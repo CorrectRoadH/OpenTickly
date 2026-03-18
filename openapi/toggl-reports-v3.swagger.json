@@ -1,0 +1,5627 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "contact": {}
+  },
+  "paths": {
+    "/insights/api/v1/workspace/{workspace_id}/data_trends/projects": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns the projects' data trends projects from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "insights"
+        ],
+        "summary": "Load projects' data trends",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Projects filter conditions",
+            "name": "project_trend_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/projects.ProjectTrend"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns filtered projects",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/projects.ProjectTrends"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Wrong format date</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have the {feature} feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Workspace not found/accessible</li><li>Admin permissions required</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/insights/api/v1/workspace/{workspace_id}/profitability/employees.{extension}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads employee profitability insights in the specified format: csv or xlsx.",
+        "produces": [
+          "text/csv",
+          "text/xlsx"
+        ],
+        "tags": [
+          "insights",
+          "exports"
+        ],
+        "summary": "Export employee profitability insights",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "csv,xlsx",
+            "name": "extension",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Parameters for report",
+            "name": "parameters",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.EmployeeProfitability"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream with the csv or xlsx for the report being exported",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "User has no access to workspace or is not admin",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/insights/api/v1/workspace/{workspace_id}/profitability/projects.{extension}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads profitability project insights in the specified format: csv or xlsx.",
+        "produces": [
+          "text/csv",
+          "text/xlsx"
+        ],
+        "tags": [
+          "insights",
+          "exports"
+        ],
+        "summary": "Export profitability project insights",
+        "parameters": [
+          {
+            "description": "Parameters for report",
+            "name": "parameters",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectProfitability"
+            }
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "csv,xlsx",
+            "name": "extension",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A stream with the csv or xlsx for the report being exported",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>Invalid parameters</li><li>Invalid workspace ID</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "User has no access to workspace or is not admin",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/insights/api/v1/workspace/{workspace_id}/trends/projects.{extension}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads projects data trends in the specified format: csv or xlsx.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "insights",
+          "exports"
+        ],
+        "summary": "Export projects data trends",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "csv,xlsx",
+            "name": "extension",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Projects filter conditions",
+            "name": "project_trend",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/projects.ProjectTrend"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns data projects data trends",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/projects.ProjectTrends"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>wrong format date</li><li>start should come after end</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Workspace not found/accessible\"</li><li>user has no required access to asked workspace</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/shared/{report_token}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "<p>Returns the previously saved report.</p>\n<p><b>Authentication</b></p><p>A public report is accessible by anyone, a private one is only accessible by the report's owner or workspace admin. If the criteria aren't met it returns 403 status code.</p>\n<p><b>Parameters</b></p><p>The report can be executed without parameters, and in this case the saved or default parameters will be used.</p>",
+        "consumes": [
+          "text/plain"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "saved_reports"
+        ],
+        "summary": "Load the previously saved report",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for the saved report",
+            "name": "report_token",
+            "in": "path",
+            "required": true
+          },
+          {
+            "format": "date",
+            "description": "Starting date in the format YYYY-MM-DD",
+            "name": "start_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Unix timestamp(UTC) or null for proper pagination. This parameter only works in Detailed and Summary reports.",
+            "name": "first_timestamp",
+            "in": "body",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "format": "date",
+            "description": "End date in the format YYYY-MM-DD. This parameter only works in Detailed and Summary reports.",
+            "name": "end_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with group_ids",
+            "name": "group_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with user_ids",
+            "name": "user_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with client_ids",
+            "name": "client_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with project_ids",
+            "name": "project_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with task_ids",
+            "name": "task_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "collectionFormat": "csv",
+            "description": "Integer array with tag_ids",
+            "name": "tag_ids",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          },
+          {
+            "description": "Case insensitive pattern that matches `.*(description).*`",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Is billable filter on",
+            "name": "billable",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "default": 0,
+            "description": "How the rounding is done: 1 is rounding up, -1 down, 0 for no rounding.",
+            "name": "rounding",
+            "in": "body",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                -1,
+                0,
+                1
+              ]
+            }
+          },
+          {
+            "default": 1,
+            "description": "Rounding amount in minutes",
+            "name": "rounding_minutes",
+            "in": "body",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "default": false,
+            "description": "If it is grouped or not. This parameter only works for Detailed report.",
+            "name": "grouped",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "default": "projects",
+            "description": "Criteria to group by. This parameter only works for Summary report.",
+            "name": "grouping",
+            "in": "body",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "projects",
+                "users",
+                "clients"
+              ]
+            }
+          },
+          {
+            "default": "time_entries",
+            "description": "Criteria to subgroup. This parameter only works for Summary report.",
+            "name": "sub_grouping",
+            "in": "body",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "time_entries",
+                "users",
+                "clients",
+                "projects",
+                "tasks"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns report information",
+            "schema": {
+              "$ref": "#/definitions/saved.ReportOutput"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>report_type does not exist in params</li><li>The report period is not supported</li/</ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "Possible error messages:<ul><li>Unable to extract authentication data</li><li>Incorrect username and/or password</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Invalid token",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "report is too big to be exported",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/shared/{report_token}/csv": {
+      "post": {
+        "security": [
+          {
+            "APIKeyAuth": [],
+            "BasicAuth": []
+          }
+        ],
+        "description": "<p>Downloads a previously saved report in csv.</p>\n<p><b>Authentication</b></p><p>A public report is accessible by anyone, a private one is only accessible by the report's owner or workspace admin. If the criteria aren't met it returns 403 status code.</p>\n<p><b>Parameters</b></p><p>The report can be executed without parameters, and in this case the saved or default parameters will be used.</p>",
+        "consumes": [
+          "text/plain"
+        ],
+        "produces": [
+          "text/csv"
+        ],
+        "tags": [
+          "saved_reports",
+          "exports"
+        ],
+        "summary": "Export CSV for saved report",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for the saved report",
+            "name": "report_token",
+            "in": "path",
+            "required": true
+          },
+          {
+            "format": "date",
+            "description": "Starting date in the format YYYY-MM-DD",
+            "name": "start_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "format": "date",
+            "description": "End date in the format YYYY-MM-DD",
+            "name": "end_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns report information in csv form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>report_type does not exist in params</li><li>The report period is not supported</li/</ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "Possible error messages:<ul><li>Unable to extract authentication data</li><li>Incorrect username and/or password</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Invalid token</li><li>Workspace was not found or the report's owner is no longer active on it</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "parameter `since` is missing",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/shared/{report_token}/pdf": {
+      "post": {
+        "security": [
+          {
+            "APIKeyAuth": [],
+            "BasicAuth": []
+          }
+        ],
+        "description": "<p><b>Authentication</b></p><p>A public report is accessible by anyone, a private one is only accessible by the report's owner or workspace admin. If the criteria aren't met it returns 403 status code.</p>\n<p><b>Parameters</b></p><p>The report can be executed without parameters, and in this case the saved or default parameters will be used.</p>",
+        "consumes": [
+          "text/plain"
+        ],
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "saved_reports",
+          "exports"
+        ],
+        "summary": "Export saved report in pdf format",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for the saved report",
+            "name": "report_token",
+            "in": "path",
+            "required": true
+          },
+          {
+            "format": "date",
+            "description": "Starting date in the format YYYY-MM-DD",
+            "name": "start_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "format": "date",
+            "description": "End date in the format YYYY-MM-DD",
+            "name": "end_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Display mode for time data, only for detailed reports. Possible values: 'date_only', 'time_only', 'date_time'. Default value: 'date_and_time'",
+            "name": "display_mode",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns report information in pdf form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>report_type does not exist in params</li><li>The report period is not supported</li/</ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "Possible error messages:<ul><li>Unable to extract authentication data</li><li>Incorrect username and/or password</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Invalid token</li><li>Workspace was not found or the report's owner is no longer active on it</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "parameter `since` is missing",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/shared/{report_token}/xlsx": {
+      "post": {
+        "security": [
+          {
+            "APIKeyAuth": [],
+            "BasicAuth": []
+          }
+        ],
+        "description": "<p>Downloads a previously saved report in xlsx.</p>\n<p><b>Authentication</b></p><p>A public report is accessible by anyone, a private one is only accessible by the report's owner or workspace admin. If the criteria aren't met it returns 403 status code.</p>\n<p><b>Parameters</b></p><p>The report can be executed without parameters, and in this case the saved or default parameters will be used.</p>",
+        "consumes": [
+          "text/plain"
+        ],
+        "produces": [
+          "text/xlsx"
+        ],
+        "tags": [
+          "saved_reports",
+          "exports"
+        ],
+        "summary": "Export XSLX saved report",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Token for the saved report",
+            "name": "report_token",
+            "in": "path",
+            "required": true
+          },
+          {
+            "format": "date",
+            "description": "Starting date in the format YYYY-MM-DD",
+            "name": "start_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "format": "date",
+            "description": "End date in the format YYYY-MM-DD",
+            "name": "end_date",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns report information in xlsx form",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>report_type does not exist in params</li><li>The report period is not supported</li/</ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "401": {
+            "description": "Possible error messages:<ul><li>Unable to extract authentication data</li><li>Incorrect username and/or password</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Invalid token</li><li>Workspace was not found or the report's owner is no longer active on it</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "parameter `since` is missing",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/comparative": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns comparative report.",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Load comparative report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Comparative reports conditions",
+            "name": "comparative_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/comparative.comparativePost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns comparative report",
+            "schema": {
+              "$ref": "#/definitions/comparative.report"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>Date range too large for given resolution</li><li>Date should be within 2006-01-01 to 2030-01-01</li><li>Start time must be before end time</li><li>Resolution must be one of [day, week, month]</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/data_trends/clients": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns the clients' data trends.",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Load clients' data trends",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Report data trends conditions",
+            "name": "data_trends_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/base.DataTrendsPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns data trends report",
+            "schema": {
+              "$ref": "#/definitions/clients.dataTrendsReport"
+            }
+          },
+          "400": {
+            "description": "Currency is required parameter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/data_trends/projects": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns projects' data trends.",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Load projects' data trends",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Data trends conditions",
+            "name": "data_trends_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/base.DataTrendsPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns data trends projects report",
+            "schema": {
+              "$ref": "#/definitions/projects.dataTrendsReport"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>Currency is required parameter</li><li>Invalid date format</li><li>At least 1 id required</li><li>Maximum 5 ids allowed</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Workspace not found/accessible\"</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/data_trends/users": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns users' data trends.",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Load users' data trends",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Report data trends conditions",
+            "name": "data_trends_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/base.DataTrendsPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns data trends report",
+            "schema": {
+              "$ref": "#/definitions/users.dataTrendsReport"
+            }
+          },
+          "400": {
+            "description": "Currency is required parameter",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/clients": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered clients from a workspace (only ID and name).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List clients",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Clients filter conditions",
+            "name": "clients_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.ClientFilterParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns filtered clients",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ClientFilterResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Maximum count of posted IDs is 2000",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/project_groups": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns the project groups from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List project groups filter",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Project groups filter conditions",
+            "name": "project_groups_params",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectGroupParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns project groups",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ProjectGroupResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is {value}</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/project_users": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered user projects.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List project users",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "User projects filter conditions",
+            "name": "status_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectUserParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns project users",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ProjectUserResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is {value}</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/projects": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered projects from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List projects",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Projects filter conditions",
+            "name": "projects_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectFilterParamRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns filtered projects",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ProjectFilterResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Maximum count of posted IDs is {value}",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/projects/status": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns\tfiltered projects statuses from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List projects statuses",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Projects statuses filter conditions",
+            "name": "status_filter_params",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectStatusParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns projects statuses",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ProjectStatusResponse"
+              }
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/tasks/status": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Filter tasks statuses from a workspace",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List tasks statuses",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Task filter conditions",
+            "name": "tasks_status_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/tasks.tasksStatusPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns filtered tasks",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/tasks.TaskStatus"
+              }
+            }
+          },
+          "400": {
+            "description": "At least one parameter must be set",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Tasks are a premium feature",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/filters/users": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered users from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List users",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Users filter parameters",
+            "name": "users_filter",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.UserFilterParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns filtered users",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.UserFilterResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Maximum count of posted IDs is 100",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/profitability/projects": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns profitability projects report.",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Load profitability projects report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Profitability projects report conditions",
+            "name": "project_profitability_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectProfitability"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns profitability report",
+            "schema": {
+              "$ref": "#/definitions/projects.Report"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>Wrong format date</li><li>Invalid date span</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Workspace not found/accessible</li><li>Admin permissions required</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/projects/summary": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns summary user projects.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "summary_reports"
+        ],
+        "summary": "List project users",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "User projects summary input filter",
+            "name": "project_users_input",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectUsersRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns summary user projects",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/users.ProjectUsersSummaryRow"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/projects/{project_id}/summary": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns project's summary.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "summary_reports"
+        ],
+        "summary": "Load project summary",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Project ID",
+            "name": "project_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Date range conditions",
+            "name": "range_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/base.RangePost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns project summary",
+            "schema": {
+              "$ref": "#/definitions/totals.ReportData"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>Invalid workspace id</li><li>Invalid project id</li><li>The {parameter} parameter is required</li><li>Invalid {parameter} format</li><li>{date_range} should be within 2006-01-01 to 2030-01-01</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have the {feature} feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Possible error messages:<ul><li>Workspace not found/accessible</li><li>project not found or not accessible</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/clients": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered clients from a workspace (whole client object).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "Search clients",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Clients search conditions",
+            "name": "clients_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.ClientFilterParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns searched clients",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ClientFilterResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is 2000</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/projects": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered projects from a workspace (whole project object).",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List projects",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Projects list conditions",
+            "name": "projects_filter_params",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.ProjectFilterParamRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns projects",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.ProjectFilterResponse"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is {value}</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/time_entries": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns time entries for detailed report according to the given filters.\nSupports pagination via X-Next-ID and X-Next-Row-Number headers returned in the response.\nSee [Overview](https://developers.track.toggl.com/docs/reports_start#detailed-reports)",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "detailed_reports"
+        ],
+        "summary": "Search time entries",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Search report conditions",
+            "name": "search_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/detailed.Post"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns grouped time entries for detailed report",
+            "schema": {
+              "type": "string"
+            },
+            "headers": {
+              "X-Next-ID": {
+                "type": "string",
+                "description": "If has next page, contains the ID of first item in next page"
+              },
+              "X-Next-Row-Number": {
+                "type": "string",
+                "description": "If has next page, contains the row number of first item in next page"
+              },
+              "X-Range-End": {
+                "type": "string",
+                "description": "Actual end date used for query"
+              },
+              "X-Range-Start": {
+                "type": "string",
+                "description": "Actual start date used for query"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/time_entries.pdf": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads detailed report in pdf format.",
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "detailed_reports",
+          "exports"
+        ],
+        "summary": "Export detailed report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Detailed report conditions",
+            "name": "detailed_export_pdf_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/detailed.ExportPDFPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the detailed report in pdf format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/time_entries.{extension}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads detailed report in the specified format: csv or xlsx.",
+        "produces": [
+          "text/csv",
+          "text/xlsx"
+        ],
+        "tags": [
+          "detailed_reports",
+          "exports"
+        ],
+        "summary": "Export detailed report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "csv,xlsx",
+            "name": "extension",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Detailed report conditions",
+            "name": "detailed_export_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/detailed.SearchExportPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the detailed report in the specified format: csv or xlsx",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/time_entries/totals": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns totals sums for detailed report.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "detailed_reports"
+        ],
+        "summary": "Load totals detailed report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Totals detailed report conditions",
+            "name": "totals_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/totals.ReportPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns totals values sums for detailed report",
+            "schema": {
+              "type": "string"
+            },
+            "headers": {
+              "X-Range-End": {
+                "type": "string",
+                "description": "Actual end date used for query"
+              },
+              "X-Range-Start": {
+                "type": "string",
+                "description": "Actual start date used for query"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/search/users": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered users from a workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List users",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Users filter parameters",
+            "name": "users_filter",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/dto.UserFilterParamsRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns users",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/model.User"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is 100</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/summary/time_entries": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns time entries for summary report according to the given filters.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "summary_reports"
+        ],
+        "summary": "Search time entries",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Summary report conditions",
+            "name": "summary_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/summary.ReportPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the summary time entries",
+            "schema": {
+              "type": "string"
+            },
+            "headers": {
+              "X-Grouping": {
+                "type": "string",
+                "description": "Grouping used for report"
+              },
+              "X-Range-End": {
+                "type": "string",
+                "description": "Actual end date used for query"
+              },
+              "X-Range-Start": {
+                "type": "string",
+                "description": "Actual start date used for query"
+              },
+              "X-Sub-Grouping": {
+                "type": "string",
+                "description": "Sub grouping used for report"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/summary/time_entries.pdf": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads summary report in pdf format.",
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "summary_reports",
+          "exports"
+        ],
+        "summary": "Export summary report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Summary report conditions",
+            "name": "summary_export_pdf_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/summary.ExportPDFPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the summary report in pdf format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/summary/time_entries.{extension}": {
+      "post": {
+        "security": [
+          {
+            "APIKeyAuth": [],
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads summary report in the specified in the specified format: csv or xlsx.",
+        "produces": [
+          "text/csv",
+          "text/xlsx"
+        ],
+        "tags": [
+          "summary_reports",
+          "exports"
+        ],
+        "summary": "Export summary report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "csv,xlsx",
+            "name": "extension",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Summary report conditions",
+            "name": "summary_export_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/summary.ExportPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the summary report on the specified format: csv or xlsx",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/weekly/time_entries": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns time entries for weekly report according to the given filters.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "weekly_reports"
+        ],
+        "summary": "Search time entries",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Weekly report conditions",
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/base.Post"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the weekly report time entries",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>The '{parameter}' parameter is not supported</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/weekly/time_entries.csv": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads weekly report in csv format.",
+        "produces": [
+          "text/csv"
+        ],
+        "tags": [
+          "weekly_reports",
+          "exports"
+        ],
+        "summary": "Export weekly report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Weekly report conditions",
+            "name": "weekly_export_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/weekly.ExportPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the weekly report in csv format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>The '{parameter}' parameter is not supported</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/weekly/time_entries.pdf": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Downloads weekly report in pdf format.",
+        "produces": [
+          "application/pdf"
+        ],
+        "tags": [
+          "weekly_reports",
+          "exports"
+        ],
+        "summary": "Export weekly report",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Weekly report conditions",
+            "name": "weekly_export_pdf_post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/weekly.ExportPDFPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns the weekly report in pdf format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Invalid workspace id</li><li>The '{parameter}' parameter is not supported</li><li>Invalid '{parameter}' value, allowed values are: '{valid_values}'</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "402": {
+            "description": "Workspace needs to have this feature enabled",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/reports/api/v3/workspace/{workspace_id}/{action}/tasks": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Returns filtered tasks from workspace.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "utils"
+        ],
+        "summary": "List tasks",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Workspace ID",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "search,filters",
+            "name": "action",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Task search conditions",
+            "name": "tasks_post",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/tasks.tasksPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns tasks",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/models.Task"
+              }
+            }
+          },
+          "400": {
+            "description": "Possible error messages:<ul><li>At least one parameter must be set</li><li>Maximum count of posted IDs is 2000</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "Workspace not found/accessible",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "base.BillableHourlyRate": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "hourly_rate_in_cents": {
+          "type": "integer"
+        }
+      }
+    },
+    "base.DataTrendsPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "type": "boolean"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "rounding": {
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "type": "integer"
+        },
+        "start_date": {
+          "type": "string"
+        }
+      }
+    },
+    "base.Post": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "base.RangePost": {
+      "type": "object",
+      "properties": {
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        }
+      }
+    },
+    "clients.dataTrendsGraph": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clients.dataTrendsGraphData"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "clients.dataTrendsGraphData": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/clients.reportClient"
+          }
+        },
+        "date": {
+          "type": "string"
+        }
+      }
+    },
+    "clients.dataTrendsReport": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/clients.dataTrendsGraph"
+        }
+      }
+    },
+    "clients.reportClient": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "earnings": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "total_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "comparative.comparativePost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "type": "boolean"
+        },
+        "client_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "group_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "project_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "rounding": {
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "type": "integer"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "tag_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "comparative.graphData": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "total_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "comparative.report": {
+      "type": "object",
+      "properties": {
+        "graph": {
+          "$ref": "#/definitions/comparative.reportGraph"
+        }
+      }
+    },
+    "comparative.reportGraph": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/comparative.graphData"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "detailed.ExportPDFPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "cents_separator": {
+          "type": "string"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "date_format": {
+          "type": "string",
+          "enum": [
+            "MM/DD/YYYY",
+            "DD-MM-YYYY",
+            "MM-DD-YYYY",
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            "DD.MM.YYYY"
+          ]
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "display_mode": {
+          "type": "string"
+        },
+        "duration_format": {
+          "description": "Duration format, optional, default \"classic\". Can be \"classic\", \"decimal\" or \"improved\".",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "enrich_response": {
+          "description": "EnrichResponse, optional, default false. It will force the detailed report to return as much information as possible,\nas it does for the export.",
+          "type": "boolean"
+        },
+        "first_id": {
+          "type": "integer"
+        },
+        "first_row_number": {
+          "type": "integer"
+        },
+        "first_timestamp": {
+          "type": "integer"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouped": {
+          "description": "Whether time entries should be grouped, optional, default false.",
+          "type": "boolean"
+        },
+        "hide_amounts": {
+          "description": "Whether amounts should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "hour_format": {
+          "type": "string"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "order_by": {
+          "description": "Order by field, optional, default \"date\". Can be \"date\", \"user\", \"duration\", \"description\" or \"last_update\".",
+          "type": "string"
+        },
+        "order_dir": {
+          "description": "Order direction, optional. Can be ASC or DESC.",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "PageSize defines the number of items per page, optional, default 50.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "detailed.GroupedTimeEntry": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "type": "boolean"
+        },
+        "billable_amount_in_cents": {
+          "type": "integer"
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "hourly_rate_in_cents": {
+          "type": "integer"
+        },
+        "project_color": {
+          "type": "string"
+        },
+        "project_hex": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "row_number": {
+          "type": "integer"
+        },
+        "tag_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "tag_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "task_id": {
+          "type": "integer"
+        },
+        "task_name": {
+          "type": "string"
+        },
+        "time_entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/detailed.SingleTimeEntry"
+          }
+        },
+        "toggl_accounts_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "username": {
+          "type": "string"
+        }
+      }
+    },
+    "detailed.Post": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "enrich_response": {
+          "description": "EnrichResponse, optional, default false. It will force the detailed report to return as much information as possible,\nas it does for the export.",
+          "type": "boolean"
+        },
+        "first_id": {
+          "type": "integer"
+        },
+        "first_row_number": {
+          "type": "integer"
+        },
+        "first_timestamp": {
+          "type": "integer"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouped": {
+          "description": "Whether time entries should be grouped, optional, default false.",
+          "type": "boolean"
+        },
+        "hide_amounts": {
+          "description": "Whether amounts should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "order_by": {
+          "description": "Order by field, optional, default \"date\". Can be \"date\", \"user\", \"duration\", \"description\" or \"last_update\".",
+          "type": "string"
+        },
+        "order_dir": {
+          "description": "Order direction, optional. Can be ASC or DESC.",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "PageSize defines the number of items per page, optional, default 50.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "detailed.SearchExportPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "duration_format": {
+          "description": "Duration format, optional, default \"classic\". Can be \"classic\", \"decimal\" or \"improved\".",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "enrich_response": {
+          "description": "EnrichResponse, optional, default false. It will force the detailed report to return as much information as possible,\nas it does for the export.",
+          "type": "boolean"
+        },
+        "first_id": {
+          "type": "integer"
+        },
+        "first_row_number": {
+          "type": "integer"
+        },
+        "first_timestamp": {
+          "type": "integer"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouped": {
+          "description": "Whether time entries should be grouped, optional, default false.",
+          "type": "boolean"
+        },
+        "hide_amounts": {
+          "description": "Whether amounts should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "order_by": {
+          "description": "Order by field, optional, default \"date\". Can be \"date\", \"user\", \"duration\", \"description\" or \"last_update\".",
+          "type": "string"
+        },
+        "order_dir": {
+          "description": "Order direction, optional. Can be ASC or DESC.",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "PageSize defines the number of items per page, optional, default 50.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "detailed.SingleTimeEntry": {
+      "type": "object",
+      "properties": {
+        "at": {
+          "type": "string"
+        },
+        "at_tz": {
+          "description": "used by reports v2 proxy",
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "seconds": {
+          "type": "integer"
+        },
+        "start": {
+          "type": "string"
+        },
+        "stop": {
+          "type": "string"
+        }
+      }
+    },
+    "dictionary.GeneralDictionary": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/dictionary.ReportDict"
+      }
+    },
+    "dictionary.ProjectUserDict": {
+      "type": "object",
+      "properties": {
+        "actual_hours": {
+          "type": "integer"
+        },
+        "actual_seconds": {
+          "type": "integer"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "custom_period": {
+          "type": "integer"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "estimated_hours": {
+          "type": "integer"
+        },
+        "estimated_seconds": {
+          "type": "integer"
+        },
+        "external_reference": {
+          "type": "string"
+        },
+        "fixed_fee": {
+          "type": "number"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "recurring": {
+          "type": "boolean"
+        },
+        "recurring_period": {
+          "type": "string"
+        },
+        "start_date": {
+          "type": "string"
+        }
+      }
+    },
+    "dictionary.ReportDict": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "dictionary.ReportDictionaries": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.ClientDictionary"
+        },
+        "filters": {
+          "description": "Remove it after FlexQ release.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/dictionary.ReportDictionariesData"
+            }
+          ]
+        },
+        "projects": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.ProjectDictionary"
+        },
+        "tags": {
+          "$ref": "#/definitions/dictionary.GeneralDictionary"
+        },
+        "tasks": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.TaskDictionary"
+        },
+        "user_groups": {
+          "$ref": "#/definitions/dictionary.GeneralDictionary"
+        },
+        "users": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.UserDictionary"
+        }
+      }
+    },
+    "dictionary.ReportDictionariesData": {
+      "type": "object",
+      "properties": {
+        "clients": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.ClientDictionary"
+        },
+        "projects": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.ProjectDictionary"
+        },
+        "tags": {
+          "$ref": "#/definitions/dictionary.GeneralDictionary"
+        },
+        "tasks": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.TaskDictionary"
+        },
+        "user_groups": {
+          "$ref": "#/definitions/dictionary.GeneralDictionary"
+        },
+        "users": {
+          "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.UserDictionary"
+        }
+      }
+    },
+    "dictionary.ReportUserDict": {
+      "type": "object",
+      "properties": {
+        "avatar_url": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "group_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "id": {
+          "type": "integer"
+        },
+        "labour_cost": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "dto.ClientFilterParamsRequest": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "description": "Client IDs for filtering.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "name": {
+          "description": "Client name for filtering.",
+          "type": "string"
+        },
+        "start": {
+          "description": "Start is the client ID cursor for pagination.",
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ClientFilterResponse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Client ID.",
+          "type": "integer"
+        },
+        "name": {
+          "description": "Client name.",
+          "type": "string"
+        }
+      }
+    },
+    "dto.EmployeeProfitability": {
+      "type": "object",
+      "required": [
+        "currency"
+      ],
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "group_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month",
+            "quarter"
+          ]
+        },
+        "rounding": {
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "type": "integer"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "user_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "dto.ProjectFilterParamRequest": {
+      "type": "object",
+      "properties": {
+        "client_ids": {
+          "description": "Client IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "currency": {
+          "description": "Currency, optional, example \"EUR\".",
+          "type": "string"
+        },
+        "ids": {
+          "description": "Project IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "is_active": {
+          "description": "Whether the wanted projects are archived, optional, default false.",
+          "type": "boolean"
+        },
+        "is_billable": {
+          "description": "Whether the wanted projects are billable, optional, premium feature, default false.",
+          "type": "boolean"
+        },
+        "is_private": {
+          "description": "Whether the wanted projects are private, optional, default false.",
+          "type": "boolean"
+        },
+        "name": {
+          "description": "Project name, optional.",
+          "type": "string"
+        },
+        "page_size": {
+          "description": "PageSize is the number of records returned per page. If unset, the default value of 201 will be used.",
+          "type": "integer"
+        },
+        "start": {
+          "description": "Start is used for pagination, optional, default 0. The api will return the next projects page with id >= Start.",
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectFilterResponse": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "billable": {
+          "type": "boolean"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "dto.ProjectGroupParamsRequest": {
+      "type": "object",
+      "properties": {
+        "group_ids": {
+          "description": "Group IDs, optional. At least Projects IDs or Group IDs should be informed.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "project_ids": {
+          "description": "Project IDs, optional. At least Projects IDs or Group IDs should be informed.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "start_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectGroupResponse": {
+      "type": "object",
+      "properties": {
+        "group_id": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectProfitability": {
+      "type": "object",
+      "required": [
+        "currency"
+      ],
+      "properties": {
+        "billable": {
+          "description": "Whether the project is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional. A nil entry on this list means that only projects without client will be selected.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "currency": {
+          "description": "Currency, example: \"usd\".",
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, optional, example: time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "project_ids": {
+          "description": "Project IDS, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "description": "Resolution, optional. Can be \"day\", \"week\" or \"month\".",
+          "type": "string",
+          "enum": [
+            "day",
+            "week",
+            "month"
+          ]
+        },
+        "rounding": {
+          "description": "Rounding, optional, duration rounding settings, premium feature.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "RoundingMinutes, optional, duration rounding minutes settings, premium feature.",
+          "type": "integer"
+        },
+        "start_date": {
+          "description": "Start date, optional, example: time.DateOnly. Should be less than End date.",
+          "type": "string"
+        }
+      }
+    },
+    "dto.ProjectStatusParamsRequest": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "Whether the wanted projects statuses are archived, optional, default false.",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "Project IDs.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "dto.ProjectStatusResponse": {
+      "type": "object",
+      "properties": {
+        "billable_amount": {
+          "type": "integer"
+        },
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "estimated_seconds": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "tracked_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectUserParamsRequest": {
+      "type": "object",
+      "properties": {
+        "client_ids": {
+          "description": "Client IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "project_ids": {
+          "description": "Project IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "start_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectUserResponse": {
+      "type": "object",
+      "properties": {
+        "group_id": {
+          "description": "Group ID.",
+          "type": "integer"
+        },
+        "hourly_rate": {
+          "description": "Hourly rate.",
+          "type": "number"
+        },
+        "id": {
+          "description": "Project user ID.",
+          "type": "integer"
+        },
+        "labour_cost": {
+          "description": "Labor cost.",
+          "type": "integer"
+        },
+        "project_id": {
+          "description": "Project ID.",
+          "type": "integer"
+        },
+        "user_id": {
+          "description": "User ID.",
+          "type": "integer"
+        }
+      }
+    },
+    "dto.ProjectUsersRequest": {
+      "type": "object",
+      "properties": {
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        }
+      }
+    },
+    "dto.UserFilterParamsRequest": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "Whether the wanted users are active, optional, default true.",
+          "type": "boolean"
+        },
+        "ids": {
+          "description": "User IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "start": {
+          "description": "Cursor to point from where to start the search, it should be a user ID, optional.",
+          "type": "integer"
+        }
+      }
+    },
+    "dto.UserFilterResponse": {
+      "type": "object",
+      "properties": {
+        "deleted_at": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.ClientDict": {
+      "type": "object",
+      "properties": {
+        "external_reference": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.ClientDictionary": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.ClientDict"
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.ProjectDictionary": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/dictionary.ProjectUserDict"
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.TaskDict": {
+      "type": "object",
+      "properties": {
+        "estimated_seconds": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "tracked_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.TaskDictionary": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/github_com_toggl_toggl_api_internal_reports_saved_dictionary.TaskDict"
+      }
+    },
+    "github_com_toggl_toggl_api_internal_reports_saved_dictionary.UserDictionary": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/dictionary.ReportUserDict"
+      }
+    },
+    "indexed.Indexed-summary_SubGroupData-string": {
+      "type": "object"
+    },
+    "model.User": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "Whether the user is active or not.",
+          "type": "boolean"
+        },
+        "avatar": {
+          "description": "Avatar file name",
+          "type": "string"
+        },
+        "deactivated": {
+          "description": "Whether the user is deactivated or not.",
+          "type": "boolean"
+        },
+        "deleted_at": {
+          "description": "Deleted at date.",
+          "type": "string"
+        },
+        "email": {
+          "description": "Email",
+          "type": "string"
+        },
+        "fullname": {
+          "description": "Full name",
+          "type": "string"
+        },
+        "id": {
+          "description": "User ID",
+          "type": "integer"
+        },
+        "workspace_user_id": {
+          "description": "Workspace User ID",
+          "type": "integer"
+        }
+      }
+    },
+    "models.IntegrationProvider": {
+      "type": "string",
+      "enum": [
+        "asana",
+        "jira",
+        "salesforce"
+      ],
+      "x-enum-varnames": [
+        "AsanaProvider",
+        "JIRAProvider",
+        "SalesForceProvider"
+      ]
+    },
+    "models.Task": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "description": "False when the task has been done",
+          "type": "boolean"
+        },
+        "at": {
+          "description": "When the task was created/last modified",
+          "type": "string"
+        },
+        "avatar_url": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "client_id": {
+          "type": "integer",
+          "x-nullable": true
+        },
+        "client_name": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "estimated_seconds": {
+          "description": "Estimation time for this task in seconds",
+          "type": "integer",
+          "x-nullable": true
+        },
+        "external_reference": {
+          "description": "ExternalReference can be used to store an external reference to the Track Task Entity.",
+          "type": "string"
+        },
+        "id": {
+          "description": "Task ID",
+          "type": "integer"
+        },
+        "integration_ext_id": {
+          "description": "The external ID of the linked entity in the external system (e.g. JIRA/SalesForce)",
+          "type": "string"
+        },
+        "integration_ext_type": {
+          "description": "The external type of the linked entity in the external system (e.g. JIRA/SalesForce)",
+          "type": "string"
+        },
+        "integration_provider": {
+          "description": "The provider (e.g. JIRA/SalesForce) that has an entity linked to this Toggl Track entity",
+          "allOf": [
+            {
+              "$ref": "#/definitions/models.IntegrationProvider"
+            }
+          ]
+        },
+        "name": {
+          "description": "Task Name",
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "project_billable": {
+          "type": "boolean"
+        },
+        "project_color": {
+          "description": "Metadata",
+          "type": "string"
+        },
+        "project_id": {
+          "description": "Project ID",
+          "type": "integer"
+        },
+        "project_is_private": {
+          "type": "boolean",
+          "x-nullable": true
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "rate": {
+          "description": "Rate for this task",
+          "type": "number"
+        },
+        "rate_last_updated": {
+          "description": "Last date for rate change",
+          "type": "string",
+          "x-nullable": true
+        },
+        "recurring": {
+          "description": "Whether this is a recurring task",
+          "type": "boolean"
+        },
+        "toggl_accounts_id": {
+          "description": "Task assignee, if set above this will be the toggl_account_id for that user",
+          "type": "string",
+          "x-nullable": true
+        },
+        "tracked_seconds": {
+          "description": "The value tracked_seconds is in milliseconds, not in seconds.",
+          "type": "integer"
+        },
+        "user_id": {
+          "description": "Task assignee, if available",
+          "type": "integer",
+          "x-nullable": true
+        },
+        "user_name": {
+          "type": "string",
+          "x-nullable": true
+        },
+        "workspace_id": {
+          "description": "Workspace ID",
+          "type": "integer"
+        }
+      }
+    },
+    "projects.ProjectTrend": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the project is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "previous_period_start": {
+          "description": "Previous start date, example time.DateOnly.",
+          "type": "string"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Rounding, optional, duration rounding settings, premium feature.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "RoundingMinutes, optional, duration rounding minutes settings, premium feature.",
+          "type": "integer"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        }
+      }
+    },
+    "projects.ProjectTrends": {
+      "type": "object",
+      "properties": {
+        "current_period_seconds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "end": {
+          "type": "string"
+        },
+        "previousStart": {
+          "type": "string"
+        },
+        "previous_period_seconds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "start": {
+          "type": "string"
+        },
+        "user_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "projects.Report": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/projects.reportGraph"
+        },
+        "table": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/projects.ReportTableRow"
+          }
+        }
+      }
+    },
+    "projects.ReportTableRow": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "earnings": {
+          "type": "integer"
+        },
+        "labour_cost": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "total_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "projects.dataTrendsGraph": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/projects.dataTrendsGraphData"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "projects.dataTrendsGraphData": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "projects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/projects.dataTrendsProject"
+          }
+        }
+      }
+    },
+    "projects.dataTrendsProject": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "color": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "earnings": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "total_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "projects.dataTrendsReport": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/projects.dataTrendsGraph"
+        }
+      }
+    },
+    "projects.graphItem": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "earnings": {
+          "type": "integer"
+        },
+        "labour_cost": {
+          "type": "integer"
+        }
+      }
+    },
+    "projects.reportGraph": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/projects.graphItem"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "saved.DetailedReportData": {
+      "type": "object",
+      "properties": {
+        "report": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/detailed.GroupedTimeEntry"
+          }
+        },
+        "totals": {
+          "$ref": "#/definitions/totals.ReportData"
+        }
+      }
+    },
+    "saved.ReportOutput": {
+      "type": "object",
+      "properties": {
+        "detailed_results": {
+          "$ref": "#/definitions/saved.DetailedReportData"
+        },
+        "dictionaries": {
+          "$ref": "#/definitions/dictionary.ReportDictionaries"
+        },
+        "features": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "boolean"
+          }
+        },
+        "fixed_daterange": {
+          "type": "boolean"
+        },
+        "hide_amounts": {
+          "type": "boolean"
+        },
+        "input_params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "is_commenting_enabled": {
+          "type": "boolean"
+        },
+        "public": {
+          "type": "boolean"
+        },
+        "report_name": {
+          "type": "string"
+        },
+        "report_type": {
+          "type": "string",
+          "example": "weekly"
+        },
+        "saved_params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "summary_results": {
+          "$ref": "#/definitions/saved.SummaryReportData"
+        },
+        "weekly_results": {
+          "$ref": "#/definitions/saved.WeeklyReportData"
+        },
+        "workspace_logo": {
+          "type": "string"
+        }
+      }
+    },
+    "saved.SummaryReportData": {
+      "type": "object",
+      "properties": {
+        "report": {
+          "$ref": "#/definitions/summary.ReportData"
+        },
+        "totals": {
+          "$ref": "#/definitions/totals.ReportData"
+        }
+      }
+    },
+    "saved.WeeklyReportData": {
+      "type": "object",
+      "properties": {
+        "report": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/weekly.DataRow"
+          }
+        },
+        "totals": {
+          "$ref": "#/definitions/totals.ReportData"
+        }
+      }
+    },
+    "summary.Audit": {
+      "type": "object",
+      "properties": {
+        "group_filter": {
+          "$ref": "#/definitions/summary.AuditGroupFilter"
+        },
+        "show_empty_groups": {
+          "description": "Whether empty groups should be displayed, default false, premium feature.",
+          "type": "boolean"
+        },
+        "show_tracked_groups": {
+          "description": "Whether tacked groups should be displayed, default true, premium feature.",
+          "type": "boolean"
+        }
+      }
+    },
+    "summary.AuditGroupFilter": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "description": "Audit currency, optional, example \"USD\", premium feature.",
+          "type": "string"
+        },
+        "max_amount_cents": {
+          "description": "Audit max amount in cents, optional, premium feature.",
+          "type": "integer"
+        },
+        "max_duration_seconds": {
+          "description": "Audit max duration in seconds, optional, premium feature.",
+          "type": "integer"
+        },
+        "min_amount_cents": {
+          "description": "Audit min amount in cents, optional, premium feature.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Audit min duration in seconds, optional, premium feature.",
+          "type": "integer"
+        }
+      }
+    },
+    "summary.ExportPDFPost": {
+      "type": "object",
+      "properties": {
+        "audit": {
+          "$ref": "#/definitions/summary.Audit"
+        },
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "cents_separator": {
+          "type": "string"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "collapse": {
+          "description": "Whether collapse others, optional, default false.",
+          "type": "boolean"
+        },
+        "date_format": {
+          "description": "Date format, optional, default \"MM/DD/YYYY\". Can be \"MM/DD/YYYY\", \"DD-MM-YYYY\", \"MM-DD-YYYY\", \"YYYY-MM-DD\", \"DD/MM/YYYY\" or \"DD.MM.YYYY\".",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "distinguish_rates": {
+          "description": "DistinguishRates will create new subgroups for each rate, optional, default false.",
+          "type": "boolean"
+        },
+        "duration_format": {
+          "description": "Duration format, optional, default \"classic\". Can be \"classic\", \"decimal\" or \"improved\".",
+          "type": "string",
+          "enum": [
+            "classic",
+            "decimal",
+            "improved"
+          ]
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouping": {
+          "description": "Grouping option, optional.",
+          "type": "string"
+        },
+        "hide_amounts": {
+          "description": "Whether amounts should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "hide_rates": {
+          "description": "Whether rates should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "include_time_entry_ids": {
+          "description": "Whether time entry IDs should be included in the results, optional, default false. Not applicable for export.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "order_by": {
+          "description": "Order by option, optional, default title. Can be title or duration.",
+          "type": "string"
+        },
+        "order_dir": {
+          "description": "Order direction, optional. Can be ASC or DESC.",
+          "type": "string"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "description": "Graph resolution, optional. Allow clients to explicitly request a resolution.",
+          "type": "string"
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "sub_grouping": {
+          "description": "SubGrouping option, optional.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "summary.ExportPost": {
+      "type": "object",
+      "properties": {
+        "audit": {
+          "$ref": "#/definitions/summary.Audit"
+        },
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "collapse": {
+          "description": "Whether collapse others, optional, default false.",
+          "type": "boolean"
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "distinguish_rates": {
+          "description": "DistinguishRates will create new subgroups for each rate, optional, default false.",
+          "type": "boolean"
+        },
+        "duration_format": {
+          "description": "Duration format, optional, default \"classic\". Can be \"classic\", \"decimal\" or \"improved\".",
+          "type": "string",
+          "enum": [
+            "classic",
+            "decimal",
+            "improved"
+          ]
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouping": {
+          "description": "Grouping option, optional.",
+          "type": "string"
+        },
+        "hide_amounts": {
+          "description": "Whether amounts should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "hide_rates": {
+          "description": "Whether rates should be hidden, optional, default false.",
+          "type": "boolean"
+        },
+        "include_time_entry_ids": {
+          "description": "Whether time entry IDs should be included in the results, optional, default false. Not applicable for export.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "order_by": {
+          "description": "Order by option, optional, default title. Can be title or duration.",
+          "type": "string"
+        },
+        "order_dir": {
+          "description": "Order direction, optional. Can be ASC or DESC.",
+          "type": "string"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "sub_grouping": {
+          "description": "SubGrouping option, optional.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "summary.GroupData": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "ids": {
+          "description": "IDs will be used for tags grouping, can be ignored in all other cases. Don't confuse this IDs with the IDs in SubGroupData.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "names": {
+          "description": "names of the group, used for summary export",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "project_color": {
+          "type": "string"
+        },
+        "project_hex_color": {
+          "type": "string"
+        },
+        "sub_groups": {
+          "$ref": "#/definitions/indexed.Indexed-summary_SubGroupData-string"
+        }
+      }
+    },
+    "summary.ReportData": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/summary.GroupData"
+          }
+        }
+      }
+    },
+    "summary.ReportPost": {
+      "type": "object",
+      "properties": {
+        "audit": {
+          "$ref": "#/definitions/summary.Audit"
+        },
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "distinguish_rates": {
+          "description": "DistinguishRates will create new subgroups for each rate, optional, default false.",
+          "type": "boolean"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouping": {
+          "description": "Grouping option, optional.",
+          "type": "string"
+        },
+        "include_time_entry_ids": {
+          "description": "Whether time entry IDs should be included in the results, optional, default false. Not applicable for export.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "sub_grouping": {
+          "description": "SubGrouping option, optional.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "tasks.TaskStatus": {
+      "type": "object",
+      "properties": {
+        "billable_amount": {
+          "type": "integer"
+        },
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "estimated_seconds": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "tracked_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "tasks.tasksPost": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "type": "boolean"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "page_size": {
+          "type": "integer"
+        },
+        "project_active": {
+          "type": "boolean"
+        },
+        "project_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "start": {
+          "type": "integer"
+        },
+        "user_ids": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "tasks.tasksStatusPost": {
+      "type": "object",
+      "properties": {
+        "ids": {
+          "description": "Time entries IDs.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "totals.Graph": {
+      "type": "object",
+      "properties": {
+        "billable_amount_in_cents": {
+          "type": "integer"
+        },
+        "by_rate": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "labour_cost_in_cents": {
+          "type": "integer"
+        },
+        "seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "totals.ReportData": {
+      "type": "object",
+      "properties": {
+        "billable_amount_in_cents": {
+          "type": "integer"
+        },
+        "graph": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/totals.Graph"
+          }
+        },
+        "labour_cost_in_cents": {
+          "type": "integer"
+        },
+        "rates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/base.BillableHourlyRate"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "seconds": {
+          "type": "integer"
+        },
+        "tracked_days": {
+          "type": "integer"
+        }
+      }
+    },
+    "totals.ReportPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "granularity": {
+          "description": "Totals granularity, optional, overrides resolution values. Possible values: day, week and month.",
+          "type": "string"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouped": {
+          "description": "Whether time entries should be grouped, optional, default false.",
+          "type": "boolean"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "resolution": {
+          "description": "Graph resolution, optional. Allow clients to explicitly request a resolution.",
+          "type": "string"
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "Time entry IDs, optional.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "withInlineRates": {
+          "description": "Whether results should be returned in line, optional, default false.",
+          "type": "boolean"
+        },
+        "with_graph": {
+          "description": "Whether Graph information should be loaded, optional,  default false.",
+          "type": "boolean"
+        }
+      }
+    },
+    "users.ProjectUsersSummaryRow": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "tracked_seconds": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "users.dataTrendsGraph": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users.dataTrendsGraphData"
+          }
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "users.dataTrendsGraphData": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/users.dataTrendsUser"
+          }
+        }
+      }
+    },
+    "users.dataTrendsReport": {
+      "type": "object",
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/users.dataTrendsGraph"
+        }
+      }
+    },
+    "users.dataTrendsUser": {
+      "type": "object",
+      "properties": {
+        "billable_seconds": {
+          "type": "integer"
+        },
+        "earnings": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "total_seconds": {
+          "type": "integer"
+        },
+        "user_id": {
+          "type": "integer"
+        }
+      }
+    },
+    "weekly.DataRow": {
+      "type": "object",
+      "properties": {
+        "billable_amounts_in_cents": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "billable_seconds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "hourly_rate_in_cents": {
+          "description": "In cents",
+          "type": "integer"
+        },
+        "planned_task_id": {
+          "type": "integer"
+        },
+        "project_color": {
+          "type": "string"
+        },
+        "project_hex_color": {
+          "type": "string"
+        },
+        "project_id": {
+          "type": "integer"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "seconds": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_id": {
+          "type": "integer"
+        },
+        "user_name": {
+          "type": "string"
+        }
+      }
+    },
+    "weekly.ExportPDFPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "calculate": {
+          "description": "Calculate option, optional. Can be by time or amounts.",
+          "type": "string"
+        },
+        "cents_separator": {
+          "type": "string"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "date_format": {
+          "description": "Date format, optional, default \"MM/DD/YYYY\". Can be \"MM/DD/YYYY\", \"DD-MM-YYYY\", \"MM-DD-YYYY\", \"YYYY-MM-DD\", \"DD/MM/YYYY\" or \"DD.MM.YYYY\".",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "duration_format": {
+          "description": "Duration format, optional, default \"classic\". Can be \"classic\", \"decimal\" or \"improved\".",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_by_task": {
+          "description": "GroupByTask tells the weekly report to return the data grouped by all the usual groups plus planned task.",
+          "type": "boolean"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouping": {
+          "description": "Grouping option, optional.",
+          "type": "string"
+        },
+        "logo_url": {
+          "type": "string"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "weekly.ExportPost": {
+      "type": "object",
+      "properties": {
+        "billable": {
+          "description": "Whether the time entry is set as billable, optional, premium feature.",
+          "type": "boolean"
+        },
+        "calculate": {
+          "description": "Calculate option, optional. Can be by time or amounts.",
+          "type": "string"
+        },
+        "client_ids": {
+          "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "description": {
+          "description": "Description, optional, filtering attribute.",
+          "type": "string"
+        },
+        "endTime": {
+          "type": "string"
+        },
+        "end_date": {
+          "description": "End date, example time.DateOnly. Should be greater than Start date.",
+          "type": "string"
+        },
+        "group_by_task": {
+          "description": "GroupByTask tells the weekly report to return the data grouped by all the usual groups plus planned task.",
+          "type": "boolean"
+        },
+        "group_ids": {
+          "description": "Group IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "grouping": {
+          "description": "Grouping option, optional.",
+          "type": "string"
+        },
+        "max_duration_seconds": {
+          "description": "Max duration seconds, optional, filtering attribute. Time Audit only, should be greater than MinDurationSeconds.",
+          "type": "integer"
+        },
+        "min_duration_seconds": {
+          "description": "Min duration seconds, optional, filtering attribute. Time Audit only, should be less than MaxDurationSeconds.",
+          "type": "integer"
+        },
+        "project_ids": {
+          "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "rounding": {
+          "description": "Whether time should be rounded, optional, default from user preferences.",
+          "type": "integer"
+        },
+        "rounding_minutes": {
+          "description": "Rounding minutes value, optional, default from user preferences. Should be 0, 1, 5, 6, 10, 12, 15, 30, 60 or 240.",
+          "type": "integer"
+        },
+        "startTime": {
+          "type": "string"
+        },
+        "start_date": {
+          "description": "Start date, example time.DateOnly. Should be less than End date.",
+          "type": "string"
+        },
+        "tag_ids": {
+          "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "task_ids": {
+          "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "time_entry_ids": {
+          "description": "TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "user_ids": {
+          "description": "User IDs, optional, filtering attribute.",
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

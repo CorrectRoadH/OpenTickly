@@ -1,0 +1,646 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "contact": {}
+  },
+  "paths": {
+    "/event_filters": {
+      "get": {
+        "description": "Returns the list of supported event filters to be used when creating or updating a subscription.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "event_filters"
+        ],
+        "summary": "Returns the list of supported event filters.",
+        "operationId": "get-event_filters",
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "client": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "project": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "time_entry": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/limits/{workspace_id}": {
+      "get": {
+        "description": "Returns the webhook limits (amount and event filters) for the given workspace ID.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "limits"
+        ],
+        "summary": "Returns the webhook limits for the specified workspace ID.",
+        "operationId": "get-workspace-limits",
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/limits.WorkspaceLimits"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/ping/{workspace_id}/{subscription_id}": {
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Sends a dummy payload to subscription's callback URL to check it's accessible and returns the correct status.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "ping"
+        ],
+        "summary": "Sends test payload to subscription's callback URL.",
+        "operationId": "post-ping",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the subscription",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/ping.Response"
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/status": {
+      "get": {
+        "description": "Retrieve the Webhooks server status.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "status"
+        ],
+        "summary": "Retrieve the Webhooks server status",
+        "operationId": "get-status",
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/status.Response"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/subscriptions/{workspace_id}": {
+      "get": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Retrieves existing subscriptions for the requested workspace ID.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Retrieves existing subscriptions for the requested workspace ID.",
+        "operationId": "get-subscriptions",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/models.WebhookSubscription"
+              }
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "post": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Creates a subscription for the requested workspace ID.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Creates a subscription.",
+        "operationId": "post-subscription",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Input data for new subscription",
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          },
+          "400": {
+            "description": "<p>Possible error messages:</p><ul><li>URL endpoint {url_callback} responded with status {HTTP status code} instead of 200</li><li>URL endpoint {url_callback} request failed with error: {HTTP error}</li><li>User {user_id} already reached the limit of {allowed limit} enabled subscriptions for workspace {workspace_id}</li><li>Subscription description must not be empty</li><li>Subscription description '{description}' is already in use for workspace {workspace_id}</li><li>The list of event filters must not be empty</li><li>The limit of {allowed limit} event filters for your subscription has been exceeded as you're trying to set {number of filters} filters</li><li>The following event filter appears more than once for your subscription: {subscription_id}</li><li>The entity field for each subscription event filter must be non-empty</li><li>The value '{entity}' for the filter entity can only contain letters, numbers and '_' or be '*' to match all entities</li><li>The action field for each subscription event filter must be non-empty</li><li>The value '{action}' for the filter action can only contain letters, numbers and '_' or be '*' to match all actions</li><li>Invalid value '{action}' for event filter action</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/subscriptions/{workspace_id}/{subscription_id}": {
+      "put": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Updates existing subscription given its ID and workspace ID.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Update existing subscription.",
+        "operationId": "update-subscription",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the subscription",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "Input data for the updated subscription",
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          },
+          "400": {
+            "description": "<p>Possible error messages:</p><ul><li>URL endpoint {url_callback} responded with status {HTTP status code} instead of 2xx</li><li>URL endpoint {url_callback} request failed with error: {HTTP error}</li><li>User {user_id} already reached the limit of {allowed limit} enabled subscriptions for workspace {workspace_id}</li><li>Subscription description must not be empty</li><li>Subscription description '{description}' is already in use for workspace {workspace_id}</li><li>The list of event filters must not be empty</li><li>The limit of {allowed limit} event filters for your subscription has been exceeded as you're trying to set {number of filters} filters</li><li>The following event filter appears more than once for your subscription: {event_filter}</li><li>The entity field for each subscription event filter must be non-empty</li><li>The value '{entity}' for the filter entity can only contain letters, numbers and '_' or be '*' to match all entities</li><li>The action field for each subscription event filter must be non-empty</li><li>The value '{action}' for the filter action can only contain letters, numbers and '_' or be '*' to match all actions</li><li>Invalid value '{action}' for event filter action</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "subscription {subscription_id} for workspace {workspace_id} was not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Remove existing subscription given its ID and workspace ID.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Remove existing subscription.",
+        "operationId": "delete-subscription",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the subscription",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "subscription {subscription_id} for workspace {workspace_id} was not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "patch": {
+        "security": [
+          {
+            "BasicAuth": []
+          }
+        ],
+        "description": "Updates existing subscription enabled status.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "subscriptions"
+        ],
+        "summary": "Updates an existing subscription enabled status given its ID and workspace ID.",
+        "operationId": "patch-subscription",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the subscription",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "description": "New value for the subscription's enabled status",
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/subscriptions.State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation.",
+            "schema": {
+              "$ref": "#/definitions/models.WebhookSubscription"
+            }
+          },
+          "400": {
+            "description": "<p>Possible error messages:</p><ul><li>URL endpoint {url_callback} responded with status {HTTP status code} instead of 200</li><li>URL endpoint {url_callback} request failed with error: {HTTP error}</li><li>User {user_id} already reached the limit of {allowed limit} enabled subscriptions for workspace {workspace_id}</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "403": {
+            "description": "User not found/accessible for workspace",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "404": {
+            "description": "subscription {subscription_id} for workspace {workspace_id} was not found",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/validate/{workspace_id}/{subscription_id}/{validation_code}": {
+      "get": {
+        "description": "Sets the subscription as validated if the received {validation_code} matches the ones stored for {subscription_id}.",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "validate"
+        ],
+        "summary": "Sets the subscription as validated if the received {validation_code} is correct.",
+        "operationId": "get-validate",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "Numeric ID of the workspace",
+            "name": "workspace_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "description": "Numeric ID of the subscription",
+            "name": "subscription_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Validation code of the subscription",
+            "name": "validation_code",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "400": {
+            "description": "<p>Possible error messages:</p><ul><li>subscription {subscription_id} for workspace {workspace_id} and validation code '{validation_code}' was not found</li><li>subscription {subscription_id} has already been validated</li></ul>",
+            "schema": {
+              "type": "string"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "limits.WorkspaceLimits": {
+      "type": "object",
+      "properties": {
+        "max_events_per_webhook": {
+          "type": "integer"
+        },
+        "max_webhooks": {
+          "type": "integer"
+        }
+      }
+    },
+    "models.WebhookSubscription": {
+      "type": "object",
+      "properties": {
+        "created_at": {
+          "description": "Time of creation",
+          "type": "string"
+        },
+        "deleted_at": {
+          "description": "Time of deletion",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description for this subscription, which is unique for its workspace",
+          "type": "string"
+        },
+        "enabled": {
+          "description": "Whether the subscription is enabled to notify events",
+          "type": "boolean"
+        },
+        "event_filters": {
+          "description": "List of filters to select events to notifiy",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/models.WebhookSubscriptionEventFilter"
+          }
+        },
+        "has_pending_events": {
+          "description": "Whether there are events pending to be delivered to this subscription",
+          "type": "boolean"
+        },
+        "secret": {
+          "description": "Allows to validate whether the received events have been sent by Toggl",
+          "type": "string"
+        },
+        "subscription_id": {
+          "description": "ID of the Webhooks subscription",
+          "type": "integer"
+        },
+        "updated_at": {
+          "description": "Time of last update",
+          "type": "string"
+        },
+        "url_callback": {
+          "description": "URL endpoint where events will be notified",
+          "type": "string"
+        },
+        "user_id": {
+          "description": "Subscription's creator ID",
+          "type": "integer"
+        },
+        "validated_at": {
+          "description": "Time for when this subscription has been validated",
+          "type": "string"
+        },
+        "workspace_id": {
+          "description": "Subscription's workspace ID",
+          "type": "integer"
+        }
+      }
+    },
+    "models.WebhookSubscriptionEventFilter": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "description": "Type of modification applied to the business entity",
+          "type": "string"
+        },
+        "entity": {
+          "description": "Toggl Track business entity to which this filter applies",
+          "type": "string"
+        }
+      }
+    },
+    "ping.Response": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "status.Response": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      }
+    },
+    "subscriptions.State": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "description": "Controls whether the subscription will be enabled or disabled",
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}
