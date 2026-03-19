@@ -24,9 +24,9 @@
 - `openapi/toggl-track-api-v9.swagger.json`
 - `openapi/toggl-reports-v3.swagger.json`
 - `openapi/toggl-webhooks-v1.swagger.json`
-- `docs/reference/Toggl-API-分析.md`
-- `docs/reference/Toggl-领域模型.md`
-- `docs/reference/部署方案.md`
+- `docs/reference/toggl-api-analysis.md`
+- `docs/reference/toggl-domain-model.md`
+- `docs/reference/deployment-options.md`
 - `docs/upstream/toggl-official/engineering.toggl.com/docs/`
 
 首版范围限定为“当前公开资料所定义的能力”。
@@ -253,7 +253,7 @@ OpenToggl 后续应按以下方式维护这份公开定义：
 当前状态：
 
 - `reports` 的官方 docs 和 OpenAPI 证据都较强
-- 已经足够支持单独撰写 `docs/contracts/报表语义.md`
+- 已经足够支持单独撰写 `docs/contracts/reports.md`
 - 后续更适合继续做逐端点矩阵而不是泛泛讨论
 
 ### 2. Webhooks

@@ -2107,8 +2107,8 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是用户生命周期与历史数据保留策略，不是模块边界冲突。应写入：
 
-- `docs/product/身份与租户.md`
-- 需要影响报表口径的部分，再同步到 `docs/contracts/报表语义.md`
+- `docs/product/identity-and-tenant.md`
+- 需要影响报表口径的部分，再同步到 `docs/contracts/reports.md`
 
 对齐原则：
 
@@ -2121,8 +2121,8 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是核心产品语义，尤其会直接影响报表金额和历史重算规则。应写入：
 
-- `docs/product/时间追踪.md`
-- `docs/contracts/报表语义.md`
+- `docs/product/tracking.md`
+- `docs/contracts/reports.md`
 
 对齐原则：
 
@@ -2135,11 +2135,11 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是产品流程定义缺口。应写入：
 
-- `docs/product/时间追踪.md`
+- `docs/product/tracking.md`
 
 必要时再同步到：
 
-- `docs/reference/Toggl-领域模型.md`
+- `docs/reference/toggl-domain-model.md`
 
 对齐原则：
 
@@ -2152,7 +2152,7 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是产品能力定义，不是“是否存在 tracking 模块”的问题。应写入：
 
-- `docs/product/时间追踪.md`
+- `docs/product/tracking.md`
 
 若后续需要更细合同，再单独补 calendar contract 文档。
 
@@ -2167,7 +2167,7 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是产品流程定义缺口。应写入：
 
-- `docs/product/时间追踪.md`
+- `docs/product/tracking.md`
 
 若后续公开 API / 导入导出合同变复杂，再拆出 expense 专题文档。
 
@@ -2182,8 +2182,8 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 这是 reports 产品语义，不是架构总纲问题。应写入：
 
-- `docs/product/报表与共享.md`
-- `docs/contracts/报表语义.md`
+- `docs/product/reports-and-sharing.md`
+- `docs/contracts/reports.md`
 
 对齐原则：
 
@@ -2192,12 +2192,12 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 ### 已吸收的文档变更
 
-- `docs/core/产品定义总览.md`
+- `docs/core/product-definition.md`
   - 增加了 `User Lifecycle`
   - 增加了 `Billable Rate Resolution`
   - 增加了 `Timesheets / Approvals / Expenses / Calendar` 的产品规则
   - 增加了 saved/shared report 的权限与参数覆盖规则
-- `docs/contracts/报表语义.md`
+- `docs/contracts/reports.md`
   - 写死了费率优先级与 `null` 回落
   - 写死了历史对象在报表中的保留语义
   - 写死了 shared report 的参数覆盖不回写规则

@@ -241,7 +241,7 @@ Client
 
 要求：
 
-- 报表统计口径以 `docs/contracts/报表语义.md` 为准。
+- 报表统计口径以 `docs/contracts/reports.md` 为准。
 - 在线查询与异步导出共享同一套过滤与权限语义。
 
 ### 6.4 Webhook 投递路径
@@ -410,7 +410,7 @@ backend/
 - `Organization` 与 `Workspace` 是公开产品资源和租户实体，但代码层面统一归 `tenant`。
 - `governance` 是正式顶层模块，不应隐在 `organization` 或 `workspace` 下。
 - `platform` 是共享技术底座，不是业务上下文。
-- 具体目录与依赖规则以后续 `docs/core/代码结构.md` 为准。
+- 具体目录与依赖规则以后续 `docs/core/codebase-structure.md` 为准。
 
 建议职责：
 

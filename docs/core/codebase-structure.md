@@ -819,7 +819,7 @@ type Store interface {
 
 ## 15. 实现优先级建议
 
-本节只定义实现顺序建议，不代表首版范围裁剪。首版正式版本的范围仍以 `docs/core/产品定义总览.md` 及 `docs/product/` 下已承诺的完整兼容能力为准。
+本节只定义实现顺序建议，不代表首版范围裁剪。首版正式版本的范围仍以 `docs/core/product-definition.md` 及 `docs/product/` 下已定义的完整产品能力为准。
 
 优先建立：
 

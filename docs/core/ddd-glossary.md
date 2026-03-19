@@ -2,7 +2,7 @@
 
 本文档用于定义 `OpenToggl` 在架构、DDD 和模块划分上的关键术语。
 
-如果术语表与其他文档冲突，以本文档和 `docs/core/代码结构.md` 的组合解释为准。
+如果术语表与其他文档冲突，以本文档和 `docs/core/codebase-structure.md` 的组合解释为准。
 
 ## 1. 总则
 
