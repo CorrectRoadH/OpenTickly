@@ -41,20 +41,15 @@
 - Reports 是独立产品面，不是 Track API 的附属查询页。
 - 用户在 Web 与 API 中看到的 reports 结果，必须基于同一套公开统计规则解释。
 - exports 不是“另一个实现”，而是同一查询定义的另一种结果表达。
-- shared report、saved report、在线查询、导出结果必须共享同一组权限和参数语义。
+- shared report、saved report、在线查询、导出结果必须共享同一组权限和参数语义；具体规则以 `contracts/reports.md` 为准。
 
 ## Shared / Saved Reports
 
-- saved reports 和 shared reports 必须作为公开产品对象存在，支持保存、更新、删除、共享 token、共享访问控制和共享导出。
-- `public` report 可按兼容语义公开访问。
-- `private` report 仅 owner 或兼容权限角色可访问。
-- 访问者可以在执行时覆盖查询参数，但覆盖后的参数不得隐式改写 saved definition，除非显式执行更新/保存操作。
-- 当 saved/shared report 的 owner 不再活跃于 workspace 时，必须按兼容语义让共享访问失效或受限。
+- saved reports 和 shared reports 必须作为公开产品对象存在。
+- public/private 权限、参数覆盖、owner 失活、共享导出等公开行为以 `contracts/reports.md` 为准。
 
 ## Edge Cases
 
-- owner 不再活跃、report 被禁用、token 被撤销时，shared report 必须失败，而不是继续匿名可读。
-- 参数覆盖只影响本次执行结果，不得隐式变更 saved definition。
 - 历史对象被停用、删除或归档后，reports 默认继续统计相关历史事实，而不是静默抹除。
 
 ## Open Questions

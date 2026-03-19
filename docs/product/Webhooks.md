@@ -33,21 +33,18 @@
 ## Product Rules
 
 - Webhook 不能绕过权限模型，私有项目、成员权限和工作区边界必须影响事件可见性。
-- limits 必须以 workspace 为边界表达当前数量和上限，并与计划/订阅关联。
 - Webhook 的公开价值不只是 CRUD，还包括：
   - 事件过滤
   - endpoint 验证
   - delivery 记录
   - retry / disable 运行时语义
   - limits / status
-- validation、ping、签名、timeout、retry、disable 必须是正式产品行为，而不是隐藏在内部运维里的实现细节。
+- validation、ping、签名、timeout、retry、disable 必须是正式产品行为；其精确定义以 `contracts/Webhooks.md` 为准。
 
 ## Edge Cases
 
-- callback endpoint 超时、返回 4xx/5xx、重复失败时，必须进入固定的 retry / terminal state 行为。
-- noisy subscription 不得无限重试；到达阈值后必须进入用户可见的失败状态。
 - 当订阅 owner、workspace 权限或私有项目可见性变化时，事件暴露范围必须随之变化，而不是继续按旧权限发送。
-- 手动 ping / validate 与真实 delivery 的状态必须彼此可区分，不能混成同一条模糊记录。
+- 手动 ping / validate 与真实 delivery 的状态必须彼此可区分；具体状态模型以 `contracts/Webhooks.md` 为准。
 
 ## Open Questions
 

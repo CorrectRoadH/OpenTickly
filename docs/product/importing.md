@@ -24,15 +24,12 @@
 ## Product Rules
 
 - `import` 的目标不是通用 ETL，而是完成从 Toggl 到 OpenToggl 的迁移闭环。
-- 优先保留原始 ID；发生冲突时允许 remap，但必须保证引用关系同时更新。
 - import 完成后，数据必须能通过公开 API、Web UI 和 reports 正常读取。
-- import 不是一次性内部脚本，而是正式产品能力，因此必须有任务状态、进度、失败明细和诊断入口。
+- import 不是一次性内部脚本，而是正式产品能力；ID 保留、remap、状态机、失败明细和联动规则以 `contracts/importing.md` 为准。
 
 ## Edge Cases
 
-- 部分成功必须是正式状态，而不是隐藏在日志中的内部结果。
-- import 后如需触发 reports 重建、billing 重新评估、webhook 默认不回放等联动，必须对用户可解释。
-- 当原始 ID 保留与现有实例数据冲突时，必须返回明确冲突信息，而不是静默改写。
+- 导入过程中出现部分成功、冲突、联动延迟时，结果必须对用户可解释；具体状态与联动规则以 `contracts/importing.md` 为准。
 
 ## 必须具备的产品能力
 
