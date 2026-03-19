@@ -25,7 +25,7 @@
 - 前端：`React + Vite+`
 - 后端：`Go`
 - 数据库：`PostgreSQL`
-- 缓存与短时状态：`Redis`（可选）
+- 缓存与短时状态：`Redis`
 - 文件存储：`PostgreSQL Blob`
 - 部署：`Railway` / `Docker Compose`
 
@@ -34,7 +34,6 @@
 - 前端统一使用 `React + Vite+`，承担完整 Web UI 与管理后台。
 - 后端以 Go 实现，首版采用单个 API 进程承载同步请求与必要后台任务，不拆独立 worker。
 - 文件存储首版不引入对象存储，统一通过 PostgreSQL Blob 实现附件、导出物和品牌资源存储。
-- Redis 不是首版必须项；如果需要进一步简化，限流、幂等和短时状态可以先落在 PostgreSQL 中。
 
 ## 3. 设计原则
 
@@ -107,7 +106,7 @@ Application Layer
 
 State Layer
 ├── PostgreSQL (OLTP + blob store + job records)
-├── Redis (optional)
+├── Redis
 └── Analytics Read Model
 
 External Integrations
@@ -522,7 +521,7 @@ backend/
 - Railway Web Service: `api`
 - Railway Static / Web Service: `web`
 - Railway PostgreSQL
-- Redis（可选）
+- Redis
 
 特点：
 
@@ -536,7 +535,7 @@ backend/
 - `web`
 - `api`
 - `postgres`
-- `redis`（可选）
+- `redis`
 
 特点：
 
