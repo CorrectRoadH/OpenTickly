@@ -2,6 +2,14 @@
 
 本文档记录对当前架构设计的系统性挑战，聚焦于产品能力定义、模块边界、跨模块协调机制的不一致与缺失。
 
+---
+
+## 挑战批次 1
+
+- 挑战者：未记录
+- 挑战时间：未记录
+- 是否回应：已回应
+
 ## 1. 模块边界与职责冲突
 
 ### 1.1 Billing 的归属权混乱
@@ -1309,6 +1317,14 @@ workspace_id bigint not null,
 
 ---
 
+---
+
+## 挑战批次 2
+
+- 挑战者：未记录
+- 挑战时间：未记录
+- 是否回应：已回应
+
 ## 补充挑战：更多产品细节缺失
 
 ### 6.1 TimeEntry 的时间修正规则未定义
@@ -1479,6 +1495,273 @@ Project A 被归档了，但还有 10 个成员。
 - 如果能看到，他们能做什么？只读？还是可以修改历史 time entry？
 - 如果不能看到，他们的历史 time entry 怎么办？
 
+---
+
+---
+
+## 回应批次 1-2（截至 6.4）
+
+- 回应者：Codex
+- 回应时间：未记录
+- 是否完成：已完成，后续新增挑战另开批次
+
+## 响应 / 处置结果（追加）
+
+以下响应针对本次新增挑战，按 `成立 / 部分成立 / 不成立或表述过度` 分类。
+
+### A. 成立，且值得进入后续细化
+
+#### A.1 Reports freshness 保证
+
+这条成立。
+
+当前文档已经明确 `reports` 是独立读模型、默认最终一致，但还没有把以下内容写死：
+
+- 普通写操作后的可见延迟目标
+- projection 未完成时 UI / API 的行为
+- import / 重建期间的状态表达
+
+这不是边界冲突，而是运行时语义缺口。
+
+#### A.2 Webhook 投递保证
+
+这条成立。
+
+当前文档只写到“失败重试、超过阈值失败终态”，但没有参数级定义：
+
+- 最大重试次数
+- 退避曲线
+- 超时阈值
+- noisy subscription 的治理阈值
+
+这是 `webhooks-delivery-contract.md` 的后续细化工作，不构成当前模块划分冲突。
+
+#### A.3 Import 进度可见性
+
+这条成立。
+
+`import-migration-contract.md` 已经定义了状态机，但还没把以下内容定成公开语义：
+
+- 进度粒度
+- 失败明细结构
+- 部分失败后的恢复入口
+
+这是产品与合同层的缺口，不是架构原则冲突。
+
+#### A.4 软删除级联规则
+
+这条成立。
+
+当前文档多处使用 `deleted_at`，但没有按对象类型写清：
+
+- 删除时是否级联
+- 软删对象在报表中的显示语义
+- 可恢复性与历史可见性
+
+这需要在领域模型与对应 contract 文档中继续补。
+
+#### A.5 并发冲突策略
+
+这条成立。
+
+尤其这些场景需要明确：
+
+- running timer 并发启动
+- import 并发提交
+- subscription 并发修改
+
+这是运行时行为定义缺口，不是 DDD 结构错误。
+
+#### A.6 Reports 统计口径的边界情况
+
+这条成立。
+
+`reports-semantics.md` 已经定了“结果口径优先”，但边界案例还不够细：
+
+- rounding
+- 跨时区 / 跨天
+- 删除对象在报表中的表达
+- billable 计算细节
+
+这应继续补在 `reports-semantics.md`，而不是回退主架构。
+
+#### A.7 Webhook 事件定义
+
+这条成立。
+
+当前 `webhooks` 文档已经定义了交付语义，但对外事件目录、触发条件、payload 形状还不够具体。
+
+这属于 `webhooks-delivery-contract.md` 的公开合同细化。
+
+#### A.8 Import 冲突处理与 ID remap
+
+这条成立。
+
+现有文档只到原则：
+
+- 尽量保留原始 ID
+- 冲突时允许 remap
+
+但还没写：
+
+- 冲突检测优先级
+- remap 算法
+- 引用更新机制
+
+这应继续补在 `import-migration-contract.md`。
+
+### B. 部分成立，但原文有偷换概念或夸大
+
+#### B.1 Calendar / Operational Integrations 冲突
+
+这条只部分成立。
+
+有效部分是：如果读者把 `Operational Integrations` 误读成代码模块，就会困惑。
+
+但原文把“领域概念聚类”强行等同于“必须独立顶层模块”，这个前提不成立。当前项目已经明确：
+
+- `Operational Integrations` 是概念聚类
+- 不是代码顶层模块
+- `calendar integrations` 的代码归属在 `tracking`
+
+所以这里剩下的是术语解释成本，不是架构冲突。
+
+#### B.2 Instance Administration 必须独立模块
+
+这条只部分成立。
+
+有效部分是：实例级能力和租户级治理能力的作用域不同，需要清楚标明。
+
+但“有自己的聚合根，所以当前必须独立顶层模块”这个推论过度。当前阶段把实例级子域放在 `governance` 代码边界内实现，是务实选择，不违反当前项目的模块化目标。
+
+真正需要继续收紧的是：
+
+- 权限边界
+- 实例级配置入口归属
+- 未来何时拆独立模块的阈值
+
+#### B.3 领域事件 / job record 的冲突
+
+这条只部分成立。
+
+有效部分是：文档必须把“概念上的领域事件”和“持久化的异步机制”拆开写清。
+
+但原文仍然把以下概念混在一起：
+
+- domain event
+- event record
+- outbox
+- job record
+- webhook event
+
+当前项目已经做出的决定是：
+
+- 首版异步持久化机制只有 `job record`
+- 这不等于禁止在领域建模时使用“事件”这个术语
+- `technical-architecture.md` 中仍残留的 `Internal Event / Job` 提法，如果继续造成歧义，应收紧为 job-only 口径
+
+所以这里是文档表述需要继续压实，不是必须改成 event-based 方案。
+
+#### B.4 防腐层（ACL）缺失
+
+这条部分成立。
+
+有效部分是：跨上下文不能直接耦合内部模型或存储。
+
+但原文把 ACL 说成所有上下文边界都必须有一层显式适配器，这过于绝对。对当前项目，更准确的规则是：
+
+- 默认通过 `application` port / query port 交互
+- 默认不共享对方内部实体
+- 默认不直接依赖对方存储模型
+- 只在确有异质模型翻译需求时引入显式 ACL
+
+也就是说，原则上需要“防腐效果”，不等于每条边界都要专门建一个叫 ACL 的层。
+
+#### B.5 跨上下文事务一致性必须上 Saga
+
+这条部分成立。
+
+有效部分是：跨上下文不能靠隐含分布式事务混过去，失败补偿和最终一致语义必须讲清。
+
+但直接把可选方案收敛为 “Saga / 分布式事务” 两个词，还是太快了。当前项目是模块化单体，优先策略应是：
+
+- 单请求一个主事务
+- 同事务只做主写入 + 审计 + job 登记
+- 跨模块后续行为走 job 驱动最终一致
+- 对少数初始化流程单独定义协调者与补偿规则
+
+这里需要补的是“具体协调模式”，不是先引入更重的分布式模式术语。
+
+### C. 不成立或表述过度
+
+#### C.1 “兼容合同会绑架内部架构”
+
+这条表述过度。
+
+兼容合同确实会约束公开 API 和行为语义，但当前文档体系已经明确：
+
+- 对外兼容是产品要求
+- 内部模型不需要与外部资源一一同构
+- workspace subscription 视图可作为 organization 合同的投影
+
+真正缺的是投影规则与端点差异定义，不是“兼容原则本身有问题”。
+
+#### C.2 “如果 Repository 不承载所有查询，DDD 就不完整”
+
+这条不成立。
+
+当前项目已经明确：
+
+- Repository 面向聚合根持久化
+- 复杂读取、跨聚合读取、报表读取走 query port / query service
+
+这里现在缺的是更多例子，不是原则错误。
+
+#### C.3 “应用服务承担权限、事务、编排就越界”
+
+这条不成立。
+
+在当前模块化单体里，`application` 持有：
+
+- 事务边界
+- 权限裁决入口
+- 跨聚合协调
+- job 登记
+
+这是合理分工。真正需要继续细化的是：
+
+- 哪些规则是 domain policy
+- 哪些检查是 application orchestration
+- 哪些错误映射发生在 transport
+
+不是把 `application` 压缩成只剩“转发调用”。
+
+### D. 当前新增挑战的处理结论
+
+本轮新增挑战里，真正值得继续进入主文档细化的优先项有：
+
+1. `reports` freshness 与 projection 状态语义
+2. webhook 重试 / 超时 / noisy subscription 参数
+3. import 进度、失败明细、恢复入口
+4. import 的 ID 冲突与 remap 算法
+5. 软删除级联规则
+6. 并发冲突策略
+7. reports 统计口径边界案例
+8. webhook 事件目录与触发条件
+
+本轮不采纳的方向有：
+
+- 因 `Operational Integrations` 的概念聚类而新增顶层代码模块
+- 因 `Instance Administration` 存在聚合根就立刻拆独立顶层模块
+- 将首版异步机制从 job-only 回退成 event/outbox 并行双轨
+- 将 ACL、Saga 等术语当作所有跨模块边界的默认必选实现
+
+简化地说：
+
+- 对方这轮抓到的更多是“运行时规则还没写细”
+- 不是“当前架构边界已经自相矛盾”
+- 该补的是合同和行为语义，不是把模块边界重新推翻
+
 **具体场景 3：归档 Project 的 Reports**
 
 Project A 被归档了。
@@ -1496,6 +1779,14 @@ Project A 被归档了。
 - 定义归档 project 在 reports 中的显示规则
 
 ---
+
+---
+
+## 挑战批次 3
+
+- 挑战者：未记录
+- 挑战时间：未记录
+- 是否回应：已回应
 
 ### 6.5 User 的停用和删除规则未定义
 
@@ -1783,101 +2074,145 @@ Saved report 有默认参数（比如 date range: last 7 days）。
 
 **这些产品细节问题必须在实现前解决，否则不同开发者会做出不一致的产品决策。**
 
-- 端到端测试的覆盖率要求
-- 如何测试跨模块协调
-- 如何测试异步任务
-
-### 7.2 可观测性设计
-
-文档完全没有提到：
-
-- 日志规范（结构化？级别？）
-- 指标收集（Prometheus？自定义？）
-- 链路追踪（OpenTelemetry？）
-- 如何追踪跨模块调用
-- 如何追踪异步任务
-
-### 7.3 错误处理策略
-
-文档完全没有提到：
-
-- 错误分类（业务错误？系统错误？）
-- 错误传播（跨模块如何传递错误？）
-- 错误恢复（哪些错误可重试？）
-- 错误上报（如何通知运维？）
-
-### 7.4 部署与运维
-
-文档只说了"Railway / Docker Compose"，但没有提到：
-
-- 数据库迁移策略
-- 配置管理（环境变量？配置文件？）
-- 密钥管理（API token？数据库密码？）
-- 备份与恢复
-- 滚动更新策略
+---
 
 ---
 
-## 总结
+## 回应批次 3
 
-当前架构文档的三个系统性问题：
-
-1. **模块边界定义不清晰**：领域模型与代码结构不一致，限界上下文与模块的映射规则不明确。
-
-2. **跨模块协调机制缺失**：定义了很多"必须异步"的规则，但没有定义协调机制（event？job？直接调用？）。
-
-3. **约束条件不完整**：定义了很多"应该"的规则，但没有定义违反规则时的行为（报错？降级？忽略？）。
-
-**这些问题必须在实现前解决，否则架构文档无法指导实现。**
-
----
+- 回应者：Codex
+- 回应时间：未记录
+- 是否完成：已完成，已下沉到对应产品文档
 
 ## 响应 / 处置结果
 
-### 已吸收并修改的点
+### 总体裁决
 
-- `billing / tenant` 关联机制
-  - 已在 `docs/codebase-structure.md` 明确：
-    - `tenant` 持有关联引用
-    - `billing` 持有业务本体
-    - 创建协调通过 `tenant/application -> billing/application` 接口完成
-- `platform` 抽象层级
-  - 已在 `docs/codebase-structure.md` 增加接口级规则：
-    - `platform` 提供 SMTP sender、blob store、payment client、SSO adapter 这类技术接口
-    - 业务模块负责模板、通知类型、文件业务归属和入口
-- 聚合根边界与核心不变量
-  - 已在 `docs/toggl-domain-model.md` 为 `Workspace`、`Project`、`TimeEntry`、`WebhookSubscription`、`SavedReport`、`RegistrationPolicy`、`InstanceSetting` 补充边界与核心不变量
-- Repository / Query Service / Value Object
-  - 已在 `docs/codebase-structure.md` 与 `docs/ddd-glossary.md` 明确：
-    - Repository 面向聚合根持久化
-    - Query Port / Query Service 面向读模型、列表和聚合读取
-    - Value Object 的选择方向
-- feature gating 检查点与返回语义
-  - 已在 `docs/codebase-structure.md` 与 `docs/billing-contract.md` 明确：
-    - feature gating 由业务模块 `application` 层检查
-    - `billing` 只提供 plan / feature / commercial quota 的判定事实
-    - `402 / 403 / 429` 的边界已写死
-- `Workspace` / `Project` / `TimeEntry` 的更细不变量
-  - 已在 `docs/toggl-domain-model.md` 补充：
-    - workspace 设置、rounding、自定义属性的自洽规则
-    - project 的 billable / private / fixed_fee / rate / currency 自洽规则
-    - time entry 的 running / stopped / duration / 引用一致性规则
-- 首批 Value Object 示例 shape
-  - 已在 `docs/ddd-glossary.md` 补充：
-    - `Email`
-    - `Duration`
-    - `Money`
-    - `TimeRange`
-    - `BillingPeriod`
-    - `ReportFilter`
+`挑战批次 3` 的主问题不是架构边界错误，而是产品定义还没写实。
 
-### 不接受的挑战及原因
+这批问题应优先按以下规则处理：
 
-- “`Operational Integrations` 必须映射为独立顶层模块”
-  - 不接受。它在当前文档体系中是领域概念聚类，不是代码顶层模块。
-- “`Instance Administration` 只要有自己的对象，就必须立刻拆独立模块”
-  - 不接受。当前阶段它作为实例级子域，代码先归 `governance`，这是明确的工程决策。
-- “`job record` 与 `domain event` / `outbox` 必须二选一”
-  - 不接受。首版持久化异步机制已明确采用 `job record`；`domain event` 作为概念术语不自动等于采用 `event record` 或 `outbox`。
-- “跨聚合约束只能由聚合根内部保护，不能由应用层协调”
-  - 不接受。对于 running timer 这类跨聚合约束，当前采用 `application` 协调 + domain policy / query port 的方案，这是刻意选择的务实边界。
+1. 先对齐 Toggl 的公开行为、语义和用户可见结果。
+2. 对齐内容应写入对应的 PRD / contract 文档，而不是继续堆在架构总纲里。
+3. 如果 Toggl 行为不明确：
+   - 先回到仓库内已有参考资料和官方镜像材料找证据。
+   - 仍不明确时，可以来问产品决策。
+   - 若没有可得证据，则采用显式写明的最佳实践，而不是隐式拍脑袋。
+
+### 逐条裁决
+
+#### 6.5 User 的停用和删除规则
+
+成立。
+
+这是用户生命周期与历史数据保留策略，不是模块边界冲突。应写入：
+
+- `docs/product/身份与租户.md`
+- 需要影响报表口径的部分，再同步到 `docs/contracts/报表语义.md`
+
+对齐原则：
+
+- 先按 Toggl 对停用用户、删除用户、历史 time entry 可见性的行为对齐。
+- 如果 Toggl 对“真删除”语义不明确，再单独做 OpenToggl 决策。
+
+#### 6.6 Billable Rate 的优先级规则
+
+成立。
+
+这是核心产品语义，尤其会直接影响报表金额和历史重算规则。应写入：
+
+- `docs/product/时间追踪.md`
+- `docs/contracts/报表语义.md`
+
+对齐原则：
+
+- 先对齐 Toggl 的 rate 优先级、null 回落和历史金额语义。
+- 如果官方行为不清楚，再补 OpenToggl 的明确规则。
+
+#### 6.7 Approval 的状态机
+
+成立。
+
+这是产品流程定义缺口。应写入：
+
+- `docs/product/时间追踪.md`
+
+必要时再同步到：
+
+- `docs/reference/Toggl-领域模型.md`
+
+对齐原则：
+
+- 优先对齐 Toggl 对 approval / timesheet approval 的公开状态与权限模型。
+- 若无足够证据，再采用最小可解释状态机，而不是先堆复杂审批流。
+
+#### 6.8 Calendar Integration 的同步规则
+
+成立。
+
+这是产品能力定义，不是“是否存在 tracking 模块”的问题。应写入：
+
+- `docs/product/时间追踪.md`
+
+若后续需要更细合同，再单独补 calendar contract 文档。
+
+对齐原则：
+
+- 优先对齐 Toggl 的同步方向、映射规则、断开连接后的行为。
+- 若官方行为不明确，采用单向同步优先、冲突策略显式、不断开即删历史数据的保守最佳实践。
+
+#### 6.9 Expense 的审批和报销流程
+
+成立。
+
+这是产品流程定义缺口。应写入：
+
+- `docs/product/时间追踪.md`
+
+若后续公开 API / 导入导出合同变复杂，再拆出 expense 专题文档。
+
+对齐原则：
+
+- 优先对齐 Toggl 的 expense 状态、审批、附件、币种语义。
+- 若官方行为不明确，再做 OpenToggl 明确取舍。
+
+#### 6.10 Saved Report 的共享权限
+
+成立。
+
+这是 reports 产品语义，不是架构总纲问题。应写入：
+
+- `docs/product/报表与共享.md`
+- `docs/contracts/报表语义.md`
+
+对齐原则：
+
+- 优先对齐 Toggl 对 saved report / shared report 的可见性、owner 权限、参数覆盖行为。
+- 若官方行为不明确，再由 OpenToggl 明确“公开范围”和“参数覆盖是否持久化”。
+
+### 已吸收的文档变更
+
+- `docs/core/产品定义总览.md`
+  - 增加了 `User Lifecycle`
+  - 增加了 `Billable Rate Resolution`
+  - 增加了 `Timesheets / Approvals / Expenses / Calendar` 的产品规则
+  - 增加了 saved/shared report 的权限与参数覆盖规则
+- `docs/contracts/报表语义.md`
+  - 写死了费率优先级与 `null` 回落
+  - 写死了历史对象在报表中的保留语义
+  - 写死了 shared report 的参数覆盖不回写规则
+  - 明确了 owner 不再活跃时的共享访问受限语义
+
+### 不采纳的表述方式
+
+以下表述我不接受：
+
+- 把这批问题继续归类成“架构边界冲突”
+- 因为产品细节没写完，就推导出当前模块边界无效
+- 在没有 Toggl 证据时默认引入更重、更复杂的产品流程
+
+更准确的说法是：
+
+- 这批问题大多是 `PRD / contract` 缺口
+- 不是 `codebase-structure.md` 要继续膨胀的理由
+- 它们应以 Toggl 对齐为主线，在对应产品文档中逐项落定

@@ -2,7 +2,7 @@
 
 ## 目的
 
-把 billing / subscription / invoice / quota 相关公开端点整理成逐端点兼容矩阵，作为 `docs/billing-contract.md` 的补充。
+把 billing / subscription / invoice / quota 相关公开端点整理成逐端点兼容矩阵，作为 `docs/contracts/billing.md` 的补充。
 
 ## 使用方式
 
@@ -28,7 +28,7 @@
   - 与总览页中的 quota headers 语义相互对应
 - 主要证据来源：
   - `openapi/toggl-track-api-v9.swagger.json`
-  - `docs/toggl-official/engineering.toggl.com/docs/index.html`
+  - `docs/upstream/toggl-official/engineering.toggl.com/docs/index.html`
 - 当前实现风险：
   - 中，主要在 product quota 与 technical rate limit 的关系
 

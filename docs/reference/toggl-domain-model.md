@@ -154,7 +154,7 @@ Instance Administration
 说明：
 
 - 这里是领域概念上的聚类，不等于最终代码模块一定存在单独的 `integrations/` 目录。
-- 最终代码模块边界以 `docs/codebase-structure.md` 为准。
+- 最终代码模块边界以 `docs/core/codebase-structure.md` 为准。
 
 ### Analytics
 

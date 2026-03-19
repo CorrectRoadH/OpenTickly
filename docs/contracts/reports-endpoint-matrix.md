@@ -2,7 +2,7 @@
 
 ## 目的
 
-把 `Reports API v3` 与 `Insights API v1` 的公开端点整理成逐端点兼容矩阵，作为 `docs/reports-semantics.md` 的补充。
+把 `Reports API v3` 与 `Insights API v1` 的公开端点整理成逐端点矩阵，作为 `docs/contracts/reports.md` 的补充。
 
 ## 使用方式
 
@@ -30,7 +30,7 @@
   - `403` 可由 workspace 不可访问或缺少权限触发
 - 主要证据来源：
   - `openapi/toggl-reports-v3.swagger.json`
-  - `docs/toggl-official/engineering.toggl.com/docs/reports/insights/index.html`
+  - `docs/upstream/toggl-official/engineering.toggl.com/docs/reports/insights/index.html`
 - 当前实现风险：
   - 中，主要在 trends 计算口径与 previous period 对齐逻辑
 
@@ -474,5 +474,5 @@
 
 ## 备注
 
-- 这份矩阵聚焦端点和公开行为，不替代 `docs/reports-semantics.md` 中对统计口径和结果合同的定义。
+- 这份矩阵聚焦端点和公开行为，不替代 `docs/contracts/reports.md` 中对统计口径和结果合同的定义。
 - 对于 comparative、profitability、insights 等高风险计算面，即使端点矩阵已整理完成，仍需后续通过样本和行为验证进一步收敛。

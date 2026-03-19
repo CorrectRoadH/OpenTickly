@@ -1,15 +1,15 @@
-# Instance Admin / Platform Operations PRD
+# Instance Admin / Platform Operations
 
-## Problem Statement
+## Goal
 
-`OpenToggl` 不只是一个兼容 Toggl 的业务产品，还需要作为一个可运行、可治理、可维护的实例被部署和运营。
+`OpenToggl` 不只是一组业务功能，还需要作为一个可运行、可治理、可维护的实例被部署和运营。
 
-这意味着除了 Toggl 兼容能力与 `import` 之外，还存在一类独立的产品能力：
+这意味着除了 Toggl 公开产品面与 `import` 之外，还存在一类独立的产品能力：
 
 - self-hosted 场景下的站长 / 实例管理员能力
 - SaaS 场景下的平台管理员 / 运营后台能力
 
-这些能力不属于 Toggl 兼容合同，但它们决定：
+这些能力不属于 Toggl 公开产品面本身，但它们决定：
 
 - 一个实例能否被安全地初始化
 - 是否允许开放注册
@@ -17,7 +17,7 @@
 - 如何配置 SMTP、支付、存储、SSO 等实例级依赖
 - 如何观察实例健康、任务积压、错误率和资源使用
 
-如果这类能力不被定义为正式产品面，OpenToggl 就会只剩“兼容业务功能”，却缺少“把一个 OpenToggl 站点真正运行起来”的宿主能力。
+如果这类能力不被定义为正式产品面，OpenToggl 就会只剩业务功能，却缺少“把一个 OpenToggl 站点真正运行起来”的宿主能力。
 
 ## Scope
 
@@ -31,17 +31,17 @@
 - 实例级安全、审计与维护入口
 - self-hosted 与 SaaS 两种部署模型下的平台管理共性
 
-本 PRD 不覆盖：
+本文件不覆盖：
 
-- Toggl 兼容 API 本身
+- Toggl 公开 API 本身
 - 组织 / 工作区 / 项目 /时间记录等业务对象的普通使用流程
 - 支付网关、存储、邮件等技术实现细节
 - 具体部署脚本与运维手册
 
-## Current Product Decision
+## Product Rules
 
 - `Instance Admin / Platform Operations` 是 `OpenToggl` 的原生产品面。
-- 它不属于 Toggl 兼容合同。
+- 它不属于 Toggl 公开产品面本身。
 - 它同时覆盖 self-hosted 的站长能力和 SaaS 的平台管理能力。
 - 两者共享同一套概念模型，只在权限来源、默认策略和执行环境上有所区别。
 
@@ -61,6 +61,13 @@
   - 把实例级管理入口当作通用超级管理员后门
 
 如果后续需要引入更强的跨租户业务干预能力，应单独定义为受审计的高权限操作，而不是隐含包含在实例管理员默认权限中。
+
+## Edge Cases
+
+- 实例管理员默认不能把实例级入口当作业务对象的超级后门；若确实需要跨租户强制干预，必须作为单独的受审计操作暴露。
+- self-hosted 与 SaaS 可以在 provider 默认值和运维方式上不同，但对外产品面不得变成两套不同产品。
+- 配置错误、provider 失效、后台任务积压、维护模式开启等状态，必须通过正式状态页或诊断入口可见，而不是只存在日志里。
+- bootstrap 一旦完成，后续重复 bootstrap 必须被显式阻止，而不是默默覆盖首个管理员。
 
 ## User Roles
 
@@ -206,15 +213,20 @@
   - self-hosted 可通过单机或 Compose 维护
   - SaaS 可依赖托管平台与集中式运维
 
+## Open Questions
+
+- 某些平台级统计指标和健康诊断项的最小集合，仍需继续收敛。
+- 是否需要把更强的跨租户业务干预能力单独建成另一组高权限操作，后续再决定。
+
 ## Relationship To Existing Docs
 
-- `docs/prd.md`
-  - 定义 Toggl 兼容产品面与 `import`
-- `docs/cloud-selfhosted-parity-policy.md`
+- `docs/core/product-definition.md`
+  - 定义 Toggl 公开产品面与 `import`
+- `docs/reference/cloud-selfhosted-parity.md`
   - 定义 cloud / self-hosted 的对外一致性要求
-- `docs/codebase-structure.md`
+- `docs/core/codebase-structure.md`
   - 定义这些能力在代码结构中的归属
-- `docs/ddd-glossary.md`
+- `docs/core/ddd-glossary.md`
   - 定义“实例级能力”“平台管理能力”等术语
 
 ## Initial Structure Decision

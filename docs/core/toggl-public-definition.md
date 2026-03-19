@@ -1,42 +1,42 @@
-# Toggl 兼容基线
+# Toggl Public Definition
 
 ## 目的
 
 这份文档不是 PRD。
 
-它的作用是把 `OpenToggl` 当前承诺要兼容的 Toggl 官方公开资料沉淀成一份本地基线，后续所有 PRD 讨论、挑战、范围确认与实现拆解，都应该优先引用这份文档，而不是继续依赖口头表述。
+它的作用是把 Toggl 官方当前公开资料沉淀成一份本地定义来源，后续所有产品讨论、挑战、范围确认与实现拆解，都应该优先引用这份文档，而不是继续依赖口头表述。
 
-这份文档同时承担“持续兼容跟踪基线”的角色。也就是说，它不只是首版范围说明，还应该在后续 Toggl 官方公开资料变更时继续更新。
+这份文档同时承担“持续跟踪公开定义”的角色。也就是说，它不只是首版范围说明，还应该在后续 Toggl 官方公开资料变更时继续更新。
 
 建议文档分层如下：
 
-- `docs/prd.md`
+- `docs/core/product-definition.md`
   - 写产品目标、功能承诺、首版范围、非范围、待确认项
-- `docs/compat-baseline.md`
+- `docs/core/toggl-public-definition.md`
   - 写 Toggl 官方公开 docs / OpenAPI 当前定义了什么
-- `docs/toggl-official/`
+- `docs/upstream/toggl-official/`
   - 本地镜像的 Toggl 官方公开文档，作为后续 review context
 
-## 当前兼容基线来源
+## 当前公开定义来源
 
-以当前仓库中的以下资料作为兼容基线：
+以当前仓库中的以下资料作为公开定义来源：
 
 - `openapi/toggl-track-api-v9.swagger.json`
 - `openapi/toggl-reports-v3.swagger.json`
 - `openapi/toggl-webhooks-v1.swagger.json`
-- `docs/toggl-api-analysis.md`
-- `docs/toggl-domain-model.md`
-- `docs/toggl-local-vs-cloud-architecture.md`
-- `docs/toggl-official/engineering.toggl.com/docs/`
+- `docs/reference/Toggl-API-分析.md`
+- `docs/reference/Toggl-领域模型.md`
+- `docs/reference/部署方案.md`
+- `docs/upstream/toggl-official/engineering.toggl.com/docs/`
 
-首版兼容基线限定为“当前公开资料所定义的能力”。
+首版范围限定为“当前公开资料所定义的能力”。
 
-首版发布后，OpenToggl 的定位是 Toggl 的持续兼容层，因此这份基线文档需要随着 Toggl 官方公开资料更新而持续演进，用于记录：
+首版发布后，OpenToggl 继续按 Toggl 的公开资料更新自己的定义，因此这份文档需要随着 Toggl 官方公开资料更新而持续演进，用于记录：
 
 - 当前已对齐的官方公开能力
 - 新增公开能力
 - 已变化的公开能力
-- 待追平的兼容差距
+- 待补齐的定义差距
 
 ## 当前已镜像到本地的官方 Docs 范围
 
@@ -149,9 +149,9 @@
   - `time_entry_constraints`
   - `workspaces/time_entry_constraints`
 
-这意味着后续做兼容矩阵时，不能把“官方 docs 没单独成章”误读成“这些功能不重要”。
+这意味着后续做端点矩阵时，不能把“官方 docs 没单独成章”误读成“这些功能不重要”。
 
-## 基线解读原则
+## 解读原则
 
 ### 1. 公开 OpenAPI 是必要基线，不是充分基线
 
@@ -182,7 +182,7 @@
 
 ### 2. 文档优先于猜测
 
-如果官方 docs 明确写了某项行为，则该行为应被视为兼容合同的一部分。
+如果官方 docs 明确写了某项行为，则该行为应被视为公开合同的一部分。
 
 如果官方 docs 未明确、OpenAPI 也未明确，则：
 
@@ -190,26 +190,26 @@
 - 不能伪造精确语义
 - 必要时通过后续样本、真实响应、迁移数据或用户补充材料确认
 
-### 3. 兼容目标只针对公开产品面
+### 3. 当前定义只针对公开产品面
 
-当前兼容目标包括：
+当前公开定义包括：
 
 - `Track API v9`
 - `Reports API v3`
 - `Webhooks API v1`
 - 与这些 API 对应的公开产品功能
 
-并且该兼容目标是持续性的，不只是首版快照。
+并且这种公开定义是持续更新的，不只是首版快照。
 
-当前兼容目标不包括：
+当前公开定义不包括：
 
 - Toggl 官方 Web / Desktop / Mobile 客户端直接连接能力
 - 未公开的私有接口
 - 官方前端内部聚合接口
 
-## 兼容跟踪原则
+## 跟踪原则
 
-OpenToggl 作为持续兼容层，后续应按以下方式维护兼容：
+OpenToggl 后续应按以下方式维护这份公开定义：
 
 1. 持续跟踪 Toggl 官方公开 docs 与 OpenAPI 变更。
 2. 先更新本基线文档，再更新 PRD 或实施计划。
@@ -221,19 +221,19 @@ OpenToggl 作为持续兼容层，后续应按以下方式维护兼容：
 4. 对每项变更记录：
    - 官方来源
    - 影响模块
-   - 对 OpenToggl 的兼容影响
-   - 当前状态：已兼容 / 待兼容 / 待确认
+   - 对 OpenToggl 的定义影响
+   - 当前状态：已落实 / 待落实 / 待确认
 
-## 当前已确认的产品兼容结论
+## 当前已确认的产品结论
 
-这些结论已进入 PRD，并以本兼容基线为依据：
+这些结论已进入产品定义文档，并以本公开定义为依据：
 
-- `OpenToggl` 首版以功能定义上的完全兼容为目标
+- `OpenToggl` 首版直接按 Toggl 当前公开功能定义自己
 - 首版完整覆盖 `Track API v9 + Reports API v3 + Webhooks API v1`
-- Web 界面必须完整覆盖全部兼容能力
+- Web 界面必须完整覆盖全部公开能力
 - 云 SaaS 与自托管版功能面一致
 - 账单、订阅、发票、配额、审计、导出、状态类能力也在范围内
-- 首版唯一允许超出 Toggl 兼容面的新增能力是 `import`
+- 首版唯一允许超出 Toggl 当前公开产品面的新增能力是 `import`
 - `import` 目标是导入 Toggl 导出数据，并尽可能保留原始 ID
 
 ## 已识别的高风险语义区
@@ -253,7 +253,7 @@ OpenToggl 作为持续兼容层，后续应按以下方式维护兼容：
 当前状态：
 
 - `reports` 的官方 docs 和 OpenAPI 证据都较强
-- 已经足够支持单独撰写 `docs/reports-semantics.md`
+- 已经足够支持单独撰写 `docs/contracts/报表语义.md`
 - 后续更适合继续做逐端点矩阵而不是泛泛讨论
 
 ### 2. Webhooks
@@ -276,7 +276,7 @@ OpenToggl 作为持续兼容层，后续应按以下方式维护兼容：
 
 - `billing` 的公开 docs 说明明显弱于 reports
 - 主要依赖 `openapi/toggl-track-api-v9.swagger.json`
-- 因此在未获得更多公开行为样本前，应优先保证对象/端点/错误类别兼容，而对少量运行时边界保持保守
+- 因此在未获得更多公开行为样本前，应优先保证对象/端点/错误类别定义一致，而对少量运行时边界保持保守
 
 ### 4. Import
 
@@ -307,7 +307,7 @@ OpenToggl 作为持续兼容层，后续应按以下方式维护兼容：
 下一步建议继续补三类文档：
 
 1. `billing/import/export` 相关 PRD 细化
-2. 逐对象兼容矩阵
-3. 逐端点兼容矩阵
+2. 逐对象矩阵
+3. 逐端点矩阵
 
-其中“逐端点兼容矩阵”建议单独成文，而不要继续堆进 PRD 正文。
+其中“逐端点矩阵”建议单独成文，而不要继续堆进产品定义正文。

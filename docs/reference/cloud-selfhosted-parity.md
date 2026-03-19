@@ -188,13 +188,13 @@ BYO 的本质是“实现替换”，不是“产品功能裁剪”。
 
 ## 与其他文档的关系
 
-- `docs/prd.md`：定义首版产品承诺与范围
-- `docs/technical-architecture.md`：定义运行时与系统架构蓝图
-- `docs/codebase-structure.md`：定义模块边界与目录结构
-- `docs/billing-contract.md`：定义 billing / subscription / invoice / quota 合同
-- `docs/reports-semantics.md`：定义报表口径与导出语义
-- `docs/webhooks-delivery-contract.md`：定义 webhook 运行时合同
-- `docs/import-migration-contract.md`：定义 import 合同与联动规则
+- `docs/core/product-definition.md`：定义首版产品承诺与范围
+- `docs/core/architecture-overview.md`：定义运行时与系统架构蓝图
+- `docs/core/codebase-structure.md`：定义模块边界与目录结构
+- `docs/contracts/billing.md`：定义 billing / subscription / invoice / quota 合同
+- `docs/contracts/reports.md`：定义报表口径与导出语义
+- `docs/contracts/Webhooks.md`：定义 webhook 运行时合同
+- `docs/contracts/importing.md`：定义 import 合同与联动规则
 
 本文档的职责是把这些合同收束为一句可执行的话：
 

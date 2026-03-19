@@ -2,7 +2,7 @@
 
 本文档用于定义 `OpenToggl` 在架构、DDD 和模块划分上的关键术语。
 
-如果术语表与其他文档冲突，以本文档和 `docs/codebase-structure.md` 的组合解释为准。
+如果术语表与其他文档冲突，以本文档和 `docs/core/代码结构.md` 的组合解释为准。
 
 ## 1. 总则
 
@@ -14,8 +14,8 @@
 
 OpenToggl 映射：
 
-- 组织级 subscription 挂载在 `organization`
-- 工作区级 subscription 视图挂载在 `workspace`
+- 组织级 subscription 相关公开端点可能挂载在 `organization`
+- 工作区级 subscription 视图相关公开端点可能挂载在 `workspace`
 
 ### 代码模块边界
 
@@ -77,6 +77,7 @@ OpenToggl 映射：
 
 OpenToggl 映射：
 
+- 当前已明确的核心聚合根：
 - `Workspace`
 - `Project`
 - `TimeEntry`
@@ -84,6 +85,16 @@ OpenToggl 映射：
 - `SavedReport`
 - `RegistrationPolicy`
 - `InstanceSetting`
+- 当前仍待在领域模型中继续细化的实体包括：
+  - `User`
+  - `Organization`
+  - `Subscription`
+  - `Customer`
+  - `Approval`
+  - `Expense`
+  - `Timesheet`
+  - `ImportJob`
+- 其他实体是否为独立聚合根，必须以领域模型和模块文档中的明确规则为准，不能仅因为“它很重要”就默认算聚合根
 
 ### 实体
 
@@ -120,70 +131,16 @@ OpenToggl 映射：
 
 定义：
 
-- 值对象的最小结构示例，用于统一创建、验证和比较方式。
+- 值对象的概念性示例，用于统一创建、验证和比较方式。
 
 OpenToggl 示例：
 
-```go
-type Email struct {
-	value string
-}
-
-func NewEmail(raw string) (Email, error)
-func (e Email) String() string
-```
-
-```go
-type Duration struct {
-	seconds int64
-}
-
-func NewDuration(seconds int64) (Duration, error)
-func (d Duration) Seconds() int64
-```
-
-```go
-type Money struct {
-	amountCents int64
-	currency    string
-}
-
-func NewMoney(amountCents int64, currency string) (Money, error)
-func (m Money) AmountCents() int64
-func (m Money) Currency() string
-```
-
-```go
-type TimeRange struct {
-	start time.Time
-	end   time.Time
-}
-
-func NewTimeRange(start, end time.Time) (TimeRange, error)
-func (r TimeRange) Start() time.Time
-func (r TimeRange) End() time.Time
-```
-
-```go
-type BillingPeriod struct {
-	kind  string
-	start time.Time
-	end   time.Time
-}
-
-func NewBillingPeriod(kind string, start, end time.Time) (BillingPeriod, error)
-```
-
-```go
-type ReportFilter struct {
-	workspaceID int64
-	start       time.Time
-	end         time.Time
-	grouping    string
-}
-
-func NewReportFilter(...) (ReportFilter, error)
-```
+- `Email`
+- `Duration`
+- `Money`
+- `TimeRange`
+- `BillingPeriod`
+- `ReportFilter`
 
 ### 领域规则
 
@@ -202,6 +159,26 @@ func NewReportFilter(...) (ReportFilter, error)
 OpenToggl 映射：
 
 - 负责事务边界、权限检查、端口调用和后台 job 登记
+
+### Application Service
+
+定义：
+
+- 应用层中的用例服务，负责事务边界、权限裁决、聚合调用、端口调用和跨模块编排。
+
+OpenToggl 映射：
+
+- 位于各模块的 `application/` 目录
+
+### Domain Service
+
+定义：
+
+- 不自然归属于单一聚合根、但仍属于领域规则的服务。
+
+OpenToggl 映射：
+
+- 用于承载跨聚合但仍属于领域语义的规则
 
 ### 协议层
 
@@ -227,6 +204,31 @@ OpenToggl 映射：
 - 文件存储
 - 外部 provider
 - 后台 runner
+
+### Port
+
+定义：
+
+- 应用层或领域层定义的接口，由基础设施层或其他模块提供实现。
+
+OpenToggl 映射：
+
+- repository interface
+- query interface
+- mail / storage / payment / provider interface
+
+### Adapter
+
+定义：
+
+- 对某个 port 或外部系统协议的具体实现。
+
+OpenToggl 映射：
+
+- Postgres repository
+- SMTP sender
+- Blob storage client
+- Payment provider client
 
 ## 4. 对象层级
 
@@ -255,6 +257,7 @@ OpenToggl 映射：
 OpenToggl 映射：
 
 - 归 `billing`
+- 定义套餐、seat、feature gating、对象数量上限等商业限制的策略本体
 
 ### API Quota
 
@@ -268,6 +271,7 @@ OpenToggl 映射：
 - `X-Toggl-Quota-Remaining`
 - `X-Toggl-Quota-Resets-In`
 - 归 `governance`
+- 其窗口或阈值可以受 plan 策略影响，但公开 API quota 的表达与执行归 `governance`
 
 ### Rate Limit
 
@@ -278,6 +282,7 @@ OpenToggl 映射：
 OpenToggl 映射：
 
 - 归 `governance`
+- 可按 plan 或部署策略调整阈值，但限流执行本身归 `governance`
 
 ## 6. Read Model 术语
 
@@ -342,6 +347,28 @@ OpenToggl 映射：
 
 - 当前架构基线不把 outbox 作为首版必需机制
 - 首版异步协调机制以 `job record` 为准
+
+### Saga / Process Manager
+
+定义：
+
+- 用于跨多个步骤或跨多个模块协调长事务、重试与补偿的流程协调模式。
+
+OpenToggl 映射：
+
+- 当前不是首版默认术语或默认实现
+- 只有在简单 job 编排不足以表达跨步骤恢复时才需要显式引入
+
+### Anti-Corruption Layer
+
+定义：
+
+- 为了防止外部模型或其他上下文的术语直接污染当前上下文而设置的隔离层。
+
+OpenToggl 映射：
+
+- 当前默认目标是“防腐效果”
+- 不要求每个边界都显式建一个独立 ACL 模块
 
 ## 8. Operational Integrations
 
@@ -437,6 +464,11 @@ OpenToggl 映射：
 - `InstanceSetting` -> `governance`
 - `MaintenanceMode` -> `governance`
 - `PlatformStat` -> `governance`
+
+说明：
+
+- 该映射表记录当前架构基线，不记录开放争议。
+- 若某个实体归属在挑战文档中仍被讨论，以主架构文档当前定稿为准；挑战文档只记录待辩点，不覆盖词条定义。
 
 ## 11. Query 术语
 

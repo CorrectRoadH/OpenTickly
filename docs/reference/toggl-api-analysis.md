@@ -95,11 +95,13 @@ Webhooks API v1 公开面虽然更小，但行为要求更强：
 官方资料明确存在两层控制：
 
 1. Product quota
+
 - 与组织套餐相关
 - 通过 `X-Toggl-Quota-Remaining`
 - 通过 `X-Toggl-Quota-Resets-In`
 
 2. Technical rate limit
+
 - 超限返回 `429`
 - 安全窗口大致可按 `1 req/sec` 理解
 

@@ -2,11 +2,11 @@
 
 ## 目的
 
-将 `Webhooks API v1` 的投递合同和运行时语义单独定义，避免只兼容 CRUD 接口。
+将 `Webhooks API v1` 的投递合同和运行时语义单独定义，避免只停留在 CRUD 接口层。
 
 ## 当前结论
 
-- Webhooks 兼容范围包括 filters、validation、signature、delivery、retry、disable、limits 和 status。
+- Webhooks 的公开范围包括 filters、validation、signature、delivery、retry、disable、limits 和 status。
 - 本文档定义对外投递合同，不限定内部消息总线或任务系统实现。
 
 ## 合同范围
@@ -28,7 +28,7 @@
 
 ### 1. Webhook 合同的重点是运行时，而不是 CRUD
 
-- 仅兼容 subscription CRUD 不算兼容。
+- 仅有 subscription CRUD 不算定义完成。
 - 事件何时触发、如何签名、何时重试、何时停用，才是下游真正依赖的合同。
 
 ### 2. 至少一次投递，允许重复
@@ -48,7 +48,7 @@
 
 ## Subscription 合同
 
-至少应兼容：
+至少应覆盖：
 
 - 创建、更新、部分更新、删除
 - 启用/停用状态
@@ -61,11 +61,11 @@
 默认规则：
 
 - subscription 是一等产品对象。
-- 非法状态、无权限、超限、验证失败等情况必须优先返回兼容错误类别。
+- 非法状态、无权限、超限、验证失败等情况必须优先返回公开错误类别。
 
 ## Filters 合同
 
-至少应兼容：
+至少应覆盖：
 
 - 可用 event filters 查询
 - subscription 上的 filter 配置
@@ -78,7 +78,7 @@
 
 ## Validate / Ping 合同
 
-至少应兼容：
+至少应覆盖：
 
 - validate
 - ping
@@ -119,7 +119,7 @@
 
 ## Signature 合同
 
-至少应兼容：
+至少应覆盖：
 
 - secret 参与签名
 - 签名头或等价公开字段
@@ -144,7 +144,7 @@
 
 ## Limits 合同
 
-至少应兼容：
+至少应覆盖：
 
 - workspace 级限制查询
 - 当前数量 / 上限语义
@@ -152,7 +152,7 @@
 
 ## Delivery History / Attempts
 
-至少应兼容：
+至少应覆盖：
 
 - delivery history 可观察
 - attempts 可观察
@@ -167,4 +167,4 @@
 
 ## 与 PRD 的关系
 
-该文档用于支撑 `docs/prd.md` 中 Webhooks API v1 章节。
+该文档用于支撑 `docs/product/Webhooks.md`。

@@ -172,4 +172,4 @@ import 至少应有以下可观察状态：
 
 ## 与 PRD 的关系
 
-该文档用于支撑 `docs/prd.md` 中 Import 章节。
+该文档用于支撑 `docs/product/importing.md`。

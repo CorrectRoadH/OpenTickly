@@ -2,19 +2,19 @@
 
 本文档定义 `OpenToggl` 的目标技术架构，回答四个问题：
 
-1. 如何用一套系统同时承载 Toggl 兼容 API、Web UI 与导入能力。
+1. 如何用一套系统同时承载 Toggl 当前公开 API、Web UI 与导入能力。
 2. 如何在 Railway 部署与 Docker Compose 自部署之间保持同一套公开契约与功能面。
 3. 前后端采用什么技术栈，以及代码按什么结构组织。
-4. 如何把当前仓库从脚手架逐步演进为可交付的兼容实现。
+4. 如何把当前仓库从脚手架逐步演进为可交付实现。
 
-本文档是实现蓝图，不替代专题合同文档。关于具体兼容边界、报表语义、Webhook 投递合同、导入合同和领域对象定义，分别以 `docs/` 下对应文档为准。
+本文档是实现蓝图，不替代专题合同文档。关于具体公开边界、报表语义、Webhook 投递合同、导入合同和领域对象定义，分别以 `docs/` 下对应文档为准。
 
 ## 1. 架构目标
 
 `OpenToggl` 的技术架构必须同时满足以下目标：
 
 - 对外完整承载 `Track API v9`、`Reports API v3`、`Webhooks API v1`。
-- 提供覆盖全部兼容能力的 Web UI，而不是只做 API 兼容层。
+- 提供覆盖全部公开能力的 Web UI，而不是只做 API 表面。
 - 保持公开 OpenAPI、CLI 与 skill 接入对 AI/自动化友好，但不单独设计独立的 AI API 产品面。
 - 同时支持 Railway 托管部署与 Docker Compose 自部署，且两者公开产品面一致。
 - 支持导入 Toggl 数据，并尽可能保留原始 ID。
@@ -55,10 +55,10 @@
 - 报表、导出、Webhook、搜索等高读取或异步能力可以通过投影、任务表和缓存解耦。
 - 首版允许从单库起步，但必须保留向独立读模型演进的边界。
 
-### 3.4 兼容合同优先于内部实现
+### 3.4 公开合同优先于内部实现
 
 - 外部 API 的路径、参数、错误语义、鉴权方式、限流表达和运行时行为优先。
-- 内部模块命名、包结构和存储模型可以为实现效率优化，但不能破坏对外兼容。
+- 内部模块命名、包结构和存储模型可以为实现效率优化，但不能破坏对外公开定义。
 
 ### 3.5 Workspace 是主业务边界，Organization 是治理边界
 
@@ -78,7 +78,7 @@
 
 - 代码先按业务上下文拆模块，如 `identity`、`tracking`、`reports`、`webhooks`。
 - 每个模块内部再分 `domain`、`application`、`infra`、`transport`。
-- `transport` 负责 HTTP 输入输出和兼容 DTO。
+- `transport` 负责 HTTP 输入输出和公开 DTO。
 - `application` 负责用例编排、事务、授权和调用顺序。
 - `domain` 负责实体、不变量和领域规则。
 - `infra` 负责 Postgres、Redis、外部 HTTP、文件存储等实现。
@@ -89,7 +89,7 @@
 
 ```text
 Clients
-├── Toggl-compatible API consumers
+├── Toggl API consumers
 ├── OpenToggl Web App
 ├── AI agents / automation
 └── Admin / import operators
@@ -124,9 +124,9 @@ External Integrations
 负责：
 
 - 注册、登录、登出
-- `Basic auth(email:password)` 兼容
-- `Basic auth(api_token:api_token)` 兼容
-- session cookie 兼容入口
+- `Basic auth(email:password)` 入口
+- `Basic auth(api_token:api_token)` 入口
+- session cookie 入口
 - API token 生命周期
 - 当前用户与偏好读取
 
@@ -205,13 +205,13 @@ Client Request
    -> Audit Records
    -> Job Records
 -> Commit
--> Return Compatible Response
+-> Return Public Response
 ```
 
 要求：
 
 - 对外响应优先基于事务真相源生成。
-- 兼容接口的错误码、校验失败和权限拒绝必须在这里定型。
+- 公开接口的错误码、校验失败和权限拒绝必须在这里定型。
 
 ### 6.2 后台任务路径
 
@@ -241,7 +241,7 @@ Client
 
 要求：
 
-- 报表统计口径以 `docs/reports-semantics.md` 为准。
+- 报表统计口径以 `docs/contracts/报表语义.md` 为准。
 - 在线查询与异步导出共享同一套过滤与权限语义。
 
 ### 6.4 Webhook 投递路径
@@ -410,7 +410,7 @@ backend/
 - `Organization` 与 `Workspace` 是公开产品资源和租户实体，但代码层面统一归 `tenant`。
 - `governance` 是正式顶层模块，不应隐在 `organization` 或 `workspace` 下。
 - `platform` 是共享技术底座，不是业务上下文。
-- 具体目录与依赖规则以后续 `docs/codebase-structure.md` 为准。
+- 具体目录与依赖规则以后续 `docs/core/代码结构.md` 为准。
 
 建议职责：
 
@@ -548,7 +548,7 @@ backend/
 
 当前仓库状态：
 
-- 已有 PRD、兼容基线、报表/Billing/Webhook/Import 专题文档。
+- 已有产品定义、公开定义、报表/Billing/Webhook/Import 专题文档。
 - 已收录 Toggl OpenAPI 与官方文档镜像。
 - 代码仍处于 Vite+ monorepo starter 阶段，尚未开始业务实现。
 
@@ -563,13 +563,13 @@ backend/
 
 ## 15. 与其他文档的关系
 
-- `docs/prd.md`：定义产品目标与兼容承诺。
-- `docs/compat-baseline.md`：定义首版兼容基线。
-- `docs/codebase-structure.md`：定义前后端目录结构、依赖方向和模块规则。
-- `docs/toggl-domain-model.md`：定义领域对象与关系。
-- `docs/toggl-local-vs-cloud-architecture.md`：讨论部署模型与共享契约。
-- `docs/reports-semantics.md`：定义报表统计语义。
-- `docs/webhooks-delivery-contract.md`：定义 Webhook 运行时合同。
-- `docs/import-migration-contract.md`：定义导入合同。
+- `docs/core/product-definition.md`：定义产品目标与公开定义。
+- `docs/core/toggl-public-definition.md`：定义当前 Toggl 公开定义来源。
+- `docs/core/codebase-structure.md`：定义前后端目录结构、依赖方向和模块规则。
+- `docs/reference/toggl-domain-model.md`：定义领域对象与关系。
+- `docs/reference/deployment-options.md`：讨论部署模型与共享契约。
+- `docs/contracts/reports.md`：定义报表统计语义。
+- `docs/contracts/Webhooks.md`：定义 Webhook 运行时合同。
+- `docs/contracts/importing.md`：定义导入合同。
 
 本文档负责把这些文档收束为一份统一的工程实现蓝图。
