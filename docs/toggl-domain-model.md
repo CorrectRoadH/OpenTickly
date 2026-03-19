@@ -39,7 +39,7 @@ Governance
 ├── AuditLog
 └── QuotaPolicy / RetentionPolicy
 
-Integrations
+Operational Integrations
 ├── CalendarIntegration
 ├── Calendar
 ├── CalendarEvent
@@ -53,6 +53,13 @@ Analytics
 ├── WeeklyReport
 ├── SavedReport
 └── Insight
+
+Instance Administration
+├── InstanceAdmin
+├── RegistrationPolicy
+├── InstanceSetting
+├── MaintenanceMode
+└── PlatformStat
 ```
 
 ## 2. 限界上下文
@@ -72,8 +79,23 @@ Analytics
 
 - organizations
 - workspaces
-- plans / subscription
+- 与 billing plan、subscription、quota profile 的关联关系
 - ownership / admin
+
+不负责：
+
+- plan / subscription / invoice / customer 的业务本体
+
+### Billing
+
+负责：
+
+- plans
+- subscriptions
+- invoices
+- customer
+- commercial quota policy
+- feature exposure
 
 ### Access / Membership
 
@@ -112,16 +134,27 @@ Analytics
 - approvals
 - timesheets
 - audit logs
-- quota / retention / policy
+- API quota / rate limit
+- retention / policy
 
-### Integrations
+说明：
+
+- 这里的 quota 指 API quota / rate limit。
+- 商业计划、seat 限制、feature gating 不属于 Governance，而属于 Billing。
+
+### Operational Integrations
 
 负责：
 
-- webhooks
 - calendar sync
-- exports
+- webhook delivery
+- export jobs
 - file attachments
+
+说明：
+
+- 这里是领域概念上的聚类，不等于最终代码模块一定存在单独的 `integrations/` 目录。
+- 最终代码模块边界以 `docs/codebase-structure.md` 为准。
 
 ### Analytics
 
@@ -132,6 +165,22 @@ Analytics
 - weekly reports
 - saved reports
 - insights / profitability / trends
+
+### Instance Administration
+
+负责：
+
+- instance admin
+- registration policy
+- instance-level settings
+- maintenance mode
+- platform stats / health
+
+说明：
+
+- 这一组能力不属于 Toggl 兼容合同。
+- 当前代码归属优先落在 `governance`，技术实现由 `platform` 支撑。
+- 这里是领域概念上的实例级子域，不表示当前代码必须单独拆出顶层模块。
 
 ## 3. 核心聚合根
 
@@ -144,12 +193,141 @@ Analytics
 - `TimeEntry`
 - `WebhookSubscription`
 - `SavedReport`
+- `RegistrationPolicy`
+- `InstanceSetting`
 
 这些对象的共同特点是：
 
 - 直接出现在公开 API 中
 - 变化频繁
 - 对其他模型有明显支配作用
+
+### 聚合边界与核心不变量
+
+#### `Workspace`
+
+聚合边界：
+
+- workspace 基本属性
+- workspace 级设置
+- workspace branding 引用
+- 与 organization 的归属关系
+
+核心不变量：
+
+- workspace 必须从属于一个 organization
+- workspace 级设置在单次修改中必须保持自洽
+- rounding 开关与 rounding_minutes 必须自洽
+- 默认币种、时间显示、默认策略字段必须可被完整解析
+
+在应用边界检查的引用一致性：
+
+- workspace 与当前 organization 的归属关系
+- workspace 上暴露的 plan / subscription 视图引用
+
+#### `Project`
+
+聚合边界：
+
+- project 基本属性
+- project 状态
+- project 默认策略
+- billable / private / pinned / rate / fixed_fee / currency 等项目级属性
+
+不自动纳入聚合内部：
+
+- `ProjectUser`
+- `ProjectGroup`
+- `Task`
+
+核心不变量：
+
+- project 的归档、激活、private、billable 等状态必须自洽
+- project 默认策略变更必须通过 `Project` 自身完成
+- fixed_fee、rate、currency、billable 相关字段组合必须自洽
+- archived project 不能处于与 active 冲突的状态
+
+在应用边界检查的引用一致性：
+
+- project 必须从属于一个 workspace
+- task / project member / project group 关联是否合法
+- feature gating 是否允许当前 plan 创建或变更该类 project
+
+#### `TimeEntry`
+
+聚合边界：
+
+- time entry 基本字段
+- start / stop / duration
+- 与 project / task / tag 的引用
+- billable / description / source 等事实字段
+
+核心不变量：
+
+- 已停止的 `TimeEntry` 不能再次停止
+- running / stopped 状态必须一致
+- duration 与 start / stop 的兼容语义必须一致
+- stopped 状态下 `stop >= start`
+- running 状态下 `stop = null`
+- user / workspace 引用不能为空
+
+跨聚合约束：
+
+- “同一 workspace 下同一用户不能同时运行多个 timer” 属于跨聚合约束
+- 这类规则由 `application` 协调检查，通过 domain policy / query port 支撑，不由单个 `TimeEntry` 聚合独立完成
+- project / task / tag 是否存在、是否属于同一 workspace，也属于应用边界检查的引用一致性
+
+#### `WebhookSubscription`
+
+聚合边界：
+
+- subscription 基本属性
+- callback URL
+- enabled / validated / failure 状态
+- filter 配置
+
+核心不变量：
+
+- validated 状态与可投递状态必须一致
+- filter 配置必须保持合法
+
+#### `SavedReport`
+
+聚合边界：
+
+- saved/shared report 基本属性
+- token
+- access mode
+- 默认参数
+
+核心不变量：
+
+- shared token 的访问模式必须一致
+- saved/default 参数回落规则必须固定
+
+#### `RegistrationPolicy`
+
+聚合边界：
+
+- 开放注册
+- 关闭注册
+- 仅邀请注册
+
+核心不变量：
+
+- 一个实例在任一时刻只能处于一种主注册策略
+
+#### `InstanceSetting`
+
+聚合边界：
+
+- 实例级 provider 配置引用
+- 实例级安全与维护开关
+
+核心不变量：
+
+- 配置集合必须可被完整解析
+- 高风险配置变更必须受审计
 
 ## 4. 关系模型
 
@@ -172,6 +350,19 @@ Workspace 1---* WebhookSubscription
 Workspace 1---* SavedReport
 ```
 
+对于 `Instance Administration`，当前关系以实例级作用域表达，不映射到 workspace 之下：
+
+- `InstanceAdmin` 管理实例级入口
+- `RegistrationPolicy` 描述实例级注册策略
+- `InstanceSetting` 描述实例级配置
+- `MaintenanceMode` 描述实例级维护状态
+- `PlatformStat` 是实例级统计与诊断视图
+
+说明：
+
+- `ProjectUser`、`ProjectGroup`、`Task` 与 `Project` 有强关联，但当前不自动视为 `Project` 聚合内部成员
+- 这些对象是否通过单独聚合还是从属实体实现，以具体用例与不变量为准
+
 ## 5. 建议存储模型
 
 ### 5.1 OLTP 数据库
@@ -182,8 +373,11 @@ Workspace 1---* SavedReport
 
 - `users`
 - `organizations`
-- `organization_users`
 - `workspaces`
+
+#### Membership 表
+
+- `organization_users`
 - `workspace_users`
 - `roles`
 - `groups`
@@ -209,7 +403,14 @@ Workspace 1---* SavedReport
 - `goals`
 - `audit_logs`
 
-#### Integration 表
+#### Billing 表
+
+- `plans`
+- `subscriptions`
+- `customers`
+- `invoices`
+
+#### Operational Integration 表
 
 - `calendar_integrations`
 - `calendars`
@@ -334,45 +535,7 @@ create table time_entry_tags (
 - `response_excerpt`
 - `failed_at`
 
-## 6. 事件模型
-
-建议显式定义领域事件，而不是让外部行为直接耦合数据库变化。
-
-典型事件包括：
-
-- `user.created`
-- `workspace.created`
-- `project.created`
-- `project.updated`
-- `time_entry.created`
-- `time_entry.updated`
-- `time_entry.stopped`
-- `subscription.updated`
-- `webhook.subscription.created`
-
-这些事件会同时服务于：
-
-- reports 投影
-- webhook fanout
-- audit log
-- 缓存刷新
-
-## 7. Outbox 模式
-
-建议所有关键写操作都写入 outbox，再由后台 worker 异步处理：
-
-1. 事务写入主表
-2. 同事务写入 outbox
-3. worker 消费 outbox
-4. 更新：
-   - analytics projections
-   - webhook delivery
-   - audit trail
-   - caches
-
-这与官方公开资料中暴露出的最终一致性信号是匹配的。
-
-## 8. Analytics 模型
+## 6. Analytics 模型
 
 ### Dimensions
 
@@ -399,15 +562,14 @@ create table time_entry_tags (
 - profitability projections
 - insights projections
 
-## 9. API 分层建议
+## 7. API 分层建议
 
 ### Core Transaction API
 
 负责：
 
 - identity
-- organizations
-- workspaces
+- tenant resources
 - memberships
 - clients/projects/tasks/tags
 - time entries
@@ -439,10 +601,10 @@ create table time_entry_tags (
 - account
 - session / token
 
-## 10. 需要保留的设计原则
+## 8. 需要保留的设计原则
 
 - `workspace` 是主要业务边界
-- `organization` 是治理与计费边界
+- `organization` 是公开产品面上的主要治理与订阅挂载点，但不等于单独代码模块
 - `membership` 是一等业务对象
 - `reports` 是独立读模型
 - `webhooks` 是独立运行时模型

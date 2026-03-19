@@ -232,6 +232,34 @@
 - billable rates 仅 Starter 及以上套餐可用
 - pinned projects 数量随 free/paid plan 不同而不同
 
+### 4. Feature Gating 检查与返回语义
+
+feature gating 的判断事实来源于 billing surface，但检查发生在发起该业务动作的模块中。
+
+检查规则：
+
+- `billing` 暴露 plan / feature / commercial quota 的判定结果
+- 具体业务模块在自己的 `application` 用例中执行 gating 检查
+- `transport` 只负责把 gating 失败映射为兼容错误
+- 前端隐藏入口只是提示，不是最终裁决
+
+返回语义：
+
+- 因 plan 不支持或商业配额受限
+  - 返回 `402 Payment Required`
+- 因 API quota / rate limit 超限
+  - 返回 `429`
+- 因权限不足或对象不可见
+  - 返回 `403`
+- 因参数非法、对象状态非法、领域不变量失败
+  - 不返回 `402`
+
+检查点：
+
+- 变更型请求在进入主写事务前检查
+- gated 查询和导出在执行重型查询或登记导出 job 前检查
+- 长时任务的公开入口在创建任务时检查；后续任务执行是否再次校验，按公开合同语义决定
+
 ## 公开对象与语义
 
 ### Subscription

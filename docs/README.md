@@ -28,8 +28,16 @@
   - Import 迁移合同
 - `toggl-api-analysis.md`
   - Toggl 公开 API 面分析
+- `technical-architecture.md`
+  - 系统级技术架构蓝图
+- `codebase-structure.md`
+  - 前后端目录结构与依赖规则
 - `toggl-domain-model.md`
   - OpenToggl 领域模型
+- `ddd-glossary.md`
+  - DDD / 架构术语表
+- `instance-admin-prd.md`
+  - 实例管理员 / 平台运营产品定义
 - `toggl-local-vs-cloud-architecture.md`
   - 本地部署与云 SaaS 架构建议
 
@@ -57,4 +65,7 @@
 3. `reports-semantics.md`
 4. `billing-contract.md`
 5. 逐端点矩阵文档
-6. 领域模型与架构文档
+6. `technical-architecture.md`
+7. `codebase-structure.md`
+8. `ddd-glossary.md`
+9. 领域模型与架构专题文档

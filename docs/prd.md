@@ -19,7 +19,7 @@
 - 现有基于 Toggl 公开 API 的脚本、自动化、内部工具和第三方集成，应尽可能无缝迁移。
 - 现有 Toggl 数据可以导入到 OpenToggl 中，迁移后尽可能保留原始 ID，使链接、脚本、外部映射和历史引用继续有效。
 - 除 API 外，还要提供一套覆盖全部能力的 Web 界面，不能把低频能力留在 API-only 状态。
-- 在兼容 Toggl 的同时，提供一套对 AI 更友好的原生 API，帮助 AI 分析、检索、解释和操作数据。
+- 在兼容 Toggl 的同时，保持公开 OpenAPI、CLI 与 skill 接入对 AI/自动化友好，不额外承诺独立的 AI 专用 API 产品面。
 
 现有时间追踪产品和开源替代方案通常只覆盖部分高频能力，缺少 Toggl 的完整 API 契约、报表能力、Webhook 运行时语义、账单与组织治理能力，因此无法承担“无明显能力退化的迁移目标”这一角色。
 
@@ -35,7 +35,6 @@ OpenToggl 首个正式版本即承诺：
 - 提供与兼容 API 对应的完整 Web 界面
 - 同时支持云 SaaS 与自托管，两者功能面一致
 - 支持导入 Toggl 导出数据，作为首版唯一超出 Toggl 兼容面的新增能力
-- 提供一套 `AI-friendly API`，作为 OpenToggl 的原生增强接口层
 
 兼容的定义不是“路径和字段大体一致”，而是将以下内容都视为公开产品合同的一部分：
 
@@ -52,8 +51,6 @@ OpenToggl 首个正式版本即承诺：
 
 OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 兼容并不足以推出官方客户端兼容；但 OpenToggl 承诺公开 API 与对应公开功能面的完整兼容。
 
-除兼容 API 之外，OpenToggl 还将提供一套独立的 `AI-friendly API`。这套 API 不受 Toggl 兼容合同约束，而是作为 OpenToggl 的原生增强能力，服务 AI agent、自动化分析、批处理与自然语言操作场景。
-
 首版兼容基线以当前仓库中的 `openapi/` 与 `docs/` 为准。首版发布后，OpenToggl 的产品定位不是“冻结在某个 Toggl 版本的兼容快照”，而是持续跟踪 Toggl 官方公开 API 与公开文档的变化，并在后续版本中继续保持兼容。
 
 这里的“持续兼容”采用版本化承诺，而不是不可验证的“永远兼容”口号。也就是说：
@@ -63,6 +60,8 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - 每次变更通过兼容基线和兼容矩阵落成可审计、可 review、可验证的版本化承诺。
 
 本 PRD 的兼容依据与官方资料来源，进一步整理见 `docs/compat-baseline.md`。
+
+与实例级站点管理、平台运营和站长能力相关的非兼容产品面，另见 `docs/instance-admin-prd.md`。
 
 ## User Stories
 
@@ -101,8 +100,8 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 33. 作为替代 Toggl 的采用者，我希望 OpenToggl 在产品定义上就是完整替代品，而不是一个只支持一半功能的兼容层。
 34. 作为长期使用者，我希望 OpenToggl 不只是兼容某一个历史快照，而是能随着 Toggl 官方公开变更持续演进，这样我的集成不会因为上游变化而逐渐失效。
 35. 作为平台使用者，我希望这种持续兼容是有版本记录和可审计基线的，这样我能知道某个版本到底对齐到哪一版公开契约。
-36. 作为 AI agent 的使用者，我希望 OpenToggl 提供比 Toggl 兼容 API 更易理解、更高层的原生接口，这样 AI 能更稳定地分析和处理数据。
-37. 作为 AI agent 的使用者，我希望这套原生接口既能做分析，也能做操作，这样 AI 不只会读数据，还能安全地执行工作流。
+36. 作为 AI agent 的使用者，我希望 OpenToggl 的公开 OpenAPI、CLI 与 skill 接口足够稳定清晰，这样 AI 能更稳定地分析和处理数据。
+37. 作为 AI agent 的使用者，我希望这套公开接口既能做分析，也能做操作，这样 AI 不只会读数据，还能安全地执行工作流。
 
 ## Implementation Decisions
 
@@ -138,7 +137,6 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - Billing / Subscription / Invoice / Plan / Quota
 - Export / File / Calendar / Misc
 - Import
-- AI-friendly API
 - 完整 Web UI
 
 ### 3. Identity / Account
@@ -255,7 +253,7 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - 时区切日、舍入、利润、汇率等统计口径的兼容
 - 与 Track 数据的可回读一致性
 
-### 10. Webhooks / Integrations
+### 10. Webhooks
 
 必须完整覆盖：
 
@@ -451,26 +449,6 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - dashboard、status、meta 及其他公开杂项端点也必须作为兼容合同的一部分保留。
 - Web 端必须提供这些能力的对应页面或正式入口，不能只留下孤立 API。
 
-### AI-friendly API
-
-- `AI-friendly API` 是 OpenToggl 的原生增强接口层，不属于 Toggl 兼容合同的一部分。
-- 该接口层与 Compatibility API、Web UI 共用同一套底层领域模型和权限体系。
-- 该接口层同时覆盖两类能力：
-  - 分析型能力
-  - 操作型能力
-- 分析型能力至少应支持：
-  - 面向 AI 的高层检索
-  - 时间记录、项目、成员、报表的聚合查询
-  - 异常检测、趋势解释、归因分析、摘要生成所需的结构化数据访问
-  - 比 Toggl 兼容 API 更适合 agent 消费的稳定对象视图
-- 操作型能力至少应支持：
-  - 通过高层接口创建、更新、删除 time entries、projects、tags、reports 等对象
-  - 批量操作
-  - 面向 agent 的幂等、安全执行与结果回执
-  - 比 Toggl 兼容 API 更适合自然语言驱动工作流的命令式接口
-- `AI-friendly API` 必须是显式独立产品面，不能把 AI 能力偷偷混入 Toggl 兼容合同。
-- `AI-friendly API` 的具体资源模型、权限边界和安全约束，建议后续单独成文。
-
 ## Testing Decisions
 
 - 本 PRD 暂不定义详细验收矩阵和逐端点测试计划。
@@ -495,10 +473,6 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - 在未拿到脱敏样本前，对 Toggl 导出格式和导入字段映射做过度具体化承诺。
 - 未来 Toggl 新增公开能力的自动兼容义务。
 
-说明：
-
-- `AI-friendly API` 不属于“超出 Toggl 兼容面的随意新增功能”，而是已确认的原生产品面。
-
 ## Further Notes
 
 - `OpenToggl` 的核心定位不是“开源时间追踪工具”，而是“当前公开 Toggl 产品面的完整兼容实现”。
@@ -506,4 +480,3 @@ OpenToggl 不承诺官方 Toggl 客户端可直接连接，因为公开 OpenAPI 
 - 你的产品策略可以提供更宽松额度，但不能破坏与 Toggl 兼容的计划、配额、限制和相关接口表达。
 - 后续仍需继续细化至少以下模块：
   - 逐对象字段与逐端点兼容矩阵
-  - AI-friendly API 资源模型与安全边界
