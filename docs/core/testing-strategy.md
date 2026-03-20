@@ -54,6 +54,14 @@
 - 任何宣称“已兼容”“已实现”“可发布”的结论，都应能被测试直接支撑，而不是依赖人工走查。
 - 对 Toggl 兼容面的验收，优先通过用户故事驱动的 page flow test、e2e、application integration，再辅以 contract test 与 golden test 完成。
 
+下列情况属于“假绿”，不能据此宣称完成：
+
+- OpenAPI / schema / contract test 通过，但 real-runtime page flow 或 e2e 失败
+- 单测覆盖了 mapper / formatter / hook，但对应用户故事没有 page flow 或 e2e 支撑
+- mock server 下流程通过，但真实路由、真实后端、真实浏览器路径没有验证
+- 页面可以提交数据，但没有对应 Figma/fallback 对齐证据，或仍停留在占位页骨架
+- 只证明 endpoint shape 对了，却没有证明用户目标达成
+
 ### 1.2 全量测试必须快
 
 - 仓库内不允许保留慢测试。
@@ -168,6 +176,23 @@
 - 并发 / 幂等 / 重试保护测试
 
 这些测试不替代用户故事验收链路，但它们是稳定性防线的一部分。
+
+## 2.2 完成判定与失败门禁
+
+一个能力只有在以下条件同时成立时，才算通过测试 gate：
+
+- 对应用户故事已有明确映射
+- 关键 domain / integration / contract 覆盖已存在
+- 对应正式页面族已有 page flow test
+- 至少一条高价值真实流程已有 e2e 或 real-runtime 验证
+- 相关 root-level 检查命令通过，不能依赖“部分子集是绿的”
+
+以下情况必须视为阻塞，而不是“后续再补”：
+
+- root `test`、root `check`、关键 smoke 或 real-runtime e2e 失败
+- 只有 contract / golden，没有 page flow / e2e
+- 只有 mocked browser flow，没有真实 runtime 验证
+- 测试缺口已知存在，但没有在 stories 清单中被明确记录和降级批准
 
 ## 2.5 执行模型与时长预算
 

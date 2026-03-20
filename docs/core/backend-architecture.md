@@ -153,6 +153,30 @@ bootstrap.NewApp(cfg)
 - transport contract test 可以挂真实 Echo + generated compat routes，但替换外部 provider
 - job test 可以单独起 runner 和 handler，不需要整站启动
 
+### 0.6.1 transport 层的坏味道与禁止项
+
+`transport` 层最容易因为“先把接口跑起来”而逐步吞掉 application / domain 责任。
+
+本项目把以下情况视为明确坏味道，而不是可长期保留的工程折中：
+
+- `transport/http/*` 持有业务内存状态、伪仓储、业务集合或业务状态机
+- handler 直接在 transport 层维护 user / workspace / project / timer 等业务事实
+- handler 在 transport 层拼接跨请求共享的可变业务状态，而不是调用 application service
+- 为了“临时跑通”把授权、配额、领域规则或错误语义直接硬编码在路由壳层
+- 已有 OpenAPI 合同后，仍持续手写 DTO、route table、bind/validate 入口并把它当成正式边界
+
+允许存在的临时过渡实现只限于：
+
+- 在 task packet 中明确标注为过渡态
+- 明确写出退出条件、替换目标和所属波次
+- 不把过渡态测试或占位 runtime 叙事当成正式完成依据
+
+如果出现以下信号，必须优先做结构治理，而不是继续在其上叠加功能：
+
+- handler 文件持续膨胀，并同时承载 decode、业务规则、状态管理和响应映射
+- transport 测试主要在验证伪状态，而不是验证 OpenAPI / public contract / application 编排
+- 新 endpoint 为了复用“现成状态”继续接入 transport 内 fake runtime，而不是接入对应模块
+
 ## 0.7 OpenAPI 生成与兼容工作流
 
 OpenAPI 相关工作需要明确区分 4 件事：
@@ -193,6 +217,13 @@ OpenAPI 相关工作需要明确区分 4 件事：
 - compat handler 的 request validation 以 OpenAPI 为准，不允许在 handler 中额外发明另一套字段语义
 - compat response 的字段名、可空性、错误 body 以 OpenAPI 与必要 golden 样本为准
 - OpenToggl 自定义 API 也走同一生成链路，但合同来源换成 `opentoggl-*`
+
+对于已经存在 OpenAPI 来源的正式边界，以下情况一律视为漂移：
+
+- 继续新增手写 route table，而不是走生成 registration
+- 继续新增手写 request/response DTO，导致与 OpenAPI 重复维护
+- 在 handler 中补另一套独立字段校验或字段语义解释
+- 以“目前只是 web/internal API”为理由长期跳过 generation-first 的边界收口
 
 ### 0.7.1 compat API 的生成边界
 

@@ -34,6 +34,7 @@
 >
 > - 结构收口、技术债治理、启动/交付链路修正的优先级高于继续增加功能面。
 > - 如果基础结构仍在漂移，不允许以“先做功能、后面再整理”为理由跳过结构治理。
+> - 占位页、placeholder runtime、手写 transport 壳层与 Figma 对齐缺口的清理，属于 Wave 2 前高优先级阻塞项，不得作为“实现中自然会顺手解决”的次要事项下放。
 
 - [x] Wave 0：工程地基与生成链路
   - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
@@ -51,6 +52,15 @@
   - [x] `identity-tenant-web` 切片完全过 gate
   - [x] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
   - [ ] Wave 1 整体退出标准全部满足
+- [ ] Wave 1.5：UI/Figma 对齐与占位实现退出 gate
+  - [ ] 执行 TODO：共享 app shell、`profile`、`settings` 按已引用的 PRD/Figma 节点完成正式页面骨架对齐，不再保留开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事。Refs: `docs/product/identity-and-tenant.md`、`docs/product/tracking.md`、`docs/core/frontend-architecture.md`
+  - [ ] 执行 TODO：为 `shell`、`profile`、`settings` 建立并提交 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果。Refs: `docs/core/testing-strategy.md`、`docs/core/frontend-architecture.md`
+  - [ ] 执行 TODO：为 Wave 2 将要扩张的 `project`、`client`、成员/权限相关页面补齐 `PRD/Figma 或 fallback 骨架来源` 清单，禁止继续以 placeholder 页面扩张功能。Refs: `docs/core/frontend-architecture.md`、`docs/testing/bdd-user-stories.md`
+  - [ ] 执行 TODO：从正式页面中移除 `placeholder slice`、`contract-backed shell`、`Wave x slice` 等完成口径，未完成页面必须显式标记为过渡态并写明退出条件。Refs: `docs/core/frontend-architecture.md`
+  - [ ] 执行 TODO：梳理当前页面层是否直接请求底层 API、直接消费 raw DTO 或绕过 `feature/entity` 分层；对已发现越权点建立整改清单，并在继续扩张页面前优先收口。Refs: `docs/core/frontend-architecture.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：梳理当前 `transport/http/*` 中仍承担业务状态、伪仓储、手写 DTO / route / bind 的过渡实现，建立“OpenAPI/模块化收口”整改清单，并禁止继续在 fake runtime 上叠加新能力。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：补齐至少一条 shell 登录后进入 workspace 的 real-runtime 验证链路，避免 contract test / mocked page flow 假绿掩盖真实运行时断链。Refs: `docs/core/testing-strategy.md`
+  - [ ] 该 gate 未完成前，不允许继续扩张 Wave 2 的正式页面族与 runtime endpoint slice
 - [ ] Wave 2 前结构与交付基线收口 gate
   - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`

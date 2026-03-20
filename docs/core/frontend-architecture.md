@@ -134,6 +134,13 @@ packages/
 - `pages/` 可以读取 query hook、URL state、session，但不直接写底层请求细节。
 - `pages/` 不承载可跨页面复用的业务流程；那属于 `features/`。
 
+明确禁止：
+
+- `pages/` 直接调用 `fetch`、`webRequest` 或等价底层 client
+- `pages/` 直接消费 raw backend DTO 并在页面内部拼装展示语义
+- `pages/` 直接承载 mutation 流程、提交编排、错误恢复或批量操作状态机
+- `pages/` 以“当前只是一个简单列表/表单页”为理由跳过 `feature` / `entity` 分层
+
 ### 2.4 `features/`
 
 负责：
@@ -171,6 +178,12 @@ packages/
 
 - 页面和 feature 尽量消费 entity view model，不直接消费 raw DTO。
 - 同一实体的格式化规则、状态文案、颜色映射、显示字段优先集中在 `entities/`。
+
+这条规则同样适用于生成合同类型：
+
+- `packages/shared-contracts` 只承载公开合同类型、schema 和生成产物
+- view model、页面展示语义、空态/状态文案、派生字段不放在 `shared-contracts`
+- 如果页面直接依赖合同生成类型完成展示拼装，默认说明 `entity` 层缺位
 
 ### 2.6 `shared/*`
 
@@ -318,6 +331,30 @@ packages/
 - 把“看起来是一个卡片”就塞进 `web-ui`
 - 把 DTO 映射、权限文案、业务状态颜色写进 design system 组件
 - 页面直接内联复杂业务组件，绕过 `feature`
+
+## 5. 正式页面完成标准与占位页退出规则
+
+正式页面的完成标准不只是“接口通了、表单能提交、列表能展示”。
+
+如果对应 PRD 已绑定 Figma 节点或明确 fallback 骨架来源，则页面完成时必须同时满足：
+
+- 已记录 `PRD -> Figma 节点或 fallback -> 页面实现 -> page flow/e2e -> 截图或证据`
+- 页面信息架构、主次区域、关键状态与共享导航语义已对齐
+- 空态、加载态、错误态不是临时默认文案或开发期说明文案
+- 不再以 `placeholder`、`contract-backed`、`Wave x slice`、`tracer shell` 等叙事作为完成依据
+
+以下情况一律视为过渡态，不得宣称正式完成：
+
+- 通用列表/卡片/表单占位页准备“后面再贴 Figma”
+- 为了先扩页面数量，复用同一套页面骨架而没有对齐各自产品语义
+- 页面文案仍在解释这是当前 wave、placeholder slice 或 contract-backed shell
+- 尚未明确该页面的 Figma 引用或 fallback 骨架来源
+
+如果某个正式页面暂时只能以过渡态存在，任务单里必须显式写明：
+
+- 当前缺失的 Figma 节点或对齐证据
+- 临时页面与目标页面的差距
+- 退出该过渡态的所属波次与 gate
 
 ## 5. `packages/web-ui` 与 `baseui` 规则
 
