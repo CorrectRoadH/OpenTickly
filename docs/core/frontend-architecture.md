@@ -21,6 +21,7 @@
 - server state：`TanStack Query`
 - forms：`react-hook-form` + `zod`
 - UI primitives：`baseui`
+- utility styling：`tailwindcss@4`
 - styling/runtime：`styletron`
 
 说明：
@@ -29,6 +30,8 @@
 - `TanStack Router` 适合本项目这种重 URL state、重筛选、重视图切换的应用。
 - `TanStack Query` 适合 tracking / reports 这类 server state 密集产品面。
 - `baseui` 适合数据密集的表单、表格、popover、drawer、select、date/time 场景。
+- `tailwindcss@4` 是正式约束，不是可选偏好；默认用于页面布局、间距、栅格、响应式和通用 utility class 组合。
+- `styletron` 继续保留，因为 `baseui` 的 theme、override 和运行时依赖它；这不是与 Tailwind 二选一。
 - `packages/web-ui` 是基于 `baseui` 的应用级 UI 包，不另造一套设计系统。
 
 ## 1. 目标目录
@@ -303,6 +306,13 @@ packages/
 - 如果组件完全不知道业务对象，只关心视觉和交互基元，它属于 `shared/ui` 或 `packages/web-ui`
 - 如果组件只在某个页面里做布局拼装，它属于 `page`
 
+样式分工规则：
+
+- 页面级布局、grid、stack、间距、尺寸、响应式切换默认使用 `tailwindcss@4`
+- `baseui` primitive 的 theme、override 和复杂交互样式继续通过 `styletron` 与 `packages/web-ui` 管理
+- 不要在页面层再平行引入另一套 CSS-in-JS 方案
+- 不要把业务语义样式 token 塞进全局散落的 CSS 文件；优先通过 Tailwind utility 或 `packages/web-ui` 收口
+
 禁止：
 
 - 把“看起来是一个卡片”就塞进 `web-ui`
@@ -323,6 +333,7 @@ packages/
 - 集中 `baseui` theme / token / overrides
 - 提供有限的薄包装组件
 - 统一应用级视觉基线
+- 承接 `baseui + styletron` 与 `tailwindcss@4` 的边界，把 design token 和 utility class 约定收束为稳定基线
 
 不是职责：
 
@@ -352,6 +363,7 @@ packages/
 
 优先级规则：
 
+- 页面与业务组件的布局、间距、响应式优先使用 `tailwindcss@4`
 - 能直接用 `baseui` 的地方，先用 `baseui`
 - 需要统一 theme / token / override 时，包一层 `packages/web-ui`
 - 只有出现业务语义时，才进入 `entities/` 或 `features/`

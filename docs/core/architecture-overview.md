@@ -22,7 +22,7 @@
 
 ## 2. 技术栈
 
-- 前端：`React + Vite+`
+- 前端：`React + Vite+ + Tailwind CSS 4`
 - 后端：`Go`
 - 数据库：`PostgreSQL`
 - 缓存与短时状态：`Redis`
@@ -31,7 +31,9 @@
 
 说明：
 
-- 前端统一使用 `React + Vite+`，承担完整 Web UI 与管理后台。
+- 前端统一使用 `React + Vite+ + Tailwind CSS 4`，承担完整 Web UI 与管理后台。
+- `Tailwind CSS 4` 是正式前端栈的一部分，不是可选偏好；它负责页面布局、间距、栅格和通用 utility styling。
+- 基于 `baseui` 的组件能力仍保留在前端专题架构中，由 `styletron` 负责其 theme 与 override 运行时。
 - 后端以 Go 实现，首版采用单个 API 进程承载同步请求与必要后台任务，不拆独立 worker。
 - 文件存储首版不引入对象存储，统一通过 PostgreSQL Blob 实现附件、导出物和品牌资源存储。
 
