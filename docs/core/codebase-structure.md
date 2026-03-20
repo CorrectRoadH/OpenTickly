@@ -138,7 +138,7 @@ backend/
 - `tenant`：organization、workspace、本体设置与归属
 - `membership`：成员关系、角色、组、项目成员可见性
 - `catalog`：client、project、task、tag 等目录对象
-- `tracking`：time entry、running timer、expense、calendar integration
+- `tracking`：time entry、running timer、expense
 - `governance`：approval、timesheet、audit、实例治理、API quota
 - `reports`：报表读模型、导出、saved/shared reports
 - `webhooks`：订阅、投递、重试、运行时健康

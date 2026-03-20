@@ -72,9 +72,6 @@ Governance
 └── QuotaPolicy / RetentionPolicy
 
 Operational Integrations
-├── CalendarIntegration
-├── Calendar
-├── CalendarEvent
 ├── WebhookSubscription
 ├── WebhookDelivery
 └── ExportJob
@@ -178,7 +175,6 @@ Instance Administration
 
 负责：
 
-- calendar sync
 - webhook delivery
 - export jobs
 - file attachments

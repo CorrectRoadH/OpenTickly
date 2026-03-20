@@ -112,7 +112,6 @@ State Layer
 External Integrations
 ├── Email / notification provider
 ├── Payment provider
-├── Calendar providers
 └── User webhook endpoints
 ```
 

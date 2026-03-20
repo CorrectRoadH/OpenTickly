@@ -58,7 +58,7 @@
   - Figma：`integrations webhooks`，node `12:3561`
   - Screenshot：当前没有对应截图，先以 Figma 为主参考
   - 产品含义：这是当前首版唯一正式支持的 integration 页面入口。虽然导航上可以叫 `Integrations`，但在首版中它实际承载的是 `Webhooks` 产品面，而不是通用 integrations marketplace。
-  - 实现要求：页面需要直接承载 subscriptions、filters、validation / ping、delivery history、failure attempts、limits、status 和健康诊断；如果 UI 暂时保留其他 integration 名称，只能作为未实现占位，不得暗示已有 iCalendar、Google Calendar、Slack 等能力。
+  - 实现要求：页面需要直接承载 subscriptions、filters、validation / ping、delivery history、failure attempts、limits、status 和健康诊断；如果 UI 暂时保留其他 integration 名称，只能作为未实现占位，不得暗示已有其他未实现 integration 能力。
 
 ## Web 要求
 

@@ -2,7 +2,7 @@
 
 ## Goal
 
-这一册定义 time entry、running timer、projects/clients/tasks/tags、timesheets/approvals/expenses 和 calendar integrations 的用户可见行为。
+这一册定义 time entry、running timer、projects/clients/tasks/tags、timesheets/approvals/expenses 的用户可见行为。
 
 ## 范围
 
@@ -13,7 +13,6 @@
 - Projects / Clients / Tasks / Tags
 - timesheets / approvals / expenses
 - favorites / goals / reminders / timeline
-- calendar integrations
 
 本文件的强约束输入：
 
@@ -100,21 +99,11 @@
 - expense 必须保留原始币种与原始金额；如存在工作区展示币种或报表换算币种，换算规则必须明确且可审计。
 - 若发生币种换算，必须保留原始金额、原始币种、换算目标币种和所使用的汇率快照；已 approved 或已 reimbursed 的历史 expense 不得因后续汇率变化而静默重算。
 
-## Calendar Integrations
-
-- calendar integrations 必须被定义为正式产品能力，而不是“有个连接器就算完成”。
-- 当前默认原则是优先对齐 Toggl 的公开同步行为；在证据不足时，采用保守且可解释的默认规则：
-  - 同步方向与冲突策略必须固定
-  - 断开 calendar 连接不得删除已同步产生的历史 time entries
-  - calendar event 与 time entry 的关联断开后，历史业务事实仍保留
-- 当前默认同步模型为“calendar -> OpenToggl 单向导入优先”；除非公开定义明确证明存在对外承诺的双向写回，否则不默认把 OpenToggl 修改回写到外部 calendar。
-- 当前默认冲突规则为“OpenToggl 内已人工修改的 time entry 优先于后续 calendar 覆写”。
-
 ## Edge Cases
 
 - 同一用户在同一 workspace 下默认不能维持多个 running timer；发生冲突时，必须有固定处理规则，而不是由不同入口各自决定。
 - time entry 的 `start/stop/duration` 之间出现不自洽输入时，必须返回固定错误，而不是在不同入口做不同自动修正。
-- archived project、停用成员、断开 calendar connection 等状态变化，不得静默抹掉历史 time entries。
+- archived project、停用成员等状态变化，不得静默抹掉历史 time entries。
 - rate、billable、currency 这类会影响 reports 和 billing 结果的字段，不得在 tracking 页面和报表页面出现不同解释。
 
 ## Open Questions
@@ -174,4 +163,3 @@ Web 端至少提供：
 - 批量编辑与过滤视图
 - 项目列表、详情、成员管理、任务管理、模板视图
 - timesheets / approvals / expenses 页面
-- calendar integrations 设置与状态入口
