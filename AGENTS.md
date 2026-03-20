@@ -29,6 +29,7 @@
 - Do not add fallback mechanisms, configurability, or extension points that are not required by the documented product definition.
 - Keep modules focused and readable. Prefer explicit straightforward logic over cleverness.
 - When choosing between "generic/flexible" and "small/obvious", prefer "small/obvious" unless the docs require the broader design.
+- 代码应该要有注释，说明这里为什么这样写，是解决什么问题、BUG。或者实现什么样特殊的动画、UI效果
 
 ## Testing Rules
 
