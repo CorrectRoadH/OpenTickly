@@ -16,7 +16,15 @@
 
 ## 定义方式
 
-OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公开定义视为自己的产品定义来源。也就是说，以下内容都直接按 Toggl 公开定义来定义：
+OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公开定义视为自己的产品定义来源。
+
+首版产品定义采用以下输入分工：
+
+- `openapi/*.json` 是 API 兼容实现的强约束来源
+- Figma 原型是 UI 界面与交互兼容实现的强约束来源
+- `docs/product/*.md` 只补充 OpenAPI 与 Figma 无法完整表达的功能细节
+
+也就是说，以下内容都直接按上游公开定义来定义：
 
 - 路径与 HTTP 方法
 - 请求参数、过滤、排序、分页语义
@@ -29,7 +37,7 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 - 订阅、账单、发票、配额等运营与商业接口
 - Web 界面上的对应功能与操作流
 
-公开定义见 [toggl-public-definition](./toggl-public-definition.md)。
+产品文档不重复抄写 OpenAPI 或 Figma 本身；只定义两者未完整覆盖、但实现必须遵守的产品细节。
 
 ## 产品分册
 
@@ -44,16 +52,14 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 - [importing](../product/importing.md)
 - [instance-admin](../product/instance-admin.md)
 
-## 合同文档
+## 上游输入
 
-以下专题合同用于补充公开行为和运行时语义：
+实现和 PRD 编写时，应直接引用：
 
-- [reports](../contracts/reports.md)
-- [reports-endpoint-matrix](../contracts/reports-endpoint-matrix.md)
-- [billing](../contracts/billing.md)
-- [billing-endpoint-matrix](../contracts/billing-endpoint-matrix.md)
-- [Webhooks](../contracts/Webhooks.md)
-- [importing](../contracts/importing.md)
+- `openapi/toggl-track-api-v9.swagger.json`
+- `openapi/toggl-reports-v3.swagger.json`
+- `openapi/toggl-webhooks-v1.swagger.json`
+- OpenToggl Figma 原型
 
 ## 共同产品原则
 
@@ -68,4 +74,4 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 
 - 首版对当前公开基线做完整对齐承诺。
 - 后续版本持续跟踪 Toggl 官方公开变更。
-- 每次变更都应先更新公开基线与专题合同，再进入产品定义或实施计划。
+- 每次变更都应先更新 OpenAPI、Figma 或对应 PRD，再进入领域建模和实施计划。

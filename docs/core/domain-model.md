@@ -1,6 +1,6 @@
 # OpenToggl 领域模型
 
-本文档基于 Toggl 公开 API 面，整理 `OpenToggl` 应采用的核心领域模型。
+本文档基于 OpenAPI、Figma 与对应 PRD，整理 `OpenToggl` 已确定的核心领域模型。
 
 ## 1. 顶层领域图
 
@@ -154,7 +154,7 @@ Instance Administration
 说明：
 
 - 这里是领域概念上的聚类，不等于最终代码模块一定存在单独的 `integrations/` 目录。
-- 最终代码模块边界以 `docs/core/codebase-structure.md` 为准。
+- 最终代码模块边界以 `docs/core/codebase-structure.md` 与 `docs/core/backend-architecture.md` 为准。
 
 ### Analytics
 

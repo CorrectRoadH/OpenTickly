@@ -8,9 +8,10 @@
 
 `import` 是首版允许超出 Toggl 当前公开业务产品面的新增业务能力。
 
-更细迁移合同见：
+本文件的强约束输入：
 
-- [importing contract](../contracts/importing.md)
+- OpenToggl import 相关 OpenAPI
+- 对应 Figma 导入页面原型
 
 ## 产品目标
 
@@ -25,11 +26,11 @@
 
 - `import` 的目标不是通用 ETL，而是完成从 Toggl 到 OpenToggl 的迁移闭环。
 - import 完成后，数据必须能通过公开 API、Web UI 和 reports 正常读取。
-- import 不是一次性内部脚本，而是正式产品能力；ID 保留、remap、状态机、失败明细和联动规则以 `contracts/importing.md` 为准。
+- import 不是一次性内部脚本，而是正式产品能力；ID 保留、remap、状态机、失败明细和联动规则必须在本 PRD 和实现中明确。
 
 ## Edge Cases
 
-- 导入过程中出现部分成功、冲突、联动延迟时，结果必须对用户可解释；具体状态与联动规则以 `contracts/importing.md` 为准。
+- 导入过程中出现部分成功、冲突、联动延迟时，结果必须对用户可解释。
 
 ## 必须具备的产品能力
 

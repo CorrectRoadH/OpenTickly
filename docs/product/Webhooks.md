@@ -8,9 +8,10 @@
 
 本文件定义 `Webhooks API v1` 的产品面。
 
-投递、重试、失败治理等更细公开语义见：
+本文件的强约束输入：
 
-- [Webhooks 合同](../contracts/Webhooks.md)
+- `openapi/toggl-webhooks-v1.swagger.json`
+- 对应 Figma `Integrations / Webhooks` 页面原型
 
 ## 必须完整覆盖
 
@@ -39,17 +40,25 @@
   - delivery 记录
   - retry / disable 运行时语义
   - limits / status
-- validation、ping、签名、timeout、retry、disable 必须是正式产品行为；其精确定义以 `contracts/Webhooks.md` 为准。
+- validation、ping、签名、timeout、retry、disable 必须是正式产品行为，并与 OpenAPI 和 Figma 兼容。
 
 ## Edge Cases
 
 - 当订阅 owner、workspace 权限或私有项目可见性变化时，事件暴露范围必须随之变化，而不是继续按旧权限发送。
-- 手动 ping / validate 与真实 delivery 的状态必须彼此可区分；具体状态模型以 `contracts/Webhooks.md` 为准。
+- 手动 ping / validate 与真实 delivery 的状态必须彼此可区分。
 
 ## Open Questions
 
-- retry/backoff 的精确参数、超时阈值和 noisy subscription 阈值，仍需继续在专题合同里写死。
+- retry/backoff 的精确参数、超时阈值和 noisy subscription 阈值，仍需继续在本 PRD 与实现中写死。
 - 事件目录与 payload shape 仍需继续收敛成更完整的公开定义。
+
+## 页面映射（Figma / Screenshot）
+
+- `Integrations / Webhooks`
+  - Figma：`integrations webhooks`，node `12:3561`
+  - Screenshot：当前没有对应截图，先以 Figma 为主参考
+  - 产品含义：这是当前首版唯一正式支持的 integration 页面入口。虽然导航上可以叫 `Integrations`，但在首版中它实际承载的是 `Webhooks` 产品面，而不是通用 integrations marketplace。
+  - 实现要求：页面需要直接承载 subscriptions、filters、validation / ping、delivery history、failure attempts、limits、status 和健康诊断；如果 UI 暂时保留其他 integration 名称，只能作为未实现占位，不得暗示已有 iCalendar、Google Calendar、Slack 等能力。
 
 ## Web 要求
 

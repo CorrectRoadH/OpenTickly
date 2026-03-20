@@ -14,10 +14,10 @@
 - shared reports
 - exports
 
-具体统计口径与导出行为见：
+本文件的强约束输入：
 
-- [reports](../contracts/reports.md)
-- [reports-endpoint-matrix](../contracts/reports-endpoint-matrix.md)
+- `openapi/toggl-reports-v3.swagger.json`
+- 对应 Figma 报表页面原型
 
 ## 必须完整覆盖
 
@@ -41,12 +41,12 @@
 - Reports 是独立产品面，不是 Track API 的附属查询页。
 - 用户在 Web 与 API 中看到的 reports 结果，必须基于同一套公开统计规则解释。
 - exports 不是“另一个实现”，而是同一查询定义的另一种结果表达。
-- shared report、saved report、在线查询、导出结果必须共享同一组权限和参数语义；具体规则以 `contracts/reports.md` 为准。
+- shared report、saved report、在线查询、导出结果必须共享同一组权限和参数语义。
 
 ## Shared / Saved Reports
 
 - saved reports 和 shared reports 必须作为公开产品对象存在。
-- public/private 权限、参数覆盖、owner 失活、共享导出等公开行为以 `contracts/reports.md` 为准。
+- public/private 权限、参数覆盖、owner 失活、共享导出等公开行为必须与上游 OpenAPI 和 Figma 兼容。
 
 ## Edge Cases
 
@@ -55,7 +55,7 @@
 ## Open Questions
 
 - shared report 在极端大报表、极端长时间范围下的公开失败阈值，仍需继续收集。
-- 某些 profitability / insights 边界计算细则，仍以专题合同为后续细化目标。
+- 某些 profitability / insights 边界计算细则，仍需继续收敛到本 PRD 与实现中。
 
 ## Web 要求
 

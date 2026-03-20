@@ -7,7 +7,7 @@
 3. 前后端采用什么技术栈，以及代码按什么结构组织。
 4. 如何把当前仓库从脚手架逐步演进为可交付实现。
 
-本文档是实现蓝图，不替代专题合同文档。关于具体公开边界、报表语义、Webhook 投递合同、导入合同和领域对象定义，分别以 `docs/` 下对应文档为准。
+本文档是实现蓝图，不替代 OpenAPI、Figma 与对应 PRD。关于具体公开边界、页面语义、功能细节和领域对象定义，分别以上游输入与 `docs/` 下对应文档为准。
 
 ## 1. 架构目标
 
@@ -240,7 +240,7 @@ Client
 
 要求：
 
-- 报表统计口径以 `docs/contracts/reports.md` 为准。
+- 报表统计口径以对应 OpenAPI、Figma 与 `docs/product/reports-and-sharing.md` 为准。
 - 在线查询与异步导出共享同一套过滤与权限语义。
 
 ### 6.4 Webhook 投递路径
@@ -413,7 +413,7 @@ backend/
 
 建议职责：
 
-- `apps/web`：React Web UI。
+- `apps/website`：当前 React Web UI 主应用；在正式重构边界前，它是前端目录事实来源。
 - `apps/api`：Go API 入口，承载兼容 API、Web 管理接口与进程内后台任务。
 - `packages/web-ui`：前端可复用 UI、hooks、前端工具函数。
 - `packages/shared-contracts`：少量前后端共享的非兼容层公共类型。
@@ -547,14 +547,14 @@ backend/
 
 当前仓库状态：
 
-- 已有产品定义、公开定义、报表/Billing/Webhook/Import 专题文档。
+- 已有产品定义、DDD、架构与专题 PRD 文档。
 - 已收录 Toggl OpenAPI 与官方文档镜像。
 - 代码仍处于 Vite+ monorepo starter 阶段，尚未开始业务实现。
 
 建议的落地顺序：
 
 1. 先确定 monorepo 模块边界与目录结构。
-2. 搭建 `apps/api`、`apps/web` 两个主入口。
+2. 搭建 `apps/api`，并把当前 `apps/website` 演进为正式 Web 主入口。
 3. 落第一版 `domain`、`application`、`auth`、`db`、`filestore`、`jobs` 基础层。
 4. 优先打通 Identity、Workspace、Projects、Time Entries 的主写路径。
 5. 引入任务表和进程内 job runner，再扩展 reports/webhooks/import。
@@ -562,13 +562,14 @@ backend/
 
 ## 15. 与其他文档的关系
 
-- `docs/core/product-definition.md`：定义产品目标与公开定义。
-- `docs/core/toggl-public-definition.md`：定义当前 Toggl 公开定义来源。
+- `docs/core/product-definition.md`：定义产品目标，以及 OpenAPI / Figma / PRD 的依赖关系。
 - `docs/core/codebase-structure.md`：定义前后端目录结构、依赖方向和模块规则。
-- `docs/reference/toggl-domain-model.md`：定义领域对象与关系。
-- `docs/reference/deployment-options.md`：讨论部署模型与共享契约。
-- `docs/contracts/reports.md`：定义报表统计语义。
-- `docs/contracts/Webhooks.md`：定义 Webhook 运行时合同。
-- `docs/contracts/importing.md`：定义导入合同。
+- `docs/core/frontend-architecture.md`：定义前端状态管理、组件边界与页面实现结构。
+- `docs/core/backend-architecture.md`：定义后端模块内部结构、组合层与异步运行时规则。
+- `docs/core/testing-strategy.md`：定义测试矩阵、目录与最低发布门槛。
+- `docs/core/domain-model.md`：定义领域对象、上下文、聚合与不变量。
+- `openapi/*.json`：定义 API 兼容强约束输入。
+- Figma：定义 UI 兼容强约束输入。
+- `docs/product/*.md`：补充 OpenAPI 与 Figma 未完整表达的功能细节。
 
 本文档负责把这些文档收束为一份统一的工程实现蓝图。

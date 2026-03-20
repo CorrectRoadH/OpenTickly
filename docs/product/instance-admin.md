@@ -221,9 +221,7 @@
 ## Relationship To Existing Docs
 
 - `docs/core/product-definition.md`
-  - 定义 Toggl 公开产品面与 `import`
-- `docs/reference/cloud-selfhosted-parity.md`
-  - 定义 cloud / self-hosted 的对外一致性要求
+  - 定义 OpenAPI / Figma / PRD 的依赖关系，以及 `import`
 - `docs/core/codebase-structure.md`
   - 定义这些能力在代码结构中的归属
 - `docs/core/ddd-glossary.md`
