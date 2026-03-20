@@ -10,3 +10,32 @@
 - For API compatibility and runtime semantics, read `docs/core/toggl-public-definition.md`, the relevant file under `docs/contracts/`, and then `openapi/` or `docs/upstream/` if more evidence is needed.
 - For architecture and module-boundary work, read `docs/core/architecture-overview.md`, `docs/core/codebase-structure.md`, `docs/core/frontend-architecture.md`, `docs/core/backend-architecture.md`, `docs/core/testing-strategy.md`, and `docs/core/ddd-glossary.md`.
 - Do not start from `docs/reference/` or `docs/challenges/` unless the task explicitly needs supporting evidence, historical analysis, or unresolved questions.
+
+## Compatibility Rules
+
+- This project is an implementation of Toggl with fully matching behavior.
+- Target 100% compatibility with Toggl for product behavior, API semantics, data shapes, interaction details, and edge-case handling.
+- Treat the definitions in `docs/` as the source of truth. Do not invent or reinterpret behavior when the docs already define it.
+- Do not introduce product changes, UX deviations, API drift, or "improvements" that make the implementation differ from Toggl.
+- If behavior appears ambiguous, resolve it from the documented contracts and upstream evidence instead of making a new local rule.
+
+## Code Requirements
+
+- Write code that is clean, direct, and minimal. Prefer the simplest implementation that correctly satisfies the documented behavior.
+- Optimize for low cognitive load. Fewer moving parts, fewer abstractions, and fewer files are preferred when they preserve clarity.
+- Code should carry its own weight. Do not create code-shaped documentation, speculative abstractions, or ceremony-heavy patterns.
+- Avoid adding environment variables unless they are strictly necessary for the real runtime contract.
+- Avoid one-off scripts, migration helpers, temporary scaffolding, or other disposable implementation artifacts unless explicitly requested.
+- Do not add fallback mechanisms, configurability, or extension points that are not required by the documented product definition.
+- Keep modules focused and readable. Prefer explicit straightforward logic over cleverness.
+- When choosing between "generic/flexible" and "small/obvious", prefer "small/obvious" unless the docs require the broader design.
+
+## Testing Rules
+
+- `docs/core/testing-strategy.md` is a hard implementation constraint, not optional guidance.
+- This project does not assume manual QA or manual product acceptance. Tests are the primary acceptance mechanism.
+- Do not introduce slow tests. The repository standard is that the full test suite should stay fast enough for routine local execution before commit.
+- Do not design a split where "fast tests" run locally and "real confidence" is deferred to slow CI-only suites.
+- Prefer real integration boundaries over mocks. Use mocks/fakes only at true external system boundaries, not to simulate internal business behavior.
+- New code is not complete if it lacks the tests required by the testing strategy for its layer, public contract, and user-facing flow.
+- If a feature is hard to test quickly, simplify the implementation or boundaries instead of normalizing slow, brittle, or heavily mocked tests.
