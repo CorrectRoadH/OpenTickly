@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "deny": ["Read(.agent/history/**)"],
+    "allow": ["**"]
+  },
+  "defaultMode": "acceptEdits",
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["playwright", "context7", "sequential-thinking"],
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.js"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.js"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/play-sound.js notification"
+          }
+        ]
+      }
+    ]
+  }
+}
