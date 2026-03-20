@@ -43,6 +43,11 @@ describe("workspace shell page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
     expect((screen.getByLabelText("Workspace") as HTMLSelectElement).value).toBe("202");
+    expect(screen.getByText("Workspace")).toBeTruthy();
+    expect(screen.getByText("Account")).toBeTruthy();
+    expect(screen.getByText("Alex North")).toBeTruthy();
+    expect(screen.getByText("alex@example.com")).toBeTruthy();
+    expect(screen.getByText("Starter plan")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Workspace"), {
       target: { value: "303" },
@@ -65,5 +70,24 @@ describe("workspace shell page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
     expect((screen.getByLabelText("Workspace") as HTMLSelectElement).value).toBe("303");
+  });
+
+  it("fails closed to login when the current session is denied by the runtime", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () =>
+          jsonResponse("User does not have access to this resource.", {
+            status: 403,
+          }),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
   });
 });

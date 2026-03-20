@@ -9,7 +9,7 @@
 
 **Goal:** 在当前 starter 仓库上，按文档定义实现一个与 Toggl 当前公开产品面兼容的 OpenToggl v1，覆盖 Track API v9、Reports API v3、Webhooks API v1、对应 Web 界面，以及 OpenToggl 自有的 `import` 与 `instance-admin` 产品面。
 
-**Architecture:** 采用单体优先架构，一个 Go `apps/api` 进程加一个 React `apps/website` 应用；后端按 `transport -> application -> domain` 和固定限界上下文拆分，前端按 `app/routes/pages/features/entities/shared` 拆分。事务写模型以 PostgreSQL 为真相源，报表与异步投递通过 in-process job runner 与投影读模型完成。
+**Architecture:** 采用单体优先架构，一个 Go `apps/backend` 进程加一个 React `apps/website` 应用；后端按 `transport -> application -> domain` 和固定限界上下文拆分，前端按 `app/routes/pages/features/entities/shared` 拆分。事务写模型以 PostgreSQL 为真相源，报表与异步投递通过 in-process job runner 与投影读模型完成。
 
 **Tech Stack:** Go + Echo + oapi-codegen + pgx + PostgreSQL + Redis；React + Vite+ + Tailwind CSS 4 + TanStack Router + TanStack Query + react-hook-form + zod + baseui + styletron。
 
@@ -21,25 +21,68 @@
 >
 > - `- [x]` 表示已通过当前波次 gate，可视为本计划当前已完成部分。
 > - `- [ ]` 表示未完成，其中包含“未开始”和“进行中”两类；进行中的细项会在条目文字里标明。
-> - 这里的勾选状态用于执行追踪，不替代下面各波次的正式 `退出标准` 与 `强制测试链路`。
+> - 这里的勾选状态用于执行追踪，不替代下面各波次的正式 `退出标准` 与全局测试要求。
+
+> 开始任何未完成 TODO 前，必须先按对应类别阅读以下文档入口：
+>
+> - Wave 级产品实现 TODO：先读对应 `docs/product/*.md`，再读 `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`、`docs/core/testing-strategy.md`，最后下钻到对应 `openapi/*.json` 与 Figma。
+> - 测试计划与故事清单 TODO：先读 `docs/core/testing-strategy.md`、`docs/testing/bdd-user-stories.md`，再回看对应产品 PRD / OpenAPI / Figma。
+> - 自部署与发布交付链路 TODO：先读 `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`，再读受影响波次的产品文档与 OpenAPI。
+> - 若某项 TODO 进入实际执行，必须在对应 task packet 中继续明确写出 `PRD`、`Core Docs`、`OpenAPI Source`、`Figma Reference`，不能只引用这里的总入口。
+>
+> 执行优先级补充：
+>
+> - 结构收口、技术债治理、启动/交付链路修正的优先级高于继续增加功能面。
+> - 如果基础结构仍在漂移，不允许以“先做功能、后面再整理”为理由跳过结构治理。
 
 - [x] Wave 0：工程地基与生成链路
-  - [x] `apps/api`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
+  - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
   - [x] `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架落地
-  - [x] `vp test`、`vp check`、`go test ./apps/api/... ./internal/... ./backend/internal/...` 当前可通过
-- [ ] 本地开发基线
-  - [ ] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
-  - [ ] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
-  - [ ] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增入口统一收口到 root toolchain 或正式 CLI
+  - [ ] `vp test`、`vp check`、`go test ./apps/backend/...` 当前可通过
+- [x] 本地开发基线
+  - [x] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
+  - [x] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
+  - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增入口统一收口到 root toolchain 或正式 CLI
 - [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
   - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
   - [x] `billing-foundation` 后端基础切片第一版
   - [x] `tenant-backend` 后端基础切片第一版
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
-  - [ ] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
+  - [x] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
   - [ ] Wave 1 整体退出标准全部满足
-- [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice）
+- [ ] Wave 2 前结构与交付基线收口 gate
+  - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
+  - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
+  - [ ] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
+  - [x] 执行 TODO：本地开发与文档启动命令统一收口为 `go run ./apps/backend`，不再使用 `go run ./apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：同步修正文档、README、样例命令和 smoke test，避免继续出现 `apps/api`、`backend/internal/*`、`website + api` 双运行时表述。Refs: `README.md`、`docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：修正根 `package.json` 的 `dev:api` 等旧命令引用，确保根工具链不再指向 `apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
+  - [x] 执行 TODO：处理遗留 `apps/api` 目录，明确哪些测试/脚本迁移到 `apps/backend`，哪些删除，禁止长期并存两个后端应用目录。Refs: `docs/core/codebase-structure.md`、`docs/core/testing-strategy.md`
+  - [x] 执行 TODO：将 `apps/api/tests/compat`、`apps/api/tests/golden`、`apps/api/tests/openapi` 收口到与 `apps/backend` 一致的位置，避免测试资产继续绑定旧目录。Refs: `docs/core/testing-strategy.md`、`docs/core/backend-architecture.md`
+  - [x] 执行 TODO：评估 `apps/api/package.json`、`apps/api/scripts/generate-openapi-test-artifacts.mjs`、`apps/api/src/testing/*` 的归属，迁移到 `apps/backend` 或共享工具目录，避免旧应用壳残留。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：修复 `apps/backend` 作为 JS/Vitest 工具入口后的测试启动问题，确保目录收口后 `vp test run` 不因 toolchain/config 漂移失效。Refs: `docs/core/testing-strategy.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：收口 `pnpm-lock.yaml` 与 workspace 元数据，移除旧 `apps/api` workspace 残留，确保安装链路不再提示 broken lockfile 或旧应用目录记录。Refs: `docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：梳理当前 `docker-compose.yml`、`docker/api.Dockerfile`、`docker/website.Dockerfile`、`docker/nginx/website.conf` 的职责，标记哪些保留、哪些删除、哪些迁移。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
+  - [ ] 执行 TODO：移除或替换根级 shell 验证脚本（如 self-hosted smoke 验证脚本），将对应验证入口收口到 root toolchain 或正式 CLI，避免继续依赖 `scripts/*.sh`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 将当前 self-hosted 实现收口到单应用镜像，移除独立 `website` / Nginx 运行时依赖。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] TODO: 删除与目标形态冲突的 `docker/website.Dockerfile`、Nginx 配置与 compose service，或将其降级为仅调试/过渡用途并明确标注。Refs: `docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：删除 `docker/website.Dockerfile` 与 `docker/nginx/website.conf`，若短期不能删则必须改名或在文档中明确标注为过渡态，禁止继续作为目标发布方案。Refs: `docs/self-hosting/docker-compose.md`
+  - [ ] 生产构建可生成稳定单镜像，而不是依赖开发态启动。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] TODO: `apps/website` 产物构建与 `go:embed` 打包链路正式化，避免发布态重复维护前端容器。Refs: `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：在 `apps/website` 产物构建完成后，由 `apps/backend` 构建链路把前端静态资源复制到可 `go:embed` 的目录，并保证本地开发链路不依赖该步骤。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`
+  - [ ] TODO: 后端补齐 SPA 静态资源服务、history fallback 和与 `/web/v1/*` 共存的路由规则。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：在 Go HTTP 入口实现静态资源服务、SPA history fallback、根路径 `/` 与静态资源缓存策略，同时保持 `/web/v1/*`、`/healthz`、`/readyz` 路由不回退到前端。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：新增或收口单镜像 `Dockerfile`，镜像内只运行一个 `opentoggl` 进程，不再要求 Nginx sidecar 或独立 website runtime。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] `docker compose` 自托管启动链路收口为 `opentoggl + postgres + redis`。Refs: `docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：重写 `docker-compose.yml`，删除 `website` service，保留 `opentoggl + postgres + redis`，并更新 healthcheck、端口、env 与 volume 说明。Refs: `docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：处理当前真实偏移中的 `docker/api.Dockerfile` 命名与职责问题，决定是迁移为 `docker/backend.Dockerfile` 还是收口为单一发布 Dockerfile，避免目录/镜像语义继续停留在旧 `api` 命名。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：决定是否保留 `dev:api` 作为兼容别名；若保留需明确过渡期限，若不保留则同步删除相关旧别名文档与命令。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`
+  - [ ] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
+- [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice；前提：先通过“Wave 2 前结构与交付基线收口 gate”）
 - [ ] Wave 3：Tracking 核心事务面
 - [ ] Wave 4：Tracking 扩展面与 Governance
 - [ ] Wave 5：Reports 读模型与共享
@@ -50,17 +93,17 @@
 - [ ] Wave 10：兼容性收口与发布准备
 - [ ] 测试计划与故事清单持续维护
   - [ ] 建立 BDD 故事入口：`docs/testing/bdd-user-stories.md`
+  - [ ] 建立 `BDD Story -> Test Coverage` 对照清单：逐条映射 `docs/testing/bdd-user-stories.md` 到 `Domain Unit / Application Integration / Transport Contract / Frontend Feature / Frontend Page Flow / E2E / Golden`，标记 `已覆盖 / 部分覆盖 / 缺失`，并把缺口作为后续波次阻塞项管理
   - [ ] 每个 Wave 开始前，把对应产品面的故事映射到 `Domain / Integration / Contract / Feature / Page Flow / E2E / Golden`
   - [ ] 每个 Wave 结束时，更新“已覆盖故事 / 未覆盖故事 / 延后原因”清单
   - [ ] Wave 10 前补齐 `testing-strategy` 明确要求但尚未实现的 page flow 与 e2e
   - [ ] 为每个正式页面族建立 `PRD -> Figma 节点 -> 页面实现 -> page flow/e2e` 对照清单
-- [ ] 自部署与发布交付链路
-  - [ ] 明确 self-hosted 交付形态：前后端双镜像 + 反向代理
-  - [ ] 前后端生产构建可生成稳定镜像，而不是依赖开发态启动
-  - [ ] `docker compose` 自托管启动链路可用，并覆盖 `website + api + postgres + redis`
+- [ ] 自部署与发布交付链路（其中结构与运行时收口部分必须在 Wave 2 前完成）
+  - [x] 明确 self-hosted 目标交付形态：单 Go 应用镜像，构建时内嵌前端 `dist`，由同一运行时同时提供 Web UI 与 API
   - [ ] 数据库迁移、首次管理员初始化、默认配置注入有正式流程
   - [ ] 健康检查、readiness、基础日志与最小 smoke test 固定
   - [ ] 升级/回滚步骤、持久化卷和必要环境变量文档化
+  - [ ] 执行 TODO：补齐单镜像发布链路验证，至少覆盖镜像构建、容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`
   - [ ] Wave 10 产出正式 release artifact：镜像、compose 文件、样例 env、发布说明
 
 ## 1. 计划依据
@@ -89,7 +132,7 @@
 当前仓库仍处于 starter 阶段：
 
 - `apps/website` 仍是 Vite 默认模板，不是正式 Web 应用。
-- `apps/api`、`backend/internal/*`、`packages/web-ui`、`packages/shared-contracts` 仍不存在。
+- `apps/backend`、`packages/web-ui`、`packages/shared-contracts` 仍不存在。
 - `openapi/` 已有 Toggl compat 定义，但尚未落成 transport、contract test、golden test 与运行时。
 - 现有测试无法支撑任何产品面验收。
 
@@ -204,104 +247,42 @@
 
 ### 4.3 每个任务的交付协议
 
-每个开发任务开始前，`Orchestrator` 必须先准备一个明确的 task packet，subagent 不应该拿到一句含糊的“去做 tracking”。
+每个开发任务开始前，`Orchestrator` 必须准备一个明确的 task packet。最少包含：
 
-每个 task packet 至少包含：
+1. 任务名称、目标、产品面
+2. 对应 PRD、core docs、OpenAPI、Figma/fallback 骨架来源
+3. 用户故事与对应测试层
+4. 文件 ownership 与禁止触碰范围
+5. 验收命令与完成定义
 
-1. 任务名称与目标
-2. 该任务服务的产品面
-3. 对应 PRD 路径
-4. 对应 core docs 路径
-5. 对应 OpenAPI JSON 路径
-6. 对应 Figma 文件、节点 ID 与 screenshot 引用；如果当前页面无独立 Figma 节点，必须明确说明回退参考来源
-7. 要提炼的用户故事清单
-8. 每条用户故事对应的测试链路
-9. subagent 的文件 ownership
-10. 明确不允许碰的文件或模块
-11. 若涉及测试，引用的 BDD 故事路径与场景
-12. 若涉及 self-hosted / release，引用容器、迁移、env 与 smoke test 要求
-13. 交付所需命令与验收门槛
+每个 implementer 的交付最少包含：
 
-task packet 模板：
+1. 负责文件清单
+2. 失败测试证据
+3. 最小实现说明
+4. 回归测试与验证命令结果
+5. 剩余风险
 
-```text
-Task: [clear slice name]
-Product Area: [identity | tracking | reports | ...]
-PRD:
-- docs/product/...
-Core Docs:
-- docs/core/...
-OpenAPI Source:
-- openapi/...
-Figma Reference:
-- file: ...
-- node: ...
-- fallback reference when no dedicated node: ...
-Generated Boundary:
-- generated transport / DTO / validator / contract skeleton
-User Stories:
-- story 1
-- story 2
-BDD Source:
-- docs/testing/bdd-user-stories.md
-Required Tests:
-- Domain Unit: ...
-- Application Integration: ...
-- Transport Contract: ...
-- Frontend Feature/Page Flow: ...
-- E2E: ...
-- Golden: ...
-Ownership:
-- Modify: ...
-- Do Not Touch: ...
-Definition of Done:
-- ...
-```
-
-每个 implementer subagent 的交付必须包含：
-
-1. 任务目标与负责文件清单
-2. 先写的失败测试与失败原因
-3. 最小实现与为何足以通过当前测试
-4. 新增或更新的回归测试
-5. 本地验证命令与结果摘要
-6. 未解决风险、已知限制、是否需要更高层收口
-
-如果 subagent 不能给出第 2 项和第 5 项，该任务视为未完成。
+缺少失败测试证据或本地验证结果，视为未完成。
 
 ### 4.4 每个任务的 gate
 
 每个任务完成顺序固定为：
 
-1. implementer 写失败测试并确认失败
-2. implementer 写最小实现并跑通过
-3. implementer 自检并提交结果
-4. orchestrator 做上下文集成 review
-5. spec reviewer 检查是否符合文档与合同
-6. quality reviewer 检查边界、代码与测试质量
-7. orchestrator 决定是否合并、返工或拆分
+1. 写失败测试
+2. 写最小实现并跑通
+3. implementer 自检
+4. orchestrator 集成 review
+5. spec / quality review
+6. 决定合并或打回
 
-任何 reviewer 提出阻断问题，该任务必须回到 implementer 修复后再审。
+`orchestrator` review 是硬 gate，重点只看五件事：
 
-`orchestrator` 的上下文集成 review 是硬 gate，不是走流程。检查项至少包括：
-
-- 任务是否只修改了 task packet 允许的文件与模块
-- 是否引入了无关改动、顺手重构、临时脚手架、一次性辅助代码或泄漏的调试产物
-- 当前 diff 是否仍符合单向依赖规则
-- 是否出现架构偏移，例如：
-  - `platform -> business module`
-  - `domain -> transport`
-  - `domain -> SQL / Redis / HTTP client`
-  - `page -> raw backend DTO`
-  - `feature -> feature`
-  - `module A/infra -> module B/infra`
-- 是否把业务语义错误地下沉到 `packages/web-ui`、`shared-contracts` 或 transport generated artifacts
-- 是否出现明显坏味道：重复逻辑、过宽接口、模糊命名、职责漂移、硬编码 feature gate、mock 内部行为、测试只测实现细节
-- 是否遵守仓库代码要求：尽量小而直接、无多余 env、无多余扩展点、必要处有解释“为什么”的注释
-- git 工作区是否只包含当前任务预期变更；若出现意外脏文件，必须先识别来源再决定是否打回
-- 本任务完成后，代码库是否仍保持可继续集成的健康状态
-
-任一项不满足，`orchestrator` 必须直接打回 implementer，而不是带着问题进入 spec / quality review。
+- 是否超出 task packet 范围
+- 是否破坏依赖方向或模块边界
+- 是否把业务语义错误地下沉到共享层或 generated artifacts
+- 是否引入明显坏味道或临时实现
+- 当前仓库是否仍处于可继续集成状态
 
 ### 4.4.1 打回规则
 
@@ -323,23 +304,15 @@ Definition of Done:
 
 ### 4.5 每个波次的启动顺序
 
-每个波次都必须按以下顺序启动：
+每个波次默认按以下顺序启动：
 
-1. `Story/Test Design Subagent`
-   - 读取该波次 PRD 与 core docs
-   - 提炼用户故事与失败分支
-   - 生成故事到测试矩阵
-2. `Contract Generation Subagent`
-   - 对 compat 面，从既有 `openapi/*.json` 生成 transport / contract skeleton
-   - 对自定义能力，先更新 `opentoggl-*.openapi.json`，再生成 skeleton
-3. `Backend Implementer Subagent`
-   - 领取明确 task packet，先写失败测试，再写最小实现
-4. `Frontend Implementer Subagent`
-   - 领取明确 task packet，基于已存在合同和 story-to-test map 实现页面、feature、page flow
-5. `Spec Reviewer Subagent`
-6. `Quality Reviewer Subagent`
+1. 提炼故事与测试映射
+2. 收口合同边界
+3. 后端实现
+4. 前端实现
+5. review 与验收
 
-如果第 1 步和第 2 步未完成，后续 implementer 不得开始写功能代码。
+前两步未完成，不开始功能实现。
 
 ## 5. 目标仓库结构
 
@@ -403,41 +376,12 @@ apps/website/src/
 - Web 页面、feature、page flow
 - 对应测试链路
 
-前端对齐规则：
+波次默认规则：
 
-- 如果 PRD 中该页面已有 Figma 原型，前端任务必须先读取对应节点，再进入实现。
-- Page flow 和 e2e 只验证行为走通；它们不替代 Figma 对齐检查。
-- 每个正式页面族在波次收口时都必须提供一份 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e` 对照结果。
-- Figma 对齐至少要回答：
-  - 当前实现对应哪个 Figma 节点
-  - 哪些布局/入口/状态已对齐
-  - 哪些差异是有意延后
-  - 没有独立节点的页面借用了哪一个现有页面骨架
-
-前端 implementer 的固定步骤：
-
-1. 先读对应 `docs/product/*.md` 的页面映射段，确认该页面是否已有 Figma 节点、截图或明确骨架来源。
-2. 把 task packet 中的 Figma 文件、节点 ID、fallback 页面写清楚，再开始拆 `page / feature / entity / shared`。
-3. 先实现页面信息架构和壳层关系，再实现表单、列表、筛选和 mutation，不允许先做一个与目标页面结构无关的通用占位页。
-4. 页面完成时必须补：
-   - 真实页面 route
-   - 对应 feature test
-   - 对应 page flow test
-   - 该页面关联的 BDD 故事映射
-5. 波次收口时必须提交 Figma 对齐结果：
-   - Figma 节点引用
-   - 当前页面截图或等价证据
-   - 已对齐项
-   - 已知差异和延后原因
-
-只有异步读模型、共享 UI、shared contracts 这类明显横切能力，才允许单独作为基础波次先行。
-
-合同优先规则：
-
-- 任何 compat API 变更或实现，都必须以现有 `toggl-*` OpenAPI JSON 为源，先生成 transport、DTO、validator、contract skeleton 与 golden skeleton，再落 handler 和实现。
-- 任何 OpenToggl 自定义 Web / import / admin 接口，都必须先更新对应 `opentoggl-*.openapi.json`，再从该 OpenAPI 生成 transport 和 contract skeleton，然后进入实现。
-- 不允许 subagent 先手写 handler、前端请求层或公开 DTO shape，再事后补 OpenAPI。
-- 不允许业务模块各自发明 feature gate、quota header、error body 或 admin/import Web 接口 shape；这些都必须回到对应合同来源统一定义。
+- 前端页面遵循 §3.2.1 的 Figma 对齐约束，不再在各 Wave 重复展开
+- 测试遵循 §8 的统一测试矩阵
+- 公开接口遵循合同优先：先更新 OpenAPI，再生成边界，再进入实现
+- 只有明显横切能力才允许先于产品波次单独建设
 
 ## 7. 波次规划
 
@@ -449,9 +393,9 @@ apps/website/src/
 
 **范围**
 
-- 建立 `apps/api`
-- 建立 `apps/api/internal/bootstrap`、`apps/api/internal/http`、`apps/api/internal/web`
-- 建立 `backend/internal/*` 模块骨架与 `platform` 基础设施骨架
+- 建立 `apps/backend`
+- 建立 `apps/backend/main.go`、`apps/backend/internal/bootstrap`、`apps/backend/internal/http`、`apps/backend/internal/web`
+- 建立 `apps/backend/internal/*` 模块骨架与 `platform` 基础设施骨架
 - 建立 PostgreSQL Blob `filestore` 抽象、blob 表与平台 wiring，作为 logo/avatar、expense attachment、report export、invoice artifact、import archive 的统一基础
 - 把 `apps/website` 重构成 React + Router + Query 正式入口
 - 把 `tailwindcss@4` 接入正式前端 runtime，并明确它与 `baseui/styletron` 的分工
@@ -466,9 +410,9 @@ apps/website/src/
 **推荐并行 streams**
 
 - `api-foundation` subagent
-  - `apps/api`
-  - `backend/internal/platform`
-  - `apps/api/internal/bootstrap` / `http` / `web`
+  - `apps/backend`
+  - `apps/backend/internal/platform`
+  - `apps/backend/internal/bootstrap` / `http` / `web`
   - bootstrap / config / db / redis / filestore / job runner 骨架
 - `web-foundation` subagent
   - `apps/website/src/app`
@@ -549,7 +493,6 @@ apps/website/src/
 **依赖**
 
 - 依赖 Wave 0 runtime、路由、contract 与测试骨架。
-- Wave 1 涉及的自定义 Web 接口必须先落到 `opentoggl-web.openapi.json`，再进入 transport 与页面实现。
 
 **退出标准**
 
@@ -560,18 +503,55 @@ apps/website/src/
 - 停用中的 running timer 自动停止语义有测试覆盖
 - feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许“默认全开占位实现”
 - Wave 1 范围内的 BDD 故事已映射到 page flow / e2e / contract / integration
-- `profile`、`settings`、共享 app shell 已明确引用各自 PRD 中的 Figma 节点，并提交对齐结果
 - self-hosted `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
+- `profile`、`settings`、共享 app shell 的正式 UI/Figma 对齐在 Wave 1.5 收口
 
-**强制测试链路**
+### Wave 1.5: UI / Figma 对齐修复
 
-- Domain Unit: user/account/security state/value objects
-- Frontend Unit: session mapper、profile/settings form adapter、workspace settings/url adapter
-- Application Integration: login/session/token/tenant settings、billing quota/capability check
-- Transport Contract: compat auth / identity / tenant endpoints
-- Frontend Feature: 登录、更新 profile、更新 settings
-- Frontend Page Flow: profile / settings / shell / workspace switcher / organization-workspace management
-- E2E: 登录后进入 workspace 成功
+**目标**
+
+在继续扩张 Wave 2 页面族之前，先收口已经出现的 Web UI 漂移，确保共享应用壳、`profile`、`settings` 和后续会复用的页面基线真正按 PRD/Figma 落地，而不是继续建立在占位式页面骨架之上。
+
+**范围**
+
+- 共享 app shell
+  - 以 `docs/product/tracking.md` 中的 Figma `left nav` 节点 `8:2829` 为输入
+  - 收口 left nav、workspace switcher、profile/admin 入口、workspace 上下文区、loading/error/empty 状态
+  - 删除开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事
+- `profile`
+  - 以 `docs/product/identity-and-tenant.md` 中的 Figma `profile` 节点 `10:14814` 为输入
+  - 先对齐页面信息架构、主次区域、账户级状态区、偏好区、token/security 入口，再补细节字段
+- `settings`
+  - 以 `docs/product/identity-and-tenant.md` 中的 Figma `settings` 节点 `11:3680` 为输入
+  - 先对齐 workspace / organization 设置页面的区域切分、导航关系、branding 入口和正式设置骨架
+- `packages/web-ui`
+  - 从当前最小 theme/panel/button 基线扩到正式共享 UI 基线
+  - 至少补齐 page shell、section header、form field shell、notice/empty/error/loading state、nav item、list/table shell
+  - 明确 `tailwindcss@4` 与 `baseui/styletron` 的使用边界，避免页面各写一套视觉语言
+- Figma 对齐证据
+  - 为 `shell`、`profile`、`settings` 建立 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果
+  - 对 `project/client/tag` 与成员/权限相关页面补“当前 Figma/fallback 骨架来源”清单，禁止继续以 placeholder 页面扩张功能
+
+**推荐并行 streams**
+
+- `shell-parity-recovery` subagent
+- `identity-settings-parity` subagent
+- `web-ui-baseline-hardening` subagent
+- `figma-parity-evidence` subagent
+
+**依赖**
+
+- 依赖 Wave 1 的 identity、tenant、session、workspace settings 与共享 app shell 基线。
+- 本波次完成前，不得把 `project / client / task / tag / members / permission` 等正式页面继续建立在占位式信息架构上扩张。
+
+**退出标准**
+
+- 共享 app shell 的信息架构、导航关系和状态区域与 Figma `left nav` 语义一致，不再保留开发期说明文案
+- `profile` 与 `settings` 页面已按各自 Figma 节点完成正式页面骨架对齐，而不是卡片堆叠式占位表单
+- `packages/web-ui` 已形成可复用的应用级 UI 基线，而不是仅有 theme/panel/button 的极薄封装
+- loading / error / empty / success notice 等关键状态已统一进入共享 UI 基线，不再由各页面临时拼接
+- `shell`、`profile`、`settings` 已提交 `PRD -> Figma 节点 -> 实现页面 -> 测试 -> 截图/证据` 对照结果
+- Wave 2 将要扩张的正式页面已补齐各自的 Figma 引用或 fallback 骨架来源，未再保留“placeholder slice”作为完成依据
 
 ### Wave 2: Membership、Access、Catalog 完整产品面
 
@@ -608,8 +588,7 @@ apps/website/src/
 
 **依赖**
 
-- 依赖 Wave 1 的 identity、tenant、session 与 workspace settings。
-- Wave 2 涉及的 Web 后台接口必须先扩充 `opentoggl-web.openapi.json`，不得绕过合同直接补 endpoint。
+- 依赖 Wave 1 与 Wave 1.5 的 identity、tenant、session、workspace settings 和 UI 基线。
 
 **退出标准**
 
@@ -620,16 +599,6 @@ apps/website/src/
 - 费率 / 成本设置页与权限配置页已具备正式页面、合同与测试覆盖
 - Wave 2 范围内的故事覆盖状态已更新到测试故事清单
 - `project page`、`client page` 以及成员/权限相关正式页面已引用 PRD/Figma 或明确 fallback 骨架，并提交对齐结果
-
-**强制测试链路**
-
-- Domain Unit: 角色、授权、成员状态、项目私有性、费率优先级对象
-- Frontend Unit: member list mapper、rate/cost form adapter、project/client/tag filter/url adapter
-- Application Integration: invite/join/disable/restore/remove、项目成员授权、成员费率
-- Transport Contract: members/groups/projects/clients/tags 端点
-- Frontend Feature: 邀请成员、归档项目、私有项目授权
-- Frontend Page Flow: project page / client page / tag page / 组织成员页 / 工作区成员页 / rate-cost-settings / permission-config
-- E2E: 创建 project 后在成员和 timer 相关入口可见
 
 ### Wave 3: Tracking 核心事务面
 
@@ -661,7 +630,6 @@ apps/website/src/
 **依赖**
 
 - 依赖 Wave 2 的 membership、catalog、workspace settings、rate/cost 规则。
-- Wave 3 中新增的 tracking Web 接口必须先落到 `opentoggl-web.openapi.json`；compat 部分仍严格以 `toggl-track-api-v9.swagger.json` 为边界来源。
 
 **退出标准**
 
@@ -671,19 +639,6 @@ apps/website/src/
 - since sync 与主要过滤在 compat API 与 Web 行为上对齐
 - Wave 3 对应的 `timer` 页面族 page flow 与核心 e2e 已按 testing-strategy 落地
 - `calendar`、`list`、`timesheet` 三个正式视图已引用对应 Figma 节点，并证明它们共享同一页面族语义
-
-**强制测试链路**
-
-- Domain Unit: duration、time range、timer state、rate resolution
-- Frontend Unit: time entry mapper、duration/date formatter、timer filter/url adapter、time-entry form adapter
-- Application Integration: create/update/stop/bulk update/filter/sync
-- Transport Contract: time entries / running timer compat endpoints
-- Frontend Feature: start/stop timer、create/edit entry、bulk update
-- Frontend Page Flow: `calendar | list | timesheet` 同路由族一致性
-- E2E:
-  - 登录后启动并停止 timer
-  - 在 `calendar/list/timesheet` 间切换状态不丢失
-- Golden: compat time entry JSON shape
 
 ### Wave 4: Tracking 扩展面与 Governance
 
@@ -714,7 +669,6 @@ apps/website/src/
 **依赖**
 
 - 强依赖 Wave 3 tracking 事实源。
-- Wave 4 的 tracking / governance Web 接口继续先改 `opentoggl-web.openapi.json` 再改实现。
 
 **退出标准**
 
@@ -722,16 +676,6 @@ apps/website/src/
 - 审批权限、编辑回退到 `reopened` 等规则在 API 与 Web 一致
 - 附件、汇率快照、历史结果冻结语义完整
 - Wave 4 覆盖状态已回填到测试故事清单，并标明剩余缺口
-
-**强制测试链路**
-
-- Domain Unit: approval / expense state machine
-- Frontend Unit: approval status mapper、expense currency/attachment adapter、expense form adapter
-- Application Integration: approve/reject/reopen、expense submit/approve/reimburse、attachment rule
-- Transport Contract: approvals / expenses / favorites / reminders 等 compat 端点
-- Frontend Feature: 提交审批、编辑 expense、附件上传
-- Frontend Page Flow: approvals / expenses 页面
-- Golden: expense / approval 输出 shape
 
 ### Wave 5: Reports 读模型与共享
 
@@ -761,7 +705,6 @@ apps/website/src/
 
 - 依赖 Wave 2 的 membership/catalog/rate
 - 依赖 Wave 3-4 的 tracking / approvals / expenses
-- Reports API v3 始终以 `toggl-reports-v3.swagger.json` 为 compat 合同来源；任何 saved/shared/export 的 Web 自定义编排接口必须落在 `opentoggl-web.openapi.json`。
 
 **退出标准**
 
@@ -769,20 +712,6 @@ apps/website/src/
 - 报表与 tracking 的历史事实解释一致
 - 汇率、rounding、profitability 规则在 shared/export/online 三者一致
 - 报表页面族 page flow、导出 golden 与至少一条高价值 e2e 已对齐 stories
-
-**强制测试链路**
-
-- Domain Unit: report filter、time slicing、aggregation helper
-- Frontend Unit: report filter adapter、report table mapper、export option form adapter
-- Application Integration: saved/shared report、permission-cut result、export job record
-- Async Runtime: projector refresh、export generation、rebuild/retry
-- Transport Contract: Reports API v3 全部公开端点
-- Frontend Feature: 保存报表、共享、导出
-- Frontend Page Flow: 报表页面族
-- E2E: 创建 project 并在 report 中可见
-- Golden:
-  - report JSON shape
-  - CSV/PDF/XLSX 列结构基线
 
 ### Wave 6: Webhooks Runtime
 
@@ -814,7 +743,6 @@ apps/website/src/
 
 - 依赖 Wave 2 权限模型
 - 依赖 Wave 3-4 tracking/governance 事件事实
-- Webhooks API v1 始终以 `toggl-webhooks-v1.swagger.json` 为 compat 合同来源；Web 管理页的附加查询/诊断接口若不属于 compat 面，必须进入 `opentoggl-web.openapi.json`。
 
 **退出标准**
 
@@ -823,18 +751,6 @@ apps/website/src/
 - 私有项目和权限变化会影响后续事件暴露
 - Webhooks 页面族、runtime test 与基础验证 e2e 已按 stories 覆盖
 - `integrations webhooks` 页面已引用 PRD 中的 Figma 节点并提交对齐结果
-
-**强制测试链路**
-
-- Domain Unit: filter、signature、subscription state
-- Frontend Unit: webhook filter mapper、status badge mapper、validate form adapter
-- Application Integration: create/validate/ping/disable
-- Async Runtime: delivery retry、dead-letter/final failure、owner visibility change
-- Transport Contract: Webhooks API v1 全部公开端点
-- Frontend Feature: create subscription、validate endpoint、查看失败记录
-- Frontend Page Flow: integrations webhooks 页面
-- E2E: webhook subscription 创建并完成基础验证
-- Golden: webhook payload / status output
 
 ### Wave 7: Billing 商业视图、发票与收口
 
@@ -871,16 +787,6 @@ apps/website/src/
 - self-hosted 虽可使用不同底层计费实现，但对外状态表达与对象模型一致
 - 计划降级、超限与历史对象保留的故事已有明确测试映射与覆盖状态
 
-**强制测试链路**
-
-- Domain Unit: subscription state / quota rule / feature gate rule
-- Frontend Unit: billing plan mapper、invoice list formatter、customer form adapter
-- Application Integration: quota headers、plan downgrade、invoice/customer query
-- Transport Contract: billing/public commercial endpoints
-- Frontend Feature: 查看 quota、查看 invoice、更新 customer
-- Frontend Page Flow: billing/subscription 页面
-- Golden: plan/quota/header shape
-
 ### Wave 8: Importing 迁移闭环
 
 **目标**
@@ -913,7 +819,6 @@ apps/website/src/
 
 - 依赖 Wave 1-4 的核心实体和 tracking 事实源
 - 依赖 Wave 5 reports 可回读一致性
-- `opentoggl-import.openapi.json` 必须先于 import transport 和 Web data access 定型。
 
 **退出标准**
 
@@ -921,17 +826,6 @@ apps/website/src/
 - ID mapping、失败明细、冲突诊断、可重试行为完整
 - import continuation 使用真实 job runtime，不依赖人工补脚本
 - import 页面族、诊断页和“最小样本导入成功” e2e 已对齐 stories
-
-**强制测试链路**
-
-- Domain Unit: mapping、conflict rule、state machine
-- Application Integration: import phase 1/2、partial failure、retry
-- Async Runtime: continuation、resume、idempotency
-- Transport Contract: import API
-- Frontend Feature: 上传/启动导入、查看诊断、重试
-- Frontend Page Flow: import 页面族
-- E2E: 导入一个最小样本并看到结果反馈
-- Golden: import result payload
 
 ### Wave 9: Instance Admin / Platform Operations
 
@@ -970,7 +864,6 @@ apps/website/src/
 - 依赖 Wave 0 platform runtime
 - 依赖 Wave 1 identity/session
 - 依赖 Wave 5/6/8 的异步系统状态接入
-- `opentoggl-admin.openapi.json` 必须先于 admin transport 和 Web data access 定型。
 
 **退出标准**
 
@@ -978,17 +871,6 @@ apps/website/src/
 - 注册策略、实例级用户治理、实例级健康与维护入口都具备正式产品表达
 - 管理员不是业务对象超级后门；高权限操作有审计
 - self-hosted 首次管理员初始化流程和实例级健康页已可用于容器化部署 smoke test
-
-**强制测试链路**
-
-- Domain Unit: bootstrap state、registration policy、maintenance state
-- Frontend Unit: registration-policy adapter、instance config form adapter、health-status mapper
-- Application Integration: create first admin、disable user、pause jobs、health summary
-- Async Runtime: paused jobs / resumed jobs / diagnostic aggregation
-- Transport Contract: admin API
-- Frontend Feature: bootstrap、切换注册策略、暂停/恢复维护入口
-- Frontend Page Flow: instance admin 页面族
-- Golden: admin status / audit payload
 
 ### Wave 10: 兼容性收口与发布准备
 

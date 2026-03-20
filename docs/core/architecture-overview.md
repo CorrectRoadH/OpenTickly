@@ -47,15 +47,18 @@
 ### 3.1.1 本地开发与自托管交付分离
 
 - 本地开发默认采用源码直启：`website` 与 `api` 作为两个开发进程分别启动。
+- 本地开发前端由 `Vite` dev server 提供，浏览器请求通过 Vite proxy 转发到 Go API；默认代理目标为 `OPENTOGGL_WEB_PROXY_TARGET`，未设置时指向 `http://127.0.0.1:8080`。
 - `docker compose` 属于 self-hosted 交付、部署演练和发布态 smoke 验证路径，不是默认本地开发路径。
 - 本地开发所需环境变量统一放在仓库根目录，避免按应用分散配置。
 - 本地开发 env 文件约定也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
 
 ### 3.2 单体优先，不先拆多进程运行时
 
-- 首版运行时只保留 `api` 一个 Go 进程和 `web` 一个前端应用。
+- 首版运行时只保留 `api` 一个 Go 进程。
+- Web 前端仍作为 `apps/website` 独立构建，但 self-hosted 交付默认采用“先构建前端静态产物，再嵌入 Go API 二进制并由同一进程提供页面与 API”的单体运行时。
 - `reports`、`webhooks`、`import` 在代码结构上隔离，但仍运行在同一个 Go API 进程内。
 - 不允许为了“看起来先进”而在一开始引入 worker、队列系统或多服务调用复杂度。
+- self-hosted 默认不要求额外引入独立 `website` 容器或 Nginx 运行时；如部署环境已有现成入口层，它只承担 TLS / ingress 职责，不改变默认交付形态。
 
 ### 3.3 单一事务真相源，读写分离按需演进
 
@@ -422,11 +425,11 @@ backend/
 建议职责：
 
 - `apps/website`：当前 React Web UI 主应用；在正式重构边界前，它是前端目录事实来源。
-- `apps/api`：Go API 入口，承载兼容 API、Web 管理接口与进程内后台任务。
+- `apps/backend`：Go 后端应用入口，承载兼容 API、Web 管理接口与进程内后台任务。
 - `packages/web-ui`：前端可复用 UI、hooks、前端工具函数。
 - `packages/shared-contracts`：少量前后端共享的非兼容层公共类型。
-- `backend/internal/<context>`：后端按业务上下文拆分的模块代码。
-- `backend/internal/platform`：数据库、认证、缓存、文件存储、后台任务、可观测性等共享基础设施。
+- `apps/backend/internal/<context>`：后端按业务上下文拆分的模块代码。
+- `apps/backend/internal/platform`：数据库、认证、缓存、文件存储、后台任务、可观测性等共享基础设施。
 
 约束：
 
@@ -540,14 +543,19 @@ backend/
 
 最小可用拓扑：
 
-- `web`
-- `api`
+- `opentoggl`
 - `postgres`
 - `redis`
+
+其中：
+
+- `opentoggl` 是单个 Go 运行时容器，同时提供 Web UI 静态资源、SPA 路由回退和 HTTP API。
+- `apps/website` 仍是源码开发入口，但不是 self-hosted 发布态必须单独部署的运行时服务。
 
 特点：
 
 - 单机可运行
+- 自托管默认以单应用镜像交付，而不是前后端双镜像
 - 可接受通过单个 Go API 进程 + PostgreSQL 起步
 - 对外功能面不裁剪
 
@@ -562,7 +570,7 @@ backend/
 建议的落地顺序：
 
 1. 先确定 monorepo 模块边界与目录结构。
-2. 搭建 `apps/api`，并把当前 `apps/website` 演进为正式 Web 主入口。
+2. 搭建 `apps/backend`，并把当前 `apps/website` 演进为正式 Web 主入口。
 3. 落第一版 `domain`、`application`、`auth`、`db`、`filestore`、`jobs` 基础层。
 4. 优先打通 Identity、Workspace、Projects、Time Entries 的主写路径。
 5. 引入任务表和进程内 job runner，再扩展 reports/webhooks/import。

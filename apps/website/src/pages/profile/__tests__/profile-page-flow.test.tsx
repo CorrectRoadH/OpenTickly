@@ -46,7 +46,9 @@ describe("profile page flow", () => {
     render(<AppProviders router={router} />);
 
     expect(await screen.findByRole("heading", { name: "Profile" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "API token" })).toBeTruthy();
     expect(screen.getByDisplayValue("Alex North")).toBeTruthy();
+    expect(screen.getByDisplayValue("api-token-99")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Settings" }).getAttribute("href")).toBe(
       "/workspaces/202/settings?section=general",
     );
@@ -69,6 +71,47 @@ describe("profile page flow", () => {
         },
         method: "PATCH",
         pathname: "/web/v1/profile",
+      });
+    });
+  });
+
+  it("rotates the current user api token through the web contract", async () => {
+    const api = installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/profile",
+        resolver: () => jsonResponse(createProfileFixture()),
+      },
+      {
+        path: "/web/v1/preferences",
+        resolver: () => jsonResponse(createPreferencesFixture()),
+      },
+      {
+        method: "POST",
+        path: "/web/v1/profile/api-token/reset",
+        resolver: () => jsonResponse({ api_token: "api-token-100" }),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/profile"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByDisplayValue("api-token-99")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Rotate token" }));
+
+    expect(await screen.findByText("API token rotated")).toBeTruthy();
+    expect(screen.getByDisplayValue("api-token-100")).toBeTruthy();
+    await waitFor(() => {
+      expect(api.calls).toContainEqual({
+        body: undefined,
+        method: "POST",
+        pathname: "/web/v1/profile/api-token/reset",
       });
     });
   });

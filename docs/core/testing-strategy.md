@@ -127,15 +127,15 @@
 
 | 层级                    | 目标                                       | 位置                                                           | 关注点                         |
 | ----------------------- | ------------------------------------------ | -------------------------------------------------------------- | ------------------------------ |
-| Domain Unit             | 不变量与值对象                             | `backend/internal/<context>/domain/*_test.go`                  | 纯业务规则                     |
-| Application Integration | 用例、事务、权限、job record               | `backend/internal/<context>/application/*_integration_test.go` | command/query 编排             |
-| Transport Contract      | 公开 API 与错误语义                        | `apps/api/tests/compat/**`                                     | 路径、字段、状态码、错误映射   |
-| Async Runtime           | projector / delivery / import continuation | `backend/internal/<context>/infra/**/*_job_test.go`            | 幂等、重试、失败恢复           |
+| Domain Unit             | 不变量与值对象                             | `apps/backend/internal/<context>/domain/*_test.go`             | 纯业务规则                     |
+| Application Integration | 用例、事务、权限、job record               | `apps/backend/internal/<context>/application/*_integration_test.go` | command/query 编排         |
+| Transport Contract      | 公开 API 与错误语义                        | `apps/backend/tests/compat/**`                                 | 路径、字段、状态码、错误映射   |
+| Async Runtime           | projector / delivery / import continuation | `apps/backend/internal/<context>/infra/**/*_job_test.go`       | 幂等、重试、失败恢复           |
 | Frontend Unit           | formatter、mapper、helper                  | `apps/website/src/**/__tests__/*`                              | 纯函数与映射                   |
 | Frontend Feature        | 组件交互与 mutation 行为                   | `apps/website/src/features/**/__tests__/*`                     | 提交、错误、状态切换           |
 | Frontend Page Flow      | 页面族与 URL/query 协同                    | `apps/website/src/pages/**/__tests__/*`                        | route、search params、视图切换 |
 | E2E                     | 高价值跨层流程                             | `apps/website/e2e/**`                                          | 用户关键路径                   |
-| Compatibility Golden    | Toggl 兼容基线                             | `apps/api/tests/golden/**`                                     | JSON shape、导出/报表基线      |
+| Compatibility Golden    | Toggl 兼容基线                             | `apps/backend/tests/golden/**`                                 | JSON shape、导出/报表基线      |
 
 ## 2.1 用户故事到测试分层映射
 

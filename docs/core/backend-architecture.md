@@ -102,7 +102,7 @@
 - compat API 的主要风险不是“框架选错”，而是人工手写路由、参数绑定、校验和响应 shape 后逐步偏离 OpenAPI。
 - 因此 compat API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
 - 在这个前提下，`echo` 的价值是作为成熟的 transport runtime 承载生成产物，而不是承载业务语义。
-- `echo` 只能停留在 `transport` 与 `apps/api/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
+- `echo` 只能停留在 `transport` 与 `apps/backend/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
 - DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图，不是额外框架语义。
 - OpenAPI 仍然只生成 transport/contract 边界，不生成 domain/application/infra。
 
@@ -112,7 +112,7 @@
 
 - 让 `application` 能在测试里直接替换 port
 - 让 `transport` 能在不启动整站的情况下单独挂到测试 server
-- 让 `apps/api/internal/bootstrap` 成为唯一装配真相源
+- 让 `apps/backend/internal/bootstrap` 成为唯一装配真相源
 - 让 review 时能直接看出一个 endpoint 穿过哪些模块
 
 因此固定规则如下：
@@ -120,7 +120,7 @@
 - 每个 `application` 用例通过显式构造函数接收依赖
 - `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
 - `infra` 实现 port，但不反向持有 service locator
-- `apps/api/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
+- `apps/backend/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
@@ -128,7 +128,7 @@
 推荐装配形状：
 
 ```text
-apps/api/internal/bootstrap/
+apps/backend/internal/bootstrap/
   config.go
   database.go
   redis.go
@@ -176,7 +176,7 @@ OpenAPI 相关工作需要明确区分 4 件事：
 - `transport/http/compat/*`
 - `transport/http/web/*`
 - `packages/shared-contracts/` 中面向前端或工具的 schema/type 产物
-- `apps/api/tests/compat/**` 与 `apps/api/tests/golden/**` 的测试 skeleton
+- `apps/backend/tests/compat/**` 与 `apps/backend/tests/golden/**` 的测试 skeleton
 
 不允许把生成结果直接扩散到：
 
@@ -230,15 +230,12 @@ compat API 必须做到“架构由合同生成”，具体含义如下：
 ## 1. 目标目录
 
 ```text
-apps/api/
-  cmd/
+apps/backend/
+  main.go
   internal/
     bootstrap/
     http/
     web/
-
-backend/
-  internal/
     <context>/
       domain/
       application/
@@ -251,16 +248,16 @@ backend/
 
 说明：
 
-- `apps/api` 是进程入口、依赖装配和跨模块 web composition 层。
-- `backend/internal/<context>` 是业务模块主体。
-- 业务规则不放在 `apps/api`；`apps/api` 只负责把模块接起来。
+- `apps/backend` 是后端应用目录，`main.go` 是唯一进程入口。
+- `apps/backend/internal/<context>` 是业务模块主体。
+- 业务规则不放在 `main.go`；组合、装配与业务模块都收口在 `apps/backend/internal/*`。
 
 ## 2. 模块模板
 
 每个业务模块统一采用下面的模板：
 
 ```text
-backend/internal/tracking/
+apps/backend/internal/tracking/
   domain/
     time_entry.go
     timer_policy.go
@@ -443,9 +440,9 @@ Query 的特征：
 
 它们应放在：
 
-- `apps/api/internal/web/`：Web 页面所需的跨模块组合接口
-- `apps/api/internal/http/`：总路由、middleware、模块挂载
-- `apps/api/internal/bootstrap/`：依赖装配、provider wiring、config
+- `apps/backend/internal/web/`：Web 页面所需的跨模块组合接口
+- `apps/backend/internal/http/`：总路由、middleware、模块挂载
+- `apps/backend/internal/bootstrap/`：依赖装配、provider wiring、config
 
 典型场景：
 
@@ -459,11 +456,11 @@ Query 的特征：
 - 组合层不拥有独立领域规则
 - 如果聚合逻辑本身形成稳定业务能力，应回收进某个业务模块的 `application/query`
 
-## 5.5 `apps/api` 的运行时边界
+## 5.5 `apps/backend` 的运行时边界
 
-`apps/api` 不是“随便写点 glue code”的目录，它有非常具体的职责：
+`apps/backend` 不是“随便写点 glue code”的目录，它有非常具体的职责：
 
-- `cmd/`：进程启动入口
+- `main.go`：进程启动入口
 - `internal/bootstrap/`：依赖装配、配置解析、生命周期管理
 - `internal/http/`：顶层 middleware、路由注册、健康检查、公开 server 组装
 - `internal/web/`：跨模块 Web composition query
@@ -478,7 +475,7 @@ Query 的特征：
 判断规则：
 
 - 如果逻辑只服务于 `tracking`，它应回到 `tracking/application`
-- 如果逻辑稳定地组合 `tracking + tenant + membership` 的页面数据，它才属于 `apps/api/internal/web`
+- 如果逻辑稳定地组合 `tracking + tenant + membership` 的页面数据，它才属于 `apps/backend/internal/web`
 - 如果逻辑只是数据库连接、server 启停、middleware 组合，它属于 `bootstrap` 或 `http`
 
 ## 6. 权限、套餐和事务

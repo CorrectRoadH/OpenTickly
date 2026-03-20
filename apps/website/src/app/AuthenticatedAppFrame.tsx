@@ -1,8 +1,9 @@
 import { AppPanel } from "@opentoggl/web-ui";
-import { Navigate, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 
 import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
+import { AuthPage } from "../pages/auth/AuthPage.tsx";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { SessionProvider } from "../shared/session/session-context.tsx";
 import { WebApiError } from "../shared/api/web-client.ts";
@@ -32,8 +33,11 @@ export function AuthenticatedAppFrame({
     );
   }
 
-  if (sessionQuery.error instanceof WebApiError && sessionQuery.error.status === 401) {
-    return <Navigate to="/login" />;
+  if (
+    sessionQuery.error instanceof WebApiError &&
+    (sessionQuery.error.status === 401 || sessionQuery.error.status === 403)
+  ) {
+    return <AuthPage mode="login" />;
   }
 
   if (sessionQuery.isError || !sessionQuery.data) {

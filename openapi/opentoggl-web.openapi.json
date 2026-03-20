@@ -134,6 +134,24 @@
         }
       }
     },
+    "/web/v1/profile/api-token/reset": {
+      "post": {
+        "summary": "Rotate the current user API token for the web shell",
+        "operationId": "reset-current-user-api-token",
+        "responses": {
+          "200": {
+            "description": "Updated current user API token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserAPIToken"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/preferences": {
       "get": {
         "summary": "Read the current user preferences for the web shell",
@@ -923,6 +941,15 @@
           "has_password",
           "2fa_enabled"
         ]
+      },
+      "CurrentUserAPIToken": {
+        "type": "object",
+        "properties": {
+          "api_token": {
+            "type": "string"
+          }
+        },
+        "required": ["api_token"]
       },
       "LoginRequest": {
         "type": "object",

@@ -1,6 +1,4 @@
-# Docker Compose Startup (Wave 1)
-
-This stack is scoped to runtime boot for current Wave 1 services.
+# Docker Compose Startup (Target Shape)
 
 This document defines the self-hosted runtime path only.
 
@@ -11,14 +9,17 @@ This document defines the self-hosted runtime path only.
 
 ## Services
 
-- `website`: Nginx serving the built React app on `http://localhost:3000`
-- `api`: Go API runtime on `http://localhost:8080`
+- `opentoggl`: single Go runtime serving embedded Web assets and HTTP API on `http://localhost:8080`
 - `postgres`: PostgreSQL 16
 - `redis`: Redis 7
 
-`website` proxies `/web/v1/*`, `/healthz`, and `/readyz` to `api`, so browser requests stay same-origin.
+Self-hosted delivery should default to one application image:
 
-`docker compose` health checks use `/readyz` for readiness.
+- build `apps/website`
+- embed the built frontend assets into the Go API binary
+- serve SPA routes and `/web/v1/*` from the same Go runtime
+
+`docker compose` health checks use `/readyz` for readiness on the single `opentoggl` service.
 
 ## Start
 
@@ -30,11 +31,9 @@ docker compose up -d --build
 
 ```bash
 docker compose ps
+curl -fsSI http://localhost:8080/
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
-curl -fsSI http://localhost:3000/
-curl -fsS http://localhost:3000/healthz
-curl -fsS http://localhost:3000/readyz
 ```
 
 ## Stop
@@ -42,3 +41,7 @@ curl -fsS http://localhost:3000/readyz
 ```bash
 docker compose down
 ```
+
+## Drift Note
+
+If the repository currently contains a separate `website` container or Nginx runtime, treat that as implementation drift to be removed. The target self-hosted shape is a single Go application image, not a `website + api` dual-runtime deployment.

@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 example
+.agent
+.agents
+.claude
+.codex

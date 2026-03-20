@@ -8,8 +8,8 @@ Local development must run source processes directly from the repository root.
 
 - Do not use `docker compose` as the default local development workflow.
 - Start the frontend from the repository root with `vp run website#dev`.
-- Start the backend from the repository root with `go run ./apps/api/cmd/api`.
-- Local development environment variables must live at the repository root, not under `apps/website`, `apps/api`, or ad hoc shell wrappers.
+- Start the backend from the repository root with `go run ./apps/backend`.
+- Local development environment variables must live at the repository root, not under `apps/website`, `apps/backend`, or ad hoc shell wrappers.
 - Documented local development env variables belong in root-level env files such as `.env.example` and `.env.local`.
 - When local development needs additional entry points, add them to the root toolchain surface such as root `package.json`, `vp`, or a checked-in Go CLI entrypoint.
 - Do not add root-level `scripts/*.sh` files as local development wrappers.
@@ -44,6 +44,8 @@ When reviewing or implementing code:
 - If dependencies are not one-way as documented, change the code.
 - If module boundaries, file ownership, or layer responsibilities drift from the docs, change the code.
 - If naming, shape, or API contracts differ from the docs or OpenAPI, change the code.
+- Structural cleanup, technical debt reduction, and runtime/developer-entrypoint simplification take priority over adding more product surface on top of a drifting foundation.
+- If structure and feature work compete, fix the structure first and only then continue expanding functionality.
 
 ## Reuse Before Creating
 
@@ -63,6 +65,7 @@ Keep files between **200-300 lines max**. If a file exceeds this:
 4. **Group by feature** — co-locate related files, not by type
 
 Signs a file needs splitting:
+
 - Multiple unrelated exports
 - Scrolling to find what you need
 - "Utils" file becoming a junk drawer
@@ -79,6 +82,7 @@ Signs a file needs splitting:
 If you didn't test it, it doesn't work.
 
 Verify written code by:
+
 - Running unit tests
 - Running end to end tests
 - Checking for type errors

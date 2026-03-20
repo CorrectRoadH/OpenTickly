@@ -67,12 +67,18 @@
 
 - 本地开发入口统一从仓库根目录触发。
 - 前端本地开发入口是根目录执行的 `vp run website#dev`。
-- 后端本地开发入口是根目录执行的 `go run ./apps/api/cmd/api`。
-- 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/api` 或根级 shell 包装脚本。
+- 后端本地开发入口是根目录执行的 `go run ./apps/backend`。
+- 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/backend` 或根级 shell 包装脚本。
 - 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
 - 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
 - `scripts/` 目录不承载日常本地开发职责；如需新增开发入口，优先收口到根工具链或正式 CLI。
 - `docker compose` 只描述 self-hosted 交付链路，不作为默认本地开发流程。
+
+## 3.3 结构优先级
+
+- 结构收口、技术债治理、运行时入口简化的优先级高于继续扩展产品功能面。
+- 如果目录结构、启动命令、self-hosted 交付形态或文档口径仍在漂移，不应继续在其上叠加更多正式功能。
+- 当结构治理与功能开发发生冲突时，先完成结构治理，再继续后续波次功能实现。
 
 ## 3.5 OpenAPI 来源分层
 
@@ -103,34 +109,36 @@
 ```text
 apps/
   website/
-  api/
+  backend/
+    main.go
+    internal/
+      bootstrap/
+      http/
+      web/
+      identity/
+      tenant/
+      membership/
+      catalog/
+      tracking/
+      governance/
+      reports/
+      webhooks/
+      billing/
+      importing/
+      platform/
 
 packages/
   web-ui/
   shared-contracts/
   utils/
-
-backend/
-  internal/
-    identity/
-    tenant/
-    membership/
-    catalog/
-    tracking/
-    governance/
-    reports/
-    webhooks/
-    billing/
-    importing/
-    platform/
 ```
 
 说明：
 
 - `apps/website` 是当前 Web 产品应用。
-- `apps/api` 是 Go API 进程入口与组合层。
+- `apps/backend` 是 Go 后端应用，`main.go` 是唯一进程入口，`internal/*` 同时承载 bootstrap、组合层与业务模块。
 - `packages/` 只放跨应用共享、但不拥有业务流程的代码。
-- `backend/internal/*` 是后端业务模块主体。
+- 后端业务模块主体位于 `apps/backend/internal/*`，不再额外拆出顶层 `backend/` 目录。
 
 前端的 `packages/web-ui` 不是可选项，而是应用级 UI 基线包：
 
@@ -232,7 +240,7 @@ all modules -> platform
 - 如果是一个新的事务型业务能力，落到对应后端模块的 `application/`
 - 如果是一个新的实体、不变量、值对象，落到对应后端模块的 `domain/`
 - 如果是一个新的数据库/缓存/第三方实现，落到对应后端模块的 `infra/` 或 `platform/`
-- 如果是一个新的 HTTP 入口，只能落到 `transport/http/*` 或 `apps/api` 组合层
+- 如果是一个新的 HTTP 入口，只能落到 `transport/http/*` 或 `apps/backend/internal/http` / `apps/backend/internal/web`
 - 如果是一个新的跨产品测试要求，落到 [testing-strategy](./testing-strategy.md) 规定的位置
 
 ## 10. Code Review 检查项

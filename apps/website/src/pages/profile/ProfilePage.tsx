@@ -1,6 +1,7 @@
 import { AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 
+import { ApiTokenSection } from "../../features/profile/ApiTokenSection.tsx";
 import { PreferencesFormSection } from "../../features/profile/PreferencesFormSection.tsx";
 import { ProfileFormSection } from "../../features/profile/ProfileFormSection.tsx";
 import {
@@ -10,6 +11,7 @@ import {
 import {
   usePreferencesQuery,
   useProfileQuery,
+  useResetApiTokenMutation,
   useUpdatePreferencesMutation,
   useUpdateProfileMutation,
 } from "../../shared/query/web-shell.ts";
@@ -18,7 +20,9 @@ export function ProfilePage(): ReactElement {
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
   const updateProfileMutation = useUpdateProfileMutation();
+  const resetApiTokenMutation = useResetApiTokenMutation();
   const updatePreferencesMutation = useUpdatePreferencesMutation();
+  const [apiTokenStatus, setApiTokenStatus] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<string | null>(null);
   const [preferencesStatus, setPreferencesStatus] = useState<string | null>(null);
 
@@ -48,6 +52,16 @@ export function ProfilePage(): ReactElement {
           await updateProfileMutation.mutateAsync(request);
           setProfileStatus("Profile saved");
         }}
+      />
+
+      {apiTokenStatus ? <Notice>{apiTokenStatus}</Notice> : null}
+      <ApiTokenSection
+        isRotating={resetApiTokenMutation.isPending}
+        onRotate={async () => {
+          await resetApiTokenMutation.mutateAsync();
+          setApiTokenStatus("API token rotated");
+        }}
+        token={profileQuery.data.api_token}
       />
 
       {preferencesStatus ? <Notice>{preferencesStatus}</Notice> : null}

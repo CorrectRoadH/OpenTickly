@@ -9,10 +9,16 @@
     "test": "vp run test -r",
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
     "dev": "vp run website#dev",
+    "dev:website": "vp run website#dev",
+    "dev:backend": "go run ./apps/backend",
+    "dev:api": "go run ./apps/backend",
     "prepare": "vp config"
   },
   "devDependencies": {
-    "vite-plus": "catalog:"
+    "@playwright/test": "^1.58.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=22.12.0"

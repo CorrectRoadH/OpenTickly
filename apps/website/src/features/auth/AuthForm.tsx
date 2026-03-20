@@ -1,4 +1,5 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { type ReactElement } from "react";
 import { z } from "zod";
@@ -17,6 +18,7 @@ const registerSchema = loginSchema.extend({
 type AuthMode = "login" | "register";
 
 type AuthFormProps = {
+  errorMessage?: string | null;
   mode: AuthMode;
   onSubmit: (payload: LoginRequestDto | RegisterRequestDto) => Promise<void> | void;
 };
@@ -24,7 +26,7 @@ type AuthFormProps = {
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export function AuthForm({ mode, onSubmit }: AuthFormProps): ReactElement {
+export function AuthForm({ errorMessage, mode, onSubmit }: AuthFormProps): ReactElement {
   const form = useForm<LoginFormValues & RegisterFormValues>({
     defaultValues: {
       email: "",
@@ -88,6 +90,25 @@ export function AuthForm({ mode, onSubmit }: AuthFormProps): ReactElement {
         </Field>
 
         <AppButton type="submit">{mode === "login" ? "Log in" : "Register"}</AppButton>
+
+        {errorMessage ? (
+          <p
+            className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            role="alert"
+          >
+            {errorMessage}
+          </p>
+        ) : null}
+
+        <p className="text-sm text-slate-600">
+          {mode === "login" ? "Need an account?" : "Already have an account?"}{" "}
+          <Link
+            className="font-semibold text-emerald-800 underline-offset-4 hover:underline"
+            to={mode === "login" ? "/register" : "/login"}
+          >
+            {mode === "login" ? "Register" : "Log in"}
+          </Link>
+        </p>
       </form>
     </AppPanel>
   );

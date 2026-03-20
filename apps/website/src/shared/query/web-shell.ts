@@ -26,6 +26,7 @@ import type {
 import { webRequest } from "../api/web-client.ts";
 
 const sessionQueryKey = ["web-session"] as const;
+const profileQueryKey = ["web-profile"] as const;
 const workspaceSettingsQueryKey = (workspaceId: number) =>
   ["workspace-settings", workspaceId] as const;
 const workspacePermissionsQueryKey = (workspaceId: number) =>
@@ -79,6 +80,8 @@ type TaskCreateRequest = {
   workspace_id: number;
 };
 
+type ResetCurrentUserApiTokenResponseDto = Pick<WebCurrentUserProfileDto, "api_token">;
+
 export function useSessionBootstrapQuery() {
   return useQuery({
     queryFn: () => webRequest<WebSessionBootstrapDto>("/web/v1/session"),
@@ -119,7 +122,7 @@ export function useRegisterMutation() {
 export function useProfileQuery() {
   return useQuery({
     queryFn: () => webRequest<WebCurrentUserProfileDto>("/web/v1/profile"),
-    queryKey: ["web-profile"],
+    queryKey: profileQueryKey,
   });
 }
 
@@ -133,7 +136,31 @@ export function useUpdateProfileMutation() {
         method: "PATCH",
       }),
     onSuccess: (data) => {
-      queryClient.setQueryData(["web-profile"], data);
+      queryClient.setQueryData(profileQueryKey, data);
+      void queryClient.invalidateQueries({
+        queryKey: sessionQueryKey,
+      });
+    },
+  });
+}
+
+export function useResetApiTokenMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      webRequest<ResetCurrentUserApiTokenResponseDto>("/web/v1/profile/api-token/reset", {
+        method: "POST",
+      }),
+    onSuccess: (data) => {
+      queryClient.setQueryData<WebCurrentUserProfileDto | undefined>(profileQueryKey, (profile) =>
+        profile
+          ? {
+              ...profile,
+              api_token: data.api_token,
+            }
+          : profile,
+      );
       void queryClient.invalidateQueries({
         queryKey: sessionQueryKey,
       });
