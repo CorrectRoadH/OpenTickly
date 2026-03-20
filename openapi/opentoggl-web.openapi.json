@@ -372,6 +372,405 @@
           }
         }
       }
+    },
+    "/web/v1/workspaces/{workspace_id}/members": {
+      "get": {
+        "summary": "List workspace members for the current workspace",
+        "operationId": "list-workspace-members",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMembersEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/members/invitations": {
+      "post": {
+        "summary": "Invite a member into the current workspace",
+        "operationId": "invite-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceMemberInvitationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workspace member invitation created"
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}": {
+      "patch": {
+        "summary": "Update a workspace member",
+        "operationId": "update-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceMemberUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove a workspace member",
+        "operationId": "remove-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workspace member removed"
+          }
+        }
+      }
+    },
+    "/web/v1/projects": {
+      "get": {
+        "summary": "List projects available to the current workspace scope",
+        "operationId": "list-projects",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a project for the web shell",
+        "operationId": "create-project",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/projects/{project_id}": {
+      "get": {
+        "summary": "Read a project for the web shell",
+        "operationId": "get-project",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a project for the web shell",
+        "operationId": "update-project",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/projects/{project_id}/archive": {
+      "post": {
+        "summary": "Archive a project",
+        "operationId": "archive-project",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archived project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/projects/{project_id}/restore": {
+      "post": {
+        "summary": "Restore a project",
+        "operationId": "restore-project",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restored project",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/projects/{project_id}/members": {
+      "get": {
+        "summary": "List members granted to a project",
+        "operationId": "list-project-members",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMembersEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Grant a workspace member access to a project",
+        "operationId": "grant-project-member",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectMemberGrantRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Granted project member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/projects/{project_id}/members/{member_id}": {
+      "delete": {
+        "summary": "Revoke a project member grant",
+        "operationId": "revoke-project-member",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Project member revoked"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -422,6 +821,121 @@
       },
       "QuotaWindow": {
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/QuotaWindow"
+      },
+      "ProjectCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "billable": {
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["workspace_id", "name"]
+      },
+      "ProjectListEnvelope": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectView"
+            }
+          }
+        },
+        "required": ["projects"]
+      },
+      "ProjectMember": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "integer"
+          },
+          "member_id": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["project_id", "member_id"]
+      },
+      "ProjectMemberGrantRequest": {
+        "type": "object",
+        "properties": {
+          "member_id": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["member_id"]
+      },
+      "ProjectMembersEnvelope": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectMember"
+            }
+          }
+        },
+        "required": ["members"]
+      },
+      "ProjectUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "billable": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "ProjectView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "billable": {
+            "type": "boolean"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "color": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "workspace_id", "name", "archived"]
       },
       "RegisterRequest": {
         "type": "object",
@@ -507,6 +1021,69 @@
       },
       "WorkspacePreferences": {
         "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.WorkspacePreferences"
+      },
+      "WorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "workspace_id", "email", "role", "active"]
+      },
+      "WorkspaceMemberInvitationRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["email"]
+      },
+      "WorkspaceMembersEnvelope": {
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMember"
+            }
+          }
+        },
+        "required": ["members"]
+      },
+      "WorkspaceMemberUpdate": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
       },
       "WorkspaceSettings": {
         "$ref": "./toggl-track-api-v9.swagger.json#/definitions/github_com_toggl_toggl_api_internal_models.Workspace"

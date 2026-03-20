@@ -16,7 +16,7 @@ import {
 import { validateGeneratedSchemaValue } from "../../src/testing/contracts/schema-backed-validator.ts";
 
 describe("opentoggl custom OpenAPI sources", () => {
-  const wave1WebPaths = [
+  const wave2WebPaths = [
     "/web/v1/auth/login",
     "/web/v1/auth/logout",
     "/web/v1/auth/register",
@@ -27,6 +27,29 @@ describe("opentoggl custom OpenAPI sources", () => {
     "/web/v1/workspaces/{workspace_id}/settings",
     "/web/v1/workspaces/{workspace_id}/capabilities",
     "/web/v1/workspaces/{workspace_id}/quota",
+    "/web/v1/workspaces/{workspace_id}/members",
+    "/web/v1/workspaces/{workspace_id}/members/invitations",
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}",
+    "/web/v1/projects",
+    "/web/v1/projects/{project_id}",
+    "/web/v1/projects/{project_id}/archive",
+    "/web/v1/projects/{project_id}/restore",
+    "/web/v1/projects/{project_id}/members",
+    "/web/v1/projects/{project_id}/members/{member_id}",
+  ] as const;
+
+  const wave2WebSchemas = [
+    "WorkspaceMember",
+    "WorkspaceMembersEnvelope",
+    "WorkspaceMemberInvitationRequest",
+    "WorkspaceMemberUpdate",
+    "ProjectView",
+    "ProjectListEnvelope",
+    "ProjectCreateRequest",
+    "ProjectUpdateRequest",
+    "ProjectMember",
+    "ProjectMembersEnvelope",
+    "ProjectMemberGrantRequest",
   ] as const;
 
   it("defines the Wave 0 custom boundary documents", () => {
@@ -62,10 +85,10 @@ describe("opentoggl custom OpenAPI sources", () => {
     );
   });
 
-  it("defines the Wave 1 web shell boundary for auth, session, profile, preferences, and tenant settings", () => {
+  it("defines the Wave 2 web shell boundary for auth, session, settings, workspace members, and projects", () => {
     const webDocument = loadOpenTogglDocuments()[0]?.document;
 
-    expect(Object.keys(webDocument?.paths ?? {})).toEqual(wave1WebPaths);
+    expect(Object.keys(webDocument?.paths ?? {})).toEqual(wave2WebPaths);
     expect(webDocument?.paths?.["/web/v1/auth/register"]?.post?.operationId).toBe(
       "register-web-user",
     );
@@ -80,9 +103,48 @@ describe("opentoggl custom OpenAPI sources", () => {
     expect(
       webDocument?.paths?.["/web/v1/workspaces/{workspace_id}/settings"]?.patch?.operationId,
     ).toBe("update-workspace-settings");
+    expect(webDocument?.paths?.["/web/v1/workspaces/{workspace_id}/members"]?.get?.operationId).toBe(
+      "list-workspace-members",
+    );
+    expect(
+      webDocument?.paths?.["/web/v1/workspaces/{workspace_id}/members/invitations"]?.post
+        ?.operationId,
+    ).toBe("invite-workspace-member");
+    expect(
+      webDocument?.paths?.["/web/v1/workspaces/{workspace_id}/members/{member_id}"]?.patch
+        ?.operationId,
+    ).toBe("update-workspace-member");
+    expect(
+      webDocument?.paths?.["/web/v1/workspaces/{workspace_id}/members/{member_id}"]?.delete
+        ?.operationId,
+    ).toBe("remove-workspace-member");
+    expect(webDocument?.paths?.["/web/v1/projects"]?.get?.operationId).toBe("list-projects");
+    expect(webDocument?.paths?.["/web/v1/projects"]?.post?.operationId).toBe("create-project");
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}"]?.get?.operationId).toBe(
+      "get-project",
+    );
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}"]?.patch?.operationId).toBe(
+      "update-project",
+    );
+    expect(
+      webDocument?.paths?.["/web/v1/projects/{project_id}/archive"]?.post?.operationId,
+    ).toBe("archive-project");
+    expect(
+      webDocument?.paths?.["/web/v1/projects/{project_id}/restore"]?.post?.operationId,
+    ).toBe("restore-project");
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}/members"]?.get?.operationId).toBe(
+      "list-project-members",
+    );
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}/members"]?.post?.operationId).toBe(
+      "grant-project-member",
+    );
+    expect(
+      webDocument?.paths?.["/web/v1/projects/{project_id}/members/{member_id}"]?.delete
+        ?.operationId,
+    ).toBe("revoke-project-member");
   });
 
-  it("loads the generated manifest entries for the Wave 1 web shell operations", () => {
+  it("loads the generated manifest entries for the current generated web shell operations", () => {
     const manifest = loadGeneratedCustomOperationManifest();
     const webOperations = manifest.operations.filter(
       (entry) => entry.source === "opentoggl-web.openapi.json",
@@ -105,6 +167,34 @@ describe("opentoggl custom OpenAPI sources", () => {
       "GET /web/v1/workspaces/{workspace_id}/capabilities",
       "GET /web/v1/workspaces/{workspace_id}/quota",
     ]);
+  });
+
+  it("defines the Wave 2 workspace member and project schemas", () => {
+    const webDocument = loadOpenTogglDocuments()[0]?.document;
+
+    expect(
+      wave2WebSchemas.every((schemaName) => webDocument?.components?.schemas?.[schemaName]),
+    ).toBe(true);
+    expect(webDocument?.components?.schemas?.WorkspaceMembersEnvelope?.properties?.members).toEqual(
+      {
+        type: "array",
+        items: {
+          $ref: "#/components/schemas/WorkspaceMember",
+        },
+      },
+    );
+    expect(webDocument?.components?.schemas?.ProjectListEnvelope?.properties?.projects).toEqual({
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/ProjectView",
+      },
+    });
+    expect(webDocument?.components?.schemas?.ProjectMembersEnvelope?.properties?.members).toEqual({
+      type: "array",
+      items: {
+        $ref: "#/components/schemas/ProjectMember",
+      },
+    });
   });
 
   it("reuses the shared capability and quota schemas through external refs", () => {
