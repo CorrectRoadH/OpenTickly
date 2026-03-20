@@ -1,46 +1,82 @@
-## Vite+ Skill
+# Code Quality Standards
 
-- Use the project skill at `.agents/skills/vite-plus/SKILL.md` for all `vp` workflow rules.
-- In this repo, package management, checks, tests, builds, and JS tool execution must go through `vp`, not `pnpm`, `npm`, or `yarn`.
+Always apply these standards to all code you write.
 
-## Docs Routing
+## Documentation Is The Source Of Truth
 
-- Before changing product scope, architecture, implementation structure, or UI semantics, read `docs/00-start-here.md` first.
-- For product behavior changes, read `docs/core/product-definition.md` and the relevant file under `docs/product/`.
-- For API compatibility and runtime semantics, read `docs/core/toggl-public-definition.md`, the relevant file under `docs/contracts/`, and then `openapi/` or `docs/upstream/` if more evidence is needed.
-- For architecture and module-boundary work, read `docs/core/architecture-overview.md`, `docs/core/codebase-structure.md`, `docs/core/frontend-architecture.md`, `docs/core/backend-architecture.md`, `docs/core/testing-strategy.md`, and `docs/core/ddd-glossary.md`.
-- Do not start from `docs/reference/` or `docs/challenges/` unless the task explicitly needs supporting evidence, historical analysis, or unresolved questions.
+This repository is implemented from `docs/` and `openapi/`.
 
-## Compatibility Rules
+- Product behavior, API shape, page semantics, architecture boundaries, and testing expectations must match the definitions in `docs/` and `openapi/`.
+- The goal is not "reasonable behavior" or "close enough". The goal is implementation that matches the documented definition.
+- Before making changes, read the relevant files under `docs/core/`, `docs/product/`, and `openapi/`, then implement against those definitions.
+- If documentation already defines the behavior, do not invent a local interpretation, simplify it, or replace it with a "better" implementation.
 
-- This project is an implementation of Toggl with fully matching behavior.
-- Target 100% compatibility with Toggl for product behavior, API semantics, data shapes, interaction details, and edge-case handling.
-- Treat the definitions in `docs/` as the source of truth. Do not invent or reinterpret behavior when the docs already define it.
-- Do not introduce product changes, UX deviations, API drift, or "improvements" that make the implementation differ from Toggl.
-- If behavior appears ambiguous, resolve it from the documented contracts and upstream evidence instead of making a new local rule.
+## Documentation Change Rules
 
-## Code Requirements
+Documentation is not allowed to drift to fit the current implementation.
 
-- Write code that is clean, direct, and minimal. Prefer the simplest implementation that correctly satisfies the documented behavior.
-- Optimize for low cognitive load. Fewer moving parts, fewer abstractions, and fewer files are preferred when they preserve clarity.
-- Code should carry its own weight. Do not create code-shaped documentation, speculative abstractions, or ceremony-heavy patterns.
-- Avoid adding environment variables unless they are strictly necessary for the real runtime contract.
-- Avoid one-off scripts, migration helpers, temporary scaffolding, or other disposable implementation artifacts unless explicitly requested.
-- Do not add fallback mechanisms, configurability, or extension points that are not required by the documented product definition.
-- Keep modules focused and readable. Prefer explicit straightforward logic over cleverness.
-- When choosing between "generic/flexible" and "small/obvious", prefer "small/obvious" unless the docs require the broader design.
-- 代码应该要有注释，说明这里为什么这样写，是解决什么问题、BUG。或者实现什么样特殊的动画、UI效果
+- If implementation and docs differ, fix the implementation to match the docs by default.
+- If you discover the docs are incomplete, ambiguous, or missing implementation context, add clarification at the corresponding documentation location.
+- Clarifications must be additive. Do not rewrite, weaken, or silently change the original documented requirement just to make the current implementation pass.
+- If a documented rule needs to change, treat that as an explicit documentation change request, not an implementation convenience.
+- Never use doc edits to hide code drift, architecture drift, or low-quality implementation decisions.
 
-## Testing Rules
+## Drift Handling
 
-- `docs/core/testing-strategy.md` is a hard implementation constraint, not optional guidance.
-- This project does not assume manual QA or manual product acceptance. Tests are the primary acceptance mechanism.
-- Design tests from PRD-defined user stories first. Do not design tests by walking OpenAPI endpoint lists and filling coverage mechanically.
-- Treat user stories as the primary source for acceptance tests, not the only allowed source for every test.
-- Do not introduce slow tests. The repository standard is that the full test suite should stay fast enough for routine local execution before commit.
-- Do not design a split where "fast tests" run locally and "real confidence" is deferred to slow CI-only suites.
-- Prefer real integration boundaries over mocks. Use mocks/fakes only at true external system boundaries, not to simulate internal business behavior.
-- New code is not complete if it lacks the tests required by the testing strategy for its layer, public contract, and user-facing flow.
-- Use OpenAPI as a contract-validation input, not as the primary test design source.
-- Add regression tests for bugs, edge cases, invariants, and other TDD-discovered rules even when they do not map to a full user story.
-- If a feature is hard to test quickly, simplify the implementation or boundaries instead of normalizing slow, brittle, or heavily mocked tests.
+When reviewing or implementing code:
+
+- If code does not match documented behavior, change the code.
+- If code quality does not match documented structure expectations, change the code.
+- If dependencies are not one-way as documented, change the code.
+- If module boundaries, file ownership, or layer responsibilities drift from the docs, change the code.
+- If naming, shape, or API contracts differ from the docs or OpenAPI, change the code.
+
+## Reuse Before Creating
+
+Before writing new code, analyze existing utilities, components, hooks, helpers and tests:
+
+1. **Search first** — grep/glob for similar functionality before implementing
+2. **Extend if close** — if something exists that's 80% of what you need, extend it
+3. **Extract if duplicating** — if you're about to copy-paste, extract to shared module instead
+
+## File Size & Organization
+
+Keep files between **200-300 lines max**. If a file exceeds this:
+
+1. **Split by responsibility** — one module = one concern
+2. **Extract sub-components** — UI pieces that can stand alone should
+3. **Separate logic from presentation** — hooks/utils in their own files
+4. **Group by feature** — co-locate related files, not by type
+
+Signs a file needs splitting:
+- Multiple unrelated exports
+- Scrolling to find what you need
+- "Utils" file becoming a junk drawer
+- Component doing data fetching + transformation + rendering
+
+## Code Style
+
+1. Prefer writing clear code and use inline comments sparingly
+2. Document methods with block comments at the top of the method
+3. Use Conventional Commit format
+
+## Test To Verify Functionality
+
+If you didn't test it, it doesn't work.
+
+Verify written code by:
+- Running unit tests
+- Running end to end tests
+- Checking for type errors
+- Checking for lint errors
+- Smoke testing and checking for runtime errors with Playwright
+- Taking screenshots and verifying the UI is as expected
+
+## Verification Against Docs
+
+A task is not complete unless both of these are true:
+
+- The implementation passes the required checks and tests.
+- The implementation still matches the relevant definitions in `docs/` and `openapi/`.
+
+Passing tests does not justify behavior that differs from the docs.
