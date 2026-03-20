@@ -69,7 +69,7 @@
   - `billing` 负责 plan / subscription / invoice / customer / 商业配额
   - `governance` 负责 API quota / audit / retention / status
 
-### 3.6 代码结构采用有明确规则的 DDD/Hexagonal 组合
+### 3.6 代码结构采用有明确规则的领域边界 + Hexagonal 组合
 
 这里不接受只写一句“DDD-lite”。
 
@@ -547,7 +547,7 @@ backend/
 
 当前仓库状态：
 
-- 已有产品定义、DDD、架构与专题 PRD 文档。
+- 已有产品定义、领域模型、架构与专题 PRD 文档。
 - 已收录 Toggl OpenAPI 与官方文档镜像。
 - 代码仍处于 Vite+ monorepo starter 阶段，尚未开始业务实现。
 

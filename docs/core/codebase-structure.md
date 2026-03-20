@@ -37,7 +37,7 @@
 
 1. `docs/core/product-definition.md` 与对应 `docs/product/*.md`
 2. `openapi/*.json` 与 Figma
-3. `docs/core/ddd-glossary.md` 与 `docs/core/domain-model.md`
+3. `docs/core/domain-model.md`
 4. `docs/core/architecture-overview.md`
 5. 本文档与对应的前端、后端、测试专题文档
 6. `docs/challenges/*`
@@ -46,7 +46,7 @@
 
 - `product/` 决定用户可见行为与页面语义。
 - `openapi/` 是 API 边界的直接输入来源，Figma 是 UI 边界的直接输入来源。
-- `ddd-glossary` 与 `domain-model` 决定领域边界和对象归属。
+- `domain-model` 决定领域边界、对象归属、聚合根和关键不变量。
 - `core/architecture-overview.md` 决定系统级运行时蓝图。
 - 本文档与子文档决定代码如何组织、如何依赖、如何测试。
 - `challenges/` 不是当前权威定义。
@@ -243,7 +243,6 @@ all modules -> platform
 - [frontend-architecture](./frontend-architecture.md)：定义前端状态、页面、组件与共享包规则
 - [backend-architecture](./backend-architecture.md)：定义后端模块内部结构、协作与组合规则
 - [testing-strategy](./testing-strategy.md)：定义测试矩阵、目录与验收边界
-- `docs/core/ddd-glossary.md`：定义术语边界与判定规则
-- `docs/core/domain-model.md`：定义 OpenToggl 已确定的领域模型
+- `docs/core/domain-model.md`：定义 OpenToggl 已确定的领域模型与实现边界约束
 
 本文档是入口，不是细节黑洞。

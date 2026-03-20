@@ -224,8 +224,8 @@
   - 定义 OpenAPI / Figma / PRD 的依赖关系，以及 `import`
 - `docs/core/codebase-structure.md`
   - 定义这些能力在代码结构中的归属
-- `docs/core/ddd-glossary.md`
-  - 定义“实例级能力”“平台管理能力”等术语
+- `docs/core/domain-model.md`
+  - 定义实例级能力、平台管理能力和代码归属边界
 
 ## Initial Structure Decision
 
