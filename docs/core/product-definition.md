@@ -20,9 +20,11 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 
 首版产品定义采用以下输入分工：
 
+- `docs/product/*.md` 是默认阅读入口
 - `openapi/*.json` 是 API 兼容实现的强约束来源
 - Figma 原型是 UI 界面与交互兼容实现的强约束来源
-- `docs/product/*.md` 只补充 OpenAPI 与 Figma 无法完整表达的功能细节
+- PRD 必须明确引用相关 OpenAPI 与 Figma
+- PRD 只补充 OpenAPI 与 Figma 无法完整表达的功能细节
 
 也就是说，以下内容都直接按上游公开定义来定义：
 
@@ -36,6 +38,8 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 - Webhook 生命周期与运行时行为
 - 订阅、账单、发票、配额等运营与商业接口
 - Web 界面上的对应功能与操作流
+
+处理需求时，默认先读对应 PRD；只有在需要精确实现 API 或 UI 细节时，才下钻去读 PRD 所引用的 OpenAPI 或 Figma。
 
 产品文档不重复抄写 OpenAPI 或 Figma 本身；只定义两者未完整覆盖、但实现必须遵守的产品细节。
 
@@ -54,7 +58,7 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 
 ## 上游输入
 
-实现和 PRD 编写时，应直接引用：
+PRD 编写时，应引用：
 
 - `openapi/toggl-track-api-v9.swagger.json`
 - `openapi/toggl-reports-v3.swagger.json`

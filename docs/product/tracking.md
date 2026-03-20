@@ -15,6 +15,30 @@
 - favorites / goals / reminders / timeline
 - calendar integrations
 
+本文件的强约束输入：
+
+- `openapi/toggl-track-api-v9.swagger.json`
+- 对应 Figma timer / project / client / tag / tracking 相关页面原型
+
+本文件只补充 OpenAPI 与 Figma 无法完整表达的功能细节。
+
+## API 兼容要求
+
+- tracking 不仅要提供对应 Web 页面，还必须完整兼容 `Track API v9` 中属于 tracking 产品面的公开接口。
+- 至少包括：
+  - time entries
+  - running timer
+  - projects
+  - clients
+  - tasks
+  - tags
+  - approvals
+  - expenses
+  - favorites
+  - goals
+  - reminders
+- 如果某项能力在产品上被视为 tracking 正式功能，就不能只做 Web，不做兼容 API。
+
 ## Product Rules
 
 - tracking 是日常使用最频繁的产品面，API 和 Web 必须共享同一套公开行为。
@@ -97,6 +121,49 @@
 
 - running timer 并发冲突的精确公开行为，仍需继续对照 Toggl 公开资料确认。
 - favorites、goals、reminders、timeline 的低频字段和边界行为，仍需继续从公开资料补齐。
+
+## 页面映射（Figma / Screenshot）
+
+### Shared App Shell
+
+- 共享应用壳以 Figma `left nav` 节点 `8:2829` 为参考，文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。
+- workspace switcher、左侧导航、running timer 状态、profile/admin 入口应跨 `timer`、`project`、`client`、`tag` 复用同一壳层，不为每个页面复制一套布局。
+
+### Timer 页面族
+
+- `Timer / Calendar`
+  - Figma：`timer calendar mode`，node `8:3029`
+  - Screenshot：[toggl-timer-calendar-view-week.png](../../toggl_screenshots/toggl-timer-calendar-view-week.png)
+  - 产品含义：这是同一 `timer` 页面在 `calendar` 视图下的周视图，用时间栅格展示 time entries。
+  - 实现要求：它与 `list view`、`timesheet` 共享同一路由族、日期范围、筛选条件、running timer/header 状态，只替换主内容区投影，不单独定义另一套页面或数据模型。
+- `Timer / List view`
+  - Figma：`timer listview`，node `12:2948`
+  - Screenshot：[toggl-timer-list-view-all-dates.png](../../toggl_screenshots/toggl-timer-list-view-all-dates.png)
+  - 产品含义：这是 `timer` 页面按日期分组的明细视图，用线性列表展示 time entries。
+  - 实现要求：它读取的仍是同一批 time entries，不应和 `calendar`、`timesheet` 产生不同过滤语义；创建、编辑、停止 timer 的入口要保持一致。
+- `Timer / Timesheet`
+  - Figma：`timer timesheet mode`，node `10:13202`
+  - Screenshot：[toggl-timer-timesheet-view-week.png](../../toggl_screenshots/toggl-timer-timesheet-view-week.png)
+  - 产品含义：这是 `timer` 页面在 `timesheet` 视图下的聚合呈现，按项目和星期维度显示工作时长。
+  - 实现要求：它是 time entries 的聚合读面，不是单独的事务写模型；复制上周、按日合计、按项目行展示等行为都应建立在同一 tracking 事实之上。
+
+### Project / Client / Tag 页面
+
+- `Project page`
+  - Figma：节点名为 `project list`，node `10:20028`
+  - Screenshot：[toggl-projects-list.png](../../toggl_screenshots/toggl-projects-list.png)
+  - 产品含义：PRD 中按 `project page` 理解，而不是只读列表。它承担项目浏览、过滤、创建、归档/恢复、pin/unpin、成员与任务入口。
+  - 实现要求：顶部过滤条、主表格、创建按钮、时间状态/成员/pinned 等列是默认信息架构；详情、成员、任务、模板等流程应从该页面进入或挂接，而不是拆成一组彼此无关的页面。
+- `Client page`
+  - Figma：`client`，node `12:3281`
+  - Screenshot：当前没有对应截图，先以 Figma 为主参考
+  - 产品含义：client 是独立产品对象，不是 project 的附属标签。
+  - 实现要求：过滤栏、表格骨架、批量操作和详情入口直接参考 `project page` 结构，只把主实体、列定义和过滤条件替换为 client 语义。
+- `Tag page`
+  - Figma：当前没有单列 node
+  - Screenshot：当前没有单列截图
+  - 产品含义：tag 仍是正式产品对象，但当前页面结构可以直接参考 `project page`。
+  - 实现要求：信息架构、过滤条、表格主体、批量编辑与详情入口可沿用 `project page` 的骨架，只替换为 tag 的字段与操作；后续若补独立 Figma node，再细化视觉与交互差异。
 
 ## Web 要求
 
