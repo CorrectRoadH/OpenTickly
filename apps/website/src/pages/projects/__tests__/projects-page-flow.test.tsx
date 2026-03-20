@@ -30,6 +30,7 @@ describe("projects page flow", () => {
     const list = screen.getByLabelText("Projects list");
     expect(within(list).getByText("Website Revamp")).toBeTruthy();
     expect(within(list).getByText("Community Launch")).toBeTruthy();
-    expect(within(list).getByText(/Public project · Archived/)).toBeTruthy();
+    expect(within(list).getByText(/Public project · Inactive/)).toBeTruthy();
+    expect(within(list).getAllByText(/Workspace ws_202/)).not.toHaveLength(0);
   });
 });

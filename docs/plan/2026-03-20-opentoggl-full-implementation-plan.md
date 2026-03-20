@@ -34,7 +34,7 @@
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
   - [ ] Wave 1 整体退出标准全部满足
-- [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + members/projects slice）
+- [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice）
 - [ ] Wave 3：Tracking 核心事务面
 - [ ] Wave 4：Tracking 扩展面与 Governance
 - [ ] Wave 5：Reports 读模型与共享

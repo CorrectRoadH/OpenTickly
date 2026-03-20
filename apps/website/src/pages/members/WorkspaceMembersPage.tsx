@@ -1,47 +1,86 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type ReactElement } from "react";
+import React from "react";
 
-import { useSession } from "../../shared/session/session-context.tsx";
+type Member = {
+  id: string;
+  workspace_id: string;
+  email: string;
+  name: string;
+  role: string;
+};
 
-const sampleMembers = [
-  { id: 1, name: "Alex North", role: "Admin" },
-  { id: 2, name: "Jamie Lee", role: "Member" },
-  { id: 3, name: "Samira Chen", role: "Member" },
+const sampleMembers: Member[] = [
+  {
+    id: "mem-1",
+    workspace_id: "ws-123",
+    email: "alex@example.com",
+    name: "Alex Johnson",
+    role: "owner",
+  },
+  {
+    id: "mem-2",
+    workspace_id: "ws-123",
+    email: "bailey@example.com",
+    name: "Bailey Lee",
+    role: "admin",
+  },
+  {
+    id: "mem-3",
+    workspace_id: "ws-123",
+    email: "casey@example.com",
+    name: "Casey Smith",
+    role: "member",
+  },
 ];
 
-export function WorkspaceMembersPage(): ReactElement {
-  const session = useSession();
-
+export const WorkspaceMembersPage: React.FC = () => {
   return (
-    <AppPanel className="bg-white/95">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-            Team
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-            Workspace Members
-          </h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Viewing members for {session.currentWorkspace.name}.
+    <main aria-label="workspace-members" className="p-6 space-y-4">
+      <header className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">Workspace Members</h1>
+          <p className="text-sm text-gray-600">
+            Members sourced from the workspace contract data.
           </p>
         </div>
-        <AppButton type="button">Invite members</AppButton>
-      </div>
+        <button
+          type="button"
+          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
+          Invite members
+        </button>
+      </header>
 
-      <ul className="mt-6 divide-y divide-slate-200" aria-label="Workspace members list">
+      <section
+        aria-label="Workspace members list"
+        data-testid="members-list"
+        className="border rounded-lg divide-y"
+      >
         {sampleMembers.map((member) => (
-          <li key={member.id} className="flex items-center justify-between py-3">
-            <div>
-              <p className="text-sm font-semibold text-slate-900">{member.name}</p>
-              <p className="text-xs text-slate-600">{member.role}</p>
+          <article
+            key={member.id}
+            className="p-4 grid grid-cols-[2fr_2fr_1fr] gap-2"
+            data-member-id={member.id}
+          >
+            <div className="font-medium">{member.name}</div>
+            <div className="text-gray-700">{member.email}</div>
+            <div className="text-gray-500 uppercase tracking-wide">
+              {member.role}
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-              Active
-            </span>
-          </li>
+            <dl className="sr-only">
+              <div>
+                <dt>Member ID</dt>
+                <dd>{member.id}</dd>
+              </div>
+              <div>
+                <dt>Workspace ID</dt>
+                <dd>{member.workspace_id}</dd>
+              </div>
+            </dl>
+          </article>
         ))}
-      </ul>
-    </AppPanel>
+      </section>
+    </main>
   );
-}
+};
+
+export default WorkspaceMembersPage;
