@@ -56,7 +56,7 @@ type OrganizationSettingsRequest struct {
 }
 
 type WorkspaceSettingsRequest struct {
-	Workspace   *workspaceSettingsSnapshot   `json:"workspace"`
+	Workspace   *workspaceSettingsSnapshot    `json:"workspace"`
 	Preferences *workspacePreferencesSnapshot `json:"preferences"`
 }
 
@@ -84,32 +84,32 @@ type wave1State struct {
 }
 
 type userRecord struct {
-	ID                 int64
-	Email              string
-	Password           string
-	FullName           string
-	APIToken           string
-	Timezone           string
-	BeginningOfWeek    int
-	CountryID          int64
-	DefaultWorkspaceID int64
-	DateFormat         string
-	TimeOfDayFormat    string
-	DurationFormat     string
-	PGTimeZoneName     string
+	ID                  int64
+	Email               string
+	Password            string
+	FullName            string
+	APIToken            string
+	Timezone            string
+	BeginningOfWeek     int
+	CountryID           int64
+	DefaultWorkspaceID  int64
+	DateFormat          string
+	TimeOfDayFormat     string
+	DurationFormat      string
+	PGTimeZoneName      string
 	CollapseTimeEntries bool
-	LanguageCode       string
-	HideSidebarRight   bool
-	ReportsCollapse    bool
-	ManualMode         bool
-	ManualEntryMode    string
+	LanguageCode        string
+	HideSidebarRight    bool
+	ReportsCollapse     bool
+	ManualMode          bool
+	ManualEntryMode     string
 }
 
 type homeRecord struct {
-	OrganizationID   int64
-	OrganizationName string
-	WorkspaceID      int64
-	Settings         workspaceSettingsSnapshot
+	OrganizationID       int64
+	OrganizationName     string
+	WorkspaceID          int64
+	Settings             workspaceSettingsSnapshot
 	WorkspacePreferences workspacePreferencesSnapshot
 }
 

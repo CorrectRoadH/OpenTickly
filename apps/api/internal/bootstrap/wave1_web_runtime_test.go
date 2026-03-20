@@ -46,9 +46,9 @@ func TestWave1WebRoutesServeLiveEchoRuntime(t *testing.T) {
 			Name string `json:"name"`
 		} `json:"organizations"`
 		Workspaces []struct {
-			ID             int64  `json:"id"`
-			OrganizationID int64  `json:"organization_id"`
-			Name           string `json:"name"`
+			ID              int64  `json:"id"`
+			OrganizationID  int64  `json:"organization_id"`
+			Name            string `json:"name"`
 			DefaultCurrency string `json:"default_currency"`
 		} `json:"workspaces"`
 		WorkspaceCapabilities map[string]any `json:"workspace_capabilities"`
@@ -153,19 +153,19 @@ func TestWave1WebRoutesServeLiveEchoRuntime(t *testing.T) {
 
 	updatedWorkspaceSettings := performJSONRequest(t, app, http.MethodPatch, workspaceSettingsPath, map[string]any{
 		"workspace": map[string]any{
-			"name":                             "Delivery West",
-			"default_currency":                 "EUR",
-			"default_hourly_rate":              175.0,
-			"rounding":                         1,
-			"rounding_minutes":                 15,
-			"reports_collapse":                 true,
-			"only_admins_may_create_projects":  false,
-			"only_admins_may_create_tags":      false,
-			"only_admins_see_team_dashboard":   false,
-			"projects_billable_by_default":     true,
-			"projects_private_by_default":      false,
-			"projects_enforce_billable":        false,
-			"limit_public_project_data":        false,
+			"name":                            "Delivery West",
+			"default_currency":                "EUR",
+			"default_hourly_rate":             175.0,
+			"rounding":                        1,
+			"rounding_minutes":                15,
+			"reports_collapse":                true,
+			"only_admins_may_create_projects": false,
+			"only_admins_may_create_tags":     false,
+			"only_admins_see_team_dashboard":  false,
+			"projects_billable_by_default":    true,
+			"projects_private_by_default":     false,
+			"projects_enforce_billable":       false,
+			"limit_public_project_data":       false,
 		},
 		"preferences": map[string]any{
 			"hide_start_end_times": true,
