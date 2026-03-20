@@ -79,6 +79,154 @@
 2. 由人工把 endpoint 映射到模块与 use case
 3. 由实现层决定 domain、application、infra 如何协作
 
+## 0.5 后端技术栈与框架结论
+
+后端文档必须明确到可执行工程决策，而不是只停留在抽象分层。
+
+当前目标态的正式结论如下：
+
+- HTTP runtime：`echo`
+- compat 路由与 handler interface：由 `oapi-codegen` 基于 OpenAPI 全生成
+- compat request/response validation：由 OpenAPI 生成链路与 `kin-openapi` 驱动
+- Web/internal API runtime：可继续挂在同一 `echo` 实例上，但不反向污染 compat transport
+- OpenAPI 生成代码：`oapi-codegen`，以 compat transport 为最高优先级生成目标
+- 数据库：`PostgreSQL`
+- 数据库访问：`pgx`
+- 事务：显式 `pgx.Tx`
+- Redis：官方 Redis client，由 `platform` 提供连接与最小封装
+- 依赖注入：手写 constructor wiring，不使用运行时 DI 容器，不使用代码生成式 DI
+- 后台 job runner：进程内 runner + PostgreSQL job record
+
+解释：
+
+- compat API 的主要风险不是“框架选错”，而是人工手写路由、参数绑定、校验和响应 shape 后逐步偏离 OpenAPI。
+- 因此 compat API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
+- 在这个前提下，`echo` 的价值是作为成熟的 transport runtime 承载生成产物，而不是承载业务语义。
+- `echo` 只能停留在 `transport` 与 `apps/api/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
+- DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图，不是额外框架语义。
+- OpenAPI 仍然只生成 transport/contract 边界，不生成 domain/application/infra。
+
+## 0.6 为什么是手写 DI
+
+本项目的依赖注入目标不是“可配置”，而是：
+
+- 让 `application` 能在测试里直接替换 port
+- 让 `transport` 能在不启动整站的情况下单独挂到测试 server
+- 让 `apps/api/internal/bootstrap` 成为唯一装配真相源
+- 让 review 时能直接看出一个 endpoint 穿过哪些模块
+
+因此固定规则如下：
+
+- 每个 `application` 用例通过显式构造函数接收依赖
+- `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
+- `infra` 实现 port，但不反向持有 service locator
+- `apps/api/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
+- `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
+- 不允许在 handler 内临时 `new` repository
+- 不允许在 `domain` 或 `application` 里读取全局单例
+
+推荐装配形状：
+
+```text
+apps/api/internal/bootstrap/
+  config.go
+  database.go
+  redis.go
+  modules.go
+  http.go
+  compat.go
+
+bootstrap.NewApp(cfg)
+-> open postgres / redis
+-> build platform services
+-> build module infra adapters
+-> build module application services
+-> bind generated compat server implementations
+-> register generated compat routes into Echo
+-> return app runtime
+```
+
+这种装配方式直接服务于测试策略：
+
+- domain test 不需要 bootstrap
+- application integration test 只构造当前模块 + 真实数据库依赖
+- transport contract test 可以挂真实 Echo + generated compat routes，但替换外部 provider
+- job test 可以单独起 runner 和 handler，不需要整站启动
+
+## 0.7 OpenAPI 生成与兼容工作流
+
+OpenAPI 相关工作需要明确区分 4 件事：
+
+1. 谁是兼容真相源
+2. 生成哪些机械产物
+3. 哪些逻辑必须手写
+4. 如何证明实现没有偏离合同
+
+固定流程如下：
+
+1. 更新 `openapi/*.json`
+2. 用 `oapi-codegen` 为 compat API 生成 DTO、参数类型、server interface、Echo 路由与 validator glue
+3. 用 `kin-openapi` 生成或驱动 request/response contract skeleton
+4. 人工维护 endpoint -> module -> use case 映射
+5. 人工只实现 generated server interface 背后的 application adapter 与错误映射
+6. 用 contract test + golden test 证明实现与 OpenAPI 一致
+
+生成产物只允许落在以下边界：
+
+- `transport/http/compat/*`
+- `transport/http/web/*`
+- `packages/shared-contracts/` 中面向前端或工具的 schema/type 产物
+- `apps/api/tests/compat/**` 与 `apps/api/tests/golden/**` 的测试 skeleton
+
+不允许把生成结果直接扩散到：
+
+- `domain/`
+- `application/commands`
+- `application/queries`
+- `infra/`
+- `platform/`
+
+兼容规则：
+
+- `toggl-*` OpenAPI 更新后，必须先更新 compat contract test，再改实现
+- compat route、bind、validation、handler interface 必须由生成链路提供，不允许回退为手写 endpoint 壳层
+- compat handler 的 request validation 以 OpenAPI 为准，不允许在 handler 中额外发明另一套字段语义
+- compat response 的字段名、可空性、错误 body 以 OpenAPI 与必要 golden 样本为准
+- OpenToggl 自定义 API 也走同一生成链路，但合同来源换成 `opentoggl-*`
+
+### 0.7.1 compat API 的生成边界
+
+compat API 必须做到“架构由合同生成”，具体含义如下：
+
+- endpoint path / method 生成
+- path/query/header/body 参数类型生成
+- request decode / bind 生成
+- request validation 生成
+- handler interface 生成
+- route registration 生成
+- contract test skeleton 生成
+
+人工保留的部分只有：
+
+- generated server interface 的实现
+- transport public error mapping
+- application command/query 调用
+- endpoint 到模块/use case 的归属清单
+
+不允许人工手写以下 compat 结构：
+
+- compat route table
+- compat request DTO
+- compat response DTO
+- compat handler method signature
+- compat 参数校验入口
+
+原因很简单：
+
+- compat API 的首要目标是“跟着 OpenAPI 演进”，不是“让人写得顺手”
+- 只要 endpoint 壳层允许手写，最终就一定会出现 shape drift、漏字段、漏校验和错误码偏移
+- generation-first 比 code review 更可靠，因为它先消除了可变面
+
 ## 1. 目标目录
 
 ```text
@@ -311,6 +459,28 @@ Query 的特征：
 - 组合层不拥有独立领域规则
 - 如果聚合逻辑本身形成稳定业务能力，应回收进某个业务模块的 `application/query`
 
+## 5.5 `apps/api` 的运行时边界
+
+`apps/api` 不是“随便写点 glue code”的目录，它有非常具体的职责：
+
+- `cmd/`：进程启动入口
+- `internal/bootstrap/`：依赖装配、配置解析、生命周期管理
+- `internal/http/`：顶层 middleware、路由注册、健康检查、公开 server 组装
+- `internal/web/`：跨模块 Web composition query
+
+明确不放：
+
+- 领域规则
+- 模块内部 repository
+- 模块内部 SQL
+- 只属于单个业务模块的 query 逻辑
+
+判断规则：
+
+- 如果逻辑只服务于 `tracking`，它应回到 `tracking/application`
+- 如果逻辑稳定地组合 `tracking + tenant + membership` 的页面数据，它才属于 `apps/api/internal/web`
+- 如果逻辑只是数据库连接、server 启停、middleware 组合，它属于 `bootstrap` 或 `http`
+
 ## 6. 权限、套餐和事务
 
 权限与套餐检查点在 `application`。
@@ -373,6 +543,38 @@ Query Port 负责：
 - 列表页、表格页、报表页默认优先用 query port
 - repository 不要演变成万能 SQL 工具箱
 - 一个 query 为页面服务并不意味着它必须放在 `transport`
+
+## 8.2 如何为测试策略设计边界
+
+本文件必须直接支撑 [testing-strategy](./testing-strategy.md)，而不是事后“再想怎么测”。
+
+后端边界设计固定按下面约束执行：
+
+- `domain` 保持纯内存可测，不引入数据库、HTTP、时间源全局单例
+- `application` 用例显式接收 repository / query port / clock / job recorder / authz checker
+- `infra` 负责真实数据库与外部系统接线，但其行为可通过真实集成边界测试，而不是 mock 内部调用顺序
+- `transport` 保持薄层，使 contract test 只验证公开合同，不被业务拼装噪音污染
+- `platform/jobs` 提供可同步推进的测试入口，避免 retry/backoff 测试真实等待
+
+这意味着代码结构上必须预留以下可测接口：
+
+- `Clock`
+- `TxManager` 或等价事务执行抽象
+- `JobRecorder`
+- `AuthContextDecoder`
+- 权限/feature gate query 接口
+- 外部 provider client interface
+
+但这些接口只在真实边界上出现，不允许为了“方便 mock”把内部逻辑拆成大量无意义接口。
+
+测试映射关系应当非常直接：
+
+- domain unit test -> `domain`
+- application integration test -> `application + infra/pg + real tx`
+- transport contract test -> `transport + real validator + real error mapping`
+- async runtime test -> `platform/jobs + <module>/infra job handler`
+
+如果一个实现很难按这四层快速测试，优先判断是边界设计错了，而不是补更多 mock。
 
 ## 8.5 允许自动生成的内容
 
@@ -444,6 +646,14 @@ Query Port 负责：
 - `transport/http/compat` 有合同测试
 - `reports` / `webhooks` / `importing` 的异步运行时有 job 级测试
 - compat endpoint 有 OpenAPI 到 handler / use case 的映射
+
+进一步的结构要求：
+
+- `application/*_integration_test.go` 默认通过真实 Postgres 跑用例，不 mock repository
+- `transport/http/compat` 的 contract test 默认通过真实 `Echo` + generated compat routes + OpenAPI validator 跑请求
+- handler 测试优先验证公开输入输出，不验证内部调用次数
+- 需要时间推进的 job test 必须注入可控时钟
+- 需要重试的 job test 必须在进程内同步推进调度，不做真实 sleep
 
 ## 12. Review 检查项
 
