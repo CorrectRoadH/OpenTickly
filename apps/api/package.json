@@ -1,0 +1,21 @@
+{
+  "name": "@opentoggl/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "generate": "node ./scripts/generate-openapi-test-artifacts.mjs",
+    "test": "vp test run",
+    "check": "vp check"
+  },
+  "dependencies": {
+    "@opentoggl/shared-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
+  }
+}

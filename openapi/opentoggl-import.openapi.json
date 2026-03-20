@@ -1,0 +1,116 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenToggl Import API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/import/v1/jobs": {
+      "post": {
+        "summary": "Create an import job",
+        "operationId": "create-import-job",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportJobCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Import job accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Import feature is not available",
+            "headers": {
+              "X-OpenToggl-Feature-Gate": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Feature-Gate"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureGateDecision"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/import/v1/jobs/{job_id}": {
+      "get": {
+        "summary": "Get import job status",
+        "operationId": "get-import-job",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Import job state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FeatureGateDecision": {
+        "$ref": "./opentoggl-shared.openapi.json#/components/schemas/FeatureGateDecision"
+      },
+      "ImportJobCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["toggl_export_archive"]
+          }
+        },
+        "required": ["workspace_id", "source"]
+      },
+      "ImportJob": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "running", "completed", "failed"]
+          },
+          "workspace_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["job_id", "status", "workspace_id"]
+      }
+    }
+  }
+}

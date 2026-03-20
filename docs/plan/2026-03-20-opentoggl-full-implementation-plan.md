@@ -14,6 +14,35 @@
 
 ---
 
+## 0. 执行 Todo
+
+> 说明：
+>
+> - `- [x]` 表示已通过当前波次 gate，可视为本计划当前已完成部分。
+> - `- [ ]` 表示未完成，其中包含“未开始”和“进行中”两类；进行中的细项会在条目文字里标明。
+> - 这里的勾选状态用于执行追踪，不替代下面各波次的正式 `退出标准` 与 `强制测试链路`。
+
+- [x] Wave 0：工程地基与生成链路
+  - [x] `apps/api`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
+  - [x] `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架落地
+  - [x] `vp test`、`vp check`、`go test ./apps/api/... ./internal/... ./backend/internal/...` 当前可通过
+- [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
+  - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
+  - [x] `billing-foundation` 后端基础切片第一版
+  - [x] `tenant-backend` 后端基础切片第一版
+  - [x] `identity-backend` 切片完全过 gate
+  - [x] `identity-tenant-web` 切片完全过 gate
+  - [ ] Wave 1 整体退出标准全部满足
+- [ ] Wave 2：Membership、Access、Catalog 完整产品面
+- [ ] Wave 3：Tracking 核心事务面
+- [ ] Wave 4：Tracking 扩展面与 Governance
+- [ ] Wave 5：Reports 读模型与共享
+- [ ] Wave 6：Webhooks Runtime
+- [ ] Wave 7：Billing 商业视图、发票与收口
+- [ ] Wave 8：Importing 迁移闭环
+- [ ] Wave 9：Instance Admin / Platform Operations
+- [ ] Wave 10：兼容性收口与发布准备
+
 ## 1. 计划依据
 
 本计划以以下文档为权威输入，发生冲突时按该顺序解释：

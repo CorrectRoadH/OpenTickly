@@ -1,0 +1,125 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenToggl Shared Contracts",
+    "version": "0.0.0"
+  },
+  "components": {
+    "headers": {
+      "X-OpenToggl-Quota-Remaining": {
+        "description": "Remaining requests in the current quota window.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "X-OpenToggl-Quota-Reset-In-Secs": {
+        "description": "Seconds until the current quota window resets.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "X-OpenToggl-Quota-Total": {
+        "description": "Total requests allowed in the current quota window.",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "X-OpenToggl-Feature-Gate": {
+        "description": "Capability key used for the current feature-gate decision.",
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "CapabilityContext": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "workspace_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "enum": ["instance", "organization", "workspace"]
+          }
+        },
+        "required": ["scope"]
+      },
+      "FeatureCapability": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["billing", "instance_admin", "platform"]
+          }
+        },
+        "required": ["key", "enabled", "source"]
+      },
+      "QuotaWindow": {
+        "type": "object",
+        "properties": {
+          "organization_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "remaining": {
+            "type": "integer"
+          },
+          "resets_in_secs": {
+            "type": "integer"
+          },
+          "total": {
+            "type": "integer"
+          }
+        },
+        "required": ["organization_id", "remaining", "resets_in_secs", "total"]
+      },
+      "FeatureGateDecision": {
+        "type": "object",
+        "properties": {
+          "capability_key": {
+            "type": "string"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string",
+            "enum": ["allowed", "plan_restricted", "quota_exhausted", "instance_disabled"]
+          },
+          "quota": {
+            "$ref": "#/components/schemas/QuotaWindow",
+            "nullable": true
+          }
+        },
+        "required": ["capability_key", "allowed", "reason"]
+      },
+      "CapabilitySnapshot": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "$ref": "#/components/schemas/CapabilityContext"
+          },
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureCapability"
+            }
+          }
+        },
+        "required": ["context", "capabilities"]
+      }
+    }
+  }
+}

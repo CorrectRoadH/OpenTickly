@@ -1,16 +1,45 @@
 {
-  "name": "website",
+  "name": "@opentoggl/website",
   "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vp dev",
-    "build": "tsc && vp build",
-    "preview": "vp preview"
+    "build": "tsc -p tsconfig.json --noEmit && vp build",
+    "preview": "vp preview",
+    "check": "vp check",
+    "test": "vp test run && vp exec playwright test",
+    "test:unit": "vp test run",
+    "test:e2e": "vp exec playwright test",
+    "test:e2e:real-runtime": "vp exec playwright test e2e/app-shell.real-runtime.spec.ts"
+  },
+  "dependencies": {
+    "@opentoggl/shared-contracts": "workspace:*",
+    "@opentoggl/web-ui": "workspace:*",
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-router": "^1.132.19",
+    "baseui": "^15.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "catalog:",
+    "styletron-engine-atomic": "^1.6.2",
+    "styletron-react": "^6.1.1",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.1",
+    "@tailwindcss/vite": "^4.1.14",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "catalog:",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^5.1.0",
+    "jsdom": "^27.0.1",
+    "tailwindcss": "^4.1.14",
     "typescript": "~5.9.3",
     "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "vite-plus": "catalog:",
+    "vitest": "catalog:"
   }
 }

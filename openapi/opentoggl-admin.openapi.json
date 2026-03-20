@@ -1,0 +1,101 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenToggl Instance Admin API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/admin/v1/bootstrap": {
+      "post": {
+        "summary": "Create the first instance administrator",
+        "operationId": "bootstrap-instance-admin",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BootstrapRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bootstrap completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BootstrapState"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/features/{capability_key}": {
+      "get": {
+        "summary": "Resolve a capability gate for the instance",
+        "operationId": "get-instance-feature-gate",
+        "parameters": [
+          {
+            "name": "capability_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feature gate decision",
+            "headers": {
+              "X-OpenToggl-Feature-Gate": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Feature-Gate"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureGateDecision"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FeatureGateDecision": {
+        "$ref": "./opentoggl-shared.openapi.json#/components/schemas/FeatureGateDecision"
+      },
+      "BootstrapRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "BootstrapState": {
+        "type": "object",
+        "properties": {
+          "completed": {
+            "type": "boolean"
+          },
+          "admin_email": {
+            "type": "string"
+          }
+        },
+        "required": ["completed", "admin_email"]
+      }
+    }
+  }
+}

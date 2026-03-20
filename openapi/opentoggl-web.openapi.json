@@ -1,0 +1,551 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenToggl Web API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/web/v1/auth/login": {
+      "post": {
+        "summary": "Login through the web app shell",
+        "operationId": "login-web-user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated session bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/auth/logout": {
+      "post": {
+        "summary": "Logout from the web app shell",
+        "operationId": "logout-web-user",
+        "responses": {
+          "204": {
+            "description": "Session cleared"
+          }
+        }
+      }
+    },
+    "/web/v1/auth/register": {
+      "post": {
+        "summary": "Register through the web app shell",
+        "operationId": "register-web-user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered session bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/session": {
+      "get": {
+        "summary": "Bootstrap the current web session shell",
+        "operationId": "get-web-session",
+        "responses": {
+          "200": {
+            "description": "Current session bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/profile": {
+      "get": {
+        "summary": "Read the current user profile for the web shell",
+        "operationId": "get-current-user-profile",
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserProfile"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update the current user profile for the web shell",
+        "operationId": "update-current-user-profile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCurrentUserProfileRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUserProfile"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/preferences": {
+      "get": {
+        "summary": "Read the current user preferences for the web shell",
+        "operationId": "get-current-user-preferences",
+        "responses": {
+          "200": {
+            "description": "Current user preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update the current user preferences for the web shell",
+        "operationId": "update-current-user-preferences",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferences"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated current user preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/organizations/{organization_id}/settings": {
+      "get": {
+        "summary": "Read organization settings for the web shell",
+        "operationId": "get-organization-settings",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organization settings shell",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSettingsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update organization settings for the web shell",
+        "operationId": "update-organization-settings",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationSettingsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated organization settings shell",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationSettingsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/settings": {
+      "get": {
+        "summary": "Read workspace settings for the web shell",
+        "operationId": "get-workspace-settings",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace settings shell",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSettingsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update workspace settings for the web shell",
+        "operationId": "update-workspace-settings",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSettingsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace settings shell",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSettingsEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/capabilities": {
+      "get": {
+        "summary": "Capability snapshot for the current workspace",
+        "operationId": "get-workspace-capabilities",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Capability snapshot",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CapabilitySnapshot"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/quota": {
+      "get": {
+        "summary": "Quota snapshot for the current workspace",
+        "operationId": "get-workspace-quota",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quota snapshot",
+            "headers": {
+              "X-OpenToggl-Quota-Remaining": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Remaining"
+              },
+              "X-OpenToggl-Quota-Reset-In-Secs": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Reset-In-Secs"
+              },
+              "X-OpenToggl-Quota-Total": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Total"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotaWindow"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CapabilitySnapshot": {
+        "$ref": "./opentoggl-shared.openapi.json#/components/schemas/CapabilitySnapshot"
+      },
+      "CurrentUserProfile": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/github_com_toggl_toggl_api_internal_models.TogglUser"
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "OrganizationSettings": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.MeOrganization"
+      },
+      "OrganizationSettingsEnvelope": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationSettings"
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/SubscriptionView",
+            "nullable": true
+          }
+        },
+        "required": ["organization"]
+      },
+      "OrganizationSettingsUpdate": {
+        "type": "object",
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/UpdateOrganizationSettingsRequest"
+          }
+        },
+        "required": ["organization"]
+      },
+      "QuotaWindow": {
+        "$ref": "./opentoggl-shared.openapi.json#/components/schemas/QuotaWindow"
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string"
+          },
+          "fullname": {
+            "type": "string"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "SessionBootstrap": {
+        "type": "object",
+        "properties": {
+          "current_organization_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "current_workspace_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "organization_subscription": {
+            "$ref": "#/components/schemas/SubscriptionView",
+            "nullable": true
+          },
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrganizationSettings"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/CurrentUserProfile"
+          },
+          "workspace_capabilities": {
+            "$ref": "#/components/schemas/CapabilitySnapshot",
+            "nullable": true
+          },
+          "workspace_quota": {
+            "$ref": "#/components/schemas/QuotaWindow",
+            "nullable": true
+          },
+          "workspace_subscription": {
+            "$ref": "#/components/schemas/SubscriptionView",
+            "nullable": true
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSettings"
+            }
+          }
+        },
+        "required": [
+          "user",
+          "organizations",
+          "workspaces",
+          "workspace_capabilities",
+          "workspace_quota"
+        ]
+      },
+      "SubscriptionView": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/subscription.OutData"
+      },
+      "UpdateCurrentUserProfileRequest": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/me.payload"
+      },
+      "UpdateOrganizationSettingsRequest": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.PutPayload"
+      },
+      "UpdateWorkspaceSettingsRequest": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/workspace.Payload"
+      },
+      "UserPreferences": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.AllPreferences"
+      },
+      "WorkspacePreferences": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.WorkspacePreferences"
+      },
+      "WorkspaceSettings": {
+        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/github_com_toggl_toggl_api_internal_models.Workspace"
+      },
+      "WorkspaceSettingsEnvelope": {
+        "type": "object",
+        "properties": {
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitySnapshot",
+            "nullable": true
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/WorkspacePreferences"
+          },
+          "quota": {
+            "$ref": "#/components/schemas/QuotaWindow",
+            "nullable": true
+          },
+          "subscription": {
+            "$ref": "#/components/schemas/SubscriptionView",
+            "nullable": true
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceSettings"
+          }
+        },
+        "required": ["workspace", "preferences"]
+      },
+      "WorkspaceSettingsUpdate": {
+        "type": "object",
+        "properties": {
+          "preferences": {
+            "$ref": "#/components/schemas/WorkspacePreferences"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/UpdateWorkspaceSettingsRequest"
+          }
+        }
+      }
+    }
+  }
+}

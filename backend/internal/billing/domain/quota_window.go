@@ -1,0 +1,48 @@
+package domain
+
+import (
+	"fmt"
+	"strconv"
+)
+
+type QuotaWindow struct {
+	OrganizationID  int64
+	Remaining       int
+	ResetsInSeconds int
+	Total           int
+}
+
+func NewQuotaWindow(
+	organizationID int64,
+	remaining int,
+	resetsInSeconds int,
+	total int,
+) (QuotaWindow, error) {
+	if organizationID <= 0 {
+		return QuotaWindow{}, fmt.Errorf("organization id must be positive")
+	}
+	if resetsInSeconds < 0 {
+		return QuotaWindow{}, fmt.Errorf("quota reset seconds must not be negative")
+	}
+	if total < 0 {
+		return QuotaWindow{}, fmt.Errorf("quota total must not be negative")
+	}
+	return QuotaWindow{
+		OrganizationID:  organizationID,
+		Remaining:       remaining,
+		ResetsInSeconds: resetsInSeconds,
+		Total:           total,
+	}, nil
+}
+
+func (window QuotaWindow) Headers() map[string]string {
+	return map[string]string{
+		"X-OpenToggl-Quota-Remaining":     strconv.Itoa(window.Remaining),
+		"X-OpenToggl-Quota-Reset-In-Secs": strconv.Itoa(window.ResetsInSeconds),
+		"X-OpenToggl-Quota-Total":         strconv.Itoa(window.Total),
+	}
+}
+
+func (window QuotaWindow) Exhausted() bool {
+	return window.Remaining <= 0
+}

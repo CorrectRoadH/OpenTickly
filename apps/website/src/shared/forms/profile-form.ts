@@ -1,0 +1,108 @@
+import { z } from "zod";
+
+import type {
+  UpdateCurrentUserProfileRequestDto,
+  WebCurrentUserProfileDto,
+  WebUserPreferencesDto,
+} from "../api/web-contract.ts";
+
+export const profileFormSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  timezone: z.string().min(1),
+  beginningOfWeek: z.number().int().min(0).max(6),
+  countryId: z.number().int().nonnegative(),
+  defaultWorkspaceId: z.number().int().nonnegative(),
+  currentPassword: z.string(),
+  newPassword: z.string(),
+});
+
+export type ProfileFormValues = z.infer<typeof profileFormSchema>;
+
+export const preferencesFormSchema = z.object({
+  dateFormat: z.string().min(1),
+  durationFormat: z.string().min(1),
+  timezone: z.string().min(1),
+  beginningOfWeek: z.number().int().min(0).max(6),
+  collapseTimeEntries: z.boolean(),
+  languageCode: z.string().min(1),
+  hideSidebarRight: z.boolean(),
+  reportsCollapse: z.boolean(),
+  manualMode: z.boolean(),
+  manualEntryMode: z.string().min(1),
+  timeofdayFormat: z.string().min(1),
+});
+
+export type PreferencesFormValues = z.infer<typeof preferencesFormSchema>;
+
+export function createProfileFormValues(profile: WebCurrentUserProfileDto): ProfileFormValues {
+  return {
+    email: profile.email ?? "",
+    fullName: profile.fullname ?? "",
+    timezone: profile.timezone ?? "",
+    beginningOfWeek: profile.beginning_of_week ?? 1,
+    countryId: profile.country_id ?? 0,
+    defaultWorkspaceId: profile.default_workspace_id ?? 0,
+    currentPassword: "",
+    newPassword: "",
+  };
+}
+
+export function mapProfileFormToRequest(
+  values: ProfileFormValues,
+): UpdateCurrentUserProfileRequestDto {
+  const parsed = profileFormSchema.parse(values);
+  const request: UpdateCurrentUserProfileRequestDto = {
+    email: parsed.email,
+    fullname: parsed.fullName,
+    timezone: parsed.timezone,
+    beginning_of_week: parsed.beginningOfWeek,
+    country_id: parsed.countryId,
+    default_workspace_id: parsed.defaultWorkspaceId,
+  };
+
+  // Toggl-style profile updates should not send blank password fields, otherwise the
+  // shell would look like it is changing credentials on every profile save.
+  if (parsed.currentPassword && parsed.newPassword) {
+    request.current_password = parsed.currentPassword;
+    request.password = parsed.newPassword;
+  }
+
+  return request;
+}
+
+export function createPreferencesFormValues(
+  preferences: WebUserPreferencesDto,
+): PreferencesFormValues {
+  return {
+    dateFormat: preferences.date_format ?? "YYYY-MM-DD",
+    durationFormat: preferences.duration_format ?? "improved",
+    timezone: preferences.pg_time_zone_name ?? "UTC",
+    beginningOfWeek: preferences.beginningOfWeek ?? 1,
+    collapseTimeEntries: preferences.collapseTimeEntries ?? false,
+    languageCode: preferences.language_code ?? "en-US",
+    hideSidebarRight: preferences.hide_sidebar_right ?? false,
+    reportsCollapse: preferences.reports_collapse ?? false,
+    manualMode: preferences.manualMode ?? false,
+    manualEntryMode: preferences.manualEntryMode ?? "timer",
+    timeofdayFormat: preferences.timeofday_format ?? "h:mm a",
+  };
+}
+
+export function mapPreferencesFormToRequest(values: PreferencesFormValues): WebUserPreferencesDto {
+  const parsed = preferencesFormSchema.parse(values);
+
+  return {
+    date_format: parsed.dateFormat,
+    duration_format: parsed.durationFormat,
+    pg_time_zone_name: parsed.timezone,
+    beginningOfWeek: parsed.beginningOfWeek,
+    collapseTimeEntries: parsed.collapseTimeEntries,
+    language_code: parsed.languageCode,
+    hide_sidebar_right: parsed.hideSidebarRight,
+    reports_collapse: parsed.reportsCollapse,
+    manualMode: parsed.manualMode,
+    manualEntryMode: parsed.manualEntryMode,
+    timeofday_format: parsed.timeofdayFormat,
+  };
+}

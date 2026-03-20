@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  color: #163227;
+  background:
+    radial-gradient(circle at top, rgb(210 235 219 / 90%), transparent 36%),
+    linear-gradient(180deg, #f8fbf7 0%, #eef4ef 100%);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+#app {
+  min-height: 100vh;
+}

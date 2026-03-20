@@ -1,0 +1,15 @@
+.git
+.claude
+.codex
+.agent
+.agents
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+playwright-report
+**/playwright-report
+tmp
+**/.DS_Store
