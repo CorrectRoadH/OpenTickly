@@ -223,7 +223,9 @@ toggl_time_entry_id <-> opentoggl_time_entry_id
 
 ## Web 要求
 
-Web 端至少提供：
+Web 端必须完整承接 `import` 产品面的正式能力，不允许把本册定义的正式能力降级为一次性内部脚本或后台-only 能力。
+
+Web 端的正式页面与入口包括：
 
 - import 页面
 - 导入任务列表

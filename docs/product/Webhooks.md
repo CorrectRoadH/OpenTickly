@@ -62,7 +62,9 @@
 
 ## Web 要求
 
-Web 端必须提供：
+Web 端必须完整承接 Webhooks 产品面的正式能力，不允许把本册定义的正式能力保留为 API-only。
+
+Web 端的正式页面与入口包括：
 
 - subscriptions 列表
 - 创建 / 编辑

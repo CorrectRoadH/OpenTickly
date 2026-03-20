@@ -51,7 +51,9 @@
 
 ## Web 要求
 
-Web 端至少提供：
+Web 端必须完整承接本册定义的正式产品能力，不允许把本册定义的任何正式能力保留为 API-only。
+
+Web 端的正式页面与入口包括：
 
 - billing 管理页
 - subscription 管理页

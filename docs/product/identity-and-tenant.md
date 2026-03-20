@@ -78,9 +78,27 @@
 - Toggl 对“真删除用户”是否真的物理清空所有历史业务事实，目前仍需继续确认。
 - organization 与 workspace 双入口下某些低频字段的精确差异，仍需继续从公开资料确认。
 
+## 页面映射（Figma / Screenshot）
+
+### Profile
+
+- Figma：`profile`，node `10:14814`
+- Screenshot：当前没有对应截图，先以 Figma 为主参考
+- 产品含义：这是当前用户的账户资料与个人偏好页面，归属 `Identity / Account`，不是 workspace 设置页。
+- 实现要求：页面应围绕当前用户信息、个人偏好、账户级安全状态和账户入口组织，不把 workspace 配置、subscription 或实例级治理能力混进同一个页面。
+
+### Settings
+
+- Figma：`settings`，node `11:3680`
+- Screenshot：当前没有对应截图，先以 Figma 为主参考
+- 产品含义：这是 workspace / organization 设置页面，归属 `Organization / Workspace`，与 `profile` 明确分离。
+- 实现要求：logo/avatar、默认币种、默认费率、rounding、显示策略、低频 workspace 设置都应从这里进入；billing / subscription 如需展示，也应作为关联信息或跳转入口，不应把 billing 产品面整体并入本页。
+
 ## Web 要求
 
-Web 端至少提供：
+Web 端必须完整承接本册定义的正式产品能力，不允许把本册定义的任何正式能力保留为 API-only。
+
+Web 端的正式页面与入口包括：
 
 - 登录 / 注册 / 偏好设置页面
 - 用户资料页
