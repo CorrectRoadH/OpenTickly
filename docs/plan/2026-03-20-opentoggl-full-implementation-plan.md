@@ -5,6 +5,7 @@
 > 1. 本计划的开发执行必须由 subagent 完成，主 agent 只负责编排、依赖管理、review gate、汇总验收与合并决策。
 > 2. 所有实现任务必须按 TDD 执行：先写失败测试，再写最小实现，再补重构与回归保护。
 > 3. 任何正式产品能力都不能以 “先 API-only” 或 “先 Web-only” 方式落地；该能力所属波次必须同时完成对应 API、Web、测试链路。
+> 4. self-hosted 不是发布后的附加脚本；从 Wave 0 起就必须作为正式交付目标推进，最终必须具备可构建、可启动、可验证的容器化交付物。
 
 **Goal:** 在当前 starter 仓库上，按文档定义实现一个与 Toggl 当前公开产品面兼容的 OpenToggl v1，覆盖 Track API v9、Reports API v3、Webhooks API v1、对应 Web 界面，以及 OpenToggl 自有的 `import` 与 `instance-admin` 产品面。
 
@@ -33,7 +34,7 @@
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
   - [ ] Wave 1 整体退出标准全部满足
-- [ ] Wave 2：Membership、Access、Catalog 完整产品面
+- [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + members/projects slice）
 - [ ] Wave 3：Tracking 核心事务面
 - [ ] Wave 4：Tracking 扩展面与 Governance
 - [ ] Wave 5：Reports 读模型与共享
@@ -42,6 +43,20 @@
 - [ ] Wave 8：Importing 迁移闭环
 - [ ] Wave 9：Instance Admin / Platform Operations
 - [ ] Wave 10：兼容性收口与发布准备
+- [ ] 测试计划与故事清单持续维护
+  - [ ] 建立 BDD 故事入口：`docs/testing/bdd-user-stories.md`
+  - [ ] 每个 Wave 开始前，把对应产品面的故事映射到 `Domain / Integration / Contract / Feature / Page Flow / E2E / Golden`
+  - [ ] 每个 Wave 结束时，更新“已覆盖故事 / 未覆盖故事 / 延后原因”清单
+  - [ ] Wave 10 前补齐 `testing-strategy` 明确要求但尚未实现的 page flow 与 e2e
+  - [ ] 为每个正式页面族建立 `PRD -> Figma 节点 -> 页面实现 -> page flow/e2e` 对照清单
+- [ ] 自部署与发布交付链路
+  - [ ] 明确 self-hosted 交付形态：前后端双镜像 + 反向代理
+  - [ ] 前后端生产构建可生成稳定镜像，而不是依赖开发态启动
+  - [ ] `docker compose` 本地/自托管启动链路可用，并覆盖 `website + api + postgres + redis`
+  - [ ] 数据库迁移、首次管理员初始化、默认配置注入有正式流程
+  - [ ] 健康检查、readiness、基础日志与最小 smoke test 固定
+  - [ ] 升级/回滚步骤、持久化卷和必要环境变量文档化
+  - [ ] Wave 10 产出正式 release artifact：镜像、compose 文件、样例 env、发布说明
 
 ## 1. 计划依据
 
@@ -59,6 +74,8 @@
 10. `docs/core/backend-architecture.md`
 11. `docs/core/frontend-architecture.md`
 12. `docs/core/testing-strategy.md`
+13. `docs/testing/bdd-user-stories.md`
+14. `docs/self-hosting/docker-compose.md`
 
 本计划不重写产品语义，只把这些定义收束为可执行的实施蓝图。
 
@@ -100,13 +117,44 @@
 - 主写路径必须在单个 PostgreSQL 事务内完成主业务写入、audit record 与 job record。
 - reports projection、webhook delivery、export generation、import continuation 等必须异步运行，且通过同事务写入的 job record 驱动。
 
+### 3.2.1 前端与 Figma 对齐约束
+
+- 任何在 `docs/product/*.md` 中已绑定 Figma 原型或节点 ID 的正式页面，都必须把 Figma 作为实现输入，而不是只按接口和字段把页面“搭出来”。
+- 前端实现必须优先对齐：
+  - 页面信息架构
+  - 主次区域布局
+  - 正式入口与导航关系
+  - 关键交互状态
+  - 空态、加载态、错误态
+  - 与同一路由族共享的筛选、header 和工作区上下文
+- 不允许用“先做一个通用表单/列表占位页，后面再慢慢贴 Figma”的方式宣称页面已完成。
+- 如果某个正式页面在 PRD 中没有对应 Figma 节点：
+  - 必须在任务单中明确写明“当前无独立 Figma 节点”
+  - 必须引用可复用的相邻页面原型或文档指定骨架来源
+  - 不得自行发明另一套与现有产品语言冲突的信息架构
+- 页面完成的验收不只看是否能提交数据，还必须看它是否与 PRD 中声明的 Figma 原型保持同一页面语义。
+
 ### 3.3 测试约束
 
 - 测试是主要验收机制，不依赖人工 QA 兜底。
 - 测试设计起点必须是 `docs/product/*.md` 用户故事，不是 endpoint 清单。
+- `docs/testing/bdd-user-stories.md` 是当前已沉淀的验收故事入口；后续波次必须持续补充，而不是另起一套测试语义。
 - 全量测试必须保持本地快速门禁，总预算 `<= 30s`。
 - 测试必须尽量使用真实依赖与真实边界，只对真正外部系统做 fake/stub。
 - 新增功能、缺陷修复、并发/幂等/权限/边界规则都必须先有失败测试。
+
+### 3.4 自部署与发布约束
+
+- Cloud 与 self-hosted 共享同一公开契约与正式功能面，不能通过“自托管版先少一半功能”缩 scope。
+- 前端和后端必须能产出正式生产构建，并以容器化交付物运行；不允许把开发服务器拼装成伪生产方案。
+- self-hosted 至少要提供：
+  - 可构建镜像
+  - 可启动的 `docker compose` 栈
+  - 数据库迁移与首次管理员初始化流程
+  - 持久化卷策略
+  - 健康检查与基础 smoke test
+  - 升级与回滚说明
+- Wave 10 的完成标准必须包含“新环境按文档启动后可登录、可进入 workspace、可通过基础 health 与 smoke test”，否则不算可发布。
 
 ## 4. 强制执行模型：Subagent-Driven Delivery
 
@@ -160,12 +208,14 @@
 3. 对应 PRD 路径
 4. 对应 core docs 路径
 5. 对应 OpenAPI JSON 路径
-6. 若有必要，对应 Figma / screenshot 引用
+6. 对应 Figma 文件、节点 ID 与 screenshot 引用；如果当前页面无独立 Figma 节点，必须明确说明回退参考来源
 7. 要提炼的用户故事清单
 8. 每条用户故事对应的测试链路
 9. subagent 的文件 ownership
 10. 明确不允许碰的文件或模块
-11. 交付所需命令与验收门槛
+11. 若涉及测试，引用的 BDD 故事路径与场景
+12. 若涉及 self-hosted / release，引用容器、迁移、env 与 smoke test 要求
+13. 交付所需命令与验收门槛
 
 task packet 模板：
 
@@ -178,11 +228,17 @@ Core Docs:
 - docs/core/...
 OpenAPI Source:
 - openapi/...
+Figma Reference:
+- file: ...
+- node: ...
+- fallback reference when no dedicated node: ...
 Generated Boundary:
 - generated transport / DTO / validator / contract skeleton
 User Stories:
 - story 1
 - story 2
+BDD Source:
+- docs/testing/bdd-user-stories.md
 Required Tests:
 - Domain Unit: ...
 - Application Integration: ...
@@ -342,6 +398,33 @@ apps/website/src/
 - Web 页面、feature、page flow
 - 对应测试链路
 
+前端对齐规则：
+
+- 如果 PRD 中该页面已有 Figma 原型，前端任务必须先读取对应节点，再进入实现。
+- Page flow 和 e2e 只验证行为走通；它们不替代 Figma 对齐检查。
+- 每个正式页面族在波次收口时都必须提供一份 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e` 对照结果。
+- Figma 对齐至少要回答：
+  - 当前实现对应哪个 Figma 节点
+  - 哪些布局/入口/状态已对齐
+  - 哪些差异是有意延后
+  - 没有独立节点的页面借用了哪一个现有页面骨架
+
+前端 implementer 的固定步骤：
+
+1. 先读对应 `docs/product/*.md` 的页面映射段，确认该页面是否已有 Figma 节点、截图或明确骨架来源。
+2. 把 task packet 中的 Figma 文件、节点 ID、fallback 页面写清楚，再开始拆 `page / feature / entity / shared`。
+3. 先实现页面信息架构和壳层关系，再实现表单、列表、筛选和 mutation，不允许先做一个与目标页面结构无关的通用占位页。
+4. 页面完成时必须补：
+   - 真实页面 route
+   - 对应 feature test
+   - 对应 page flow test
+   - 该页面关联的 BDD 故事映射
+5. 波次收口时必须提交 Figma 对齐结果：
+   - Figma 节点引用
+   - 当前页面截图或等价证据
+   - 已对齐项
+   - 已知差异和延后原因
+
 只有异步读模型、共享 UI、shared contracts 这类明显横切能力，才允许单独作为基础波次先行。
 
 合同优先规则：
@@ -372,6 +455,7 @@ apps/website/src/
 - 建立 Web 自定义 OpenAPI：`opentoggl-web`、`opentoggl-import`、`opentoggl-admin`
 - 建立 feature gate / quota / capability check 的统一接口边界，但在 Wave 7 之前只允许提供最小占位实现，不允许把 gate 规则散落到业务模块
 - 建立最小测试脚手架与统一门禁
+- 建立 self-hosted 容器化交付骨架：生产构建、Dockerfile、compose、health/readiness、基础 smoke 脚本
 
 **推荐并行 streams**
 
@@ -391,6 +475,11 @@ apps/website/src/
   - `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架
   - feature gate / quota header 合同与测试骨架
   - contract/golden/e2e 目录与 fixture 规范
+- `self-hosting-foundation` subagent
+  - 生产镜像构建骨架
+  - `docker compose` 基线
+  - health/readiness 与最小 smoke 命令
+  - env/volume/migration/init 约定
 
 **依赖**
 
@@ -405,6 +494,9 @@ apps/website/src/
 - capability check / feature gate 只有统一入口，没有散落在各模块里的硬编码分支
 - PostgreSQL Blob `filestore` 已可被应用层通过统一接口消费，而不是等附件类功能出现时再补
 - 测试目录、命名、最小 fixture 和并发策略固定
+- `docs/testing/bdd-user-stories.md` 已成为测试设计输入，而不是只留在会话中
+- 至少有一套可构建的 API/Website 生产镜像骨架与 `docker compose` 启动基线
+- health/readiness、迁移入口、最小 smoke test 命令已固定
 - `vp check`、`vp run test -r`、`vp run build -r` 与 Go 测试入口可工作
 
 ### Wave 1: Identity、Session、Tenant、Billing Foundation 与应用壳
@@ -458,6 +550,9 @@ apps/website/src/
 - 停用用户会被阻止继续登录和继续写业务数据
 - 停用中的 running timer 自动停止语义有测试覆盖
 - feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许“默认全开占位实现”
+- Wave 1 范围内的 BDD 故事已映射到 page flow / e2e / contract / integration
+- `profile`、`settings`、共享 app shell 已明确引用各自 PRD 中的 Figma 节点，并提交对齐结果
+- `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
 
 **强制测试链路**
 
@@ -514,6 +609,8 @@ apps/website/src/
 - 费率与成本字段已成为 tracking / reports 的可用输入
 - project / client / task / tag 已完成正式产品面对齐，包括 CRUD、archive/restore、pin/unpin、模板和 stats/periods
 - 费率 / 成本设置页与权限配置页已具备正式页面、合同与测试覆盖
+- Wave 2 范围内的故事覆盖状态已更新到测试故事清单
+- `project page`、`client page` 以及成员/权限相关正式页面已引用 PRD/Figma 或明确 fallback 骨架，并提交对齐结果
 
 **强制测试链路**
 
@@ -563,6 +660,8 @@ apps/website/src/
 - running timer 冲突规则固定且有回归保护
 - `start/stop/duration` 非法组合返回固定错误
 - since sync 与主要过滤在 compat API 与 Web 行为上对齐
+- Wave 3 对应的 `timer` 页面族 page flow 与核心 e2e 已按 testing-strategy 落地
+- `calendar`、`list`、`timesheet` 三个正式视图已引用对应 Figma 节点，并证明它们共享同一页面族语义
 
 **强制测试链路**
 
@@ -613,6 +712,7 @@ apps/website/src/
 - approval / expense 状态机固定
 - 审批权限、编辑回退到 `reopened` 等规则在 API 与 Web 一致
 - 附件、汇率快照、历史结果冻结语义完整
+- Wave 4 覆盖状态已回填到测试故事清单，并标明剩余缺口
 
 **强制测试链路**
 
@@ -659,6 +759,7 @@ apps/website/src/
 - 在线查询、导出、saved report、shared report 使用同一套权限与过滤语义
 - 报表与 tracking 的历史事实解释一致
 - 汇率、rounding、profitability 规则在 shared/export/online 三者一致
+- 报表页面族 page flow、导出 golden 与至少一条高价值 e2e 已对齐 stories
 
 **强制测试链路**
 
@@ -711,6 +812,8 @@ apps/website/src/
 - validate/ping 与真实 delivery 共享运行时，但状态可区分
 - retry / disable / limits / status 是正式运行时行为，不是管理脚本
 - 私有项目和权限变化会影响后续事件暴露
+- Webhooks 页面族、runtime test 与基础验证 e2e 已按 stories 覆盖
+- `integrations webhooks` 页面已引用 PRD 中的 Figma 节点并提交对齐结果
 
 **强制测试链路**
 
@@ -757,6 +860,7 @@ apps/website/src/
 - feature gate 与 quota 事实来源继续保持由 billing 统一提供
 - organization/workspace 的 subscription 视角不形成两套真相
 - self-hosted 虽可使用不同底层计费实现，但对外状态表达与对象模型一致
+- 计划降级、超限与历史对象保留的故事已有明确测试映射与覆盖状态
 
 **强制测试链路**
 
@@ -807,6 +911,7 @@ apps/website/src/
 - 最小 Toggl 样本可导入并在主要 tracking 视图与 compat API 中可读
 - ID mapping、失败明细、冲突诊断、可重试行为完整
 - import continuation 使用真实 job runtime，不依赖人工补脚本
+- import 页面族、诊断页和“最小样本导入成功” e2e 已对齐 stories
 
 **强制测试链路**
 
@@ -863,6 +968,7 @@ apps/website/src/
 - 首个管理员 bootstrap 只能成功一次
 - 注册策略、实例级用户治理、实例级健康与维护入口都具备正式产品表达
 - 管理员不是业务对象超级后门；高权限操作有审计
+- self-hosted 首次管理员初始化流程和实例级健康页已可用于容器化部署 smoke test
 
 **强制测试链路**
 
@@ -905,6 +1011,10 @@ apps/website/src/
 - Compat 输出都被 contract 或 golden 锁定
 - 全量测试符合预算
 - 无 API-only / Web-only 的残缺产品面
+- `testing-strategy` 明确要求的 page flow 与 e2e 缺口清零或被显式降级批准
+- self-hosted 交付物完整：镜像、compose、env 样例、迁移命令、初始化流程、持久化卷策略、升级/回滚说明
+- 新环境按文档启动后，能通过 `health`、登录、进入 workspace、最小关键路径 smoke test
+- 所有在 PRD 中有 Figma 原型的正式页面，都已有 `PRD -> Figma 节点 -> 实现页面 -> 测试` 对照结果
 
 ## 8. 贯穿全程的测试矩阵
 
@@ -937,6 +1047,13 @@ apps/website/src/
 - 有正式页面族的能力必须有 page flow test。
 - 高价值用户路径必须有 e2e。
 
+每个波次还必须维护一份故事覆盖清单，最少包括：
+
+- 已覆盖的 BDD 故事与对应测试层
+- 尚未覆盖的故事
+- 明确延期的故事与原因
+- 对 `testing-strategy` 要求的 page flow / e2e 缺口状态
+
 ## 9. 统一依赖关系
 
 全计划的核心依赖图如下：
@@ -960,6 +1077,8 @@ apps/website/src/
 - 把 reports、webhooks、import 当成 CRUD 或脚本，绕开真实运行时。
 - 让 Web 与 API 各自实现一套语义，导致兼容漂移。
 - 测试数量增加后失控，突破 30s 预算。
+- 一直到最后才考虑 self-hosted 交付，导致镜像、compose、迁移和初始化流程在发布前集中爆雷。
+- 发布时只有源码，没有稳定的可运行 artifact 与 smoke gate。
 
 ### 10.2 对策
 
@@ -968,6 +1087,8 @@ apps/website/src/
 - 所有异步系统都必须通过同一 job runtime 与 record 机制落地。
 - `packages/shared-contracts` 只承载公开合同类型、schema 和生成产物；view model 映射归位到 `entities`、`shared/forms`、`shared/url-state` 或 transport adapter，禁止 page 直连后端 DTO。
 - 每个波次结束都执行一次测试预算检查，不把超时问题留到末尾。
+- 从 Wave 0 起维护容器化交付链路，每个相关波次都跑 `compose + smoke`，不把部署问题留到 Wave 10。
+- 发布准备必须产出镜像、compose、env 样例、迁移与初始化步骤，而不是只写“如何本地启动源码”。
 
 ## 11. 完成定义
 
@@ -978,6 +1099,9 @@ apps/website/src/
 - `import` 与 `instance-admin` 已作为正式产品面上线，而不是脚本或手工流程。
 - Web 页面族与 Figma/截图语义保持一致，没有私自改写产品语义。
 - 所有高价值用户故事都有至少一条贯穿测试链路。
+- `docs/testing/bdd-user-stories.md` 中的已承诺故事都已有覆盖、明确延期批准或被正式移除。
+- 前后端已有正式生产构建与容器镜像，self-hosted 可通过 `docker compose` 启动。
+- 新环境按文档执行迁移、初始化后，可完成 health check、登录、进入 workspace 和最小关键路径 smoke test。
 - 全量测试可在本地快速运行并维持预算。
 - 剩余问题仅限已记录、可接受、且不违反公开契约的缺口。
 
