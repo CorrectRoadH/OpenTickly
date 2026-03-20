@@ -2,6 +2,20 @@
 
 Always apply these standards to all code you write.
 
+## Local Development Runtime
+
+Local development must run source processes directly from the repository root.
+
+- Do not use `docker compose` as the default local development workflow.
+- Start the frontend from the repository root with `vp run website#dev`.
+- Start the backend from the repository root with `go run ./apps/api/cmd/api`.
+- Local development environment variables must live at the repository root, not under `apps/website`, `apps/api`, or ad hoc shell wrappers.
+- Documented local development env variables belong in root-level env files such as `.env.example` and `.env.local`.
+- When local development needs additional entry points, add them to the root toolchain surface such as root `package.json`, `vp`, or a checked-in Go CLI entrypoint.
+- Do not add root-level `scripts/*.sh` files as local development wrappers.
+- `docker compose` is reserved for self-hosted packaging, deployment rehearsal, and release-style smoke verification, not day-to-day local source development.
+- If a change affects how developers boot the app locally, update this file with root-run commands and root-level env expectations in the same change.
+
 ## Documentation Is The Source Of Truth
 
 This repository is implemented from `docs/` and `openapi/`.

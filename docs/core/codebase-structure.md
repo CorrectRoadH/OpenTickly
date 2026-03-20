@@ -63,6 +63,17 @@
 禁止在 `product/` 文档里发明实现结构。
 禁止在 `openapi/` 之外重复手写 compat API 字段真相。
 
+## 3.2 本地开发入口与根目录约束
+
+- 本地开发入口统一从仓库根目录触发。
+- 前端本地开发入口是根目录执行的 `vp run website#dev`。
+- 后端本地开发入口是根目录执行的 `go run ./apps/api/cmd/api`。
+- 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/api` 或根级 shell 包装脚本。
+- 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
+- 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
+- `scripts/` 目录不承载日常本地开发职责；如需新增开发入口，优先收口到根工具链或正式 CLI。
+- `docker compose` 只描述 self-hosted 交付链路，不作为默认本地开发流程。
+
 ## 3.5 OpenAPI 来源分层
 
 当前已存在的兼容 OpenAPI 来源：

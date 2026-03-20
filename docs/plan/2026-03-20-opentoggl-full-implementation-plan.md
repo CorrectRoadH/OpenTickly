@@ -27,12 +27,17 @@
   - [x] `apps/api`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
   - [x] `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架落地
   - [x] `vp test`、`vp check`、`go test ./apps/api/... ./internal/... ./backend/internal/...` 当前可通过
+- [ ] 本地开发基线
+  - [ ] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
+  - [ ] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
+  - [ ] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增入口统一收口到 root toolchain 或正式 CLI
 - [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
   - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
   - [x] `billing-foundation` 后端基础切片第一版
   - [x] `tenant-backend` 后端基础切片第一版
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
+  - [ ] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
   - [ ] Wave 1 整体退出标准全部满足
 - [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice）
 - [ ] Wave 3：Tracking 核心事务面
@@ -52,7 +57,7 @@
 - [ ] 自部署与发布交付链路
   - [ ] 明确 self-hosted 交付形态：前后端双镜像 + 反向代理
   - [ ] 前后端生产构建可生成稳定镜像，而不是依赖开发态启动
-  - [ ] `docker compose` 本地/自托管启动链路可用，并覆盖 `website + api + postgres + redis`
+  - [ ] `docker compose` 自托管启动链路可用，并覆盖 `website + api + postgres + redis`
   - [ ] 数据库迁移、首次管理员初始化、默认配置注入有正式流程
   - [ ] 健康检查、readiness、基础日志与最小 smoke test 固定
   - [ ] 升级/回滚步骤、持久化卷和必要环境变量文档化
@@ -149,7 +154,7 @@
 - 前端和后端必须能产出正式生产构建，并以容器化交付物运行；不允许把开发服务器拼装成伪生产方案。
 - self-hosted 至少要提供：
   - 可构建镜像
-  - 可启动的 `docker compose` 栈
+  - 可启动的 self-hosted `docker compose` 栈
   - 数据库迁移与首次管理员初始化流程
   - 持久化卷策略
   - 健康检查与基础 smoke test
@@ -455,6 +460,7 @@ apps/website/src/
 - 建立 Web 自定义 OpenAPI：`opentoggl-web`、`opentoggl-import`、`opentoggl-admin`
 - 建立 feature gate / quota / capability check 的统一接口边界，但在 Wave 7 之前只允许提供最小占位实现，不允许把 gate 规则散落到业务模块
 - 建立最小测试脚手架与统一门禁
+- 建立本地开发基线：仓库根目录源码启动、根目录 env 约定、无根级本地开发 shell 包装
 - 建立 self-hosted 容器化交付骨架：生产构建、Dockerfile、compose、health/readiness、基础 smoke 脚本
 
 **推荐并行 streams**
@@ -477,7 +483,7 @@ apps/website/src/
   - contract/golden/e2e 目录与 fixture 规范
 - `self-hosting-foundation` subagent
   - 生产镜像构建骨架
-  - `docker compose` 基线
+  - self-hosted `docker compose` 基线
   - health/readiness 与最小 smoke 命令
   - env/volume/migration/init 约定
 
@@ -488,6 +494,9 @@ apps/website/src/
 **退出标准**
 
 - 根目录、API、Web 都能启动最小正式 runtime
+- 本地开发可从仓库根目录分别启动前端与后端源码进程，不依赖 `docker compose`
+- 本地开发 env 已统一收口在仓库根目录，而不是分散在 `apps/*`
+- 本地开发入口未退化为根级 `scripts/*.sh` 包装
 - Web 端已完成 `tailwindcss@4 + baseui + styletron` 的共存基线，而不是后续再补
 - OpenAPI 生成链路可用
 - compat 与 `opentoggl-*` 自定义合同都已有最小可生成骨架
@@ -495,7 +504,7 @@ apps/website/src/
 - PostgreSQL Blob `filestore` 已可被应用层通过统一接口消费，而不是等附件类功能出现时再补
 - 测试目录、命名、最小 fixture 和并发策略固定
 - `docs/testing/bdd-user-stories.md` 已成为测试设计输入，而不是只留在会话中
-- 至少有一套可构建的 API/Website 生产镜像骨架与 `docker compose` 启动基线
+- 至少有一套可构建的 API/Website 生产镜像骨架与 self-hosted `docker compose` 启动基线
 - health/readiness、迁移入口、最小 smoke test 命令已固定
 - `vp check`、`vp run test -r`、`vp run build -r` 与 Go 测试入口可工作
 
@@ -552,7 +561,7 @@ apps/website/src/
 - feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许“默认全开占位实现”
 - Wave 1 范围内的 BDD 故事已映射到 page flow / e2e / contract / integration
 - `profile`、`settings`、共享 app shell 已明确引用各自 PRD 中的 Figma 节点，并提交对齐结果
-- `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
+- self-hosted `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
 
 **强制测试链路**
 
@@ -1100,7 +1109,7 @@ apps/website/src/
 - Web 页面族与 Figma/截图语义保持一致，没有私自改写产品语义。
 - 所有高价值用户故事都有至少一条贯穿测试链路。
 - `docs/testing/bdd-user-stories.md` 中的已承诺故事都已有覆盖、明确延期批准或被正式移除。
-- 前后端已有正式生产构建与容器镜像，self-hosted 可通过 `docker compose` 启动。
+- 前后端已有正式生产构建与容器镜像，self-hosted 可通过 `docker compose` 启动；本地开发默认仍以前后端源码进程方式运行。
 - 新环境按文档执行迁移、初始化后，可完成 health check、登录、进入 workspace 和最小关键路径 smoke test。
 - 全量测试可在本地快速运行并维持预算。
 - 剩余问题仅限已记录、可接受、且不违反公开契约的缺口。
