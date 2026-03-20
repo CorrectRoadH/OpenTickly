@@ -34,8 +34,12 @@
 
 - `docs/core/testing-strategy.md` is a hard implementation constraint, not optional guidance.
 - This project does not assume manual QA or manual product acceptance. Tests are the primary acceptance mechanism.
+- Design tests from PRD-defined user stories first. Do not design tests by walking OpenAPI endpoint lists and filling coverage mechanically.
+- Treat user stories as the primary source for acceptance tests, not the only allowed source for every test.
 - Do not introduce slow tests. The repository standard is that the full test suite should stay fast enough for routine local execution before commit.
 - Do not design a split where "fast tests" run locally and "real confidence" is deferred to slow CI-only suites.
 - Prefer real integration boundaries over mocks. Use mocks/fakes only at true external system boundaries, not to simulate internal business behavior.
 - New code is not complete if it lacks the tests required by the testing strategy for its layer, public contract, and user-facing flow.
+- Use OpenAPI as a contract-validation input, not as the primary test design source.
+- Add regression tests for bugs, edge cases, invariants, and other TDD-discovered rules even when they do not map to a full user story.
 - If a feature is hard to test quickly, simplify the implementation or boundaries instead of normalizing slow, brittle, or heavily mocked tests.
