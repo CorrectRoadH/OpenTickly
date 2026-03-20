@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "generate": "node ./scripts/generate-shared-contracts.mjs",
+    "generate": "node ./scripts/generate-shared-contracts.mjs && node ./scripts/generate-shared-contracts.mjs --source ../../openapi/opentoggl-web.openapi.json --target ./src/generated/web-contracts.generated.ts && vp check --fix src/generated/public-contracts.generated.ts src/generated/web-contracts.generated.ts",
     "test": "vp test run",
     "check": "vp check"
   },

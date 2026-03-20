@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type {
   UpdateCurrentUserProfileRequestDto,
+  UpdateUserPreferencesRequestDto,
   WebCurrentUserProfileDto,
   WebUserPreferencesDto,
 } from "../api/web-contract.ts";
@@ -89,7 +90,9 @@ export function createPreferencesFormValues(
   };
 }
 
-export function mapPreferencesFormToRequest(values: PreferencesFormValues): WebUserPreferencesDto {
+export function mapPreferencesFormToRequest(
+  values: PreferencesFormValues,
+): UpdateUserPreferencesRequestDto {
   const parsed = preferencesFormSchema.parse(values);
 
   return {

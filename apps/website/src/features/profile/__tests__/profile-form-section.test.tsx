@@ -14,12 +14,16 @@ describe("profile form section", () => {
     render(
       <ProfileFormSection
         initialValues={createProfileFormValues({
+          id: 99,
           email: "alex@example.com",
           fullname: "Alex North",
+          api_token: "api-token-99",
           timezone: "Europe/Tallinn",
           beginning_of_week: 1,
           country_id: 70,
           default_workspace_id: 202,
+          has_password: true,
+          "2fa_enabled": false,
         })}
         onSubmit={handleSubmit}
       />,

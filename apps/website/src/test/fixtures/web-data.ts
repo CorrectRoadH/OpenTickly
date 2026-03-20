@@ -1,10 +1,54 @@
 import type {
+  ClientListEnvelopeDto,
+  ClientSummaryDto,
+  ProjectListEnvelopeDto,
+  ProjectMembersEnvelopeDto,
+  ProjectSummaryDto,
+  TagListEnvelopeDto,
+  TagSummaryDto,
   WebCurrentUserProfileDto,
   WebOrganizationSettingsDto,
   WebSessionBootstrapDto,
   WebUserPreferencesDto,
+  WorkspaceMemberDto,
+  WorkspaceMembersEnvelopeDto,
+  WorkspaceSettingsEnvelopeDto,
   WebWorkspaceSettingsDto,
 } from "../../shared/api/web-contract.ts";
+
+type GroupSummaryFixture = {
+  active: boolean;
+  id: number;
+  name: string;
+  workspace_id: number;
+};
+
+type GroupListFixture = {
+  groups: GroupSummaryFixture[];
+};
+
+type TaskSummaryFixture = {
+  active: boolean;
+  id: number;
+  name: string;
+  workspace_id: number;
+};
+
+type TaskListFixture = {
+  tasks: TaskSummaryFixture[];
+};
+
+type WorkspacePermissionsFixture = Pick<
+  WebWorkspaceSettingsDto,
+  | "only_admins_may_create_projects"
+  | "only_admins_may_create_tags"
+  | "only_admins_see_team_dashboard"
+  | "limit_public_project_data"
+>;
+
+type WorkspacePermissionsEnvelopeFixture = {
+  workspace: WorkspacePermissionsFixture;
+};
 
 export function createSessionFixture(
   overrides?: Partial<WebSessionBootstrapDto>,
@@ -61,6 +105,7 @@ export function createProfileFixture(
     id: 99,
     email: "alex@example.com",
     fullname: "Alex North",
+    api_token: "api-token-99",
     timezone: "Europe/Tallinn",
     default_workspace_id: 202,
     beginning_of_week: 1,
@@ -128,6 +173,223 @@ export function createWorkspaceFixture(
     admin: true,
     premium: true,
     role: "admin",
+    ...overrides,
+  };
+}
+
+export function createWorkspaceSettingsEnvelopeFixture(
+  overrides?: Partial<WorkspaceSettingsEnvelopeDto>,
+): WorkspaceSettingsEnvelopeDto {
+  return {
+    workspace: createWorkspaceFixture(),
+    preferences: {
+      hide_start_end_times: false,
+      report_locked_at: "",
+    },
+    subscription: {
+      plan_name: "Starter",
+      state: "active",
+    },
+    capabilities: null,
+    quota: null,
+    ...overrides,
+  };
+}
+
+export function createWorkspacePermissionsFixture(
+  overrides?: Partial<WorkspacePermissionsEnvelopeFixture>,
+): WorkspacePermissionsEnvelopeFixture {
+  return {
+    workspace: {
+      only_admins_may_create_projects: false,
+      only_admins_may_create_tags: true,
+      only_admins_see_team_dashboard: false,
+      limit_public_project_data: false,
+      ...overrides?.workspace,
+    },
+    ...overrides,
+  };
+}
+
+export function createWorkspaceMemberFixture(
+  overrides?: Partial<WorkspaceMemberDto>,
+): WorkspaceMemberDto {
+  return {
+    id: 1,
+    workspace_id: 202,
+    email: "alex@example.com",
+    name: "Alex Johnson",
+    role: "owner",
+    ...overrides,
+  };
+}
+
+export function createWorkspaceMembersFixture(
+  overrides?: Partial<WorkspaceMembersEnvelopeDto>,
+): WorkspaceMembersEnvelopeDto {
+  return {
+    members: [
+      createWorkspaceMemberFixture(),
+      createWorkspaceMemberFixture({
+        id: 2,
+        email: "bailey@example.com",
+        name: "Bailey Lee",
+        role: "admin",
+      }),
+      createWorkspaceMemberFixture({
+        id: 3,
+        email: "casey@example.com",
+        name: "Casey Smith",
+        role: "member",
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export function createProjectSummaryFixture(
+  overrides?: Partial<ProjectSummaryDto>,
+): ProjectSummaryDto {
+  return {
+    id: 1001,
+    name: "Website Revamp",
+    workspace_id: 202,
+    active: true,
+    ...overrides,
+  };
+}
+
+export function createProjectsFixture(
+  overrides?: Partial<ProjectListEnvelopeDto>,
+): ProjectListEnvelopeDto {
+  return {
+    projects: [
+      createProjectSummaryFixture(),
+      createProjectSummaryFixture({
+        id: 1002,
+        name: "Community Launch",
+        active: false,
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export function createProjectMembersFixture(
+  overrides?: Partial<ProjectMembersEnvelopeDto>,
+): ProjectMembersEnvelopeDto {
+  return {
+    members: [
+      {
+        project_id: 1001,
+        member_id: 99,
+        role: "admin",
+      },
+    ],
+    ...overrides,
+  };
+}
+
+export function createClientSummaryFixture(
+  overrides?: Partial<ClientSummaryDto>,
+): ClientSummaryDto {
+  return {
+    id: 501,
+    name: "North Ridge Client",
+    workspace_id: 202,
+    active: true,
+    ...overrides,
+  };
+}
+
+export function createClientsFixture(
+  overrides?: Partial<ClientListEnvelopeDto>,
+): ClientListEnvelopeDto {
+  return {
+    clients: [
+      createClientSummaryFixture(),
+      createClientSummaryFixture({
+        id: 502,
+        name: "Studio Partner",
+        active: false,
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export function createTagSummaryFixture(overrides?: Partial<TagSummaryDto>): TagSummaryDto {
+  return {
+    id: 701,
+    name: "Urgent",
+    workspace_id: 202,
+    active: true,
+    ...overrides,
+  };
+}
+
+export function createTaskSummaryFixture(
+  overrides?: Partial<TaskSummaryFixture>,
+): TaskSummaryFixture {
+  return {
+    id: 601,
+    name: "Prep launch brief",
+    workspace_id: 202,
+    active: true,
+    ...overrides,
+  };
+}
+
+export function createTasksFixture(overrides?: Partial<TaskListFixture>): TaskListFixture {
+  return {
+    tasks: [
+      createTaskSummaryFixture(),
+      createTaskSummaryFixture({
+        id: 602,
+        name: "Retro follow-up",
+        active: false,
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export function createGroupSummaryFixture(
+  overrides?: Partial<GroupSummaryFixture>,
+): GroupSummaryFixture {
+  return {
+    id: 901,
+    name: "Marketing pod",
+    workspace_id: 202,
+    active: true,
+    ...overrides,
+  };
+}
+
+export function createGroupsFixture(overrides?: Partial<GroupListFixture>): GroupListFixture {
+  return {
+    groups: [
+      createGroupSummaryFixture(),
+      createGroupSummaryFixture({
+        id: 902,
+        name: "Contractors",
+        active: false,
+      }),
+    ],
+    ...overrides,
+  };
+}
+
+export function createTagsFixture(overrides?: Partial<TagListEnvelopeDto>): TagListEnvelopeDto {
+  return {
+    tags: [
+      createTagSummaryFixture(),
+      createTagSummaryFixture({
+        id: 702,
+        name: "Ops",
+        active: false,
+      }),
+    ],
     ...overrides,
   };
 }

@@ -2,6 +2,13 @@ package httpapp
 
 import "context"
 
+type WorkspacePermissionsRequest struct {
+	OnlyAdminsMayCreateProjects bool `json:"only_admins_may_create_projects"`
+	OnlyAdminsMayCreateTags     bool `json:"only_admins_may_create_tags"`
+	OnlyAdminsSeeTeamDashboard  bool `json:"only_admins_see_team_dashboard"`
+	LimitPublicProjectData      bool `json:"limit_public_project_data"`
+}
+
 func (handlers *Wave1TenantHandlers) GetOrganizationSettings(
 	_ context.Context,
 	sessionID string,
@@ -93,6 +100,102 @@ func (handlers *Wave1TenantHandlers) GetWorkspaceSettings(
 	}
 }
 
+func (handlers *Wave1TenantHandlers) GetWorkspacePermissions(
+	_ context.Context,
+	sessionID string,
+	workspaceID int64,
+) Wave1Response {
+	handlers.state.mu.RLock()
+	defer handlers.state.mu.RUnlock()
+
+	user, home, ok := handlers.state.userAndHomeBySessionLocked(sessionID)
+	if !ok || user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if workspaceID != home.WorkspaceID {
+		return Wave1Response{StatusCode: 404, Body: "workspace not found"}
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body:       handlers.workspacePermissionsBody(home),
+	}
+}
+
+func (handlers *Wave1TenantHandlers) UpdateWorkspacePermissions(
+	_ context.Context,
+	sessionID string,
+	workspaceID int64,
+	request WorkspacePermissionsRequest,
+) Wave1Response {
+	handlers.state.mu.Lock()
+	defer handlers.state.mu.Unlock()
+
+	user, home, ok := handlers.state.userAndHomeBySessionLocked(sessionID)
+	if !ok || user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if workspaceID != home.WorkspaceID {
+		return Wave1Response{StatusCode: 404, Body: "workspace not found"}
+	}
+
+	stored := handlers.state.homes[user.ID]
+	stored.Settings.OnlyAdminsMayCreateProjects = request.OnlyAdminsMayCreateProjects
+	stored.Settings.OnlyAdminsMayCreateTags = request.OnlyAdminsMayCreateTags
+	stored.Settings.OnlyAdminsSeeTeamDashboard = request.OnlyAdminsSeeTeamDashboard
+	stored.Settings.LimitPublicProjectData = request.LimitPublicProjectData
+	home = *stored
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body:       handlers.workspacePermissionsBody(home),
+	}
+}
+
+func (handlers *Wave1TenantHandlers) GetWorkspaceCapabilities(
+	_ context.Context,
+	sessionID string,
+	workspaceID int64,
+) Wave1Response {
+	handlers.state.mu.RLock()
+	defer handlers.state.mu.RUnlock()
+
+	user, home, ok := handlers.state.userAndHomeBySessionLocked(sessionID)
+	if !ok || user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if workspaceID != home.WorkspaceID {
+		return Wave1Response{StatusCode: 404, Body: "workspace not found"}
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body:       handlers.capabilityBody(home),
+	}
+}
+
+func (handlers *Wave1TenantHandlers) GetWorkspaceQuota(
+	_ context.Context,
+	sessionID string,
+	workspaceID int64,
+) Wave1Response {
+	handlers.state.mu.RLock()
+	defer handlers.state.mu.RUnlock()
+
+	user, home, ok := handlers.state.userAndHomeBySessionLocked(sessionID)
+	if !ok || user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if workspaceID != home.WorkspaceID {
+		return Wave1Response{StatusCode: 404, Body: "workspace not found"}
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body:       handlers.quotaBody(home),
+	}
+}
+
 func (handlers *Wave1TenantHandlers) UpdateWorkspaceSettings(
 	_ context.Context,
 	sessionID string,
@@ -172,6 +275,15 @@ func (handlers *Wave1TenantHandlers) workspaceBody(home homeRecord) map[string]a
 		"admin":                           true,
 		"premium":                         false,
 		"role":                            "admin",
+	}
+}
+
+func (handlers *Wave1TenantHandlers) workspacePermissionsBody(home homeRecord) map[string]any {
+	return map[string]any{
+		"only_admins_may_create_projects": home.Settings.OnlyAdminsMayCreateProjects,
+		"only_admins_may_create_tags":     home.Settings.OnlyAdminsMayCreateTags,
+		"only_admins_see_team_dashboard":  home.Settings.OnlyAdminsSeeTeamDashboard,
+		"limit_public_project_data":       home.Settings.LimitPublicProjectData,
 	}
 }
 

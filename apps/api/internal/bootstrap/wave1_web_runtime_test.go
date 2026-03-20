@@ -188,6 +188,93 @@ func TestWave1WebRoutesServeLiveEchoRuntime(t *testing.T) {
 		t.Fatalf("expected report_locked_at to persist, got %#v", preferencesBody["report_locked_at"])
 	}
 
+	workspacePermissionsPath := "/web/v1/workspaces/" + intToString(workspaceID) + "/permissions"
+	workspacePermissions := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		workspacePermissionsPath,
+		nil,
+		sessionCookie,
+	)
+	if workspacePermissions.Code != http.StatusOK {
+		t.Fatalf("expected workspace permissions status 200, got %d body=%s", workspacePermissions.Code, workspacePermissions.Body.String())
+	}
+	var workspacePermissionsBody map[string]any
+	mustDecodeJSON(t, workspacePermissions.Body.Bytes(), &workspacePermissionsBody)
+	if workspacePermissionsBody["only_admins_may_create_projects"] != false {
+		t.Fatalf("expected only_admins_may_create_projects to reflect workspace settings state, got %#v", workspacePermissionsBody["only_admins_may_create_projects"])
+	}
+	if workspacePermissionsBody["only_admins_may_create_tags"] != false {
+		t.Fatalf("expected only_admins_may_create_tags to reflect workspace settings state, got %#v", workspacePermissionsBody["only_admins_may_create_tags"])
+	}
+	if workspacePermissionsBody["only_admins_see_team_dashboard"] != false {
+		t.Fatalf("expected only_admins_see_team_dashboard to reflect workspace settings state, got %#v", workspacePermissionsBody["only_admins_see_team_dashboard"])
+	}
+	if workspacePermissionsBody["limit_public_project_data"] != false {
+		t.Fatalf("expected limit_public_project_data to reflect workspace settings state, got %#v", workspacePermissionsBody["limit_public_project_data"])
+	}
+
+	updatedWorkspacePermissions := performJSONRequest(t, app, http.MethodPatch, workspacePermissionsPath, map[string]any{
+		"only_admins_may_create_projects": true,
+		"only_admins_may_create_tags":     true,
+		"only_admins_see_team_dashboard":  true,
+		"limit_public_project_data":       true,
+	}, sessionCookie)
+	if updatedWorkspacePermissions.Code != http.StatusOK {
+		t.Fatalf("expected workspace permissions patch status 200, got %d body=%s", updatedWorkspacePermissions.Code, updatedWorkspacePermissions.Body.String())
+	}
+	var updatedWorkspacePermissionsBody map[string]any
+	mustDecodeJSON(t, updatedWorkspacePermissions.Body.Bytes(), &updatedWorkspacePermissionsBody)
+	if updatedWorkspacePermissionsBody["only_admins_may_create_projects"] != true {
+		t.Fatalf("expected only_admins_may_create_projects to persist through permissions patch, got %#v", updatedWorkspacePermissionsBody["only_admins_may_create_projects"])
+	}
+	if updatedWorkspacePermissionsBody["only_admins_may_create_tags"] != true {
+		t.Fatalf("expected only_admins_may_create_tags to persist through permissions patch, got %#v", updatedWorkspacePermissionsBody["only_admins_may_create_tags"])
+	}
+	if updatedWorkspacePermissionsBody["only_admins_see_team_dashboard"] != true {
+		t.Fatalf("expected only_admins_see_team_dashboard to persist through permissions patch, got %#v", updatedWorkspacePermissionsBody["only_admins_see_team_dashboard"])
+	}
+	if updatedWorkspacePermissionsBody["limit_public_project_data"] != true {
+		t.Fatalf("expected limit_public_project_data to persist through permissions patch, got %#v", updatedWorkspacePermissionsBody["limit_public_project_data"])
+	}
+
+	workspaceSettingsAfterPermissions := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		workspaceSettingsPath,
+		nil,
+		sessionCookie,
+	)
+	if workspaceSettingsAfterPermissions.Code != http.StatusOK {
+		t.Fatalf("expected workspace settings status 200 after permissions patch, got %d body=%s", workspaceSettingsAfterPermissions.Code, workspaceSettingsAfterPermissions.Body.String())
+	}
+	var workspaceSettingsAfterPermissionsBody map[string]any
+	mustDecodeJSON(t, workspaceSettingsAfterPermissions.Body.Bytes(), &workspaceSettingsAfterPermissionsBody)
+	workspaceBody, ok := workspaceSettingsAfterPermissionsBody["workspace"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected workspace settings response to include workspace map, got %#v", workspaceSettingsAfterPermissionsBody["workspace"])
+	}
+	if workspaceBody["name"] != "Delivery West" {
+		t.Fatalf("expected permissions patch to preserve workspace name, got %#v", workspaceBody["name"])
+	}
+	if workspaceBody["default_currency"] != "EUR" {
+		t.Fatalf("expected permissions patch to preserve default_currency, got %#v", workspaceBody["default_currency"])
+	}
+	if workspaceBody["only_admins_may_create_projects"] != true {
+		t.Fatalf("expected workspace settings to reflect permissions patch, got %#v", workspaceBody["only_admins_may_create_projects"])
+	}
+	if workspaceBody["only_admins_may_create_tags"] != true {
+		t.Fatalf("expected workspace settings to reflect permissions patch, got %#v", workspaceBody["only_admins_may_create_tags"])
+	}
+	if workspaceBody["only_admins_see_team_dashboard"] != true {
+		t.Fatalf("expected workspace settings to reflect permissions patch, got %#v", workspaceBody["only_admins_see_team_dashboard"])
+	}
+	if workspaceBody["limit_public_project_data"] != true {
+		t.Fatalf("expected workspace settings to reflect permissions patch, got %#v", workspaceBody["limit_public_project_data"])
+	}
+
 	organizationSettingsPath := "/web/v1/organizations/" + intToString(organizationID) + "/settings"
 	organizationSettings := performJSONRequest(t, app, http.MethodGet, organizationSettingsPath, nil, sessionCookie)
 	if organizationSettings.Code != http.StatusOK {

@@ -18,11 +18,13 @@ describe("workspace settings form", () => {
           id: 202,
           organization_id: 14,
           name: "North Ridge Delivery",
+          admin: true,
           default_currency: "USD",
           default_hourly_rate: 175,
           rounding: 1,
           rounding_minutes: 15,
           reports_collapse: true,
+          premium: true,
           only_admins_may_create_projects: false,
           only_admins_may_create_tags: true,
           only_admins_see_team_dashboard: false,
@@ -31,6 +33,7 @@ describe("workspace settings form", () => {
           projects_enforce_billable: true,
           limit_public_project_data: false,
           logo_url: "https://cdn.example.com/logo.png",
+          role: "admin",
         })}
         onSubmit={handleSubmit}
       />,

@@ -25,19 +25,31 @@ func TestNewProject(t *testing.T) {
 func TestArchive(t *testing.T) {
 	p := NewProject(1, 2, "Project Beta", false, false)
 
-	p.Archive()
+	if err := p.Archive(); err != nil {
+		t.Fatalf("expected first archive to succeed: %v", err)
+	}
 
 	if !p.Archived {
 		t.Fatalf("expected Archived true after Archive()")
+	}
+
+	if err := p.Archive(); err != ErrProjectAlreadyArchived {
+		t.Fatalf("expected ErrProjectAlreadyArchived, got %v", err)
 	}
 }
 
 func TestRestore(t *testing.T) {
 	p := NewProject(1, 2, "Project Gamma", false, true)
 
-	p.Restore()
+	if err := p.Restore(); err != nil {
+		t.Fatalf("expected first restore to succeed: %v", err)
+	}
 
 	if p.Archived {
 		t.Fatalf("expected Archived false after Restore()")
+	}
+
+	if err := p.Restore(); err != ErrProjectNotArchived {
+		t.Fatalf("expected ErrProjectNotArchived, got %v", err)
 	}
 }

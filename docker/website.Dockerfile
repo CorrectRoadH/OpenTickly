@@ -8,12 +8,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY apps ./apps
 COPY packages ./packages
 
-RUN pnpm install --no-frozen-lockfile --ignore-scripts
-RUN pnpm --filter @opentoggl/website exec vite build --outDir /out
+RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm --filter @opentoggl/website run build
 
 FROM nginx:1.27-alpine
 
 COPY docker/nginx/website.conf /etc/nginx/conf.d/default.conf
-COPY --from=builder /out /usr/share/nginx/html
+COPY --from=builder /workspace/apps/website/dist /usr/share/nginx/html
 
 EXPOSE 80

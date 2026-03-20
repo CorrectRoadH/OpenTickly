@@ -65,6 +65,36 @@ type WorkspaceMemberInvitationRequest struct {
 	Role  *string `json:"role"`
 }
 
+type ProjectCreateRequest struct {
+	WorkspaceID int64  `json:"workspace_id"`
+	Name        string `json:"name"`
+}
+
+type ProjectMemberGrantRequest struct {
+	MemberID int64   `json:"member_id"`
+	Role     *string `json:"role"`
+}
+
+type ClientCreateRequest struct {
+	WorkspaceID int64  `json:"workspace_id"`
+	Name        string `json:"name"`
+}
+
+type TaskCreateRequest struct {
+	WorkspaceID int64  `json:"workspace_id"`
+	Name        string `json:"name"`
+}
+
+type TagCreateRequest struct {
+	WorkspaceID int64  `json:"workspace_id"`
+	Name        string `json:"name"`
+}
+
+type GroupCreateRequest struct {
+	WorkspaceID int64  `json:"workspace_id"`
+	Name        string `json:"name"`
+}
+
 type Wave1WebHandlers struct {
 	Tenant *Wave1TenantHandlers
 	state  *wave1State
@@ -81,11 +111,73 @@ type wave1State struct {
 	nextSessionID   int64
 	nextOrgID       int64
 	nextWorkspaceID int64
+	nextMemberID    int64
+	nextProjectID   int64
+	nextClientID    int64
+	nextTaskID      int64
+	nextTagID       int64
+	nextGroupID     int64
 
-	users        map[int64]*userRecord
-	usersByEmail map[string]int64
-	sessions     map[string]int64
-	homes        map[int64]*homeRecord
+	users             map[int64]*userRecord
+	usersByEmail      map[string]int64
+	sessions          map[string]int64
+	homes             map[int64]*homeRecord
+	workspaceMembers  map[int64][]workspaceMemberRecord
+	workspaceProjects map[int64][]projectRecord
+	projectMembers    map[int64][]projectMemberRecord
+	workspaceClients  map[int64][]clientRecord
+	workspaceTasks    map[int64][]taskRecord
+	workspaceTags     map[int64][]tagRecord
+	workspaceGroups   map[int64][]groupRecord
+}
+
+type workspaceMemberRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Email       string
+	Name        string
+	Role        string
+}
+
+type projectRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Name        string
+	Active      bool
+}
+
+type projectMemberRecord struct {
+	ProjectID int64
+	MemberID  int64
+	Role      string
+}
+
+type clientRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Name        string
+	Active      bool
+}
+
+type taskRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Name        string
+	Active      bool
+}
+
+type tagRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Name        string
+	Active      bool
+}
+
+type groupRecord struct {
+	ID          int64
+	WorkspaceID int64
+	Name        string
+	Active      bool
 }
 
 type userRecord struct {
@@ -141,14 +233,27 @@ type workspacePreferencesSnapshot struct {
 
 func NewWave1WebHandlers() *Wave1WebHandlers {
 	state := &wave1State{
-		nextUserID:      1,
-		nextSessionID:   1,
-		nextOrgID:       1,
-		nextWorkspaceID: 1,
-		users:           make(map[int64]*userRecord),
-		usersByEmail:    make(map[string]int64),
-		sessions:        make(map[string]int64),
-		homes:           make(map[int64]*homeRecord),
+		nextUserID:        1,
+		nextSessionID:     1,
+		nextOrgID:         1,
+		nextWorkspaceID:   1,
+		nextMemberID:      1,
+		nextProjectID:     1001,
+		nextClientID:      501,
+		nextTaskID:        901,
+		nextTagID:         801,
+		nextGroupID:       701,
+		users:             make(map[int64]*userRecord),
+		usersByEmail:      make(map[string]int64),
+		sessions:          make(map[string]int64),
+		homes:             make(map[int64]*homeRecord),
+		workspaceMembers:  make(map[int64][]workspaceMemberRecord),
+		workspaceProjects: make(map[int64][]projectRecord),
+		projectMembers:    make(map[int64][]projectMemberRecord),
+		workspaceClients:  make(map[int64][]clientRecord),
+		workspaceTasks:    make(map[int64][]taskRecord),
+		workspaceTags:     make(map[int64][]tagRecord),
+		workspaceGroups:   make(map[int64][]groupRecord),
 	}
 	return &Wave1WebHandlers{
 		Tenant: &Wave1TenantHandlers{state: state},
@@ -414,7 +519,154 @@ func (handlers *Wave1WebHandlers) ensureHomeLocked(user *userRecord) homeRecord 
 		},
 	}
 	handlers.state.homes[user.ID] = home
+	handlers.state.seedWorkspaceMembersLocked(*home, user)
+	handlers.state.seedWorkspaceProjectsLocked(*home)
+	handlers.state.seedWorkspaceClientsLocked(*home)
+	handlers.state.seedWorkspaceTasksLocked(*home)
+	handlers.state.seedWorkspaceTagsLocked(*home)
+	handlers.state.seedWorkspaceGroupsLocked(*home)
 	return *home
+}
+
+func (state *wave1State) seedWorkspaceMembersLocked(home homeRecord, user *userRecord) {
+	if _, ok := state.workspaceMembers[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceMembers[home.WorkspaceID] = []workspaceMemberRecord{
+		{
+			ID:          state.nextMemberID,
+			WorkspaceID: home.WorkspaceID,
+			Email:       user.Email,
+			Name:        user.FullName,
+			Role:        "owner",
+		},
+	}
+	state.nextMemberID++
+}
+
+func (state *wave1State) seedWorkspaceProjectsLocked(home homeRecord) {
+	if _, ok := state.workspaceProjects[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceProjects[home.WorkspaceID] = []projectRecord{
+		{
+			ID:          state.nextProjectID,
+			WorkspaceID: home.WorkspaceID,
+			Name:        "Sample Project",
+			Active:      true,
+		},
+	}
+	state.seedProjectMembersLocked(state.workspaceProjects[home.WorkspaceID][0])
+	state.nextProjectID++
+}
+
+func (state *wave1State) seedProjectMembersLocked(project projectRecord) {
+	if _, ok := state.projectMembers[project.ID]; ok {
+		return
+	}
+
+	workspaceMembers := state.workspaceMembers[project.WorkspaceID]
+	if len(workspaceMembers) == 0 {
+		state.projectMembers[project.ID] = []projectMemberRecord{}
+		return
+	}
+
+	state.projectMembers[project.ID] = []projectMemberRecord{
+		{
+			ProjectID: project.ID,
+			MemberID:  workspaceMembers[0].ID,
+			Role:      "admin",
+		},
+	}
+}
+
+func (state *wave1State) projectByIDLocked(projectID int64) (projectRecord, bool) {
+	for _, projects := range state.workspaceProjects {
+		for _, project := range projects {
+			if project.ID == projectID {
+				return project, true
+			}
+		}
+	}
+	return projectRecord{}, false
+}
+
+func (state *wave1State) workspaceMemberByIDLocked(
+	workspaceID int64,
+	memberID int64,
+) (workspaceMemberRecord, bool) {
+	for _, member := range state.workspaceMembers[workspaceID] {
+		if member.ID == memberID {
+			return member, true
+		}
+	}
+	return workspaceMemberRecord{}, false
+}
+
+func (state *wave1State) seedWorkspaceClientsLocked(home homeRecord) {
+	if _, ok := state.workspaceClients[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceClients[home.WorkspaceID] = []clientRecord{
+		{
+			ID:          state.nextClientID,
+			WorkspaceID: home.WorkspaceID,
+			Name:        "North Ridge Client",
+			Active:      true,
+		},
+	}
+	state.nextClientID++
+}
+
+func (state *wave1State) seedWorkspaceTasksLocked(home homeRecord) {
+	if _, ok := state.workspaceTasks[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceTasks[home.WorkspaceID] = []taskRecord{
+		{
+			ID:          state.nextTaskID,
+			WorkspaceID: home.WorkspaceID,
+			Name:        "Weekly Sync",
+			Active:      true,
+		},
+	}
+	state.nextTaskID++
+}
+
+func (state *wave1State) seedWorkspaceTagsLocked(home homeRecord) {
+	if _, ok := state.workspaceTags[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceTags[home.WorkspaceID] = []tagRecord{
+		{
+			ID:          state.nextTagID,
+			WorkspaceID: home.WorkspaceID,
+			Name:        "billable",
+			Active:      true,
+		},
+	}
+	state.nextTagID++
+}
+
+func (state *wave1State) seedWorkspaceGroupsLocked(home homeRecord) {
+	if _, ok := state.workspaceGroups[home.WorkspaceID]; ok {
+		return
+	}
+
+	state.workspaceGroups[home.WorkspaceID] = []groupRecord{
+		{
+			ID:          state.nextGroupID,
+			WorkspaceID: home.WorkspaceID,
+			Name:        "Design",
+			Active:      true,
+		},
+	}
+	state.nextGroupID++
 }
 
 func (handlers *Wave1WebHandlers) newSessionLocked(userID int64) string {
@@ -560,22 +812,28 @@ func (handlers *Wave1WebHandlers) workspaceBody(home homeRecord) map[string]any 
 func normalizeEmail(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
 }
+
 // ListWorkspaceMembers returns a simple member list envelope for the given workspace.
 func (h *Wave1TenantHandlers) ListWorkspaceMembers(ctx context.Context, sessionID string, workspaceID int64) Wave1Response {
 	_ = ctx
 	_ = sessionID
 
-	members := []map[string]any{
-		{
-			"id":           int64(1),
-			"workspace_id": workspaceID,
-			"email":        "member@example.com",
-			"name":         "Sample Member",
-			"role":         "admin",
-		},
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	members := make([]map[string]any, 0, len(h.state.workspaceMembers[workspaceID]))
+	for _, member := range h.state.workspaceMembers[workspaceID] {
+		members = append(members, map[string]any{
+			"id":           member.ID,
+			"workspace_id": member.WorkspaceID,
+			"email":        member.Email,
+			"name":         member.Name,
+			"role":         member.Role,
+		})
 	}
 
 	return Wave1Response{
+		StatusCode: 200,
 		Body: map[string]any{
 			"members": members,
 		},
@@ -599,13 +857,21 @@ func (h *Wave1TenantHandlers) ListProjectMembers(ctx context.Context, sessionID 
 	if user == nil {
 		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
 	}
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
 
-	members := []map[string]any{
-		{
-			"project_id": projectID,
-			"member_id":  user.ID,
-			"role":       "admin",
-		},
+	members := make([]map[string]any, 0, len(h.state.projectMembers[projectID]))
+	for _, member := range h.state.projectMembers[projectID] {
+		members = append(members, map[string]any{
+			"project_id": member.ProjectID,
+			"member_id":  member.MemberID,
+			"role":       member.Role,
+		})
 	}
 
 	return Wave1Response{
@@ -627,8 +893,8 @@ func (h *Wave1TenantHandlers) InviteWorkspaceMember(ctx context.Context, session
 		return Wave1Response{StatusCode: 400, Body: "invalid workspace member invitation payload"}
 	}
 
-	h.state.mu.RLock()
-	defer h.state.mu.RUnlock()
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
 
 	userID, ok := h.state.sessions[sessionID]
 	if !ok {
@@ -642,9 +908,197 @@ func (h *Wave1TenantHandlers) InviteWorkspaceMember(ctx context.Context, session
 		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
 	}
 
+	name := strings.TrimSpace(strings.Split(email, "@")[0])
+	if name == "" {
+		name = email
+	}
+	role := "member"
+	if request.Role != nil && strings.TrimSpace(*request.Role) != "" {
+		role = strings.TrimSpace(*request.Role)
+	}
+
+	member := workspaceMemberRecord{
+		ID:          h.state.nextMemberID,
+		WorkspaceID: workspaceID,
+		Email:       email,
+		Name:        name,
+		Role:        role,
+	}
+	h.state.nextMemberID++
+	h.state.workspaceMembers[workspaceID] = append(h.state.workspaceMembers[workspaceID], member)
+
 	return Wave1Response{
 		StatusCode: 201,
-		Body:       map[string]any{},
+		Body: map[string]any{
+			"id":           member.ID,
+			"workspace_id": member.WorkspaceID,
+			"email":        member.Email,
+			"name":         member.Name,
+			"role":         member.Role,
+		},
+	}
+}
+
+/*
+GrantProjectMember adds or updates a minimal project-member grant for the current session.
+*/
+func (h *Wave1TenantHandlers) GrantProjectMember(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+	request ProjectMemberGrantRequest,
+) Wave1Response {
+	_ = ctx
+
+	if request.MemberID <= 0 {
+		return Wave1Response{StatusCode: 400, Body: "invalid project member payload"}
+	}
+
+	role := "member"
+	if request.Role != nil && strings.TrimSpace(*request.Role) != "" {
+		role = strings.TrimSpace(*request.Role)
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+	if _, ok := h.state.workspaceMemberByIDLocked(project.WorkspaceID, request.MemberID); !ok {
+		return Wave1Response{StatusCode: 404, Body: "Workspace member not found"}
+	}
+
+	for index, member := range h.state.projectMembers[project.ID] {
+		if member.MemberID != request.MemberID {
+			continue
+		}
+		h.state.projectMembers[project.ID][index].Role = role
+		return Wave1Response{
+			StatusCode: 201,
+			Body: map[string]any{
+				"project_id": project.ID,
+				"member_id":  request.MemberID,
+				"role":       role,
+			},
+		}
+	}
+
+	member := projectMemberRecord{
+		ProjectID: project.ID,
+		MemberID:  request.MemberID,
+		Role:      role,
+	}
+	h.state.projectMembers[project.ID] = append(h.state.projectMembers[project.ID], member)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"project_id": member.ProjectID,
+			"member_id":  member.MemberID,
+			"role":       member.Role,
+		},
+	}
+}
+
+/*
+RevokeProjectMember removes a minimal project-member grant for the current session.
+*/
+func (h *Wave1TenantHandlers) RevokeProjectMember(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+	memberID int64,
+) Wave1Response {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	projectMembers := h.state.projectMembers[project.ID]
+	for index, member := range projectMembers {
+		if member.MemberID != memberID {
+			continue
+		}
+		h.state.projectMembers[project.ID] = append(projectMembers[:index], projectMembers[index+1:]...)
+		return Wave1Response{StatusCode: 204}
+	}
+
+	return Wave1Response{StatusCode: 404, Body: "Project member not found"}
+}
+
+// CreateProject accepts a minimal project payload for the caller's workspace.
+func (h *Wave1TenantHandlers) CreateProject(ctx context.Context, sessionID string, request ProjectCreateRequest) Wave1Response {
+	_ = ctx
+
+	if request.WorkspaceID <= 0 || strings.TrimSpace(request.Name) == "" {
+		return Wave1Response{StatusCode: 400, Body: "invalid project payload"}
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != request.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	project := projectRecord{
+		ID:          h.state.nextProjectID,
+		WorkspaceID: request.WorkspaceID,
+		Name:        strings.TrimSpace(request.Name),
+		Active:      true,
+	}
+	h.state.nextProjectID++
+	h.state.workspaceProjects[request.WorkspaceID] = append(
+		h.state.workspaceProjects[request.WorkspaceID],
+		project,
+	)
+	h.state.seedProjectMembersLocked(project)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"id":           project.ID,
+			"name":         project.Name,
+			"workspace_id": project.WorkspaceID,
+			"active":       project.Active,
+		},
 	}
 }
 
@@ -653,23 +1107,324 @@ func (h *Wave1TenantHandlers) ListProjects(ctx context.Context, sessionID string
 	_ = ctx
 	_ = sessionID
 
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
 	workspaceID := int64(1)
 	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
 		workspaceID = *request.WorkspaceID
 	}
 
-	projects := []map[string]any{
-		{
-			"id":           int64(1001),
-			"name":         "Sample Project",
-			"workspace_id": workspaceID,
-			"active":       true,
-		},
+	projects := make([]map[string]any, 0, len(h.state.workspaceProjects[workspaceID]))
+	for _, project := range h.state.workspaceProjects[workspaceID] {
+		projects = append(projects, map[string]any{
+			"id":           project.ID,
+			"name":         project.Name,
+			"workspace_id": project.WorkspaceID,
+			"active":       project.Active,
+		})
 	}
 
 	return Wave1Response{
+		StatusCode: 200,
 		Body: map[string]any{
 			"projects": projects,
+		},
+	}
+}
+
+// ListClients returns a simple clients envelope based on the requested workspace.
+func (h *Wave1TenantHandlers) ListClients(ctx context.Context, sessionID string, request ListProjectsRequest) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	workspaceID := int64(1)
+	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
+		workspaceID = *request.WorkspaceID
+	}
+
+	clients := make([]map[string]any, 0, len(h.state.workspaceClients[workspaceID]))
+	for _, client := range h.state.workspaceClients[workspaceID] {
+		clients = append(clients, map[string]any{
+			"id":           client.ID,
+			"name":         client.Name,
+			"workspace_id": client.WorkspaceID,
+			"active":       client.Active,
+		})
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body: map[string]any{
+			"clients": clients,
+		},
+	}
+}
+
+// CreateClient accepts a minimal client payload for the caller's workspace.
+func (h *Wave1TenantHandlers) CreateClient(ctx context.Context, sessionID string, request ClientCreateRequest) Wave1Response {
+	_ = ctx
+
+	if request.WorkspaceID <= 0 || strings.TrimSpace(request.Name) == "" {
+		return Wave1Response{StatusCode: 400, Body: "invalid client payload"}
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != request.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	client := clientRecord{
+		ID:          h.state.nextClientID,
+		WorkspaceID: request.WorkspaceID,
+		Name:        strings.TrimSpace(request.Name),
+		Active:      true,
+	}
+	h.state.nextClientID++
+	h.state.workspaceClients[request.WorkspaceID] = append(h.state.workspaceClients[request.WorkspaceID], client)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"id":           client.ID,
+			"name":         client.Name,
+			"workspace_id": client.WorkspaceID,
+			"active":       client.Active,
+		},
+	}
+}
+
+// ListTasks returns a simple tasks envelope based on the requested workspace.
+func (h *Wave1TenantHandlers) ListTasks(ctx context.Context, sessionID string, request ListProjectsRequest) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	workspaceID := int64(1)
+	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
+		workspaceID = *request.WorkspaceID
+	}
+
+	tasks := make([]map[string]any, 0, len(h.state.workspaceTasks[workspaceID]))
+	for _, task := range h.state.workspaceTasks[workspaceID] {
+		tasks = append(tasks, map[string]any{
+			"id":           task.ID,
+			"name":         task.Name,
+			"workspace_id": task.WorkspaceID,
+			"active":       task.Active,
+		})
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body: map[string]any{
+			"tasks": tasks,
+		},
+	}
+}
+
+// CreateTask accepts a minimal task payload for the caller's workspace.
+func (h *Wave1TenantHandlers) CreateTask(ctx context.Context, sessionID string, request TaskCreateRequest) Wave1Response {
+	_ = ctx
+
+	if request.WorkspaceID <= 0 || strings.TrimSpace(request.Name) == "" {
+		return Wave1Response{StatusCode: 400, Body: "invalid task payload"}
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != request.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	task := taskRecord{
+		ID:          h.state.nextTaskID,
+		WorkspaceID: request.WorkspaceID,
+		Name:        strings.TrimSpace(request.Name),
+		Active:      true,
+	}
+	h.state.nextTaskID++
+	h.state.workspaceTasks[request.WorkspaceID] = append(h.state.workspaceTasks[request.WorkspaceID], task)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"id":           task.ID,
+			"name":         task.Name,
+			"workspace_id": task.WorkspaceID,
+			"active":       task.Active,
+		},
+	}
+}
+
+// ListTags returns a simple tags envelope based on the requested workspace.
+func (h *Wave1TenantHandlers) ListTags(ctx context.Context, sessionID string, request ListProjectsRequest) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	workspaceID := int64(1)
+	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
+		workspaceID = *request.WorkspaceID
+	}
+
+	tags := make([]map[string]any, 0, len(h.state.workspaceTags[workspaceID]))
+	for _, tag := range h.state.workspaceTags[workspaceID] {
+		tags = append(tags, map[string]any{
+			"id":           tag.ID,
+			"name":         tag.Name,
+			"workspace_id": tag.WorkspaceID,
+			"active":       tag.Active,
+		})
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body: map[string]any{
+			"tags": tags,
+		},
+	}
+}
+
+// CreateTag accepts a minimal tag payload for the caller's workspace.
+func (h *Wave1TenantHandlers) CreateTag(ctx context.Context, sessionID string, request TagCreateRequest) Wave1Response {
+	_ = ctx
+
+	if request.WorkspaceID <= 0 || strings.TrimSpace(request.Name) == "" {
+		return Wave1Response{StatusCode: 400, Body: "invalid tag payload"}
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != request.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	tag := tagRecord{
+		ID:          h.state.nextTagID,
+		WorkspaceID: request.WorkspaceID,
+		Name:        strings.TrimSpace(request.Name),
+		Active:      true,
+	}
+	h.state.nextTagID++
+	h.state.workspaceTags[request.WorkspaceID] = append(h.state.workspaceTags[request.WorkspaceID], tag)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"id":           tag.ID,
+			"name":         tag.Name,
+			"workspace_id": tag.WorkspaceID,
+			"active":       tag.Active,
+		},
+	}
+}
+
+// ListGroups returns a simple groups envelope based on the requested workspace.
+func (h *Wave1TenantHandlers) ListGroups(ctx context.Context, sessionID string, request ListProjectsRequest) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	workspaceID := int64(1)
+	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
+		workspaceID = *request.WorkspaceID
+	}
+
+	groups := make([]map[string]any, 0, len(h.state.workspaceGroups[workspaceID]))
+	for _, group := range h.state.workspaceGroups[workspaceID] {
+		groups = append(groups, map[string]any{
+			"id":           group.ID,
+			"name":         group.Name,
+			"workspace_id": group.WorkspaceID,
+			"active":       group.Active,
+		})
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body: map[string]any{
+			"groups": groups,
+		},
+	}
+}
+
+// CreateGroup accepts a minimal group payload for the caller's workspace.
+func (h *Wave1TenantHandlers) CreateGroup(ctx context.Context, sessionID string, request GroupCreateRequest) Wave1Response {
+	_ = ctx
+
+	if request.WorkspaceID <= 0 || strings.TrimSpace(request.Name) == "" {
+		return Wave1Response{StatusCode: 400, Body: "invalid group payload"}
+	}
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != request.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	group := groupRecord{
+		ID:          h.state.nextGroupID,
+		WorkspaceID: request.WorkspaceID,
+		Name:        strings.TrimSpace(request.Name),
+		Active:      true,
+	}
+	h.state.nextGroupID++
+	h.state.workspaceGroups[request.WorkspaceID] = append(h.state.workspaceGroups[request.WorkspaceID], group)
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body: map[string]any{
+			"id":           group.ID,
+			"name":         group.Name,
+			"workspace_id": group.WorkspaceID,
+			"active":       group.Active,
 		},
 	}
 }

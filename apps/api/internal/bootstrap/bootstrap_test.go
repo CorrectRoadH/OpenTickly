@@ -79,34 +79,36 @@ func TestNewAppBuildsWave0Runtime(t *testing.T) {
 		t.Fatal("expected bootstrapped job runner to execute shared platform handler")
 	}
 
-	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
-	recorder := httptest.NewRecorder()
+	for _, path := range []string{"/healthz", "/readyz"} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		recorder := httptest.NewRecorder()
 
-	app.HTTP.ServeHTTP(recorder, request)
+		app.HTTP.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected /healthz to return 200, got %d", recorder.Code)
-	}
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("expected %s to return 200, got %d", path, recorder.Code)
+		}
 
-	var response struct {
-		Service string   `json:"service"`
-		Status  string   `json:"status"`
-		Modules []string `json:"modules"`
-	}
-	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
-		t.Fatalf("expected health response to be valid json: %v", err)
-	}
+		var response struct {
+			Service string   `json:"service"`
+			Status  string   `json:"status"`
+			Modules []string `json:"modules"`
+		}
+		if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+			t.Fatalf("expected %s response to be valid json: %v", path, err)
+		}
 
-	if response.Service != "opentoggl-api" {
-		t.Fatalf("expected service name in health response, got %q", response.Service)
-	}
+		if response.Service != "opentoggl-api" {
+			t.Fatalf("expected service name in %s response, got %q", path, response.Service)
+		}
 
-	if response.Status != "ok" {
-		t.Fatalf("expected health status ok, got %q", response.Status)
-	}
+		if response.Status != "ok" {
+			t.Fatalf("expected %s status ok, got %q", path, response.Status)
+		}
 
-	if len(response.Modules) != 10 {
-		t.Fatalf("expected health response to expose all modules, got %d", len(response.Modules))
+		if len(response.Modules) != 10 {
+			t.Fatalf("expected %s response to expose all modules, got %d", path, len(response.Modules))
+		}
 	}
 }
 

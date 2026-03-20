@@ -159,7 +159,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UserPreferences"
+                "$ref": "#/components/schemas/UserPreferencesUpdate"
               }
             }
           }
@@ -373,9 +373,73 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/permissions": {
+      "get": {
+        "summary": "Read workspace permission toggles for the current placeholder web shell slice",
+        "operationId": "get-workspace-permissions",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace permission configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacePermissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update workspace permission toggles for the current placeholder web shell slice",
+        "operationId": "update-workspace-permissions",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspacePermissionsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace permission configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspacePermissions"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/members": {
       "get": {
-        "summary": "List workspace members for the current workspace",
+        "summary": "List workspace members for the current placeholder web shell slice",
         "operationId": "list-workspace-members",
         "parameters": [
           {
@@ -389,7 +453,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Workspace members",
+            "description": "Workspace members placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
@@ -403,7 +467,7 @@
     },
     "/web/v1/workspaces/{workspace_id}/members/invitations": {
       "post": {
-        "summary": "Invite a member into the current workspace",
+        "summary": "Invite a workspace member through the current placeholder web shell slice",
         "operationId": "invite-workspace-member",
         "parameters": [
           {
@@ -427,87 +491,21 @@
         },
         "responses": {
           "201": {
-            "description": "Workspace member invitation created"
-          }
-        }
-      }
-    },
-    "/web/v1/workspaces/{workspace_id}/members/{member_id}": {
-      "patch": {
-        "summary": "Update a workspace member",
-        "operationId": "update-workspace-member",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "member_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkspaceMemberUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated workspace member",
+            "description": "Workspace member invitation accepted by the placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkspaceMember"
+                  "type": "object"
                 }
               }
             }
-          }
-        }
-      },
-      "delete": {
-        "summary": "Remove a workspace member",
-        "operationId": "remove-workspace-member",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "member_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Workspace member removed"
           }
         }
       }
     },
     "/web/v1/projects": {
       "get": {
-        "summary": "List projects available to the current workspace scope",
+        "summary": "List projects for the current placeholder web shell slice",
         "operationId": "list-projects",
         "parameters": [
           {
@@ -521,7 +519,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Projects",
+            "description": "Project list placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
@@ -533,7 +531,7 @@
         }
       },
       "post": {
-        "summary": "Create a project for the web shell",
+        "summary": "Create a project through the current placeholder web shell slice",
         "operationId": "create-project",
         "requestBody": {
           "required": true,
@@ -547,131 +545,11 @@
         },
         "responses": {
           "201": {
-            "description": "Created project",
+            "description": "Created project placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectView"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/v1/projects/{project_id}": {
-      "get": {
-        "summary": "Read a project for the web shell",
-        "operationId": "get-project",
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectView"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "summary": "Update a project for the web shell",
-        "operationId": "update-project",
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProjectUpdateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Updated project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectView"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/v1/projects/{project_id}/archive": {
-      "post": {
-        "summary": "Archive a project",
-        "operationId": "archive-project",
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Archived project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectView"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/v1/projects/{project_id}/restore": {
-      "post": {
-        "summary": "Restore a project",
-        "operationId": "restore-project",
-        "parameters": [
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Restored project",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectView"
+                  "$ref": "#/components/schemas/ProjectSummary"
                 }
               }
             }
@@ -681,7 +559,7 @@
     },
     "/web/v1/projects/{project_id}/members": {
       "get": {
-        "summary": "List members granted to a project",
+        "summary": "List project members for the current placeholder web shell slice",
         "operationId": "list-project-members",
         "parameters": [
           {
@@ -695,7 +573,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Project members",
+            "description": "Project members placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
@@ -707,7 +585,7 @@
         }
       },
       "post": {
-        "summary": "Grant a workspace member access to a project",
+        "summary": "Grant a project member through the current placeholder web shell slice",
         "operationId": "grant-project-member",
         "parameters": [
           {
@@ -731,7 +609,7 @@
         },
         "responses": {
           "201": {
-            "description": "Granted project member",
+            "description": "Granted project member placeholder slice",
             "content": {
               "application/json": {
                 "schema": {
@@ -745,7 +623,7 @@
     },
     "/web/v1/projects/{project_id}/members/{member_id}": {
       "delete": {
-        "summary": "Revoke a project member grant",
+        "summary": "Revoke a project member through the current placeholder web shell slice",
         "operationId": "revoke-project-member",
         "parameters": [
           {
@@ -767,7 +645,223 @@
         ],
         "responses": {
           "204": {
-            "description": "Project member revoked"
+            "description": "Revoked project member placeholder slice"
+          }
+        }
+      }
+    },
+    "/web/v1/clients": {
+      "get": {
+        "summary": "List clients for the current placeholder web shell slice",
+        "operationId": "list-clients",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client list placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a client through the current placeholder web shell slice",
+        "operationId": "create-client",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created client placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClientSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/tasks": {
+      "get": {
+        "summary": "List tasks for the current placeholder web shell slice",
+        "operationId": "list-tasks",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task list placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a task through the current placeholder web shell slice",
+        "operationId": "create-task",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created task placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/tags": {
+      "get": {
+        "summary": "List tags for the current placeholder web shell slice",
+        "operationId": "list-tags",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag list placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a tag through the current placeholder web shell slice",
+        "operationId": "create-tag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TagCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created tag placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/groups": {
+      "get": {
+        "summary": "List groups for the current placeholder web shell slice",
+        "operationId": "list-groups",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group list placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupListEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a group through the current placeholder web shell slice",
+        "operationId": "create-group",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created group placeholder slice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupSummary"
+                }
+              }
+            }
           }
         }
       }
@@ -779,7 +873,56 @@
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/CapabilitySnapshot"
       },
       "CurrentUserProfile": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/github_com_toggl_toggl_api_internal_models.TogglUser"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "fullname": {
+            "type": "string"
+          },
+          "image_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "api_token": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "default_workspace_id": {
+            "type": "integer"
+          },
+          "beginning_of_week": {
+            "type": "integer"
+          },
+          "country_id": {
+            "type": "integer"
+          },
+          "has_password": {
+            "type": "boolean"
+          },
+          "2fa_enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "fullname",
+          "api_token",
+          "timezone",
+          "default_workspace_id",
+          "beginning_of_week",
+          "country_id",
+          "has_password",
+          "2fa_enabled"
+        ]
       },
       "LoginRequest": {
         "type": "object",
@@ -795,7 +938,39 @@
         "required": ["email", "password"]
       },
       "OrganizationSettings": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.MeOrganization"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "max_workspaces": {
+            "type": "integer"
+          },
+          "pricing_plan_name": {
+            "type": "string"
+          },
+          "is_multi_workspace_enabled": {
+            "type": "boolean"
+          },
+          "user_count": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "admin",
+          "max_workspaces",
+          "pricing_plan_name",
+          "is_multi_workspace_enabled",
+          "user_count"
+        ]
       },
       "OrganizationSettingsEnvelope": {
         "type": "object",
@@ -808,7 +983,7 @@
             "nullable": true
           }
         },
-        "required": ["organization"]
+        "required": ["organization", "subscription"]
       },
       "OrganizationSettingsUpdate": {
         "type": "object",
@@ -822,6 +997,18 @@
       "QuotaWindow": {
         "$ref": "./opentoggl-shared.openapi.json#/components/schemas/QuotaWindow"
       },
+      "ProjectListEnvelope": {
+        "type": "object",
+        "properties": {
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProjectSummary"
+            }
+          }
+        },
+        "required": ["projects"]
+      },
       "ProjectCreateRequest": {
         "type": "object",
         "properties": {
@@ -830,44 +1017,9 @@
           },
           "name": {
             "type": "string"
-          },
-          "billable": {
-            "type": "boolean"
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
           }
         },
         "required": ["workspace_id", "name"]
-      },
-      "ProjectListEnvelope": {
-        "type": "object",
-        "properties": {
-          "projects": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ProjectView"
-            }
-          }
-        },
-        "required": ["projects"]
-      },
-      "ProjectMember": {
-        "type": "object",
-        "properties": {
-          "project_id": {
-            "type": "integer"
-          },
-          "member_id": {
-            "type": "integer"
-          },
-          "role": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": ["project_id", "member_id"]
       },
       "ProjectMemberGrantRequest": {
         "type": "object",
@@ -882,6 +1034,21 @@
         },
         "required": ["member_id"]
       },
+      "ProjectMember": {
+        "type": "object",
+        "properties": {
+          "project_id": {
+            "type": "integer"
+          },
+          "member_id": {
+            "type": "integer"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": ["project_id", "member_id", "role"]
+      },
       "ProjectMembersEnvelope": {
         "type": "object",
         "properties": {
@@ -894,48 +1061,23 @@
         },
         "required": ["members"]
       },
-      "ProjectUpdateRequest": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "billable": {
-            "type": "boolean"
-          },
-          "archived": {
-            "type": "boolean"
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "ProjectView": {
+      "ProjectSummary": {
         "type": "object",
         "properties": {
           "id": {
             "type": "integer"
           },
-          "workspace_id": {
-            "type": "integer"
-          },
           "name": {
             "type": "string"
           },
-          "billable": {
-            "type": "boolean"
+          "workspace_id": {
+            "type": "integer"
           },
-          "archived": {
+          "active": {
             "type": "boolean"
-          },
-          "color": {
-            "type": "string",
-            "nullable": true
           }
         },
-        "required": ["id", "workspace_id", "name", "archived"]
+        "required": ["id", "name", "workspace_id", "active"]
       },
       "RegisterRequest": {
         "type": "object",
@@ -968,14 +1110,24 @@
             "$ref": "#/components/schemas/SubscriptionView",
             "nullable": true
           },
+          "workspace_subscription": {
+            "$ref": "#/components/schemas/SubscriptionView",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/CurrentUserProfile"
+          },
           "organizations": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/OrganizationSettings"
             }
           },
-          "user": {
-            "$ref": "#/components/schemas/CurrentUserProfile"
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceSettings"
+            }
           },
           "workspace_capabilities": {
             "$ref": "#/components/schemas/CapabilitySnapshot",
@@ -984,19 +1136,13 @@
           "workspace_quota": {
             "$ref": "#/components/schemas/QuotaWindow",
             "nullable": true
-          },
-          "workspace_subscription": {
-            "$ref": "#/components/schemas/SubscriptionView",
-            "nullable": true
-          },
-          "workspaces": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkspaceSettings"
-            }
           }
         },
         "required": [
+          "current_organization_id",
+          "current_workspace_id",
+          "organization_subscription",
+          "workspace_subscription",
           "user",
           "organizations",
           "workspaces",
@@ -1005,22 +1151,263 @@
         ]
       },
       "SubscriptionView": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/subscription.OutData"
+        "type": "object",
+        "properties": {
+          "plan_name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "enterprise": {
+            "type": "boolean",
+            "nullable": true
+          }
+        },
+        "required": ["plan_name", "state"]
       },
       "UpdateCurrentUserProfileRequest": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/me.payload"
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "fullname": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "beginning_of_week": {
+            "type": "integer"
+          },
+          "country_id": {
+            "type": "integer"
+          },
+          "default_workspace_id": {
+            "type": "integer"
+          },
+          "current_password": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "email",
+          "fullname",
+          "timezone",
+          "beginning_of_week",
+          "country_id",
+          "default_workspace_id"
+        ]
       },
       "UpdateOrganizationSettingsRequest": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.PutPayload"
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
       },
       "UpdateWorkspaceSettingsRequest": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/workspace.Payload"
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "default_currency": {
+            "type": "string"
+          },
+          "default_hourly_rate": {
+            "type": "number"
+          },
+          "rounding": {
+            "type": "integer"
+          },
+          "rounding_minutes": {
+            "type": "integer"
+          },
+          "reports_collapse": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_projects": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_tags": {
+            "type": "boolean"
+          },
+          "only_admins_see_team_dashboard": {
+            "type": "boolean"
+          },
+          "projects_billable_by_default": {
+            "type": "boolean"
+          },
+          "projects_private_by_default": {
+            "type": "boolean"
+          },
+          "projects_enforce_billable": {
+            "type": "boolean"
+          },
+          "limit_public_project_data": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "default_currency",
+          "default_hourly_rate",
+          "rounding",
+          "rounding_minutes",
+          "reports_collapse",
+          "only_admins_may_create_projects",
+          "only_admins_may_create_tags",
+          "only_admins_see_team_dashboard",
+          "projects_billable_by_default",
+          "projects_private_by_default",
+          "projects_enforce_billable",
+          "limit_public_project_data"
+        ]
       },
       "UserPreferences": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.AllPreferences"
+        "type": "object",
+        "properties": {
+          "date_format": {
+            "type": "string"
+          },
+          "timeofday_format": {
+            "type": "string"
+          },
+          "duration_format": {
+            "type": "string"
+          },
+          "pg_time_zone_name": {
+            "type": "string"
+          },
+          "beginningOfWeek": {
+            "type": "integer"
+          },
+          "collapseTimeEntries": {
+            "type": "boolean"
+          },
+          "language_code": {
+            "type": "string"
+          },
+          "hide_sidebar_right": {
+            "type": "boolean"
+          },
+          "reports_collapse": {
+            "type": "boolean"
+          },
+          "manualMode": {
+            "type": "boolean"
+          },
+          "manualEntryMode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "date_format",
+          "timeofday_format",
+          "duration_format",
+          "pg_time_zone_name",
+          "beginningOfWeek",
+          "collapseTimeEntries",
+          "language_code",
+          "hide_sidebar_right",
+          "reports_collapse",
+          "manualMode",
+          "manualEntryMode"
+        ]
       },
-      "WorkspacePreferences": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/models.WorkspacePreferences"
+      "UserPreferencesUpdate": {
+        "type": "object",
+        "properties": {
+          "date_format": {
+            "type": "string"
+          },
+          "timeofday_format": {
+            "type": "string"
+          },
+          "duration_format": {
+            "type": "string"
+          },
+          "pg_time_zone_name": {
+            "type": "string"
+          },
+          "beginningOfWeek": {
+            "type": "integer"
+          },
+          "collapseTimeEntries": {
+            "type": "boolean"
+          },
+          "language_code": {
+            "type": "string"
+          },
+          "hide_sidebar_right": {
+            "type": "boolean"
+          },
+          "reports_collapse": {
+            "type": "boolean"
+          },
+          "manualMode": {
+            "type": "boolean"
+          },
+          "manualEntryMode": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspacePermissions": {
+        "type": "object",
+        "properties": {
+          "only_admins_may_create_projects": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_tags": {
+            "type": "boolean"
+          },
+          "only_admins_see_team_dashboard": {
+            "type": "boolean"
+          },
+          "limit_public_project_data": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "only_admins_may_create_projects",
+          "only_admins_may_create_tags",
+          "only_admins_see_team_dashboard",
+          "limit_public_project_data"
+        ]
+      },
+      "UpdateWorkspacePermissionsRequest": {
+        "type": "object",
+        "properties": {
+          "only_admins_may_create_projects": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_tags": {
+            "type": "boolean"
+          },
+          "only_admins_see_team_dashboard": {
+            "type": "boolean"
+          },
+          "limit_public_project_data": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "only_admins_may_create_projects",
+          "only_admins_may_create_tags",
+          "only_admins_see_team_dashboard",
+          "limit_public_project_data"
+        ]
       },
       "WorkspaceMember": {
         "type": "object",
@@ -1036,17 +1423,181 @@
             "format": "email"
           },
           "name": {
-            "type": "string",
-            "nullable": true
+            "type": "string"
           },
           "role": {
             "type": "string"
+          }
+        },
+        "required": ["id", "workspace_id", "email", "name", "role"]
+      },
+      "ClientListEnvelope": {
+        "type": "object",
+        "properties": {
+          "clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientSummary"
+            }
+          }
+        },
+        "required": ["clients"]
+      },
+      "ClientSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "integer"
           },
           "active": {
             "type": "boolean"
           }
         },
-        "required": ["id", "workspace_id", "email", "role", "active"]
+        "required": ["id", "name", "workspace_id", "active"]
+      },
+      "ClientCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name"]
+      },
+      "TaskListEnvelope": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskSummary"
+            }
+          }
+        },
+        "required": ["tasks"]
+      },
+      "TaskSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "name", "workspace_id", "active"]
+      },
+      "TaskCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name"]
+      },
+      "TagListEnvelope": {
+        "type": "object",
+        "properties": {
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagSummary"
+            }
+          }
+        },
+        "required": ["tags"]
+      },
+      "TagSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "name", "workspace_id", "active"]
+      },
+      "TagCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name"]
+      },
+      "GroupListEnvelope": {
+        "type": "object",
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupSummary"
+            }
+          }
+        },
+        "required": ["groups"]
+      },
+      "GroupSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": ["id", "name", "workspace_id", "active"]
+      },
+      "GroupCreateRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["workspace_id", "name"]
       },
       "WorkspaceMemberInvitationRequest": {
         "type": "object",
@@ -1074,52 +1625,133 @@
         },
         "required": ["members"]
       },
-      "WorkspaceMemberUpdate": {
+      "WorkspacePreferences": {
         "type": "object",
         "properties": {
-          "role": {
-            "type": "string"
-          },
-          "active": {
+          "hide_start_end_times": {
             "type": "boolean"
+          },
+          "report_locked_at": {
+            "type": "string"
           }
-        }
+        },
+        "required": ["hide_start_end_times", "report_locked_at"]
       },
       "WorkspaceSettings": {
-        "$ref": "./toggl-track-api-v9.swagger.json#/definitions/github_com_toggl_toggl_api_internal_models.Workspace"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "organization_id": {
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "logo_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "default_currency": {
+            "type": "string"
+          },
+          "default_hourly_rate": {
+            "type": "number"
+          },
+          "rounding": {
+            "type": "integer"
+          },
+          "rounding_minutes": {
+            "type": "integer"
+          },
+          "reports_collapse": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_projects": {
+            "type": "boolean"
+          },
+          "only_admins_may_create_tags": {
+            "type": "boolean"
+          },
+          "only_admins_see_team_dashboard": {
+            "type": "boolean"
+          },
+          "projects_billable_by_default": {
+            "type": "boolean"
+          },
+          "projects_private_by_default": {
+            "type": "boolean"
+          },
+          "projects_enforce_billable": {
+            "type": "boolean"
+          },
+          "limit_public_project_data": {
+            "type": "boolean"
+          },
+          "admin": {
+            "type": "boolean"
+          },
+          "premium": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "name",
+          "default_currency",
+          "default_hourly_rate",
+          "rounding",
+          "rounding_minutes",
+          "reports_collapse",
+          "only_admins_may_create_projects",
+          "only_admins_may_create_tags",
+          "only_admins_see_team_dashboard",
+          "projects_billable_by_default",
+          "projects_private_by_default",
+          "projects_enforce_billable",
+          "limit_public_project_data",
+          "admin",
+          "premium",
+          "role"
+        ]
       },
       "WorkspaceSettingsEnvelope": {
         "type": "object",
         "properties": {
-          "capabilities": {
-            "$ref": "#/components/schemas/CapabilitySnapshot",
-            "nullable": true
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceSettings"
           },
           "preferences": {
             "$ref": "#/components/schemas/WorkspacePreferences"
-          },
-          "quota": {
-            "$ref": "#/components/schemas/QuotaWindow",
-            "nullable": true
           },
           "subscription": {
             "$ref": "#/components/schemas/SubscriptionView",
             "nullable": true
           },
-          "workspace": {
-            "$ref": "#/components/schemas/WorkspaceSettings"
+          "capabilities": {
+            "$ref": "#/components/schemas/CapabilitySnapshot",
+            "nullable": true
+          },
+          "quota": {
+            "$ref": "#/components/schemas/QuotaWindow",
+            "nullable": true
           }
         },
-        "required": ["workspace", "preferences"]
+        "required": ["workspace", "preferences", "subscription", "capabilities", "quota"]
       },
       "WorkspaceSettingsUpdate": {
         "type": "object",
         "properties": {
-          "preferences": {
-            "$ref": "#/components/schemas/WorkspacePreferences"
-          },
           "workspace": {
             "$ref": "#/components/schemas/UpdateWorkspaceSettingsRequest"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/WorkspacePreferences"
           }
         }
       }

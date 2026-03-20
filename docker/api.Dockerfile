@@ -17,6 +17,9 @@ WORKDIR /app
 
 COPY --from=builder /out/opentoggl-api /usr/local/bin/opentoggl-api
 
+RUN adduser -D -u 10001 opentoggl
+USER opentoggl
+
 EXPOSE 8080
 
 ENTRYPOINT ["opentoggl-api"]

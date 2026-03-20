@@ -47,7 +47,8 @@ test("real runtime: login reaches workspace shell without API stubs", async ({ p
   ).toBe(200);
 
   const sessionResponse = await page.waitForResponse(
-    (response) => response.url().includes("/web/v1/session") && response.request().method() === "GET",
+    (response) =>
+      response.url().includes("/web/v1/session") && response.request().method() === "GET",
   );
   const sessionBody = await sessionResponse.text();
 

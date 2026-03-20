@@ -10,6 +10,11 @@ export {
   sharedContractsGeneratedArtifact,
 } from "./generated/public-contracts.generated.ts";
 
+export {
+  sharedContractsDocument as webContractsDocument,
+  sharedContractsGeneratedArtifact as webContractsGeneratedArtifact,
+} from "./generated/web-contracts.generated.ts";
+
 export type {
   CapabilityContext,
   CapabilitySnapshot,
@@ -19,6 +24,44 @@ export type {
   SharedContractSchemaName,
   SharedContractTypeMap,
 } from "./generated/public-contracts.generated.ts";
+
+export type {
+  ClientCreateRequest,
+  ClientListEnvelope,
+  ClientSummary,
+  CurrentUserProfile,
+  LoginRequest,
+  OrganizationSettings,
+  OrganizationSettingsEnvelope,
+  OrganizationSettingsUpdate,
+  ProjectCreateRequest,
+  ProjectListEnvelope,
+  ProjectMember,
+  ProjectMembersEnvelope,
+  ProjectSummary,
+  RegisterRequest,
+  SessionBootstrap,
+  SharedContractSchemaName as WebContractSchemaName,
+  SharedContractTypeMap as WebContractTypeMap,
+  SubscriptionView,
+  TagCreateRequest,
+  TagListEnvelope,
+  TagSummary,
+  UpdateCurrentUserProfileRequest,
+  UpdateOrganizationSettingsRequest,
+  UpdateWorkspaceSettingsRequest,
+  UserPreferences,
+  UserPreferencesUpdate,
+  WorkspaceMember,
+  WorkspaceMemberInvitationRequest,
+  WorkspaceMembersEnvelope,
+  WorkspacePermissions,
+  WorkspacePreferences,
+  WorkspaceSettings,
+  WorkspaceSettingsEnvelope,
+  UpdateWorkspacePermissionsRequest,
+  WorkspaceSettingsUpdate,
+} from "./generated/web-contracts.generated.ts";
 
 export {
   parseCapabilityContext,

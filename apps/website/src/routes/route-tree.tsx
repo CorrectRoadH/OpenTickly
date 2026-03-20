@@ -13,7 +13,12 @@ import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.t
 import { WorkspaceOverviewPage } from "../pages/shell/WorkspaceOverviewPage.tsx";
 import { WorkspaceReportsPage } from "../pages/shell/WorkspaceReportsPage.tsx";
 import { WorkspaceMembersPage } from "../pages/members/WorkspaceMembersPage.tsx";
+import { PermissionConfigPage } from "../pages/permission-config/PermissionConfigPage.tsx";
 import { ProjectsPage } from "../pages/projects/ProjectsPage.tsx";
+import { ClientsPage } from "../pages/clients/ClientsPage.tsx";
+import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
+import { TasksPage } from "../pages/tasks/TasksPage.tsx";
+import { TagsPage } from "../pages/tags/TagsPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
 const homeRoute = createRoute({
@@ -68,6 +73,36 @@ const workspaceMembersRoute = createRoute({
   component: WorkspaceMembersRouteComponent,
 });
 
+const workspaceClientsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/clients",
+  component: WorkspaceClientsRouteComponent,
+});
+
+const workspaceGroupsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/groups",
+  component: WorkspaceGroupsRouteComponent,
+});
+
+const workspacePermissionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/permissions",
+  component: WorkspacePermissionsRouteComponent,
+});
+
+const workspaceTasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/tasks",
+  component: WorkspaceTasksRouteComponent,
+});
+
+const workspaceTagsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/tags",
+  component: WorkspaceTagsRouteComponent,
+});
+
 const workspaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/settings",
@@ -90,6 +125,11 @@ export const routeTree = rootRoute.addChildren([
   workspaceReportsRoute,
   workspaceProjectsRoute,
   workspaceMembersRoute,
+  workspaceClientsRoute,
+  workspaceGroupsRoute,
+  workspacePermissionsRoute,
+  workspaceTasksRoute,
+  workspaceTagsRoute,
   workspaceSettingsRoute,
   organizationSettingsRoute,
 ]);
@@ -148,6 +188,61 @@ function WorkspaceMembersRouteComponent() {
   return (
     <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
       <WorkspaceMembersPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceClientsRouteComponent() {
+  const params = workspaceClientsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <ClientsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceGroupsRouteComponent() {
+  const params = workspaceGroupsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <GroupsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspacePermissionsRouteComponent() {
+  const params = workspacePermissionsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <PermissionConfigPage workspaceId={workspaceId} />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceTasksRouteComponent() {
+  const params = workspaceTasksRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <TasksPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceTagsRouteComponent() {
+  const params = workspaceTagsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <TagsPage />
     </AuthenticatedAppFrame>
   );
 }

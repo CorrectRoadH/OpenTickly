@@ -23,14 +23,16 @@ describe("identity compat contract", () => {
         )
         .map((entry) => entry.operationId)
         .sort(),
-    ).toEqual([
-      "get-me",
-      "get-me-logged",
-      "get-preferences",
-      "post-reset-token",
-      "post-preferences",
-      "put-me",
-    ].sort());
+    ).toEqual(
+      [
+        "get-me",
+        "get-me-logged",
+        "get-preferences",
+        "post-reset-token",
+        "post-preferences",
+        "put-me",
+      ].sort(),
+    );
 
     const getMe = manifest.operations.find(
       (entry) => entry.path === "/me" && entry.method === "get",

@@ -13,9 +13,11 @@ func NewServer(health web.HealthSnapshot, wave1 *Wave1WebHandlers) *echo.Echo {
 	server.HideBanner = true
 	server.HidePort = true
 
-	server.GET("/healthz", func(context echo.Context) error {
+	healthHandler := func(context echo.Context) error {
 		return context.JSON(http.StatusOK, health)
-	})
+	}
+	server.GET("/healthz", healthHandler)
+	server.GET("/readyz", healthHandler)
 	registerWave1WebRoutes(server, wave1)
 
 	return server

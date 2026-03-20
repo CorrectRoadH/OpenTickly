@@ -14,6 +14,7 @@ import {
   quotaWindowHeaderSchemas,
   sharedContractsDocument,
   sharedContractsGeneratedArtifact,
+  webContractsGeneratedArtifact,
 } from "./index.ts";
 
 const repositoryRoot = resolve(import.meta.dirname, "../../..");
@@ -40,6 +41,12 @@ describe("shared contracts", () => {
     expect(sharedContractsGeneratedArtifact.source).toBe("openapi/opentoggl-shared.openapi.json");
     expect(sharedContractsGeneratedArtifact.schemaNames).toContain("FeatureGateDecision");
     expect(sharedContractsGeneratedArtifact.headerNames).toContain("X-OpenToggl-Feature-Gate");
+  });
+
+  it("publishes generated wave-1 web contract metadata from opentoggl-web openapi", () => {
+    expect(webContractsGeneratedArtifact.source).toBe("openapi/opentoggl-web.openapi.json");
+    expect(webContractsGeneratedArtifact.schemaNames).toContain("SessionBootstrap");
+    expect(webContractsGeneratedArtifact.schemaNames).toContain("UpdateWorkspaceSettingsRequest");
   });
 
   it("exports shared quota and feature-gate header skeletons", () => {

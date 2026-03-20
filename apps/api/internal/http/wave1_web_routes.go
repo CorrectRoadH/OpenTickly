@@ -137,6 +137,74 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
+	server.GET("/web/v1/workspaces/:workspace_id/capabilities", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.GetWorkspaceCapabilities(
+			context.Request().Context(),
+			sessionID(context),
+			workspaceID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.GET("/web/v1/workspaces/:workspace_id/quota", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.GetWorkspaceQuota(
+			context.Request().Context(),
+			sessionID(context),
+			workspaceID,
+		)
+		if response.StatusCode == http.StatusOK {
+			setQuotaWindowHeaders(context, response.Body)
+		}
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	registerWave2PlaceholderRoutes(server, handlers)
+}
+
+// TODO(wave2-runtime): these routes are outside current Wave 1 OpenAPI scope and
+// remain as temporary runtime placeholders until Wave 2 contracts are finalized.
+func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
+	server.GET("/web/v1/workspaces/:workspace_id/permissions", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.GetWorkspacePermissions(
+			context.Request().Context(),
+			sessionID(context),
+			workspaceID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.PATCH("/web/v1/workspaces/:workspace_id/permissions", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		var request WorkspacePermissionsRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		response := handlers.Tenant.UpdateWorkspacePermissions(
+			context.Request().Context(),
+			sessionID(context),
+			workspaceID,
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
 	server.GET("/web/v1/workspaces/:workspace_id/members", func(context echo.Context) error {
 		workspaceID, ok := parsePathID(context, "workspace_id")
 		if !ok {
@@ -161,6 +229,45 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 			projectID,
 		)
 		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/projects/:project_id/members", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		var request ProjectMemberGrantRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		response := handlers.Tenant.GrantProjectMember(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.DELETE("/web/v1/projects/:project_id/members/:member_id", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		memberID, ok := parsePathID(context, "member_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		response := handlers.Tenant.RevokeProjectMember(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+			memberID,
+		)
+		return noContentOrJSON(context, response.StatusCode, response.Body)
 	})
 
 	server.POST("/web/v1/workspaces/:workspace_id/members/invitations", func(context echo.Context) error {
@@ -193,6 +300,139 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 			request.WorkspaceID = &workspaceID
 		}
 		response := handlers.Tenant.ListProjects(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/projects", func(context echo.Context) error {
+		var request ProjectCreateRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.CreateProject(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.GET("/web/v1/clients", func(context echo.Context) error {
+		var request ListProjectsRequest
+		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
+			workspaceID, err := strconv.ParseInt(workspaceIDValue, 10, 64)
+			if err != nil {
+				return context.JSON(http.StatusBadRequest, "Bad Request")
+			}
+			request.WorkspaceID = &workspaceID
+		}
+		response := handlers.Tenant.ListClients(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/clients", func(context echo.Context) error {
+		var request ClientCreateRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.CreateClient(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.GET("/web/v1/tasks", func(context echo.Context) error {
+		var request ListProjectsRequest
+		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
+			workspaceID, err := strconv.ParseInt(workspaceIDValue, 10, 64)
+			if err != nil {
+				return context.JSON(http.StatusBadRequest, "Bad Request")
+			}
+			request.WorkspaceID = &workspaceID
+		}
+		response := handlers.Tenant.ListTasks(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/tasks", func(context echo.Context) error {
+		var request TaskCreateRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.CreateTask(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.GET("/web/v1/tags", func(context echo.Context) error {
+		var request ListProjectsRequest
+		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
+			workspaceID, err := strconv.ParseInt(workspaceIDValue, 10, 64)
+			if err != nil {
+				return context.JSON(http.StatusBadRequest, "Bad Request")
+			}
+			request.WorkspaceID = &workspaceID
+		}
+		response := handlers.Tenant.ListTags(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/tags", func(context echo.Context) error {
+		var request TagCreateRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.CreateTag(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.GET("/web/v1/groups", func(context echo.Context) error {
+		var request ListProjectsRequest
+		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
+			workspaceID, err := strconv.ParseInt(workspaceIDValue, 10, 64)
+			if err != nil {
+				return context.JSON(http.StatusBadRequest, "Bad Request")
+			}
+			request.WorkspaceID = &workspaceID
+		}
+		response := handlers.Tenant.ListGroups(
+			context.Request().Context(),
+			sessionID(context),
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/groups", func(context echo.Context) error {
+		var request GroupCreateRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.CreateGroup(
 			context.Request().Context(),
 			sessionID(context),
 			request,
@@ -251,6 +491,28 @@ func parsePathID(context echo.Context, key string) (int64, bool) {
 		return 0, false
 	}
 	return value, true
+}
+
+func setQuotaWindowHeaders(context echo.Context, body any) {
+	quota, ok := body.(map[string]any)
+	if !ok {
+		return
+	}
+
+	setQuotaHeader(context.Response().Header(), "X-OpenToggl-Quota-Remaining", quota["remaining"])
+	setQuotaHeader(context.Response().Header(), "X-OpenToggl-Quota-Reset-In-Secs", quota["resets_in_secs"])
+	setQuotaHeader(context.Response().Header(), "X-OpenToggl-Quota-Total", quota["total"])
+}
+
+func setQuotaHeader(headers http.Header, name string, value any) {
+	switch typed := value.(type) {
+	case int:
+		headers.Set(name, strconv.Itoa(typed))
+	case int64:
+		headers.Set(name, strconv.FormatInt(typed, 10))
+	case float64:
+		headers.Set(name, strconv.FormatInt(int64(typed), 10))
+	}
 }
 
 func noContentOrJSON(context echo.Context, statusCode int, body any) error {

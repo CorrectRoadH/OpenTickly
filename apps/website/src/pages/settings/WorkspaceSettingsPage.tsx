@@ -35,8 +35,7 @@ export function WorkspaceSettingsPage({
     );
   }
 
-  const organizationId =
-    settingsQuery.data.organization?.id ?? settingsQuery.data.workspace.organization_id ?? 0;
+  const organizationId = settingsQuery.data.workspace.organization_id ?? 0;
 
   return (
     <div className="space-y-4">

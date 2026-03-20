@@ -5,6 +5,7 @@ const packageRoot = resolve(import.meta.dirname, "..");
 const repositoryRoot = resolve(packageRoot, "../..");
 const defaultSourcePath = resolve(repositoryRoot, "openapi/opentoggl-shared.openapi.json");
 const defaultTargetPath = resolve(packageRoot, "src/generated/public-contracts.generated.ts");
+const sharedSchemaRefMarker = "opentoggl-shared.openapi.json#/components/schemas/";
 
 function normalizePath(path) {
   return path.replaceAll("\\", "/");
@@ -47,6 +48,27 @@ function refToTypeName(ref) {
   return ref.split("/").at(-1);
 }
 
+function toModuleSpecifier(path) {
+  const normalizedPath = normalizePath(path);
+  return normalizedPath.startsWith(".") ? normalizedPath : `./${normalizedPath}`;
+}
+
+function sharedImportTypeName(typeName) {
+  return `Shared${typeName}`;
+}
+
+function refToTypeReference(ref, path) {
+  if (ref.startsWith("#/components/schemas/")) {
+    return refToTypeName(ref);
+  }
+
+  if (ref.includes(sharedSchemaRefMarker)) {
+    return sharedImportTypeName(refToTypeName(ref));
+  }
+
+  throw unsupportedSchema(path, `external ref "${ref}" is not supported`);
+}
+
 function applyNullable(typeSource, schema) {
   return schema.nullable ? `${typeSource} | null` : typeSource;
 }
@@ -76,7 +98,7 @@ function schemaToType(schema, path) {
   assertSupportedSchema(schema, path);
 
   if (schema.$ref) {
-    return applyNullable(refToTypeName(schema.$ref), schema);
+    return applyNullable(refToTypeReference(schema.$ref, path), schema);
   }
 
   if (schema.type === "array") {
@@ -115,14 +137,85 @@ function schemaToType(schema, path) {
   }
 }
 
+function collectExternalSchemaRefs(schema, path, refs = new Set()) {
+  assertSupportedSchema(schema, path);
+
+  if (schema.$ref) {
+    if (!schema.$ref.startsWith("#/components/schemas/")) {
+      refs.add(schema.$ref);
+    }
+    return refs;
+  }
+
+  if (schema.type === "array") {
+    collectExternalSchemaRefs(schema.items, `${path}.items`, refs);
+    return refs;
+  }
+
+  if (schema.type === "object") {
+    for (const [propertyName, propertySchema] of Object.entries(schema.properties ?? {})) {
+      collectExternalSchemaRefs(propertySchema, `${path}.properties.${propertyName}`, refs);
+    }
+  }
+
+  return refs;
+}
+
 const { sourcePath, targetPath } = parseCliArguments(process.argv.slice(2));
 const source = JSON.parse(readFileSync(sourcePath, "utf8"));
 const sourceLabel = normalizePath(relative(repositoryRoot, sourcePath));
 
-const schemaNames = Object.keys(source.components.schemas);
-const headerNames = Object.keys(source.components.headers);
+const schemas = source.components?.schemas ?? {};
+const headers = source.components?.headers ?? {};
+const schemaNames = Object.keys(schemas);
+const headerNames = Object.keys(headers);
+const importedTypeSpecifiers = Array.from(
+  schemaNames.reduce((refs, schemaName) => {
+    collectExternalSchemaRefs(schemas[schemaName], `components.schemas.${schemaName}`, refs);
+    return refs;
+  }, new Set()),
+)
+  .map((ref) => {
+    const externalRef = String(ref);
+    const importedTypeName = refToTypeName(externalRef);
+    const importedAlias = refToTypeReference(externalRef, `ref:${externalRef}`);
+    return importedTypeName === importedAlias ? null : `${importedTypeName} as ${importedAlias}`;
+  })
+  .filter(Boolean);
+const sharedTypeImportPath = toModuleSpecifier(relative(dirname(targetPath), defaultTargetPath));
+const schemaAliasExports = [
+  ["capabilityContextSchema", "CapabilityContext"],
+  ["featureCapabilitySchema", "FeatureCapability"],
+  ["quotaWindowSchema", "QuotaWindow"],
+  ["featureGateDecisionSchema", "FeatureGateDecision"],
+  ["capabilitySnapshotSchema", "CapabilitySnapshot"],
+]
+  .filter(([, schemaName]) => schemaNames.includes(schemaName))
+  .map(
+    ([exportName, schemaName]) =>
+      `export const ${exportName} = sharedContractsDocument.components.schemas.${schemaName};`,
+  )
+  .join("\n");
+const quotaHeaderNames = [
+  "X-OpenToggl-Quota-Remaining",
+  "X-OpenToggl-Quota-Reset-In-Secs",
+  "X-OpenToggl-Quota-Total",
+];
+const quotaHeaderExport = quotaHeaderNames.every((headerName) => headerNames.includes(headerName))
+  ? `
+export const quotaWindowHeaderSchemas = {
+  "X-OpenToggl-Quota-Remaining": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Remaining"],
+  "X-OpenToggl-Quota-Reset-In-Secs": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Reset-In-Secs"],
+  "X-OpenToggl-Quota-Total": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Total"]
+} as const;`
+  : "";
+const featureGateHeaderExport = headerNames.includes("X-OpenToggl-Feature-Gate")
+  ? `
+export const featureGateDecisionHeaderSchema =
+  sharedContractsDocument.components.headers["X-OpenToggl-Feature-Gate"];`
+  : "";
 
-const output = `/* eslint-disable */
+const output = `${importedTypeSpecifiers.length > 0 ? `import type {\n${importedTypeSpecifiers.map((specifier) => `  ${specifier},`).join("\n")}\n} from ${JSON.stringify(sharedTypeImportPath)};\n\n` : ""}/* eslint-disable */
 // Generated from ${sourceLabel}.
 // Do not edit by hand.
 
@@ -140,26 +233,15 @@ ${schemaNames.map((schemaName) => `  ${schemaName}: ${schemaName};`).join("\n")}
 
 export type SharedContractSchemaName = keyof SharedContractTypeMap;
 
-export const capabilityContextSchema = sharedContractsDocument.components.schemas.CapabilityContext;
-export const featureCapabilitySchema = sharedContractsDocument.components.schemas.FeatureCapability;
-export const quotaWindowSchema = sharedContractsDocument.components.schemas.QuotaWindow;
-export const featureGateDecisionSchema = sharedContractsDocument.components.schemas.FeatureGateDecision;
-export const capabilitySnapshotSchema = sharedContractsDocument.components.schemas.CapabilitySnapshot;
-
-export const quotaWindowHeaderSchemas = {
-  "X-OpenToggl-Quota-Remaining": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Remaining"],
-  "X-OpenToggl-Quota-Reset-In-Secs": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Reset-In-Secs"],
-  "X-OpenToggl-Quota-Total": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Total"]
-} as const;
-
-export const featureGateDecisionHeaderSchema =
-  sharedContractsDocument.components.headers["X-OpenToggl-Feature-Gate"];
+${schemaAliasExports}
+${quotaHeaderExport}
+${featureGateHeaderExport}
 
 ${schemaNames
   .map(
     (schemaName) =>
       `export type ${schemaName} = ${schemaToType(
-        source.components.schemas[schemaName],
+        schemas[schemaName],
         `components.schemas.${schemaName}`,
       )};`,
   )

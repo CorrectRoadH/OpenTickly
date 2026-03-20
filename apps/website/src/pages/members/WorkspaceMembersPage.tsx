@@ -1,46 +1,38 @@
-import React from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 
-type Member = {
-  id: string;
-  workspace_id: string;
-  email: string;
-  name: string;
-  role: string;
-};
+import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { useSession } from "../../shared/session/session-context.tsx";
+import {
+  useInviteWorkspaceMemberMutation,
+  useWorkspaceMembersQuery,
+} from "../../shared/query/web-shell.ts";
 
-const sampleMembers: Member[] = [
-  {
-    id: "mem-1",
-    workspace_id: "ws-123",
-    email: "alex@example.com",
-    name: "Alex Johnson",
-    role: "owner",
-  },
-  {
-    id: "mem-2",
-    workspace_id: "ws-123",
-    email: "bailey@example.com",
-    name: "Bailey Lee",
-    role: "admin",
-  },
-  {
-    id: "mem-3",
-    workspace_id: "ws-123",
-    email: "casey@example.com",
-    name: "Casey Smith",
-    role: "member",
-  },
-];
+export function WorkspaceMembersPage(): ReactElement {
+  const session = useSession();
+  const membersQuery = useWorkspaceMembersQuery(session.currentWorkspace.id);
+  const inviteMutation = useInviteWorkspaceMemberMutation(session.currentWorkspace.id);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const [status, setStatus] = useState<string | null>(null);
 
-export const WorkspaceMembersPage: React.FC = () => {
+  async function handleInviteSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    await inviteMutation.mutateAsync({
+      email: inviteEmail,
+      role: inviteRole,
+    });
+    setInviteEmail("");
+    setInviteRole("member");
+    setStatus("Invitation sent");
+  }
+
   return (
-    <main aria-label="workspace-members" className="p-6 space-y-4">
+    <main aria-label="workspace-members" className="space-y-4 p-6">
       <header className="flex items-start justify-between">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">Workspace Members</h1>
-          <p className="text-sm text-gray-600">
-            Members sourced from the workspace contract data.
-          </p>
+          <p className="text-sm text-gray-600">Members sourced from the workspace contract data.</p>
         </div>
         <button
           type="button"
@@ -50,37 +42,75 @@ export const WorkspaceMembersPage: React.FC = () => {
         </button>
       </header>
 
-      <section
-        aria-label="Workspace members list"
-        data-testid="members-list"
-        className="border rounded-lg divide-y"
-      >
-        {sampleMembers.map((member) => (
-          <article
-            key={member.id}
-            className="p-4 grid grid-cols-[2fr_2fr_1fr] gap-2"
-            data-member-id={member.id}
-          >
-            <div className="font-medium">{member.name}</div>
-            <div className="text-gray-700">{member.email}</div>
-            <div className="text-gray-500 uppercase tracking-wide">
-              {member.role}
-            </div>
-            <dl className="sr-only">
-              <div>
-                <dt>Member ID</dt>
-                <dd>{member.id}</dd>
-              </div>
-              <div>
-                <dt>Workspace ID</dt>
-                <dd>{member.workspace_id}</dd>
-              </div>
-            </dl>
-          </article>
-        ))}
-      </section>
+      {membersQuery.isPending ? (
+        <section
+          aria-label="Workspace members list"
+          data-testid="members-list"
+          className="rounded-lg border p-4 text-sm text-gray-600"
+        >
+          Loading members…
+        </section>
+      ) : null}
+
+      <AppPanel className="bg-white/95">
+        <form className="flex flex-wrap items-end gap-3" onSubmit={handleInviteSubmit}>
+          <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+            Invite by email
+            <input
+              className="rounded-2xl border border-slate-300 px-4 py-3"
+              type="email"
+              value={inviteEmail}
+              onChange={(event) => setInviteEmail(event.target.value)}
+            />
+          </label>
+          <label className="flex min-w-[10rem] flex-col gap-2 text-sm font-medium text-slate-700">
+            Role
+            <select
+              className="rounded-2xl border border-slate-300 px-4 py-3"
+              value={inviteRole}
+              onChange={(event) => setInviteRole(event.target.value)}
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+              <option value="owner">Owner</option>
+            </select>
+          </label>
+          <AppButton type="submit">Send invite</AppButton>
+          {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+        </form>
+      </AppPanel>
+
+      {membersQuery.isSuccess ? (
+        <section
+          aria-label="Workspace members list"
+          data-testid="members-list"
+          className="divide-y rounded-lg border"
+        >
+          {membersQuery.data.members.map((member) => (
+            <article
+              key={member.id}
+              className="grid grid-cols-[2fr_2fr_1fr] gap-2 p-4"
+              data-member-id={member.id}
+            >
+              <div className="font-medium">{member.name}</div>
+              <div className="text-gray-700">{member.email}</div>
+              <div className="text-gray-500 uppercase tracking-wide">{member.role}</div>
+              <dl className="sr-only">
+                <div>
+                  <dt>Member ID</dt>
+                  <dd>{member.id}</dd>
+                </div>
+                <div>
+                  <dt>Workspace ID</dt>
+                  <dd>{member.workspace_id}</dd>
+                </div>
+              </dl>
+            </article>
+          ))}
+        </section>
+      ) : null}
     </main>
   );
-};
+}
 
 export default WorkspaceMembersPage;

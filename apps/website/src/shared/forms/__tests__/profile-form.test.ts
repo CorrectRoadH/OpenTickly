@@ -10,12 +10,16 @@ import {
 describe("profile form adapters", () => {
   it("creates profile defaults from the current user contract and omits blank password updates", () => {
     const values = createProfileFormValues({
+      id: 99,
       email: "alex@example.com",
       fullname: "Alex North",
+      api_token: "api-token-99",
       timezone: "Europe/Tallinn",
       beginning_of_week: 1,
       country_id: 70,
       default_workspace_id: 202,
+      has_password: true,
+      "2fa_enabled": false,
     });
 
     expect(values).toEqual({
@@ -71,6 +75,7 @@ describe("profile form adapters", () => {
   it("creates preference defaults and maps them back to the contract fields", () => {
     const values = createPreferencesFormValues({
       date_format: "YYYY-MM-DD",
+      timeofday_format: "h:mm a",
       duration_format: "improved",
       pg_time_zone_name: "Europe/Tallinn",
       beginningOfWeek: 1,
@@ -80,7 +85,6 @@ describe("profile form adapters", () => {
       reports_collapse: true,
       manualMode: false,
       manualEntryMode: "timer",
-      timeofday_format: "h:mm a",
     });
 
     expect(values).toEqual({
