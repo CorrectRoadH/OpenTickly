@@ -60,6 +60,11 @@ type WorkspaceSettingsRequest struct {
 	Preferences *workspacePreferencesSnapshot `json:"preferences"`
 }
 
+type WorkspaceMemberInvitationRequest struct {
+	Email string  `json:"email"`
+	Role  *string `json:"role"`
+}
+
 type Wave1WebHandlers struct {
 	Tenant *Wave1TenantHandlers
 	state  *wave1State
@@ -574,6 +579,72 @@ func (h *Wave1TenantHandlers) ListWorkspaceMembers(ctx context.Context, sessionI
 		Body: map[string]any{
 			"members": members,
 		},
+	}
+}
+
+/*
+ListProjectMembers returns a minimal project-member envelope for the current session.
+*/
+func (h *Wave1TenantHandlers) ListProjectMembers(ctx context.Context, sessionID string, projectID int64) Wave1Response {
+	_ = ctx
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+
+	members := []map[string]any{
+		{
+			"project_id": projectID,
+			"member_id":  user.ID,
+			"role":       "admin",
+		},
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body: map[string]any{
+			"members": members,
+		},
+	}
+}
+
+/*
+InviteWorkspaceMember accepts a minimal invitation payload for the caller's workspace.
+*/
+func (h *Wave1TenantHandlers) InviteWorkspaceMember(ctx context.Context, sessionID string, workspaceID int64, request WorkspaceMemberInvitationRequest) Wave1Response {
+	_ = ctx
+
+	email := normalizeEmail(request.Email)
+	if email == "" || !strings.Contains(email, "@") {
+		return Wave1Response{StatusCode: 400, Body: "invalid workspace member invitation payload"}
+	}
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != workspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	return Wave1Response{
+		StatusCode: 201,
+		Body:       map[string]any{},
 	}
 }
 

@@ -150,6 +150,39 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
+	server.GET("/web/v1/projects/:project_id/members", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.ListProjectMembers(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/workspaces/:workspace_id/members/invitations", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		var request WorkspaceMemberInvitationRequest
+		if err := context.Bind(&request); err != nil {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+
+		response := handlers.Tenant.InviteWorkspaceMember(
+			context.Request().Context(),
+			sessionID(context),
+			workspaceID,
+			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
 	server.GET("/web/v1/projects", func(context echo.Context) error {
 		var request ListProjectsRequest
 		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
@@ -230,4 +263,3 @@ func noContentOrJSON(context echo.Context, statusCode int, body any) error {
 type ListProjectsRequest struct {
 	WorkspaceID *int64 `json:"workspace_id"`
 }
-// TODO: route registrations pending
