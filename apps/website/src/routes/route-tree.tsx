@@ -12,6 +12,8 @@ import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettings
 import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
 import { WorkspaceOverviewPage } from "../pages/shell/WorkspaceOverviewPage.tsx";
 import { WorkspaceReportsPage } from "../pages/shell/WorkspaceReportsPage.tsx";
+import { WorkspaceMembersPage } from "../pages/members/WorkspaceMembersPage.tsx";
+import { ProjectsPage } from "../pages/projects/ProjectsPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
 const homeRoute = createRoute({
@@ -54,6 +56,18 @@ const workspaceReportsRoute = createRoute({
   component: WorkspaceReportsRouteComponent,
 });
 
+const workspaceProjectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/projects",
+  component: WorkspaceProjectsRouteComponent,
+});
+
+const workspaceMembersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/members",
+  component: WorkspaceMembersRouteComponent,
+});
+
 const workspaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/settings",
@@ -74,6 +88,8 @@ export const routeTree = rootRoute.addChildren([
   profileRoute,
   workspaceOverviewRoute,
   workspaceReportsRoute,
+  workspaceProjectsRoute,
+  workspaceMembersRoute,
   workspaceSettingsRoute,
   organizationSettingsRoute,
 ]);
@@ -110,6 +126,28 @@ function WorkspaceReportsRouteComponent() {
   return (
     <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
       <WorkspaceReportsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceProjectsRouteComponent() {
+  const params = workspaceProjectsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <ProjectsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceMembersRouteComponent() {
+  const params = workspaceMembersRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <WorkspaceMembersPage />
     </AuthenticatedAppFrame>
   );
 }
