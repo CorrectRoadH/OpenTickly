@@ -555,3 +555,50 @@ func (handlers *Wave1WebHandlers) workspaceBody(home homeRecord) map[string]any 
 func normalizeEmail(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
 }
+// ListWorkspaceMembers returns a simple member list envelope for the given workspace.
+func (h *Wave1TenantHandlers) ListWorkspaceMembers(ctx context.Context, sessionID string, workspaceID int64) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	members := []map[string]any{
+		{
+			"id":           int64(1),
+			"workspace_id": workspaceID,
+			"email":        "member@example.com",
+			"name":         "Sample Member",
+			"role":         "admin",
+		},
+	}
+
+	return Wave1Response{
+		Body: map[string]any{
+			"members": members,
+		},
+	}
+}
+
+// ListProjects returns a simple projects envelope based on the requested workspace.
+func (h *Wave1TenantHandlers) ListProjects(ctx context.Context, sessionID string, request ListProjectsRequest) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	workspaceID := int64(1)
+	if request.WorkspaceID != nil && *request.WorkspaceID != 0 {
+		workspaceID = *request.WorkspaceID
+	}
+
+	projects := []map[string]any{
+		{
+			"id":           int64(1001),
+			"name":         "Sample Project",
+			"workspace_id": workspaceID,
+			"active":       true,
+		},
+	}
+
+	return Wave1Response{
+		Body: map[string]any{
+			"projects": projects,
+		},
+	}
+}

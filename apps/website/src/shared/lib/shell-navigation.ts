@@ -16,6 +16,14 @@ export function shellNavigationItems(session: SessionBootstrapViewModel) {
       to: buildWorkspaceReportsPath(session.currentWorkspace.id),
     },
     {
+      label: "Members",
+      to: `/workspaces/${session.currentWorkspace.id}/members`,
+    },
+    {
+      label: "Projects",
+      to: `/workspaces/${session.currentWorkspace.id}/projects`,
+    },
+    {
       label: "Profile",
       to: "/profile",
     },
