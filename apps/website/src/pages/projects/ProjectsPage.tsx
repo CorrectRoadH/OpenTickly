@@ -1,11 +1,9 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { useQueries } from "@tanstack/react-query";
-import { type FormEvent, type ReactElement, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { type FormEvent, type ReactElement, useRef, useState } from "react";
 
-import { webRequest } from "../../shared/api/web-client.ts";
-import type { ProjectMembersEnvelopeDto, ProjectSummaryDto } from "../../shared/api/web-contract.ts";
+import type { ProjectSummaryDto } from "../../shared/api/web-contract.ts";
 import {
-  type ProjectListStatusFilter,
   useArchiveProjectMutation,
   useCreateProjectMutation,
   usePinProjectMutation,
@@ -14,17 +12,10 @@ import {
   useUnpinProjectMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
+import type { ProjectStatusFilter } from "../../shared/url-state/projects-location.ts";
+import { ProjectListItem } from "./ProjectListItem.tsx";
 
-function formatProjectMemberRole(role: string): string {
-  return role.charAt(0).toUpperCase() + role.slice(1);
-}
-
-function projectStatusLabel(project: ProjectSummaryDto): string {
-  return project.active ? "Active" : "Archived";
-}
-
-function emptyStateTitle(statusFilter: ProjectListStatusFilter): string {
+function emptyStateTitle(statusFilter: ProjectStatusFilter): string {
   if (statusFilter === "archived") {
     return "No archived projects in this workspace yet.";
   }
@@ -36,158 +27,15 @@ function emptyStateTitle(statusFilter: ProjectListStatusFilter): string {
   return "No projects in this workspace yet.";
 }
 
-type ProjectMembersSectionProps = {
-  isError: boolean;
-  isPending: boolean;
-  members: ProjectMembersEnvelopeDto["members"];
-  project: ProjectSummaryDto;
+type ProjectsPageProps = {
+  statusFilter: ProjectStatusFilter;
 };
 
-function ProjectMembersSection({
-  isError,
-  isPending,
-  members,
-  project,
-}: ProjectMembersSectionProps): ReactElement {
-  
-  return (
-    <section className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-        Project members
-      </p>
-
-      {isPending ? (
-        <p className="mt-2 text-sm text-slate-600">Loading members…</p>
-      ) : null}
-
-      {isError ? (
-        <p className="mt-2 text-sm text-rose-700">Unable to load members.</p>
-      ) : null}
-
-      {!isPending && !isError ? (
-        members.length > 0 ? (
-          <ul className="mt-2 space-y-2" aria-label={`${project.name} members`}>
-            {members.map((member) => (
-              <li
-                key={`${member.project_id}-${member.member_id}-${member.role}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs text-slate-700"
-              >
-                <span className="font-semibold text-slate-900">Member {member.member_id}</span>
-                <span>Project {member.project_id}</span>
-                <span>{formatProjectMemberRole(member.role)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-2 text-sm text-slate-600">No members assigned</p>
-        )
-      ) : null}
-    </section>
-  );
-}
-
-type ProjectListItemProps = {
-  mutationPending: boolean;
-  onArchiveToggle: (project: ProjectSummaryDto) => Promise<void>;
-  onPinToggle: (project: ProjectSummaryDto) => Promise<void>;
-  project: ProjectSummaryDto;
-  projectMembers: ProjectMembersEnvelopeDto["members"];
-  projectMembersError: boolean;
-  projectMembersPending: boolean;
-  workspaceId: number;
-};
-
-function ProjectListItem({
-  mutationPending,
-  onArchiveToggle,
-  onPinToggle,
-  project,
-  projectMembers,
-  projectMembersError,
-  projectMembersPending,
-  workspaceId,
-}: ProjectListItemProps): ReactElement {
-  const memberCount = projectMembers.length;
-  const statusLabel = projectStatusLabel(project);
-  const pinActionLabel = project.pinned ? "Unpin" : "Pin";
-  const archiveActionLabel = project.active ? "Archive" : "Restore";
-
-  return (
-    <li key={project.id} aria-label={`Project ${project.name}`} className="py-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-slate-900">{project.name}</p>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-              {statusLabel}
-            </span>
-            {project.pinned ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-                Pinned
-              </span>
-            ) : null}
-          </div>
-          <p className="text-xs text-slate-600">Project · {statusLabel}</p>
-          <p className="text-[11px] text-slate-500">
-            Workspace {project.workspace_id} · {memberCount} member{memberCount === 1 ? "" : "s"}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <a
-            aria-label={`Project details for ${project.name}`}
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
-            href={`/workspaces/${workspaceId}/projects/${project.id}`}
-          >
-            Project details
-          </a>
-          <a
-            aria-label={`Project tasks for ${project.name}`}
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
-            href={buildWorkspaceTasksPath({
-              workspaceId,
-              projectId: project.id,
-            })}
-          >
-            Project tasks
-          </a>
-          <AppButton
-            disabled={mutationPending}
-            onClick={() => void onPinToggle(project)}
-            type="button"
-          >
-            <span className="sr-only">
-              {pinActionLabel} project {project.name}
-            </span>
-            <span aria-hidden="true">{pinActionLabel}</span>
-          </AppButton>
-          <AppButton
-            disabled={mutationPending}
-            onClick={() => void onArchiveToggle(project)}
-            type="button"
-          >
-            <span className="sr-only">
-              {archiveActionLabel} project {project.name}
-            </span>
-            <span aria-hidden="true">{archiveActionLabel}</span>
-          </AppButton>
-        </div>
-      </div>
-
-      <ProjectMembersSection
-        isError={projectMembersError}
-        isPending={projectMembersPending}
-        members={projectMembers}
-        project={project}
-      />
-    </li>
-  );
-}
-
-export function ProjectsPage(): ReactElement {
+export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement {
+  const navigate = useNavigate();
   const session = useSession();
+  const createInputRef = useRef<HTMLInputElement | null>(null);
   const [projectName, setProjectName] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ProjectListStatusFilter>("all");
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const workspaceId = session.currentWorkspace.id;
@@ -198,13 +46,6 @@ export function ProjectsPage(): ReactElement {
   const pinProjectMutation = usePinProjectMutation(workspaceId);
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
   const projects = projectsQuery.data?.projects ?? [];
-  const projectMembersQueries = useQueries({
-    queries: projects.map((project) => ({
-      queryFn: () =>
-        webRequest<ProjectMembersEnvelopeDto>(`/web/v1/projects/${project.id}/members`),
-      queryKey: ["project-members", project.id],
-    })),
-  });
   const activeCount = projects.filter((project) => project.active).length;
   const pinnedCount = projects.filter((project) => project.pinned).length;
   const mutationPending =
@@ -214,6 +55,16 @@ export function ProjectsPage(): ReactElement {
     pinProjectMutation.isPending ||
     unpinProjectMutation.isPending;
 
+  async function navigateToStatus(nextStatus: ProjectStatusFilter) {
+    await navigate({
+      params: {
+        workspaceId: String(workspaceId),
+      },
+      search: nextStatus === "all" ? {} : { status: nextStatus },
+      to: "/workspaces/$workspaceId/projects",
+    });
+  }
+
   async function handleCreateProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -221,8 +72,12 @@ export function ProjectsPage(): ReactElement {
       workspace_id: workspaceId,
       name: projectName,
     });
+
+    if (statusFilter !== "all") {
+      await navigateToStatus("all");
+    }
+
     setProjectName("");
-    setStatusFilter("all");
     setStatusMessage("Project created");
   }
 
@@ -267,7 +122,9 @@ export function ProjectsPage(): ReactElement {
             project state visible from one workspace page.
           </p>
         </div>
-        <AppButton type="button">Create project</AppButton>
+        <AppButton onClick={() => createInputRef.current?.focus()} type="button">
+          Create project
+        </AppButton>
       </div>
 
       <div className="mt-6 flex flex-wrap items-end gap-3">
@@ -276,7 +133,7 @@ export function ProjectsPage(): ReactElement {
           <select
             aria-label="Project status filter"
             className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
-            onChange={(event) => setStatusFilter(event.target.value as ProjectListStatusFilter)}
+            onChange={(event) => void navigateToStatus(event.target.value as ProjectStatusFilter)}
             value={statusFilter}
           >
             <option value="all">All projects</option>
@@ -290,6 +147,7 @@ export function ProjectsPage(): ReactElement {
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
           Project name
           <input
+            ref={createInputRef}
             className="rounded-2xl border border-slate-300 px-4 py-3"
             onChange={(event) => setProjectName(event.target.value)}
             value={projectName}
@@ -312,33 +170,28 @@ export function ProjectsPage(): ReactElement {
       ) : null}
 
       {!projectsQuery.isError ? (
-        <>
-          {projects.length > 0 ? (
-            <ul className="mt-6 divide-y divide-slate-200" aria-label="Projects list">
-              {projects.map((project, index) => (
-                <ProjectListItem
-                  key={project.id}
-                  mutationPending={mutationPending}
-                  onArchiveToggle={handleArchiveToggle}
-                  onPinToggle={handlePinToggle}
-                  project={project}
-                  projectMembers={projectMembersQueries[index]?.data?.members ?? []}
-                  projectMembersError={projectMembersQueries[index]?.isError ?? false}
-                  projectMembersPending={projectMembersQueries[index]?.isPending ?? false}
-                  workspaceId={workspaceId}
-                />
-              ))}
-            </ul>
-          ) : (
-            <section className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-5 text-sm text-slate-700">
-              <p className="font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
-              <p className="mt-2">
-                Adjust the filter or create a project to keep project tasks, members, and
-                reporting links discoverable from the project page.
-              </p>
-            </section>
-          )}
-        </>
+        projects.length > 0 ? (
+          <ul className="mt-6 divide-y divide-slate-200" aria-label="Projects list">
+            {projects.map((project) => (
+              <ProjectListItem
+                key={project.id}
+                mutationPending={mutationPending}
+                onArchiveToggle={handleArchiveToggle}
+                onPinToggle={handlePinToggle}
+                project={project}
+                workspaceId={workspaceId}
+              />
+            ))}
+          </ul>
+        ) : (
+          <section className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-5 text-sm text-slate-700">
+            <p className="font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
+            <p className="mt-2">
+              Adjust the filter or create a project to keep project tasks, members, and reporting
+              links discoverable from the project page.
+            </p>
+          </section>
+        )
       ) : null}
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">

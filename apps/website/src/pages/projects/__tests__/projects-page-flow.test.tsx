@@ -13,136 +13,145 @@ import {
 } from "../../../test/fixtures/web-data.ts";
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
+function installProjectsApiFixture() {
+  const projects = createProjectsFixture().projects.slice();
+  const requestedStatuses: string[] = [];
+
+  const { calls } = installMockWebApi([
+    {
+      path: "/web/v1/session",
+      resolver: () => jsonResponse(createSessionFixture()),
+    },
+    {
+      path: "/web/v1/projects",
+      resolver: (request) => {
+        const searchParams = new URLSearchParams(request.search);
+        const status = searchParams.get("status") ?? "all";
+        requestedStatuses.push(status);
+        const filteredProjects = projects.filter((project) => {
+          if (status === "active") {
+            return project.active;
+          }
+
+          if (status === "archived") {
+            return !project.active;
+          }
+
+          return true;
+        });
+
+        return jsonResponse({ projects: filteredProjects });
+      },
+    },
+    {
+      method: "POST",
+      path: "/web/v1/projects",
+      resolver: (request) => {
+        const body = request.body as { name?: string; workspace_id?: number };
+        projects.push({
+          id: 1003,
+          name: body.name ?? "Untitled",
+          workspace_id: body.workspace_id ?? 202,
+          active: true,
+          pinned: false,
+        });
+        return jsonResponse(projects[projects.length - 1], { status: 201 });
+      },
+    },
+    {
+      method: "POST",
+      path: "/web/v1/projects/1001/pin",
+      resolver: () => {
+        const project = projects.find((candidate) => candidate.id === 1001);
+        if (!project) {
+          throw new Error("missing project 1001");
+        }
+        project.pinned = true;
+        return jsonResponse(project);
+      },
+    },
+    {
+      method: "DELETE",
+      path: "/web/v1/projects/1002/pin",
+      resolver: () => {
+        const project = projects.find((candidate) => candidate.id === 1002);
+        if (!project) {
+          throw new Error("missing project 1002");
+        }
+        project.pinned = false;
+        return jsonResponse(project);
+      },
+    },
+    {
+      method: "POST",
+      path: "/web/v1/projects/1001/archive",
+      resolver: () => {
+        const project = projects.find((candidate) => candidate.id === 1001);
+        if (!project) {
+          throw new Error("missing project 1001");
+        }
+        project.active = false;
+        return jsonResponse(project);
+      },
+    },
+    {
+      method: "DELETE",
+      path: "/web/v1/projects/1002/archive",
+      resolver: () => {
+        const project = projects.find((candidate) => candidate.id === 1002);
+        if (!project) {
+          throw new Error("missing project 1002");
+        }
+        project.active = true;
+        return jsonResponse(project);
+      },
+    },
+    {
+      path: "/web/v1/projects/1001/members",
+      resolver: () =>
+        jsonResponse(
+          createProjectMembersFixture({
+            members: [
+              {
+                project_id: 1001,
+                member_id: 99,
+                role: "admin",
+              },
+              {
+                project_id: 1001,
+                member_id: 17,
+                role: "member",
+              },
+            ],
+          }),
+        ),
+    },
+    {
+      path: "/web/v1/projects/1002/members",
+      resolver: () =>
+        jsonResponse(
+          createProjectMembersFixture({
+            members: [],
+          }),
+        ),
+    },
+    {
+      path: "/web/v1/projects/1003/members",
+      resolver: () =>
+        jsonResponse(
+          createProjectMembersFixture({
+            members: [],
+          }),
+        ),
+    },
+  ]);
+
+  return { calls, requestedStatuses };
+}
+
 describe("projects page flow", () => {
   it("renders project archive and pin controls with status-filtered list behavior", async () => {
-    const projects = createProjectsFixture().projects.slice();
-    const { calls } = installMockWebApi([
-      {
-        path: "/web/v1/session",
-        resolver: () => jsonResponse(createSessionFixture()),
-      },
-      {
-        path: "/web/v1/projects",
-        resolver: (request) => {
-          const searchParams = new URLSearchParams(request.search);
-          const status = searchParams.get("status") ?? "all";
-          const filteredProjects = projects.filter((project) => {
-            if (status === "active") {
-              return project.active;
-            }
-
-            if (status === "archived") {
-              return !project.active;
-            }
-
-            return true;
-          });
-
-          return jsonResponse({ projects: filteredProjects });
-        },
-      },
-      {
-        method: "POST",
-        path: "/web/v1/projects",
-        resolver: (request) => {
-          const body = request.body as { name?: string; workspace_id?: number };
-          projects.push({
-            id: 1003,
-            name: body.name ?? "Untitled",
-            workspace_id: body.workspace_id ?? 202,
-            active: true,
-            pinned: false,
-          });
-          return jsonResponse(projects[projects.length - 1], { status: 201 });
-        },
-      },
-      {
-        method: "POST",
-        path: "/web/v1/projects/1001/pin",
-        resolver: () => {
-          const project = projects.find((candidate) => candidate.id === 1001);
-          if (!project) {
-            throw new Error("missing project 1001");
-          }
-          project.pinned = true;
-          return jsonResponse(project);
-        },
-      },
-      {
-        method: "DELETE",
-        path: "/web/v1/projects/1002/pin",
-        resolver: () => {
-          const project = projects.find((candidate) => candidate.id === 1002);
-          if (!project) {
-            throw new Error("missing project 1002");
-          }
-          project.pinned = false;
-          return jsonResponse(project);
-        },
-      },
-      {
-        method: "POST",
-        path: "/web/v1/projects/1001/archive",
-        resolver: () => {
-          const project = projects.find((candidate) => candidate.id === 1001);
-          if (!project) {
-            throw new Error("missing project 1001");
-          }
-          project.active = false;
-          return jsonResponse(project);
-        },
-      },
-      {
-        method: "DELETE",
-        path: "/web/v1/projects/1002/archive",
-        resolver: () => {
-          const project = projects.find((candidate) => candidate.id === 1002);
-          if (!project) {
-            throw new Error("missing project 1002");
-          }
-          project.active = true;
-          return jsonResponse(project);
-        },
-      },
-      {
-        path: "/web/v1/projects/1001/members",
-        resolver: () =>
-          jsonResponse(
-            createProjectMembersFixture({
-              members: [
-                {
-                  project_id: 1001,
-                  member_id: 99,
-                  role: "admin",
-                },
-                {
-                  project_id: 1001,
-                  member_id: 17,
-                  role: "member",
-                },
-              ],
-            }),
-          ),
-      },
-      {
-        path: "/web/v1/projects/1002/members",
-        resolver: () =>
-          jsonResponse(
-            createProjectMembersFixture({
-              members: [],
-            }),
-          ),
-      },
-      {
-        path: "/web/v1/projects/1003/members",
-        resolver: () =>
-          jsonResponse(
-            createProjectMembersFixture({
-              members: [],
-            }),
-          ),
-      },
-    ]);
+    const { calls } = installProjectsApiFixture();
 
     const router = createAppRouter({
       initialEntries: ["/workspaces/202/projects"],
@@ -160,11 +169,14 @@ describe("projects page flow", () => {
     expect(within(list).getByText("Website Revamp")).toBeTruthy();
     expect(within(list).getByText("Community Launch")).toBeTruthy();
     expect(within(list).getByText(/Project · Archived/)).toBeTruthy();
-    expect(within(list).getByText("Workspace 202 · 2 members")).toBeTruthy();
-    expect(within(list).getByText("Workspace 202 · 0 members")).toBeTruthy();
     expect(screen.getByText("Showing 2 projects in workspace 202.")).toBeTruthy();
     expect(screen.getByText("Active: 1 · Pinned: 1")).toBeTruthy();
     expect(screen.getByLabelText("Project status filter")).toBeTruthy();
+
+    await waitFor(() => {
+      expect(within(list).getByText("Workspace 202 · 2 members")).toBeTruthy();
+      expect(within(list).getByText("Workspace 202 · 0 members")).toBeTruthy();
+    });
 
     const websiteRevampProject = within(list).getByLabelText("Project Website Revamp");
     expect(within(websiteRevampProject).getByText("Member 99")).toBeTruthy();
@@ -249,6 +261,9 @@ describe("projects page flow", () => {
     });
 
     await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "archived",
+      );
       const archivedList = screen.getByLabelText("Projects list");
       expect(within(archivedList).getByText("Website Revamp")).toBeTruthy();
       expect(within(archivedList).getByText("Community Launch")).toBeTruthy();
@@ -257,6 +272,10 @@ describe("projects page flow", () => {
 
     fireEvent.change(screen.getByLabelText("Project status filter"), {
       target: { value: "all" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Project status filter")).toBeTruthy();
     });
 
     fireEvent.change(screen.getByLabelText("Project name"), {
@@ -286,6 +305,121 @@ describe("projects page flow", () => {
         (call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/archive",
       ),
     ).toBe(true);
+  });
+
+  it("reads the shared status filter from the route and shows the matching project slice", async () => {
+    installProjectsApiFixture();
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/projects?status=archived"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Projects" })).toBeTruthy();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "archived",
+      );
+      expect(router.state.location.searchStr).toBe("?status=archived");
+      const archivedList = screen.getByLabelText("Projects list");
+      expect(within(archivedList).queryByText("Website Revamp")).toBeNull();
+      expect(within(archivedList).getByText("Community Launch")).toBeTruthy();
+      expect(screen.getByText("Showing 1 projects in workspace 202.")).toBeTruthy();
+      expect(screen.getByText("Active: 0 · Pinned: 1")).toBeTruthy();
+    });
+  });
+
+  it("keeps the status filter in sync with route navigation and browser back-forward history", async () => {
+    const { requestedStatuses } = installProjectsApiFixture();
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/projects?status=paused"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Projects" })).toBeTruthy();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "all",
+      );
+      expect(screen.getByText("Showing 2 projects in workspace 202.")).toBeTruthy();
+    });
+
+    await router.navigate({
+      params: { workspaceId: "202" },
+      search: { status: "archived" },
+      to: "/workspaces/$workspaceId/projects",
+    });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "archived",
+      );
+      expect(router.state.location.searchStr).toBe("?status=archived");
+      expect(screen.getByText("Showing 1 projects in workspace 202.")).toBeTruthy();
+      expect(screen.queryByText("Website Revamp")).toBeNull();
+      expect(screen.getByText("Community Launch")).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText("Project status filter"), {
+      target: { value: "active" },
+    });
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "active",
+      );
+      expect(router.state.location.searchStr).toBe("?status=active");
+      expect(screen.getByText("Showing 1 projects in workspace 202.")).toBeTruthy();
+      expect(screen.getByText("Website Revamp")).toBeTruthy();
+      expect(screen.queryByText("Community Launch")).toBeNull();
+    });
+
+    router.history.back();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "archived",
+      );
+      expect(router.state.location.searchStr).toBe("?status=archived");
+      expect(screen.queryByText("Website Revamp")).toBeNull();
+      expect(screen.getByText("Community Launch")).toBeTruthy();
+    });
+
+    router.history.back();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "all",
+      );
+      expect(screen.getByText("Website Revamp")).toBeTruthy();
+      expect(screen.getByText("Community Launch")).toBeTruthy();
+    });
+
+    router.history.forward();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "archived",
+      );
+      expect(router.state.location.searchStr).toBe("?status=archived");
+    });
+
+    router.history.forward();
+
+    await waitFor(() => {
+      expect((screen.getByLabelText("Project status filter") as HTMLSelectElement).value).toBe(
+        "active",
+      );
+      expect(router.state.location.searchStr).toBe("?status=active");
+    });
+
+    expect(requestedStatuses.includes("active")).toBe(true);
+    expect(requestedStatuses.includes("archived")).toBe(true);
   });
 
   it("shows a formal empty state when the selected status has no matching projects", async () => {
