@@ -145,6 +145,57 @@ func TestWave1WebWorkspaceSettingsRoutesRejectPartialWorkspacePayloadFromOpenAPI
 	}
 }
 
+func TestWave1WebClientRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+	sessionCookie := mustRegisterWave1Session(t, server)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/web/v1/clients",
+		strings.NewReader(`{"workspace_id":1}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cookie", sessionCookie)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected generated client boundary to reject missing required fields with 400, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestWave1WebCatalogMiscRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+	sessionCookie := mustRegisterWave1Session(t, server)
+
+	for _, tc := range []struct {
+		path string
+		body string
+	}{
+		{path: "/web/v1/tasks", body: `{"workspace_id":1}`},
+		{path: "/web/v1/tags", body: `{"workspace_id":1}`},
+		{path: "/web/v1/groups", body: `{"workspace_id":1}`},
+	} {
+		request := httptest.NewRequest(http.MethodPost, tc.path, strings.NewReader(tc.body))
+		request.Header.Set("Content-Type", "application/json")
+		request.Header.Set("Cookie", sessionCookie)
+		recorder := httptest.NewRecorder()
+
+		server.ServeHTTP(recorder, request)
+
+		if recorder.Code != http.StatusBadRequest {
+			t.Fatalf("expected generated catalog misc boundary for %s to reject missing required fields with 400, got %d body=%s", tc.path, recorder.Code, recorder.Body.String())
+		}
+	}
+}
+
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
 	t.Helper()
 

@@ -40,7 +40,7 @@
   - delivery 记录
   - retry / disable 运行时语义
   - limits / status
-- validation、ping、签名、timeout、retry、disable 必须是正式产品行为，并与 OpenAPI 和 Figma 兼容。
+- validation、ping、签名、timeout、retry、disable 必须是正式产品行为，并按引用的 OpenAPI 和 Figma 如实实现。
 
 ## Edge Cases
 

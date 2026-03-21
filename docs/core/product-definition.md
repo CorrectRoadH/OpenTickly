@@ -17,12 +17,13 @@
 ## 定义方式
 
 OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公开定义视为自己的产品定义来源。
+本仓库的产品与验收口径统一表述为：按引用的 PRD、OpenAPI 和 Figma 如实实现。
 
 首版产品定义采用以下输入分工：
 
 - `docs/product/*.md` 是默认阅读入口
-- `openapi/*.json` 是 API 兼容实现的强约束来源
-- Figma 原型是 UI 界面与交互兼容实现的强约束来源
+- `openapi/*.json` 是 API 公开定义的强约束来源
+- Figma 原型是 UI 界面与交互公开定义的强约束来源
 - PRD 必须明确引用相关 OpenAPI 与 Figma
 - PRD 只补充 OpenAPI 与 Figma 无法完整表达的功能细节
 
@@ -73,6 +74,10 @@ PRD 编写时，应引用：
 - 除 `import` 外，首版不承诺超出 Toggl 当前公开业务产品面的新增业务功能。
 - `instance-admin` 属于 OpenToggl 自己的实例 / 宿主能力，不计入上一条对业务产品面的限制。
 - 与 AI/自动化相关的承诺仅限公开 OpenAPI、CLI 与 skill 接口友好，不额外承诺独立的 AI API 产品面。
+
+## 术语说明
+
+- 本项目中的完成标准是“按引用的公开定义如实实现”，不是“宣称自己兼容某个模糊对象”。
 
 ## 版本化对齐
 

@@ -29,7 +29,7 @@
 - `openapi/toggl-reports-v3.swagger.json`
 - `openapi/toggl-webhooks-v1.swagger.json`
 
-它们分别对应 Toggl 官方兼容面：
+它们分别对应 Toggl 官方公开 API 面：
 
 - `Track API v9`
 - `Reports API v3`
@@ -43,16 +43,16 @@
 
 职责划分：
 
-- `toggl-*`：外部兼容承诺来源
+- `toggl-*`：外部公开合同来源
 - `opentoggl-web`：Web 前端自有后台接口
 - `opentoggl-import`：导入产品面与 job 编排接口
 - `opentoggl-admin`：实例管理、治理、运营接口
 
 规则：
 
-- `transport/http/compat` 只吃 `toggl-*`
+- `transport/http/public-api` 只吃 `toggl-*`
 - `transport/http/web` 只吃 `opentoggl-web`、`opentoggl-import`、`opentoggl-admin`
-- 不允许把 OpenToggl 自定义管理接口混进 Toggl compat OpenAPI
+- 不允许把 OpenToggl 自定义管理接口混进 `toggl-*` 外部公开合同来源
 - 不允许把 import API 塞进 admin，除非只是复用底层用例而不是复用公开合同
 
 后端不能“从 OpenAPI 生成架构”，但必须“从 OpenAPI 生成边界要求”。
@@ -79,6 +79,11 @@
 2. 由人工把 endpoint 映射到模块与 use case
 3. 由实现层决定 domain、application、infra 如何协作
 
+额外命名约束：
+
+- transport、生成脚本、生成文件、adapter、handler interface、runtime 组装文件和测试文件，只允许按产品面、能力域或合同边界命名。
+- 当前覆盖范围不足、实现仍在过渡中、或某能力尚未完全接管，都必须记录在 plan/debt，而不是写进代码名。
+
 ## 0.5 后端技术栈与框架结论
 
 后端文档必须明确到可执行工程决策，而不是只停留在抽象分层。
@@ -86,10 +91,10 @@
 当前目标态的正式结论如下：
 
 - HTTP runtime：`echo`
-- compat 路由与 handler interface：由 `oapi-codegen` 基于 OpenAPI 全生成
-- compat request/response validation：由 OpenAPI 生成链路与 `kin-openapi` 驱动
-- Web/internal API runtime：可继续挂在同一 `echo` 实例上，但不反向污染 compat transport
-- OpenAPI 生成代码：`oapi-codegen`，以 compat transport 为最高优先级生成目标
+- 由 `toggl-*` OpenAPI 驱动的外部公开 API 路由与 handler interface：由 `oapi-codegen` 基于 OpenAPI 全生成
+- 由 `toggl-*` OpenAPI 驱动的外部公开 API request/response validation：由 OpenAPI 生成链路与 `kin-openapi` 驱动
+- Web/internal API runtime：可继续挂在同一 `echo` 实例上，但不反向污染 `transport/http/public-api` 边界
+- OpenAPI 生成代码：`oapi-codegen`，以外部公开 API transport 为最高优先级生成目标
 - 数据库：`PostgreSQL`
 - 数据库访问：`pgx`
 - PostgreSQL schema 管理：`pgschema`（声明式 desired-state SQL + `plan/apply` 工作流）
@@ -100,8 +105,8 @@
 
 解释：
 
-- compat API 的主要风险不是“框架选错”，而是人工手写路由、参数绑定、校验和响应 shape 后逐步偏离 OpenAPI。
-- 因此 compat API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
+- 外部公开 API 的主要风险不是“框架选错”，而是人工手写路由、参数绑定、校验和响应 shape 后逐步偏离 OpenAPI。
+- 因此外部公开 API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
 - 在这个前提下，`echo` 的价值是作为成熟的 transport runtime 承载生成产物，而不是承载业务语义。
 - `echo` 只能停留在 `transport` 与 `apps/backend/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
 - DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图、可审查的启动顺序和显式模块边界，而不是额外框架语义。
@@ -207,7 +212,7 @@ apps/backend/internal/bootstrap/
   redis.go
   modules.go
   http.go
-  compat.go
+  public_api.go
 
 bootstrap.NewApp(cfg)
 -> open postgres / redis
@@ -215,8 +220,8 @@ bootstrap.NewApp(cfg)
 -> build platform services
 -> build module infra adapters
 -> build module application services
--> bind generated compat server implementations
--> register generated compat routes into Echo
+-> bind generated public API server implementations
+-> register generated public API routes into Echo
 -> return app runtime
 ```
 
@@ -224,7 +229,7 @@ bootstrap.NewApp(cfg)
 
 - domain test 不需要 bootstrap
 - application integration test 只构造当前模块 + 真实数据库依赖
-- transport contract test 可以挂真实 Echo + generated compat routes，但替换外部 provider
+- transport contract test 可以挂真实 Echo + generated public-API routes，但替换外部 provider
 - job test 可以单独起 runner 和 handler，不需要整站启动
 
 ### 0.6.2 schema / init / readiness 顺序
@@ -258,6 +263,7 @@ bootstrap.NewApp(cfg)
 - 为了“临时跑通”把授权、配额、领域规则或错误语义直接硬编码在路由壳层
 - 已有 OpenAPI 合同后，仍持续手写 DTO、route table、bind/validate 入口并把它当成正式边界
 - 在本地源码默认启动路径中，以内存 state、伪仓储或 placeholder runtime 代替真实 Postgres / Redis 依赖
+- 用不表达长期职责的阶段语义给 transport/runtime/adapter/测试命名，并把这些名字继续当作长期实现边界
 
 允许存在的临时过渡实现只限于：
 
@@ -271,11 +277,11 @@ bootstrap.NewApp(cfg)
 - transport 测试主要在验证伪状态，而不是验证 OpenAPI / public contract / application 编排
 - 新 endpoint 为了复用“现成状态”继续接入 transport 内 fake runtime，而不是接入对应模块
 
-## 0.7 OpenAPI 生成与兼容工作流
+## 0.7 OpenAPI 生成与公开合同工作流
 
 OpenAPI 相关工作需要明确区分 4 件事：
 
-1. 谁是兼容真相源
+1. 谁是公开合同真相源
 2. 生成哪些机械产物
 3. 哪些逻辑必须手写
 4. 如何证明实现没有偏离合同
@@ -283,7 +289,7 @@ OpenAPI 相关工作需要明确区分 4 件事：
 固定流程如下：
 
 1. 更新 `openapi/*.json`
-2. 用 `oapi-codegen` 为 compat API 生成 DTO、参数类型、server interface、Echo 路由与 validator glue
+2. 用 `oapi-codegen` 为任何正式 API 边界生成 DTO、参数类型、server interface、Echo 路由与 validator glue
 3. 用 `kin-openapi` 生成或驱动 request/response contract skeleton
 4. 人工维护 endpoint -> module -> use case 映射
 5. 人工只实现 generated server interface 背后的 application adapter 与错误映射
@@ -291,10 +297,10 @@ OpenAPI 相关工作需要明确区分 4 件事：
 
 生成产物只允许落在以下边界：
 
-- `transport/http/compat/*`
+- `transport/http/public-api/*`
 - `transport/http/web/*`
 - `packages/shared-contracts/` 中面向前端或工具的 schema/type 产物
-- `apps/backend/tests/compat/**` 与 `apps/backend/tests/golden/**` 的测试 skeleton
+- `apps/backend/tests/public-contract/**` 与 `apps/backend/tests/golden/**` 的测试 skeleton
 
 不允许把生成结果直接扩散到：
 
@@ -304,24 +310,24 @@ OpenAPI 相关工作需要明确区分 4 件事：
 - `infra/`
 - `platform/`
 
-兼容规则：
+公开合同规则：
 
-- `toggl-*` OpenAPI 更新后，必须先更新 compat contract test，再改实现
-- compat route、bind、validation、handler interface 必须由生成链路提供，不允许回退为手写 endpoint 壳层
-- compat handler 的 request validation 以 OpenAPI 为准，不允许在 handler 中额外发明另一套字段语义
-- compat response 的字段名、可空性、错误 body 以 OpenAPI 与必要 golden 样本为准
-- OpenToggl 自定义 API 也走同一生成链路，但合同来源换成 `opentoggl-*`
+- `toggl-*` OpenAPI 更新后，必须先更新对应 contract test，再改实现
+- 任何正式 API 边界的 route、bind、validation、handler interface 必须由生成链路提供，不允许回退为手写 endpoint 壳层
+- 任何正式 API handler 的 request validation 以对应 OpenAPI 为准，不允许在 handler 中额外发明另一套字段语义
+- 任何正式 API response 的字段名、可空性、错误 body 以对应 OpenAPI 与必要 golden 样本为准
+- `toggl-*` 与 `opentoggl-*` 统一走同一 generation-first 路径，区别只在合同来源文件
 
-对于已经存在 OpenAPI 来源的正式边界，以下情况一律视为漂移：
+对于任何已经存在 OpenAPI 来源的正式 API 边界，以下情况一律视为漂移：
 
 - 继续新增手写 route table，而不是走生成 registration
 - 继续新增手写 request/response DTO，导致与 OpenAPI 重复维护
 - 在 handler 中补另一套独立字段校验或字段语义解释
 - 以“目前只是 web/internal API”为理由长期跳过 generation-first 的边界收口
 
-### 0.7.1 compat API 的生成边界
+### 0.7.1 正式 API 的生成边界
 
-compat API 必须做到“架构由合同生成”，具体含义如下：
+任何正式 API 都必须做到“架构由合同生成”，具体含义如下：
 
 - endpoint path / method 生成
 - path/query/header/body 参数类型生成
@@ -338,17 +344,17 @@ compat API 必须做到“架构由合同生成”，具体含义如下：
 - application command/query 调用
 - endpoint 到模块/use case 的归属清单
 
-不允许人工手写以下 compat 结构：
+不允许人工手写以下正式 API 结构：
 
-- compat route table
-- compat request DTO
-- compat response DTO
-- compat handler method signature
-- compat 参数校验入口
+- route table
+- request DTO
+- response DTO
+- handler method signature
+- 参数校验入口
 
 原因很简单：
 
-- compat API 的首要目标是“跟着 OpenAPI 演进”，不是“让人写得顺手”
+- 正式 API 的首要目标是“跟着 OpenAPI 演进”，不是“让人写得顺手”
 - 只要 endpoint 壳层允许手写，最终就一定会出现 shape drift、漏字段、漏校验和错误码偏移
 - generation-first 比 code review 更可靠，因为它先消除了可变面
 
@@ -367,7 +373,7 @@ apps/backend/
       infra/
       transport/
         http/
-          compat/
+          public-api/
           web/
 ```
 
@@ -405,7 +411,7 @@ apps/backend/internal/tracking/
     providers/
   transport/
     http/
-      compat/
+      public-api/
         time_entries.go
         dto.go
       web/
@@ -419,7 +425,7 @@ apps/backend/internal/tracking/
 - `application/commands` 放事务型用例
 - `application/queries` 放列表、投影、聚合读取
 - `infra` 放 port 的技术实现
-- `transport/http/compat` 放 Toggl-compatible API
+- `transport/http/public-api` 放由 `toggl-*` OpenAPI 驱动的外部公开 API
 - `transport/http/web` 放 Web 管理接口
 
 如果模块还很小，`commands/` 与 `queries/` 可以先不拆子目录，但语义上仍必须区分 command 与 query。
@@ -490,11 +496,11 @@ apps/backend/internal/tracking/
 
 规则：
 
-- `compat` 与 `web` 可以共用同一 `application`
-- `compat` 与 `web` 不共享 DTO 与错误映射
+- 外部公开 API transport 与 `web` 可以共用同一 `application`
+- 外部公开 API transport 与 `web` 不共享 DTO 与错误映射
 - transport 不是业务流程容器
-- `compat` 的 DTO、参数要求和响应 shape 直接以 `openapi/*.json` 为准
-- `web` transport 不应反向污染 compat DTO
+- 外部公开 API 的 DTO、参数要求和响应 shape 直接以 `openapi/*.json` 为准
+- `web` transport 不应反向污染外部公开 API DTO
 
 ### 3.5 OpenAPI 到模块的映射要求
 
@@ -503,7 +509,7 @@ apps/backend/internal/tracking/
 - OpenAPI endpoint 是什么
 - 属于哪个业务模块
 - 对应哪个 command 或 query
-- 由哪个 `transport/http/compat` 或 `transport/http/web` handler 承接
+- 由哪个外部公开 API transport 或 `transport/http/web` handler 承接
 - 至少需要哪些 contract tests
 
 推荐记录格式：
@@ -513,7 +519,7 @@ POST /workspaces/{workspace_id}/time_entries
 -> source: toggl-track-api-v9.swagger.json
 -> module: tracking
 -> use case: StartTimeEntry
--> transport: tracking/transport/http/compat
+-> transport: tracking/transport/http/public-api
 -> tests:
    - success contract
    - validation error
@@ -715,7 +721,7 @@ Query Port 负责：
 
 ## 8.5 允许自动生成的内容
 
-为了减少 compat API 的机械劳动，允许生成以下产物：
+为了减少外部公开 API 的机械劳动，允许生成以下产物：
 
 - DTO types
 - route / handler stub
@@ -788,14 +794,14 @@ Query Port 负责：
 
 - `domain` 有单测覆盖不变量
 - `application/commands` 有事务与权限级集成测试
-- `transport/http/compat` 有合同测试
+- `transport/http/public-api` 有合同测试
 - `reports` / `webhooks` / `importing` 的异步运行时有 job 级测试
-- compat endpoint 有 OpenAPI 到 handler / use case 的映射
+- 外部公开 API endpoint 有 OpenAPI 到 handler / use case 的映射
 
 进一步的结构要求：
 
 - `application/*_integration_test.go` 默认通过真实 Postgres 跑用例，不 mock repository
-- `transport/http/compat` 的 contract test 默认通过真实 `Echo` + generated compat routes + OpenAPI validator 跑请求
+- `transport/http/public-api` 的 contract test 默认通过真实 `Echo` + generated public-API routes + OpenAPI validator 跑请求
 - handler 测试优先验证公开输入输出，不验证内部调用次数
 - 需要时间推进的 job test 必须注入可控时钟
 - 需要重试的 job test 必须在进程内同步推进调度，不做真实 sleep

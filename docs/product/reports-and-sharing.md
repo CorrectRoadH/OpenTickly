@@ -46,7 +46,7 @@
 ## Shared / Saved Reports
 
 - saved reports 和 shared reports 必须作为公开产品对象存在。
-- public/private 权限、参数覆盖、owner 失活、共享导出等公开行为必须与上游 OpenAPI 和 Figma 兼容。
+- public/private 权限、参数覆盖、owner 失活、共享导出等公开行为必须按引用的 OpenAPI 和 Figma 如实实现。
 
 ## Edge Cases
 

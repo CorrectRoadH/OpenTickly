@@ -30,3 +30,6 @@ example
 .agents
 .claude
 .codex
+
+# ralphex progress logs
+.ralphex/progress/
