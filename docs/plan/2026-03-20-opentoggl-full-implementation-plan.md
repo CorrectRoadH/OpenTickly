@@ -38,9 +38,9 @@
 > - 新发现的 duplicate path / duplicate naming / duplicate implementation / internal compat alias 问题视为插队级结构治理项；发现后立即提到当前执行队首，在收口前暂停继续扩张相关功能面。
 > - `go run ./apps/backend` 只能证明 Go 进程可启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
 
-- [ ] 插队 P0：One-Way 结构治理与规范入口收口
+- [x] 插队 P0：One-Way 结构治理与规范入口收口
   - [x] 执行 TODO：删除 `pnpm -> node tools/self-hosted/cli.mjs -> docker compose` 的 self-hosted 包装层，self-hosted 启动与校验统一直接收口为 `docker compose` 与显式 `curl` 命令，不再保留 `self-hosted:*` root scripts。Refs: `AGENTS.md`、`docs/self-hosting/docker-compose.md`、`package.json`
-  - [ ] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
+  - [x] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
   - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
   - [x] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。已完成首批对象（2026-03-21）：`apps/backend/internal/membership/domain/workspace_member.go` 删除 `WorkspaceMemberStateActive` 内部 alias；`apps/backend/internal/catalog/application/service.go` 删除 `AddProjectMember`、`CanViewProject` duplicate helper，统一收口到 `GrantProjectMember` 与 `CanAccessProject`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
@@ -57,7 +57,7 @@
       - debt：测试仍以 placeholder runtime 为基线，固化假运行时
       - exit condition：真实模块 integration、generated contract、real-runtime HTTP / e2e 证据覆盖同一条能力链
       - delete condition：对应 placeholder runtime 路径已删除，且同能力已有正式 runtime 测试替代
-  - [ ] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
+  - [x] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路
   - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
@@ -66,7 +66,7 @@
 - [x] 本地开发基线
   - [x] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
   - [x] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
-  - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增入口统一收口到 root toolchain 或正式 CLI
+  - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增源码开发入口统一收口到 root toolchain 或正式 CLI
 - [x] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
   - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
   - [x] `billing-foundation` 后端基础切片第一版
@@ -185,7 +185,7 @@
       - `docker/nginx/website.conf`：`删除（delete）`
       - 原因：依赖独立 Nginx/website 容器并反向代理 `api:8080`，属于双运行时实现；目标态由 Go 进程直接提供 SPA 与 `/web/v1/*`。
       - 过渡态约束：`docker/website.Dockerfile` 与 `docker/nginx/website.conf` 仅可视为 `transitional-only` 资产，不得继续作为 self-hosted 目标发布方案。
-  - [x] 执行 TODO：移除或替换根级 shell 验证脚本（如 self-hosted smoke 验证脚本），将对应验证入口收口到 root toolchain 或正式 CLI，避免继续依赖 `scripts/*.sh`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：移除根级 shell 验证脚本（如 self-hosted smoke 验证脚本），避免继续依赖 `scripts/*.sh`；self-hosted 交付链路统一直接收口为 `docker compose` 与显式运行时校验命令，而不是再包装为 root toolchain 或正式 CLI。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
   - [x] 将当前 self-hosted 实现收口到单应用镜像，移除独立 `website` / Nginx 运行时依赖。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] TODO: 删除与目标形态冲突的 `docker/website.Dockerfile`、Nginx 配置与 compose service，或将其降级为仅调试/过渡用途并明确标注。Refs: `docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：删除 `docker/website.Dockerfile` 与 `docker/nginx/website.conf`，若短期不能删则必须改名或在文档中明确标注为过渡态，禁止继续作为目标发布方案。Refs: `docs/self-hosting/docker-compose.md`
