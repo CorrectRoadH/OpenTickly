@@ -1,4 +1,6 @@
-import { Navigate, createRoute } from "@tanstack/react-router";
+import { AppPanel } from "@opentoggl/web-ui";
+import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
+import { type ReactNode } from "react";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
 import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
@@ -46,11 +48,7 @@ const registerRoute = createRoute({
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/profile",
-  component: () => (
-    <AuthenticatedAppFrame>
-      <ProfilePage />
-    </AuthenticatedAppFrame>
-  ),
+  component: ProfileRouteComponent,
 });
 
 const workspaceOverviewRoute = createRoute({
@@ -163,48 +161,44 @@ export const routeTree = rootRoute.addChildren([
 function HomeRouteComponent() {
   const sessionQuery = useSessionBootstrapQuery();
 
-  if (sessionQuery.error instanceof WebApiError && sessionQuery.error.status === 401) {
-    return <Navigate to="/login" />;
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
   }
 
-  if (!sessionQuery.data) {
-    return null;
+  if (isSessionAccessDenied(sessionQuery.error)) {
+    return <Navigate replace to="/login" />;
   }
 
-  return <Navigate to={resolveHomePath(mapSessionBootstrap(sessionQuery.data))} />;
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return <SessionUnavailablePanel />;
+  }
+
+  return <Navigate replace to={resolveHomePath(mapSessionBootstrap(sessionQuery.data))} />;
+}
+
+function ProfileRouteComponent() {
+  return renderProtectedRoute(<ProfilePage />);
 }
 
 function WorkspaceOverviewRouteComponent() {
   const params = workspaceOverviewRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <WorkspaceOverviewPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<WorkspaceOverviewPage />, workspaceId);
 }
 
 function WorkspaceReportsRouteComponent() {
   const params = workspaceReportsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <WorkspaceReportsPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<WorkspaceReportsPage />, workspaceId);
 }
 
 function WorkspaceProjectsRouteComponent() {
   const params = workspaceProjectsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <ProjectsPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<ProjectsPage />, workspaceId);
 }
 
 function WorkspaceProjectDetailRouteComponent() {
@@ -212,10 +206,9 @@ function WorkspaceProjectDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const projectId = Number(params.projectId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />
-    </AuthenticatedAppFrame>
+  return renderProtectedRoute(
+    <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />,
+    workspaceId,
   );
 }
 
@@ -223,22 +216,14 @@ function WorkspaceMembersRouteComponent() {
   const params = workspaceMembersRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <WorkspaceMembersPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<WorkspaceMembersPage />, workspaceId);
 }
 
 function WorkspaceClientsRouteComponent() {
   const params = workspaceClientsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <ClientsPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<ClientsPage />, workspaceId);
 }
 
 function WorkspaceClientDetailRouteComponent() {
@@ -246,10 +231,9 @@ function WorkspaceClientDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const clientId = Number(params.clientId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <ClientDetailPage clientId={clientId} workspaceId={workspaceId} />
-    </AuthenticatedAppFrame>
+  return renderProtectedRoute(
+    <ClientDetailPage clientId={clientId} workspaceId={workspaceId} />,
+    workspaceId,
   );
 }
 
@@ -257,22 +241,14 @@ function WorkspaceGroupsRouteComponent() {
   const params = workspaceGroupsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <GroupsPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<GroupsPage />, workspaceId);
 }
 
 function WorkspacePermissionsRouteComponent() {
   const params = workspacePermissionsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <PermissionConfigPage workspaceId={workspaceId} />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<PermissionConfigPage workspaceId={workspaceId} />, workspaceId);
 }
 
 function WorkspaceTasksRouteComponent() {
@@ -280,22 +256,14 @@ function WorkspaceTasksRouteComponent() {
   const search = workspaceTasksRoute.useSearch();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <TasksPage projectId={search.projectId} />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<TasksPage projectId={search.projectId} />, workspaceId);
 }
 
 function WorkspaceTagsRouteComponent() {
   const params = workspaceTagsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <TagsPage />
-    </AuthenticatedAppFrame>
-  );
+  return renderProtectedRoute(<TagsPage />, workspaceId);
 }
 
 function WorkspaceTagDetailRouteComponent() {
@@ -303,10 +271,9 @@ function WorkspaceTagDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const tagId = Number(params.tagId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <TagDetailPage tagId={tagId} workspaceId={workspaceId} />
-    </AuthenticatedAppFrame>
+  return renderProtectedRoute(
+    <TagDetailPage tagId={tagId} workspaceId={workspaceId} />,
+    workspaceId,
   );
 }
 
@@ -315,10 +282,9 @@ function WorkspaceSettingsRouteComponent() {
   const search = workspaceSettingsRoute.useSearch();
   const workspaceId = Number(params.workspaceId);
 
-  return (
-    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <WorkspaceSettingsPage section={search.section} workspaceId={workspaceId} />
-    </AuthenticatedAppFrame>
+  return renderProtectedRoute(
+    <WorkspaceSettingsPage section={search.section} workspaceId={workspaceId} />,
+    workspaceId,
   );
 }
 
@@ -326,9 +292,83 @@ function OrganizationSettingsRouteComponent() {
   const params = organizationSettingsRoute.useParams();
   const organizationId = Number(params.organizationId);
 
+  return renderProtectedRoute(<OrganizationSettingsPage organizationId={organizationId} />);
+}
+
+function renderProtectedRoute(children: ReactNode, requestedWorkspaceId?: number) {
   return (
-    <AuthenticatedAppFrame>
-      <OrganizationSettingsPage organizationId={organizationId} />
+    <ProtectedRouteBoundary requestedWorkspaceId={requestedWorkspaceId}>
+      {children}
+    </ProtectedRouteBoundary>
+  );
+}
+
+type ProtectedRouteBoundaryProps = {
+  children: ReactNode;
+  requestedWorkspaceId?: number;
+};
+
+function ProtectedRouteBoundary({
+  children,
+  requestedWorkspaceId,
+}: ProtectedRouteBoundaryProps) {
+  const sessionQuery = useSessionBootstrapQuery();
+
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
+  }
+
+  if (isSessionAccessDenied(sessionQuery.error)) {
+    return <Navigate replace to="/login" />;
+  }
+
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return <SessionUnavailablePanel />;
+  }
+
+  return (
+    <AuthenticatedAppFrame
+      requestedWorkspaceId={requestedWorkspaceId}
+      sessionBootstrap={sessionQuery.data}
+    >
+      {children}
     </AuthenticatedAppFrame>
+  );
+}
+
+function SessionPendingPanel() {
+  return (
+    <div className="min-h-screen px-4 py-8">
+      <AppPanel className="mx-auto max-w-2xl bg-white/95">
+        <p className="text-sm font-medium text-slate-700">Loading session…</p>
+      </AppPanel>
+    </div>
+  );
+}
+
+function SessionUnavailablePanel() {
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+
+  return (
+    <div className="min-h-screen px-4 py-8">
+      <AppPanel className="mx-auto max-w-2xl bg-white/95">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+          Session unavailable
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          The shell could not bootstrap the current session from
+          <code className="mx-1 rounded bg-slate-100 px-2 py-1 text-xs">/web/v1/session</code>
+          while rendering {pathname}.
+        </p>
+      </AppPanel>
+    </div>
+  );
+}
+
+function isSessionAccessDenied(error: unknown) {
+  return (
+    error instanceof WebApiError && (error.status === 401 || error.status === 403)
   );
 }

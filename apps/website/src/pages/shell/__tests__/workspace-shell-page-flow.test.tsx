@@ -10,6 +10,26 @@ import { createSessionFixture } from "../../../test/fixtures/web-data.ts";
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("workspace shell page flow", () => {
+  it("redirects unauthenticated home entry to login before bootstrapping the shell", async () => {
+    const router = createAppRouter({
+      initialEntries: ["/"],
+    });
+
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse("Session missing.", { status: 401 }),
+      },
+    ]);
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
+  });
+
   it("boots from the session contract, redirects into the current workspace, and supports switcher navigation", async () => {
     installMockWebApi([
       {
@@ -90,6 +110,9 @@ describe("workspace shell page flow", () => {
     render(<AppProviders router={router} />);
 
     expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
   });
 
   it("exposes logout in the shell, clears session access, and returns users to login", async () => {
@@ -129,12 +152,15 @@ describe("workspace shell page flow", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
-
-    await router.navigate({
-      to: "/workspaces/$workspaceId",
-      params: { workspaceId: "202" },
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
     });
 
-    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+    router.history.back();
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+      expect(screen.getByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+    });
   });
 });

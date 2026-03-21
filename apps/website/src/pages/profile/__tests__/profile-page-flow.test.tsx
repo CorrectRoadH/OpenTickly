@@ -14,6 +14,26 @@ import {
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("profile page flow", () => {
+  it("redirects unauthenticated profile entry to login at the route level", async () => {
+    const router = createAppRouter({
+      initialEntries: ["/profile"],
+    });
+
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse("Session missing.", { status: 401 }),
+      },
+    ]);
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
+  });
+
   it("loads the dedicated profile page and saves profile updates through the web contract", async () => {
     const api = installMockWebApi([
       {
