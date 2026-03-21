@@ -1,4 +1,4 @@
-package compat
+package publicapi
 
 import (
 	"context"
