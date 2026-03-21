@@ -18,8 +18,6 @@ const (
 	WorkspaceMemberStateDisabled WorkspaceMemberState = "disabled"
 	WorkspaceMemberStateRestored WorkspaceMemberState = "restored"
 	WorkspaceMemberStateRemoved  WorkspaceMemberState = "removed"
-	// Backward-compatible alias for older code/tests that still reference "active".
-	WorkspaceMemberStateActive WorkspaceMemberState = WorkspaceMemberStateJoined
 )
 
 var (

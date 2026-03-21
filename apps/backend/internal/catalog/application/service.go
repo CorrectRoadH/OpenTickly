@@ -119,11 +119,6 @@ func (s *CatalogService) GrantProjectMember(projectID int64, memberID int64) err
 	return nil
 }
 
-// AddProjectMember is a backward-compatible alias for GrantProjectMember.
-func (s *CatalogService) AddProjectMember(projectID int64, memberID int64) error {
-	return s.GrantProjectMember(projectID, memberID)
-}
-
 // RemoveProjectMember removes a member from a project.
 func (s *CatalogService) RemoveProjectMember(projectID int64, memberID int64) error {
 	s.mu.Lock()
@@ -179,15 +174,4 @@ func (s *CatalogService) CanAccessProject(projectID int64, facts domain.ProjectA
 
 	_, isProjectMember := s.projectMembers[projectID][facts.ActorID]
 	return project.CanAccess(facts, isProjectMember, action)
-}
-
-// CanViewProject is a backward-compatible helper for simple view checks.
-func (s *CatalogService) CanViewProject(projectID int64, memberID int64) bool {
-	facts := domain.ProjectAuthorizationFacts{
-		ActorID:                 memberID,
-		IsWorkspaceMember:       true,
-		IsWorkspaceMemberActive: true,
-	}
-
-	return s.CanAccessProject(projectID, facts, domain.ProjectAccessActionView)
 }

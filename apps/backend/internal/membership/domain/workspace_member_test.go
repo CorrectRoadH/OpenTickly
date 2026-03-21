@@ -1,6 +1,11 @@
 package domain
 
-import "testing"
+import (
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"testing"
+)
 
 func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
 	member, err := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateInvited, 100, 80)
@@ -125,6 +130,29 @@ func TestWorkspaceMemberTransitionValidation(t *testing.T) {
 	if err := removed.Remove(); err != ErrWorkspaceMemberAlreadyRemoved {
 		t.Fatalf("expected ErrWorkspaceMemberAlreadyRemoved, got %v", err)
 	}
+}
+
+func TestWorkspaceMemberSourceDoesNotExposeActiveAlias(t *testing.T) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "workspace_member.go", nil, 0)
+	if err != nil {
+		t.Fatalf("ParseFile error: %v", err)
+	}
+
+	ast.Inspect(file, func(node ast.Node) bool {
+		valueSpec, ok := node.(*ast.ValueSpec)
+		if !ok {
+			return true
+		}
+
+		for _, name := range valueSpec.Names {
+			if name.Name == "WorkspaceMemberStateActive" {
+				t.Fatalf("expected canonical workspace member states only, found internal alias %s", name.Name)
+			}
+		}
+
+		return true
+	})
 }
 
 func assertLifecycleStateSequence(

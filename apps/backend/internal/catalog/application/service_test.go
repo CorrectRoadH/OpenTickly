@@ -2,6 +2,7 @@ package application
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/catalog/domain"
@@ -233,5 +234,17 @@ func TestCatalogService_AccessChecksRequireWorkspaceMembershipEvenWithProjectGra
 
 	if svc.CanAccessProject(8, facts, domain.ProjectAccessActionView) {
 		t.Fatalf("expected project grant not to bypass missing workspace membership")
+	}
+}
+
+func TestCatalogService_ExposesOnlyCanonicalProjectMembershipAndAccessMethods(t *testing.T) {
+	serviceType := reflect.TypeOf(&CatalogService{})
+
+	if _, ok := serviceType.MethodByName("AddProjectMember"); ok {
+		t.Fatal("expected AddProjectMember alias to be removed from CatalogService")
+	}
+
+	if _, ok := serviceType.MethodByName("CanViewProject"); ok {
+		t.Fatal("expected CanViewProject helper to be removed from CatalogService")
 	}
 }
