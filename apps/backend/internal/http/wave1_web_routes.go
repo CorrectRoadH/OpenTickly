@@ -18,39 +18,9 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 
 	registerGeneratedWave1WebAuthSessionRoutes(server, newGeneratedWave1WebAuthSessionAdapter(handlers))
 	registerGeneratedWave1WebProfilePreferencesRoutes(server, newGeneratedWave1WebProfilePreferencesAdapter(handlers))
+	registerGeneratedWave1WebOrganizationSettingsRoutes(server, newGeneratedWave1WebOrganizationSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspaceSettingsRoutes(server, newGeneratedWave1WebWorkspaceSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
-
-	server.GET("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
-		organizationID, ok := parsePathID(context, "organization_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetOrganizationSettings(
-			context.Request().Context(),
-			sessionID(context),
-			organizationID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.PATCH("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
-		var request OrganizationSettingsRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		organizationID, ok := parsePathID(context, "organization_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.UpdateOrganizationSettings(
-			context.Request().Context(),
-			sessionID(context),
-			organizationID,
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
 
 	server.GET("/web/v1/workspaces/:workspace_id/capabilities", func(context echo.Context) error {
 		workspaceID, ok := parsePathID(context, "workspace_id")
