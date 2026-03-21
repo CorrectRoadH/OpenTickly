@@ -80,8 +80,8 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
-	server.GET("/web/v1/organizations/:organizationID/settings", func(context echo.Context) error {
-		organizationID, ok := parsePathID(context, "organizationID")
+	server.GET("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
+		organizationID, ok := parsePathID(context, "organization_id")
 		if !ok {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
@@ -93,12 +93,12 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
-	server.PATCH("/web/v1/organizations/:organizationID/settings", func(context echo.Context) error {
+	server.PATCH("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
 		var request OrganizationSettingsRequest
 		if err := context.Bind(&request); err != nil {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		organizationID, ok := parsePathID(context, "organizationID")
+		organizationID, ok := parsePathID(context, "organization_id")
 		if !ok {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
@@ -111,8 +111,8 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
-	server.GET("/web/v1/workspaces/:workspaceID/settings", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspaceID")
+	server.GET("/web/v1/workspaces/:workspace_id/settings", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
 		if !ok {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
@@ -124,12 +124,12 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
-	server.PATCH("/web/v1/workspaces/:workspaceID/settings", func(context echo.Context) error {
+	server.PATCH("/web/v1/workspaces/:workspace_id/settings", func(context echo.Context) error {
 		var request WorkspaceSettingsRequest
 		if err := context.Bind(&request); err != nil {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		workspaceID, ok := parsePathID(context, "workspaceID")
+		workspaceID, ok := parsePathID(context, "workspace_id")
 		if !ok {
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}

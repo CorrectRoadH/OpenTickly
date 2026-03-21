@@ -38,13 +38,15 @@ func TestWave1WebRoutesRegistersProjectDetailEndpoint(t *testing.T) {
 	}
 }
 
-func TestWave1WebRoutesPathParamNamingDriftBaseline(t *testing.T) {
+func TestWave1WebRoutesUsesSnakeCasePathParamsForOpenAPIParity(t *testing.T) {
 	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), NewWave1WebHandlers())
 
-	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/organizations/:organizationID/settings")
-	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspaceID/settings")
+	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/organizations/:organization_id/settings")
+	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspace_id/settings")
 	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspace_id/permissions")
 	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/projects/:project_id/members")
+	assertRouteNotRegistered(t, server, http.MethodGet, "/web/v1/organizations/:organizationID/settings")
+	assertRouteNotRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspaceID/settings")
 }
 
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
@@ -85,4 +87,14 @@ func assertRouteRegistered(t *testing.T, server *echo.Echo, method string, path 
 	}
 
 	t.Fatalf("expected %s %s to be registered", method, path)
+}
+
+func assertRouteNotRegistered(t *testing.T, server *echo.Echo, method string, path string) {
+	t.Helper()
+
+	for _, route := range server.Routes() {
+		if route.Method == method && route.Path == path {
+			t.Fatalf("expected %s %s to not be registered", method, path)
+		}
+	}
 }
