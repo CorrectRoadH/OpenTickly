@@ -4,6 +4,7 @@
 
 - Install backend dev runtime: `go install github.com/air-verse/air@latest`
 - Create root `.env.local` from `.env.local.example` before starting local source processes
+- Required backend env: `PORT`, `DATABASE_URL`, `REDIS_URL`
 - Frontend: `vp run website#dev`
 - Backend: `air`
 - Backend hot reload config: root `.air.toml`

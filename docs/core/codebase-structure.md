@@ -73,6 +73,8 @@
 - 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
 - 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的运行时输入。
 - 后端源码启动默认必须通过 env 显式拿到真实 datasource 配置；缺少 datasource env 时必须立即启动失败，不允许回填可工作的默认数据库地址。
+- 后端连接类与监听类 env 使用标准命名：`PORT`、`DATABASE_URL`、`REDIS_URL`。不允许为默认开发/运行时再发明平行命名如 `*_DATABASE_DSN`、`*_REDIS_ADDRESS`、`*_LISTEN_ADDRESS`。
+- `PORT` 只表达监听端口，不承载“绑定哪个 host”的语义；后端运行时监听地址由实现统一绑定到 `0.0.0.0:<PORT>`。
 - 本地开发默认运行路径必须连接真实 PostgreSQL / Redis 等依赖；不允许以内存 store、placeholder runtime、fake 状态或“临时默认值”作为正常源码开发后端。
 - 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
 - `scripts/` 目录不承载日常本地开发职责；如需新增源码开发入口，优先收口到根工具链或正式 CLI。

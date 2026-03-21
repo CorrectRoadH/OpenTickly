@@ -78,6 +78,14 @@ describe("shared contracts", () => {
     }
   });
 
+  it("does not ship placeholder copy in the web contract source", () => {
+    const document = readFileSync(
+      resolve(repositoryRoot, "openapi/opentoggl-web.openapi.json"),
+      "utf8",
+    );
+    expect(document).not.toContain("placeholder");
+  });
+
   it("fails closed when the generator sees unsupported schema constructs", () => {
     const fixtureDir = mkdtempSync(join(tmpdir(), "shared-contracts-generator-"));
     const sourcePath = resolve(fixtureDir, "unsupported.openapi.json");

@@ -521,6 +521,9 @@ Query 的特征：
 - `air` 是唯一允许的后端本地源码开发启动入口，不再把 `go run ./apps/backend` 作为日常开发文档化入口。
 - 根级 `.air.toml` 是后端热重载配置的唯一真相源；不允许在 `apps/backend`、根级 `scripts/` 或其他包装层复制第二套 dev runtime 配置。
 - `.air.toml` 负责监听源码变化并重建/重启 `./apps/backend`，但不改变正式应用入口；真正的进程入口仍然是 `apps/backend/main.go`。
+- 本地开发与默认运行时边界使用标准 env 名：`PORT`、`DATABASE_URL`、`REDIS_URL`。对数据库、Redis、监听端口这类通用运行时概念，不允许继续发明项目私有平行命名。
+- `PORT` 只表达端口号；后端启动时统一监听 `0.0.0.0:<PORT>`，而不是把完整 listen address 暴露为默认 env 合同。
+- `DATABASE_URL` 与 `REDIS_URL` 属于必填运行时输入；缺失时 `bootstrap` 必须直接失败，不允许回退到默认 DSN、内存实现或伪依赖。
 - `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器运行时都不得依赖 `air` 常驻。
 - 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应运行时命令，而不是复用 `air`。
 
