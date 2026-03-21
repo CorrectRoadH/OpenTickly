@@ -2,29 +2,36 @@ package bootstrap
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 )
 
 /**
- * ConfigFromEnvironment returns the API runtime config with optional overrides
- * from environment variables and repo-root `.env` files while preserving
- * DefaultConfig fallbacks.
+ * ConfigFromEnvironment returns runtime config from environment variables and
+ * repo-root `.env` files, while requiring explicit env for network-boundary
+ * settings such as PORT.
  */
-func ConfigFromEnvironment(getEnv func(string) string) Config {
+func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	cfg := DefaultConfig()
 	if getEnv == nil {
 		getEnv = repositoryEnvironmentGetter(os.Getenv)
 	}
 
 	applyStringOverride(&cfg.ServiceName, getEnv("OPENTOGGL_SERVICE_NAME"))
-	applyStringOverride(&cfg.Server.ListenAddress, getEnv("OPENTOGGL_API_LISTEN_ADDRESS"))
-	applyStringOverride(&cfg.Database.PrimaryDSN, getEnv("OPENTOGGL_API_DATABASE_DSN"))
-	applyStringOverride(&cfg.Redis.Address, getEnv("OPENTOGGL_API_REDIS_ADDRESS"))
+	if err := applyRequiredPortOverride(&cfg.Server.ListenAddress, getEnv("PORT")); err != nil {
+		return Config{}, err
+	}
+	if err := applyRequiredStringOverride(&cfg.Database.PrimaryDSN, "DATABASE_URL", getEnv("DATABASE_URL")); err != nil {
+		return Config{}, err
+	}
+	if err := applyRequiredStringOverride(&cfg.Redis.Address, "REDIS_URL", getEnv("REDIS_URL")); err != nil {
+		return Config{}, err
+	}
 	applyStringOverride(&cfg.FileStore.Namespace, getEnv("OPENTOGGL_FILESTORE_NAMESPACE"))
 	applyStringOverride(&cfg.Jobs.QueueName, getEnv("OPENTOGGL_JOBS_QUEUE_NAME"))
 
-	return withDefaults(cfg)
+	return withDefaults(cfg), nil
 }
 
 /**
@@ -35,6 +42,33 @@ func applyStringOverride(target *string, value string) {
 		return
 	}
 	*target = value
+}
+
+/**
+ * applyRequiredStringOverride requires a non-empty env and applies it without
+ * fallback.
+ */
+func applyRequiredStringOverride(target *string, envName, value string) error {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return fmt.Errorf("missing required env %s", envName)
+	}
+	*target = value
+	return nil
+}
+
+/**
+ * applyRequiredPortOverride requires a PORT env and normalizes it into the
+ * canonical backend listen address.
+ */
+func applyRequiredPortOverride(target *string, value string) error {
+	value = strings.TrimSpace(value)
+	value = strings.TrimPrefix(value, ":")
+	if value == "" {
+		return fmt.Errorf("missing required env PORT")
+	}
+	*target = "0.0.0.0:" + value
+	return nil
 }
 
 /**

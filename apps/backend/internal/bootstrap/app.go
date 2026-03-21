@@ -15,6 +15,14 @@ type App struct {
 	Modules  []ModuleDescriptor
 }
 
+func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
+	cfg, err := ConfigFromEnvironment(getEnv)
+	if err != nil {
+		return nil, err
+	}
+	return NewApp(cfg)
+}
+
 func NewApp(cfg Config) (*App, error) {
 	cfg = withDefaults(cfg)
 	modules := defaultModules()

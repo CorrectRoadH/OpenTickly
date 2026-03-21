@@ -15,7 +15,7 @@ func DefaultConfig() Config {
 	return Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
-			ListenAddress: ":8080",
+			ListenAddress: "0.0.0.0:8080",
 		},
 		Database: DatabaseConfig{
 			PrimaryDSN: "postgres://opentoggl@localhost/opentoggl",

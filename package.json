@@ -9,7 +9,6 @@
     "test": "vp run test -r",
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
     "dev:website": "vp run website#dev",
-    "dev:backend": "go run ./apps/backend",
     "prepare": "vp config"
   },
   "devDependencies": {
