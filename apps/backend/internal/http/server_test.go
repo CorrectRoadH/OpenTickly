@@ -239,8 +239,45 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 		t.Fatalf("expected /readyz status error, got %#v", response["status"])
 	}
 
-	if !strings.Contains(logs.String(), "readiness check failed") {
+	var readinessRecord map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(logs.String()), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+
+		var record map[string]any
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			t.Fatalf("expected readiness failure logs to be valid json, got %q: %v", line, err)
+		}
+
+		if record["msg"] == "readiness check failed" {
+			readinessRecord = record
+			break
+		}
+	}
+
+	if readinessRecord == nil {
 		t.Fatalf("expected readiness failure diagnostics in logs, got %q", logs.String())
+	}
+
+	if readinessRecord["service"] != "opentoggl" {
+		t.Fatalf("expected readiness failure log service %q, got %#v", "opentoggl", readinessRecord["service"])
+	}
+
+	if readinessRecord["check"] != "postgres" {
+		t.Fatalf("expected readiness failure log check %q, got %#v", "postgres", readinessRecord["check"])
+	}
+
+	if readinessRecord["target"] != "127.0.0.1:5432" {
+		t.Fatalf("expected readiness failure log target %q, got %#v", "127.0.0.1:5432", readinessRecord["target"])
+	}
+
+	if readinessRecord["message"] != "dial tcp 127.0.0.1:5432: connect: connection refused" {
+		t.Fatalf(
+			"expected readiness failure log message %q, got %#v",
+			"dial tcp 127.0.0.1:5432: connect: connection refused",
+			readinessRecord["message"],
+		)
 	}
 }
 
