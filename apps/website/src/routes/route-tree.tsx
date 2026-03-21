@@ -21,6 +21,7 @@ import { ClientDetailPage } from "../pages/clients/ClientDetailPage.tsx";
 import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { TasksPage } from "../pages/tasks/TasksPage.tsx";
 import { TagsPage } from "../pages/tags/TagsPage.tsx";
+import { TagDetailPage } from "../pages/tags/TagDetailPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
 const homeRoute = createRoute({
@@ -117,6 +118,12 @@ const workspaceTagsRoute = createRoute({
   component: WorkspaceTagsRouteComponent,
 });
 
+const workspaceTagDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/tags/$tagId",
+  component: WorkspaceTagDetailRouteComponent,
+});
+
 const workspaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/settings",
@@ -146,6 +153,7 @@ export const routeTree = rootRoute.addChildren([
   workspacePermissionsRoute,
   workspaceTasksRoute,
   workspaceTagsRoute,
+  workspaceTagDetailRoute,
   workspaceSettingsRoute,
   organizationSettingsRoute,
 ]);
@@ -283,6 +291,18 @@ function WorkspaceTagsRouteComponent() {
   return (
     <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
       <TagsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceTagDetailRouteComponent() {
+  const params = workspaceTagDetailRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+  const tagId = Number(params.tagId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <TagDetailPage tagId={tagId} workspaceId={workspaceId} />
     </AuthenticatedAppFrame>
   );
 }

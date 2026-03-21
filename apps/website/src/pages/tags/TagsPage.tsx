@@ -38,10 +38,7 @@ export function TagsPage(): ReactElement {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tags</h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page keeps tag records visible with the project-page skeleton,
-            but the documented tag surface still needs its final list controls and detail flow.
-          </p>
+          <p className="text-sm leading-6 text-slate-600">Tag directory</p>
         </div>
         <AppButton type="button">Create tag</AppButton>
       </div>
@@ -70,9 +67,18 @@ export function TagsPage(): ReactElement {
                 <p className="text-xs text-slate-600">Tag · {statusLabel}</p>
                 <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                {statusLabel}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  aria-label={`Tag details for ${tag.name}`}
+                  className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                  href={`/workspaces/${session.currentWorkspace.id}/tags/${tag.id}`}
+                >
+                  Tag details
+                </a>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  {statusLabel}
+                </span>
+              </div>
             </li>
           );
         })}
@@ -80,10 +86,9 @@ export function TagsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          Transition state. Showing {tags.length} tag{tags.length === 1 ? "" : "s"} for workspace{" "}
-          {session.currentWorkspace.id}, with {activeCount} active. Exit when the documented tag
-          management controls are present and covered by page-flow evidence.
+          Showing {tags.length} tags in workspace {session.currentWorkspace.id}.
         </p>
+        <p className="mt-1">Active: {activeCount}</p>
       </div>
     </AppPanel>
   );

@@ -6,25 +6,12 @@ import { describe, expect, it } from "vitest";
 
 import { AppProviders } from "../../../app/AppProviders.tsx";
 import { createAppRouter } from "../../../app/create-app-router.tsx";
-import { createSessionFixture } from "../../../test/fixtures/web-data.ts";
+import { createSessionFixture, createTagsFixture } from "../../../test/fixtures/web-data.ts";
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("tags page flow", () => {
-  it("renders tags list and create action in workspace shell", async () => {
-    const tags = [
-      {
-        id: 701,
-        name: "Urgent",
-        workspace_id: 202,
-        active: true,
-      },
-      {
-        id: 702,
-        name: "Ops",
-        workspace_id: 202,
-        active: false,
-      },
-    ];
+  it("renders tag directory list with create action and detail entry links", async () => {
+    const tags = createTagsFixture().tags.slice();
     const { calls } = installMockWebApi([
       {
         path: "/web/v1/session",
@@ -61,27 +48,31 @@ describe("tags page flow", () => {
       "/workspaces/202/tags",
     );
     expect(screen.getByRole("button", { name: "Create tag" })).toBeTruthy();
-    expect(
-      screen.getByText(
-        /This page keeps tag records visible with the project-page skeleton, but the documented tag surface still needs its final list controls and detail flow/,
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Tag directory")).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
+    expect(screen.queryByText(/Exit when/i)).toBeNull();
 
     const list = screen.getByLabelText("Tags list");
     expect(within(list).getByText("Urgent")).toBeTruthy();
     expect(within(list).getByText("Ops")).toBeTruthy();
     expect(within(list).getByText(/Tag · Inactive/)).toBeTruthy();
     expect(within(list).getAllByText(/Workspace 202/)).not.toHaveLength(0);
-    expect(screen.getByText(/Showing 2 tags for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(screen.getByText("Showing 2 tags in workspace 202.")).toBeTruthy();
+    expect(screen.getByText("Active: 1")).toBeTruthy();
     expect(
-      screen.getByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-          "Exit when the documented tag management controls are present and covered by page-flow evidence.",
-        )) ??
-        false,
-      ),
-    ).toBeTruthy();
+      within(list)
+        .getByRole("link", {
+          name: "Tag details for Urgent",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/tags/701");
+    expect(
+      within(list)
+        .getByRole("link", {
+          name: "Tag details for Ops",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/tags/702");
 
     fireEvent.change(screen.getByLabelText("Tag name"), {
       target: { value: "Client-visible" },
