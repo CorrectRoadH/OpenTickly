@@ -1,14 +1,18 @@
 package httpapp
 
 import (
+	"context"
 	"encoding/json"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/web"
+
+	"github.com/labstack/echo/v4"
 )
 
 func TestServerServesEmbeddedIndexForRootAndClientRoutes(t *testing.T) {
@@ -92,24 +96,151 @@ func TestServerDoesNotFallbackReservedRoutes(t *testing.T) {
 func TestServerReturnsJSONForHealthRoutes(t *testing.T) {
 	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
 
-	for _, path := range []string{"/healthz", "/readyz"} {
-		request := httptest.NewRequest(http.MethodGet, path, nil)
-		recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	recorder := httptest.NewRecorder()
 
-		server.ServeHTTP(recorder, request)
+	server.ServeHTTP(recorder, request)
 
-		if recorder.Code != http.StatusOK {
-			t.Fatalf("expected %s to return 200, got %d", path, recorder.Code)
-		}
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected /healthz to return 200, got %d", recorder.Code)
+	}
 
-		var response map[string]any
-		if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
-			t.Fatalf("expected %s response to be valid json: %v", path, err)
-		}
+	var response map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected /healthz response to be valid json: %v", err)
+	}
 
-		if _, ok := response["service"]; !ok {
-			t.Fatalf("expected %s response to include service", path)
-		}
+	if _, ok := response["service"]; !ok {
+		t.Fatalf("expected /healthz response to include service")
+	}
+
+	if _, ok := response["modules"]; !ok {
+		t.Fatalf("expected /healthz response to include modules")
+	}
+}
+
+func TestServerReturnsReadinessPayloadForReadyz(t *testing.T) {
+	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
+	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected /readyz to return 200, got %d", recorder.Code)
+	}
+
+	var response map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected /readyz response to be valid json: %v", err)
+	}
+
+	if _, ok := response["service"]; !ok {
+		t.Fatalf("expected /readyz response to include service")
+	}
+
+	if _, ok := response["checks"]; !ok {
+		t.Fatalf("expected /readyz response to include checks")
+	}
+
+	if _, ok := response["modules"]; ok {
+		t.Fatalf("expected /readyz response to not reuse health snapshot modules payload: %#v", response)
+	}
+}
+
+func TestServerAssignsRequestIDAndLogsRequestFields(t *testing.T) {
+	var logs strings.Builder
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	t.Cleanup(func() {
+		slog.SetDefault(previousLogger)
+	})
+
+	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	requestID := recorder.Header().Get(echo.HeaderXRequestID)
+	if requestID == "" {
+		t.Fatal("expected request log middleware to assign an X-Request-Id header")
+	}
+
+	var record map[string]any
+	if err := json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &record); err != nil {
+		t.Fatalf("expected request log to emit json, got %q: %v", logs.String(), err)
+	}
+
+	if record["msg"] != "http request" {
+		t.Fatalf("expected request log message, got %#v", record["msg"])
+	}
+
+	if record["method"] != http.MethodGet {
+		t.Fatalf("expected request log method %q, got %#v", http.MethodGet, record["method"])
+	}
+
+	if record["path"] != "/healthz" {
+		t.Fatalf("expected request log path /healthz, got %#v", record["path"])
+	}
+
+	if status, ok := record["status"].(float64); !ok || int(status) != http.StatusOK {
+		t.Fatalf("expected request log status %d, got %#v", http.StatusOK, record["status"])
+	}
+
+	if record["request_id"] != requestID {
+		t.Fatalf("expected request log request_id %q, got %#v", requestID, record["request_id"])
+	}
+
+	if _, ok := record["duration"]; !ok {
+		t.Fatalf("expected request log to include duration, got %#v", record)
+	}
+}
+
+func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
+	var logs strings.Builder
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		nil,
+		ServerOptions{
+			Logger: logger,
+			Readiness: stubReadinessProbe{
+				report: web.ReadinessReport{
+					Service: "opentoggl",
+					Status:  web.StatusError,
+					Checks: []web.ReadinessCheck{
+						{
+							Name:    "postgres",
+							Status:  web.StatusError,
+							Target:  "127.0.0.1:5432",
+							Message: "dial tcp 127.0.0.1:5432: connect: connection refused",
+						},
+					},
+				},
+			},
+		},
+	)
+	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected /readyz to return 503, got %d", recorder.Code)
+	}
+
+	var response map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected /readyz response to be valid json: %v", err)
+	}
+
+	if response["status"] != web.StatusError {
+		t.Fatalf("expected /readyz status error, got %#v", response["status"])
+	}
+
+	if !strings.Contains(logs.String(), "readiness check failed") {
+		t.Fatalf("expected readiness failure diagnostics in logs, got %q", logs.String())
 	}
 }
 
@@ -136,4 +267,12 @@ func mustReadEmbeddedIndexHTML(t *testing.T) string {
 	}
 
 	return string(indexHTML)
+}
+
+type stubReadinessProbe struct {
+	report web.ReadinessReport
+}
+
+func (probe stubReadinessProbe) Check(context.Context) web.ReadinessReport {
+	return probe.report
 }

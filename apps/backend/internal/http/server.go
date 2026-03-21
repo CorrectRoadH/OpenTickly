@@ -1,7 +1,9 @@
 package httpapp
 
 import (
+	"context"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"path"
 	"strings"
@@ -9,20 +11,93 @@ import (
 	"opentoggl/backend/apps/backend/internal/web"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
-func NewServer(health web.HealthSnapshot, wave1 *Wave1WebHandlers) *echo.Echo {
-	server := echo.New()
+type ServerOptions struct {
+	Logger    *slog.Logger
+	Readiness web.ReadinessProbe
+}
 
-	healthHandler := func(context echo.Context) error {
-		return context.JSON(http.StatusOK, health)
+func NewServer(health web.HealthSnapshot, wave1 *Wave1WebHandlers) *echo.Echo {
+	return NewServerWithOptions(health, wave1, ServerOptions{})
+}
+
+func NewServerWithOptions(
+	health web.HealthSnapshot,
+	wave1 *Wave1WebHandlers,
+	options ServerOptions,
+) *echo.Echo {
+	server := echo.New()
+	logger := options.Logger
+	if logger == nil {
+		logger = slog.Default()
+	}
+	readiness := options.Readiness
+	if readiness == nil {
+		readiness = web.NewStaticReadinessProbe(health.Service)
+	}
+
+	server.Use(middleware.RequestID())
+	server.Use(newRequestLogMiddleware(logger))
+
+	healthHandler := func(c echo.Context) error {
+		return c.JSON(http.StatusOK, health)
+	}
+	readinessHandler := func(c echo.Context) error {
+		report := readiness.Check(c.Request().Context())
+		statusCode := http.StatusOK
+		if report.Status != web.StatusOK {
+			statusCode = http.StatusServiceUnavailable
+			logReadinessFailure(c.Request().Context(), logger, report)
+		}
+		return c.JSON(statusCode, report)
 	}
 	server.GET("/healthz", healthHandler)
-	server.GET("/readyz", healthHandler)
+	server.GET("/readyz", readinessHandler)
 	registerWave1WebRoutes(server, wave1)
 	registerStaticWebRoutes(server, web.StaticFiles())
 
 	return server
+}
+
+func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
+	return middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogMethod:    true,
+		LogStatus:    true,
+		LogLatency:   true,
+		LogRequestID: true,
+		HandleError:  true,
+		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			requestPath := c.Request().URL.Path
+			logger.Info(
+				"http request",
+				"request_id", values.RequestID,
+				"method", values.Method,
+				"path", requestPath,
+				"status", values.Status,
+				"duration", values.Latency.String(),
+			)
+			return nil
+		},
+	})
+}
+
+func logReadinessFailure(ctx context.Context, logger *slog.Logger, report web.ReadinessReport) {
+	for _, check := range report.Checks {
+		if check.Status == web.StatusOK {
+			continue
+		}
+
+		logger.WarnContext(
+			ctx,
+			"readiness check failed",
+			"service", report.Service,
+			"check", check.Name,
+			"target", check.Target,
+			"message", check.Message,
+		)
+	}
 }
 
 /*
