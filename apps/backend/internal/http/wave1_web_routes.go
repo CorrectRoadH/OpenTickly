@@ -23,117 +23,16 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
 	registerGeneratedWave1WebCapabilitiesQuotaRoutes(server, newGeneratedWave1WebCapabilitiesQuotaAdapter(handlers))
 	registerGeneratedWave1WebWorkspaceMembersRoutes(server, newGeneratedWave1WebWorkspaceMembersAdapter(handlers))
+	registerGeneratedWave1WebProjectsRoutes(server, newGeneratedWave1WebProjectsAdapter(handlers))
 	registerGeneratedWave1WebProjectMembersRoutes(server, newGeneratedWave1WebProjectMembersAdapter(handlers))
 
 	registerWave2PlaceholderRoutes(server, handlers)
 }
 
-// TODO(wave2-runtime): these routes are outside current Wave 1 OpenAPI scope and
-// remain as temporary runtime placeholders until Wave 2 contracts are finalized.
+// TODO(wave2-runtime): the remaining list/create routes below are outside current
+// Wave 1 OpenAPI scope and remain temporary runtime placeholders until their
+// contracts are finalized.
 func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
-	server.GET("/web/v1/projects", func(context echo.Context) error {
-		var request ListProjectsRequest
-		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
-			workspaceID, err := strconv.ParseInt(workspaceIDValue, 10, 64)
-			if err != nil {
-				return context.JSON(http.StatusBadRequest, "Bad Request")
-			}
-			request.WorkspaceID = &workspaceID
-		}
-		if status := context.QueryParam("status"); status != "" {
-			switch status {
-			case "all", "active", "archived":
-				request.Status = &status
-			default:
-				return context.JSON(http.StatusBadRequest, "Bad Request")
-			}
-		}
-		response := handlers.Tenant.ListProjects(
-			context.Request().Context(),
-			sessionID(context),
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/projects", func(context echo.Context) error {
-		var request ProjectCreateRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.CreateProject(
-			context.Request().Context(),
-			sessionID(context),
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.GET("/web/v1/projects/:project_id", func(context echo.Context) error {
-		projectID, ok := parsePathID(context, "project_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetProject(
-			context.Request().Context(),
-			sessionID(context),
-			projectID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/projects/:project_id/archive", func(context echo.Context) error {
-		projectID, ok := parsePathID(context, "project_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.ArchiveProject(
-			context.Request().Context(),
-			sessionID(context),
-			projectID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.DELETE("/web/v1/projects/:project_id/archive", func(context echo.Context) error {
-		projectID, ok := parsePathID(context, "project_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.RestoreProject(
-			context.Request().Context(),
-			sessionID(context),
-			projectID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/projects/:project_id/pin", func(context echo.Context) error {
-		projectID, ok := parsePathID(context, "project_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.PinProject(
-			context.Request().Context(),
-			sessionID(context),
-			projectID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.DELETE("/web/v1/projects/:project_id/pin", func(context echo.Context) error {
-		projectID, ok := parsePathID(context, "project_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.UnpinProject(
-			context.Request().Context(),
-			sessionID(context),
-			projectID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
 	server.GET("/web/v1/clients", func(context echo.Context) error {
 		var request ListProjectsRequest
 		if workspaceIDValue := context.QueryParam("workspace_id"); workspaceIDValue != "" {
