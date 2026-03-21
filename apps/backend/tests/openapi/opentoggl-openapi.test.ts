@@ -30,7 +30,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "/web/v1/workspaces/{workspace_id}/quota",
   ] as const;
 
-  const wave2PlaceholderWebPaths = [
+  const wave2ManagedWebPaths = [
     "/web/v1/workspaces/{workspace_id}/permissions",
     "/web/v1/workspaces/{workspace_id}/members",
     "/web/v1/workspaces/{workspace_id}/members/invitations",
@@ -46,7 +46,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "/web/v1/groups",
   ] as const;
 
-  const currentWebPaths = [...wave1WebPaths, ...wave2PlaceholderWebPaths] as const;
+  const currentWebPaths = [...wave1WebPaths, ...wave2ManagedWebPaths] as const;
 
   const wave1WebOperations = [
     "POST /web/v1/auth/login",
@@ -66,7 +66,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "GET /web/v1/workspaces/{workspace_id}/quota",
   ] as const;
 
-  const wave2PlaceholderWebOperations = [
+  const wave2ManagedWebOperations = [
     "GET /web/v1/workspaces/{workspace_id}/permissions",
     "PATCH /web/v1/workspaces/{workspace_id}/permissions",
     "GET /web/v1/workspaces/{workspace_id}/members",
@@ -91,7 +91,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "POST /web/v1/groups",
   ] as const;
 
-  const currentWebOperations = [...wave1WebOperations, ...wave2PlaceholderWebOperations] as const;
+  const currentWebOperations = [...wave1WebOperations, ...wave2ManagedWebOperations] as const;
 
   it("defines the Wave 0 custom boundary documents", () => {
     const documents = loadOpenTogglDocuments();
@@ -126,7 +126,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     );
   });
 
-  it("defines the current web shell boundary for Wave 1 plus the first Wave 2 placeholder slice", () => {
+  it("defines the current web shell boundary for Wave 1 plus the first Wave 2 runtime-managed slice", () => {
     const webDocument = loadOpenTogglDocuments()[0]?.document;
 
     expect(Object.keys(webDocument?.paths ?? {})).toEqual(currentWebPaths);
@@ -287,7 +287,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     expect(webDocument?.components?.schemas?.CurrentUserAPIToken?.required).toEqual(["api_token"]);
   });
 
-  it("defines explicit minimal schemas for the first Wave 2 placeholder permission, member, and project slice", () => {
+  it("defines explicit minimal schemas for the first Wave 2 runtime-managed permission, member, and project slice", () => {
     const webDocument = loadOpenTogglDocuments()[0]?.document;
 
     const workspacePermissionsSchema = webDocument?.components?.schemas?.WorkspacePermissions;
@@ -394,8 +394,9 @@ describe("opentoggl custom OpenAPI sources", () => {
       "fixed_fee",
       "rate",
     ]);
-    expect(webDocument?.paths?.["/web/v1/projects/{project_id}"]?.get?.responses?.["200"]).toEqual({
-      description: "Project detail placeholder slice",
+    const projectDetailResponse =
+      webDocument?.paths?.["/web/v1/projects/{project_id}"]?.get?.responses?.["200"];
+    expect(projectDetailResponse).toMatchObject({
       content: {
         "application/json": {
           schema: {
@@ -404,6 +405,8 @@ describe("opentoggl custom OpenAPI sources", () => {
         },
       },
     });
+    expect(projectDetailResponse?.description).toEqual(expect.any(String));
+    expect(projectDetailResponse?.description?.length).toBeGreaterThan(0);
 
     expect(projectMemberSchema?.$ref).toBeUndefined();
     expect(projectMemberGrantRequestSchema?.required).toEqual(["member_id"]);
@@ -769,7 +772,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     expect(errors).toEqual([]);
   });
 
-  it("accepts the minimal workspace permissions placeholder payload and rejects malformed permission updates", () => {
+  it("accepts the minimal workspace permissions contract payload and rejects malformed permission updates", () => {
     const manifest = loadGeneratedCustomOperationManifest();
     const webDocument = loadOpenTogglDocuments()[0]?.document;
     const getWorkspacePermissionsOperation = manifest.operations.find(
@@ -805,7 +808,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     );
   });
 
-  it("accepts the first Wave 2 placeholder permission, member, project, client, and tag payloads and rejects malformed request shapes", () => {
+  it("accepts the first Wave 2 runtime-managed permission, member, project, client, task, tag, and group payloads and rejects malformed request shapes", () => {
     const manifest = loadGeneratedCustomOperationManifest();
     const webDocument = loadOpenTogglDocuments()[0]?.document;
 
@@ -960,6 +963,7 @@ describe("opentoggl custom OpenAPI sources", () => {
           name: "Sample Project",
           workspace_id: 11,
           active: true,
+          pinned: false,
         },
       ],
     };

@@ -402,7 +402,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/workspaces/{workspace_id}/permissions": {
       get: {
-        summary: "Read workspace permission toggles for the current placeholder web shell slice",
+        summary: "Read workspace permission toggles",
         operationId: "get-workspace-permissions",
         parameters: [
           {
@@ -428,7 +428,7 @@ export const sharedContractsDocument = {
         },
       },
       patch: {
-        summary: "Update workspace permission toggles for the current placeholder web shell slice",
+        summary: "Update workspace permission toggles",
         operationId: "update-workspace-permissions",
         parameters: [
           {
@@ -466,7 +466,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/workspaces/{workspace_id}/members": {
       get: {
-        summary: "List workspace members for the current placeholder web shell slice",
+        summary: "List workspace members",
         operationId: "list-workspace-members",
         parameters: [
           {
@@ -480,7 +480,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Workspace members placeholder slice",
+            description: "Workspace member list",
             content: {
               "application/json": {
                 schema: {
@@ -494,7 +494,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/workspaces/{workspace_id}/members/invitations": {
       post: {
-        summary: "Invite a workspace member through the current placeholder web shell slice",
+        summary: "Invite a workspace member",
         operationId: "invite-workspace-member",
         parameters: [
           {
@@ -518,7 +518,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Workspace member invitation accepted by the placeholder slice",
+            description: "Workspace member invitation accepted",
             content: {
               "application/json": {
                 schema: {
@@ -532,7 +532,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects": {
       get: {
-        summary: "List projects for the current placeholder web shell slice",
+        summary: "List projects",
         operationId: "list-projects",
         parameters: [
           {
@@ -555,7 +555,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Project list placeholder slice",
+            description: "Project list",
             content: {
               "application/json": {
                 schema: {
@@ -567,7 +567,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Create a project through the current placeholder web shell slice",
+        summary: "Create a project",
         operationId: "create-project",
         requestBody: {
           required: true,
@@ -581,7 +581,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Created project placeholder slice",
+            description: "Created project",
             content: {
               "application/json": {
                 schema: {
@@ -595,7 +595,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects/{project_id}": {
       get: {
-        summary: "Get project detail for the current placeholder web shell slice",
+        summary: "Retrieve project detail",
         operationId: "get-project",
         parameters: [
           {
@@ -609,7 +609,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Project detail placeholder slice",
+            description: "Project detail",
             content: {
               "application/json": {
                 schema: {
@@ -623,7 +623,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects/{project_id}/archive": {
       post: {
-        summary: "Archive a project through the current placeholder web shell slice",
+        summary: "Archive a project",
         operationId: "archive-project",
         parameters: [
           {
@@ -637,7 +637,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Archived project placeholder slice",
+            description: "Archived project",
             content: {
               "application/json": {
                 schema: {
@@ -649,7 +649,7 @@ export const sharedContractsDocument = {
         },
       },
       delete: {
-        summary: "Restore an archived project through the current placeholder web shell slice",
+        summary: "Restore an archived project",
         operationId: "restore-project",
         parameters: [
           {
@@ -663,7 +663,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Restored project placeholder slice",
+            description: "Restored project",
             content: {
               "application/json": {
                 schema: {
@@ -677,7 +677,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects/{project_id}/pin": {
       post: {
-        summary: "Pin a project through the current placeholder web shell slice",
+        summary: "Pin a project",
         operationId: "pin-project",
         parameters: [
           {
@@ -691,7 +691,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Pinned project placeholder slice",
+            description: "Pinned project",
             content: {
               "application/json": {
                 schema: {
@@ -703,7 +703,7 @@ export const sharedContractsDocument = {
         },
       },
       delete: {
-        summary: "Unpin a project through the current placeholder web shell slice",
+        summary: "Unpin a project",
         operationId: "unpin-project",
         parameters: [
           {
@@ -717,7 +717,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Unpinned project placeholder slice",
+            description: "Unpinned project",
             content: {
               "application/json": {
                 schema: {
@@ -731,7 +731,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects/{project_id}/members": {
       get: {
-        summary: "List project members for the current placeholder web shell slice",
+        summary: "List project members",
         operationId: "list-project-members",
         parameters: [
           {
@@ -745,7 +745,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Project members placeholder slice",
+            description: "Project members list",
             content: {
               "application/json": {
                 schema: {
@@ -757,7 +757,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Grant a project member through the current placeholder web shell slice",
+        summary: "Grant a project member",
         operationId: "grant-project-member",
         parameters: [
           {
@@ -781,7 +781,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Granted project member placeholder slice",
+            description: "Granted project member",
             content: {
               "application/json": {
                 schema: {
@@ -795,7 +795,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/projects/{project_id}/members/{member_id}": {
       delete: {
-        summary: "Revoke a project member through the current placeholder web shell slice",
+        summary: "Revoke a project member",
         operationId: "revoke-project-member",
         parameters: [
           {
@@ -817,14 +817,14 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "204": {
-            description: "Revoked project member placeholder slice",
+            description: "Revoked project member",
           },
         },
       },
     },
     "/web/v1/clients": {
       get: {
-        summary: "List clients for the current placeholder web shell slice",
+        summary: "List clients",
         operationId: "list-clients",
         parameters: [
           {
@@ -838,7 +838,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Client list placeholder slice",
+            description: "Client list",
             content: {
               "application/json": {
                 schema: {
@@ -850,7 +850,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Create a client through the current placeholder web shell slice",
+        summary: "Create a client",
         operationId: "create-client",
         requestBody: {
           required: true,
@@ -864,7 +864,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Created client placeholder slice",
+            description: "Created client",
             content: {
               "application/json": {
                 schema: {
@@ -878,7 +878,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/tasks": {
       get: {
-        summary: "List tasks for the current placeholder web shell slice",
+        summary: "List tasks",
         operationId: "list-tasks",
         parameters: [
           {
@@ -892,7 +892,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Task list placeholder slice",
+            description: "Task list",
             content: {
               "application/json": {
                 schema: {
@@ -904,7 +904,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Create a task through the current placeholder web shell slice",
+        summary: "Create a task",
         operationId: "create-task",
         requestBody: {
           required: true,
@@ -918,7 +918,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Created task placeholder slice",
+            description: "Created task",
             content: {
               "application/json": {
                 schema: {
@@ -932,7 +932,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/tags": {
       get: {
-        summary: "List tags for the current placeholder web shell slice",
+        summary: "List tags",
         operationId: "list-tags",
         parameters: [
           {
@@ -946,7 +946,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Tag list placeholder slice",
+            description: "Tag list",
             content: {
               "application/json": {
                 schema: {
@@ -958,7 +958,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Create a tag through the current placeholder web shell slice",
+        summary: "Create a tag",
         operationId: "create-tag",
         requestBody: {
           required: true,
@@ -972,7 +972,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Created tag placeholder slice",
+            description: "Created tag",
             content: {
               "application/json": {
                 schema: {
@@ -986,7 +986,7 @@ export const sharedContractsDocument = {
     },
     "/web/v1/groups": {
       get: {
-        summary: "List groups for the current placeholder web shell slice",
+        summary: "List groups",
         operationId: "list-groups",
         parameters: [
           {
@@ -1000,7 +1000,7 @@ export const sharedContractsDocument = {
         ],
         responses: {
           "200": {
-            description: "Group list placeholder slice",
+            description: "Group list",
             content: {
               "application/json": {
                 schema: {
@@ -1012,7 +1012,7 @@ export const sharedContractsDocument = {
         },
       },
       post: {
-        summary: "Create a group through the current placeholder web shell slice",
+        summary: "Create a group",
         operationId: "create-group",
         requestBody: {
           required: true,
@@ -1026,7 +1026,7 @@ export const sharedContractsDocument = {
         },
         responses: {
           "201": {
-            description: "Created group placeholder slice",
+            description: "Created group",
             content: {
               "application/json": {
                 schema: {

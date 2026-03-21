@@ -41,6 +41,8 @@
 - [x] 插队 P0：One-Way 结构治理与规范入口收口
   - [x] 执行 TODO：删除 `pnpm -> node tools/self-hosted/cli.mjs -> docker compose` 的 self-hosted 包装层，self-hosted 启动与校验统一直接收口为 `docker compose` 与显式 `curl` 命令，不再保留 `self-hosted:*` root scripts。Refs: `AGENTS.md`、`docs/self-hosting/docker-compose.md`、`package.json`
   - [x] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
+  - [ ] 执行 TODO：按 `docs/core/backend-architecture.md` 的 generation-first 规则收口当前手写 Web transport 漂移；重点处理 `apps/backend/internal/http/wave1_web_routes.go` 中手写 `server.GET/POST/...`、`context.Bind(...)` 与 placeholder route 注册，迁移为以 `openapi/opentoggl-web.openapi.json` 为源的 generated route/DTO/handler interface/validator 边界。该项完成前，不允许继续在手写 route table 上叠加新 endpoint。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`、`openapi/opentoggl-web.openapi.json`
+  - [ ] 执行 TODO：按 `docs/core/frontend-architecture.md` 与对应 `docs/product/*.md` 的 Figma/fallback 对齐规则收口当前正式页面族偏移；重点处理 `apps/website/src/pages/projects/ProjectsPage.tsx`、`apps/website/src/pages/clients/ClientsPage.tsx`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/pages/tags/TagsPage.tsx`、`apps/website/src/pages/groups/GroupsPage.tsx`、`apps/website/src/pages/permission-config/PermissionConfigPage.tsx` 中仍然存在的 `Transition state` 叙事与占位式页面骨架。该项完成前，这些页面不得宣称正式完成，且不得继续以过渡态文案替代 Figma/fallback 对齐证据。Refs: `docs/core/frontend-architecture.md`、`docs/product/tracking.md`、`docs/product/membership-and-access.md`、`docs/core/testing-strategy.md`
   - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
   - [x] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。已完成首批对象（2026-03-21）：`apps/backend/internal/membership/domain/workspace_member.go` 删除 `WorkspaceMemberStateActive` 内部 alias；`apps/backend/internal/catalog/application/service.go` 删除 `AddProjectMember`、`CanViewProject` duplicate helper，统一收口到 `GrantProjectMember` 与 `CanAccessProject`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
@@ -57,6 +59,9 @@
       - debt：测试仍以 placeholder runtime 为基线，固化假运行时
       - exit condition：真实模块 integration、generated contract、real-runtime HTTP / e2e 证据覆盖同一条能力链
       - delete condition：对应 placeholder runtime 路径已删除，且同能力已有正式 runtime 测试替代
+  - [x] 执行 TODO：清理 `opentoggl-web` 正式合同与生成产物中的 placeholder / transitional 语义；以正式产品语义重写 `openapi/opentoggl-web.openapi.json` 对应 summary/description，并重新生成 `packages/shared-contracts/src/generated/web-contracts.generated.ts`，禁止 placeholder 文案继续通过正式 contract 外溢。Refs: `AGENTS.md`、`openapi/opentoggl-web.openapi.json`、`packages/shared-contracts/package.json`
+  - [x] 执行 TODO：同步收口把 placeholder 固化进测试基线的断言与命名，重点清理 `apps/backend/tests/openapi/opentoggl-openapi.test.ts` 中对 “Wave 2 placeholder slice” 的制度化表述，改为正式 contract / runtime 接管目标的断言。Refs: `AGENTS.md`、`docs/core/testing-strategy.md`、`openapi/opentoggl-web.openapi.json`
+  - [ ] 执行 TODO：评估 `packages/utils` 是否仍有项目内职责；若无明确消费者与边界，删除整个 workspace 包；若保留，需补齐真实职责说明、规范命名与最小实际用途，禁止继续以 starter 模板包形态漂移。Refs: `AGENTS.md`、`packages/utils/package.json`、`pnpm-workspace.yaml`
   - [x] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路
@@ -163,6 +168,11 @@
   - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
   - [ ] 在进入 Wave 2 前固定“后端可工作”的最低标准：`go run ./apps/backend`、数据库迁移、默认配置注入、首次管理员初始化、真实依赖 readiness、最小 smoke test 必须形成一条可重复执行的链路；单独的进程启动或静态 `200 OK` 不得再视为完成。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`
+    - 当前缺口（2026-03-21）：
+      - `apps/backend/internal/bootstrap/app.go` 仍通过 `newWave1WebHandlers()` 把 fake runtime 当作默认可用后端装配的一部分，尚未形成“真实依赖 + 正式迁移/初始化”的可重复工作链
+      - `apps/backend/internal/bootstrap/config_env.go` 目前只负责 env 读取与默认配置回填，未覆盖数据库迁移、首次管理员初始化或默认实例配置注入
+      - `apps/backend/internal/bootstrap/bootstrap_test.go` 当前主要证明可启动/health/模块 inventory，尚未证明“迁移 -> 初始化 -> readiness -> smoke”链路
+      - 下一具体工作项：先补一条最小的 bootstrap/runtime 验证链，至少把“迁移/初始化入口是否存在、readiness 是否依赖真实后端配置、smoke 命令是否指向真实 runtime”固定为可执行证据，再决定是否需要正式 CLI 或测试 harness
   - [x] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
@@ -202,7 +212,7 @@
   - [x] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
   - [ ] 执行 TODO：补齐数据库迁移、首次管理员初始化、默认配置注入的正式流程；该流程必须可被新环境重复执行，不允许依赖手工补数据库或临时 shell 步骤。Refs: `docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：把 `/readyz` 从静态健康快照收口为真实运行时检查，至少覆盖数据库可达、Redis 可达、必要配置已加载；`/healthz` 可保持轻量，但不得再与 readiness 共享同一完成口径。Refs: `docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：固定基础日志与最小 smoke test，至少覆盖容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`，并要求 smoke test 显式区分“进程已启动”和“依赖已就绪”。Refs: `docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：固定基础日志与最小 smoke test，至少覆盖容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`，并要求 smoke test 显式区分“进程已启动”和“依赖已就绪”。该项必须补齐默认 startup log、基础 request log 与 readiness/依赖失败诊断日志，禁止继续接受“HTTP 没有任何后台日志输出”的运行时。Refs: `docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：补齐单镜像发布链路验证，至少覆盖镜像构建、容器启动、数据库迁移/初始化完成、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
   - [ ] 执行 TODO：补齐升级/回滚步骤、持久化卷与必要环境变量文档，避免“能起本地源码进程”被误当成 self-hosted 可交付。Refs: `docs/self-hosting/docker-compose.md`、`README.md`
   - [ ] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
