@@ -39,10 +39,17 @@ func NewApp(cfg Config) (*App, error) {
 		moduleNames = append(moduleNames, module.Name)
 	}
 	health := web.NewHealthSnapshot(cfg.ServiceName, moduleNames)
+	readiness := web.NewRuntimeReadinessProbe(web.RuntimeReadinessConfig{
+		Service:     cfg.ServiceName,
+		DatabaseURL: platform.Database.PrimaryDSN(),
+		RedisURL:    platform.Redis.Address(),
+	})
 
 	return &App{
 		Config:   cfg,
-		HTTP:     httpapp.NewServer(health, routeRegistrar),
+		HTTP: httpapp.NewServerWithOptions(health, routeRegistrar, httpapp.ServerOptions{
+			Readiness: readiness,
+		}),
 		Platform: platform,
 		Modules:  modules,
 	}, nil
