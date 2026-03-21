@@ -47,6 +47,21 @@ When reviewing or implementing code:
 - Structural cleanup, technical debt reduction, and runtime/developer-entrypoint simplification take priority over adding more product surface on top of a drifting foundation.
 - If structure and feature work compete, fix the structure first and only then continue expanding functionality.
 
+## Code Principles
+
+Code in this repository must be one-way.
+
+- One responsibility: a module, function, script, or file should have one clear job. If one unit is doing multiple unrelated jobs, split it.
+- One canonical path: for any repeated developer action or runtime behavior, there must be exactly one documented default way to do it.
+- One canonical name: inside the codebase, one concept should have one preferred name. Do not keep multiple internal names for the same thing.
+- One canonical implementation: do not keep two active implementations, routes, adapters, helpers, or script entrypoints that do the same job.
+- Best-practice only: when multiple implementation patterns are possible, keep the strongest one that matches the architecture and remove weaker transitional variants.
+- Compat only at boundaries: backward compatibility is allowed only at explicit external boundaries such as public APIs, imported contracts, or migration seams. Compatibility aliases must not leak into domain, application, or normal internal developer workflows.
+- No internal aliases: do not add “legacy”, “compat”, “old”, “transition”, or duplicate wrapper names for internal codepaths when a canonical path already exists.
+- No parallel entrypoints: if two scripts or commands start, build, test, generate, or verify the same thing, choose one canonical entrypoint and delete the duplicate.
+- No placeholder normalization: placeholder, transitional, fake-runtime, or temporary paths must be tracked as debt with an exit condition; they must not become the default implementation.
+- Insert structural cleanup: if a task reveals duplicate paths, duplicate names, duplicate implementations, or non-one-way dependencies, structural cleanup becomes the immediate priority before more feature expansion.
+
 ## Reuse Before Creating
 
 Before writing new code, analyze existing utilities, components, hooks, helpers and tests:

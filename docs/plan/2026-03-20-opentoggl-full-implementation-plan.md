@@ -35,6 +35,15 @@
 > - 结构收口、技术债治理、启动/交付链路修正的优先级高于继续增加功能面。
 > - 如果基础结构仍在漂移，不允许以“先做功能、后面再整理”为理由跳过结构治理。
 > - 占位页、placeholder runtime、手写 transport 壳层与 Figma 对齐缺口的清理，属于 Wave 2 前高优先级阻塞项，不得作为“实现中自然会顺手解决”的次要事项下放。
+> - 新发现的 duplicate path / duplicate naming / duplicate implementation / internal compat alias 问题视为插队级结构治理项；发现后立即提到当前执行队首，在收口前暂停继续扩张相关功能面。
+> - `go run ./apps/backend` 只能证明 Go 进程可启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
+
+- [ ] 插队 P0：One-Way 结构治理与规范入口收口
+  - [ ] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
+  - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
+  - [ ] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。当前已知首批对象：`apps/backend/internal/membership/domain/workspace_member.go`、`apps/backend/internal/catalog/application/service.go`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
+  - [ ] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
+  - [ ] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路
   - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
@@ -136,9 +145,10 @@
     - 约束：用例显式等待真实 `/web/v1/auth/register`、`/web/v1/auth/login`、`/web/v1/session` 响应，不依赖 API stub
   - [x] 该 gate 未完成前，不允许继续扩张 Wave 2 的正式页面族与 runtime endpoint slice
 
-- [x] Wave 2 前结构与交付基线收口 gate
+- [ ] Wave 2 前结构、后端可用性与交付基线收口 gate
   - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
+  - [ ] 在进入 Wave 2 前固定“后端可工作”的最低标准：`go run ./apps/backend`、数据库迁移、默认配置注入、首次管理员初始化、真实依赖 readiness、最小 smoke test 必须形成一条可重复执行的链路；单独的进程启动或静态 `200 OK` 不得再视为完成。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`
   - [x] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
@@ -176,7 +186,12 @@
   - [x] 执行 TODO：处理当前真实偏移中的 `docker/api.Dockerfile` 命名与职责问题，决定是迁移为 `docker/backend.Dockerfile` 还是收口为单一发布 Dockerfile，避免目录/镜像语义继续停留在旧 `api` 命名。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：决定是否保留 `dev:api` 作为兼容别名；若保留需明确过渡期限，若不保留则同步删除相关旧别名文档与命令。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`
   - [x] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
+  - [ ] 执行 TODO：补齐数据库迁移、首次管理员初始化、默认配置注入的正式流程；该流程必须可被新环境重复执行，不允许依赖手工补数据库或临时 shell 步骤。Refs: `docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`、`docs/core/backend-architecture.md`
+  - [ ] 执行 TODO：把 `/readyz` 从静态健康快照收口为真实运行时检查，至少覆盖数据库可达、Redis 可达、必要配置已加载；`/healthz` 可保持轻量，但不得再与 readiness 共享同一完成口径。Refs: `docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
+  - [ ] 执行 TODO：固定基础日志与最小 smoke test，至少覆盖容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`，并要求 smoke test 显式区分“进程已启动”和“依赖已就绪”。Refs: `docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`
+  - [ ] 执行 TODO：补齐单镜像发布链路验证，至少覆盖镜像构建、容器启动、数据库迁移/初始化完成、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
+  - [ ] 执行 TODO：补齐升级/回滚步骤、持久化卷与必要环境变量文档，避免“能起本地源码进程”被误当成 self-hosted 可交付。Refs: `docs/self-hosting/docker-compose.md`、`README.md`
+  - [ ] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
 - [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice；前提：先通过“Wave 2 前结构与交付基线收口 gate”）
   - 当前缺口（2026-03-21，经核查）：`project` 正式产品面对齐仍未满足 Wave 2 退出标准。当前 Web 仅能验证 `/workspaces/$workspaceId/projects` 列表页，且实现与 page-flow 仍显式标注为 `Transition state`，缺少已写明的 filters、archive/pin controls、task/detail entry points；`openapi/opentoggl-web.openapi.json` 当前仅覆盖 `/web/v1/projects` 与 `/web/v1/projects/{project_id}/members*`，未见 `pin/unpin`、`templates`、`stats/periods` 等所需合同。下一具体工作项应先收口 `project page` 为正式页面，并同步补齐对应 Web contract、runtime 与测试证据。
 - [ ] Wave 3：Tracking 核心事务面
@@ -196,10 +211,7 @@
   - [ ] 为每个正式页面族建立 `PRD -> Figma 节点 -> 页面实现 -> page flow/e2e` 对照清单
 - [ ] 自部署与发布交付链路（其中结构与运行时收口部分必须在 Wave 2 前完成）
   - [x] 明确 self-hosted 目标交付形态：单 Go 应用镜像，构建时内嵌前端 `dist`，由同一运行时同时提供 Web UI 与 API
-  - [ ] 数据库迁移、首次管理员初始化、默认配置注入有正式流程
-  - [ ] 健康检查、readiness、基础日志与最小 smoke test 固定
-  - [ ] 升级/回滚步骤、持久化卷和必要环境变量文档化
-  - [ ] 执行 TODO：补齐单镜像发布链路验证，至少覆盖镜像构建、容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`
+  - [ ] Wave 2 前阻塞项已前移到“Wave 2 前结构、后端可用性与交付基线收口 gate”，不得再作为后续波次中的宽松尾项处理
   - [ ] Wave 10 产出正式 release artifact：镜像、compose 文件、样例 env、发布说明
 
 ## 1. 计划依据

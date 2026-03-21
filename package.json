@@ -11,7 +11,6 @@
     "self-hosted:verify": "node tools/self-hosted/cli.mjs verify",
     "self-hosted:smoke": "node tools/self-hosted/cli.mjs smoke",
     "self-hosted:up": "node tools/self-hosted/cli.mjs up",
-    "dev": "vp run website#dev",
     "dev:website": "vp run website#dev",
     "dev:backend": "go run ./apps/backend",
     "prepare": "vp config"

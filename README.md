@@ -4,7 +4,6 @@
 
 - Frontend: `vp run website#dev`
 - Backend: `go run ./apps/backend`
-- Backend alias: `npm run dev:backend`
 
 # Self Hosting
 
