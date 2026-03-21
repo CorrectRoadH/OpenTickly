@@ -333,6 +333,19 @@ func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandler
 		return context.JSON(response.StatusCode, response.Body)
 	})
 
+	server.GET("/web/v1/projects/:project_id", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.GetProject(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
 	server.POST("/web/v1/projects/:project_id/archive", func(context echo.Context) error {
 		projectID, ok := parsePathID(context, "project_id")
 		if !ok {

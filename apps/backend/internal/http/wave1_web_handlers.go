@@ -1233,6 +1233,25 @@ func (h *Wave1TenantHandlers) ListProjects(ctx context.Context, sessionID string
 	}
 }
 
+// GetProject returns a minimal project payload by id.
+func (h *Wave1TenantHandlers) GetProject(ctx context.Context, sessionID string, projectID int64) Wave1Response {
+	_ = ctx
+	_ = sessionID
+
+	h.state.mu.RLock()
+	defer h.state.mu.RUnlock()
+
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+
+	return Wave1Response{
+		StatusCode: 200,
+		Body:       projectSummaryBody(project),
+	}
+}
+
 func (h *Wave1TenantHandlers) ArchiveProject(
 	ctx context.Context,
 	sessionID string,
