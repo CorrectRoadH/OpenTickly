@@ -21,6 +21,7 @@ func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
 		return nil, err
 	}
 	if err := verifyStartupDependencies(cfg); err != nil {
+		logStartupDependencyFailure(cfg, err)
 		return nil, err
 	}
 	return NewApp(cfg)
@@ -32,6 +33,7 @@ func NewApp(cfg Config) (*App, error) {
 	platform := newPlatformServices(cfg)
 	routeRegistrar, err := newHTTPRouteRegistrar()
 	if err != nil {
+		logStartupAssemblyFailure(cfg, err)
 		return nil, err
 	}
 	moduleNames := make([]string, 0, len(modules))
@@ -45,14 +47,16 @@ func NewApp(cfg Config) (*App, error) {
 		RedisURL:    platform.Redis.Address(),
 	})
 
-	return &App{
-		Config:   cfg,
+	app := &App{
+		Config: cfg,
 		HTTP: httpapp.NewServerWithOptions(health, routeRegistrar, httpapp.ServerOptions{
 			Readiness: readiness,
 		}),
 		Platform: platform,
 		Modules:  modules,
-	}, nil
+	}
+	logStartupSuccess(cfg, moduleNames)
+	return app, nil
 }
 
 func (app *App) Start() error {

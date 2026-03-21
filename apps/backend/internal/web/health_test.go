@@ -59,9 +59,34 @@ func TestRuntimeReadinessProbeReportsDependencyFailures(t *testing.T) {
 	if report.Checks[1].Status != StatusError {
 		t.Fatalf("expected postgres readiness failure, got %#v", report.Checks[1])
 	}
+	if report.Checks[1].Target != closedAddress {
+		t.Fatalf("expected postgres readiness failure target %q, got %#v", closedAddress, report.Checks[1].Target)
+	}
 
 	if report.Checks[2].Status != StatusError {
 		t.Fatalf("expected redis readiness failure, got %#v", report.Checks[2])
+	}
+	if report.Checks[2].Message == "" {
+		t.Fatalf("expected redis readiness failure message, got %#v", report.Checks[2])
+	}
+}
+
+func TestRuntimeReadinessProbeReportsMissingRequiredConfiguration(t *testing.T) {
+	probe := NewRuntimeReadinessProbe(RuntimeReadinessConfig{
+		DatabaseURL: "postgres://opentoggl@127.0.0.1:5432/opentoggl",
+		RedisURL:    "redis://127.0.0.1:6379/0",
+	})
+
+	report := probe.Check(context.Background())
+
+	if report.Status != StatusError {
+		t.Fatalf("expected readiness status error, got %#v", report)
+	}
+	if report.Checks[0].Name != "configuration" {
+		t.Fatalf("expected configuration check first, got %#v", report.Checks[0])
+	}
+	if report.Checks[0].Message != "service name is missing" {
+		t.Fatalf("expected missing service name message, got %#v", report.Checks[0].Message)
 	}
 }
 

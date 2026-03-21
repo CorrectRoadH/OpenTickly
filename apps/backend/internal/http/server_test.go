@@ -240,6 +240,7 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 	}
 
 	var readinessRecord map[string]any
+	var requestRecord map[string]any
 	for _, line := range strings.Split(strings.TrimSpace(logs.String()), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
@@ -252,7 +253,9 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 
 		if record["msg"] == "readiness check failed" {
 			readinessRecord = record
-			break
+		}
+		if record["msg"] == "http request" && record["path"] == "/readyz" {
+			requestRecord = record
 		}
 	}
 
@@ -278,6 +281,26 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 			"dial tcp 127.0.0.1:5432: connect: connection refused",
 			readinessRecord["message"],
 		)
+	}
+
+	if requestRecord == nil {
+		t.Fatalf("expected request log for failing /readyz request, got %q", logs.String())
+	}
+
+	if requestRecord["method"] != http.MethodGet {
+		t.Fatalf("expected /readyz request log method %q, got %#v", http.MethodGet, requestRecord["method"])
+	}
+
+	if status, ok := requestRecord["status"].(float64); !ok || int(status) != http.StatusServiceUnavailable {
+		t.Fatalf(
+			"expected /readyz request log status %d, got %#v",
+			http.StatusServiceUnavailable,
+			requestRecord["status"],
+		)
+	}
+
+	if requestRecord["request_id"] == "" {
+		t.Fatalf("expected /readyz request log request_id, got %#v", requestRecord["request_id"])
 	}
 }
 
