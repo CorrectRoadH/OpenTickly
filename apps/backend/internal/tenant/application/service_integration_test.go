@@ -285,7 +285,7 @@ func TestServiceComposesWorkspaceEntryFromTenantSettingsAndBillingTruth(t *testi
 	}
 	account, err := billingdomain.NewCommercialAccount(
 		int64(result.OrganizationID),
-		"cust_wave1",
+		"cust_web",
 		mustSubscription(t, billingdomain.PlanStarter, billingdomain.SubscriptionStateActive),
 		quota,
 	)

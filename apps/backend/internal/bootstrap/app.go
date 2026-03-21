@@ -64,12 +64,12 @@ func (app *App) Start() error {
 }
 
 func newHTTPRouteRegistrar() (httpapp.RouteRegistrar, error) {
-	wave1Routes, err := newWave1WebRoutes()
+	webRoutes, err := newWebRoutes()
 	if err != nil {
 		return nil, err
 	}
 
 	return httpapp.ComposeRouteRegistrars(
-		wave1Routes,
+		webRoutes,
 	), nil
 }
