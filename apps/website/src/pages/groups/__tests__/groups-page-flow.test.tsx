@@ -83,21 +83,27 @@ describe("groups page flow", () => {
     expect(screen.getByRole("link", { name: "Groups" }).getAttribute("href")).toBe(
       "/workspaces/202/groups",
     );
+    expect(screen.getByText("Workspace group directory")).toBeTruthy();
     expect(
-      screen.getByText(/This page keeps workspace groups visible, but the documented group management surface still needs its dedicated information architecture and membership controls/),
+      screen.getByText(
+        /Review workspace groups and create new ones for the active workspace. Group membership controls remain blocked until the dedicated groups management surface is documented and implemented\./,
+      ),
     ).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
 
     const initialList = screen.getByLabelText("Groups list");
     expect(within(initialList).getByText("Marketing pod")).toBeTruthy();
     expect(within(initialList).getByText("Contractors")).toBeTruthy();
     expect(within(initialList).getByText(/Group · Inactive/)).toBeTruthy();
     expect(within(initialList).getAllByText(/Workspace 202/)).not.toHaveLength(0);
-    expect(screen.getByText(/Showing 2 groups for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(
+      screen.getByText(/Showing 2 groups for workspace 202, with 1 active and 1 inactive\./),
+    ).toBeTruthy();
     expect(
       screen.getByText((_, element) =>
         (element?.tagName === "P" &&
           element.textContent?.includes(
-          "Exit when the documented group management flow and membership controls are in place and covered by page-flow evidence.",
+            "Blocked: member assignment, member removal, and dedicated group management workflows are not available on this page yet.",
         )) ??
         false,
       ),
@@ -118,11 +124,13 @@ describe("groups page flow", () => {
     expect(within(switchedList).getByText("Studio leads")).toBeTruthy();
     expect(within(switchedList).getByText("Seasonal support")).toBeTruthy();
     expect(within(switchedList).getAllByText(/Workspace 303/)).not.toHaveLength(0);
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
+    expect(screen.getByText(/Showing 2 groups for workspace 303, with 1 active and 1 inactive\./)).toBeTruthy();
     expect(
       screen.getByText((_, element) =>
         (element?.tagName === "P" &&
           element.textContent?.includes(
-            "Exit when the documented group management flow and membership controls are in place and covered by page-flow evidence.",
+            "Blocked: member assignment, member removal, and dedicated group management workflows are not available on this page yet.",
           )) ??
         false,
       ),

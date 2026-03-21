@@ -21,6 +21,7 @@ export function GroupsPage(): ReactElement {
 
   const groups = groupsQuery.data?.groups ?? [];
   const activeCount = groups.filter((group) => group.active).length;
+  const inactiveCount = groups.length - activeCount;
 
   async function handleCreateGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -38,13 +39,18 @@ export function GroupsPage(): ReactElement {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Groups</h1>
+          <p className="text-sm font-medium uppercase tracking-[0.18em] text-emerald-700">
+            Workspace group directory
+          </p>
           <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page keeps workspace groups visible, but the documented group
-            management surface still needs its dedicated information architecture and membership
-            controls.
+            Review workspace groups and create new ones for the active workspace. Group
+            membership controls remain blocked until the dedicated groups management surface is
+            documented and implemented.
           </p>
         </div>
-        <AppButton type="button">Create group</AppButton>
+        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">
+          Membership controls blocked
+        </span>
       </div>
 
       <form className="mt-6 flex flex-wrap items-end gap-3" onSubmit={handleCreateGroup}>
@@ -80,11 +86,13 @@ export function GroupsPage(): ReactElement {
       </ul>
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-        <p>
-          Transition state. Showing {groups.length} group{groups.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when the
-          documented group management flow and membership controls are in place and covered by
-          page-flow evidence.
+        <p className="font-medium text-slate-900">
+          Showing {groups.length} group{groups.length === 1 ? "" : "s"} for workspace{" "}
+          {session.currentWorkspace.id}, with {activeCount} active and {inactiveCount} inactive.
+        </p>
+        <p className="mt-1">
+          Blocked: member assignment, member removal, and dedicated group management workflows are
+          not available on this page yet.
         </p>
       </div>
     </AppPanel>
