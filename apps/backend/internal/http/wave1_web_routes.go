@@ -21,35 +21,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 	registerGeneratedWave1WebOrganizationSettingsRoutes(server, newGeneratedWave1WebOrganizationSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspaceSettingsRoutes(server, newGeneratedWave1WebWorkspaceSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
-
-	server.GET("/web/v1/workspaces/:workspace_id/capabilities", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetWorkspaceCapabilities(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.GET("/web/v1/workspaces/:workspace_id/quota", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetWorkspaceQuota(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-		)
-		if response.StatusCode == http.StatusOK {
-			setQuotaWindowHeaders(context, response.Body)
-		}
-		return context.JSON(response.StatusCode, response.Body)
-	})
+	registerGeneratedWave1WebCapabilitiesQuotaRoutes(server, newGeneratedWave1WebCapabilitiesQuotaAdapter(handlers))
 
 	registerWave2PlaceholderRoutes(server, handlers)
 }
