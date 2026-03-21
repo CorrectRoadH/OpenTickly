@@ -17,39 +17,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 	}
 
 	registerGeneratedWave1WebAuthSessionRoutes(server, newGeneratedWave1WebAuthSessionAdapter(handlers))
-
-	server.GET("/web/v1/profile", func(context echo.Context) error {
-		response := handlers.GetProfile(context.Request().Context(), sessionID(context))
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.PATCH("/web/v1/profile", func(context echo.Context) error {
-		var request ProfileRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.UpdateProfile(context.Request().Context(), sessionID(context), request)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/profile/api-token/reset", func(context echo.Context) error {
-		response := handlers.ResetAPIToken(context.Request().Context(), sessionID(context))
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.GET("/web/v1/preferences", func(context echo.Context) error {
-		response := handlers.GetPreferences(context.Request().Context(), sessionID(context))
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.PATCH("/web/v1/preferences", func(context echo.Context) error {
-		var request PreferencesRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.UpdatePreferences(context.Request().Context(), sessionID(context), request)
-		return context.JSON(response.StatusCode, response.Body)
-	})
+	registerGeneratedWave1WebProfilePreferencesRoutes(server, newGeneratedWave1WebProfilePreferencesAdapter(handlers))
 
 	server.GET("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
 		organizationID, ok := parsePathID(context, "organization_id")

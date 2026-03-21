@@ -76,6 +76,29 @@ func TestWave1WebAuthSessionRoutesRejectMissingRequiredFieldsFromOpenAPI(t *test
 	}
 }
 
+func TestWave1WebProfileRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+	sessionCookie := mustRegisterWave1Session(t, server)
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/web/v1/profile",
+		strings.NewReader(`{"email":"updated@example.com"}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cookie", sessionCookie)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected generated profile boundary to reject missing required fields with 400, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
 	t.Helper()
 
