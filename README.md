@@ -8,8 +8,9 @@
 - Frontend: `vp run website#dev`
 - Backend: `air`
 - Backend hot reload config: root `.air.toml`
-- `.env.local.example` is only a template; the local backend must fail to start if `.env.local` or required datasource env is missing
-- Local backend development is expected to connect to the real PostgreSQL and Redis instances you started separately; in-memory fallback is not a valid default runtime
+- `.env.local.example` is only a template; the canonical source-based backend startup path requires a real root `.env.local`
+- `air` must fail immediately if `.env.local`, `PORT`, `DATABASE_URL`, or `REDIS_URL` is missing
+- `air` must also fail immediately if PostgreSQL or Redis is unreachable; local backend development is expected to connect to the real dependencies you started separately
 
 # Self Hosting
 

@@ -20,6 +20,9 @@ func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := verifyStartupDependencies(cfg); err != nil {
+		return nil, err
+	}
 	return NewApp(cfg)
 }
 

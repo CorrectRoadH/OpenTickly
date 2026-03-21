@@ -15,7 +15,11 @@ import (
 func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	cfg := DefaultConfig()
 	if getEnv == nil {
-		getEnv = repositoryEnvironmentGetter(os.Getenv)
+		var err error
+		getEnv, err = repositoryEnvironmentGetter(os.Getenv)
+		if err != nil {
+			return Config{}, err
+		}
 	}
 
 	applyStringOverride(&cfg.ServiceName, getEnv("OPENTOGGL_SERVICE_NAME"))
@@ -76,36 +80,49 @@ func applyRequiredPortOverride(target *string, value string) error {
  * environment first, then falls back to repo-root `.env` files for
  * source-based local development.
  */
-func repositoryEnvironmentGetter(getEnv func(string) string) func(string) string {
-	fileValues := loadRepositoryEnvFiles()
+func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) string, error) {
+	fileValues, err := loadRepositoryEnvFiles()
+	if err != nil {
+		return nil, err
+	}
 
 	return func(key string) string {
 		if value := getEnv(key); value != "" {
 			return value
 		}
 		return fileValues[key]
-	}
+	}, nil
 }
 
 /**
  * loadRepositoryEnvFiles loads `.env` followed by `.env.local` from the current
- * working directory so root-run local development can share one env surface.
+ * working directory so root-run local development can share one env surface
+ * while still requiring the canonical repo-root `.env.local`.
  */
-func loadRepositoryEnvFiles() map[string]string {
+func loadRepositoryEnvFiles() (map[string]string, error) {
 	values := map[string]string{}
-	for _, filePath := range []string{".env", ".env.local"} {
-		mergeEnvFile(values, filePath)
+	if err := mergeEnvFile(values, ".env", false); err != nil {
+		return nil, err
 	}
-	return values
+	if err := mergeEnvFile(values, ".env.local", true); err != nil {
+		return nil, err
+	}
+	return values, nil
 }
 
 /**
  * mergeEnvFile parses a simple dotenv file and merges it into `target`.
  */
-func mergeEnvFile(target map[string]string, filePath string) {
+func mergeEnvFile(target map[string]string, filePath string, required bool) error {
 	file, err := os.Open(filePath)
 	if err != nil {
-		return
+		if !required && os.IsNotExist(err) {
+			return nil
+		}
+		if required && os.IsNotExist(err) {
+			return fmt.Errorf("missing required repo-root %s", filePath)
+		}
+		return fmt.Errorf("open %s: %w", filePath, err)
 	}
 	defer file.Close()
 
@@ -131,4 +148,8 @@ func mergeEnvFile(target map[string]string, filePath string) {
 		value = strings.Trim(value, `"'`)
 		target[key] = value
 	}
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("scan %s: %w", filePath, err)
+	}
+	return nil
 }

@@ -14,15 +14,6 @@ type JobsConfig = platformconfig.JobsConfig
 func DefaultConfig() Config {
 	return Config{
 		ServiceName: "opentoggl-api",
-		Server: ServerConfig{
-			ListenAddress: "0.0.0.0:8080",
-		},
-		Database: DatabaseConfig{
-			PrimaryDSN: "postgres://opentoggl@localhost/opentoggl",
-		},
-		Redis: RedisConfig{
-			Address: "redis://127.0.0.1:6379/0",
-		},
 		FileStore: FileStoreConfig{
 			Namespace: "opentoggl",
 		},
@@ -36,15 +27,6 @@ func withDefaults(cfg Config) Config {
 	defaults := DefaultConfig()
 	if cfg.ServiceName == "" {
 		cfg.ServiceName = defaults.ServiceName
-	}
-	if cfg.Server.ListenAddress == "" {
-		cfg.Server.ListenAddress = defaults.Server.ListenAddress
-	}
-	if cfg.Database.PrimaryDSN == "" {
-		cfg.Database.PrimaryDSN = defaults.Database.PrimaryDSN
-	}
-	if cfg.Redis.Address == "" {
-		cfg.Redis.Address = defaults.Redis.Address
 	}
 	if cfg.FileStore.Namespace == "" {
 		cfg.FileStore.Namespace = defaults.FileStore.Namespace
