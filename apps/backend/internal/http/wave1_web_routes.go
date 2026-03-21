@@ -18,6 +18,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 
 	registerGeneratedWave1WebAuthSessionRoutes(server, newGeneratedWave1WebAuthSessionAdapter(handlers))
 	registerGeneratedWave1WebProfilePreferencesRoutes(server, newGeneratedWave1WebProfilePreferencesAdapter(handlers))
+	registerGeneratedWave1WebWorkspaceSettingsRoutes(server, newGeneratedWave1WebWorkspaceSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
 
 	server.GET("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
@@ -46,37 +47,6 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 			context.Request().Context(),
 			sessionID(context),
 			organizationID,
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.GET("/web/v1/workspaces/:workspace_id/settings", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetWorkspaceSettings(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.PATCH("/web/v1/workspaces/:workspace_id/settings", func(context echo.Context) error {
-		var request WorkspaceSettingsRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.UpdateWorkspaceSettings(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
 			request,
 		)
 		return context.JSON(response.StatusCode, response.Body)

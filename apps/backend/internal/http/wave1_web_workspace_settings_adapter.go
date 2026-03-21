@@ -1,0 +1,54 @@
+package httpapp
+
+import "context"
+
+type generatedWave1WebWorkspaceSettingsAdapter struct {
+	handlers *Wave1WebHandlers
+}
+
+func newGeneratedWave1WebWorkspaceSettingsAdapter(
+	handlers *Wave1WebHandlers,
+) GeneratedWave1WebWorkspaceSettingsHandler {
+	return &generatedWave1WebWorkspaceSettingsAdapter{handlers: handlers}
+}
+
+func (adapter *generatedWave1WebWorkspaceSettingsAdapter) GetWorkspaceSettings(
+	ctx context.Context,
+	session string,
+	workspaceID int64,
+) Wave1Response {
+	return adapter.handlers.Tenant.GetWorkspaceSettings(ctx, session, workspaceID)
+}
+
+func (adapter *generatedWave1WebWorkspaceSettingsAdapter) UpdateWorkspaceSettings(
+	ctx context.Context,
+	session string,
+	workspaceID int64,
+	request UpdateWorkspaceSettingsEnvelopeRequestBody,
+) Wave1Response {
+	workspaceRequest := WorkspaceSettingsRequest{}
+	if request.Workspace != nil {
+		workspaceRequest.Workspace = &workspaceSettingsSnapshot{
+			Name:                        request.Workspace.Name,
+			DefaultCurrency:             request.Workspace.DefaultCurrency,
+			DefaultHourlyRate:           request.Workspace.DefaultHourlyRate,
+			Rounding:                    request.Workspace.Rounding,
+			RoundingMinutes:             request.Workspace.RoundingMinutes,
+			ReportsCollapse:             request.Workspace.ReportsCollapse,
+			OnlyAdminsMayCreateProjects: request.Workspace.OnlyAdminsMayCreateProjects,
+			OnlyAdminsMayCreateTags:     request.Workspace.OnlyAdminsMayCreateTags,
+			OnlyAdminsSeeTeamDashboard:  request.Workspace.OnlyAdminsSeeTeamDashboard,
+			ProjectsBillableByDefault:   request.Workspace.ProjectsBillableByDefault,
+			ProjectsPrivateByDefault:    request.Workspace.ProjectsPrivateByDefault,
+			ProjectsEnforceBillable:     request.Workspace.ProjectsEnforceBillable,
+			LimitPublicProjectData:      request.Workspace.LimitPublicProjectData,
+		}
+	}
+	if request.Preferences != nil {
+		workspaceRequest.Preferences = &workspacePreferencesSnapshot{
+			HideStartEndTimes: request.Preferences.HideStartEndTimes,
+			ReportLockedAt:    request.Preferences.ReportLockedAt,
+		}
+	}
+	return adapter.handlers.Tenant.UpdateWorkspaceSettings(ctx, session, workspaceID, workspaceRequest)
+}
