@@ -4,7 +4,7 @@
 
 - Frontend: `vp run website#dev`
 - Backend: `go run ./apps/backend`
-- Compatibility alias: `npm run dev:api` currently maps to `go run ./apps/backend` and exists only as a temporary transition alias; prefer `npm run dev:backend`.
+- Backend alias: `npm run dev:backend`
 
 # Self Hosting
 

@@ -255,6 +255,7 @@ export function createProjectSummaryFixture(
     name: "Website Revamp",
     workspace_id: 202,
     active: true,
+    pinned: false,
     ...overrides,
   };
 }
@@ -269,6 +270,7 @@ export function createProjectsFixture(
         id: 1002,
         name: "Community Launch",
         active: false,
+        pinned: true,
       }),
     ],
     ...overrides,

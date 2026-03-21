@@ -304,6 +304,14 @@ func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandler
 			}
 			request.WorkspaceID = &workspaceID
 		}
+		if status := context.QueryParam("status"); status != "" {
+			switch status {
+			case "all", "active", "archived":
+				request.Status = &status
+			default:
+				return context.JSON(http.StatusBadRequest, "Bad Request")
+			}
+		}
 		response := handlers.Tenant.ListProjects(
 			context.Request().Context(),
 			sessionID(context),
@@ -321,6 +329,58 @@ func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandler
 			context.Request().Context(),
 			sessionID(context),
 			request,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/projects/:project_id/archive", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.ArchiveProject(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.DELETE("/web/v1/projects/:project_id/archive", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.RestoreProject(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/projects/:project_id/pin", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.PinProject(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
+		)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.DELETE("/web/v1/projects/:project_id/pin", func(context echo.Context) error {
+		projectID, ok := parsePathID(context, "project_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handlers.Tenant.UnpinProject(
+			context.Request().Context(),
+			sessionID(context),
+			projectID,
 		)
 		return context.JSON(response.StatusCode, response.Body)
 	})
@@ -528,5 +588,6 @@ func noContentOrJSON(context echo.Context, statusCode int, body any) error {
 }
 
 type ListProjectsRequest struct {
-	WorkspaceID *int64 `json:"workspace_id"`
+	WorkspaceID *int64  `json:"workspace_id"`
+	Status      *string `json:"status"`
 }

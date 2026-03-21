@@ -145,6 +145,7 @@ type projectRecord struct {
 	WorkspaceID int64
 	Name        string
 	Active      bool
+	Pinned      bool
 }
 
 type projectMemberRecord struct {
@@ -659,6 +660,35 @@ func (state *wave1State) projectByIDLocked(projectID int64) (projectRecord, bool
 	return projectRecord{}, false
 }
 
+func (state *wave1State) mutateProjectByIDLocked(
+	projectID int64,
+	mutate func(project *projectRecord),
+) (projectRecord, bool) {
+	for workspaceID, projects := range state.workspaceProjects {
+		for index := range projects {
+			if projects[index].ID != projectID {
+				continue
+			}
+
+			mutate(&projects[index])
+			state.workspaceProjects[workspaceID][index] = projects[index]
+			return projects[index], true
+		}
+	}
+
+	return projectRecord{}, false
+}
+
+func projectSummaryBody(project projectRecord) map[string]any {
+	return map[string]any{
+		"id":           project.ID,
+		"name":         project.Name,
+		"workspace_id": project.WorkspaceID,
+		"active":       project.Active,
+		"pinned":       project.Pinned,
+	}
+}
+
 func (state *wave1State) workspaceMemberByIDLocked(
 	workspaceID int64,
 	memberID int64,
@@ -1149,6 +1179,7 @@ func (h *Wave1TenantHandlers) CreateProject(ctx context.Context, sessionID strin
 		WorkspaceID: request.WorkspaceID,
 		Name:        strings.TrimSpace(request.Name),
 		Active:      true,
+		Pinned:      false,
 	}
 	h.state.nextProjectID++
 	h.state.workspaceProjects[request.WorkspaceID] = append(
@@ -1159,12 +1190,7 @@ func (h *Wave1TenantHandlers) CreateProject(ctx context.Context, sessionID strin
 
 	return Wave1Response{
 		StatusCode: 201,
-		Body: map[string]any{
-			"id":           project.ID,
-			"name":         project.Name,
-			"workspace_id": project.WorkspaceID,
-			"active":       project.Active,
-		},
+		Body:       projectSummaryBody(project),
 	}
 }
 
@@ -1183,12 +1209,20 @@ func (h *Wave1TenantHandlers) ListProjects(ctx context.Context, sessionID string
 
 	projects := make([]map[string]any, 0, len(h.state.workspaceProjects[workspaceID]))
 	for _, project := range h.state.workspaceProjects[workspaceID] {
-		projects = append(projects, map[string]any{
-			"id":           project.ID,
-			"name":         project.Name,
-			"workspace_id": project.WorkspaceID,
-			"active":       project.Active,
-		})
+		if request.Status != nil {
+			switch *request.Status {
+			case "active":
+				if !project.Active {
+					continue
+				}
+			case "archived":
+				if project.Active {
+					continue
+				}
+			}
+		}
+
+		projects = append(projects, projectSummaryBody(project))
 	}
 
 	return Wave1Response{
@@ -1197,6 +1231,154 @@ func (h *Wave1TenantHandlers) ListProjects(ctx context.Context, sessionID string
 			"projects": projects,
 		},
 	}
+}
+
+func (h *Wave1TenantHandlers) ArchiveProject(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+) Wave1Response {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	project, ok = h.state.mutateProjectByIDLocked(projectID, func(project *projectRecord) {
+		project.Active = false
+	})
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+
+	return Wave1Response{StatusCode: 200, Body: projectSummaryBody(project)}
+}
+
+func (h *Wave1TenantHandlers) RestoreProject(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+) Wave1Response {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	project, ok = h.state.mutateProjectByIDLocked(projectID, func(project *projectRecord) {
+		project.Active = true
+	})
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+
+	return Wave1Response{StatusCode: 200, Body: projectSummaryBody(project)}
+}
+
+func (h *Wave1TenantHandlers) PinProject(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+) Wave1Response {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	project, ok = h.state.mutateProjectByIDLocked(projectID, func(project *projectRecord) {
+		project.Pinned = true
+	})
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+
+	return Wave1Response{StatusCode: 200, Body: projectSummaryBody(project)}
+}
+
+func (h *Wave1TenantHandlers) UnpinProject(
+	ctx context.Context,
+	sessionID string,
+	projectID int64,
+) Wave1Response {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		return Wave1Response{StatusCode: 401, Body: "Unauthorized"}
+	}
+
+	project, ok := h.state.projectByIDLocked(projectID)
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != project.WorkspaceID {
+		return Wave1Response{StatusCode: 403, Body: "User does not have access to this resource."}
+	}
+
+	project, ok = h.state.mutateProjectByIDLocked(projectID, func(project *projectRecord) {
+		project.Pinned = false
+	})
+	if !ok {
+		return Wave1Response{StatusCode: 404, Body: "Project not found"}
+	}
+
+	return Wave1Response{StatusCode: 200, Body: projectSummaryBody(project)}
 }
 
 // ListClients returns a simple clients envelope based on the requested workspace.

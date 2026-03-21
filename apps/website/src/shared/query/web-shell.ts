@@ -8,6 +8,7 @@ import type {
   ProjectCreateRequestDto,
   ProjectListEnvelopeDto,
   ProjectMembersEnvelopeDto,
+  ProjectSummaryDto,
   RegisterRequestDto,
   UpdateCurrentUserProfileRequestDto,
   UpdateOrganizationSettingsRequestDto,
@@ -31,6 +32,8 @@ const workspaceSettingsQueryKey = (workspaceId: number) =>
   ["workspace-settings", workspaceId] as const;
 const workspacePermissionsQueryKey = (workspaceId: number) =>
   ["workspace-permissions", workspaceId] as const;
+const projectsQueryKey = (workspaceId: number, status: ProjectListStatusFilter) =>
+  ["projects", workspaceId, status] as const;
 
 export type WorkspacePermissionsDto = Pick<
   WebWorkspaceSettingsDto,
@@ -81,6 +84,8 @@ type TaskCreateRequest = {
 };
 
 type ResetCurrentUserApiTokenResponseDto = Pick<WebCurrentUserProfileDto, "api_token">;
+
+export type ProjectListStatusFilter = "active" | "all" | "archived";
 
 export function useSessionBootstrapQuery() {
   return useQuery({
@@ -280,11 +285,13 @@ export function useInviteWorkspaceMemberMutation(workspaceId: number) {
   });
 }
 
-export function useProjectsQuery(workspaceId: number) {
+export function useProjectsQuery(workspaceId: number, status: ProjectListStatusFilter = "all") {
   return useQuery({
     queryFn: () =>
-      webRequest<ProjectListEnvelopeDto>(`/web/v1/projects?workspace_id=${workspaceId}`),
-    queryKey: ["projects", workspaceId],
+      webRequest<ProjectListEnvelopeDto>(
+        `/web/v1/projects?workspace_id=${workspaceId}&status=${status}`,
+      ),
+    queryKey: projectsQueryKey(workspaceId, status),
   });
 }
 
@@ -296,6 +303,70 @@ export function useCreateProjectMutation(workspaceId: number) {
       webRequest(`/web/v1/projects`, {
         body: request,
         method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useArchiveProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) =>
+      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/archive`, {
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useRestoreProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) =>
+      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/archive`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function usePinProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) =>
+      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/pin`, {
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useUnpinProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) =>
+      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/pin`, {
+        method: "DELETE",
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

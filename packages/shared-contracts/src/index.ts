@@ -35,6 +35,7 @@ export type {
   OrganizationSettingsEnvelope,
   OrganizationSettingsUpdate,
   ProjectCreateRequest,
+  ProjectDetail,
   ProjectListEnvelope,
   ProjectMember,
   ProjectMembersEnvelope,

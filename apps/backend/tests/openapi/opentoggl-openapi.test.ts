@@ -35,6 +35,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "/web/v1/workspaces/{workspace_id}/members",
     "/web/v1/workspaces/{workspace_id}/members/invitations",
     "/web/v1/projects",
+    "/web/v1/projects/{project_id}",
     "/web/v1/projects/{project_id}/archive",
     "/web/v1/projects/{project_id}/pin",
     "/web/v1/projects/{project_id}/members",
@@ -72,6 +73,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     "POST /web/v1/workspaces/{workspace_id}/members/invitations",
     "GET /web/v1/projects",
     "POST /web/v1/projects",
+    "GET /web/v1/projects/{project_id}",
     "POST /web/v1/projects/{project_id}/archive",
     "DELETE /web/v1/projects/{project_id}/archive",
     "POST /web/v1/projects/{project_id}/pin",
@@ -160,6 +162,9 @@ describe("opentoggl custom OpenAPI sources", () => {
     ).toBe("invite-workspace-member");
     expect(webDocument?.paths?.["/web/v1/projects"]?.get?.operationId).toBe("list-projects");
     expect(webDocument?.paths?.["/web/v1/projects"]?.post?.operationId).toBe("create-project");
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}"]?.get?.operationId).toBe(
+      "get-project",
+    );
     expect(webDocument?.paths?.["/web/v1/projects/{project_id}/archive"]?.post?.operationId).toBe(
       "archive-project",
     );
@@ -296,6 +301,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     const projectSummarySchema = webDocument?.components?.schemas?.ProjectSummary;
     const projectListEnvelopeSchema = webDocument?.components?.schemas?.ProjectListEnvelope;
     const projectCreateRequestSchema = webDocument?.components?.schemas?.ProjectCreateRequest;
+    const projectDetailSchema = webDocument?.components?.schemas?.ProjectDetail;
     const projectMemberGrantRequestSchema =
       webDocument?.components?.schemas?.ProjectMemberGrantRequest;
     const projectMemberSchema = webDocument?.components?.schemas?.ProjectMember;
@@ -370,6 +376,34 @@ describe("opentoggl custom OpenAPI sources", () => {
       },
     });
     expect(projectCreateRequestSchema?.required).toEqual(["workspace_id", "name"]);
+    expect(projectDetailSchema?.$ref).toBeUndefined();
+    expect(projectDetailSchema?.required).toEqual([
+      "id",
+      "workspace_id",
+      "client_id",
+      "name",
+      "active",
+      "pinned",
+      "billable",
+      "private",
+      "template",
+      "color",
+      "currency",
+      "estimated_seconds",
+      "actual_seconds",
+      "fixed_fee",
+      "rate",
+    ]);
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}"]?.get?.responses?.["200"]).toEqual({
+      description: "Project detail placeholder slice",
+      content: {
+        "application/json": {
+          schema: {
+            $ref: "#/components/schemas/ProjectDetail",
+          },
+        },
+      },
+    });
 
     expect(projectMemberSchema?.$ref).toBeUndefined();
     expect(projectMemberGrantRequestSchema?.required).toEqual(["member_id"]);
@@ -811,6 +845,12 @@ describe("opentoggl custom OpenAPI sources", () => {
         entry.method === "post" &&
         entry.path === "/web/v1/projects",
     );
+    const getProjectOperation = manifest.operations.find(
+      (entry) =>
+        entry.source === "opentoggl-web.openapi.json" &&
+        entry.method === "get" &&
+        entry.path === "/web/v1/projects/{project_id}",
+    );
     const projectMembersOperation = manifest.operations.find(
       (entry) =>
         entry.source === "opentoggl-web.openapi.json" &&
@@ -887,6 +927,7 @@ describe("opentoggl custom OpenAPI sources", () => {
     });
     expect(listProjectsOperation).toBeDefined();
     expect(createProjectOperation).toBeDefined();
+    expect(getProjectOperation).toBeDefined();
     expect(projectMembersOperation).toBeDefined();
     expect(grantProjectMemberOperation).toBeDefined();
     expect(revokeProjectMemberOperation).toBeDefined();
@@ -931,6 +972,24 @@ describe("opentoggl custom OpenAPI sources", () => {
       workspace_id: 11,
       name: "Launch Website",
       active: true,
+      pinned: false,
+    };
+    const getProjectResponse = {
+      id: 1001,
+      workspace_id: 11,
+      client_id: 501,
+      name: "Sample Project",
+      active: true,
+      pinned: false,
+      billable: true,
+      private: false,
+      template: false,
+      color: "#2C7A7B",
+      currency: "USD",
+      estimated_seconds: 14400,
+      actual_seconds: 7200,
+      fixed_fee: 0,
+      rate: 125,
     };
     const projectMembersResponse = {
       members: [
@@ -1061,6 +1120,12 @@ describe("opentoggl custom OpenAPI sources", () => {
     );
     expect(createProjectResponseErrors).toEqual([]);
 
+    const getProjectResponseErrors = validateGeneratedSchemaValue(
+      getProjectResponse,
+      getProjectOperation?.responses["200"]?.bodySchema ?? undefined,
+    );
+    expect(getProjectResponseErrors).toEqual([]);
+
     const projectMemberErrors = validateGeneratedSchemaValue(
       projectMembersResponse,
       projectMembersOperation?.responses["200"]?.bodySchema ?? undefined,
@@ -1166,6 +1231,29 @@ describe("opentoggl custom OpenAPI sources", () => {
       webDocument?.components?.schemas?.ProjectCreateRequest,
     );
     expect(malformedProjectCreateErrors).toContain("$.name is required");
+
+    const malformedProjectDetailResponse = {
+      id: 1001,
+      workspace_id: 11,
+      client_id: 501,
+      name: "Sample Project",
+      active: true,
+      pinned: false,
+      billable: "yes",
+      private: false,
+      template: false,
+      color: "#2C7A7B",
+      currency: "USD",
+      estimated_seconds: 14400,
+      actual_seconds: 7200,
+      fixed_fee: 0,
+      rate: 125,
+    };
+    const malformedProjectDetailErrors = validateGeneratedSchemaValue(
+      malformedProjectDetailResponse,
+      getProjectOperation?.responses["200"]?.bodySchema ?? undefined,
+    );
+    expect(malformedProjectDetailErrors).toContain("$.billable should be a boolean");
 
     const malformedClientCreateRequest = {
       workspace_id: 11,

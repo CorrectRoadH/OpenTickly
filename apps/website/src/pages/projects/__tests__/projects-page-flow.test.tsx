@@ -176,7 +176,9 @@ describe("projects page flow", () => {
     expect(within(websiteRevampProject).getByText("Admin")).toBeTruthy();
     expect(within(websiteRevampProject).getByText("Member 17")).toBeTruthy();
     expect(within(websiteRevampProject).getByText("Member")).toBeTruthy();
-    expect(within(websiteRevampProject).getByRole("button", { name: "Pin project Website Revamp" })).toBeTruthy();
+    expect(
+      within(websiteRevampProject).getByRole("button", { name: "Pin project Website Revamp" }),
+    ).toBeTruthy();
     expect(
       within(websiteRevampProject).getByRole("button", { name: "Archive project Website Revamp" }),
     ).toBeTruthy();
@@ -185,10 +187,14 @@ describe("projects page flow", () => {
     expect(within(communityLaunchProject).getByText("No members assigned")).toBeTruthy();
     expect(within(communityLaunchProject).getByText("Pinned")).toBeTruthy();
     expect(
-      within(communityLaunchProject).getByRole("button", { name: "Restore project Community Launch" }),
+      within(communityLaunchProject).getByRole("button", {
+        name: "Restore project Community Launch",
+      }),
     ).toBeTruthy();
     expect(
-      within(communityLaunchProject).getByRole("button", { name: "Unpin project Community Launch" }),
+      within(communityLaunchProject).getByRole("button", {
+        name: "Unpin project Community Launch",
+      }),
     ).toBeTruthy();
 
     fireEvent.click(
@@ -197,7 +203,9 @@ describe("projects page flow", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Pinned project Website Revamp")).toBeTruthy();
-      expect(within(screen.getByLabelText("Project Website Revamp")).getByText("Pinned")).toBeTruthy();
+      expect(
+        within(screen.getByLabelText("Project Website Revamp")).getByText("Pinned"),
+      ).toBeTruthy();
     });
 
     fireEvent.click(
@@ -208,7 +216,9 @@ describe("projects page flow", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Archived project Website Revamp")).toBeTruthy();
-      expect(within(screen.getByLabelText("Project Website Revamp")).getByText(/Project · Archived/)).toBeTruthy();
+      expect(
+        within(screen.getByLabelText("Project Website Revamp")).getByText(/Project · Archived/),
+      ).toBeTruthy();
     });
 
     fireEvent.change(screen.getByLabelText("Project status filter"), {
@@ -220,6 +230,10 @@ describe("projects page flow", () => {
       expect(within(archivedList).getByText("Website Revamp")).toBeTruthy();
       expect(within(archivedList).getByText("Community Launch")).toBeTruthy();
       expect(within(archivedList).queryByText("Launch Website")).toBeNull();
+    });
+
+    fireEvent.change(screen.getByLabelText("Project status filter"), {
+      target: { value: "all" },
     });
 
     fireEvent.change(screen.getByLabelText("Project name"), {
@@ -241,9 +255,13 @@ describe("projects page flow", () => {
           (call.body as { name?: string; workspace_id?: number }).workspace_id === 202,
       ),
     ).toBe(true);
-    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/pin")).toBe(true);
     expect(
-      calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/archive"),
+      calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/pin"),
+    ).toBe(true);
+    expect(
+      calls.some(
+        (call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/archive",
+      ),
     ).toBe(true);
   });
 });

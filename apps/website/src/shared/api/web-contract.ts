@@ -7,6 +7,7 @@ export type {
   OrganizationSettings as WebOrganizationSettingsDto,
   OrganizationSettingsEnvelope as OrganizationSettingsEnvelopeDto,
   ProjectCreateRequest as ProjectCreateRequestDto,
+  ProjectDetail as ProjectDetailDto,
   ProjectListEnvelope as ProjectListEnvelopeDto,
   ProjectMember as ProjectMemberDto,
   ProjectMembersEnvelope as ProjectMembersEnvelopeDto,

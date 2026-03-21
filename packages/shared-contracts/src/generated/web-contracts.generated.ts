@@ -143,6 +143,24 @@ export const sharedContractsDocument = {
         },
       },
     },
+    "/web/v1/profile/api-token/reset": {
+      post: {
+        summary: "Rotate the current user API token for the web shell",
+        operationId: "reset-current-user-api-token",
+        responses: {
+          "200": {
+            description: "Updated current user API token",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CurrentUserAPIToken",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/web/v1/preferences": {
       get: {
         summary: "Read the current user preferences for the web shell",
@@ -525,6 +543,15 @@ export const sharedContractsDocument = {
               type: "integer",
             },
           },
+          {
+            name: "status",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["all", "active", "archived"],
+            },
+          },
         ],
         responses: {
           "200": {
@@ -555,6 +582,142 @@ export const sharedContractsDocument = {
         responses: {
           "201": {
             description: "Created project placeholder slice",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProjectSummary",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/web/v1/projects/{project_id}": {
+      get: {
+        summary: "Get project detail for the current placeholder web shell slice",
+        operationId: "get-project",
+        parameters: [
+          {
+            name: "project_id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Project detail placeholder slice",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProjectDetail",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/web/v1/projects/{project_id}/archive": {
+      post: {
+        summary: "Archive a project through the current placeholder web shell slice",
+        operationId: "archive-project",
+        parameters: [
+          {
+            name: "project_id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Archived project placeholder slice",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProjectSummary",
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Restore an archived project through the current placeholder web shell slice",
+        operationId: "restore-project",
+        parameters: [
+          {
+            name: "project_id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Restored project placeholder slice",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProjectSummary",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/web/v1/projects/{project_id}/pin": {
+      post: {
+        summary: "Pin a project through the current placeholder web shell slice",
+        operationId: "pin-project",
+        parameters: [
+          {
+            name: "project_id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Pinned project placeholder slice",
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/ProjectSummary",
+                },
+              },
+            },
+          },
+        },
+      },
+      delete: {
+        summary: "Unpin a project through the current placeholder web shell slice",
+        operationId: "unpin-project",
+        parameters: [
+          {
+            name: "project_id",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Unpinned project placeholder slice",
             content: {
               "application/json": {
                 schema: {
@@ -933,6 +1096,15 @@ export const sharedContractsDocument = {
           "2fa_enabled",
         ],
       },
+      CurrentUserAPIToken: {
+        type: "object",
+        properties: {
+          api_token: {
+            type: "string",
+          },
+        },
+        required: ["api_token"],
+      },
       LoginRequest: {
         type: "object",
         properties: {
@@ -1030,6 +1202,76 @@ export const sharedContractsDocument = {
         },
         required: ["workspace_id", "name"],
       },
+      ProjectDetail: {
+        type: "object",
+        properties: {
+          id: {
+            type: "integer",
+          },
+          workspace_id: {
+            type: "integer",
+          },
+          client_id: {
+            type: "integer",
+            nullable: true,
+          },
+          name: {
+            type: "string",
+          },
+          active: {
+            type: "boolean",
+          },
+          pinned: {
+            type: "boolean",
+          },
+          billable: {
+            type: "boolean",
+          },
+          private: {
+            type: "boolean",
+          },
+          template: {
+            type: "boolean",
+          },
+          color: {
+            type: "string",
+          },
+          currency: {
+            type: "string",
+            nullable: true,
+          },
+          estimated_seconds: {
+            type: "integer",
+          },
+          actual_seconds: {
+            type: "integer",
+          },
+          fixed_fee: {
+            type: "number",
+          },
+          rate: {
+            type: "number",
+            nullable: true,
+          },
+        },
+        required: [
+          "id",
+          "workspace_id",
+          "client_id",
+          "name",
+          "active",
+          "pinned",
+          "billable",
+          "private",
+          "template",
+          "color",
+          "currency",
+          "estimated_seconds",
+          "actual_seconds",
+          "fixed_fee",
+          "rate",
+        ],
+      },
       ProjectMemberGrantRequest: {
         type: "object",
         properties: {
@@ -1085,8 +1327,11 @@ export const sharedContractsDocument = {
           active: {
             type: "boolean",
           },
+          pinned: {
+            type: "boolean",
+          },
         },
-        required: ["id", "name", "workspace_id", "active"],
+        required: ["id", "name", "workspace_id", "active", "pinned"],
       },
       RegisterRequest: {
         type: "object",
@@ -1773,6 +2018,7 @@ export const sharedContractsGeneratedArtifact = {
   schemaNames: [
     "CapabilitySnapshot",
     "CurrentUserProfile",
+    "CurrentUserAPIToken",
     "LoginRequest",
     "OrganizationSettings",
     "OrganizationSettingsEnvelope",
@@ -1780,6 +2026,7 @@ export const sharedContractsGeneratedArtifact = {
     "QuotaWindow",
     "ProjectListEnvelope",
     "ProjectCreateRequest",
+    "ProjectDetail",
     "ProjectMemberGrantRequest",
     "ProjectMember",
     "ProjectMembersEnvelope",
@@ -1820,6 +2067,7 @@ export const sharedContractsGeneratedArtifact = {
 export interface SharedContractTypeMap {
   CapabilitySnapshot: CapabilitySnapshot;
   CurrentUserProfile: CurrentUserProfile;
+  CurrentUserAPIToken: CurrentUserAPIToken;
   LoginRequest: LoginRequest;
   OrganizationSettings: OrganizationSettings;
   OrganizationSettingsEnvelope: OrganizationSettingsEnvelope;
@@ -1827,6 +2075,7 @@ export interface SharedContractTypeMap {
   QuotaWindow: QuotaWindow;
   ProjectListEnvelope: ProjectListEnvelope;
   ProjectCreateRequest: ProjectCreateRequest;
+  ProjectDetail: ProjectDetail;
   ProjectMemberGrantRequest: ProjectMemberGrantRequest;
   ProjectMember: ProjectMember;
   ProjectMembersEnvelope: ProjectMembersEnvelope;
@@ -1882,6 +2131,7 @@ export type CurrentUserProfile = {
   has_password: boolean;
   "2fa_enabled": boolean;
 };
+export type CurrentUserAPIToken = { api_token: string };
 export type LoginRequest = { email: string; password: string };
 export type OrganizationSettings = {
   id: number;
@@ -1900,10 +2150,33 @@ export type OrganizationSettingsUpdate = { organization: UpdateOrganizationSetti
 export type QuotaWindow = SharedQuotaWindow;
 export type ProjectListEnvelope = { projects: ProjectSummary[] };
 export type ProjectCreateRequest = { workspace_id: number; name: string };
+export type ProjectDetail = {
+  id: number;
+  workspace_id: number;
+  client_id: number | null;
+  name: string;
+  active: boolean;
+  pinned: boolean;
+  billable: boolean;
+  private: boolean;
+  template: boolean;
+  color: string;
+  currency: string | null;
+  estimated_seconds: number;
+  actual_seconds: number;
+  fixed_fee: number;
+  rate: number | null;
+};
 export type ProjectMemberGrantRequest = { member_id: number; role?: string | null };
 export type ProjectMember = { project_id: number; member_id: number; role: string };
 export type ProjectMembersEnvelope = { members: ProjectMember[] };
-export type ProjectSummary = { id: number; name: string; workspace_id: number; active: boolean };
+export type ProjectSummary = {
+  id: number;
+  name: string;
+  workspace_id: number;
+  active: boolean;
+  pinned: boolean;
+};
 export type RegisterRequest = { email: string; password: string; fullname?: string };
 export type SessionBootstrap = {
   current_organization_id: number | null;

@@ -14,7 +14,6 @@
     "dev": "vp run website#dev",
     "dev:website": "vp run website#dev",
     "dev:backend": "go run ./apps/backend",
-    "dev:api": "go run ./apps/backend",
     "prepare": "vp config"
   },
   "devDependencies": {

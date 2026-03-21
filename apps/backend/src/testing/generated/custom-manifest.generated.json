@@ -38,7 +38,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "workspace_subscription": {
@@ -55,7 +58,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "user": {
@@ -253,10 +259,16 @@
                       },
                       "scope": {
                         "type": "string",
-                        "enum": ["instance", "organization", "workspace"]
+                        "enum": [
+                          "instance",
+                          "organization",
+                          "workspace"
+                        ]
                       }
                     },
-                    "required": ["scope"],
+                    "required": [
+                      "scope"
+                    ],
                     "$ref": "#/components/schemas/CapabilityContext"
                   },
                   "capabilities": {
@@ -272,15 +284,26 @@
                         },
                         "source": {
                           "type": "string",
-                          "enum": ["billing", "instance_admin", "platform"]
+                          "enum": [
+                            "billing",
+                            "instance_admin",
+                            "platform"
+                          ]
                         }
                       },
-                      "required": ["key", "enabled", "source"],
+                      "required": [
+                        "key",
+                        "enabled",
+                        "source"
+                      ],
                       "$ref": "#/components/schemas/FeatureCapability"
                     }
                   }
                 },
-                "required": ["context", "capabilities"],
+                "required": [
+                  "context",
+                  "capabilities"
+                ],
                 "$ref": "#/components/schemas/CapabilitySnapshot"
               },
               "workspace_quota": {
@@ -300,7 +323,12 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
@@ -371,7 +399,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "workspace_subscription": {
@@ -388,7 +419,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "user": {
@@ -586,10 +620,16 @@
                       },
                       "scope": {
                         "type": "string",
-                        "enum": ["instance", "organization", "workspace"]
+                        "enum": [
+                          "instance",
+                          "organization",
+                          "workspace"
+                        ]
                       }
                     },
-                    "required": ["scope"],
+                    "required": [
+                      "scope"
+                    ],
                     "$ref": "#/components/schemas/CapabilityContext"
                   },
                   "capabilities": {
@@ -605,15 +645,26 @@
                         },
                         "source": {
                           "type": "string",
-                          "enum": ["billing", "instance_admin", "platform"]
+                          "enum": [
+                            "billing",
+                            "instance_admin",
+                            "platform"
+                          ]
                         }
                       },
-                      "required": ["key", "enabled", "source"],
+                      "required": [
+                        "key",
+                        "enabled",
+                        "source"
+                      ],
                       "$ref": "#/components/schemas/FeatureCapability"
                     }
                   }
                 },
-                "required": ["context", "capabilities"],
+                "required": [
+                  "context",
+                  "capabilities"
+                ],
                 "$ref": "#/components/schemas/CapabilitySnapshot"
               },
               "workspace_quota": {
@@ -633,7 +684,12 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
@@ -689,7 +745,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "workspace_subscription": {
@@ -706,7 +765,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "user": {
@@ -904,10 +966,16 @@
                       },
                       "scope": {
                         "type": "string",
-                        "enum": ["instance", "organization", "workspace"]
+                        "enum": [
+                          "instance",
+                          "organization",
+                          "workspace"
+                        ]
                       }
                     },
-                    "required": ["scope"],
+                    "required": [
+                      "scope"
+                    ],
                     "$ref": "#/components/schemas/CapabilityContext"
                   },
                   "capabilities": {
@@ -923,15 +991,26 @@
                         },
                         "source": {
                           "type": "string",
-                          "enum": ["billing", "instance_admin", "platform"]
+                          "enum": [
+                            "billing",
+                            "instance_admin",
+                            "platform"
+                          ]
                         }
                       },
-                      "required": ["key", "enabled", "source"],
+                      "required": [
+                        "key",
+                        "enabled",
+                        "source"
+                      ],
                       "$ref": "#/components/schemas/FeatureCapability"
                     }
                   }
                 },
-                "required": ["context", "capabilities"],
+                "required": [
+                  "context",
+                  "capabilities"
+                ],
                 "$ref": "#/components/schemas/CapabilitySnapshot"
               },
               "workspace_quota": {
@@ -951,7 +1030,12 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
@@ -1123,7 +1207,9 @@
                 "type": "string"
               }
             },
-            "required": ["api_token"],
+            "required": [
+              "api_token"
+            ],
             "$ref": "#/components/schemas/CurrentUserAPIToken"
           },
           "bodySchemaRef": "#/components/schemas/CurrentUserAPIToken",
@@ -1325,11 +1411,17 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               }
             },
-            "required": ["organization", "subscription"],
+            "required": [
+              "organization",
+              "subscription"
+            ],
             "$ref": "#/components/schemas/OrganizationSettingsEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/OrganizationSettingsEnvelope",
@@ -1399,11 +1491,17 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               }
             },
-            "required": ["organization", "subscription"],
+            "required": [
+              "organization",
+              "subscription"
+            ],
             "$ref": "#/components/schemas/OrganizationSettingsEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/OrganizationSettingsEnvelope",
@@ -1517,7 +1615,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["hide_start_end_times", "report_locked_at"],
+                "required": [
+                  "hide_start_end_times",
+                  "report_locked_at"
+                ],
                 "$ref": "#/components/schemas/WorkspacePreferences"
               },
               "subscription": {
@@ -1534,7 +1635,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "capabilities": {
@@ -1553,10 +1657,16 @@
                       },
                       "scope": {
                         "type": "string",
-                        "enum": ["instance", "organization", "workspace"]
+                        "enum": [
+                          "instance",
+                          "organization",
+                          "workspace"
+                        ]
                       }
                     },
-                    "required": ["scope"],
+                    "required": [
+                      "scope"
+                    ],
                     "$ref": "#/components/schemas/CapabilityContext"
                   },
                   "capabilities": {
@@ -1572,15 +1682,26 @@
                         },
                         "source": {
                           "type": "string",
-                          "enum": ["billing", "instance_admin", "platform"]
+                          "enum": [
+                            "billing",
+                            "instance_admin",
+                            "platform"
+                          ]
                         }
                       },
-                      "required": ["key", "enabled", "source"],
+                      "required": [
+                        "key",
+                        "enabled",
+                        "source"
+                      ],
                       "$ref": "#/components/schemas/FeatureCapability"
                     }
                   }
                 },
-                "required": ["context", "capabilities"],
+                "required": [
+                  "context",
+                  "capabilities"
+                ],
                 "$ref": "#/components/schemas/CapabilitySnapshot"
               },
               "quota": {
@@ -1600,11 +1721,22 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
-            "required": ["workspace", "preferences", "subscription", "capabilities", "quota"],
+            "required": [
+              "workspace",
+              "preferences",
+              "subscription",
+              "capabilities",
+              "quota"
+            ],
             "$ref": "#/components/schemas/WorkspaceSettingsEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/WorkspaceSettingsEnvelope",
@@ -1718,7 +1850,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["hide_start_end_times", "report_locked_at"],
+                "required": [
+                  "hide_start_end_times",
+                  "report_locked_at"
+                ],
                 "$ref": "#/components/schemas/WorkspacePreferences"
               },
               "subscription": {
@@ -1735,7 +1870,10 @@
                     "nullable": true
                   }
                 },
-                "required": ["plan_name", "state"],
+                "required": [
+                  "plan_name",
+                  "state"
+                ],
                 "$ref": "#/components/schemas/SubscriptionView"
               },
               "capabilities": {
@@ -1754,10 +1892,16 @@
                       },
                       "scope": {
                         "type": "string",
-                        "enum": ["instance", "organization", "workspace"]
+                        "enum": [
+                          "instance",
+                          "organization",
+                          "workspace"
+                        ]
                       }
                     },
-                    "required": ["scope"],
+                    "required": [
+                      "scope"
+                    ],
                     "$ref": "#/components/schemas/CapabilityContext"
                   },
                   "capabilities": {
@@ -1773,15 +1917,26 @@
                         },
                         "source": {
                           "type": "string",
-                          "enum": ["billing", "instance_admin", "platform"]
+                          "enum": [
+                            "billing",
+                            "instance_admin",
+                            "platform"
+                          ]
                         }
                       },
-                      "required": ["key", "enabled", "source"],
+                      "required": [
+                        "key",
+                        "enabled",
+                        "source"
+                      ],
                       "$ref": "#/components/schemas/FeatureCapability"
                     }
                   }
                 },
-                "required": ["context", "capabilities"],
+                "required": [
+                  "context",
+                  "capabilities"
+                ],
                 "$ref": "#/components/schemas/CapabilitySnapshot"
               },
               "quota": {
@@ -1801,11 +1956,22 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
-            "required": ["workspace", "preferences", "subscription", "capabilities", "quota"],
+            "required": [
+              "workspace",
+              "preferences",
+              "subscription",
+              "capabilities",
+              "quota"
+            ],
             "$ref": "#/components/schemas/WorkspaceSettingsEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/WorkspaceSettingsEnvelope",
@@ -1838,10 +2004,16 @@
                   },
                   "scope": {
                     "type": "string",
-                    "enum": ["instance", "organization", "workspace"]
+                    "enum": [
+                      "instance",
+                      "organization",
+                      "workspace"
+                    ]
                   }
                 },
-                "required": ["scope"],
+                "required": [
+                  "scope"
+                ],
                 "$ref": "#/components/schemas/CapabilityContext"
               },
               "capabilities": {
@@ -1857,15 +2029,26 @@
                     },
                     "source": {
                       "type": "string",
-                      "enum": ["billing", "instance_admin", "platform"]
+                      "enum": [
+                        "billing",
+                        "instance_admin",
+                        "platform"
+                      ]
                     }
                   },
-                  "required": ["key", "enabled", "source"],
+                  "required": [
+                    "key",
+                    "enabled",
+                    "source"
+                  ],
                   "$ref": "#/components/schemas/FeatureCapability"
                 }
               }
             },
-            "required": ["context", "capabilities"],
+            "required": [
+              "context",
+              "capabilities"
+            ],
             "$ref": "#/components/schemas/CapabilitySnapshot"
           },
           "bodySchemaRef": "#/components/schemas/CapabilitySnapshot",
@@ -1899,7 +2082,12 @@
                 "type": "integer"
               }
             },
-            "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+            "required": [
+              "organization_id",
+              "remaining",
+              "resets_in_secs",
+              "total"
+            ],
             "$ref": "#/components/schemas/QuotaWindow"
           },
           "bodySchemaRef": "#/components/schemas/QuotaWindow",
@@ -2039,12 +2227,20 @@
                       "type": "string"
                     }
                   },
-                  "required": ["id", "workspace_id", "email", "name", "role"],
+                  "required": [
+                    "id",
+                    "workspace_id",
+                    "email",
+                    "name",
+                    "role"
+                  ],
                   "$ref": "#/components/schemas/WorkspaceMember"
                 }
               }
             },
-            "required": ["members"],
+            "required": [
+              "members"
+            ],
             "$ref": "#/components/schemas/WorkspaceMembersEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/WorkspaceMembersEnvelope",
@@ -2097,14 +2293,25 @@
                     },
                     "active": {
                       "type": "boolean"
+                    },
+                    "pinned": {
+                      "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "workspace_id", "active"],
+                  "required": [
+                    "id",
+                    "name",
+                    "workspace_id",
+                    "active",
+                    "pinned"
+                  ],
                   "$ref": "#/components/schemas/ProjectSummary"
                 }
               }
             },
-            "required": ["projects"],
+            "required": [
+              "projects"
+            ],
             "$ref": "#/components/schemas/ProjectListEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/ProjectListEnvelope",
@@ -2135,9 +2342,271 @@
               },
               "active": {
                 "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
               }
             },
-            "required": ["id", "name", "workspace_id", "active"],
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active",
+              "pinned"
+            ],
+            "$ref": "#/components/schemas/ProjectSummary"
+          },
+          "bodySchemaRef": "#/components/schemas/ProjectSummary",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/projects/{project_id}",
+      "method": "get",
+      "operationId": "get-project",
+      "sourceOperationId": "get-project",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "client_id": {
+                "type": "integer",
+                "nullable": true
+              },
+              "name": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
+              },
+              "billable": {
+                "type": "boolean"
+              },
+              "private": {
+                "type": "boolean"
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "color": {
+                "type": "string"
+              },
+              "currency": {
+                "type": "string",
+                "nullable": true
+              },
+              "estimated_seconds": {
+                "type": "integer"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "fixed_fee": {
+                "type": "number"
+              },
+              "rate": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "workspace_id",
+              "client_id",
+              "name",
+              "active",
+              "pinned",
+              "billable",
+              "private",
+              "template",
+              "color",
+              "currency",
+              "estimated_seconds",
+              "actual_seconds",
+              "fixed_fee",
+              "rate"
+            ],
+            "$ref": "#/components/schemas/ProjectDetail"
+          },
+          "bodySchemaRef": "#/components/schemas/ProjectDetail",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/projects/{project_id}/archive",
+      "method": "post",
+      "operationId": "archive-project",
+      "sourceOperationId": "archive-project",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active",
+              "pinned"
+            ],
+            "$ref": "#/components/schemas/ProjectSummary"
+          },
+          "bodySchemaRef": "#/components/schemas/ProjectSummary",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/projects/{project_id}/archive",
+      "method": "delete",
+      "operationId": "restore-project",
+      "sourceOperationId": "restore-project",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active",
+              "pinned"
+            ],
+            "$ref": "#/components/schemas/ProjectSummary"
+          },
+          "bodySchemaRef": "#/components/schemas/ProjectSummary",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/projects/{project_id}/pin",
+      "method": "post",
+      "operationId": "pin-project",
+      "sourceOperationId": "pin-project",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active",
+              "pinned"
+            ],
+            "$ref": "#/components/schemas/ProjectSummary"
+          },
+          "bodySchemaRef": "#/components/schemas/ProjectSummary",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/projects/{project_id}/pin",
+      "method": "delete",
+      "operationId": "unpin-project",
+      "sourceOperationId": "unpin-project",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "pinned": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active",
+              "pinned"
+            ],
             "$ref": "#/components/schemas/ProjectSummary"
           },
           "bodySchemaRef": "#/components/schemas/ProjectSummary",
@@ -2172,12 +2641,18 @@
                       "type": "string"
                     }
                   },
-                  "required": ["project_id", "member_id", "role"],
+                  "required": [
+                    "project_id",
+                    "member_id",
+                    "role"
+                  ],
                   "$ref": "#/components/schemas/ProjectMember"
                 }
               }
             },
-            "required": ["members"],
+            "required": [
+              "members"
+            ],
             "$ref": "#/components/schemas/ProjectMembersEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/ProjectMembersEnvelope",
@@ -2207,7 +2682,11 @@
                 "type": "string"
               }
             },
-            "required": ["project_id", "member_id", "role"],
+            "required": [
+              "project_id",
+              "member_id",
+              "role"
+            ],
             "$ref": "#/components/schemas/ProjectMember"
           },
           "bodySchemaRef": "#/components/schemas/ProjectMember",
@@ -2260,12 +2739,19 @@
                       "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "workspace_id", "active"],
+                  "required": [
+                    "id",
+                    "name",
+                    "workspace_id",
+                    "active"
+                  ],
                   "$ref": "#/components/schemas/ClientSummary"
                 }
               }
             },
-            "required": ["clients"],
+            "required": [
+              "clients"
+            ],
             "$ref": "#/components/schemas/ClientListEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/ClientListEnvelope",
@@ -2298,7 +2784,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["id", "name", "workspace_id", "active"],
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active"
+            ],
             "$ref": "#/components/schemas/ClientSummary"
           },
           "bodySchemaRef": "#/components/schemas/ClientSummary",
@@ -2336,12 +2827,19 @@
                       "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "workspace_id", "active"],
+                  "required": [
+                    "id",
+                    "name",
+                    "workspace_id",
+                    "active"
+                  ],
                   "$ref": "#/components/schemas/TaskSummary"
                 }
               }
             },
-            "required": ["tasks"],
+            "required": [
+              "tasks"
+            ],
             "$ref": "#/components/schemas/TaskListEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/TaskListEnvelope",
@@ -2374,7 +2872,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["id", "name", "workspace_id", "active"],
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active"
+            ],
             "$ref": "#/components/schemas/TaskSummary"
           },
           "bodySchemaRef": "#/components/schemas/TaskSummary",
@@ -2412,12 +2915,19 @@
                       "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "workspace_id", "active"],
+                  "required": [
+                    "id",
+                    "name",
+                    "workspace_id",
+                    "active"
+                  ],
                   "$ref": "#/components/schemas/TagSummary"
                 }
               }
             },
-            "required": ["tags"],
+            "required": [
+              "tags"
+            ],
             "$ref": "#/components/schemas/TagListEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/TagListEnvelope",
@@ -2450,7 +2960,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["id", "name", "workspace_id", "active"],
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active"
+            ],
             "$ref": "#/components/schemas/TagSummary"
           },
           "bodySchemaRef": "#/components/schemas/TagSummary",
@@ -2488,12 +3003,19 @@
                       "type": "boolean"
                     }
                   },
-                  "required": ["id", "name", "workspace_id", "active"],
+                  "required": [
+                    "id",
+                    "name",
+                    "workspace_id",
+                    "active"
+                  ],
                   "$ref": "#/components/schemas/GroupSummary"
                 }
               }
             },
-            "required": ["groups"],
+            "required": [
+              "groups"
+            ],
             "$ref": "#/components/schemas/GroupListEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/GroupListEnvelope",
@@ -2526,7 +3048,12 @@
                 "type": "boolean"
               }
             },
-            "required": ["id", "name", "workspace_id", "active"],
+            "required": [
+              "id",
+              "name",
+              "workspace_id",
+              "active"
+            ],
             "$ref": "#/components/schemas/GroupSummary"
           },
           "bodySchemaRef": "#/components/schemas/GroupSummary",
@@ -2551,13 +3078,22 @@
               },
               "status": {
                 "type": "string",
-                "enum": ["queued", "running", "completed", "failed"]
+                "enum": [
+                  "queued",
+                  "running",
+                  "completed",
+                  "failed"
+                ]
               },
               "workspace_id": {
                 "type": "integer"
               }
             },
-            "required": ["job_id", "status", "workspace_id"],
+            "required": [
+              "job_id",
+              "status",
+              "workspace_id"
+            ],
             "$ref": "#/components/schemas/ImportJob"
           },
           "bodySchemaRef": "#/components/schemas/ImportJob",
@@ -2576,7 +3112,12 @@
               },
               "reason": {
                 "type": "string",
-                "enum": ["allowed", "plan_restricted", "quota_exhausted", "instance_disabled"]
+                "enum": [
+                  "allowed",
+                  "plan_restricted",
+                  "quota_exhausted",
+                  "instance_disabled"
+                ]
               },
               "quota": {
                 "type": "object",
@@ -2595,11 +3136,20 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
-            "required": ["capability_key", "allowed", "reason"],
+            "required": [
+              "capability_key",
+              "allowed",
+              "reason"
+            ],
             "$ref": "#/components/schemas/FeatureGateDecision"
           },
           "bodySchemaRef": "#/components/schemas/FeatureGateDecision",
@@ -2632,13 +3182,22 @@
               },
               "status": {
                 "type": "string",
-                "enum": ["queued", "running", "completed", "failed"]
+                "enum": [
+                  "queued",
+                  "running",
+                  "completed",
+                  "failed"
+                ]
               },
               "workspace_id": {
                 "type": "integer"
               }
             },
-            "required": ["job_id", "status", "workspace_id"],
+            "required": [
+              "job_id",
+              "status",
+              "workspace_id"
+            ],
             "$ref": "#/components/schemas/ImportJob"
           },
           "bodySchemaRef": "#/components/schemas/ImportJob",
@@ -2665,7 +3224,10 @@
                 "type": "string"
               }
             },
-            "required": ["completed", "admin_email"],
+            "required": [
+              "completed",
+              "admin_email"
+            ],
             "$ref": "#/components/schemas/BootstrapState"
           },
           "bodySchemaRef": "#/components/schemas/BootstrapState",
@@ -2693,7 +3255,12 @@
               },
               "reason": {
                 "type": "string",
-                "enum": ["allowed", "plan_restricted", "quota_exhausted", "instance_disabled"]
+                "enum": [
+                  "allowed",
+                  "plan_restricted",
+                  "quota_exhausted",
+                  "instance_disabled"
+                ]
               },
               "quota": {
                 "type": "object",
@@ -2712,11 +3279,20 @@
                     "type": "integer"
                   }
                 },
-                "required": ["organization_id", "remaining", "resets_in_secs", "total"],
+                "required": [
+                  "organization_id",
+                  "remaining",
+                  "resets_in_secs",
+                  "total"
+                ],
                 "$ref": "#/components/schemas/QuotaWindow"
               }
             },
-            "required": ["capability_key", "allowed", "reason"],
+            "required": [
+              "capability_key",
+              "allowed",
+              "reason"
+            ],
             "$ref": "#/components/schemas/FeatureGateDecision"
           },
           "bodySchemaRef": "#/components/schemas/FeatureGateDecision",
