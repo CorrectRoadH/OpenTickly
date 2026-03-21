@@ -15,6 +15,7 @@ import { WorkspaceReportsPage } from "../pages/shell/WorkspaceReportsPage.tsx";
 import { WorkspaceMembersPage } from "../pages/members/WorkspaceMembersPage.tsx";
 import { PermissionConfigPage } from "../pages/permission-config/PermissionConfigPage.tsx";
 import { ProjectsPage } from "../pages/projects/ProjectsPage.tsx";
+import { ProjectDetailPage } from "../pages/projects/ProjectDetailPage.tsx";
 import { ClientsPage } from "../pages/clients/ClientsPage.tsx";
 import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { TasksPage } from "../pages/tasks/TasksPage.tsx";
@@ -65,6 +66,12 @@ const workspaceProjectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/projects",
   component: WorkspaceProjectsRouteComponent,
+});
+
+const workspaceProjectDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/projects/$projectId",
+  component: WorkspaceProjectDetailRouteComponent,
 });
 
 const workspaceMembersRoute = createRoute({
@@ -124,6 +131,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceOverviewRoute,
   workspaceReportsRoute,
   workspaceProjectsRoute,
+  workspaceProjectDetailRoute,
   workspaceMembersRoute,
   workspaceClientsRoute,
   workspaceGroupsRoute,
@@ -177,6 +185,18 @@ function WorkspaceProjectsRouteComponent() {
   return (
     <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
       <ProjectsPage />
+    </AuthenticatedAppFrame>
+  );
+}
+
+function WorkspaceProjectDetailRouteComponent() {
+  const params = workspaceProjectDetailRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+  const projectId = Number(params.projectId);
+
+  return (
+    <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
+      <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />
     </AuthenticatedAppFrame>
   );
 }

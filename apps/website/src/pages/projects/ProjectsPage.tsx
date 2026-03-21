@@ -103,11 +103,7 @@ export function ProjectsPage(): ReactElement {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Projects</h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page now covers status filtering and archive/pin controls, but
-            the documented project page still needs task/detail entry points and template/statistics
-            flows.
-          </p>
+          <p className="text-sm leading-6 text-slate-600">Project directory</p>
         </div>
         <AppButton type="button">Create project</AppButton>
       </div>
@@ -177,6 +173,20 @@ export function ProjectsPage(): ReactElement {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
+                  <a
+                    aria-label={`Project details for ${project.name}`}
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                    href={`/workspaces/${session.currentWorkspace.id}/projects/${project.id}`}
+                  >
+                    Project details
+                  </a>
+                  <a
+                    aria-label={`Project tasks for ${project.name}`}
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                    href={`/workspaces/${session.currentWorkspace.id}/tasks?projectId=${project.id}`}
+                  >
+                    Project tasks
+                  </a>
                   <AppButton
                     disabled={mutationPending}
                     onClick={() => void handlePinToggle(project)}
@@ -241,10 +251,10 @@ export function ProjectsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          Transition state. Showing {projects.length} project{projects.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active and {pinnedCount}{" "}
-          pinned. Exit when this page adds task/detail entry points plus template/statistics flows
-          with page-flow evidence.
+          Showing {projects.length} projects in workspace {session.currentWorkspace.id}.
+        </p>
+        <p className="mt-1">
+          Active: {activeCount} · Pinned: {pinnedCount}
         </p>
       </div>
     </AppPanel>

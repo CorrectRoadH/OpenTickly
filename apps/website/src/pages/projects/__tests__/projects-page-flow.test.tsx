@@ -152,11 +152,9 @@ describe("projects page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create project" })).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Transition state. This page now covers status filtering and archive/pin controls, but the documented project page still needs task/detail entry points and template/statistics flows.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Project directory")).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
+    expect(screen.queryByText(/Exit when/i)).toBeNull();
 
     const list = screen.getByLabelText("Projects list");
     expect(within(list).getByText("Website Revamp")).toBeTruthy();
@@ -164,11 +162,8 @@ describe("projects page flow", () => {
     expect(within(list).getByText(/Project · Archived/)).toBeTruthy();
     expect(within(list).getByText("Workspace 202 · 2 members")).toBeTruthy();
     expect(within(list).getByText("Workspace 202 · 0 members")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "Transition state. Showing 2 projects for workspace 202, with 1 active and 1 pinned. Exit when this page adds task/detail entry points plus template/statistics flows with page-flow evidence.",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Showing 2 projects in workspace 202.")).toBeTruthy();
+    expect(screen.getByText("Active: 1 · Pinned: 1")).toBeTruthy();
     expect(screen.getByLabelText("Project status filter")).toBeTruthy();
 
     const websiteRevampProject = within(list).getByLabelText("Project Website Revamp");
@@ -182,6 +177,20 @@ describe("projects page flow", () => {
     expect(
       within(websiteRevampProject).getByRole("button", { name: "Archive project Website Revamp" }),
     ).toBeTruthy();
+    expect(
+      within(websiteRevampProject)
+        .getByRole("link", {
+          name: "Project details for Website Revamp",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/projects/1001");
+    expect(
+      within(websiteRevampProject)
+        .getByRole("link", {
+          name: "Project tasks for Website Revamp",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/tasks?projectId=1001");
 
     const communityLaunchProject = within(list).getByLabelText("Project Community Launch");
     expect(within(communityLaunchProject).getByText("No members assigned")).toBeTruthy();
@@ -196,6 +205,20 @@ describe("projects page flow", () => {
         name: "Unpin project Community Launch",
       }),
     ).toBeTruthy();
+    expect(
+      within(communityLaunchProject)
+        .getByRole("link", {
+          name: "Project details for Community Launch",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/projects/1002");
+    expect(
+      within(communityLaunchProject)
+        .getByRole("link", {
+          name: "Project tasks for Community Launch",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/tasks?projectId=1002");
 
     fireEvent.click(
       within(websiteRevampProject).getByRole("button", { name: "Pin project Website Revamp" }),
