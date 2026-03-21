@@ -68,6 +68,7 @@
 - self-hosted 与 SaaS 可以在 provider 默认值和运维方式上不同，但对外产品面不得变成两套不同产品。
 - 配置错误、provider 失效、后台任务积压、维护模式开启等状态，必须通过正式状态页或诊断入口可见，而不是只存在日志里。
 - bootstrap 一旦完成，后续重复 bootstrap 必须被显式阻止，而不是默默覆盖首个管理员。
+- self-hosted 首次管理员初始化必须建立在正式 PostgreSQL schema 已通过 `pgschema` 收口完成的前提上；不允许以手工建表、临时 SQL 或人工改库替代正式 init 流程。
 
 ## User Roles
 
@@ -157,6 +158,7 @@
 
 - 这些能力是产品入口，不定义底层 provider SDK 或 secret 存储细节。
 - 这些入口属于实例级产品能力，而不是 `platform` 自身拥有的业务能力。
+- 但它们依赖的 schema、bootstrap guard 与初始化顺序必须是正式产品交付的一部分；self-hosted 不能要求操作者手工补数据库对象后再进入这些入口。
 
 ### 5. Ops & Health
 
@@ -198,6 +200,7 @@
 - 实例级配置入口
 - 健康状态与诊断入口
 - 实例级审计能力
+- 正式 schema 管理路径；在 PostgreSQL 上固定以 `pgschema` 管理 desired state、review 变更并应用 schema
 
 ### 差异
 

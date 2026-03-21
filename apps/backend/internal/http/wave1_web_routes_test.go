@@ -122,6 +122,29 @@ func TestWave1WebWorkspacePermissionsRoutesRejectMissingRequiredFieldsFromOpenAP
 	}
 }
 
+func TestWave1WebWorkspaceSettingsRoutesRejectPartialWorkspacePayloadFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+	sessionCookie := mustRegisterWave1Session(t, server)
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/web/v1/workspaces/1/settings",
+		strings.NewReader(`{"workspace":{"name":"Updated"}}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cookie", sessionCookie)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected generated workspace settings boundary to reject partial workspace payload with 400, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
 	t.Helper()
 

@@ -92,6 +92,7 @@
 - OpenAPI 生成代码：`oapi-codegen`，以 compat transport 为最高优先级生成目标
 - 数据库：`PostgreSQL`
 - 数据库访问：`pgx`
+- PostgreSQL schema 管理：`pgschema`（声明式 desired-state SQL + `plan/apply` 工作流）
 - 事务：显式 `pgx.Tx`
 - Redis：官方 Redis client，由 `platform` 提供连接与最小封装
 - 依赖注入：手写 constructor wiring，不使用运行时 DI 容器，不使用代码生成式 DI
@@ -103,8 +104,54 @@
 - 因此 compat API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
 - 在这个前提下，`echo` 的价值是作为成熟的 transport runtime 承载生成产物，而不是承载业务语义。
 - `echo` 只能停留在 `transport` 与 `apps/backend/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
-- DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图，不是额外框架语义。
+- DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图、可审查的启动顺序和显式模块边界，而不是额外框架语义。
 - OpenAPI 仍然只生成 transport/contract 边界，不生成 domain/application/infra。
+
+## 0.5.1 PostgreSQL Schema SSOT 与 `pgschema` 工作流
+
+PostgreSQL schema 管理必须是单一路径。
+
+固定结论如下：
+
+- PostgreSQL schema 的唯一真相源是仓库内受版本控制的 `pgschema` desired-state SQL。
+- `pgschema` 是唯一允许的正式 schema 管理器；不再维护第二套长期并行的 migration 编号体系、ORM auto-migrate 或 ad hoc DDL 工作流。
+- `pgschema dump` 只用于导入现状、调试或事故分析，不作为日常变更的真相源。
+- 日常 schema 变更工作流固定为：修改 desired-state SQL -> `pgschema plan` -> review plan 输出 -> `pgschema apply`。
+- `pgschema plan` 的输出属于 code review 与部署 review 证据的一部分；不能跳过 plan 直接在数据库里手写 DDL。
+- `pgschema apply` 可以在本地开发、自托管部署和 CD 中使用，但都必须以仓库里的同一份 desired-state SQL 为输入。
+
+推荐目录归属：
+
+```text
+apps/backend/internal/platform/
+  schema/
+    schema.sql
+    blobs.sql
+    jobs.sql
+    bootstrap.sql
+    .pgschemaignore
+```
+
+规则：
+
+- `platform/schema/` 负责 PostgreSQL 结构定义，不承载业务 command/query 逻辑。
+- schema 文件可以按对象族拆分，但合起来必须仍然表达完整 desired state。
+- Blob、job record、bootstrap guard、平台级元数据等共享基础表归 `platform/schema/`。
+- 具体业务表以后分别由各模块 ownership 维护，但仍通过 `pgschema` 汇总到同一 desired state。
+- 不允许在模块内部偷偷引入第二套 schema 入口，例如 `gorm.AutoMigrate()`、运行时即兴 `CREATE TABLE` 或脱离 `pgschema` 的独立 migration CLI。
+
+环境约定：
+
+- 应用运行时继续使用 `DATABASE_URL` 作为 Go 后端的主 DSN 输入。
+- `pgschema` 命令使用标准 PostgreSQL CLI 环境：`PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE`。
+- 如果仓库根 `.env.local` 同时提供了应用运行时 env 与 `pgschema` 所需 PG* env，它们必须指向同一个数据库实例，不允许形成两套数据库目标。
+
+工作流约定：
+
+- 本地开发：修改 schema SQL 后，先运行 `pgschema plan`，确认 plan 正确，再运行 `pgschema apply`，最后启动或重启 `air` 做真实运行时验证。
+- CI：对 schema 相关变更至少运行一次 `pgschema plan`，并把 plan 结果作为 review 证据。
+- CD / self-hosted：部署流程在应用对外 ready 之前执行 `pgschema apply --auto-approve` 或等价的受控 apply 步骤。
+- 回滚：优先通过 Git 回退 desired-state SQL 后重新执行 `pgschema plan/apply`；如果变更涉及不可逆破坏性 DDL，必须在 review 阶段提前标注和制定数据恢复方案。
 
 ## 0.6 为什么是手写 DI
 
@@ -114,6 +161,29 @@
 - 让 `transport` 能在不启动整站的情况下单独挂到测试 server
 - 让 `apps/backend/internal/bootstrap` 成为唯一装配真相源
 - 让 review 时能直接看出一个 endpoint 穿过哪些模块
+- 让启动顺序中的副作用步骤保持显式可读：`connect postgres/redis -> pgschema reconcile -> bootstrap/init guard -> build services -> start http`
+
+因此这里不采用 `fx` 的原因不是“它不好”，而是它解决的主要问题与本项目当前约束不匹配。
+
+对本项目来说，`fx` / `dig` / `wire` 的主要问题是：
+
+- 会把依赖关系的一部分隐藏到 provider graph、annotation 或 lifecycle hook 中，削弱 `bootstrap` 作为装配 SSOT 的可读性
+- 容易把“可以注入”误当成“应该依赖”，放松模块边界，增加跨上下文耦合的机会
+- 会把启动时序和对象构造混在一起；而本项目恰恰要求 schema apply、bootstrap guard、readiness gate 这些副作用步骤保持显式顺序
+- 会让 code review 更难直接回答“这个 endpoint 穿过了哪些 repo/query service/job runner”
+- 对当前阶段的模块规模来说，引入容器语义的复杂度大于收益
+
+特别是 `fx`：
+
+- `fx` 更适合需要大量可插拔 provider、复杂模块生命周期和长期容器化装配约定的大型服务
+- 当前仓库更需要显式、稳定、可逐行审查的构造顺序，而不是运行时容器帮我们“推导出一个图”
+- 如果未来真的出现几十个独立模块、多个独立启动 profile、重复的生命周期编排痛点，再重新评估也不迟；但那必须是显式架构决策，不是为了少写几行 wiring 代码就提前引入
+
+结论：
+
+- `fx` 不是禁止讨论的工具，但不是当前仓库的推荐方案
+- 当前正式路径固定为：显式 constructor + 手写 bootstrap wiring
+- 除非先更新架构文档并明确说明为什么手写装配已经不再满足需求，否则不引入 `fx`、`dig`、`wire` 或类似容器
 
 因此固定规则如下：
 
@@ -121,6 +191,7 @@
 - `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
 - `infra` 实现 port，但不反向持有 service locator
 - `apps/backend/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
+- `apps/backend/internal/bootstrap` 负责在正式启动链路中调用 `pgschema` 所管理的 schema reconcile / apply 步骤，并在该步骤失败时立即启动失败
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
@@ -140,6 +211,7 @@ apps/backend/internal/bootstrap/
 
 bootstrap.NewApp(cfg)
 -> open postgres / redis
+-> reconcile postgres schema via pgschema desired state
 -> build platform services
 -> build module infra adapters
 -> build module application services
@@ -154,6 +226,25 @@ bootstrap.NewApp(cfg)
 - application integration test 只构造当前模块 + 真实数据库依赖
 - transport contract test 可以挂真实 Echo + generated compat routes，但替换外部 provider
 - job test 可以单独起 runner 和 handler，不需要整站启动
+
+### 0.6.2 schema / init / readiness 顺序
+
+本项目的正式启动顺序固定如下：
+
+1. 读取根目录 `.env.local` 或部署环境变量
+2. 建立真实 Postgres / Redis 连接
+3. 调用 `pgschema` 让 live database schema 收口到仓库 desired state
+4. 运行实例级初始化与 bootstrap guard
+5. 构建 platform services、模块 infra、application 与 transport
+6. 启动 HTTP runtime
+7. 只有当 schema、初始化和依赖检查都完成后，`/readyz` 才返回 ready
+
+规则：
+
+- 不允许把 schema apply 延后到首次请求时再懒执行。
+- 不允许在正常请求路径中隐式创建表、索引、触发器或 extension。
+- 不允许让 `readyz` 在 schema 未收口、bootstrap 未检查完成时提前返回成功。
+- `healthz` 可只表示进程存活；`readyz` 必须表达“真实依赖可用且 schema/init 已完成”。
 
 ### 0.6.1 transport 层的坏味道与禁止项
 

@@ -14,6 +14,7 @@ Local development must run source processes directly from the repository root.
 - Root `.env.local` is required for source-based local development. `.env.local.example` is only a template and is not itself a runnable local-development env file.
 - The backend local-development path must require explicit datasource configuration from env. If the datasource env is missing, backend startup must fail immediately.
 - The default local backend runtime must connect to real dependencies started outside the app process. It must not silently fall back to in-memory stores, placeholder runtime state, or fabricated dependency defaults.
+- PostgreSQL schema management must use `pgschema` as the single canonical path. Do not introduce a second long-lived migration/schema toolchain or runtime auto-migrate path.
 - Backend hot reload configuration must live at the repository root in `.air.toml`; do not duplicate `air` config under `apps/backend` or ad hoc shell wrappers.
 - When local development needs additional entry points, add them to the root toolchain surface such as root `package.json`, `vp`, or a checked-in Go CLI entrypoint.
 - Root toolchain entrypoints are for source-based local development workflows. Do not add wrapper CLIs around native deployment/runtime tools when the underlying tool is already the canonical interface; if `air` is the canonical backend dev runtime, do not wrap it behind duplicate shell or Node entrypoints.
@@ -105,6 +106,7 @@ Use TDD for behavior changes.
 - TDD is required for new product functionality, bug fixes, and behavior changes where the task changes what the software does.
 - TDD must not be used for documentation-only changes, plan-only changes, infra/config/bootstrap/documentation cleanup, mechanical renames, generated-code refreshes, or structural refactors that do not intentionally change behavior.
 - Startup wiring, env loading, bootstrap config parsing, dev-runtime entrypoint changes, readiness plumbing, and similar runtime/infrastructure setup work must not be driven by TDD-style config/unit tests when a direct startup check, smoke run, or targeted runtime verification is the stronger proof.
+- Schema-management changes must be verified with `pgschema` plan/apply evidence and runtime startup/readiness evidence, not only unit tests.
 - Do not force red-green-refactor onto changes whose purpose is clarifying docs, tightening operational rules, or removing drift in configuration and repository structure.
 - If an infra or structural change also fixes a real bug or changes runtime behavior, treat the behavior-changing part as a bug/feature change and use TDD for that part.
 

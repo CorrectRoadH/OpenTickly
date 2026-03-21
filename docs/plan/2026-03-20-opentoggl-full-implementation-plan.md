@@ -3,7 +3,7 @@
 > **硬约束**
 >
 > 1. 本计划的开发执行必须由 subagent 完成，主 agent 只负责编排、依赖管理、review gate、汇总验收与合并决策。
-> 2. 所有实现任务必须按 TDD 执行：先写失败测试，再写最小实现，再补重构与回归保护。
+> 2. 行为变更类实现任务必须按 TDD 执行：先写失败测试，再写最小实现，再补重构与回归保护；但 infra/config/bootstrap/runtime wiring、计划/文档更新、机械性重命名、generated artifact refresh 与不刻意改变行为的结构治理项，按 `AGENTS.md` 执行非 TDD 验证，不得为了仪式感补低信号测试。
 > 3. 任何正式产品能力都不能以 “先 API-only” 或 “先 Web-only” 方式落地；该能力所属波次必须同时完成对应 API、Web、测试链路。
 > 4. self-hosted 不是发布后的附加脚本；从 Wave 0 起就必须作为正式交付目标推进，最终必须具备可构建、可启动、可验证的容器化交付物。
 
@@ -11,7 +11,7 @@
 
 **Architecture:** 采用单体优先架构，一个 Go `apps/backend` 进程加一个 React `apps/website` 应用；后端按 `transport -> application -> domain` 和固定限界上下文拆分，前端按 `app/routes/pages/features/entities/shared` 拆分。事务写模型以 PostgreSQL 为真相源，报表与异步投递通过 in-process job runner 与投影读模型完成。
 
-**Tech Stack:** Go + Echo + oapi-codegen + pgx + PostgreSQL + Redis；React + Vite+ + Tailwind CSS 4 + TanStack Router + TanStack Query + react-hook-form + zod + baseui + styletron。
+**Tech Stack:** Go + Echo + oapi-codegen + pgx + PostgreSQL + `pgschema` + Redis；React + Vite+ + Tailwind CSS 4 + TanStack Router + TanStack Query + react-hook-form + zod + baseui + styletron。
 
 ---
 
@@ -49,10 +49,26 @@
   - [ ] 执行 TODO：收口本地源码启动的 env / dependency 入口，固定“根 `.env.local` + 显式 datasource env + 真实依赖”作为唯一默认路径。缺少 `.env.local` 或关键 datasource env 时，`air` 启动必须立即失败；禁止继续以默认 DSN、内存 store、placeholder runtime 或 fake dependency 让后端表面可启动。Refs: `AGENTS.md`、`README.md`、`docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：删除或降级低信号的 bootstrap/config 单元测试，避免把 env 加载、默认值回填、bootstrap 字段透传这类 infra/config 规则继续按 TDD 风格固化。首批对象：`apps/backend/internal/bootstrap/config_env_test.go`、`apps/backend/internal/bootstrap/bootstrap_test.go` 中仅验证 `ConfigFromEnvironment` 映射、默认值与平台句柄透传的用例。替代证据应改为直接启动检查、readiness 检查与最小 smoke runtime 证据。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
   - [ ] 执行 TODO：按 `docs/core/frontend-architecture.md` 与对应 `docs/product/*.md` 的 Figma/fallback 对齐规则收口当前正式页面族偏移；重点处理 `apps/website/src/pages/projects/ProjectsPage.tsx`、`apps/website/src/pages/clients/ClientsPage.tsx`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/pages/tags/TagsPage.tsx`、`apps/website/src/pages/groups/GroupsPage.tsx`、`apps/website/src/pages/permission-config/PermissionConfigPage.tsx` 中仍然存在的 `Transition state` 叙事与占位式页面骨架。该项完成前，这些页面不得宣称正式完成，且不得继续以过渡态文案替代 Figma/fallback 对齐证据。Refs: `docs/core/frontend-architecture.md`、`docs/product/tracking.md`、`docs/product/membership-and-access.md`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：收口前端 URL state 到 `routes/ + shared/url-state/` 的单一路径，禁止页面继续直接 `new URLSearchParams(...)`、散读 `location.searchStr` 或在 page 内自行解析 search params。首批对象：`apps/website/src/pages/tasks/TasksPage.tsx` 的 `projectId` 读取，以及后续所有列表/过滤/视图切换页面；每个 search param 必须具备 `validateSearch`/schema、reload/share/back-forward 一致性和对应 page-flow 覆盖。该项完成前，不得继续扩张新的筛选、排序、分页或视图切换能力。Refs: `docs/core/frontend-architecture.md`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：补齐 Web identity/session 的 logout 正式链路，前端必须实现 `/web/v1/auth/logout` 的 mutation、导航入口、成功后的 `web-session` 与相关 query cache 清理、以及跳回 `/login` 的正式用户流；不得继续只实现 login/register 而缺失 logout。测试必须同时补齐 page flow 与至少一条真实运行时或 e2e 证据。Refs: `docs/product/identity-and-tenant.md`、`docs/core/architecture-overview.md`、`openapi/opentoggl-web.openapi.json`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：把受保护 Web 页面当前主要依赖 `AuthenticatedAppFrame` 的组件级 session 兜底，收口为 `routes/` 层的 route-level guard / redirect；`AuthenticatedAppFrame` 只保留 shell、provider 与已鉴权页面装配，不再承担主要登录态分支。首页 `/`、`/profile`、`/workspaces/$workspaceId/**`、`/organizations/$organizationId/settings` 的进入、失效会话、401/403 跳转语义必须统一。该项完成前，不得继续增加新的受保护页面入口。Refs: `docs/core/frontend-architecture.md`、`docs/product/identity-and-tenant.md`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：把 `apps/website/src/pages/auth/AuthPage.tsx` 当前承担的 login/register mutation 编排、transport error 解析与成功跳转逻辑下沉到 `features/auth`，页面层只保留路由 mode、布局和 feature 装配；不得继续让 page 直接感知 `WebApiError` 或底层 transport error shape。补齐后需同步更新 auth feature/page-flow 测试，证明错误文案、成功跳转和 session bootstrap 行为仍成立。Refs: `docs/core/frontend-architecture.md`、`docs/product/identity-and-tenant.md`、`docs/core/testing-strategy.md`
+  - [ ] 执行 TODO：收口前端 URL state 到 `routes/ + shared/url-state/` 的单一路径。
+    - 当前对象：`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/routes/route-tree.tsx`、`apps/website/src/shared/url-state/`
+    - 目标状态：禁止页面继续直接 `new URLSearchParams(...)`、散读 `location.searchStr` 或在 page 内自行解析 search params；`projectId` 等 search params 必须经 `validateSearch` / schema 进入页面；page 只消费已归一化的 route/search 输入。
+    - 阻塞规则：该项完成前，不得继续扩张新的筛选、排序、分页或视图切换能力。
+    - 验收证据：对应 page-flow 覆盖 `route enter / reload / share / back-forward` 一致性，且不再依赖手写 URL adapter。Refs: `docs/core/frontend-architecture.md`、`docs/core/testing-strategy.md`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/routes/route-tree.tsx`、`apps/website/src/shared/url-state/`
+  - [ ] 执行 TODO：补齐 Web identity/session 的 logout 正式链路。
+    - 当前对象：`apps/website/src/shared/query/web-shell.ts`、`apps/website/src/app/AppShell.tsx`、`apps/website/src/routes/route-tree.tsx`
+    - 目标状态：前端必须实现 `/web/v1/auth/logout` 的 mutation、导航入口、成功后的 `web-session` 与相关 query cache 清理、以及跳回 `/login` 的正式用户流；不得继续只实现 login/register 而缺失 logout。
+    - 阻塞规则：该项完成前，不得宣称 Wave 1 的 identity/session Web 能力完整，也不得继续增加依赖登录态的导航入口而不提供退出路径。
+    - 验收证据：存在可发现的 logout 入口；点击后调用 `/web/v1/auth/logout`，清理 session 相关缓存，受保护页面回到登录态；至少补齐一条 auth page-flow 与一条 real-runtime/e2e 证据。Refs: `docs/product/identity-and-tenant.md`、`docs/core/architecture-overview.md`、`openapi/opentoggl-web.openapi.json`、`docs/core/testing-strategy.md`、`apps/website/src/shared/query/web-shell.ts`、`apps/website/src/app/AppShell.tsx`、`apps/website/src/routes/route-tree.tsx`
+  - [ ] 执行 TODO：把受保护 Web 页面当前主要依赖 `AuthenticatedAppFrame` 的组件级 session 兜底，收口为 `routes/` 层的 route-level guard / redirect。
+    - 当前对象：`apps/website/src/app/AuthenticatedAppFrame.tsx`、`apps/website/src/routes/route-tree.tsx`、`apps/website/src/pages/auth/AuthPage.tsx`
+    - 目标状态：`AuthenticatedAppFrame` 只保留 shell、provider 与已鉴权页面装配，不再承担主要登录态分支；首页 `/`、`/profile`、`/workspaces/$workspaceId/**`、`/organizations/$organizationId/settings` 的进入、失效会话、401/403 跳转语义统一由 routes 证明。
+    - 阻塞规则：该项完成前，不得继续增加新的受保护页面入口。
+    - 验收证据：对应 page-flow 覆盖 `route enter / reload / back-forward / expired session`；`AuthenticatedAppFrame` 内不再承载主要登录态分支。Refs: `docs/core/frontend-architecture.md`、`docs/product/identity-and-tenant.md`、`docs/core/testing-strategy.md`、`apps/website/src/app/AuthenticatedAppFrame.tsx`、`apps/website/src/routes/route-tree.tsx`、`apps/website/src/pages/auth/AuthPage.tsx`
+  - [ ] 执行 TODO：把 `apps/website/src/pages/auth/AuthPage.tsx` 当前承担的 login/register mutation 编排、transport error 解析与成功跳转逻辑下沉到 `features/auth`。
+    - 当前对象：`apps/website/src/pages/auth/AuthPage.tsx`、`apps/website/src/features/auth/AuthForm.tsx`、`apps/website/src/shared/query/web-shell.ts`
+    - 目标状态：页面层只保留路由 mode、布局和 feature 装配；不得继续让 page 直接感知 `WebApiError` 或底层 transport error shape；auth feature 统一输出页面安全的错误文案与成功回调。
+    - 阻塞规则：该项完成前，不得继续在 page 层新增 auth transport 细节或重复错误映射逻辑。
+    - 验收证据：同步更新 auth feature test 与 page-flow test，证明错误文案、成功跳转和 session bootstrap 行为仍成立。Refs: `docs/core/frontend-architecture.md`、`docs/product/identity-and-tenant.md`、`docs/core/testing-strategy.md`、`apps/website/src/pages/auth/AuthPage.tsx`、`apps/website/src/features/auth/AuthForm.tsx`、`apps/website/src/shared/query/web-shell.ts`
   - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
   - [x] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。已完成首批对象（2026-03-21）：`apps/backend/internal/membership/domain/workspace_member.go` 删除 `WorkspaceMemberStateActive` 内部 alias；`apps/backend/internal/catalog/application/service.go` 删除 `AddProjectMember`、`CanViewProject` duplicate helper，统一收口到 `GrantProjectMember` 与 `CanAccessProject`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
@@ -76,13 +92,11 @@
   - [x] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路
-  - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
-  - [x] `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架落地
-  - [x] `vp test`、`vp check`、`go test ./apps/backend/...` 当前可通过
+  - [x] 基线已落地：`apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts`
+  - [x] 初始合同骨架已落地：`opentoggl-web` / `opentoggl-import` / `opentoggl-admin`
+  - [x] 根级验证入口当前可工作：`vp test`、`vp check`、`go test ./apps/backend/...`
 - [x] 本地开发基线
-  - [x] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
-  - [x] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
-  - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增源码开发入口统一收口到 root toolchain 或正式 CLI
+  - [x] 本地开发已收口到仓库根目录源码启动链路与根级 env；不再接受根级 `scripts/*.sh` 作为默认开发入口
 - [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
   - 状态回退说明（2026-03-21，改回人：Codex）
   - 改回原因：本波次父级退出标准与当前仓库已记录的结构漂移清单存在直接冲突，继续标记为已完成会掩盖“正式事实来源未完全接管 transport/runtime”的现状。
@@ -103,54 +117,22 @@
   - 未通过验收：`docs/plan/2026-03-20-opentoggl-full-implementation-plan.md` 的 Wave 1.5 退出标准仍要求 `packages/web-ui` 形成可复用应用级 UI 基线、loading/error/empty/success notice 进入共享 UI 基线，以及 `shell/profile/settings` 提交截图/证据；当前仓库仍仅有极薄 `AppPanel/AppButton/theme` 封装，且计划证据表中明确写有 shell/profile/settings 截图证据缺失。
   - [x] 执行 TODO：共享 app shell、`profile`、`settings` 按已引用的 PRD/Figma 节点完成正式页面骨架对齐，不再保留开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事。Refs: `docs/product/identity-and-tenant.md`、`docs/product/tracking.md`、`docs/core/frontend-architecture.md`
   - [x] 执行 TODO：为 `shell`、`profile`、`settings` 建立并提交 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果。Refs: `docs/core/testing-strategy.md`、`docs/core/frontend-architecture.md`
-    - 当前提交证据（2026-03-21）：
-
-      | Surface    | PRD / Figma                                                                                | 实现页面                                                                                                                                                                                                                                                                  | Page flow / E2E                                                                                                                                                                                          | 截图 / 证据状态                                                                                                                                                           |
-      | ---------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-      | `shell`    | PRD: `docs/product/tracking.md` 的 `Shared App Shell`。Figma: `left nav`，node `8:2829`。  | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/workspaces/$workspaceId`）。壳层：`apps/website/src/app/AppShell.tsx`。落地页：`apps/website/src/pages/shell/WorkspaceOverviewPage.tsx`。                                                                           | Page flow: `apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx`。E2E: `apps/website/e2e/app-shell.spec.ts`。Real-runtime E2E: `apps/website/e2e/app-shell.real-runtime.spec.ts`。 | 未找到已提交的 shell 截图证据。仓库内 `toggl_screenshots/` 仅有 timer/project/reports 截图；未发现 shell 对应截图、`test-results`、`playwright-report` 或 docs 证据文件。 |
-      | `profile`  | PRD: `docs/product/identity-and-tenant.md` `Profile`。Figma: `profile`，node `10:14814`。  | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/profile`）。页面：`apps/website/src/pages/profile/ProfilePage.tsx`。                                                                                                                                                | Page flow: `apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx`。E2E: 未在 `apps/website/e2e` 下找到 `profile` 专项 Playwright 用例。                                                   | `docs/product/identity-and-tenant.md` 已注明 “当前没有对应截图，先以 Figma 为主参考”。仓库内也未找到已提交的 profile 截图或证据工件。                                     |
-      | `settings` | PRD: `docs/product/identity-and-tenant.md` `Settings`。Figma: `settings`，node `11:3680`。 | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/workspaces/$workspaceId/settings`、`/organizations/$organizationId/settings`）。页面：`apps/website/src/pages/settings/WorkspaceSettingsPage.tsx`、`apps/website/src/pages/settings/OrganizationSettingsPage.tsx`。 | Page flow: `apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx`。E2E: 未在 `apps/website/e2e` 下找到 `settings` 专项 Playwright 用例。                                                | `docs/product/identity-and-tenant.md` 已注明 “当前没有对应截图，先以 Figma 为主参考”。仓库内也未找到已提交的 settings 截图或证据工件。                                    |
-
+    - 当前证据摘要（2026-03-21）：
+      - `shell`：已有 page flow、E2E、real-runtime E2E；截图证据仍缺
+      - `profile`：已有 page flow；独立 E2E 与截图证据仍缺
+      - `settings`：已有 page flow；独立 E2E 与截图证据仍缺
   - [x] 执行 TODO：为 Wave 2 将要扩张的 `project`、`client`、成员/权限相关页面补齐 `PRD/Figma 或 fallback 骨架来源` 清单，禁止继续以 placeholder 页面扩张功能。Refs: `docs/core/frontend-architecture.md`、`docs/testing/bdd-user-stories.md`
-    - Wave 2 来源清单（仅以下来源可作为页面扩张依据；`apps/website/src/pages/{projects,clients,members,permission-config,groups,tasks,tags}` 及其 page-flow 测试只用于现状盘点，不构成新增设计来源）
-      - `project`（`apps/website/src/pages/projects/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`project list`，node `10:20028`；fallback=`无`，已有专属 node，禁止退回 placeholder 骨架。
-      - `client`（`apps/website/src/pages/clients/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`client`，node `12:3281`；fallback=`docs/product/tracking.md` 已明示“过滤栏、表格骨架、批量操作和详情入口直接参考 project page 结构”。
-      - `tasks`（`apps/website/src/pages/tasks/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Web 要求` 中“项目列表、详情、成员管理、任务管理、模板视图”；Figma=`无已验证专属 node`；fallback=`project list`，node `10:20028`，仅可作为 project 内 task management 入口/骨架来源，不得另起 placeholder 页面族。
-      - `tags`（`apps/website/src/pages/tags/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`无已验证专属 node`；fallback=`docs/product/tracking.md` 已明示使用 `project page` 骨架，node `10:20028`。
-      - `members`（`apps/website/src/pages/members/*`）：PRD=`docs/product/membership-and-access.md` 的 `生命周期与权限`、`Product Rules`、`Web 要求` 中“组织成员页 / 工作区成员页 / 邀请状态页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，成员页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
-      - `permission-config`（`apps/website/src/pages/permission-config/*`）：PRD=`docs/product/membership-and-access.md` 的 `生命周期与权限`、`Product Rules`、`Web 要求` 中“权限配置页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，权限配置页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
-      - `groups`（`apps/website/src/pages/groups/*`）：PRD=`docs/product/membership-and-access.md` 的 `对象范围`（`Group`、`GroupMember`）、`Web 要求` 中“组管理页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，组管理页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
+    - Wave 2 来源摘要：
+      - `project`、`client`：已有 PRD/Figma 来源，可直接作为正式页面输入
+      - `tasks`、`tags`：以 `project page` 为 fallback 骨架，不得另起 placeholder 页面族
+      - `members`、`permission-config`、`groups`：仅允许复用 `left nav` 共享壳层；主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked
   - [x] 执行 TODO：从正式页面中移除 `placeholder slice`、`contract-backed shell`、`Wave x slice` 等完成口径，未完成页面必须显式标记为过渡态并写明退出条件。Refs: `docs/core/frontend-architecture.md`
   - [x] 执行 TODO：梳理当前页面层是否直接请求底层 API、直接消费 raw DTO 或绕过 `feature/entity` 分层；对已发现越权点建立整改清单，并在继续扩张页面前优先收口。Refs: `docs/core/frontend-architecture.md`、`docs/core/codebase-structure.md`
-    - 当前已发现越权点（2026-03-21）：
-      - `apps/website/src/pages/projects/ProjectsPage.tsx`
-      - 表现：页面层直接 `import { webRequest } ...`、直接消费 `ProjectMembersEnvelopeDto`、并在 page 内用 `useQueries(...)` 请求 project members
-      - 风险：page 直接触底 transport / raw DTO，绕过 `feature -> entity/shared` 分层，后续继续扩张项目页会放大耦合
-      - 优先整改方向：把 project members 读取收口到 `feature` 或 `entity` 级查询封装，页面只消费整理后的 view model
-      - `apps/website/src/pages/permission-config/PermissionConfigPage.tsx`
-      - 表现：页面层直接持有 `useForm`、`useEffect(reset)`，并在 page 内完成 `only_admins_*` / `limit_public_*` 原始 DTO 字段到表单值的双向映射后直接提交 mutation
-      - 风险：页面承担 DTO adapter、提交编排与保存反馈，`feature` / `shared/forms` 缺位，后续权限面扩张会继续把 raw contract 细节堆进 page
-      - 优先整改方向：补 `shared/forms/permission-config` 与 `features/permission-config/*`，把 schema、adapter、submit/status 统一下沉
-      - `apps/website/src/pages/members/WorkspaceMembersPage.tsx`
-      - 表现：页面层自己持有 invite 表单 state、直接调用 `inviteMutation.mutateAsync(...)`，并直接渲染 `member.role`、`member.workspace_id` 等合同字段
-      - 风险：成员邀请动作流和成员展示语义都停留在 page，`feature` 与 `entities/member` 缺位
-      - 优先整改方向：抽离 `invite-workspace-member` feature，并补 `entities/member` 的 row / badge / view model
-      - `apps/website/src/pages/clients/ClientsPage.tsx`、`apps/website/src/pages/groups/GroupsPage.tsx`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/pages/tags/TagsPage.tsx`
-      - 表现：这些页面都在 page 内持有 create 表单 state、直接 `mutateAsync(...)`、直接渲染 `active` / `workspace_id` 等原始列表字段
-      - 风险：catalog / membership 占位页虽然没有直接 `fetch`，但已经绕过 `feature` 与 `entity`，继续扩张会把创建流程、状态文案和 DTO 展示规则复制到每个 page
-      - 优先整改方向：分别抽出 `create-client`、`create-group`、`create-task`、`create-tag` feature，并补 `entities/{client,group,task,tag}` 展示层
-      - `apps/website/src/pages/profile/ProfilePage.tsx`、`apps/website/src/pages/settings/WorkspaceSettingsPage.tsx`、`apps/website/src/pages/settings/OrganizationSettingsPage.tsx`
-      - 表现：未发现直接 `fetch` / `webRequest`，但 page 仍直接持有 mutation、成功状态文案和提交 orchestration
-      - 风险：页面继续承担动作流，feature 只剩“表单壳”，一旦继续追加保存错误恢复、toast、乐观更新，会继续把业务状态机推回 page
-      - 优先整改方向：把保存流程和反馈继续下沉到对应 feature，page 只保留 query 装配和布局拼装
-      - `apps/website/src/pages/auth/AuthPage.tsx`
-      - 表现：未发现直接 `fetch` / `webRequest`，但 page 直接依赖 `WebApiError` 做错误解析，并直接承担 login/register mutation 的错误恢复与跳转编排
-      - 风险：page 直接感知底层 transport error 形状，后续 auth 错误语义变化会把 transport 细节继续泄漏到 page
-      - 优先整改方向：把错误映射与提交状态下沉到 auth feature，对 page 只暴露页面安全的错误文案和成功回调
-      - `apps/website/src/pages/shell/WorkspaceOverviewPage.tsx`、`apps/website/src/pages/shell/WorkspaceReportsPage.tsx`
-      - 表现：本轮未发现直接底层 API 调用、raw DTO adapter 或显式绕过 `feature/entity` 的写路径
-      - 备注：暂记为 `none found yet`，保持只读装配页
-      - 收口优先级：先修 `ProjectsPage` 与 `PermissionConfigPage` 两个 P0 越权点，再统一抽离 members / catalog 页面族的 feature 与 entity；该批问题未收口前，不继续扩张 `project/client/task/tag/group/member/permission-config` 页面能力
+    - 当前审计摘要（2026-03-21）：
+      - P0 越权点：`ProjectsPage`、`PermissionConfigPage`
+      - 第二优先级：`WorkspaceMembersPage` 与 `clients/groups/tasks/tags` 页面族的 create flow / raw DTO 展示仍停留在 page
+      - 持续治理方向：`profile/settings/auth` 继续把 mutation、错误反馈与提交流程下沉到 feature；`WorkspaceOverviewPage`、`WorkspaceReportsPage` 暂记 `none found yet`
+      - 执行规则：先修 `ProjectsPage` 与 `PermissionConfigPage`，再统一抽离 members / catalog 页面族的 feature 与 entity；该批问题未收口前，不继续扩张 `project/client/task/tag/group/member/permission-config` 页面能力
   - [x] 执行 TODO：梳理当前 `transport/http/*` 中仍承担业务状态、伪仓储、手写 DTO / route / bind 的过渡实现，建立“OpenAPI/模块化收口”整改清单，并禁止继续在 fake runtime 上叠加新能力。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
     - 当前已确认的过渡实现与整改清单（2026-03-21）：
       - `apps/backend/internal/http/wave1_web_handlers.go`
@@ -217,45 +199,11 @@
       - 下一具体工作项：把当前 gate 拆成 `backend-env-and-startup`、`backend-runtime-observability`、`contract-boundary-repair` 三条 stream 并行推进；其中 env/startup、request log/readiness、generated boundary 分别独立验收，最后再汇合到单一 release-readiness gate
   - [x] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
-  - [x] 执行 TODO：本地开发与文档启动命令统一收口为根目录 `air`，不再使用 `go run ./apps/backend` 或 `go run ./apps/api/cmd/api` 作为日常本地开发入口。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
-  - [x] 执行 TODO：补齐根级 `.air.toml` 并把其定义为后端热重载唯一真相源；其 build/run target 必须指向 `./apps/backend`，且不得在 `apps/backend` 或 `scripts/` 下新增平行 dev runtime 包装。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
-  - [x] 执行 TODO：同步修正文档、README、样例命令和 smoke test，避免继续出现 `apps/api`、`backend/internal/*`、`website + api` 双运行时表述。Refs: `README.md`、`docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：修正根 `package.json` 的 `dev:api` 等旧命令引用，确保根工具链不再指向 `apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
-  - [x] 执行 TODO：处理遗留 `apps/api` 目录，明确哪些测试/脚本迁移到 `apps/backend`，哪些删除，禁止长期并存两个后端应用目录。Refs: `docs/core/codebase-structure.md`、`docs/core/testing-strategy.md`
-  - [x] 执行 TODO：将 `apps/api/tests/compat`、`apps/api/tests/golden`、`apps/api/tests/openapi` 收口到与 `apps/backend` 一致的位置，避免测试资产继续绑定旧目录。Refs: `docs/core/testing-strategy.md`、`docs/core/backend-architecture.md`
-  - [x] 执行 TODO：评估 `apps/api/package.json`、`apps/api/scripts/generate-openapi-test-artifacts.mjs`、`apps/api/src/testing/*` 的归属，迁移到 `apps/backend` 或共享工具目录，避免旧应用壳残留。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
-  - [x] 执行 TODO：修复 `apps/backend` 作为 JS/Vitest 工具入口后的测试启动问题，确保目录收口后 `vp test run` 不因 toolchain/config 漂移失效。Refs: `docs/core/testing-strategy.md`、`docs/core/codebase-structure.md`
-  - [x] 执行 TODO：收口 `pnpm-lock.yaml` 与 workspace 元数据，移除旧 `apps/api` workspace 残留，确保安装链路不再提示 broken lockfile 或旧应用目录记录。Refs: `docs/core/codebase-structure.md`
-  - [x] 执行 TODO：梳理当前 `docker-compose.yml`、`docker/api.Dockerfile`、`docker/website.Dockerfile`、`docker/nginx/website.conf` 的职责，标记哪些保留、哪些删除、哪些迁移。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
-    - 盘点结论（2026-03-21，基于当前仓库实现与目标架构对照）：
-      - `docker-compose.yml`：`迁移（migrate）`
-      - 原因：当前承担 `api + website` 双运行时编排；应迁移为目标态 `opentoggl + postgres + redis` 三服务编排，保留 Postgres/Redis 职责并重写应用服务定义、端口与健康检查口径。
-      - `docker/api.Dockerfile`：`迁移（migrate）`
-      - 原因：当前仅构建/运行 API 二进制且入口仍指向旧 `apps/api/cmd/api`；应迁移为单镜像发布 Dockerfile（或重命名为与 `apps/backend` 一致语义），并纳入前端构建产物嵌入链路。
-      - `docker/website.Dockerfile`：`删除（delete）`
-      - 原因：定义独立前端 + Nginx runtime，与“单 Go 运行时提供 Web + API”目标形态冲突；最多仅允许过渡期存在。
-      - `docker/nginx/website.conf`：`删除（delete）`
-      - 原因：依赖独立 Nginx/website 容器并反向代理 `api:8080`，属于双运行时实现；目标态由 Go 进程直接提供 SPA 与 `/web/v1/*`。
-      - 过渡态约束：`docker/website.Dockerfile` 与 `docker/nginx/website.conf` 仅可视为 `transitional-only` 资产，不得继续作为 self-hosted 目标发布方案。
-  - [x] 执行 TODO：移除根级 shell 验证脚本（如 self-hosted smoke 验证脚本），避免继续依赖 `scripts/*.sh`；self-hosted 交付链路统一直接收口为 `docker compose` 与显式运行时校验命令，而不是再包装为 root toolchain 或正式 CLI。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 将当前 self-hosted 实现收口到单应用镜像，移除独立 `website` / Nginx 运行时依赖。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [x] TODO: 删除与目标形态冲突的 `docker/website.Dockerfile`、Nginx 配置与 compose service，或将其降级为仅调试/过渡用途并明确标注。Refs: `docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：删除 `docker/website.Dockerfile` 与 `docker/nginx/website.conf`，若短期不能删则必须改名或在文档中明确标注为过渡态，禁止继续作为目标发布方案。Refs: `docs/self-hosting/docker-compose.md`
-  - [x] 生产构建可生成稳定单镜像，而不是依赖开发态启动。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [x] TODO: `apps/website` 产物构建与 `go:embed` 打包链路正式化，避免发布态重复维护前端容器。Refs: `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`
-  - [x] 执行 TODO：在 `apps/website` 产物构建完成后，由 `apps/backend` 构建链路把前端静态资源复制到可 `go:embed` 的目录，并保证本地开发链路不依赖该步骤。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`
-  - [x] TODO: 后端补齐 SPA 静态资源服务、history fallback 和与 `/web/v1/*` 共存的路由规则。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：在 Go HTTP 入口实现静态资源服务、SPA history fallback、根路径 `/` 与静态资源缓存策略，同时保持 `/web/v1/*`、`/healthz`、`/readyz` 路由不回退到前端。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：新增或收口单镜像 `Dockerfile`，镜像内只运行一个 `opentoggl` 进程，不再要求 Nginx sidecar 或独立 website runtime。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [x] `docker compose` 自托管启动链路收口为 `opentoggl + postgres + redis`。Refs: `docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：重写 `docker-compose.yml`，删除 `website` service，保留 `opentoggl + postgres + redis`，并更新 healthcheck、端口、env 与 volume 说明。Refs: `docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：处理当前真实偏移中的 `docker/api.Dockerfile` 命名与职责问题，决定是迁移为 `docker/backend.Dockerfile` 还是收口为单一发布 Dockerfile，避免目录/镜像语义继续停留在旧 `api` 命名。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [x] 执行 TODO：决定是否保留 `dev:api` 作为兼容别名；若保留需明确过渡期限，若不保留则同步删除相关旧别名文档与命令。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`
-  - [x] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 已完成收口摘要：后端目录从 `apps/api` 迁移到 `apps/backend`，本地源码启动命令统一为根目录 `air`，根级 `.air.toml` 成为唯一热重载真相源；相关文档、README、样例命令、workspace 元数据、测试资产与旧别名已同步收口。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
+  - [x] 已完成 self-hosted 摘要：目标形态已收口为单 Go 应用镜像，内嵌前端产物并同时提供 Web UI 与 API；`website` / Nginx 双运行时资产已删除，`docker compose` 已收口为 `opentoggl + postgres + redis`，SPA 静态资源服务、history fallback、单镜像 `Dockerfile` 与构建嵌入链路已建立。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
   - [ ] 执行 TODO：为 `apps/backend/internal/http` 补齐默认 request log middleware，至少记录 method、path、status、duration 与 request id / trace correlation 字段中的可用子集。该项独立属于 `backend-runtime-observability` stream，未完成前不得宣称后端 runtime 达到“可工作”基线。Refs: `docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
   - [ ] 执行 TODO：为后端启动成功、依赖失败与 readiness 失败补齐默认诊断日志；该项独立属于 `backend-runtime-observability` stream，不再与 smoke test 打包成单一宽泛 TODO。Refs: `docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
-  - [ ] 执行 TODO：补齐数据库迁移、首次管理员初始化、默认配置注入的正式流程；该流程必须可被新环境重复执行，不允许依赖手工补数据库或临时 shell 步骤。Refs: `docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`、`docs/core/backend-architecture.md`
+  - [ ] 执行 TODO：补齐以 `pgschema` 为唯一 PostgreSQL schema 管理路径的正式流程，包括 desired-state schema、`plan/apply` 工作流、首次管理员初始化、默认配置注入；该流程必须可被新环境重复执行，不允许依赖手工补数据库或临时 shell 步骤。Refs: `docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：把 `/readyz` 从静态健康快照收口为真实运行时检查，至少覆盖数据库可达、Redis 可达、必要配置已加载；`/healthz` 可保持轻量，但不得再与 readiness 共享同一完成口径。Refs: `docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`
   - [ ] 执行 TODO：固定最小 smoke test，至少覆盖容器启动、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`，并要求 smoke test 显式区分“进程已启动”和“依赖已就绪”。startup log、request log 与 readiness/依赖失败诊断日志已拆到独立 TODO，不再作为这个 smoke TODO 的隐含子项。Refs: `docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：补齐单镜像发布链路验证，至少覆盖镜像构建、容器启动、数据库迁移/初始化完成、首页可达、SPA 路由可达、`/web/v1/session`、`/healthz`、`/readyz`。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
@@ -661,6 +609,9 @@ apps/website/src/
   - organization / workspace 管理页
   - workspace logo / avatar 管理入口
   - left nav / workspace switcher / session bootstrap
+  - `shell / profile / settings` 的 Figma 主结构直接落地，不允许继续以 placeholder 信息架构或临时卡片堆叠形态扩张
+  - `packages/web-ui` 的最小共享 UI 基线前置到本波次：至少完成 page shell、section header、form field shell、notice/error/empty/loading state、nav item、list/table shell
+  - session/auth/url-state 的共享前端结构必须与上述正式页面同步收口，不允许等到后续波次再统一
 
 **推荐并行 streams**
 
@@ -681,6 +632,8 @@ apps/website/src/
 - 停用用户会被阻止继续登录和继续写业务数据
 - 停用中的 running timer 自动停止语义有测试覆盖
 - feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许“默认全开占位实现”
+- 共享 app shell、`profile`、`settings` 已完成 Figma 主结构与共享状态组件基线收口，不再依赖 placeholder 信息架构、临时 hero 文案或卡片堆叠式过渡页面
+- `packages/web-ui` 已具备支撑 Wave 2 页面扩张的最小共享 UI 基线，而不是继续由各页面临时拼接 loading/error/empty/form/list/nav 表达
 - Wave 1 范围内的 BDD 故事已映射到 page flow / e2e / contract / integration
   - 当前 Wave 1 覆盖映射（2026-03-21）：
     - 登录 / 注册 / 会话引导
@@ -707,30 +660,31 @@ apps/website/src/
       - Domain / integration：`apps/backend/internal/identity/domain/user_test.go`、`apps/backend/internal/identity/application/service_integration_test.go`
       - Runtime regression：`apps/backend/internal/bootstrap/wave1_web_runtime_test.go`
 - self-hosted `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
-- `profile`、`settings`、共享 app shell 的正式 UI/Figma 对齐在 Wave 1.5 收口
+- `shell`、`profile`、`settings` 的剩余 parity polish、截图/证据提交与跨页面推广工作可在 Wave 1.5 继续补齐，但 Wave 1 不得再把共享 UI 基线、核心信息架构和正式 Figma 主结构留作后续尾项
 
-### Wave 1.5: UI / Figma 对齐修复
+### Wave 1.5: UI / Figma Parity Polish 与证据收口
 
 **目标**
 
-在继续扩张 Wave 2 页面族之前，先收口已经出现的 Web UI 漂移，确保共享应用壳、`profile`、`settings` 和后续会复用的页面基线真正按 PRD/Figma 落地，而不是继续建立在占位式页面骨架之上。
+在继续扩张 Wave 2 页面族之前，收口 Wave 1 已完成正式基线页面的剩余 parity 细节、截图/测试证据和共享 UI 推广工作，确保后续页面族建立在已经统一的结构和视觉基线之上，而不是继续一边扩张一边发散。
+
+说明：Wave 1.5 不是用来补做本该在 Wave 1 完成的共享 UI 基线、核心信息架构或 `shell/profile/settings` 主结构；这些必须前置到 Wave 1。Wave 1.5 只负责 parity polish、证据提交和对 Wave 2 页面族的基线推广。
 
 **范围**
 
 - 共享 app shell
   - 以 `docs/product/tracking.md` 中的 Figma `left nav` 节点 `8:2829` 为输入
-  - 收口 left nav、workspace switcher、profile/admin 入口、workspace 上下文区、loading/error/empty 状态
-  - 删除开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事
+  - 补齐 left nav、workspace switcher、profile/admin 入口、workspace 上下文区在真实状态下的 parity 细节与视觉证据
+  - 清除 Wave 1 收口后残留的开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事
 - `profile`
   - 以 `docs/product/identity-and-tenant.md` 中的 Figma `profile` 节点 `10:14814` 为输入
-  - 先对齐页面信息架构、主次区域、账户级状态区、偏好区、token/security 入口，再补细节字段
+  - 在已完成正式信息架构的前提下，补齐账户级状态区、偏好区、token/security 入口的 parity 细节与证据
 - `settings`
   - 以 `docs/product/identity-and-tenant.md` 中的 Figma `settings` 节点 `11:3680` 为输入
-  - 先对齐 workspace / organization 设置页面的区域切分、导航关系、branding 入口和正式设置骨架
+  - 在已完成正式页面骨架的前提下，补齐 workspace / organization 设置页面的区域细节、导航关系、branding 入口 parity 与证据
 - `packages/web-ui`
-  - 从当前最小 theme/panel/button 基线扩到正式共享 UI 基线
-  - 至少补齐 page shell、section header、form field shell、notice/empty/error/loading state、nav item、list/table shell
-  - 明确 `tailwindcss@4` 与 `baseui/styletron` 的使用边界，避免页面各写一套视觉语言
+  - 把 Wave 1 已建立的共享 UI 基线推广到 Wave 2 将要使用的页面族与状态面
+  - 继续收口 token、spacing、state presentation 与 `tailwindcss@4` / `baseui/styletron` 边界，避免后续页面各写一套视觉语言
 - Figma 对齐证据
   - 为 `shell`、`profile`、`settings` 建立 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果
   - 对 `project/client/tag` 与成员/权限相关页面补“当前 Figma/fallback 骨架来源”清单，禁止继续以 placeholder 页面扩张功能
@@ -749,10 +703,9 @@ apps/website/src/
 
 **退出标准**
 
-- 共享 app shell 的信息架构、导航关系和状态区域与 Figma `left nav` 语义一致，不再保留开发期说明文案
-- `profile` 与 `settings` 页面已按各自 Figma 节点完成正式页面骨架对齐，而不是卡片堆叠式占位表单
-- `packages/web-ui` 已形成可复用的应用级 UI 基线，而不是仅有 theme/panel/button 的极薄封装
-- loading / error / empty / success notice 等关键状态已统一进入共享 UI 基线，不再由各页面临时拼接
+- Wave 1 已建立的共享 app shell、`profile`、`settings` 主结构与共享状态表达已完成 parity polish，不再残留开发期说明文案或临时过渡态
+- `packages/web-ui` 已从 Wave 1 的最小正式基线推广为可支撑 Wave 2 页面族的统一应用级 UI 基线
+- loading / error / empty / success notice 等关键状态不仅已统一进入共享 UI 基线，而且已在 Wave 2 将要扩张的页面族上具备复用落点
 - `shell`、`profile`、`settings` 已提交 `PRD -> Figma 节点 -> 实现页面 -> 测试 -> 截图/证据` 对照结果
 - Wave 2 将要扩张的正式页面已补齐各自的 Figma 引用或 fallback 骨架来源，未再保留“placeholder slice”作为完成依据
 
@@ -1083,11 +1036,13 @@ apps/website/src/
 
 **范围**
 
-- 全局 URL state / query state / session state 一致性清理
+- 全局 URL state / query state / session state 一致性复核与剩余缺口清理
 - 共享 app shell、navigation、branding、feature gating 收口
 - OpenAPI、golden、page flow、e2e 的缺口补齐
 - 性能预算与全量测试预算压缩
 - 文档、fixtures、seed、最低发布门槛复核
+
+说明：凡已在 P0、Wave 1 或更早波次识别出的结构性 state 问题，应在对应前置波次完成主要整改；Wave 10 只负责最终跨产品面复核、补漏与统一口径，不得把已知高优先级结构漂移推迟到本波次再处理。
 
 **推荐并行 streams**
 

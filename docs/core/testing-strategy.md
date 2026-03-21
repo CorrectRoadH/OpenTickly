@@ -59,6 +59,7 @@
 - OpenAPI / schema / contract test 通过，但 real-runtime page flow 或 e2e 失败
 - 单测覆盖了 mapper / formatter / hook，但对应用户故事没有 page flow 或 e2e 支撑
 - mock server 下流程通过，但真实路由、真实后端、真实浏览器路径没有验证
+- `pgschema plan` 没跑、schema apply 没验证，却只靠 application/unit 测试宣称数据库改造完成
 - 页面可以提交数据，但没有对应 Figma/fallback 对齐证据，或仍停留在占位页骨架
 - 只证明 endpoint shape 对了，却没有证明用户目标达成
 
@@ -131,6 +132,24 @@
 - 没有用户故事归属的测试，也必须能回答“它在保护什么具体行为”。
 - 不允许写只证明实现细节、却不保护任何外部行为或业务规则的脆弱测试。
 
+## 1.7 基础设施与 schema 工作流验证
+
+infra / bootstrap / schema 管理类改动不要求机械套用 TDD，但必须有直接 runtime 证据。
+
+对 PostgreSQL schema 相关改动，固定验证要求如下：
+
+- desired-state SQL 已更新到仓库内 `pgschema` 真相源
+- `pgschema plan` 已运行并审阅输出
+- `pgschema apply` 已在目标数据库或等价测试库上成功执行
+- 应用在 schema apply 后可以完成启动或 smoke verification
+- `readyz` 在数据库、Redis、schema reconcile、初始化都完成后才返回 ready
+
+不充分证据包括：
+
+- 只改了 schema SQL 文件但没有跑 `pgschema plan/apply`
+- 只验证某个 repository SQL 语句能跑，不验证完整 schema 收口
+- 只跑 config/bootstrap 单元测试，不跑真实数据库启动或 readiness 检查
+
 ## 2. 测试矩阵
 
 | 层级                    | 目标                                       | 位置                                                                | 关注点                         |
@@ -139,6 +158,7 @@
 | Application Integration | 用例、事务、权限、job record               | `apps/backend/internal/<context>/application/*_integration_test.go` | command/query 编排             |
 | Transport Contract      | 公开 API 与错误语义                        | `apps/backend/tests/compat/**`                                      | 路径、字段、状态码、错误映射   |
 | Async Runtime           | projector / delivery / import continuation | `apps/backend/internal/<context>/infra/**/*_job_test.go`            | 幂等、重试、失败恢复           |
+| Schema / Startup Smoke  | `pgschema`、bootstrap、init、readiness     | `apps/backend/internal/bootstrap/**/*` + runtime smoke              | schema apply、初始化、依赖就绪 |
 | Frontend Unit           | formatter、mapper、helper                  | `apps/website/src/**/__tests__/*`                                   | 纯函数与映射                   |
 | Frontend Feature        | 组件交互与 mutation 行为                   | `apps/website/src/features/**/__tests__/*`                          | 提交、错误、状态切换           |
 | Frontend Page Flow      | 页面族与 URL/query 协同                    | `apps/website/src/pages/**/__tests__/*`                             | route、search params、视图切换 |
@@ -183,6 +203,7 @@
 
 - 对应用户故事已有明确映射
 - 关键 domain / integration / contract 覆盖已存在
+- 如果该能力引入了数据库结构变更，`pgschema plan/apply` 与 runtime smoke 证据已存在
 - 对应正式页面族已有 page flow test
 - 至少一条高价值真实流程已有 e2e 或 real-runtime 验证
 - 相关 root-level 检查命令通过，不能依赖“部分子集是绿的”
@@ -190,6 +211,7 @@
 以下情况必须视为阻塞，而不是“后续再补”：
 
 - root `test`、root `check`、关键 smoke 或 real-runtime e2e 失败
+- schema 变更未经过 `pgschema plan` review，或 `pgschema apply` / startup smoke 失败
 - 只有 contract / golden，没有 page flow / e2e
 - 只有 mocked browser flow，没有真实 runtime 验证
 - 测试缺口已知存在，但没有在 stories 清单中被明确记录和降级批准

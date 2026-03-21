@@ -23,12 +23,53 @@ Self-hosted delivery should default to one application image:
 
 `docker compose` health checks use `/readyz` for readiness on the single `opentoggl` service.
 
+## PostgreSQL Schema Management
+
+Self-hosted PostgreSQL schema management is standardized on `pgschema`.
+
+- The repository-managed desired schema is the only PostgreSQL schema source of truth.
+- Self-hosted deployments must not rely on handwritten one-off DDL, ad hoc `psql` sessions, ORM auto-migrate, or a second migration toolchain.
+- The canonical deployment order is: connect database -> `pgschema apply` -> run bootstrap/init guard -> start serving traffic -> report ready on `/readyz`.
+
+`pgschema` command inputs use standard PostgreSQL CLI environment variables:
+
+- `PGHOST`
+- `PGPORT`
+- `PGDATABASE`
+- `PGUSER`
+- `PGPASSWORD`
+- `PGSSLMODE`
+
+Application runtime still uses:
+
+- `PORT`
+- `DATABASE_URL`
+- `REDIS_URL`
+
+These two env surfaces must point at the same PostgreSQL instance.
+
 ## Start
 
 ```bash
 docker compose up -d --build
 docker compose ps
 ```
+
+## Schema Workflow
+
+Schema changes are managed declaratively with `pgschema`:
+
+```bash
+pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
+```
+
+Rules:
+
+- Review `pgschema plan` output before applying schema changes to any shared environment.
+- `docker compose` startup for self-hosted delivery should execute the equivalent of `pgschema apply` before the `opentoggl` runtime is treated as ready.
+- First-admin bootstrap/init runs after schema apply, not before.
+- A fresh environment is not considered bootstrapped until both schema reconcile and initialization complete successfully.
 
 ## Verify
 
@@ -37,6 +78,33 @@ curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 curl -fsSI http://localhost:8080/
 ```
+
+Expected readiness semantics:
+
+- `/healthz` proves the process is alive
+- `/readyz` proves PostgreSQL, Redis, schema reconcile, and required initialization are complete
+- readiness must fail if `pgschema apply` failed or bootstrap/init has not completed
+
+## Upgrade
+
+Canonical self-hosted upgrade flow:
+
+1. Pull the new image and updated repository schema files
+2. Run `pgschema plan` against the target database and review the plan
+3. Run `pgschema apply --auto-approve`
+4. Start or restart the `opentoggl` service
+5. Verify `/readyz`, `/healthz`, and the minimum smoke path
+
+## Rollback
+
+Rollback is driven by repository state, not by handcrafted SQL snippets:
+
+1. Revert the desired schema SQL to the target release state
+2. Regenerate and review the `pgschema plan`
+3. Apply the reviewed rollback plan
+4. Restart the runtime and verify readiness
+
+If the schema change is destructive or non-reversible, document the required backup/restore procedure alongside the release notes.
 
 ## Stop
 

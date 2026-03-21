@@ -124,6 +124,21 @@ export function useRegisterMutation() {
   });
 }
 
+export function useLogoutMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () =>
+      webRequest<void>("/web/v1/auth/logout", {
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.cancelQueries();
+      queryClient.clear();
+    },
+  });
+}
+
 export function useProfileQuery() {
   return useQuery({
     queryFn: () => webRequest<WebCurrentUserProfileDto>("/web/v1/profile"),

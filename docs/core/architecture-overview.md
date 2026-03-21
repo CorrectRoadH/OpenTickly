@@ -25,6 +25,7 @@
 - 前端：`React + Vite+ + Tailwind CSS 4`
 - 后端：`Go`
 - 数据库：`PostgreSQL`
+- PostgreSQL schema 管理：`pgschema`
 - 缓存与短时状态：`Redis`
 - 文件存储：`PostgreSQL Blob`
 - 部署：`Railway` / `Docker Compose`
@@ -35,6 +36,7 @@
 - `Tailwind CSS 4` 是正式前端栈的一部分，不是可选偏好；它负责页面布局、间距、栅格和通用 utility styling。
 - 基于 `baseui` 的组件能力仍保留在前端专题架构中，由 `styletron` 负责其 theme 与 override 运行时。
 - 后端以 Go 实现，首版采用单个 API 进程承载同步请求与必要后台任务，不拆独立 worker。
+- PostgreSQL schema 以 `pgschema` 管理的声明式 desired-state SQL 作为唯一真相源，不再长期并行维护第二套 schema 工作流。
 - 文件存储首版不引入对象存储，统一通过 PostgreSQL Blob 实现附件、导出物和品牌资源存储。
 
 ## 3. 设计原则
@@ -68,6 +70,7 @@
 ### 3.3 单一事务真相源，读写分离按需演进
 
 - 事务写模型以 PostgreSQL 为核心真相源。
+- PostgreSQL 结构定义以仓库内 `pgschema` desired-state SQL 为准；对 live database 的结构收口必须通过 `pgschema plan/apply` 执行。
 - 报表、导出、Webhook、搜索等高读取或异步能力可以通过投影、任务表和缓存解耦。
 - 首版允许从单库起步，但必须保留向独立读模型演进的边界。
 - 源码本地开发默认也遵守同一真相源原则：事务写路径不能以内存 store 或 placeholder runtime 替代 PostgreSQL。
@@ -123,7 +126,7 @@ Application Layer
 └── In-Process Background Jobs
 
 State Layer
-├── PostgreSQL (OLTP + blob store + job records)
+├── PostgreSQL (OLTP + blob store + job records, schema managed by pgschema)
 ├── Redis
 └── Analytics Read Model
 
@@ -228,6 +231,7 @@ Client Request
 
 - 对外响应优先基于事务真相源生成。
 - 公开接口的错误码、校验失败和权限拒绝必须在这里定型。
+- 正式启动链路固定为：建立数据库连接 -> 用 `pgschema` 使 live schema 收口到仓库 desired state -> 执行实例初始化/bootstrap guard -> 再暴露 readiness。
 
 ### 6.2 后台任务路径
 

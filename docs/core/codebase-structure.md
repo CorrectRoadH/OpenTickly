@@ -74,6 +74,7 @@
 - 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的运行时输入。
 - 后端源码启动默认必须通过 env 显式拿到真实 datasource 配置；缺少 datasource env 时必须立即启动失败，不允许回填可工作的默认数据库地址。
 - 后端连接类与监听类 env 使用标准命名：`PORT`、`DATABASE_URL`、`REDIS_URL`。不允许为默认开发/运行时再发明平行命名如 `*_DATABASE_DSN`、`*_REDIS_ADDRESS`、`*_LISTEN_ADDRESS`。
+- PostgreSQL schema 管理固定使用 `pgschema`。这套工作流允许使用标准 PostgreSQL CLI 环境变量 `PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE` 作为 `pgschema` 输入；它们只服务于 schema tooling，不替代应用运行时的 `DATABASE_URL`。
 - `PORT` 只表达监听端口，不承载“绑定哪个 host”的语义；后端运行时监听地址由实现统一绑定到 `0.0.0.0:<PORT>`。
 - 本地开发默认运行路径必须连接真实 PostgreSQL / Redis 等依赖；不允许以内存 store、placeholder runtime、fake 状态或“临时默认值”作为正常源码开发后端。
 - 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
@@ -133,6 +134,7 @@ apps/
       billing/
       importing/
       platform/
+        schema/
 
 packages/
   web-ui/
@@ -144,6 +146,7 @@ packages/
 
 - `apps/website` 是当前 Web 产品应用。
 - `apps/backend` 是 Go 后端应用，`main.go` 是唯一进程入口，`internal/*` 同时承载 bootstrap、组合层与业务模块。
+- `apps/backend/internal/platform/schema/` 是 PostgreSQL desired-state schema 的唯一归属目录，由 `pgschema` 负责 plan/apply，不允许在别处再维护并行 schema 真相源。
 - `packages/` 只放跨应用共享、但不拥有业务流程的代码。
 - 后端业务模块主体位于 `apps/backend/internal/*`，不再额外拆出顶层 `backend/` 目录。
 
@@ -171,6 +174,7 @@ packages/
 - `billing`：plan、subscription、invoice、customer、商业配额
 - `importing`：导入、ID 保留、冲突、审计、重试
 - `platform`：数据库、鉴权、filestore、jobs、可观测性等技术底座
+- `platform/schema`：PostgreSQL schema desired state、blob/job/bootstrap 共享基础表定义，以及与 `pgschema` 对接的 schema 管理边界
 
 模块职责的细化与模板以 [backend-architecture](./backend-architecture.md) 为准。
 
@@ -208,6 +212,7 @@ all modules -> platform
 - 产品真相源：`product/` 文档定义用户可见行为
 - API/UI 强约束源：`openapi/*.json` 与 Figma
 - 数据真相源：事务写模型以 PostgreSQL 为准，报表读模型以 `reports` projection 为准
+- PostgreSQL 结构真相源：以仓库内 `pgschema` desired-state SQL 为准；live database 只是该真相源在某一时刻的落地结果
 
 前端状态也必须有真相源分工：
 
@@ -247,6 +252,7 @@ all modules -> platform
 - 如果是一个新的事务型业务能力，落到对应后端模块的 `application/`
 - 如果是一个新的实体、不变量、值对象，落到对应后端模块的 `domain/`
 - 如果是一个新的数据库/缓存/第三方实现，落到对应后端模块的 `infra/` 或 `platform/`
+- 如果是一个新的 PostgreSQL 表、索引、约束、trigger、RLS policy 或平台共享表定义，先判断 ownership，再通过 `platform/schema/` 汇总进 `pgschema` desired-state SQL，而不是直接改 live database
 - 如果是一个新的 HTTP 入口，只能落到 `transport/http/*` 或 `apps/backend/internal/http` / `apps/backend/internal/web`
 - 如果是一个新的跨产品测试要求，落到 [testing-strategy](./testing-strategy.md) 规定的位置
 
