@@ -99,6 +99,29 @@ func TestWave1WebProfileRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.
 	}
 }
 
+func TestWave1WebWorkspacePermissionsRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+	sessionCookie := mustRegisterWave1Session(t, server)
+
+	request := httptest.NewRequest(
+		http.MethodPatch,
+		"/web/v1/workspaces/1/permissions",
+		strings.NewReader(`{"only_admins_may_create_projects":true}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Cookie", sessionCookie)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected generated workspace permissions boundary to reject missing required fields with 400, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
 	t.Helper()
 

@@ -18,6 +18,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 
 	registerGeneratedWave1WebAuthSessionRoutes(server, newGeneratedWave1WebAuthSessionAdapter(handlers))
 	registerGeneratedWave1WebProfilePreferencesRoutes(server, newGeneratedWave1WebProfilePreferencesAdapter(handlers))
+	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
 
 	server.GET("/web/v1/organizations/:organization_id/settings", func(context echo.Context) error {
 		organizationID, ok := parsePathID(context, "organization_id")
@@ -116,39 +117,6 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 // TODO(wave2-runtime): these routes are outside current Wave 1 OpenAPI scope and
 // remain as temporary runtime placeholders until Wave 2 contracts are finalized.
 func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
-	server.GET("/web/v1/workspaces/:workspace_id/permissions", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.GetWorkspacePermissions(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.PATCH("/web/v1/workspaces/:workspace_id/permissions", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-
-		var request WorkspacePermissionsRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-
-		response := handlers.Tenant.UpdateWorkspacePermissions(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
 	server.GET("/web/v1/workspaces/:workspace_id/members", func(context echo.Context) error {
 		workspaceID, ok := parsePathID(context, "workspace_id")
 		if !ok {
