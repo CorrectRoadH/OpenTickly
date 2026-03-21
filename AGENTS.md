@@ -98,6 +98,16 @@ Signs a file needs splitting:
 2. Document methods with block comments at the top of the method
 3. Use Conventional Commit format
 
+## TDD Policy
+
+Use TDD for behavior changes.
+
+- TDD is required for new product functionality, bug fixes, and behavior changes where the task changes what the software does.
+- TDD must not be used for documentation-only changes, plan-only changes, infra/config/bootstrap/documentation cleanup, mechanical renames, generated-code refreshes, or structural refactors that do not intentionally change behavior.
+- Startup wiring, env loading, bootstrap config parsing, dev-runtime entrypoint changes, readiness plumbing, and similar runtime/infrastructure setup work must not be driven by TDD-style config/unit tests when a direct startup check, smoke run, or targeted runtime verification is the stronger proof.
+- Do not force red-green-refactor onto changes whose purpose is clarifying docs, tightening operational rules, or removing drift in configuration and repository structure.
+- If an infra or structural change also fixes a real bug or changes runtime behavior, treat the behavior-changing part as a bug/feature change and use TDD for that part.
+
 ## Test To Verify Functionality
 
 If you didn't test it, it doesn't work.
@@ -110,6 +120,15 @@ Verify written code by:
 - Checking for lint errors
 - Smoke testing and checking for runtime errors with Playwright
 - Taking screenshots and verifying the UI is as expected
+
+Non-TDD work still requires verification proportional to the change.
+
+- Not requiring TDD does not mean "no verification".
+- Documentation-only changes should be checked for internal consistency and affected reference updates.
+- Infra/config/bootstrap/runtime changes should be verified with the relevant commands, startup checks, readiness checks, smoke checks, or other direct runtime evidence needed to prove the change.
+- Purely mechanical or structural refactors should run the narrowest checks that prove no behavior regressed.
+- Do not add low-signal tests for documentation-only changes just to satisfy a ritual. Add or run tests when they prove behavior, compatibility, or runtime safety.
+- Do not add low-signal unit tests that only restate env mapping, default-value wiring, bootstrap field copying, or other configuration trivia when the real question is whether the process starts correctly against the intended dependencies.
 
 ## Verification Against Docs
 
