@@ -38,11 +38,7 @@ export function ClientsPage(): ReactElement {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page keeps client records visible inside the workspace shell,
-            but the documented client surface still needs its full filter set, batch actions, and
-            dedicated detail flow.
-          </p>
+          <p className="text-sm leading-6 text-slate-600">Client directory</p>
         </div>
         <AppButton type="button">Create client</AppButton>
       </div>
@@ -61,6 +57,9 @@ export function ClientsPage(): ReactElement {
       </form>
 
       <ul className="mt-6 divide-y divide-slate-200" aria-label="Clients list">
+        <li className="py-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
+          Workspace {session.currentWorkspace.id}
+        </li>
         {clients.map((client) => {
           const statusLabel = client.active ? "Active" : "Inactive";
 
@@ -69,11 +68,19 @@ export function ClientsPage(): ReactElement {
               <div>
                 <p className="text-sm font-semibold text-slate-900">{client.name}</p>
                 <p className="text-xs text-slate-600">Client · {statusLabel}</p>
-                <p className="text-[11px] text-slate-500">Workspace {client.workspace_id}</p>
               </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                {statusLabel}
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  aria-label={`Client details for ${client.name}`}
+                  className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                  href={`/workspaces/${session.currentWorkspace.id}/clients/${client.id}`}
+                >
+                  Client details
+                </a>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  {statusLabel}
+                </span>
+              </div>
             </li>
           );
         })}
@@ -81,11 +88,9 @@ export function ClientsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          Transition state. Showing {clients.length} client{clients.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when the page
-          matches the documented client management flow with filters, batch actions, and detail
-          entry points covered by page-flow evidence.
+          Showing {clients.length} clients in workspace {session.currentWorkspace.id}.
         </p>
+        <p className="mt-1">Active: {activeCount}</p>
       </div>
     </AppPanel>
   );

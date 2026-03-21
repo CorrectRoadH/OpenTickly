@@ -10,7 +10,7 @@ import { createClientsFixture, createSessionFixture } from "../../../test/fixtur
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("clients page flow", () => {
-  it("renders clients list and create action in workspace shell", async () => {
+  it("renders client directory list with create action and detail entry links", async () => {
     const clients = createClientsFixture().clients.slice();
     const { calls } = installMockWebApi([
       {
@@ -45,25 +45,31 @@ describe("clients page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Clients" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create client" })).toBeTruthy();
-    expect(
-      screen.getByText(/This page keeps client records visible inside the workspace shell/),
-    ).toBeTruthy();
+    expect(screen.getByText("Client directory")).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
+    expect(screen.queryByText(/Exit when/i)).toBeNull();
 
     const list = screen.getByLabelText("Clients list");
     expect(within(list).getByText("North Ridge Client")).toBeTruthy();
     expect(within(list).getByText("Studio Partner")).toBeTruthy();
     expect(within(list).getByText(/Client · Inactive/)).toBeTruthy();
-    expect(within(list).getAllByText(/Workspace 202/)).not.toHaveLength(0);
-    expect(screen.getByText(/Showing 2 clients for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(within(list).getByText("Workspace 202")).toBeTruthy();
+    expect(screen.getByText("Showing 2 clients in workspace 202.")).toBeTruthy();
+    expect(screen.getByText("Active: 1")).toBeTruthy();
     expect(
-      screen.queryAllByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-            "documented client management flow with filters, batch actions, and detail",
-          )) ??
-        false,
-      ).length,
-    ).toBeGreaterThan(0);
+      within(list)
+        .getByRole("link", {
+          name: "Client details for North Ridge Client",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/clients/501");
+    expect(
+      within(list)
+        .getByRole("link", {
+          name: "Client details for Studio Partner",
+        })
+        .getAttribute("href"),
+    ).toBe("/workspaces/202/clients/502");
 
     fireEvent.change(screen.getByLabelText("Client name"), {
       target: { value: "Launch Partner" },
