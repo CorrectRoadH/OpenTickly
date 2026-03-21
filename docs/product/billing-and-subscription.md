@@ -31,12 +31,12 @@
 ## 产品约束
 
 - 账单与订阅不是可选附属功能，而是当前公开 API 的正式组成部分。
-- 组织级 / 工作区级 subscription 视图、customer、invoice、payment、quota、feature gating 等具体公开行为必须与上游 OpenAPI 和 Figma 兼容。
+- 组织级 / 工作区级 subscription 视图、customer、invoice、payment、quota、feature gating 等具体公开行为必须按引用的 OpenAPI 和 Figma 如实实现。
 
 ## Product Rules
 
 - organization 与 workspace 都可能暴露 subscription 相关公开入口，但 subscription 的业务本体只有一套，不得被实现成两套真相。
-- feature gating 的事实来源由 billing 定义，各业务模块只负责在自己的用例里检查；返回语义和 headers 规则必须与上游 OpenAPI 兼容。
+- feature gating 的事实来源由 billing 定义，各业务模块只负责在自己的用例里检查；返回语义和 headers 规则必须按引用的 OpenAPI 如实实现。
 - 即使 self-hosted 没有官方 SaaS 支付后台，plan / subscription / invoice / customer / quota 的公开对象和状态表达仍然必须存在。
 
 ## Edge Cases

@@ -75,7 +75,7 @@ backend-arch frontend-arch testing-strategy
 
 - `domain-model` 直接决定后端具体应采用什么边界、对象归属、聚合根和不变量。
 - `backend-architecture` 只能把这些约束落成代码结构，不能反向发明或改写领域边界。
-- 如果改动会影响 API 或 UI 的精确兼容细节，再继续下钻到对应 PRD 所引用的 OpenAPI 或 Figma。
+- 如果改动会影响 API 或 UI 的精确定义细节，再继续下钻到对应 PRD 所引用的 OpenAPI 或 Figma。
 
 ## 目录职责
 

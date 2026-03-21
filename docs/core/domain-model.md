@@ -206,7 +206,7 @@ Instance Administration
 
 说明：
 
-- 这一组能力不属于 Toggl 兼容合同。
+- 这一组能力不属于 Toggl 公开合同。
 - 当前代码归属优先落在 `governance`，技术实现由 `platform` 支撑。
 - 这里是领域概念上的实例级子域，不表示当前代码必须单独拆出顶层模块。
 
@@ -294,7 +294,7 @@ Instance Administration
 
 - 已停止的 `TimeEntry` 不能再次停止
 - running / stopped 状态必须一致
-- duration 与 start / stop 的兼容语义必须一致
+- duration 与 start / stop 的公开定义语义必须一致
 - stopped 状态下 `stop >= start`
 - running 状态下 `stop = null`
 - user / workspace 引用不能为空
@@ -480,7 +480,7 @@ create table time_entries (
 
 - `organization_id` 与 `workspace_id` 同时保留，有利于多租户隔离与 billing/reporting。
 - `stop_at = null` 可表示 running timer。
-- `duration_seconds` 不能完全由 `start/stop` 推导时，也允许作为兼容字段保留。
+- `duration_seconds` 不能完全由 `start/stop` 推导时，也允许作为公开合同字段保留。
 
 ### 5.3 推荐的 `time_entry_tags` 表
 
@@ -637,4 +637,4 @@ create table time_entry_tags (
 - `reports` 是独立读模型
 - `webhooks` 是独立运行时模型
 - `time_entries` 是核心事实对象
-- 外部兼容合同优先于内部实现便利
+- 外部公开合同优先于内部实现便利

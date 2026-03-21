@@ -389,26 +389,26 @@ packages/
 建议职责：
 
 - `apps/website`：当前 React Web UI 主应用；在正式重构边界前，它是前端目录事实来源。
-- `apps/backend`：Go 后端应用入口，承载兼容 API、Web 管理接口与进程内后台任务。
+- `apps/backend`：Go 后端应用入口，承载由 `toggl-*` OpenAPI 驱动的外部公开 API、Web 管理接口与进程内后台任务。
 - `packages/web-ui`：前端可复用 UI、hooks、前端工具函数。
-- `packages/shared-contracts`：少量前后端共享的非兼容层公共类型。
+- `packages/shared-contracts`：少量前后端共享的非外部公开 API 层公共类型。
 - `apps/backend/internal/<context>`：后端按业务上下文拆分的模块代码。
 - `apps/backend/internal/platform`：数据库、认证、缓存、文件存储、后台任务、可观测性等共享基础设施。
 
 约束：
 
-- 兼容 API 与 Web UI 必须共享同一套领域模型和权限语义。
+- 外部公开 API 与 Web UI 必须共享同一套领域模型和权限语义。
 - 不能让 Web UI 直接绕过应用层写数据库。
 - 不能让后端退化为按技术层平铺的 `controllers/services/repositories` 大目录。
 
 ## 9. API 分层策略
 
-### 9.1 External Compatibility Layer
+### 9.1 External Public API Layer
 
 职责：
 
-- 暴露 Toggl 兼容路径和响应结构
-- 承担兼容鉴权、错误语义、分页和 headers
+- 暴露由 `toggl-*` OpenAPI 定义的外部公开路径和响应结构
+- 承担对应公开鉴权、错误语义、分页和 headers
 
 要求：
 
@@ -431,7 +431,7 @@ packages/
 - 实体
 - 不变量
 - 生命周期约束
-- 兼容语义中需要稳定存在的业务规则
+- 公开定义中需要稳定存在的业务规则
 
 ### 9.4 Infrastructure Layer
 
@@ -551,8 +551,8 @@ packages/
 - `docs/core/backend-architecture.md`：定义后端模块内部结构、组合层与异步运行时规则。
 - `docs/core/testing-strategy.md`：定义测试矩阵、目录与最低发布门槛。
 - `docs/core/domain-model.md`：定义领域对象、上下文、聚合与不变量。
-- `openapi/*.json`：定义 API 兼容强约束输入。
-- Figma：定义 UI 兼容强约束输入。
+- `openapi/*.json`：定义 API 公开合同强约束输入。
+- Figma：定义 UI 公开定义强约束输入。
 - `docs/product/*.md`：补充 OpenAPI 与 Figma 未完整表达的功能细节。
 
 本文档负责把这些文档收束为一份统一的工程实现蓝图。

@@ -119,6 +119,7 @@ packages/
 - search params 必须有 schema，不允许页面自己散着 parse。
 - `routes/` 负责“怎么进入页面”，不负责“页面里怎么工作”。
 - 复杂页面数据拼装不放在 `routes/`，而放到 `pages/` 或 `shared/query/`。
+- 页面、feature、entity、query、adapter、测试文件和 UI 组件命名只允许表达能力、对象、路由语义或共享边界；执行阶段和过渡状态不属于可进入长期实现命名的语义集合。
 
 ### 2.3 `pages/`
 

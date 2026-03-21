@@ -61,7 +61,7 @@
 - 测试分层、目录、覆盖要求：[testing-strategy](./testing-strategy.md)
 
 禁止在 `product/` 文档里发明实现结构。
-禁止在 `openapi/` 之外重复手写 compat API 字段真相。
+禁止在 `openapi/` 之外重复手写外部公开 API 字段真相。
 
 ## 3.2 本地开发入口与根目录约束
 
@@ -88,9 +88,20 @@
 - 如果目录结构、启动命令、self-hosted 交付形态或文档口径仍在漂移，不应继续在其上叠加更多正式功能。
 - 当结构治理与功能开发发生冲突时，先完成结构治理，再继续后续波次功能实现。
 
+## 3.4 命名必须表达长期职责，不得表达执行阶段
+
+- 长期保留的代码命名只允许表达以下内容：职责、产品面、模块边界、实体/动作语义、运行时边界、合同边界。
+- 代码标识符、文件名、目录名、生成产物名、脚本名、测试套件名和公开合同标签，默认都必须落在上述命名集合里。
+- 计划阶段、执行顺序、交付批次、临时状态、过渡状态不属于允许进入长期实现命名的语义集合。
+- 如果某段实现仍是过渡路径，也必须按职责命名；“它现在仍是过渡实现”只能记录在 plan、debt、历史归档或明确注释中，并附退出条件。
+- 生成链路同样遵守该白名单：生成脚本、生成文件、handler interface、adapter、fixture 与测试命名都必须表达能力或合同边界。
+- 只有计划文档、历史归档、迁移说明和显式 debt 记录可以保留阶段术语；这些术语不是正式实现命名的一部分。
+- 反例速查：如果命名里出现 `wave`、`phase`、`milestone`、`slice`、`temporary`、`transition`、`current`、`tracer`、`spike`、`compat` 这类词汇，应默认先怀疑它表达的是执行阶段、模糊迁移边界或过渡状态，而不是长期职责，并要求给出保留理由或直接重命名。
+- 评审时如果发现命名表达的是执行阶段而不是长期职责，应直接视为结构漂移。
+
 ## 3.5 OpenAPI 来源分层
 
-当前已存在的兼容 OpenAPI 来源：
+当前已存在的外部公开 API OpenAPI 来源：
 
 - `toggl-track-api-v9.swagger.json`
 - `toggl-reports-v3.swagger.json`
@@ -104,7 +115,7 @@
 
 规则：
 
-- `toggl-*` 只承载外部兼容承诺
+- `toggl-*` 只承载外部公开 API 定义
 - `opentoggl-web` 承载 Web 前端自有后台接口
 - `opentoggl-import` 承载导入产品面
 - `opentoggl-admin` 承载实例管理与治理能力
@@ -261,7 +272,7 @@ all modules -> platform
 做结构相关 review 时，至少检查：
 
 - 是否把用户可见规则写进了 `product/`，而不是只藏在代码里
-- compat API 是否明确以 `openapi/*.json` 为输入来源
+- 外部公开 API 是否明确以 `openapi/*.json` 为输入来源
 - 是否遵守单向依赖，没有偷穿 `platform` 或跨模块 `infra`
 - 是否把 server state、URL state、local UI state 混在一起
 - 是否让页面直接吞 raw DTO，而没有经过 entity/view model 映射

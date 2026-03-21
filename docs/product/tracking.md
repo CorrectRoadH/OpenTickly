@@ -21,9 +21,9 @@
 
 本文件只补充 OpenAPI 与 Figma 无法完整表达的功能细节。
 
-## API 兼容要求
+## API 要求
 
-- tracking 不仅要提供对应 Web 页面，还必须完整兼容 `Track API v9` 中属于 tracking 产品面的公开接口。
+- tracking 不仅要提供对应 Web 页面，还必须完整实现 `Track API v9` 中属于 tracking 产品面的公开接口。
 - 至少包括：
   - time entries
   - running timer
@@ -36,7 +36,7 @@
   - favorites
   - goals
   - reminders
-- 如果某项能力在产品上被视为 tracking 正式功能，就不能只做 Web，不做兼容 API。
+- 如果某项能力在产品上被视为 tracking 正式功能，就不能只做 Web，不做对应公开 API。
 
 ## Product Rules
 
@@ -47,16 +47,16 @@
 
 ## Time Entries
 
-- 时间记录对象需要完整承载 `workspace_id`、`user_id`、`project_id`、`task_id`、`client_id`、`description`、`billable`、`start`、`stop`、`duration`、`created_with`、`tags` 等兼容语义。
+- 时间记录对象需要完整承载 `workspace_id`、`user_id`、`project_id`、`task_id`、`client_id`、`description`、`billable`、`start`、`stop`、`duration`、`created_with`、`tags` 等公开定义语义。
 - 必须完整支持创建、更新、删除、单条读取、批量读取、批量更新、按时间范围/用户/项目/任务/标签/描述过滤、since 增量同步、停止运行中时间记录等能力。
-- running timer 必须作为兼容产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
-- 时间语义必须兼容 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
+- running timer 必须作为正式产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
+- 时间语义必须按引用的公开定义实现 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
 
 ## Projects / Clients / Tasks / Tags
 
-- 项目对象必须承载 `client_id`、`name`、`active`、`billable`、`private`、`color`、`currency`、`estimated_seconds`、`actual_seconds`、`fixed_fee`、`rate`、`pinned` 等兼容语义。
+- 项目对象必须承载 `client_id`、`name`、`active`、`billable`、`private`、`color`、`currency`、`estimated_seconds`、`actual_seconds`、`fixed_fee`、`rate`、`pinned` 等公开定义语义。
 - 必须完整支持创建、查看、更新、删除、归档/恢复、激活/停用、批量修改、模板、pin/unpin、统计与 periods 等能力。
-- `billable`、`private`、`rate`、`fixed_fee`、`currency`、`estimated_seconds` 等属性必须对时间记录默认行为、报表和盈利分析产生兼容影响。
+- `billable`、`private`、`rate`、`fixed_fee`、`currency`、`estimated_seconds` 等属性必须对时间记录默认行为、报表和盈利分析产生一致影响。
 - 必须完整支持项目与 client、tasks、project users、project groups、time entries、reports 的关联关系。
 
 ## Billable Rate Resolution

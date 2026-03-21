@@ -1,5 +1,11 @@
 # OpenToggl 完整实现计划
 
+> Historical snapshot retained for reference.
+>
+> Active planning entrypoint: [`docs/plan/index.md`](/Users/opentoggl-ci/Code/opentoggl/docs/plan/index.md)
+>
+> This document remains as the original consolidated snapshot from 2026-03-20/2026-03-21. New plan navigation, dependency ordering, and per-collection status now live in the split plan documents under `docs/plan/`.
+
 > **硬约束**
 >
 > 1. 本计划的开发执行必须由 subagent 完成，主 agent 只负责编排、依赖管理、review gate、汇总验收与合并决策。
