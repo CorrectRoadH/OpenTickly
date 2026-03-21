@@ -8,9 +8,6 @@
     "check": "vp check && vp run check -r",
     "test": "vp run test -r",
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
-    "self-hosted:verify": "node tools/self-hosted/cli.mjs verify",
-    "self-hosted:smoke": "node tools/self-hosted/cli.mjs smoke",
-    "self-hosted:up": "node tools/self-hosted/cli.mjs up",
     "dev:website": "vp run website#dev",
     "dev:backend": "go run ./apps/backend",
     "prepare": "vp config"

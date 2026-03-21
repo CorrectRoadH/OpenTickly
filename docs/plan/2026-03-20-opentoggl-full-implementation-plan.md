@@ -39,10 +39,24 @@
 > - `go run ./apps/backend` 只能证明 Go 进程可启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
 
 - [ ] 插队 P0：One-Way 结构治理与规范入口收口
+  - [x] 执行 TODO：删除 `pnpm -> node tools/self-hosted/cli.mjs -> docker compose` 的 self-hosted 包装层，self-hosted 启动与校验统一直接收口为 `docker compose` 与显式 `curl` 命令，不再保留 `self-hosted:*` root scripts。Refs: `AGENTS.md`、`docs/self-hosting/docker-compose.md`、`package.json`
   - [ ] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
   - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
   - [x] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。已完成首批对象（2026-03-21）：`apps/backend/internal/membership/domain/workspace_member.go` 删除 `WorkspaceMemberStateActive` 内部 alias；`apps/backend/internal/catalog/application/service.go` 删除 `AddProjectMember`、`CanViewProject` duplicate helper，统一收口到 `GrantProjectMember` 与 `CanAccessProject`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
-  - [ ] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
+  - [x] 执行 TODO：把 placeholder / transitional runtime 从默认实现路径继续剥离，未完成前必须显式标记为 debt，并写明退出条件与删除条件。当前已知首批对象：`apps/backend/internal/http/wave1_web_routes.go`、`openapi/opentoggl-web.openapi.json`、`apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`。Refs: `AGENTS.md`、`docs/core/frontend-architecture.md`、`docs/core/backend-architecture.md`
+    - 当前 transitional debt（2026-03-21）：
+      - `apps/backend/internal/http/wave1_web_routes.go`
+      - debt：仍包含 `registerWave2PlaceholderRoutes`，默认 runtime 继续暴露 Wave 2 placeholder endpoints
+      - exit condition：对应 `/web/v1/projects`、`/clients`、`/tasks`、`/tags`、`/groups`、`/permissions`、`/members` 等路径全部由 OpenAPI + 模块 transport 注册器接管
+      - delete condition：`registerWave2PlaceholderRoutes` 无剩余调用点，且 project/catalog/membership 页面与 runtime 不再依赖其占位路由
+      - `openapi/opentoggl-web.openapi.json`
+      - debt：仍含 `current placeholder web shell slice` / 过渡性描述，部分路径只覆盖最小临时 slice
+      - exit condition：对应页面达到正式产品面对齐，contract 描述改为正式语义且覆盖 archive/pin/detail/权限等承诺能力
+      - delete condition：所有 placeholder / transition 描述从合同中移除，不再用 placeholder 语义描述正式 path
+      - `apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`
+      - debt：测试仍以 placeholder runtime 为基线，固化假运行时
+      - exit condition：真实模块 integration、generated contract、real-runtime HTTP / e2e 证据覆盖同一条能力链
+      - delete condition：对应 placeholder runtime 路径已删除，且同能力已有正式 runtime 测试替代
   - [ ] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路

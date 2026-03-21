@@ -24,14 +24,16 @@ Self-hosted delivery should default to one application image:
 ## Start
 
 ```bash
-pnpm run self-hosted:up
+docker compose up -d --build
+docker compose ps
 ```
 
 ## Verify
 
 ```bash
-pnpm run self-hosted:verify
-pnpm run self-hosted:smoke
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+curl -fsSI http://localhost:8080/
 ```
 
 ## Stop
