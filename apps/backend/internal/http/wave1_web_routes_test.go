@@ -14,7 +14,10 @@ import (
 )
 
 func TestWave1WebRoutesRegistersProjectDetailEndpoint(t *testing.T) {
-	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), NewWave1WebHandlers())
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
 	sessionCookie := mustRegisterWave1Session(t, server)
 
 	request := httptest.NewRequest(http.MethodGet, "/web/v1/projects/1001", nil)
@@ -39,7 +42,10 @@ func TestWave1WebRoutesRegistersProjectDetailEndpoint(t *testing.T) {
 }
 
 func TestWave1WebRoutesUsesSnakeCasePathParamsForOpenAPIParity(t *testing.T) {
-	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), NewWave1WebHandlers())
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
 
 	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/organizations/:organization_id/settings")
 	assertRouteRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspace_id/settings")

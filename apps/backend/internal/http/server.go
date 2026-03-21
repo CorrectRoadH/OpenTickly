@@ -19,13 +19,15 @@ type ServerOptions struct {
 	Readiness web.ReadinessProbe
 }
 
-func NewServer(health web.HealthSnapshot, wave1 *Wave1WebHandlers) *echo.Echo {
-	return NewServerWithOptions(health, wave1, ServerOptions{})
+type RouteRegistrar func(*echo.Echo)
+
+func NewServer(health web.HealthSnapshot, registerRoutes RouteRegistrar) *echo.Echo {
+	return NewServerWithOptions(health, registerRoutes, ServerOptions{})
 }
 
 func NewServerWithOptions(
 	health web.HealthSnapshot,
-	wave1 *Wave1WebHandlers,
+	registerRoutes RouteRegistrar,
 	options ServerOptions,
 ) *echo.Echo {
 	server := echo.New()
@@ -55,10 +57,18 @@ func NewServerWithOptions(
 	}
 	server.GET("/healthz", healthHandler)
 	server.GET("/readyz", readinessHandler)
-	registerWave1WebRoutes(server, wave1)
+	if registerRoutes != nil {
+		registerRoutes(server)
+	}
 	registerStaticWebRoutes(server, web.StaticFiles())
 
 	return server
+}
+
+func NewWave1WebRouteRegistrar(handlers *Wave1WebHandlers) RouteRegistrar {
+	return func(server *echo.Echo) {
+		registerWave1WebRoutes(server, handlers)
+	}
 }
 
 func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
@@ -145,7 +155,8 @@ func newStaticFallbackHandler(staticFiles fs.FS) echo.HandlerFunc {
 
 /*
 serveEmbeddedIndex returns the embedded SPA shell and disables caching so the
- browser always revalidates the HTML entrypoint.
+
+	browser always revalidates the HTML entrypoint.
 */
 func serveEmbeddedIndex(context echo.Context, staticFiles fs.FS) error {
 	context.Response().Header().Set("Cache-Control", "no-cache")

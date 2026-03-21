@@ -30,7 +30,7 @@ func NewApp(cfg Config) (*App, error) {
 	cfg = withDefaults(cfg)
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	wave1WebHandlers, err := newWave1WebHandlers()
+	webRoutes, err := newWave1WebRoutes()
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func NewApp(cfg Config) (*App, error) {
 
 	return &App{
 		Config:   cfg,
-		HTTP:     httpapp.NewServer(health, wave1WebHandlers),
+		HTTP:     httpapp.NewServer(health, webRoutes),
 		Platform: platform,
 		Modules:  modules,
 	}, nil
