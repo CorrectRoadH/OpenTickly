@@ -39,8 +39,9 @@ export function TasksPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tasks</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Contract-backed task records reuse the workspace list skeleton while staying scoped to
-            task-level planning work.
+            Transition state. This page surfaces task records in the workspace shell, but the
+            documented task management flow still needs project-scoped entry points and its final
+            interaction model.
           </p>
         </div>
         <AppButton type="button">Create task</AppButton>
@@ -67,7 +68,7 @@ export function TasksPage(): ReactElement {
             <li key={task.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">{task.name}</p>
-                <p className="text-xs text-slate-600">Contract-backed task · {statusLabel}</p>
+                <p className="text-xs text-slate-600">Task · {statusLabel}</p>
                 <p className="text-[11px] text-slate-500">Workspace {task.workspace_id}</p>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -80,8 +81,10 @@ export function TasksPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          This placeholder slice exposes {tasks.length} task{tasks.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active.
+          Transition state. Showing {tasks.length} task{tasks.length === 1 ? "" : "s"} for
+          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when task
+          management is connected to its documented project/task flows and covered by page-flow
+          evidence.
         </p>
       </div>
     </AppPanel>

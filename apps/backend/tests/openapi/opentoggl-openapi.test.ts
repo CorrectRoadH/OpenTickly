@@ -35,6 +35,8 @@ describe("opentoggl custom OpenAPI sources", () => {
     "/web/v1/workspaces/{workspace_id}/members",
     "/web/v1/workspaces/{workspace_id}/members/invitations",
     "/web/v1/projects",
+    "/web/v1/projects/{project_id}/archive",
+    "/web/v1/projects/{project_id}/pin",
     "/web/v1/projects/{project_id}/members",
     "/web/v1/projects/{project_id}/members/{member_id}",
     "/web/v1/clients",
@@ -70,6 +72,10 @@ describe("opentoggl custom OpenAPI sources", () => {
     "POST /web/v1/workspaces/{workspace_id}/members/invitations",
     "GET /web/v1/projects",
     "POST /web/v1/projects",
+    "POST /web/v1/projects/{project_id}/archive",
+    "DELETE /web/v1/projects/{project_id}/archive",
+    "POST /web/v1/projects/{project_id}/pin",
+    "DELETE /web/v1/projects/{project_id}/pin",
     "GET /web/v1/projects/{project_id}/members",
     "POST /web/v1/projects/{project_id}/members",
     "DELETE /web/v1/projects/{project_id}/members/{member_id}",
@@ -154,6 +160,18 @@ describe("opentoggl custom OpenAPI sources", () => {
     ).toBe("invite-workspace-member");
     expect(webDocument?.paths?.["/web/v1/projects"]?.get?.operationId).toBe("list-projects");
     expect(webDocument?.paths?.["/web/v1/projects"]?.post?.operationId).toBe("create-project");
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}/archive"]?.post?.operationId).toBe(
+      "archive-project",
+    );
+    expect(
+      webDocument?.paths?.["/web/v1/projects/{project_id}/archive"]?.delete?.operationId,
+    ).toBe("restore-project");
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}/pin"]?.post?.operationId).toBe(
+      "pin-project",
+    );
+    expect(webDocument?.paths?.["/web/v1/projects/{project_id}/pin"]?.delete?.operationId).toBe(
+      "unpin-project",
+    );
     expect(webDocument?.paths?.["/web/v1/projects/{project_id}/members"]?.get?.operationId).toBe(
       "list-project-members",
     );
@@ -329,7 +347,22 @@ describe("opentoggl custom OpenAPI sources", () => {
     });
 
     expect(projectSummarySchema?.$ref).toBeUndefined();
-    expect(projectSummarySchema?.required).toEqual(["id", "name", "workspace_id", "active"]);
+    expect(projectSummarySchema?.required).toEqual([
+      "id",
+      "name",
+      "workspace_id",
+      "active",
+      "pinned",
+    ]);
+    expect(webDocument?.paths?.["/web/v1/projects"]?.get?.parameters).toContainEqual({
+      name: "status",
+      in: "query",
+      required: false,
+      schema: {
+        type: "string",
+        enum: ["all", "active", "archived"],
+      },
+    });
     expect(projectListEnvelopeSchema?.properties?.projects).toEqual({
       type: "array",
       items: {

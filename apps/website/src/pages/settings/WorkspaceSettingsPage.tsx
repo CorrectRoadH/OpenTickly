@@ -46,8 +46,8 @@ export function WorkspaceSettingsPage({
               Workspace settings
             </h1>
             <p className="text-sm leading-6 text-slate-600">
-              Tenant defaults, branding, and related billing context live here without merging into
-              the profile page.
+              Manage workspace defaults, branding, and member-facing behavior for the current
+              workspace.
             </p>
           </div>
           <Link
@@ -83,8 +83,8 @@ export function WorkspaceSettingsPage({
               Branding assets
             </h2>
             <p className="text-sm leading-6 text-slate-600">
-              Reach logo and avatar management from the settings surface even before upload tooling
-              lands in later waves.
+              Keep workspace logo and avatar entry points with the rest of the workspace settings
+              surface.
             </p>
           </div>
         </AppPanel>

@@ -39,8 +39,9 @@ export function ClientsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Contract-backed client records follow the same list skeleton as projects, but keep
-            client semantics separate from project ownership.
+            Transition state. This page keeps client records visible inside the workspace shell,
+            but the documented client surface still needs its full filter set, batch actions, and
+            dedicated detail flow.
           </p>
         </div>
         <AppButton type="button">Create client</AppButton>
@@ -67,7 +68,7 @@ export function ClientsPage(): ReactElement {
             <li key={client.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">{client.name}</p>
-                <p className="text-xs text-slate-600">Contract-backed client · {statusLabel}</p>
+                <p className="text-xs text-slate-600">Client · {statusLabel}</p>
                 <p className="text-[11px] text-slate-500">Workspace {client.workspace_id}</p>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -80,8 +81,10 @@ export function ClientsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          This placeholder slice exposes {clients.length} client{clients.length === 1 ? "" : "s"}{" "}
-          for workspace {session.currentWorkspace.id}, with {activeCount} active.
+          Transition state. Showing {clients.length} client{clients.length === 1 ? "" : "s"} for
+          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when the page
+          matches the documented client management flow with filters, batch actions, and detail
+          entry points covered by page-flow evidence.
         </p>
       </div>
     </AppPanel>

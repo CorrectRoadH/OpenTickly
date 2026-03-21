@@ -53,7 +53,9 @@ export function ProjectsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Projects</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Track workspace projects with quick visibility and status cues.
+            Transition state. This page shows project status and member assignments, but the
+            documented project page still needs filters, archive and pin controls, and task/detail
+            entry points.
           </p>
         </div>
         <AppButton type="button">Create project</AppButton>
@@ -84,7 +86,7 @@ export function ProjectsPage(): ReactElement {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{project.name}</p>
-                  <p className="text-xs text-slate-600">Contract-backed project · {statusLabel}</p>
+                  <p className="text-xs text-slate-600">Project · {statusLabel}</p>
                   <p className="text-[11px] text-slate-500">
                     Workspace {project.workspace_id} · {memberCount} member
                     {memberCount === 1 ? "" : "s"}
@@ -136,10 +138,10 @@ export function ProjectsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          The current Wave 2 slice exposes {projects.length} project
-          {projects.length === 1 ? "" : "s"} for workspace {session.currentWorkspace.id}. Active
-          projects ({activeCount}) remain available for new work; inactive projects stay visible for
-          reference in this placeholder slice.
+          Transition state. Showing {projects.length} project{projects.length === 1 ? "" : "s"}{" "}
+          for workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when this
+          page matches the documented project page with filters, archive and pin controls, and
+          member/task entry points covered by page-flow evidence.
         </p>
       </div>
     </AppPanel>

@@ -141,6 +141,7 @@ func TestWave2PlaceholderRoutesServeCurrentRuntimeSlice(t *testing.T) {
 			Name        string `json:"name"`
 			WorkspaceID int64  `json:"workspace_id"`
 			Active      bool   `json:"active"`
+			Pinned      bool   `json:"pinned"`
 		} `json:"projects"`
 	}
 	mustDecodeJSON(t, projects.Body.Bytes(), &projectsBody)
@@ -149,6 +150,9 @@ func TestWave2PlaceholderRoutesServeCurrentRuntimeSlice(t *testing.T) {
 	}
 	if projectsBody.Projects[0].WorkspaceID != workspaceID {
 		t.Fatalf("expected project to echo workspace id %d, got %d", workspaceID, projectsBody.Projects[0].WorkspaceID)
+	}
+	if projectsBody.Projects[0].Pinned {
+		t.Fatal("expected seeded placeholder project to start unpinned")
 	}
 
 	createProject := performJSONRequest(
@@ -206,6 +210,135 @@ func TestWave2PlaceholderRoutesServeCurrentRuntimeSlice(t *testing.T) {
 	}
 	if !foundCreatedProject {
 		t.Fatalf("expected created project %q to appear in projects list", createdProject.Name)
+	}
+
+	pinProject := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/web/v1/projects/"+intToString(createdProject.ID)+"/pin",
+		nil,
+		sessionCookie,
+	)
+	if pinProject.Code != http.StatusOK {
+		t.Fatalf("expected pin project status 200, got %d body=%s", pinProject.Code, pinProject.Body.String())
+	}
+	var pinnedProject struct {
+		ID      int64 `json:"id"`
+		Pinned  bool  `json:"pinned"`
+		Active  bool  `json:"active"`
+	}
+	mustDecodeJSON(t, pinProject.Body.Bytes(), &pinnedProject)
+	if pinnedProject.ID != createdProject.ID || !pinnedProject.Pinned {
+		t.Fatalf("expected pinned response for project %d, got %#v", createdProject.ID, pinnedProject)
+	}
+
+	archiveProject := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/web/v1/projects/"+intToString(createdProject.ID)+"/archive",
+		nil,
+		sessionCookie,
+	)
+	if archiveProject.Code != http.StatusOK {
+		t.Fatalf(
+			"expected archive project status 200, got %d body=%s",
+			archiveProject.Code,
+			archiveProject.Body.String(),
+		)
+	}
+	var archivedProject struct {
+		ID      int64 `json:"id"`
+		Pinned  bool  `json:"pinned"`
+		Active  bool  `json:"active"`
+	}
+	mustDecodeJSON(t, archiveProject.Body.Bytes(), &archivedProject)
+	if archivedProject.ID != createdProject.ID || archivedProject.Active {
+		t.Fatalf("expected archived response for project %d, got %#v", createdProject.ID, archivedProject)
+	}
+	if !archivedProject.Pinned {
+		t.Fatal("expected archive not to clear pinned state")
+	}
+
+	archivedProjects := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/web/v1/projects?workspace_id="+intToString(workspaceID)+"&status=archived",
+		nil,
+		sessionCookie,
+	)
+	if archivedProjects.Code != http.StatusOK {
+		t.Fatalf(
+			"expected archived projects status 200, got %d body=%s",
+			archivedProjects.Code,
+			archivedProjects.Body.String(),
+		)
+	}
+	var archivedProjectsBody struct {
+		Projects []struct {
+			ID     int64 `json:"id"`
+			Active bool  `json:"active"`
+			Pinned bool  `json:"pinned"`
+		} `json:"projects"`
+	}
+	mustDecodeJSON(t, archivedProjects.Body.Bytes(), &archivedProjectsBody)
+	foundArchivedProject := false
+	for _, project := range archivedProjectsBody.Projects {
+		if project.ID == createdProject.ID {
+			foundArchivedProject = true
+			if project.Active {
+				t.Fatalf("expected archived project %d to report inactive", createdProject.ID)
+			}
+			if !project.Pinned {
+				t.Fatalf("expected archived project %d to stay pinned", createdProject.ID)
+			}
+		}
+	}
+	if !foundArchivedProject {
+		t.Fatalf("expected archived project %d to appear in archived filter", createdProject.ID)
+	}
+
+	restoreProject := performJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/web/v1/projects/"+intToString(createdProject.ID)+"/archive",
+		nil,
+		sessionCookie,
+	)
+	if restoreProject.Code != http.StatusOK {
+		t.Fatalf(
+			"expected restore project status 200, got %d body=%s",
+			restoreProject.Code,
+			restoreProject.Body.String(),
+		)
+	}
+
+	unpinProject := performJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/web/v1/projects/"+intToString(createdProject.ID)+"/pin",
+		nil,
+		sessionCookie,
+	)
+	if unpinProject.Code != http.StatusOK {
+		t.Fatalf(
+			"expected unpin project status 200, got %d body=%s",
+			unpinProject.Code,
+			unpinProject.Body.String(),
+		)
+	}
+	var restoredProject struct {
+		ID      int64 `json:"id"`
+		Pinned  bool  `json:"pinned"`
+		Active  bool  `json:"active"`
+	}
+	mustDecodeJSON(t, unpinProject.Body.Bytes(), &restoredProject)
+	if restoredProject.ID != createdProject.ID || !restoredProject.Active || restoredProject.Pinned {
+		t.Fatalf("expected restored unpinned project %d, got %#v", createdProject.ID, restoredProject)
 	}
 
 	projectMembers := performJSONRequest(

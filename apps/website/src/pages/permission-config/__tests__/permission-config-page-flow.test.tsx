@@ -56,7 +56,11 @@ describe("permission config page flow", () => {
     expect(screen.getByRole("link", { name: "Permissions" }).getAttribute("href")).toBe(
       "/workspaces/202/permissions",
     );
-
+    expect(
+      screen.getByText(
+        /This page exposes the current permission toggles, but the documented permission configuration surface still needs its final workspace governance layout and review flow/,
+      ),
+    ).toBeTruthy();
     expect(
       (screen.getByLabelText("Only admins may create projects") as HTMLInputElement).checked,
     ).toBe(false);

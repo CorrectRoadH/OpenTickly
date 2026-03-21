@@ -35,8 +35,7 @@ export function OrganizationSettingsPage({
             Organization settings
           </h1>
           <p className="text-sm leading-6 text-slate-600">
-            Cross-workspace governance stays on its own route so workspace settings can stay small
-            and explicit.
+            Manage organization-wide governance and settings that apply across workspaces.
           </p>
         </div>
       </AppPanel>

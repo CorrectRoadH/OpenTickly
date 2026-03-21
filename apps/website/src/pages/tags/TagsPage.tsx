@@ -39,8 +39,8 @@ export function TagsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tags</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Contract-backed tag records reuse the project-page list skeleton while staying a
-            distinct product object.
+            Transition state. This page keeps tag records visible with the project-page skeleton,
+            but the documented tag surface still needs its final list controls and detail flow.
           </p>
         </div>
         <AppButton type="button">Create tag</AppButton>
@@ -67,7 +67,7 @@ export function TagsPage(): ReactElement {
             <li key={tag.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">{tag.name}</p>
-                <p className="text-xs text-slate-600">Contract-backed tag · {statusLabel}</p>
+                <p className="text-xs text-slate-600">Tag · {statusLabel}</p>
                 <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -80,8 +80,9 @@ export function TagsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          This placeholder slice exposes {tags.length} tag{tags.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active.
+          Transition state. Showing {tags.length} tag{tags.length === 1 ? "" : "s"} for workspace{" "}
+          {session.currentWorkspace.id}, with {activeCount} active. Exit when the documented tag
+          management controls are present and covered by page-flow evidence.
         </p>
       </div>
     </AppPanel>

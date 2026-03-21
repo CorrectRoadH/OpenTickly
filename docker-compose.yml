@@ -24,12 +24,12 @@ services:
       retries: 20
     restart: unless-stopped
 
-  api:
+  opentoggl:
     build:
       context: .
-      dockerfile: docker/api.Dockerfile
+      dockerfile: docker/opentoggl.Dockerfile
     environment:
-      OPENTOGGL_SERVICE_NAME: opentoggl-api
+      OPENTOGGL_SERVICE_NAME: opentoggl
       OPENTOGGL_API_LISTEN_ADDRESS: :8080
       OPENTOGGL_API_DATABASE_DSN: postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable
       OPENTOGGL_API_REDIS_ADDRESS: redis://redis:6379/0
@@ -44,22 +44,6 @@ services:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/readyz"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-
-  website:
-    build:
-      context: .
-      dockerfile: docker/website.Dockerfile
-    depends_on:
-      api:
-        condition: service_healthy
-    ports:
-      - "3000:80"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/readyz"]
       interval: 5s
       timeout: 3s
       retries: 20

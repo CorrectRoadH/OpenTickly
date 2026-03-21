@@ -1,4 +1,4 @@
-import { afterEach, vi } from "vitest";
+import { onTestFinished, vi } from "vitest";
 
 type MockCall = {
   body: unknown;
@@ -15,6 +15,23 @@ type MockHandler = {
   path: RegExp | string;
   resolver: (request: MockRequest) => Promise<Response> | Response;
 };
+
+type ActiveFetchMock = {
+  fetchMock: typeof fetch;
+};
+
+const nativeFetch = globalThis.fetch;
+const activeFetchMocks: ActiveFetchMock[] = [];
+
+function applyActiveFetch() {
+  const activeMock = activeFetchMocks[activeFetchMocks.length - 1];
+
+  Object.defineProperty(globalThis, "fetch", {
+    configurable: true,
+    value: activeMock?.fetchMock ?? nativeFetch,
+    writable: true,
+  });
+}
 
 function toResponse(body: unknown, init?: ResponseInit): Response {
   return new Response(body === undefined ? null : JSON.stringify(body), {
@@ -35,6 +52,7 @@ export function emptyResponse(init?: ResponseInit): Response {
 
 export function installMockWebApi(handlers: MockHandler[]) {
   const calls: MockCall[] = [];
+  let restored = false;
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(
@@ -74,15 +92,29 @@ export function installMockWebApi(handlers: MockHandler[]) {
       search: url.search,
     });
   });
+  const activeMock: ActiveFetchMock = {
+    fetchMock: fetchMock as typeof fetch,
+  };
+  activeFetchMocks.push(activeMock);
+  applyActiveFetch();
+  const restore = () => {
+    if (restored) {
+      return;
+    }
+    restored = true;
 
-  vi.stubGlobal("fetch", fetchMock);
+    const activeIndex = activeFetchMocks.indexOf(activeMock);
+    if (activeIndex === -1) {
+      return;
+    }
+    activeFetchMocks.splice(activeIndex, 1);
+    applyActiveFetch();
+  };
+  onTestFinished(restore);
 
   return {
     calls,
     fetchMock,
+    restore,
   };
 }
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});

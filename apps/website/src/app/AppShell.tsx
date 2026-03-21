@@ -32,14 +32,14 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             <div className="space-y-4">
               <div className="space-y-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                  Identity + Tenant
+                  Workspace shell
                 </p>
                 <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-                  OpenToggl web shell
+                  Workspace access
                 </h1>
                 <p className="text-sm leading-6 text-slate-600">
-                  Session bootstrap, profile, workspace settings, and shell routing now share one
-                  contract-backed source of truth.
+                  Switch between workspaces, open account surfaces, and enter workspace management
+                  from the current session.
                 </p>
               </div>
               <WorkspaceBadge />

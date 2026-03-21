@@ -15,8 +15,8 @@ export function WorkspaceOverviewPage(): ReactElement {
               Workspace Overview
             </h1>
             <p className="text-sm leading-6 text-slate-600">
-              Real session bootstrap now lands the user in the current workspace instead of the Wave
-              0 tracer shell.
+              Review the active organization, workspace defaults, and current access scope before
+              moving into reports, members, or settings.
             </p>
           </div>
           <dl className="grid gap-3 rounded-[1.75rem] border border-emerald-100 bg-emerald-50/70 p-5 text-sm text-slate-700">
@@ -39,11 +39,11 @@ export function WorkspaceOverviewPage(): ReactElement {
       <AppPanel className="bg-slate-950 text-slate-50">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-300">
-            Shell Source
+            Workspace scope
           </p>
           <p className="text-sm leading-6 text-slate-200">
-            Workspace navigation, settings, and profile all read from the same bootstrapped session
-            contract and route state.
+            Profile stays account-scoped, while organization and workspace management stay on their
+            own routes under the current workspace context.
           </p>
         </div>
       </AppPanel>

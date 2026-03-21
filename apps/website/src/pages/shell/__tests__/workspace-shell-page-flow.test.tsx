@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AppProviders } from "../../../app/AppProviders.tsx";
@@ -42,12 +42,13 @@ describe("workspace shell page flow", () => {
     const firstRender = render(<AppProviders router={firstRouter} />);
 
     expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
+    expect(within(screen.getByTestId("shell-hero")).getByText("Workspace access")).toBeTruthy();
     expect((screen.getByLabelText("Workspace") as HTMLSelectElement).value).toBe("202");
     expect(screen.getByText("Workspace")).toBeTruthy();
-    expect(screen.getByText("Account")).toBeTruthy();
+    expect(within(screen.getByTestId("shell-hero")).getByText("Profile")).toBeTruthy();
+    expect(screen.getByText("Workspace scope")).toBeTruthy();
     expect(screen.getByText("Alex North")).toBeTruthy();
     expect(screen.getByText("alex@example.com")).toBeTruthy();
-    expect(screen.getByText("Starter plan")).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Workspace"), {
       target: { value: "303" },

@@ -46,7 +46,7 @@
 
 ### 3.1.1 本地开发与自托管交付分离
 
-- 本地开发默认采用源码直启：`website` 与 `api` 作为两个开发进程分别启动。
+- 本地开发默认采用源码直启：前端与后端分别从仓库根目录启动（`vp run website#dev` + `go run ./apps/backend`）。
 - 本地开发前端由 `Vite` dev server 提供，浏览器请求通过 Vite proxy 转发到 Go API；默认代理目标为 `OPENTOGGL_WEB_PROXY_TARGET`，未设置时指向 `http://127.0.0.1:8080`。
 - `docker compose` 属于 self-hosted 交付、部署演练和发布态 smoke 验证路径，不是默认本地开发路径。
 - 本地开发所需环境变量统一放在仓库根目录，避免按应用分散配置。
@@ -54,9 +54,9 @@
 
 ### 3.2 单体优先，不先拆多进程运行时
 
-- 首版运行时只保留 `api` 一个 Go 进程。
-- Web 前端仍作为 `apps/website` 独立构建，但 self-hosted 交付默认采用“先构建前端静态产物，再嵌入 Go API 二进制并由同一进程提供页面与 API”的单体运行时。
-- `reports`、`webhooks`、`import` 在代码结构上隔离，但仍运行在同一个 Go API 进程内。
+- 首版运行时只保留 `apps/backend` 一个 Go 进程。
+- Web 前端仍作为 `apps/website` 独立构建，但 self-hosted 交付默认采用“先构建前端静态产物，再嵌入 Go 后端二进制并由同一进程提供页面与 API”的单体运行时。
+- `reports`、`webhooks`、`import` 在代码结构上隔离，但仍运行在同一个 Go 后端进程内。
 - 不允许为了“看起来先进”而在一开始引入 worker、队列系统或多服务调用复杂度。
 - self-hosted 默认不要求额外引入独立 `website` 容器或 Nginx 运行时；如部署环境已有现成入口层，它只承担 TLS / ingress 职责，不改变默认交付形态。
 
@@ -345,74 +345,28 @@ Core Mutation
 
 ```text
 apps/
-  web/
-  api/
+  website/
+  backend/
+    main.go
+    internal/
+      bootstrap/
+      http/
+      web/
+      identity/
+      tenant/
+      membership/
+      catalog/
+      tracking/
+      governance/
+      reports/
+      webhooks/
+      billing/
+      importing/
+      platform/
 
 packages/
   web-ui/
   shared-contracts/
-
-backend/
-  internal/
-    identity/
-      domain/
-      application/
-      infra/
-      transport/
-    tenant/
-      domain/
-      application/
-      infra/
-      transport/
-    membership/
-      domain/
-      application/
-      infra/
-      transport/
-    catalog/
-      domain/
-      application/
-      infra/
-      transport/
-    tracking/
-      domain/
-      application/
-      infra/
-      transport/
-    reports/
-      domain/
-      application/
-      infra/
-      transport/
-    webhooks/
-      domain/
-      application/
-      infra/
-      transport/
-    billing/
-      domain/
-      application/
-      infra/
-      transport/
-    importing/
-      domain/
-      application/
-      infra/
-      transport/
-    governance/
-      domain/
-      application/
-      infra/
-      transport/
-    platform/
-      db/
-      auth/
-      cache/
-      filestore/
-      jobs/
-      http/
-      observability/
-      config/
 ```
 
 说明：
@@ -529,10 +483,13 @@ backend/
 
 推荐拓扑：
 
-- Railway Web Service: `api`
-- Railway Static / Web Service: `web`
+- Railway Web Service: `opentoggl`（单 Go 运行时，提供 API 与嵌入后的 Web 资源）
 - Railway PostgreSQL
 - Redis
+
+说明：
+
+- 如果当前仓库或历史部署仍有 `website` 独立运行时，应视为待清理的实现漂移，而非目标拓扑。
 
 特点：
 
@@ -556,7 +513,7 @@ backend/
 
 - 单机可运行
 - 自托管默认以单应用镜像交付，而不是前后端双镜像
-- 可接受通过单个 Go API 进程 + PostgreSQL 起步
+- 可接受通过单个 Go 后端进程 + PostgreSQL 起步
 - 对外功能面不裁剪
 
 ## 14. 当前仓库状态与下一步落地

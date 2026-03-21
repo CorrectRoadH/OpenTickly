@@ -83,12 +83,25 @@ describe("groups page flow", () => {
     expect(screen.getByRole("link", { name: "Groups" }).getAttribute("href")).toBe(
       "/workspaces/202/groups",
     );
+    expect(
+      screen.getByText(/This page keeps workspace groups visible, but the documented group management surface still needs its dedicated information architecture and membership controls/),
+    ).toBeTruthy();
 
     const initialList = screen.getByLabelText("Groups list");
     expect(within(initialList).getByText("Marketing pod")).toBeTruthy();
     expect(within(initialList).getByText("Contractors")).toBeTruthy();
-    expect(within(initialList).getByText(/Contract-backed group · Inactive/)).toBeTruthy();
+    expect(within(initialList).getByText(/Group · Inactive/)).toBeTruthy();
     expect(within(initialList).getAllByText(/Workspace 202/)).not.toHaveLength(0);
+    expect(screen.getByText(/Showing 2 groups for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(
+      screen.getByText((_, element) =>
+        (element?.tagName === "P" &&
+          element.textContent?.includes(
+          "Exit when the documented group management flow and membership controls are in place and covered by page-flow evidence.",
+        )) ??
+        false,
+      ),
+    ).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Workspace"), {
       target: { value: "303" },
@@ -105,6 +118,15 @@ describe("groups page flow", () => {
     expect(within(switchedList).getByText("Studio leads")).toBeTruthy();
     expect(within(switchedList).getByText("Seasonal support")).toBeTruthy();
     expect(within(switchedList).getAllByText(/Workspace 303/)).not.toHaveLength(0);
+    expect(
+      screen.getByText((_, element) =>
+        (element?.tagName === "P" &&
+          element.textContent?.includes(
+            "Exit when the documented group management flow and membership controls are in place and covered by page-flow evidence.",
+          )) ??
+        false,
+      ),
+    ).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Group name"), {
       target: { value: "Field ops" },

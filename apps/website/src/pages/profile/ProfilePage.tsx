@@ -37,11 +37,22 @@ export function ProfilePage(): ReactElement {
   return (
     <div className="space-y-4">
       <AppPanel className="bg-white/95">
-        <div className="space-y-2">
+        <div className="space-y-4">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Profile</h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Manage account details and personal preferences on their dedicated page.
-          </p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SectionSummary
+              description="Current user details used across the account and session surfaces."
+              title="Account"
+            />
+            <SectionSummary
+              description="Personal defaults that shape how time, dates, and notifications appear."
+              title="Preferences"
+            />
+            <SectionSummary
+              description="API token access for account-level integrations and basic auth compatibility."
+              title="Security"
+            />
+          </div>
         </div>
       </AppPanel>
 
@@ -81,6 +92,21 @@ function LoadingPanel({ message }: { message: string }): ReactElement {
     <AppPanel className="bg-white/95">
       <p className="text-sm font-medium text-slate-700">{message}</p>
     </AppPanel>
+  );
+}
+
+function SectionSummary({
+  description,
+  title,
+}: {
+  description: string;
+  title: string;
+}): ReactElement {
+  return (
+    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4">
+      <p className="text-sm font-semibold text-slate-950">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    </div>
   );
 }
 

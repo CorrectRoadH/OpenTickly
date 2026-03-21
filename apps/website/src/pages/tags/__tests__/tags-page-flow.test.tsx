@@ -61,12 +61,27 @@ describe("tags page flow", () => {
       "/workspaces/202/tags",
     );
     expect(screen.getByRole("button", { name: "Create tag" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        /This page keeps tag records visible with the project-page skeleton, but the documented tag surface still needs its final list controls and detail flow/,
+      ),
+    ).toBeTruthy();
 
     const list = screen.getByLabelText("Tags list");
     expect(within(list).getByText("Urgent")).toBeTruthy();
     expect(within(list).getByText("Ops")).toBeTruthy();
-    expect(within(list).getByText(/Contract-backed tag · Inactive/)).toBeTruthy();
+    expect(within(list).getByText(/Tag · Inactive/)).toBeTruthy();
     expect(within(list).getAllByText(/Workspace 202/)).not.toHaveLength(0);
+    expect(screen.getByText(/Showing 2 tags for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(
+      screen.getByText((_, element) =>
+        (element?.tagName === "P" &&
+          element.textContent?.includes(
+          "Exit when the documented tag management controls are present and covered by page-flow evidence.",
+        )) ??
+        false,
+      ),
+    ).toBeTruthy();
 
     fireEvent.change(screen.getByLabelText("Tag name"), {
       target: { value: "Client-visible" },

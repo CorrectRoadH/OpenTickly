@@ -21,5 +21,6 @@ export default defineConfig({
     // Vitest replaces its default excludes when `exclude` is set, so keep the built-ins
     // and add the Playwright-owned e2e tree that broke the root JS test gate.
     exclude: ["**/node_modules/**", "**/.git/**", "**/e2e/**"],
+    setupFiles: ["./apps/website/src/test/setup.ts"],
   },
 });

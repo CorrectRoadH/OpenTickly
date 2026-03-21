@@ -103,8 +103,9 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             Permission configuration
           </h1>
           <p className="text-sm leading-6 text-slate-600">
-            Manage the current placeholder permission toggles using one contract-backed source of
-            truth.
+            Transition state. This page exposes the current permission toggles, but the documented
+            permission configuration surface still needs its final workspace governance layout and
+            review flow.
           </p>
         </div>
 

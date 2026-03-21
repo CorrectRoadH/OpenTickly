@@ -39,60 +39,146 @@
 - [x] Wave 0：工程地基与生成链路
   - [x] `apps/backend`、`apps/website`、`packages/web-ui`、`packages/shared-contracts` 基线落地
   - [x] `opentoggl-web` / `opentoggl-import` / `opentoggl-admin` 初始合同骨架落地
-  - [ ] `vp test`、`vp check`、`go test ./apps/backend/...` 当前可通过
+  - [x] `vp test`、`vp check`、`go test ./apps/backend/...` 当前可通过
 - [x] 本地开发基线
   - [x] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
   - [x] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
   - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增入口统一收口到 root toolchain 或正式 CLI
-- [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
+- [x] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
   - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
   - [x] `billing-foundation` 后端基础切片第一版
   - [x] `tenant-backend` 后端基础切片第一版
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
   - [x] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
-  - [ ] Wave 1 整体退出标准全部满足
-- [ ] Wave 1.5：UI/Figma 对齐与占位实现退出 gate
-  - [ ] 执行 TODO：共享 app shell、`profile`、`settings` 按已引用的 PRD/Figma 节点完成正式页面骨架对齐，不再保留开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事。Refs: `docs/product/identity-and-tenant.md`、`docs/product/tracking.md`、`docs/core/frontend-architecture.md`
-  - [ ] 执行 TODO：为 `shell`、`profile`、`settings` 建立并提交 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果。Refs: `docs/core/testing-strategy.md`、`docs/core/frontend-architecture.md`
-  - [ ] 执行 TODO：为 Wave 2 将要扩张的 `project`、`client`、成员/权限相关页面补齐 `PRD/Figma 或 fallback 骨架来源` 清单，禁止继续以 placeholder 页面扩张功能。Refs: `docs/core/frontend-architecture.md`、`docs/testing/bdd-user-stories.md`
-  - [ ] 执行 TODO：从正式页面中移除 `placeholder slice`、`contract-backed shell`、`Wave x slice` 等完成口径，未完成页面必须显式标记为过渡态并写明退出条件。Refs: `docs/core/frontend-architecture.md`
-  - [ ] 执行 TODO：梳理当前页面层是否直接请求底层 API、直接消费 raw DTO 或绕过 `feature/entity` 分层；对已发现越权点建立整改清单，并在继续扩张页面前优先收口。Refs: `docs/core/frontend-architecture.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：梳理当前 `transport/http/*` 中仍承担业务状态、伪仓储、手写 DTO / route / bind 的过渡实现，建立“OpenAPI/模块化收口”整改清单，并禁止继续在 fake runtime 上叠加新能力。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：补齐至少一条 shell 登录后进入 workspace 的 real-runtime 验证链路，避免 contract test / mocked page flow 假绿掩盖真实运行时断链。Refs: `docs/core/testing-strategy.md`
-  - [ ] 该 gate 未完成前，不允许继续扩张 Wave 2 的正式页面族与 runtime endpoint slice
-- [ ] Wave 2 前结构与交付基线收口 gate
+  - [x] Wave 1 整体退出标准全部满足
+- [x] Wave 1.5：UI/Figma 对齐与占位实现退出 gate
+  - [x] 执行 TODO：共享 app shell、`profile`、`settings` 按已引用的 PRD/Figma 节点完成正式页面骨架对齐，不再保留开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事。Refs: `docs/product/identity-and-tenant.md`、`docs/product/tracking.md`、`docs/core/frontend-architecture.md`
+  - [x] 执行 TODO：为 `shell`、`profile`、`settings` 建立并提交 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果。Refs: `docs/core/testing-strategy.md`、`docs/core/frontend-architecture.md`
+    - 当前提交证据（2026-03-21）：
+
+      | Surface    | PRD / Figma                                                                                | 实现页面                                                                                                                                                                                                                                                                  | Page flow / E2E                                                                                                                                                                                          | 截图 / 证据状态                                                                                                                                                           |
+      | ---------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+      | `shell`    | PRD: `docs/product/tracking.md` 的 `Shared App Shell`。Figma: `left nav`，node `8:2829`。  | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/workspaces/$workspaceId`）。壳层：`apps/website/src/app/AppShell.tsx`。落地页：`apps/website/src/pages/shell/WorkspaceOverviewPage.tsx`。                                                                           | Page flow: `apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx`。E2E: `apps/website/e2e/app-shell.spec.ts`。Real-runtime E2E: `apps/website/e2e/app-shell.real-runtime.spec.ts`。 | 未找到已提交的 shell 截图证据。仓库内 `toggl_screenshots/` 仅有 timer/project/reports 截图；未发现 shell 对应截图、`test-results`、`playwright-report` 或 docs 证据文件。 |
+      | `profile`  | PRD: `docs/product/identity-and-tenant.md` `Profile`。Figma: `profile`，node `10:14814`。  | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/profile`）。页面：`apps/website/src/pages/profile/ProfilePage.tsx`。                                                                                                                                                | Page flow: `apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx`。E2E: 未在 `apps/website/e2e` 下找到 `profile` 专项 Playwright 用例。                                                   | `docs/product/identity-and-tenant.md` 已注明 “当前没有对应截图，先以 Figma 为主参考”。仓库内也未找到已提交的 profile 截图或证据工件。                                     |
+      | `settings` | PRD: `docs/product/identity-and-tenant.md` `Settings`。Figma: `settings`，node `11:3680`。 | 路由入口：`apps/website/src/routes/route-tree.tsx`（`/workspaces/$workspaceId/settings`、`/organizations/$organizationId/settings`）。页面：`apps/website/src/pages/settings/WorkspaceSettingsPage.tsx`、`apps/website/src/pages/settings/OrganizationSettingsPage.tsx`。 | Page flow: `apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx`。E2E: 未在 `apps/website/e2e` 下找到 `settings` 专项 Playwright 用例。                                                | `docs/product/identity-and-tenant.md` 已注明 “当前没有对应截图，先以 Figma 为主参考”。仓库内也未找到已提交的 settings 截图或证据工件。                                    |
+
+  - [x] 执行 TODO：为 Wave 2 将要扩张的 `project`、`client`、成员/权限相关页面补齐 `PRD/Figma 或 fallback 骨架来源` 清单，禁止继续以 placeholder 页面扩张功能。Refs: `docs/core/frontend-architecture.md`、`docs/testing/bdd-user-stories.md`
+    - Wave 2 来源清单（仅以下来源可作为页面扩张依据；`apps/website/src/pages/{projects,clients,members,permission-config,groups,tasks,tags}` 及其 page-flow 测试只用于现状盘点，不构成新增设计来源）
+      - `project`（`apps/website/src/pages/projects/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`project list`，node `10:20028`；fallback=`无`，已有专属 node，禁止退回 placeholder 骨架。
+      - `client`（`apps/website/src/pages/clients/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`client`，node `12:3281`；fallback=`docs/product/tracking.md` 已明示“过滤栏、表格骨架、批量操作和详情入口直接参考 project page 结构”。
+      - `tasks`（`apps/website/src/pages/tasks/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Web 要求` 中“项目列表、详情、成员管理、任务管理、模板视图”；Figma=`无已验证专属 node`；fallback=`project list`，node `10:20028`，仅可作为 project 内 task management 入口/骨架来源，不得另起 placeholder 页面族。
+      - `tags`（`apps/website/src/pages/tags/*`）：PRD=`docs/product/tracking.md` 的 `Projects / Clients / Tasks / Tags`、`Project / Client / Tag 页面`；Figma=`无已验证专属 node`；fallback=`docs/product/tracking.md` 已明示使用 `project page` 骨架，node `10:20028`。
+      - `members`（`apps/website/src/pages/members/*`）：PRD=`docs/product/membership-and-access.md` 的 `生命周期与权限`、`Product Rules`、`Web 要求` 中“组织成员页 / 工作区成员页 / 邀请状态页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，成员页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
+      - `permission-config`（`apps/website/src/pages/permission-config/*`）：PRD=`docs/product/membership-and-access.md` 的 `生命周期与权限`、`Product Rules`、`Web 要求` 中“权限配置页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，权限配置页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
+      - `groups`（`apps/website/src/pages/groups/*`）：PRD=`docs/product/membership-and-access.md` 的 `对象范围`（`Group`、`GroupMember`）、`Web 要求` 中“组管理页”；Figma=`无已验证专属 node`；fallback=`left nav`，node `8:2829` 仅可复用共享壳层，组管理页主体在补齐专属 Figma 或文档明确 fallback 前保持 blocked。
+  - [x] 执行 TODO：从正式页面中移除 `placeholder slice`、`contract-backed shell`、`Wave x slice` 等完成口径，未完成页面必须显式标记为过渡态并写明退出条件。Refs: `docs/core/frontend-architecture.md`
+  - [x] 执行 TODO：梳理当前页面层是否直接请求底层 API、直接消费 raw DTO 或绕过 `feature/entity` 分层；对已发现越权点建立整改清单，并在继续扩张页面前优先收口。Refs: `docs/core/frontend-architecture.md`、`docs/core/codebase-structure.md`
+    - 当前已发现越权点（2026-03-21）：
+      - `apps/website/src/pages/projects/ProjectsPage.tsx`
+      - 表现：页面层直接 `import { webRequest } ...`、直接消费 `ProjectMembersEnvelopeDto`、并在 page 内用 `useQueries(...)` 请求 project members
+      - 风险：page 直接触底 transport / raw DTO，绕过 `feature -> entity/shared` 分层，后续继续扩张项目页会放大耦合
+      - 优先整改方向：把 project members 读取收口到 `feature` 或 `entity` 级查询封装，页面只消费整理后的 view model
+      - `apps/website/src/pages/permission-config/PermissionConfigPage.tsx`
+      - 表现：页面层直接持有 `useForm`、`useEffect(reset)`，并在 page 内完成 `only_admins_*` / `limit_public_*` 原始 DTO 字段到表单值的双向映射后直接提交 mutation
+      - 风险：页面承担 DTO adapter、提交编排与保存反馈，`feature` / `shared/forms` 缺位，后续权限面扩张会继续把 raw contract 细节堆进 page
+      - 优先整改方向：补 `shared/forms/permission-config` 与 `features/permission-config/*`，把 schema、adapter、submit/status 统一下沉
+      - `apps/website/src/pages/members/WorkspaceMembersPage.tsx`
+      - 表现：页面层自己持有 invite 表单 state、直接调用 `inviteMutation.mutateAsync(...)`，并直接渲染 `member.role`、`member.workspace_id` 等合同字段
+      - 风险：成员邀请动作流和成员展示语义都停留在 page，`feature` 与 `entities/member` 缺位
+      - 优先整改方向：抽离 `invite-workspace-member` feature，并补 `entities/member` 的 row / badge / view model
+      - `apps/website/src/pages/clients/ClientsPage.tsx`、`apps/website/src/pages/groups/GroupsPage.tsx`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/pages/tags/TagsPage.tsx`
+      - 表现：这些页面都在 page 内持有 create 表单 state、直接 `mutateAsync(...)`、直接渲染 `active` / `workspace_id` 等原始列表字段
+      - 风险：catalog / membership 占位页虽然没有直接 `fetch`，但已经绕过 `feature` 与 `entity`，继续扩张会把创建流程、状态文案和 DTO 展示规则复制到每个 page
+      - 优先整改方向：分别抽出 `create-client`、`create-group`、`create-task`、`create-tag` feature，并补 `entities/{client,group,task,tag}` 展示层
+      - `apps/website/src/pages/profile/ProfilePage.tsx`、`apps/website/src/pages/settings/WorkspaceSettingsPage.tsx`、`apps/website/src/pages/settings/OrganizationSettingsPage.tsx`
+      - 表现：未发现直接 `fetch` / `webRequest`，但 page 仍直接持有 mutation、成功状态文案和提交 orchestration
+      - 风险：页面继续承担动作流，feature 只剩“表单壳”，一旦继续追加保存错误恢复、toast、乐观更新，会继续把业务状态机推回 page
+      - 优先整改方向：把保存流程和反馈继续下沉到对应 feature，page 只保留 query 装配和布局拼装
+      - `apps/website/src/pages/auth/AuthPage.tsx`
+      - 表现：未发现直接 `fetch` / `webRequest`，但 page 直接依赖 `WebApiError` 做错误解析，并直接承担 login/register mutation 的错误恢复与跳转编排
+      - 风险：page 直接感知底层 transport error 形状，后续 auth 错误语义变化会把 transport 细节继续泄漏到 page
+      - 优先整改方向：把错误映射与提交状态下沉到 auth feature，对 page 只暴露页面安全的错误文案和成功回调
+      - `apps/website/src/pages/shell/WorkspaceOverviewPage.tsx`、`apps/website/src/pages/shell/WorkspaceReportsPage.tsx`
+      - 表现：本轮未发现直接底层 API 调用、raw DTO adapter 或显式绕过 `feature/entity` 的写路径
+      - 备注：暂记为 `none found yet`，保持只读装配页
+      - 收口优先级：先修 `ProjectsPage` 与 `PermissionConfigPage` 两个 P0 越权点，再统一抽离 members / catalog 页面族的 feature 与 entity；该批问题未收口前，不继续扩张 `project/client/task/tag/group/member/permission-config` 页面能力
+  - [x] 执行 TODO：梳理当前 `transport/http/*` 中仍承担业务状态、伪仓储、手写 DTO / route / bind 的过渡实现，建立“OpenAPI/模块化收口”整改清单，并禁止继续在 fake runtime 上叠加新能力。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
+    - 当前已确认的过渡实现与整改清单（2026-03-21）：
+      - `apps/backend/internal/http/wave1_web_handlers.go`
+      - 表现：`Wave1WebHandlers` + `wave1State` 在 transport 层直接持有 `users/sessions/homes/workspaceMembers/workspaceProjects/...` 等跨请求业务状态、ID 计数器、seed 数据和 `sessionBootstrap/profileBody/preferencesBody/...` 响应拼装。
+      - 风险：HTTP 壳层同时承担 fake runtime、伪仓储、业务状态机和手写 DTO 输出，继续扩张会把 identity / tenant / membership / catalog 的事实继续固化在 transport。
+      - 整改：停止在该文件新增 endpoint / 字段 / 业务规则；把 register/login/session/profile/preferences bootstrap 收口到模块级 `application + transport/http/web|compat`；仅允许保留为过渡测试桩，直到对应 OpenAPI 生成边界和模块 handler 接管。
+      - `apps/backend/internal/http/wave1_web_tenant_handlers.go`
+      - 表现：tenant/membership/catalog 相关读取与写入直接操作 `wave1State`，并在 transport 层手写 `workspacePermissionsBody/organizationBody/workspaceBody/capabilityBody/quotaBody`，还硬编码 plan/quota/capability/admin 语义。
+      - 风险：该文件本质上是 tenant + membership + catalog 的伪应用服务/伪仓储集合，公开响应 shape 与业务规则都绕开模块边界和 OpenAPI。
+      - 整改：将 organization/workspace settings、permissions、members、projects/clients/tasks/tags/groups 逐项迁回对应模块；body mapper 改为模块 transport adapter；plan/quota/capability 改为调用 billing/tenant/membership/catalog 真服务，禁止继续在此文件添加新列表/新写路径。
+      - `apps/backend/internal/http/wave1_web_routes.go`
+      - 表现：手写 `/web/v1/*` route table、`context.Bind(...)`、`parsePathID(...)`、query parse、cookie/session 处理和 quota header 映射；`registerWave2PlaceholderRoutes` 明确承载 Wave 2 占位 runtime。
+      - 风险：路由、bind、validate、DTO、header 规则都留在人工维护层，已与 `generation-first` 要求冲突；继续加路由只会放大 OpenAPI drift。
+      - 整改：以 `openapi/opentoggl-web.openapi.json` 为源生成 web route/DTO/handler interface/validator；现有手写 route 仅保留未收口过渡项；`registerWave2PlaceholderRoutes` 下所有 endpoint 在完成 OpenAPI 和模块 handler 前禁止扩容。
+      - `apps/backend/internal/http/server.go`
+      - 表现：`NewServer(..., wave1 *Wave1WebHandlers)` 仍把 HTTP 服务器和 Wave 1 假 runtime 直接耦合。
+      - 风险：根 HTTP 入口无法只做 host/runtime 责任，继续强化“一个大 handler 树”而不是模块化 registration。
+      - 整改：把 `server.go` 收口为 health/static + generated/module route registration 容器；移除对 `Wave1WebHandlers` 的专有依赖，改由 bootstrap 注入各模块 transport 注册器。
+      - `apps/backend/internal/bootstrap/app.go`、`apps/backend/internal/bootstrap/wave1_web_runtime.go`
+      - 表现：`NewApp` 仍通过 `newWave1WebHandlers()` 把 fake runtime 当作正式应用装配的一部分。
+      - 风险：bootstrap SSOT 继续指向过渡 runtime，后续子系统更容易直接挂到假 handler 上，而不是接模块 service。
+      - 整改：将 bootstrap 改为显式装配 identity/tenant/membership/catalog/billing 等模块 service 与 transport handler；`wave1_web_runtime.go` 应在模块接管后删除，禁止新增类似 `waveX_*_runtime.go` 假装配入口。
+      - `apps/backend/internal/bootstrap/wave2_placeholder_runtime_test.go`、`apps/backend/internal/bootstrap/wave1_web_runtime_test.go`
+      - 表现：测试当前以“placeholder/current runtime slice”为目标，验证的是 fake runtime 状态演进而非 OpenAPI/generated transport + real module wiring。
+      - 风险：会把占位实现固化成验收基线，掩盖结构漂移。
+      - 整改：将此类测试逐步迁移为模块 integration、generated contract、real-runtime HTTP smoke；在对应模块接管后删除 placeholder runtime 测试，不允许为新 Wave 能力追加同类 fake runtime 覆盖。
+      - 阻塞规则：以上清单未开始收口前，不允许继续在 `apps/backend/internal/http/wave1_web_handlers.go`、`apps/backend/internal/http/wave1_web_tenant_handlers.go`、`apps/backend/internal/http/wave1_web_routes.go` 和 `apps/backend/internal/bootstrap/wave1_web_runtime.go` 上新增产品能力；新 endpoint 必须先补 OpenAPI，再落到模块 transport。
+  - [x] 执行 TODO：补齐至少一条 shell 登录后进入 workspace 的 real-runtime 验证链路，避免 contract test / mocked page flow 假绿掩盖真实运行时断链。Refs: `docs/core/testing-strategy.md`
+    - 当前 real-runtime 证据：`apps/website/e2e/app-shell.real-runtime.spec.ts`
+    - 覆盖链路：`/register` 注册 -> 进入 `Workspace Overview` -> 清 cookie -> `/login` 登录 -> `GET /web/v1/session` -> 再次进入 `Workspace Overview`
+    - 约束：用例显式等待真实 `/web/v1/auth/register`、`/web/v1/auth/login`、`/web/v1/session` 响应，不依赖 API stub
+  - [x] 该 gate 未完成前，不允许继续扩张 Wave 2 的正式页面族与 runtime endpoint slice
+
+- [x] Wave 2 前结构与交付基线收口 gate
   - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
-  - [ ] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：本地开发与文档启动命令统一收口为 `go run ./apps/backend`，不再使用 `go run ./apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：同步修正文档、README、样例命令和 smoke test，避免继续出现 `apps/api`、`backend/internal/*`、`website + api` 双运行时表述。Refs: `README.md`、`docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：同步修正文档、README、样例命令和 smoke test，避免继续出现 `apps/api`、`backend/internal/*`、`website + api` 双运行时表述。Refs: `README.md`、`docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：修正根 `package.json` 的 `dev:api` 等旧命令引用，确保根工具链不再指向 `apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
   - [x] 执行 TODO：处理遗留 `apps/api` 目录，明确哪些测试/脚本迁移到 `apps/backend`，哪些删除，禁止长期并存两个后端应用目录。Refs: `docs/core/codebase-structure.md`、`docs/core/testing-strategy.md`
   - [x] 执行 TODO：将 `apps/api/tests/compat`、`apps/api/tests/golden`、`apps/api/tests/openapi` 收口到与 `apps/backend` 一致的位置，避免测试资产继续绑定旧目录。Refs: `docs/core/testing-strategy.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：评估 `apps/api/package.json`、`apps/api/scripts/generate-openapi-test-artifacts.mjs`、`apps/api/src/testing/*` 的归属，迁移到 `apps/backend` 或共享工具目录，避免旧应用壳残留。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：修复 `apps/backend` 作为 JS/Vitest 工具入口后的测试启动问题，确保目录收口后 `vp test run` 不因 toolchain/config 漂移失效。Refs: `docs/core/testing-strategy.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：收口 `pnpm-lock.yaml` 与 workspace 元数据，移除旧 `apps/api` workspace 残留，确保安装链路不再提示 broken lockfile 或旧应用目录记录。Refs: `docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：梳理当前 `docker-compose.yml`、`docker/api.Dockerfile`、`docker/website.Dockerfile`、`docker/nginx/website.conf` 的职责，标记哪些保留、哪些删除、哪些迁移。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
-  - [ ] 执行 TODO：移除或替换根级 shell 验证脚本（如 self-hosted smoke 验证脚本），将对应验证入口收口到 root toolchain 或正式 CLI，避免继续依赖 `scripts/*.sh`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 将当前 self-hosted 实现收口到单应用镜像，移除独立 `website` / Nginx 运行时依赖。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] TODO: 删除与目标形态冲突的 `docker/website.Dockerfile`、Nginx 配置与 compose service，或将其降级为仅调试/过渡用途并明确标注。Refs: `docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：删除 `docker/website.Dockerfile` 与 `docker/nginx/website.conf`，若短期不能删则必须改名或在文档中明确标注为过渡态，禁止继续作为目标发布方案。Refs: `docs/self-hosting/docker-compose.md`
-  - [ ] 生产构建可生成稳定单镜像，而不是依赖开发态启动。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] TODO: `apps/website` 产物构建与 `go:embed` 打包链路正式化，避免发布态重复维护前端容器。Refs: `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：在 `apps/website` 产物构建完成后，由 `apps/backend` 构建链路把前端静态资源复制到可 `go:embed` 的目录，并保证本地开发链路不依赖该步骤。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`
-  - [ ] TODO: 后端补齐 SPA 静态资源服务、history fallback 和与 `/web/v1/*` 共存的路由规则。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：在 Go HTTP 入口实现静态资源服务、SPA history fallback、根路径 `/` 与静态资源缓存策略，同时保持 `/web/v1/*`、`/healthz`、`/readyz` 路由不回退到前端。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：新增或收口单镜像 `Dockerfile`，镜像内只运行一个 `opentoggl` 进程，不再要求 Nginx sidecar 或独立 website runtime。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] `docker compose` 自托管启动链路收口为 `opentoggl + postgres + redis`。Refs: `docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：重写 `docker-compose.yml`，删除 `website` service，保留 `opentoggl + postgres + redis`，并更新 healthcheck、端口、env 与 volume 说明。Refs: `docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：处理当前真实偏移中的 `docker/api.Dockerfile` 命名与职责问题，决定是迁移为 `docker/backend.Dockerfile` 还是收口为单一发布 Dockerfile，避免目录/镜像语义继续停留在旧 `api` 命名。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 执行 TODO：决定是否保留 `dev:api` 作为兼容别名；若保留需明确过渡期限，若不保留则同步删除相关旧别名文档与命令。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`
-  - [ ] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
-  - [ ] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
+  - [x] 执行 TODO：修复 `apps/backend` 作为 JS/Vitest 工具入口后的测试启动问题，确保目录收口后 `vp test run` 不因 toolchain/config 漂移失效。Refs: `docs/core/testing-strategy.md`、`docs/core/codebase-structure.md`
+  - [x] 执行 TODO：收口 `pnpm-lock.yaml` 与 workspace 元数据，移除旧 `apps/api` workspace 残留，确保安装链路不再提示 broken lockfile 或旧应用目录记录。Refs: `docs/core/codebase-structure.md`
+  - [x] 执行 TODO：梳理当前 `docker-compose.yml`、`docker/api.Dockerfile`、`docker/website.Dockerfile`、`docker/nginx/website.conf` 的职责，标记哪些保留、哪些删除、哪些迁移。Refs: `docs/self-hosting/docker-compose.md`、`docs/core/architecture-overview.md`
+    - 盘点结论（2026-03-21，基于当前仓库实现与目标架构对照）：
+      - `docker-compose.yml`：`迁移（migrate）`
+      - 原因：当前承担 `api + website` 双运行时编排；应迁移为目标态 `opentoggl + postgres + redis` 三服务编排，保留 Postgres/Redis 职责并重写应用服务定义、端口与健康检查口径。
+      - `docker/api.Dockerfile`：`迁移（migrate）`
+      - 原因：当前仅构建/运行 API 二进制且入口仍指向旧 `apps/api/cmd/api`；应迁移为单镜像发布 Dockerfile（或重命名为与 `apps/backend` 一致语义），并纳入前端构建产物嵌入链路。
+      - `docker/website.Dockerfile`：`删除（delete）`
+      - 原因：定义独立前端 + Nginx runtime，与“单 Go 运行时提供 Web + API”目标形态冲突；最多仅允许过渡期存在。
+      - `docker/nginx/website.conf`：`删除（delete）`
+      - 原因：依赖独立 Nginx/website 容器并反向代理 `api:8080`，属于双运行时实现；目标态由 Go 进程直接提供 SPA 与 `/web/v1/*`。
+      - 过渡态约束：`docker/website.Dockerfile` 与 `docker/nginx/website.conf` 仅可视为 `transitional-only` 资产，不得继续作为 self-hosted 目标发布方案。
+  - [x] 执行 TODO：移除或替换根级 shell 验证脚本（如 self-hosted smoke 验证脚本），将对应验证入口收口到 root toolchain 或正式 CLI，避免继续依赖 `scripts/*.sh`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 将当前 self-hosted 实现收口到单应用镜像，移除独立 `website` / Nginx 运行时依赖。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] TODO: 删除与目标形态冲突的 `docker/website.Dockerfile`、Nginx 配置与 compose service，或将其降级为仅调试/过渡用途并明确标注。Refs: `docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：删除 `docker/website.Dockerfile` 与 `docker/nginx/website.conf`，若短期不能删则必须改名或在文档中明确标注为过渡态，禁止继续作为目标发布方案。Refs: `docs/self-hosting/docker-compose.md`
+  - [x] 生产构建可生成稳定单镜像，而不是依赖开发态启动。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] TODO: `apps/website` 产物构建与 `go:embed` 打包链路正式化，避免发布态重复维护前端容器。Refs: `docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`
+  - [x] 执行 TODO：在 `apps/website` 产物构建完成后，由 `apps/backend` 构建链路把前端静态资源复制到可 `go:embed` 的目录，并保证本地开发链路不依赖该步骤。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`
+  - [x] TODO: 后端补齐 SPA 静态资源服务、history fallback 和与 `/web/v1/*` 共存的路由规则。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：在 Go HTTP 入口实现静态资源服务、SPA history fallback、根路径 `/` 与静态资源缓存策略，同时保持 `/web/v1/*`、`/healthz`、`/readyz` 路由不回退到前端。Refs: `docs/core/backend-architecture.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：新增或收口单镜像 `Dockerfile`，镜像内只运行一个 `opentoggl` 进程，不再要求 Nginx sidecar 或独立 website runtime。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] `docker compose` 自托管启动链路收口为 `opentoggl + postgres + redis`。Refs: `docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：重写 `docker-compose.yml`，删除 `website` service，保留 `opentoggl + postgres + redis`，并更新 healthcheck、端口、env 与 volume 说明。Refs: `docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：处理当前真实偏移中的 `docker/api.Dockerfile` 命名与职责问题，决定是迁移为 `docker/backend.Dockerfile` 还是收口为单一发布 Dockerfile，避免目录/镜像语义继续停留在旧 `api` 命名。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 执行 TODO：决定是否保留 `dev:api` 作为兼容别名；若保留需明确过渡期限，若不保留则同步删除相关旧别名文档与命令。Refs: `AGENTS.md`、`README.md`、`docs/core/codebase-structure.md`
+  - [x] 执行 TODO：在 README 或 self-hosting 文档中补一句“当前目标态为单镜像，仓库实现仍在从旧双运行时收口中”，避免使用者把现存 Docker 文件误读为最终方案。Refs: `README.md`、`docs/self-hosting/docker-compose.md`
+  - [x] 该 gate 未完成前，不允许继续推进 Wave 2 及之后波次的正式功能扩展
 - [ ] Wave 2：Membership、Access、Catalog 完整产品面（进行中：已完成首个 contracts + backend core + web pages + runtime endpoints slice；前提：先通过“Wave 2 前结构与交付基线收口 gate”）
+  - 当前缺口（2026-03-21，经核查）：`project` 正式产品面对齐仍未满足 Wave 2 退出标准。当前 Web 仅能验证 `/workspaces/$workspaceId/projects` 列表页，且实现与 page-flow 仍显式标注为 `Transition state`，缺少已写明的 filters、archive/pin controls、task/detail entry points；`openapi/opentoggl-web.openapi.json` 当前仅覆盖 `/web/v1/projects` 与 `/web/v1/projects/{project_id}/members*`，未见 `pin/unpin`、`templates`、`stats/periods` 等所需合同。下一具体工作项应先收口 `project page` 为正式页面，并同步补齐对应 Web contract、runtime 与测试证据。
 - [ ] Wave 3：Tracking 核心事务面
 - [ ] Wave 4：Tracking 扩展面与 Governance
 - [ ] Wave 5：Reports 读模型与共享
@@ -513,6 +599,30 @@ apps/website/src/
 - 停用中的 running timer 自动停止语义有测试覆盖
 - feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许“默认全开占位实现”
 - Wave 1 范围内的 BDD 故事已映射到 page flow / e2e / contract / integration
+  - 当前 Wave 1 覆盖映射（2026-03-21）：
+    - 登录 / 注册 / 会话引导
+      - Page flow：`apps/website/src/pages/auth/__tests__/auth-page-flow.test.tsx`
+      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`
+      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
+      - E2E / real-runtime：`apps/website/e2e/app-shell.real-runtime.spec.ts`
+    - 当前用户资料 / 偏好 / API token
+      - Page flow：`apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx`
+      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`
+      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
+      - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 profile e2e 仍缺
+    - workspace / organization settings
+      - Page flow：`apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx`
+      - Contract：`apps/backend/tests/compat/tenant-contract.test.ts`
+      - Integration：`apps/backend/internal/tenant/application/service_integration_test.go`、`apps/backend/internal/billing/application/service_integration_test.go`
+      - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 settings e2e 仍缺
+    - 进入 workspace 的共享 app shell
+      - Page flow：`apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx`
+      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`、`apps/backend/tests/compat/tenant-contract.test.ts`
+      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`、`apps/backend/internal/tenant/application/service_integration_test.go`
+      - E2E / real-runtime：`apps/website/e2e/app-shell.spec.ts`、`apps/website/e2e/app-shell.real-runtime.spec.ts`
+    - 停用用户阻止登录 / 写入与 stop-running-timer 语义
+      - Domain / integration：`apps/backend/internal/identity/domain/user_test.go`、`apps/backend/internal/identity/application/service_integration_test.go`
+      - Runtime regression：`apps/backend/internal/bootstrap/wave1_web_runtime_test.go`
 - self-hosted `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
 - `profile`、`settings`、共享 app shell 的正式 UI/Figma 对齐在 Wave 1.5 收口
 

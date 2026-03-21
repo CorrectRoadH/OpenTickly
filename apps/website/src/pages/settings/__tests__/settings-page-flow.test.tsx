@@ -52,11 +52,19 @@ describe("settings page flow", () => {
     render(<AppProviders router={router} />);
 
     expect(await screen.findByRole("heading", { name: "Workspace settings" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Manage workspace defaults, branding, and member-facing behavior for the current workspace.",
+      ),
+    ).toBeTruthy();
     expect(screen.getByText("Branding assets")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("link", { name: "Organization settings" }));
 
     expect(await screen.findByRole("heading", { name: "Organization settings" })).toBeTruthy();
+    expect(
+      screen.getByText("Manage organization-wide governance and settings that apply across workspaces."),
+    ).toBeTruthy();
     expect(screen.getByDisplayValue("North Ridge Org")).toBeTruthy();
   });
 });

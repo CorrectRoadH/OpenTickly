@@ -46,6 +46,11 @@ describe("profile page flow", () => {
     render(<AppProviders router={router} />);
 
     expect(await screen.findByRole("heading", { name: "Profile" })).toBeTruthy();
+    expect(screen.getByText("Account")).toBeTruthy();
+    expect(
+      screen.getByText("Personal defaults that shape how time, dates, and notifications appear."),
+    ).toBeTruthy();
+    expect(screen.getByText("Security")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "API token" })).toBeTruthy();
     expect(screen.getByDisplayValue("Alex North")).toBeTruthy();
     expect(screen.getByDisplayValue("api-token-99")).toBeTruthy();

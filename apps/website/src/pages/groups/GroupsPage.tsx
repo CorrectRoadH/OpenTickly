@@ -39,8 +39,9 @@ export function GroupsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Groups</h1>
           <p className="text-sm leading-6 text-slate-600">
-            Contract-backed group records reuse the current placeholder shell list pattern while
-            keeping team grouping separate from projects, clients, tasks, and tags.
+            Transition state. This page keeps workspace groups visible, but the documented group
+            management surface still needs its dedicated information architecture and membership
+            controls.
           </p>
         </div>
         <AppButton type="button">Create group</AppButton>
@@ -67,7 +68,7 @@ export function GroupsPage(): ReactElement {
             <li key={group.id} className="flex items-center justify-between py-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">{group.name}</p>
-                <p className="text-xs text-slate-600">Contract-backed group · {statusLabel}</p>
+                <p className="text-xs text-slate-600">Group · {statusLabel}</p>
                 <p className="text-[11px] text-slate-500">Workspace {group.workspace_id}</p>
               </div>
               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
@@ -80,8 +81,10 @@ export function GroupsPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          This placeholder slice exposes {groups.length} group{groups.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active.
+          Transition state. Showing {groups.length} group{groups.length === 1 ? "" : "s"} for
+          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when the
+          documented group management flow and membership controls are in place and covered by
+          page-flow evidence.
         </p>
       </div>
     </AppPanel>

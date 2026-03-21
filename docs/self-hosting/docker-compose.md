@@ -16,7 +16,7 @@ This document defines the self-hosted runtime path only.
 Self-hosted delivery should default to one application image:
 
 - build `apps/website`
-- embed the built frontend assets into the Go API binary
+- embed the built frontend assets into the Go backend binary
 - serve SPA routes and `/web/v1/*` from the same Go runtime
 
 `docker compose` health checks use `/readyz` for readiness on the single `opentoggl` service.
@@ -24,16 +24,14 @@ Self-hosted delivery should default to one application image:
 ## Start
 
 ```bash
-docker compose up -d --build
+pnpm run self-hosted:up
 ```
 
 ## Verify
 
 ```bash
-docker compose ps
-curl -fsSI http://localhost:8080/
-curl -fsS http://localhost:8080/healthz
-curl -fsS http://localhost:8080/readyz
+pnpm run self-hosted:verify
+pnpm run self-hosted:smoke
 ```
 
 ## Stop
@@ -45,3 +43,4 @@ docker compose down
 ## Drift Note
 
 If the repository currently contains a separate `website` container or Nginx runtime, treat that as implementation drift to be removed. The target self-hosted shape is a single Go application image, not a `website + api` dual-runtime deployment.
+Current examples of this drift may still exist in historical branches or local worktrees (for example, an old dedicated website Dockerfile) and should not be interpreted as the target architecture.

@@ -14,7 +14,7 @@ import {
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("projects page flow", () => {
-  it("renders projects with visible contract-backed member rows in the workspace shell", async () => {
+  it("renders project archive and pin controls with status-filtered list behavior", async () => {
     const projects = createProjectsFixture().projects.slice();
     const { calls } = installMockWebApi([
       {
@@ -23,7 +23,23 @@ describe("projects page flow", () => {
       },
       {
         path: "/web/v1/projects",
-        resolver: () => jsonResponse({ projects }),
+        resolver: (request) => {
+          const searchParams = new URLSearchParams(request.search);
+          const status = searchParams.get("status") ?? "all";
+          const filteredProjects = projects.filter((project) => {
+            if (status === "active") {
+              return project.active;
+            }
+
+            if (status === "archived") {
+              return !project.active;
+            }
+
+            return true;
+          });
+
+          return jsonResponse({ projects: filteredProjects });
+        },
       },
       {
         method: "POST",
@@ -35,8 +51,57 @@ describe("projects page flow", () => {
             name: body.name ?? "Untitled",
             workspace_id: body.workspace_id ?? 202,
             active: true,
+            pinned: false,
           });
           return jsonResponse(projects[projects.length - 1], { status: 201 });
+        },
+      },
+      {
+        method: "POST",
+        path: "/web/v1/projects/1001/pin",
+        resolver: () => {
+          const project = projects.find((candidate) => candidate.id === 1001);
+          if (!project) {
+            throw new Error("missing project 1001");
+          }
+          project.pinned = true;
+          return jsonResponse(project);
+        },
+      },
+      {
+        method: "DELETE",
+        path: "/web/v1/projects/1002/pin",
+        resolver: () => {
+          const project = projects.find((candidate) => candidate.id === 1002);
+          if (!project) {
+            throw new Error("missing project 1002");
+          }
+          project.pinned = false;
+          return jsonResponse(project);
+        },
+      },
+      {
+        method: "POST",
+        path: "/web/v1/projects/1001/archive",
+        resolver: () => {
+          const project = projects.find((candidate) => candidate.id === 1001);
+          if (!project) {
+            throw new Error("missing project 1001");
+          }
+          project.active = false;
+          return jsonResponse(project);
+        },
+      },
+      {
+        method: "DELETE",
+        path: "/web/v1/projects/1002/archive",
+        resolver: () => {
+          const project = projects.find((candidate) => candidate.id === 1002);
+          if (!project) {
+            throw new Error("missing project 1002");
+          }
+          project.active = true;
+          return jsonResponse(project);
         },
       },
       {
@@ -87,22 +152,75 @@ describe("projects page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Projects" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create project" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Transition state. This page now covers status filtering and archive/pin controls, but the documented project page still needs task/detail entry points and template/statistics flows.",
+      ),
+    ).toBeTruthy();
 
     const list = screen.getByLabelText("Projects list");
     expect(within(list).getByText("Website Revamp")).toBeTruthy();
     expect(within(list).getByText("Community Launch")).toBeTruthy();
-    expect(within(list).getByText(/Contract-backed project · Inactive/)).toBeTruthy();
+    expect(within(list).getByText(/Project · Archived/)).toBeTruthy();
     expect(within(list).getByText("Workspace 202 · 2 members")).toBeTruthy();
     expect(within(list).getByText("Workspace 202 · 0 members")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Transition state. Showing 2 projects for workspace 202, with 1 active and 1 pinned. Exit when this page adds task/detail entry points plus template/statistics flows with page-flow evidence.",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Project status filter")).toBeTruthy();
 
     const websiteRevampProject = within(list).getByLabelText("Project Website Revamp");
     expect(within(websiteRevampProject).getByText("Member 99")).toBeTruthy();
     expect(within(websiteRevampProject).getByText("Admin")).toBeTruthy();
     expect(within(websiteRevampProject).getByText("Member 17")).toBeTruthy();
     expect(within(websiteRevampProject).getByText("Member")).toBeTruthy();
+    expect(within(websiteRevampProject).getByRole("button", { name: "Pin project Website Revamp" })).toBeTruthy();
+    expect(
+      within(websiteRevampProject).getByRole("button", { name: "Archive project Website Revamp" }),
+    ).toBeTruthy();
 
     const communityLaunchProject = within(list).getByLabelText("Project Community Launch");
     expect(within(communityLaunchProject).getByText("No members assigned")).toBeTruthy();
+    expect(within(communityLaunchProject).getByText("Pinned")).toBeTruthy();
+    expect(
+      within(communityLaunchProject).getByRole("button", { name: "Restore project Community Launch" }),
+    ).toBeTruthy();
+    expect(
+      within(communityLaunchProject).getByRole("button", { name: "Unpin project Community Launch" }),
+    ).toBeTruthy();
+
+    fireEvent.click(
+      within(websiteRevampProject).getByRole("button", { name: "Pin project Website Revamp" }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Pinned project Website Revamp")).toBeTruthy();
+      expect(within(screen.getByLabelText("Project Website Revamp")).getByText("Pinned")).toBeTruthy();
+    });
+
+    fireEvent.click(
+      within(screen.getByLabelText("Project Website Revamp")).getByRole("button", {
+        name: "Archive project Website Revamp",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Archived project Website Revamp")).toBeTruthy();
+      expect(within(screen.getByLabelText("Project Website Revamp")).getByText(/Project · Archived/)).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByLabelText("Project status filter"), {
+      target: { value: "archived" },
+    });
+
+    await waitFor(() => {
+      const archivedList = screen.getByLabelText("Projects list");
+      expect(within(archivedList).getByText("Website Revamp")).toBeTruthy();
+      expect(within(archivedList).getByText("Community Launch")).toBeTruthy();
+      expect(within(archivedList).queryByText("Launch Website")).toBeNull();
+    });
 
     fireEvent.change(screen.getByLabelText("Project name"), {
       target: { value: "Launch Website" },
@@ -122,6 +240,10 @@ describe("projects page flow", () => {
           (call.body as { name?: string; workspace_id?: number }).name === "Launch Website" &&
           (call.body as { name?: string; workspace_id?: number }).workspace_id === 202,
       ),
+    ).toBe(true);
+    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/pin")).toBe(true);
+    expect(
+      calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/projects/1001/archive"),
     ).toBe(true);
   });
 });

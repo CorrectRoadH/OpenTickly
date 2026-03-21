@@ -45,12 +45,25 @@ describe("clients page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Clients" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Create client" })).toBeTruthy();
+    expect(
+      screen.getByText(/This page keeps client records visible inside the workspace shell/),
+    ).toBeTruthy();
 
     const list = screen.getByLabelText("Clients list");
     expect(within(list).getByText("North Ridge Client")).toBeTruthy();
     expect(within(list).getByText("Studio Partner")).toBeTruthy();
-    expect(within(list).getByText(/Contract-backed client · Inactive/)).toBeTruthy();
+    expect(within(list).getByText(/Client · Inactive/)).toBeTruthy();
     expect(within(list).getAllByText(/Workspace 202/)).not.toHaveLength(0);
+    expect(screen.getByText(/Showing 2 clients for workspace 202, with 1 active\./)).toBeTruthy();
+    expect(
+      screen.queryAllByText((_, element) =>
+        (element?.tagName === "P" &&
+          element.textContent?.includes(
+            "documented client management flow with filters, batch actions, and detail",
+          )) ??
+        false,
+      ).length,
+    ).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText("Client name"), {
       target: { value: "Launch Partner" },

@@ -65,10 +65,10 @@ snapshots:
   '@pnpm/exe@10.32.1':
     optionalDependencies:
       '@pnpm/win-arm64': 10.32.1
-      '@pnpm/macos-x64': 10.32.1
-      '@pnpm/linux-arm64': 10.32.1
       '@pnpm/macos-arm64': 10.32.1
+      '@pnpm/macos-x64': 10.32.1
       '@pnpm/win-x64': 10.32.1
+      '@pnpm/linux-arm64': 10.32.1
       '@pnpm/linux-x64': 10.32.1
 
   '@pnpm/linux-arm64@10.32.1':
