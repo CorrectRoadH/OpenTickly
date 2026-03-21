@@ -13,8 +13,6 @@ import (
 
 func NewServer(health web.HealthSnapshot, wave1 *Wave1WebHandlers) *echo.Echo {
 	server := echo.New()
-	server.HideBanner = true
-	server.HidePort = true
 
 	healthHandler := func(context echo.Context) error {
 		return context.JSON(http.StatusOK, health)
