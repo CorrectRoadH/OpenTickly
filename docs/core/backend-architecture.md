@@ -124,6 +124,8 @@
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
+- 源码本地开发默认必须通过根目录 `.env.local` 提供数据库/缓存等关键配置；缺少关键 env 时，`bootstrap` 必须失败，不允许伪造可工作默认值
+- `apps/backend/internal/bootstrap` 必须把真实 Postgres / Redis 连接失败视为启动失败；不允许把内存 store、placeholder runtime 或 fake dependency 当成默认装配路径
 
 推荐装配形状：
 
@@ -164,6 +166,7 @@ bootstrap.NewApp(cfg)
 - handler 在 transport 层拼接跨请求共享的可变业务状态，而不是调用 application service
 - 为了“临时跑通”把授权、配额、领域规则或错误语义直接硬编码在路由壳层
 - 已有 OpenAPI 合同后，仍持续手写 DTO、route table、bind/validate 入口并把它当成正式边界
+- 在本地源码默认启动路径中，以内存 state、伪仓储或 placeholder runtime 代替真实 Postgres / Redis 依赖
 
 允许存在的临时过渡实现只限于：
 
@@ -509,6 +512,18 @@ Query 的特征：
 - 如果逻辑稳定地组合 `tracking + tenant + membership` 的页面数据，它才属于 `apps/backend/internal/web`
 - 如果逻辑只是数据库连接、server 启停、middleware 组合，它属于 `bootstrap` 或 `http`
 
+### 5.5.1 本地开发运行时入口
+
+后端本地开发入口固定为仓库根目录执行的 `air`。
+
+规则：
+
+- `air` 是唯一允许的后端本地源码开发启动入口，不再把 `go run ./apps/backend` 作为日常开发文档化入口。
+- 根级 `.air.toml` 是后端热重载配置的唯一真相源；不允许在 `apps/backend`、根级 `scripts/` 或其他包装层复制第二套 dev runtime 配置。
+- `.air.toml` 负责监听源码变化并重建/重启 `./apps/backend`，但不改变正式应用入口；真正的进程入口仍然是 `apps/backend/main.go`。
+- `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器运行时都不得依赖 `air` 常驻。
+- 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应运行时命令，而不是复用 `air`。
+
 ## 6. 权限、套餐和事务
 
 权限与套餐检查点在 `application`。
@@ -662,6 +677,14 @@ Query Port 负责：
 - 任何跨模块业务编排
 
 如果某个接口名字里带明显业务动作，它大概率不该在 `platform`。
+
+`observability` 的最低要求：
+
+- 后端进程启动成功时必须输出基础 startup log，至少包含监听地址、服务名与关键 runtime mode。
+- HTTP 入口必须具备基础 request log；至少记录 method、path、status、duration 与 request id / trace correlation 字段中的可用子集。
+- `/readyz` 与依赖初始化失败时必须输出可诊断日志，不能只返回静态状态而没有任何后台证据。
+- “进程活着”与“依赖已就绪”必须能从日志与 readiness 结果中区分，不能只靠静态 `200 OK` 冒充可工作后端。
+- 这些日志属于默认运行时要求，不是仅在 debug 模式下才存在的可选能力。
 
 ## 11. 后端测试入口
 

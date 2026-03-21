@@ -46,11 +46,15 @@
 
 ### 3.1.1 本地开发与自托管交付分离
 
-- 本地开发默认采用源码直启：前端与后端分别从仓库根目录启动（`vp run website#dev` + `go run ./apps/backend`）。
+- 本地开发默认采用源码直启：前端与后端分别从仓库根目录启动（`vp run website#dev` + `air`）。
 - 本地开发前端由 `Vite` dev server 提供，浏览器请求通过 Vite proxy 转发到 Go API；默认代理目标为 `OPENTOGGL_WEB_PROXY_TARGET`，未设置时指向 `http://127.0.0.1:8080`。
+- 后端本地开发统一通过根级 `.air.toml` 进行热重载；`air` 只用于本地源码开发，CI、生产构建与 self-hosted 运行时不依赖 `air`。
 - `docker compose` 属于 self-hosted 交付、部署演练和发布态 smoke 验证路径，不是默认本地开发路径。
 - 本地开发所需环境变量统一放在仓库根目录，避免按应用分散配置。
 - 本地开发 env 文件约定也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
+- `.env.local` 是源码本地开发的必需输入；`.env.local.example` 仅用于拷贝生成本机配置。
+- 后端本地启动不得依赖内置 datasource fallback。若关键 env 缺失，进程必须直接失败，而不是退回内存实现或伪默认配置。
+- 本地开发的 Go 后端默认应连接真实 PostgreSQL 与 Redis；“能启动一个假 runtime”不构成后端可工作。
 
 ### 3.2 单体优先，不先拆多进程运行时
 
@@ -65,6 +69,7 @@
 - 事务写模型以 PostgreSQL 为核心真相源。
 - 报表、导出、Webhook、搜索等高读取或异步能力可以通过投影、任务表和缓存解耦。
 - 首版允许从单库起步，但必须保留向独立读模型演进的边界。
+- 源码本地开发默认也遵守同一真相源原则：事务写路径不能以内存 store 或 placeholder runtime 替代 PostgreSQL。
 
 ### 3.4 公开合同优先于内部实现
 

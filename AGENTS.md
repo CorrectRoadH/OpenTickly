@@ -8,12 +8,18 @@ Local development must run source processes directly from the repository root.
 
 - Do not use `docker compose` as the default local development workflow.
 - Start the frontend from the repository root with `vp run website#dev`.
-- Start the backend from the repository root with `go run ./apps/backend`.
+- Start the backend from the repository root with `air`.
 - Local development environment variables must live at the repository root, not under `apps/website`, `apps/backend`, or ad hoc shell wrappers.
 - Documented local development env variables belong in root-level env files such as `.env.example` and `.env.local`.
+- Root `.env.local` is required for source-based local development. `.env.local.example` is only a template and is not itself a runnable local-development env file.
+- The backend local-development path must require explicit datasource configuration from env. If the datasource env is missing, backend startup must fail immediately.
+- The default local backend runtime must connect to real dependencies started outside the app process. It must not silently fall back to in-memory stores, placeholder runtime state, or fabricated dependency defaults.
+- Backend hot reload configuration must live at the repository root in `.air.toml`; do not duplicate `air` config under `apps/backend` or ad hoc shell wrappers.
 - When local development needs additional entry points, add them to the root toolchain surface such as root `package.json`, `vp`, or a checked-in Go CLI entrypoint.
+- Root toolchain entrypoints are for source-based local development workflows. Do not add wrapper CLIs around native deployment/runtime tools when the underlying tool is already the canonical interface; if `air` is the canonical backend dev runtime, do not wrap it behind duplicate shell or Node entrypoints.
 - Do not add root-level `scripts/*.sh` files as local development wrappers.
 - `docker compose` is reserved for self-hosted packaging, deployment rehearsal, and release-style smoke verification, not day-to-day local source development.
+- Self-hosted runtime commands should be documented and executed directly with `docker compose` and other native runtime commands, not wrapped behind `pnpm`, Node, or ad hoc helper CLIs.
 - If a change affects how developers boot the app locally, update this file with root-run commands and root-level env expectations in the same change.
 
 ## Documentation Is The Source Of Truth

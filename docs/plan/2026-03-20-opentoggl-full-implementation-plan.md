@@ -36,12 +36,17 @@
 > - 如果基础结构仍在漂移，不允许以“先做功能、后面再整理”为理由跳过结构治理。
 > - 占位页、placeholder runtime、手写 transport 壳层与 Figma 对齐缺口的清理，属于 Wave 2 前高优先级阻塞项，不得作为“实现中自然会顺手解决”的次要事项下放。
 > - 新发现的 duplicate path / duplicate naming / duplicate implementation / internal compat alias 问题视为插队级结构治理项；发现后立即提到当前执行队首，在收口前暂停继续扩张相关功能面。
-> - `go run ./apps/backend` 只能证明 Go 进程可启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
+> - `air` 只能证明后端开发运行时可热重载启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
+> - 根目录 `.env.local` 是源码本地开发必需前置条件；`.env.local.example` 仅是模板。缺少 `.env.local`、缺少 datasource env、或默认启动继续落到内存/placeholder runtime，都视为结构未收口。
 
-- [x] 插队 P0：One-Way 结构治理与规范入口收口
+- [ ] 插队 P0：One-Way 结构治理与规范入口收口
+  - 状态回退说明（2026-03-21，改回人：Codex）
+  - 改回原因：父项下仍存在未完成的阻塞级 TODO，继续标记为已完成会掩盖当前真实偏移状态。
+  - 未通过验收：`apps/backend/internal/http/wave1_web_routes.go` 仍是手写 Web transport；`apps/website/src/pages/{projects,clients,tasks,tags,groups,permission-config}/*.tsx` 仍保留 `Transition state` 过渡态文案；`packages/utils/src/index.ts` 与 `packages/utils/tests/index.test.ts` 仍是 starter 示例实现。
   - [x] 执行 TODO：删除 `pnpm -> node tools/self-hosted/cli.mjs -> docker compose` 的 self-hosted 包装层，self-hosted 启动与校验统一直接收口为 `docker compose` 与显式 `curl` 命令，不再保留 `self-hosted:*` root scripts。Refs: `AGENTS.md`、`docs/self-hosting/docker-compose.md`、`package.json`
   - [x] 执行 TODO：按 `AGENTS.md` 新增 `Code Principles` 清理所有重复内部入口、重复命名、重复实现与内部 compat alias，建立“one responsibility / one canonical path / one canonical name / one canonical implementation”基线。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`
   - [ ] 执行 TODO：按 `docs/core/backend-architecture.md` 的 generation-first 规则收口当前手写 Web transport 漂移；重点处理 `apps/backend/internal/http/wave1_web_routes.go` 中手写 `server.GET/POST/...`、`context.Bind(...)` 与 placeholder route 注册，迁移为以 `openapi/opentoggl-web.openapi.json` 为源的 generated route/DTO/handler interface/validator 边界。该项完成前，不允许继续在手写 route table 上叠加新 endpoint。Refs: `docs/core/backend-architecture.md`、`docs/core/codebase-structure.md`、`openapi/opentoggl-web.openapi.json`
+  - [ ] 执行 TODO：收口本地源码启动的 env / dependency 入口，固定“根 `.env.local` + 显式 datasource env + 真实依赖”作为唯一默认路径。缺少 `.env.local` 或关键 datasource env 时，`air` 启动必须立即失败；禁止继续以默认 DSN、内存 store、placeholder runtime 或 fake dependency 让后端表面可启动。Refs: `AGENTS.md`、`README.md`、`docs/core/architecture-overview.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [ ] 执行 TODO：按 `docs/core/frontend-architecture.md` 与对应 `docs/product/*.md` 的 Figma/fallback 对齐规则收口当前正式页面族偏移；重点处理 `apps/website/src/pages/projects/ProjectsPage.tsx`、`apps/website/src/pages/clients/ClientsPage.tsx`、`apps/website/src/pages/tasks/TasksPage.tsx`、`apps/website/src/pages/tags/TagsPage.tsx`、`apps/website/src/pages/groups/GroupsPage.tsx`、`apps/website/src/pages/permission-config/PermissionConfigPage.tsx` 中仍然存在的 `Transition state` 叙事与占位式页面骨架。该项完成前，这些页面不得宣称正式完成，且不得继续以过渡态文案替代 Figma/fallback 对齐证据。Refs: `docs/core/frontend-architecture.md`、`docs/product/tracking.md`、`docs/product/membership-and-access.md`、`docs/core/testing-strategy.md`
   - [x] 执行 TODO：根工具链收口到唯一规范开发入口命名；删除与规范入口重复的 alias 或包装脚本。当前已知首批对象：根 `package.json` 中 `dev` vs `dev:website`、README 中 alias 叙事。已收口为仅保留显式脚本名 `dev:website`，删除重复根 alias `dev`，README 仅保留规范源码启动命令。Refs: `AGENTS.md`、`README.md`
   - [x] 执行 TODO：清理内部代码中的 backward-compatible alias / helper / duplicate adapter，禁止 compat 语义继续泄漏到 `domain`、`application`、常规开发脚本与默认 runtime。已完成首批对象（2026-03-21）：`apps/backend/internal/membership/domain/workspace_member.go` 删除 `WorkspaceMemberStateActive` 内部 alias；`apps/backend/internal/catalog/application/service.go` 删除 `AddProjectMember`、`CanViewProject` duplicate helper，统一收口到 `GrantProjectMember` 与 `CanAccessProject`。Refs: `AGENTS.md`、`docs/core/backend-architecture.md`
@@ -61,7 +66,8 @@
       - delete condition：对应 placeholder runtime 路径已删除，且同能力已有正式 runtime 测试替代
   - [x] 执行 TODO：清理 `opentoggl-web` 正式合同与生成产物中的 placeholder / transitional 语义；以正式产品语义重写 `openapi/opentoggl-web.openapi.json` 对应 summary/description，并重新生成 `packages/shared-contracts/src/generated/web-contracts.generated.ts`，禁止 placeholder 文案继续通过正式 contract 外溢。Refs: `AGENTS.md`、`openapi/opentoggl-web.openapi.json`、`packages/shared-contracts/package.json`
   - [x] 执行 TODO：同步收口把 placeholder 固化进测试基线的断言与命名，重点清理 `apps/backend/tests/openapi/opentoggl-openapi.test.ts` 中对 “Wave 2 placeholder slice” 的制度化表述，改为正式 contract / runtime 接管目标的断言。Refs: `AGENTS.md`、`docs/core/testing-strategy.md`、`openapi/opentoggl-web.openapi.json`
-  - [ ] 执行 TODO：评估 `packages/utils` 是否仍有项目内职责；若无明确消费者与边界，删除整个 workspace 包；若保留，需补齐真实职责说明、规范命名与最小实际用途，禁止继续以 starter 模板包形态漂移。Refs: `AGENTS.md`、`packages/utils/package.json`、`pnpm-workspace.yaml`
+  - [ ] 执行 TODO：收口 `packages/shared-contracts/src/shared-contracts.test.ts` 与 `openapi/opentoggl-web.openapi.json` 的当前冲突；测试已经要求正式 web contract source 不得包含 `placeholder` 文案，因此必须决定以正式合同为准重写 source + generated artifact，或按文档边界重新定义测试职责，禁止 source/test 长期互相矛盾。Refs: `docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`、`packages/shared-contracts/src/shared-contracts.test.ts`、`openapi/opentoggl-web.openapi.json`
+  - [ ] 执行 TODO：评估 `packages/utils` 是否仍有项目内职责；当前不仅元数据曾是 starter 模板，连 `packages/utils/src/index.ts` 与 `packages/utils/tests/index.test.ts` 仍是 starter 示例实现。若无明确消费者与边界，删除整个 workspace 包；若保留，需补齐真实职责说明、规范命名与最小实际用途，禁止继续以 starter 模板包形态漂移。Refs: `AGENTS.md`、`packages/utils/package.json`、`packages/utils/src/index.ts`、`packages/utils/tests/index.test.ts`、`pnpm-workspace.yaml`
   - [x] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
 - [x] Wave 0：工程地基与生成链路
@@ -72,15 +78,24 @@
   - [x] 本地开发采用仓库根目录源码启动链路，前后端可分别启动并共享根目录 env
   - [x] 本地开发 env 文件统一收口到仓库根目录，例如 `.env.example`、`.env.local`
   - [x] 不允许新增根级 `scripts/*.sh` 作为本地开发入口，新增源码开发入口统一收口到 root toolchain 或正式 CLI
-- [x] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
+- [ ] Wave 1：Identity、Session、Tenant、Billing Foundation 与应用壳
+  - 状态回退说明（2026-03-21，改回人：Codex）
+  - 改回原因：本波次父级退出标准与当前仓库已记录的结构漂移清单存在直接冲突，继续标记为已完成会掩盖“正式事实来源未完全接管 transport/runtime”的现状。
+  - 未通过验收：Wave 1 退出标准要求 `feature gate、quota header 与 capability check 已由 billing 提供正式事实来源`；但同一计划文档当前整改清单已明确写出 `apps/backend/internal/http/wave1_web_tenant_handlers.go` 仍在 transport 层硬编码 `plan/quota/capability/admin` 语义，`apps/backend/internal/http/wave1_web_handlers.go` / `wave1_web_runtime.go` 仍以 fake runtime 作为默认装配基础，因此本波次不能视为整体退出标准已满足。
   - [x] Wave 1 Web 合同扩展：`openapi/opentoggl-web.openapi.json`
   - [x] `billing-foundation` 后端基础切片第一版
   - [x] `tenant-backend` 后端基础切片第一版
   - [x] `identity-backend` 切片完全过 gate
   - [x] `identity-tenant-web` 切片完全过 gate
   - [x] 登录页补齐可发现的注册入口与跳转，避免 `/login` 成为注册流程死路
-  - [x] Wave 1 整体退出标准全部满足
-- [x] Wave 1.5：UI/Figma 对齐与占位实现退出 gate
+  - [ ] Wave 1 整体退出标准全部满足
+    - 状态回退说明（2026-03-21，改回人：Codex）
+    - 改回原因：当前代码仍与 Wave 1 退出标准中的“billing 正式事实来源接管 capability/quota/gate”要求不一致。
+    - 未通过验收：`docs/plan/2026-03-20-opentoggl-full-implementation-plan.md` 当前整改清单已写明 `apps/backend/internal/http/wave1_web_tenant_handlers.go` 仍在 transport 层手写 `workspacePermissionsBody/organizationBody/workspaceBody/capabilityBody/quotaBody` 并硬编码 plan/quota/capability/admin 语义；这与 Wave 1 退出标准中“feature gate、quota header 与 capability check 已由 billing 提供正式事实来源，不再允许默认全开占位实现”直接冲突。
+- [ ] Wave 1.5：UI/Figma 对齐与占位实现退出 gate
+  - 状态回退说明（2026-03-21，改回人：Codex）
+  - 改回原因：本波次父级退出标准要求的 UI 基线与证据链尚未满足，继续标记为已完成会掩盖当前 `shell/profile/settings` 之外的明显收口缺口。
+  - 未通过验收：`docs/plan/2026-03-20-opentoggl-full-implementation-plan.md` 的 Wave 1.5 退出标准仍要求 `packages/web-ui` 形成可复用应用级 UI 基线、loading/error/empty/success notice 进入共享 UI 基线，以及 `shell/profile/settings` 提交截图/证据；当前仓库仍仅有极薄 `AppPanel/AppButton/theme` 封装，且计划证据表中明确写有 shell/profile/settings 截图证据缺失。
   - [x] 执行 TODO：共享 app shell、`profile`、`settings` 按已引用的 PRD/Figma 节点完成正式页面骨架对齐，不再保留开发期 hero、Wave 文案、placeholder/contract-backed/tracer shell 叙事。Refs: `docs/product/identity-and-tenant.md`、`docs/product/tracking.md`、`docs/core/frontend-architecture.md`
   - [x] 执行 TODO：为 `shell`、`profile`、`settings` 建立并提交 `PRD -> Figma 节点 -> 实现页面 -> page flow/e2e -> 截图/证据` 对照结果。Refs: `docs/core/testing-strategy.md`、`docs/core/frontend-architecture.md`
     - 当前提交证据（2026-03-21）：
@@ -166,17 +181,19 @@
 
 - [ ] Wave 2 前结构、后端可用性与交付基线收口 gate
   - [x] 在进入 Wave 2 前完成后端目录结构收口：`apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
-  - [x] 在进入 Wave 2 前完成后端启动命令收口：`go run ./apps/backend`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
-  - [ ] 在进入 Wave 2 前固定“后端可工作”的最低标准：`go run ./apps/backend`、数据库迁移、默认配置注入、首次管理员初始化、真实依赖 readiness、最小 smoke test 必须形成一条可重复执行的链路；单独的进程启动或静态 `200 OK` 不得再视为完成。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`
+  - [x] 在进入 Wave 2 前完成后端启动命令收口：`air`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
+  - [ ] 在进入 Wave 2 前固定“后端可工作”的最低标准：`air`、数据库迁移、默认配置注入、首次管理员初始化、真实依赖 readiness、最小 smoke test 必须形成一条可重复执行的链路；单独的热重载启动或静态 `200 OK` 不得再视为完成。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`
     - 当前缺口（2026-03-21）：
+      - 仓库虽然已有 `.env.local.example`，但“根 `.env.local` 是必需前置条件、缺少 datasource env 必须启动失败”的规则尚未在代码与验证链中正式落地
       - `apps/backend/internal/bootstrap/app.go` 仍通过 `newWave1WebHandlers()` 把 fake runtime 当作默认可用后端装配的一部分，尚未形成“真实依赖 + 正式迁移/初始化”的可重复工作链
       - `apps/backend/internal/bootstrap/config_env.go` 目前只负责 env 读取与默认配置回填，未覆盖数据库迁移、首次管理员初始化或默认实例配置注入
       - `apps/backend/internal/bootstrap/bootstrap_test.go` 当前主要证明可启动/health/模块 inventory，尚未证明“迁移 -> 初始化 -> readiness -> smoke”链路
-      - 下一具体工作项：先补一条最小的 bootstrap/runtime 验证链，至少把“迁移/初始化入口是否存在、readiness 是否依赖真实后端配置、smoke 命令是否指向真实 runtime”固定为可执行证据，再决定是否需要正式 CLI 或测试 harness
+      - 下一具体工作项：先收口 env / bootstrap 规则，至少把“根 `.env.local` 是否存在、datasource env 是否必填、readiness 是否依赖真实后端配置、smoke 命令是否指向真实 runtime”固定为可执行证据，再决定是否需要正式 CLI 或测试 harness
   - [x] 在进入 Wave 2 前完成 self-hosted 单镜像运行时方向收口，不再以 `website + api` 双运行时作为目标形态。Refs: `docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 在进入 Wave 2 前完成相关文档、README、样例命令与 smoke test 口径统一。Refs: `AGENTS.md`、`README.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：后端目录结构从 `apps/api + backend/internal/*` 收口为 `apps/backend/main.go + apps/backend/internal/*`。Refs: `docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
-  - [x] 执行 TODO：本地开发与文档启动命令统一收口为 `go run ./apps/backend`，不再使用 `go run ./apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
+  - [x] 执行 TODO：本地开发与文档启动命令统一收口为根目录 `air`，不再使用 `go run ./apps/backend` 或 `go run ./apps/api/cmd/api` 作为日常本地开发入口。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
+  - [x] 执行 TODO：补齐根级 `.air.toml` 并把其定义为后端热重载唯一真相源；其 build/run target 必须指向 `./apps/backend`，且不得在 `apps/backend` 或 `scripts/` 下新增平行 dev runtime 包装。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [x] 执行 TODO：同步修正文档、README、样例命令和 smoke test，避免继续出现 `apps/api`、`backend/internal/*`、`website + api` 双运行时表述。Refs: `README.md`、`docs/core/architecture-overview.md`、`docs/self-hosting/docker-compose.md`
   - [x] 执行 TODO：修正根 `package.json` 的 `dev:api` 等旧命令引用，确保根工具链不再指向 `apps/api/cmd/api`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`
   - [x] 执行 TODO：处理遗留 `apps/api` 目录，明确哪些测试/脚本迁移到 `apps/backend`，哪些删除，禁止长期并存两个后端应用目录。Refs: `docs/core/codebase-structure.md`、`docs/core/testing-strategy.md`
@@ -571,6 +588,7 @@ apps/website/src/
 
 - 根目录、API、Web 都能启动最小正式 runtime
 - 本地开发可从仓库根目录分别启动前端与后端源码进程，不依赖 `docker compose`
+- 后端源码开发入口已统一收口到根目录 `air`，并由根级 `.air.toml` 管理热重载
 - 本地开发 env 已统一收口在仓库根目录，而不是分散在 `apps/*`
 - 本地开发入口未退化为根级 `scripts/*.sh` 包装
 - Web 端已完成 `tailwindcss@4 + baseui + styletron` 的共存基线，而不是后续再补

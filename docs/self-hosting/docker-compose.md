@@ -6,6 +6,8 @@ This document defines the self-hosted runtime path only.
 - Local development should run source processes directly from the repository root.
 - Local development environment variables belong in the repository root.
 - Root-level local env files such as `.env.example` and `.env.local` remain the source of truth for source-based development.
+- Root `.env.local` is required for source-based local development; `.env.local.example` is only a template.
+- Source-based local backend startup must fail if required datasource env is missing instead of falling back to in-memory behavior.
 
 ## Services
 

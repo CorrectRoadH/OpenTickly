@@ -2,8 +2,13 @@
 
 ## Local Development
 
+- Install backend dev runtime: `go install github.com/air-verse/air@latest`
+- Create root `.env.local` from `.env.local.example` before starting local source processes
 - Frontend: `vp run website#dev`
-- Backend: `go run ./apps/backend`
+- Backend: `air`
+- Backend hot reload config: root `.air.toml`
+- `.env.local.example` is only a template; the local backend must fail to start if `.env.local` or required datasource env is missing
+- Local backend development is expected to connect to the real PostgreSQL and Redis instances you started separately; in-memory fallback is not a valid default runtime
 
 # Self Hosting
 

@@ -67,12 +67,17 @@
 
 - 本地开发入口统一从仓库根目录触发。
 - 前端本地开发入口是根目录执行的 `vp run website#dev`。
-- 后端本地开发入口是根目录执行的 `go run ./apps/backend`。
+- 后端本地开发入口是根目录执行的 `air`。
+- `air` 的根级配置文件固定为仓库根目录 `.air.toml`，其 build/run target 指向 `./apps/backend`；不允许在 `apps/backend` 下再维护第二份热重载入口或平行配置。
 - 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/backend` 或根级 shell 包装脚本。
 - 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
+- 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的运行时输入。
+- 后端源码启动默认必须通过 env 显式拿到真实 datasource 配置；缺少 datasource env 时必须立即启动失败，不允许回填可工作的默认数据库地址。
+- 本地开发默认运行路径必须连接真实 PostgreSQL / Redis 等依赖；不允许以内存 store、placeholder runtime、fake 状态或“临时默认值”作为正常源码开发后端。
 - 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
-- `scripts/` 目录不承载日常本地开发职责；如需新增开发入口，优先收口到根工具链或正式 CLI。
+- `scripts/` 目录不承载日常本地开发职责；如需新增源码开发入口，优先收口到根工具链或正式 CLI。
 - `docker compose` 只描述 self-hosted 交付链路，不作为默认本地开发流程。
+- self-hosted 交付链路应直接使用 `docker compose` 作为规范入口，不再额外包装为 `pnpm`、Node CLI 或其他二次入口。
 
 ## 3.3 结构优先级
 
