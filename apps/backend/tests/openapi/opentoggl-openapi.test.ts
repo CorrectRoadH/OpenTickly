@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -14,6 +17,11 @@ import {
   quotaWindowHeaderSchemas,
 } from "@opentoggl/shared-contracts";
 import { validateGeneratedSchemaValue } from "../../src/testing/contracts/schema-backed-validator.ts";
+
+const webOpenapiSourcePath = resolve(
+  import.meta.dirname,
+  "../../../../openapi/opentoggl-web.openapi.json",
+);
 
 describe("opentoggl custom OpenAPI sources", () => {
   const wave1WebPaths = [
@@ -195,6 +203,11 @@ describe("opentoggl custom OpenAPI sources", () => {
     expect(webDocument?.paths?.["/web/v1/tags"]?.post?.operationId).toBe("create-tag");
     expect(webDocument?.paths?.["/web/v1/groups"]?.get?.operationId).toBe("list-groups");
     expect(webDocument?.paths?.["/web/v1/groups"]?.post?.operationId).toBe("create-group");
+  });
+
+  it("keeps placeholder copy out of the web OpenAPI source", () => {
+    const source = readFileSync(webOpenapiSourcePath, "utf8");
+    expect(source).not.toContain("placeholder");
   });
 
   it("loads the generated manifest entries for the current generated web shell operations", () => {
