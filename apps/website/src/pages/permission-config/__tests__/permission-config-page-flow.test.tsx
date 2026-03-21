@@ -118,4 +118,87 @@ describe("permission config page flow", () => {
       ),
     ).toBe(true);
   });
+
+  it("shows a blocked-state message when the permission policy cannot be loaded", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/workspaces/202/permissions",
+        resolver: () =>
+          jsonResponse(
+            {
+              message: "workspace permissions unavailable",
+            },
+            { status: 500 },
+          ),
+      },
+    ]);
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/permissions"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Permission configuration" })).toBeTruthy();
+    expect(screen.getByText("Workspace access rules")).toBeTruthy();
+    expect(screen.getByText("Permission policy is temporarily unavailable.")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "Reload after the workspace settings service recovers. Existing project, member, and private-access rules stay unchanged until this page can fetch the current policy.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText("Loading workspace permissions…")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Save permissions" })).toBeNull();
+  });
+
+  it("keeps the edited values visible when saving fails", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/workspaces/202/permissions",
+        resolver: () => jsonResponse(createWorkspacePermissionsFixture()),
+      },
+      {
+        method: "PATCH",
+        path: "/web/v1/workspaces/202/permissions",
+        resolver: () =>
+          jsonResponse(
+            {
+              message: "save failed",
+            },
+            { status: 500 },
+          ),
+      },
+    ]);
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/permissions"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Permission configuration" })).toBeTruthy();
+
+    fireEvent.click(screen.getByLabelText("Only admins may create projects"));
+    fireEvent.click(screen.getByLabelText("Limit public project data"));
+    fireEvent.click(screen.getByRole("button", { name: "Save permissions" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Unable to save permissions.")).toBeTruthy();
+    });
+
+    expect(
+      (screen.getByLabelText("Only admins may create projects") as HTMLInputElement).checked,
+    ).toBe(true);
+    expect((screen.getByLabelText("Limit public project data") as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
 });

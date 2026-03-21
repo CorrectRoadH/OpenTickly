@@ -287,4 +287,67 @@ describe("projects page flow", () => {
       ),
     ).toBe(true);
   });
+
+  it("shows a formal empty state when the selected status has no matching projects", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/projects",
+        resolver: (request) => {
+          const searchParams = new URLSearchParams(request.search);
+          const status = searchParams.get("status") ?? "all";
+
+          return jsonResponse({
+            projects:
+              status === "archived"
+                ? []
+                : [
+                    {
+                      id: 1001,
+                      name: "Website Revamp",
+                      workspace_id: 202,
+                      active: true,
+                      pinned: false,
+                    },
+                  ],
+          });
+        },
+      },
+      {
+        path: "/web/v1/projects/1001/members",
+        resolver: () =>
+          jsonResponse(
+            createProjectMembersFixture({
+              members: [],
+            }),
+          ),
+      },
+    ]);
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/projects"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Projects" })).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Project status filter"), {
+      target: { value: "archived" },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("No archived projects in this workspace yet.")).toBeTruthy();
+      expect(
+        screen.getByText(
+          "Adjust the filter or create a project to keep project tasks, members, and reporting links discoverable from the project page.",
+        ),
+      ).toBeTruthy();
+      expect(screen.getByText("Showing 0 projects in workspace 202.")).toBeTruthy();
+      expect(screen.getByText("Active: 0 · Pinned: 0")).toBeTruthy();
+    });
+  });
 });

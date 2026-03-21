@@ -59,6 +59,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
     defaultValues: defaultPermissionValues,
   });
   const [status, setStatus] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!permissionsQuery.data) {
@@ -74,6 +75,28 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
   }, [permissionsQuery.data, reset]);
 
   if (permissionsQuery.isPending || !permissionsQuery.data) {
+    if (permissionsQuery.isError) {
+      return (
+        <AppPanel className="bg-white/95">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+              Permission configuration
+            </h1>
+            <p className="text-sm leading-6 text-slate-600">Workspace permission policy</p>
+            <p className="text-sm leading-6 text-slate-600">Workspace access rules</p>
+          </div>
+
+          <section className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
+            <p className="font-semibold">Permission policy is temporarily unavailable.</p>
+            <p className="mt-2">
+              Reload after the workspace settings service recovers. Existing project, member, and
+              private-access rules stay unchanged until this page can fetch the current policy.
+            </p>
+          </section>
+        </AppPanel>
+      );
+    }
+
     return (
       <AppPanel className="bg-white/95">
         <p className="text-sm font-medium text-slate-700">Loading workspace permissions…</p>
@@ -87,15 +110,21 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         className="space-y-6"
         onSubmit={handleSubmit(async (values) => {
           setStatus(null);
-          await updateMutation.mutateAsync({
-            workspace: {
-              limit_public_project_data: values.limitPublicProjectData,
-              only_admins_may_create_projects: values.onlyAdminsMayCreateProjects,
-              only_admins_may_create_tags: values.onlyAdminsMayCreateTags,
-              only_admins_see_team_dashboard: values.onlyAdminsSeeTeamDashboard,
-            },
-          });
-          setStatus("Permissions saved");
+          setSaveError(null);
+
+          try {
+            await updateMutation.mutateAsync({
+              workspace: {
+                limit_public_project_data: values.limitPublicProjectData,
+                only_admins_may_create_projects: values.onlyAdminsMayCreateProjects,
+                only_admins_may_create_tags: values.onlyAdminsMayCreateTags,
+                only_admins_see_team_dashboard: values.onlyAdminsSeeTeamDashboard,
+              },
+            });
+            setStatus("Permissions saved");
+          } catch {
+            setSaveError("Unable to save permissions.");
+          }
         })}
       >
         <div className="space-y-2">
@@ -103,6 +132,13 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             Permission configuration
           </h1>
           <p className="text-sm leading-6 text-slate-600">Workspace permission policy</p>
+          <p className="text-sm leading-6 text-slate-600">
+            Workspace access rules
+          </p>
+          <p className="text-sm leading-6 text-slate-600">
+            Keep admin-only creation, dashboard visibility, and public project exposure aligned
+            with the current workspace access policy.
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -131,6 +167,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             Save permissions
           </AppButton>
           {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+          {saveError ? <p className="text-sm font-medium text-rose-700">{saveError}</p> : null}
         </div>
       </form>
     </AppPanel>
