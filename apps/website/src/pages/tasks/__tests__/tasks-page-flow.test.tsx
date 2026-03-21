@@ -10,7 +10,7 @@ import { createSessionFixture, createTasksFixture } from "../../../test/fixtures
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("tasks page flow", () => {
-  it("renders tasks list, preserves the tasks path across workspace switches, and creates tasks", async () => {
+  it("renders project-scoped task entry, preserves the tasks path across workspace switches, and creates tasks", async () => {
     const tasksByWorkspace: Record<
       number,
       Array<{ active: boolean; id: number; name: string; workspace_id: number }>
@@ -73,7 +73,7 @@ describe("tasks page flow", () => {
     ]);
 
     const router = createAppRouter({
-      initialEntries: ["/workspaces/202/tasks"],
+      initialEntries: ["/workspaces/202/tasks?projectId=1001"],
     });
 
     render(<AppProviders router={router} />);
@@ -82,33 +82,33 @@ describe("tasks page flow", () => {
     expect(screen.getByRole("link", { name: "Tasks" }).getAttribute("href")).toBe(
       "/workspaces/202/tasks",
     );
-    expect(
-      screen.getByText(
-        /This page surfaces task records in the workspace shell, but the documented task management flow still needs project-scoped entry points and its final interaction model/,
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("Task directory")).toBeTruthy();
+    expect(screen.getByText("Project task management entry")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Project details" }).getAttribute("href")).toBe(
+      "/workspaces/202/projects/1001",
+    );
+    expect(screen.getByRole("link", { name: "All workspace tasks" }).getAttribute("href")).toBe(
+      "/workspaces/202/tasks",
+    );
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
 
     const initialList = screen.getByLabelText("Tasks list");
     expect(within(initialList).getByText("Prep launch brief")).toBeTruthy();
     expect(within(initialList).getByText("Retro follow-up")).toBeTruthy();
     expect(within(initialList).getByText(/Task · Inactive/)).toBeTruthy();
     expect(within(initialList).getAllByText(/Workspace 202/)).not.toHaveLength(0);
-    expect(
-      screen.getByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-          "Exit when task management is connected to its documented project/task flows and covered by page-flow evidence.",
-        )) ??
-        false,
-      ),
-    ).toBeTruthy();
-
     fireEvent.change(screen.getByLabelText("Workspace"), {
       target: { value: "303" },
     });
 
     await waitFor(() => {
       expect(screen.getByRole("link", { name: "Tasks" }).getAttribute("href")).toBe(
+        "/workspaces/303/tasks",
+      );
+      expect(screen.getByRole("link", { name: "Project details" }).getAttribute("href")).toBe(
+        "/workspaces/303/projects/1001",
+      );
+      expect(screen.getByRole("link", { name: "All workspace tasks" }).getAttribute("href")).toBe(
         "/workspaces/303/tasks",
       );
       expect(screen.getByText("Studio QA")).toBeTruthy();
@@ -118,15 +118,7 @@ describe("tasks page flow", () => {
     expect(within(switchedList).getByText("Studio QA")).toBeTruthy();
     expect(within(switchedList).getByText("Billing handoff")).toBeTruthy();
     expect(within(switchedList).getAllByText(/Workspace 303/)).not.toHaveLength(0);
-    expect(
-      screen.getByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-            "Exit when task management is connected to its documented project/task flows and covered by page-flow evidence.",
-          )) ??
-        false,
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Task name"), {
       target: { value: "Close launch checklist" },

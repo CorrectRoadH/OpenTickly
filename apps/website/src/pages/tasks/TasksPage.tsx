@@ -1,4 +1,5 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { useRouterState } from "@tanstack/react-router";
 import { type FormEvent, type ReactElement, useState } from "react";
 
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
@@ -6,10 +7,16 @@ import { useSession } from "../../shared/session/session-context.tsx";
 
 export function TasksPage(): ReactElement {
   const session = useSession();
+  const location = useRouterState({
+    select: (state) => state.location,
+  });
   const tasksQuery = useTasksQuery(session.currentWorkspace.id);
   const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const projectScopeRaw = new URLSearchParams(location.searchStr).get("projectId");
+  const projectScopeId = projectScopeRaw ? Number(projectScopeRaw) : NaN;
+  const hasProjectScope = Number.isInteger(projectScopeId) && projectScopeId > 0;
 
   if (tasksQuery.isPending) {
     return (
@@ -38,14 +45,36 @@ export function TasksPage(): ReactElement {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tasks</h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page surfaces task records in the workspace shell, but the
-            documented task management flow still needs project-scoped entry points and its final
-            interaction model.
-          </p>
+          <p className="text-sm leading-6 text-slate-600">Task directory</p>
         </div>
         <AppButton type="button">Create task</AppButton>
       </div>
+
+      {hasProjectScope ? (
+        <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Project task management entry
+          </p>
+          <p className="mt-2 text-sm text-slate-700">
+            Opened from project {projectScopeId}. Use this page as the task management entry point
+            for that project context.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a
+              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+              href={`/workspaces/${session.currentWorkspace.id}/projects/${projectScopeId}`}
+            >
+              Project details
+            </a>
+            <a
+              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+              href={`/workspaces/${session.currentWorkspace.id}/tasks`}
+            >
+              All workspace tasks
+            </a>
+          </div>
+        </section>
+      ) : null}
 
       <form className="mt-6 flex flex-wrap items-end gap-3" onSubmit={handleCreateTask}>
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
@@ -81,11 +110,9 @@ export function TasksPage(): ReactElement {
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
         <p>
-          Transition state. Showing {tasks.length} task{tasks.length === 1 ? "" : "s"} for
-          workspace {session.currentWorkspace.id}, with {activeCount} active. Exit when task
-          management is connected to its documented project/task flows and covered by page-flow
-          evidence.
+          Showing {tasks.length} tasks in workspace {session.currentWorkspace.id}.
         </p>
+        <p className="mt-1">Active: {activeCount}</p>
       </div>
     </AppPanel>
   );
