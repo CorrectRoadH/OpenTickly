@@ -1,0 +1,5 @@
+-- OpenToggl PostgreSQL desired-state schema.
+--
+-- This skeleton intentionally starts empty. Future platform-owned tables,
+-- indexes, constraints, extensions, and shared metadata objects should be
+-- declared here and remain the canonical input for `pgschema plan/apply`.
