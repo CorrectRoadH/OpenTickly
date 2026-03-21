@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { AppProviders } from "../../../app/AppProviders.tsx";
@@ -88,6 +88,52 @@ describe("workspace shell page flow", () => {
     });
 
     render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+  });
+
+  it("exposes logout in the shell, clears session access, and returns users to login", async () => {
+    let signedOut = false;
+
+    const { calls } = installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () =>
+          signedOut
+            ? jsonResponse("Session missing.", { status: 401 })
+            : jsonResponse(createSessionFixture()),
+      },
+      {
+        method: "POST",
+        path: "/web/v1/auth/logout",
+        resolver: () => {
+          signedOut = true;
+          return new Response(null, { status: 204 });
+        },
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Log out" }));
+
+    await waitFor(() =>
+      expect(
+        calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/auth/logout"),
+      ).toBe(true),
+    );
+
+    expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
+
+    await router.navigate({
+      to: "/workspaces/$workspaceId",
+      params: { workspaceId: "202" },
+    });
 
     expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
   });

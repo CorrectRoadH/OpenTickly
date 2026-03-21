@@ -5,6 +5,7 @@ import { type ReactElement, type ReactNode } from "react";
 import { WorkspaceBadge } from "../entities/workspace/WorkspaceBadge.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
+import { useLogoutMutation } from "../shared/query/web-shell.ts";
 import { swapWorkspaceInPath } from "../shared/lib/workspace-routing.ts";
 import { useSession } from "../shared/session/session-context.tsx";
 import { SessionBootstrapStatus } from "./SessionBootstrapStatus.tsx";
@@ -18,6 +19,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const location = useRouterState({
     select: (state) => state.location,
   });
+  const logoutMutation = useLogoutMutation();
   const session = useSession();
   const navigationItems = shellNavigationItems(session);
 
@@ -76,6 +78,20 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                   </Link>
                 ))}
               </nav>
+              <button
+                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-rose-500 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={logoutMutation.isPending}
+                onClick={() => {
+                  void logoutMutation.mutateAsync().then(() =>
+                    navigate({
+                      to: "/login",
+                    }),
+                  );
+                }}
+                type="button"
+              >
+                {logoutMutation.isPending ? "Logging out…" : "Log out"}
+              </button>
             </div>
           </AppPanel>
         </aside>
