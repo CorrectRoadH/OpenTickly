@@ -1,14 +1,15 @@
 package httpapp
 
 import (
-	"context"
 	"encoding/json"
 	"io/fs"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/web"
 
@@ -198,6 +199,13 @@ func TestServerAssignsRequestIDAndLogsRequestFields(t *testing.T) {
 }
 
 func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
+	postgresListener := mustListenTCP(t)
+	closedAddress := postgresListener.Addr().String()
+	postgresListener.Close()
+
+	redisListener := mustListenTCP(t)
+	defer redisListener.Close()
+
 	var logs strings.Builder
 	logger := slog.New(slog.NewJSONHandler(&logs, nil))
 	server := NewServerWithOptions(
@@ -205,20 +213,12 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 		nil,
 		ServerOptions{
 			Logger: logger,
-			Readiness: stubReadinessProbe{
-				report: web.ReadinessReport{
-					Service: "opentoggl",
-					Status:  web.StatusError,
-					Checks: []web.ReadinessCheck{
-						{
-							Name:    "postgres",
-							Status:  web.StatusError,
-							Target:  "127.0.0.1:5432",
-							Message: "dial tcp 127.0.0.1:5432: connect: connection refused",
-						},
-					},
-				},
-			},
+			Readiness: web.NewRuntimeReadinessProbe(web.RuntimeReadinessConfig{
+				Service:     "opentoggl",
+				DatabaseURL: "postgres://opentoggl@" + closedAddress + "/opentoggl",
+				RedisURL:    "redis://" + redisListener.Addr().String() + "/0",
+				Timeout:     100 * time.Millisecond,
+			}),
 		},
 	)
 	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
@@ -271,14 +271,15 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 		t.Fatalf("expected readiness failure log check %q, got %#v", "postgres", readinessRecord["check"])
 	}
 
-	if readinessRecord["target"] != "127.0.0.1:5432" {
-		t.Fatalf("expected readiness failure log target %q, got %#v", "127.0.0.1:5432", readinessRecord["target"])
+	if readinessRecord["target"] != closedAddress {
+		t.Fatalf("expected readiness failure log target %q, got %#v", closedAddress, readinessRecord["target"])
 	}
 
-	if readinessRecord["message"] != "dial tcp 127.0.0.1:5432: connect: connection refused" {
+	readinessMessage, ok := readinessRecord["message"].(string)
+	if !ok || !strings.Contains(readinessMessage, closedAddress) {
 		t.Fatalf(
-			"expected readiness failure log message %q, got %#v",
-			"dial tcp 127.0.0.1:5432: connect: connection refused",
+			"expected readiness failure log message to mention %q, got %#v",
+			closedAddress,
 			readinessRecord["message"],
 		)
 	}
@@ -358,10 +359,13 @@ func mustReadEmbeddedIndexHTML(t *testing.T) string {
 	return string(indexHTML)
 }
 
-type stubReadinessProbe struct {
-	report web.ReadinessReport
-}
+func mustListenTCP(t *testing.T) net.Listener {
+	t.Helper()
 
-func (probe stubReadinessProbe) Check(context.Context) web.ReadinessReport {
-	return probe.report
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("expected tcp listener to start: %v", err)
+	}
+
+	return listener
 }
