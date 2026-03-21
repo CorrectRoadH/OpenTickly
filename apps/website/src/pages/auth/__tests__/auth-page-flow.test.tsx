@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 
 import { AppProviders } from "../../../app/AppProviders.tsx";
 import { createAppRouter } from "../../../app/create-app-router.tsx";
+import { createSessionFixture } from "../../../test/fixtures/web-data.ts";
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("auth page flow", () => {
@@ -76,5 +77,40 @@ describe("auth page flow", () => {
 
     expect(await screen.findByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
     expect(await screen.findByText("User does not have access to this resource.")).toBeTruthy();
+  });
+
+  it("redirects authenticated users into the workspace shell after login succeeds", async () => {
+    installMockWebApi([
+      {
+        method: "POST",
+        path: "/web/v1/auth/login",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/login"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    fireEvent.change(await screen.findByLabelText("Email"), {
+      target: { value: "alex@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "secret-pass" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
+    expect(await screen.findByText("Session ready")).toBeTruthy();
+    expect(await screen.findByText("Alex North")).toBeTruthy();
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/workspaces/202");
+    });
   });
 });
