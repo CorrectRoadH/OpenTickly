@@ -102,11 +102,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
             Permission configuration
           </h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Transition state. This page exposes the current permission toggles, but the documented
-            permission configuration surface still needs its final workspace governance layout and
-            review flow.
-          </p>
+          <p className="text-sm leading-6 text-slate-600">Workspace permission policy</p>
         </div>
 
         <div className="space-y-4">

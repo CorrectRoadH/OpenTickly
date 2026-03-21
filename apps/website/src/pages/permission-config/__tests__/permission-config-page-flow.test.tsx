@@ -13,8 +13,9 @@ import {
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("permission config page flow", () => {
-  it("renders workspace permission toggles and saves updates in the shell", async () => {
+  it("loads permission policy, saves checkbox updates, and refills form from saved state", async () => {
     let permissions = createWorkspacePermissionsFixture().workspace;
+    let resolvePermissionsRequest: (() => void) | null = null;
     const { calls } = installMockWebApi([
       {
         path: "/web/v1/session",
@@ -23,17 +24,24 @@ describe("permission config page flow", () => {
       {
         path: "/web/v1/workspaces/202/permissions",
         resolver: () =>
-          jsonResponse({
-            workspace: permissions,
+          new Promise((resolve) => {
+            resolvePermissionsRequest = () =>
+              resolve(
+                jsonResponse({
+                  workspace: permissions,
+                }),
+              );
           }),
       },
       {
         method: "PATCH",
         path: "/web/v1/workspaces/202/permissions",
         resolver: (request) => {
+          const body = (request.body as { workspace?: typeof permissions }).workspace;
           permissions = {
             ...permissions,
-            ...(request.body as Partial<typeof permissions>),
+            ...body,
+            only_admins_may_create_tags: false,
           };
 
           return jsonResponse(
@@ -52,15 +60,24 @@ describe("permission config page flow", () => {
 
     render(<AppProviders router={router} />);
 
+    await waitFor(() => {
+      expect(screen.queryByText("Loading workspace permissions…")).toBeTruthy();
+    });
+
+    await waitFor(() => {
+      expect(resolvePermissionsRequest).toBeTruthy();
+    });
+    if (typeof resolvePermissionsRequest !== "function") {
+      throw new Error("missing deferred permissions resolver");
+    }
+    (resolvePermissionsRequest as () => void)();
+
     expect(await screen.findByRole("heading", { name: "Permission configuration" })).toBeTruthy();
+    expect(screen.getByText("Workspace permission policy")).toBeTruthy();
     expect(screen.getByRole("link", { name: "Permissions" }).getAttribute("href")).toBe(
       "/workspaces/202/permissions",
     );
-    expect(
-      screen.getByText(
-        /This page exposes the current permission toggles, but the documented permission configuration surface still needs its final workspace governance layout and review flow/,
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Transition state/i)).toBeNull();
     expect(
       (screen.getByLabelText("Only admins may create projects") as HTMLInputElement).checked,
     ).toBe(false);
@@ -80,6 +97,9 @@ describe("permission config page flow", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Permissions saved")).toBeTruthy();
+      expect(
+        (screen.getByLabelText("Only admins may create tags") as HTMLInputElement).checked,
+      ).toBe(false);
     });
 
     expect(
