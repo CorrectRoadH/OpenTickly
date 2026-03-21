@@ -258,6 +258,35 @@ func TestServerDoesNotFallbackMissingStaticAssets(t *testing.T) {
 	}
 }
 
+func TestComposeRouteRegistrarsRegistersEachNonNilRegistrarInOrder(t *testing.T) {
+	var calls []string
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		ComposeRouteRegistrars(
+			func(*echo.Echo) { calls = append(calls, "first") },
+			nil,
+			func(*echo.Echo) { calls = append(calls, "second") },
+		),
+	)
+
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected /healthz to return 200, got %d", recorder.Code)
+	}
+
+	if len(calls) != 2 {
+		t.Fatalf("expected 2 registrar calls, got %d", len(calls))
+	}
+
+	if calls[0] != "first" || calls[1] != "second" {
+		t.Fatalf("expected registrar order [first second], got %#v", calls)
+	}
+}
+
 func mustReadEmbeddedIndexHTML(t *testing.T) string {
 	t.Helper()
 

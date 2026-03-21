@@ -30,7 +30,7 @@ func NewApp(cfg Config) (*App, error) {
 	cfg = withDefaults(cfg)
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	webRoutes, err := newWave1WebRoutes()
+	routeRegistrar, err := newHTTPRouteRegistrar()
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func NewApp(cfg Config) (*App, error) {
 
 	return &App{
 		Config:   cfg,
-		HTTP:     httpapp.NewServer(health, webRoutes),
+		HTTP:     httpapp.NewServer(health, routeRegistrar),
 		Platform: platform,
 		Modules:  modules,
 	}, nil
@@ -50,4 +50,15 @@ func NewApp(cfg Config) (*App, error) {
 
 func (app *App) Start() error {
 	return app.HTTP.Start(app.Config.Server.ListenAddress)
+}
+
+func newHTTPRouteRegistrar() (httpapp.RouteRegistrar, error) {
+	wave1Routes, err := newWave1WebRoutes()
+	if err != nil {
+		return nil, err
+	}
+
+	return httpapp.ComposeRouteRegistrars(
+		wave1Routes,
+	), nil
 }

@@ -21,6 +21,17 @@ type ServerOptions struct {
 
 type RouteRegistrar func(*echo.Echo)
 
+func ComposeRouteRegistrars(registrars ...RouteRegistrar) RouteRegistrar {
+	return func(server *echo.Echo) {
+		for _, registrar := range registrars {
+			if registrar == nil {
+				continue
+			}
+			registrar(server)
+		}
+	}
+}
+
 func NewServer(health web.HealthSnapshot, registerRoutes RouteRegistrar) *echo.Echo {
 	return NewServerWithOptions(health, registerRoutes, ServerOptions{})
 }
@@ -63,12 +74,6 @@ func NewServerWithOptions(
 	registerStaticWebRoutes(server, web.StaticFiles())
 
 	return server
-}
-
-func NewWave1WebRouteRegistrar(handlers *Wave1WebHandlers) RouteRegistrar {
-	return func(server *echo.Echo) {
-		registerWave1WebRoutes(server, handlers)
-	}
 }
 
 func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
