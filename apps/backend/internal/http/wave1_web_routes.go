@@ -22,6 +22,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 	registerGeneratedWave1WebWorkspaceSettingsRoutes(server, newGeneratedWave1WebWorkspaceSettingsAdapter(handlers))
 	registerGeneratedWave1WebWorkspacePermissionsRoutes(server, newGeneratedWave1WebWorkspacePermissionsAdapter(handlers))
 	registerGeneratedWave1WebCapabilitiesQuotaRoutes(server, newGeneratedWave1WebCapabilitiesQuotaAdapter(handlers))
+	registerGeneratedWave1WebWorkspaceMembersRoutes(server, newGeneratedWave1WebWorkspaceMembersAdapter(handlers))
 
 	registerWave2PlaceholderRoutes(server, handlers)
 }
@@ -29,19 +30,6 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 // TODO(wave2-runtime): these routes are outside current Wave 1 OpenAPI scope and
 // remain as temporary runtime placeholders until Wave 2 contracts are finalized.
 func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
-	server.GET("/web/v1/workspaces/:workspace_id/members", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Tenant.ListWorkspaceMembers(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-		)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
 	server.GET("/web/v1/projects/:project_id/members", func(context echo.Context) error {
 		projectID, ok := parsePathID(context, "project_id")
 		if !ok {
@@ -92,26 +80,6 @@ func registerWave2PlaceholderRoutes(server *echo.Echo, handlers *Wave1WebHandler
 			memberID,
 		)
 		return noContentOrJSON(context, response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/workspaces/:workspace_id/members/invitations", func(context echo.Context) error {
-		workspaceID, ok := parsePathID(context, "workspace_id")
-		if !ok {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-
-		var request WorkspaceMemberInvitationRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-
-		response := handlers.Tenant.InviteWorkspaceMember(
-			context.Request().Context(),
-			sessionID(context),
-			workspaceID,
-			request,
-		)
-		return context.JSON(response.StatusCode, response.Body)
 	})
 
 	server.GET("/web/v1/projects", func(context echo.Context) error {
