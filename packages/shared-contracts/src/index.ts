@@ -11,8 +11,8 @@ export {
 } from "./generated/public-contracts.generated.ts";
 
 export {
-  sharedContractsDocument as webContractsDocument,
-  sharedContractsGeneratedArtifact as webContractsGeneratedArtifact,
+  webContractsDocument,
+  webContractsGeneratedArtifact,
 } from "./generated/web-contracts.generated.ts";
 
 export type {
@@ -42,8 +42,6 @@ export type {
   ProjectSummary,
   RegisterRequest,
   SessionBootstrap,
-  SharedContractSchemaName as WebContractSchemaName,
-  SharedContractTypeMap as WebContractTypeMap,
   SubscriptionView,
   TagCreateRequest,
   TagListEnvelope,
@@ -60,6 +58,8 @@ export type {
   WorkspacePreferences,
   WorkspaceSettings,
   WorkspaceSettingsEnvelope,
+  WebContractSchemaName,
+  WebContractTypeMap,
   UpdateWorkspacePermissionsRequest,
   WorkspaceSettingsUpdate,
 } from "./generated/web-contracts.generated.ts";

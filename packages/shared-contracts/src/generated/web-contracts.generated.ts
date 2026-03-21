@@ -7,7 +7,7 @@ import type {
 // Generated from openapi/opentoggl-web.openapi.json.
 // Do not edit by hand.
 
-export const sharedContractsDocument = {
+export const webContractsDocument = {
   openapi: "3.1.0",
   info: {
     title: "OpenToggl Web API",
@@ -2013,7 +2013,7 @@ export const sharedContractsDocument = {
   },
 } as const;
 
-export const sharedContractsGeneratedArtifact = {
+export const webContractsGeneratedArtifact = {
   source: "openapi/opentoggl-web.openapi.json",
   schemaNames: [
     "CapabilitySnapshot",
@@ -2064,7 +2064,7 @@ export const sharedContractsGeneratedArtifact = {
   headerNames: [],
 } as const;
 
-export interface SharedContractTypeMap {
+export interface WebContractTypeMap {
   CapabilitySnapshot: CapabilitySnapshot;
   CurrentUserProfile: CurrentUserProfile;
   CurrentUserAPIToken: CurrentUserAPIToken;
@@ -2111,11 +2111,10 @@ export interface SharedContractTypeMap {
   WorkspaceSettingsUpdate: WorkspaceSettingsUpdate;
 }
 
-export type SharedContractSchemaName = keyof SharedContractTypeMap;
+export type WebContractSchemaName = keyof WebContractTypeMap;
 
-export const quotaWindowSchema = sharedContractsDocument.components.schemas.QuotaWindow;
-export const capabilitySnapshotSchema =
-  sharedContractsDocument.components.schemas.CapabilitySnapshot;
+export const quotaWindowSchema = webContractsDocument.components.schemas.QuotaWindow;
+export const capabilitySnapshotSchema = webContractsDocument.components.schemas.CapabilitySnapshot;
 
 export type CapabilitySnapshot = SharedCapabilitySnapshot;
 export type CurrentUserProfile = {

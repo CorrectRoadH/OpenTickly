@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, relative, resolve } from "node:path";
+import { basename, dirname, relative, resolve } from "node:path";
 
 const packageRoot = resolve(import.meta.dirname, "..");
 const repositoryRoot = resolve(packageRoot, "../..");
@@ -51,6 +51,24 @@ function refToTypeName(ref) {
 function toModuleSpecifier(path) {
   const normalizedPath = normalizePath(path);
   return normalizedPath.startsWith(".") ? normalizedPath : `./${normalizedPath}`;
+}
+
+function resolveExportSurface(targetPath) {
+  if (basename(targetPath) === "web-contracts.generated.ts") {
+    return {
+      documentName: "webContractsDocument",
+      artifactName: "webContractsGeneratedArtifact",
+      typeMapName: "WebContractTypeMap",
+      schemaNameType: "WebContractSchemaName",
+    };
+  }
+
+  return {
+    documentName: "sharedContractsDocument",
+    artifactName: "sharedContractsGeneratedArtifact",
+    typeMapName: "SharedContractTypeMap",
+    schemaNameType: "SharedContractSchemaName",
+  };
 }
 
 function sharedImportTypeName(typeName) {
@@ -169,6 +187,7 @@ const schemas = source.components?.schemas ?? {};
 const headers = source.components?.headers ?? {};
 const schemaNames = Object.keys(schemas);
 const headerNames = Object.keys(headers);
+const exportSurface = resolveExportSurface(targetPath);
 const importedTypeSpecifiers = Array.from(
   schemaNames.reduce((refs, schemaName) => {
     collectExternalSchemaRefs(schemas[schemaName], `components.schemas.${schemaName}`, refs);
@@ -193,7 +212,7 @@ const schemaAliasExports = [
   .filter(([, schemaName]) => schemaNames.includes(schemaName))
   .map(
     ([exportName, schemaName]) =>
-      `export const ${exportName} = sharedContractsDocument.components.schemas.${schemaName};`,
+      `export const ${exportName} = ${exportSurface.documentName}.components.schemas.${schemaName};`,
   )
   .join("\n");
 const quotaHeaderNames = [
@@ -204,34 +223,34 @@ const quotaHeaderNames = [
 const quotaHeaderExport = quotaHeaderNames.every((headerName) => headerNames.includes(headerName))
   ? `
 export const quotaWindowHeaderSchemas = {
-  "X-OpenToggl-Quota-Remaining": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Remaining"],
-  "X-OpenToggl-Quota-Reset-In-Secs": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Reset-In-Secs"],
-  "X-OpenToggl-Quota-Total": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Total"]
+  "X-OpenToggl-Quota-Remaining": ${exportSurface.documentName}.components.headers["X-OpenToggl-Quota-Remaining"],
+  "X-OpenToggl-Quota-Reset-In-Secs": ${exportSurface.documentName}.components.headers["X-OpenToggl-Quota-Reset-In-Secs"],
+  "X-OpenToggl-Quota-Total": ${exportSurface.documentName}.components.headers["X-OpenToggl-Quota-Total"]
 } as const;`
   : "";
 const featureGateHeaderExport = headerNames.includes("X-OpenToggl-Feature-Gate")
   ? `
 export const featureGateDecisionHeaderSchema =
-  sharedContractsDocument.components.headers["X-OpenToggl-Feature-Gate"];`
+  ${exportSurface.documentName}.components.headers["X-OpenToggl-Feature-Gate"];`
   : "";
 
 const output = `${importedTypeSpecifiers.length > 0 ? `import type {\n${importedTypeSpecifiers.map((specifier) => `  ${specifier},`).join("\n")}\n} from ${JSON.stringify(sharedTypeImportPath)};\n\n` : ""}/* eslint-disable */
 // Generated from ${sourceLabel}.
 // Do not edit by hand.
 
-export const sharedContractsDocument = ${JSON.stringify(source, null, 2)} as const;
+export const ${exportSurface.documentName} = ${JSON.stringify(source, null, 2)} as const;
 
-export const sharedContractsGeneratedArtifact = {
+export const ${exportSurface.artifactName} = {
   source: ${JSON.stringify(sourceLabel)},
   schemaNames: ${JSON.stringify(schemaNames)},
   headerNames: ${JSON.stringify(headerNames)}
 } as const;
 
-export interface SharedContractTypeMap {
+export interface ${exportSurface.typeMapName} {
 ${schemaNames.map((schemaName) => `  ${schemaName}: ${schemaName};`).join("\n")}
 }
 
-export type SharedContractSchemaName = keyof SharedContractTypeMap;
+export type ${exportSurface.schemaNameType} = keyof ${exportSurface.typeMapName};
 
 ${schemaAliasExports}
 ${quotaHeaderExport}
