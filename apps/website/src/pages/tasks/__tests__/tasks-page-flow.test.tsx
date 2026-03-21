@@ -9,68 +9,74 @@ import { createAppRouter } from "../../../app/create-app-router.tsx";
 import { createSessionFixture, createTasksFixture } from "../../../test/fixtures/web-data.ts";
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
+function installTasksApiFixture() {
+  const tasksByWorkspace: Record<
+    number,
+    Array<{ active: boolean; id: number; name: string; workspace_id: number }>
+  > = {
+    202: createTasksFixture().tasks.slice(),
+    303: createTasksFixture({
+      tasks: [
+        {
+          id: 801,
+          name: "Studio QA",
+          workspace_id: 303,
+          active: true,
+        },
+        {
+          id: 802,
+          name: "Billing handoff",
+          workspace_id: 303,
+          active: false,
+        },
+      ],
+    }).tasks.slice(),
+  };
+
+  const { calls } = installMockWebApi([
+    {
+      path: "/web/v1/session",
+      resolver: () => jsonResponse(createSessionFixture()),
+    },
+    {
+      path: "/web/v1/tasks",
+      resolver: (request) => {
+        const workspaceId = Number(
+          new URLSearchParams(request.search).get("workspace_id") ?? "202",
+        );
+        return jsonResponse({
+          tasks: tasksByWorkspace[workspaceId] ?? [],
+        });
+      },
+    },
+    {
+      method: "POST",
+      path: "/web/v1/tasks",
+      resolver: (request) => {
+        const body = request.body as { name?: string; workspace_id?: number };
+        const workspaceId = body.workspace_id ?? 202;
+        const tasks = tasksByWorkspace[workspaceId] ?? [];
+        const createdTask = {
+          id: workspaceId === 303 ? 803 : 703,
+          name: body.name ?? "Untitled task",
+          workspace_id: workspaceId,
+          active: true,
+        };
+
+        tasks.push(createdTask);
+        tasksByWorkspace[workspaceId] = tasks;
+
+        return jsonResponse(createdTask, { status: 201 });
+      },
+    },
+  ]);
+
+  return { calls };
+}
+
 describe("tasks page flow", () => {
   it("renders project-scoped task entry, preserves the tasks path across workspace switches, and creates tasks", async () => {
-    const tasksByWorkspace: Record<
-      number,
-      Array<{ active: boolean; id: number; name: string; workspace_id: number }>
-    > = {
-      202: createTasksFixture().tasks.slice(),
-      303: createTasksFixture({
-        tasks: [
-          {
-            id: 801,
-            name: "Studio QA",
-            workspace_id: 303,
-            active: true,
-          },
-          {
-            id: 802,
-            name: "Billing handoff",
-            workspace_id: 303,
-            active: false,
-          },
-        ],
-      }).tasks.slice(),
-    };
-
-    const { calls } = installMockWebApi([
-      {
-        path: "/web/v1/session",
-        resolver: () => jsonResponse(createSessionFixture()),
-      },
-      {
-        path: "/web/v1/tasks",
-        resolver: (request) => {
-          const workspaceId = Number(
-            new URLSearchParams(request.search).get("workspace_id") ?? "202",
-          );
-          return jsonResponse({
-            tasks: tasksByWorkspace[workspaceId] ?? [],
-          });
-        },
-      },
-      {
-        method: "POST",
-        path: "/web/v1/tasks",
-        resolver: (request) => {
-          const body = request.body as { name?: string; workspace_id?: number };
-          const workspaceId = body.workspace_id ?? 202;
-          const tasks = tasksByWorkspace[workspaceId] ?? [];
-          const createdTask = {
-            id: workspaceId === 303 ? 803 : 703,
-            name: body.name ?? "Untitled task",
-            workspace_id: workspaceId,
-            active: true,
-          };
-
-          tasks.push(createdTask);
-          tasksByWorkspace[workspaceId] = tasks;
-
-          return jsonResponse(createdTask, { status: 201 });
-        },
-      },
-    ]);
+    const { calls } = installTasksApiFixture();
 
     const router = createAppRouter({
       initialEntries: ["/workspaces/202/tasks?projectId=1001"],
@@ -140,5 +146,67 @@ describe("tasks page flow", () => {
           (call.body as { name?: string; workspace_id?: number }).workspace_id === 303,
       ),
     ).toBe(true);
+  });
+
+  it("rejects non-canonical projectId search values and keeps project scope consistent across back-forward navigation", async () => {
+    installTasksApiFixture();
+
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/tasks?projectId=abc"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Tasks" })).toBeTruthy();
+    expect(screen.queryByText("Project task management entry")).toBeNull();
+
+    await router.navigate({
+      params: { workspaceId: "202" },
+      search: { projectId: 1001 },
+      to: "/workspaces/$workspaceId/tasks",
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Project task management entry")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Project details" }).getAttribute("href")).toBe(
+        "/workspaces/202/projects/1001",
+      );
+      expect(screen.getByRole("link", { name: "All workspace tasks" }).getAttribute("href")).toBe(
+        "/workspaces/202/tasks",
+      );
+    });
+
+    await router.navigate({
+      params: { workspaceId: "202" },
+      to: "/workspaces/$workspaceId/tasks",
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText("Project task management entry")).toBeNull();
+    });
+
+    router.history.back();
+
+    await waitFor(() => {
+      expect(screen.getByText("Project task management entry")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Project details" }).getAttribute("href")).toBe(
+        "/workspaces/202/projects/1001",
+      );
+    });
+
+    router.history.back();
+
+    await waitFor(() => {
+      expect(screen.queryByText("Project task management entry")).toBeNull();
+    });
+
+    router.history.forward();
+
+    await waitFor(() => {
+      expect(screen.getByText("Project task management entry")).toBeTruthy();
+      expect(screen.getByRole("link", { name: "All workspace tasks" }).getAttribute("href")).toBe(
+        "/workspaces/202/tasks",
+      );
+    });
   });
 });

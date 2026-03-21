@@ -5,6 +5,7 @@ import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
+import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
 import { parseWorkspaceSettingsSearch } from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
 import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
@@ -109,6 +110,7 @@ const workspacePermissionsRoute = createRoute({
 const workspaceTasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/tasks",
+  validateSearch: parseTasksSearch,
   component: WorkspaceTasksRouteComponent,
 });
 
@@ -275,11 +277,12 @@ function WorkspacePermissionsRouteComponent() {
 
 function WorkspaceTasksRouteComponent() {
   const params = workspaceTasksRoute.useParams();
+  const search = workspaceTasksRoute.useSearch();
   const workspaceId = Number(params.workspaceId);
 
   return (
     <AuthenticatedAppFrame requestedWorkspaceId={workspaceId}>
-      <TasksPage />
+      <TasksPage projectId={search.projectId} />
     </AuthenticatedAppFrame>
   );
 }

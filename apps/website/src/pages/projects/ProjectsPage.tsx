@@ -17,6 +17,7 @@ import {
   useUnpinProjectMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
 
 function formatProjectMemberRole(role: string): string {
   return role.charAt(0).toUpperCase() + role.slice(1);
@@ -183,7 +184,10 @@ export function ProjectsPage(): ReactElement {
                   <a
                     aria-label={`Project tasks for ${project.name}`}
                     className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
-                    href={`/workspaces/${session.currentWorkspace.id}/tasks?projectId=${project.id}`}
+                    href={buildWorkspaceTasksPath({
+                      workspaceId: session.currentWorkspace.id,
+                      projectId: project.id,
+                    })}
                   >
                     Project tasks
                   </a>

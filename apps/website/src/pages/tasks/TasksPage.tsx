@@ -1,21 +1,21 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { useRouterState } from "@tanstack/react-router";
 import { type FormEvent, type ReactElement, useState } from "react";
 
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
 
-export function TasksPage(): ReactElement {
+type TasksPageProps = {
+  projectId?: number;
+};
+
+export function TasksPage({ projectId }: TasksPageProps): ReactElement {
   const session = useSession();
-  const location = useRouterState({
-    select: (state) => state.location,
-  });
   const tasksQuery = useTasksQuery(session.currentWorkspace.id);
   const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const projectScopeRaw = new URLSearchParams(location.searchStr).get("projectId");
-  const projectScopeId = projectScopeRaw ? Number(projectScopeRaw) : NaN;
+  const projectScopeId = Number(projectId);
   const hasProjectScope = Number.isInteger(projectScopeId) && projectScopeId > 0;
 
   if (tasksQuery.isPending) {
@@ -68,7 +68,9 @@ export function TasksPage(): ReactElement {
             </a>
             <a
               className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
-              href={`/workspaces/${session.currentWorkspace.id}/tasks`}
+              href={buildWorkspaceTasksPath({
+                workspaceId: session.currentWorkspace.id,
+              })}
             >
               All workspace tasks
             </a>
