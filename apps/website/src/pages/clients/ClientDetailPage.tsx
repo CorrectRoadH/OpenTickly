@@ -12,7 +12,27 @@ export function ClientDetailPage({ clientId, workspaceId }: ClientDetailPageProp
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Client details</h1>
         <p className="text-sm leading-6 text-slate-600">
-          Workspace {workspaceId} · Client {clientId}
+          Formal detail entry point for workspace clients.
+        </p>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          Workspace {workspaceId}
+        </span>
+        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
+          Client {clientId}
+        </span>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-sm font-semibold text-slate-900">
+          This entry point keeps the formal client route stable while the workspace directory
+          remains the canonical place to review and update client records.
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Return to the clients directory to create records, switch status views, and open another
+          client detail route.
         </p>
       </div>
 
