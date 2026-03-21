@@ -16,36 +16,7 @@ func registerWave1WebRoutes(server *echo.Echo, handlers *Wave1WebHandlers) {
 		return
 	}
 
-	server.POST("/web/v1/auth/register", func(context echo.Context) error {
-		var request RegisterRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Register(context.Request().Context(), request)
-		setSessionCookie(context, response.SessionID, response.StatusCode)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/auth/login", func(context echo.Context) error {
-		var request LoginRequest
-		if err := context.Bind(&request); err != nil {
-			return context.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		response := handlers.Login(context.Request().Context(), request)
-		setSessionCookie(context, response.SessionID, response.StatusCode)
-		return context.JSON(response.StatusCode, response.Body)
-	})
-
-	server.POST("/web/v1/auth/logout", func(context echo.Context) error {
-		response := handlers.Logout(context.Request().Context(), sessionID(context))
-		clearSessionCookie(context)
-		return noContentOrJSON(context, response.StatusCode, response.Body)
-	})
-
-	server.GET("/web/v1/session", func(context echo.Context) error {
-		response := handlers.GetSession(context.Request().Context(), sessionID(context))
-		return context.JSON(response.StatusCode, response.Body)
-	})
+	registerGeneratedWave1WebAuthSessionRoutes(server, newGeneratedWave1WebAuthSessionAdapter(handlers))
 
 	server.GET("/web/v1/profile", func(context echo.Context) error {
 		response := handlers.GetProfile(context.Request().Context(), sessionID(context))

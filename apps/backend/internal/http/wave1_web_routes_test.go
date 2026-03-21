@@ -55,6 +55,27 @@ func TestWave1WebRoutesUsesSnakeCasePathParamsForOpenAPIParity(t *testing.T) {
 	assertRouteNotRegistered(t, server, http.MethodGet, "/web/v1/workspaces/:workspaceID/settings")
 }
 
+func TestWave1WebAuthSessionRoutesRejectMissingRequiredFieldsFromOpenAPI(t *testing.T) {
+	server := NewServer(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		NewWave1WebRouteRegistrar(NewWave1WebHandlers()),
+	)
+
+	request := httptest.NewRequest(
+		http.MethodPost,
+		"/web/v1/auth/login",
+		strings.NewReader(`{"email":"routes@example.com"}`),
+	)
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected generated auth boundary to reject missing password with 400, got %d body=%s", recorder.Code, recorder.Body.String())
+	}
+}
+
 func mustRegisterWave1Session(t *testing.T, server http.Handler) string {
 	t.Helper()
 
