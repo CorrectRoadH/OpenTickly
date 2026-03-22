@@ -1,0 +1,9 @@
+package: importapi
+generate:
+  models: true
+  echo-server: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
+import-mapping:
+  ./opentoggl-shared.openapi.json: opentoggl/backend/apps/backend/internal/http/generated/shared

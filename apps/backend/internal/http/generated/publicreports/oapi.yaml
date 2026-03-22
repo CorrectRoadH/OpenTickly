@@ -1,0 +1,7 @@
+package: publicreportsapi
+generate:
+  models: true
+  echo-server: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
