@@ -1,0 +1,306 @@
+package postgres
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+)
+
+func (store *Store) ListClients(
+	ctx context.Context,
+	workspaceID int64,
+	filter catalogapplication.ListClientsFilter,
+) ([]catalogapplication.ClientView, error) {
+	where := []string{"workspace_id = $1"}
+	args := []any{workspaceID}
+	if filter.Name != "" {
+		args = append(args, "%"+strings.ToLower(filter.Name)+"%")
+		where = append(where, fmt.Sprintf("lower(name) like $%d", len(args)))
+	}
+	switch filter.Status {
+	case catalogapplication.ClientStatusActive:
+		where = append(where, "archived = false")
+	case catalogapplication.ClientStatusArchived:
+		where = append(where, "archived = true")
+	}
+
+	rows, err := store.pool.Query(
+		ctx,
+		fmt.Sprintf(
+			"select id, workspace_id, name, archived, created_by, created_at from catalog_clients where %s order by lower(name), id",
+			strings.Join(where, " and "),
+		),
+		args...,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog clients", err)
+	}
+	defer rows.Close()
+
+	clients := make([]catalogapplication.ClientView, 0)
+	for rows.Next() {
+		var client catalogapplication.ClientView
+		if err := rows.Scan(&client.ID, &client.WorkspaceID, &client.Name, &client.Archived, &client.CreatedBy, &client.CreatedAt); err != nil {
+			return nil, writeCatalogError("scan catalog client", err)
+		}
+		clients = append(clients, client)
+	}
+	return clients, rows.Err()
+}
+
+func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalogapplication.GroupView, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		"select id, workspace_id, name, has_users, created_at from catalog_groups where workspace_id = $1 order by lower(name), id",
+		workspaceID,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog groups", err)
+	}
+	defer rows.Close()
+
+	groups := make([]catalogapplication.GroupView, 0)
+	for rows.Next() {
+		var group catalogapplication.GroupView
+		if err := rows.Scan(&group.ID, &group.WorkspaceID, &group.Name, &group.HasUsers, &group.CreatedAt); err != nil {
+			return nil, writeCatalogError("scan catalog group", err)
+		}
+		groups = append(groups, group)
+	}
+	return groups, rows.Err()
+}
+
+func (store *Store) ListTags(
+	ctx context.Context,
+	workspaceID int64,
+	filter catalogapplication.ListTagsFilter,
+) ([]catalogapplication.TagView, error) {
+	where := []string{"workspace_id = $1"}
+	args := []any{workspaceID}
+	if filter.Search != "" {
+		args = append(args, "%"+strings.ToLower(filter.Search)+"%")
+		where = append(where, fmt.Sprintf("lower(name) like $%d", len(args)))
+	}
+	args = append(args, filter.PerPage, (filter.Page-1)*filter.PerPage)
+
+	rows, err := store.pool.Query(
+		ctx,
+		fmt.Sprintf(
+			"select id, workspace_id, name, deleted_at, created_by, created_at from catalog_tags where %s order by lower(name), id limit $%d offset $%d",
+			strings.Join(where, " and "),
+			len(args)-1,
+			len(args),
+		),
+		args...,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog tags", err)
+	}
+	defer rows.Close()
+
+	tags := make([]catalogapplication.TagView, 0)
+	for rows.Next() {
+		var tag catalogapplication.TagView
+		if err := rows.Scan(&tag.ID, &tag.WorkspaceID, &tag.Name, &tag.DeletedAt, &tag.CreatedBy, &tag.CreatedAt); err != nil {
+			return nil, writeCatalogError("scan catalog tag", err)
+		}
+		tags = append(tags, tag)
+	}
+	return tags, rows.Err()
+}
+
+func (store *Store) ListProjectUsers(
+	ctx context.Context,
+	workspaceID int64,
+	filter catalogapplication.ListProjectUsersFilter,
+) ([]catalogapplication.ProjectUserView, error) {
+	where := []string{"p.workspace_id = $1"}
+	args := []any{workspaceID}
+	if len(filter.ProjectIDs) > 0 {
+		args = append(args, filter.ProjectIDs)
+		where = append(where, fmt.Sprintf("pu.project_id = any($%d)", len(args)))
+	}
+
+	rows, err := store.pool.Query(
+		ctx,
+		fmt.Sprintf(
+			`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at
+			from catalog_project_users pu
+			join catalog_projects p on p.id = pu.project_id
+			where %s
+			order by pu.project_id, pu.user_id`,
+			strings.Join(where, " and "),
+		),
+		args...,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog project users", err)
+	}
+	defer rows.Close()
+
+	users := make([]catalogapplication.ProjectUserView, 0)
+	for rows.Next() {
+		var user catalogapplication.ProjectUserView
+		if err := rows.Scan(&user.ProjectID, &user.UserID, &user.Role, &user.WorkspaceID, &user.CreatedAt); err != nil {
+			return nil, writeCatalogError("scan catalog project user", err)
+		}
+		users = append(users, user)
+	}
+	return users, rows.Err()
+}
+
+func (store *Store) ListProjects(
+	ctx context.Context,
+	workspaceID int64,
+	filter catalogapplication.ListProjectsFilter,
+) ([]catalogapplication.ProjectView, error) {
+	where := []string{"p.workspace_id = $1"}
+	args := []any{workspaceID}
+	if filter.Active != nil {
+		args = append(args, *filter.Active)
+		where = append(where, fmt.Sprintf("p.active = $%d", len(args)))
+	}
+	if filter.OnlyTemplates {
+		where = append(where, "p.template = true")
+	}
+	if filter.Name != "" {
+		args = append(args, "%"+strings.ToLower(filter.Name)+"%")
+		where = append(where, fmt.Sprintf("lower(p.name) like $%d", len(args)))
+	}
+	if filter.Search != "" {
+		args = append(args, "%"+strings.ToLower(filter.Search)+"%")
+		where = append(where, fmt.Sprintf("lower(p.name) like $%d", len(args)))
+	}
+	args = append(args, filter.PerPage, (filter.Page-1)*filter.PerPage)
+
+	rows, err := store.pool.Query(
+		ctx,
+		fmt.Sprintf(
+			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
+			from catalog_projects p
+			left join catalog_clients c on c.id = p.client_id
+			where %s
+			order by %s
+			limit $%d offset $%d`,
+			strings.Join(where, " and "),
+			projectOrderClause(filter),
+			len(args)-1,
+			len(args),
+		),
+		args...,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog projects", err)
+	}
+	defer rows.Close()
+
+	projects := make([]catalogapplication.ProjectView, 0)
+	for rows.Next() {
+		project, err := scanProject(rows)
+		if err != nil {
+			return nil, writeCatalogError("scan catalog project", err)
+		}
+		projects = append(projects, project)
+	}
+	return projects, rows.Err()
+}
+
+func (store *Store) GetProject(
+	ctx context.Context,
+	workspaceID int64,
+	projectID int64,
+) (catalogapplication.ProjectView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
+		from catalog_projects p
+		left join catalog_clients c on c.id = p.client_id
+		where p.workspace_id = $1 and p.id = $2`,
+		workspaceID,
+		projectID,
+	)
+	project, err := scanProject(row)
+	if err != nil {
+		if notFound(err) {
+			return catalogapplication.ProjectView{}, false, nil
+		}
+		return catalogapplication.ProjectView{}, false, writeCatalogError("get catalog project", err)
+	}
+	return project, true, nil
+}
+
+func (store *Store) ListTasks(
+	ctx context.Context,
+	workspaceID int64,
+	filter catalogapplication.ListTasksFilter,
+) (catalogapplication.TaskPage, error) {
+	where := []string{"t.workspace_id = $1"}
+	args := []any{workspaceID}
+	if filter.Active != nil {
+		args = append(args, *filter.Active)
+		where = append(where, fmt.Sprintf("t.active = $%d", len(args)))
+	}
+	if filter.ProjectID != nil {
+		args = append(args, *filter.ProjectID)
+		where = append(where, fmt.Sprintf("t.project_id = $%d", len(args)))
+	}
+	if filter.Search != "" {
+		args = append(args, "%"+strings.ToLower(filter.Search)+"%")
+		where = append(where, fmt.Sprintf("lower(t.name) like $%d", len(args)))
+	}
+
+	var totalCount int
+	if err := store.pool.QueryRow(
+		ctx,
+		fmt.Sprintf("select count(*) from catalog_tasks t where %s", strings.Join(where, " and ")),
+		args...,
+	).Scan(&totalCount); err != nil {
+		return catalogapplication.TaskPage{}, writeCatalogError("count catalog tasks", err)
+	}
+
+	args = append(args, filter.PerPage, (filter.Page-1)*filter.PerPage)
+	rows, err := store.pool.Query(
+		ctx,
+		fmt.Sprintf(
+			`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+			from catalog_tasks t
+			left join catalog_projects p on p.id = t.project_id
+			where %s
+			order by %s
+			limit $%d offset $%d`,
+			strings.Join(where, " and "),
+			taskOrderClause(filter),
+			len(args)-1,
+			len(args),
+		),
+		args...,
+	)
+	if err != nil {
+		return catalogapplication.TaskPage{}, writeCatalogError("list catalog tasks", err)
+	}
+	defer rows.Close()
+
+	tasks := make([]catalogapplication.TaskView, 0)
+	for rows.Next() {
+		task, err := scanTask(rows)
+		if err != nil {
+			return catalogapplication.TaskPage{}, writeCatalogError("scan catalog task", err)
+		}
+		tasks = append(tasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		return catalogapplication.TaskPage{}, writeCatalogError("iterate catalog tasks", err)
+	}
+	return catalogapplication.TaskPage{
+		Tasks:      tasks,
+		Page:       filter.Page,
+		PerPage:    filter.PerPage,
+		TotalCount: totalCount,
+		SortField:  filter.SortField,
+		SortOrder:  filter.SortOrder,
+	}, nil
+}
