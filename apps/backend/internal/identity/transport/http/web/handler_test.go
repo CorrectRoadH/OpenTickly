@@ -7,6 +7,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 )
 
 func TestRegisterReturnsSessionBootstrap(t *testing.T) {
@@ -215,7 +216,7 @@ func newTestHandler(t *testing.T) *Handler {
 		Users:              identitypostgres.NewUserRepository(database.Pool),
 		Sessions:           identitypostgres.NewSessionRepository(database.Pool),
 		JobRecorder:        identitypostgres.NewJobRecorder(database.Pool),
-		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(database.Pool),
+		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(database.Pool),
 		IDs:                identitypostgres.NewSequence(database.Pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})

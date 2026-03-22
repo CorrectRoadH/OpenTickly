@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/publicapi"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
@@ -20,12 +22,14 @@ import (
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
+	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 )
 
 const sessionCookieName = "opentoggl_session"
+const currentSessionHomeContextKey = "current_session_home"
 
 func newWebRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 	runtime, err := newWebRuntime(pool)
@@ -71,7 +75,7 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 		Users:              identitypostgres.NewUserRepository(pool),
 		Sessions:           identitypostgres.NewSessionRepository(pool),
 		JobRecorder:        identitypostgres.NewJobRecorder(pool),
-		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(pool),
+		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(pool),
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
@@ -157,6 +161,9 @@ func (runtime *webRuntime) organizationSettings(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
+	if err := runtime.requireCurrentSessionOrganization(ctx, organizationID); err != nil {
+		return err
+	}
 	response := runtime.tenant.GetOrganizationSettings(ctx.Request().Context(), organizationID)
 	return writeTenantResponse(ctx, response)
 }
@@ -168,6 +175,9 @@ func (runtime *webRuntime) updateOrganizationSettings(ctx echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionOrganization(ctx, organizationID); err != nil {
+		return err
 	}
 	var request tenantweb.OrganizationSettingsRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -185,6 +195,9 @@ func (runtime *webRuntime) workspaceSettings(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
 	response := runtime.tenant.GetWorkspaceSettings(ctx.Request().Context(), workspaceID)
 	return writeTenantResponse(ctx, response)
 }
@@ -196,6 +209,9 @@ func (runtime *webRuntime) updateWorkspaceSettings(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
 	}
 	var request workspaceSettingsRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -300,6 +316,9 @@ func (runtime *webRuntime) workspacePermissions(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
 	workspace, err := runtime.tenantApp.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
 	if err != nil {
 		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
@@ -320,6 +339,9 @@ func (runtime *webRuntime) updateWorkspacePermissions(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
 	}
 	var request workspacePermissionsRequest
 	if err := ctx.Bind(&request); err != nil {
@@ -366,6 +388,9 @@ func (runtime *webRuntime) workspaceCapabilities(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
 	body, err := runtime.billingApp.WorkspaceCapabilitySnapshot(ctx.Request().Context(), workspaceID)
 	if err != nil {
 		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
@@ -380,6 +405,9 @@ func (runtime *webRuntime) workspaceQuota(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
 	}
 	body, headers, err := runtime.billingApp.WorkspaceQuotaSnapshot(ctx.Request().Context(), workspaceID)
 	if err != nil {
@@ -437,7 +465,7 @@ func (runtime *webRuntime) authorizeSession(ctx echo.Context) (error, bool) {
 	if response.StatusCode == http.StatusOK {
 		return nil, true
 	}
-	return writeIdentityResponse(ctx, response), false
+	return identityHTTPError(response), false
 }
 
 func writeTenantResponse(ctx echo.Context, response tenantweb.Response) error {
@@ -455,6 +483,65 @@ func setSessionCookie(ctx echo.Context, sessionID string) {
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
+}
+
+func identityHTTPError(response identityweb.Response) error {
+	return echo.NewHTTPError(response.StatusCode, response.Body)
+}
+
+func (runtime *webRuntime) requireCurrentSessionOrganization(ctx echo.Context, organizationID int64) error {
+	home, err := runtime.currentSessionHome(ctx)
+	if err != nil {
+		return err
+	}
+	if home.organizationID != organizationID {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+	return nil
+}
+
+func (runtime *webRuntime) requireCurrentSessionWorkspace(ctx echo.Context, workspaceID int64) error {
+	home, err := runtime.currentSessionHome(ctx)
+	if err != nil {
+		return err
+	}
+	if home.workspaceID != workspaceID {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+	return nil
+}
+
+func (runtime *webRuntime) currentSessionHome(ctx echo.Context) (sessionHome, error) {
+	if cached, ok := ctx.Get(currentSessionHomeContextKey).(*sessionHome); ok && cached != nil {
+		return *cached, nil
+	}
+
+	user, err := runtime.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		switch {
+		case errors.Is(err, identityapplication.ErrSessionNotFound),
+			errors.Is(err, identitydomain.ErrUserDeactivated),
+			errors.Is(err, identitydomain.ErrUserDeleted):
+			return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		default:
+			return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+	}
+
+	organizationID, workspaceID, found, lookupErr := runtime.userHomes.FindByUserID(ctx.Request().Context(), user.ID)
+	switch {
+	case lookupErr != nil:
+		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	case !found:
+		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	default:
+		home := &sessionHome{
+			organizationID: organizationID,
+			workspaceID:    workspaceID,
+		}
+		ctx.Set(currentSessionHomeContextKey, home)
+		return *home, nil
+	}
 }
 
 func clearSessionCookie(ctx echo.Context) {

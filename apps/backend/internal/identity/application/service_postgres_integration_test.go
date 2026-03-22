@@ -9,6 +9,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 )
 
 func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T) {
@@ -140,7 +141,7 @@ type postgresTestDependencies struct {
 	Users       *identitypostgres.UserRepository
 	Sessions    *identitypostgres.SessionRepository
 	JobRecorder *identitypostgres.JobRecorder
-	TimerState  *identitypostgres.RunningTimerLookup
+	TimerState  *trackingpostgres.RunningTimerLookup
 	IDs         *identitypostgres.Sequence
 }
 
@@ -153,7 +154,7 @@ func newPostgresTestDependencies(database *pgtest.Database) postgresTestDependen
 		Users:       identitypostgres.NewUserRepository(database.Pool),
 		Sessions:    identitypostgres.NewSessionRepository(database.Pool),
 		JobRecorder: identitypostgres.NewJobRecorder(database.Pool),
-		TimerState:  identitypostgres.NewRunningTimerLookup(database.Pool),
+		TimerState:  trackingpostgres.NewRunningTimerLookup(database.Pool),
 		IDs:         identitypostgres.NewSequence(database.Pool),
 	}
 }
