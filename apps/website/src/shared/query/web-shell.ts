@@ -19,6 +19,7 @@ import type {
   WebCurrentUserProfileDto,
   WebSessionBootstrapDto,
   WebUserPreferencesDto,
+  WorkspaceMemberDto,
   WorkspaceMemberInvitationRequestDto,
   WorkspaceMembersEnvelopeDto,
   WebWorkspaceSettingsDto,
@@ -291,6 +292,54 @@ export function useInviteWorkspaceMemberMutation(workspaceId: number) {
       webRequest(`/web/v1/workspaces/${workspaceId}/members/invitations`, {
         body: request,
         method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace-members", workspaceId],
+      });
+    },
+  });
+}
+
+export function useDisableWorkspaceMemberMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: number) =>
+      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}/disable`, {
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace-members", workspaceId],
+      });
+    },
+  });
+}
+
+export function useRestoreWorkspaceMemberMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: number) =>
+      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}/restore`, {
+        method: "POST",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["workspace-members", workspaceId],
+      });
+    },
+  });
+}
+
+export function useRemoveWorkspaceMemberMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: number) =>
+      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}`, {
+        method: "DELETE",
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

@@ -220,6 +220,7 @@ export function createWorkspaceMemberFixture(
     email: "alex@example.com",
     name: "Alex Johnson",
     role: "owner",
+    status: "joined",
     ...overrides,
   };
 }

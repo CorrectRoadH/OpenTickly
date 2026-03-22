@@ -2259,6 +2259,7 @@ export type WorkspaceMember = {
   email: string;
   name: string;
   role: string;
+  status: string;
 };
 export type ClientListEnvelope = { clients: ClientSummary[] };
 export type ClientSummary = { id: number; name: string; workspace_id: number; active: boolean };

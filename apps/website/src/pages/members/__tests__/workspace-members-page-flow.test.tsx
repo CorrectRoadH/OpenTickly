@@ -13,8 +13,11 @@ import {
 import { installMockWebApi, jsonResponse } from "../../../test/mock-web-api.ts";
 
 describe("workspace members page flow", () => {
-  it("renders contract-shaped member list and invite action in workspace shell", async () => {
-    const members = createWorkspaceMembersFixture().members.slice();
+  it("renders contract-shaped member list, invite action, and lifecycle actions in workspace shell", async () => {
+    const members = createWorkspaceMembersFixture().members.map((member, index) => ({
+      ...member,
+      status: index === 0 ? "joined" : index === 1 ? "disabled" : "restored",
+    }));
     const { calls } = installMockWebApi([
       {
         path: "/web/v1/session",
@@ -39,8 +42,40 @@ describe("workspace members page flow", () => {
             email,
             name: "new.member",
             role,
+            status: "invited",
           });
           return jsonResponse({}, { status: 201 });
+        },
+      },
+      {
+        method: "POST",
+        path: "/web/v1/workspaces/202/members/1/disable",
+        resolver: () => {
+          const member = members.find((candidate) => candidate.id === 1);
+          if (member) {
+            member.status = "disabled";
+          }
+          return jsonResponse(member ?? {}, { status: 200 });
+        },
+      },
+      {
+        method: "POST",
+        path: "/web/v1/workspaces/202/members/2/restore",
+        resolver: () => {
+          const member = members.find((candidate) => candidate.id === 2);
+          if (member) {
+            member.status = "restored";
+          }
+          return jsonResponse(member ?? {}, { status: 200 });
+        },
+      },
+      {
+        method: "DELETE",
+        path: "/web/v1/workspaces/202/members/3",
+        resolver: () => {
+          const memberIndex = members.findIndex((candidate) => candidate.id === 3);
+          const [member] = memberIndex >= 0 ? members.splice(memberIndex, 1) : [undefined];
+          return jsonResponse(member ? { ...member, status: "removed" } : {}, { status: 200 });
         },
       },
     ]);
@@ -54,14 +89,13 @@ describe("workspace members page flow", () => {
     expect(await screen.findByRole("heading", { name: "Workspace Members" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Invite members" })).toBeTruthy();
 
-    const expectedMembers = createWorkspaceMembersFixture().members;
-
     await waitFor(() => {
       const withinList = within(screen.getByLabelText("Workspace members list"));
-      expectedMembers.forEach((member) => {
+      members.forEach((member) => {
         expect(withinList.getByText(member.name)).toBeTruthy();
         expect(withinList.getByText(member.email)).toBeTruthy();
         expect(withinList.getByText(member.role)).toBeTruthy();
+        expect(withinList.getByText(member.status)).toBeTruthy();
         expect(withinList.getAllByText(String(member.workspace_id)).length).toBeGreaterThan(0);
         expect(withinList.getByText(String(member.id))).toBeTruthy();
       });
@@ -80,6 +114,37 @@ describe("workspace members page flow", () => {
     });
     await waitFor(() => {
       expect(screen.getByText("new.member@example.com")).toBeTruthy();
+      expect(screen.getByText("invited")).toBeTruthy();
+    });
+
+    const alexCard = screen.getByText("Alex Johnson").closest("article");
+    if (!alexCard) {
+      throw new Error("Alex Johnson row not found");
+    }
+    fireEvent.click(within(alexCard).getByRole("button", { name: "Disable" }));
+    await waitFor(() => {
+      expect(screen.getByText("Member disabled")).toBeTruthy();
+    });
+
+    const baileyCard = screen.getByText("Bailey Lee").closest("article");
+    if (!baileyCard) {
+      throw new Error("Bailey Lee row not found");
+    }
+    fireEvent.click(within(baileyCard).getByRole("button", { name: "Restore" }));
+    await waitFor(() => {
+      expect(screen.getByText("Member restored")).toBeTruthy();
+    });
+
+    const caseyCard = screen.getByText("Casey Smith").closest("article");
+    if (!caseyCard) {
+      throw new Error("Casey Smith row not found");
+    }
+    fireEvent.click(within(caseyCard).getByRole("button", { name: "Remove" }));
+    await waitFor(() => {
+      expect(screen.getByText("Member removed")).toBeTruthy();
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("Casey Smith")).toBeNull();
     });
 
     expect(
@@ -91,5 +156,8 @@ describe("workspace members page flow", () => {
           (call.body as { email?: string; role?: string }).role === "admin",
       ),
     ).toBe(true);
+    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/1/disable")).toBe(true);
+    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/2/restore")).toBe(true);
+    expect(calls.some((call) => call.method === "DELETE" && call.pathname === "/web/v1/workspaces/202/members/3")).toBe(true);
   });
 });

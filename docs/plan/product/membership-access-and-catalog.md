@@ -43,6 +43,7 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
 
 - First contracts, backend-core, Web-pages, and runtime-endpoints slice exists
 - Formal completion is blocked by readiness work and remaining project-page/product-surface gaps
+- Workspace members page now supports invite plus disable/restore/remove lifecycle actions on the existing formal surface, with focused backend and page-flow coverage
 
 ## Known Gaps
 
@@ -70,3 +71,10 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
 - Contract and integration coverage for membership and catalog behavior
 - Page-flow and E2E coverage for formal page families
 - PRD/Figma or explicit fallback references for formal Web pages
+
+## Recent Progress
+
+- Workspace member lifecycle actions now exist on the existing members page for disable, restore, and remove flows alongside invite
+- Focused verification for this slice passed:
+  - `go test ./apps/backend/internal/http ./apps/backend/internal/membership/application`
+  - `vp run website#test:unit -- --run src/pages/members/__tests__/workspace-members-page-flow.test.tsx`

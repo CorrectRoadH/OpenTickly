@@ -31,3 +31,30 @@ func (adapter *generatedWebWorkspaceMembersAdapter) InviteWorkspaceMember(
 		Role:  request.Role,
 	})
 }
+
+func (adapter *generatedWebWorkspaceMembersAdapter) DisableWorkspaceMember(
+	ctx context.Context,
+	session string,
+	workspaceID int64,
+	memberID int64,
+) WebResponse {
+	return adapter.handlers.Tenant.DisableWorkspaceMember(ctx, session, workspaceID, memberID)
+}
+
+func (adapter *generatedWebWorkspaceMembersAdapter) RestoreWorkspaceMember(
+	ctx context.Context,
+	session string,
+	workspaceID int64,
+	memberID int64,
+) WebResponse {
+	return adapter.handlers.Tenant.RestoreWorkspaceMember(ctx, session, workspaceID, memberID)
+}
+
+func (adapter *generatedWebWorkspaceMembersAdapter) RemoveWorkspaceMember(
+	ctx context.Context,
+	session string,
+	workspaceID int64,
+	memberID int64,
+) WebResponse {
+	return adapter.handlers.Tenant.RemoveWorkspaceMember(ctx, session, workspaceID, memberID)
+}

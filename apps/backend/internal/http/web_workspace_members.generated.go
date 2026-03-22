@@ -22,6 +22,9 @@ type InviteWorkspaceMemberRequestBody struct {
 type GeneratedWebWorkspaceMembersHandler interface {
 	ListWorkspaceMembers(context.Context, string, int64) WebResponse
 	InviteWorkspaceMember(context.Context, string, int64, InviteWorkspaceMemberRequestBody) WebResponse
+	DisableWorkspaceMember(context.Context, string, int64, int64) WebResponse
+	RestoreWorkspaceMember(context.Context, string, int64, int64) WebResponse
+	RemoveWorkspaceMember(context.Context, string, int64, int64) WebResponse
 }
 
 func registerGeneratedWebWorkspaceMembersRoutes(
@@ -51,6 +54,45 @@ func registerGeneratedWebWorkspaceMembersRoutes(
 			return context.JSON(http.StatusBadRequest, "Bad Request")
 		}
 		response := handler.InviteWorkspaceMember(context.Request().Context(), sessionID(context), workspaceID, request)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/workspaces/:workspace_id/members/:member_id/disable", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		memberID, ok := parsePathID(context, "member_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handler.DisableWorkspaceMember(context.Request().Context(), sessionID(context), workspaceID, memberID)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.POST("/web/v1/workspaces/:workspace_id/members/:member_id/restore", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		memberID, ok := parsePathID(context, "member_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handler.RestoreWorkspaceMember(context.Request().Context(), sessionID(context), workspaceID, memberID)
+		return context.JSON(response.StatusCode, response.Body)
+	})
+
+	server.DELETE("/web/v1/workspaces/:workspace_id/members/:member_id", func(context echo.Context) error {
+		workspaceID, ok := parsePathID(context, "workspace_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		memberID, ok := parsePathID(context, "member_id")
+		if !ok {
+			return context.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		response := handler.RemoveWorkspaceMember(context.Request().Context(), sessionID(context), workspaceID, memberID)
 		return context.JSON(response.StatusCode, response.Body)
 	})
 }

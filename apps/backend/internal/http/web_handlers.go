@@ -138,6 +138,7 @@ type workspaceMemberRecord struct {
 	Email       string
 	Name        string
 	Role        string
+	Status      string
 }
 
 type projectRecord struct {
@@ -607,6 +608,7 @@ func (state *webState) seedWorkspaceMembersLocked(home homeRecord, user *userRec
 			Email:       user.Email,
 			Name:        user.FullName,
 			Role:        "owner",
+			Status:      "joined",
 		},
 	}
 	state.nextMemberID++
@@ -909,6 +911,44 @@ func normalizeEmail(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
 }
 
+func workspaceMemberResponse(member workspaceMemberRecord) map[string]any {
+	return map[string]any{
+		"id":           member.ID,
+		"workspace_id": member.WorkspaceID,
+		"email":        member.Email,
+		"name":         member.Name,
+		"role":         member.Role,
+		"status":       member.Status,
+	}
+}
+
+func (h *WebTenantHandlers) requireAccessibleWorkspaceMemberLocked(sessionID string, workspaceID int64, memberID int64) (*workspaceMemberRecord, *WebResponse) {
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		response := WebResponse{StatusCode: 401, Body: "Unauthorized"}
+		return nil, &response
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		response := WebResponse{StatusCode: 401, Body: "Unauthorized"}
+		return nil, &response
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != workspaceID {
+		response := WebResponse{StatusCode: 403, Body: "User does not have access to this resource."}
+		return nil, &response
+	}
+
+	members := h.state.workspaceMembers[workspaceID]
+	for index := range members {
+		if members[index].ID == memberID {
+			return &members[index], nil
+		}
+	}
+
+	response := WebResponse{StatusCode: 404, Body: "Workspace member not found"}
+	return nil, &response
+}
+
 // ListWorkspaceMembers returns a simple member list envelope for the given workspace.
 func (h *WebTenantHandlers) ListWorkspaceMembers(ctx context.Context, sessionID string, workspaceID int64) WebResponse {
 	_ = ctx
@@ -925,6 +965,7 @@ func (h *WebTenantHandlers) ListWorkspaceMembers(ctx context.Context, sessionID 
 			"email":        member.Email,
 			"name":         member.Name,
 			"role":         member.Role,
+			"status":       member.Status,
 		})
 	}
 
@@ -1019,6 +1060,7 @@ func (h *WebTenantHandlers) InviteWorkspaceMember(ctx context.Context, sessionID
 		Email:       email,
 		Name:        name,
 		Role:        role,
+		Status:      "invited",
 	}
 	h.state.nextMemberID++
 	h.state.workspaceMembers[workspaceID] = append(h.state.workspaceMembers[workspaceID], member)
@@ -1031,8 +1073,76 @@ func (h *WebTenantHandlers) InviteWorkspaceMember(ctx context.Context, sessionID
 			"email":        member.Email,
 			"name":         member.Name,
 			"role":         member.Role,
+			"status":       member.Status,
 		},
 	}
+}
+
+/*
+DisableWorkspaceMember marks a workspace member as disabled for the current workspace.
+*/
+func (h *WebTenantHandlers) DisableWorkspaceMember(ctx context.Context, sessionID string, workspaceID int64, memberID int64) WebResponse {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	member, response := h.requireAccessibleWorkspaceMemberLocked(sessionID, workspaceID, memberID)
+	if response != nil {
+		return *response
+	}
+	if member.Status != "joined" && member.Status != "restored" {
+		return WebResponse{StatusCode: 409, Body: "Workspace member cannot be disabled from current state."}
+	}
+	member.Status = "disabled"
+	return WebResponse{StatusCode: 200, Body: workspaceMemberResponse(*member)}
+}
+
+/*
+RestoreWorkspaceMember marks a disabled workspace member as restored for the current workspace.
+*/
+func (h *WebTenantHandlers) RestoreWorkspaceMember(ctx context.Context, sessionID string, workspaceID int64, memberID int64) WebResponse {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	member, response := h.requireAccessibleWorkspaceMemberLocked(sessionID, workspaceID, memberID)
+	if response != nil {
+		return *response
+	}
+	if member.Status != "disabled" {
+		return WebResponse{StatusCode: 409, Body: "Workspace member is not disabled."}
+	}
+	member.Status = "restored"
+	return WebResponse{StatusCode: 200, Body: workspaceMemberResponse(*member)}
+}
+
+/*
+RemoveWorkspaceMember removes a workspace member from the active workspace list.
+*/
+func (h *WebTenantHandlers) RemoveWorkspaceMember(ctx context.Context, sessionID string, workspaceID int64, memberID int64) WebResponse {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	_, response := h.requireAccessibleWorkspaceMemberLocked(sessionID, workspaceID, memberID)
+	if response != nil {
+		return *response
+	}
+
+	members := h.state.workspaceMembers[workspaceID]
+	for index, member := range members {
+		if member.ID != memberID {
+			continue
+		}
+		member.Status = "removed"
+		h.state.workspaceMembers[workspaceID] = append(members[:index], members[index+1:]...)
+		return WebResponse{StatusCode: 200, Body: workspaceMemberResponse(member)}
+	}
+
+	return WebResponse{StatusCode: 404, Body: "Workspace member not found"}
 }
 
 /*

@@ -483,6 +483,114 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/disable": {
+      "post": {
+        "summary": "Disable a workspace member",
+        "operationId": "disable-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Disabled workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/restore": {
+      "post": {
+        "summary": "Restore a workspace member",
+        "operationId": "restore-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Restored workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}": {
+      "delete": {
+        "summary": "Remove a workspace member",
+        "operationId": "remove-workspace-member",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/members/invitations": {
       "post": {
         "summary": "Invite a workspace member",
@@ -1843,6 +1951,30 @@
           }
         },
         "required": ["workspace_id", "name"]
+      },
+      "WorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "workspace_id", "email", "name", "role", "status"]
       },
       "WorkspaceMemberInvitationRequest": {
         "type": "object",
