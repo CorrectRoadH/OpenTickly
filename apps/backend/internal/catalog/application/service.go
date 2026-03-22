@@ -177,6 +177,18 @@ func (service *Service) ListTasks(ctx context.Context, workspaceID int64, filter
 	return service.store.ListTasks(ctx, workspaceID, filter)
 }
 
+func (service *Service) CreateTask(ctx context.Context, command CreateTaskCommand) (TaskView, error) {
+	name, err := domain.NormalizeCatalogName(command.Name)
+	if err != nil {
+		return TaskView{}, err
+	}
+	command.Name = name
+	if command.Active == nil {
+		command.Active = boolPtr(true)
+	}
+	return service.store.CreateTask(ctx, command)
+}
+
 func requireWorkspaceID(workspaceID int64) error {
 	if workspaceID <= 0 {
 		return fmt.Errorf("%w: %d", ErrInvalidWorkspace, workspaceID)

@@ -168,11 +168,24 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 		t.Fatalf("expected updated pinned project, got %#v", projects)
 	}
 
+	createdTask, err := service.CreateTask(ctx, catalogapplication.CreateTaskCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		ProjectID:   &project.ID,
+		Name:        "Delivery",
+	})
+	if err != nil {
+		t.Fatalf("create task: %v", err)
+	}
+	if createdTask.Name != "Delivery" || !createdTask.Active {
+		t.Fatalf("expected created task to persist normalized name and default active state, got %#v", createdTask)
+	}
+
 	activeTasks, err := service.ListTasks(ctx, workspaceID, catalogapplication.ListTasksFilter{Page: 1, PerPage: 50})
 	if err != nil {
 		t.Fatalf("list active tasks: %v", err)
 	}
-	if activeTasks.TotalCount != 1 || len(activeTasks.Tasks) != 1 || activeTasks.Tasks[0].Name != "Design" {
+	if activeTasks.TotalCount != 2 || len(activeTasks.Tasks) != 2 || activeTasks.Tasks[0].Name != "Delivery" || activeTasks.Tasks[1].Name != "Design" {
 		t.Fatalf("expected default active task page, got %#v", activeTasks)
 	}
 

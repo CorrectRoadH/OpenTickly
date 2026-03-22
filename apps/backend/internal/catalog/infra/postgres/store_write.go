@@ -124,3 +124,26 @@ func (store *Store) SetProjectPinned(ctx context.Context, workspaceID int64, pro
 	}
 	return nil
 }
+
+func (store *Store) CreateTask(
+	ctx context.Context,
+	command catalogapplication.CreateTaskCommand,
+) (catalogapplication.TaskView, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`insert into catalog_tasks (workspace_id, project_id, name, active, created_by)
+		values ($1, $2, $3, $4, $5)
+		returning id, workspace_id, project_id, name, active`,
+		command.WorkspaceID,
+		command.ProjectID,
+		command.Name,
+		boolValue(command.Active),
+		command.CreatedBy,
+	)
+
+	var task catalogapplication.TaskView
+	if err := row.Scan(&task.ID, &task.WorkspaceID, &task.ProjectID, &task.Name, &task.Active); err != nil {
+		return catalogapplication.TaskView{}, writeCatalogError("create catalog task", err)
+	}
+	return task, nil
+}

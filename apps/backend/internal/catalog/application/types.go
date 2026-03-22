@@ -167,6 +167,14 @@ type CreateProjectCommand struct {
 	Recurring   *bool
 }
 
+type CreateTaskCommand struct {
+	WorkspaceID int64
+	CreatedBy   int64
+	ProjectID   *int64
+	Name        string
+	Active      *bool
+}
+
 type UpdateProjectCommand struct {
 	WorkspaceID int64
 	ProjectID   int64
@@ -197,4 +205,5 @@ type Store interface {
 	UpdateProject(context.Context, ProjectView) error
 	SetProjectPinned(context.Context, int64, int64, bool) error
 	ListTasks(context.Context, int64, ListTasksFilter) (TaskPage, error)
+	CreateTask(context.Context, CreateTaskCommand) (TaskView, error)
 }
