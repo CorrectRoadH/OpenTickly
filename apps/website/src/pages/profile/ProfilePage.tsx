@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 
 import { ApiTokenSection } from "../../features/profile/ApiTokenSection.tsx";
@@ -25,13 +25,44 @@ export function ProfilePage(): ReactElement {
   const [apiTokenStatus, setApiTokenStatus] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<string | null>(null);
   const [preferencesStatus, setPreferencesStatus] = useState<string | null>(null);
+  const [apiTokenError, setApiTokenError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [preferencesError, setPreferencesError] = useState<string | null>(null);
 
   if (profileQuery.isPending || preferencesQuery.isPending) {
-    return <LoadingPanel message="Loading profile…" />;
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="Fetching current user account details and preferences."
+          title="Loading profile"
+          tone="loading"
+        />
+      </AppPanel>
+    );
+  }
+
+  if (profileQuery.isError || preferencesQuery.isError) {
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="We could not load account details right now. Refresh or try again shortly."
+          title="Profile unavailable"
+          tone="error"
+        />
+      </AppPanel>
+    );
   }
 
   if (!profileQuery.data || !preferencesQuery.data) {
-    return <LoadingPanel message="Profile data unavailable." />;
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="No profile data was returned for this session."
+          title="Profile data unavailable"
+          tone="empty"
+        />
+      </AppPanel>
+    );
   }
 
   return (
@@ -56,42 +87,59 @@ export function ProfilePage(): ReactElement {
         </div>
       </AppPanel>
 
-      {profileStatus ? <Notice>{profileStatus}</Notice> : null}
+      {profileStatus ? <AppInlineNotice tone="success">{profileStatus}</AppInlineNotice> : null}
+      {profileError ? <AppInlineNotice tone="error">{profileError}</AppInlineNotice> : null}
       <ProfileFormSection
         initialValues={createProfileFormValues(profileQuery.data)}
         onSubmit={async (request) => {
-          await updateProfileMutation.mutateAsync(request);
-          setProfileStatus("Profile saved");
+          try {
+            await updateProfileMutation.mutateAsync(request);
+            setProfileStatus("Profile saved");
+            setProfileError(null);
+          } catch {
+            setProfileError("Could not save profile");
+            setProfileStatus(null);
+          }
         }}
       />
 
-      {apiTokenStatus ? <Notice>{apiTokenStatus}</Notice> : null}
+      {apiTokenStatus ? <AppInlineNotice tone="success">{apiTokenStatus}</AppInlineNotice> : null}
+      {apiTokenError ? <AppInlineNotice tone="error">{apiTokenError}</AppInlineNotice> : null}
       <ApiTokenSection
         isRotating={resetApiTokenMutation.isPending}
         onRotate={async () => {
-          await resetApiTokenMutation.mutateAsync();
-          setApiTokenStatus("API token rotated");
+          try {
+            await resetApiTokenMutation.mutateAsync();
+            setApiTokenStatus("API token rotated");
+            setApiTokenError(null);
+          } catch {
+            setApiTokenError("Could not rotate API token");
+            setApiTokenStatus(null);
+          }
         }}
         token={profileQuery.data.api_token}
       />
 
-      {preferencesStatus ? <Notice>{preferencesStatus}</Notice> : null}
+      {preferencesStatus ? (
+        <AppInlineNotice tone="success">{preferencesStatus}</AppInlineNotice>
+      ) : null}
+      {preferencesError ? (
+        <AppInlineNotice tone="error">{preferencesError}</AppInlineNotice>
+      ) : null}
       <PreferencesFormSection
         initialValues={createPreferencesFormValues(preferencesQuery.data)}
         onSubmit={async (request) => {
-          await updatePreferencesMutation.mutateAsync(request);
-          setPreferencesStatus("Preferences saved");
+          try {
+            await updatePreferencesMutation.mutateAsync(request);
+            setPreferencesStatus("Preferences saved");
+            setPreferencesError(null);
+          } catch {
+            setPreferencesError("Could not save preferences");
+            setPreferencesStatus(null);
+          }
         }}
       />
     </div>
-  );
-}
-
-function LoadingPanel({ message }: { message: string }): ReactElement {
-  return (
-    <AppPanel className="bg-white/95">
-      <p className="text-sm font-medium text-slate-700">{message}</p>
-    </AppPanel>
   );
 }
 
@@ -107,13 +155,5 @@ function SectionSummary({
       <p className="text-sm font-semibold text-slate-950">{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
     </div>
-  );
-}
-
-function Notice({ children }: { children: string }): ReactElement {
-  return (
-    <AppPanel className="border-emerald-200 bg-emerald-50/80">
-      <p className="text-sm font-semibold text-emerald-800">{children}</p>
-    </AppPanel>
   );
 }

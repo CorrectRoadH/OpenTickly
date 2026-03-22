@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 
 import { OrganizationSettingsForm } from "../../features/settings/OrganizationSettingsForm.tsx";
@@ -18,11 +18,40 @@ export function OrganizationSettingsPage({
   const organizationQuery = useOrganizationSettingsQuery(organizationId);
   const updateMutation = useUpdateOrganizationSettingsMutation(organizationId);
   const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (organizationQuery.isPending || !organizationQuery.data) {
+  if (organizationQuery.isPending) {
     return (
       <AppPanel className="bg-white/95">
-        <p className="text-sm font-medium text-slate-700">Loading organization settings…</p>
+        <AppSurfaceState
+          description="Fetching organization-level configuration and policy values."
+          title="Loading organization settings"
+          tone="loading"
+        />
+      </AppPanel>
+    );
+  }
+
+  if (organizationQuery.isError) {
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="We could not load organization settings right now. Refresh or try again shortly."
+          title="Organization settings unavailable"
+          tone="error"
+        />
+      </AppPanel>
+    );
+  }
+
+  if (!organizationQuery.data) {
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="No organization settings data was returned for this organization."
+          title="Organization settings unavailable"
+          tone="empty"
+        />
       </AppPanel>
     );
   }
@@ -40,16 +69,19 @@ export function OrganizationSettingsPage({
         </div>
       </AppPanel>
 
-      {status ? (
-        <AppPanel className="border-emerald-200 bg-emerald-50/80">
-          <p className="text-sm font-semibold text-emerald-800">{status}</p>
-        </AppPanel>
-      ) : null}
+      {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
+      {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
       <OrganizationSettingsForm
         initialValues={createOrganizationSettingsFormValues(organizationQuery.data.organization)}
         onSubmit={async (request) => {
-          await updateMutation.mutateAsync(request);
-          setStatus("Organization saved");
+          try {
+            await updateMutation.mutateAsync(request);
+            setStatus("Organization saved");
+            setError(null);
+          } catch {
+            setError("Could not save organization settings");
+            setStatus(null);
+          }
         }}
       />
     </div>

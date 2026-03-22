@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, useState } from "react";
 
@@ -26,11 +26,40 @@ export function WorkspaceSettingsPage({
   const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
   const [status, setStatus] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  if (settingsQuery.isPending || !settingsQuery.data) {
+  if (settingsQuery.isPending) {
     return (
       <AppPanel className="bg-white/95">
-        <p className="text-sm font-medium text-slate-700">Loading workspace settings…</p>
+        <AppSurfaceState
+          description="Fetching workspace defaults, branding, and policy settings."
+          title="Loading workspace settings"
+          tone="loading"
+        />
+      </AppPanel>
+    );
+  }
+
+  if (settingsQuery.isError) {
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="We could not load workspace settings right now. Refresh or try again shortly."
+          title="Workspace settings unavailable"
+          tone="error"
+        />
+      </AppPanel>
+    );
+  }
+
+  if (!settingsQuery.data) {
+    return (
+      <AppPanel className="bg-white/95">
+        <AppSurfaceState
+          description="No workspace settings data was returned for this workspace."
+          title="Workspace settings unavailable"
+          tone="empty"
+        />
       </AppPanel>
     );
   }
@@ -90,17 +119,20 @@ export function WorkspaceSettingsPage({
         </AppPanel>
       ) : null}
 
-      {status ? (
-        <AppPanel className="border-emerald-200 bg-emerald-50/80">
-          <p className="text-sm font-semibold text-emerald-800">{status}</p>
-        </AppPanel>
-      ) : null}
+      {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
+      {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
       <WorkspaceSettingsForm
         brandingHref={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
         initialValues={createWorkspaceSettingsFormValues(settingsQuery.data.workspace)}
         onSubmit={async (request) => {
-          await updateMutation.mutateAsync(request);
-          setStatus("Workspace settings saved");
+          try {
+            await updateMutation.mutateAsync(request);
+            setStatus("Workspace settings saved");
+            setError(null);
+          } catch {
+            setError("Could not save workspace settings");
+            setStatus(null);
+          }
         }}
       />
     </div>

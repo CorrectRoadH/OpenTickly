@@ -163,4 +163,26 @@ describe("workspace shell page flow", () => {
       expect(screen.getByRole("heading", { name: "Log in to OpenToggl" })).toBeTruthy();
     });
   });
+
+  it("shows reports as a formal workspace surface without transition-story copy", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/reports"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Reports" })).toBeTruthy();
+    expect(
+      screen.getByText("Review workspace-level reporting status, visibility, and export readiness."),
+    ).toBeTruthy();
+    expect(
+      screen.queryByText("Reports stay inside the current workspace shell while Wave 1 focuses on"),
+    ).toBeNull();
+  });
 });

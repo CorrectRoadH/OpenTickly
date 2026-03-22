@@ -67,4 +67,27 @@ describe("settings page flow", () => {
     ).toBeTruthy();
     expect(screen.getByDisplayValue("North Ridge Org")).toBeTruthy();
   });
+
+  it("shows an explicit error state when workspace settings fail to load", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/workspaces/202/settings",
+        resolver: () => jsonResponse("Workspace settings unavailable.", { status: 500 }),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/workspaces/202/settings?section=general"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByText("Workspace settings unavailable")).toBeTruthy();
+    expect(
+      screen.getByText("We could not load workspace settings right now. Refresh or try again shortly."),
+    ).toBeTruthy();
+  });
 });

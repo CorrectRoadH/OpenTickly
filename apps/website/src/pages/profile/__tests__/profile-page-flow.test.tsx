@@ -140,4 +140,31 @@ describe("profile page flow", () => {
       });
     });
   });
+
+  it("shows an explicit error state when profile data cannot be loaded", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+      {
+        path: "/web/v1/profile",
+        resolver: () => jsonResponse("Profile unavailable.", { status: 500 }),
+      },
+      {
+        path: "/web/v1/preferences",
+        resolver: () => jsonResponse(createPreferencesFixture()),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/profile"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByText("Profile unavailable")).toBeTruthy();
+    expect(
+      screen.getByText("We could not load account details right now. Refresh or try again shortly."),
+    ).toBeTruthy();
+  });
 });
