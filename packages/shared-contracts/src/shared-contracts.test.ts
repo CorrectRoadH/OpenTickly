@@ -14,6 +14,7 @@ import {
   quotaWindowHeaderSchemas,
   sharedContractsDocument,
   sharedContractsGeneratedArtifact,
+  webContractsDocument,
   webContractsGeneratedArtifact,
 } from "./index.ts";
 import * as webGeneratedContracts from "./generated/web-contracts.generated.ts";
@@ -44,7 +45,7 @@ describe("shared contracts", () => {
     expect(sharedContractsGeneratedArtifact.headerNames).toContain("X-OpenToggl-Feature-Gate");
   });
 
-  it("publishes generated wave-1 web contract metadata from opentoggl-web openapi", () => {
+  it("publishes generated web contract metadata from opentoggl-web openapi", () => {
     expect(webContractsGeneratedArtifact.source).toBe("openapi/opentoggl-web.openapi.json");
     expect(webContractsGeneratedArtifact.schemaNames).toContain("SessionBootstrap");
     expect(webContractsGeneratedArtifact.schemaNames).toContain("UpdateWorkspaceSettingsRequest");
@@ -57,6 +58,36 @@ describe("shared contracts", () => {
     expect(webGeneratedContracts.webContractsDocument.info.title).toBe("OpenToggl Web API");
     expect("sharedContractsGeneratedArtifact" in webGeneratedContracts).toBe(false);
     expect("sharedContractsDocument" in webGeneratedContracts).toBe(false);
+  });
+
+  it("keeps web schema ownership boundaries by referencing shared contract components", () => {
+    expect(webContractsDocument.components.schemas.CapabilitySnapshot.$ref).toBe(
+      "./opentoggl-shared.openapi.json#/components/schemas/CapabilitySnapshot",
+    );
+    expect(webContractsDocument.components.schemas.QuotaWindow.$ref).toBe(
+      "./opentoggl-shared.openapi.json#/components/schemas/QuotaWindow",
+    );
+  });
+
+  it("preserves SessionBootstrap placeholder semantics from OpenAPI", () => {
+    const sessionBootstrap = webContractsDocument.components.schemas.SessionBootstrap;
+
+    expect(sessionBootstrap.required).toEqual(
+      expect.arrayContaining([
+        "current_organization_id",
+        "current_workspace_id",
+        "organization_subscription",
+        "workspace_subscription",
+        "workspace_capabilities",
+        "workspace_quota",
+      ]),
+    );
+    expect(sessionBootstrap.properties.current_organization_id.nullable).toBe(true);
+    expect(sessionBootstrap.properties.current_workspace_id.nullable).toBe(true);
+    expect(sessionBootstrap.properties.organization_subscription.nullable).toBe(true);
+    expect(sessionBootstrap.properties.workspace_subscription.nullable).toBe(true);
+    expect(sessionBootstrap.properties.workspace_capabilities.nullable).toBe(true);
+    expect(sessionBootstrap.properties.workspace_quota.nullable).toBe(true);
   });
 
   it("exports shared quota and feature-gate header skeletons", () => {
