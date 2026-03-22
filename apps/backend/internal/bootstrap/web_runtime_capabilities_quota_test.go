@@ -4,16 +4,20 @@ import (
 	"net/http"
 	"strconv"
 	"testing"
+
+	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
 func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
+	database := pgtest.Open(t)
+
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
 		Database: DatabaseConfig{
-			PrimaryDSN: "postgres://opentoggl@localhost:5432/opentoggl",
+			PrimaryDSN: database.ConnString(),
 		},
 		Redis: RedisConfig{
 			Address: "redis://127.0.0.1:6379/0",
@@ -22,6 +26,7 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
 	}
+	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
 		"email":    "caps-quota@example.com",

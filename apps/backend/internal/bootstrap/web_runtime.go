@@ -10,47 +10,29 @@ import (
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
-	billinginfra "opentoggl/backend/apps/backend/internal/billing/infra"
+	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
-	identitymemory "opentoggl/backend/apps/backend/internal/identity/infra/memory"
+	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
+	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 )
 
 const sessionCookieName = "opentoggl_session"
 
-func newWebRoutes() (httpapp.RouteRegistrar, error) {
-	runtime, err := newWebRuntime()
+func newWebRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
+	runtime, err := newWebRuntime(pool)
 	if err != nil {
 		return nil, err
 	}
 
-	return func(server *echo.Echo) {
-		server.POST("/web/v1/auth/register", runtime.register)
-		server.POST("/web/v1/auth/login", runtime.login)
-		server.POST("/web/v1/auth/logout", runtime.logout)
-		server.GET("/web/v1/session", runtime.session)
-		server.GET("/web/v1/profile", runtime.profile)
-		server.PATCH("/web/v1/profile", runtime.updateProfile)
-		server.POST("/web/v1/profile/api-token/reset", runtime.resetAPIToken)
-		server.GET("/web/v1/preferences", runtime.preferences)
-		server.PATCH("/web/v1/preferences", runtime.updatePreferences)
-
-		server.GET("/web/v1/organizations/:organization_id/settings", runtime.organizationSettings)
-		server.PATCH("/web/v1/organizations/:organization_id/settings", runtime.updateOrganizationSettings)
-
-		server.GET("/web/v1/workspaces/:workspace_id/settings", runtime.workspaceSettings)
-		server.PATCH("/web/v1/workspaces/:workspace_id/settings", runtime.updateWorkspaceSettings)
-		server.GET("/web/v1/workspaces/:workspace_id/permissions", runtime.workspacePermissions)
-		server.PATCH("/web/v1/workspaces/:workspace_id/permissions", runtime.updateWorkspacePermissions)
-		server.GET("/web/v1/workspaces/:workspace_id/capabilities", runtime.workspaceCapabilities)
-		server.GET("/web/v1/workspaces/:workspace_id/quota", runtime.workspaceQuota)
-	}, nil
+	return httpapp.NewGeneratedWebRouteRegistrar(newBootstrapWebOpenAPIServer(runtime))
 }
 
 type webRuntime struct {
@@ -64,11 +46,10 @@ type webRuntime struct {
 	workspacePreferencesByWS    map[int64]workspacePreferences
 }
 
-func newWebRuntime() (*webRuntime, error) {
-	workspaceOwnership := newWorkspaceOwnership()
+func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 	billingService, err := billingapplication.NewService(
-		billinginfra.NewMemoryAccountRepository(),
-		workspaceOwnership,
+		billingpostgres.NewAccountRepository(pool),
+		billingpostgres.NewWorkspaceOwnershipLookup(pool),
 		[]billingdomain.CapabilityRule{
 			{Key: "reports.profitability", MinimumPlan: billingdomain.PlanEnterprise},
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
@@ -79,21 +60,19 @@ func newWebRuntime() (*webRuntime, error) {
 		return nil, err
 	}
 
-	tenantService, err := tenantapplication.NewService(tenantapplication.NewInMemoryStore(), billingService)
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(pool), billingService)
 	if err != nil {
 		return nil, err
 	}
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
 	identityService := identityapplication.NewService(identityapplication.Config{
-		Users:              identitymemory.NewUserRepository(),
-		Sessions:           identitymemory.NewSessionRepository(),
-		JobRecorder:        identitymemory.NewJobRecorder(),
-		RunningTimerLookup: identitymemory.NewTimerState(),
-		IDs:                identitymemory.NewSequence(),
+		Users:              identitypostgres.NewUserRepository(pool),
+		Sessions:           identitypostgres.NewSessionRepository(pool),
+		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
-	shellProvider := newBillingBackedSessionShell(tenantService, billingService, workspaceOwnership)
+	shellProvider := newBillingBackedSessionShell(tenantService, billingService, newPostgresUserHomeRepository(pool))
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
 	return &webRuntime{
@@ -495,43 +474,12 @@ func clearSessionCookie(ctx echo.Context) {
 	})
 }
 
-type workspaceOwnership struct {
-	mu             sync.RWMutex
-	workspaceToOrg map[int64]int64
-}
-
-func newWorkspaceOwnership() *workspaceOwnership {
-	return &workspaceOwnership{
-		workspaceToOrg: make(map[int64]int64),
-	}
-}
-
-func (ownership *workspaceOwnership) Assign(workspaceID int64, organizationID int64) {
-	ownership.mu.Lock()
-	defer ownership.mu.Unlock()
-	ownership.workspaceToOrg[workspaceID] = organizationID
-}
-
-func (ownership *workspaceOwnership) OrganizationIDForWorkspace(
-	_ context.Context,
-	workspaceID int64,
-) (int64, error) {
-	ownership.mu.RLock()
-	defer ownership.mu.RUnlock()
-	organizationID, ok := ownership.workspaceToOrg[workspaceID]
-	if !ok {
-		return 0, tenantapplication.ErrWorkspaceNotFound
-	}
-	return organizationID, nil
-}
-
 type billingBackedSessionShell struct {
 	tenant    *tenantapplication.Service
 	billing   *billingapplication.Service
-	ownership *workspaceOwnership
+	userHomes userHomeRepository
 
-	mu        sync.RWMutex
-	userHomes map[int64]sessionHome
+	mu sync.Mutex
 }
 
 type sessionHome struct {
@@ -542,13 +490,12 @@ type sessionHome struct {
 func newBillingBackedSessionShell(
 	tenant *tenantapplication.Service,
 	billing *billingapplication.Service,
-	ownership *workspaceOwnership,
+	userHomes userHomeRepository,
 ) *billingBackedSessionShell {
 	return &billingBackedSessionShell{
 		tenant:    tenant,
 		billing:   billing,
-		ownership: ownership,
-		userHomes: make(map[int64]sessionHome),
+		userHomes: userHomes,
 	}
 }
 
@@ -594,16 +541,17 @@ func (provider *billingBackedSessionShell) ensureHome(
 	ctx context.Context,
 	user identityapplication.UserSnapshot,
 ) (sessionHome, error) {
-	provider.mu.RLock()
-	home, ok := provider.userHomes[user.ID]
-	provider.mu.RUnlock()
-	if ok {
+	if home, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
+		return sessionHome{}, err
+	} else if ok {
 		return home, nil
 	}
 
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
-	if existing, ok := provider.userHomes[user.ID]; ok {
+	if existing, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
+		return sessionHome{}, err
+	} else if ok {
 		return existing, nil
 	}
 
@@ -615,12 +563,13 @@ func (provider *billingBackedSessionShell) ensureHome(
 		return sessionHome{}, err
 	}
 
-	home = sessionHome{
+	home := sessionHome{
 		organizationID: int64(created.OrganizationID),
 		workspaceID:    int64(created.WorkspaceID),
 	}
-	provider.userHomes[user.ID] = home
-	provider.ownership.Assign(home.workspaceID, home.organizationID)
+	if err := provider.userHomes.Save(ctx, user.ID, home); err != nil {
+		return sessionHome{}, err
+	}
 	return home, nil
 }
 

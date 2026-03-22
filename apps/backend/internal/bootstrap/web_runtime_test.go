@@ -10,16 +10,19 @@ import (
 	"testing"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
+	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
 func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
+	database := pgtest.Open(t)
+
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
 		Database: DatabaseConfig{
-			PrimaryDSN: "postgres://opentoggl@localhost:5432/opentoggl",
+			PrimaryDSN: database.ConnString(),
 		},
 		Redis: RedisConfig{
 			Address: "redis://127.0.0.1:6379/0",
@@ -28,6 +31,7 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
 	}
+	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
 		"email":    "person@example.com",
@@ -375,6 +379,39 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 	}, "")
 	if login.Code != http.StatusOK {
 		t.Fatalf("expected login status 200, got %d body=%s", login.Code, login.Body.String())
+	}
+}
+
+func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
+	cfg := mustRuntimeConfigFromRepositoryEnv(t)
+
+	firstApp, err := NewApp(cfg)
+	if err != nil {
+		t.Fatalf("first NewApp returned error: %v", err)
+	}
+
+	register := performJSONRequest(t, firstApp, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "persisted@example.com",
+		"fullname": "Persisted Person",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register response to set session cookie")
+	}
+
+	secondApp, err := NewApp(cfg)
+	if err != nil {
+		t.Fatalf("second NewApp returned error: %v", err)
+	}
+
+	session := performJSONRequest(t, secondApp, http.MethodGet, "/web/v1/session", nil, sessionCookie)
+	if session.Code != http.StatusOK {
+		t.Fatalf("expected restarted app session status 200, got %d body=%s", session.Code, session.Body.String())
 	}
 }
 

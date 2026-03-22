@@ -38,7 +38,7 @@ func NewApp(cfg Config) (*App, error) {
 	}
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	routeRegistrar, err := newHTTPRouteRegistrar()
+	routeRegistrar, err := newHTTPRouteRegistrar(platform)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -88,8 +88,8 @@ func validateRequiredRuntimeConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar() (httpapp.RouteRegistrar, error) {
-	webRoutes, err := newWebRoutes()
+func newHTTPRouteRegistrar(platform *platform.Runtime) (httpapp.RouteRegistrar, error) {
+	webRoutes, err := newWebRoutes(platform.Database.Pool())
 	if err != nil {
 		return nil, err
 	}
