@@ -45,31 +45,41 @@ Release artifacts that must ship together:
 
 - `docker/opentoggl.Dockerfile`
 - `docker-compose.yml`
-- `.env.self-hosted.example`
 - `docs/self-hosting/docker-compose.md`
 
 ## Compose Startup and Smoke
 
-1. Create env file: `cp .env.self-hosted.example .env.self-hosted`
-2. Start dependencies: `docker compose --env-file .env.self-hosted up -d postgres redis`
-3. Reconcile schema using `pgschema` against the same PostgreSQL target:
+1. Start dependencies: `docker compose up -d postgres redis`
+2. Reconcile schema using `pgschema` against the same PostgreSQL target:
 
 ```bash
-set -a
-source .env.self-hosted
-set +a
+PGHOST=127.0.0.1 \
+PGPORT=5432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+
+PGHOST=127.0.0.1 \
+PGPORT=5432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
 ```
 
-4. Start runtime: `docker compose --env-file .env.self-hosted up -d opentoggl`
-5. Verify readiness and key-path smoke:
+3. Start runtime: `docker compose up -d --build opentoggl`
+4. Verify readiness and key-path smoke:
 
 ```bash
 curl -fsS http://localhost:8080/healthz
 curl -fsS http://localhost:8080/readyz
 curl -fsSI http://localhost:8080/
 ```
+
+Optional operator overrides can still be provided through host env vars or an operator-managed env file passed with `docker compose --env-file`.
 
 ## Upgrade and Rollback
 

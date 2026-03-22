@@ -4,7 +4,7 @@
 
 - Repository: `opentoggl`
 - Flow: self-hosted compose startup, schema tooling, readiness, and HTTP smoke
-- Env file: `.env.self-hosted` copied from `.env.self-hosted.example`
+- Baseline source: committed defaults in `docker-compose.yml` (no required env template)
 - Local host override for this run only: `OPENTOGGL_POSTGRES_PORT=55432` and `PGPORT=55432` (because host `5432` was already allocated)
 
 ## Commands and Outputs
@@ -14,13 +14,13 @@
 Command:
 
 ```bash
-docker compose --env-file .env.self-hosted up -d postgres redis
+OPENTOGGL_POSTGRES_PORT=55432 docker compose up -d postgres redis
 ```
 
 Follow-up status:
 
 ```bash
-docker compose --env-file .env.self-hosted ps
+docker compose ps
 ```
 
 Observed output (healthy):
@@ -36,9 +36,12 @@ opentoggl-self-hosted-redis-1      redis:7-alpine       "docker-entrypoint.s…"
 Command:
 
 ```bash
-set -a
-source .env.self-hosted
-set +a
+PGHOST=127.0.0.1 \
+PGPORT=55432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema plan --file apps/backend/internal/platform/schema/schema.sql
 ```
 
@@ -51,9 +54,12 @@ No changes detected.
 Command:
 
 ```bash
-set -a
-source .env.self-hosted
-set +a
+PGHOST=127.0.0.1 \
+PGPORT=55432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
 ```
 
@@ -68,7 +74,7 @@ No changes to apply. Database schema is already up to date.
 Command:
 
 ```bash
-docker compose --env-file .env.self-hosted up -d --build opentoggl
+OPENTOGGL_POSTGRES_PORT=55432 docker compose up -d --build opentoggl
 ```
 
 Observed result:
@@ -81,7 +87,7 @@ Container opentoggl-self-hosted-opentoggl-1  Started
 Follow-up status:
 
 ```bash
-docker compose --env-file .env.self-hosted ps
+docker compose ps
 ```
 
 Observed output (all healthy):

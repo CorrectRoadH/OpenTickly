@@ -12,29 +12,26 @@ Each release must provide these synchronized artifacts:
 
 - `docker/opentoggl.Dockerfile` (single runtime image build)
 - `docker-compose.yml` (self-hosted runtime baseline)
-- `.env.self-hosted.example` (required self-hosted env template)
 - this runbook (`docs/self-hosting/docker-compose.md`)
 
 ## Required Environment
 
-1. Create runtime env:
+The committed self-hosted baseline is directly usable from `docker-compose.yml` with no required env template.
 
-```bash
-cp .env.self-hosted.example .env.self-hosted
-```
+Baseline defaults shipped in compose:
 
-2. Required compose/runtime env in `.env.self-hosted`:
+- `OPENTOGGL_IMAGE=opentoggl:local`
+- `OPENTOGGL_PORT=8080`
+- `OPENTOGGL_POSTGRES_DB=opentoggl`
+- `OPENTOGGL_POSTGRES_USER=postgres`
+- `OPENTOGGL_POSTGRES_PASSWORD=postgres`
+- `OPENTOGGL_POSTGRES_PORT=5432`
+- `OPENTOGGL_DATABASE_URL=postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable`
+- `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
 
-- `OPENTOGGL_IMAGE`
-- `OPENTOGGL_PORT`
-- `OPENTOGGL_POSTGRES_DB`
-- `OPENTOGGL_POSTGRES_USER`
-- `OPENTOGGL_POSTGRES_PASSWORD`
-- `OPENTOGGL_POSTGRES_PORT`
-- `OPENTOGGL_DATABASE_URL`
-- `OPENTOGGL_REDIS_URL`
+Operator overrides are optional. Use host env vars or an operator-managed env file (for example `.env.self-hosted`, not shipped as a required artifact).
 
-3. Required `pgschema` env in `.env.self-hosted`:
+For `pgschema`, export these standard PostgreSQL CLI vars against the same database as `OPENTOGGL_DATABASE_URL`:
 
 - `PGHOST`
 - `PGPORT`
@@ -42,8 +39,6 @@ cp .env.self-hosted.example .env.self-hosted
 - `PGUSER`
 - `PGPASSWORD`
 - `PGSSLMODE`
-
-`PG*` values and `OPENTOGGL_DATABASE_URL` must point at the same PostgreSQL instance.
 
 ## Startup, Migration, Init, and Readiness
 
@@ -57,22 +52,34 @@ Canonical order is fixed:
 Commands:
 
 ```bash
-docker compose --env-file .env.self-hosted up -d postgres redis
-docker compose --env-file .env.self-hosted ps
+docker compose up -d postgres redis
+docker compose ps
 ```
 
 ```bash
-set -a
-source .env.self-hosted
-set +a
+PGHOST=127.0.0.1 \
+PGPORT=5432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+
+PGHOST=127.0.0.1 \
+PGPORT=5432 \
+PGDATABASE=opentoggl \
+PGUSER=postgres \
+PGPASSWORD=postgres \
+PGSSLMODE=disable \
 pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
 ```
 
 ```bash
-docker compose --env-file .env.self-hosted up -d --build opentoggl
-docker compose --env-file .env.self-hosted ps
+docker compose up -d --build opentoggl
+docker compose ps
 ```
+
+If `5432` is already in use on your host, set `OPENTOGGL_POSTGRES_PORT` and matching `PGPORT` explicitly for that run.
 
 Readiness semantics:
 
@@ -98,19 +105,19 @@ Minimum smoke pass requires all three commands to succeed.
 Stop/cleanup:
 
 ```bash
-docker compose --env-file .env.self-hosted down
+docker compose down
 ```
 
 To also remove PostgreSQL data (destructive):
 
 ```bash
-docker compose --env-file .env.self-hosted down -v
+docker compose down -v
 ```
 
 ## Upgrade
 
 1. Pull or build the target `OPENTOGGL_IMAGE`.
-2. Update `.env.self-hosted` to the target image tag/config.
+2. Update runtime config with env overrides if needed (for example `OPENTOGGL_IMAGE`).
 3. Run `pgschema plan` and review output.
 4. Run `pgschema apply --auto-approve`.
 5. Restart `opentoggl` with compose.

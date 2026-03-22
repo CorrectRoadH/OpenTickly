@@ -36,7 +36,7 @@ This plan exists because self-hosted delivery is a formal product outcome, not a
 - Single Go application image serves both Web UI and API
 - Compose path is formal for self-hosted packaging and smoke verification
 - Startup, migration/init, health, readiness, and minimal key-path smoke are documented and repeatable
-- Release output includes image, compose file, env examples, and release instructions
+- Release output includes image, compose file with default baseline values, and release instructions
 
 ## Stage 2 Delivery Snapshot
 
@@ -44,7 +44,6 @@ Formal release output for this stage is:
 
 - image build spec: `docker/opentoggl.Dockerfile`
 - runtime baseline: `docker-compose.yml`
-- self-hosted env template: `.env.self-hosted.example`
 - operator runbook: `docs/self-hosting/docker-compose.md`
 - verification evidence: `docs/testing/evidence/self-hosted/`
 - verification evidence sample: `docs/testing/evidence/self-hosted/2026-03-22-compose-smoke.md`

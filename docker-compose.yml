@@ -4,9 +4,9 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${OPENTOGGL_POSTGRES_DB:?set OPENTOGGL_POSTGRES_DB}
-      POSTGRES_USER: ${OPENTOGGL_POSTGRES_USER:?set OPENTOGGL_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:?set OPENTOGGL_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${OPENTOGGL_POSTGRES_DB:-opentoggl}
+      POSTGRES_USER: ${OPENTOGGL_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:-postgres}
     ports:
       - "${OPENTOGGL_POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -15,7 +15,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${OPENTOGGL_POSTGRES_USER} -d ${OPENTOGGL_POSTGRES_DB}",
+          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB",
         ]
       interval: 5s
       timeout: 3s
@@ -40,8 +40,8 @@ services:
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: ${OPENTOGGL_PORT:-8080}
-      DATABASE_URL: ${OPENTOGGL_DATABASE_URL:?set OPENTOGGL_DATABASE_URL}
-      REDIS_URL: ${OPENTOGGL_REDIS_URL:?set OPENTOGGL_REDIS_URL}
+      DATABASE_URL: ${OPENTOGGL_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable}
+      REDIS_URL: ${OPENTOGGL_REDIS_URL:-redis://redis:6379/0}
       OPENTOGGL_FILESTORE_NAMESPACE: ${OPENTOGGL_FILESTORE_NAMESPACE:-opentoggl}
       OPENTOGGL_JOBS_QUEUE_NAME: ${OPENTOGGL_JOBS_QUEUE_NAME:-default}
     depends_on:
