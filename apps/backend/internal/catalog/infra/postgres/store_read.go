@@ -41,13 +41,36 @@ func (store *Store) ListClients(
 
 	clients := make([]catalogapplication.ClientView, 0)
 	for rows.Next() {
-		var client catalogapplication.ClientView
-		if err := rows.Scan(&client.ID, &client.WorkspaceID, &client.Name, &client.Archived, &client.CreatedBy, &client.CreatedAt); err != nil {
+		client, err := scanClient(rows)
+		if err != nil {
 			return nil, writeCatalogError("scan catalog client", err)
 		}
 		clients = append(clients, client)
 	}
 	return clients, rows.Err()
+}
+
+func (store *Store) GetClient(
+	ctx context.Context,
+	workspaceID int64,
+	clientID int64,
+) (catalogapplication.ClientView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select id, workspace_id, name, archived, created_by, created_at
+		from catalog_clients
+		where workspace_id = $1 and id = $2`,
+		workspaceID,
+		clientID,
+	)
+	client, err := scanClient(row)
+	if err != nil {
+		if notFound(err) {
+			return catalogapplication.ClientView{}, false, nil
+		}
+		return catalogapplication.ClientView{}, false, writeCatalogError("get catalog client", err)
+	}
+	return client, true, nil
 }
 
 func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalogapplication.GroupView, error) {
@@ -102,13 +125,36 @@ func (store *Store) ListTags(
 
 	tags := make([]catalogapplication.TagView, 0)
 	for rows.Next() {
-		var tag catalogapplication.TagView
-		if err := rows.Scan(&tag.ID, &tag.WorkspaceID, &tag.Name, &tag.DeletedAt, &tag.CreatedBy, &tag.CreatedAt); err != nil {
+		tag, err := scanTag(rows)
+		if err != nil {
 			return nil, writeCatalogError("scan catalog tag", err)
 		}
 		tags = append(tags, tag)
 	}
 	return tags, rows.Err()
+}
+
+func (store *Store) GetTag(
+	ctx context.Context,
+	workspaceID int64,
+	tagID int64,
+) (catalogapplication.TagView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select id, workspace_id, name, deleted_at, created_by, created_at
+		from catalog_tags
+		where workspace_id = $1 and id = $2`,
+		workspaceID,
+		tagID,
+	)
+	tag, err := scanTag(row)
+	if err != nil {
+		if notFound(err) {
+			return catalogapplication.TagView{}, false, nil
+		}
+		return catalogapplication.TagView{}, false, writeCatalogError("get catalog tag", err)
+	}
+	return tag, true, nil
 }
 
 func (store *Store) ListProjectUsers(
@@ -303,4 +349,28 @@ func (store *Store) ListTasks(
 		SortField:  filter.SortField,
 		SortOrder:  filter.SortOrder,
 	}, nil
+}
+
+func (store *Store) GetTask(
+	ctx context.Context,
+	workspaceID int64,
+	taskID int64,
+) (catalogapplication.TaskView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+		from catalog_tasks t
+		left join catalog_projects p on p.id = t.project_id
+		where t.workspace_id = $1 and t.id = $2`,
+		workspaceID,
+		taskID,
+	)
+	task, err := scanTask(row)
+	if err != nil {
+		if notFound(err) {
+			return catalogapplication.TaskView{}, false, nil
+		}
+		return catalogapplication.TaskView{}, false, writeCatalogError("get catalog task", err)
+	}
+	return task, true, nil
 }

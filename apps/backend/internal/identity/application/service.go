@@ -47,9 +47,9 @@ type RunningTimerLookup interface {
 }
 
 type Sequence interface {
-	NextUserID() int64
-	NextSessionID() string
-	NextAPIToken() string
+	NextUserID() (int64, error)
+	NextSessionID() (string, error)
+	NextAPIToken() (string, error)
 }
 
 type RegisterInput struct {
@@ -112,12 +112,21 @@ func NewService(cfg Config) *Service {
 }
 
 func (service *Service) Register(ctx context.Context, input RegisterInput) (AuthenticatedSession, error) {
+	userID, err := service.ids.NextUserID()
+	if err != nil {
+		return AuthenticatedSession{}, err
+	}
+	apiToken, err := service.ids.NextAPIToken()
+	if err != nil {
+		return AuthenticatedSession{}, err
+	}
+
 	user, err := domain.RegisterUser(domain.RegisterParams{
-		ID:       service.ids.NextUserID(),
+		ID:       userID,
 		Email:    input.Email,
 		FullName: input.FullName,
 		Password: input.Password,
-		APIToken: service.ids.NextAPIToken(),
+		APIToken: apiToken,
 	})
 	if err != nil {
 		return AuthenticatedSession{}, err
@@ -228,7 +237,10 @@ func (service *Service) ResetAPIToken(ctx context.Context, userID int64) (string
 		return "", err
 	}
 
-	token := service.ids.NextAPIToken()
+	token, err := service.ids.NextAPIToken()
+	if err != nil {
+		return "", err
+	}
 	if err := user.RotateAPIToken(token); err != nil {
 		return "", err
 	}
@@ -294,7 +306,10 @@ func (service *Service) AuthorizeBusinessWrite(ctx context.Context, userID int64
 }
 
 func (service *Service) issueSession(ctx context.Context, user *domain.User) (AuthenticatedSession, error) {
-	sessionID := service.ids.NextSessionID()
+	sessionID, err := service.ids.NextSessionID()
+	if err != nil {
+		return AuthenticatedSession{}, err
+	}
 	if err := service.sessions.Put(ctx, Session{
 		ID:     sessionID,
 		UserID: user.ID(),

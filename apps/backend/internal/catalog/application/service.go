@@ -11,7 +11,10 @@ import (
 
 var (
 	ErrStoreRequired    = errors.New("catalog store is required")
+	ErrClientNotFound   = errors.New("catalog client not found")
 	ErrProjectNotFound  = errors.New("catalog project not found")
+	ErrTagNotFound      = errors.New("catalog tag not found")
+	ErrTaskNotFound     = errors.New("catalog task not found")
 	ErrInvalidWorkspace = errors.New("catalog workspace id must be positive")
 )
 
@@ -42,6 +45,36 @@ func (service *Service) CreateClient(ctx context.Context, command CreateClientCo
 	}
 	command.Name = name
 	return service.store.CreateClient(ctx, command)
+}
+
+func (service *Service) GetClient(ctx context.Context, workspaceID int64, clientID int64) (ClientView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return ClientView{}, err
+	}
+	return service.loadClient(ctx, workspaceID, clientID)
+}
+
+func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCommand) (ClientView, error) {
+	current, ok, err := service.store.GetClient(ctx, command.WorkspaceID, command.ClientID)
+	if err != nil {
+		return ClientView{}, err
+	}
+	if !ok {
+		return ClientView{}, ErrClientNotFound
+	}
+
+	if command.Name != nil {
+		name, err := domain.NormalizeCatalogName(*command.Name)
+		if err != nil {
+			return ClientView{}, err
+		}
+		current.Name = name
+	}
+
+	if err := service.store.UpdateClient(ctx, current); err != nil {
+		return ClientView{}, err
+	}
+	return service.loadClient(ctx, command.WorkspaceID, command.ClientID)
 }
 
 func (service *Service) ListGroups(ctx context.Context, workspaceID int64) ([]GroupView, error) {
@@ -79,6 +112,48 @@ func (service *Service) CreateTag(ctx context.Context, command CreateTagCommand)
 	return service.store.CreateTag(ctx, command)
 }
 
+func (service *Service) GetTag(ctx context.Context, workspaceID int64, tagID int64) (TagView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return TagView{}, err
+	}
+	return service.loadTag(ctx, workspaceID, tagID)
+}
+
+func (service *Service) UpdateTag(ctx context.Context, command UpdateTagCommand) (TagView, error) {
+	current, ok, err := service.store.GetTag(ctx, command.WorkspaceID, command.TagID)
+	if err != nil {
+		return TagView{}, err
+	}
+	if !ok {
+		return TagView{}, ErrTagNotFound
+	}
+
+	if command.Name != nil {
+		name, err := domain.NormalizeCatalogName(*command.Name)
+		if err != nil {
+			return TagView{}, err
+		}
+		current.Name = name
+	}
+
+	if err := service.store.UpdateTag(ctx, current); err != nil {
+		return TagView{}, err
+	}
+	return service.loadTag(ctx, command.WorkspaceID, command.TagID)
+}
+
+func (service *Service) DeleteTag(ctx context.Context, workspaceID int64, tagID int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if _, ok, err := service.store.GetTag(ctx, workspaceID, tagID); err != nil {
+		return err
+	} else if !ok {
+		return ErrTagNotFound
+	}
+	return service.store.DeleteTag(ctx, workspaceID, tagID)
+}
+
 func (service *Service) ListProjectUsers(
 	ctx context.Context,
 	workspaceID int64,
@@ -113,6 +188,13 @@ func (service *Service) CreateProject(ctx context.Context, command CreateProject
 		command.Active = boolPtr(true)
 	}
 	return service.store.CreateProject(ctx, command)
+}
+
+func (service *Service) GetProject(ctx context.Context, workspaceID int64, projectID int64) (ProjectView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return ProjectView{}, err
+	}
+	return service.loadProject(ctx, workspaceID, projectID)
 }
 
 func (service *Service) UpdateProject(ctx context.Context, command UpdateProjectCommand) (ProjectView, error) {
@@ -199,6 +281,56 @@ func (service *Service) CreateTask(ctx context.Context, command CreateTaskComman
 	return service.store.CreateTask(ctx, command)
 }
 
+func (service *Service) GetTask(ctx context.Context, workspaceID int64, projectID int64, taskID int64) (TaskView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return TaskView{}, err
+	}
+	if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+		return TaskView{}, err
+	} else if !ok {
+		return TaskView{}, ErrProjectNotFound
+	}
+
+	task, ok, err := service.store.GetTask(ctx, workspaceID, taskID)
+	if err != nil {
+		return TaskView{}, err
+	}
+	if !ok || task.ProjectID == nil || *task.ProjectID != projectID {
+		return TaskView{}, ErrTaskNotFound
+	}
+	return task, nil
+}
+
+func (service *Service) UpdateTask(ctx context.Context, command UpdateTaskCommand) (TaskView, error) {
+	current, err := service.GetTask(ctx, command.WorkspaceID, command.ProjectID, command.TaskID)
+	if err != nil {
+		return TaskView{}, err
+	}
+
+	if command.Name != nil {
+		name, err := domain.NormalizeCatalogName(*command.Name)
+		if err != nil {
+			return TaskView{}, err
+		}
+		current.Name = name
+	}
+	if command.Active != nil {
+		current.Active = *command.Active
+	}
+
+	if err := service.store.UpdateTask(ctx, current); err != nil {
+		return TaskView{}, err
+	}
+	return service.GetTask(ctx, command.WorkspaceID, command.ProjectID, command.TaskID)
+}
+
+func (service *Service) DeleteTask(ctx context.Context, workspaceID int64, projectID int64, taskID int64) error {
+	if _, err := service.GetTask(ctx, workspaceID, projectID, taskID); err != nil {
+		return err
+	}
+	return service.store.DeleteTask(ctx, workspaceID, taskID)
+}
+
 func requireWorkspaceID(workspaceID int64) error {
 	if workspaceID <= 0 {
 		return fmt.Errorf("%w: %d", ErrInvalidWorkspace, workspaceID)
@@ -266,4 +398,26 @@ func (service *Service) loadProject(ctx context.Context, workspaceID int64, proj
 		return ProjectView{}, ErrProjectNotFound
 	}
 	return project, nil
+}
+
+func (service *Service) loadClient(ctx context.Context, workspaceID int64, clientID int64) (ClientView, error) {
+	client, ok, err := service.store.GetClient(ctx, workspaceID, clientID)
+	if err != nil {
+		return ClientView{}, err
+	}
+	if !ok {
+		return ClientView{}, ErrClientNotFound
+	}
+	return client, nil
+}
+
+func (service *Service) loadTag(ctx context.Context, workspaceID int64, tagID int64) (TagView, error) {
+	tag, ok, err := service.store.GetTag(ctx, workspaceID, tagID)
+	if err != nil {
+		return TagView{}, err
+	}
+	if !ok {
+		return TagView{}, ErrTagNotFound
+	}
+	return tag, nil
 }

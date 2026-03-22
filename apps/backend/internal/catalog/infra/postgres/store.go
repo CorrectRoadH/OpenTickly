@@ -76,6 +76,32 @@ func scanProject(scanner scanner) (catalogapplication.ProjectView, error) {
 	return project, err
 }
 
+func scanClient(scanner scanner) (catalogapplication.ClientView, error) {
+	var client catalogapplication.ClientView
+	err := scanner.Scan(
+		&client.ID,
+		&client.WorkspaceID,
+		&client.Name,
+		&client.Archived,
+		&client.CreatedBy,
+		&client.CreatedAt,
+	)
+	return client, err
+}
+
+func scanTag(scanner scanner) (catalogapplication.TagView, error) {
+	var tag catalogapplication.TagView
+	err := scanner.Scan(
+		&tag.ID,
+		&tag.WorkspaceID,
+		&tag.Name,
+		&tag.DeletedAt,
+		&tag.CreatedBy,
+		&tag.CreatedAt,
+	)
+	return tag, err
+}
+
 func scanTask(scanner scanner) (catalogapplication.TaskView, error) {
 	var task catalogapplication.TaskView
 	err := scanner.Scan(

@@ -50,30 +50,7 @@ func newPublicTrackRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 	return func(server *echo.Echo) {
 		group := server.Group("/api/v9")
 		group.Use(validator)
-
-		group.GET("/me", runtime.getPublicTrackMe)
-		group.PUT("/me", runtime.putPublicTrackMe)
-		group.GET("/me/preferences", runtime.getPublicTrackPreferences)
-		group.POST("/me/preferences", runtime.postPublicTrackPreferences)
-		group.POST("/me/reset_token", runtime.postPublicTrackResetToken)
-		group.GET("/organizations/:organization_id", runtime.getPublicTrackOrganization)
-		group.PUT("/organizations/:organization_id", runtime.putPublicTrackOrganization)
-
-		group.GET("/workspaces/:workspace_id/clients", runtime.getPublicTrackClients)
-		group.POST("/workspaces/:workspace_id/clients", runtime.postPublicTrackClients)
-		group.GET("/workspaces/:workspace_id/groups", runtime.getPublicTrackGroups)
-		group.POST("/workspaces/:workspace_id/groups", runtime.postPublicTrackGroups)
-		group.GET("/workspaces/:workspace_id/tags", runtime.getPublicTrackTags)
-		group.POST("/workspaces/:workspace_id/tags", runtime.postPublicTrackTags)
-		group.GET("/workspaces/:workspace_id/project_users", runtime.getPublicTrackProjectUsers)
-		group.GET("/workspaces/:workspace_id/projects", runtime.getPublicTrackProjects)
-		group.POST("/workspaces/:workspace_id/projects", runtime.postPublicTrackProjects)
-		group.PUT("/workspaces/:workspace_id/projects/:project_id", runtime.putPublicTrackProject)
-		group.POST("/workspaces/:workspace_id/projects/:project_id/pin", runtime.postPublicTrackPinnedProject)
-		group.GET("/workspaces/:workspace_id/projects/:project_id/tasks", runtime.getPublicTrackProjectTasks)
-		group.POST("/workspaces/:workspace_id/projects/:project_id/tasks", runtime.postPublicTrackProjectTask)
-		group.GET("/workspaces/:workspace_id/tasks", runtime.getPublicTrackTasks)
-		group.GET("/workspaces/:workspace_id/tasks/basic", runtime.getPublicTrackTasksBasic)
+		publictrackapi.RegisterHandlers(group, newBootstrapPublicTrackOpenAPIServer(runtime))
 	}, nil
 }
 

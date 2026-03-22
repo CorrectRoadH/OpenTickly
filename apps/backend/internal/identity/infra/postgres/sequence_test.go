@@ -10,8 +10,14 @@ func TestSequenceNextUserIDUsesCurrentIdentityUsersSerialSequence(t *testing.T) 
 	database := pgtest.Open(t)
 	sequence := NewSequence(database.Pool)
 
-	first := sequence.NextUserID()
-	second := sequence.NextUserID()
+	first, err := sequence.NextUserID()
+	if err != nil {
+		t.Fatalf("first NextUserID: %v", err)
+	}
+	second, err := sequence.NextUserID()
+	if err != nil {
+		t.Fatalf("second NextUserID: %v", err)
+	}
 
 	if first != 1 {
 		t.Fatalf("expected first user id 1, got %d", first)

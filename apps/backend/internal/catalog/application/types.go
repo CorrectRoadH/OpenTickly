@@ -175,6 +175,12 @@ type CreateTaskCommand struct {
 	Active      *bool
 }
 
+type UpdateClientCommand struct {
+	WorkspaceID int64
+	ClientID    int64
+	Name        *string
+}
+
 type UpdateProjectCommand struct {
 	WorkspaceID int64
 	ProjectID   int64
@@ -191,13 +197,32 @@ type SetProjectPinnedCommand struct {
 	Pinned      bool
 }
 
+type UpdateTagCommand struct {
+	WorkspaceID int64
+	TagID       int64
+	Name        *string
+}
+
+type UpdateTaskCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	TaskID      int64
+	Name        *string
+	Active      *bool
+}
+
 type Store interface {
 	ListClients(context.Context, int64, ListClientsFilter) ([]ClientView, error)
+	GetClient(context.Context, int64, int64) (ClientView, bool, error)
 	CreateClient(context.Context, CreateClientCommand) (ClientView, error)
+	UpdateClient(context.Context, ClientView) error
 	ListGroups(context.Context, int64) ([]GroupView, error)
 	CreateGroup(context.Context, CreateGroupCommand) (GroupView, error)
 	ListTags(context.Context, int64, ListTagsFilter) ([]TagView, error)
+	GetTag(context.Context, int64, int64) (TagView, bool, error)
 	CreateTag(context.Context, CreateTagCommand) (TagView, error)
+	UpdateTag(context.Context, TagView) error
+	DeleteTag(context.Context, int64, int64) error
 	ListProjectUsers(context.Context, int64, ListProjectUsersFilter) ([]ProjectUserView, error)
 	ListProjects(context.Context, int64, ListProjectsFilter) ([]ProjectView, error)
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
@@ -205,5 +230,8 @@ type Store interface {
 	UpdateProject(context.Context, ProjectView) error
 	SetProjectPinned(context.Context, int64, int64, bool) error
 	ListTasks(context.Context, int64, ListTasksFilter) (TaskPage, error)
+	GetTask(context.Context, int64, int64) (TaskView, bool, error)
 	CreateTask(context.Context, CreateTaskCommand) (TaskView, error)
+	UpdateTask(context.Context, TaskView) error
+	DeleteTask(context.Context, int64, int64) error
 }
