@@ -131,7 +131,9 @@
             "$ref": "#/definitions/models.Avatar"
           },
           "bodySchemaRef": "#/definitions/models.Avatar",
-          "unsupportedKeywords": ["$.properties.avatar_urls.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.properties.avatar_urls.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -205,7 +207,9 @@
             "$ref": "#/definitions/models.Avatar"
           },
           "bodySchemaRef": "#/definitions/models.Avatar",
-          "unsupportedKeywords": ["$.properties.avatar_urls.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.properties.avatar_urls.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -2721,7 +2725,9 @@
             "$ref": "#/definitions/github_com_toggl_toggl_api_internal_models.TogglUser"
           },
           "bodySchemaRef": "#/definitions/github_com_toggl_toggl_api_internal_models.TogglUser",
-          "unsupportedKeywords": ["$.properties.options.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.options.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -2851,7 +2857,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "500": {
@@ -3685,7 +3693,9 @@
             "$ref": "#/definitions/user.Flags"
           },
           "bodySchemaRef": "#/definitions/user.Flags",
-          "unsupportedKeywords": ["$.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.additionalProperties"
+          ],
           "headers": {}
         },
         "403": {
@@ -3720,7 +3730,9 @@
             "$ref": "#/definitions/user.Flags"
           },
           "bodySchemaRef": "#/definitions/user.Flags",
-          "unsupportedKeywords": ["$.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -4842,7 +4854,9 @@
             "$ref": "#/definitions/models.AllPreferences"
           },
           "bodySchemaRef": "#/definitions/models.AllPreferences",
-          "unsupportedKeywords": ["$.properties.decimal_separator.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.decimal_separator.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -5686,7 +5700,9 @@
             "$ref": "#/definitions/models.AllPreferences"
           },
           "bodySchemaRef": "#/definitions/models.AllPreferences",
-          "unsupportedKeywords": ["$.properties.decimal_separator.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.decimal_separator.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -6533,7 +6549,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -6684,7 +6702,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -9477,7 +9497,12 @@
                 },
                 "entity": {
                   "type": "string",
-                  "enum": ["organization", "workspace", "project", "group"]
+                  "enum": [
+                    "organization",
+                    "workspace",
+                    "project",
+                    "group"
+                  ]
                 },
                 "name": {
                   "type": "string"
@@ -9498,7 +9523,12 @@
                       },
                       "entity": {
                         "type": "string",
-                        "enum": ["organization", "workspace", "project", "group"]
+                        "enum": [
+                          "organization",
+                          "workspace",
+                          "project",
+                          "group"
+                        ]
                       },
                       "name": {
                         "type": "string"
@@ -9518,7 +9548,12 @@
                 },
                 "type": {
                   "type": "string",
-                  "enum": ["owner", "admin", "manager", "guest"]
+                  "enum": [
+                    "owner",
+                    "admin",
+                    "manager",
+                    "guest"
+                  ]
                 }
               },
               "$ref": "#/definitions/types.Role"
@@ -10689,7 +10724,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.additionalProperties"
+          ],
           "headers": {}
         },
         "500": {
@@ -11808,7 +11845,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.additionalProperties"
+          ],
           "headers": {}
         },
         "403": {
@@ -13757,7 +13796,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -13859,7 +13900,9 @@
             "$ref": "#/definitions/models.Client"
           },
           "bodySchemaRef": "#/definitions/models.Client",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -14021,7 +14064,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -14146,7 +14191,9 @@
             "$ref": "#/definitions/models.Client"
           },
           "bodySchemaRef": "#/definitions/models.Client",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -14248,7 +14295,9 @@
             "$ref": "#/definitions/models.Client"
           },
           "bodySchemaRef": "#/definitions/models.Client",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -14441,7 +14490,9 @@
             "$ref": "#/definitions/models.Client"
           },
           "bodySchemaRef": "#/definitions/models.Client",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -16648,7 +16699,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -16790,7 +16843,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -18701,7 +18756,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.items.additionalProperties"
+          ],
           "headers": {}
         },
         "403": {
@@ -18773,7 +18830,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.items.additionalProperties"
+          ],
           "headers": {}
         },
         "403": {
@@ -19661,7 +19720,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -19817,7 +19878,9 @@
             "$ref": "#/definitions/models.Task"
           },
           "bodySchemaRef": "#/definitions/models.Task",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -20038,7 +20101,9 @@
             "$ref": "#/definitions/models.Task"
           },
           "bodySchemaRef": "#/definitions/models.Task",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -20194,7 +20259,9 @@
             "$ref": "#/definitions/models.Task"
           },
           "bodySchemaRef": "#/definitions/models.Task",
-          "unsupportedKeywords": ["$.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -20383,8 +20450,14 @@
                 },
                 "type": {
                   "type": "string",
-                  "enum": ["billable_rates", "labor_costs"],
-                  "x-enum-varnames": ["RateTypeBillable", "RateTypeLaborCost"],
+                  "enum": [
+                    "billable_rates",
+                    "labor_costs"
+                  ],
+                  "x-enum-varnames": [
+                    "RateTypeBillable",
+                    "RateTypeLaborCost"
+                  ],
                   "$ref": "#/definitions/models.RateType"
                 },
                 "updated_at": {
@@ -21836,7 +21909,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -21922,7 +21997,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -22057,7 +22134,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {
@@ -22294,7 +22373,9 @@
             "$ref": "#/definitions/task.Response"
           },
           "bodySchemaRef": "#/definitions/task.Response",
-          "unsupportedKeywords": ["$.properties.data.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.data.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -22466,7 +22547,9 @@
             "$ref": "#/definitions/task.Response"
           },
           "bodySchemaRef": "#/definitions/task.Response",
-          "unsupportedKeywords": ["$.properties.data.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.properties.data.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "403": {
@@ -22506,7 +22589,9 @@
             "$ref": "#/definitions/tasks.responseBody"
           },
           "bodySchemaRef": "#/definitions/tasks.responseBody",
-          "unsupportedKeywords": ["$.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -23608,7 +23693,15 @@
                     },
                     "reminder_day": {
                       "type": "integer",
-                      "enum": [0, 1, 2, 3, 4, 5, 6],
+                      "enum": [
+                        0,
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6
+                      ],
                       "x-enum-varnames": [
                         "Sunday",
                         "Monday",
@@ -23778,7 +23871,15 @@
                 },
                 "reminder_day": {
                   "type": "integer",
-                  "enum": [0, 1, 2, 3, 4, 5, 6],
+                  "enum": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6
+                  ],
                   "x-enum-varnames": [
                     "Sunday",
                     "Monday",
@@ -23807,7 +23908,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.approvers_layers.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.items.properties.approvers_layers.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -23941,7 +24044,15 @@
               },
               "reminder_day": {
                 "type": "integer",
-                "enum": [0, 1, 2, 3, 4, 5, 6],
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
                 "x-enum-varnames": [
                   "Sunday",
                   "Monday",
@@ -23969,7 +24080,9 @@
             "$ref": "#/definitions/timesheetsetups.APITimesheetSetup"
           },
           "bodySchemaRef": "#/definitions/timesheetsetups.APITimesheetSetup",
-          "unsupportedKeywords": ["$.properties.approvers_layers.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.properties.approvers_layers.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -24185,7 +24298,15 @@
                       },
                       "reminder_day": {
                         "type": "integer",
-                        "enum": [0, 1, 2, 3, 4, 5, 6],
+                        "enum": [
+                          0,
+                          1,
+                          2,
+                          3,
+                          4,
+                          5,
+                          6
+                        ],
                         "x-enum-varnames": [
                           "Sunday",
                           "Monday",
@@ -24432,7 +24553,15 @@
               },
               "reminder_day": {
                 "type": "integer",
-                "enum": [0, 1, 2, 3, 4, 5, 6],
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
                 "x-enum-varnames": [
                   "Sunday",
                   "Monday",
@@ -24511,7 +24640,9 @@
             "$ref": "#/definitions/timesheets.APITimesheet"
           },
           "bodySchemaRef": "#/definitions/timesheets.APITimesheet",
-          "unsupportedKeywords": ["$.properties.approvers_layers.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.properties.approvers_layers.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -24730,7 +24861,15 @@
               },
               "reminder_day": {
                 "type": "integer",
-                "enum": [0, 1, 2, 3, 4, 5, 6],
+                "enum": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
                 "x-enum-varnames": [
                   "Sunday",
                   "Monday",
@@ -24809,7 +24948,9 @@
             "$ref": "#/definitions/timesheets.APITimesheet"
           },
           "bodySchemaRef": "#/definitions/timesheets.APITimesheet",
-          "unsupportedKeywords": ["$.properties.approvers_layers.additionalProperties"],
+          "unsupportedKeywords": [
+            "$.properties.approvers_layers.additionalProperties"
+          ],
           "headers": {}
         },
         "400": {
@@ -28872,7 +29013,9 @@
             }
           },
           "bodySchemaRef": null,
-          "unsupportedKeywords": ["$.items.properties.integration_provider.allOf"],
+          "unsupportedKeywords": [
+            "$.items.properties.integration_provider.allOf"
+          ],
           "headers": {}
         },
         "400": {

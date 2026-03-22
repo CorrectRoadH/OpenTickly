@@ -591,6 +591,52 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/rate-cost": {
+      "patch": {
+        "summary": "Update workspace member rate and cost settings",
+        "operationId": "update-workspace-member-rate-cost",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "member_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceMemberRateCostRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/members/invitations": {
       "post": {
         "summary": "Invite a workspace member",
@@ -1428,9 +1474,51 @@
           },
           "pinned": {
             "type": "boolean"
+          },
+          "client_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "template": {
+            "type": "boolean"
+          },
+          "actual_seconds": {
+            "type": "integer"
+          },
+          "tracked_seconds_current_period": {
+            "type": "integer"
+          },
+          "tracked_seconds_previous_period": {
+            "type": "integer"
+          },
+          "recurring_period": {
+            "type": "string",
+            "nullable": true
+          },
+          "recurring_period_start": {
+            "type": "string",
+            "nullable": true
+          },
+          "recurring_period_end": {
+            "type": "string",
+            "nullable": true
           }
         },
-        "required": ["id", "name", "workspace_id", "active", "pinned"]
+        "required": [
+          "id",
+          "name",
+          "workspace_id",
+          "active",
+          "pinned",
+          "client_name",
+          "template",
+          "actual_seconds",
+          "tracked_seconds_current_period",
+          "tracked_seconds_previous_period",
+          "recurring_period",
+          "recurring_period_start",
+          "recurring_period_end"
+        ]
       },
       "RegisterRequest": {
         "type": "object",
@@ -1972,9 +2060,17 @@
           },
           "status": {
             "type": "string"
+          },
+          "hourly_rate": {
+            "type": "number",
+            "nullable": true
+          },
+          "labor_cost": {
+            "type": "number",
+            "nullable": true
           }
         },
-        "required": ["id", "workspace_id", "email", "name", "role", "status"]
+        "required": ["id", "workspace_id", "email", "name", "role", "status", "hourly_rate", "labor_cost"]
       },
       "WorkspaceMemberInvitationRequest": {
         "type": "object",
@@ -1989,6 +2085,20 @@
           }
         },
         "required": ["email"]
+      },
+      "UpdateWorkspaceMemberRateCostRequest": {
+        "type": "object",
+        "properties": {
+          "hourly_rate": {
+            "type": "number",
+            "nullable": true
+          },
+          "labor_cost": {
+            "type": "number",
+            "nullable": true
+          }
+        },
+        "required": ["hourly_rate", "labor_cost"]
       },
       "WorkspaceMembersEnvelope": {
         "type": "object",

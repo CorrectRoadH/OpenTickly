@@ -44,7 +44,8 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
 - First contracts, backend-core, Web-pages, and runtime-endpoints slice exists
 - Formal completion is blocked by readiness work and remaining project-page/product-surface gaps
 - Workspace members and invite-status joined surfaces now cover the implemented invite/join/disable/restore/remove lifecycle closure on the existing formal Web surface, with focused backend and page-flow coverage
-- Project, client, tag, group, and permission-configuration pages all have formal page-flow coverage on the current Web surface, but they remain partial relative to full PRD exit rules because E2E, broader contract depth, and several downstream effects are still open
+- Project, client, tag, and group pages all have formal page-flow coverage on the current Web surface, but they remain partial relative to full PRD exit rules because E2E, broader contract depth, and several downstream effects are still open
+- Permission-configuration now has formal page-flow coverage plus focused backend route-integration and direct real-runtime save/reload evidence, but it remains partial until transport-contract and finer-grained permission-rule coverage land
 
 ## Known Gaps
 
@@ -88,5 +89,7 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
   - `vp run website#test:unit -- --run src/pages/tags/__tests__/tags-page-flow.test.tsx`
   - `vp run website#test:unit -- --run src/pages/groups/__tests__/groups-page-flow.test.tsx`
   - `vp run website#test:unit -- --run src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx`
+  - `go test ./apps/backend/internal/http -run TestWorkspacePermissionsRoutesPersistToWorkspaceSettingsAndSession`
+  - `vp run website#test:e2e -- e2e/permission-config.real-runtime.spec.ts`
 - Existing backend/domain and generated-route tests also provide partial non-page evidence for implemented slices:
   - `go test ./apps/backend/internal/catalog/domain ./apps/backend/internal/http`

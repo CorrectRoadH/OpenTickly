@@ -41,6 +41,10 @@ describe("opentoggl custom OpenAPI sources", () => {
   const wave2ManagedWebPaths = [
     "/web/v1/workspaces/{workspace_id}/permissions",
     "/web/v1/workspaces/{workspace_id}/members",
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/disable",
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/restore",
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}",
+    "/web/v1/workspaces/{workspace_id}/members/{member_id}/rate-cost",
     "/web/v1/workspaces/{workspace_id}/members/invitations",
     "/web/v1/projects",
     "/web/v1/projects/{project_id}",
@@ -78,6 +82,10 @@ describe("opentoggl custom OpenAPI sources", () => {
     "GET /web/v1/workspaces/{workspace_id}/permissions",
     "PATCH /web/v1/workspaces/{workspace_id}/permissions",
     "GET /web/v1/workspaces/{workspace_id}/members",
+    "POST /web/v1/workspaces/{workspace_id}/members/{member_id}/disable",
+    "POST /web/v1/workspaces/{workspace_id}/members/{member_id}/restore",
+    "DELETE /web/v1/workspaces/{workspace_id}/members/{member_id}",
+    "PATCH /web/v1/workspaces/{workspace_id}/members/{member_id}/rate-cost",
     "POST /web/v1/workspaces/{workspace_id}/members/invitations",
     "GET /web/v1/projects",
     "POST /web/v1/projects",
@@ -352,6 +360,9 @@ describe("opentoggl custom OpenAPI sources", () => {
       "email",
       "name",
       "role",
+      "status",
+      "hourly_rate",
+      "labor_cost",
     ]);
     expect(workspaceMembersEnvelopeSchema?.properties?.members).toEqual({
       type: "array",
@@ -372,7 +383,35 @@ describe("opentoggl custom OpenAPI sources", () => {
       "workspace_id",
       "active",
       "pinned",
+      "client_name",
+      "template",
+      "actual_seconds",
+      "tracked_seconds_current_period",
+      "tracked_seconds_previous_period",
+      "recurring_period",
+      "recurring_period_start",
+      "recurring_period_end",
     ]);
+    expect(projectSummarySchema?.properties?.client_name).toEqual({
+      type: "string",
+      nullable: true,
+    });
+    expect(projectSummarySchema?.properties?.template).toEqual({
+      type: "boolean",
+    });
+    expect(projectSummarySchema?.properties?.actual_seconds).toEqual({
+      type: "integer",
+    });
+    expect(projectSummarySchema?.properties?.tracked_seconds_current_period).toEqual({
+      type: "integer",
+    });
+    expect(projectSummarySchema?.properties?.tracked_seconds_previous_period).toEqual({
+      type: "integer",
+    });
+    expect(projectSummarySchema?.properties?.recurring_period).toEqual({
+      type: "string",
+      nullable: true,
+    });
     expect(webDocument?.paths?.["/web/v1/projects"]?.get?.parameters).toContainEqual({
       name: "status",
       in: "query",
@@ -965,6 +1004,9 @@ describe("opentoggl custom OpenAPI sources", () => {
           email: "member@example.com",
           name: "Sample Member",
           role: "admin",
+          status: "joined",
+          hourly_rate: 125,
+          labor_cost: 80,
         },
       ],
     };
@@ -977,6 +1019,14 @@ describe("opentoggl custom OpenAPI sources", () => {
           workspace_id: 11,
           active: true,
           pinned: false,
+          client_name: "North Ridge Client",
+          template: false,
+          actual_seconds: 7200,
+          tracked_seconds_current_period: 3600,
+          tracked_seconds_previous_period: 1800,
+          recurring_period: "weekly",
+          recurring_period_start: "2026-03-17",
+          recurring_period_end: "2026-03-23",
         },
       ],
     };
@@ -990,6 +1040,14 @@ describe("opentoggl custom OpenAPI sources", () => {
       name: "Launch Website",
       active: true,
       pinned: false,
+      client_name: null,
+      template: false,
+      actual_seconds: 0,
+      tracked_seconds_current_period: 0,
+      tracked_seconds_previous_period: 0,
+      recurring_period: null,
+      recurring_period_start: null,
+      recurring_period_end: null,
     };
     const getProjectResponse = {
       id: 1001,

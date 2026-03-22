@@ -2217,14 +2217,24 @@
                       "type": "integer"
                     },
                     "email": {
-                      "type": "string",
-                      "format": "email"
+                      "type": "string"
                     },
                     "name": {
                       "type": "string"
                     },
                     "role": {
                       "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "hourly_rate": {
+                      "type": "number",
+                      "nullable": true
+                    },
+                    "labor_cost": {
+                      "type": "number",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -2232,7 +2242,10 @@
                     "workspace_id",
                     "email",
                     "name",
-                    "role"
+                    "role",
+                    "status",
+                    "hourly_rate",
+                    "labor_cost"
                   ],
                   "$ref": "#/components/schemas/WorkspaceMember"
                 }
@@ -2244,6 +2257,230 @@
             "$ref": "#/components/schemas/WorkspaceMembersEnvelope"
           },
           "bodySchemaRef": "#/components/schemas/WorkspaceMembersEnvelope",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/workspaces/{workspace_id}/members/{member_id}/disable",
+      "method": "post",
+      "operationId": "disable-workspace-member",
+      "sourceOperationId": "disable-workspace-member",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "hourly_rate": {
+                "type": "number",
+                "nullable": true
+              },
+              "labor_cost": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "workspace_id",
+              "email",
+              "name",
+              "role",
+              "status",
+              "hourly_rate",
+              "labor_cost"
+            ],
+            "$ref": "#/components/schemas/WorkspaceMember"
+          },
+          "bodySchemaRef": "#/components/schemas/WorkspaceMember",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/workspaces/{workspace_id}/members/{member_id}/restore",
+      "method": "post",
+      "operationId": "restore-workspace-member",
+      "sourceOperationId": "restore-workspace-member",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "hourly_rate": {
+                "type": "number",
+                "nullable": true
+              },
+              "labor_cost": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "workspace_id",
+              "email",
+              "name",
+              "role",
+              "status",
+              "hourly_rate",
+              "labor_cost"
+            ],
+            "$ref": "#/components/schemas/WorkspaceMember"
+          },
+          "bodySchemaRef": "#/components/schemas/WorkspaceMember",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/workspaces/{workspace_id}/members/{member_id}",
+      "method": "delete",
+      "operationId": "remove-workspace-member",
+      "sourceOperationId": "remove-workspace-member",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "hourly_rate": {
+                "type": "number",
+                "nullable": true
+              },
+              "labor_cost": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "workspace_id",
+              "email",
+              "name",
+              "role",
+              "status",
+              "hourly_rate",
+              "labor_cost"
+            ],
+            "$ref": "#/components/schemas/WorkspaceMember"
+          },
+          "bodySchemaRef": "#/components/schemas/WorkspaceMember",
+          "unsupportedKeywords": [],
+          "headers": {}
+        }
+      }
+    },
+    {
+      "source": "opentoggl-web.openapi.json",
+      "path": "/web/v1/workspaces/{workspace_id}/members/{member_id}/rate-cost",
+      "method": "patch",
+      "operationId": "update-workspace-member-rate-cost",
+      "sourceOperationId": "update-workspace-member-rate-cost",
+      "responses": {
+        "200": {
+          "bodySchema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "workspace_id": {
+                "type": "integer"
+              },
+              "email": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "hourly_rate": {
+                "type": "number",
+                "nullable": true
+              },
+              "labor_cost": {
+                "type": "number",
+                "nullable": true
+              }
+            },
+            "required": [
+              "id",
+              "workspace_id",
+              "email",
+              "name",
+              "role",
+              "status",
+              "hourly_rate",
+              "labor_cost"
+            ],
+            "$ref": "#/components/schemas/WorkspaceMember"
+          },
+          "bodySchemaRef": "#/components/schemas/WorkspaceMember",
           "unsupportedKeywords": [],
           "headers": {}
         }
@@ -2296,6 +2533,34 @@
                     },
                     "pinned": {
                       "type": "boolean"
+                    },
+                    "client_name": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "template": {
+                      "type": "boolean"
+                    },
+                    "actual_seconds": {
+                      "type": "integer"
+                    },
+                    "tracked_seconds_current_period": {
+                      "type": "integer"
+                    },
+                    "tracked_seconds_previous_period": {
+                      "type": "integer"
+                    },
+                    "recurring_period": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "recurring_period_start": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "recurring_period_end": {
+                      "type": "string",
+                      "nullable": true
                     }
                   },
                   "required": [
@@ -2303,7 +2568,15 @@
                     "name",
                     "workspace_id",
                     "active",
-                    "pinned"
+                    "pinned",
+                    "client_name",
+                    "template",
+                    "actual_seconds",
+                    "tracked_seconds_current_period",
+                    "tracked_seconds_previous_period",
+                    "recurring_period",
+                    "recurring_period_start",
+                    "recurring_period_end"
                   ],
                   "$ref": "#/components/schemas/ProjectSummary"
                 }
@@ -2345,6 +2618,34 @@
               },
               "pinned": {
                 "type": "boolean"
+              },
+              "client_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "tracked_seconds_current_period": {
+                "type": "integer"
+              },
+              "tracked_seconds_previous_period": {
+                "type": "integer"
+              },
+              "recurring_period": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_start": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_end": {
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -2352,7 +2653,15 @@
               "name",
               "workspace_id",
               "active",
-              "pinned"
+              "pinned",
+              "client_name",
+              "template",
+              "actual_seconds",
+              "tracked_seconds_current_period",
+              "tracked_seconds_previous_period",
+              "recurring_period",
+              "recurring_period_start",
+              "recurring_period_end"
             ],
             "$ref": "#/components/schemas/ProjectSummary"
           },
@@ -2472,6 +2781,34 @@
               },
               "pinned": {
                 "type": "boolean"
+              },
+              "client_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "tracked_seconds_current_period": {
+                "type": "integer"
+              },
+              "tracked_seconds_previous_period": {
+                "type": "integer"
+              },
+              "recurring_period": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_start": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_end": {
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -2479,7 +2816,15 @@
               "name",
               "workspace_id",
               "active",
-              "pinned"
+              "pinned",
+              "client_name",
+              "template",
+              "actual_seconds",
+              "tracked_seconds_current_period",
+              "tracked_seconds_previous_period",
+              "recurring_period",
+              "recurring_period_start",
+              "recurring_period_end"
             ],
             "$ref": "#/components/schemas/ProjectSummary"
           },
@@ -2514,6 +2859,34 @@
               },
               "pinned": {
                 "type": "boolean"
+              },
+              "client_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "tracked_seconds_current_period": {
+                "type": "integer"
+              },
+              "tracked_seconds_previous_period": {
+                "type": "integer"
+              },
+              "recurring_period": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_start": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_end": {
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -2521,7 +2894,15 @@
               "name",
               "workspace_id",
               "active",
-              "pinned"
+              "pinned",
+              "client_name",
+              "template",
+              "actual_seconds",
+              "tracked_seconds_current_period",
+              "tracked_seconds_previous_period",
+              "recurring_period",
+              "recurring_period_start",
+              "recurring_period_end"
             ],
             "$ref": "#/components/schemas/ProjectSummary"
           },
@@ -2556,6 +2937,34 @@
               },
               "pinned": {
                 "type": "boolean"
+              },
+              "client_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "tracked_seconds_current_period": {
+                "type": "integer"
+              },
+              "tracked_seconds_previous_period": {
+                "type": "integer"
+              },
+              "recurring_period": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_start": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_end": {
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -2563,7 +2972,15 @@
               "name",
               "workspace_id",
               "active",
-              "pinned"
+              "pinned",
+              "client_name",
+              "template",
+              "actual_seconds",
+              "tracked_seconds_current_period",
+              "tracked_seconds_previous_period",
+              "recurring_period",
+              "recurring_period_start",
+              "recurring_period_end"
             ],
             "$ref": "#/components/schemas/ProjectSummary"
           },
@@ -2598,6 +3015,34 @@
               },
               "pinned": {
                 "type": "boolean"
+              },
+              "client_name": {
+                "type": "string",
+                "nullable": true
+              },
+              "template": {
+                "type": "boolean"
+              },
+              "actual_seconds": {
+                "type": "integer"
+              },
+              "tracked_seconds_current_period": {
+                "type": "integer"
+              },
+              "tracked_seconds_previous_period": {
+                "type": "integer"
+              },
+              "recurring_period": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_start": {
+                "type": "string",
+                "nullable": true
+              },
+              "recurring_period_end": {
+                "type": "string",
+                "nullable": true
               }
             },
             "required": [
@@ -2605,7 +3050,15 @@
               "name",
               "workspace_id",
               "active",
-              "pinned"
+              "pinned",
+              "client_name",
+              "template",
+              "actual_seconds",
+              "tracked_seconds_current_period",
+              "tracked_seconds_previous_period",
+              "recurring_period",
+              "recurring_period_start",
+              "recurring_period_end"
             ],
             "$ref": "#/components/schemas/ProjectSummary"
           },

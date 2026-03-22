@@ -16,8 +16,8 @@ func TestMembershipLifecycleInviteJoinDisableRestoreRemove(t *testing.T) {
 		"Owner",
 		domain.WorkspaceRoleOwner,
 		domain.WorkspaceMemberStateJoined,
-		0,
-		0,
+		float64Ptr(0),
+		float64Ptr(0),
 	)
 	if err := service.SeedWorkspaceMember(100, owner); err != nil {
 		t.Fatalf("owner seed failed: %v", err)
@@ -29,8 +29,8 @@ func TestMembershipLifecycleInviteJoinDisableRestoreRemove(t *testing.T) {
 		"Invitee",
 		domain.WorkspaceRoleMember,
 		domain.WorkspaceMemberStateInvited,
-		70,
-		40,
+		float64Ptr(70),
+		float64Ptr(40),
 	)
 	if err := service.InviteWorkspaceMember(100, 10, invitee); err != nil {
 		t.Fatalf("unexpected error inviting member: %v", err)
@@ -223,7 +223,7 @@ func mustMember(
 ) *domain.WorkspaceMember {
 	t.Helper()
 
-	member, err := domain.NewWorkspaceMember(id, email, email, role, state, 0, 0)
+	member, err := domain.NewWorkspaceMember(id, email, email, role, state, float64Ptr(0), float64Ptr(0))
 	if err != nil {
 		t.Fatalf("expected member construction to succeed: %v", err)
 	}
@@ -246,4 +246,8 @@ func assertLifecycleStates(
 			t.Fatalf("expected lifecycle state[%d]=%s, got %s", idx, expected, facts[idx].State)
 		}
 	}
+}
+
+func float64Ptr(value float64) *float64 {
+	return &value
 }

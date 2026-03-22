@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+
+	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 )
 
 type WebResponse struct {
@@ -63,6 +65,11 @@ type WorkspaceSettingsRequest struct {
 type WorkspaceMemberInvitationRequest struct {
 	Email string  `json:"email"`
 	Role  *string `json:"role"`
+}
+
+type WorkspaceMemberRateCostUpdateRequest struct {
+	HourlyRate *float64 `json:"hourly_rate"`
+	LaborCost  *float64 `json:"labor_cost"`
 }
 
 type ProjectCreateRequest struct {
@@ -139,14 +146,32 @@ type workspaceMemberRecord struct {
 	Name        string
 	Role        string
 	Status      string
+	HourlyRate  *float64
+	LaborCost   *float64
 }
 
 type projectRecord struct {
-	ID          int64
-	WorkspaceID int64
-	Name        string
-	Active      bool
-	Pinned      bool
+	ID                           int64
+	WorkspaceID                  int64
+	ClientID                     *int64
+	ClientName                   *string
+	Name                         string
+	Active                       bool
+	Pinned                       bool
+	Billable                     bool
+	Private                      bool
+	Template                     bool
+	Color                        string
+	Currency                     *string
+	EstimatedSeconds             int64
+	ActualSeconds                int64
+	FixedFee                     float64
+	Rate                         *float64
+	TrackedSecondsCurrentPeriod  int64
+	TrackedSecondsPreviousPeriod int64
+	RecurringPeriod              *string
+	RecurringPeriodStart         *string
+	RecurringPeriodEnd           *string
 }
 
 type projectMemberRecord struct {
@@ -619,12 +644,33 @@ func (state *webState) seedWorkspaceProjectsLocked(home homeRecord) {
 		return
 	}
 
+	clientName := "North Ridge Client"
+	currency := "USD"
+	recurringPeriod := "weekly"
+	recurringPeriodStart := "2026-03-17"
+	recurringPeriodEnd := "2026-03-23"
 	state.workspaceProjects[home.WorkspaceID] = []projectRecord{
 		{
-			ID:          state.nextProjectID,
-			WorkspaceID: home.WorkspaceID,
-			Name:        "Sample Project",
-			Active:      true,
+			ID:                           state.nextProjectID,
+			WorkspaceID:                  home.WorkspaceID,
+			ClientName:                   &clientName,
+			Name:                         "Sample Project",
+			Active:                       true,
+			Pinned:                       false,
+			Billable:                     home.Settings.ProjectsBillableByDefault,
+			Private:                      home.Settings.ProjectsPrivateByDefault,
+			Template:                     false,
+			Color:                        "#2C7A7B",
+			Currency:                     &currency,
+			EstimatedSeconds:             14400,
+			ActualSeconds:                7200,
+			FixedFee:                     0,
+			Rate:                         float64Ptr(125),
+			TrackedSecondsCurrentPeriod:  3600,
+			TrackedSecondsPreviousPeriod: 1800,
+			RecurringPeriod:              &recurringPeriod,
+			RecurringPeriodStart:         &recurringPeriodStart,
+			RecurringPeriodEnd:           &recurringPeriodEnd,
 		},
 	}
 	state.seedProjectMembersLocked(state.workspaceProjects[home.WorkspaceID][0])
@@ -683,11 +729,39 @@ func (state *webState) mutateProjectByIDLocked(
 
 func projectSummaryBody(project projectRecord) map[string]any {
 	return map[string]any{
-		"id":           project.ID,
-		"name":         project.Name,
-		"workspace_id": project.WorkspaceID,
-		"active":       project.Active,
-		"pinned":       project.Pinned,
+		"id":                              project.ID,
+		"name":                            project.Name,
+		"workspace_id":                    project.WorkspaceID,
+		"active":                          project.Active,
+		"pinned":                          project.Pinned,
+		"client_name":                     project.ClientName,
+		"template":                        project.Template,
+		"actual_seconds":                  project.ActualSeconds,
+		"tracked_seconds_current_period":  project.TrackedSecondsCurrentPeriod,
+		"tracked_seconds_previous_period": project.TrackedSecondsPreviousPeriod,
+		"recurring_period":                project.RecurringPeriod,
+		"recurring_period_start":          project.RecurringPeriodStart,
+		"recurring_period_end":            project.RecurringPeriodEnd,
+	}
+}
+
+func projectDetailBody(project projectRecord) map[string]any {
+	return map[string]any{
+		"id":                project.ID,
+		"workspace_id":      project.WorkspaceID,
+		"client_id":         project.ClientID,
+		"name":              project.Name,
+		"active":            project.Active,
+		"pinned":            project.Pinned,
+		"billable":          project.Billable,
+		"private":           project.Private,
+		"template":          project.Template,
+		"color":             project.Color,
+		"currency":          project.Currency,
+		"estimated_seconds": project.EstimatedSeconds,
+		"actual_seconds":    project.ActualSeconds,
+		"fixed_fee":         project.FixedFee,
+		"rate":              project.Rate,
 	}
 }
 
@@ -911,6 +985,23 @@ func normalizeEmail(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
 }
 
+func cloneOptionalFloat64(value *float64) *float64 {
+	if value == nil {
+		return nil
+	}
+
+	copyValue := *value
+	return &copyValue
+}
+
+func float64Ptr(value float64) *float64 {
+	return &value
+}
+
+func stringPtr(value string) *string {
+	return &value
+}
+
 func workspaceMemberResponse(member workspaceMemberRecord) map[string]any {
 	return map[string]any{
 		"id":           member.ID,
@@ -919,7 +1010,45 @@ func workspaceMemberResponse(member workspaceMemberRecord) map[string]any {
 		"name":         member.Name,
 		"role":         member.Role,
 		"status":       member.Status,
+		"hourly_rate":  member.HourlyRate,
+		"labor_cost":   member.LaborCost,
 	}
+}
+
+func (h *WebTenantHandlers) requireWorkspaceMemberAdminLocked(sessionID string, workspaceID int64) (*workspaceMemberRecord, *WebResponse) {
+	userID, ok := h.state.sessions[sessionID]
+	if !ok {
+		response := WebResponse{StatusCode: 401, Body: "Unauthorized"}
+		return nil, &response
+	}
+	user := h.state.users[userID]
+	if user == nil {
+		response := WebResponse{StatusCode: 401, Body: "Unauthorized"}
+		return nil, &response
+	}
+	if user.DefaultWorkspaceID != 0 && user.DefaultWorkspaceID != workspaceID {
+		response := WebResponse{StatusCode: 403, Body: "User does not have access to this resource."}
+		return nil, &response
+	}
+
+	members := h.state.workspaceMembers[workspaceID]
+	for index := range members {
+		if normalizeEmail(members[index].Email) != normalizeEmail(user.Email) {
+			continue
+		}
+		if members[index].Status != "joined" && members[index].Status != "restored" {
+			response := WebResponse{StatusCode: 403, Body: "User does not have access to this resource."}
+			return nil, &response
+		}
+		if members[index].Role != "owner" && members[index].Role != "admin" {
+			response := WebResponse{StatusCode: 403, Body: "User does not have access to this resource."}
+			return nil, &response
+		}
+		return &members[index], nil
+	}
+
+	response := WebResponse{StatusCode: 403, Body: "User does not have access to this resource."}
+	return nil, &response
 }
 
 func (h *WebTenantHandlers) requireAccessibleWorkspaceMemberLocked(sessionID string, workspaceID int64, memberID int64) (*workspaceMemberRecord, *WebResponse) {
@@ -1146,6 +1275,38 @@ func (h *WebTenantHandlers) RemoveWorkspaceMember(ctx context.Context, sessionID
 }
 
 /*
+UpdateWorkspaceMemberRateCost stores workspace-member rate/cost settings while
+keeping unset values explicit for documented precedence fallback.
+*/
+func (h *WebTenantHandlers) UpdateWorkspaceMemberRateCost(
+	ctx context.Context,
+	sessionID string,
+	workspaceID int64,
+	memberID int64,
+	request WorkspaceMemberRateCostUpdateRequest,
+) WebResponse {
+	_ = ctx
+
+	h.state.mu.Lock()
+	defer h.state.mu.Unlock()
+
+	if _, response := h.requireWorkspaceMemberAdminLocked(sessionID, workspaceID); response != nil {
+		return *response
+	}
+	member, response := h.requireAccessibleWorkspaceMemberLocked(sessionID, workspaceID, memberID)
+	if response != nil {
+		return *response
+	}
+	if err := membershipdomain.ValidateWorkspaceMemberRateCost(request.HourlyRate, request.LaborCost); err != nil {
+		return WebResponse{StatusCode: 400, Body: err.Error()}
+	}
+
+	member.HourlyRate = cloneOptionalFloat64(request.HourlyRate)
+	member.LaborCost = cloneOptionalFloat64(request.LaborCost)
+	return WebResponse{StatusCode: 200, Body: workspaceMemberResponse(*member)}
+}
+
+/*
 GrantProjectMember adds or updates a minimal project-member grant for the current session.
 */
 func (h *WebTenantHandlers) GrantProjectMember(
@@ -1285,11 +1446,25 @@ func (h *WebTenantHandlers) CreateProject(ctx context.Context, sessionID string,
 	}
 
 	project := projectRecord{
-		ID:          h.state.nextProjectID,
-		WorkspaceID: request.WorkspaceID,
-		Name:        strings.TrimSpace(request.Name),
-		Active:      true,
-		Pinned:      false,
+		ID:                           h.state.nextProjectID,
+		WorkspaceID:                  request.WorkspaceID,
+		Name:                         strings.TrimSpace(request.Name),
+		Active:                       true,
+		Pinned:                       false,
+		Billable:                     true,
+		Private:                      false,
+		Template:                     false,
+		Color:                        "#2C7A7B",
+		Currency:                     stringPtr("USD"),
+		EstimatedSeconds:             0,
+		ActualSeconds:                0,
+		FixedFee:                     0,
+		Rate:                         nil,
+		TrackedSecondsCurrentPeriod:  0,
+		TrackedSecondsPreviousPeriod: 0,
+		RecurringPeriod:              nil,
+		RecurringPeriodStart:         nil,
+		RecurringPeriodEnd:           nil,
 	}
 	h.state.nextProjectID++
 	h.state.workspaceProjects[request.WorkspaceID] = append(
@@ -1358,7 +1533,7 @@ func (h *WebTenantHandlers) GetProject(ctx context.Context, sessionID string, pr
 
 	return WebResponse{
 		StatusCode: 200,
-		Body:       projectSummaryBody(project),
+		Body:       projectDetailBody(project),
 	}
 }
 

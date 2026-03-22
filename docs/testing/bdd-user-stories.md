@@ -692,7 +692,7 @@
 | 故事 6A：管理员管理成员费率与成本设置 | `docs/product/membership-and-access.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | story 已补，但当前仓库还没有 rate/cost 对应测试落点 |
 | 故事 7：成员权限影响私有项目、报表和事件可见性 | `docs/product/membership-and-access.md` | `apps/backend/internal/catalog/domain/project_access_test.go` | `apps/backend/internal/catalog/application/service_test.go` | 缺失 | `apps/website/src/pages/projects/__tests__/projects-page-flow.test.tsx`、`apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | 缺失 | 部分覆盖 | 现有测试只覆盖项目访问与权限配置局部；reports / webhooks 可见性联动尚无证据 |
 | 故事 7A：管理员管理 groups 与成员归属 | `docs/product/membership-and-access.md` | 缺失 | 缺失 | 缺失 | `apps/website/src/pages/groups/__tests__/groups-page-flow.test.tsx` | 缺失 | 部分覆盖 | 已补故事，但当前实现与 page flow 仍明确是过渡态，backend/contract/e2e 均缺 |
-| 故事 7B：管理员配置工作区权限策略 | `docs/product/membership-and-access.md` | 缺失 | 缺失 | 缺失 | `apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | 缺失 | 部分覆盖 | 已补故事；当前只有页面流证据，尚无 backend 规则、contract 与 e2e 承接 |
+| 故事 7B：管理员配置工作区权限策略 | `docs/product/membership-and-access.md` | 缺失 | `apps/backend/internal/http/web_workspace_permissions_flow_test.go` | 缺失 | `apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | `apps/website/e2e/permission-config.real-runtime.spec.ts` | 部分覆盖 | 已补后端路由集成与 real-runtime 保存/重载链，但 transport contract 与更细权限规则仍未闭环 |
 | 故事 8：用户查看、保存和共享报表 | `docs/product/reports-and-sharing.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 报表页面、保存报表、共享报表、导出一致性均未落到测试 |
 | 故事 8A：用户在不同 reports 读面之间保持同一查询语义 | `docs/product/reports-and-sharing.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | detailed / summary / weekly / trends / profitability / insights 的统一查询语义尚无测试 |
 | 故事 8B：用户导出报表并复用同一查询定义 | `docs/product/reports-and-sharing.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | exports 与在线查询同语义的验收链尚未建立 |
@@ -727,7 +727,7 @@
 | `3A` catalog 对象管理 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | P | P | N | N | P | Y | N | N | 部分覆盖 | 已有 projects/clients/tasks/tags page flow，缺 e2e/contract |
 | `7` 权限影响可见性 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | P | P | N | N | P | P | N | N | 部分覆盖 | reports/webhooks 可见性联动证据缺 |
 | `7A` groups 与成员归属 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | N | N | N | N | P | Y | N | N | 部分覆盖 | page flow 仍是过渡态，backend/contract/e2e 缺失 |
-| `7B` 权限策略配置 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | N | N | N | N | P | Y | N | N | 部分覆盖 | 当前只有页面流证据 |
+| `7B` 权限策略配置 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | N | Y | N | N | P | Y | Y | N | 部分覆盖 | 已有 backend 路由集成与 direct real-runtime 保存/重载链，但 transport contract 与更细权限规则仍缺 |
 | `15-18` instance-admin | `product/instance-admin-and-platform-operations` | N | N | N | N | N | N | N | N | 已批准延期 | Stage 2 foundation 只交付运行时 gate，不闭环平台产品故事 |
 
 ### 正式页面族对照
@@ -745,7 +745,7 @@
 | Tags | `docs/product/tracking.md` | 以 `project page` 作为 fallback 骨架；当前无独立 Figma node / screenshot | `apps/website/src/pages/tags/TagsPage.tsx`、`apps/website/src/pages/tags/TagDetailPage.tsx` | `apps/website/src/pages/tags/__tests__/tags-page-flow.test.tsx` | 缺失 | 部分覆盖 | 缺少 e2e；当前仍需后续补独立视觉对齐来源时再细化 |
 | Workspace Members | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/members/WorkspaceMembersPage.tsx` | `apps/website/src/pages/members/__tests__/workspace-members-page-flow.test.tsx` | 缺失 | 部分覆盖 | 当前 page flow 只证明列表与邀请入口；页面来源文档仍需补齐 |
 | Groups | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/groups/GroupsPage.tsx` | `apps/website/src/pages/groups/__tests__/groups-page-flow.test.tsx` | 缺失 | 部分覆盖 | 当前实现与测试都明确标注仍是过渡态，不能当作正式完成证据 |
-| Permission Config | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/permission-config/PermissionConfigPage.tsx` | `apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | 缺失 | 部分覆盖 | 具备 page flow，但页面来源与更高层验证链仍不完整 |
+| Permission Config | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/permission-config/PermissionConfigPage.tsx` | `apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | `apps/website/e2e/permission-config.real-runtime.spec.ts` | 部分覆盖 | 已补直接 real-runtime 保存/重载验证，但页面来源与 transport contract 证据仍不完整 |
 | Integrations Webhooks | `docs/product/Webhooks.md` | 当前产品文档未沉淀独立 Figma 节点，暂以 PRD + openapi/toggl-webhooks-v1.swagger.json 作为 fallback 设计来源 | 当前未建立正式 `integrations webhooks` 页面族映射 | 缺失 | 缺失 | 缺失 | testing-strategy 要求的正式页面族之一，需在 [webhooks-runtime.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/webhooks-runtime.md) 建立 page-flow/E2E 证据 |
 
 ### 当前优先缺口
@@ -753,7 +753,7 @@
 - Tracking 故事 1-3 仍是整块缺失；这直接对应 testing-strategy 中要求的 `timer` 页面族 page flow 与核心 e2e 缺口。
 - Reports、Importing、Webhooks 的故事 8-12 当前没有正式测试映射，后续进入对应 Wave 前必须先补故事到测试层级的落点。
 - Billing 故事 13-14 当前只有 backend 规则与局部 contract 证据，仍缺正式页面与 e2e。
-- Wave 2 页面族里，`projects/clients/tasks/tags/members/groups/permission-config` 基本都还停在“有 page flow，但没有完整 page flow + e2e + Figma/fallback 证据链”的状态。
+- Wave 2 页面族里，`projects/clients/tasks/tags/members/groups` 仍基本停在“有 page flow，但没有完整 page flow + e2e + Figma/fallback 证据链”的状态；`permission-config` 已补 direct real-runtime E2E，但 transport contract 与页面来源链仍未闭环。
 
 ## Source Documents
 

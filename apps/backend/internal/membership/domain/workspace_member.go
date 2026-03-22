@@ -23,6 +23,8 @@ const (
 var (
 	ErrInvalidWorkspaceRole                  = errors.New("invalid workspace role")
 	ErrInvalidWorkspaceMemberState           = errors.New("invalid workspace member state")
+	ErrNegativeWorkspaceMemberHourlyRate     = errors.New("workspace member hourly rate must be zero or positive")
+	ErrNegativeWorkspaceMemberLaborCost      = errors.New("workspace member labor cost must be zero or positive")
 	ErrWorkspaceMemberNotInvited             = errors.New("workspace member not invited")
 	ErrWorkspaceMemberCannotDisableFromState = errors.New("workspace member cannot be disabled from current state")
 	ErrWorkspaceMemberAlreadyDisabled        = errors.New("workspace member already disabled")
@@ -41,8 +43,8 @@ type WorkspaceMember struct {
 	FullName   string
 	Role       WorkspaceRole
 	State      WorkspaceMemberState
-	HourlyRate float64
-	LaborCost  float64
+	HourlyRate *float64
+	LaborCost  *float64
 	facts      []WorkspaceMemberLifecycleFact
 }
 
@@ -50,12 +52,21 @@ type WorkspaceMember struct {
 NewWorkspaceMember constructs a workspace membership aggregate and records the
 initial lifecycle fact so lifecycle transitions remain queryable in-memory.
 */
-func NewWorkspaceMember(id int64, email, fullName string, role WorkspaceRole, state WorkspaceMemberState, hourlyRate, laborCost float64) (*WorkspaceMember, error) {
+func NewWorkspaceMember(
+	id int64,
+	email, fullName string,
+	role WorkspaceRole,
+	state WorkspaceMemberState,
+	hourlyRate, laborCost *float64,
+) (*WorkspaceMember, error) {
 	if !isValidWorkspaceRole(role) {
 		return nil, ErrInvalidWorkspaceRole
 	}
 	if !isValidWorkspaceMemberState(state) {
 		return nil, ErrInvalidWorkspaceMemberState
+	}
+	if err := ValidateWorkspaceMemberRateCost(hourlyRate, laborCost); err != nil {
+		return nil, err
 	}
 
 	member := &WorkspaceMember{
@@ -64,11 +75,26 @@ func NewWorkspaceMember(id int64, email, fullName string, role WorkspaceRole, st
 		FullName:   fullName,
 		Role:       role,
 		State:      state,
-		HourlyRate: hourlyRate,
-		LaborCost:  laborCost,
+		HourlyRate: cloneOptionalFloat64(hourlyRate),
+		LaborCost:  cloneOptionalFloat64(laborCost),
 	}
 	member.recordLifecycleFact(state)
 	return member, nil
+}
+
+/*
+ValidateWorkspaceMemberRateCost enforces the documented non-negative member
+rate and cost constraints while still allowing unset values for precedence
+fallback.
+*/
+func ValidateWorkspaceMemberRateCost(hourlyRate, laborCost *float64) error {
+	if hourlyRate != nil && *hourlyRate < 0 {
+		return ErrNegativeWorkspaceMemberHourlyRate
+	}
+	if laborCost != nil && *laborCost < 0 {
+		return ErrNegativeWorkspaceMemberLaborCost
+	}
+	return nil
 }
 
 /*
@@ -160,6 +186,20 @@ func (m WorkspaceMember) LifecycleFacts() []WorkspaceMemberLifecycleFact {
 }
 
 /*
+UpdateRateCost sets the current member-specific billable rate and labor cost.
+Nil keeps the setting explicitly unset so downstream precedence can fall back.
+*/
+func (m *WorkspaceMember) UpdateRateCost(hourlyRate, laborCost *float64) error {
+	if err := ValidateWorkspaceMemberRateCost(hourlyRate, laborCost); err != nil {
+		return err
+	}
+
+	m.HourlyRate = cloneOptionalFloat64(hourlyRate)
+	m.LaborCost = cloneOptionalFloat64(laborCost)
+	return nil
+}
+
+/*
 Clone returns a deep copy safe for cross-layer read/write isolation.
 */
 func (m *WorkspaceMember) Clone() *WorkspaceMember {
@@ -168,6 +208,8 @@ func (m *WorkspaceMember) Clone() *WorkspaceMember {
 	}
 
 	copyMember := *m
+	copyMember.HourlyRate = cloneOptionalFloat64(m.HourlyRate)
+	copyMember.LaborCost = cloneOptionalFloat64(m.LaborCost)
 	copyMember.facts = append([]WorkspaceMemberLifecycleFact(nil), m.facts...)
 	return &copyMember
 }
@@ -196,4 +238,13 @@ func isValidWorkspaceMemberState(state WorkspaceMemberState) bool {
 	default:
 		return false
 	}
+}
+
+func cloneOptionalFloat64(value *float64) *float64 {
+	if value == nil {
+		return nil
+	}
+
+	copyValue := *value
+	return &copyValue
 }

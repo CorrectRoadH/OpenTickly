@@ -8,7 +8,15 @@ import (
 )
 
 func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
-	member, err := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateInvited, 100, 80)
+	member, err := NewWorkspaceMember(
+		1,
+		"owner@example.com",
+		"Owner",
+		WorkspaceRoleOwner,
+		WorkspaceMemberStateInvited,
+		float64Ptr(100),
+		float64Ptr(80),
+	)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -21,21 +29,45 @@ func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
 }
 
 func TestNewWorkspaceMemberInvalidRole(t *testing.T) {
-	_, err := NewWorkspaceMember(1, "user@example.com", "User Example", WorkspaceRole("superuser"), WorkspaceMemberStateInvited, 100, 80)
+	_, err := NewWorkspaceMember(
+		1,
+		"user@example.com",
+		"User Example",
+		WorkspaceRole("superuser"),
+		WorkspaceMemberStateInvited,
+		float64Ptr(100),
+		float64Ptr(80),
+	)
 	if err == nil {
 		t.Fatal("expected error for invalid role, got nil")
 	}
 }
 
 func TestNewWorkspaceMemberInvalidState(t *testing.T) {
-	_, err := NewWorkspaceMember(1, "user@example.com", "User Example", WorkspaceRoleOwner, WorkspaceMemberState("pending"), 100, 80)
+	_, err := NewWorkspaceMember(
+		1,
+		"user@example.com",
+		"User Example",
+		WorkspaceRoleOwner,
+		WorkspaceMemberState("pending"),
+		float64Ptr(100),
+		float64Ptr(80),
+	)
 	if err == nil {
 		t.Fatal("expected error for invalid state, got nil")
 	}
 }
 
 func TestWorkspaceMemberLifecycleInvitedJoinedDisabledRestoredRemoved(t *testing.T) {
-	member, _ := NewWorkspaceMember(1, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateInvited, 100, 80)
+	member, _ := NewWorkspaceMember(
+		1,
+		"member@example.com",
+		"Member",
+		WorkspaceRoleMember,
+		WorkspaceMemberStateInvited,
+		float64Ptr(100),
+		float64Ptr(80),
+	)
 
 	if err := member.Join(); err != nil {
 		t.Fatalf("expected join to succeed, got %v", err)
@@ -88,9 +120,9 @@ func TestWorkspaceMemberLifecycleInvitedJoinedDisabledRestoredRemoved(t *testing
 }
 
 func TestWorkspaceMemberRoleCapabilities(t *testing.T) {
-	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateJoined, 0, 0)
-	admin, _ := NewWorkspaceMember(2, "admin@example.com", "Admin", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, 0, 0)
-	member, _ := NewWorkspaceMember(3, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateJoined, 0, 0)
+	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
+	admin, _ := NewWorkspaceMember(2, "admin@example.com", "Admin", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
+	member, _ := NewWorkspaceMember(3, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
 
 	if !owner.CanManageMembers() {
 		t.Fatal("expected owner to manage members")
@@ -104,7 +136,7 @@ func TestWorkspaceMemberRoleCapabilities(t *testing.T) {
 }
 
 func TestWorkspaceMemberTransitionValidation(t *testing.T) {
-	invited, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, 0, 0)
+	invited, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, float64Ptr(0), float64Ptr(0))
 	if err := invited.Disable(); err != ErrWorkspaceMemberCannotDisableFromState {
 		t.Fatalf("expected ErrWorkspaceMemberCannotDisableFromState, got %v", err)
 	}
@@ -112,12 +144,12 @@ func TestWorkspaceMemberTransitionValidation(t *testing.T) {
 		t.Fatalf("expected ErrWorkspaceMemberNotDisabled, got %v", err)
 	}
 
-	joined, _ := NewWorkspaceMember(2, "b@example.com", "B", WorkspaceRoleMember, WorkspaceMemberStateJoined, 0, 0)
+	joined, _ := NewWorkspaceMember(2, "b@example.com", "B", WorkspaceRoleMember, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
 	if err := joined.Join(); err != ErrWorkspaceMemberNotInvited {
 		t.Fatalf("expected ErrWorkspaceMemberNotInvited, got %v", err)
 	}
 
-	removed, _ := NewWorkspaceMember(3, "c@example.com", "C", WorkspaceRoleMember, WorkspaceMemberStateRemoved, 0, 0)
+	removed, _ := NewWorkspaceMember(3, "c@example.com", "C", WorkspaceRoleMember, WorkspaceMemberStateRemoved, float64Ptr(0), float64Ptr(0))
 	if err := removed.Join(); err != ErrWorkspaceMemberRemoved {
 		t.Fatalf("expected ErrWorkspaceMemberRemoved, got %v", err)
 	}
@@ -129,6 +161,34 @@ func TestWorkspaceMemberTransitionValidation(t *testing.T) {
 	}
 	if err := removed.Remove(); err != ErrWorkspaceMemberAlreadyRemoved {
 		t.Fatalf("expected ErrWorkspaceMemberAlreadyRemoved, got %v", err)
+	}
+}
+
+func TestNewWorkspaceMemberRejectsNegativeRateCost(t *testing.T) {
+	_, err := NewWorkspaceMember(
+		1,
+		"user@example.com",
+		"User Example",
+		WorkspaceRoleMember,
+		WorkspaceMemberStateInvited,
+		float64Ptr(-1),
+		nil,
+	)
+	if err != ErrNegativeWorkspaceMemberHourlyRate {
+		t.Fatalf("expected ErrNegativeWorkspaceMemberHourlyRate, got %v", err)
+	}
+
+	_, err = NewWorkspaceMember(
+		1,
+		"user@example.com",
+		"User Example",
+		WorkspaceRoleMember,
+		WorkspaceMemberStateInvited,
+		nil,
+		float64Ptr(-1),
+	)
+	if err != ErrNegativeWorkspaceMemberLaborCost {
+		t.Fatalf("expected ErrNegativeWorkspaceMemberLaborCost, got %v", err)
 	}
 }
 
@@ -171,4 +231,8 @@ func assertLifecycleStateSequence(
 			t.Fatalf("expected lifecycle fact at index %d to be %s, got %s", i, state, facts[i].State)
 		}
 	}
+}
+
+func float64Ptr(value float64) *float64 {
+	return &value
 }

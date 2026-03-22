@@ -214,6 +214,29 @@ func (s *MembershipService) LifecycleFacts(
 	return nil, ErrMemberNotFound
 }
 
+/*
+UpdateWorkspaceMemberRateCost stores member-specific rate and labor-cost
+settings when the actor has admin-level membership permissions.
+*/
+func (s *MembershipService) UpdateWorkspaceMemberRateCost(
+	workspaceID, actorID, memberID int64,
+	hourlyRate, laborCost *float64,
+) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if err := s.requireLifecycleAdminLocked(workspaceID, actorID); err != nil {
+		return err
+	}
+
+	member, err := s.getActiveMemberLocked(workspaceID, memberID)
+	if err != nil {
+		return err
+	}
+
+	return member.UpdateRateCost(hourlyRate, laborCost)
+}
+
 func (s *MembershipService) requireLifecycleAdminLocked(workspaceID, actorID int64) error {
 	actor, err := s.getActiveMemberLocked(workspaceID, actorID)
 	if err != nil {

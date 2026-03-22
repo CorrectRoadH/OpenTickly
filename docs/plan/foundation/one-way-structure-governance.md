@@ -76,7 +76,8 @@ Covered stories (full or partial evidence already exists):
 Missing stories in this plan scope:
 
 - `4B` still lacks dedicated logout page-flow and direct E2E chain
-- `3A/7/7A/7B` still lack contract depth and E2E closure required for full completion
+- `3A/7/7A` still lack contract depth and E2E closure required for full completion
+- `7B` now has backend integration plus direct E2E, but it still lacks transport-contract depth and finer-grained permission-rule closure required for full completion
 
 Approved deferrals/gaps:
 
@@ -88,7 +89,8 @@ Page-flow / E2E gaps to keep visible:
 - auth logout and protected-route guard chain (`4B`) remains open until route-level guard and logout flow have direct page-flow + E2E evidence
 - `projects`/`clients` page families still miss direct E2E
 - `tasks`/`tags` page families still miss direct E2E
-- `groups` and `permission-config` still have page-flow-only evidence and remain E2E gaps
+- `groups` still has page-flow-only evidence and remains an E2E gap
+- `permission-config` now has direct E2E evidence, but it still lacks matching transport-contract depth and finer-grained permission-rule coverage
 
 ## Acceptance Criteria
 
