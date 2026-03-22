@@ -2,12 +2,12 @@ package bootstrap
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -26,32 +26,14 @@ func (runtime *webRuntime) listPublicTrackGroups(ctx echo.Context) error {
 		return err
 	}
 
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		"select id, workspace_id, name, has_users, created_at from catalog_groups where workspace_id = $1 order by lower(name), id",
-		workspaceID,
-	)
+	views, err := runtime.catalogApp.ListGroups(ctx.Request().Context(), workspaceID)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	defer rows.Close()
 
-	groups := make([]publictrackapi.GithubComTogglTogglApiInternalModelsGroup, 0)
-	for rows.Next() {
-		var id, wid int64
-		var name string
-		var hasUsers bool
-		var createdAt time.Time
-		if err := rows.Scan(&id, &wid, &name, &hasUsers, &createdAt); err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		groups = append(groups, publictrackapi.GithubComTogglTogglApiInternalModelsGroup{
-			At:          timePointer(createdAt),
-			HasUsers:    boolPointer(hasUsers),
-			Id:          intPointer(id),
-			Name:        stringPointer(name),
-			WorkspaceId: intPointer(wid),
-		})
+	groups := make([]publictrackapi.GithubComTogglTogglApiInternalModelsGroup, 0, len(views))
+	for _, view := range views {
+		groups = append(groups, groupViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, groups)
 }
@@ -68,49 +50,18 @@ func (runtime *webRuntime) listPublicTrackTags(ctx echo.Context) error {
 		return err
 	}
 
-	where := []string{"workspace_id = $1"}
-	args := []any{workspaceID}
-	if search := strings.TrimSpace(ctx.QueryParam("search")); search != "" {
-		args = append(args, "%"+strings.ToLower(search)+"%")
-		where = append(where, fmt.Sprintf("lower(name) like $%d", len(args)))
-	}
-	page := max(queryInt(ctx, "page", 1), 1)
-	perPage := max(min(queryInt(ctx, "per_page", 200), 200), 1)
-	args = append(args, perPage, (page-1)*perPage)
-
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		fmt.Sprintf(
-			"select id, workspace_id, name, deleted_at, created_by, created_at from catalog_tags where %s order by lower(name), id limit $%d offset $%d",
-			strings.Join(where, " and "),
-			len(args)-1,
-			len(args),
-		),
-		args...,
-	)
+	views, err := runtime.catalogApp.ListTags(ctx.Request().Context(), workspaceID, catalogapplication.ListTagsFilter{
+		Search:  ctx.QueryParam("search"),
+		Page:    max(queryInt(ctx, "page", 1), 1),
+		PerPage: max(min(queryInt(ctx, "per_page", 200), 200), 1),
+	})
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	defer rows.Close()
 
-	tags := make([]publictrackapi.ModelsTag, 0)
-	for rows.Next() {
-		var id, wid int64
-		var name string
-		var deletedAt *time.Time
-		var createdBy *int64
-		var createdAt time.Time
-		if err := rows.Scan(&id, &wid, &name, &deletedAt, &createdBy, &createdAt); err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		tags = append(tags, publictrackapi.ModelsTag{
-			At:          timePointer(createdAt),
-			CreatorId:   intPointerFromInt64Pointer(createdBy),
-			DeletedAt:   deletedAt,
-			Id:          intPointer(id),
-			Name:        stringPointer(name),
-			WorkspaceId: intPointer(wid),
-		})
+	tags := make([]publictrackapi.ModelsTag, 0, len(views))
+	for _, view := range views {
+		tags = append(tags, tagViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, tags)
 }
@@ -132,35 +83,16 @@ func (runtime *webRuntime) postPublicTrackClients(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	name, ok := normalizedCatalogName(request.Name)
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-
-	var id, wid int64
-	var archived bool
-	var createdBy *int64
-	var createdAt time.Time
-	if err := runtime.pool.QueryRow(
-		ctx.Request().Context(),
-		`insert into catalog_clients (workspace_id, name, created_by)
-		values ($1, $2, $3)
-		returning id, workspace_id, archived, created_by, created_at`,
-		workspaceID,
-		name,
-		user.ID,
-	).Scan(&id, &wid, &archived, &createdBy, &createdAt); err != nil {
+	view, err := runtime.catalogApp.CreateClient(ctx.Request().Context(), catalogapplication.CreateClientCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   user.ID,
+		Name:        stringValue(request.Name),
+	})
+	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, publictrackapi.ModelsClient{
-		Archived:  boolPointer(archived),
-		At:        timePointer(createdAt),
-		CreatorId: intPointerFromInt64Pointer(createdBy),
-		Id:        intPointer(id),
-		Name:      stringPointer(name),
-		Wid:       intPointer(wid),
-	})
+	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }
 
 func (runtime *webRuntime) postPublicTrackGroups(ctx echo.Context) error {
@@ -180,33 +112,16 @@ func (runtime *webRuntime) postPublicTrackGroups(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	name, ok := normalizedCatalogName(request.Name)
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-
-	var id, wid int64
-	var hasUsers bool
-	var createdAt time.Time
-	if err := runtime.pool.QueryRow(
-		ctx.Request().Context(),
-		`insert into catalog_groups (workspace_id, name, created_by)
-		values ($1, $2, $3)
-		returning id, workspace_id, has_users, created_at`,
-		workspaceID,
-		name,
-		user.ID,
-	).Scan(&id, &wid, &hasUsers, &createdAt); err != nil {
+	view, err := runtime.catalogApp.CreateGroup(ctx.Request().Context(), catalogapplication.CreateGroupCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   user.ID,
+		Name:        stringValue(request.Name),
+	})
+	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, publictrackapi.GithubComTogglTogglApiInternalModelsGroup{
-		At:          timePointer(createdAt),
-		HasUsers:    boolPointer(hasUsers),
-		Id:          intPointer(id),
-		Name:        stringPointer(name),
-		WorkspaceId: intPointer(wid),
-	})
+	return ctx.JSON(http.StatusOK, groupViewToAPI(view))
 }
 
 func (runtime *webRuntime) postPublicTrackTags(ctx echo.Context) error {
@@ -226,33 +141,16 @@ func (runtime *webRuntime) postPublicTrackTags(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	name, ok := normalizedCatalogName(request.Name)
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-
-	var id, wid int64
-	var createdBy *int64
-	var createdAt time.Time
-	if err := runtime.pool.QueryRow(
-		ctx.Request().Context(),
-		`insert into catalog_tags (workspace_id, name, created_by)
-		values ($1, $2, $3)
-		returning id, workspace_id, created_by, created_at`,
-		workspaceID,
-		name,
-		user.ID,
-	).Scan(&id, &wid, &createdBy, &createdAt); err != nil {
+	view, err := runtime.catalogApp.CreateTag(ctx.Request().Context(), catalogapplication.CreateTagCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   user.ID,
+		Name:        stringValue(request.Name),
+	})
+	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{{
-		At:          timePointer(createdAt),
-		CreatorId:   intPointerFromInt64Pointer(createdBy),
-		Id:          intPointer(id),
-		Name:        stringPointer(name),
-		WorkspaceId: intPointer(wid),
-	}})
+	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{tagViewToAPI(view)})
 }
 
 func (runtime *webRuntime) postPublicTrackProjects(ctx echo.Context) error {
@@ -272,42 +170,23 @@ func (runtime *webRuntime) postPublicTrackProjects(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	name, ok := normalizedCatalogName(request.Name)
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-
 	clientID := int64PointerFromTrackIntPointer(request.ClientId)
 	if clientID == nil {
 		clientID = int64PointerFromTrackIntPointer(request.Cid)
 	}
-	active := boolValue(request.Active)
-	if request.Active == nil {
-		active = true
-	}
-
-	var projectID int64
-	if err := runtime.pool.QueryRow(
-		ctx.Request().Context(),
-		`insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by)
-		values ($1, $2, $3, $4, $5, $6, $7)
-		returning id`,
-		workspaceID,
-		clientID,
-		name,
-		active,
-		boolValue(request.Template),
-		boolValue(request.Recurring),
-		user.ID,
-	).Scan(&projectID); err != nil {
+	view, err := runtime.catalogApp.CreateProject(ctx.Request().Context(), catalogapplication.CreateProjectCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   user.ID,
+		ClientID:    clientID,
+		Name:        stringValue(request.Name),
+		Active:      request.Active,
+		Template:    request.Template,
+		Recurring:   request.Recurring,
+	})
+	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
 	}
-
-	project, err := runtime.loadCatalogProject(ctx, workspaceID, projectID)
-	if err != nil {
-		return err
-	}
-	return ctx.JSON(http.StatusOK, project.toAPI())
+	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
 }
 
 func (runtime *webRuntime) putPublicTrackProject(ctx echo.Context) error {
@@ -326,59 +205,34 @@ func (runtime *webRuntime) putPublicTrackProject(ctx echo.Context) error {
 		return err
 	}
 
-	project, err := runtime.loadCatalogProject(ctx, workspaceID, projectID)
-	if err != nil {
-		return err
-	}
-
 	var request publictrackapi.ProjectPayload
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if request.Name != nil {
-		name, ok := normalizedCatalogName(request.Name)
-		if !ok {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
-		}
-		project.Name = name
-	}
-	if request.Active != nil {
-		project.Active = *request.Active
-	}
-	if request.Template != nil {
-		project.Template = *request.Template
-	}
-	if request.Recurring != nil {
-		project.Recurring = *request.Recurring
+
+	command := catalogapplication.UpdateProjectCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   projectID,
+		Name:        request.Name,
+		Active:      request.Active,
+		Template:    request.Template,
+		Recurring:   request.Recurring,
 	}
 	if request.ClientId != nil || request.Cid != nil {
-		project.ClientID = int64PointerFromTrackIntPointer(request.ClientId)
-		if project.ClientID == nil {
-			project.ClientID = int64PointerFromTrackIntPointer(request.Cid)
+		command.ClientID = int64PointerFromTrackIntPointer(request.ClientId)
+		if command.ClientID == nil {
+			command.ClientID = int64PointerFromTrackIntPointer(request.Cid)
 		}
 	}
 
-	if _, err := runtime.pool.Exec(
-		ctx.Request().Context(),
-		`update catalog_projects
-		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7
-		where workspace_id = $1 and id = $2`,
-		workspaceID,
-		projectID,
-		project.ClientID,
-		project.Name,
-		project.Active,
-		project.Template,
-		project.Recurring,
-	); err != nil {
+	updated, err := runtime.catalogApp.UpdateProject(ctx.Request().Context(), command)
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
-
-	updated, err := runtime.loadCatalogProject(ctx, workspaceID, projectID)
-	if err != nil {
-		return err
-	}
-	return ctx.JSON(http.StatusOK, updated.toAPI())
+	return ctx.JSON(http.StatusOK, projectViewToAPI(updated))
 }
 
 func (runtime *webRuntime) postPublicTrackPinnedProject(ctx echo.Context) error {
@@ -401,40 +255,86 @@ func (runtime *webRuntime) postPublicTrackPinnedProject(ctx echo.Context) error 
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	if _, err := runtime.loadCatalogProject(ctx, workspaceID, projectID); err != nil {
-		return err
-	}
-	if _, err := runtime.pool.Exec(
-		ctx.Request().Context(),
-		"update catalog_projects set pinned = $3 where workspace_id = $1 and id = $2",
-		workspaceID,
-		projectID,
-		boolValue(request.Pin),
-	); err != nil {
+	project, err := runtime.catalogApp.SetProjectPinned(ctx.Request().Context(), catalogapplication.SetProjectPinnedCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   projectID,
+		Pinned:      boolValue(request.Pin),
+	})
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
+	return ctx.JSON(http.StatusOK, projectViewToAPI(project))
+}
 
-	project, err := runtime.loadCatalogProject(ctx, workspaceID, projectID)
+func (runtime *webRuntime) postPublicTrackProjectTask(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	user, err := runtime.requirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	return ctx.JSON(http.StatusOK, project.toAPI())
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.TaskPayload
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	task, err := runtime.catalogApp.CreateTask(ctx.Request().Context(), catalogapplication.CreateTaskCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   user.ID,
+		ProjectID:   &projectID,
+		Name:        stringValue(request.Name),
+		Active:      request.Active,
+	})
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, taskViewToAPI(task))
 }
 
 func writePublicTrackCatalogError(ctx echo.Context, err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503") {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	}
-	return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+	return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 }
 
-func normalizedCatalogName(value *string) (string, bool) {
-	if value == nil {
-		return "", false
+func groupViewToAPI(view catalogapplication.GroupView) publictrackapi.GithubComTogglTogglApiInternalModelsGroup {
+	return publictrackapi.GithubComTogglTogglApiInternalModelsGroup{
+		At:          timePointer(view.CreatedAt),
+		HasUsers:    boolPointer(view.HasUsers),
+		Id:          intPointer(view.ID),
+		Name:        stringPointer(view.Name),
+		WorkspaceId: intPointer(view.WorkspaceID),
 	}
-	name := strings.TrimSpace(*value)
-	return name, name != ""
+}
+
+func tagViewToAPI(view catalogapplication.TagView) publictrackapi.ModelsTag {
+	return publictrackapi.ModelsTag{
+		At:          timePointer(view.CreatedAt),
+		CreatorId:   intPointerFromInt64Pointer(view.CreatedBy),
+		DeletedAt:   view.DeletedAt,
+		Id:          intPointer(view.ID),
+		Name:        stringPointer(view.Name),
+		WorkspaceId: intPointer(view.WorkspaceID),
+	}
 }
 
 func parseCSVInt64s(value string) ([]int64, error) {
@@ -452,29 +352,6 @@ func parseCSVInt64s(value string) ([]int64, error) {
 		values = append(values, parsed)
 	}
 	return values, nil
-}
-
-func projectOrderClause(sortField string, sortOrder string, sortPinned bool) string {
-	orderParts := make([]string, 0, 3)
-	if sortPinned {
-		orderParts = append(orderParts, "p.pinned desc")
-	}
-	field := "lower(p.name)"
-	if strings.EqualFold(sortField, "created_at") {
-		field = "p.created_at"
-	}
-	direction := sortDirection(sortOrder)
-	orderParts = append(orderParts, field+" "+direction, "p.id "+direction)
-	return strings.Join(orderParts, ", ")
-}
-
-func taskOrderClause(sortField string, sortOrder string) string {
-	field := "lower(t.name)"
-	if strings.EqualFold(sortField, "created_at") {
-		field = "t.created_at"
-	}
-	direction := sortDirection(sortOrder)
-	return field + " " + direction + ", t.id " + direction
 }
 
 func defaultTaskSortField(value string) string {

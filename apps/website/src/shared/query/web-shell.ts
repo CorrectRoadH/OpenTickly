@@ -4,12 +4,14 @@ import type {
   LoginRequestDto,
   RegisterRequestDto,
   TaskCreateRequestDto,
-  UpdateCurrentUserProfileRequestDto,
-  UpdateUserPreferencesRequestDto,
   UpdateWorkspaceSettingsRequestDto,
   WorkspaceMemberInvitationRequestDto,
   WebWorkspaceSettingsDto,
 } from "../api/web-contract.ts";
+import type {
+  MePayload,
+  ModelsAllPreferences,
+} from "../api/generated/public-track/types.gen.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   getMe,
@@ -25,6 +27,7 @@ import {
   postPreferences,
   postResetToken,
   postWorkspaceProjectCreate,
+  postWorkspaceProjectTasks,
   postWorkspaceClients,
   postWorkspaceGroup,
   putMe,
@@ -131,7 +134,7 @@ export function useUpdateProfileMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateCurrentUserProfileRequestDto) =>
+    mutationFn: (request: MePayload) =>
       unwrapWebApiResult(putMe({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(profileQueryKey, data);
@@ -174,7 +177,7 @@ export function useUpdatePreferencesMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateUserPreferencesRequestDto) =>
+    mutationFn: (request: ModelsAllPreferences) =>
       unwrapWebApiResult(postPreferences({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -630,12 +633,35 @@ export function useTasksQuery(workspaceId: number, projectId?: number) {
   });
 }
 
-export function useCreateTaskMutation(workspaceId: number) {
+export function useCreateTaskMutation(workspaceId: number, projectId?: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: TaskCreateRequestDto) =>
-      unwrapWebApiResult(createTask({ body: request })),
+    mutationFn: async (name: string) => {
+      if (projectId == null) {
+        await unwrapWebApiResult(
+          createTask({
+            body: {
+              name,
+              workspace_id: workspaceId,
+            } satisfies TaskCreateRequestDto,
+          }),
+        );
+        return;
+      }
+
+      await unwrapWebApiResult(
+        postWorkspaceProjectTasks({
+          body: {
+            name,
+          },
+          path: {
+            project_id: projectId,
+            workspace_id: workspaceId,
+          },
+        }),
+      );
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["tasks", workspaceId],

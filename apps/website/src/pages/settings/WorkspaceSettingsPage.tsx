@@ -30,8 +30,9 @@ export function WorkspaceSettingsPage({
 
   if (settingsQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="Fetching workspace defaults, branding, and policy settings."
           title="Loading workspace settings"
           tone="loading"
@@ -42,8 +43,9 @@ export function WorkspaceSettingsPage({
 
   if (settingsQuery.isError) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-rose-500/30 bg-[#23181b] text-rose-200"
           description="We could not load workspace settings right now. Refresh or try again shortly."
           title="Workspace settings unavailable"
           tone="error"
@@ -54,8 +56,9 @@ export function WorkspaceSettingsPage({
 
   if (!settingsQuery.data) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="No workspace settings data was returned for this workspace."
           title="Workspace settings unavailable"
           tone="empty"
@@ -65,39 +68,53 @@ export function WorkspaceSettingsPage({
   }
 
   const organizationId = settingsQuery.data.workspace.organization_id ?? 0;
+  const workspace = settingsQuery.data.workspace;
+  const preferences = settingsQuery.data.preferences;
 
   return (
-    <div className="space-y-4">
-      <AppPanel className="bg-white/95">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-              Workspace settings
-            </h1>
-            <p className="text-sm leading-6 text-slate-600">
-              Manage workspace defaults, branding, and member-facing behavior for the current
-              workspace.
-            </p>
+    <div className="space-y-4" data-testid="workspace-settings-page">
+      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-header">
+        <div className="space-y-5">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold text-white">Workspace settings</h1>
+              <p className="max-w-3xl text-sm leading-6 text-slate-400">
+                Manage workspace defaults, branding, and member-facing behavior for the current
+                workspace.
+              </p>
+            </div>
+            <Link
+              className="rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/8"
+              to={buildOrganizationSettingsPath(organizationId)}
+            >
+              Organization settings
+            </Link>
           </div>
-          <Link
-            className="text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline"
-            to={buildOrganizationSettingsPath(organizationId)}
-          >
-            Organization settings
-          </Link>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SummaryCard
+              label="Workspace"
+              value={workspace.name ?? `Workspace ${workspaceId}`}
+            />
+            <SummaryCard label="Currency" value={workspace.default_currency ?? "USD"} />
+            <SummaryCard
+              label="Timesheet view"
+              value={preferences.show_timesheet_view ? "Enabled" : "Hidden"}
+            />
+          </div>
         </div>
       </AppPanel>
 
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-tabs">
         <div className="flex flex-wrap gap-3">
           <Link
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium"
+            className={sectionLinkClass(section === "general")}
             to={buildWorkspaceSettingsPathWithSection(workspaceId, "general")}
           >
             General
           </Link>
           <Link
-            className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium"
+            className={sectionLinkClass(section === "branding")}
             to={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
           >
             Branding
@@ -106,21 +123,36 @@ export function WorkspaceSettingsPage({
       </AppPanel>
 
       {section === "branding" ? (
-        <AppPanel className="bg-white/95">
+        <AppPanel
+          className="border-white/8 bg-[#1f1f23]"
+          data-testid="workspace-settings-branding-panel"
+        >
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-950">
-              Branding assets
-            </h2>
-            <p className="text-sm leading-6 text-slate-600">
+            <h2 className="text-2xl font-semibold text-white">Branding assets</h2>
+            <p className="text-sm leading-6 text-slate-400">
               Keep workspace logo and avatar entry points with the rest of the workspace settings
               surface.
             </p>
+            <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+              <p className="text-xs font-medium uppercase text-slate-500">Current logo URL</p>
+              <p className="mt-2 break-all text-sm text-slate-300">
+                {workspace.logo_url ?? "No logo configured yet."}
+              </p>
+            </div>
           </div>
         </AppPanel>
       ) : null}
 
-      {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
-      {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
+      {status ? (
+        <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
+          {status}
+        </AppInlineNotice>
+      ) : null}
+      {error ? (
+        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
+          {error}
+        </AppInlineNotice>
+      ) : null}
       <WorkspaceSettingsForm
         brandingHref={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
         initialValues={createWorkspaceSettingsFormValues(settingsQuery.data)}
@@ -137,4 +169,21 @@ export function WorkspaceSettingsPage({
       />
     </div>
   );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-white">{value}</p>
+    </div>
+  );
+}
+
+function sectionLinkClass(isActive: boolean): string {
+  return `rounded-lg border px-4 py-2 text-sm font-medium ${
+    isActive
+      ? "border-[#8c5495] bg-[#4d2c52] text-white"
+      : "border-white/10 bg-transparent text-slate-300"
+  }`;
 }

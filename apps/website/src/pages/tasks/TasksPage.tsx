@@ -1,5 +1,5 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type FormEvent, type ReactElement, useState } from "react";
+import { type FormEvent, type ReactElement, useRef, useState } from "react";
 
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -12,61 +12,84 @@ type TasksPageProps = {
 export function TasksPage({ projectId }: TasksPageProps): ReactElement {
   const session = useSession();
   const tasksQuery = useTasksQuery(session.currentWorkspace.id, projectId);
-  const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id);
+  const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id, projectId);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const taskNameInputRef = useRef<HTMLInputElement | null>(null);
   const hasProjectScope = typeof projectId === "number" && Number.isInteger(projectId) && projectId > 0;
+  const tasks = normalizeTasks(tasksQuery.data);
+  const activeCount = tasks.filter((task) => task.active !== false).length;
+  const trimmedTaskName = taskName.trim();
 
   if (tasksQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
-        <p className="text-sm text-slate-600">Loading tasks…</p>
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <p className="text-sm text-slate-400">Loading tasks…</p>
       </AppPanel>
     );
   }
 
-  const tasks = tasksQuery.data?.data ?? [];
-  const activeCount = tasks.filter((task) => task.active).length;
+  if (tasksQuery.isError) {
+    return (
+      <AppPanel className="border-rose-500/30 bg-[#23181b]">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold text-white">Tasks</h1>
+          <p className="text-sm leading-6 text-rose-300">
+            Unable to load tasks. Refresh to try again.
+          </p>
+        </div>
+      </AppPanel>
+    );
+  }
 
   async function handleCreateTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (trimmedTaskName.length === 0) {
+      return;
+    }
 
-    await createTaskMutation.mutateAsync({
-      workspace_id: session.currentWorkspace.id,
-      name: taskName,
-    });
+    await createTaskMutation.mutateAsync(trimmedTaskName);
     setTaskName("");
     setStatus("Task created");
   }
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="tasks-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tasks</h1>
-          <p className="text-sm leading-6 text-slate-600">Task directory</p>
+          <h1 className="text-3xl font-semibold text-white">Tasks</h1>
+          <p className="text-sm text-slate-500">Task directory</p>
+          <p className="text-sm leading-6 text-slate-400">
+            Keep project-scoped work breakdown, task availability, and quick creation visible from
+            the shared tracking catalog.
+          </p>
         </div>
-        <AppButton type="button">Create task</AppButton>
+        <AppButton onClick={() => taskNameInputRef.current?.focus()} type="button">
+          Create task
+        </AppButton>
       </div>
 
       {hasProjectScope ? (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3">
+        <section
+          className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-4"
+          data-testid="tasks-context-bar"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
             Project task management entry
           </p>
-          <p className="mt-2 text-sm text-slate-700">
+          <p className="mt-2 text-sm text-slate-300">
             Opened from project {projectId}. Use this page as the task management entry point
             for that project context.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a
-              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+              className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
               href={`/workspaces/${session.currentWorkspace.id}/projects/${projectId}`}
             >
               Project details
             </a>
             <a
-              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+              className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
               href={buildWorkspaceTasksPath({
                 workspaceId: session.currentWorkspace.id,
               })}
@@ -77,39 +100,58 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
         </section>
       ) : null}
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" onSubmit={handleCreateTask}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+      <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="tasks-create-form" onSubmit={handleCreateTask}>
+        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Task name
           <input
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            ref={taskNameInputRef}
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
             value={taskName}
             onChange={(event) => setTaskName(event.target.value)}
           />
         </label>
-        <AppButton type="submit">Save task</AppButton>
-        {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+        <AppButton disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending} type="submit">
+          Save task
+        </AppButton>
+        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
       </form>
 
-      <ul className="mt-6 divide-y divide-slate-200" aria-label="Tasks list">
-        {tasks.map((task) => {
-          const statusLabel = task.active ? "Active" : "Inactive";
+      {tasks.length > 0 ? (
+        <ul className="mt-6 divide-y divide-white/8" aria-label="Tasks list" data-testid="tasks-list">
+          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
+            Workspace {session.currentWorkspace.id}
+          </li>
+          {tasks.map((task) => {
+            const statusLabel = task.active === false ? "Inactive" : "Active";
 
-          return (
-            <li key={task.id} className="flex items-center justify-between py-3">
-              <div>
-                <p className="text-sm font-semibold text-slate-900">{task.name}</p>
-                <p className="text-xs text-slate-600">Task · {statusLabel}</p>
-                <p className="text-[11px] text-slate-500">Workspace {task.workspace_id}</p>
-              </div>
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                {statusLabel}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={task.id} className="flex items-center justify-between py-3">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-white">{task.name}</p>
+                  <p className="text-xs text-slate-400">Task · {statusLabel}</p>
+                  <p className="text-[11px] text-slate-500">Workspace {task.workspace_id}</p>
+                </div>
+                <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
+                  {statusLabel}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <section
+          className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-5 text-sm text-slate-300"
+          data-testid="tasks-empty-state"
+        >
+          <p className="font-semibold text-white">No tasks in this workspace yet.</p>
+          <p className="mt-2 text-slate-400">
+            Create a task to keep project planning and tracked work connected from the same
+            catalog surface.
+          </p>
+        </section>
+      )}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="tasks-summary">
         <p>
           Showing {tasks.length} tasks in workspace {session.currentWorkspace.id}.
         </p>
@@ -117,4 +159,34 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
       </div>
     </AppPanel>
   );
+}
+
+type TaskListItem = {
+  active?: boolean | null;
+  id: number;
+  name: string;
+  workspace_id?: number | null;
+};
+
+function normalizeTasks(data: unknown): TaskListItem[] {
+  if (Array.isArray(data)) {
+    return data as TaskListItem[];
+  }
+
+  if (hasTaskArray(data, "tasks")) {
+    return data.tasks;
+  }
+
+  if (hasTaskArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasTaskArray(
+  value: unknown,
+  key: "data" | "tasks",
+): value is Record<typeof key, TaskListItem[]> {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
 }

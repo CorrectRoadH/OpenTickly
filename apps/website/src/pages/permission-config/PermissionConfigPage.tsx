@@ -77,16 +77,16 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
   if (permissionsQuery.isPending || !permissionsQuery.data) {
     if (permissionsQuery.isError) {
       return (
-        <AppPanel className="bg-white/95">
+        <AppPanel className="border-rose-500/30 bg-[#23181b]">
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+            <h1 className="text-3xl font-semibold text-white">
               Permission configuration
             </h1>
-            <p className="text-sm leading-6 text-slate-600">Workspace permission policy</p>
-            <p className="text-sm leading-6 text-slate-600">Workspace access rules</p>
+            <p className="text-sm leading-6 text-slate-400">Workspace permission policy</p>
+            <p className="text-sm leading-6 text-slate-400">Workspace access rules</p>
           </div>
 
-          <section className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
+          <section className="mt-6 rounded-xl border border-rose-500/30 bg-[#1a1214] px-5 py-4 text-sm text-rose-200">
             <p className="font-semibold">Permission policy is temporarily unavailable.</p>
             <p className="mt-2">
               Reload after the workspace settings service recovers. Existing project, member, and
@@ -98,14 +98,14 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
     }
 
     return (
-      <AppPanel className="bg-white/95">
-        <p className="text-sm font-medium text-slate-700">Loading workspace permissions…</p>
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <p className="text-sm font-medium text-slate-400">Loading workspace permissions…</p>
       </AppPanel>
     );
   }
 
   return (
-    <AppPanel className="bg-white/95" data-testid="permission-config-page">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="permission-config-page">
       <form
         className="space-y-6"
         data-testid="permission-config-form"
@@ -129,14 +129,14 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         })}
       >
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          <h1 className="text-3xl font-semibold text-white">
             Permission configuration
           </h1>
-          <p className="text-sm leading-6 text-slate-600">Workspace permission policy</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-slate-500">Workspace permission policy</p>
+          <p className="text-sm leading-6 text-slate-500">
             Workspace access rules
           </p>
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-slate-400">
             Keep admin-only creation, dashboard visibility, and public project exposure aligned
             with the current workspace access policy.
           </p>
@@ -145,19 +145,19 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         <div className="space-y-4" data-testid="permission-config-toggles">
           {permissionFields.map((field) => (
             <label
-              className="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3"
+              className="flex items-start gap-3 rounded-xl border border-white/10 bg-[#18181c] px-4 py-3"
               key={field.name}
             >
               <input
                 aria-label={field.label}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-700"
+                className="mt-1 h-4 w-4 rounded border-white/20 bg-[#111114] text-[#c792d1] focus:ring-[#c792d1]"
                 disabled={updateMutation.isPending}
                 type="checkbox"
                 {...register(field.name)}
               />
               <span className="space-y-1">
-                <span className="block text-sm font-semibold text-slate-900">{field.label}</span>
-                <span className="block text-sm leading-6 text-slate-600">{field.description}</span>
+                <span className="block text-sm font-semibold text-white">{field.label}</span>
+                <span className="block text-sm leading-6 text-slate-400">{field.description}</span>
               </span>
             </label>
           ))}
@@ -167,8 +167,8 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           <AppButton disabled={updateMutation.isPending} type="submit">
             Save permissions
           </AppButton>
-          {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
-          {saveError ? <p className="text-sm font-medium text-rose-700">{saveError}</p> : null}
+          {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
+          {saveError ? <p className="text-sm font-medium text-rose-300">{saveError}</p> : null}
         </div>
       </form>
     </AppPanel>

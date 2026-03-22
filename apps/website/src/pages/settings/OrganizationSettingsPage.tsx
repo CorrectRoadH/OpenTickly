@@ -22,8 +22,9 @@ export function OrganizationSettingsPage({
 
   if (organizationQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="Fetching organization-level configuration and policy values."
           title="Loading organization settings"
           tone="loading"
@@ -34,8 +35,9 @@ export function OrganizationSettingsPage({
 
   if (organizationQuery.isError) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-rose-500/30 bg-[#23181b] text-rose-200"
           description="We could not load organization settings right now. Refresh or try again shortly."
           title="Organization settings unavailable"
           tone="error"
@@ -46,8 +48,9 @@ export function OrganizationSettingsPage({
 
   if (!organizationQuery.data) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="No organization settings data was returned for this organization."
           title="Organization settings unavailable"
           tone="empty"
@@ -57,20 +60,39 @@ export function OrganizationSettingsPage({
   }
 
   return (
-    <div className="space-y-4">
-      <AppPanel className="bg-white/95">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-            Organization settings
-          </h1>
-          <p className="text-sm leading-6 text-slate-600">
-            Manage organization-wide governance and settings that apply across workspaces.
-          </p>
+    <div className="space-y-4" data-testid="organization-settings-page">
+      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="organization-settings-header">
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-white">Organization settings</h1>
+            <p className="text-sm leading-6 text-slate-400">
+              Manage organization-wide governance and settings that apply across workspaces.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SummaryCard label="Organization" value={organizationQuery.data.name ?? "Unnamed org"} />
+            <SummaryCard
+              label="Plan"
+              value={organizationQuery.data.pricing_plan_name ?? "Free"}
+            />
+            <SummaryCard
+              label="Members"
+              value={String(organizationQuery.data.user_count ?? 0)}
+            />
+          </div>
         </div>
       </AppPanel>
 
-      {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
-      {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
+      {status ? (
+        <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
+          {status}
+        </AppInlineNotice>
+      ) : null}
+      {error ? (
+        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
+          {error}
+        </AppInlineNotice>
+      ) : null}
       <OrganizationSettingsForm
         initialValues={createOrganizationSettingsFormValues(organizationQuery.data)}
         onSubmit={async (request) => {
@@ -84,6 +106,15 @@ export function OrganizationSettingsPage({
           }
         }}
       />
+    </div>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>
   );
 }

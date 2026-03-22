@@ -1,5 +1,5 @@
 import { AppPanel } from "@opentoggl/web-ui";
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
 import { useSession } from "../../shared/session/session-context.tsx";
 
@@ -118,7 +118,7 @@ function ToolbarBadge({ label, value }: { label: string; value: string }): React
   );
 }
 
-function FilterChip({ children }: { children: string }): ReactElement {
+function FilterChip({ children }: { children: ReactNode }): ReactElement {
   return (
     <span className="rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm text-slate-200">
       {children}

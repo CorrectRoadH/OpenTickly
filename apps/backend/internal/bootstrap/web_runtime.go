@@ -12,12 +12,17 @@ import (
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/publicapi"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
+	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
+	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
+	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
@@ -41,14 +46,16 @@ func newWebRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 }
 
 type webRuntime struct {
-	pool        *pgxpool.Pool
-	identity    *identityweb.Handler
-	identityApp *identityapplication.Service
-	identityAPI *identitypublicapi.Handler
-	userHomes   userHomeRepository
-	tenant      *tenantweb.Handler
-	tenantApp   *tenantapplication.Service
-	billingApp  *billingapplication.Service
+	pool          *pgxpool.Pool
+	catalogApp    *catalogapplication.Service
+	identity      *identityweb.Handler
+	identityApp   *identityapplication.Service
+	identityAPI   *identitypublicapi.Handler
+	membershipApp *membershipapplication.Service
+	userHomes     userHomeRepository
+	tenant        *tenantweb.Handler
+	tenantApp     *tenantapplication.Service
+	billingApp    *billingapplication.Service
 }
 
 func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
@@ -71,6 +78,16 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 	}
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
+	catalogService, err := catalogapplication.NewService(catalogpostgres.NewStore(pool))
+	if err != nil {
+		return nil, err
+	}
+
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(pool))
+	if err != nil {
+		return nil, err
+	}
+
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              identitypostgres.NewUserRepository(pool),
 		Sessions:           identitypostgres.NewSessionRepository(pool),
@@ -79,18 +96,25 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
-	shellProvider := newBillingBackedSessionShell(tenantService, billingService, tenantpostgres.NewUserHomeRepository(pool))
+	shellProvider := newBillingBackedSessionShell(
+		tenantService,
+		billingService,
+		membershipService,
+		tenantpostgres.NewUserHomeRepository(pool),
+	)
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
 	return &webRuntime{
-		pool:        pool,
-		identity:    identityHandler,
-		identityApp: identityService,
-		identityAPI: identitypublicapi.NewHandler(identityService),
-		userHomes:   tenantpostgres.NewUserHomeRepository(pool),
-		tenant:      tenantHandler,
-		tenantApp:   tenantService,
-		billingApp:  billingService,
+		pool:          pool,
+		catalogApp:    catalogService,
+		identity:      identityHandler,
+		identityApp:   identityService,
+		identityAPI:   identitypublicapi.NewHandler(identityService),
+		membershipApp: membershipService,
+		userHomes:     tenantpostgres.NewUserHomeRepository(pool),
+		tenant:        tenantHandler,
+		tenantApp:     tenantService,
+		billingApp:    billingService,
 	}, nil
 }
 
@@ -120,71 +144,47 @@ func (runtime *webRuntime) session(ctx echo.Context) error {
 	return writeIdentityResponse(ctx, response)
 }
 
-func (runtime *webRuntime) profile(ctx echo.Context) error {
-	response := runtime.identity.GetProfile(ctx.Request().Context(), sessionID(ctx))
-	return writeIdentityResponse(ctx, response)
-}
-
-func (runtime *webRuntime) updateProfile(ctx echo.Context) error {
-	var request identityweb.ProfileRequest
-	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	response := runtime.identity.UpdateProfile(ctx.Request().Context(), sessionID(ctx), request)
-	return writeIdentityResponse(ctx, response)
-}
-
-func (runtime *webRuntime) resetAPIToken(ctx echo.Context) error {
-	response := runtime.identity.ResetAPIToken(ctx.Request().Context(), sessionID(ctx))
-	return writeIdentityResponse(ctx, response)
-}
-
-func (runtime *webRuntime) preferences(ctx echo.Context) error {
-	response := runtime.identity.GetPreferences(ctx.Request().Context(), sessionID(ctx), "web")
-	return writeIdentityResponse(ctx, response)
-}
-
-func (runtime *webRuntime) updatePreferences(ctx echo.Context) error {
-	var request identityweb.PreferencesRequest
-	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	response := runtime.identity.UpdatePreferences(ctx.Request().Context(), sessionID(ctx), "web", request)
-	return writeIdentityResponse(ctx, response)
-}
-
-func (runtime *webRuntime) organizationSettings(ctx echo.Context) error {
+func (runtime *webRuntime) createTask(ctx echo.Context) error {
 	if response, ok := runtime.authorizeSession(ctx); !ok {
 		return response
 	}
-	organizationID, ok := parsePathID(ctx, "organization_id")
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	if err := runtime.requireCurrentSessionOrganization(ctx, organizationID); err != nil {
-		return err
-	}
-	response := runtime.tenant.GetOrganizationSettings(ctx.Request().Context(), organizationID)
-	return writeTenantResponse(ctx, response)
-}
 
-func (runtime *webRuntime) updateOrganizationSettings(ctx echo.Context) error {
-	if response, ok := runtime.authorizeSession(ctx); !ok {
-		return response
+	var request struct {
+		WorkspaceID int64  `json:"workspace_id"`
+		Name        string `json:"name"`
 	}
-	organizationID, ok := parsePathID(ctx, "organization_id")
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	if err := runtime.requireCurrentSessionOrganization(ctx, organizationID); err != nil {
-		return err
-	}
-	var request tenantweb.OrganizationSettingsRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	response := runtime.tenant.UpdateOrganizationSettings(ctx.Request().Context(), organizationID, request)
-	return writeTenantResponse(ctx, response)
+	if err := runtime.requireCurrentSessionWorkspace(ctx, request.WorkspaceID); err != nil {
+		return err
+	}
+
+	user, err := runtime.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+
+	task, err := runtime.catalogApp.CreateTask(ctx.Request().Context(), catalogapplication.CreateTaskCommand{
+		WorkspaceID: request.WorkspaceID,
+		CreatedBy:   user.ID,
+		Name:        request.Name,
+	})
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	return ctx.JSON(http.StatusCreated, struct {
+		Active      bool   `json:"active"`
+		Id          int    `json:"id"`
+		Name        string `json:"name"`
+		WorkspaceID int    `json:"workspace_id"`
+	}{
+		Active:      task.Active,
+		Id:          int(task.ID),
+		Name:        task.Name,
+		WorkspaceID: int(task.WorkspaceID),
+	})
 }
 
 func (runtime *webRuntime) workspaceSettings(ctx echo.Context) error {
@@ -419,6 +419,159 @@ func (runtime *webRuntime) workspaceQuota(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, body)
 }
 
+func (runtime *webRuntime) listWorkspaceMembers(ctx echo.Context) error {
+	if response, ok := runtime.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	user, err := runtime.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+
+	members, err := runtime.membershipApp.ListWorkspaceMembers(ctx.Request().Context(), workspaceID, user.ID)
+	if err != nil {
+		return writeMembershipError(err)
+	}
+	return ctx.JSON(http.StatusOK, map[string]any{
+		"members": membershipBodies(members),
+	})
+}
+
+func (runtime *webRuntime) inviteWorkspaceMember(ctx echo.Context) error {
+	if response, ok := runtime.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request struct {
+		Email string  `json:"email"`
+		Role  *string `json:"role"`
+	}
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	user, err := runtime.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+
+	command := membershipapplication.InviteWorkspaceMemberCommand{
+		WorkspaceID: workspaceID,
+		RequestedBy: user.ID,
+		Email:       request.Email,
+	}
+	if request.Role != nil {
+		role := membershipdomain.WorkspaceRole(*request.Role)
+		command.Role = &role
+	}
+	if _, err := runtime.membershipApp.InviteWorkspaceMember(ctx.Request().Context(), command); err != nil {
+		return writeMembershipError(err)
+	}
+	return ctx.JSON(http.StatusCreated, map[string]any{})
+}
+
+func (runtime *webRuntime) disableWorkspaceMember(ctx echo.Context) error {
+	return runtime.transitionWorkspaceMember(ctx, func(requestCtx context.Context, workspaceID int64, memberID int64, userID int64) (membershipapplication.WorkspaceMemberView, error) {
+		return runtime.membershipApp.DisableWorkspaceMember(requestCtx, workspaceID, memberID, userID)
+	})
+}
+
+func (runtime *webRuntime) restoreWorkspaceMember(ctx echo.Context) error {
+	return runtime.transitionWorkspaceMember(ctx, func(requestCtx context.Context, workspaceID int64, memberID int64, userID int64) (membershipapplication.WorkspaceMemberView, error) {
+		return runtime.membershipApp.RestoreWorkspaceMember(requestCtx, workspaceID, memberID, userID)
+	})
+}
+
+func (runtime *webRuntime) removeWorkspaceMember(ctx echo.Context) error {
+	return runtime.transitionWorkspaceMember(ctx, func(requestCtx context.Context, workspaceID int64, memberID int64, userID int64) (membershipapplication.WorkspaceMemberView, error) {
+		return runtime.membershipApp.RemoveWorkspaceMember(requestCtx, workspaceID, memberID, userID)
+	})
+}
+
+func (runtime *webRuntime) updateWorkspaceMemberRateCost(ctx echo.Context) error {
+	if response, ok := runtime.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, memberID, user, err := runtime.workspaceMemberMutationContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	var request struct {
+		HourlyRate *float64 `json:"hourly_rate"`
+		LaborCost  *float64 `json:"labor_cost"`
+	}
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	member, err := runtime.membershipApp.UpdateWorkspaceMemberRateCost(ctx.Request().Context(), membershipapplication.UpdateWorkspaceMemberRateCostCommand{
+		WorkspaceID: workspaceID,
+		MemberID:    memberID,
+		RequestedBy: user.ID,
+		HourlyRate:  request.HourlyRate,
+		LaborCost:   request.LaborCost,
+	})
+	if err != nil {
+		return writeMembershipError(err)
+	}
+	return ctx.JSON(http.StatusOK, membershipBody(member))
+}
+
+func (runtime *webRuntime) transitionWorkspaceMember(
+	ctx echo.Context,
+	operation func(context.Context, int64, int64, int64) (membershipapplication.WorkspaceMemberView, error),
+) error {
+	if response, ok := runtime.authorizeSession(ctx); !ok {
+		return response
+	}
+	workspaceID, memberID, user, err := runtime.workspaceMemberMutationContext(ctx)
+	if err != nil {
+		return err
+	}
+
+	member, err := operation(ctx.Request().Context(), workspaceID, memberID, user.ID)
+	if err != nil {
+		return writeMembershipError(err)
+	}
+	return ctx.JSON(http.StatusOK, membershipBody(member))
+}
+
+func (runtime *webRuntime) workspaceMemberMutationContext(
+	ctx echo.Context,
+) (workspaceID int64, memberID int64, user identityapplication.UserSnapshot, err error) {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	memberID, ok = parsePathID(ctx, "member_id")
+	if !ok {
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	if err := runtime.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
+		return 0, 0, identityapplication.UserSnapshot{}, err
+	}
+	user, resolveErr := runtime.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if resolveErr != nil {
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+	return workspaceID, memberID, user, nil
+}
+
 func sessionID(ctx echo.Context) string {
 	cookie, err := ctx.Cookie(sessionCookieName)
 	if err == nil {
@@ -489,17 +642,6 @@ func identityHTTPError(response identityweb.Response) error {
 	return echo.NewHTTPError(response.StatusCode, response.Body)
 }
 
-func (runtime *webRuntime) requireCurrentSessionOrganization(ctx echo.Context, organizationID int64) error {
-	home, err := runtime.currentSessionHome(ctx)
-	if err != nil {
-		return err
-	}
-	if home.organizationID != organizationID {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
-	}
-	return nil
-}
-
 func (runtime *webRuntime) requireCurrentSessionWorkspace(ctx echo.Context, workspaceID int64) error {
 	home, err := runtime.currentSessionHome(ctx)
 	if err != nil {
@@ -560,9 +702,10 @@ func boolPtr(value bool) *bool {
 }
 
 type billingBackedSessionShell struct {
-	tenant    *tenantapplication.Service
-	billing   *billingapplication.Service
-	userHomes userHomeRepository
+	tenant     *tenantapplication.Service
+	billing    *billingapplication.Service
+	membership *membershipapplication.Service
+	userHomes  userHomeRepository
 
 	mu sync.Mutex
 }
@@ -575,12 +718,14 @@ type sessionHome struct {
 func newBillingBackedSessionShell(
 	tenant *tenantapplication.Service,
 	billing *billingapplication.Service,
+	membership *membershipapplication.Service,
 	userHomes userHomeRepository,
 ) *billingBackedSessionShell {
 	return &billingBackedSessionShell{
-		tenant:    tenant,
-		billing:   billing,
-		userHomes: userHomes,
+		tenant:     tenant,
+		billing:    billing,
+		membership: membership,
+		userHomes:  userHomes,
 	}
 }
 
@@ -629,7 +774,11 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
 		return sessionHome{}, err
 	} else if ok {
-		return sessionHome{organizationID: organizationID, workspaceID: workspaceID}, nil
+		home := sessionHome{organizationID: organizationID, workspaceID: workspaceID}
+		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
+			return sessionHome{}, err
+		}
+		return home, nil
 	}
 
 	provider.mu.Lock()
@@ -637,7 +786,11 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
 		return sessionHome{}, err
 	} else if ok {
-		return sessionHome{organizationID: organizationID, workspaceID: workspaceID}, nil
+		home := sessionHome{organizationID: organizationID, workspaceID: workspaceID}
+		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
+			return sessionHome{}, err
+		}
+		return home, nil
 	}
 
 	created, err := provider.tenant.CreateOrganization(ctx, tenantapplication.CreateOrganizationCommand{
@@ -655,7 +808,67 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if err := provider.userHomes.Save(ctx, user.ID, home.organizationID, home.workspaceID); err != nil {
 		return sessionHome{}, err
 	}
+	if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
+		return sessionHome{}, err
+	}
 	return home, nil
+}
+
+func (provider *billingBackedSessionShell) ensureWorkspaceOwner(
+	ctx context.Context,
+	user identityapplication.UserSnapshot,
+	home sessionHome,
+) error {
+	_, err := provider.membership.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
+		WorkspaceID: home.workspaceID,
+		UserID:      user.ID,
+	})
+	return err
+}
+
+func membershipBodies(members []membershipapplication.WorkspaceMemberView) []map[string]any {
+	bodies := make([]map[string]any, 0, len(members))
+	for _, member := range members {
+		bodies = append(bodies, membershipBody(member))
+	}
+	return bodies
+}
+
+func membershipBody(member membershipapplication.WorkspaceMemberView) map[string]any {
+	return map[string]any{
+		"id":           member.ID,
+		"workspace_id": member.WorkspaceID,
+		"email":        member.Email,
+		"name":         member.FullName,
+		"role":         string(member.Role),
+		"status":       string(member.State),
+		"hourly_rate":  member.HourlyRate,
+		"labor_cost":   member.LaborCost,
+	}
+}
+
+func writeMembershipError(err error) error {
+	switch {
+	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
+		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
+		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),
+		errors.Is(err, membershipdomain.ErrInvalidWorkspaceMemberState),
+		errors.Is(err, membershipdomain.ErrNegativeWorkspaceMemberHourlyRate),
+		errors.Is(err, membershipdomain.ErrNegativeWorkspaceMemberLaborCost),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotInvited),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberCannotDisableFromState),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyDisabled),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotDisabled),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberRemoved),
+		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyRemoved):
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	default:
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
 }
 
 func defaultOrganizationName(user identityapplication.UserSnapshot) string {

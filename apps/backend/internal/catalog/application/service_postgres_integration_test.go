@@ -208,7 +208,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
-	workspaceID, _ := seedCatalogWorkspaceAndUser(t, ctx, database)
+	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
 	service := mustNewCatalogService(t, database)
 
 	if _, err := service.UpdateProject(ctx, catalogapplication.UpdateProjectCommand{
@@ -225,6 +225,15 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 		Pinned:      true,
 	}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
 		t.Fatalf("expected ErrProjectNotFound from pin, got %v", err)
+	}
+
+	if _, err := service.CreateTask(ctx, catalogapplication.CreateTaskCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		ProjectID:   int64Ptr(999),
+		Name:        "Missing project task",
+	}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
+		t.Fatalf("expected ErrProjectNotFound from create task, got %v", err)
 	}
 }
 
@@ -271,6 +280,10 @@ func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pg
 }
 
 func stringPtr(value string) *string {
+	return &value
+}
+
+func int64Ptr(value int64) *int64 {
 	return &value
 }
 

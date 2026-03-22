@@ -1,44 +1,15 @@
 package bootstrap
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
+	"github.com/labstack/echo/v4"
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
-
-	"github.com/jackc/pgx/v5"
-	"github.com/labstack/echo/v4"
 )
-
-type catalogProjectRecord struct {
-	ID            int64
-	WorkspaceID   int64
-	ClientID      *int64
-	Name          string
-	Active        bool
-	Pinned        bool
-	Template      bool
-	ActualSeconds int64
-	Recurring     bool
-	PeriodStart   *time.Time
-	PeriodEnd     *time.Time
-	ClientName    *string
-	CreatedAt     time.Time
-}
-
-type catalogTaskRecord struct {
-	ID          int64
-	WorkspaceID int64
-	ProjectID   *int64
-	Name        string
-	Active      bool
-	ProjectName *string
-}
 
 func (runtime *webRuntime) getPublicTrackClients(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
@@ -52,53 +23,22 @@ func (runtime *webRuntime) getPublicTrackClients(ctx echo.Context) error {
 		return err
 	}
 
-	where := []string{"workspace_id = $1"}
-	args := []any{workspaceID}
-	if name := strings.TrimSpace(ctx.QueryParam("name")); name != "" {
-		args = append(args, "%"+strings.ToLower(name)+"%")
-		where = append(where, fmt.Sprintf("lower(name) like $%d", len(args)))
-	}
-	switch strings.TrimSpace(ctx.QueryParam("status")) {
-	case "", "both":
-	case "active":
-		where = append(where, "archived = false")
-	case "archived":
-		where = append(where, "archived = true")
-	default:
+	status, err := publicTrackClientStatus(ctx.QueryParam("status"))
+	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		fmt.Sprintf(
-			"select id, workspace_id, name, archived, created_by, created_at from catalog_clients where %s order by lower(name), id",
-			strings.Join(where, " and "),
-		),
-		args...,
-	)
+	views, err := runtime.catalogApp.ListClients(ctx.Request().Context(), workspaceID, catalogapplication.ListClientsFilter{
+		Name:   ctx.QueryParam("name"),
+		Status: status,
+	})
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	defer rows.Close()
 
-	clients := make([]publictrackapi.ModelsClient, 0)
-	for rows.Next() {
-		var id, wid int64
-		var name string
-		var archived bool
-		var createdBy *int64
-		var createdAt time.Time
-		if err := rows.Scan(&id, &wid, &name, &archived, &createdBy, &createdAt); err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		clients = append(clients, publictrackapi.ModelsClient{
-			Archived:  boolPointer(archived),
-			At:        timePointer(createdAt),
-			CreatorId: intPointerFromInt64Pointer(createdBy),
-			Id:        intPointer(id),
-			Name:      stringPointer(name),
-			Wid:       intPointer(wid),
-		})
+	clients := make([]publictrackapi.ModelsClient, 0, len(views))
+	for _, view := range views {
+		clients = append(clients, clientViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, clients)
 }
@@ -123,51 +63,32 @@ func (runtime *webRuntime) getPublicTrackProjectUsers(ctx echo.Context) error {
 		return err
 	}
 
-	where := []string{"p.workspace_id = $1"}
-	args := []any{workspaceID}
 	if raw := strings.TrimSpace(ctx.QueryParam("project_ids")); raw != "" {
 		projectIDs, err := parseCSVInt64s(raw)
 		if err != nil {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		args = append(args, projectIDs)
-		where = append(where, fmt.Sprintf("pu.project_id = any($%d)", len(args)))
-	}
-
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		fmt.Sprintf(
-			`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at
-			from catalog_project_users pu
-			join catalog_projects p on p.id = pu.project_id
-			where %s
-			order by pu.project_id, pu.user_id`,
-			strings.Join(where, " and "),
-		),
-		args...,
-	)
-	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-	}
-	defer rows.Close()
-
-	users := make([]publictrackapi.ModelsProjectUser, 0)
-	for rows.Next() {
-		var projectID, userID, wid int64
-		var role string
-		var createdAt time.Time
-		if err := rows.Scan(&projectID, &userID, &role, &wid, &createdAt); err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		manager := role == "admin"
-		users = append(users, publictrackapi.ModelsProjectUser{
-			At:          timePointer(createdAt),
-			Id:          intPointer(projectID*1000000 + userID),
-			Manager:     boolPointer(manager),
-			ProjectId:   intPointer(projectID),
-			UserId:      intPointer(userID),
-			WorkspaceId: intPointer(wid),
+		views, err := runtime.catalogApp.ListProjectUsers(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectUsersFilter{
+			ProjectIDs: projectIDs,
 		})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+		users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
+		for _, view := range views {
+			users = append(users, projectUserViewToAPI(view))
+		}
+		return ctx.JSON(http.StatusOK, users)
+	}
+
+	views, err := runtime.catalogApp.ListProjectUsers(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectUsersFilter{})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
+	for _, view := range views {
+		users = append(users, projectUserViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, users)
 }
@@ -184,66 +105,97 @@ func (runtime *webRuntime) getPublicTrackProjects(ctx echo.Context) error {
 		return err
 	}
 
-	where := []string{"p.workspace_id = $1"}
-	args := []any{workspaceID}
+	filter := catalogapplication.ListProjectsFilter{
+		Page:       max(queryInt(ctx, "page", 1), 1),
+		PerPage:    max(min(queryInt(ctx, "per_page", 151), 200), 1),
+		SortPinned: queryBoolValue(ctx, "sort_pinned"),
+	}
 	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue != "" {
 		active, err := strconv.ParseBool(activeValue)
 		if err != nil {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		args = append(args, active)
-		where = append(where, fmt.Sprintf("p.active = $%d", len(args)))
+		filter.Active = &active
 	}
 	if onlyTemplates, ok := queryBool(ctx, "only_templates"); ok && onlyTemplates {
-		where = append(where, "p.template = true")
+		filter.OnlyTemplates = true
 	}
-	if name := strings.TrimSpace(ctx.QueryParam("name")); name != "" {
-		args = append(args, "%"+strings.ToLower(name)+"%")
-		where = append(where, fmt.Sprintf("lower(p.name) like $%d", len(args)))
+	if strings.EqualFold(ctx.QueryParam("sort_field"), "created_at") {
+		filter.SortField = catalogapplication.ProjectSortFieldCreatedAt
 	}
-	if search := strings.TrimSpace(ctx.QueryParam("search")); search != "" {
-		args = append(args, "%"+strings.ToLower(search)+"%")
-		where = append(where, fmt.Sprintf("lower(p.name) like $%d", len(args)))
+	if strings.EqualFold(ctx.QueryParam("sort_order"), "desc") {
+		filter.SortOrder = catalogapplication.SortOrderDescending
 	}
+	filter.Name = ctx.QueryParam("name")
+	filter.Search = ctx.QueryParam("search")
 
-	page := max(queryInt(ctx, "page", 1), 1)
-	perPage := max(min(queryInt(ctx, "per_page", 151), 200), 1)
-	args = append(args, perPage, (page-1)*perPage)
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		fmt.Sprintf(
-			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
-				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
-			from catalog_projects p
-			left join catalog_clients c on c.id = p.client_id
-			where %s
-			order by %s
-			limit $%d offset $%d`,
-			strings.Join(where, " and "),
-			projectOrderClause(ctx.QueryParam("sort_field"), ctx.QueryParam("sort_order"), queryBoolValue(ctx, "sort_pinned")),
-			len(args)-1,
-			len(args),
-		),
-		args...,
-	)
+	views, err := runtime.catalogApp.ListProjects(ctx.Request().Context(), workspaceID, filter)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	defer rows.Close()
 
-	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0)
-	for rows.Next() {
-		record, err := scanCatalogProject(rows)
-		if err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		projects = append(projects, record.toAPI())
+	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
+	for _, view := range views {
+		projects = append(projects, projectViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, projects)
 }
 
 func (runtime *webRuntime) getPublicTrackTasksBasic(ctx echo.Context) error {
+	pageView, err := runtime.listPublicTrackTasks(ctx, publicTrackTaskListQuery{
+		projectQueryKey: "project_id",
+		requireActive:   true,
+		defaultPerPage:  50,
+	})
+	if err != nil {
+		return err
+	}
+
+	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
+	for _, view := range pageView.Tasks {
+		tasks = append(tasks, taskViewToAPI(view))
+	}
+
+	return ctx.JSON(http.StatusOK, publictrackapi.TaskResponse{
+		Data:       &tasks,
+		Page:       intPointerFromInt(pageView.Page),
+		PerPage:    intPointerFromInt(pageView.PerPage),
+		SortField:  stringPointer(defaultTaskSortField(string(pageView.SortField))),
+		SortOrder:  stringPointer(string(pageView.SortOrder)),
+		TotalCount: intPointerFromInt(pageView.TotalCount),
+	})
+}
+
+func (runtime *webRuntime) getPublicTrackTasks(ctx echo.Context) error {
+	pageView, err := runtime.listPublicTrackTasks(ctx, publicTrackTaskListQuery{
+		projectQueryKey: "pid",
+		defaultPerPage:  50,
+	})
+	if err != nil {
+		return err
+	}
+
+	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
+	for _, view := range pageView.Tasks {
+		tasks = append(tasks, taskViewToAPI(view))
+	}
+
+	return ctx.JSON(http.StatusOK, publictrackapi.TaskResponse{
+		Data:       &tasks,
+		Page:       intPointerFromInt(pageView.Page),
+		PerPage:    intPointerFromInt(pageView.PerPage),
+		SortField:  stringPointer(defaultTaskSortField(string(pageView.SortField))),
+		SortOrder:  stringPointer(string(pageView.SortOrder)),
+		TotalCount: intPointerFromInt(pageView.TotalCount),
+	})
+}
+
+func (runtime *webRuntime) getPublicTrackProjectTasks(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
@@ -254,77 +206,92 @@ func (runtime *webRuntime) getPublicTrackTasksBasic(ctx echo.Context) error {
 		return err
 	}
 
-	where := []string{"t.workspace_id = $1"}
-	args := []any{workspaceID}
-	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue == "" {
-		where = append(where, "t.active = true")
-	} else {
+	filter := catalogapplication.ListTasksFilter{
+		Page:      1,
+		PerPage:   200,
+		ProjectID: &projectID,
+	}
+	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue != "" {
 		active, err := strconv.ParseBool(activeValue)
 		if err != nil {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		args = append(args, active)
-		where = append(where, fmt.Sprintf("t.active = $%d", len(args)))
-	}
-	if projectID := strings.TrimSpace(ctx.QueryParam("project_id")); projectID != "" {
-		parsed, err := strconv.ParseInt(projectID, 10, 64)
-		if err != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		if active {
+			filter.Active = boolPtr(true)
 		}
-		args = append(args, parsed)
-		where = append(where, fmt.Sprintf("t.project_id = $%d", len(args)))
-	}
-	if search := strings.TrimSpace(ctx.QueryParam("search")); search != "" {
-		args = append(args, "%"+strings.ToLower(search)+"%")
-		where = append(where, fmt.Sprintf("lower(t.name) like $%d", len(args)))
 	}
 
-	page := max(queryInt(ctx, "page", 1), 1)
-	perPage := max(min(queryInt(ctx, "per_page", 50), 200), 1)
-	countSQL := fmt.Sprintf("select count(*) from catalog_tasks t where %s", strings.Join(where, " and "))
-	var totalCount int
-	if err := runtime.pool.QueryRow(ctx.Request().Context(), countSQL, args...).Scan(&totalCount); err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	args = append(args, perPage, (page-1)*perPage)
-	rows, err := runtime.pool.Query(
-		ctx.Request().Context(),
-		fmt.Sprintf(
-			`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
-			from catalog_tasks t
-			left join catalog_projects p on p.id = t.project_id
-			where %s
-			order by %s
-			limit $%d offset $%d`,
-			strings.Join(where, " and "),
-			taskOrderClause(ctx.QueryParam("sort_field"), ctx.QueryParam("sort_order")),
-			len(args)-1,
-			len(args),
-		),
-		args...,
-	)
+	pageView, err := runtime.catalogApp.ListTasks(ctx.Request().Context(), workspaceID, filter)
 	if err != nil {
-		return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	defer rows.Close()
 
-	tasks := make([]publictrackapi.ModelsTask, 0)
-	for rows.Next() {
-		record, err := scanCatalogTask(rows)
-		if err != nil {
-			return ctx.JSON(http.StatusInternalServerError, "Internal Server Error")
-		}
-		tasks = append(tasks, record.toAPI())
+	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
+	for _, view := range pageView.Tasks {
+		tasks = append(tasks, taskViewToAPI(view))
 	}
-	return ctx.JSON(http.StatusOK, publictrackapi.TaskResponse{
-		Data:       &tasks,
-		Page:       intPointerFromInt(page),
-		PerPage:    intPointerFromInt(perPage),
-		SortField:  stringPointer(defaultTaskSortField(ctx.QueryParam("sort_field"))),
-		SortOrder:  stringPointer(sortDirection(ctx.QueryParam("sort_order"))),
-		TotalCount: intPointerFromInt(totalCount),
-	})
+
+	return ctx.JSON(http.StatusOK, tasks)
+}
+
+type publicTrackTaskListQuery struct {
+	projectQueryKey string
+	requireActive   bool
+	defaultPerPage  int
+}
+
+func (runtime *webRuntime) listPublicTrackTasks(
+	ctx echo.Context,
+	query publicTrackTaskListQuery,
+) (catalogapplication.TaskPage, error) {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return catalogapplication.TaskPage{}, err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return catalogapplication.TaskPage{}, err
+	}
+
+	filter := catalogapplication.ListTasksFilter{
+		Page:    max(queryInt(ctx, "page", 1), 1),
+		PerPage: max(min(queryInt(ctx, "per_page", query.defaultPerPage), 200), 1),
+	}
+	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue == "" {
+		if query.requireActive {
+			filter.Active = boolPtr(true)
+		}
+	} else {
+		active, err := strconv.ParseBool(activeValue)
+		if err != nil {
+			return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		}
+		filter.Active = &active
+	}
+	if query.projectQueryKey != "" {
+		if projectID := strings.TrimSpace(ctx.QueryParam(query.projectQueryKey)); projectID != "" {
+			parsed, err := strconv.ParseInt(projectID, 10, 64)
+			if err != nil {
+				return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+			}
+			filter.ProjectID = &parsed
+		}
+	}
+	if strings.EqualFold(ctx.QueryParam("sort_field"), "created_at") {
+		filter.SortField = catalogapplication.TaskSortFieldCreatedAt
+	}
+	if strings.EqualFold(ctx.QueryParam("sort_order"), "desc") {
+		filter.SortOrder = catalogapplication.SortOrderDescending
+	}
+	filter.Search = ctx.QueryParam("search")
+
+	pageView, err := runtime.catalogApp.ListTasks(ctx.Request().Context(), workspaceID, filter)
+	if err != nil {
+		return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	return pageView, nil
 }
 
 func (runtime *webRuntime) requirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error) {
@@ -370,89 +337,77 @@ func (runtime *webRuntime) requirePublicTrackHome(ctx echo.Context) (sessionHome
 	}
 }
 
-func (runtime *webRuntime) loadCatalogProject(ctx echo.Context, workspaceID int64, projectID int64) (*catalogProjectRecord, error) {
-	row := runtime.pool.QueryRow(
-		ctx.Request().Context(),
-		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
-			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
-		from catalog_projects p
-		left join catalog_clients c on c.id = p.client_id
-		where p.workspace_id = $1 and p.id = $2`,
-		workspaceID,
-		projectID,
-	)
-	record, err := scanCatalogProject(row)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, echo.NewHTTPError(http.StatusNotFound, "Not Found")
+func clientViewToAPI(view catalogapplication.ClientView) publictrackapi.ModelsClient {
+	return publictrackapi.ModelsClient{
+		Archived:  boolPointer(view.Archived),
+		At:        timePointer(view.CreatedAt),
+		CreatorId: intPointerFromInt64Pointer(view.CreatedBy),
+		Id:        intPointer(view.ID),
+		Name:      stringPointer(view.Name),
+		Wid:       intPointer(view.WorkspaceID),
 	}
-	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-	}
-	return &record, nil
 }
 
-func (record catalogProjectRecord) toAPI() publictrackapi.GithubComTogglTogglApiInternalModelsProject {
+func projectUserViewToAPI(view catalogapplication.ProjectUserView) publictrackapi.ModelsProjectUser {
+	return publictrackapi.ModelsProjectUser{
+		At:          timePointer(view.CreatedAt),
+		Id:          intPointer(view.ProjectID*1000000 + view.UserID),
+		Manager:     boolPointer(view.Role == "admin"),
+		ProjectId:   intPointer(view.ProjectID),
+		UserId:      intPointer(view.UserID),
+		WorkspaceId: intPointer(view.WorkspaceID),
+	}
+}
+
+func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.GithubComTogglTogglApiInternalModelsProject {
 	project := publictrackapi.GithubComTogglTogglApiInternalModelsProject{
-		Active:        boolPointer(record.Active),
-		ActualSeconds: intPointer(record.ActualSeconds),
-		At:            timePointer(record.CreatedAt),
-		CanTrackTime:  boolPointer(record.Active),
-		ClientId:      intPointerFromInt64Pointer(record.ClientID),
-		ClientName:    record.ClientName,
-		CreatedAt:     timePointer(record.CreatedAt),
-		Id:            intPointer(record.ID),
-		Name:          stringPointer(record.Name),
-		Pinned:        boolPointer(record.Pinned),
-		Recurring:     boolPointer(record.Recurring),
-		Template:      boolPointer(record.Template),
-		Wid:           intPointer(record.WorkspaceID),
-		WorkspaceId:   intPointer(record.WorkspaceID),
+		Active:        boolPointer(view.Active),
+		ActualSeconds: intPointer(view.ActualSeconds),
+		At:            timePointer(view.CreatedAt),
+		CanTrackTime:  boolPointer(view.Active),
+		ClientId:      intPointerFromInt64Pointer(view.ClientID),
+		ClientName:    view.ClientName,
+		CreatedAt:     timePointer(view.CreatedAt),
+		Id:            intPointer(view.ID),
+		Name:          stringPointer(view.Name),
+		Pinned:        boolPointer(view.Pinned),
+		Recurring:     boolPointer(view.Recurring),
+		Template:      boolPointer(view.Template),
+		Wid:           intPointer(view.WorkspaceID),
+		WorkspaceId:   intPointer(view.WorkspaceID),
 	}
-	if record.ClientID != nil {
-		project.Cid = intPointer(*record.ClientID)
+	if view.ClientID != nil {
+		project.Cid = intPointer(*view.ClientID)
 	}
-	if record.Recurring && record.PeriodStart != nil && record.PeriodEnd != nil {
+	if view.Recurring && view.PeriodStart != nil && view.PeriodEnd != nil {
 		project.CurrentPeriod = &publictrackapi.ModelsRecurringPeriod{
-			StartDate: datePointer(*record.PeriodStart),
-			EndDate:   datePointer(*record.PeriodEnd),
+			StartDate: datePointer(*view.PeriodStart),
+			EndDate:   datePointer(*view.PeriodEnd),
 		}
 	}
 	return project
 }
 
-func (record catalogTaskRecord) toAPI() publictrackapi.ModelsTask {
+func taskViewToAPI(view catalogapplication.TaskView) publictrackapi.ModelsTask {
 	return publictrackapi.ModelsTask{
-		Active:      boolPointer(record.Active),
-		Id:          intPointer(record.ID),
-		Name:        stringPointer(record.Name),
-		ProjectId:   intPointerFromInt64Pointer(record.ProjectID),
-		ProjectName: record.ProjectName,
-		WorkspaceId: intPointer(record.WorkspaceID),
+		Active:      boolPointer(view.Active),
+		Id:          intPointer(view.ID),
+		Name:        stringPointer(view.Name),
+		ProjectId:   intPointerFromInt64Pointer(view.ProjectID),
+		ProjectName: view.ProjectName,
+		WorkspaceId: intPointer(view.WorkspaceID),
 	}
 }
 
-func scanCatalogProject(scanner interface{ Scan(...any) error }) (catalogProjectRecord, error) {
-	var record catalogProjectRecord
-	err := scanner.Scan(
-		&record.ID,
-		&record.WorkspaceID,
-		&record.ClientID,
-		&record.Name,
-		&record.Active,
-		&record.Pinned,
-		&record.Template,
-		&record.ActualSeconds,
-		&record.Recurring,
-		&record.PeriodStart,
-		&record.PeriodEnd,
-		&record.ClientName,
-		&record.CreatedAt,
-	)
-	return record, err
-}
-
-func scanCatalogTask(scanner interface{ Scan(...any) error }) (catalogTaskRecord, error) {
-	var record catalogTaskRecord
-	err := scanner.Scan(&record.ID, &record.WorkspaceID, &record.ProjectID, &record.Name, &record.Active, &record.ProjectName)
-	return record, err
+func publicTrackClientStatus(value string) (catalogapplication.ClientStatus, error) {
+	switch strings.TrimSpace(value) {
+	case "", "both":
+		return catalogapplication.ClientStatusBoth, nil
+	case "active":
+		return catalogapplication.ClientStatusActive, nil
+	case "archived":
+		return catalogapplication.ClientStatusArchived, nil
+	default:
+		return "", strconv.ErrSyntax
+	}
 }

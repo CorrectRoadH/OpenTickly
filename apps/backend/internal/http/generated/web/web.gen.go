@@ -21,13 +21,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-// Defines values for ListProjectsParamsStatus.
-const (
-	Active   ListProjectsParamsStatus = "active"
-	All      ListProjectsParamsStatus = "all"
-	Archived ListProjectsParamsStatus = "archived"
-)
-
 // CapabilitySnapshot defines model for CapabilitySnapshot.
 type CapabilitySnapshot = externalRef0.CapabilitySnapshot
 
@@ -348,40 +341,11 @@ type WorkspaceSettingsUpdate struct {
 	Workspace   *UpdateWorkspaceSettingsRequest `json:"workspace,omitempty"`
 }
 
-// ListProjectsParams defines parameters for ListProjects.
-type ListProjectsParams struct {
-	WorkspaceId *int                      `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
-	Status      *ListProjectsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
-}
-
-// ListProjectsParamsStatus defines parameters for ListProjects.
-type ListProjectsParamsStatus string
-
-// ListTasksParams defines parameters for ListTasks.
-type ListTasksParams struct {
-	WorkspaceId *int `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
-}
-
 // LoginWebUserJSONRequestBody defines body for LoginWebUser for application/json ContentType.
 type LoginWebUserJSONRequestBody = LoginRequest
 
 // RegisterWebUserJSONRequestBody defines body for RegisterWebUser for application/json ContentType.
 type RegisterWebUserJSONRequestBody = RegisterRequest
-
-// UpdateOrganizationSettingsJSONRequestBody defines body for UpdateOrganizationSettings for application/json ContentType.
-type UpdateOrganizationSettingsJSONRequestBody = OrganizationSettingsUpdate
-
-// UpdateCurrentUserPreferencesJSONRequestBody defines body for UpdateCurrentUserPreferences for application/json ContentType.
-type UpdateCurrentUserPreferencesJSONRequestBody = UserPreferencesUpdate
-
-// UpdateCurrentUserProfileJSONRequestBody defines body for UpdateCurrentUserProfile for application/json ContentType.
-type UpdateCurrentUserProfileJSONRequestBody = UpdateCurrentUserProfileRequest
-
-// CreateProjectJSONRequestBody defines body for CreateProject for application/json ContentType.
-type CreateProjectJSONRequestBody = ProjectCreateRequest
-
-// GrantProjectMemberJSONRequestBody defines body for GrantProjectMember for application/json ContentType.
-type GrantProjectMemberJSONRequestBody = ProjectMemberGrantRequest
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = TaskCreateRequest
@@ -409,63 +373,9 @@ type ServerInterface interface {
 	// Register through the web app shell
 	// (POST /web/v1/auth/register)
 	RegisterWebUser(ctx echo.Context) error
-	// Read organization settings for the web shell
-	// (GET /web/v1/organizations/{organization_id}/settings)
-	GetOrganizationSettings(ctx echo.Context, organizationId int) error
-	// Update organization settings for the web shell
-	// (PATCH /web/v1/organizations/{organization_id}/settings)
-	UpdateOrganizationSettings(ctx echo.Context, organizationId int) error
-	// Read the current user preferences for the web shell
-	// (GET /web/v1/preferences)
-	GetCurrentUserPreferences(ctx echo.Context) error
-	// Update the current user preferences for the web shell
-	// (PATCH /web/v1/preferences)
-	UpdateCurrentUserPreferences(ctx echo.Context) error
-	// Read the current user profile for the web shell
-	// (GET /web/v1/profile)
-	GetCurrentUserProfile(ctx echo.Context) error
-	// Update the current user profile for the web shell
-	// (PATCH /web/v1/profile)
-	UpdateCurrentUserProfile(ctx echo.Context) error
-	// Rotate the current user API token for the web shell
-	// (POST /web/v1/profile/api-token/reset)
-	ResetCurrentUserApiToken(ctx echo.Context) error
-	// List projects
-	// (GET /web/v1/projects)
-	ListProjects(ctx echo.Context, params ListProjectsParams) error
-	// Create a project
-	// (POST /web/v1/projects)
-	CreateProject(ctx echo.Context) error
-	// Retrieve project detail
-	// (GET /web/v1/projects/{project_id})
-	GetProject(ctx echo.Context, projectId int) error
-	// Restore an archived project
-	// (DELETE /web/v1/projects/{project_id}/archive)
-	RestoreProject(ctx echo.Context, projectId int) error
-	// Archive a project
-	// (POST /web/v1/projects/{project_id}/archive)
-	ArchiveProject(ctx echo.Context, projectId int) error
-	// List project members
-	// (GET /web/v1/projects/{project_id}/members)
-	ListProjectMembers(ctx echo.Context, projectId int) error
-	// Grant a project member
-	// (POST /web/v1/projects/{project_id}/members)
-	GrantProjectMember(ctx echo.Context, projectId int) error
-	// Revoke a project member
-	// (DELETE /web/v1/projects/{project_id}/members/{member_id})
-	RevokeProjectMember(ctx echo.Context, projectId int, memberId int) error
-	// Unpin a project
-	// (DELETE /web/v1/projects/{project_id}/pin)
-	UnpinProject(ctx echo.Context, projectId int) error
-	// Pin a project
-	// (POST /web/v1/projects/{project_id}/pin)
-	PinProject(ctx echo.Context, projectId int) error
 	// Bootstrap the current web session shell
 	// (GET /web/v1/session)
 	GetWebSession(ctx echo.Context) error
-	// List tasks
-	// (GET /web/v1/tasks)
-	ListTasks(ctx echo.Context, params ListTasksParams) error
 	// Create a task
 	// (POST /web/v1/tasks)
 	CreateTask(ctx echo.Context) error
@@ -539,277 +449,12 @@ func (w *ServerInterfaceWrapper) RegisterWebUser(ctx echo.Context) error {
 	return err
 }
 
-// GetOrganizationSettings converts echo context to params.
-func (w *ServerInterfaceWrapper) GetOrganizationSettings(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "organization_id" -------------
-	var organizationId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "organization_id", ctx.Param("organization_id"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter organization_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetOrganizationSettings(ctx, organizationId)
-	return err
-}
-
-// UpdateOrganizationSettings converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdateOrganizationSettings(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "organization_id" -------------
-	var organizationId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "organization_id", ctx.Param("organization_id"), &organizationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter organization_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateOrganizationSettings(ctx, organizationId)
-	return err
-}
-
-// GetCurrentUserPreferences converts echo context to params.
-func (w *ServerInterfaceWrapper) GetCurrentUserPreferences(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetCurrentUserPreferences(ctx)
-	return err
-}
-
-// UpdateCurrentUserPreferences converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdateCurrentUserPreferences(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateCurrentUserPreferences(ctx)
-	return err
-}
-
-// GetCurrentUserProfile converts echo context to params.
-func (w *ServerInterfaceWrapper) GetCurrentUserProfile(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetCurrentUserProfile(ctx)
-	return err
-}
-
-// UpdateCurrentUserProfile converts echo context to params.
-func (w *ServerInterfaceWrapper) UpdateCurrentUserProfile(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UpdateCurrentUserProfile(ctx)
-	return err
-}
-
-// ResetCurrentUserApiToken converts echo context to params.
-func (w *ServerInterfaceWrapper) ResetCurrentUserApiToken(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ResetCurrentUserApiToken(ctx)
-	return err
-}
-
-// ListProjects converts echo context to params.
-func (w *ServerInterfaceWrapper) ListProjects(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListProjectsParams
-	// ------------- Optional query parameter "workspace_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "workspace_id", ctx.QueryParams(), &params.WorkspaceId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
-	}
-
-	// ------------- Optional query parameter "status" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "status", ctx.QueryParams(), &params.Status)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter status: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListProjects(ctx, params)
-	return err
-}
-
-// CreateProject converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateProject(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateProject(ctx)
-	return err
-}
-
-// GetProject converts echo context to params.
-func (w *ServerInterfaceWrapper) GetProject(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetProject(ctx, projectId)
-	return err
-}
-
-// RestoreProject converts echo context to params.
-func (w *ServerInterfaceWrapper) RestoreProject(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RestoreProject(ctx, projectId)
-	return err
-}
-
-// ArchiveProject converts echo context to params.
-func (w *ServerInterfaceWrapper) ArchiveProject(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ArchiveProject(ctx, projectId)
-	return err
-}
-
-// ListProjectMembers converts echo context to params.
-func (w *ServerInterfaceWrapper) ListProjectMembers(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListProjectMembers(ctx, projectId)
-	return err
-}
-
-// GrantProjectMember converts echo context to params.
-func (w *ServerInterfaceWrapper) GrantProjectMember(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GrantProjectMember(ctx, projectId)
-	return err
-}
-
-// RevokeProjectMember converts echo context to params.
-func (w *ServerInterfaceWrapper) RevokeProjectMember(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// ------------- Path parameter "member_id" -------------
-	var memberId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "member_id", ctx.Param("member_id"), &memberId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter member_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.RevokeProjectMember(ctx, projectId, memberId)
-	return err
-}
-
-// UnpinProject converts echo context to params.
-func (w *ServerInterfaceWrapper) UnpinProject(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UnpinProject(ctx, projectId)
-	return err
-}
-
-// PinProject converts echo context to params.
-func (w *ServerInterfaceWrapper) PinProject(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "project_id" -------------
-	var projectId int
-
-	err = runtime.BindStyledParameterWithOptions("simple", "project_id", ctx.Param("project_id"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter project_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.PinProject(ctx, projectId)
-	return err
-}
-
 // GetWebSession converts echo context to params.
 func (w *ServerInterfaceWrapper) GetWebSession(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetWebSession(ctx)
-	return err
-}
-
-// ListTasks converts echo context to params.
-func (w *ServerInterfaceWrapper) ListTasks(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTasksParams
-	// ------------- Optional query parameter "workspace_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "workspace_id", ctx.QueryParams(), &params.WorkspaceId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListTasks(ctx, params)
 	return err
 }
 
@@ -1077,25 +722,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/web/v1/auth/login", wrapper.LoginWebUser)
 	router.POST(baseURL+"/web/v1/auth/logout", wrapper.LogoutWebUser)
 	router.POST(baseURL+"/web/v1/auth/register", wrapper.RegisterWebUser)
-	router.GET(baseURL+"/web/v1/organizations/:organization_id/settings", wrapper.GetOrganizationSettings)
-	router.PATCH(baseURL+"/web/v1/organizations/:organization_id/settings", wrapper.UpdateOrganizationSettings)
-	router.GET(baseURL+"/web/v1/preferences", wrapper.GetCurrentUserPreferences)
-	router.PATCH(baseURL+"/web/v1/preferences", wrapper.UpdateCurrentUserPreferences)
-	router.GET(baseURL+"/web/v1/profile", wrapper.GetCurrentUserProfile)
-	router.PATCH(baseURL+"/web/v1/profile", wrapper.UpdateCurrentUserProfile)
-	router.POST(baseURL+"/web/v1/profile/api-token/reset", wrapper.ResetCurrentUserApiToken)
-	router.GET(baseURL+"/web/v1/projects", wrapper.ListProjects)
-	router.POST(baseURL+"/web/v1/projects", wrapper.CreateProject)
-	router.GET(baseURL+"/web/v1/projects/:project_id", wrapper.GetProject)
-	router.DELETE(baseURL+"/web/v1/projects/:project_id/archive", wrapper.RestoreProject)
-	router.POST(baseURL+"/web/v1/projects/:project_id/archive", wrapper.ArchiveProject)
-	router.GET(baseURL+"/web/v1/projects/:project_id/members", wrapper.ListProjectMembers)
-	router.POST(baseURL+"/web/v1/projects/:project_id/members", wrapper.GrantProjectMember)
-	router.DELETE(baseURL+"/web/v1/projects/:project_id/members/:member_id", wrapper.RevokeProjectMember)
-	router.DELETE(baseURL+"/web/v1/projects/:project_id/pin", wrapper.UnpinProject)
-	router.POST(baseURL+"/web/v1/projects/:project_id/pin", wrapper.PinProject)
 	router.GET(baseURL+"/web/v1/session", wrapper.GetWebSession)
-	router.GET(baseURL+"/web/v1/tasks", wrapper.ListTasks)
 	router.POST(baseURL+"/web/v1/tasks", wrapper.CreateTask)
 	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/capabilities", wrapper.GetWorkspaceCapabilities)
 	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/members", wrapper.ListWorkspaceMembers)
@@ -1115,64 +742,54 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"//8VuIXCIm8AAA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

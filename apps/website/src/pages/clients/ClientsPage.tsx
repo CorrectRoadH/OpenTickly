@@ -37,18 +37,18 @@ export function ClientsPage(): ReactElement {
 
   if (clientsQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
-        <p className="text-sm text-slate-600">Loading clients…</p>
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <p className="text-sm text-slate-400">Loading clients…</p>
       </AppPanel>
     );
   }
 
   if (clientsQuery.isError) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-rose-500/30 bg-[#23181b]">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
-          <p className="text-sm leading-6 text-rose-700">
+          <h1 className="text-3xl font-semibold text-white">Clients</h1>
+          <p className="text-sm leading-6 text-rose-300">
             Unable to load clients. Refresh to try again.
           </p>
         </div>
@@ -85,12 +85,12 @@ export function ClientsPage(): ReactElement {
   }
 
   return (
-    <AppPanel className="bg-white/95" data-testid="clients-page">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="clients-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
-          <p className="text-sm leading-6 text-slate-600">Client directory</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <h1 className="text-3xl font-semibold text-white">Clients</h1>
+          <p className="text-sm text-slate-500">Client directory</p>
+          <p className="text-sm leading-6 text-slate-400">
             Keep project ownership, archived coverage, and tracked-time totals visible from the
             workspace client directory.
           </p>
@@ -101,11 +101,11 @@ export function ClientsPage(): ReactElement {
       </div>
 
       <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="clients-filter-bar">
-        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-700">
+        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Client status filter
           <select
             aria-label="Client status filter"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm text-white"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as ClientStatusFilter)}
           >
@@ -117,11 +117,11 @@ export function ClientsPage(): ReactElement {
       </div>
 
       <form className="mt-4 flex flex-wrap items-end gap-3" data-testid="clients-create-form" onSubmit={handleCreateClient}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Client name
           <input
             ref={clientNameInputRef}
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
             value={clientName}
             onChange={(event) => setClientName(event.target.value)}
           />
@@ -132,12 +132,12 @@ export function ClientsPage(): ReactElement {
         >
           Save client
         </AppButton>
-        {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
       </form>
 
       {filteredClients.length > 0 ? (
-        <ul className="mt-6 divide-y divide-slate-200" aria-label="Clients list" data-testid="clients-list">
-          <li className="py-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
+        <ul className="mt-6 divide-y divide-white/8" aria-label="Clients list" data-testid="clients-list">
+          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
             Workspace {session.currentWorkspace.id}
           </li>
           {filteredClients.map((client) => {
@@ -147,19 +147,19 @@ export function ClientsPage(): ReactElement {
             return (
               <li key={client.id} className="flex items-center justify-between py-3">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">{client.name}</p>
-                  <p className="text-xs text-slate-600">Client · {statusLabel}</p>
+                  <p className="text-sm font-semibold text-white">{client.name}</p>
+                  <p className="text-xs text-slate-400">Client · {statusLabel}</p>
                   <p className="text-[11px] text-slate-500">Workspace {workspaceRef}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a
                     aria-label={`Client details for ${client.name}`}
-                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                    className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
                     href={`/workspaces/${session.currentWorkspace.id}/clients/${client.id}`}
                   >
                     Client details
                   </a>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
                     {statusLabel}
                   </span>
                 </div>
@@ -168,15 +168,15 @@ export function ClientsPage(): ReactElement {
           })}
         </ul>
       ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6" data-testid="clients-empty-state">
-          <p className="text-sm font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
-          <p className="mt-1 text-sm text-slate-600">
+        <div className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-6" data-testid="clients-empty-state">
+          <p className="text-sm font-semibold text-white">{emptyStateTitle(statusFilter)}</p>
+          <p className="mt-1 text-sm text-slate-400">
             Switch filters or create a client to continue.
           </p>
         </div>
       )}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="clients-summary">
+      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="clients-summary">
         <p>
           Showing {clients.length} clients in workspace {session.currentWorkspace.id}.
         </p>

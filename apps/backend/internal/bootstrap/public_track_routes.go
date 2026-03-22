@@ -70,6 +70,9 @@ func newPublicTrackRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 		group.POST("/workspaces/:workspace_id/projects", runtime.postPublicTrackProjects)
 		group.PUT("/workspaces/:workspace_id/projects/:project_id", runtime.putPublicTrackProject)
 		group.POST("/workspaces/:workspace_id/projects/:project_id/pin", runtime.postPublicTrackPinnedProject)
+		group.GET("/workspaces/:workspace_id/projects/:project_id/tasks", runtime.getPublicTrackProjectTasks)
+		group.POST("/workspaces/:workspace_id/projects/:project_id/tasks", runtime.postPublicTrackProjectTask)
+		group.GET("/workspaces/:workspace_id/tasks", runtime.getPublicTrackTasks)
 		group.GET("/workspaces/:workspace_id/tasks/basic", runtime.getPublicTrackTasksBasic)
 	}, nil
 }
@@ -146,7 +149,7 @@ func (runtime *webRuntime) postPublicTrackPreferences(ctx echo.Context) error {
 
 	response := runtime.identityAPI.PostPreferences(ctx.Request().Context(), credentials, "web", identitydomain.Preferences{
 		DateFormat:      stringValue(request.DateFormat),
-		TimeOfDayFormat: stringValue(request.TimeofdayFormat),
+		TimeOfDayFormat: normalizeTrackTimeOfDayFormat(stringValue(request.TimeofdayFormat)),
 		AlphaFeatures:   alphaFeaturesFromPublicTrack(request.AlphaFeatures),
 	})
 
@@ -248,6 +251,14 @@ func stringValue(value *string) string {
 	}
 
 	return *value
+}
+
+func normalizeTrackTimeOfDayFormat(value string) string {
+	if strings.TrimSpace(value) == "h:mm a" {
+		return "h:mm A"
+	}
+
+	return value
 }
 
 func emailValue(value *openapi_types.Email) string {

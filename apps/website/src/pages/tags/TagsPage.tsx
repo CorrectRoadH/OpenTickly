@@ -29,18 +29,18 @@ export function TagsPage(): ReactElement {
 
   if (tagsQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
-        <p className="text-sm text-slate-600">Loading tags…</p>
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <p className="text-sm text-slate-400">Loading tags…</p>
       </AppPanel>
     );
   }
 
   if (tagsQuery.isError) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-rose-500/30 bg-[#23181b]">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tags</h1>
-          <p className="text-sm leading-6 text-rose-700">
+          <h1 className="text-3xl font-semibold text-white">Tags</h1>
+          <p className="text-sm leading-6 text-rose-300">
             Unable to load tags. Refresh to try again.
           </p>
         </div>
@@ -48,7 +48,7 @@ export function TagsPage(): ReactElement {
     );
   }
 
-  const tags = tagsQuery.data ?? [];
+  const tags = normalizeTags(tagsQuery.data);
   const filteredTags = tags.filter((tag) => {
     if (statusFilter === "active") {
       return !tag.deleted_at;
@@ -77,12 +77,12 @@ export function TagsPage(): ReactElement {
   }
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="tags-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tags</h1>
-          <p className="text-sm leading-6 text-slate-600">Tag directory</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <h1 className="text-3xl font-semibold text-white">Tags</h1>
+          <p className="text-sm text-slate-500">Tag directory</p>
+          <p className="text-sm leading-6 text-slate-400">
             Keep tag usage visible from the shared tracking catalog so list, filter, and detail
             entry points align with the project page skeleton.
           </p>
@@ -92,12 +92,12 @@ export function TagsPage(): ReactElement {
         </AppButton>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-end gap-3">
-        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-700">
+      <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="tags-filter-bar">
+        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Tag status filter
           <select
             aria-label="Tag status filter"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm text-white"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
           >
@@ -108,12 +108,12 @@ export function TagsPage(): ReactElement {
         </label>
       </div>
 
-      <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={handleCreateTag}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+      <form className="mt-4 flex flex-wrap items-end gap-3" data-testid="tags-create-form" onSubmit={handleCreateTag}>
+        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Tag name
           <input
             ref={tagNameInputRef}
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
             value={tagName}
             onChange={(event) => setTagName(event.target.value)}
           />
@@ -124,30 +124,33 @@ export function TagsPage(): ReactElement {
         >
           Save tag
         </AppButton>
-        {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
       </form>
 
       {filteredTags.length > 0 ? (
-        <ul className="mt-6 divide-y divide-slate-200" aria-label="Tags list">
+        <ul className="mt-6 divide-y divide-white/8" aria-label="Tags list" data-testid="tags-list">
+          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
+            Workspace {session.currentWorkspace.id}
+          </li>
           {filteredTags.map((tag) => {
             const statusLabel = tag.deleted_at ? "Inactive" : "Active";
 
             return (
               <li key={tag.id} className="flex items-center justify-between py-3">
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-slate-900">{tag.name}</p>
-                  <p className="text-xs text-slate-600">Tag · {statusLabel}</p>
+                  <p className="text-sm font-semibold text-white">{tag.name}</p>
+                  <p className="text-xs text-slate-400">Tag · {statusLabel}</p>
                   <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a
                     aria-label={`Tag details for ${tag.name}`}
-                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+                    className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
                     href={`/workspaces/${session.currentWorkspace.id}/tags/${tag.id}`}
                   >
                     Tag details
                   </a>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                  <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
                     {statusLabel}
                   </span>
                 </div>
@@ -156,13 +159,16 @@ export function TagsPage(): ReactElement {
           })}
         </ul>
       ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6">
-          <p className="text-sm font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
-          <p className="mt-1 text-sm text-slate-600">Switch filters or create a tag to continue.</p>
+        <div
+          className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-6"
+          data-testid="tags-empty-state"
+        >
+          <p className="text-sm font-semibold text-white">{emptyStateTitle(statusFilter)}</p>
+          <p className="mt-1 text-sm text-slate-400">Switch filters or create a tag to continue.</p>
         </div>
       )}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="tags-summary">
         <p>
           Showing {tags.length} tags in workspace {session.currentWorkspace.id}.
         </p>
@@ -172,4 +178,34 @@ export function TagsPage(): ReactElement {
       </div>
     </AppPanel>
   );
+}
+
+type TagListItem = {
+  deleted_at?: string | null;
+  id: number;
+  name: string;
+  workspace_id?: number | null;
+};
+
+function normalizeTags(data: unknown): TagListItem[] {
+  if (Array.isArray(data)) {
+    return data as TagListItem[];
+  }
+
+  if (hasTagArray(data, "tags")) {
+    return data.tags;
+  }
+
+  if (hasTagArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasTagArray(
+  value: unknown,
+  key: "data" | "tags",
+): value is Record<typeof key, TagListItem[]> {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
 }

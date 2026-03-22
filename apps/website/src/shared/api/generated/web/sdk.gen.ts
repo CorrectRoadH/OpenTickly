@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ArchiveProjectData, ArchiveProjectResponses, CreateProjectData, CreateProjectResponses, CreateTaskData, CreateTaskResponses, DisableWorkspaceMemberData, DisableWorkspaceMemberResponses, GetCurrentUserPreferencesData, GetCurrentUserPreferencesResponses, GetCurrentUserProfileData, GetCurrentUserProfileResponses, GetOrganizationSettingsData, GetOrganizationSettingsResponses, GetProjectData, GetProjectResponses, GetWebSessionData, GetWebSessionResponses, GetWorkspaceCapabilitiesData, GetWorkspaceCapabilitiesResponses, GetWorkspacePermissionsData, GetWorkspacePermissionsResponses, GetWorkspaceQuotaData, GetWorkspaceQuotaResponses, GetWorkspaceSettingsData, GetWorkspaceSettingsResponses, GrantProjectMemberData, GrantProjectMemberResponses, InviteWorkspaceMemberData, InviteWorkspaceMemberResponses, ListProjectMembersData, ListProjectMembersResponses, ListProjectsData, ListProjectsResponses, ListTasksData, ListTasksResponses, ListWorkspaceMembersData, ListWorkspaceMembersResponses, LoginWebUserData, LoginWebUserResponses, LogoutWebUserData, LogoutWebUserResponses, PinProjectData, PinProjectResponses, RegisterWebUserData, RegisterWebUserResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberResponses, ResetCurrentUserApiTokenData, ResetCurrentUserApiTokenResponses, RestoreProjectData, RestoreProjectResponses, RestoreWorkspaceMemberData, RestoreWorkspaceMemberResponses, RevokeProjectMemberData, RevokeProjectMemberResponses, UnpinProjectData, UnpinProjectResponses, UpdateCurrentUserPreferencesData, UpdateCurrentUserPreferencesResponses, UpdateCurrentUserProfileData, UpdateCurrentUserProfileResponses, UpdateOrganizationSettingsData, UpdateOrganizationSettingsResponses, UpdateWorkspaceMemberRateCostData, UpdateWorkspaceMemberRateCostResponses, UpdateWorkspacePermissionsData, UpdateWorkspacePermissionsResponses, UpdateWorkspaceSettingsData, UpdateWorkspaceSettingsResponses } from './types.gen.js';
+import type { CreateTaskData, CreateTaskResponses, DisableWorkspaceMemberData, DisableWorkspaceMemberResponses, GetWebSessionData, GetWebSessionResponses, GetWorkspaceCapabilitiesData, GetWorkspaceCapabilitiesResponses, GetWorkspacePermissionsData, GetWorkspacePermissionsResponses, GetWorkspaceQuotaData, GetWorkspaceQuotaResponses, GetWorkspaceSettingsData, GetWorkspaceSettingsResponses, InviteWorkspaceMemberData, InviteWorkspaceMemberResponses, ListWorkspaceMembersData, ListWorkspaceMembersResponses, LoginWebUserData, LoginWebUserResponses, LogoutWebUserData, LogoutWebUserResponses, RegisterWebUserData, RegisterWebUserResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberResponses, RestoreWorkspaceMemberData, RestoreWorkspaceMemberResponses, UpdateWorkspaceMemberRateCostData, UpdateWorkspaceMemberRateCostResponses, UpdateWorkspacePermissionsData, UpdateWorkspacePermissionsResponses, UpdateWorkspaceSettingsData, UpdateWorkspaceSettingsResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -51,62 +51,6 @@ export const registerWebUser = <ThrowOnError extends boolean = false>(options: O
  * Bootstrap the current web session shell
  */
 export const getWebSession = <ThrowOnError extends boolean = false>(options?: Options<GetWebSessionData, ThrowOnError>) => (options?.client ?? client).get<GetWebSessionResponses, unknown, ThrowOnError>({ url: '/web/v1/session', ...options });
-
-/**
- * Read the current user profile for the web shell
- */
-export const getCurrentUserProfile = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserProfileData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentUserProfileResponses, unknown, ThrowOnError>({ url: '/web/v1/profile', ...options });
-
-/**
- * Update the current user profile for the web shell
- */
-export const updateCurrentUserProfile = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentUserProfileData, ThrowOnError>) => (options.client ?? client).patch<UpdateCurrentUserProfileResponses, unknown, ThrowOnError>({
-    url: '/web/v1/profile',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Rotate the current user API token for the web shell
- */
-export const resetCurrentUserApiToken = <ThrowOnError extends boolean = false>(options?: Options<ResetCurrentUserApiTokenData, ThrowOnError>) => (options?.client ?? client).post<ResetCurrentUserApiTokenResponses, unknown, ThrowOnError>({ url: '/web/v1/profile/api-token/reset', ...options });
-
-/**
- * Read the current user preferences for the web shell
- */
-export const getCurrentUserPreferences = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserPreferencesData, ThrowOnError>) => (options?.client ?? client).get<GetCurrentUserPreferencesResponses, unknown, ThrowOnError>({ url: '/web/v1/preferences', ...options });
-
-/**
- * Update the current user preferences for the web shell
- */
-export const updateCurrentUserPreferences = <ThrowOnError extends boolean = false>(options: Options<UpdateCurrentUserPreferencesData, ThrowOnError>) => (options.client ?? client).patch<UpdateCurrentUserPreferencesResponses, unknown, ThrowOnError>({
-    url: '/web/v1/preferences',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Read organization settings for the web shell
- */
-export const getOrganizationSettings = <ThrowOnError extends boolean = false>(options: Options<GetOrganizationSettingsData, ThrowOnError>) => (options.client ?? client).get<GetOrganizationSettingsResponses, unknown, ThrowOnError>({ url: '/web/v1/organizations/{organization_id}/settings', ...options });
-
-/**
- * Update organization settings for the web shell
- */
-export const updateOrganizationSettings = <ThrowOnError extends boolean = false>(options: Options<UpdateOrganizationSettingsData, ThrowOnError>) => (options.client ?? client).patch<UpdateOrganizationSettingsResponses, unknown, ThrowOnError>({
-    url: '/web/v1/organizations/{organization_id}/settings',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
 
 /**
  * Read workspace settings for the web shell
@@ -195,75 +139,6 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(opti
         ...options.headers
     }
 });
-
-/**
- * List projects
- */
-export const listProjects = <ThrowOnError extends boolean = false>(options?: Options<ListProjectsData, ThrowOnError>) => (options?.client ?? client).get<ListProjectsResponses, unknown, ThrowOnError>({ url: '/web/v1/projects', ...options });
-
-/**
- * Create a project
- */
-export const createProject = <ThrowOnError extends boolean = false>(options: Options<CreateProjectData, ThrowOnError>) => (options.client ?? client).post<CreateProjectResponses, unknown, ThrowOnError>({
-    url: '/web/v1/projects',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Retrieve project detail
- */
-export const getProject = <ThrowOnError extends boolean = false>(options: Options<GetProjectData, ThrowOnError>) => (options.client ?? client).get<GetProjectResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}', ...options });
-
-/**
- * Restore an archived project
- */
-export const restoreProject = <ThrowOnError extends boolean = false>(options: Options<RestoreProjectData, ThrowOnError>) => (options.client ?? client).delete<RestoreProjectResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/archive', ...options });
-
-/**
- * Archive a project
- */
-export const archiveProject = <ThrowOnError extends boolean = false>(options: Options<ArchiveProjectData, ThrowOnError>) => (options.client ?? client).post<ArchiveProjectResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/archive', ...options });
-
-/**
- * Unpin a project
- */
-export const unpinProject = <ThrowOnError extends boolean = false>(options: Options<UnpinProjectData, ThrowOnError>) => (options.client ?? client).delete<UnpinProjectResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/pin', ...options });
-
-/**
- * Pin a project
- */
-export const pinProject = <ThrowOnError extends boolean = false>(options: Options<PinProjectData, ThrowOnError>) => (options.client ?? client).post<PinProjectResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/pin', ...options });
-
-/**
- * List project members
- */
-export const listProjectMembers = <ThrowOnError extends boolean = false>(options: Options<ListProjectMembersData, ThrowOnError>) => (options.client ?? client).get<ListProjectMembersResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/members', ...options });
-
-/**
- * Grant a project member
- */
-export const grantProjectMember = <ThrowOnError extends boolean = false>(options: Options<GrantProjectMemberData, ThrowOnError>) => (options.client ?? client).post<GrantProjectMemberResponses, unknown, ThrowOnError>({
-    url: '/web/v1/projects/{project_id}/members',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Revoke a project member
- */
-export const revokeProjectMember = <ThrowOnError extends boolean = false>(options: Options<RevokeProjectMemberData, ThrowOnError>) => (options.client ?? client).delete<RevokeProjectMemberResponses, unknown, ThrowOnError>({ url: '/web/v1/projects/{project_id}/members/{member_id}', ...options });
-
-/**
- * List tasks
- */
-export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => (options?.client ?? client).get<ListTasksResponses, unknown, ThrowOnError>({ url: '/web/v1/tasks', ...options });
 
 /**
  * Create a task

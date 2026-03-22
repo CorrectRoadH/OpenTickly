@@ -81,6 +81,10 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   async function handleArchiveToggle(project: GithubComTogglTogglApiInternalModelsProject) {
+    if (project.id == null) {
+      return;
+    }
+
     if (project.active) {
       await archiveProjectMutation.mutateAsync(project.id);
       setStatusMessage(`Archived project ${project.name}`);
@@ -92,6 +96,10 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   async function handlePinToggle(project: GithubComTogglTogglApiInternalModelsProject) {
+    if (project.id == null) {
+      return;
+    }
+
     if (project.pinned) {
       await unpinProjectMutation.mutateAsync(project.id);
       setStatusMessage(`Unpinned project ${project.name}`);
@@ -104,19 +112,19 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
   if (projectsQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
-        <p className="text-sm text-slate-600">Loading projects…</p>
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <p className="text-sm text-slate-400">Loading projects…</p>
       </AppPanel>
     );
   }
 
   return (
-    <AppPanel className="bg-white/95" data-testid="projects-page">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="projects-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Projects</h1>
-          <p className="text-sm leading-6 text-slate-600">Project directory</p>
-          <p className="text-sm leading-6 text-slate-600">
+          <h1 className="text-3xl font-semibold text-white">Projects</h1>
+          <p className="text-sm text-slate-500">Project directory</p>
+          <p className="text-sm leading-6 text-slate-400">
             Browse the project directory, open task entry points, and keep archive or pinned
             project state visible from one workspace page.
           </p>
@@ -127,11 +135,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       </div>
 
       <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="projects-filter-bar">
-        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-700">
+        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Status
           <select
             aria-label="Project status filter"
-            className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm text-white"
             onChange={(event) => void navigateToStatus(event.target.value as ProjectStatusFilter)}
             value={statusFilter}
           >
@@ -143,11 +151,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       </div>
 
       <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="projects-create-form" onSubmit={handleCreateProject}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
           Project name
           <input
             ref={createInputRef}
-            className="rounded-2xl border border-slate-300 px-4 py-3"
+            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
             onChange={(event) => setProjectName(event.target.value)}
             value={projectName}
           />
@@ -155,11 +163,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         <AppButton disabled={mutationPending} type="submit">
           Save project
         </AppButton>
-        {statusMessage ? <p className="text-sm font-medium text-emerald-700">{statusMessage}</p> : null}
+        {statusMessage ? <p className="text-sm font-medium text-[#dface3]">{statusMessage}</p> : null}
       </form>
 
       {projectsQuery.isError ? (
-        <section className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-800">
+        <section className="mt-6 rounded-xl border border-rose-500/30 bg-[#23181b] px-5 py-4 text-sm text-rose-200">
           <p className="font-semibold">Project directory is temporarily unavailable.</p>
           <p className="mt-2">
             Reload after the catalog service recovers. Existing project detail, task, and archive
@@ -170,7 +178,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
       {!projectsQuery.isError ? (
         projects.length > 0 ? (
-          <ul className="mt-6 divide-y divide-slate-200" aria-label="Projects list" data-testid="projects-list">
+          <ul className="mt-6 divide-y divide-white/8" aria-label="Projects list" data-testid="projects-list">
             {projects.map((project) => (
               <ProjectListItem
                 key={project.id}
@@ -183,9 +191,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             ))}
           </ul>
         ) : (
-          <section className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-5 text-sm text-slate-700" data-testid="projects-empty-state">
-            <p className="font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
-            <p className="mt-2">
+          <section className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-5 text-sm text-slate-300" data-testid="projects-empty-state">
+            <p className="font-semibold text-white">{emptyStateTitle(statusFilter)}</p>
+            <p className="mt-2 text-slate-400">
               Adjust the filter or create a project to keep project tasks, members, and reporting
               links discoverable from the project page.
             </p>
@@ -193,7 +201,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         )
       ) : null}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="projects-summary">
+      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="projects-summary">
         <p>Showing {projects.length} projects in workspace {workspaceId}.</p>
         <p className="mt-1">
           Active: {activeCount} · Pinned: {pinnedCount}

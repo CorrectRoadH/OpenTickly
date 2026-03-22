@@ -1,6 +1,6 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { useForm } from "react-hook-form";
 import { type ReactElement } from "react";
+import { useForm } from "react-hook-form";
 
 import {
   mapOrganizationSettingsFormToRequest,
@@ -14,6 +14,8 @@ type OrganizationSettingsFormProps = {
   ) => Promise<void> | void;
 };
 
+const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
+
 export function OrganizationSettingsForm({
   initialValues,
   onSubmit,
@@ -23,7 +25,7 @@ export function OrganizationSettingsForm({
   });
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="organization-settings-form">
       <form
         className="space-y-5"
         onSubmit={form.handleSubmit(async (values) => {
@@ -31,23 +33,44 @@ export function OrganizationSettingsForm({
         })}
       >
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Organization</h2>
-          <p className="text-sm leading-6 text-slate-600">
+          <h2 className="text-2xl font-semibold text-white">Organization</h2>
+          <p className="text-sm leading-6 text-slate-400">
             Organization settings stay separate so cross-workspace governance does not get folded
             into the workspace form.
           </p>
         </div>
 
-        <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
-          Organization name
-          <input
-            className="rounded-2xl border border-slate-300 px-4 py-3"
-            {...form.register("name")}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SummaryCard label="Plan" value={initialValues.planName} />
+          <SummaryCard label="Members" value={String(initialValues.userCount)} />
+          <SummaryCard
+            label="Multi-workspace"
+            value={initialValues.isMultiWorkspaceEnabled ? "Enabled" : "Disabled"}
           />
-        </label>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
+            Organization name
+            <input className={fieldClassName} {...form.register("name")} />
+          </label>
+          <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
+            Max workspaces
+            <input className={fieldClassName} readOnly value={form.watch("maxWorkspaces")} />
+          </label>
+        </div>
 
         <AppButton type="submit">Save organization</AppButton>
       </form>
     </AppPanel>
+  );
+}
+
+function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+  return (
+    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
+      <p className="mt-2 text-base font-semibold text-white">{value}</p>
+    </div>
   );
 }

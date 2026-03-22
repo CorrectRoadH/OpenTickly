@@ -13,6 +13,7 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 )
 
 func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
@@ -101,7 +102,9 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 		t.Fatalf("expected session status 200, got %d body=%s", session.Code, session.Body.String())
 	}
 
-	profile := performJSONRequest(t, app, http.MethodGet, "/web/v1/profile", nil, sessionCookie)
+	passwordAuthorization := basicAuthorization("person@example.com", "secret1")
+
+	profile := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, passwordAuthorization)
 	if profile.Code != http.StatusOK {
 		t.Fatalf("expected profile status 200, got %d body=%s", profile.Code, profile.Body.String())
 	}
@@ -112,28 +115,29 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 		t.Fatalf("expected profile api_token string, got %#v", profileBody["api_token"])
 	}
 
-	resetAPIToken := performJSONRequest(
+	resetAPIToken := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
-		"/web/v1/profile/api-token/reset",
+		"/api/v9/me/reset_token",
 		nil,
-		sessionCookie,
+		passwordAuthorization,
 	)
 	if resetAPIToken.Code != http.StatusOK {
 		t.Fatalf("expected api token reset status 200, got %d body=%s", resetAPIToken.Code, resetAPIToken.Body.String())
 	}
-	var resetAPITokenBody map[string]any
-	mustDecodeJSON(t, resetAPIToken.Body.Bytes(), &resetAPITokenBody)
-	rotatedToken, ok := resetAPITokenBody["api_token"].(string)
-	if !ok || rotatedToken == "" {
-		t.Fatalf("expected reset response api_token string, got %#v", resetAPITokenBody["api_token"])
+	var rotatedToken string
+	mustDecodeJSON(t, resetAPIToken.Body.Bytes(), &rotatedToken)
+	if rotatedToken == "" {
+		t.Fatal("expected reset response api_token string")
 	}
 	if rotatedToken == originalToken {
 		t.Fatalf("expected rotated api_token to differ from %q", originalToken)
 	}
 
-	profileAfterReset := performJSONRequest(t, app, http.MethodGet, "/web/v1/profile", nil, sessionCookie)
+	tokenAuthorization := basicAuthorization(rotatedToken, "api_token")
+
+	profileAfterReset := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, tokenAuthorization)
 	if profileAfterReset.Code != http.StatusOK {
 		t.Fatalf("expected profile status 200 after token reset, got %d body=%s", profileAfterReset.Code, profileAfterReset.Body.String())
 	}
@@ -143,44 +147,42 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 		t.Fatalf("expected profile api_token %q after reset, got %#v", rotatedToken, profileAfterResetBody["api_token"])
 	}
 
-	updatedProfile := performJSONRequest(t, app, http.MethodPatch, "/web/v1/profile", map[string]any{
+	updatedProfile := performAuthorizedJSONRequest(t, app, http.MethodPut, "/api/v9/me", map[string]any{
 		"email":                "renamed@example.com",
 		"fullname":             "Renamed Person",
 		"timezone":             "Asia/Shanghai",
 		"beginning_of_week":    1,
 		"country_id":           44,
 		"default_workspace_id": workspaceID,
-	}, sessionCookie)
+	}, tokenAuthorization)
 	if updatedProfile.Code != http.StatusOK {
 		t.Fatalf("expected profile patch status 200, got %d body=%s", updatedProfile.Code, updatedProfile.Body.String())
 	}
 
-	preferences := performJSONRequest(t, app, http.MethodGet, "/web/v1/preferences", nil, sessionCookie)
+	preferences := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me/preferences", nil, tokenAuthorization)
 	if preferences.Code != http.StatusOK {
 		t.Fatalf("expected preferences status 200, got %d body=%s", preferences.Code, preferences.Body.String())
 	}
 
-	updatedPreferences := performJSONRequest(t, app, http.MethodPatch, "/web/v1/preferences", map[string]any{
-		"date_format":       "YYYY-MM-DD",
-		"timeofday_format":  "h:mm a",
-		"duration_format":   "improved",
-		"pg_time_zone_name": "Asia/Shanghai",
-		"beginningOfWeek":   1,
-		"language_code":     "en-US",
-	}, sessionCookie)
+	updatedPreferences := performAuthorizedJSONRequest(t, app, http.MethodPost, "/api/v9/me/preferences", map[string]any{
+		"date_format":      "YYYY-MM-DD",
+		"timeofday_format": "h:mm A",
+	}, tokenAuthorization)
 	if updatedPreferences.Code != http.StatusOK {
 		t.Fatalf("expected preferences patch status 200, got %d body=%s", updatedPreferences.Code, updatedPreferences.Body.String())
 	}
+
+	preferencesAfterUpdate := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me/preferences", nil, tokenAuthorization)
+	if preferencesAfterUpdate.Code != http.StatusOK {
+		t.Fatalf("expected preferences status 200 after update, got %d body=%s", preferencesAfterUpdate.Code, preferencesAfterUpdate.Body.String())
+	}
 	var updatedPreferencesBody map[string]any
-	mustDecodeJSON(t, updatedPreferences.Body.Bytes(), &updatedPreferencesBody)
-	if updatedPreferencesBody["duration_format"] != "improved" {
-		t.Fatalf("expected duration_format to round-trip, got %#v", updatedPreferencesBody["duration_format"])
+	mustDecodeJSON(t, preferencesAfterUpdate.Body.Bytes(), &updatedPreferencesBody)
+	if updatedPreferencesBody["date_format"] != "YYYY-MM-DD" {
+		t.Fatalf("expected date_format to round-trip, got %#v", updatedPreferencesBody["date_format"])
 	}
-	if updatedPreferencesBody["language_code"] != "en-US" {
-		t.Fatalf("expected language_code to round-trip, got %#v", updatedPreferencesBody["language_code"])
-	}
-	if updatedPreferencesBody["pg_time_zone_name"] != "Asia/Shanghai" {
-		t.Fatalf("expected pg_time_zone_name to round-trip, got %#v", updatedPreferencesBody["pg_time_zone_name"])
+	if updatedPreferencesBody["timeofday_format"] != "h:mm A" {
+		t.Fatalf("expected timeofday_format to round-trip, got %#v", updatedPreferencesBody["timeofday_format"])
 	}
 
 	workspaceSettingsPath := "/web/v1/workspaces/" + intToString(workspaceID) + "/settings"
@@ -336,17 +338,15 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 		t.Fatalf("expected workspace settings to reflect permissions patch, got %#v", workspaceBody["limit_public_project_data"])
 	}
 
-	organizationSettingsPath := "/web/v1/organizations/" + intToString(organizationID) + "/settings"
-	organizationSettings := performJSONRequest(t, app, http.MethodGet, organizationSettingsPath, nil, sessionCookie)
+	organizationSettingsPath := "/api/v9/organizations/" + intToString(organizationID)
+	organizationSettings := performAuthorizedJSONRequest(t, app, http.MethodGet, organizationSettingsPath, nil, tokenAuthorization)
 	if organizationSettings.Code != http.StatusOK {
 		t.Fatalf("expected organization settings status 200, got %d body=%s", organizationSettings.Code, organizationSettings.Body.String())
 	}
 
-	updatedOrganizationSettings := performJSONRequest(t, app, http.MethodPatch, organizationSettingsPath, map[string]any{
-		"organization": map[string]any{
-			"name": "North Ridge Org",
-		},
-	}, sessionCookie)
+	updatedOrganizationSettings := performAuthorizedJSONRequest(t, app, http.MethodPut, organizationSettingsPath, map[string]any{
+		"name": "North Ridge Org",
+	}, tokenAuthorization)
 	if updatedOrganizationSettings.Code != http.StatusOK {
 		t.Fatalf("expected organization settings patch status 200, got %d body=%s", updatedOrganizationSettings.Code, updatedOrganizationSettings.Body.String())
 	}
@@ -362,13 +362,13 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 	if invalidWorkspacePath.Code != http.StatusBadRequest {
 		t.Fatalf("expected invalid workspace id status 400, got %d body=%s", invalidWorkspacePath.Code, invalidWorkspacePath.Body.String())
 	}
-	invalidOrganizationPath := performJSONRequest(
+	invalidOrganizationPath := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodGet,
-		"/web/v1/organizations/not-a-number/settings",
+		"/api/v9/organizations/not-a-number",
 		nil,
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if invalidOrganizationPath.Code != http.StatusBadRequest {
 		t.Fatalf("expected invalid organization id status 400, got %d body=%s", invalidOrganizationPath.Code, invalidOrganizationPath.Body.String())
@@ -490,7 +490,7 @@ func TestWebRuntimeRejectsWritesForDeactivatedUsers(t *testing.T) {
 		Users:              identitypostgres.NewUserRepository(app.Platform.Database.Pool()),
 		Sessions:           identitypostgres.NewSessionRepository(app.Platform.Database.Pool()),
 		JobRecorder:        identitypostgres.NewJobRecorder(app.Platform.Database.Pool()),
-		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(app.Platform.Database.Pool()),
+		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(app.Platform.Database.Pool()),
 		IDs:                identitypostgres.NewSequence(app.Platform.Database.Pool()),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
@@ -511,34 +511,36 @@ func TestWebRuntimeRejectsWritesForDeactivatedUsers(t *testing.T) {
 		t.Fatalf("expected deactivated login status 403, got %d body=%s", login.Code, login.Body.String())
 	}
 
-	updatedProfile := performJSONRequest(t, app, http.MethodPatch, "/web/v1/profile", map[string]any{
+	passwordAuthorization := basicAuthorization("person@example.com", "secret1")
+
+	updatedProfile := performAuthorizedJSONRequest(t, app, http.MethodPut, "/api/v9/me", map[string]any{
 		"email":                "person@example.com",
 		"fullname":             "Blocked Rename",
 		"timezone":             "UTC",
 		"beginning_of_week":    1,
 		"country_id":           44,
 		"default_workspace_id": *registerBody.CurrentWorkspaceID,
-	}, sessionCookie)
+	}, passwordAuthorization)
 	if updatedProfile.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated profile patch status 403, got %d body=%s", updatedProfile.Code, updatedProfile.Body.String())
 	}
 
-	updatedPreferences := performJSONRequest(t, app, http.MethodPatch, "/web/v1/preferences", map[string]any{
+	updatedPreferences := performAuthorizedJSONRequest(t, app, http.MethodPost, "/api/v9/me/preferences", map[string]any{
 		"language_code": "zh-CN",
-	}, sessionCookie)
+	}, passwordAuthorization)
 	if updatedPreferences.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated preferences patch status 403, got %d body=%s", updatedPreferences.Code, updatedPreferences.Body.String())
 	}
 
-	resetToken := performJSONRequest(t, app, http.MethodPost, "/web/v1/profile/api-token/reset", nil, sessionCookie)
+	resetToken := performAuthorizedJSONRequest(t, app, http.MethodPost, "/api/v9/me/reset_token", nil, passwordAuthorization)
 	if resetToken.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated api token reset status 403, got %d body=%s", resetToken.Code, resetToken.Body.String())
 	}
 
-	organizationSettingsPath := "/web/v1/organizations/" + intToString(*registerBody.CurrentOrganizationID) + "/settings"
-	updatedOrganizationSettings := performJSONRequest(t, app, http.MethodPatch, organizationSettingsPath, map[string]any{
-		"organization": map[string]any{"name": "Blocked"},
-	}, sessionCookie)
+	organizationSettingsPath := "/api/v9/organizations/" + intToString(*registerBody.CurrentOrganizationID)
+	updatedOrganizationSettings := performAuthorizedJSONRequest(t, app, http.MethodPut, organizationSettingsPath, map[string]any{
+		"name": "Blocked",
+	}, passwordAuthorization)
 	if updatedOrganizationSettings.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated organization settings patch status 403, got %d body=%s", updatedOrganizationSettings.Code, updatedOrganizationSettings.Body.String())
 	}
@@ -614,11 +616,11 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 		cookie string
 	}{
 		{method: http.MethodPost, path: "/web/v1/auth/login", body: map[string]any{"email": "routes@example.com"}},
-		{method: http.MethodPatch, path: "/web/v1/profile", body: map[string]any{"email": "updated@example.com"}, cookie: sessionCookie},
-		{method: http.MethodPatch, path: "/web/v1/organizations/1/settings", body: map[string]any{"organization": map[string]any{}}, cookie: sessionCookie},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/settings", body: map[string]any{"workspace": map[string]any{"name": "Updated"}}, cookie: sessionCookie},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/permissions", body: map[string]any{"only_admins_may_create_projects": true}, cookie: sessionCookie},
 		{method: http.MethodPost, path: "/web/v1/tasks", body: map[string]any{"workspace_id": 1}, cookie: sessionCookie},
+		{method: http.MethodPost, path: "/web/v1/workspaces/1/members/invitations", body: map[string]any{"role": "member"}, cookie: sessionCookie},
+		{method: http.MethodPatch, path: "/web/v1/workspaces/1/members/1/rate-cost", body: map[string]any{"hourly_rate": 10}, cookie: sessionCookie},
 	} {
 		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, tc.cookie)
 		if response.Code != http.StatusBadRequest {
@@ -627,7 +629,7 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 	}
 }
 
-func TestUnimplementedWebCatalogRoutesFailExplicitly(t *testing.T) {
+func TestWebTaskCreateRoutePersistsCatalogTask(t *testing.T) {
 	database := pgtest.Open(t)
 
 	app, err := NewApp(Config{
@@ -656,19 +658,255 @@ func TestUnimplementedWebCatalogRoutesFailExplicitly(t *testing.T) {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
 	}
 	sessionCookie := register.Header().Get("Set-Cookie")
+	var registerBody struct {
+		User struct {
+			ID int64 `json:"id"`
+		} `json:"user"`
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected workspace bootstrap id, got %#v", registerBody)
+	}
 
-	for _, tc := range []struct {
-		method string
-		path   string
-		body   any
-	}{
-		{method: http.MethodGet, path: "/web/v1/projects?workspace_id=1"},
-		{method: http.MethodPost, path: "/web/v1/projects", body: map[string]any{"workspace_id": 1, "name": "Launch Website"}},
-	} {
-		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, sessionCookie)
-		if response.Code != http.StatusNotImplemented {
-			t.Fatalf("expected %s %s to return 501 until implemented, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
-		}
+	response := performJSONRequest(t, app, http.MethodPost, "/web/v1/tasks", map[string]any{
+		"workspace_id": *registerBody.CurrentWorkspaceID,
+		"name":         "Inbox triage",
+	}, sessionCookie)
+	if response.Code != http.StatusCreated {
+		t.Fatalf("expected POST /web/v1/tasks to return 201, got %d body=%s", response.Code, response.Body.String())
+	}
+
+	var responseBody struct {
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
+		Active      bool   `json:"active"`
+		WorkspaceID int    `json:"workspace_id"`
+	}
+	mustDecodeJSON(t, response.Body.Bytes(), &responseBody)
+	if responseBody.Name != "Inbox triage" || !responseBody.Active || responseBody.WorkspaceID != int(*registerBody.CurrentWorkspaceID) {
+		t.Fatalf("unexpected task create response: %#v", responseBody)
+	}
+
+	var persisted struct {
+		Name        string
+		WorkspaceID int64
+		Active      bool
+		CreatedBy   *int64
+	}
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select name, workspace_id, active, created_by from catalog_tasks where id = $1",
+		responseBody.ID,
+	).Scan(&persisted.Name, &persisted.WorkspaceID, &persisted.Active, &persisted.CreatedBy); err != nil {
+		t.Fatalf("expected created task row: %v", err)
+	}
+	if persisted.Name != "Inbox triage" || persisted.WorkspaceID != *registerBody.CurrentWorkspaceID || !persisted.Active {
+		t.Fatalf("unexpected persisted task row: %#v", persisted)
+	}
+	if persisted.CreatedBy == nil || *persisted.CreatedBy != registerBody.User.ID {
+		t.Fatalf("unexpected persisted created_by: %#v", persisted.CreatedBy)
+	}
+}
+
+func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	ownerRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "owner-members@example.com",
+		"fullname": "Owner Members",
+		"password": "secret1",
+	}, "")
+	if ownerRegister.Code != http.StatusCreated {
+		t.Fatalf("expected owner register status 201, got %d body=%s", ownerRegister.Code, ownerRegister.Body.String())
+	}
+	ownerCookie := ownerRegister.Header().Get("Set-Cookie")
+	var ownerBody struct {
+		User struct {
+			ID       int64  `json:"id"`
+			Email    string `json:"email"`
+			FullName string `json:"fullname"`
+		} `json:"user"`
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, ownerRegister.Body.Bytes(), &ownerBody)
+	if ownerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected current workspace id, got %#v", ownerBody)
+	}
+	workspaceID := *ownerBody.CurrentWorkspaceID
+
+	members := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members",
+		nil,
+		ownerCookie,
+	)
+	if members.Code != http.StatusOK {
+		t.Fatalf("expected members list status 200, got %d body=%s", members.Code, members.Body.String())
+	}
+	var membersBody struct {
+		Members []map[string]any `json:"members"`
+	}
+	mustDecodeJSON(t, members.Body.Bytes(), &membersBody)
+	if len(membersBody.Members) != 1 {
+		t.Fatalf("expected one owner member, got %#v", membersBody.Members)
+	}
+	if membersBody.Members[0]["role"] != "owner" || membersBody.Members[0]["status"] != "joined" {
+		t.Fatalf("expected joined owner membership, got %#v", membersBody.Members[0])
+	}
+
+	invite := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/invitations",
+		map[string]any{
+			"email": "invited-members@example.com",
+			"role":  "admin",
+		},
+		ownerCookie,
+	)
+	if invite.Code != http.StatusCreated {
+		t.Fatalf("expected invite status 201, got %d body=%s", invite.Code, invite.Body.String())
+	}
+
+	var invitedState string
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select state from membership_workspace_members where workspace_id = $1 and lower(email) = lower($2)",
+		workspaceID,
+		"invited-members@example.com",
+	).Scan(&invitedState); err != nil {
+		t.Fatalf("expected invited member row: %v", err)
+	}
+	if invitedState != "invited" {
+		t.Fatalf("expected invited state, got %q", invitedState)
+	}
+
+	joinedRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "joined-members@example.com",
+		"fullname": "Joined Member",
+		"password": "secret1",
+	}, "")
+	if joinedRegister.Code != http.StatusCreated {
+		t.Fatalf("expected joined register status 201, got %d body=%s", joinedRegister.Code, joinedRegister.Body.String())
+	}
+	var joinedBody struct {
+		User struct {
+			ID       int64  `json:"id"`
+			Email    string `json:"email"`
+			FullName string `json:"fullname"`
+		} `json:"user"`
+	}
+	mustDecodeJSON(t, joinedRegister.Body.Bytes(), &joinedBody)
+
+	var joinedMemberID int64
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		`insert into membership_workspace_members (workspace_id, user_id, email, full_name, role, state, created_by)
+		 values ($1, $2, $3, $4, $5, $6, $7)
+		 returning id`,
+		workspaceID,
+		joinedBody.User.ID,
+		joinedBody.User.Email,
+		joinedBody.User.FullName,
+		"member",
+		"joined",
+		ownerBody.User.ID,
+	).Scan(&joinedMemberID); err != nil {
+		t.Fatalf("expected joined member row insert: %v", err)
+	}
+
+	updateRateCost := performJSONRequest(
+		t,
+		app,
+		http.MethodPatch,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/"+intToString(joinedMemberID)+"/rate-cost",
+		map[string]any{
+			"hourly_rate": 150.5,
+			"labor_cost":  85.25,
+		},
+		ownerCookie,
+	)
+	if updateRateCost.Code != http.StatusOK {
+		t.Fatalf("expected rate-cost status 200, got %d body=%s", updateRateCost.Code, updateRateCost.Body.String())
+	}
+
+	disable := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/"+intToString(joinedMemberID)+"/disable",
+		nil,
+		ownerCookie,
+	)
+	if disable.Code != http.StatusOK {
+		t.Fatalf("expected disable status 200, got %d body=%s", disable.Code, disable.Body.String())
+	}
+
+	restore := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/"+intToString(joinedMemberID)+"/restore",
+		nil,
+		ownerCookie,
+	)
+	if restore.Code != http.StatusOK {
+		t.Fatalf("expected restore status 200, got %d body=%s", restore.Code, restore.Body.String())
+	}
+
+	remove := performJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/"+intToString(joinedMemberID),
+		nil,
+		ownerCookie,
+	)
+	if remove.Code != http.StatusOK {
+		t.Fatalf("expected remove status 200, got %d body=%s", remove.Code, remove.Body.String())
+	}
+
+	var persisted struct {
+		State      string
+		HourlyRate *float64
+		LaborCost  *float64
+	}
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select state, hourly_rate, labor_cost from membership_workspace_members where id = $1",
+		joinedMemberID,
+	).Scan(&persisted.State, &persisted.HourlyRate, &persisted.LaborCost); err != nil {
+		t.Fatalf("expected joined member persisted row: %v", err)
+	}
+	if persisted.State != "removed" {
+		t.Fatalf("expected removed state, got %#v", persisted)
+	}
+	if persisted.HourlyRate == nil || *persisted.HourlyRate != 150.5 {
+		t.Fatalf("expected hourly rate 150.5, got %#v", persisted.HourlyRate)
+	}
+	if persisted.LaborCost == nil || *persisted.LaborCost != 85.25 {
+		t.Fatalf("expected labor cost 85.25, got %#v", persisted.LaborCost)
 	}
 }
 
@@ -862,6 +1100,23 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("expected project pin status 200, got %d body=%s", pinProject.Code, pinProject.Body.String())
 	}
 
+	createProjectTask := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks",
+		map[string]any{"name": "Ship checklist"},
+		tokenAuthorization,
+	)
+	if createProjectTask.Code != http.StatusOK {
+		t.Fatalf("expected project task create status 200, got %d body=%s", createProjectTask.Code, createProjectTask.Body.String())
+	}
+	var projectTaskBody map[string]any
+	mustDecodeJSON(t, createProjectTask.Body.Bytes(), &projectTaskBody)
+	if projectTaskBody["project_id"] != float64(projectID) {
+		t.Fatalf("expected created project task to carry project_id %d, got %#v", projectID, projectTaskBody["project_id"])
+	}
+
 	archiveProject := performAuthorizedJSONRequest(
 		t,
 		app,
@@ -884,6 +1139,30 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	)
 	if projectUsers.Code != http.StatusOK {
 		t.Fatalf("expected project users status 200, got %d body=%s", projectUsers.Code, projectUsers.Body.String())
+	}
+
+	projectTasks := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks",
+		nil,
+		tokenAuthorization,
+	)
+	if projectTasks.Code != http.StatusOK {
+		t.Fatalf("expected project tasks status 200, got %d body=%s", projectTasks.Code, projectTasks.Body.String())
+	}
+
+	tasks := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/tasks?page=1&per_page=50&sort_field=name&sort_order=ASC&search=&pid="+intToString(projectID),
+		nil,
+		tokenAuthorization,
+	)
+	if tasks.Code != http.StatusOK {
+		t.Fatalf("expected tasks status 200, got %d body=%s", tasks.Code, tasks.Body.String())
 	}
 
 	tasksBasic := performAuthorizedJSONRequest(
@@ -970,6 +1249,179 @@ func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	)
 	if crossOrganization.Code != http.StatusForbidden {
 		t.Fatalf("expected cross organization status 403, got %d body=%s", crossOrganization.Code, crossOrganization.Body.String())
+	}
+}
+
+func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	firstRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "owner-web@example.com",
+		"fullname": "Owner Web",
+		"password": "secret1",
+	}, "")
+	if firstRegister.Code != http.StatusCreated {
+		t.Fatalf("expected first register status 201, got %d body=%s", firstRegister.Code, firstRegister.Body.String())
+	}
+	firstCookie := firstRegister.Header().Get("Set-Cookie")
+
+	secondRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "other-web@example.com",
+		"fullname": "Other Web",
+		"password": "secret1",
+	}, "")
+	if secondRegister.Code != http.StatusCreated {
+		t.Fatalf("expected second register status 201, got %d body=%s", secondRegister.Code, secondRegister.Body.String())
+	}
+	secondCookie := secondRegister.Header().Get("Set-Cookie")
+
+	var firstRegisterBody struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, firstRegister.Body.Bytes(), &firstRegisterBody)
+	if firstRegisterBody.CurrentOrganizationID == nil || firstRegisterBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected first bootstrap ids, got %#v", firstRegisterBody)
+	}
+
+	if firstCookie == "" || secondCookie == "" {
+		t.Fatal("expected both register responses to set session cookies")
+	}
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   any
+	}{
+		{
+			method: http.MethodGet,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/settings",
+		},
+		{
+			method: http.MethodPatch,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/settings",
+			body: map[string]any{
+				"workspace": map[string]any{
+					"name":                            "Hijack Workspace",
+					"default_currency":                "USD",
+					"default_hourly_rate":             0,
+					"rounding":                        0,
+					"rounding_minutes":                0,
+					"reports_collapse":                false,
+					"only_admins_may_create_projects": false,
+					"only_admins_may_create_tags":     false,
+					"only_admins_see_team_dashboard":  false,
+					"projects_billable_by_default":    false,
+					"projects_private_by_default":     false,
+					"projects_enforce_billable":       false,
+					"limit_public_project_data":       false,
+				},
+			},
+		},
+		{
+			method: http.MethodGet,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/permissions",
+		},
+		{
+			method: http.MethodPatch,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/permissions",
+			body: map[string]any{
+				"only_admins_may_create_projects": true,
+				"only_admins_may_create_tags":     true,
+				"only_admins_see_team_dashboard":  true,
+				"limit_public_project_data":       true,
+			},
+		},
+		{
+			method: http.MethodGet,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/capabilities",
+		},
+		{
+			method: http.MethodGet,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/quota",
+		},
+		{
+			method: http.MethodPost,
+			path:   "/web/v1/tasks",
+			body: map[string]any{
+				"workspace_id": *firstRegisterBody.CurrentWorkspaceID,
+				"name":         "Cross Workspace",
+			},
+		},
+		{
+			method: http.MethodGet,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members",
+		},
+		{
+			method: http.MethodPost,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members/invitations",
+			body: map[string]any{
+				"email": "cross-workspace@example.com",
+			},
+		},
+	} {
+		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, secondCookie)
+		if response.Code != http.StatusForbidden {
+			t.Fatalf("expected %s %s to return 403, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
+		}
+	}
+
+	var firstOwnerMemberID int64
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select id from membership_workspace_members where workspace_id = $1 and role = 'owner'",
+		*firstRegisterBody.CurrentWorkspaceID,
+	).Scan(&firstOwnerMemberID); err != nil {
+		t.Fatalf("expected first owner membership row: %v", err)
+	}
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   any
+	}{
+		{
+			method: http.MethodPost,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members/" + intToString(firstOwnerMemberID) + "/disable",
+		},
+		{
+			method: http.MethodPost,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members/" + intToString(firstOwnerMemberID) + "/restore",
+		},
+		{
+			method: http.MethodDelete,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members/" + intToString(firstOwnerMemberID),
+		},
+		{
+			method: http.MethodPatch,
+			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/members/" + intToString(firstOwnerMemberID) + "/rate-cost",
+			body: map[string]any{
+				"hourly_rate": 100,
+				"labor_cost":  80,
+			},
+		},
+	} {
+		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, secondCookie)
+		if response.Code != http.StatusForbidden {
+			t.Fatalf("expected %s %s to return 403, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
+		}
 	}
 }
 

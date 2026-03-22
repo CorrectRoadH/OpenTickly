@@ -1,6 +1,6 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { useForm } from "react-hook-form";
 import { type ReactElement } from "react";
+import { useForm } from "react-hook-form";
 
 import {
   mapPreferencesFormToRequest,
@@ -12,6 +12,8 @@ type PreferencesFormSectionProps = {
   onSubmit: (request: ReturnType<typeof mapPreferencesFormToRequest>) => Promise<void> | void;
 };
 
+const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
+
 export function PreferencesFormSection({
   initialValues,
   onSubmit,
@@ -21,7 +23,7 @@ export function PreferencesFormSection({
   });
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="preferences-form-section">
       <form
         className="space-y-5"
         onSubmit={form.handleSubmit(async (values) => {
@@ -29,31 +31,57 @@ export function PreferencesFormSection({
         })}
       >
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold tracking-tight text-slate-950">Preferences</h2>
-          <p className="text-sm leading-6 text-slate-600">
+          <h2 className="text-2xl font-semibold text-white">Preferences</h2>
+          <p className="text-sm leading-6 text-slate-400">
             Preferences stay on the dedicated profile page because they belong to the user, not the
             current workspace.
           </p>
         </div>
 
-        <Field label="Date format">
-          <input
-            className="rounded-2xl border border-slate-300 px-4 py-3"
-            {...form.register("dateFormat")}
-          />
-        </Field>
-        <Field label="Timezone">
-          <input
-            className="rounded-2xl border border-slate-300 px-4 py-3"
-            {...form.register("timezone")}
-          />
-        </Field>
-        <Field label="Language code">
-          <input
-            className="rounded-2xl border border-slate-300 px-4 py-3"
-            {...form.register("languageCode")}
-          />
-        </Field>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Date format">
+            <input className={fieldClassName} {...form.register("dateFormat")} />
+          </Field>
+          <Field label="Duration format">
+            <input className={fieldClassName} {...form.register("durationFormat")} />
+          </Field>
+          <Field label="Timezone">
+            <input className={fieldClassName} {...form.register("timezone")} />
+          </Field>
+          <Field label="Language code">
+            <input className={fieldClassName} {...form.register("languageCode")} />
+          </Field>
+          <Field label="Time of day format">
+            <input className={fieldClassName} {...form.register("timeofdayFormat")} />
+          </Field>
+          <Field label="Manual entry mode">
+            <input className={fieldClassName} {...form.register("manualEntryMode")} />
+          </Field>
+          <Field label="Beginning of week">
+            <input
+              className={fieldClassName}
+              max={6}
+              min={0}
+              type="number"
+              {...form.register("beginningOfWeek", { valueAsNumber: true })}
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2">
+          <ToggleField label="Collapse time entries">
+            <input type="checkbox" {...form.register("collapseTimeEntries")} />
+          </ToggleField>
+          <ToggleField label="Collapse reports by default">
+            <input type="checkbox" {...form.register("reportsCollapse")} />
+          </ToggleField>
+          <ToggleField label="Hide right sidebar">
+            <input type="checkbox" {...form.register("hideSidebarRight")} />
+          </ToggleField>
+          <ToggleField label="Enable manual mode">
+            <input type="checkbox" {...form.register("manualMode")} />
+          </ToggleField>
+        </div>
 
         <AppButton type="submit">Save preferences</AppButton>
       </form>
@@ -63,8 +91,17 @@ export function PreferencesFormSection({
 
 function Field(props: { children: ReactElement; label: string }): ReactElement {
   return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-slate-700">
+    <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
       {props.label}
+      {props.children}
+    </label>
+  );
+}
+
+function ToggleField(props: { children: ReactElement; label: string }): ReactElement {
+  return (
+    <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm font-medium text-slate-300">
+      <span>{props.label}</span>
       {props.children}
     </label>
   );

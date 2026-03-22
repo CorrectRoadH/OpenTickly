@@ -10,6 +10,8 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
+	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -21,6 +23,10 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 
 	tenantService := mustNewTenantPostgresService(t, database)
 	billingService := mustNewBillingPostgresService(t, database)
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	if err != nil {
+		t.Fatalf("new membership postgres service: %v", err)
+	}
 	homes := tenantpostgres.NewUserHomeRepository(database.Pool)
 
 	user := identityapplication.UserSnapshot{
@@ -42,7 +48,7 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 		t.Fatalf("save persisted test user: %v", err)
 	}
 
-	firstProvider := newBillingBackedSessionShell(tenantService, billingService, homes)
+	firstProvider := newBillingBackedSessionShell(tenantService, billingService, membershipService, homes)
 	firstShell, err := firstProvider.SessionShell(ctx, user)
 	if err != nil {
 		t.Fatalf("first session shell: %v", err)
@@ -51,7 +57,7 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 		t.Fatalf("expected first shell to create tenant home, got %#v", firstShell)
 	}
 
-	secondProvider := newBillingBackedSessionShell(tenantService, billingService, homes)
+	secondProvider := newBillingBackedSessionShell(tenantService, billingService, membershipService, homes)
 	secondShell, err := secondProvider.SessionShell(ctx, user)
 	if err != nil {
 		t.Fatalf("second session shell: %v", err)
@@ -69,6 +75,7 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 	assertTableCount(t, database, "tenant_organizations", 1)
 	assertTableCount(t, database, "tenant_workspaces", 1)
 	assertTableCount(t, database, "web_user_homes", 1)
+	assertTableCount(t, database, "membership_workspace_members", 1)
 }
 
 func mustNewTenantPostgresService(t *testing.T, database *pgtest.Database) *tenantapplication.Service {

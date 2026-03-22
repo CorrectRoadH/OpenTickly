@@ -36,12 +36,12 @@ export function ProjectMembersSection({
           <ul className="mt-2 space-y-2" aria-label={`${project.name} members`}>
             {members.map((member) => (
               <li
-                key={`${member.project_id}-${member.user_id}-${member.role}`}
+                key={`${member.project_id}-${member.user_id}`}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs text-slate-700"
               >
                 <span className="font-semibold text-slate-900">Member {member.user_id}</span>
                 <span>Project {member.project_id}</span>
-                <span>{formatProjectMemberRole(member.role ?? "member")}</span>
+                <span>{formatProjectMemberRole(member.manager ? "manager" : "member")}</span>
               </li>
             ))}
           </ul>

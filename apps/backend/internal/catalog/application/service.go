@@ -178,6 +178,16 @@ func (service *Service) ListTasks(ctx context.Context, workspaceID int64, filter
 }
 
 func (service *Service) CreateTask(ctx context.Context, command CreateTaskCommand) (TaskView, error) {
+	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
+		return TaskView{}, err
+	}
+	if command.ProjectID != nil {
+		if _, ok, err := service.store.GetProject(ctx, command.WorkspaceID, *command.ProjectID); err != nil {
+			return TaskView{}, err
+		} else if !ok {
+			return TaskView{}, ErrProjectNotFound
+		}
+	}
 	name, err := domain.NormalizeCatalogName(command.Name)
 	if err != nil {
 		return TaskView{}, err

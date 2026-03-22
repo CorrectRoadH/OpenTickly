@@ -31,8 +31,9 @@ export function ProfilePage(): ReactElement {
 
   if (profileQuery.isPending || preferencesQuery.isPending) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="Fetching current user account details and preferences."
           title="Loading profile"
           tone="loading"
@@ -43,8 +44,9 @@ export function ProfilePage(): ReactElement {
 
   if (profileQuery.isError || preferencesQuery.isError) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-rose-500/30 bg-[#23181b] text-rose-200"
           description="We could not load account details right now. Refresh or try again shortly."
           title="Profile unavailable"
           tone="error"
@@ -55,8 +57,9 @@ export function ProfilePage(): ReactElement {
 
   if (!profileQuery.data || !preferencesQuery.data) {
     return (
-      <AppPanel className="bg-white/95">
+      <AppPanel className="border-white/8 bg-[#1f1f23]">
         <AppSurfaceState
+          className="border-white/10 bg-[#18181c] text-slate-300"
           description="No profile data was returned for this session."
           title="Profile data unavailable"
           tone="empty"
@@ -65,30 +68,49 @@ export function ProfilePage(): ReactElement {
     );
   }
 
+  const preferenceFormValues = createPreferencesFormValues(preferencesQuery.data);
+
   return (
-    <div className="space-y-4">
-      <AppPanel className="bg-white/95">
+    <div className="space-y-4" data-testid="profile-page">
+      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="profile-overview">
         <div className="space-y-4">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Profile</h1>
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold text-white">Profile</h1>
+            <p className="text-sm leading-6 text-slate-400">
+              Account details, personal defaults, and API access stay on the user profile surface
+              instead of being mixed into workspace administration.
+            </p>
+          </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <SectionSummary
-              description="Current user details used across the account and session surfaces."
-              title="Account"
+              description={profileQuery.data.email ?? "No email configured"}
+              eyebrow="Account"
+              metric={profileQuery.data.fullname ?? "Unnamed user"}
             />
             <SectionSummary
-              description="Personal defaults that shape how time, dates, and notifications appear."
-              title="Preferences"
+              description={`${preferenceFormValues.languageCode} · ${preferenceFormValues.dateFormat}`}
+              eyebrow="Preferences"
+              metric={preferenceFormValues.timezone}
             />
             <SectionSummary
-              description="API token access for account-level integrations and basic auth compatibility."
-              title="Security"
+              description={`Default workspace ${profileQuery.data.default_workspace_id ?? 0}`}
+              eyebrow="Security"
+              metric={profileQuery.data.api_token ? "API token active" : "No API token"}
             />
           </div>
         </div>
       </AppPanel>
 
-      {profileStatus ? <AppInlineNotice tone="success">{profileStatus}</AppInlineNotice> : null}
-      {profileError ? <AppInlineNotice tone="error">{profileError}</AppInlineNotice> : null}
+      {profileStatus ? (
+        <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
+          {profileStatus}
+        </AppInlineNotice>
+      ) : null}
+      {profileError ? (
+        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
+          {profileError}
+        </AppInlineNotice>
+      ) : null}
       <ProfileFormSection
         initialValues={createProfileFormValues(profileQuery.data)}
         onSubmit={async (request) => {
@@ -103,8 +125,16 @@ export function ProfilePage(): ReactElement {
         }}
       />
 
-      {apiTokenStatus ? <AppInlineNotice tone="success">{apiTokenStatus}</AppInlineNotice> : null}
-      {apiTokenError ? <AppInlineNotice tone="error">{apiTokenError}</AppInlineNotice> : null}
+      {apiTokenStatus ? (
+        <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
+          {apiTokenStatus}
+        </AppInlineNotice>
+      ) : null}
+      {apiTokenError ? (
+        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
+          {apiTokenError}
+        </AppInlineNotice>
+      ) : null}
       <ApiTokenSection
         isRotating={resetApiTokenMutation.isPending}
         onRotate={async () => {
@@ -117,17 +147,21 @@ export function ProfilePage(): ReactElement {
             setApiTokenStatus(null);
           }
         }}
-        token={profileQuery.data.api_token}
+        token={profileQuery.data.api_token ?? ""}
       />
 
       {preferencesStatus ? (
-        <AppInlineNotice tone="success">{preferencesStatus}</AppInlineNotice>
+        <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
+          {preferencesStatus}
+        </AppInlineNotice>
       ) : null}
       {preferencesError ? (
-        <AppInlineNotice tone="error">{preferencesError}</AppInlineNotice>
+        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
+          {preferencesError}
+        </AppInlineNotice>
       ) : null}
       <PreferencesFormSection
-        initialValues={createPreferencesFormValues(preferencesQuery.data)}
+        initialValues={preferenceFormValues}
         onSubmit={async (request) => {
           try {
             await updatePreferencesMutation.mutateAsync(request);
@@ -145,15 +179,18 @@ export function ProfilePage(): ReactElement {
 
 function SectionSummary({
   description,
-  title,
+  eyebrow,
+  metric,
 }: {
   description: string;
-  title: string;
+  eyebrow: string;
+  metric: string;
 }): ReactElement {
   return (
-    <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/80 p-4">
-      <p className="text-sm font-semibold text-slate-950">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+      <p className="text-xs font-medium uppercase text-slate-500">{eyebrow}</p>
+      <p className="mt-2 text-base font-semibold text-white">{metric}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
     </div>
   );
 }

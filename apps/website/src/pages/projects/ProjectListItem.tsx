@@ -1,7 +1,10 @@
 import { AppButton } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
 
-import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
+import type {
+  GithubComTogglTogglApiInternalModelsProject,
+  ModelsProjectUser,
+} from "../../shared/api/generated/public-track/types.gen.ts";
 import { useProjectMembersQuery } from "../../shared/query/web-shell.ts";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
 import { ProjectMembersSection } from "./ProjectMembersSection.tsx";
@@ -42,20 +45,20 @@ export function ProjectListItem({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-semibold text-slate-900">{project.name}</p>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+            <p className="text-sm font-semibold text-white">{project.name}</p>
+            <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
               {statusLabel}
             </span>
-            <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
+            <span className="rounded-lg border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-200">
               {templateLabel}
             </span>
             {project.pinned ? (
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
+              <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-200">
                 Pinned
               </span>
             ) : null}
           </div>
-          <p className="text-xs text-slate-600">Project · {statusLabel}</p>
+          <p className="text-xs text-slate-400">Project · {statusLabel}</p>
           <p className="text-[11px] text-slate-500">
             Workspace {project.wid} · {memberCount} member{memberCount === 1 ? "" : "s"}
           </p>
@@ -74,14 +77,14 @@ export function ProjectListItem({
         <div className="flex flex-wrap gap-2">
           <a
             aria-label={`Project details for ${project.name}`}
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+            className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
             href={`/workspaces/${workspaceId}/projects/${project.id}`}
           >
             Project details
           </a>
           <a
             aria-label={`Project tasks for ${project.name}`}
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
+            className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
             href={buildWorkspaceTasksPath({
               workspaceId,
               projectId: project.id,
@@ -122,9 +125,9 @@ export function ProjectListItem({
   );
 }
 
-function normalizeProjectMembers(data: unknown): Array<{ member_id?: number | null }> {
+function normalizeProjectMembers(data: unknown): Array<ModelsProjectUser> {
   if (Array.isArray(data)) {
-    return data as Array<{ member_id?: number | null }>;
+    return data as Array<ModelsProjectUser>;
   }
 
   if (hasMembersArray(data)) {
@@ -136,6 +139,6 @@ function normalizeProjectMembers(data: unknown): Array<{ member_id?: number | nu
 
 function hasMembersArray(
   value: unknown,
-): value is { members: Array<{ member_id?: number | null }> } {
+): value is { members: Array<ModelsProjectUser> } {
   return Boolean(value) && typeof value === "object" && Array.isArray((value as { members?: unknown }).members);
 }

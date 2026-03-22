@@ -74,15 +74,23 @@ export function mapProfileFormToRequest(
 export function createPreferencesFormValues(
   preferences: ModelsAllPreferences,
 ): PreferencesFormValues {
+  const extraPreferences = preferences as Record<string, unknown>;
+
   return {
     dateFormat: preferences.date_format ?? "YYYY-MM-DD",
     durationFormat: preferences.duration_format ?? "improved",
     timezone: preferences.pg_time_zone_name ?? "UTC",
     beginningOfWeek: preferences.beginningOfWeek ?? 1,
     collapseTimeEntries: preferences.collapseTimeEntries ?? false,
-    languageCode: preferences.language_code ?? "en-US",
+    languageCode:
+      typeof extraPreferences["language_code"] === "string"
+        ? (extraPreferences["language_code"] as string)
+        : "en-US",
     hideSidebarRight: preferences.hide_sidebar_right ?? false,
-    reportsCollapse: preferences.reports_collapse ?? false,
+    reportsCollapse:
+      typeof extraPreferences["reports_collapse"] === "boolean"
+        ? (extraPreferences["reports_collapse"] as boolean)
+        : false,
     manualMode: preferences.manualMode ?? false,
     manualEntryMode: preferences.manualEntryMode ?? "timer",
     timeofdayFormat: preferences.timeofday_format ?? "h:mm a",
@@ -93,18 +101,21 @@ export function mapPreferencesFormToRequest(
   values: PreferencesFormValues,
 ): ModelsAllPreferences {
   const parsed = preferencesFormSchema.parse(values);
-
-  return {
+  const request: ModelsAllPreferences = {
     date_format: parsed.dateFormat,
     duration_format: parsed.durationFormat,
     pg_time_zone_name: parsed.timezone,
     beginningOfWeek: parsed.beginningOfWeek,
     collapseTimeEntries: parsed.collapseTimeEntries,
-    language_code: parsed.languageCode,
     hide_sidebar_right: parsed.hideSidebarRight,
-    reports_collapse: parsed.reportsCollapse,
     manualMode: parsed.manualMode,
     manualEntryMode: parsed.manualEntryMode,
     timeofday_format: parsed.timeofdayFormat,
   };
+
+  const extraRequest = request as Record<string, unknown>;
+  extraRequest["language_code"] = parsed.languageCode;
+  extraRequest["reports_collapse"] = parsed.reportsCollapse;
+
+  return request;
 }
