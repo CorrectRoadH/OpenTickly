@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -19,7 +20,7 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 	store := tenantpostgres.NewStore(database.Pool)
 	billingRepository := billingpostgres.NewAccountRepository(database.Pool)
 	workspaceOwnership := billingpostgres.NewWorkspaceOwnershipLookup(database.Pool)
-	billingService := mustNewBillingService(t, billingRepository, workspaceOwnership)
+	billingService := mustNewPostgresBillingService(t, billingRepository, workspaceOwnership)
 	service, err := NewService(store, billingService)
 	if err != nil {
 		t.Fatalf("new tenant service: %v", err)
@@ -125,4 +126,26 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 	if _, err := service.GetWorkspace(ctx, result.WorkspaceID); !errors.Is(err, ErrWorkspaceNotFound) {
 		t.Fatalf("expected deleted workspace lookup to return ErrWorkspaceNotFound, got %v", err)
 	}
+}
+
+func mustNewPostgresBillingService(
+	t *testing.T,
+	accounts billingapplication.AccountRepository,
+	workspaces billingapplication.WorkspaceOwnershipLookup,
+) *billingapplication.Service {
+	t.Helper()
+
+	service, err := billingapplication.NewService(
+		accounts,
+		workspaces,
+		[]billingdomain.CapabilityRule{
+			{Key: "reports.profitability", MinimumPlan: billingdomain.PlanEnterprise},
+			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
+			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
+		},
+	)
+	if err != nil {
+		t.Fatalf("new billing service: %v", err)
+	}
+	return service
 }

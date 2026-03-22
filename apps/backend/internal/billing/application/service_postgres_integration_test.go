@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 
@@ -101,12 +102,7 @@ func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 	}
 }
 
-func mustDefaultWorkspaceSettings(t *testing.T) domain.WorkspaceSettings {
+func mustDefaultWorkspaceSettings(t *testing.T) tenantdomain.WorkspaceSettings {
 	t.Helper()
-
-	settings, err := tenantpostgres.DefaultWorkspaceSettingsForTests()
-	if err != nil {
-		t.Fatalf("default workspace settings: %v", err)
-	}
-	return settings
+	return tenantdomain.DefaultWorkspaceSettings()
 }

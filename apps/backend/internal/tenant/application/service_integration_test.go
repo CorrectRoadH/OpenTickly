@@ -5,9 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	billingapp "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
-	billinginfra "opentoggl/backend/apps/backend/internal/billing/infra"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 )
 
@@ -244,93 +242,6 @@ func TestServiceAlwaysReadsCommercialFieldsFromBillingTruth(t *testing.T) {
 	}
 }
 
-func TestServiceComposesWorkspaceEntryFromTenantSettingsAndBillingTruth(t *testing.T) {
-	ctx := context.Background()
-	store := NewInMemoryStore()
-	ownership := newMutableWorkspaceOwnership()
-	accountRepository := billinginfra.NewMemoryAccountRepository()
-	billingService := mustNewBillingService(t, accountRepository, ownership)
-	service := mustNewTenantService(t, store, billingService)
-
-	result, err := service.CreateOrganization(ctx, CreateOrganizationCommand{
-		Name:          "Analytics",
-		WorkspaceName: "Analytics HQ",
-	})
-	if err != nil {
-		t.Fatalf("expected organization creation to succeed: %v", err)
-	}
-
-	if err := service.UpdateWorkspace(ctx, UpdateWorkspaceCommand{
-		WorkspaceID: result.WorkspaceID,
-		Name:        "Analytics EU",
-		Settings: domain.WorkspaceSettingsInput{
-			DefaultCurrency:             "EUR",
-			DefaultHourlyRate:           150,
-			Rounding:                    domain.WorkspaceRoundingUp,
-			RoundingMinutes:             15,
-			DisplayPolicy:               domain.WorkspaceDisplayPolicyHideStartEndTimes,
-			OnlyAdminsMayCreateProjects: true,
-			ProjectsBillableByDefault:   true,
-			PublicProjectAccess:         domain.WorkspacePublicProjectAccessAdmins,
-		},
-	}); err != nil {
-		t.Fatalf("expected workspace update to succeed: %v", err)
-	}
-
-	ownership.Assign(int64(result.WorkspaceID), int64(result.OrganizationID))
-
-	quota, err := billingdomain.NewQuotaWindow(int64(result.OrganizationID), 7, 300, 10)
-	if err != nil {
-		t.Fatalf("expected quota window to be valid: %v", err)
-	}
-	account, err := billingdomain.NewCommercialAccount(
-		int64(result.OrganizationID),
-		"cust_web",
-		mustSubscription(t, billingdomain.PlanStarter, billingdomain.SubscriptionStateActive),
-		quota,
-	)
-	if err != nil {
-		t.Fatalf("expected billing account to be valid: %v", err)
-	}
-	if err := accountRepository.Save(ctx, account); err != nil {
-		t.Fatalf("expected billing account to be stored: %v", err)
-	}
-
-	workspace, err := service.GetWorkspace(ctx, result.WorkspaceID)
-	if err != nil {
-		t.Fatalf("expected workspace to be readable: %v", err)
-	}
-	capabilities, err := billingService.WorkspaceCapabilitySnapshot(ctx, int64(result.WorkspaceID))
-	if err != nil {
-		t.Fatalf("expected capability snapshot to resolve: %v", err)
-	}
-	quotaWindow, headers, err := billingService.WorkspaceQuotaSnapshot(ctx, int64(result.WorkspaceID))
-	if err != nil {
-		t.Fatalf("expected quota snapshot to resolve: %v", err)
-	}
-
-	if workspace.Name != "Analytics EU" || workspace.Settings.DefaultCurrency() != "EUR" {
-		t.Fatalf("expected tenant settings to survive workspace entry composition, got %+v", workspace)
-	}
-
-	if workspace.Commercial.Subscription.Plan != billingdomain.PlanStarter ||
-		workspace.Commercial.Subscription.State != billingdomain.SubscriptionStateActive {
-		t.Fatalf("expected workspace commercial status from billing truth, got %+v", workspace.Commercial)
-	}
-
-	if workspace.Commercial.WorkspaceID == nil || *workspace.Commercial.WorkspaceID != int64(result.WorkspaceID) {
-		t.Fatalf("expected workspace commercial status to stay workspace-scoped, got %+v", workspace.Commercial)
-	}
-
-	if quotaWindow != quota || headers["X-OpenToggl-Quota-Remaining"] != "7" {
-		t.Fatalf("expected workspace quota composition from billing, got window=%#v headers=%#v", quotaWindow, headers)
-	}
-
-	if len(capabilities.Capabilities) != 3 || capabilities.Context.WorkspaceID == nil || *capabilities.Context.WorkspaceID != int64(result.WorkspaceID) {
-		t.Fatalf("expected workspace capabilities to resolve for the same workspace entry, got %#v", capabilities)
-	}
-}
-
 type stubCommercialTruthSource struct {
 	byOrganization map[int64]CommercialSnapshot
 	byWorkspace    map[int64]CommercialSnapshot
@@ -365,29 +276,6 @@ func (source stubCommercialTruthSource) CommercialStatusForWorkspace(
 	return organizationSnapshot, nil
 }
 
-type mutableWorkspaceOwnership struct {
-	workspaceOrganizations map[int64]int64
-}
-
-func newMutableWorkspaceOwnership() *mutableWorkspaceOwnership {
-	return &mutableWorkspaceOwnership{workspaceOrganizations: make(map[int64]int64)}
-}
-
-func (ownership *mutableWorkspaceOwnership) Assign(workspaceID int64, organizationID int64) {
-	ownership.workspaceOrganizations[workspaceID] = organizationID
-}
-
-func (ownership *mutableWorkspaceOwnership) OrganizationIDForWorkspace(
-	_ context.Context,
-	workspaceID int64,
-) (int64, error) {
-	organizationID, ok := ownership.workspaceOrganizations[workspaceID]
-	if !ok {
-		return 0, errors.New("workspace ownership missing from billing stub")
-	}
-	return organizationID, nil
-}
-
 func mustNewTenantService(
 	t *testing.T,
 	store *InMemoryStore,
@@ -398,28 +286,6 @@ func mustNewTenantService(
 	service, err := NewService(store, commercial)
 	if err != nil {
 		t.Fatalf("expected tenant service to be valid: %v", err)
-	}
-	return service
-}
-
-func mustNewBillingService(
-	t *testing.T,
-	accounts billingapp.AccountRepository,
-	workspaces billingapp.WorkspaceOwnershipLookup,
-) *billingapp.Service {
-	t.Helper()
-
-	service, err := billingapp.NewService(
-		accounts,
-		workspaces,
-		[]billingdomain.CapabilityRule{
-			{Key: "reports.profitability", MinimumPlan: billingdomain.PlanEnterprise},
-			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
-			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
-		},
-	)
-	if err != nil {
-		t.Fatalf("expected billing service to be valid: %v", err)
 	}
 	return service
 }

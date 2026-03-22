@@ -383,12 +383,25 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 }
 
 func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
-	cfg := mustRuntimeConfigFromRepositoryEnv(t)
+	database := pgtest.Open(t)
+	cfg := Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	}
 
 	firstApp, err := NewApp(cfg)
 	if err != nil {
 		t.Fatalf("first NewApp returned error: %v", err)
 	}
+	t.Cleanup(firstApp.Platform.Database.Close)
 
 	register := performJSONRequest(t, firstApp, http.MethodPost, "/web/v1/auth/register", map[string]any{
 		"email":    "persisted@example.com",
@@ -408,6 +421,7 @@ func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	if err != nil {
 		t.Fatalf("second NewApp returned error: %v", err)
 	}
+	t.Cleanup(secondApp.Platform.Database.Close)
 
 	session := performJSONRequest(t, secondApp, http.MethodGet, "/web/v1/session", nil, sessionCookie)
 	if session.Code != http.StatusOK {
