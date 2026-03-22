@@ -45,9 +45,21 @@ This plan exists because “the process starts” is still not the same thing as
 
 ## Current Drift Against Docs
 
-- Source startup still does not fully prove the real-env, real-datasource path required by [codebase-structure.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/codebase-structure.md)
+- Source startup now proves the canonical real-env, real-datasource path more directly: root `.env.local` remains required for source-based local development, explicit runtime env can bypass `.env.local` for non-local startup paths, and startup fails fast on unreachable PostgreSQL/Redis.
 - Readiness and startup evidence are still thinner than the runtime proof required by [backend-architecture.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/backend-architecture.md) and [testing-strategy.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/testing-strategy.md)
 - Self-hosted release evidence still needs to fully match the delivery expectations in [docker-compose.md](/Users/opentoggl-ci/Code/opentoggl/docs/self-hosting/docker-compose.md)
+
+## Recent Progress
+
+- `backend-env-and-startup` landed a first accepted slice:
+  - local source startup still requires root `.env.local`
+  - explicit `PORT` + `DATABASE_URL` + `REDIS_URL` now form a valid non-local runtime path without `.env.local`
+  - backend startup continues to fail fast on unreachable PostgreSQL/Redis
+  - local `air` startup is now documented to require external `pgschema plan/apply`, not implicit in-process schema reconcile
+- Verification evidence captured for this slice:
+  - `go test ./apps/backend/internal/bootstrap ./apps/backend/internal/web`
+  - empty-env startup fails with missing root `.env.local`
+  - explicit env startup fails fast on unreachable PostgreSQL
 
 ## Testing Story Coverage Status (Stage 2)
 

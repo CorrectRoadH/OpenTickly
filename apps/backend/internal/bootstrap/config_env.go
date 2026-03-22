@@ -81,6 +81,10 @@ func applyRequiredPortOverride(target *string, value string) error {
  * source-based local development.
  */
 func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) string, error) {
+	if hasExplicitRuntimeEnvironment(getEnv) {
+		return getEnv, nil
+	}
+
 	fileValues, err := loadRepositoryEnvFiles()
 	if err != nil {
 		return nil, err
@@ -92,6 +96,17 @@ func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) strin
 		}
 		return fileValues[key]
 	}, nil
+}
+
+/**
+ * hasExplicitRuntimeEnvironment reports whether the process environment already
+ * provides the required runtime inputs for deployed or otherwise non-local
+ * startup paths.
+ */
+func hasExplicitRuntimeEnvironment(getEnv func(string) string) bool {
+	return strings.TrimSpace(getEnv("PORT")) != "" &&
+		strings.TrimSpace(getEnv("DATABASE_URL")) != "" &&
+		strings.TrimSpace(getEnv("REDIS_URL")) != ""
 }
 
 /**

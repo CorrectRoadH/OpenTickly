@@ -196,7 +196,7 @@ apps/backend/internal/platform/
 - `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
 - `infra` 实现 port，但不反向持有 service locator
 - `apps/backend/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
-- `apps/backend/internal/bootstrap` 负责在正式启动链路中调用 `pgschema` 所管理的 schema reconcile / apply 步骤，并在该步骤失败时立即启动失败
+- `apps/backend/internal/bootstrap` 负责在受控 self-hosted / deployment 流程之外消费已经完成的 `pgschema` 结果；本地 `air` 源码启动与默认应用运行时不得在进程内隐式执行 schema reconcile / apply
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
@@ -216,7 +216,7 @@ apps/backend/internal/bootstrap/
 
 bootstrap.NewApp(cfg)
 -> open postgres / redis
--> reconcile postgres schema via pgschema desired state
+-> consume database state already reconciled via external pgschema workflow
 -> build platform services
 -> build module infra adapters
 -> build module application services
@@ -238,11 +238,11 @@ bootstrap.NewApp(cfg)
 
 1. 读取根目录 `.env.local` 或部署环境变量
 2. 建立真实 Postgres / Redis 连接
-3. 调用 `pgschema` 让 live database schema 收口到仓库 desired state
+3. 验证数据库 schema 已通过仓库 desired state 对齐；本地 `air` 源码启动不得在进程内隐式执行 `pgschema reconcile/apply`
 4. 运行实例级初始化与 bootstrap guard
 5. 构建 platform services、模块 infra、application 与 transport
 6. 启动 HTTP runtime
-7. 只有当 schema、初始化和依赖检查都完成后，`/readyz` 才返回 ready
+7. 只有当 schema 前置校验、初始化和依赖检查都完成后，`/readyz` 才返回 ready
 
 规则：
 
@@ -622,6 +622,7 @@ Query 的特征：
 - `PORT` 只表达端口号；后端启动时统一监听 `0.0.0.0:<PORT>`，而不是把完整 listen address 暴露为默认 env 合同。
 - `DATABASE_URL` 与 `REDIS_URL` 属于必填运行时输入；缺失时 `bootstrap` 必须直接失败，不允许回退到默认 DSN、内存实现或伪依赖。
 - `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器运行时都不得依赖 `air` 常驻。
+- 本地 `air` 源码启动不得在应用进程内隐式执行 `pgschema reconcile/apply`；schema 变更必须先通过仓库外部受控的 `pgschema plan/apply` 流程完成，再启动或重启后端验证运行时。
 - 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应运行时命令，而不是复用 `air`。
 
 ## 6. 权限、套餐和事务
