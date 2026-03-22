@@ -58,6 +58,38 @@ This plan exists because the current repository still contains structural drift 
 - Start with documentation and plan terminology, then follow with implementation paths, generation scripts, and test asset names
 - Treat current names such as `transport/http/compat`, `apps/backend/tests/compat`, and similar catch-all labels as historical debt rather than accepted target naming
 
+## Testing Story Coverage Status (Stage 2)
+
+Coverage source of truth:
+
+- [bdd-user-stories.md](/Users/opentoggl-ci/Code/opentoggl/docs/testing/bdd-user-stories.md)
+- [testing-story-coverage.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/testing-story-coverage.md)
+
+Covered stories (full or partial evidence already exists):
+
+- `3A` 管理员管理 projects、clients、tasks 和 tags 目录对象
+- `7` 成员权限影响私有项目、报表和事件可见性
+- `7A` 管理员管理 groups 与成员归属
+- `7B` 管理员配置工作区权限策略
+- `4B` 用户主动退出并结束当前会话（当前为 backend/contract partial，且本计划持有页面闭环责任）
+
+Missing stories in this plan scope:
+
+- `4B` still lacks dedicated logout page-flow and direct E2E chain
+- `3A/7/7A/7B` still lack contract depth and E2E closure required for full completion
+
+Approved deferrals/gaps:
+
+- Tracking core timer stories `1/2/3` are owned by [Tracking Core Transactions](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/tracking-core-transactions.md)
+- Membership lifecycle/commercial depth beyond current structural cleanup is owned by [Membership, Access, and Catalog](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/membership-access-and-catalog.md)
+
+Page-flow / E2E gaps to keep visible:
+
+- auth logout and protected-route guard chain (`4B`) remains open until route-level guard and logout flow have direct page-flow + E2E evidence
+- `projects`/`clients` page families still miss direct E2E
+- `tasks`/`tags` page families still miss direct E2E
+- `groups` and `permission-config` still have page-flow-only evidence and remain E2E gaps
+
 ## Acceptance Criteria
 
 - Backend source startup fails immediately when `.env.local` or required datasource env is missing

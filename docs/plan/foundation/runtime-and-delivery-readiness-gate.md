@@ -49,6 +49,31 @@ This plan exists because “the process starts” is still not the same thing as
 - Readiness and startup evidence are still thinner than the runtime proof required by [backend-architecture.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/backend-architecture.md) and [testing-strategy.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/testing-strategy.md)
 - Self-hosted release evidence still needs to fully match the delivery expectations in [docker-compose.md](/Users/opentoggl-ci/Code/opentoggl/docs/self-hosting/docker-compose.md)
 
+## Testing Story Coverage Status (Stage 2)
+
+Coverage source of truth:
+
+- [bdd-user-stories.md](/Users/opentoggl-ci/Code/opentoggl/docs/testing/bdd-user-stories.md)
+- [testing-story-coverage.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/testing-story-coverage.md)
+
+Covered stories (this plan's runtime prerequisites currently supporting downstream stories):
+
+- runtime/readiness evidence needed before `15-18` instance-admin stories can be formally validated
+
+Missing stories in this plan scope:
+
+- no instance-admin product story (`15`, `16`, `17`, `18`) is fully closed within this foundation gate
+
+Approved deferrals/gaps:
+
+- full story closure for `15-18` is owned by [Instance Admin and Platform Operations](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/instance-admin-and-platform-operations.md)
+- webhook/report/import runtime product chains are owned by downstream product plans after readiness gate completion
+
+Page-flow / E2E gaps to keep visible:
+
+- no formal instance-admin page-flow/E2E chain is present yet for bootstrap, registration policy, governance, config, health, maintenance, or audit surfaces
+- these gaps remain blocking for instance-admin completion but are intentionally outside this plan's direct implementation scope
+
 ## Acceptance Criteria
 
 - Backend source startup requires real env and real datasource configuration

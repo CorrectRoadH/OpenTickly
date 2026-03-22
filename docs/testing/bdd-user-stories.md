@@ -673,6 +673,7 @@
 - `已覆盖`：当前已能找到与故事或页面直接对应的主要测试证据链。
 - `部分覆盖`：已有局部证据，但还没有形成 testing-strategy 要求的完整验收链。
 - `缺失`：当前仓库内尚未找到能直接承接该故事或页面的正式测试证据。
+- `已批准延期`：当前阶段不在本计划直接闭环，由已明确 owner 的下游计划承接，缺口需保持可见直到关闭。
 
 ### BDD Story -> Test Coverage
 
@@ -708,10 +709,32 @@
 | 故事 17：站长管理实例级配置与 provider 状态 | `docs/product/instance-admin.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 实例级配置和 provider 状态尚无测试入口 |
 | 故事 18：站长查看实例健康、维护状态与审计记录 | `docs/product/instance-admin.md` | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 缺失 | 健康、维护模式、审计和后台任务状态尚无测试入口 |
 
+### Stage 2 Active Plan Coverage Snapshot
+
+此处只列 Stage 2 active foundation 计划直接关联的故事，并把 `docs/core/testing-strategy.md` 要求的主要层级显式对齐。
+
+`Y` = 已有主要证据，`P` = 部分覆盖，`N` = 缺失，`D` = 已批准延期且有 owner。
+
+| 故事 | Stage 2 主责任计划 | Domain Unit | Application Integration | Transport Contract | Async Runtime | Frontend Feature | Frontend Page Flow | E2E / Real Runtime | Public Contract Golden | 当前状态 | 说明 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `4` 登录并进入工作区 | `foundation/identity-session-tenant-and-billing-foundation` | Y | Y | Y | N | P | Y | Y | N | 已覆盖 | 已有 auth/shell page flow 和 app-shell e2e 链 |
+| `4A` 账户资料/偏好/API token | `foundation/identity-session-tenant-and-billing-foundation` | Y | Y | Y | N | P | Y | P | N | 部分覆盖 | 缺独立 profile e2e |
+| `4B` logout 与会话结束 | `foundation/one-way-structure-governance` | N | Y | Y | N | N | N | N | N | 部分覆盖 | 仅 backend/contract 局部覆盖；页面链路缺失 |
+| `5A` organization/workspace 上下文管理 | `foundation/identity-session-tenant-and-billing-foundation` | P | Y | Y | N | P | Y | P | N | 部分覆盖 | 生命周期与独立 e2e 仍不完整 |
+| `5` 工作区设置 | `foundation/identity-session-tenant-and-billing-foundation` | P | Y | Y | N | P | Y | P | N | 部分覆盖 | settings 独立 e2e、品牌与历史事实链仍缺 |
+| `13` 套餐/订阅/配额 | `foundation/identity-session-tenant-and-billing-foundation` | Y | Y | P | N | N | N | N | N | 部分覆盖 | backend 规则较完整，但 Web page-flow/e2e 缺失 |
+| `14` 降级与超限处理 | `foundation/identity-session-tenant-and-billing-foundation` | Y | Y | N | N | N | N | N | N | 部分覆盖 | 降级后 UI 与 e2e 证据缺失 |
+| `3A` catalog 对象管理 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | P | P | N | N | P | Y | N | N | 部分覆盖 | 已有 projects/clients/tasks/tags page flow，缺 e2e/contract |
+| `7` 权限影响可见性 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | P | P | N | N | P | P | N | N | 部分覆盖 | reports/webhooks 可见性联动证据缺 |
+| `7A` groups 与成员归属 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | N | N | N | N | P | Y | N | N | 部分覆盖 | page flow 仍是过渡态，backend/contract/e2e 缺失 |
+| `7B` 权限策略配置 | `foundation/one-way-structure-governance` + `product/membership-access-and-catalog` | N | N | N | N | P | Y | N | N | 部分覆盖 | 当前只有页面流证据 |
+| `15-18` instance-admin | `product/instance-admin-and-platform-operations` | N | N | N | N | N | N | N | N | 已批准延期 | Stage 2 foundation 只交付运行时 gate，不闭环平台产品故事 |
+
 ### 正式页面族对照
 
 | 页面族 | PRD 来源 | Figma / fallback 来源 | 当前实现页面 | Page Flow 证据 | E2E / Real Runtime 证据 | 当前状态 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Timer 页面族（`calendar` / `list` / `timesheet`） | `docs/product/tracking.md` | Figma `timer calendar mode` node `8:3029`、`timer listview` node `12:2948`、`timer timesheet mode` node `10:13202`；Screenshots `toggl-timer-calendar-view-week.png`、`toggl-timer-list-view-all-dates.png`、`toggl-timer-timesheet-view-week.png` | 当前暂无统一的正式 timer 页面族实现映射 | 缺失 | 缺失 | 缺失 | 这是 testing-strategy 强制 page-flow/E2E 页面族，需保持红灯直到 [tracking-core-transactions.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/tracking-core-transactions.md) 关闭 |
 | Auth | `docs/product/identity-and-tenant.md` | 当前未在 PRD 中记录独立 Figma 节点 | `apps/website/src/pages/auth/AuthPage.tsx` | `apps/website/src/pages/auth/__tests__/auth-page-flow.test.tsx` | `apps/website/e2e/app-shell.spec.ts`、`apps/website/e2e/app-shell.real-runtime.spec.ts` | 部分覆盖 | register/login 可回归；logout 尚未形成正式证据链 |
 | Shared App Shell | `docs/product/tracking.md` | Figma `left nav`，node `8:2829` | `apps/website/src/pages/shell/WorkspaceOverviewPage.tsx` | `apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx` | `apps/website/e2e/app-shell.spec.ts`、`apps/website/e2e/app-shell.real-runtime.spec.ts` | 已覆盖 | 截图证据仍缺，见计划中的 Wave 1.5 备注 |
 | Profile | `docs/product/identity-and-tenant.md` | Figma `profile`，node `10:14814` | `apps/website/src/pages/profile/ProfilePage.tsx` | `apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx` | 当前仅被 `apps/website/e2e/app-shell.real-runtime.spec.ts` 间接覆盖 | 部分覆盖 | 缺少独立 profile e2e 与截图证据 |
@@ -723,6 +746,7 @@
 | Workspace Members | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/members/WorkspaceMembersPage.tsx` | `apps/website/src/pages/members/__tests__/workspace-members-page-flow.test.tsx` | 缺失 | 部分覆盖 | 当前 page flow 只证明列表与邀请入口；页面来源文档仍需补齐 |
 | Groups | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/groups/GroupsPage.tsx` | `apps/website/src/pages/groups/__tests__/groups-page-flow.test.tsx` | 缺失 | 部分覆盖 | 当前实现与测试都明确标注仍是过渡态，不能当作正式完成证据 |
 | Permission Config | `docs/product/membership-and-access.md` | 计划当前只允许复用 left nav 共享壳层；专属 Figma 或明确 fallback 尚未补齐 | `apps/website/src/pages/permission-config/PermissionConfigPage.tsx` | `apps/website/src/pages/permission-config/__tests__/permission-config-page-flow.test.tsx` | 缺失 | 部分覆盖 | 具备 page flow，但页面来源与更高层验证链仍不完整 |
+| Integrations Webhooks | `docs/product/Webhooks.md` | 当前产品文档未沉淀独立 Figma 节点，暂以 PRD + openapi/toggl-webhooks-v1.swagger.json 作为 fallback 设计来源 | 当前未建立正式 `integrations webhooks` 页面族映射 | 缺失 | 缺失 | 缺失 | testing-strategy 要求的正式页面族之一，需在 [webhooks-runtime.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/webhooks-runtime.md) 建立 page-flow/E2E 证据 |
 
 ### 当前优先缺口
 

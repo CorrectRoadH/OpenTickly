@@ -49,6 +49,39 @@ This plan exists because identity, tenant, session, and billing facts are prereq
 - Runtime assembly still depends on fake or transitional runtime paths that conflict with [backend-architecture.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/backend-architecture.md)
 - Logout and route-level session closure remain incomplete relative to [identity-and-tenant.md](/Users/opentoggl-ci/Code/opentoggl/docs/product/identity-and-tenant.md) and [frontend-architecture.md](/Users/opentoggl-ci/Code/opentoggl/docs/core/frontend-architecture.md)
 
+## Testing Story Coverage Status (Stage 2)
+
+Coverage source of truth:
+
+- [bdd-user-stories.md](/Users/opentoggl-ci/Code/opentoggl/docs/testing/bdd-user-stories.md)
+- [testing-story-coverage.md](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/testing-story-coverage.md)
+
+Covered stories (full or partial evidence already exists):
+
+- `4` 用户登录并进入正确的工作区
+- `4A` 用户管理账户资料、个人偏好与 API token
+- `5A` 管理员管理 organization、workspace 与当前工作上下文
+- `5` 管理员管理工作区设置
+- `13` 管理员管理套餐、订阅和配额
+- `14` 管理员在降级后处理超限状态
+
+Missing stories in this plan scope:
+
+- `4B` 用户主动退出并结束当前会话 still misses formal page-flow and direct E2E closure
+- `13A` 管理员管理 customer、invoice 与 payment 相关状态 remains missing in formal Web + test layers
+
+Approved deferrals/gaps:
+
+- `4B` page-flow/E2E closure is owned by [One-Way Structure Governance](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/one-way-structure-governance.md) per route-level auth/session guard scope
+- Commercial billing surfaces for `13/13A/14` are owned by [Billing Commercial Views and Invoices](/Users/opentoggl-ci/Code/opentoggl/docs/plan/product/billing-commercial-views-and-invoices.md)
+
+Page-flow / E2E gaps to keep visible:
+
+- `4B` logout route-level flow lacks dedicated page-flow and direct E2E closure
+- `4A` profile still lacks direct (non-indirect) E2E coverage
+- `5` settings still lacks dedicated E2E coverage
+- billing stories `13/13A/14` still lack billing-page page-flow and E2E closure
+
 ## Acceptance Criteria
 
 - A user can register or log in and enter a workspace

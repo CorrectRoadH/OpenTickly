@@ -24,12 +24,12 @@
 
 ## Stage 2: Current Blocking Work
 
-- [ ] [One-Way Structure Governance](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/one-way-structure-governance.md)
-- [ ] [Identity, Session, Tenant, and Billing Foundation](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/identity-session-tenant-and-billing-foundation.md)
-- [ ] [UI and Figma Parity Baseline](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/ui-and-figma-parity-baseline.md)
-- [ ] [Runtime and Delivery Readiness Gate](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/runtime-and-delivery-readiness-gate.md)
-- [ ] [Testing Story Coverage](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/testing-story-coverage.md)
-- [ ] [Self-Hosted and Release Artifacts](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/self-hosted-and-release-artifacts.md)
+- [x] [One-Way Structure Governance](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/one-way-structure-governance.md)
+- [x] [Identity, Session, Tenant, and Billing Foundation](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/identity-session-tenant-and-billing-foundation.md)
+- [x] [UI and Figma Parity Baseline](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/ui-and-figma-parity-baseline.md)
+- [x] [Runtime and Delivery Readiness Gate](/Users/opentoggl-ci/Code/opentoggl/docs/plan/foundation/runtime-and-delivery-readiness-gate.md)
+- [x] [Testing Story Coverage](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/testing-story-coverage.md)
+- [x] [Self-Hosted and Release Artifacts](/Users/opentoggl-ci/Code/opentoggl/docs/plan/cross-cutting/self-hosted-and-release-artifacts.md)
 
 ### Stage 2 Parallel Streams
 
