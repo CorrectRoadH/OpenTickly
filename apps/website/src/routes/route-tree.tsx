@@ -7,10 +7,12 @@ import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
+import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import { parseProjectsSearch } from "../shared/url-state/projects-location.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
 import { parseWorkspaceSettingsSearch } from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
+import { InviteStatusJoinedPage } from "../pages/members/InviteStatusJoinedPage.tsx";
 import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
 import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettingsPage.tsx";
 import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
@@ -44,6 +46,13 @@ const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
   component: RegisterRouteComponent,
+});
+
+const inviteStatusJoinedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/invite-status/joined",
+  validateSearch: parseInviteStatusJoinedSearch,
+  component: InviteStatusJoinedRouteComponent,
 });
 
 const profileRoute = createRoute({
@@ -143,6 +152,7 @@ export const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
   registerRoute,
+  inviteStatusJoinedRoute,
   profileRoute,
   workspaceOverviewRoute,
   workspaceReportsRoute,
@@ -188,6 +198,17 @@ function LoginRouteComponent() {
 
 function RegisterRouteComponent() {
   return <PublicAuthRoute mode="register" />;
+}
+
+function InviteStatusJoinedRouteComponent() {
+  const search = inviteStatusJoinedRoute.useSearch();
+
+  return (
+    <InviteStatusJoinedPage
+      workspaceId={search.workspaceId}
+      workspaceName={search.workspaceName}
+    />
+  );
 }
 
 type PublicAuthRouteProps = {

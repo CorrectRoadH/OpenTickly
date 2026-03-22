@@ -43,7 +43,7 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
 
 - First contracts, backend-core, Web-pages, and runtime-endpoints slice exists
 - Formal completion is blocked by readiness work and remaining project-page/product-surface gaps
-- Workspace members page now supports invite plus disable/restore/remove lifecycle actions on the existing formal surface, with focused backend and page-flow coverage
+- Workspace members and invite-status joined surfaces now cover the implemented invite/join/disable/restore/remove lifecycle closure on the existing formal Web surface, with focused backend and page-flow coverage
 - Project, client, tag, group, and permission-configuration pages all have formal page-flow coverage on the current Web surface, but they remain partial relative to full PRD exit rules because E2E, broader contract depth, and several downstream effects are still open
 
 ## Known Gaps
@@ -76,9 +76,12 @@ This plan exists because tracking, reports, and webhooks all depend on membershi
 ## Recent Progress
 
 - Workspace member lifecycle actions now exist on the existing members page for disable, restore, and remove flows alongside invite
+- Invite-status joined closure now exists as a formal public page with canonical search parsing and page-flow coverage back into login and the workspace shell
 - Focused verification for the workspace-member lifecycle slice passed:
   - `go test ./apps/backend/internal/http ./apps/backend/internal/membership/application`
   - `vp run website#test:unit -- --run src/pages/members/__tests__/workspace-members-page-flow.test.tsx`
+  - `vp run website#test:unit -- --run src/pages/members/__tests__/invite-status-joined-page-flow.test.tsx`
+  - `vp run website#test:unit -- --run src/shared/url-state/__tests__/invite-status-location.test.ts`
 - Existing catalog/access page-flow slices already provide formal Web evidence for currently implemented page families:
   - `vp run website#test:unit -- --run src/pages/projects/__tests__/projects-page-flow.test.tsx`
   - `vp run website#test:unit -- --run src/pages/clients/__tests__/clients-page-flow.test.tsx`
