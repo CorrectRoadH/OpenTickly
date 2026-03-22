@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "generate": "node ./scripts/generate-openapi-test-artifacts.mjs",
+    "generate": "go generate ./...",
     "test": "vp test run",
     "check": "vp check"
   },

@@ -156,10 +156,16 @@ describe("mapSessionBootstrap", () => {
 
   it("falls back to the bootstrapped current workspace when the requested workspace is missing", () => {
     const result = mapSessionBootstrap({
-      current_organization_id: null,
+      current_organization_id: 14,
       current_workspace_id: 202,
-      organization_subscription: null,
-      workspace_subscription: null,
+      organization_subscription: {
+        plan_name: "Starter",
+        state: "active",
+      },
+      workspace_subscription: {
+        plan_name: "Starter",
+        state: "active",
+      },
       organizations: [],
       user: {
         id: 99,
@@ -173,8 +179,20 @@ describe("mapSessionBootstrap", () => {
         has_password: true,
         "2fa_enabled": false,
       },
-      workspace_capabilities: null,
-      workspace_quota: null,
+      workspace_capabilities: {
+        context: {
+          scope: "workspace",
+          organization_id: 14,
+          workspace_id: 202,
+        },
+        capabilities: [],
+      },
+      workspace_quota: {
+        organization_id: 14,
+        remaining: 0,
+        resets_in_secs: 60,
+        total: 100,
+      },
       workspaces: [
         {
           id: 202,

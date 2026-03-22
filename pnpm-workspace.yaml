@@ -4,6 +4,8 @@ packages:
   - tools/*
 
 catalog:
+  '@hey-api/client-fetch': ^0.13.1
+  '@hey-api/openapi-ts': 0.94.4
   "@types/node": ^24
   react-hook-form: ^7.71.2
   typescript: ^5

@@ -190,8 +190,26 @@ export function createWorkspaceSettingsEnvelopeFixture(
       plan_name: "Starter",
       state: "active",
     },
-    capabilities: null,
-    quota: null,
+    capabilities: {
+      context: {
+        scope: "workspace",
+        organization_id: 14,
+        workspace_id: 202,
+      },
+      capabilities: [
+        {
+          key: "reports",
+          enabled: true,
+          source: "billing",
+        },
+      ],
+    },
+    quota: {
+      organization_id: 14,
+      remaining: 20,
+      resets_in_secs: 600,
+      total: 100,
+    },
     ...overrides,
   };
 }
@@ -221,6 +239,8 @@ export function createWorkspaceMemberFixture(
     name: "Alex Johnson",
     role: "owner",
     status: "joined",
+    hourly_rate: 0,
+    labor_cost: 0,
     ...overrides,
   };
 }
@@ -309,9 +329,6 @@ export function createClientSummaryFixture(
     name: "North Ridge Client",
     workspace_id: 202,
     active: true,
-    archived_project_count: 1,
-    project_count: 3,
-    time_entry_count: 12,
     ...overrides,
   };
 }
@@ -338,7 +355,6 @@ export function createTagSummaryFixture(overrides?: Partial<TagSummaryDto>): Tag
     name: "Urgent",
     workspace_id: 202,
     active: true,
-    usage_count: 7,
     ...overrides,
   };
 }

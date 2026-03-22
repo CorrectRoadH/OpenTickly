@@ -1,7 +1,5 @@
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
@@ -117,49 +115,6 @@ describe("shared contracts", () => {
       expect(document).toContain("./opentoggl-shared.openapi.json#/components/");
       expect(document).not.toContain("packages/shared-contracts/openapi/public.openapi.json");
     }
-  });
-
-  it("fails closed when the generator sees unsupported schema constructs", () => {
-    const fixtureDir = mkdtempSync(join(tmpdir(), "shared-contracts-generator-"));
-    const sourcePath = resolve(fixtureDir, "unsupported.openapi.json");
-    const targetPath = resolve(fixtureDir, "unsupported.generated.ts");
-
-    writeFileSync(
-      sourcePath,
-      JSON.stringify({
-        openapi: "3.1.0",
-        info: {
-          title: "Unsupported Schema Fixture",
-          version: "0.0.0",
-        },
-        components: {
-          headers: {},
-          schemas: {
-            UnsupportedShape: {
-              oneOf: [{ type: "string" }, { type: "integer" }],
-            },
-          },
-        },
-      }),
-    );
-
-    const result = spawnSync(
-      process.execPath,
-      [
-        "packages/shared-contracts/scripts/generate-shared-contracts.mjs",
-        "--source",
-        sourcePath,
-        "--target",
-        targetPath,
-      ],
-      {
-        cwd: repositoryRoot,
-        encoding: "utf8",
-      },
-    );
-
-    expect(result.status).not.toBe(0);
-    expect(`${result.stdout}\n${result.stderr}`).toContain("Unsupported schema");
   });
 
   it("rejects invalid shared payloads through the app-agnostic validation seam", async () => {

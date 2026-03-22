@@ -48,13 +48,38 @@ function installProjectsApiFixture() {
       path: "/web/v1/projects",
       resolver: (request) => {
         const body = request.body as { name?: string; workspace_id?: number };
-        projects.push({
+        projects.push(
+          createProjectsFixture().projects[0] ?? {
+            id: 1003,
+            name: body.name ?? "Untitled",
+            workspace_id: body.workspace_id ?? 202,
+            active: true,
+            pinned: false,
+            client_name: null,
+            template: false,
+            actual_seconds: 0,
+            tracked_seconds_current_period: 0,
+            tracked_seconds_previous_period: 0,
+            recurring_period: null,
+            recurring_period_start: null,
+            recurring_period_end: null,
+          },
+        );
+        projects[projects.length - 1] = {
           id: 1003,
           name: body.name ?? "Untitled",
           workspace_id: body.workspace_id ?? 202,
           active: true,
           pinned: false,
-        });
+          client_name: "",
+          template: false,
+          actual_seconds: 0,
+          tracked_seconds_current_period: 0,
+          tracked_seconds_previous_period: 0,
+          recurring_period: "",
+          recurring_period_start: "",
+          recurring_period_end: "",
+        };
         return jsonResponse(projects[projects.length - 1], { status: 201 });
       },
     },

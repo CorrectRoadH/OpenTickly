@@ -1850,28 +1850,6 @@
           "limit_public_project_data"
         ]
       },
-      "WorkspaceMember": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "workspace_id": {
-            "type": "integer"
-          },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          }
-        },
-        "required": ["id", "workspace_id", "email", "name", "role"]
-      },
       "ClientListEnvelope": {
         "type": "object",
         "properties": {

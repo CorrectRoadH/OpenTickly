@@ -43,6 +43,8 @@ describe("workspace members page flow", () => {
             name: "new.member",
             role,
             status: "invited",
+            hourly_rate: 0,
+            labor_cost: 0,
           });
           return jsonResponse({}, { status: 201 });
         },
@@ -156,8 +158,22 @@ describe("workspace members page flow", () => {
           (call.body as { email?: string; role?: string }).role === "admin",
       ),
     ).toBe(true);
-    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/1/disable")).toBe(true);
-    expect(calls.some((call) => call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/2/restore")).toBe(true);
-    expect(calls.some((call) => call.method === "DELETE" && call.pathname === "/web/v1/workspaces/202/members/3")).toBe(true);
+    expect(
+      calls.some(
+        (call) =>
+          call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/1/disable",
+      ),
+    ).toBe(true);
+    expect(
+      calls.some(
+        (call) =>
+          call.method === "POST" && call.pathname === "/web/v1/workspaces/202/members/2/restore",
+      ),
+    ).toBe(true);
+    expect(
+      calls.some(
+        (call) => call.method === "DELETE" && call.pathname === "/web/v1/workspaces/202/members/3",
+      ),
+    ).toBe(true);
   });
 });

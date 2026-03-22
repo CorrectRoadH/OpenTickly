@@ -2,30 +2,58 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
   ClientCreateRequestDto,
-  ClientListEnvelopeDto,
+  GroupCreateRequestDto,
   LoginRequestDto,
-  OrganizationSettingsEnvelopeDto,
   ProjectCreateRequestDto,
-  ProjectListEnvelopeDto,
-  ProjectMembersEnvelopeDto,
-  ProjectSummaryDto,
   RegisterRequestDto,
+  TaskCreateRequestDto,
   UpdateCurrentUserProfileRequestDto,
   UpdateOrganizationSettingsRequestDto,
   UpdateUserPreferencesRequestDto,
   UpdateWorkspaceSettingsRequestDto,
   TagCreateRequestDto,
-  TagListEnvelopeDto,
   WebCurrentUserProfileDto,
-  WebSessionBootstrapDto,
-  WebUserPreferencesDto,
-  WorkspaceMemberDto,
   WorkspaceMemberInvitationRequestDto,
-  WorkspaceMembersEnvelopeDto,
   WebWorkspaceSettingsDto,
-  WorkspaceSettingsEnvelopeDto,
 } from "../api/web-contract.ts";
-import { webRequest } from "../api/web-client.ts";
+import { unwrapWebApiResult } from "../api/web-client.ts";
+import {
+  archiveProject,
+  createClient,
+  createGroup,
+  createProject,
+  createTag,
+  createTask,
+  disableWorkspaceMember,
+  getCurrentUserPreferences,
+  getCurrentUserProfile,
+  getOrganizationSettings,
+  getWebSession,
+  getWorkspacePermissions,
+  getWorkspaceSettings,
+  inviteWorkspaceMember,
+  listClients,
+  listGroups,
+  listProjectMembers,
+  listProjects,
+  listTags,
+  listTasks,
+  listWorkspaceMembers,
+  loginWebUser,
+  logoutWebUser,
+  pinProject,
+  registerWebUser,
+  removeWorkspaceMember,
+  resetCurrentUserApiToken,
+  restoreProject,
+  restoreWorkspaceMember,
+  unpinProject,
+  updateCurrentUserPreferences,
+  updateCurrentUserProfile,
+  updateOrganizationSettings,
+  updateWorkspacePermissions,
+  updateWorkspaceSettings,
+} from "../api/web/index.ts";
 
 const sessionQueryKey = ["web-session"] as const;
 const profileQueryKey = ["web-profile"] as const;
@@ -52,45 +80,11 @@ export type WorkspacePermissionsEnvelopeDto = {
   workspace: WorkspacePermissionsDto;
 };
 
-type TaskSummary = {
-  active: boolean;
-  id: number;
-  name: string;
-  workspace_id: number;
-};
-
-type GroupSummary = {
-  active: boolean;
-  id: number;
-  name: string;
-  workspace_id: number;
-};
-
-type GroupListEnvelope = {
-  groups: GroupSummary[];
-};
-
-type GroupCreateRequest = {
-  name: string;
-  workspace_id: number;
-};
-
-type TaskListEnvelope = {
-  tasks: TaskSummary[];
-};
-
-type TaskCreateRequest = {
-  name: string;
-  workspace_id: number;
-};
-
-type ResetCurrentUserApiTokenResponseDto = Pick<WebCurrentUserProfileDto, "api_token">;
-
 export type ProjectListStatusFilter = "active" | "all" | "archived";
 
 export function useSessionBootstrapQuery() {
   return useQuery({
-    queryFn: () => webRequest<WebSessionBootstrapDto>("/web/v1/session"),
+    queryFn: () => unwrapWebApiResult(getWebSession()),
     queryKey: sessionQueryKey,
   });
 }
@@ -99,11 +93,7 @@ export function useLoginMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: LoginRequestDto) =>
-      webRequest<WebSessionBootstrapDto>("/web/v1/auth/login", {
-        body: request,
-        method: "POST",
-      }),
+    mutationFn: (request: LoginRequestDto) => unwrapWebApiResult(loginWebUser({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(sessionQueryKey, data);
     },
@@ -115,10 +105,7 @@ export function useRegisterMutation() {
 
   return useMutation({
     mutationFn: (request: RegisterRequestDto) =>
-      webRequest<WebSessionBootstrapDto>("/web/v1/auth/register", {
-        body: request,
-        method: "POST",
-      }),
+      unwrapWebApiResult(registerWebUser({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(sessionQueryKey, data);
     },
@@ -129,10 +116,9 @@ export function useLogoutMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      webRequest<void>("/web/v1/auth/logout", {
-        method: "POST",
-      }),
+    mutationFn: async () => {
+      await unwrapWebApiResult(logoutWebUser());
+    },
     onSuccess: async () => {
       await queryClient.cancelQueries();
       queryClient.clear();
@@ -142,7 +128,7 @@ export function useLogoutMutation() {
 
 export function useProfileQuery() {
   return useQuery({
-    queryFn: () => webRequest<WebCurrentUserProfileDto>("/web/v1/profile"),
+    queryFn: () => unwrapWebApiResult(getCurrentUserProfile()),
     queryKey: profileQueryKey,
   });
 }
@@ -152,10 +138,7 @@ export function useUpdateProfileMutation() {
 
   return useMutation({
     mutationFn: (request: UpdateCurrentUserProfileRequestDto) =>
-      webRequest<WebCurrentUserProfileDto>("/web/v1/profile", {
-        body: request,
-        method: "PATCH",
-      }),
+      unwrapWebApiResult(updateCurrentUserProfile({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(profileQueryKey, data);
       void queryClient.invalidateQueries({
@@ -169,10 +152,7 @@ export function useResetApiTokenMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () =>
-      webRequest<ResetCurrentUserApiTokenResponseDto>("/web/v1/profile/api-token/reset", {
-        method: "POST",
-      }),
+    mutationFn: () => unwrapWebApiResult(resetCurrentUserApiToken()),
     onSuccess: (data) => {
       queryClient.setQueryData<WebCurrentUserProfileDto | undefined>(profileQueryKey, (profile) =>
         profile
@@ -191,7 +171,7 @@ export function useResetApiTokenMutation() {
 
 export function usePreferencesQuery() {
   return useQuery({
-    queryFn: () => webRequest<WebUserPreferencesDto>("/web/v1/preferences"),
+    queryFn: () => unwrapWebApiResult(getCurrentUserPreferences()),
     queryKey: ["web-preferences"],
   });
 }
@@ -201,10 +181,7 @@ export function useUpdatePreferencesMutation() {
 
   return useMutation({
     mutationFn: (request: UpdateUserPreferencesRequestDto) =>
-      webRequest<WebUserPreferencesDto>("/web/v1/preferences", {
-        body: request,
-        method: "PATCH",
-      }),
+      unwrapWebApiResult(updateCurrentUserPreferences({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(["web-preferences"], data);
     },
@@ -214,7 +191,13 @@ export function useUpdatePreferencesMutation() {
 export function useWorkspaceSettingsQuery(workspaceId: number) {
   return useQuery({
     queryFn: () =>
-      webRequest<WorkspaceSettingsEnvelopeDto>(`/web/v1/workspaces/${workspaceId}/settings`),
+      unwrapWebApiResult(
+        getWorkspaceSettings({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: workspaceSettingsQueryKey(workspaceId),
   });
 }
@@ -224,10 +207,14 @@ export function useUpdateWorkspaceSettingsMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: UpdateWorkspaceSettingsRequestDto) =>
-      webRequest<WorkspaceSettingsEnvelopeDto>(`/web/v1/workspaces/${workspaceId}/settings`, {
-        body: request,
-        method: "PATCH",
-      }),
+      unwrapWebApiResult(
+        updateWorkspaceSettings({
+          body: request,
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: (data) => {
       queryClient.setQueryData(workspaceSettingsQueryKey(workspaceId), data);
       void queryClient.invalidateQueries({
@@ -239,8 +226,15 @@ export function useUpdateWorkspaceSettingsMutation(workspaceId: number) {
 
 export function useWorkspacePermissionsQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () =>
-      webRequest<WorkspacePermissionsEnvelopeDto>(`/web/v1/workspaces/${workspaceId}/permissions`),
+    queryFn: async () => ({
+      workspace: await unwrapWebApiResult(
+        getWorkspacePermissions({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    }),
     queryKey: workspacePermissionsQueryKey(workspaceId),
   });
 }
@@ -249,11 +243,16 @@ export function useUpdateWorkspacePermissionsMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateWorkspacePermissionsRequestDto) =>
-      webRequest<WorkspacePermissionsEnvelopeDto>(`/web/v1/workspaces/${workspaceId}/permissions`, {
-        body: request,
-        method: "PATCH",
-      }),
+    mutationFn: async (request: UpdateWorkspacePermissionsRequestDto) => ({
+      workspace: await unwrapWebApiResult(
+        updateWorkspacePermissions({
+          body: request.workspace,
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    }),
     onSuccess: async (data) => {
       queryClient.setQueryData(workspacePermissionsQueryKey(workspaceId), data);
       await queryClient.invalidateQueries({
@@ -269,8 +268,12 @@ export function useUpdateWorkspacePermissionsMutation(workspaceId: number) {
 export function useOrganizationSettingsQuery(organizationId: number) {
   return useQuery({
     queryFn: () =>
-      webRequest<OrganizationSettingsEnvelopeDto>(
-        `/web/v1/organizations/${organizationId}/settings`,
+      unwrapWebApiResult(
+        getOrganizationSettings({
+          path: {
+            organization_id: organizationId,
+          },
+        }),
       ),
     queryKey: ["organization-settings", organizationId],
   });
@@ -279,7 +282,13 @@ export function useOrganizationSettingsQuery(organizationId: number) {
 export function useWorkspaceMembersQuery(workspaceId: number) {
   return useQuery({
     queryFn: () =>
-      webRequest<WorkspaceMembersEnvelopeDto>(`/web/v1/workspaces/${workspaceId}/members`),
+      unwrapWebApiResult(
+        listWorkspaceMembers({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: ["workspace-members", workspaceId],
   });
 }
@@ -289,10 +298,14 @@ export function useInviteWorkspaceMemberMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: WorkspaceMemberInvitationRequestDto) =>
-      webRequest(`/web/v1/workspaces/${workspaceId}/members/invitations`, {
-        body: request,
-        method: "POST",
-      }),
+      unwrapWebApiResult(
+        inviteWorkspaceMember({
+          body: request,
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
@@ -306,9 +319,14 @@ export function useDisableWorkspaceMemberMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (memberId: number) =>
-      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}/disable`, {
-        method: "POST",
-      }),
+      unwrapWebApiResult(
+        disableWorkspaceMember({
+          path: {
+            member_id: memberId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
@@ -322,9 +340,14 @@ export function useRestoreWorkspaceMemberMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (memberId: number) =>
-      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}/restore`, {
-        method: "POST",
-      }),
+      unwrapWebApiResult(
+        restoreWorkspaceMember({
+          path: {
+            member_id: memberId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
@@ -338,9 +361,14 @@ export function useRemoveWorkspaceMemberMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (memberId: number) =>
-      webRequest<WorkspaceMemberDto>(`/web/v1/workspaces/${workspaceId}/members/${memberId}`, {
-        method: "DELETE",
-      }),
+      unwrapWebApiResult(
+        removeWorkspaceMember({
+          path: {
+            member_id: memberId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["workspace-members", workspaceId],
@@ -352,8 +380,13 @@ export function useRemoveWorkspaceMemberMutation(workspaceId: number) {
 export function useProjectsQuery(workspaceId: number, status: ProjectListStatusFilter = "all") {
   return useQuery({
     queryFn: () =>
-      webRequest<ProjectListEnvelopeDto>(
-        `/web/v1/projects?workspace_id=${workspaceId}&status=${status}`,
+      unwrapWebApiResult(
+        listProjects({
+          query: {
+            status,
+            workspace_id: workspaceId,
+          },
+        }),
       ),
     queryKey: projectsQueryKey(workspaceId, status),
   });
@@ -364,10 +397,7 @@ export function useCreateProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: ProjectCreateRequestDto) =>
-      webRequest(`/web/v1/projects`, {
-        body: request,
-        method: "POST",
-      }),
+      unwrapWebApiResult(createProject({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -381,9 +411,13 @@ export function useArchiveProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (projectId: number) =>
-      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/archive`, {
-        method: "POST",
-      }),
+      unwrapWebApiResult(
+        archiveProject({
+          path: {
+            project_id: projectId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -397,9 +431,13 @@ export function useRestoreProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (projectId: number) =>
-      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/archive`, {
-        method: "DELETE",
-      }),
+      unwrapWebApiResult(
+        restoreProject({
+          path: {
+            project_id: projectId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -413,9 +451,13 @@ export function usePinProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (projectId: number) =>
-      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/pin`, {
-        method: "POST",
-      }),
+      unwrapWebApiResult(
+        pinProject({
+          path: {
+            project_id: projectId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -429,9 +471,13 @@ export function useUnpinProjectMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (projectId: number) =>
-      webRequest<ProjectSummaryDto>(`/web/v1/projects/${projectId}/pin`, {
-        method: "DELETE",
-      }),
+      unwrapWebApiResult(
+        unpinProject({
+          path: {
+            project_id: projectId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -442,14 +488,28 @@ export function useUnpinProjectMutation(workspaceId: number) {
 
 export function useProjectMembersQuery(projectId: number) {
   return useQuery({
-    queryFn: () => webRequest<ProjectMembersEnvelopeDto>(`/web/v1/projects/${projectId}/members`),
+    queryFn: () =>
+      unwrapWebApiResult(
+        listProjectMembers({
+          path: {
+            project_id: projectId,
+          },
+        }),
+      ),
     queryKey: ["project-members", projectId],
   });
 }
 
 export function useClientsQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () => webRequest<ClientListEnvelopeDto>(`/web/v1/clients?workspace_id=${workspaceId}`),
+    queryFn: () =>
+      unwrapWebApiResult(
+        listClients({
+          query: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: ["clients", workspaceId],
   });
 }
@@ -459,10 +519,7 @@ export function useCreateClientMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: ClientCreateRequestDto) =>
-      webRequest(`/web/v1/clients`, {
-        body: request,
-        method: "POST",
-      }),
+      unwrapWebApiResult(createClient({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["clients", workspaceId],
@@ -473,7 +530,14 @@ export function useCreateClientMutation(workspaceId: number) {
 
 export function useGroupsQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () => webRequest<GroupListEnvelope>(`/web/v1/groups?workspace_id=${workspaceId}`),
+    queryFn: () =>
+      unwrapWebApiResult(
+        listGroups({
+          query: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: ["groups", workspaceId],
   });
 }
@@ -482,11 +546,8 @@ export function useCreateGroupMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: GroupCreateRequest) =>
-      webRequest(`/web/v1/groups`, {
-        body: request,
-        method: "POST",
-      }),
+    mutationFn: (request: GroupCreateRequestDto) =>
+      unwrapWebApiResult(createGroup({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["groups", workspaceId],
@@ -497,7 +558,14 @@ export function useCreateGroupMutation(workspaceId: number) {
 
 export function useTasksQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () => webRequest<TaskListEnvelope>(`/web/v1/tasks?workspace_id=${workspaceId}`),
+    queryFn: () =>
+      unwrapWebApiResult(
+        listTasks({
+          query: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: ["tasks", workspaceId],
   });
 }
@@ -506,11 +574,8 @@ export function useCreateTaskMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: TaskCreateRequest) =>
-      webRequest(`/web/v1/tasks`, {
-        body: request,
-        method: "POST",
-      }),
+    mutationFn: (request: TaskCreateRequestDto) =>
+      unwrapWebApiResult(createTask({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["tasks", workspaceId],
@@ -521,7 +586,14 @@ export function useCreateTaskMutation(workspaceId: number) {
 
 export function useTagsQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () => webRequest<TagListEnvelopeDto>(`/web/v1/tags?workspace_id=${workspaceId}`),
+    queryFn: () =>
+      unwrapWebApiResult(
+        listTags({
+          query: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     queryKey: ["tags", workspaceId],
   });
 }
@@ -530,11 +602,7 @@ export function useCreateTagMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: TagCreateRequestDto) =>
-      webRequest(`/web/v1/tags`, {
-        body: request,
-        method: "POST",
-      }),
+    mutationFn: (request: TagCreateRequestDto) => unwrapWebApiResult(createTag({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["tags", workspaceId],
@@ -548,12 +616,13 @@ export function useUpdateOrganizationSettingsMutation(organizationId: number) {
 
   return useMutation({
     mutationFn: (request: UpdateOrganizationSettingsRequestDto) =>
-      webRequest<OrganizationSettingsEnvelopeDto>(
-        `/web/v1/organizations/${organizationId}/settings`,
-        {
+      unwrapWebApiResult(
+        updateOrganizationSettings({
           body: request,
-          method: "PATCH",
-        },
+          path: {
+            organization_id: organizationId,
+          },
+        }),
       ),
     onSuccess: (data) => {
       queryClient.setQueryData(["organization-settings", organizationId], data);

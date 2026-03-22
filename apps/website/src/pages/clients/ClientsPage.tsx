@@ -143,11 +143,7 @@ export function ClientsPage(): ReactElement {
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">{client.name}</p>
                   <p className="text-xs text-slate-600">Client · {statusLabel}</p>
-                  <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
-                    <span>Projects {client.project_count ?? 0}</span>
-                    <span>Archived projects {client.archived_project_count ?? 0}</span>
-                    <span>Tracked entries {client.time_entry_count ?? 0}</span>
-                  </div>
+                  <p className="text-[11px] text-slate-500">Workspace {client.workspace_id}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a

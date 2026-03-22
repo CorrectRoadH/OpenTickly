@@ -140,10 +140,7 @@ export function TagsPage(): ReactElement {
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">{tag.name}</p>
                   <p className="text-xs text-slate-600">Tag · {statusLabel}</p>
-                  <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
-                    <span>Workspace {tag.workspace_id}</span>
-                    <span>Usage count {tag.usage_count ?? 0}</span>
-                  </div>
+                  <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a

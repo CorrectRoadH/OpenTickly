@@ -55,12 +55,14 @@ export function installMockWebApi(handlers: MockHandler[]) {
   let restored = false;
 
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+    const request = input instanceof Request ? input : undefined;
     const url = new URL(
       typeof input === "string" || input instanceof URL ? input.toString() : input.url,
       "http://localhost",
     );
-    const method = init?.method?.toUpperCase() ?? "GET";
-    const rawBody = typeof init?.body === "string" ? init.body : null;
+    const method = init?.method?.toUpperCase() ?? request?.method?.toUpperCase() ?? "GET";
+    const rawBody =
+      typeof init?.body === "string" ? init.body : request ? await request.clone().text() : null;
     const body = rawBody ? JSON.parse(rawBody) : undefined;
 
     calls.push({

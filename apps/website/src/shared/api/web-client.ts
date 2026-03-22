@@ -1,3 +1,10 @@
+import { client as generatedWebClient } from "./web/index.ts";
+
+generatedWebClient.setConfig({
+  baseUrl: globalThis.location?.origin ?? "http://localhost",
+  credentials: "same-origin",
+});
+
 export class WebApiError extends Error {
   status: number;
   data: unknown;
@@ -10,45 +17,27 @@ export class WebApiError extends Error {
   }
 }
 
-type RequestOptions = Omit<RequestInit, "body"> & {
-  body?: unknown;
-};
+type WebApiResult<TResponse> = Promise<{
+  data: TResponse | undefined;
+  error: unknown;
+  request: Request;
+  response: Response;
+}>;
 
-export async function webRequest<TResponse>(
-  path: string,
-  options?: RequestOptions,
+export const webClient = generatedWebClient;
+
+export async function unwrapWebApiResult<TResponse>(
+  request: WebApiResult<TResponse>,
 ): Promise<TResponse> {
-  const requestHeaders = new Headers(options?.headers);
-  requestHeaders.set("Content-Type", "application/json");
+  const result = await request;
 
-  const response = await fetch(path, {
-    credentials: "same-origin",
-    headers: requestHeaders,
-    ...options,
-    body: options?.body === undefined ? undefined : JSON.stringify(options.body),
-  });
-  const payload = await readPayload(response);
-
-  if (!response.ok) {
-    throw new WebApiError(`Request failed for ${path}`, response.status, payload);
+  if (result.error !== undefined) {
+    throw new WebApiError(
+      `Request failed for ${result.request.url}`,
+      result.response.status,
+      result.error,
+    );
   }
 
-  return payload as TResponse;
-}
-
-async function readPayload(response: Response): Promise<unknown> {
-  if (response.status === 204) {
-    return undefined;
-  }
-
-  const text = await response.text();
-  if (!text) {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
+  return result.data as TResponse;
 }
