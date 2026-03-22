@@ -8,13 +8,17 @@ type Workspace struct {
 	branding       WorkspaceBranding
 }
 
+func NormalizeWorkspaceName(name string) (string, error) {
+	return normalizeTenantName(name, "workspace")
+}
+
 func NewWorkspace(
 	id WorkspaceID,
 	organizationID OrganizationID,
 	name string,
 	settings WorkspaceSettings,
 ) (Workspace, error) {
-	normalizedName, err := normalizeTenantName(name, "workspace")
+	normalizedName, err := NormalizeWorkspaceName(name)
 	if err != nil {
 		return Workspace{}, err
 	}
@@ -48,7 +52,7 @@ func (workspace Workspace) Branding() WorkspaceBranding {
 }
 
 func (workspace *Workspace) Rename(name string) error {
-	normalizedName, err := normalizeTenantName(name, "workspace")
+	normalizedName, err := NormalizeWorkspaceName(name)
 	if err != nil {
 		return err
 	}

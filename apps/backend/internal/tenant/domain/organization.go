@@ -11,8 +11,12 @@ type Organization struct {
 	workspaceIDs []WorkspaceID
 }
 
+func NormalizeOrganizationName(name string) (string, error) {
+	return normalizeTenantName(name, "organization")
+}
+
 func NewOrganization(id OrganizationID, name string) (Organization, error) {
-	normalizedName, err := normalizeTenantName(name, "organization")
+	normalizedName, err := NormalizeOrganizationName(name)
 	if err != nil {
 		return Organization{}, err
 	}
@@ -36,7 +40,7 @@ func (organization Organization) WorkspaceIDs() []WorkspaceID {
 }
 
 func (organization *Organization) Rename(name string) error {
-	normalizedName, err := normalizeTenantName(name, "organization")
+	normalizedName, err := NormalizeOrganizationName(name)
 	if err != nil {
 		return err
 	}

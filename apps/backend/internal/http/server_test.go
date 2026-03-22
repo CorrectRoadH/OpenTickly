@@ -2,7 +2,6 @@ package httpapp
 
 import (
 	"encoding/json"
-	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
@@ -16,9 +15,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func TestServerServesEmbeddedIndexForRootAndClientRoutes(t *testing.T) {
+func TestServerDoesNotServeFrontendFallbackWithoutCompiledWebsiteAssets(t *testing.T) {
 	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
-	indexHTML := mustReadEmbeddedIndexHTML(t)
 
 	for _, path := range []string{"/", "/projects", "/settings/profile"} {
 		request := httptest.NewRequest(http.MethodGet, path, nil)
@@ -27,27 +25,14 @@ func TestServerServesEmbeddedIndexForRootAndClientRoutes(t *testing.T) {
 
 		server.ServeHTTP(recorder, request)
 
-		if recorder.Code != http.StatusOK {
-			t.Fatalf("expected %s to return 200, got %d", path, recorder.Code)
-		}
-
-		if contentType := recorder.Header().Get("Content-Type"); !strings.Contains(contentType, "text/html") {
-			t.Fatalf("expected %s to return html, got %q", path, contentType)
-		}
-
-		if cacheControl := recorder.Header().Get("Cache-Control"); cacheControl != "no-cache" {
-			t.Fatalf("expected %s index response to disable caching, got %q", path, cacheControl)
-		}
-
-		if recorder.Body.String() != indexHTML {
-			t.Fatalf("expected %s to serve embedded index html", path)
+		if recorder.Code != http.StatusNotFound {
+			t.Fatalf("expected %s to return 404 without compiled website assets, got %d", path, recorder.Code)
 		}
 	}
 }
 
-func TestServerServesEmbeddedStaticFiles(t *testing.T) {
+func TestServerDoesNotServeEmbeddedStaticFilesWithoutCompiledWebsiteAssets(t *testing.T) {
 	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
-	indexHTML := mustReadEmbeddedIndexHTML(t)
 
 	request := httptest.NewRequest(http.MethodGet, "/index.html", nil)
 	request.Header.Set("Accept", "text/html")
@@ -55,16 +40,8 @@ func TestServerServesEmbeddedStaticFiles(t *testing.T) {
 
 	server.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("expected /index.html to return 200, got %d", recorder.Code)
-	}
-
-	if contentType := recorder.Header().Get("Content-Type"); !strings.Contains(contentType, "text/html") {
-		t.Fatalf("expected /index.html to return html, got %q", contentType)
-	}
-
-	if recorder.Body.String() != indexHTML {
-		t.Fatal("expected /index.html to serve embedded static file")
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("expected /index.html to return 404 without compiled website assets, got %d", recorder.Code)
 	}
 }
 
@@ -400,17 +377,6 @@ func TestComposeRouteRegistrarsRegistersEachNonNilRegistrarInOrder(t *testing.T)
 	if calls[0] != "first" || calls[1] != "second" {
 		t.Fatalf("expected registrar order [first second], got %#v", calls)
 	}
-}
-
-func mustReadEmbeddedIndexHTML(t *testing.T) string {
-	t.Helper()
-
-	indexHTML, err := fs.ReadFile(web.StaticFiles(), "index.html")
-	if err != nil {
-		t.Fatalf("expected embedded index.html to exist: %v", err)
-	}
-
-	return string(indexHTML)
 }
 
 func mustListenTCP(t *testing.T) net.Listener {

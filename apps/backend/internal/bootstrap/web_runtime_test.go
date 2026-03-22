@@ -9,7 +9,8 @@ import (
 	"strconv"
 	"testing"
 
-	httpapp "opentoggl/backend/apps/backend/internal/http"
+	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
@@ -438,109 +439,462 @@ func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	}
 }
 
-func TestWebRuntimeBlocksDeactivatedLoginAndCurrentWrites(t *testing.T) {
-	handlers := httpapp.NewWebHandlers()
+func TestWebRuntimeRejectsWritesForDeactivatedUsers(t *testing.T) {
+	database := pgtest.Open(t)
 
-	register := handlers.Register(context.Background(), httpapp.RegisterRequest{
-		Email:    "person@example.com",
-		FullName: "Test Person",
-		Password: "secret1",
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
-	if register.StatusCode != http.StatusCreated {
-		t.Fatalf("expected register status 201, got %d", register.StatusCode)
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "person@example.com",
+		"fullname": "Test Person",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
 	}
 
-	registerBody, ok := register.Body.(map[string]any)
-	if !ok {
-		t.Fatalf("expected register body map, got %T", register.Body)
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register response to set session cookie")
 	}
 
-	organizationID, ok := registerBody["current_organization_id"].(int64)
-	if !ok || organizationID <= 0 {
-		t.Fatalf("expected current organization id, got %#v", registerBody["current_organization_id"])
+	var registerBody struct {
+		User struct {
+			ID int64 `json:"id"`
+		} `json:"user"`
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentOrganizationID == nil || registerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected bootstrap ids, got %#v", registerBody)
 	}
 
-	workspaceID, ok := registerBody["current_workspace_id"].(int64)
-	if !ok || workspaceID <= 0 {
-		t.Fatalf("expected current workspace id, got %#v", registerBody["current_workspace_id"])
-	}
-
-	if !handlers.DeactivateUserByEmail("person@example.com") {
-		t.Fatal("expected registered user to be deactivated")
-	}
-
-	session := handlers.GetSession(context.Background(), register.SessionID)
-	if session.StatusCode != http.StatusOK {
-		t.Fatalf("expected deactivated session lookup to keep working, got %d body=%#v", session.StatusCode, session.Body)
-	}
-
-	login := handlers.Login(context.Background(), httpapp.LoginRequest{
-		Email:    "person@example.com",
-		Password: "secret1",
+	service := identityapplication.NewService(identityapplication.Config{
+		Users:              identitypostgres.NewUserRepository(app.Platform.Database.Pool()),
+		Sessions:           identitypostgres.NewSessionRepository(app.Platform.Database.Pool()),
+		JobRecorder:        identitypostgres.NewJobRecorder(app.Platform.Database.Pool()),
+		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(app.Platform.Database.Pool()),
+		IDs:                identitypostgres.NewSequence(app.Platform.Database.Pool()),
+		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
-	if login.StatusCode != http.StatusForbidden {
-		t.Fatalf("expected deactivated login status 403, got %d body=%#v", login.StatusCode, login.Body)
+	if err := service.Deactivate(t.Context(), registerBody.User.ID); err != nil {
+		t.Fatalf("expected deactivation to succeed: %v", err)
 	}
 
-	updatedProfile := handlers.UpdateProfile(context.Background(), register.SessionID, httpapp.ProfileRequest{
-		FullName: "Blocked Rename",
+	session := performJSONRequest(t, app, http.MethodGet, "/web/v1/session", nil, sessionCookie)
+	if session.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated session lookup status 403, got %d body=%s", session.Code, session.Body.String())
+	}
+
+	login := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/login", map[string]any{
+		"email":    "person@example.com",
+		"password": "secret1",
+	}, "")
+	if login.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated login status 403, got %d body=%s", login.Code, login.Body.String())
+	}
+
+	updatedProfile := performJSONRequest(t, app, http.MethodPatch, "/web/v1/profile", map[string]any{
+		"email":                "person@example.com",
+		"fullname":             "Blocked Rename",
+		"timezone":             "UTC",
+		"beginning_of_week":    1,
+		"country_id":           44,
+		"default_workspace_id": *registerBody.CurrentWorkspaceID,
+	}, sessionCookie)
+	if updatedProfile.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated profile patch status 403, got %d body=%s", updatedProfile.Code, updatedProfile.Body.String())
+	}
+
+	updatedPreferences := performJSONRequest(t, app, http.MethodPatch, "/web/v1/preferences", map[string]any{
+		"language_code": "zh-CN",
+	}, sessionCookie)
+	if updatedPreferences.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated preferences patch status 403, got %d body=%s", updatedPreferences.Code, updatedPreferences.Body.String())
+	}
+
+	resetToken := performJSONRequest(t, app, http.MethodPost, "/web/v1/profile/api-token/reset", nil, sessionCookie)
+	if resetToken.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated api token reset status 403, got %d body=%s", resetToken.Code, resetToken.Body.String())
+	}
+
+	organizationSettingsPath := "/web/v1/organizations/" + intToString(*registerBody.CurrentOrganizationID) + "/settings"
+	updatedOrganizationSettings := performJSONRequest(t, app, http.MethodPatch, organizationSettingsPath, map[string]any{
+		"organization": map[string]any{"name": "Blocked"},
+	}, sessionCookie)
+	if updatedOrganizationSettings.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated organization settings patch status 403, got %d body=%s", updatedOrganizationSettings.Code, updatedOrganizationSettings.Body.String())
+	}
+
+	workspaceSettingsPath := "/web/v1/workspaces/" + intToString(*registerBody.CurrentWorkspaceID) + "/settings"
+	updatedWorkspaceSettings := performJSONRequest(t, app, http.MethodPatch, workspaceSettingsPath, map[string]any{
+		"workspace": map[string]any{
+			"name":                            "Blocked",
+			"default_currency":                "USD",
+			"default_hourly_rate":             0,
+			"rounding":                        0,
+			"rounding_minutes":                0,
+			"reports_collapse":                false,
+			"only_admins_may_create_projects": false,
+			"only_admins_may_create_tags":     false,
+			"only_admins_see_team_dashboard":  false,
+			"projects_billable_by_default":    false,
+			"projects_private_by_default":     false,
+			"projects_enforce_billable":       false,
+			"limit_public_project_data":       false,
+		},
+	}, sessionCookie)
+	if updatedWorkspaceSettings.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated workspace settings patch status 403, got %d body=%s", updatedWorkspaceSettings.Code, updatedWorkspaceSettings.Body.String())
+	}
+
+	workspacePermissionsPath := "/web/v1/workspaces/" + intToString(*registerBody.CurrentWorkspaceID) + "/permissions"
+	updatedWorkspacePermissions := performJSONRequest(t, app, http.MethodPatch, workspacePermissionsPath, map[string]any{
+		"only_admins_may_create_projects": true,
+		"only_admins_may_create_tags":     true,
+		"only_admins_see_team_dashboard":  true,
+		"limit_public_project_data":       true,
+	}, sessionCookie)
+	if updatedWorkspacePermissions.Code != http.StatusForbidden {
+		t.Fatalf("expected deactivated workspace permissions patch status 403, got %d body=%s", updatedWorkspacePermissions.Code, updatedWorkspacePermissions.Body.String())
+	}
+}
+
+func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
-	if updatedProfile.StatusCode != http.StatusForbidden {
-		t.Fatalf("expected deactivated profile patch status 403, got %d body=%#v", updatedProfile.StatusCode, updatedProfile.Body)
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
 	}
+	t.Cleanup(app.Platform.Database.Close)
 
-	updatedPreferences := handlers.UpdatePreferences(context.Background(), register.SessionID, httpapp.PreferencesRequest{
-		LanguageCode: stringPtr("zh-CN"),
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "routes@example.com",
+		"fullname": "Routes Test",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   any
+		cookie string
+	}{
+		{method: http.MethodPost, path: "/web/v1/auth/login", body: map[string]any{"email": "routes@example.com"}},
+		{method: http.MethodPatch, path: "/web/v1/profile", body: map[string]any{"email": "updated@example.com"}, cookie: sessionCookie},
+		{method: http.MethodPatch, path: "/web/v1/organizations/1/settings", body: map[string]any{"organization": map[string]any{}}, cookie: sessionCookie},
+		{method: http.MethodPatch, path: "/web/v1/workspaces/1/settings", body: map[string]any{"workspace": map[string]any{"name": "Updated"}}, cookie: sessionCookie},
+		{method: http.MethodPatch, path: "/web/v1/workspaces/1/permissions", body: map[string]any{"only_admins_may_create_projects": true}, cookie: sessionCookie},
+		{method: http.MethodPost, path: "/web/v1/tasks", body: map[string]any{"workspace_id": 1}, cookie: sessionCookie},
+	} {
+		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, tc.cookie)
+		if response.Code != http.StatusBadRequest {
+			t.Fatalf("expected %s %s to return 400 for missing required fields, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
+		}
+	}
+}
+
+func TestUnimplementedWebCatalogRoutesFailExplicitly(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
-	if updatedPreferences.StatusCode != http.StatusForbidden {
-		t.Fatalf("expected deactivated preferences patch status 403, got %d body=%#v", updatedPreferences.StatusCode, updatedPreferences.Body)
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "catalog@example.com",
+		"fullname": "Catalog Test",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+
+	for _, tc := range []struct {
+		method string
+		path   string
+		body   any
+	}{
+		{method: http.MethodGet, path: "/web/v1/projects?workspace_id=1"},
+		{method: http.MethodPost, path: "/web/v1/projects", body: map[string]any{"workspace_id": 1, "name": "Launch Website"}},
+	} {
+		response := performJSONRequest(t, app, tc.method, tc.path, tc.body, sessionCookie)
+		if response.Code != http.StatusNotImplemented {
+			t.Fatalf("expected %s %s to return 501 until implemented, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
+		}
+	}
+}
+
+func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "track@example.com",
+		"fullname": "Track User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+
+	var registerBody struct {
+		User struct {
+			ID int64 `json:"id"`
+		} `json:"user"`
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentWorkspaceID == nil || registerBody.CurrentOrganizationID == nil {
+		t.Fatalf("expected bootstrap ids, got %#v", registerBody)
 	}
 
-	resetToken := handlers.ResetAPIToken(context.Background(), register.SessionID)
-	if resetToken.StatusCode != http.StatusForbidden {
-		t.Fatalf("expected deactivated api token reset status 403, got %d body=%#v", resetToken.StatusCode, resetToken.Body)
+	workspaceID := *registerBody.CurrentWorkspaceID
+	organizationID := *registerBody.CurrentOrganizationID
+
+	me := performJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, sessionCookie)
+	if me.Code != http.StatusOK {
+		t.Fatalf("expected /api/v9/me status 200, got %d body=%s", me.Code, me.Body.String())
 	}
 
-	updatedOrganizationSettings := handlers.Tenant.UpdateOrganizationSettings(
-		context.Background(),
-		register.SessionID,
-		organizationID,
-		httpapp.OrganizationSettingsRequest{},
+	resetToken := performJSONRequest(t, app, http.MethodPost, "/api/v9/me/reset_token", nil, sessionCookie)
+	if resetToken.Code != http.StatusOK {
+		t.Fatalf("expected /api/v9/me/reset_token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())
+	}
+	var rotatedToken string
+	mustDecodeJSON(t, resetToken.Body.Bytes(), &rotatedToken)
+	if rotatedToken == "" {
+		t.Fatal("expected rotated API token string")
+	}
+
+	preferences := performJSONRequest(t, app, http.MethodGet, "/api/v9/me/preferences", nil, sessionCookie)
+	if preferences.Code != http.StatusOK {
+		t.Fatalf("expected /api/v9/me/preferences status 200, got %d body=%s", preferences.Code, preferences.Body.String())
+	}
+
+	updateOrganization := performJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/organizations/"+intToString(organizationID),
+		map[string]any{"name": "Track Org"},
+		sessionCookie,
 	)
-	if updatedOrganizationSettings.StatusCode != http.StatusUnauthorized {
-		t.Fatalf(
-			"expected deactivated organization settings patch status 401, got %d body=%#v",
-			updatedOrganizationSettings.StatusCode,
-			updatedOrganizationSettings.Body,
-		)
+	if updateOrganization.Code != http.StatusOK {
+		t.Fatalf("expected organization put status 200, got %d body=%s", updateOrganization.Code, updateOrganization.Body.String())
 	}
 
-	updatedWorkspaceSettings := handlers.Tenant.UpdateWorkspaceSettings(
+	createClient := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
+		map[string]any{"name": "North Ridge Client"},
+		sessionCookie,
+	)
+	if createClient.Code != http.StatusOK {
+		t.Fatalf("expected client create status 200, got %d body=%s", createClient.Code, createClient.Body.String())
+	}
+
+	listClients := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
+		nil,
+		sessionCookie,
+	)
+	if listClients.Code != http.StatusOK {
+		t.Fatalf("expected clients list status 200, got %d body=%s", listClients.Code, listClients.Body.String())
+	}
+	var clientsBody []map[string]any
+	mustDecodeJSON(t, listClients.Body.Bytes(), &clientsBody)
+	if len(clientsBody) != 1 || clientsBody[0]["name"] != "North Ridge Client" {
+		t.Fatalf("expected persisted client, got %#v", clientsBody)
+	}
+
+	createTag := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/tags",
+		map[string]any{"name": "billable"},
+		sessionCookie,
+	)
+	if createTag.Code != http.StatusOK {
+		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
+	}
+
+	createGroup := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/groups",
+		map[string]any{"name": "Design"},
+		sessionCookie,
+	)
+	if createGroup.Code != http.StatusOK {
+		t.Fatalf("expected group create status 200, got %d body=%s", createGroup.Code, createGroup.Body.String())
+	}
+
+	createProject := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
+		map[string]any{"name": "Website Revamp"},
+		sessionCookie,
+	)
+	if createProject.Code != http.StatusOK {
+		t.Fatalf("expected project create status 200, got %d body=%s", createProject.Code, createProject.Body.String())
+	}
+	var projectBody map[string]any
+	mustDecodeJSON(t, createProject.Body.Bytes(), &projectBody)
+	projectID := int64(projectBody["id"].(float64))
+
+	if _, err := database.Pool.Exec(
 		context.Background(),
-		register.SessionID,
+		"insert into catalog_project_users (project_id, user_id, role) values ($1, $2, $3)",
+		projectID,
+		registerBody.User.ID,
+		"admin",
+	); err != nil {
+		t.Fatalf("seed project user: %v", err)
+	}
+	if _, err := database.Pool.Exec(
+		context.Background(),
+		"insert into catalog_tasks (workspace_id, project_id, name, active, created_by) values ($1, $2, $3, $4, $5)",
 		workspaceID,
-		httpapp.WorkspaceSettingsRequest{},
-	)
-	if updatedWorkspaceSettings.StatusCode != http.StatusUnauthorized {
-		t.Fatalf(
-			"expected deactivated workspace settings patch status 401, got %d body=%#v",
-			updatedWorkspaceSettings.StatusCode,
-			updatedWorkspaceSettings.Body,
-		)
+		projectID,
+		"Prep launch brief",
+		true,
+		registerBody.User.ID,
+	); err != nil {
+		t.Fatalf("seed task: %v", err)
 	}
 
-	updatedWorkspacePermissions := handlers.Tenant.UpdateWorkspacePermissions(
-		context.Background(),
-		register.SessionID,
-		workspaceID,
-		httpapp.WorkspacePermissionsRequest{},
+	listProjects := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects?name=&page=1&sort_field=name&sort_order=ASC&only_templates=false&sort_pinned=true&search=",
+		nil,
+		sessionCookie,
 	)
-	if updatedWorkspacePermissions.StatusCode != http.StatusUnauthorized {
-		t.Fatalf(
-			"expected deactivated workspace permissions patch status 401, got %d body=%#v",
-			updatedWorkspacePermissions.StatusCode,
-			updatedWorkspacePermissions.Body,
-		)
+	if listProjects.Code != http.StatusOK {
+		t.Fatalf("expected projects list status 200, got %d body=%s", listProjects.Code, listProjects.Body.String())
+	}
+
+	pinProject := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/pin",
+		map[string]any{"pin": true},
+		sessionCookie,
+	)
+	if pinProject.Code != http.StatusOK {
+		t.Fatalf("expected project pin status 200, got %d body=%s", pinProject.Code, pinProject.Body.String())
+	}
+
+	archiveProject := performJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID),
+		map[string]any{"active": false},
+		sessionCookie,
+	)
+	if archiveProject.Code != http.StatusOK {
+		t.Fatalf("expected project archive status 200, got %d body=%s", archiveProject.Code, archiveProject.Body.String())
+	}
+
+	projectUsers := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/project_users?project_ids="+intToString(projectID),
+		nil,
+		sessionCookie,
+	)
+	if projectUsers.Code != http.StatusOK {
+		t.Fatalf("expected project users status 200, got %d body=%s", projectUsers.Code, projectUsers.Body.String())
+	}
+
+	tasksBasic := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/tasks/basic?page=1&per_page=200&sort_field=name&sort_order=ASC&search=&project_id="+intToString(projectID),
+		nil,
+		sessionCookie,
+	)
+	if tasksBasic.Code != http.StatusOK {
+		t.Fatalf("expected tasks basic status 200, got %d body=%s", tasksBasic.Code, tasksBasic.Body.String())
 	}
 }
 
@@ -583,8 +937,4 @@ func mustDecodeJSON(t *testing.T, body []byte, target any) {
 
 func intToString(value int64) string {
 	return strconv.FormatInt(value, 10)
-}
-
-func stringPtr(value string) *string {
-	return &value
 }

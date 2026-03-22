@@ -3,15 +3,28 @@ package web
 import (
 	"embed"
 	"io/fs"
+	"strings"
 )
 
 //go:embed dist dist/*
 var embeddedStaticFiles embed.FS
 
-func StaticFiles() fs.FS {
+const missingWebsiteAssetsMarker = "OpenToggl Source Build Without Website Assets"
+
+func StaticFiles() (fs.FS, bool) {
 	dist, err := fs.Sub(embeddedStaticFiles, "dist")
 	if err != nil {
 		panic(err)
 	}
-	return dist
+
+	indexHTML, err := fs.ReadFile(dist, "index.html")
+	if err != nil {
+		panic(err)
+	}
+
+	if strings.Contains(string(indexHTML), missingWebsiteAssetsMarker) {
+		return nil, false
+	}
+
+	return dist, true
 }

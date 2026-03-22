@@ -550,36 +550,11 @@ func buildWorkspace(
 }
 
 func normalizeOrganizationName(name string) (string, error) {
-	placeholderID, err := domain.NewOrganizationID(1)
-	if err != nil {
-		return "", err
-	}
-	organization, err := domain.NewOrganization(placeholderID, name)
-	if err != nil {
-		return "", err
-	}
-	return organization.Name(), nil
+	return domain.NormalizeOrganizationName(name)
 }
 
 func normalizeWorkspaceName(name string) (string, error) {
-	placeholderWorkspaceID, err := domain.NewWorkspaceID(1)
-	if err != nil {
-		return "", err
-	}
-	placeholderOrganizationID, err := domain.NewOrganizationID(1)
-	if err != nil {
-		return "", err
-	}
-	workspace, err := domain.NewWorkspace(
-		placeholderWorkspaceID,
-		placeholderOrganizationID,
-		name,
-		domain.DefaultWorkspaceSettings(),
-	)
-	if err != nil {
-		return "", err
-	}
-	return workspace.Name(), nil
+	return domain.NormalizeWorkspaceName(name)
 }
 
 func brandingStorageKey(branding domain.WorkspaceBranding, kind domain.BrandingAssetKind) string {

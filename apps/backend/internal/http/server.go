@@ -70,7 +70,9 @@ func NewServerWithOptions(
 	if registerRoutes != nil {
 		registerRoutes(server)
 	}
-	registerStaticWebRoutes(server, web.StaticFiles())
+	if staticFiles, ok := web.StaticFiles(); ok {
+		registerStaticWebRoutes(server, staticFiles)
+	}
 
 	return server
 }
