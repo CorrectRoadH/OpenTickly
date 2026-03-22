@@ -85,6 +85,10 @@ export function ClientsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
           <p className="text-sm leading-6 text-slate-600">Client directory</p>
+          <p className="text-sm leading-6 text-slate-600">
+            Keep project ownership, archived coverage, and tracked-time totals visible from the
+            workspace client directory.
+          </p>
         </div>
         <AppButton onClick={() => clientNameInputRef.current?.focus()} type="button">
           Create client
@@ -136,9 +140,14 @@ export function ClientsPage(): ReactElement {
 
             return (
               <li key={client.id} className="flex items-center justify-between py-3">
-                <div>
+                <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">{client.name}</p>
                   <p className="text-xs text-slate-600">Client · {statusLabel}</p>
+                  <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
+                    <span>Projects {client.project_count ?? 0}</span>
+                    <span>Archived projects {client.archived_project_count ?? 0}</span>
+                    <span>Tracked entries {client.time_entry_count ?? 0}</span>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a

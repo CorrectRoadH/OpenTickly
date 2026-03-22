@@ -257,6 +257,14 @@ export function createProjectSummaryFixture(
     workspace_id: 202,
     active: true,
     pinned: false,
+    client_name: "North Ridge Client",
+    template: false,
+    actual_seconds: 14400,
+    tracked_seconds_current_period: 5400,
+    tracked_seconds_previous_period: 3600,
+    recurring_period: "weekly",
+    recurring_period_start: "2026-03-17",
+    recurring_period_end: "2026-03-23",
     ...overrides,
   };
 }
@@ -301,6 +309,9 @@ export function createClientSummaryFixture(
     name: "North Ridge Client",
     workspace_id: 202,
     active: true,
+    archived_project_count: 1,
+    project_count: 3,
+    time_entry_count: 12,
     ...overrides,
   };
 }
@@ -327,6 +338,7 @@ export function createTagSummaryFixture(overrides?: Partial<TagSummaryDto>): Tag
     name: "Urgent",
     workspace_id: 202,
     active: true,
+    usage_count: 7,
     ...overrides,
   };
 }

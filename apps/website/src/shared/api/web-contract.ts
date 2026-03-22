@@ -26,9 +26,7 @@ export type {
   WorkspaceMemberInvitationRequest as WorkspaceMemberInvitationRequestDto,
   WorkspaceMembersEnvelope as WorkspaceMembersEnvelopeDto,
   WorkspacePermissions as WorkspacePermissionsDto,
-  WorkspacePreferences as WebWorkspacePreferencesDto,
   WorkspaceSettings as WebWorkspaceSettingsDto,
   WorkspaceSettingsEnvelope as WorkspaceSettingsEnvelopeDto,
-  UpdateWorkspacePermissionsRequest as UpdateWorkspacePermissionsRequestDto,
   WorkspaceSettingsUpdate as UpdateWorkspaceSettingsRequestDto,
 } from "@opentoggl/shared-contracts";

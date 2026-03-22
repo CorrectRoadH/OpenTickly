@@ -10,6 +10,10 @@ function projectStatusLabel(project: ProjectSummaryDto): string {
   return project.active ? "Active" : "Archived";
 }
 
+function projectTemplateLabel(project: ProjectSummaryDto): string {
+  return project.template ? "Template" : "Standard";
+}
+
 type ProjectListItemProps = {
   mutationPending: boolean;
   onArchiveToggle: (project: ProjectSummaryDto) => Promise<void>;
@@ -31,6 +35,7 @@ export function ProjectListItem({
   const statusLabel = projectStatusLabel(project);
   const pinActionLabel = project.pinned ? "Unpin" : "Pin";
   const archiveActionLabel = project.active ? "Archive" : "Restore";
+  const templateLabel = projectTemplateLabel(project);
 
   return (
     <li aria-label={`Project ${project.name}`} className="py-4">
@@ -40,6 +45,9 @@ export function ProjectListItem({
             <p className="text-sm font-semibold text-slate-900">{project.name}</p>
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
               {statusLabel}
+            </span>
+            <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-medium text-sky-800">
+              {templateLabel}
             </span>
             {project.pinned ? (
               <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
@@ -51,6 +59,20 @@ export function ProjectListItem({
           <p className="text-[11px] text-slate-500">
             Workspace {project.workspace_id} · {memberCount} member{memberCount === 1 ? "" : "s"}
           </p>
+          <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
+            <span>Client {project.client_name ?? "Unassigned"}</span>
+            <span>Actual {project.actual_seconds ?? 0}s</span>
+            <span>
+              Current period {project.tracked_seconds_current_period ?? 0}s · Previous period{" "}
+              {project.tracked_seconds_previous_period ?? 0}s
+            </span>
+            <span>
+              Period {project.recurring_period ?? "none"}
+              {project.recurring_period_start && project.recurring_period_end
+                ? ` · ${project.recurring_period_start} to ${project.recurring_period_end}`
+                : ""}
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">

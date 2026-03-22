@@ -85,6 +85,10 @@ export function TagsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tags</h1>
           <p className="text-sm leading-6 text-slate-600">Tag directory</p>
+          <p className="text-sm leading-6 text-slate-600">
+            Keep tag usage visible from the shared tracking catalog so list, filter, and detail
+            entry points align with the project page skeleton.
+          </p>
         </div>
         <AppButton onClick={() => tagNameInputRef.current?.focus()} type="button">
           Create tag
@@ -133,10 +137,13 @@ export function TagsPage(): ReactElement {
 
             return (
               <li key={tag.id} className="flex items-center justify-between py-3">
-                <div>
+                <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">{tag.name}</p>
                   <p className="text-xs text-slate-600">Tag · {statusLabel}</p>
-                  <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
+                  <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
+                    <span>Workspace {tag.workspace_id}</span>
+                    <span>Usage count {tag.usage_count ?? 0}</span>
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a
