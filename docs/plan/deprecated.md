@@ -92,8 +92,8 @@
       - exit condition：真实模块 integration、generated contract、real-runtime HTTP / e2e 证据覆盖同一条能力链
       - delete condition：对应 placeholder runtime 路径已删除，且同能力已有正式 runtime 测试替代
   - [x] 执行 TODO：清理 `opentoggl-web` 正式合同与生成产物中的 placeholder / transitional 语义；以正式产品语义重写 `openapi/opentoggl-web.openapi.json` 对应 summary/description，并重新生成 `packages/shared-contracts/src/generated/web-contracts.generated.ts`，禁止 placeholder 文案继续通过正式 contract 外溢。Refs: `AGENTS.md`、`openapi/opentoggl-web.openapi.json`、`packages/shared-contracts/package.json`
-  - [x] 执行 TODO：同步收口把 placeholder 固化进测试基线的断言与命名，重点清理 `apps/backend/tests/openapi/opentoggl-openapi.test.ts` 中对 “Wave 2 placeholder slice” 的制度化表述，改为正式 contract / runtime 接管目标的断言。Refs: `AGENTS.md`、`docs/core/testing-strategy.md`、`openapi/opentoggl-web.openapi.json`
-  - [ ] 执行 TODO：收口 `packages/shared-contracts/src/shared-contracts.test.ts` 与 `openapi/opentoggl-web.openapi.json` 的当前冲突；测试已经要求正式 web contract source 不得包含 `placeholder` 文案，因此必须决定以正式合同为准重写 source + generated artifact，或按文档边界重新定义测试职责，禁止 source/test 长期互相矛盾。Refs: `docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`、`packages/shared-contracts/src/shared-contracts.test.ts`、`openapi/opentoggl-web.openapi.json`
+  - [x] 执行 TODO：同步收口把 placeholder 固化进测试基线的断言与命名，移除 backend 独立 TS/OpenAPI 测试 harness 中对 “Wave 2 placeholder slice” 的制度化表述，改为正式 contract / runtime 接管目标的断言。Refs: `AGENTS.md`、`docs/core/testing-strategy.md`、`openapi/opentoggl-web.openapi.json`
+  - [ ] 执行 TODO：收口 shared-contracts 测试职责与 `openapi/opentoggl-web.openapi.json` 的当前冲突；测试已经要求正式 web contract source 不得包含 `placeholder` 文案，因此必须决定以正式合同为准重写 source + generated artifact，或按文档边界重新定义测试职责，禁止 source/test 长期互相矛盾。Refs: `docs/core/backend-architecture.md`、`docs/core/frontend-architecture.md`、`openapi/opentoggl-web.openapi.json`
   - [ ] 执行 TODO：评估 `packages/utils` 是否仍有项目内职责；当前不仅元数据曾是 starter 模板，连 `packages/utils/src/index.ts` 与 `packages/utils/tests/index.test.ts` 仍是 starter 示例实现。若无明确消费者与边界，删除整个 workspace 包；若保留，需补齐真实职责说明、规范命名与最小实际用途，禁止继续以 starter 模板包形态漂移。Refs: `AGENTS.md`、`packages/utils/package.json`、`packages/utils/src/index.ts`、`packages/utils/tests/index.test.ts`、`pnpm-workspace.yaml`
   - [x] 阻塞规则：以上 P0 未收口前，不继续新增任何与其相关的 feature、route、script、helper、alias、placeholder runtime 或第二实现路径。
 
@@ -644,22 +644,22 @@ apps/website/src/
   - 当前 Wave 1 覆盖映射（2026-03-21）：
     - 登录 / 注册 / 会话引导
       - Page flow：`apps/website/src/pages/auth/__tests__/auth-page-flow.test.tsx`
-      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`
+      - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`
       - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
       - E2E / real-runtime：`apps/website/e2e/app-shell.real-runtime.spec.ts`
     - 当前用户资料 / 偏好 / API token
       - Page flow：`apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx`
-      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`
+      - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`
       - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
       - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 profile e2e 仍缺
     - workspace / organization settings
       - Page flow：`apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx`
-      - Contract：`apps/backend/tests/compat/tenant-contract.test.ts`
+      - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/http/web_organization_settings_generated_test.go`
       - Integration：`apps/backend/internal/tenant/application/service_integration_test.go`、`apps/backend/internal/billing/application/service_integration_test.go`
       - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 settings e2e 仍缺
     - 进入 workspace 的共享 app shell
       - Page flow：`apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx`
-      - Contract：`apps/backend/tests/compat/identity-contract.test.ts`、`apps/backend/tests/compat/tenant-contract.test.ts`
+      - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`、`apps/backend/internal/http/web_organization_settings_generated_test.go`
       - Integration：`apps/backend/internal/identity/application/service_integration_test.go`、`apps/backend/internal/tenant/application/service_integration_test.go`
       - E2E / real-runtime：`apps/website/e2e/app-shell.spec.ts`、`apps/website/e2e/app-shell.real-runtime.spec.ts`
     - 停用用户阻止登录 / 写入与 stop-running-timer 语义

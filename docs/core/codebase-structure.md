@@ -157,6 +157,7 @@ packages/
 
 - `apps/website` 是当前 Web 产品应用。
 - `apps/backend` 是 Go 后端应用，`main.go` 是唯一进程入口，`internal/*` 同时承载 bootstrap、组合层与业务模块。
+- `apps/backend` 只维护 Go 运行时代码、嵌入式静态占位资源与 Go 测试；不要在该目录再维护 `package.json`、`tsconfig`、`vite/vitest` 或前端测试 harness。
 - `apps/backend/internal/platform/schema/` 是 PostgreSQL desired-state schema 的唯一归属目录，由 `pgschema` 负责 plan/apply，不允许在别处再维护并行 schema 真相源。
 - `packages/` 只放跨应用共享、但不拥有业务流程的代码。
 - 后端业务模块主体位于 `apps/backend/internal/*`，不再额外拆出顶层 `backend/` 目录。

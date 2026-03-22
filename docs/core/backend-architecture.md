@@ -62,8 +62,13 @@
 - transport DTO
 - handler / route stub
 - 参数校验要求
-- contract test / golden test skeleton
+- request validation smoke / response shape smoke 要求
 - endpoint 到模块 / use case 的映射清单
+
+`apps/backend` 是纯 Go runtime 边界：
+
+- 不在 `apps/backend` 下维护独立 `package.json`、`tsconfig`、`vite/vitest` 或 TypeScript contract/golden harness
+- OpenAPI 合同证据优先落在 Go transport / bootstrap 测试，以及真正消费这些合同的前端或共享包测试
 
 `openapi/*.json` 不是以下内容的直接来源：
 
@@ -300,7 +305,6 @@ OpenAPI 相关工作需要明确区分 4 件事：
 - `transport/http/public-api/*`
 - `transport/http/web/*`
 - `packages/shared-contracts/` 中面向前端或工具的 schema/type 产物
-- `apps/backend/tests/public-contract/**` 与 `apps/backend/tests/golden/**` 的测试 skeleton
 
 不允许把生成结果直接扩散到：
 
@@ -324,6 +328,7 @@ OpenAPI 相关工作需要明确区分 4 件事：
 - 继续新增手写 request/response DTO，导致与 OpenAPI 重复维护
 - 在 handler 中补另一套独立字段校验或字段语义解释
 - 以“目前只是 web/internal API”为理由长期跳过 generation-first 的边界收口
+- 在 `apps/backend` 内再建一套 TypeScript/Vitest contract 或 golden harness
 
 ### 0.7.1 正式 API 的生成边界
 

@@ -56,7 +56,7 @@ This plan exists because the current repository still contains structural drift 
 
 - Replace long-lived `compat` naming with precise responsibility names such as `public-api`, product-surface names, or explicit contract-boundary names
 - Start with documentation and plan terminology, then follow with implementation paths, generation scripts, and test asset names
-- Treat current names such as `transport/http/compat`, `apps/backend/tests/compat`, and similar catch-all labels as historical debt rather than accepted target naming
+- Treat current names such as `transport/http/compat` and similar catch-all labels as historical debt rather than accepted target naming
 
 ## Testing Story Coverage Status (Stage 2)
 
