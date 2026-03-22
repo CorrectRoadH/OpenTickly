@@ -95,6 +95,41 @@ func (runtime *webRuntime) postPublicTrackClients(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }
 
+func (runtime *webRuntime) putPublicTrackClient(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	clientID, ok := parsePathID(ctx, "client_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.ClientPayload
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := runtime.catalogApp.UpdateClient(ctx.Request().Context(), catalogapplication.UpdateClientCommand{
+		WorkspaceID: workspaceID,
+		ClientID:    clientID,
+		Name:        request.Name,
+	})
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrClientNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
+}
+
 func (runtime *webRuntime) postPublicTrackGroups(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
@@ -151,6 +186,66 @@ func (runtime *webRuntime) postPublicTrackTags(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{tagViewToAPI(view)})
+}
+
+func (runtime *webRuntime) putPublicTrackTag(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	tagID, ok := parsePathID(ctx, "tag_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.TagsPayload
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := runtime.catalogApp.UpdateTag(ctx.Request().Context(), catalogapplication.UpdateTagCommand{
+		WorkspaceID: workspaceID,
+		TagID:       tagID,
+		Name:        request.Name,
+	})
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrTagNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{tagViewToAPI(view)})
+}
+
+func (runtime *webRuntime) deletePublicTrackTag(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	tagID, ok := parsePathID(ctx, "tag_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	if err := runtime.catalogApp.DeleteTag(ctx.Request().Context(), workspaceID, tagID); err != nil {
+		if errors.Is(err, catalogapplication.ErrTagNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	return ctx.JSON(http.StatusOK, "OK")
 }
 
 func (runtime *webRuntime) postPublicTrackProjects(ctx echo.Context) error {
@@ -306,6 +401,76 @@ func (runtime *webRuntime) postPublicTrackProjectTask(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, taskViewToAPI(task))
+}
+
+func (runtime *webRuntime) putPublicTrackProjectTask(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	taskID, ok := parsePathID(ctx, "task_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.TaskPayload
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	task, err := runtime.catalogApp.UpdateTask(ctx.Request().Context(), catalogapplication.UpdateTaskCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   projectID,
+		TaskID:      taskID,
+		Name:        request.Name,
+		Active:      request.Active,
+	})
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) || errors.Is(err, catalogapplication.ErrTaskNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	return ctx.JSON(http.StatusOK, taskViewToAPI(task))
+}
+
+func (runtime *webRuntime) deletePublicTrackProjectTask(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	taskID, ok := parsePathID(ctx, "task_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	if err := runtime.catalogApp.DeleteTask(ctx.Request().Context(), workspaceID, projectID, taskID); err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) || errors.Is(err, catalogapplication.ErrTaskNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+	return ctx.JSON(http.StatusOK, "OK")
 }
 
 func writePublicTrackCatalogError(ctx echo.Context, err error) error {
