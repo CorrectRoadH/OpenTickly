@@ -393,6 +393,35 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 	}
 }
 
+func TestPublicTrackRegistersUnimplementedSpecRoutes(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	for _, route := range app.HTTP.Routes() {
+		if route.Method == http.MethodGet && route.Path == "/api/v9/countries" {
+			return
+		}
+	}
+
+	t.Fatal("expected GET /api/v9/countries to be registered from public-track OpenAPI surface")
+}
+
 func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	database := pgtest.Open(t)
 	cfg := Config{
@@ -998,6 +1027,9 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if createClient.Code != http.StatusOK {
 		t.Fatalf("expected client create status 200, got %d body=%s", createClient.Code, createClient.Body.String())
 	}
+	var clientBody map[string]any
+	mustDecodeJSON(t, createClient.Body.Bytes(), &clientBody)
+	clientID := int64(clientBody["id"].(float64))
 
 	listClients := performAuthorizedJSONRequest(
 		t,
@@ -1027,6 +1059,12 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if createTag.Code != http.StatusOK {
 		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
 	}
+	var tagBody []map[string]any
+	mustDecodeJSON(t, createTag.Body.Bytes(), &tagBody)
+	if len(tagBody) != 1 {
+		t.Fatalf("expected one created tag, got %#v", tagBody)
+	}
+	tagID := int64(tagBody[0]["id"].(float64))
 
 	createGroup := performAuthorizedJSONRequest(
 		t,
@@ -1054,6 +1092,30 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	var projectBody map[string]any
 	mustDecodeJSON(t, createProject.Body.Bytes(), &projectBody)
 	projectID := int64(projectBody["id"].(float64))
+
+	getClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientID),
+		nil,
+		tokenAuthorization,
+	)
+	if getClient.Code != http.StatusOK {
+		t.Fatalf("expected client detail status 200, got %d body=%s", getClient.Code, getClient.Body.String())
+	}
+
+	updateClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientID),
+		map[string]any{"name": "North Ridge Enterprise"},
+		tokenAuthorization,
+	)
+	if updateClient.Code != http.StatusOK {
+		t.Fatalf("expected client update status 200, got %d body=%s", updateClient.Code, updateClient.Body.String())
+	}
 
 	if _, err := database.Pool.Exec(
 		context.Background(),
@@ -1088,6 +1150,23 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("expected projects list status 200, got %d body=%s", listProjects.Code, listProjects.Body.String())
 	}
 
+	getProject := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID),
+		nil,
+		tokenAuthorization,
+	)
+	if getProject.Code != http.StatusOK {
+		t.Fatalf("expected project detail status 200, got %d body=%s", getProject.Code, getProject.Body.String())
+	}
+	var getProjectBody map[string]any
+	mustDecodeJSON(t, getProject.Body.Bytes(), &getProjectBody)
+	if getProjectBody["client_name"] != "North Ridge Enterprise" {
+		t.Fatalf("expected project detail to reflect updated client name, got %#v", getProjectBody)
+	}
+
 	pinProject := performAuthorizedJSONRequest(
 		t,
 		app,
@@ -1115,6 +1194,31 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	mustDecodeJSON(t, createProjectTask.Body.Bytes(), &projectTaskBody)
 	if projectTaskBody["project_id"] != float64(projectID) {
 		t.Fatalf("expected created project task to carry project_id %d, got %#v", projectID, projectTaskBody["project_id"])
+	}
+	projectTaskID := int64(projectTaskBody["id"].(float64))
+
+	getProjectTask := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks/"+intToString(projectTaskID),
+		nil,
+		tokenAuthorization,
+	)
+	if getProjectTask.Code != http.StatusOK {
+		t.Fatalf("expected project task detail status 200, got %d body=%s", getProjectTask.Code, getProjectTask.Body.String())
+	}
+
+	updateProjectTask := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks/"+intToString(projectTaskID),
+		map[string]any{"name": "Ship runbook", "active": false},
+		tokenAuthorization,
+	)
+	if updateProjectTask.Code != http.StatusOK {
+		t.Fatalf("expected project task update status 200, got %d body=%s", updateProjectTask.Code, updateProjectTask.Body.String())
 	}
 
 	archiveProject := performAuthorizedJSONRequest(
@@ -1152,6 +1256,11 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if projectTasks.Code != http.StatusOK {
 		t.Fatalf("expected project tasks status 200, got %d body=%s", projectTasks.Code, projectTasks.Body.String())
 	}
+	var projectTasksBody []map[string]any
+	mustDecodeJSON(t, projectTasks.Body.Bytes(), &projectTasksBody)
+	if len(projectTasksBody) != 2 {
+		t.Fatalf("expected project tasks to include both active and inactive tasks, got %#v", projectTasksBody)
+	}
 
 	tasks := performAuthorizedJSONRequest(
 		t,
@@ -1175,6 +1284,66 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	)
 	if tasksBasic.Code != http.StatusOK {
 		t.Fatalf("expected tasks basic status 200, got %d body=%s", tasksBasic.Code, tasksBasic.Body.String())
+	}
+
+	updateTag := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/tags/"+intToString(tagID),
+		map[string]any{"name": "internal"},
+		tokenAuthorization,
+	)
+	if updateTag.Code != http.StatusOK {
+		t.Fatalf("expected tag update status 200, got %d body=%s", updateTag.Code, updateTag.Body.String())
+	}
+
+	deleteProjectTask := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks/"+intToString(projectTaskID),
+		nil,
+		tokenAuthorization,
+	)
+	if deleteProjectTask.Code != http.StatusOK {
+		t.Fatalf("expected project task delete status 200, got %d body=%s", deleteProjectTask.Code, deleteProjectTask.Body.String())
+	}
+
+	deleteTag := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/tags/"+intToString(tagID),
+		nil,
+		tokenAuthorization,
+	)
+	if deleteTag.Code != http.StatusOK {
+		t.Fatalf("expected tag delete status 200, got %d body=%s", deleteTag.Code, deleteTag.Body.String())
+	}
+
+	var remainingTaskCount int
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select count(*) from catalog_tasks where id = $1",
+		projectTaskID,
+	).Scan(&remainingTaskCount); err != nil {
+		t.Fatalf("count deleted task: %v", err)
+	}
+	if remainingTaskCount != 0 {
+		t.Fatalf("expected deleted task row to be removed, got %d", remainingTaskCount)
+	}
+
+	var remainingTagCount int
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select count(*) from catalog_tags where id = $1",
+		tagID,
+	).Scan(&remainingTagCount); err != nil {
+		t.Fatalf("count deleted tag: %v", err)
+	}
+	if remainingTagCount != 0 {
+		t.Fatalf("expected deleted tag row to be removed, got %d", remainingTagCount)
 	}
 }
 
