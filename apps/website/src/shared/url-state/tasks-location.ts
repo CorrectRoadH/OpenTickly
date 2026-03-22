@@ -24,6 +24,10 @@ export type TasksSearch = {
   projectId?: unknown;
 };
 
+export type ParsedTasksSearch = {
+  projectId?: number;
+};
+
 export function parseTasksSearch(search: TasksSearch | undefined): {
   projectId?: number;
 } {
@@ -32,6 +36,18 @@ export function parseTasksSearch(search: TasksSearch | undefined): {
   return {
     projectId: parsedProjectId.success ? parsedProjectId.data : undefined,
   };
+}
+
+export function formatTasksSearch(search: ParsedTasksSearch): string {
+  if (
+    typeof search.projectId === "number" &&
+    Number.isInteger(search.projectId) &&
+    search.projectId > 0
+  ) {
+    return `projectId=${search.projectId}`;
+  }
+
+  return "";
 }
 
 export function buildWorkspaceTasksPath(input: {
@@ -45,9 +61,9 @@ export function buildWorkspaceTasksPath(input: {
     return basePath;
   }
 
-  const search = new URLSearchParams({
-    projectId: String(projectId),
+  const search = formatTasksSearch({
+    projectId,
   });
 
-  return `${basePath}?${search.toString()}`;
+  return `${basePath}?${search}`;
 }

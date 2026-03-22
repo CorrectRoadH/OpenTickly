@@ -43,14 +43,11 @@ export function GroupsPage(): ReactElement {
             Workspace group directory
           </p>
           <p className="text-sm leading-6 text-slate-600">
-            Review workspace groups and create new ones for the active workspace. Group
-            membership controls remain blocked until the dedicated groups management surface is
-            documented and implemented.
+            Review workspace groups, member allocation boundaries, and active status from one page
+            inside the current workspace scope.
           </p>
         </div>
-        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">
-          Membership controls blocked
-        </span>
+        <AppButton type="button">Create group</AppButton>
       </div>
 
       <form className="mt-6 flex flex-wrap items-end gap-3" onSubmit={handleCreateGroup}>
@@ -89,10 +86,6 @@ export function GroupsPage(): ReactElement {
         <p className="font-medium text-slate-900">
           Showing {groups.length} group{groups.length === 1 ? "" : "s"} for workspace{" "}
           {session.currentWorkspace.id}, with {activeCount} active and {inactiveCount} inactive.
-        </p>
-        <p className="mt-1">
-          Blocked: member assignment, member removal, and dedicated group management workflows are
-          not available on this page yet.
         </p>
       </div>
     </AppPanel>

@@ -2,7 +2,11 @@
 
 import { describe, expect, it } from "vitest";
 
-import { buildWorkspaceTasksPath, parseTasksSearch } from "../tasks-location.ts";
+import {
+  buildWorkspaceTasksPath,
+  formatTasksSearch,
+  parseTasksSearch,
+} from "../tasks-location.ts";
 
 describe("tasks URL adapters", () => {
   it("keeps canonical positive integer projectId and drops invalid values", () => {
@@ -34,5 +38,11 @@ describe("tasks URL adapters", () => {
         projectId: 0,
       }),
     ).toBe("/workspaces/202/tasks");
+  });
+
+  it("formats canonical task search strings from parsed task search state", () => {
+    expect(formatTasksSearch({ projectId: undefined })).toBe("");
+    expect(formatTasksSearch({ projectId: 1001 })).toBe("projectId=1001");
+    expect(formatTasksSearch({ projectId: 0 })).toBe("");
   });
 });

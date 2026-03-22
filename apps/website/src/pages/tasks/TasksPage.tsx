@@ -15,8 +15,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
   const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const projectScopeId = Number(projectId);
-  const hasProjectScope = Number.isInteger(projectScopeId) && projectScopeId > 0;
+  const hasProjectScope = typeof projectId === "number" && Number.isInteger(projectId) && projectId > 0;
 
   if (tasksQuery.isPending) {
     return (
@@ -56,13 +55,13 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
             Project task management entry
           </p>
           <p className="mt-2 text-sm text-slate-700">
-            Opened from project {projectScopeId}. Use this page as the task management entry point
+            Opened from project {projectId}. Use this page as the task management entry point
             for that project context.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a
               className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:border-emerald-500 hover:text-emerald-800"
-              href={`/workspaces/${session.currentWorkspace.id}/projects/${projectScopeId}`}
+              href={`/workspaces/${session.currentWorkspace.id}/projects/${projectId}`}
             >
               Project details
             </a>

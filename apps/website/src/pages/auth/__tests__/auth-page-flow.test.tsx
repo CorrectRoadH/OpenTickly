@@ -80,15 +80,23 @@ describe("auth page flow", () => {
   });
 
   it("redirects authenticated users into the workspace shell after login succeeds", async () => {
+    let signedIn = false;
+
     installMockWebApi([
       {
         method: "POST",
         path: "/web/v1/auth/login",
-        resolver: () => jsonResponse(createSessionFixture()),
+        resolver: () => {
+          signedIn = true;
+          return jsonResponse(createSessionFixture());
+        },
       },
       {
         path: "/web/v1/session",
-        resolver: () => jsonResponse(createSessionFixture()),
+        resolver: () =>
+          signedIn
+            ? jsonResponse(createSessionFixture())
+            : jsonResponse("Session missing.", { status: 401 }),
       },
     ]);
     const router = createAppRouter({
@@ -108,6 +116,26 @@ describe("auth page flow", () => {
     expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
     expect(await screen.findByText("Session ready")).toBeTruthy();
     expect(await screen.findByText("Alex North")).toBeTruthy();
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/workspaces/202");
+    });
+  });
+
+  it("redirects authenticated users away from login at route entry", async () => {
+    installMockWebApi([
+      {
+        path: "/web/v1/session",
+        resolver: () => jsonResponse(createSessionFixture()),
+      },
+    ]);
+    const router = createAppRouter({
+      initialEntries: ["/login"],
+    });
+
+    render(<AppProviders router={router} />);
+
+    expect(await screen.findByRole("heading", { name: "Workspace Overview" })).toBeTruthy();
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/workspaces/202");

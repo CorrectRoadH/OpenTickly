@@ -85,9 +85,9 @@ describe("groups page flow", () => {
     );
     expect(screen.getByText("Workspace group directory")).toBeTruthy();
     expect(
-      screen.getByText(
-        /Review workspace groups and create new ones for the active workspace. Group membership controls remain blocked until the dedicated groups management surface is documented and implemented\./,
-      ),
+      screen.getAllByText(
+        "Review workspace groups, member allocation boundaries, and active status from one page inside the current workspace scope.",
+      )[0],
     ).toBeTruthy();
     expect(screen.queryByText(/Transition state/i)).toBeNull();
 
@@ -99,15 +99,8 @@ describe("groups page flow", () => {
     expect(
       screen.getByText(/Showing 2 groups for workspace 202, with 1 active and 1 inactive\./),
     ).toBeTruthy();
-    expect(
-      screen.getByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-            "Blocked: member assignment, member removal, and dedicated group management workflows are not available on this page yet.",
-        )) ??
-        false,
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Membership controls blocked/i)).toBeNull();
+    expect(screen.queryByText(/Blocked: member assignment/i)).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Workspace"), {
       target: { value: "303" },
@@ -126,15 +119,8 @@ describe("groups page flow", () => {
     expect(within(switchedList).getAllByText(/Workspace 303/)).not.toHaveLength(0);
     expect(screen.queryByText(/Transition state/i)).toBeNull();
     expect(screen.getByText(/Showing 2 groups for workspace 303, with 1 active and 1 inactive\./)).toBeTruthy();
-    expect(
-      screen.getByText((_, element) =>
-        (element?.tagName === "P" &&
-          element.textContent?.includes(
-            "Blocked: member assignment, member removal, and dedicated group management workflows are not available on this page yet.",
-          )) ??
-        false,
-      ),
-    ).toBeTruthy();
+    expect(screen.queryByText(/Membership controls blocked/i)).toBeNull();
+    expect(screen.queryByText(/Blocked: member assignment/i)).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Group name"), {
       target: { value: "Field ops" },

@@ -48,7 +48,18 @@ test("logs in and lands in the current workspace shell", async ({ page }) => {
     ],
   };
 
+  let signedIn = false;
+
   await page.route("**/web/v1/session", async (route) => {
+    if (!signedIn) {
+      await route.fulfill({
+        body: JSON.stringify("Session missing."),
+        contentType: "application/json",
+        status: 401,
+      });
+      return;
+    }
+
     await route.fulfill({
       body: JSON.stringify(sessionPayload),
       contentType: "application/json",
@@ -57,6 +68,7 @@ test("logs in and lands in the current workspace shell", async ({ page }) => {
   });
 
   await page.route("**/web/v1/auth/login", async (route) => {
+    signedIn = true;
     await route.fulfill({
       body: JSON.stringify(sessionPayload),
       contentType: "application/json",
@@ -123,10 +135,11 @@ test("logs out from the shell and returns to login", async ({ page }) => {
     ],
   };
 
+  let signedIn = false;
   let signedOut = false;
 
   await page.route("**/web/v1/session", async (route) => {
-    if (signedOut) {
+    if (!signedIn || signedOut) {
       await route.fulfill({
         body: JSON.stringify("Session missing."),
         contentType: "application/json",
@@ -143,6 +156,8 @@ test("logs out from the shell and returns to login", async ({ page }) => {
   });
 
   await page.route("**/web/v1/auth/login", async (route) => {
+    signedIn = true;
+    signedOut = false;
     await route.fulfill({
       body: JSON.stringify(sessionPayload),
       contentType: "application/json",
@@ -151,6 +166,7 @@ test("logs out from the shell and returns to login", async ({ page }) => {
   });
 
   await page.route("**/web/v1/auth/logout", async (route) => {
+    signedIn = false;
     signedOut = true;
     await route.fulfill({
       status: 204,

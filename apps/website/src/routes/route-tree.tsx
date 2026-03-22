@@ -37,13 +37,13 @@ const homeRoute = createRoute({
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  component: () => <AuthPage mode="login" />,
+  component: LoginRouteComponent,
 });
 
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/register",
-  component: () => <AuthPage mode="register" />,
+  component: RegisterRouteComponent,
 });
 
 const profileRoute = createRoute({
@@ -180,6 +180,36 @@ function HomeRouteComponent() {
 
 function ProfileRouteComponent() {
   return renderProtectedRoute(<ProfilePage />);
+}
+
+function LoginRouteComponent() {
+  return <PublicAuthRoute mode="login" />;
+}
+
+function RegisterRouteComponent() {
+  return <PublicAuthRoute mode="register" />;
+}
+
+type PublicAuthRouteProps = {
+  mode: "login" | "register";
+};
+
+function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
+  const sessionQuery = useSessionBootstrapQuery();
+
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
+  }
+
+  if (isSessionAccessDenied(sessionQuery.error)) {
+    return <AuthPage mode={mode} />;
+  }
+
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return <AuthPage mode={mode} />;
+  }
+
+  return <Navigate replace to={resolveHomePath(mapSessionBootstrap(sessionQuery.data))} />;
 }
 
 function WorkspaceOverviewRouteComponent() {
