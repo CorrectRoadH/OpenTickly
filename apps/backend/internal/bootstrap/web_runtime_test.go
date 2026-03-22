@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -699,8 +700,6 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if register.Code != http.StatusCreated {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
 	}
-	sessionCookie := register.Header().Get("Set-Cookie")
-
 	var registerBody struct {
 		User struct {
 			ID int64 `json:"id"`
@@ -715,13 +714,14 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 
 	workspaceID := *registerBody.CurrentWorkspaceID
 	organizationID := *registerBody.CurrentOrganizationID
+	passwordAuthorization := basicAuthorization("track@example.com", "secret1")
 
-	me := performJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, sessionCookie)
+	me := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, passwordAuthorization)
 	if me.Code != http.StatusOK {
 		t.Fatalf("expected /api/v9/me status 200, got %d body=%s", me.Code, me.Body.String())
 	}
 
-	resetToken := performJSONRequest(t, app, http.MethodPost, "/api/v9/me/reset_token", nil, sessionCookie)
+	resetToken := performAuthorizedJSONRequest(t, app, http.MethodPost, "/api/v9/me/reset_token", nil, passwordAuthorization)
 	if resetToken.Code != http.StatusOK {
 		t.Fatalf("expected /api/v9/me/reset_token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())
 	}
@@ -730,43 +730,44 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if rotatedToken == "" {
 		t.Fatal("expected rotated API token string")
 	}
+	tokenAuthorization := basicAuthorization(rotatedToken, "api_token")
 
-	preferences := performJSONRequest(t, app, http.MethodGet, "/api/v9/me/preferences", nil, sessionCookie)
+	preferences := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me/preferences", nil, tokenAuthorization)
 	if preferences.Code != http.StatusOK {
 		t.Fatalf("expected /api/v9/me/preferences status 200, got %d body=%s", preferences.Code, preferences.Body.String())
 	}
 
-	updateOrganization := performJSONRequest(
+	updateOrganization := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPut,
 		"/api/v9/organizations/"+intToString(organizationID),
 		map[string]any{"name": "Track Org"},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if updateOrganization.Code != http.StatusOK {
 		t.Fatalf("expected organization put status 200, got %d body=%s", updateOrganization.Code, updateOrganization.Body.String())
 	}
 
-	createClient := performJSONRequest(
+	createClient := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
 		map[string]any{"name": "North Ridge Client"},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if createClient.Code != http.StatusOK {
 		t.Fatalf("expected client create status 200, got %d body=%s", createClient.Code, createClient.Body.String())
 	}
 
-	listClients := performJSONRequest(
+	listClients := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodGet,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
 		nil,
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if listClients.Code != http.StatusOK {
 		t.Fatalf("expected clients list status 200, got %d body=%s", listClients.Code, listClients.Body.String())
@@ -777,37 +778,37 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("expected persisted client, got %#v", clientsBody)
 	}
 
-	createTag := performJSONRequest(
+	createTag := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/tags",
 		map[string]any{"name": "billable"},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if createTag.Code != http.StatusOK {
 		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
 	}
 
-	createGroup := performJSONRequest(
+	createGroup := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/groups",
 		map[string]any{"name": "Design"},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if createGroup.Code != http.StatusOK {
 		t.Fatalf("expected group create status 200, got %d body=%s", createGroup.Code, createGroup.Body.String())
 	}
 
-	createProject := performJSONRequest(
+	createProject := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
 		map[string]any{"name": "Website Revamp"},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if createProject.Code != http.StatusOK {
 		t.Fatalf("expected project create status 200, got %d body=%s", createProject.Code, createProject.Body.String())
@@ -837,64 +838,138 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("seed task: %v", err)
 	}
 
-	listProjects := performJSONRequest(
+	listProjects := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodGet,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects?name=&page=1&sort_field=name&sort_order=ASC&only_templates=false&sort_pinned=true&search=",
 		nil,
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if listProjects.Code != http.StatusOK {
 		t.Fatalf("expected projects list status 200, got %d body=%s", listProjects.Code, listProjects.Body.String())
 	}
 
-	pinProject := performJSONRequest(
+	pinProject := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/pin",
 		map[string]any{"pin": true},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if pinProject.Code != http.StatusOK {
 		t.Fatalf("expected project pin status 200, got %d body=%s", pinProject.Code, pinProject.Body.String())
 	}
 
-	archiveProject := performJSONRequest(
+	archiveProject := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodPut,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID),
 		map[string]any{"active": false},
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if archiveProject.Code != http.StatusOK {
 		t.Fatalf("expected project archive status 200, got %d body=%s", archiveProject.Code, archiveProject.Body.String())
 	}
 
-	projectUsers := performJSONRequest(
+	projectUsers := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodGet,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/project_users?project_ids="+intToString(projectID),
 		nil,
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if projectUsers.Code != http.StatusOK {
 		t.Fatalf("expected project users status 200, got %d body=%s", projectUsers.Code, projectUsers.Body.String())
 	}
 
-	tasksBasic := performJSONRequest(
+	tasksBasic := performAuthorizedJSONRequest(
 		t,
 		app,
 		http.MethodGet,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/tasks/basic?page=1&per_page=200&sort_field=name&sort_order=ASC&search=&project_id="+intToString(projectID),
 		nil,
-		sessionCookie,
+		tokenAuthorization,
 	)
 	if tasksBasic.Code != http.StatusOK {
 		t.Fatalf("expected tasks basic status 200, got %d body=%s", tasksBasic.Code, tasksBasic.Body.String())
+	}
+}
+
+func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	firstRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "owner@example.com",
+		"fullname": "Owner User",
+		"password": "secret1",
+	}, "")
+	if firstRegister.Code != http.StatusCreated {
+		t.Fatalf("expected first register status 201, got %d body=%s", firstRegister.Code, firstRegister.Body.String())
+	}
+
+	secondRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "other@example.com",
+		"fullname": "Other User",
+		"password": "secret1",
+	}, "")
+	if secondRegister.Code != http.StatusCreated {
+		t.Fatalf("expected second register status 201, got %d body=%s", secondRegister.Code, secondRegister.Body.String())
+	}
+
+	var firstRegisterBody struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, firstRegister.Body.Bytes(), &firstRegisterBody)
+	if firstRegisterBody.CurrentOrganizationID == nil || firstRegisterBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected first bootstrap ids, got %#v", firstRegisterBody)
+	}
+
+	otherAuthorization := basicAuthorization("other@example.com", "secret1")
+
+	crossWorkspace := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(*firstRegisterBody.CurrentWorkspaceID)+"/clients",
+		nil,
+		otherAuthorization,
+	)
+	if crossWorkspace.Code != http.StatusForbidden {
+		t.Fatalf("expected cross workspace status 403, got %d body=%s", crossWorkspace.Code, crossWorkspace.Body.String())
+	}
+
+	crossOrganization := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/organizations/"+intToString(*firstRegisterBody.CurrentOrganizationID),
+		map[string]any{"name": "Hijack Org"},
+		otherAuthorization,
+	)
+	if crossOrganization.Code != http.StatusForbidden {
+		t.Fatalf("expected cross organization status 403, got %d body=%s", crossOrganization.Code, crossOrganization.Body.String())
 	}
 }
 
@@ -905,6 +980,29 @@ func performJSONRequest(
 	path string,
 	payload any,
 	cookie string,
+) *httptest.ResponseRecorder {
+	return performJSONRequestWithMetadata(t, app, method, path, payload, cookie, "")
+}
+
+func performAuthorizedJSONRequest(
+	t *testing.T,
+	app *App,
+	method string,
+	path string,
+	payload any,
+	authorization string,
+) *httptest.ResponseRecorder {
+	return performJSONRequestWithMetadata(t, app, method, path, payload, "", authorization)
+}
+
+func performJSONRequestWithMetadata(
+	t *testing.T,
+	app *App,
+	method string,
+	path string,
+	payload any,
+	cookie string,
+	authorization string,
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -922,10 +1020,18 @@ func performJSONRequest(
 	if cookie != "" {
 		request.Header.Set("Cookie", cookie)
 	}
+	if authorization != "" {
+		request.Header.Set("Authorization", authorization)
+	}
 
 	recorder := httptest.NewRecorder()
 	app.HTTP.ServeHTTP(recorder, request)
 	return recorder
+}
+
+func basicAuthorization(username string, password string) string {
+	token := base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
+	return "Basic " + token
 }
 
 func mustDecodeJSON(t *testing.T, body []byte, target any) {

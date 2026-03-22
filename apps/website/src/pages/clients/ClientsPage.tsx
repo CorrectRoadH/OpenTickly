@@ -5,6 +5,14 @@ import { useClientsQuery, useCreateClientMutation } from "../../shared/query/web
 import { useSession } from "../../shared/session/session-context.tsx";
 
 type ClientStatusFilter = "active" | "all" | "inactive";
+type ClientListItem = {
+  active?: boolean | null;
+  archived?: boolean | null;
+  id: number;
+  name: string;
+  wid?: number | null;
+  workspace_id?: number | null;
+};
 
 function emptyStateTitle(statusFilter: ClientStatusFilter): string {
   if (statusFilter === "active") {
@@ -48,19 +56,19 @@ export function ClientsPage(): ReactElement {
     );
   }
 
-  const clients = clientsQuery.data?.clients ?? [];
+  const clients = normalizeClients(clientsQuery.data);
   const filteredClients = clients.filter((client) => {
     if (statusFilter === "active") {
-      return client.active;
+      return isClientActive(client);
     }
 
     if (statusFilter === "inactive") {
-      return !client.active;
+      return !isClientActive(client);
     }
 
     return true;
   });
-  const activeCount = clients.filter((client) => client.active).length;
+  const activeCount = clients.filter(isClientActive).length;
   const inactiveCount = clients.length - activeCount;
   const trimmedClientName = clientName.trim();
 
@@ -70,17 +78,14 @@ export function ClientsPage(): ReactElement {
       return;
     }
 
-    await createClientMutation.mutateAsync({
-      workspace_id: session.currentWorkspace.id,
-      name: trimmedClientName,
-    });
+    await createClientMutation.mutateAsync(trimmedClientName);
     setClientName("");
     setStatusFilter("all");
     setStatus("Client created");
   }
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="bg-white/95" data-testid="clients-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Clients</h1>
@@ -95,7 +100,7 @@ export function ClientsPage(): ReactElement {
         </AppButton>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-end gap-3">
+      <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="clients-filter-bar">
         <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-700">
           Client status filter
           <select
@@ -111,7 +116,7 @@ export function ClientsPage(): ReactElement {
         </label>
       </div>
 
-      <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={handleCreateClient}>
+      <form className="mt-4 flex flex-wrap items-end gap-3" data-testid="clients-create-form" onSubmit={handleCreateClient}>
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
           Client name
           <input
@@ -131,19 +136,20 @@ export function ClientsPage(): ReactElement {
       </form>
 
       {filteredClients.length > 0 ? (
-        <ul className="mt-6 divide-y divide-slate-200" aria-label="Clients list">
+        <ul className="mt-6 divide-y divide-slate-200" aria-label="Clients list" data-testid="clients-list">
           <li className="py-2 text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
             Workspace {session.currentWorkspace.id}
           </li>
           {filteredClients.map((client) => {
-            const statusLabel = client.active ? "Active" : "Inactive";
+            const statusLabel = isClientActive(client) ? "Active" : "Inactive";
+            const workspaceRef = client.wid ?? client.workspace_id ?? session.currentWorkspace.id;
 
             return (
               <li key={client.id} className="flex items-center justify-between py-3">
                 <div className="space-y-1">
                   <p className="text-sm font-semibold text-slate-900">{client.name}</p>
                   <p className="text-xs text-slate-600">Client · {statusLabel}</p>
-                  <p className="text-[11px] text-slate-500">Workspace {client.workspace_id}</p>
+                  <p className="text-[11px] text-slate-500">Workspace {workspaceRef}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <a
@@ -162,7 +168,7 @@ export function ClientsPage(): ReactElement {
           })}
         </ul>
       ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6">
+        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6" data-testid="clients-empty-state">
           <p className="text-sm font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
           <p className="mt-1 text-sm text-slate-600">
             Switch filters or create a client to continue.
@@ -170,7 +176,7 @@ export function ClientsPage(): ReactElement {
         </div>
       )}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="clients-summary">
         <p>
           Showing {clients.length} clients in workspace {session.currentWorkspace.id}.
         </p>
@@ -180,4 +186,35 @@ export function ClientsPage(): ReactElement {
       </div>
     </AppPanel>
   );
+}
+
+function normalizeClients(data: unknown): ClientListItem[] {
+  if (Array.isArray(data)) {
+    return data as ClientListItem[];
+  }
+
+  if (hasClientArray(data, "clients")) {
+    return data.clients;
+  }
+
+  if (hasClientArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasClientArray(
+  value: unknown,
+  key: "clients" | "data",
+): value is Record<typeof key, ClientListItem[]> {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+}
+
+function isClientActive(client: ClientListItem): boolean {
+  if (typeof client.archived === "boolean") {
+    return !client.archived;
+  }
+
+  return client.active !== false;
 }

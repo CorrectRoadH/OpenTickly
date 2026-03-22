@@ -19,17 +19,14 @@ export function GroupsPage(): ReactElement {
     );
   }
 
-  const groups = groupsQuery.data?.groups ?? [];
-  const activeCount = groups.filter((group) => group.active).length;
+  const groups = groupsQuery.data ?? [];
+  const activeCount = groups.filter((group) => Boolean(group.has_users)).length;
   const inactiveCount = groups.length - activeCount;
 
   async function handleCreateGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await createGroupMutation.mutateAsync({
-      workspace_id: session.currentWorkspace.id,
-      name: groupName,
-    });
+    await createGroupMutation.mutateAsync(groupName);
     setGroupName("");
     setStatus("Group created");
   }
@@ -65,7 +62,7 @@ export function GroupsPage(): ReactElement {
 
       <ul className="mt-6 divide-y divide-slate-200" aria-label="Groups list">
         {groups.map((group) => {
-          const statusLabel = group.active ? "Active" : "Inactive";
+          const statusLabel = group.has_users ? "Active" : "Inactive";
 
           return (
             <li key={group.id} className="flex items-center justify-between py-3">

@@ -24,33 +24,28 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const navigationItems = shellNavigationItems(session);
 
   return (
-    <div className="min-h-screen px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto grid w-full max-w-7xl gap-4 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <aside className="space-y-4">
-          <AppPanel
-            className="bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(231,244,235,0.92))]"
-            data-testid="shell-hero"
-          >
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
-                  Workspace shell
+    <div className="min-h-dvh bg-[#17171a] px-3 py-3 text-slate-100 sm:px-4 sm:py-4" data-testid="app-shell">
+      <div className="mx-auto grid w-full max-w-[1680px] gap-3 lg:grid-cols-[272px_minmax(0,1fr)]">
+        <aside className="rounded-2xl border border-white/8 bg-[#101013] p-3" data-testid="app-shell-sidebar">
+          <div className="flex h-full flex-col gap-4">
+            <div className="flex items-center justify-between rounded-xl border border-white/8 bg-white/4 px-3 py-3" data-testid="workspace-identity-card">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-white">
+                  {session.currentOrganization?.name ?? "Personal workspace"}
                 </p>
-                <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
-                  Workspace access
-                </h1>
-                <p className="text-sm leading-6 text-slate-600">
-                  Switch between workspaces, open account surfaces, and enter workspace management
-                  from the current session.
+                <p className="mt-1 truncate text-xs text-slate-400">
+                  {session.currentWorkspace.name}
                 </p>
               </div>
-              <WorkspaceBadge />
+              <span
+                aria-hidden="true"
+                className="flex size-8 items-center justify-center rounded-full bg-[#c792d1] text-sm font-semibold text-[#16161a]"
+              >
+                O
+              </span>
             </div>
-          </AppPanel>
 
-          <AppPanel className="bg-white/95">
-            <div className="space-y-5">
-              <SessionBootstrapStatus />
+            <div data-testid="shell-hero" className="space-y-4">
               <WorkspaceSwitcher
                 currentWorkspaceId={session.currentWorkspace.id}
                 onChange={(workspaceId) => {
@@ -63,23 +58,45 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                   name: workspace.name,
                 }))}
               />
-              <nav aria-label="Primary" className="flex flex-col gap-2">
-                {navigationItems.map((item) => (
-                  <Link
-                    activeProps={{
-                      className:
-                        "border-emerald-700 bg-emerald-700 text-white shadow-[0_10px_25px_rgba(22,50,39,0.15)]",
-                    }}
-                    className="rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-emerald-600 hover:text-emerald-800"
-                    key={item.to}
-                    to={item.to}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
+              <WorkspaceBadge />
+              <SessionBootstrapStatus />
+            </div>
+
+            <nav aria-label="Primary" className="space-y-4" data-testid="shell-primary-nav">
+              {navigationItems.map((section) => (
+                <section key={section.title} className="space-y-2">
+                  <h2 className="px-3 text-xs font-medium text-slate-500">{section.title}</h2>
+                  <div className="space-y-1">
+                    {section.items.map((item) => (
+                      <Link
+                        activeProps={{
+                          className: "bg-[#4d2c52] text-white",
+                        }}
+                        className="flex items-center rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/6 hover:text-white"
+                        key={item.to}
+                        to={item.to}
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </nav>
+
+            <div className="mt-auto rounded-xl border border-white/8 bg-white/4 p-3" data-testid="current-timer-card">
+              <p className="text-xs font-medium text-slate-500">Current timer</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-white">Running in {session.user.timezone}</p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {session.currentWorkspace.defaultCurrency ?? "USD"} workspace defaults
+                  </p>
+                </div>
+                <p className="text-lg font-semibold tabular-nums text-[#f3d37c]">1:49:21</p>
+              </div>
               <button
-                className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-rose-500 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-3 w-full rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={logoutMutation.isPending}
                 onClick={() => {
                   void logoutMutation.mutateAsync().then(() =>
@@ -93,23 +110,30 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                 {logoutMutation.isPending ? "Logging out…" : "Log out"}
               </button>
             </div>
-          </AppPanel>
+          </div>
         </aside>
 
-        <main className="space-y-4">
-          <AppPanel className="bg-white/95">
+        <main className="space-y-3" data-testid="app-shell-main">
+          <AppPanel className="border-white/8 bg-[#1c1c20]" data-testid="workspace-summary-bar">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
+                <p className="text-xs font-medium text-slate-500">
                   Current workspace
                 </p>
-                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+                <p className="mt-2 text-2xl font-semibold text-white">
                   {session.currentWorkspace.name}
                 </p>
               </div>
-              <div className="text-right text-sm text-slate-600">
-                <p>{session.currentOrganization?.name ?? "Personal scope"}</p>
-                <p>{session.currentWorkspace.defaultCurrency ?? "USD"} defaults</p>
+              <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-300">
+                <span className="rounded-lg border border-white/10 bg-white/4 px-3 py-2">
+                  {session.currentOrganization?.name ?? "Personal scope"}
+                </span>
+                <span className="rounded-lg border border-white/10 bg-white/4 px-3 py-2">
+                  Role {session.currentWorkspace.role ?? "member"}
+                </span>
+                <span className="rounded-lg border border-white/10 bg-white/4 px-3 py-2">
+                  {session.currentWorkspace.defaultCurrency ?? "USD"} defaults
+                </span>
               </div>
             </div>
           </AppPanel>

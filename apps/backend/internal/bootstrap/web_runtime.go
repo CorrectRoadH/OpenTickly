@@ -41,6 +41,7 @@ type webRuntime struct {
 	identity    *identityweb.Handler
 	identityApp *identityapplication.Service
 	identityAPI *identitypublicapi.Handler
+	userHomes   userHomeRepository
 	tenant      *tenantweb.Handler
 	tenantApp   *tenantapplication.Service
 	billingApp  *billingapplication.Service
@@ -82,6 +83,7 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 		identity:    identityHandler,
 		identityApp: identityService,
 		identityAPI: identitypublicapi.NewHandler(identityService),
+		userHomes:   tenantpostgres.NewUserHomeRepository(pool),
 		tenant:      tenantHandler,
 		tenantApp:   tenantService,
 		billingApp:  billingService,

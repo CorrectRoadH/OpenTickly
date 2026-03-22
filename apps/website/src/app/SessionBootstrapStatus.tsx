@@ -11,9 +11,9 @@ export function SessionBootstrapStatus(): ReactElement {
   return (
     <div className="flex flex-col gap-2">
       <StatusPill tone="success">Session ready</StatusPill>
-      <p className="text-sm leading-6 text-slate-600">
+      <p className="text-sm leading-6 text-slate-400">
         Bootstrapped as {session.user.email} in{" "}
-        <span className="font-medium text-slate-900">{session.currentWorkspace.name}</span>
+        <span className="font-medium text-slate-100">{session.currentWorkspace.name}</span>
       </p>
     </div>
   );

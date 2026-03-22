@@ -48,19 +48,19 @@ export function TagsPage(): ReactElement {
     );
   }
 
-  const tags = tagsQuery.data?.tags ?? [];
+  const tags = tagsQuery.data ?? [];
   const filteredTags = tags.filter((tag) => {
     if (statusFilter === "active") {
-      return tag.active;
+      return !tag.deleted_at;
     }
 
     if (statusFilter === "inactive") {
-      return !tag.active;
+      return Boolean(tag.deleted_at);
     }
 
     return true;
   });
-  const activeCount = tags.filter((tag) => tag.active).length;
+  const activeCount = tags.filter((tag) => !tag.deleted_at).length;
   const inactiveCount = tags.length - activeCount;
   const trimmedTagName = tagName.trim();
 
@@ -70,10 +70,7 @@ export function TagsPage(): ReactElement {
       return;
     }
 
-    await createTagMutation.mutateAsync({
-      workspace_id: session.currentWorkspace.id,
-      name: trimmedTagName,
-    });
+    await createTagMutation.mutateAsync(trimmedTagName);
     setTagName("");
     setStatusFilter("all");
     setStatus("Tag created");
@@ -133,7 +130,7 @@ export function TagsPage(): ReactElement {
       {filteredTags.length > 0 ? (
         <ul className="mt-6 divide-y divide-slate-200" aria-label="Tags list">
           {filteredTags.map((tag) => {
-            const statusLabel = tag.active ? "Active" : "Inactive";
+            const statusLabel = tag.deleted_at ? "Inactive" : "Active";
 
             return (
               <li key={tag.id} className="flex items-center justify-between py-3">

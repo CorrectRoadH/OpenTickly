@@ -1,56 +1,50 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
-  ClientCreateRequestDto,
-  GroupCreateRequestDto,
   LoginRequestDto,
-  ProjectCreateRequestDto,
   RegisterRequestDto,
   TaskCreateRequestDto,
   UpdateCurrentUserProfileRequestDto,
-  UpdateOrganizationSettingsRequestDto,
   UpdateUserPreferencesRequestDto,
   UpdateWorkspaceSettingsRequestDto,
-  TagCreateRequestDto,
-  WebCurrentUserProfileDto,
   WorkspaceMemberInvitationRequestDto,
   WebWorkspaceSettingsDto,
 } from "../api/web-contract.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
-  archiveProject,
-  createClient,
-  createGroup,
-  createProject,
-  createTag,
+  getMe,
+  getOrganization,
+  getPreferences,
+  getProjects,
+  getWorkspaceProjectUsers,
+  getWorkspaceClients,
+  getWorkspaceGroups,
+  getWorkspaceTag,
+  getWorkspaceTasksBasic,
+  postPinnedProject,
+  postPreferences,
+  postResetToken,
+  postWorkspaceProjectCreate,
+  postWorkspaceClients,
+  postWorkspaceGroup,
+  putMe,
+  putOrganization,
+  putWorkspaceProject,
+  postWorkspaceTag,
+} from "../api/public/track/index.ts";
+import {
   createTask,
   disableWorkspaceMember,
-  getCurrentUserPreferences,
-  getCurrentUserProfile,
-  getOrganizationSettings,
   getWebSession,
   getWorkspacePermissions,
   getWorkspaceSettings,
   inviteWorkspaceMember,
-  listClients,
-  listGroups,
-  listProjectMembers,
-  listProjects,
-  listTags,
-  listTasks,
   listWorkspaceMembers,
   loginWebUser,
   logoutWebUser,
-  pinProject,
   registerWebUser,
   removeWorkspaceMember,
-  resetCurrentUserApiToken,
-  restoreProject,
   restoreWorkspaceMember,
-  unpinProject,
-  updateCurrentUserPreferences,
-  updateCurrentUserProfile,
-  updateOrganizationSettings,
   updateWorkspacePermissions,
   updateWorkspaceSettings,
 } from "../api/web/index.ts";
@@ -128,7 +122,7 @@ export function useLogoutMutation() {
 
 export function useProfileQuery() {
   return useQuery({
-    queryFn: () => unwrapWebApiResult(getCurrentUserProfile()),
+    queryFn: () => unwrapWebApiResult(getMe()),
     queryKey: profileQueryKey,
   });
 }
@@ -138,7 +132,7 @@ export function useUpdateProfileMutation() {
 
   return useMutation({
     mutationFn: (request: UpdateCurrentUserProfileRequestDto) =>
-      unwrapWebApiResult(updateCurrentUserProfile({ body: request })),
+      unwrapWebApiResult(putMe({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(profileQueryKey, data);
       void queryClient.invalidateQueries({
@@ -152,13 +146,13 @@ export function useResetApiTokenMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => unwrapWebApiResult(resetCurrentUserApiToken()),
+    mutationFn: () => unwrapWebApiResult(postResetToken()),
     onSuccess: (data) => {
-      queryClient.setQueryData<WebCurrentUserProfileDto | undefined>(profileQueryKey, (profile) =>
+      queryClient.setQueryData(profileQueryKey, (profile) =>
         profile
           ? {
               ...profile,
-              api_token: data.api_token,
+              api_token: data,
             }
           : profile,
       );
@@ -171,7 +165,7 @@ export function useResetApiTokenMutation() {
 
 export function usePreferencesQuery() {
   return useQuery({
-    queryFn: () => unwrapWebApiResult(getCurrentUserPreferences()),
+    queryFn: () => unwrapWebApiResult(getPreferences()),
     queryKey: ["web-preferences"],
   });
 }
@@ -181,9 +175,11 @@ export function useUpdatePreferencesMutation() {
 
   return useMutation({
     mutationFn: (request: UpdateUserPreferencesRequestDto) =>
-      unwrapWebApiResult(updateCurrentUserPreferences({ body: request })),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["web-preferences"], data);
+      unwrapWebApiResult(postPreferences({ body: request })),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["web-preferences"],
+      });
     },
   });
 }
@@ -269,7 +265,7 @@ export function useOrganizationSettingsQuery(organizationId: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        getOrganizationSettings({
+        getOrganization({
           path: {
             organization_id: organizationId,
           },
@@ -381,10 +377,19 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        listProjects({
-          query: {
-            status,
+        getProjects({
+          path: {
             workspace_id: workspaceId,
+          },
+          query: {
+            active: status === "all" ? undefined : status === "active",
+            name: "",
+            only_templates: false,
+            page: 1,
+            search: "",
+            sort_field: "name",
+            sort_order: "ASC",
+            sort_pinned: true,
           },
         }),
       ),
@@ -396,8 +401,17 @@ export function useCreateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: ProjectCreateRequestDto) =>
-      unwrapWebApiResult(createProject({ body: request })),
+    mutationFn: (name: string) =>
+      unwrapWebApiResult(
+        postWorkspaceProjectCreate({
+          body: {
+            name,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
@@ -412,9 +426,13 @@ export function useArchiveProjectMutation(workspaceId: number) {
   return useMutation({
     mutationFn: (projectId: number) =>
       unwrapWebApiResult(
-        archiveProject({
+        putWorkspaceProject({
+          body: {
+            active: false,
+          },
           path: {
             project_id: projectId,
+            workspace_id: workspaceId,
           },
         }),
       ),
@@ -432,9 +450,13 @@ export function useRestoreProjectMutation(workspaceId: number) {
   return useMutation({
     mutationFn: (projectId: number) =>
       unwrapWebApiResult(
-        restoreProject({
+        putWorkspaceProject({
+          body: {
+            active: true,
+          },
           path: {
             project_id: projectId,
+            workspace_id: workspaceId,
           },
         }),
       ),
@@ -452,9 +474,13 @@ export function usePinProjectMutation(workspaceId: number) {
   return useMutation({
     mutationFn: (projectId: number) =>
       unwrapWebApiResult(
-        pinProject({
+        postPinnedProject({
+          body: {
+            pin: true,
+          },
           path: {
             project_id: projectId,
+            workspace_id: workspaceId,
           },
         }),
       ),
@@ -472,9 +498,13 @@ export function useUnpinProjectMutation(workspaceId: number) {
   return useMutation({
     mutationFn: (projectId: number) =>
       unwrapWebApiResult(
-        unpinProject({
+        postPinnedProject({
+          body: {
+            pin: false,
+          },
           path: {
             project_id: projectId,
+            workspace_id: workspaceId,
           },
         }),
       ),
@@ -486,26 +516,29 @@ export function useUnpinProjectMutation(workspaceId: number) {
   });
 }
 
-export function useProjectMembersQuery(projectId: number) {
+export function useProjectMembersQuery(workspaceId: number, projectId: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        listProjectMembers({
+        getWorkspaceProjectUsers({
           path: {
-            project_id: projectId,
+            workspace_id: workspaceId,
+          },
+          query: {
+            project_ids: String(projectId),
           },
         }),
       ),
-    queryKey: ["project-members", projectId],
+    queryKey: ["project-members", workspaceId, projectId],
   });
 }
 
 export function useClientsQuery(workspaceId: number) {
   return useQuery({
-    queryFn: () =>
+    queryFn: async () =>
       unwrapWebApiResult(
-        listClients({
-          query: {
+        getWorkspaceClients({
+          path: {
             workspace_id: workspaceId,
           },
         }),
@@ -518,8 +551,17 @@ export function useCreateClientMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: ClientCreateRequestDto) =>
-      unwrapWebApiResult(createClient({ body: request })),
+    mutationFn: (name: string) =>
+      unwrapWebApiResult(
+        postWorkspaceClients({
+          body: {
+            name,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["clients", workspaceId],
@@ -532,8 +574,8 @@ export function useGroupsQuery(workspaceId: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        listGroups({
-          query: {
+        getWorkspaceGroups({
+          path: {
             workspace_id: workspaceId,
           },
         }),
@@ -546,8 +588,17 @@ export function useCreateGroupMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: GroupCreateRequestDto) =>
-      unwrapWebApiResult(createGroup({ body: request })),
+    mutationFn: (name: string) =>
+      unwrapWebApiResult(
+        postWorkspaceGroup({
+          body: {
+            name,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["groups", workspaceId],
@@ -556,17 +607,26 @@ export function useCreateGroupMutation(workspaceId: number) {
   });
 }
 
-export function useTasksQuery(workspaceId: number) {
+export function useTasksQuery(workspaceId: number, projectId?: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        listTasks({
-          query: {
+        getWorkspaceTasksBasic({
+          path: {
             workspace_id: workspaceId,
+          },
+          query: {
+            active: undefined,
+            page: 1,
+            per_page: 200,
+            project_id: projectId,
+            search: "",
+            sort_field: "name",
+            sort_order: "ASC",
           },
         }),
       ),
-    queryKey: ["tasks", workspaceId],
+    queryKey: ["tasks", workspaceId, projectId ?? null],
   });
 }
 
@@ -588,8 +648,8 @@ export function useTagsQuery(workspaceId: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
-        listTags({
-          query: {
+        getWorkspaceTag({
+          path: {
             workspace_id: workspaceId,
           },
         }),
@@ -602,7 +662,17 @@ export function useCreateTagMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: TagCreateRequestDto) => unwrapWebApiResult(createTag({ body: request })),
+    mutationFn: (name: string) =>
+      unwrapWebApiResult(
+        postWorkspaceTag({
+          body: {
+            name,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["tags", workspaceId],
@@ -615,17 +685,19 @@ export function useUpdateOrganizationSettingsMutation(organizationId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: UpdateOrganizationSettingsRequestDto) =>
+    mutationFn: (request: { name?: string }) =>
       unwrapWebApiResult(
-        updateOrganizationSettings({
+        putOrganization({
           body: request,
           path: {
             organization_id: organizationId,
           },
         }),
       ),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["organization-settings", organizationId], data);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["organization-settings", organizationId],
+      });
       void queryClient.invalidateQueries({
         queryKey: sessionQueryKey,
       });

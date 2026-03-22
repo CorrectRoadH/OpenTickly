@@ -1,6 +1,9 @@
 import { type ReactElement } from "react";
 
-import type { ProjectMembersEnvelopeDto, ProjectSummaryDto } from "../../shared/api/web-contract.ts";
+import type {
+  GithubComTogglTogglApiInternalModelsProject,
+  ModelsProjectUser,
+} from "../../shared/api/generated/public-track/types.gen.ts";
 
 function formatProjectMemberRole(role: string): string {
   return role.charAt(0).toUpperCase() + role.slice(1);
@@ -9,8 +12,8 @@ function formatProjectMemberRole(role: string): string {
 type ProjectMembersSectionProps = {
   isError: boolean;
   isPending: boolean;
-  members: ProjectMembersEnvelopeDto["members"];
-  project: ProjectSummaryDto;
+  members: Array<ModelsProjectUser>;
+  project: GithubComTogglTogglApiInternalModelsProject;
 };
 
 export function ProjectMembersSection({
@@ -33,12 +36,12 @@ export function ProjectMembersSection({
           <ul className="mt-2 space-y-2" aria-label={`${project.name} members`}>
             {members.map((member) => (
               <li
-                key={`${member.project_id}-${member.member_id}-${member.role}`}
+                key={`${member.project_id}-${member.user_id}-${member.role}`}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs text-slate-700"
               >
-                <span className="font-semibold text-slate-900">Member {member.member_id}</span>
+                <span className="font-semibold text-slate-900">Member {member.user_id}</span>
                 <span>Project {member.project_id}</span>
-                <span>{formatProjectMemberRole(member.role)}</span>
+                <span>{formatProjectMemberRole(member.role ?? "member")}</span>
               </li>
             ))}
           </ul>

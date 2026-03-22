@@ -123,7 +123,7 @@ export function WorkspaceSettingsPage({
       {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
       <WorkspaceSettingsForm
         brandingHref={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
-        initialValues={createWorkspaceSettingsFormValues(settingsQuery.data.workspace)}
+        initialValues={createWorkspaceSettingsFormValues(settingsQuery.data)}
         onSubmit={async (request) => {
           try {
             await updateMutation.mutateAsync(request);

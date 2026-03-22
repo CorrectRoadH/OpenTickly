@@ -93,8 +93,13 @@ func newHTTPRouteRegistrar(platform *platform.Runtime) (httpapp.RouteRegistrar, 
 	if err != nil {
 		return nil, err
 	}
+	publicTrackRoutes, err := newPublicTrackRoutes(platform.Database.Pool())
+	if err != nil {
+		return nil, err
+	}
 
 	return httpapp.ComposeRouteRegistrars(
 		webRoutes,
+		publicTrackRoutes,
 	), nil
 }

@@ -156,6 +156,10 @@ func (user *User) HasPassword() bool {
 	return user.passwordHash != ""
 }
 
+func (user *User) PasswordHash() string {
+	return user.passwordHash
+}
+
 func (user *User) CanAuthenticate() bool {
 	return user.state == UserStateActive
 }

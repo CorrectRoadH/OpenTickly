@@ -7,13 +7,15 @@ export function AppButton(props: ButtonProps) {
       overrides={{
         BaseButton: {
           style: {
-            borderColor: "#c6d8cb",
-            color: "#163227",
+            backgroundColor: "#c792d1",
+            borderColor: "#c792d1",
+            color: "#18181b",
             fontWeight: 600,
+            borderRadius: "0.75rem",
           },
         },
       }}
-      shape={SHAPE.pill}
+      shape={SHAPE.default}
       {...props}
     />
   );

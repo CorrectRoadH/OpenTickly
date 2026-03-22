@@ -11,7 +11,7 @@ type TasksPageProps = {
 
 export function TasksPage({ projectId }: TasksPageProps): ReactElement {
   const session = useSession();
-  const tasksQuery = useTasksQuery(session.currentWorkspace.id);
+  const tasksQuery = useTasksQuery(session.currentWorkspace.id, projectId);
   const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
     );
   }
 
-  const tasks = tasksQuery.data?.tasks ?? [];
+  const tasks = tasksQuery.data?.data ?? [];
   const activeCount = tasks.filter((task) => task.active).length;
 
   async function handleCreateTask(event: FormEvent<HTMLFormElement>) {

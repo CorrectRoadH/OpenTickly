@@ -6,28 +6,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapWebOpenAPIServer) ListClients(ctx echo.Context, params webapi.ListClientsParams) error {
-	_ = ctx
-	_ = params
-	return newNotImplementedError()
-}
-
-func (server *bootstrapWebOpenAPIServer) CreateClient(ctx echo.Context) error {
-	_ = ctx
-	return newNotImplementedError()
-}
-
-func (server *bootstrapWebOpenAPIServer) ListGroups(ctx echo.Context, params webapi.ListGroupsParams) error {
-	_ = ctx
-	_ = params
-	return newNotImplementedError()
-}
-
-func (server *bootstrapWebOpenAPIServer) CreateGroup(ctx echo.Context) error {
-	_ = ctx
-	return newNotImplementedError()
-}
-
 func (server *bootstrapWebOpenAPIServer) ListProjects(ctx echo.Context, params webapi.ListProjectsParams) error {
 	_ = ctx
 	_ = params
@@ -85,17 +63,6 @@ func (server *bootstrapWebOpenAPIServer) UnpinProject(ctx echo.Context, projectI
 func (server *bootstrapWebOpenAPIServer) PinProject(ctx echo.Context, projectId int) error {
 	_ = ctx
 	_ = projectId
-	return newNotImplementedError()
-}
-
-func (server *bootstrapWebOpenAPIServer) ListTags(ctx echo.Context, params webapi.ListTagsParams) error {
-	_ = ctx
-	_ = params
-	return newNotImplementedError()
-}
-
-func (server *bootstrapWebOpenAPIServer) CreateTag(ctx echo.Context) error {
-	_ = ctx
 	return newNotImplementedError()
 }
 

@@ -1,24 +1,24 @@
 import { AppButton } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
 
-import type { ProjectSummaryDto } from "../../shared/api/web-contract.ts";
+import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useProjectMembersQuery } from "../../shared/query/web-shell.ts";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
 import { ProjectMembersSection } from "./ProjectMembersSection.tsx";
 
-function projectStatusLabel(project: ProjectSummaryDto): string {
+function projectStatusLabel(project: GithubComTogglTogglApiInternalModelsProject): string {
   return project.active ? "Active" : "Archived";
 }
 
-function projectTemplateLabel(project: ProjectSummaryDto): string {
+function projectTemplateLabel(project: GithubComTogglTogglApiInternalModelsProject): string {
   return project.template ? "Template" : "Standard";
 }
 
 type ProjectListItemProps = {
   mutationPending: boolean;
-  onArchiveToggle: (project: ProjectSummaryDto) => Promise<void>;
-  onPinToggle: (project: ProjectSummaryDto) => Promise<void>;
-  project: ProjectSummaryDto;
+  onArchiveToggle: (project: GithubComTogglTogglApiInternalModelsProject) => Promise<void>;
+  onPinToggle: (project: GithubComTogglTogglApiInternalModelsProject) => Promise<void>;
+  project: GithubComTogglTogglApiInternalModelsProject;
   workspaceId: number;
 };
 
@@ -29,8 +29,8 @@ export function ProjectListItem({
   project,
   workspaceId,
 }: ProjectListItemProps): ReactElement {
-  const projectMembersQuery = useProjectMembersQuery(project.id);
-  const projectMembers = projectMembersQuery.data?.members ?? [];
+  const projectMembersQuery = useProjectMembersQuery(workspaceId, project.id ?? 0);
+  const projectMembers = normalizeProjectMembers(projectMembersQuery.data);
   const memberCount = projectMembers.length;
   const statusLabel = projectStatusLabel(project);
   const pinActionLabel = project.pinned ? "Unpin" : "Pin";
@@ -57,19 +57,15 @@ export function ProjectListItem({
           </div>
           <p className="text-xs text-slate-600">Project · {statusLabel}</p>
           <p className="text-[11px] text-slate-500">
-            Workspace {project.workspace_id} · {memberCount} member{memberCount === 1 ? "" : "s"}
+            Workspace {project.wid} · {memberCount} member{memberCount === 1 ? "" : "s"}
           </p>
           <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
             <span>Client {project.client_name ?? "Unassigned"}</span>
             <span>Actual {project.actual_seconds ?? 0}s</span>
             <span>
-              Current period {project.tracked_seconds_current_period ?? 0}s · Previous period{" "}
-              {project.tracked_seconds_previous_period ?? 0}s
-            </span>
-            <span>
-              Period {project.recurring_period ?? "none"}
-              {project.recurring_period_start && project.recurring_period_end
-                ? ` · ${project.recurring_period_start} to ${project.recurring_period_end}`
+              Period {project.recurring ? "recurring" : "none"}
+              {project.current_period?.start_date && project.current_period?.end_date
+                ? ` · ${project.current_period.start_date} to ${project.current_period.end_date}`
                 : ""}
             </span>
           </div>
@@ -124,4 +120,22 @@ export function ProjectListItem({
       />
     </li>
   );
+}
+
+function normalizeProjectMembers(data: unknown): Array<{ member_id?: number | null }> {
+  if (Array.isArray(data)) {
+    return data as Array<{ member_id?: number | null }>;
+  }
+
+  if (hasMembersArray(data)) {
+    return data.members;
+  }
+
+  return [];
+}
+
+function hasMembersArray(
+  value: unknown,
+): value is { members: Array<{ member_id?: number | null }> } {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as { members?: unknown }).members);
 }

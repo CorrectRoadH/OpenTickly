@@ -2,7 +2,7 @@ import { AppButton, AppPanel } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import { type FormEvent, type ReactElement, useRef, useState } from "react";
 
-import type { ProjectSummaryDto } from "../../shared/api/web-contract.ts";
+import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useArchiveProjectMutation,
   useCreateProjectMutation,
@@ -14,6 +14,8 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import type { ProjectStatusFilter } from "../../shared/url-state/projects-location.ts";
 import { ProjectListItem } from "./ProjectListItem.tsx";
+
+type ProjectListItemView = GithubComTogglTogglApiInternalModelsProject;
 
 function emptyStateTitle(statusFilter: ProjectStatusFilter): string {
   if (statusFilter === "archived") {
@@ -45,7 +47,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const restoreProjectMutation = useRestoreProjectMutation(workspaceId);
   const pinProjectMutation = usePinProjectMutation(workspaceId);
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
-  const projects = projectsQuery.data?.projects ?? [];
+  const projects = normalizeProjects(projectsQuery.data);
   const activeCount = projects.filter((project) => project.active).length;
   const pinnedCount = projects.filter((project) => project.pinned).length;
   const mutationPending =
@@ -68,10 +70,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   async function handleCreateProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await createProjectMutation.mutateAsync({
-      workspace_id: workspaceId,
-      name: projectName,
-    });
+    await createProjectMutation.mutateAsync(projectName);
 
     if (statusFilter !== "all") {
       await navigateToStatus("all");
@@ -81,7 +80,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setStatusMessage("Project created");
   }
 
-  async function handleArchiveToggle(project: ProjectSummaryDto) {
+  async function handleArchiveToggle(project: GithubComTogglTogglApiInternalModelsProject) {
     if (project.active) {
       await archiveProjectMutation.mutateAsync(project.id);
       setStatusMessage(`Archived project ${project.name}`);
@@ -92,7 +91,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setStatusMessage(`Restored project ${project.name}`);
   }
 
-  async function handlePinToggle(project: ProjectSummaryDto) {
+  async function handlePinToggle(project: GithubComTogglTogglApiInternalModelsProject) {
     if (project.pinned) {
       await unpinProjectMutation.mutateAsync(project.id);
       setStatusMessage(`Unpinned project ${project.name}`);
@@ -112,7 +111,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="bg-white/95" data-testid="projects-page">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Projects</h1>
@@ -127,7 +126,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         </AppButton>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-end gap-3">
+      <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="projects-filter-bar">
         <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-700">
           Status
           <select
@@ -143,7 +142,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         </label>
       </div>
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" onSubmit={handleCreateProject}>
+      <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="projects-create-form" onSubmit={handleCreateProject}>
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
           Project name
           <input
@@ -171,7 +170,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
       {!projectsQuery.isError ? (
         projects.length > 0 ? (
-          <ul className="mt-6 divide-y divide-slate-200" aria-label="Projects list">
+          <ul className="mt-6 divide-y divide-slate-200" aria-label="Projects list" data-testid="projects-list">
             {projects.map((project) => (
               <ProjectListItem
                 key={project.id}
@@ -184,7 +183,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             ))}
           </ul>
         ) : (
-          <section className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-5 text-sm text-slate-700">
+          <section className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-5 text-sm text-slate-700" data-testid="projects-empty-state">
             <p className="font-semibold text-slate-900">{emptyStateTitle(statusFilter)}</p>
             <p className="mt-2">
               Adjust the filter or create a project to keep project tasks, members, and reporting
@@ -194,7 +193,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         )
       ) : null}
 
-      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+      <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700" data-testid="projects-summary">
         <p>Showing {projects.length} projects in workspace {workspaceId}.</p>
         <p className="mt-1">
           Active: {activeCount} · Pinned: {pinnedCount}
@@ -202,4 +201,27 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       </div>
     </AppPanel>
   );
+}
+
+function normalizeProjects(data: unknown): ProjectListItemView[] {
+  if (Array.isArray(data)) {
+    return data as ProjectListItemView[];
+  }
+
+  if (hasProjectArray(data, "projects")) {
+    return data.projects;
+  }
+
+  if (hasProjectArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasProjectArray(
+  value: unknown,
+  key: "data" | "projects",
+): value is Record<typeof key, ProjectListItemView[]> {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
 }

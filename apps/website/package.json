@@ -8,8 +8,7 @@
     "build": "tsc -p tsconfig.json --noEmit && vp build",
     "preview": "vp preview",
     "check": "vp check",
-    "test": "vp test run && vp exec playwright test",
-    "test:unit": "vp test run",
+    "test": "vp exec playwright test",
     "test:e2e": "vp exec playwright test",
     "test:e2e:real-runtime": "vp exec playwright test e2e/app-shell.real-runtime.spec.ts"
   },

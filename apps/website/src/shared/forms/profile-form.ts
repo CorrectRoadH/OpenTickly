@@ -1,11 +1,10 @@
 import { z } from "zod";
 
 import type {
-  UpdateCurrentUserProfileRequestDto,
-  UpdateUserPreferencesRequestDto,
-  WebCurrentUserProfileDto,
-  WebUserPreferencesDto,
-} from "../api/web-contract.ts";
+  MePayload,
+  ModelsAllPreferences,
+  RelatedUserWithRelated,
+} from "../api/generated/public-track/types.gen.ts";
 
 export const profileFormSchema = z.object({
   email: z.string().email(),
@@ -36,7 +35,7 @@ export const preferencesFormSchema = z.object({
 
 export type PreferencesFormValues = z.infer<typeof preferencesFormSchema>;
 
-export function createProfileFormValues(profile: WebCurrentUserProfileDto): ProfileFormValues {
+export function createProfileFormValues(profile: RelatedUserWithRelated): ProfileFormValues {
   return {
     email: profile.email ?? "",
     fullName: profile.fullname ?? "",
@@ -51,9 +50,9 @@ export function createProfileFormValues(profile: WebCurrentUserProfileDto): Prof
 
 export function mapProfileFormToRequest(
   values: ProfileFormValues,
-): UpdateCurrentUserProfileRequestDto {
+): MePayload {
   const parsed = profileFormSchema.parse(values);
-  const request: UpdateCurrentUserProfileRequestDto = {
+  const request: MePayload = {
     email: parsed.email,
     fullname: parsed.fullName,
     timezone: parsed.timezone,
@@ -73,7 +72,7 @@ export function mapProfileFormToRequest(
 }
 
 export function createPreferencesFormValues(
-  preferences: WebUserPreferencesDto,
+  preferences: ModelsAllPreferences,
 ): PreferencesFormValues {
   return {
     dateFormat: preferences.date_format ?? "YYYY-MM-DD",
@@ -92,7 +91,7 @@ export function createPreferencesFormValues(
 
 export function mapPreferencesFormToRequest(
   values: PreferencesFormValues,
-): UpdateUserPreferencesRequestDto {
+): ModelsAllPreferences {
   const parsed = preferencesFormSchema.parse(values);
 
   return {

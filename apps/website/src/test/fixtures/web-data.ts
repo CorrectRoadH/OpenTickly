@@ -1,11 +1,7 @@
 import type {
-  ClientListEnvelopeDto,
-  ClientSummaryDto,
   ProjectListEnvelopeDto,
   ProjectMembersEnvelopeDto,
   ProjectSummaryDto,
-  TagListEnvelopeDto,
-  TagSummaryDto,
   WebCurrentUserProfileDto,
   WebOrganizationSettingsDto,
   WebSessionBootstrapDto,
@@ -15,6 +11,28 @@ import type {
   WorkspaceSettingsEnvelopeDto,
   WebWorkspaceSettingsDto,
 } from "../../shared/api/web-contract.ts";
+
+type ClientSummaryFixture = {
+  active: boolean;
+  id: number;
+  name: string;
+  workspace_id: number;
+};
+
+type ClientListFixture = {
+  clients: ClientSummaryFixture[];
+};
+
+type TagSummaryFixture = {
+  active: boolean;
+  id: number;
+  name: string;
+  workspace_id: number;
+};
+
+type TagListFixture = {
+  tags: TagSummaryFixture[];
+};
 
 type GroupSummaryFixture = {
   active: boolean;
@@ -185,6 +203,8 @@ export function createWorkspaceSettingsEnvelopeFixture(
     preferences: {
       hide_start_end_times: false,
       report_locked_at: "",
+      show_timesheet_view: true,
+      required_time_entry_fields: [],
     },
     subscription: {
       plan_name: "Starter",
@@ -322,8 +342,8 @@ export function createProjectMembersFixture(
 }
 
 export function createClientSummaryFixture(
-  overrides?: Partial<ClientSummaryDto>,
-): ClientSummaryDto {
+  overrides?: Partial<ClientSummaryFixture>,
+): ClientSummaryFixture {
   return {
     id: 501,
     name: "North Ridge Client",
@@ -334,8 +354,8 @@ export function createClientSummaryFixture(
 }
 
 export function createClientsFixture(
-  overrides?: Partial<ClientListEnvelopeDto>,
-): ClientListEnvelopeDto {
+  overrides?: Partial<ClientListFixture>,
+): ClientListFixture {
   return {
     clients: [
       createClientSummaryFixture(),
@@ -349,7 +369,9 @@ export function createClientsFixture(
   };
 }
 
-export function createTagSummaryFixture(overrides?: Partial<TagSummaryDto>): TagSummaryDto {
+export function createTagSummaryFixture(
+  overrides?: Partial<TagSummaryFixture>,
+): TagSummaryFixture {
   return {
     id: 701,
     name: "Urgent",
@@ -411,7 +433,7 @@ export function createGroupsFixture(overrides?: Partial<GroupListFixture>): Grou
   };
 }
 
-export function createTagsFixture(overrides?: Partial<TagListEnvelopeDto>): TagListEnvelopeDto {
+export function createTagsFixture(overrides?: Partial<TagListFixture>): TagListFixture {
   return {
     tags: [
       createTagSummaryFixture(),

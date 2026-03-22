@@ -72,7 +72,7 @@ export function OrganizationSettingsPage({
       {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
       {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
       <OrganizationSettingsForm
-        initialValues={createOrganizationSettingsFormValues(organizationQuery.data.organization)}
+        initialValues={createOrganizationSettingsFormValues(organizationQuery.data)}
         onSubmit={async (request) => {
           try {
             await updateMutation.mutateAsync(request);

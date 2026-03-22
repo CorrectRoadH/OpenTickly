@@ -105,9 +105,10 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
   }
 
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel className="bg-white/95" data-testid="permission-config-page">
       <form
         className="space-y-6"
+        data-testid="permission-config-form"
         onSubmit={handleSubmit(async (values) => {
           setStatus(null);
           setSaveError(null);
@@ -141,7 +142,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4" data-testid="permission-config-toggles">
           {permissionFields.map((field) => (
             <label
               className="flex items-start gap-3 rounded-2xl border border-slate-200 px-4 py-3"

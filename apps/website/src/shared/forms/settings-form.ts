@@ -1,11 +1,13 @@
 import { z } from "zod";
 
 import type {
-  UpdateOrganizationSettingsRequestDto,
   UpdateWorkspaceSettingsRequestDto,
-  WebOrganizationSettingsDto,
-  WebWorkspaceSettingsDto,
+  WorkspaceSettingsEnvelopeDto,
 } from "../api/web-contract.ts";
+import type {
+  ModelsMeOrganization,
+  ModelsPutPayload,
+} from "../api/generated/public-track/types.gen.ts";
 
 export const organizationSettingsFormSchema = z.object({
   name: z.string().min(1),
@@ -31,13 +33,17 @@ export const workspaceSettingsFormSchema = z.object({
   projectsPrivateByDefault: z.boolean(),
   projectsEnforceBillable: z.boolean(),
   limitPublicProjectData: z.boolean(),
+  hideStartEndTimes: z.boolean(),
+  reportLockedAt: z.string(),
+  showTimesheetView: z.boolean(),
+  requiredTimeEntryFields: z.array(z.string()),
   logoUrl: z.string().url().or(z.literal("")),
 });
 
 export type WorkspaceSettingsFormValues = z.infer<typeof workspaceSettingsFormSchema>;
 
 export function createOrganizationSettingsFormValues(
-  organization: WebOrganizationSettingsDto,
+  organization: ModelsMeOrganization,
 ): OrganizationSettingsFormValues {
   return {
     name: organization.name ?? "",
@@ -50,19 +56,19 @@ export function createOrganizationSettingsFormValues(
 
 export function mapOrganizationSettingsFormToRequest(
   values: OrganizationSettingsFormValues,
-): UpdateOrganizationSettingsRequestDto {
+): ModelsPutPayload {
   const parsed = organizationSettingsFormSchema.parse(values);
 
   return {
-    organization: {
-      name: parsed.name,
-    },
+    name: parsed.name,
   };
 }
 
 export function createWorkspaceSettingsFormValues(
-  workspace: WebWorkspaceSettingsDto,
+  envelope: WorkspaceSettingsEnvelopeDto,
 ): WorkspaceSettingsFormValues {
+  const workspace = envelope.workspace;
+  const preferences = envelope.preferences;
   return {
     name: workspace.name ?? "",
     defaultCurrency: workspace.default_currency ?? "USD",
@@ -77,6 +83,10 @@ export function createWorkspaceSettingsFormValues(
     projectsPrivateByDefault: workspace.projects_private_by_default ?? false,
     projectsEnforceBillable: workspace.projects_enforce_billable ?? false,
     limitPublicProjectData: workspace.limit_public_project_data ?? false,
+    hideStartEndTimes: preferences.hide_start_end_times ?? false,
+    reportLockedAt: preferences.report_locked_at ?? "",
+    showTimesheetView: preferences.show_timesheet_view ?? true,
+    requiredTimeEntryFields: preferences.required_time_entry_fields ?? [],
     logoUrl: workspace.logo_url ?? "",
   };
 }
@@ -101,6 +111,12 @@ export function mapWorkspaceSettingsFormToRequest(
       projects_private_by_default: parsed.projectsPrivateByDefault,
       projects_enforce_billable: parsed.projectsEnforceBillable,
       limit_public_project_data: parsed.limitPublicProjectData,
+    },
+    preferences: {
+      hide_start_end_times: parsed.hideStartEndTimes,
+      report_locked_at: parsed.reportLockedAt,
+      show_timesheet_view: parsed.showTimesheetView,
+      required_time_entry_fields: parsed.requiredTimeEntryFields,
     },
   };
 }
