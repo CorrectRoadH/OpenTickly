@@ -149,6 +149,25 @@ func (service *Service) CommercialStatusForWorkspace(
 	return account.WorkspaceStatus(workspaceID)
 }
 
+func (service *Service) ProvisionDefaultOrganization(ctx context.Context, organizationID int64) error {
+	account, ok, err := service.accounts.FindByOrganizationID(ctx, organizationID)
+	if err != nil {
+		return err
+	}
+	if ok {
+		if account.OrganizationID == organizationID {
+			return nil
+		}
+		return fmt.Errorf("billing account organization mismatch for organization %d", organizationID)
+	}
+
+	account, err = domain.DefaultCommercialAccount(organizationID)
+	if err != nil {
+		return err
+	}
+	return service.accounts.Save(ctx, account)
+}
+
 func (service *Service) resolveWorkspaceAccount(
 	ctx context.Context,
 	workspaceID int64,

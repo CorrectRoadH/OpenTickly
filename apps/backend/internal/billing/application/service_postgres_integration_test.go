@@ -118,6 +118,20 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		t.Fatalf("create tenant organization for billing test: %v", err)
 	}
 
+	provisioningService, err := NewService(
+		postgresinfra.NewAccountRepository(database.Pool),
+		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
+		[]domain.CapabilityRule{
+			{Key: "reports.summary", MinimumPlan: domain.PlanStarter, RequiresQuota: true},
+		},
+	)
+	if err != nil {
+		t.Fatalf("new billing service for provision: %v", err)
+	}
+	if err := provisioningService.ProvisionDefaultOrganization(ctx, int64(organization.ID())); err != nil {
+		t.Fatalf("provision default billing account: %v", err)
+	}
+
 	if _, err := database.Pool.Exec(ctx, `
 		delete from billing_accounts
 		where organization_id = $1
@@ -138,6 +152,51 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 
 	if _, err := service.CommercialStatusForWorkspace(ctx, int64(workspace.ID())); !errors.Is(err, ErrCommercialAccountNotFound) {
 		t.Fatalf("expected ErrCommercialAccountNotFound, got %v", err)
+	}
+}
+
+func TestServiceProvisionsDefaultBillingAccount(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	organization, _, err := tenantStore.CreateOrganization(
+		ctx,
+		"Billing Org",
+		"Billing Workspace",
+		mustDefaultWorkspaceSettings(t),
+	)
+	if err != nil {
+		t.Fatalf("create tenant organization for billing test: %v", err)
+	}
+
+	service, err := NewService(
+		postgresinfra.NewAccountRepository(database.Pool),
+		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
+		[]domain.CapabilityRule{
+			{Key: "time_tracking", MinimumPlan: domain.PlanFree},
+		},
+	)
+	if err != nil {
+		t.Fatalf("new billing service: %v", err)
+	}
+
+	if err := service.ProvisionDefaultOrganization(ctx, int64(organization.ID())); err != nil {
+		t.Fatalf("provision default billing account: %v", err)
+	}
+	if err := service.ProvisionDefaultOrganization(ctx, int64(organization.ID())); err != nil {
+		t.Fatalf("expected provisioning to be idempotent, got %v", err)
+	}
+
+	account, ok, err := postgresinfra.NewAccountRepository(database.Pool).FindByOrganizationID(ctx, int64(organization.ID()))
+	if err != nil {
+		t.Fatalf("find provisioned billing account: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected billing account to exist after provisioning")
+	}
+	if account.Subscription.Plan != domain.PlanFree || account.Subscription.State != domain.SubscriptionStateFree {
+		t.Fatalf("expected free default billing account, got %#v", account.Subscription)
 	}
 }
 

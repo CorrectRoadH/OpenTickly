@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -20,6 +21,7 @@ type CommercialSnapshot = billingdomain.CommercialStatus
 type CommercialTruthSource interface {
 	CommercialStatusForOrganization(context.Context, int64) (CommercialSnapshot, error)
 	CommercialStatusForWorkspace(context.Context, int64) (CommercialSnapshot, error)
+	ProvisionDefaultOrganization(context.Context, int64) error
 }
 
 type CreateOrganizationCommand struct {
@@ -134,6 +136,21 @@ func (service *Service) CreateOrganization(
 	)
 	if err != nil {
 		return CreateOrganizationResult{}, err
+	}
+	if err := service.commercial.ProvisionDefaultOrganization(ctx, int64(organization.ID())); err != nil {
+		if cleanupErr := service.store.DeleteOrganization(ctx, organization.ID()); cleanupErr != nil {
+			return CreateOrganizationResult{}, fmt.Errorf(
+				"provision default commercial account for organization %d: %w (cleanup failed: %v)",
+				organization.ID(),
+				err,
+				cleanupErr,
+			)
+		}
+		return CreateOrganizationResult{}, fmt.Errorf(
+			"provision default commercial account for organization %d: %w",
+			organization.ID(),
+			err,
+		)
 	}
 
 	return CreateOrganizationResult{
