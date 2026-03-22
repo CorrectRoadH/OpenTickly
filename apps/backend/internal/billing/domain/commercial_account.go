@@ -36,8 +36,8 @@ func NewCommercialAccount(
 	}, nil
 }
 
-// DefaultCommercialAccount keeps the fallback commercial truth inside billing.
-// That prevents tenant-facing callers from hard-coding "free" behavior.
+// DefaultCommercialAccount builds the canonical default billing state for a
+// newly provisioned organization.
 func DefaultCommercialAccount(organizationID int64) (CommercialAccount, error) {
 	subscription, err := NewSubscription(PlanFree, SubscriptionStateFree)
 	if err != nil {

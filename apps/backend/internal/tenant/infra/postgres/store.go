@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 
 	"github.com/jackc/pgx/v5"
@@ -134,6 +135,9 @@ func (store *Store) CreateOrganization(
 	}
 
 	organization.AddWorkspace(workspace.ID())
+	if err := insertDefaultBillingAccount(ctx, tx, organizationID); err != nil {
+		return domain.Organization{}, domain.Workspace{}, err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return domain.Organization{}, domain.Workspace{}, fmt.Errorf("commit tenant create organization tx: %w", err)
 	}
@@ -571,6 +575,37 @@ func mustJSON(value any) []byte {
 		panic(err)
 	}
 	return encoded
+}
+
+func insertDefaultBillingAccount(ctx context.Context, tx pgx.Tx, organizationID int64) error {
+	account, err := billingdomain.DefaultCommercialAccount(organizationID)
+	if err != nil {
+		return fmt.Errorf("build default billing account for organization %d: %w", organizationID, err)
+	}
+
+	if _, err := tx.Exec(ctx, `
+		insert into billing_accounts (
+			organization_id,
+			customer_id,
+			subscription_plan,
+			subscription_state,
+			quota_remaining,
+			quota_resets_in_secs,
+			quota_total
+		) values ($1, $2, $3, $4, $5, $6, $7)
+	`,
+		account.OrganizationID,
+		account.CustomerID,
+		string(account.Subscription.Plan),
+		string(account.Subscription.State),
+		account.Quota.Remaining,
+		account.Quota.ResetsInSeconds,
+		account.Quota.Total,
+	); err != nil {
+		return fmt.Errorf("insert default billing account for organization %d: %w", organizationID, err)
+	}
+
+	return nil
 }
 
 func boolPtr(value bool) *bool {

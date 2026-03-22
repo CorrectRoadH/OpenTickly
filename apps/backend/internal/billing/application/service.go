@@ -10,6 +10,7 @@ import (
 )
 
 var ErrCapabilityRuleNotFound = errors.New("billing capability rule not found")
+var ErrCommercialAccountNotFound = errors.New("billing commercial account not found")
 
 type AccountRepository interface {
 	FindByOrganizationID(
@@ -174,9 +175,7 @@ func (service *Service) resolveOrganizationAccount(
 	if ok {
 		return account, nil
 	}
-	// Billing owns the fallback free/commercial defaults so other modules only
-	// query this service instead of recreating plan-state rules locally.
-	return domain.DefaultCommercialAccount(organizationID)
+	return domain.CommercialAccount{}, fmt.Errorf("%w: organization %d", ErrCommercialAccountNotFound, organizationID)
 }
 
 func int64Ref(value int64) *int64 {

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -99,6 +100,44 @@ func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 	}
 	if status.Subscription.Plan != domain.PlanStarter {
 		t.Fatalf("expected starter plan, got %#v", status.Subscription)
+	}
+}
+
+func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	organization, workspace, err := tenantStore.CreateOrganization(
+		ctx,
+		"Billing Org",
+		"Billing Workspace",
+		mustDefaultWorkspaceSettings(t),
+	)
+	if err != nil {
+		t.Fatalf("create tenant organization for billing test: %v", err)
+	}
+
+	if _, err := database.Pool.Exec(ctx, `
+		delete from billing_accounts
+		where organization_id = $1
+	`, int64(organization.ID())); err != nil {
+		t.Fatalf("delete billing account: %v", err)
+	}
+
+	service, err := NewService(
+		postgresinfra.NewAccountRepository(database.Pool),
+		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
+		[]domain.CapabilityRule{
+			{Key: "reports.summary", MinimumPlan: domain.PlanStarter, RequiresQuota: true},
+		},
+	)
+	if err != nil {
+		t.Fatalf("new billing service: %v", err)
+	}
+
+	if _, err := service.CommercialStatusForWorkspace(ctx, int64(workspace.ID())); !errors.Is(err, ErrCommercialAccountNotFound) {
+		t.Fatalf("expected ErrCommercialAccountNotFound, got %v", err)
 	}
 }
 

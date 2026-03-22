@@ -34,6 +34,23 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 		t.Fatalf("create organization: %v", err)
 	}
 
+	defaultAccount, ok, err := billingRepository.FindByOrganizationID(ctx, int64(result.OrganizationID))
+	if err != nil {
+		t.Fatalf("find default billing account: %v", err)
+	}
+	if !ok {
+		t.Fatal("expected create organization to provision a default billing account row")
+	}
+	if defaultAccount.Subscription.Plan != billingdomain.PlanFree {
+		t.Fatalf("expected default billing plan free, got %#v", defaultAccount.Subscription)
+	}
+	if defaultAccount.Subscription.State != billingdomain.SubscriptionStateFree {
+		t.Fatalf("expected default billing state free, got %#v", defaultAccount.Subscription)
+	}
+	if defaultAccount.Quota.OrganizationID != int64(result.OrganizationID) {
+		t.Fatalf("expected default billing quota to belong to organization %d, got %#v", result.OrganizationID, defaultAccount.Quota)
+	}
+
 	subscription := mustSubscription(t, billingdomain.PlanPremium, billingdomain.SubscriptionStateActive)
 	quota, err := billingdomain.NewQuotaWindow(int64(result.OrganizationID), 23, 3600, 50)
 	if err != nil {
