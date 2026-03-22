@@ -21,7 +21,7 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 
 	tenantService := mustNewTenantPostgresService(t, database)
 	billingService := mustNewBillingPostgresService(t, database)
-	homes := newPostgresUserHomeRepository(database.Pool)
+	homes := tenantpostgres.NewUserHomeRepository(database.Pool)
 
 	user := identityapplication.UserSnapshot{
 		ID:       101,

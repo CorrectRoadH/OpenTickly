@@ -14,6 +14,7 @@ import (
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/publicapi"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -36,10 +37,13 @@ func newWebRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 }
 
 type webRuntime struct {
-	identity   *identityweb.Handler
-	tenant     *tenantweb.Handler
-	tenantApp  *tenantapplication.Service
-	billingApp *billingapplication.Service
+	pool        *pgxpool.Pool
+	identity    *identityweb.Handler
+	identityApp *identityapplication.Service
+	identityAPI *identitypublicapi.Handler
+	tenant      *tenantweb.Handler
+	tenantApp   *tenantapplication.Service
+	billingApp  *billingapplication.Service
 }
 
 func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
@@ -70,14 +74,17 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
-	shellProvider := newBillingBackedSessionShell(tenantService, billingService, newPostgresUserHomeRepository(pool))
+	shellProvider := newBillingBackedSessionShell(tenantService, billingService, tenantpostgres.NewUserHomeRepository(pool))
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
 	return &webRuntime{
-		identity:   identityHandler,
-		tenant:     tenantHandler,
-		tenantApp:  tenantService,
-		billingApp: billingService,
+		pool:        pool,
+		identity:    identityHandler,
+		identityApp: identityService,
+		identityAPI: identitypublicapi.NewHandler(identityService),
+		tenant:      tenantHandler,
+		tenantApp:   tenantService,
+		billingApp:  billingService,
 	}, nil
 }
 
@@ -530,18 +537,18 @@ func (provider *billingBackedSessionShell) ensureHome(
 	ctx context.Context,
 	user identityapplication.UserSnapshot,
 ) (sessionHome, error) {
-	if home, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
+	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
 		return sessionHome{}, err
 	} else if ok {
-		return home, nil
+		return sessionHome{organizationID: organizationID, workspaceID: workspaceID}, nil
 	}
 
 	provider.mu.Lock()
 	defer provider.mu.Unlock()
-	if existing, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
+	if organizationID, workspaceID, ok, err := provider.userHomes.FindByUserID(ctx, user.ID); err != nil {
 		return sessionHome{}, err
 	} else if ok {
-		return existing, nil
+		return sessionHome{organizationID: organizationID, workspaceID: workspaceID}, nil
 	}
 
 	created, err := provider.tenant.CreateOrganization(ctx, tenantapplication.CreateOrganizationCommand{
@@ -556,7 +563,7 @@ func (provider *billingBackedSessionShell) ensureHome(
 		organizationID: int64(created.OrganizationID),
 		workspaceID:    int64(created.WorkspaceID),
 	}
-	if err := provider.userHomes.Save(ctx, user.ID, home); err != nil {
+	if err := provider.userHomes.Save(ctx, user.ID, home.organizationID, home.workspaceID); err != nil {
 		return sessionHome{}, err
 	}
 	return home, nil
