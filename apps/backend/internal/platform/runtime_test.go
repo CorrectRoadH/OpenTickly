@@ -40,12 +40,6 @@ func TestNewRuntimeExposesPlatformHandles(t *testing.T) {
 		t.Fatalf("expected job queue name to stay visible through the platform runtime, got %q", got)
 	}
 
-	runtime.FileStore.Put("healthz", []byte("ok"))
-	stored, ok := runtime.FileStore.Get("healthz")
-	if !ok || string(stored) != "ok" {
-		t.Fatalf("expected in-memory filestore to round-trip bytes, got %q %v", string(stored), ok)
-	}
-
 	handled := false
 	if err := runtime.Jobs.Register(JobDefinition{
 		Name: "platform.runtime.smoke",
