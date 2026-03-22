@@ -57,10 +57,16 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 			RoundingMinutes:             15,
 			DisplayPolicy:               domain.WorkspaceDisplayPolicyHideStartEndTimes,
 			OnlyAdminsMayCreateProjects: true,
+			OnlyAdminsMayCreateTags:     true,
 			OnlyAdminsSeeTeamDashboard:  true,
 			ProjectsBillableByDefault:   true,
+			ProjectsPrivateByDefault:    true,
+			ProjectsEnforceBillable:     true,
 			ReportsCollapse:             true,
 			PublicProjectAccess:         domain.WorkspacePublicProjectAccessAdmins,
+			ReportLockedAt:              "2026-03-20T00:00:00Z",
+			ShowTimesheetView:           boolPtr(false),
+			RequiredTimeEntryFields:     []string{"project", "task"},
 		},
 	}); err != nil {
 		t.Fatalf("update workspace: %v", err)
@@ -106,6 +112,24 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 	}
 	if workspace.Settings.DefaultCurrency() != "EUR" {
 		t.Fatalf("expected EUR default currency, got %q", workspace.Settings.DefaultCurrency())
+	}
+	if !workspace.Settings.OnlyAdminsMayCreateTags() {
+		t.Fatalf("expected only_admins_may_create_tags to persist")
+	}
+	if !workspace.Settings.ProjectsPrivateByDefault() {
+		t.Fatalf("expected projects_private_by_default to persist")
+	}
+	if !workspace.Settings.ProjectsEnforceBillable() {
+		t.Fatalf("expected projects_enforce_billable to persist")
+	}
+	if workspace.Settings.ReportLockedAt() != "2026-03-20T00:00:00Z" {
+		t.Fatalf("expected report_locked_at to persist, got %q", workspace.Settings.ReportLockedAt())
+	}
+	if workspace.Settings.ShowTimesheetView() {
+		t.Fatal("expected show_timesheet_view to persist as false")
+	}
+	if got := workspace.Settings.RequiredTimeEntryFields(); len(got) != 2 || got[0] != "project" || got[1] != "task" {
+		t.Fatalf("expected required_time_entry_fields to persist, got %#v", got)
 	}
 	if workspace.Branding.LogoStorageKey != "tenant/workspaces/1/logo.png" {
 		t.Fatalf("expected logo storage key to persist, got %q", workspace.Branding.LogoStorageKey)
@@ -162,4 +186,8 @@ func mustSubscription(
 		t.Fatalf("new subscription: %v", err)
 	}
 	return subscription
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }

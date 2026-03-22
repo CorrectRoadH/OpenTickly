@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -85,11 +86,17 @@ func (store *Store) CreateOrganization(
 			rounding_minutes,
 			display_policy,
 			only_admins_may_create_projects,
+			only_admins_may_create_tags,
 			only_admins_see_team_dashboard,
 			projects_billable_by_default,
+			projects_private_by_default,
+			projects_enforce_billable,
 			reports_collapse,
-			public_project_access
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			public_project_access,
+			report_locked_at,
+			show_timesheet_view,
+			required_time_entry_fields
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		returning id
 	`,
 		organizationID,
@@ -100,10 +107,16 @@ func (store *Store) CreateOrganization(
 		settings.RoundingMinutes(),
 		string(settings.DisplayPolicy()),
 		settings.OnlyAdminsMayCreateProjects(),
+		settings.OnlyAdminsMayCreateTags(),
 		settings.OnlyAdminsSeeTeamDashboard(),
 		settings.ProjectsBillableByDefault(),
+		settings.ProjectsPrivateByDefault(),
+		settings.ProjectsEnforceBillable(),
 		settings.ReportsCollapse(),
 		string(settings.PublicProjectAccess()),
+		settings.ReportLockedAt(),
+		settings.ShowTimesheetView(),
+		mustJSON(settings.RequiredTimeEntryFields()),
 	).Scan(&workspaceID); err != nil {
 		return domain.Organization{}, domain.Workspace{}, fmt.Errorf("insert tenant workspace: %w", err)
 	}
@@ -156,11 +169,17 @@ func (store *Store) CreateWorkspace(
 			rounding_minutes,
 			display_policy,
 			only_admins_may_create_projects,
+			only_admins_may_create_tags,
 			only_admins_see_team_dashboard,
 			projects_billable_by_default,
+			projects_private_by_default,
+			projects_enforce_billable,
 			reports_collapse,
-			public_project_access
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			public_project_access,
+			report_locked_at,
+			show_timesheet_view,
+			required_time_entry_fields
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		returning id
 	`,
 		int64(organizationID),
@@ -171,10 +190,16 @@ func (store *Store) CreateWorkspace(
 		settings.RoundingMinutes(),
 		string(settings.DisplayPolicy()),
 		settings.OnlyAdminsMayCreateProjects(),
+		settings.OnlyAdminsMayCreateTags(),
 		settings.OnlyAdminsSeeTeamDashboard(),
 		settings.ProjectsBillableByDefault(),
+		settings.ProjectsPrivateByDefault(),
+		settings.ProjectsEnforceBillable(),
 		settings.ReportsCollapse(),
 		string(settings.PublicProjectAccess()),
+		settings.ReportLockedAt(),
+		settings.ShowTimesheetView(),
+		mustJSON(settings.RequiredTimeEntryFields()),
 	).Scan(&workspaceID); err != nil {
 		if isForeignKeyViolation(err) {
 			return domain.Workspace{}, errOrganizationNotFound
@@ -248,10 +273,16 @@ func (store *Store) GetWorkspace(
 			rounding_minutes,
 			display_policy,
 			only_admins_may_create_projects,
+			only_admins_may_create_tags,
 			only_admins_see_team_dashboard,
 			projects_billable_by_default,
+			projects_private_by_default,
+			projects_enforce_billable,
 			reports_collapse,
-			public_project_access
+			public_project_access,
+			report_locked_at,
+			show_timesheet_view,
+			required_time_entry_fields
 		from tenant_workspaces
 		where id = $1
 	`, int64(workspaceID))
@@ -299,10 +330,16 @@ func (store *Store) SaveWorkspace(
 			rounding_minutes = $8,
 			display_policy = $9,
 			only_admins_may_create_projects = $10,
-			only_admins_see_team_dashboard = $11,
-			projects_billable_by_default = $12,
-			reports_collapse = $13,
-			public_project_access = $14
+			only_admins_may_create_tags = $11,
+			only_admins_see_team_dashboard = $12,
+			projects_billable_by_default = $13,
+			projects_private_by_default = $14,
+			projects_enforce_billable = $15,
+			reports_collapse = $16,
+			public_project_access = $17,
+			report_locked_at = $18,
+			show_timesheet_view = $19,
+			required_time_entry_fields = $20
 		where id = $1
 	`,
 		int64(workspace.ID()),
@@ -315,10 +352,16 @@ func (store *Store) SaveWorkspace(
 		workspace.Settings().RoundingMinutes(),
 		string(workspace.Settings().DisplayPolicy()),
 		workspace.Settings().OnlyAdminsMayCreateProjects(),
+		workspace.Settings().OnlyAdminsMayCreateTags(),
 		workspace.Settings().OnlyAdminsSeeTeamDashboard(),
 		workspace.Settings().ProjectsBillableByDefault(),
+		workspace.Settings().ProjectsPrivateByDefault(),
+		workspace.Settings().ProjectsEnforceBillable(),
 		workspace.Settings().ReportsCollapse(),
 		string(workspace.Settings().PublicProjectAccess()),
+		workspace.Settings().ReportLockedAt(),
+		workspace.Settings().ShowTimesheetView(),
+		mustJSON(workspace.Settings().RequiredTimeEntryFields()),
 	)
 	if err != nil {
 		return fmt.Errorf("update tenant workspace %d: %w", workspace.ID(), err)
@@ -376,10 +419,16 @@ func scanWorkspace(row rowScanner) (domain.Workspace, error) {
 		roundingMinutes             int
 		displayPolicy               string
 		onlyAdminsMayCreateProjects bool
+		onlyAdminsMayCreateTags     bool
 		onlyAdminsSeeTeamDashboard  bool
 		projectsBillableByDefault   bool
+		projectsPrivateByDefault    bool
+		projectsEnforceBillable     bool
 		reportsCollapse             bool
 		publicProjectAccess         string
+		reportLockedAt              string
+		showTimesheetView           bool
+		requiredTimeEntryFieldsRaw  []byte
 	)
 
 	if err := row.Scan(
@@ -394,12 +443,25 @@ func scanWorkspace(row rowScanner) (domain.Workspace, error) {
 		&roundingMinutes,
 		&displayPolicy,
 		&onlyAdminsMayCreateProjects,
+		&onlyAdminsMayCreateTags,
 		&onlyAdminsSeeTeamDashboard,
 		&projectsBillableByDefault,
+		&projectsPrivateByDefault,
+		&projectsEnforceBillable,
 		&reportsCollapse,
 		&publicProjectAccess,
+		&reportLockedAt,
+		&showTimesheetView,
+		&requiredTimeEntryFieldsRaw,
 	); err != nil {
 		return domain.Workspace{}, err
+	}
+
+	requiredTimeEntryFields := []string{}
+	if len(requiredTimeEntryFieldsRaw) > 0 {
+		if err := json.Unmarshal(requiredTimeEntryFieldsRaw, &requiredTimeEntryFields); err != nil {
+			return domain.Workspace{}, fmt.Errorf("decode tenant workspace required time entry fields %d: %w", workspaceID, err)
+		}
 	}
 
 	settings, err := domain.NewWorkspaceSettings(domain.WorkspaceSettingsInput{
@@ -409,10 +471,16 @@ func scanWorkspace(row rowScanner) (domain.Workspace, error) {
 		RoundingMinutes:             roundingMinutes,
 		DisplayPolicy:               domain.WorkspaceDisplayPolicy(displayPolicy),
 		OnlyAdminsMayCreateProjects: onlyAdminsMayCreateProjects,
+		OnlyAdminsMayCreateTags:     onlyAdminsMayCreateTags,
 		OnlyAdminsSeeTeamDashboard:  onlyAdminsSeeTeamDashboard,
 		ProjectsBillableByDefault:   projectsBillableByDefault,
+		ProjectsPrivateByDefault:    projectsPrivateByDefault,
+		ProjectsEnforceBillable:     projectsEnforceBillable,
 		ReportsCollapse:             reportsCollapse,
 		PublicProjectAccess:         domain.WorkspacePublicProjectAccess(publicProjectAccess),
+		ReportLockedAt:              reportLockedAt,
+		ShowTimesheetView:           boolPtr(showTimesheetView),
+		RequiredTimeEntryFields:     requiredTimeEntryFields,
 	})
 	if err != nil {
 		return domain.Workspace{}, fmt.Errorf("hydrate tenant workspace settings %d: %w", workspaceID, err)
@@ -520,6 +588,18 @@ func brandingStorageKey(branding domain.WorkspaceBranding, kind domain.BrandingA
 		return ""
 	}
 	return asset.StorageKey()
+}
+
+func mustJSON(value any) []byte {
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		panic(err)
+	}
+	return encoded
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
 
 func isForeignKeyViolation(err error) bool {

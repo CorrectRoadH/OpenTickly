@@ -256,8 +256,10 @@ type workspaceSettingsSnapshot struct {
 }
 
 type workspacePreferencesSnapshot struct {
-	HideStartEndTimes bool   `json:"hide_start_end_times"`
-	ReportLockedAt    string `json:"report_locked_at"`
+	HideStartEndTimes       bool     `json:"hide_start_end_times"`
+	ReportLockedAt          string   `json:"report_locked_at"`
+	ShowTimesheetView       bool     `json:"show_timesheet_view"`
+	RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
 }
 
 func NewWebHandlers() *WebHandlers {
@@ -607,8 +609,10 @@ func (handlers *WebHandlers) ensureHomeLocked(user *userRecord) homeRecord {
 			RoundingMinutes:           0,
 		},
 		WorkspacePreferences: workspacePreferencesSnapshot{
-			HideStartEndTimes: false,
-			ReportLockedAt:    "",
+			HideStartEndTimes:       false,
+			ReportLockedAt:          "",
+			ShowTimesheetView:       true,
+			RequiredTimeEntryFields: []string{},
 		},
 	}
 	handlers.state.homes[user.ID] = home

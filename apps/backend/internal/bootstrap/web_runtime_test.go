@@ -218,8 +218,10 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 			"limit_public_project_data":       false,
 		},
 		"preferences": map[string]any{
-			"hide_start_end_times": true,
-			"report_locked_at":     "2026-03-20T00:00:00Z",
+			"hide_start_end_times":       true,
+			"report_locked_at":           "2026-03-20T00:00:00Z",
+			"show_timesheet_view":        false,
+			"required_time_entry_fields": []any{"project", "task"},
 		},
 	}, sessionCookie)
 	if updatedWorkspaceSettings.Code != http.StatusOK {
@@ -236,6 +238,13 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 	}
 	if preferencesBody["report_locked_at"] != "2026-03-20T00:00:00Z" {
 		t.Fatalf("expected report_locked_at to persist, got %#v", preferencesBody["report_locked_at"])
+	}
+	if preferencesBody["show_timesheet_view"] != false {
+		t.Fatalf("expected show_timesheet_view to persist, got %#v", preferencesBody["show_timesheet_view"])
+	}
+	requiredFields, ok := preferencesBody["required_time_entry_fields"].([]any)
+	if !ok || len(requiredFields) != 2 || requiredFields[0] != "project" || requiredFields[1] != "task" {
+		t.Fatalf("expected required_time_entry_fields to persist, got %#v", preferencesBody["required_time_entry_fields"])
 	}
 
 	workspacePermissionsPath := "/web/v1/workspaces/" + intToString(workspaceID) + "/permissions"

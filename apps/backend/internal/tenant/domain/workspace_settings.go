@@ -34,10 +34,16 @@ type WorkspaceSettingsInput struct {
 	RoundingMinutes             int
 	DisplayPolicy               WorkspaceDisplayPolicy
 	OnlyAdminsMayCreateProjects bool
+	OnlyAdminsMayCreateTags     bool
 	OnlyAdminsSeeTeamDashboard  bool
 	ProjectsBillableByDefault   bool
+	ProjectsPrivateByDefault    bool
+	ProjectsEnforceBillable     bool
 	ReportsCollapse             bool
 	PublicProjectAccess         WorkspacePublicProjectAccess
+	ReportLockedAt              string
+	ShowTimesheetView           *bool
+	RequiredTimeEntryFields     []string
 }
 
 type WorkspaceSettings struct {
@@ -47,10 +53,16 @@ type WorkspaceSettings struct {
 	roundingMinutes             int
 	displayPolicy               WorkspaceDisplayPolicy
 	onlyAdminsMayCreateProjects bool
+	onlyAdminsMayCreateTags     bool
 	onlyAdminsSeeTeamDashboard  bool
 	projectsBillableByDefault   bool
+	projectsPrivateByDefault    bool
+	projectsEnforceBillable     bool
 	reportsCollapse             bool
 	publicProjectAccess         WorkspacePublicProjectAccess
+	reportLockedAt              string
+	showTimesheetView           bool
+	requiredTimeEntryFields     []string
 }
 
 func NewWorkspaceSettings(input WorkspaceSettingsInput) (WorkspaceSettings, error) {
@@ -90,6 +102,25 @@ func NewWorkspaceSettings(input WorkspaceSettingsInput) (WorkspaceSettings, erro
 		return WorkspaceSettings{}, fmt.Errorf("workspace public project access %q is not supported", publicProjectAccess)
 	}
 
+	showTimesheetView := true
+	if input.ShowTimesheetView != nil {
+		showTimesheetView = *input.ShowTimesheetView
+	}
+
+	requiredTimeEntryFields := make([]string, 0, len(input.RequiredTimeEntryFields))
+	seenRequiredFields := map[string]struct{}{}
+	for _, field := range input.RequiredTimeEntryFields {
+		normalizedField := strings.TrimSpace(field)
+		if normalizedField == "" {
+			continue
+		}
+		if _, exists := seenRequiredFields[normalizedField]; exists {
+			continue
+		}
+		seenRequiredFields[normalizedField] = struct{}{}
+		requiredTimeEntryFields = append(requiredTimeEntryFields, normalizedField)
+	}
+
 	return WorkspaceSettings{
 		defaultCurrency:             defaultCurrency,
 		defaultHourlyRate:           input.DefaultHourlyRate,
@@ -97,15 +128,23 @@ func NewWorkspaceSettings(input WorkspaceSettingsInput) (WorkspaceSettings, erro
 		roundingMinutes:             input.RoundingMinutes,
 		displayPolicy:               displayPolicy,
 		onlyAdminsMayCreateProjects: input.OnlyAdminsMayCreateProjects,
+		onlyAdminsMayCreateTags:     input.OnlyAdminsMayCreateTags,
 		onlyAdminsSeeTeamDashboard:  input.OnlyAdminsSeeTeamDashboard,
 		projectsBillableByDefault:   input.ProjectsBillableByDefault,
+		projectsPrivateByDefault:    input.ProjectsPrivateByDefault,
+		projectsEnforceBillable:     input.ProjectsEnforceBillable,
 		reportsCollapse:             input.ReportsCollapse,
 		publicProjectAccess:         publicProjectAccess,
+		reportLockedAt:              strings.TrimSpace(input.ReportLockedAt),
+		showTimesheetView:           showTimesheetView,
+		requiredTimeEntryFields:     requiredTimeEntryFields,
 	}, nil
 }
 
 func DefaultWorkspaceSettings() WorkspaceSettings {
-	settings, err := NewWorkspaceSettings(WorkspaceSettingsInput{})
+	settings, err := NewWorkspaceSettings(WorkspaceSettingsInput{
+		ShowTimesheetView: boolPtr(true),
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -136,6 +175,10 @@ func (settings WorkspaceSettings) OnlyAdminsMayCreateProjects() bool {
 	return settings.onlyAdminsMayCreateProjects
 }
 
+func (settings WorkspaceSettings) OnlyAdminsMayCreateTags() bool {
+	return settings.onlyAdminsMayCreateTags
+}
+
 func (settings WorkspaceSettings) OnlyAdminsSeeTeamDashboard() bool {
 	return settings.onlyAdminsSeeTeamDashboard
 }
@@ -144,10 +187,38 @@ func (settings WorkspaceSettings) ProjectsBillableByDefault() bool {
 	return settings.projectsBillableByDefault
 }
 
+func (settings WorkspaceSettings) ProjectsPrivateByDefault() bool {
+	return settings.projectsPrivateByDefault
+}
+
+func (settings WorkspaceSettings) ProjectsEnforceBillable() bool {
+	return settings.projectsEnforceBillable
+}
+
 func (settings WorkspaceSettings) ReportsCollapse() bool {
 	return settings.reportsCollapse
 }
 
 func (settings WorkspaceSettings) PublicProjectAccess() WorkspacePublicProjectAccess {
 	return settings.publicProjectAccess
+}
+
+func (settings WorkspaceSettings) HideStartEndTimes() bool {
+	return settings.displayPolicy == WorkspaceDisplayPolicyHideStartEndTimes
+}
+
+func (settings WorkspaceSettings) ReportLockedAt() string {
+	return settings.reportLockedAt
+}
+
+func (settings WorkspaceSettings) ShowTimesheetView() bool {
+	return settings.showTimesheetView
+}
+
+func (settings WorkspaceSettings) RequiredTimeEntryFields() []string {
+	return append([]string{}, settings.requiredTimeEntryFields...)
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }

@@ -40,10 +40,6 @@ type webRuntime struct {
 	tenant     *tenantweb.Handler
 	tenantApp  *tenantapplication.Service
 	billingApp *billingapplication.Service
-
-	mu                          sync.RWMutex
-	onlyAdminsMayCreateTagsByWS map[int64]bool
-	workspacePreferencesByWS    map[int64]workspacePreferences
 }
 
 func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
@@ -78,12 +74,10 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
 	return &webRuntime{
-		identity:                    identityHandler,
-		tenant:                      tenantHandler,
-		tenantApp:                   tenantService,
-		billingApp:                  billingService,
-		onlyAdminsMayCreateTagsByWS: make(map[int64]bool),
-		workspacePreferencesByWS:    make(map[int64]workspacePreferences),
+		identity:   identityHandler,
+		tenant:     tenantHandler,
+		tenantApp:  tenantService,
+		billingApp: billingService,
 	}, nil
 }
 
@@ -183,7 +177,6 @@ func (runtime *webRuntime) workspaceSettings(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 	response := runtime.tenant.GetWorkspaceSettings(ctx.Request().Context(), workspaceID)
-	response.Body = runtime.decorateWorkspaceSettingsEnvelope(response.Body, workspaceID)
 	return writeTenantResponse(ctx, response)
 }
 
@@ -199,12 +192,18 @@ func (runtime *webRuntime) updateWorkspaceSettings(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	runtime.setOnlyAdminsMayCreateTags(workspaceID, request.Workspace.OnlyAdminsMayCreateTags)
+	workspace, err := runtime.tenantApp.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
+	if err != nil {
+		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
+	}
+	preferences := workspacePreferences{
+		HideStartEndTimes:       workspace.Settings.HideStartEndTimes(),
+		ReportLockedAt:          workspace.Settings.ReportLockedAt(),
+		ShowTimesheetView:       workspace.Settings.ShowTimesheetView(),
+		RequiredTimeEntryFields: workspace.Settings.RequiredTimeEntryFields(),
+	}
 	if request.Preferences != nil {
-		runtime.setWorkspacePreferences(workspaceID, workspacePreferences{
-			HideStartEndTimes: request.Preferences.HideStartEndTimes,
-			ReportLockedAt:    request.Preferences.ReportLockedAt,
-		})
+		preferences = *request.Preferences
 	}
 	response := runtime.tenant.UpdateWorkspaceSettings(ctx.Request().Context(), workspaceID, tenantweb.WorkspaceSettingsRequest{
 		Workspace: struct {
@@ -215,8 +214,11 @@ func (runtime *webRuntime) updateWorkspaceSettings(ctx echo.Context) error {
 			RoundingMinutes             int     `json:"rounding_minutes"`
 			ReportsCollapse             bool    `json:"reports_collapse"`
 			OnlyAdminsMayCreateProjects bool    `json:"only_admins_may_create_projects"`
+			OnlyAdminsMayCreateTags     bool    `json:"only_admins_may_create_tags"`
 			OnlyAdminsSeeTeamDashboard  bool    `json:"only_admins_see_team_dashboard"`
 			ProjectsBillableByDefault   bool    `json:"projects_billable_by_default"`
+			ProjectsPrivateByDefault    bool    `json:"projects_private_by_default"`
+			ProjectsEnforceBillable     bool    `json:"projects_enforce_billable"`
 			LimitPublicProjectData      bool    `json:"limit_public_project_data"`
 		}{
 			Name:                        request.Workspace.Name,
@@ -226,12 +228,25 @@ func (runtime *webRuntime) updateWorkspaceSettings(ctx echo.Context) error {
 			RoundingMinutes:             request.Workspace.RoundingMinutes,
 			ReportsCollapse:             request.Workspace.ReportsCollapse,
 			OnlyAdminsMayCreateProjects: request.Workspace.OnlyAdminsMayCreateProjects,
+			OnlyAdminsMayCreateTags:     request.Workspace.OnlyAdminsMayCreateTags,
 			OnlyAdminsSeeTeamDashboard:  request.Workspace.OnlyAdminsSeeTeamDashboard,
 			ProjectsBillableByDefault:   request.Workspace.ProjectsBillableByDefault,
+			ProjectsPrivateByDefault:    request.Workspace.ProjectsPrivateByDefault,
+			ProjectsEnforceBillable:     request.Workspace.ProjectsEnforceBillable,
 			LimitPublicProjectData:      request.Workspace.LimitPublicProjectData,
 		},
+		Preferences: struct {
+			HideStartEndTimes       bool     `json:"hide_start_end_times"`
+			ReportLockedAt          string   `json:"report_locked_at"`
+			ShowTimesheetView       bool     `json:"show_timesheet_view"`
+			RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
+		}{
+			HideStartEndTimes:       preferences.HideStartEndTimes,
+			ReportLockedAt:          preferences.ReportLockedAt,
+			ShowTimesheetView:       preferences.ShowTimesheetView,
+			RequiredTimeEntryFields: preferences.RequiredTimeEntryFields,
+		},
 	})
-	response.Body = runtime.decorateWorkspaceSettingsEnvelope(response.Body, workspaceID)
 	return writeTenantResponse(ctx, response)
 }
 
@@ -262,8 +277,10 @@ type workspaceSettingsRequest struct {
 }
 
 type workspacePreferences struct {
-	HideStartEndTimes bool   `json:"hide_start_end_times"`
-	ReportLockedAt    string `json:"report_locked_at"`
+	HideStartEndTimes       bool     `json:"hide_start_end_times"`
+	ReportLockedAt          string   `json:"report_locked_at"`
+	ShowTimesheetView       bool     `json:"show_timesheet_view"`
+	RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
 }
 
 func (runtime *webRuntime) workspacePermissions(ctx echo.Context) error {
@@ -281,7 +298,7 @@ func (runtime *webRuntime) workspacePermissions(ctx echo.Context) error {
 
 	return ctx.JSON(http.StatusOK, map[string]any{
 		"only_admins_may_create_projects": workspace.Settings.OnlyAdminsMayCreateProjects(),
-		"only_admins_may_create_tags":     runtime.onlyAdminsMayCreateTags(workspaceID),
+		"only_admins_may_create_tags":     workspace.Settings.OnlyAdminsMayCreateTags(),
 		"only_admins_see_team_dashboard":  workspace.Settings.OnlyAdminsSeeTeamDashboard(),
 		"limit_public_project_data":       workspace.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
 	})
@@ -299,8 +316,6 @@ func (runtime *webRuntime) updateWorkspacePermissions(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	runtime.setOnlyAdminsMayCreateTags(workspaceID, request.OnlyAdminsMayCreateTags)
-
 	workspace, err := runtime.tenantApp.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
 	if err != nil {
 		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
@@ -313,10 +328,16 @@ func (runtime *webRuntime) updateWorkspacePermissions(ctx echo.Context) error {
 		RoundingMinutes:             workspace.Settings.RoundingMinutes(),
 		DisplayPolicy:               workspace.Settings.DisplayPolicy(),
 		OnlyAdminsMayCreateProjects: request.OnlyAdminsMayCreateProjects,
+		OnlyAdminsMayCreateTags:     request.OnlyAdminsMayCreateTags,
 		OnlyAdminsSeeTeamDashboard:  request.OnlyAdminsSeeTeamDashboard,
 		ProjectsBillableByDefault:   workspace.Settings.ProjectsBillableByDefault(),
+		ProjectsPrivateByDefault:    workspace.Settings.ProjectsPrivateByDefault(),
+		ProjectsEnforceBillable:     workspace.Settings.ProjectsEnforceBillable(),
 		ReportsCollapse:             workspace.Settings.ReportsCollapse(),
 		PublicProjectAccess:         workspacePublicProjectAccess(request.LimitPublicProjectData),
+		ReportLockedAt:              workspace.Settings.ReportLockedAt(),
+		ShowTimesheetView:           boolPtr(workspace.Settings.ShowTimesheetView()),
+		RequiredTimeEntryFields:     workspace.Settings.RequiredTimeEntryFields(),
 	}
 	if err := runtime.tenantApp.UpdateWorkspace(ctx.Request().Context(), tenantapplication.UpdateWorkspaceCommand{
 		WorkspaceID: tenantdomain.WorkspaceID(workspaceID),
@@ -427,44 +448,6 @@ func setSessionCookie(ctx echo.Context, sessionID string) {
 	})
 }
 
-func (runtime *webRuntime) onlyAdminsMayCreateTags(workspaceID int64) bool {
-	runtime.mu.RLock()
-	defer runtime.mu.RUnlock()
-	return runtime.onlyAdminsMayCreateTagsByWS[workspaceID]
-}
-
-func (runtime *webRuntime) setOnlyAdminsMayCreateTags(workspaceID int64, value bool) {
-	runtime.mu.Lock()
-	defer runtime.mu.Unlock()
-	runtime.onlyAdminsMayCreateTagsByWS[workspaceID] = value
-}
-
-func (runtime *webRuntime) workspacePreferences(workspaceID int64) workspacePreferences {
-	runtime.mu.RLock()
-	defer runtime.mu.RUnlock()
-	return runtime.workspacePreferencesByWS[workspaceID]
-}
-
-func (runtime *webRuntime) setWorkspacePreferences(workspaceID int64, value workspacePreferences) {
-	runtime.mu.Lock()
-	defer runtime.mu.Unlock()
-	runtime.workspacePreferencesByWS[workspaceID] = value
-}
-
-func (runtime *webRuntime) decorateWorkspaceSettingsEnvelope(body any, workspaceID int64) any {
-	envelope, ok := body.(map[string]any)
-	if !ok {
-		return body
-	}
-	workspace, ok := envelope["workspace"].(map[string]any)
-	if !ok {
-		return body
-	}
-	workspace["only_admins_may_create_tags"] = runtime.onlyAdminsMayCreateTags(workspaceID)
-	envelope["preferences"] = runtime.workspacePreferences(workspaceID)
-	return envelope
-}
-
 func clearSessionCookie(ctx echo.Context) {
 	ctx.SetCookie(&http.Cookie{
 		Name:     sessionCookieName,
@@ -474,6 +457,10 @@ func clearSessionCookie(ctx echo.Context) {
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 	})
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
 
 type billingBackedSessionShell struct {

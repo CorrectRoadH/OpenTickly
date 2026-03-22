@@ -967,60 +967,6 @@
         }
       }
     },
-    "/web/v1/clients": {
-      "get": {
-        "summary": "List clients",
-        "operationId": "list-clients",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Client list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientListEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a client",
-        "operationId": "create-client",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ClientCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created client",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClientSummary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/web/v1/tasks": {
       "get": {
         "summary": "List tasks",
@@ -1068,114 +1014,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskSummary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/v1/tags": {
-      "get": {
-        "summary": "List tags",
-        "operationId": "list-tags",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagListEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a tag",
-        "operationId": "create-tag",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TagCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created tag",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagSummary"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/web/v1/groups": {
-      "get": {
-        "summary": "List groups",
-        "operationId": "list-groups",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Group list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GroupListEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "summary": "Create a group",
-        "operationId": "create-group",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GroupCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created group",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GroupSummary"
                 }
               }
             }
@@ -1850,48 +1688,6 @@
           "limit_public_project_data"
         ]
       },
-      "ClientListEnvelope": {
-        "type": "object",
-        "properties": {
-          "clients": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClientSummary"
-            }
-          }
-        },
-        "required": ["clients"]
-      },
-      "ClientSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "workspace_id": {
-            "type": "integer"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": ["id", "name", "workspace_id", "active"]
-      },
-      "ClientCreateRequest": {
-        "type": "object",
-        "properties": {
-          "workspace_id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": ["workspace_id", "name"]
-      },
       "TaskListEnvelope": {
         "type": "object",
         "properties": {
@@ -1923,90 +1719,6 @@
         "required": ["id", "name", "workspace_id", "active"]
       },
       "TaskCreateRequest": {
-        "type": "object",
-        "properties": {
-          "workspace_id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": ["workspace_id", "name"]
-      },
-      "TagListEnvelope": {
-        "type": "object",
-        "properties": {
-          "tags": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TagSummary"
-            }
-          }
-        },
-        "required": ["tags"]
-      },
-      "TagSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "workspace_id": {
-            "type": "integer"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": ["id", "name", "workspace_id", "active"]
-      },
-      "TagCreateRequest": {
-        "type": "object",
-        "properties": {
-          "workspace_id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": ["workspace_id", "name"]
-      },
-      "GroupListEnvelope": {
-        "type": "object",
-        "properties": {
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GroupSummary"
-            }
-          }
-        },
-        "required": ["groups"]
-      },
-      "GroupSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "workspace_id": {
-            "type": "integer"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": ["id", "name", "workspace_id", "active"]
-      },
-      "GroupCreateRequest": {
         "type": "object",
         "properties": {
           "workspace_id": {
@@ -2098,9 +1810,23 @@
           },
           "report_locked_at": {
             "type": "string"
+          },
+          "show_timesheet_view": {
+            "type": "boolean"
+          },
+          "required_time_entry_fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
-        "required": ["hide_start_end_times", "report_locked_at"]
+        "required": [
+          "hide_start_end_times",
+          "report_locked_at",
+          "show_timesheet_view",
+          "required_time_entry_fields"
+        ]
       },
       "WorkspaceSettings": {
         "type": "object",

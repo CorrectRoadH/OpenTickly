@@ -20,7 +20,7 @@ func NewSequence(pool *pgxpool.Pool) *Sequence {
 func (sequence *Sequence) NextUserID() int64 {
 	var nextUserID int64
 	if err := sequence.pool.QueryRow(context.Background(), `
-		select nextval('identity_user_id_seq')
+		select nextval(pg_get_serial_sequence('identity_users', 'id'))
 	`).Scan(&nextUserID); err != nil {
 		panic(fmt.Errorf("next identity user id: %w", err))
 	}

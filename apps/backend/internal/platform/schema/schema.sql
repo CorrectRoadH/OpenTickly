@@ -61,8 +61,9 @@ create table tenant_workspaces (
     projects_enforce_billable boolean not null default false,
     reports_collapse boolean not null default false,
     public_project_access text not null default 'members',
-    hide_start_end_times boolean not null default false,
     report_locked_at text not null default '',
+    show_timesheet_view boolean not null default true,
+    required_time_entry_fields jsonb not null default '[]'::jsonb,
     constraint tenant_workspaces_display_policy_check check (display_policy in ('standard', 'hide_start_end_times')),
     constraint tenant_workspaces_public_project_access_check check (public_project_access in ('members', 'admins'))
 );

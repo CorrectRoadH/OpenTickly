@@ -69,8 +69,10 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	}
 	if request.Preferences != nil {
 		workspaceRequest.Preferences = &workspacePreferencesSnapshot{
-			HideStartEndTimes: request.Preferences.HideStartEndTimes,
-			ReportLockedAt:    request.Preferences.ReportLockedAt,
+			HideStartEndTimes:       request.Preferences.HideStartEndTimes,
+			ReportLockedAt:          request.Preferences.ReportLockedAt,
+			ShowTimesheetView:       request.Preferences.ShowTimesheetView,
+			RequiredTimeEntryFields: request.Preferences.RequiredTimeEntryFields,
 		}
 	}
 

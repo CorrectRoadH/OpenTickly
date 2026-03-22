@@ -31,25 +31,6 @@ const (
 // CapabilitySnapshot defines model for CapabilitySnapshot.
 type CapabilitySnapshot = externalRef0.CapabilitySnapshot
 
-// ClientCreateRequest defines model for ClientCreateRequest.
-type ClientCreateRequest struct {
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
-}
-
-// ClientListEnvelope defines model for ClientListEnvelope.
-type ClientListEnvelope struct {
-	Clients []ClientSummary `json:"clients"`
-}
-
-// ClientSummary defines model for ClientSummary.
-type ClientSummary struct {
-	Active      bool   `json:"active"`
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
-}
-
 // CurrentUserAPIToken defines model for CurrentUserAPIToken.
 type CurrentUserAPIToken struct {
 	ApiToken string `json:"api_token"`
@@ -68,25 +49,6 @@ type CurrentUserProfile struct {
 	Id                 int                 `json:"id"`
 	ImageUrl           *string             `json:"image_url"`
 	Timezone           string              `json:"timezone"`
-}
-
-// GroupCreateRequest defines model for GroupCreateRequest.
-type GroupCreateRequest struct {
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
-}
-
-// GroupListEnvelope defines model for GroupListEnvelope.
-type GroupListEnvelope struct {
-	Groups []GroupSummary `json:"groups"`
-}
-
-// GroupSummary defines model for GroupSummary.
-type GroupSummary struct {
-	Active      bool   `json:"active"`
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
 }
 
 // LoginRequest defines model for LoginRequest.
@@ -210,25 +172,6 @@ type SubscriptionView struct {
 	Enterprise *bool  `json:"enterprise"`
 	PlanName   string `json:"plan_name"`
 	State      string `json:"state"`
-}
-
-// TagCreateRequest defines model for TagCreateRequest.
-type TagCreateRequest struct {
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
-}
-
-// TagListEnvelope defines model for TagListEnvelope.
-type TagListEnvelope struct {
-	Tags []TagSummary `json:"tags"`
-}
-
-// TagSummary defines model for TagSummary.
-type TagSummary struct {
-	Active      bool   `json:"active"`
-	Id          int    `json:"id"`
-	Name        string `json:"name"`
-	WorkspaceId int    `json:"workspace_id"`
 }
 
 // TaskCreateRequest defines model for TaskCreateRequest.
@@ -361,8 +304,10 @@ type WorkspacePermissions struct {
 
 // WorkspacePreferences defines model for WorkspacePreferences.
 type WorkspacePreferences struct {
-	HideStartEndTimes bool   `json:"hide_start_end_times"`
-	ReportLockedAt    string `json:"report_locked_at"`
+	HideStartEndTimes       bool     `json:"hide_start_end_times"`
+	ReportLockedAt          string   `json:"report_locked_at"`
+	RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
+	ShowTimesheetView       bool     `json:"show_timesheet_view"`
 }
 
 // WorkspaceSettings defines model for WorkspaceSettings.
@@ -403,16 +348,6 @@ type WorkspaceSettingsUpdate struct {
 	Workspace   *UpdateWorkspaceSettingsRequest `json:"workspace,omitempty"`
 }
 
-// ListClientsParams defines parameters for ListClients.
-type ListClientsParams struct {
-	WorkspaceId *int `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
-}
-
-// ListGroupsParams defines parameters for ListGroups.
-type ListGroupsParams struct {
-	WorkspaceId *int `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
-}
-
 // ListProjectsParams defines parameters for ListProjects.
 type ListProjectsParams struct {
 	WorkspaceId *int                      `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
@@ -421,11 +356,6 @@ type ListProjectsParams struct {
 
 // ListProjectsParamsStatus defines parameters for ListProjects.
 type ListProjectsParamsStatus string
-
-// ListTagsParams defines parameters for ListTags.
-type ListTagsParams struct {
-	WorkspaceId *int `form:"workspace_id,omitempty" json:"workspace_id,omitempty"`
-}
 
 // ListTasksParams defines parameters for ListTasks.
 type ListTasksParams struct {
@@ -437,12 +367,6 @@ type LoginWebUserJSONRequestBody = LoginRequest
 
 // RegisterWebUserJSONRequestBody defines body for RegisterWebUser for application/json ContentType.
 type RegisterWebUserJSONRequestBody = RegisterRequest
-
-// CreateClientJSONRequestBody defines body for CreateClient for application/json ContentType.
-type CreateClientJSONRequestBody = ClientCreateRequest
-
-// CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
-type CreateGroupJSONRequestBody = GroupCreateRequest
 
 // UpdateOrganizationSettingsJSONRequestBody defines body for UpdateOrganizationSettings for application/json ContentType.
 type UpdateOrganizationSettingsJSONRequestBody = OrganizationSettingsUpdate
@@ -458,9 +382,6 @@ type CreateProjectJSONRequestBody = ProjectCreateRequest
 
 // GrantProjectMemberJSONRequestBody defines body for GrantProjectMember for application/json ContentType.
 type GrantProjectMemberJSONRequestBody = ProjectMemberGrantRequest
-
-// CreateTagJSONRequestBody defines body for CreateTag for application/json ContentType.
-type CreateTagJSONRequestBody = TagCreateRequest
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = TaskCreateRequest
@@ -488,18 +409,6 @@ type ServerInterface interface {
 	// Register through the web app shell
 	// (POST /web/v1/auth/register)
 	RegisterWebUser(ctx echo.Context) error
-	// List clients
-	// (GET /web/v1/clients)
-	ListClients(ctx echo.Context, params ListClientsParams) error
-	// Create a client
-	// (POST /web/v1/clients)
-	CreateClient(ctx echo.Context) error
-	// List groups
-	// (GET /web/v1/groups)
-	ListGroups(ctx echo.Context, params ListGroupsParams) error
-	// Create a group
-	// (POST /web/v1/groups)
-	CreateGroup(ctx echo.Context) error
 	// Read organization settings for the web shell
 	// (GET /web/v1/organizations/{organization_id}/settings)
 	GetOrganizationSettings(ctx echo.Context, organizationId int) error
@@ -554,12 +463,6 @@ type ServerInterface interface {
 	// Bootstrap the current web session shell
 	// (GET /web/v1/session)
 	GetWebSession(ctx echo.Context) error
-	// List tags
-	// (GET /web/v1/tags)
-	ListTags(ctx echo.Context, params ListTagsParams) error
-	// Create a tag
-	// (POST /web/v1/tags)
-	CreateTag(ctx echo.Context) error
 	// List tasks
 	// (GET /web/v1/tasks)
 	ListTasks(ctx echo.Context, params ListTasksParams) error
@@ -633,60 +536,6 @@ func (w *ServerInterfaceWrapper) RegisterWebUser(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.RegisterWebUser(ctx)
-	return err
-}
-
-// ListClients converts echo context to params.
-func (w *ServerInterfaceWrapper) ListClients(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListClientsParams
-	// ------------- Optional query parameter "workspace_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "workspace_id", ctx.QueryParams(), &params.WorkspaceId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListClients(ctx, params)
-	return err
-}
-
-// CreateClient converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateClient(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateClient(ctx)
-	return err
-}
-
-// ListGroups converts echo context to params.
-func (w *ServerInterfaceWrapper) ListGroups(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListGroupsParams
-	// ------------- Optional query parameter "workspace_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "workspace_id", ctx.QueryParams(), &params.WorkspaceId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListGroups(ctx, params)
-	return err
-}
-
-// CreateGroup converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateGroup(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateGroup(ctx)
 	return err
 }
 
@@ -943,33 +792,6 @@ func (w *ServerInterfaceWrapper) GetWebSession(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetWebSession(ctx)
-	return err
-}
-
-// ListTags converts echo context to params.
-func (w *ServerInterfaceWrapper) ListTags(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ListTagsParams
-	// ------------- Optional query parameter "workspace_id" -------------
-
-	err = runtime.BindQueryParameter("form", true, false, "workspace_id", ctx.QueryParams(), &params.WorkspaceId)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListTags(ctx, params)
-	return err
-}
-
-// CreateTag converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateTag(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.CreateTag(ctx)
 	return err
 }
 
@@ -1255,10 +1077,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/web/v1/auth/login", wrapper.LoginWebUser)
 	router.POST(baseURL+"/web/v1/auth/logout", wrapper.LogoutWebUser)
 	router.POST(baseURL+"/web/v1/auth/register", wrapper.RegisterWebUser)
-	router.GET(baseURL+"/web/v1/clients", wrapper.ListClients)
-	router.POST(baseURL+"/web/v1/clients", wrapper.CreateClient)
-	router.GET(baseURL+"/web/v1/groups", wrapper.ListGroups)
-	router.POST(baseURL+"/web/v1/groups", wrapper.CreateGroup)
 	router.GET(baseURL+"/web/v1/organizations/:organization_id/settings", wrapper.GetOrganizationSettings)
 	router.PATCH(baseURL+"/web/v1/organizations/:organization_id/settings", wrapper.UpdateOrganizationSettings)
 	router.GET(baseURL+"/web/v1/preferences", wrapper.GetCurrentUserPreferences)
@@ -1277,8 +1095,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.DELETE(baseURL+"/web/v1/projects/:project_id/pin", wrapper.UnpinProject)
 	router.POST(baseURL+"/web/v1/projects/:project_id/pin", wrapper.PinProject)
 	router.GET(baseURL+"/web/v1/session", wrapper.GetWebSession)
-	router.GET(baseURL+"/web/v1/tags", wrapper.ListTags)
-	router.POST(baseURL+"/web/v1/tags", wrapper.CreateTag)
 	router.GET(baseURL+"/web/v1/tasks", wrapper.ListTasks)
 	router.POST(baseURL+"/web/v1/tasks", wrapper.CreateTask)
 	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/capabilities", wrapper.GetWorkspaceCapabilities)
@@ -1299,67 +1115,64 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"ns4mIXcwwqy+3W7/FwAA//9vAjFFwXsAAA==",
+	"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",
+	"//8VuIXCIm8AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

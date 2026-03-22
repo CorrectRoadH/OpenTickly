@@ -301,8 +301,10 @@ func (handlers *WebTenantHandlers) organizationBody(home homeRecord) map[string]
 
 func (handlers *WebTenantHandlers) workspacePreferencesBody(home homeRecord) map[string]any {
 	return map[string]any{
-		"hide_start_end_times": home.WorkspacePreferences.HideStartEndTimes,
-		"report_locked_at":     home.WorkspacePreferences.ReportLockedAt,
+		"hide_start_end_times":       home.WorkspacePreferences.HideStartEndTimes,
+		"report_locked_at":           home.WorkspacePreferences.ReportLockedAt,
+		"show_timesheet_view":        home.WorkspacePreferences.ShowTimesheetView,
+		"required_time_entry_fields": home.WorkspacePreferences.RequiredTimeEntryFields,
 	}
 }
 

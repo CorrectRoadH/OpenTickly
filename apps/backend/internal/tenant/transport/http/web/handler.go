@@ -31,10 +31,19 @@ type WorkspaceSettingsRequest struct {
 		RoundingMinutes             int     `json:"rounding_minutes"`
 		ReportsCollapse             bool    `json:"reports_collapse"`
 		OnlyAdminsMayCreateProjects bool    `json:"only_admins_may_create_projects"`
+		OnlyAdminsMayCreateTags     bool    `json:"only_admins_may_create_tags"`
 		OnlyAdminsSeeTeamDashboard  bool    `json:"only_admins_see_team_dashboard"`
 		ProjectsBillableByDefault   bool    `json:"projects_billable_by_default"`
+		ProjectsPrivateByDefault    bool    `json:"projects_private_by_default"`
+		ProjectsEnforceBillable     bool    `json:"projects_enforce_billable"`
 		LimitPublicProjectData      bool    `json:"limit_public_project_data"`
 	} `json:"workspace"`
+	Preferences struct {
+		HideStartEndTimes      bool     `json:"hide_start_end_times"`
+		ReportLockedAt         string   `json:"report_locked_at"`
+		ShowTimesheetView      bool     `json:"show_timesheet_view"`
+		RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
+	} `json:"preferences"`
 }
 
 type Handler struct {
@@ -108,6 +117,7 @@ func (handler *Handler) GetWorkspaceSettings(ctx context.Context, workspaceID in
 		Body: map[string]any{
 			"organization": OrganizationBody(organization),
 			"workspace":    WorkspaceBody(workspace),
+			"preferences":  WorkspacePreferencesBody(workspace),
 			"subscription": SubscriptionBody(workspace.Commercial),
 			"capabilities": capabilities,
 			"quota":        quota,
@@ -128,11 +138,18 @@ func (handler *Handler) UpdateWorkspaceSettings(
 			DefaultHourlyRate:           request.Workspace.DefaultHourlyRate,
 			Rounding:                    tenantdomain.WorkspaceRoundingMode(request.Workspace.Rounding),
 			RoundingMinutes:             request.Workspace.RoundingMinutes,
+			DisplayPolicy:               workspaceDisplayPolicy(request.Preferences.HideStartEndTimes),
 			OnlyAdminsMayCreateProjects: request.Workspace.OnlyAdminsMayCreateProjects,
+			OnlyAdminsMayCreateTags:     request.Workspace.OnlyAdminsMayCreateTags,
 			OnlyAdminsSeeTeamDashboard:  request.Workspace.OnlyAdminsSeeTeamDashboard,
 			ProjectsBillableByDefault:   request.Workspace.ProjectsBillableByDefault,
+			ProjectsPrivateByDefault:    request.Workspace.ProjectsPrivateByDefault,
+			ProjectsEnforceBillable:     request.Workspace.ProjectsEnforceBillable,
 			ReportsCollapse:             request.Workspace.ReportsCollapse,
 			PublicProjectAccess:         publicProjectAccess(request.Workspace.LimitPublicProjectData),
+			ReportLockedAt:              request.Preferences.ReportLockedAt,
+			ShowTimesheetView:           boolPtr(request.Preferences.ShowTimesheetView),
+			RequiredTimeEntryFields:     request.Preferences.RequiredTimeEntryFields,
 		},
 	})
 	if err != nil {
@@ -166,15 +183,24 @@ func WorkspaceBody(view tenantapplication.WorkspaceView) map[string]any {
 		"rounding_minutes":                view.Settings.RoundingMinutes(),
 		"reports_collapse":                view.Settings.ReportsCollapse(),
 		"only_admins_may_create_projects": view.Settings.OnlyAdminsMayCreateProjects(),
-		"only_admins_may_create_tags":     false,
+		"only_admins_may_create_tags":     view.Settings.OnlyAdminsMayCreateTags(),
 		"only_admins_see_team_dashboard":  view.Settings.OnlyAdminsSeeTeamDashboard(),
 		"projects_billable_by_default":    view.Settings.ProjectsBillableByDefault(),
-		"projects_private_by_default":     false,
-		"projects_enforce_billable":       false,
+		"projects_private_by_default":     view.Settings.ProjectsPrivateByDefault(),
+		"projects_enforce_billable":       view.Settings.ProjectsEnforceBillable(),
 		"limit_public_project_data":       view.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
 		"admin":                           true,
 		"premium":                         view.Commercial.Subscription.Plan != billingdomain.PlanFree,
 		"role":                            "admin",
+	}
+}
+
+func WorkspacePreferencesBody(view tenantapplication.WorkspaceView) map[string]any {
+	return map[string]any{
+		"hide_start_end_times":       view.Settings.HideStartEndTimes(),
+		"report_locked_at":           view.Settings.ReportLockedAt(),
+		"show_timesheet_view":        view.Settings.ShowTimesheetView(),
+		"required_time_entry_fields": view.Settings.RequiredTimeEntryFields(),
 	}
 }
 
@@ -197,6 +223,17 @@ func publicProjectAccess(limitPublicProjectData bool) tenantdomain.WorkspacePubl
 		return tenantdomain.WorkspacePublicProjectAccessAdmins
 	}
 	return tenantdomain.WorkspacePublicProjectAccessMembers
+}
+
+func workspaceDisplayPolicy(hideStartEndTimes bool) tenantdomain.WorkspaceDisplayPolicy {
+	if hideStartEndTimes {
+		return tenantdomain.WorkspaceDisplayPolicyHideStartEndTimes
+	}
+	return tenantdomain.WorkspaceDisplayPolicyStandard
+}
+
+func boolPtr(value bool) *bool {
+	return &value
 }
 
 func titleCasePlan(plan billingdomain.Plan) string {
