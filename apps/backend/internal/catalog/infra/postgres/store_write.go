@@ -30,22 +30,6 @@ func (store *Store) UpdateClient(ctx context.Context, client catalogapplication.
 	_, err := store.pool.Exec(
 		ctx,
 		`update catalog_clients
-		set name = $3
-		where workspace_id = $1 and id = $2`,
-		client.WorkspaceID,
-		client.ID,
-		client.Name,
-	)
-	if err != nil {
-		return writeCatalogError("update catalog client", err)
-	}
-	return nil
-}
-
-func (store *Store) UpdateClient(ctx context.Context, client catalogapplication.ClientView) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_clients
 		set name = $3, archived = $4
 		where workspace_id = $1 and id = $2`,
 		client.WorkspaceID,
@@ -97,36 +81,6 @@ func (store *Store) CreateTag(
 		return catalogapplication.TagView{}, writeCatalogError("create catalog tag", scanErr)
 	}
 	return tag, nil
-}
-
-func (store *Store) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_tags
-		set name = $3
-		where workspace_id = $1 and id = $2`,
-		tag.WorkspaceID,
-		tag.ID,
-		tag.Name,
-	)
-	if err != nil {
-		return writeCatalogError("update catalog tag", err)
-	}
-	return nil
-}
-
-func (store *Store) DeleteTag(ctx context.Context, workspaceID int64, tagID int64) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`delete from catalog_tags
-		where workspace_id = $1 and id = $2`,
-		workspaceID,
-		tagID,
-	)
-	if err != nil {
-		return writeCatalogError("delete catalog tag", err)
-	}
-	return nil
 }
 
 func (store *Store) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {
@@ -238,37 +192,6 @@ func (store *Store) CreateTask(
 		return catalogapplication.TaskView{}, writeCatalogError("create catalog task", err)
 	}
 	return task, nil
-}
-
-func (store *Store) UpdateTask(ctx context.Context, task catalogapplication.TaskView) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_tasks
-		set name = $3, active = $4
-		where workspace_id = $1 and id = $2`,
-		task.WorkspaceID,
-		task.ID,
-		task.Name,
-		task.Active,
-	)
-	if err != nil {
-		return writeCatalogError("update catalog task", err)
-	}
-	return nil
-}
-
-func (store *Store) DeleteTask(ctx context.Context, workspaceID int64, taskID int64) error {
-	_, err := store.pool.Exec(
-		ctx,
-		`delete from catalog_tasks
-		where workspace_id = $1 and id = $2`,
-		workspaceID,
-		taskID,
-	)
-	if err != nil {
-		return writeCatalogError("delete catalog task", err)
-	}
-	return nil
 }
 
 func (store *Store) UpdateTask(ctx context.Context, task catalogapplication.TaskView) error {
