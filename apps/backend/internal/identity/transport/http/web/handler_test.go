@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
-	"opentoggl/backend/apps/backend/internal/identity/infra/memory"
+	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
 func TestRegisterReturnsSessionBootstrap(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 
 	response := handler.Register(context.Background(), RegisterRequest{
 		Email:    "person@example.com",
@@ -40,7 +41,7 @@ func TestRegisterReturnsSessionBootstrap(t *testing.T) {
 }
 
 func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 
 	registered := handler.Register(context.Background(), RegisterRequest{
 		Email:    "person@example.com",
@@ -78,7 +79,7 @@ func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
 }
 
 func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
 		Email:    "person@example.com",
@@ -106,7 +107,7 @@ func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
 }
 
 func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
 		Email:    "person@example.com",
@@ -134,7 +135,7 @@ func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
 }
 
 func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
 		Email:    "person@example.com",
@@ -187,7 +188,7 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 }
 
 func TestLoginMapsInvalidCredentialsToForbidden(t *testing.T) {
-	handler := newTestHandler()
+	handler := newTestHandler(t)
 	handler.Register(context.Background(), RegisterRequest{
 		Email:    "person@example.com",
 		FullName: "Test Person",
@@ -208,13 +209,14 @@ func TestLoginMapsInvalidCredentialsToForbidden(t *testing.T) {
 	}
 }
 
-func newTestHandler() *Handler {
+func newTestHandler(t *testing.T) *Handler {
+	database := pgtest.Open(t)
 	service := application.NewService(application.Config{
-		Users:              memory.NewUserRepository(),
-		Sessions:           memory.NewSessionRepository(),
-		JobRecorder:        memory.NewJobRecorder(),
-		RunningTimerLookup: memory.NewTimerState(),
-		IDs:                memory.NewSequence(),
+		Users:              identitypostgres.NewUserRepository(database.Pool),
+		Sessions:           identitypostgres.NewSessionRepository(database.Pool),
+		JobRecorder:        identitypostgres.NewJobRecorder(database.Pool),
+		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(database.Pool),
+		IDs:                identitypostgres.NewSequence(database.Pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
 

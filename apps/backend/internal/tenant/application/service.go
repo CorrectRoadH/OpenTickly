@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"errors"
-	"sync"
 
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -13,6 +12,7 @@ var (
 	ErrOrganizationNotFound          = errors.New("organization not found")
 	ErrWorkspaceNotFound             = errors.New("workspace not found")
 	ErrCommercialTruthSourceRequired = errors.New("tenant commercial truth source is required")
+	ErrStoreRequired                 = errors.New("tenant store is required")
 )
 
 type CommercialSnapshot = billingdomain.CommercialStatus
@@ -80,14 +80,35 @@ type WorkspaceView struct {
 	Commercial     CommercialSnapshot
 }
 
+type Store interface {
+	CreateOrganization(
+		ctx context.Context,
+		name string,
+		workspaceName string,
+		settings domain.WorkspaceSettings,
+	) (domain.Organization, domain.Workspace, error)
+	CreateWorkspace(
+		ctx context.Context,
+		organizationID domain.OrganizationID,
+		name string,
+		settings domain.WorkspaceSettings,
+	) (domain.Workspace, error)
+	GetOrganization(ctx context.Context, organizationID domain.OrganizationID) (domain.Organization, bool, error)
+	GetWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) (domain.Workspace, bool, error)
+	SaveOrganization(ctx context.Context, organization domain.Organization) error
+	SaveWorkspace(ctx context.Context, workspace domain.Workspace) error
+	DeleteWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) error
+	DeleteOrganization(ctx context.Context, organizationID domain.OrganizationID) error
+}
+
 type Service struct {
-	store      *InMemoryStore
+	store      Store
 	commercial CommercialTruthSource
 }
 
-func NewService(store *InMemoryStore, commercial CommercialTruthSource) (*Service, error) {
+func NewService(store Store, commercial CommercialTruthSource) (*Service, error) {
 	if store == nil {
-		store = NewInMemoryStore()
+		return nil, ErrStoreRequired
 	}
 	if commercial == nil {
 		// Tenant settings reads must always come from billing-owned commercial
@@ -102,28 +123,12 @@ func NewService(store *InMemoryStore, commercial CommercialTruthSource) (*Servic
 }
 
 func (service *Service) CreateOrganization(
-	_ context.Context,
+	ctx context.Context,
 	command CreateOrganizationCommand,
 ) (CreateOrganizationResult, error) {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	organizationID, err := domain.NewOrganizationID(service.store.nextOrganizationID)
-	if err != nil {
-		return CreateOrganizationResult{}, err
-	}
-	workspaceID, err := domain.NewWorkspaceID(service.store.nextWorkspaceID)
-	if err != nil {
-		return CreateOrganizationResult{}, err
-	}
-
-	organization, err := domain.NewOrganization(organizationID, command.Name)
-	if err != nil {
-		return CreateOrganizationResult{}, err
-	}
-	workspace, err := domain.NewWorkspace(
-		workspaceID,
-		organizationID,
+	organization, workspace, err := service.store.CreateOrganization(
+		ctx,
+		command.Name,
 		command.WorkspaceName,
 		domain.DefaultWorkspaceSettings(),
 	)
@@ -131,59 +136,36 @@ func (service *Service) CreateOrganization(
 		return CreateOrganizationResult{}, err
 	}
 
-	organization.AddWorkspace(workspaceID)
-	service.store.organizations[organizationID] = organization
-	service.store.workspaces[workspaceID] = workspace
-	service.store.nextOrganizationID++
-	service.store.nextWorkspaceID++
-
 	return CreateOrganizationResult{
-		OrganizationID: organizationID,
-		WorkspaceID:    workspaceID,
+		OrganizationID: organization.ID(),
+		WorkspaceID:    workspace.ID(),
 	}, nil
 }
 
 func (service *Service) CreateWorkspace(
-	_ context.Context,
+	ctx context.Context,
 	command CreateWorkspaceCommand,
 ) (CreateWorkspaceResult, error) {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	organization, ok := service.store.organizations[command.OrganizationID]
-	if !ok {
-		return CreateWorkspaceResult{}, ErrOrganizationNotFound
-	}
-
-	workspaceID, err := domain.NewWorkspaceID(service.store.nextWorkspaceID)
-	if err != nil {
-		return CreateWorkspaceResult{}, err
-	}
-
 	settings, err := domain.NewWorkspaceSettings(command.Settings)
 	if err != nil {
 		return CreateWorkspaceResult{}, err
 	}
-	workspace, err := domain.NewWorkspace(workspaceID, command.OrganizationID, command.Name, settings)
+	workspace, err := service.store.CreateWorkspace(ctx, command.OrganizationID, command.Name, settings)
 	if err != nil {
 		return CreateWorkspaceResult{}, err
 	}
 
-	organization.AddWorkspace(workspaceID)
-	service.store.organizations[command.OrganizationID] = organization
-	service.store.workspaces[workspaceID] = workspace
-	service.store.nextWorkspaceID++
-
-	return CreateWorkspaceResult{WorkspaceID: workspaceID}, nil
+	return CreateWorkspaceResult{WorkspaceID: workspace.ID()}, nil
 }
 
 func (service *Service) GetOrganization(
 	ctx context.Context,
 	organizationID domain.OrganizationID,
 ) (OrganizationView, error) {
-	service.store.mu.RLock()
-	organization, ok := service.store.organizations[organizationID]
-	service.store.mu.RUnlock()
+	organization, ok, err := service.store.GetOrganization(ctx, organizationID)
+	if err != nil {
+		return OrganizationView{}, err
+	}
 	if !ok {
 		return OrganizationView{}, ErrOrganizationNotFound
 	}
@@ -205,9 +187,10 @@ func (service *Service) GetWorkspace(
 	ctx context.Context,
 	workspaceID domain.WorkspaceID,
 ) (WorkspaceView, error) {
-	service.store.mu.RLock()
-	workspace, ok := service.store.workspaces[workspaceID]
-	service.store.mu.RUnlock()
+	workspace, ok, err := service.store.GetWorkspace(ctx, workspaceID)
+	if err != nil {
+		return WorkspaceView{}, err
+	}
 	if !ok {
 		return WorkspaceView{}, ErrWorkspaceNotFound
 	}
@@ -227,14 +210,11 @@ func (service *Service) GetWorkspace(
 	}, nil
 }
 
-func (service *Service) UpdateWorkspace(
-	_ context.Context,
-	command UpdateWorkspaceCommand,
-) error {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	workspace, ok := service.store.workspaces[command.WorkspaceID]
+func (service *Service) UpdateWorkspace(ctx context.Context, command UpdateWorkspaceCommand) error {
+	workspace, ok, err := service.store.GetWorkspace(ctx, command.WorkspaceID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return ErrWorkspaceNotFound
 	}
@@ -248,18 +228,14 @@ func (service *Service) UpdateWorkspace(
 	}
 
 	workspace.UpdateSettings(settings)
-	service.store.workspaces[command.WorkspaceID] = workspace
-	return nil
+	return service.store.SaveWorkspace(ctx, workspace)
 }
 
-func (service *Service) UpdateOrganization(
-	_ context.Context,
-	command UpdateOrganizationCommand,
-) error {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	organization, ok := service.store.organizations[command.OrganizationID]
+func (service *Service) UpdateOrganization(ctx context.Context, command UpdateOrganizationCommand) error {
+	organization, ok, err := service.store.GetOrganization(ctx, command.OrganizationID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return ErrOrganizationNotFound
 	}
@@ -267,18 +243,14 @@ func (service *Service) UpdateOrganization(
 		return err
 	}
 
-	service.store.organizations[command.OrganizationID] = organization
-	return nil
+	return service.store.SaveOrganization(ctx, organization)
 }
 
-func (service *Service) UpdateWorkspaceBranding(
-	_ context.Context,
-	command UpdateWorkspaceBrandingCommand,
-) error {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	workspace, ok := service.store.workspaces[command.WorkspaceID]
+func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command UpdateWorkspaceBrandingCommand) error {
+	workspace, ok, err := service.store.GetWorkspace(ctx, command.WorkspaceID)
+	if err != nil {
+		return err
+	}
 	if !ok {
 		return ErrWorkspaceNotFound
 	}
@@ -300,58 +272,21 @@ func (service *Service) UpdateWorkspaceBranding(
 	}
 
 	workspace.UpdateBranding(branding)
-	service.store.workspaces[command.WorkspaceID] = workspace
+	return service.store.SaveWorkspace(ctx, workspace)
+}
+
+func (service *Service) DeleteWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) error {
+	if err := service.store.DeleteWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (service *Service) DeleteWorkspace(_ context.Context, workspaceID domain.WorkspaceID) error {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	workspace, ok := service.store.workspaces[workspaceID]
-	if !ok {
-		return ErrWorkspaceNotFound
+func (service *Service) DeleteOrganization(ctx context.Context, organizationID domain.OrganizationID) error {
+	if err := service.store.DeleteOrganization(ctx, organizationID); err != nil {
+		return err
 	}
-
-	organization := service.store.organizations[workspace.OrganizationID()]
-	organization.RemoveWorkspace(workspaceID)
-	service.store.organizations[workspace.OrganizationID()] = organization
-	delete(service.store.workspaces, workspaceID)
-
 	return nil
-}
-
-func (service *Service) DeleteOrganization(_ context.Context, organizationID domain.OrganizationID) error {
-	service.store.mu.Lock()
-	defer service.store.mu.Unlock()
-
-	organization, ok := service.store.organizations[organizationID]
-	if !ok {
-		return ErrOrganizationNotFound
-	}
-
-	for _, workspaceID := range organization.WorkspaceIDs() {
-		delete(service.store.workspaces, workspaceID)
-	}
-	delete(service.store.organizations, organizationID)
-	return nil
-}
-
-type InMemoryStore struct {
-	mu                 sync.RWMutex
-	nextOrganizationID int64
-	nextWorkspaceID    int64
-	organizations      map[domain.OrganizationID]domain.Organization
-	workspaces         map[domain.WorkspaceID]domain.Workspace
-}
-
-func NewInMemoryStore() *InMemoryStore {
-	return &InMemoryStore{
-		nextOrganizationID: 1,
-		nextWorkspaceID:    1,
-		organizations:      make(map[domain.OrganizationID]domain.Organization),
-		workspaces:         make(map[domain.WorkspaceID]domain.Workspace),
-	}
 }
 
 func toWorkspaceBrandingView(branding domain.WorkspaceBranding) WorkspaceBrandingView {

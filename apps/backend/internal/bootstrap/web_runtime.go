@@ -69,6 +69,8 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              identitypostgres.NewUserRepository(pool),
 		Sessions:           identitypostgres.NewSessionRepository(pool),
+		JobRecorder:        identitypostgres.NewJobRecorder(pool),
+		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(pool),
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})

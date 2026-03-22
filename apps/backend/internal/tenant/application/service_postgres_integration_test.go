@@ -149,3 +149,17 @@ func mustNewPostgresBillingService(
 	}
 	return service
 }
+
+func mustSubscription(
+	t *testing.T,
+	plan billingdomain.Plan,
+	state billingdomain.SubscriptionState,
+) billingdomain.Subscription {
+	t.Helper()
+
+	subscription, err := billingdomain.NewSubscription(plan, state)
+	if err != nil {
+		t.Fatalf("new subscription: %v", err)
+	}
+	return subscription
+}

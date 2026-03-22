@@ -7,7 +7,6 @@ import (
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
-	identitymemory "opentoggl/backend/apps/backend/internal/identity/infra/memory"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
@@ -105,7 +104,9 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 		t.Fatalf("register: %v", err)
 	}
 
-	deps.TimerState.MarkRunning(auth.User.ID)
+	if err := deps.TimerState.MarkRunning(ctx, auth.User.ID); err != nil {
+		t.Fatalf("mark running timer: %v", err)
+	}
 
 	if err := service.Deactivate(ctx, auth.User.ID); err != nil {
 		t.Fatalf("deactivate: %v", err)
@@ -126,7 +127,10 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 		t.Fatalf("expected deactivated business writes to be blocked, got %v", err)
 	}
 
-	jobs := deps.JobRecorder.Recorded()
+	jobs, err := deps.JobRecorder.Recorded(ctx)
+	if err != nil {
+		t.Fatalf("recorded jobs: %v", err)
+	}
 	if len(jobs) != 1 || jobs[0].Name != application.StopRunningTimerJobName || jobs[0].UserID != auth.User.ID {
 		t.Fatalf("expected one stop-running-timer job for user %d, got %#v", auth.User.ID, jobs)
 	}
@@ -135,8 +139,8 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 type postgresTestDependencies struct {
 	Users       *identitypostgres.UserRepository
 	Sessions    *identitypostgres.SessionRepository
-	JobRecorder *identitymemory.JobRecorder
-	TimerState  *identitymemory.TimerState
+	JobRecorder *identitypostgres.JobRecorder
+	TimerState  *identitypostgres.RunningTimerLookup
 	IDs         *identitypostgres.Sequence
 }
 
@@ -148,8 +152,8 @@ func newPostgresTestDependencies(database *pgtest.Database) postgresTestDependen
 	return postgresTestDependencies{
 		Users:       identitypostgres.NewUserRepository(database.Pool),
 		Sessions:    identitypostgres.NewSessionRepository(database.Pool),
-		JobRecorder: identitymemory.NewJobRecorder(),
-		TimerState:  identitymemory.NewTimerState(),
+		JobRecorder: identitypostgres.NewJobRecorder(database.Pool),
+		TimerState:  identitypostgres.NewRunningTimerLookup(database.Pool),
 		IDs:         identitypostgres.NewSequence(database.Pool),
 	}
 }

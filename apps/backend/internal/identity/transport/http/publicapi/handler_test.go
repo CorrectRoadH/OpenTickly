@@ -6,7 +6,8 @@ import (
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
-	"opentoggl/backend/apps/backend/internal/identity/infra/memory"
+	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
 func TestGetMeReturnsCurrentUserForValidBasicAuth(t *testing.T) {
@@ -116,12 +117,14 @@ func TestGetLoggedUsesSessionState(t *testing.T) {
 func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession) {
 	t.Helper()
 
+	database := pgtest.Open(t)
+
 	service := application.NewService(application.Config{
-		Users:              memory.NewUserRepository(),
-		Sessions:           memory.NewSessionRepository(),
-		JobRecorder:        memory.NewJobRecorder(),
-		RunningTimerLookup: memory.NewTimerState(),
-		IDs:                memory.NewSequence(),
+		Users:              identitypostgres.NewUserRepository(database.Pool),
+		Sessions:           identitypostgres.NewSessionRepository(database.Pool),
+		JobRecorder:        identitypostgres.NewJobRecorder(database.Pool),
+		RunningTimerLookup: identitypostgres.NewRunningTimerLookup(database.Pool),
+		IDs:                identitypostgres.NewSequence(database.Pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
 
