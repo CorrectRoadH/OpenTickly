@@ -38,6 +38,26 @@ This plan exists because self-hosted delivery is a formal product outcome, not a
 - Startup, migration/init, health, readiness, and minimal key-path smoke are documented and repeatable
 - Release output includes image, compose file, env examples, and release instructions
 
+## Stage 2 Delivery Snapshot
+
+Formal release output for this stage is:
+
+- image build spec: `docker/opentoggl.Dockerfile`
+- runtime baseline: `docker-compose.yml`
+- self-hosted env template: `.env.self-hosted.example`
+- operator runbook: `docs/self-hosting/docker-compose.md`
+- verification evidence: `docs/testing/evidence/self-hosted/`
+- verification evidence sample: `docs/testing/evidence/self-hosted/2026-03-22-compose-smoke.md`
+
+## Required Verification Evidence
+
+Self-hosted/release verification must include:
+
+- compose startup logs for `postgres`, `redis`, and `opentoggl`
+- `pgschema plan` and `pgschema apply` command evidence
+- readiness evidence for `/healthz` and `/readyz`
+- minimal HTTP smoke evidence for `/`
+
 ## Current Drift Against Docs
 
 - Self-hosted expectations are partly captured in docs, but active execution still needs stronger runtime and smoke evidence to satisfy [docker-compose.md](/Users/opentoggl-ci/Code/opentoggl/docs/self-hosting/docker-compose.md)

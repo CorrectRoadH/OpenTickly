@@ -29,6 +29,14 @@ WORKDIR /app
 
 COPY --from=builder /out/opentoggl /usr/local/bin/opentoggl
 
+RUN apk add --no-cache ca-certificates wget
+RUN printf '# required by current bootstrap env loader for runtime startup\n' > /app/.env.local
+
+ARG OPENTOGGL_VERSION=dev
+LABEL org.opencontainers.image.title="OpenToggl" \
+      org.opencontainers.image.description="Single-image OpenToggl runtime (web + API)" \
+      org.opencontainers.image.version="${OPENTOGGL_VERSION}"
+
 RUN adduser -D -u 10001 opentoggl
 USER opentoggl
 
