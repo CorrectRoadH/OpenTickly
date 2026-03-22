@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -227,7 +228,7 @@ func (handler *Handler) UpdatePreferences(ctx context.Context, sessionID string,
 
 	update := domain.Preferences{
 		DateFormat:      request.DateFormat,
-		TimeOfDayFormat: request.TimeOfDayFormat,
+		TimeOfDayFormat: normalizeTimeOfDayFormat(request.TimeOfDayFormat),
 		AlphaFeatures:   request.AlphaFeatures,
 	}
 
@@ -352,4 +353,11 @@ func mapError(err error) Response {
 	default:
 		return Response{StatusCode: 500, Body: "Internal Server Error"}
 	}
+}
+
+func normalizeTimeOfDayFormat(value string) string {
+	if strings.TrimSpace(value) == "h:mm a" {
+		return "h:mm A"
+	}
+	return value
 }

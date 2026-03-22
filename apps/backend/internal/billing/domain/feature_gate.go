@@ -16,27 +16,27 @@ const (
 )
 
 type CapabilityContext struct {
-	OrganizationID *int64
-	WorkspaceID    *int64
-	Scope          string
+	OrganizationID *int64 `json:"organization_id"`
+	WorkspaceID    *int64 `json:"workspace_id"`
+	Scope          string `json:"scope"`
 }
 
 type FeatureCapability struct {
-	Key     string
-	Enabled bool
-	Source  CapabilitySource
+	Key     string           `json:"key"`
+	Enabled bool             `json:"enabled"`
+	Source  CapabilitySource `json:"source"`
 }
 
 type CapabilitySnapshot struct {
-	Context      CapabilityContext
-	Capabilities []FeatureCapability
+	Context      CapabilityContext   `json:"context"`
+	Capabilities []FeatureCapability `json:"capabilities"`
 }
 
 type FeatureGateDecision struct {
-	CapabilityKey string
-	Allowed       bool
-	Reason        GateReason
-	Quota         *QuotaWindow
+	CapabilityKey string       `json:"capability_key"`
+	Allowed       bool         `json:"allowed"`
+	Reason        GateReason   `json:"reason"`
+	Quota         *QuotaWindow `json:"quota,omitempty"`
 }
 
 type CapabilityRule struct {

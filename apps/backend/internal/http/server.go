@@ -1,7 +1,6 @@
 package httpapp
 
 import (
-	"context"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -62,7 +61,7 @@ func NewServerWithOptions(
 		statusCode := http.StatusOK
 		if report.Status != web.StatusOK {
 			statusCode = http.StatusServiceUnavailable
-			logReadinessFailure(c.Request().Context(), logger, report)
+			logReadinessFailure(c, logger, report)
 		}
 		return c.JSON(statusCode, report)
 	}
@@ -84,35 +83,129 @@ func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
 		LogRequestID: true,
 		HandleError:  true,
 		LogValuesFunc: func(c echo.Context, values middleware.RequestLoggerValues) error {
+			correlation := requestCorrelationFromRequest(c.Request(), values.RequestID)
 			requestPath := c.Request().URL.Path
-			logger.Info(
-				"http request",
-				"request_id", values.RequestID,
+			fields := []any{
 				"method", values.Method,
 				"path", requestPath,
 				"status", values.Status,
 				"duration", values.Latency.String(),
-			)
+			}
+			fields = append(fields, correlation.logFields()...)
+			logger.Info("http request", fields...)
 			return nil
 		},
 	})
 }
 
-func logReadinessFailure(ctx context.Context, logger *slog.Logger, report web.ReadinessReport) {
+func logReadinessFailure(c echo.Context, logger *slog.Logger, report web.ReadinessReport) {
+	correlation := requestCorrelationFromRequest(c.Request(), requestIDFromContext(c))
+	baseFields := []any{
+		"service", report.Service,
+		"path", c.Request().URL.Path,
+		"status", report.Status,
+	}
+	baseFields = append(baseFields, correlation.logFields()...)
+
 	for _, check := range report.Checks {
 		if check.Status == web.StatusOK {
 			continue
 		}
 
-		logger.WarnContext(
-			ctx,
-			"readiness check failed",
-			"service", report.Service,
+		fields := append([]any{}, baseFields...)
+		fields = append(fields,
 			"check", check.Name,
 			"target", check.Target,
 			"message", check.Message,
 		)
+		logger.WarnContext(c.Request().Context(), "readiness check failed", fields...)
 	}
+}
+
+type requestCorrelation struct {
+	requestID   string
+	traceparent string
+	traceID     string
+	spanID      string
+}
+
+func requestCorrelationFromRequest(request *http.Request, requestID string) requestCorrelation {
+	correlation := requestCorrelation{
+		requestID: strings.TrimSpace(requestID),
+	}
+
+	traceparent := strings.TrimSpace(request.Header.Get("Traceparent"))
+	if traceparent == "" {
+		return correlation
+	}
+
+	correlation.traceparent = traceparent
+	traceID, spanID, ok := parseTraceparent(traceparent)
+	if ok {
+		correlation.traceID = traceID
+		correlation.spanID = spanID
+	}
+
+	return correlation
+}
+
+func (correlation requestCorrelation) logFields() []any {
+	fields := []any{}
+	if correlation.requestID != "" {
+		fields = append(fields, "request_id", correlation.requestID)
+	}
+	if correlation.traceparent != "" {
+		fields = append(fields, "traceparent", correlation.traceparent)
+	}
+	if correlation.traceID != "" {
+		fields = append(fields, "trace_id", correlation.traceID)
+	}
+	if correlation.spanID != "" {
+		fields = append(fields, "span_id", correlation.spanID)
+	}
+	return fields
+}
+
+func requestIDFromContext(c echo.Context) string {
+	if value := strings.TrimSpace(c.Response().Header().Get(echo.HeaderXRequestID)); value != "" {
+		return value
+	}
+
+	if value, ok := c.Get("requestid").(string); ok {
+		return strings.TrimSpace(value)
+	}
+
+	return ""
+}
+
+func parseTraceparent(header string) (traceID string, spanID string, ok bool) {
+	parts := strings.Split(strings.TrimSpace(header), "-")
+	if len(parts) != 4 {
+		return "", "", false
+	}
+	if len(parts[1]) != 32 || len(parts[2]) != 16 {
+		return "", "", false
+	}
+	if !isLowerHex(parts[1]) || !isLowerHex(parts[2]) {
+		return "", "", false
+	}
+	if parts[1] == strings.Repeat("0", 32) || parts[2] == strings.Repeat("0", 16) {
+		return "", "", false
+	}
+
+	return parts[1], parts[2], true
+}
+
+func isLowerHex(value string) bool {
+	for _, character := range value {
+		switch {
+		case character >= '0' && character <= '9':
+		case character >= 'a' && character <= 'f':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 /*

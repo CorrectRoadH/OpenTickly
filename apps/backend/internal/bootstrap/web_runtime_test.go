@@ -18,6 +18,12 @@ func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
+		Database: DatabaseConfig{
+			PrimaryDSN: "postgres://opentoggl@localhost:5432/opentoggl",
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)

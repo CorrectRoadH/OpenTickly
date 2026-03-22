@@ -12,6 +12,12 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
+		Database: DatabaseConfig{
+			PrimaryDSN: "postgres://opentoggl@localhost:5432/opentoggl",
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
@@ -76,6 +82,30 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	if len(capabilitiesBody.Capabilities) == 0 {
 		t.Fatal("expected capabilities to include at least one feature capability")
 	}
+	if len(capabilitiesBody.Capabilities) != 3 {
+		t.Fatalf("expected 3 billing capability rules, got %#v", capabilitiesBody.Capabilities)
+	}
+	expectedCapabilities := map[string]bool{
+		"reports.profitability": false,
+		"reports.summary":       false,
+		"time_tracking":         true,
+	}
+	for _, capability := range capabilitiesBody.Capabilities {
+		wantEnabled, ok := expectedCapabilities[capability.Key]
+		if !ok {
+			t.Fatalf("expected capability key from billing rules, got %q", capability.Key)
+		}
+		if capability.Source != "billing" {
+			t.Fatalf("expected capability source billing, got %q for key %q", capability.Source, capability.Key)
+		}
+		if capability.Enabled != wantEnabled {
+			t.Fatalf("expected capability %q enabled=%t, got %#v", capability.Key, wantEnabled, capability)
+		}
+		delete(expectedCapabilities, capability.Key)
+	}
+	if len(expectedCapabilities) != 0 {
+		t.Fatalf("expected all billing capability keys to be present, missing %#v", expectedCapabilities)
+	}
 
 	quotaPath := "/web/v1/workspaces/" + intToString(workspaceID) + "/quota"
 	quota := performJSONRequest(t, app, http.MethodGet, quotaPath, nil, sessionCookie)
@@ -91,6 +121,9 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	mustDecodeJSON(t, quota.Body.Bytes(), &quotaBody)
 	if quotaBody.OrganizationID == nil || *quotaBody.OrganizationID != organizationID {
 		t.Fatalf("expected quota organization id %d, got %#v", organizationID, quotaBody.OrganizationID)
+	}
+	if quotaBody.Remaining != 0 || quotaBody.ResetsInSecs != 0 || quotaBody.Total != 0 {
+		t.Fatalf("expected default billing quota window to be zeroed, got %#v", quotaBody)
 	}
 
 	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-OpenToggl-Quota-Remaining"), quotaBody.Remaining, "X-OpenToggl-Quota-Remaining")

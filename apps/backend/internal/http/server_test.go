@@ -198,6 +198,39 @@ func TestServerAssignsRequestIDAndLogsRequestFields(t *testing.T) {
 	}
 }
 
+func TestServerLogsTraceCorrelationFieldsWhenPresent(t *testing.T) {
+	var logs strings.Builder
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	t.Cleanup(func() {
+		slog.SetDefault(previousLogger)
+	})
+
+	server := NewServer(web.NewHealthSnapshot("opentoggl", []string{"identity"}), nil)
+	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	request.Header.Set("Traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	var record map[string]any
+	if err := json.Unmarshal([]byte(strings.TrimSpace(logs.String())), &record); err != nil {
+		t.Fatalf("expected request log to emit json, got %q: %v", logs.String(), err)
+	}
+
+	if record["traceparent"] != "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" {
+		t.Fatalf("expected request log traceparent, got %#v", record["traceparent"])
+	}
+
+	if record["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected request log trace_id, got %#v", record["trace_id"])
+	}
+
+	if record["span_id"] != "00f067aa0ba902b7" {
+		t.Fatalf("expected request log span_id, got %#v", record["span_id"])
+	}
+}
+
 func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 	postgresListener := mustListenTCP(t)
 	closedAddress := postgresListener.Addr().String()
@@ -222,6 +255,7 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 		},
 	)
 	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	request.Header.Set("Traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 	recorder := httptest.NewRecorder()
 
 	server.ServeHTTP(recorder, request)
@@ -302,6 +336,26 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 
 	if requestRecord["request_id"] == "" {
 		t.Fatalf("expected /readyz request log request_id, got %#v", requestRecord["request_id"])
+	}
+
+	if requestRecord["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected /readyz request log trace_id, got %#v", requestRecord["trace_id"])
+	}
+
+	if requestRecord["span_id"] != "00f067aa0ba902b7" {
+		t.Fatalf("expected /readyz request log span_id, got %#v", requestRecord["span_id"])
+	}
+
+	if readinessRecord["request_id"] != requestRecord["request_id"] {
+		t.Fatalf(
+			"expected readiness failure log request_id %#v to match request log %#v",
+			readinessRecord["request_id"],
+			requestRecord["request_id"],
+		)
+	}
+
+	if readinessRecord["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected readiness failure log trace_id, got %#v", readinessRecord["trace_id"])
 	}
 }
 

@@ -10,6 +10,7 @@
 - Frontend: `vp run website#dev`
 - Backend: `air`
 - Backend hot reload config: root `.air.toml`
+- Run `air` from the repository root so bootstrap can load root `.env.local`
 - `.env.local.example` is only a template; the canonical source-based backend startup path requires a real root `.env.local`
 - `air` must fail immediately if `.env.local`, `PORT`, `DATABASE_URL`, or `REDIS_URL` is missing
 - `air` must also fail immediately if PostgreSQL or Redis is unreachable; local backend development is expected to connect to the real dependencies you started separately
@@ -38,7 +39,49 @@ Rules:
 
 # Self Hosting
 
+Self-hosted delivery uses a single `opentoggl` application image (embedded web + API), plus `postgres` and `redis` dependencies in `docker-compose.yml`.
+
+Release artifacts that must ship together:
+
+- `docker/opentoggl.Dockerfile`
+- `docker-compose.yml`
+- `.env.self-hosted.example`
+- `docs/self-hosting/docker-compose.md`
+
+## Compose Startup and Smoke
+
+1. Create env file: `cp .env.self-hosted.example .env.self-hosted`
+2. Start dependencies: `docker compose --env-file .env.self-hosted up -d postgres redis`
+3. Reconcile schema using `pgschema` against the same PostgreSQL target:
+
+```bash
+set -a
+source .env.self-hosted
+set +a
+pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
+```
+
+4. Start runtime: `docker compose --env-file .env.self-hosted up -d opentoggl`
+5. Verify readiness and key-path smoke:
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+curl -fsSI http://localhost:8080/
+```
+
+## Upgrade and Rollback
+
+- Upgrade: pull new image + schema files, run `pgschema plan`, run `pgschema apply --auto-approve`, restart `opentoggl`, rerun smoke checks.
+- Rollback: revert desired schema SQL and image tag to the target release, rerun `pgschema plan/apply`, restart `opentoggl`, rerun smoke checks.
+- Persistent data is in the PostgreSQL volume `opentoggl-postgres-data`.
+
+Detailed operator runbook:
+
 - [Docker Compose Startup (Target Shape)](./docs/self-hosting/docker-compose.md)
-- Self-hosted target is a single `opentoggl` Go runtime image (not `website + api` dual runtime).
-- Existing split-runtime Docker artifacts in the repository are implementation drift pending cleanup, not target deployment guidance.
-- Self-hosted PostgreSQL schema changes are managed through `pgschema`, not handwritten deployment SQL.
+
+Verification evidence location:
+
+- `docs/testing/evidence/self-hosted/`
+- `docs/testing/evidence/self-hosted/2026-03-22-compose-smoke.md`

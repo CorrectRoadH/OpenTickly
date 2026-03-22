@@ -6,10 +6,10 @@ import (
 )
 
 type QuotaWindow struct {
-	OrganizationID  int64
-	Remaining       int
-	ResetsInSeconds int
-	Total           int
+	OrganizationID  int64 `json:"organization_id"`
+	Remaining       int   `json:"remaining"`
+	ResetsInSeconds int   `json:"resets_in_secs"`
+	Total           int   `json:"total"`
 }
 
 func NewQuotaWindow(

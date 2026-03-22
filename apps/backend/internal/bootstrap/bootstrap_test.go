@@ -14,6 +14,12 @@ func TestNewAppExposesWave0HealthRuntime(t *testing.T) {
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
+		Database: DatabaseConfig{
+			PrimaryDSN: "postgres://opentoggl@localhost:5432/opentoggl",
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
@@ -64,6 +70,12 @@ func TestNewAppReadyzUsesRuntimeReadinessProbe(t *testing.T) {
 		Server: ServerConfig{
 			ListenAddress: ":0",
 		},
+		Database: DatabaseConfig{
+			PrimaryDSN: "postgres://opentoggl@127.0.0.1:1/opentoggl",
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:1/0",
+		},
 	})
 	if err != nil {
 		t.Fatalf("NewApp returned error: %v", err)
@@ -75,7 +87,7 @@ func TestNewAppReadyzUsesRuntimeReadinessProbe(t *testing.T) {
 	app.HTTP.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected /readyz to return 503 when runtime config is missing, got %d", recorder.Code)
+		t.Fatalf("expected /readyz to return 503 when runtime dependencies are not reachable, got %d", recorder.Code)
 	}
 
 	var response struct {

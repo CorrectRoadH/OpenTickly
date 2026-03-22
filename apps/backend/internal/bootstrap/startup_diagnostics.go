@@ -4,26 +4,45 @@ import (
 	"log/slog"
 	"net"
 	"net/url"
+	"time"
 )
 
 func logStartupSuccess(cfg Config, modules []string) {
+	fields := startupLogFields(cfg, modules)
+	fields = append(
+		fields,
+		"phase", "startup_success",
+		"healthz_path", "/healthz",
+		"readyz_path", "/readyz",
+	)
+
 	slog.Default().Info(
 		"backend startup succeeded",
-		startupLogFields(cfg, modules)...,
+		fields...,
 	)
 }
 
 func logStartupDependencyFailure(cfg Config, err error) {
+	fields := startupFailureLogFields(cfg, err)
+	fields = append(
+		fields,
+		"phase", "startup_dependency_failure",
+		"dependency_probe_timeout", startupDependencyProbeTimeout.String(),
+	)
+
 	slog.Default().Error(
 		"backend startup dependency check failed",
-		startupFailureLogFields(cfg, err)...,
+		fields...,
 	)
 }
 
 func logStartupAssemblyFailure(cfg Config, err error) {
+	fields := startupFailureLogFields(cfg, err)
+	fields = append(fields, "phase", "startup_assembly_failure")
+
 	slog.Default().Error(
 		"backend startup assembly failed",
-		startupFailureLogFields(cfg, err)...,
+		fields...,
 	)
 }
 
@@ -38,6 +57,7 @@ func startupLogFields(cfg Config, modules []string) []any {
 		"listen_address", cfg.Server.ListenAddress,
 		"postgres_target", diagnosticTarget(cfg.Database.PrimaryDSN, "5432"),
 		"redis_target", diagnosticTarget(cfg.Redis.Address, "6379"),
+		"timestamp_unix", time.Now().Unix(),
 	}
 	if len(modules) > 0 {
 		fields = append(fields, "modules", modules)

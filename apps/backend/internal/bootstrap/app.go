@@ -1,6 +1,9 @@
 package bootstrap
 
 import (
+	"fmt"
+	"strings"
+
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	"opentoggl/backend/apps/backend/internal/platform"
 	"opentoggl/backend/apps/backend/internal/web"
@@ -29,6 +32,10 @@ func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
 
 func NewApp(cfg Config) (*App, error) {
 	cfg = withDefaults(cfg)
+	if err := validateRequiredRuntimeConfig(cfg); err != nil {
+		logStartupAssemblyFailure(cfg, err)
+		return nil, err
+	}
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
 	routeRegistrar, err := newHTTPRouteRegistrar()
@@ -61,6 +68,24 @@ func NewApp(cfg Config) (*App, error) {
 
 func (app *App) Start() error {
 	return app.HTTP.Start(app.Config.Server.ListenAddress)
+}
+
+/**
+ * validateRequiredRuntimeConfig enforces explicit runtime boundary config in the
+ * bootstrap composition root so non-production defaults are never accepted as a
+ * normal startup path.
+ */
+func validateRequiredRuntimeConfig(cfg Config) error {
+	if strings.TrimSpace(cfg.Server.ListenAddress) == "" {
+		return fmt.Errorf("missing required runtime config server.listen_address")
+	}
+	if strings.TrimSpace(cfg.Database.PrimaryDSN) == "" {
+		return fmt.Errorf("missing required runtime config database.primary_dsn")
+	}
+	if strings.TrimSpace(cfg.Redis.Address) == "" {
+		return fmt.Errorf("missing required runtime config redis.address")
+	}
+	return nil
 }
 
 func newHTTPRouteRegistrar() (httpapp.RouteRegistrar, error) {
