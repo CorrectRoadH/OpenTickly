@@ -8,6 +8,8 @@ import (
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
+	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -25,6 +27,19 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 		ID:       101,
 		Email:    "persisted@example.com",
 		FullName: "Persisted Person",
+	}
+	persistedUser, err := identitydomain.RegisterUser(identitydomain.RegisterParams{
+		ID:       user.ID,
+		Email:    user.Email,
+		FullName: user.FullName,
+		Password: "secret1",
+		APIToken: "api-token-persisted",
+	})
+	if err != nil {
+		t.Fatalf("register persisted test user: %v", err)
+	}
+	if err := identitypostgres.NewUserRepository(database.Pool).Save(ctx, persistedUser); err != nil {
+		t.Fatalf("save persisted test user: %v", err)
 	}
 
 	firstProvider := newBillingBackedSessionShell(tenantService, billingService, homes)
