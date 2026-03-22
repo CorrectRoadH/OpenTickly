@@ -21,7 +21,33 @@ Local development must run source processes directly from the repository root.
 - Do not add root-level `scripts/*.sh` files as local development wrappers.
 - `docker compose` is reserved for self-hosted packaging, deployment rehearsal, and release-style smoke verification, not day-to-day local source development.
 - Self-hosted runtime commands should be documented and executed directly with `docker compose` and other native runtime commands, not wrapped behind `pnpm`, Node, or ad hoc helper CLIs.
+- Do not add repo-local `.mjs`/Node wrapper scripts for backend, OpenAPI, codegen, or catalog generation workflows when the same job can live in the canonical root toolchain or the owning runtime.
+- If a workflow belongs to the backend/runtime surface, prefer a checked-in Go entrypoint or an existing root toolchain command over `apps/**/scripts/*.mjs` helpers.
+- New generation or verification entrypoints must be exposed through one canonical root command and must not introduce a second script-based path that duplicates an existing toolchain responsibility.
 - If a change affects how developers boot the app locally, update this file with root-run commands and root-level env expectations in the same change.
+
+## Worktree Development Workflow
+
+When Claude team agents or manual `git worktree` flows are used in this repository, treat the worktree as an isolated implementation branch that does **not** auto-merge back into `main`.
+
+- A worktree result must be reviewed, tested, and explicitly integrated back into the primary branch by normal git operations; do not assume Claude auto-applies worktree edits to the main checkout.
+- If a worktree is only behind `main` and has no unique commits or uncommitted changes, delete the worktree and delete its branch instead of keeping stale copies under `.claude/worktrees/`.
+- If a worktree has unique commits that should land, merge or cherry-pick those commits explicitly, then remove the worktree and branch after integration.
+- Before deleting a worktree, verify both `git -C <worktree> status --short --branch` and `git rev-list --left-right --count main...<branch>` so we do not discard unique work.
+- Keep `.claude/worktrees/` ephemeral. Do not treat it as a second long-lived workspace.
+- When documenting or handing off agent work, record the worktree branch name and whether it was merged, cherry-picked, or discarded.
+
+### Running dev servers from worktrees
+
+- Run source processes from the root of the specific worktree you are validating.
+- Worktrees in this repository are allowed to start local frontend and backend runtimes when a task needs end-to-end or smoke verification.
+- Each runtime-enabled worktree must use its own root `.env.local`; copy the root env file into that worktree instead of sharing one live file across multiple worktrees.
+- In the copied `.env.local`, update `PORT` to the backend port for that worktree and update `OPENTOGGL_WEB_PROXY_TARGET` to point at that backend URL.
+- The frontend dev server also needs its own port. Start it from the worktree root with an explicit port override, for example `vp run website#dev -- --port 4174`, so it does not collide with another worktree using the default Vite port.
+- Treat the three runtime values as a set for each worktree: frontend dev port, backend `PORT`, and the proxy target inside `OPENTOGGL_WEB_PROXY_TARGET`.
+- Do not start a second worktree runtime until its copied `.env.local` and frontend port override have been updated to avoid port collisions and other shared local resource conflicts.
+- Keep the runtime commands canonical even in worktrees: start the frontend with `vp run website#dev` and the backend with `air` from the worktree root.
+- Minimal example for a second worktree: copy `.env.local`, change `PORT=8081`, change `OPENTOGGL_WEB_PROXY_TARGET=http://127.0.0.1:8081`, then run `vp run website#dev -- --port 4174` and `air` from that worktree root.
 
 ## Documentation Is The Source Of Truth
 
