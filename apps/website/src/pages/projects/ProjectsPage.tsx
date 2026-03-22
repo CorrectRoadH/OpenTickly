@@ -60,7 +60,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       params: {
         workspaceId: String(workspaceId),
       },
-      search: nextStatus === "all" ? {} : { status: nextStatus },
+      search: { status: nextStatus },
       to: "/workspaces/$workspaceId/projects",
     });
   }
