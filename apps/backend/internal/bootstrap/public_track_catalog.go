@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -41,6 +42,32 @@ func (runtime *webRuntime) getPublicTrackClients(ctx echo.Context) error {
 		clients = append(clients, clientViewToAPI(view))
 	}
 	return ctx.JSON(http.StatusOK, clients)
+}
+
+func (runtime *webRuntime) getPublicTrackClient(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	clientID, ok := parsePathID(ctx, "client_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	view, err := runtime.catalogApp.GetClient(ctx.Request().Context(), workspaceID, clientID)
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrClientNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }
 
 func (runtime *webRuntime) getPublicTrackGroups(ctx echo.Context) error {
@@ -141,6 +168,32 @@ func (runtime *webRuntime) getPublicTrackProjects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, projects)
 }
 
+func (runtime *webRuntime) getPublicTrackProject(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	view, err := runtime.catalogApp.GetProject(ctx.Request().Context(), workspaceID, projectID)
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
+}
+
 func (runtime *webRuntime) getPublicTrackTasksBasic(ctx echo.Context) error {
 	pageView, err := runtime.listPublicTrackTasks(ctx, publicTrackTaskListQuery{
 		projectQueryKey: "project_id",
@@ -205,6 +258,12 @@ func (runtime *webRuntime) getPublicTrackProjectTasks(ctx echo.Context) error {
 	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
+	if _, err := runtime.catalogApp.GetProject(ctx.Request().Context(), workspaceID, projectID); err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
 
 	filter := catalogapplication.ListTasksFilter{
 		Page:      1,
@@ -232,6 +291,36 @@ func (runtime *webRuntime) getPublicTrackProjectTasks(ctx echo.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, tasks)
+}
+
+func (runtime *webRuntime) getPublicTrackProjectTask(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	taskID, ok := parsePathID(ctx, "task_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := runtime.requirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := runtime.requirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	view, err := runtime.catalogApp.GetTask(ctx.Request().Context(), workspaceID, projectID, taskID)
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) || errors.Is(err, catalogapplication.ErrTaskNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	return ctx.JSON(http.StatusOK, taskViewToAPI(view))
 }
 
 type publicTrackTaskListQuery struct {
@@ -401,7 +490,9 @@ func taskViewToAPI(view catalogapplication.TaskView) publictrackapi.ModelsTask {
 
 func publicTrackClientStatus(value string) (catalogapplication.ClientStatus, error) {
 	switch strings.TrimSpace(value) {
-	case "", "both":
+	case "":
+		return catalogapplication.ClientStatusActive, nil
+	case "both":
 		return catalogapplication.ClientStatusBoth, nil
 	case "active":
 		return catalogapplication.ClientStatusActive, nil

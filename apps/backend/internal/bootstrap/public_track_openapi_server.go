@@ -67,26 +67,6 @@ func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceClients(ctx echo.C
 	return server.runtime.postPublicTrackClients(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceClient(
-	ctx echo.Context,
-	workspaceId int,
-	clientId int,
-) error {
-	_ = workspaceId
-	_ = clientId
-	return server.runtime.getPublicTrackClient(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceClients(
-	ctx echo.Context,
-	workspaceId int,
-	clientId int,
-) error {
-	_ = workspaceId
-	_ = clientId
-	return server.runtime.putPublicTrackClient(ctx)
-}
-
 func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceGroups(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.runtime.getPublicTrackGroups(ctx)
@@ -112,26 +92,6 @@ func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceTag(ctx echo.Conte
 	return server.runtime.postPublicTrackTags(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceTag(
-	ctx echo.Context,
-	workspaceId int,
-	tagId int,
-) error {
-	_ = workspaceId
-	_ = tagId
-	return server.runtime.putPublicTrackTag(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceTag(
-	ctx echo.Context,
-	workspaceId int,
-	tagId int,
-) error {
-	_ = workspaceId
-	_ = tagId
-	return server.runtime.deletePublicTrackTag(ctx)
-}
-
 func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectUsers(
 	ctx echo.Context,
 	workspaceId int,
@@ -150,16 +110,6 @@ func (server *bootstrapPublicTrackOpenAPIServer) GetProjects(
 	_ = workspaceId
 	_ = params
 	return server.runtime.getPublicTrackProjects(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectId(
-	ctx echo.Context,
-	workspaceId int,
-	projectId int,
-) error {
-	_ = workspaceId
-	_ = projectId
-	return server.runtime.getPublicTrackProject(ctx)
 }
 
 func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceProjectCreate(
@@ -210,42 +160,6 @@ func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceProjectTasks(
 	_ = workspaceId
 	_ = projectId
 	return server.runtime.postPublicTrackProjectTask(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectTask(
-	ctx echo.Context,
-	workspaceId int,
-	projectId int,
-	taskId int,
-) error {
-	_ = workspaceId
-	_ = projectId
-	_ = taskId
-	return server.runtime.getPublicTrackProjectTask(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceProjectTask(
-	ctx echo.Context,
-	workspaceId int,
-	projectId int,
-	taskId string,
-) error {
-	_ = workspaceId
-	_ = projectId
-	_ = taskId
-	return server.runtime.putPublicTrackProjectTask(ctx)
-}
-
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
-	ctx echo.Context,
-	workspaceId int,
-	projectId int,
-	taskId int,
-) error {
-	_ = workspaceId
-	_ = projectId
-	_ = taskId
-	return server.runtime.deletePublicTrackProjectTask(ctx)
 }
 
 func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceTasks(
