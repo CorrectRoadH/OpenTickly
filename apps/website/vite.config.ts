@@ -14,6 +14,24 @@ export default defineConfig(({ mode }) => {
   return {
     envDir: workspaceRoot,
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules")) {
+              if (id.includes("react") && !id.includes("react-router"))
+                return "vendor-react";
+              if (id.includes("@tanstack/react-query")) return "vendor-query";
+              if (id.includes("@tanstack/react-router")) return "vendor-router";
+              if (id.includes("react-hook-form") || id.includes("zod"))
+                return "vendor-forms";
+              if (id.includes("baseui") || id.includes("styletron"))
+                return "vendor-baseui";
+            }
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         "/healthz": {
