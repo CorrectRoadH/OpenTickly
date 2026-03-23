@@ -2,6 +2,7 @@ package httpapp
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net"
 	"net/http"
@@ -205,6 +206,55 @@ func TestServerLogsTraceCorrelationFieldsWhenPresent(t *testing.T) {
 
 	if record["span_id"] != "00f067aa0ba902b7" {
 		t.Fatalf("expected request log span_id, got %#v", record["span_id"])
+	}
+}
+
+func TestServerLogsHandlerErrorsWithInternalCause(t *testing.T) {
+	var logs strings.Builder
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		func(server *echo.Echo) {
+			server.GET("/boom", func(c echo.Context) error {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").
+					SetInternal(errors.New("boom cause"))
+			})
+		},
+		ServerOptions{
+			Logger: logger,
+		},
+	)
+
+	request := httptest.NewRequest(http.MethodGet, "/boom", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusInternalServerError {
+		t.Fatalf("expected /boom to return 500, got %d", recorder.Code)
+	}
+
+	lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected handler error log plus request log, got %q", logs.String())
+	}
+
+	var errorRecord map[string]any
+	if err := json.Unmarshal([]byte(lines[0]), &errorRecord); err != nil {
+		t.Fatalf("expected error log to emit json, got %q: %v", lines[0], err)
+	}
+
+	if errorRecord["msg"] != "http handler error" {
+		t.Fatalf("expected first log message to be handler error, got %#v", errorRecord["msg"])
+	}
+	if errorRecord["error"] != "boom cause" {
+		t.Fatalf("expected handler error cause to be logged, got %#v", errorRecord["error"])
+	}
+	if errorRecord["path"] != "/boom" {
+		t.Fatalf("expected handler error path /boom, got %#v", errorRecord["path"])
+	}
+	if _, ok := errorRecord["request_id"]; !ok {
+		t.Fatalf("expected handler error log to include request_id, got %#v", errorRecord)
 	}
 }
 

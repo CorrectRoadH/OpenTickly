@@ -697,14 +697,14 @@ func (handler *Handler) PostPublicTrackExpense(ctx echo.Context) error {
 func writePublicTrackTrackingError(err error) error {
 	switch {
 	case errors.Is(err, trackingapplication.ErrRunningTimeEntryExists):
-		return echo.NewHTTPError(http.StatusConflict, "Conflict")
+		return echo.NewHTTPError(http.StatusConflict, "Conflict").SetInternal(err)
 	case trackingapplication.IsNotFound(err):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	case errors.Is(err, trackingapplication.ErrInvalidTimeRange),
 		errors.Is(err, trackingapplication.ErrInvalidWorkspace):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 }
 

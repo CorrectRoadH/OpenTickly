@@ -259,7 +259,7 @@ bootstrap.NewApp(cfg)
 
 - domain test 不需要 bootstrap
 - application integration test 只构造当前模块 + 真实数据库依赖
-- transport contract test 可以挂真实 Echo + generated public-API routes，但替换外部 provider
+- HTTP 基础设施测试只验证 request id、readiness、error logging 等平台能力，不承载业务接口行为断言
 - job test 可以单独起 runner 和 handler，不需要整站启动
 
 ### 0.6.2 schema / init / readiness 顺序
@@ -743,7 +743,7 @@ Query Port 负责：
 - `domain` 保持纯内存可测，不引入数据库、HTTP、时间源全局单例
 - `application` 用例显式接收 repository / query port / clock / job recorder / authz checker
 - `infra` 负责真实数据库与外部系统接线，但其行为可通过真实集成边界测试，而不是 mock 内部调用顺序
-- `transport` 保持薄层，使 contract test 只验证公开合同，不被业务拼装噪音污染
+- `transport` 保持薄层，只负责 decode / encode / error mapping，不作为后端业务行为测试承载层
 - `platform/jobs` 提供可同步推进的测试入口，避免 retry/backoff 测试真实等待
 
 这意味着代码结构上必须预留以下可测接口：
@@ -761,7 +761,7 @@ Query Port 负责：
 
 - domain unit test -> `domain`
 - application integration test -> `application + infra/pg + real tx`
-- transport contract test -> `transport + real validator + real error mapping`
+- HTTP infrastructure test -> `internal/http + request logging + readiness/error handling`
 - async execution test -> `platform/jobs + <module>/infra job handler`
 
 如果一个实现很难按这四层快速测试，优先判断是边界设计错了，而不是补更多 mock。
@@ -841,15 +841,15 @@ Query Port 负责：
 
 - `domain` 有单测覆盖不变量
 - `application/commands` 有事务与权限级集成测试
-- `transport/http/public-api` 有合同测试
+- `transport/http/public-api` 不写逐 handler API 层测试，业务行为和回归保护落在 `application` service 层
 - `reports` / `webhooks` / `importing` 的异步执行链路有 job 级测试
-- 外部公开 API endpoint 有 OpenAPI 到 handler / use case 的映射
+- 外部公开 API endpoint 的实现仍必须保持与 OpenAPI 合同一致，但不通过后端 router/API 层测试承载
 
 进一步的结构要求：
 
 - `application/*_integration_test.go` 默认通过真实 Postgres 跑用例，不 mock repository
-- `transport/http/public-api` 的 contract test 默认通过真实 `Echo` + generated public-API routes + OpenAPI validator 跑请求
-- handler 测试优先验证公开输入输出，不验证内部调用次数
+- 业务行为、权限、状态流转、回归逻辑默认落在 `application` service 层测试；不要把这些断言下沉到 router / handler 单测
+- 不新增各模块 `transport/http/public-api/handler_test.go` 形式的逐 handler API 层测试
 - 需要时间推进的 job test 必须注入可控时钟
 - 需要重试的 job test 必须在进程内同步推进调度，不做真实 sleep
 

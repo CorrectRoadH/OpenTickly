@@ -1,6 +1,7 @@
 package httpapp
 
 import (
+	"errors"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -45,6 +46,7 @@ func NewServerWithOptions(
 	if logger == nil {
 		logger = slog.Default()
 	}
+	server.HTTPErrorHandler = newHTTPErrorHandler(server, logger)
 	readiness := options.Readiness
 	if readiness == nil {
 		readiness = web.NewStaticReadinessProbe(health.Service)
@@ -98,6 +100,35 @@ func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
 			return nil
 		},
 	})
+}
+
+func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorHandler {
+	return func(err error, c echo.Context) {
+		status := http.StatusInternalServerError
+		loggedError := err
+
+		var httpError *echo.HTTPError
+		if errors.As(err, &httpError) {
+			status = httpError.Code
+			if httpError.Internal != nil {
+				loggedError = httpError.Internal
+			}
+		}
+
+		if status >= http.StatusInternalServerError {
+			correlation := requestCorrelationFromRequest(c.Request(), requestIDFromContext(c))
+			fields := []any{
+				"method", c.Request().Method,
+				"path", c.Request().URL.Path,
+				"status", status,
+				"error", loggedError.Error(),
+			}
+			fields = append(fields, correlation.logFields()...)
+			logger.ErrorContext(c.Request().Context(), "http handler error", fields...)
+		}
+
+		server.DefaultHTTPErrorHandler(err, c)
+	}
 }
 
 func logReadinessFailure(c echo.Context, logger *slog.Logger, report web.ReadinessReport) {
