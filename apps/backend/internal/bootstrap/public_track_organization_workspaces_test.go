@@ -168,4 +168,57 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 	if organizationUsersDetailed.Code != http.StatusOK {
 		t.Fatalf("expected organization users detailed status 200, got %d body=%s", organizationUsersDetailed.Code, organizationUsersDetailed.Body.String())
 	}
+
+	organizationOwner := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/owner",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationOwner.Code != http.StatusOK {
+		t.Fatalf("expected organization owner status 200, got %d body=%s", organizationOwner.Code, organizationOwner.Body.String())
+	}
+
+	organizationRoles := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/roles",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationRoles.Code != http.StatusOK {
+		t.Fatalf("expected organization roles status 200, got %d body=%s", organizationRoles.Code, organizationRoles.Body.String())
+	}
+
+	organizationSubscription := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/subscription",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationSubscription.Code != http.StatusOK {
+		t.Fatalf("expected organization subscription status 200, got %d body=%s", organizationSubscription.Code, organizationSubscription.Body.String())
+	}
+
+	organizationWorkspaceStatistics := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/workspaces/statistics",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationWorkspaceStatistics.Code != http.StatusOK {
+		t.Fatalf("expected organization workspace statistics status 200, got %d body=%s", organizationWorkspaceStatistics.Code, organizationWorkspaceStatistics.Body.String())
+	}
+	var statisticsBody map[string]map[string]any
+	mustDecodeJSON(t, organizationWorkspaceStatistics.Body.Bytes(), &statisticsBody)
+	if len(statisticsBody) != 2 {
+		t.Fatalf("expected two organization workspace statistics entries, got %#v", statisticsBody)
+	}
 }

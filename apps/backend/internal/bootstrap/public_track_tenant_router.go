@@ -28,6 +28,11 @@ func (server *publicTrackOpenAPIServer) GetOrganization(ctx echo.Context, organi
 	return server.tenant.GetPublicTrackOrganization(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) GetOrganizationOwner(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.tenant.GetPublicTrackOrganizationOwner(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetOrganizationGroups(
 	ctx echo.Context,
 	organizationId int,
@@ -54,6 +59,21 @@ func (server *publicTrackOpenAPIServer) GetOrganizationUsersDetailed(
 ) error {
 	_ = organizationId
 	return server.tenant.GetPublicTrackOrganizationUsersDetailed(ctx, params)
+}
+
+func (server *publicTrackOpenAPIServer) GetOrganizationRoles(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.tenant.GetPublicTrackOrganizationRoles(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetOrganizationSubscription(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.tenant.GetPublicTrackOrganizationSubscription(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesStatistics(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.tenant.GetPublicTrackOrganizationWorkspacesStatistics(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) PutOrganization(ctx echo.Context, organizationId int) error {
