@@ -65,27 +65,51 @@ test.describe("Story: manage the running timer", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     const mainScroll = page.getByTestId("app-shell-main");
+    const scrollArea = page.getByTestId("tracking-timer-scroll-area");
     const weekRangeButton = page.getByRole("button", {
       name: /\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}/,
     });
 
+    await expect(scrollArea).toBeVisible();
     await expect(weekRangeButton).toBeVisible();
+
+    await mainScroll.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0;
+    });
+    await scrollArea.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0;
+    });
 
     const before = await weekRangeButton.evaluate((element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
       return { top: rect.top, windowScrollY: window.scrollY };
     });
 
-    await mainScroll.evaluate((element: HTMLElement) => {
-      element.scrollTop = 900;
-      element.dispatchEvent(new Event("scroll"));
-    });
+    const scrollAreaBox = await scrollArea.boundingBox();
+    if (!scrollAreaBox) {
+      throw new Error("Timer scroll area is not visible.");
+    }
+
+    await page.mouse.move(scrollAreaBox.x + scrollAreaBox.width / 2, scrollAreaBox.y + 80);
+    await page.mouse.wheel(0, 900);
 
     await expect
-      .poll(async () =>
-        mainScroll.evaluate((element: HTMLElement) => ({ scrollTop: element.scrollTop })),
-      )
-      .toMatchObject({ scrollTop: 900 });
+      .poll(async () => ({
+        main: await mainScroll.evaluate((element: HTMLElement) => element.scrollTop),
+        timer: await scrollArea.evaluate((element: HTMLElement) => element.scrollTop),
+      }))
+      .toEqual({
+        main: 0,
+        timer: expect.any(Number),
+      });
+
+    const afterScroll = await scrollArea.evaluate((element: HTMLElement) => ({
+      scrollHeight: element.scrollHeight,
+      scrollTop: element.scrollTop,
+    }));
+
+    expect(afterScroll.scrollHeight).toBeGreaterThan(afterScroll.scrollTop);
+    expect(afterScroll.scrollTop).toBeGreaterThan(0);
 
     const after = await weekRangeButton.evaluate((element: HTMLElement) => {
       const rect = element.getBoundingClientRect();

@@ -34,6 +34,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const sections = shellNavigationItems(session);
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
+  const isTimerRoute = location.pathname === "/timer";
   const profileInitial = (session.user.fullName || session.user.email || "P")
     .trim()
     .charAt(0)
@@ -176,10 +177,12 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         </aside>
 
         <main
-          className="min-w-0 flex-1 overflow-x-auto overflow-y-auto bg-[#161616]"
+          className={`min-w-0 flex-1 overflow-x-auto bg-[#161616] ${
+            isTimerRoute ? "overflow-y-hidden" : "overflow-y-auto"
+          }`}
           data-testid="app-shell-main"
         >
-          <div className="min-h-full">{children}</div>
+          <div className={isTimerRoute ? "h-full min-h-0" : "min-h-full"}>{children}</div>
         </main>
       </div>
     </div>
@@ -237,10 +240,17 @@ function RailButton({
   active?: boolean;
   icon: "bell" | "focus" | "help" | "plan" | "track";
 }): ReactElement {
+  const tooltipText = icon === "plan"
+    ? "opentoggl plan is comming"
+    : icon === "focus"
+      ? "opentoggl focus is comming"
+      : undefined;
+
   return (
     <button
       aria-label={icon}
-      className="flex h-10 w-full items-center justify-center py-[7px]"
+      className="group relative flex h-10 w-full items-center justify-center py-[7px]"
+      title={tooltipText}
       type="button"
     >
       <span
@@ -252,6 +262,11 @@ function RailButton({
       >
         <TrackingIcon className="size-4" name={icon} />
       </span>
+      {tooltipText ? (
+        <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded bg-[#3a3a3a] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+          {tooltipText}
+        </span>
+      ) : null}
     </button>
   );
 }
