@@ -19,11 +19,11 @@ export function WorkspaceSwitcher({
   }
 
   return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
-      Workspace
+    <label className="block">
+      <span className="sr-only">Workspace</span>
       <select
         aria-label="Workspace"
-        className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white"
+        className="h-10 w-full rounded-lg border border-white/8 bg-[#141416] px-3 text-sm font-medium text-white outline-none transition focus:border-[#b36cb8]"
         onChange={handleChange}
         value={String(currentWorkspaceId)}
       >

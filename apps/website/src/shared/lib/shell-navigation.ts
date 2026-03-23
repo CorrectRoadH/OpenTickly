@@ -1,16 +1,15 @@
 import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
 import {
-  buildWorkspaceGroupsPath,
   buildWorkspaceOverviewPath,
-  buildWorkspacePermissionsPath,
   buildWorkspaceReportsPath,
   buildWorkspaceSettingsPathWithSection,
 } from "./workspace-routing.ts";
 
 export type ShellNavigationSection = {
   items: Array<{
+    disabled?: boolean;
     label: string;
-    to: string;
+    to?: string;
   }>;
   title: string;
 };
@@ -21,7 +20,7 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       title: "Track",
       items: [
         {
-          label: "Time entries",
+          label: "Overview",
           to: buildWorkspaceOverviewPath(session.currentWorkspace.id),
         },
       ],
@@ -32,6 +31,10 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         {
           label: "Reports",
           to: buildWorkspaceReportsPath(session.currentWorkspace.id),
+        },
+        {
+          disabled: true,
+          label: "Approvals",
         },
       ],
     },
@@ -51,16 +54,20 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           to: `/workspaces/${session.currentWorkspace.id}/members`,
         },
         {
-          label: "Groups",
-          to: buildWorkspaceGroupsPath(session.currentWorkspace.id),
-        },
-        {
-          label: "Tasks",
-          to: `/workspaces/${session.currentWorkspace.id}/tasks`,
+          disabled: true,
+          label: "Invoices",
         },
         {
           label: "Tags",
           to: `/workspaces/${session.currentWorkspace.id}/tags`,
+        },
+        {
+          disabled: true,
+          label: "Goals",
+        },
+        {
+          disabled: true,
+          label: "Integrations",
         },
       ],
     },
@@ -68,12 +75,8 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       title: "Admin",
       items: [
         {
-          label: "Permissions",
-          to: buildWorkspacePermissionsPath(session.currentWorkspace.id),
-        },
-        {
-          label: "Profile",
-          to: "/profile",
+          disabled: true,
+          label: "Subscription",
         },
         {
           label: "Settings",

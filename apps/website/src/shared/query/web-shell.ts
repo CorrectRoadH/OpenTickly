@@ -3,21 +3,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   LoginRequestDto,
   RegisterRequestDto,
-  TaskCreateRequestDto,
   UpdateWorkspaceSettingsRequestDto,
   WorkspaceMemberInvitationRequestDto,
   WebWorkspaceSettingsDto,
 } from "../api/web-contract.ts";
-import type {
-  MePayload,
-  ModelsAllPreferences,
-} from "../api/generated/public-track/types.gen.ts";
-import { unwrapWebApiResult } from "../api/web-client.ts";
+import type { MePayload, ModelsAllPreferences } from "../api/generated/public-track/types.gen.ts";
+import { WebApiError, unwrapWebApiResult } from "../api/web-client.ts";
 import {
+  getCurrentTimeEntry,
   getMe,
   getOrganization,
   getPreferences,
   getProjects,
+  getTimeEntries,
   getWorkspaceProjectUsers,
   getWorkspaceClients,
   getWorkspaceGroups,
@@ -36,7 +34,6 @@ import {
   postWorkspaceTag,
 } from "../api/public/track/index.ts";
 import {
-  createTask,
   disableWorkspaceMember,
   getWebSession,
   getWorkspacePermissions,
@@ -60,6 +57,9 @@ const workspacePermissionsQueryKey = (workspaceId: number) =>
   ["workspace-permissions", workspaceId] as const;
 const projectsQueryKey = (workspaceId: number, status: ProjectListStatusFilter) =>
   ["projects", workspaceId, status] as const;
+const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
+  ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
+const currentTimeEntryQueryKey = ["current-time-entry"] as const;
 
 export type WorkspacePermissionsDto = Pick<
   WebWorkspaceSettingsDto,
@@ -134,8 +134,7 @@ export function useUpdateProfileMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: MePayload) =>
-      unwrapWebApiResult(putMe({ body: request })),
+    mutationFn: (request: MePayload) => unwrapWebApiResult(putMe({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(profileQueryKey, data);
       void queryClient.invalidateQueries({
@@ -400,6 +399,45 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
   });
 }
 
+export function useTimeEntriesQuery(options?: {
+  endDate?: string;
+  includeSharing?: boolean;
+  startDate?: string;
+}) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getTimeEntries({
+          query: {
+            end_date: options?.endDate,
+            include_sharing: options?.includeSharing,
+            meta: true,
+            start_date: options?.startDate,
+          },
+        }),
+      ),
+    queryKey: timeEntriesQueryKey(options?.startDate, options?.endDate, options?.includeSharing),
+  });
+}
+
+export function useCurrentTimeEntryQuery() {
+  return useQuery({
+    queryFn: async () => {
+      try {
+        return await unwrapWebApiResult(getCurrentTimeEntry());
+      } catch (error) {
+        if (error instanceof WebApiError && error.status === 404) {
+          return undefined;
+        }
+
+        throw error;
+      }
+    },
+    queryKey: currentTimeEntryQueryKey,
+    retry: false,
+  });
+}
+
 export function useCreateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
@@ -639,17 +677,8 @@ export function useCreateTaskMutation(workspaceId: number, projectId?: number) {
   return useMutation({
     mutationFn: async (name: string) => {
       if (projectId == null) {
-        await unwrapWebApiResult(
-          createTask({
-            body: {
-              name,
-              workspace_id: workspaceId,
-            } satisfies TaskCreateRequestDto,
-          }),
-        );
-        return;
+        throw new Error("Project-scoped task creation requires a project ID.");
       }
-
       await unwrapWebApiResult(
         postWorkspaceProjectTasks({
           body: {

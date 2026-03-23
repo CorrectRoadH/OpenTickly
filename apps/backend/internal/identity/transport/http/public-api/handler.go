@@ -29,7 +29,7 @@ func (handler *Handler) GetMe(ctx context.Context, credentials domain.BasicCrede
 
 	return Response{
 		StatusCode: 200,
-		Body: currentUserBody(user),
+		Body:       currentUserBody(user),
 	}
 }
 
@@ -46,7 +46,7 @@ func (handler *Handler) PutMe(ctx context.Context, credentials domain.BasicCrede
 
 	return Response{
 		StatusCode: 200,
-		Body: currentUserBody(updated),
+		Body:       currentUserBody(updated),
 	}
 }
 

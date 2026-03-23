@@ -648,7 +648,6 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 		{method: http.MethodPost, path: "/web/v1/auth/login", body: map[string]any{"email": "routes@example.com"}},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/settings", body: map[string]any{"workspace": map[string]any{"name": "Updated"}}, cookie: sessionCookie},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/permissions", body: map[string]any{"only_admins_may_create_projects": true}, cookie: sessionCookie},
-		{method: http.MethodPost, path: "/web/v1/tasks", body: map[string]any{"workspace_id": 1}, cookie: sessionCookie},
 		{method: http.MethodPost, path: "/web/v1/workspaces/1/members/invitations", body: map[string]any{"role": "member"}, cookie: sessionCookie},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/members/1/rate-cost", body: map[string]any{"hourly_rate": 10}, cookie: sessionCookie},
 	} {
@@ -656,86 +655,6 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("expected %s %s to return 400 for missing required fields, got %d body=%s", tc.method, tc.path, response.Code, response.Body.String())
 		}
-	}
-}
-
-func TestWebTaskCreateRoutePersistsCatalogTask(t *testing.T) {
-	database := pgtest.Open(t)
-
-	app, err := NewApp(Config{
-		ServiceName: "opentoggl-api",
-		Server: ServerConfig{
-			ListenAddress: ":0",
-		},
-		Database: DatabaseConfig{
-			PrimaryDSN: database.ConnString(),
-		},
-		Redis: RedisConfig{
-			Address: "redis://127.0.0.1:6379/0",
-		},
-	})
-	if err != nil {
-		t.Fatalf("NewApp returned error: %v", err)
-	}
-	t.Cleanup(app.Platform.Database.Close)
-
-	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "catalog@example.com",
-		"fullname": "Catalog Test",
-		"password": "secret1",
-	}, "")
-	if register.Code != http.StatusCreated {
-		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
-	}
-	sessionCookie := register.Header().Get("Set-Cookie")
-	var registerBody struct {
-		User struct {
-			ID int64 `json:"id"`
-		} `json:"user"`
-		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
-	}
-	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
-	if registerBody.CurrentWorkspaceID == nil {
-		t.Fatalf("expected workspace bootstrap id, got %#v", registerBody)
-	}
-
-	response := performJSONRequest(t, app, http.MethodPost, "/web/v1/tasks", map[string]any{
-		"workspace_id": *registerBody.CurrentWorkspaceID,
-		"name":         "Inbox triage",
-	}, sessionCookie)
-	if response.Code != http.StatusCreated {
-		t.Fatalf("expected POST /web/v1/tasks to return 201, got %d body=%s", response.Code, response.Body.String())
-	}
-
-	var responseBody struct {
-		ID          int    `json:"id"`
-		Name        string `json:"name"`
-		Active      bool   `json:"active"`
-		WorkspaceID int    `json:"workspace_id"`
-	}
-	mustDecodeJSON(t, response.Body.Bytes(), &responseBody)
-	if responseBody.Name != "Inbox triage" || !responseBody.Active || responseBody.WorkspaceID != int(*registerBody.CurrentWorkspaceID) {
-		t.Fatalf("unexpected task create response: %#v", responseBody)
-	}
-
-	var persisted struct {
-		Name        string
-		WorkspaceID int64
-		Active      bool
-		CreatedBy   *int64
-	}
-	if err := database.Pool.QueryRow(
-		context.Background(),
-		"select name, workspace_id, active, created_by from catalog_tasks where id = $1",
-		responseBody.ID,
-	).Scan(&persisted.Name, &persisted.WorkspaceID, &persisted.Active, &persisted.CreatedBy); err != nil {
-		t.Fatalf("expected created task row: %v", err)
-	}
-	if persisted.Name != "Inbox triage" || persisted.WorkspaceID != *registerBody.CurrentWorkspaceID || !persisted.Active {
-		t.Fatalf("unexpected persisted task row: %#v", persisted)
-	}
-	if persisted.CreatedBy == nil || *persisted.CreatedBy != registerBody.User.ID {
-		t.Fatalf("unexpected persisted created_by: %#v", persisted.CreatedBy)
 	}
 }
 
@@ -1579,6 +1498,79 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	}
 }
 
+func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "session-track@example.com",
+		"fullname": "Session Track User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register response to set session cookie")
+	}
+
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	if registerBody.CurrentWorkspaceID == nil {
+		t.Fatalf("expected bootstrap workspace id, got %#v", registerBody)
+	}
+
+	me := performJSONRequestWithMetadata(t, app, http.MethodGet, "/api/v9/me", nil, sessionCookie, "")
+	if me.Code != http.StatusOK {
+		t.Fatalf("expected session-auth /api/v9/me status 200, got %d body=%s", me.Code, me.Body.String())
+	}
+
+	var meBody map[string]any
+	mustDecodeJSON(t, me.Body.Bytes(), &meBody)
+	if meBody["email"] != "session-track@example.com" {
+		t.Fatalf("expected session-auth /api/v9/me email, got %#v", meBody["email"])
+	}
+
+	createTag := performJSONRequestWithMetadata(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(*registerBody.CurrentWorkspaceID)+"/tags",
+		map[string]any{"name": "session-created"},
+		sessionCookie,
+		"",
+	)
+	if createTag.Code != http.StatusOK {
+		t.Fatalf("expected session-auth tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
+	}
+
+	var tagBody []map[string]any
+	mustDecodeJSON(t, createTag.Body.Bytes(), &tagBody)
+	if len(tagBody) != 1 || tagBody[0]["name"] != "session-created" {
+		t.Fatalf("expected created tag from session auth, got %#v", tagBody)
+	}
+}
+
 func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	database := pgtest.Open(t)
 
@@ -1757,14 +1749,6 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 		{
 			method: http.MethodGet,
 			path:   "/web/v1/workspaces/" + intToString(*firstRegisterBody.CurrentWorkspaceID) + "/quota",
-		},
-		{
-			method: http.MethodPost,
-			path:   "/web/v1/tasks",
-			body: map[string]any{
-				"workspace_id": *firstRegisterBody.CurrentWorkspaceID,
-				"name":         "Cross Workspace",
-			},
 		},
 		{
 			method: http.MethodGet,

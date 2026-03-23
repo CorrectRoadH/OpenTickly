@@ -44,7 +44,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
 
   async function handleCreateTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (trimmedTaskName.length === 0) {
+    if (!hasProjectScope || trimmedTaskName.length === 0) {
       return;
     }
 
@@ -64,9 +64,11 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
             the shared tracking catalog.
           </p>
         </div>
-        <AppButton onClick={() => taskNameInputRef.current?.focus()} type="button">
-          Create task
-        </AppButton>
+        {hasProjectScope ? (
+          <AppButton onClick={() => taskNameInputRef.current?.focus()} type="button">
+            Create task
+          </AppButton>
+        ) : null}
       </div>
 
       {hasProjectScope ? (
@@ -100,21 +102,34 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
         </section>
       ) : null}
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="tasks-create-form" onSubmit={handleCreateTask}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
-          Task name
-          <input
-            ref={taskNameInputRef}
-            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
-            value={taskName}
-            onChange={(event) => setTaskName(event.target.value)}
-          />
-        </label>
-        <AppButton disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending} type="submit">
-          Save task
-        </AppButton>
-        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
-      </form>
+      {hasProjectScope ? (
+        <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="tasks-create-form" onSubmit={handleCreateTask}>
+          <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
+            Task name
+            <input
+              ref={taskNameInputRef}
+              className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
+              value={taskName}
+              onChange={(event) => setTaskName(event.target.value)}
+            />
+          </label>
+          <AppButton disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending} type="submit">
+            Save task
+          </AppButton>
+          {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
+        </form>
+      ) : (
+        <section
+          className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-4"
+          data-testid="tasks-create-unavailable"
+        >
+          <p className="text-sm font-semibold text-white">Create tasks from a project context.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-400">
+            Track API creates tasks through a project entry point. Open project tasks from a
+            project row to add or manage tasks for that project.
+          </p>
+        </section>
+      )}
 
       {tasks.length > 0 ? (
         <ul className="mt-6 divide-y divide-white/8" aria-label="Tasks list" data-testid="tasks-list">
@@ -145,8 +160,9 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
         >
           <p className="font-semibold text-white">No tasks in this workspace yet.</p>
           <p className="mt-2 text-slate-400">
-            Create a task to keep project planning and tracked work connected from the same
-            catalog surface.
+            {hasProjectScope
+              ? "Create a task to keep project planning and tracked work connected from the same catalog surface."
+              : "Open a project task entry point to create the first task for that project."}
           </p>
         </section>
       )}

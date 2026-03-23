@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const shellViewSearchSchema = z.object({
-  view: z.enum(["list", "calendar"]).catch("list"),
+  view: z.enum(["list", "calendar", "timesheet"]).catch("list"),
 });
 
 export type ShellViewMode = z.infer<typeof shellViewSearchSchema>["view"];

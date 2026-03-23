@@ -39,6 +39,7 @@ export function InviteStatusJoinedPage({
                 params={{
                   workspaceId: String(workspaceId),
                 }}
+                search={{ view: "list" }}
                 to="/workspaces/$workspaceId"
               >
                 Open workspace

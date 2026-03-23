@@ -205,22 +205,6 @@ export type UpdateWorkspacePermissionsRequest = {
     limit_public_project_data: boolean;
 };
 
-export type TaskListEnvelope = {
-    tasks: Array<TaskSummary>;
-};
-
-export type TaskSummary = {
-    id: number;
-    name: string;
-    workspace_id: number;
-    active: boolean;
-};
-
-export type TaskCreateRequest = {
-    workspace_id: number;
-    name: string;
-};
-
 export type WorkspaceMember = {
     id: number;
     workspace_id: number;
@@ -597,19 +581,3 @@ export type InviteWorkspaceMemberResponses = {
 };
 
 export type InviteWorkspaceMemberResponse = InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
-
-export type CreateTaskData = {
-    body: TaskCreateRequest;
-    path?: never;
-    query?: never;
-    url: '/web/v1/tasks';
-};
-
-export type CreateTaskResponses = {
-    /**
-     * Created task
-     */
-    201: TaskSummary;
-};
-
-export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginRuntimeUser, registerRuntimeUser } from "./fixtures/runtime-auth.ts";
+import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: manage account and tenant settings from the shell", () => {
   test("Given a newly registered account, when the user updates profile details, then the profile form keeps the saved values after reload", async ({
@@ -11,16 +11,16 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     const fullName = `Profile User ${Date.now()}`;
     const timezone = "Asia/Shanghai";
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Original Profile User",
       password,
     });
 
     await page.context().clearCookies();
-    await loginRuntimeUser(page, test.info(), { email, password });
+    await loginE2eUser(page, test.info(), { email, password });
 
-    await page.getByRole("link", { name: "Profile" }).click();
+    await page.goto(new URL("/profile", page.url()).toString());
 
     await expect(page).toHaveURL(/\/profile$/);
     await expect(page.getByTestId("profile-page")).toBeVisible();
@@ -47,14 +47,14 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     const password = "secret-pass";
     const workspaceName = `Workspace ${Date.now()}`;
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Settings Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Settings" }).click();

@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { CreateTaskData, CreateTaskResponses, DisableWorkspaceMemberData, DisableWorkspaceMemberResponses, GetWebSessionData, GetWebSessionResponses, GetWorkspaceCapabilitiesData, GetWorkspaceCapabilitiesResponses, GetWorkspacePermissionsData, GetWorkspacePermissionsResponses, GetWorkspaceQuotaData, GetWorkspaceQuotaResponses, GetWorkspaceSettingsData, GetWorkspaceSettingsResponses, InviteWorkspaceMemberData, InviteWorkspaceMemberResponses, ListWorkspaceMembersData, ListWorkspaceMembersResponses, LoginWebUserData, LoginWebUserResponses, LogoutWebUserData, LogoutWebUserResponses, RegisterWebUserData, RegisterWebUserResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberResponses, RestoreWorkspaceMemberData, RestoreWorkspaceMemberResponses, UpdateWorkspaceMemberRateCostData, UpdateWorkspaceMemberRateCostResponses, UpdateWorkspacePermissionsData, UpdateWorkspacePermissionsResponses, UpdateWorkspaceSettingsData, UpdateWorkspaceSettingsResponses } from './types.gen.js';
+import type { DisableWorkspaceMemberData, DisableWorkspaceMemberResponses, GetWebSessionData, GetWebSessionResponses, GetWorkspaceCapabilitiesData, GetWorkspaceCapabilitiesResponses, GetWorkspacePermissionsData, GetWorkspacePermissionsResponses, GetWorkspaceQuotaData, GetWorkspaceQuotaResponses, GetWorkspaceSettingsData, GetWorkspaceSettingsResponses, InviteWorkspaceMemberData, InviteWorkspaceMemberResponses, ListWorkspaceMembersData, ListWorkspaceMembersResponses, LoginWebUserData, LoginWebUserResponses, LogoutWebUserData, LogoutWebUserResponses, RegisterWebUserData, RegisterWebUserResponses, RemoveWorkspaceMemberData, RemoveWorkspaceMemberResponses, RestoreWorkspaceMemberData, RestoreWorkspaceMemberResponses, UpdateWorkspaceMemberRateCostData, UpdateWorkspaceMemberRateCostResponses, UpdateWorkspacePermissionsData, UpdateWorkspacePermissionsResponses, UpdateWorkspaceSettingsData, UpdateWorkspaceSettingsResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -133,18 +133,6 @@ export const updateWorkspaceMemberRateCost = <ThrowOnError extends boolean = fal
  */
 export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(options: Options<InviteWorkspaceMemberData, ThrowOnError>) => (options.client ?? client).post<InviteWorkspaceMemberResponses, unknown, ThrowOnError>({
     url: '/web/v1/workspaces/{workspace_id}/members/invitations',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Create a task
- */
-export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>) => (options.client ?? client).post<CreateTaskResponses, unknown, ThrowOnError>({
-    url: '/web/v1/tasks',
     ...options,
     headers: {
         'Content-Type': 'application/json',

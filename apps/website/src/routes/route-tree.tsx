@@ -9,6 +9,7 @@ import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import { parseProjectsSearch } from "../shared/url-state/projects-location.ts";
+import { parseShellViewSearch } from "../shared/url-state/shell-view.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
 import { parseWorkspaceSettingsSearch } from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
@@ -64,6 +65,7 @@ const profileRoute = createRoute({
 const workspaceOverviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId",
+  validateSearch: parseShellViewSearch,
   component: WorkspaceOverviewRouteComponent,
 });
 
@@ -204,10 +206,7 @@ function InviteStatusJoinedRouteComponent() {
   const search = inviteStatusJoinedRoute.useSearch();
 
   return (
-    <InviteStatusJoinedPage
-      workspaceId={search.workspaceId}
-      workspaceName={search.workspaceName}
-    />
+    <InviteStatusJoinedPage workspaceId={search.workspaceId} workspaceName={search.workspaceName} />
   );
 }
 
@@ -235,9 +234,10 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
 
 function WorkspaceOverviewRouteComponent() {
   const params = workspaceOverviewRoute.useParams();
+  const search = workspaceOverviewRoute.useSearch();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(<WorkspaceOverviewPage />, workspaceId);
+  return renderProtectedRoute(<WorkspaceOverviewPage view={search.view} />, workspaceId);
 }
 
 function WorkspaceReportsRouteComponent() {
@@ -362,10 +362,7 @@ type ProtectedRouteBoundaryProps = {
   requestedWorkspaceId?: number;
 };
 
-function ProtectedRouteBoundary({
-  children,
-  requestedWorkspaceId,
-}: ProtectedRouteBoundaryProps) {
+function ProtectedRouteBoundary({ children, requestedWorkspaceId }: ProtectedRouteBoundaryProps) {
   const sessionQuery = useSessionBootstrapQuery();
 
   if (sessionQuery.isPending) {
@@ -422,7 +419,5 @@ function SessionUnavailablePanel() {
 }
 
 function isSessionAccessDenied(error: unknown) {
-  return (
-    error instanceof WebApiError && (error.status === 401 || error.status === 403)
-  );
+  return error instanceof WebApiError && (error.status === 401 || error.status === 403);
 }

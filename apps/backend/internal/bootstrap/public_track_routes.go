@@ -9,7 +9,6 @@ import (
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
-	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -96,8 +95,8 @@ func publicTrackCredentials(ctx echo.Context) (identitydomain.BasicCredentials, 
 	}, nil
 }
 
-func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error) {
-	if cached, ok := ctx.Get(publicTrackUserContextKey).(*identityapplication.UserSnapshot); ok && cached != nil {
+func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*application.UserSnapshot, error) {
+	if cached, ok := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot); ok && cached != nil {
 		return cached, nil
 	}
 

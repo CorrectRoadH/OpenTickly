@@ -504,34 +504,6 @@
           }
         }
       }
-    },
-    "/web/v1/tasks": {
-      "post": {
-        "summary": "Create a task",
-        "operationId": "create-task",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TaskCreateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created task",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaskSummary"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -1199,48 +1171,6 @@
           "only_admins_see_team_dashboard",
           "limit_public_project_data"
         ]
-      },
-      "TaskListEnvelope": {
-        "type": "object",
-        "properties": {
-          "tasks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TaskSummary"
-            }
-          }
-        },
-        "required": ["tasks"]
-      },
-      "TaskSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          },
-          "workspace_id": {
-            "type": "integer"
-          },
-          "active": {
-            "type": "boolean"
-          }
-        },
-        "required": ["id", "name", "workspace_id", "active"]
-      },
-      "TaskCreateRequest": {
-        "type": "object",
-        "properties": {
-          "workspace_id": {
-            "type": "integer"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": ["workspace_id", "name"]
       },
       "WorkspaceMember": {
         "type": "object",

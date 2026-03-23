@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginRuntimeUser, registerRuntimeUser } from "./fixtures/runtime-auth.ts";
+import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: update workspace permission policy", () => {
   test("Given a newly registered admin account, when permissions are saved and the page reloads, then the toggles persist", async ({
@@ -9,14 +9,14 @@ test.describe("Story: update workspace permission policy", () => {
     const email = `permission-runtime-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Permission Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
     const permissionPath = `/workspaces/${workspaceId}/permissions`;
 

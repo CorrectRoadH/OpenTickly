@@ -19,6 +19,9 @@ export default defineConfig(({ mode }) => {
         "/healthz": {
           target: webProxyTarget,
         },
+        "/api/v9": {
+          target: webProxyTarget,
+        },
         "/web/v1": {
           target: webProxyTarget,
         },

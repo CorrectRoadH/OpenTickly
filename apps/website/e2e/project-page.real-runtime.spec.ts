@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginRuntimeUser, registerRuntimeUser } from "./fixtures/runtime-auth.ts";
+import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: browse the projects surface", () => {
   test("Given a newly registered account, when the user opens projects, then the shell shows creation controls and an empty-state catalog", async ({
@@ -9,14 +9,14 @@ test.describe("Story: browse the projects surface", () => {
     const email = `project-runtime-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Project Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Projects" }).click();

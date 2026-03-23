@@ -30,10 +30,6 @@ func (server *webOpenAPIServer) GetWebSession(ctx echo.Context) error {
 	return server.handlers.session(ctx)
 }
 
-func (server *webOpenAPIServer) CreateTask(ctx echo.Context) error {
-	return server.handlers.createTask(ctx)
-}
-
 func (server *webOpenAPIServer) GetWorkspaceCapabilities(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.handlers.workspaceCapabilities(ctx)

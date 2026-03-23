@@ -1,10 +1,10 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
-export type RuntimeWorkspaceSession = {
+export type E2eWorkspaceSession = {
   currentWorkspaceId: number;
 };
 
-export async function registerRuntimeUser(
+export async function registerE2eUser(
   page: Page,
   testInfo: TestInfo,
   options: {
@@ -20,25 +20,27 @@ export async function registerRuntimeUser(
 
   await page.getByRole("button", { name: "Register" }).click();
 
-  await page.waitForURL(/\/workspaces\/\d+$/);
-  await expect(page.getByRole("heading", { name: "Time entries" })).toBeVisible();
+  await page.waitForURL(/\/workspaces\/\d+(?:\?.*)?$/);
+  const currentWorkspaceId = extractWorkspaceId(page.url());
+  await expect(page.getByTestId("app-shell")).toBeVisible();
+  await expect(page.getByLabel("Workspace")).toHaveValue(String(currentWorkspaceId));
 }
 
-export async function loginRuntimeUser(
+export async function loginE2eUser(
   page: Page,
   testInfo: TestInfo,
   options: {
     email: string;
     password: string;
   },
-): Promise<RuntimeWorkspaceSession> {
+): Promise<E2eWorkspaceSession> {
   await page.goto(resolveAppUrl(resolveAppBaseUrl(testInfo), "/login"));
   await page.getByLabel("Email").fill(options.email);
   await page.getByLabel("Password").fill(options.password);
 
   await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL(/\/workspaces\/\d+$/);
-  await expect(page.getByRole("heading", { name: "Time entries" })).toBeVisible();
+  await page.waitForURL(/\/workspaces\/\d+(?:\?.*)?$/);
+  await expect(page.getByTestId("app-shell")).toBeVisible();
 
   const currentWorkspaceId = extractWorkspaceId(page.url());
 
@@ -64,7 +66,7 @@ function resolveAppUrl(appBaseUrl: string, pathname: string): string {
 }
 
 function extractWorkspaceId(url: string): number {
-  const match = url.match(/\/workspaces\/(\d+)$/);
+  const match = url.match(/\/workspaces\/(\d+)(?:\?.*)?$/);
 
   if (!match) {
     throw new Error(`Expected workspace URL after auth flow, got ${url}`);

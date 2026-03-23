@@ -25,6 +25,7 @@ import (
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
+	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
@@ -57,9 +58,15 @@ type routeHandlers struct {
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
 	billingApp    *billingapplication.Service
+	referenceApp  *platformapplication.ReferenceService
 }
 
 func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
+	referenceService, err := platformapplication.NewReferenceService()
+	if err != nil {
+		return nil, err
+	}
+
 	billingService, err := billingapplication.NewService(
 		billingpostgres.NewAccountRepository(pool),
 		billingpostgres.NewWorkspaceOwnershipLookup(pool),
@@ -126,6 +133,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,
 		billingApp:    billingService,
+		referenceApp:  referenceService,
 	}, nil
 }
 
@@ -153,49 +161,6 @@ func (handlers *routeHandlers) logout(ctx echo.Context) error {
 func (handlers *routeHandlers) session(ctx echo.Context) error {
 	response := handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx))
 	return writeIdentityResponse(ctx, response)
-}
-
-func (handlers *routeHandlers) createTask(ctx echo.Context) error {
-	if response, ok := handlers.authorizeSession(ctx); !ok {
-		return response
-	}
-
-	var request struct {
-		WorkspaceID int64  `json:"workspace_id"`
-		Name        string `json:"name"`
-	}
-	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	if err := handlers.requireCurrentSessionWorkspace(ctx, request.WorkspaceID); err != nil {
-		return err
-	}
-
-	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
-	}
-
-	task, err := handlers.catalogApp.CreateTask(ctx.Request().Context(), catalogapplication.CreateTaskCommand{
-		WorkspaceID: request.WorkspaceID,
-		CreatedBy:   user.ID,
-		Name:        request.Name,
-	})
-	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-
-	return ctx.JSON(http.StatusCreated, struct {
-		Active      bool   `json:"active"`
-		Id          int    `json:"id"`
-		Name        string `json:"name"`
-		WorkspaceID int    `json:"workspace_id"`
-	}{
-		Active:      task.Active,
-		Id:          int(task.ID),
-		Name:        task.Name,
-		WorkspaceID: int(task.WorkspaceID),
-	})
 }
 
 func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {

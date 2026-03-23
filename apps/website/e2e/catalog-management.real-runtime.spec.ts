@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { loginRuntimeUser, registerRuntimeUser } from "./fixtures/runtime-auth.ts";
+import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: manage catalog surfaces from the workspace shell", () => {
   test("Given a newly registered account, when the user creates a group, then the group appears in the workspace directory", async ({
@@ -10,17 +10,17 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     const password = "secret-pass";
     const groupName = `Ops Group ${Date.now()}`;
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Groups Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
-    await page.getByRole("link", { name: "Groups" }).click();
+    await page.goto(new URL(`/workspaces/${workspaceId}/groups`, page.url()).toString());
 
     await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/groups$`));
     await expect(page.getByTestId("groups-page")).toBeVisible();
@@ -43,14 +43,14 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     const password = "secret-pass";
     const tagName = `Urgent ${Date.now()}`;
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Tags Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Tags" }).click();
@@ -74,22 +74,31 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
   }) => {
     const email = `tasks-runtime-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
+    const projectName = `Task Project ${Date.now()}`;
     const taskName = `Design QA ${Date.now()}`;
 
-    await registerRuntimeUser(page, test.info(), {
+    await registerE2eUser(page, test.info(), {
       email,
       fullName: "Tasks Runtime User",
       password,
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginRuntimeUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
-    await page.getByRole("link", { name: "Tasks" }).click();
+    await page.getByRole("link", { name: "Projects" }).click();
+    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/projects(?:\\?status=all)?$`));
+    await page.getByTestId("projects-create-form").getByLabel("Project name").fill(projectName);
+    await page.getByTestId("projects-create-form").getByRole("button", { name: "Save project" }).click();
+    await expect(page.getByTestId("projects-list")).toContainText(projectName);
+    await page.getByRole("link", { name: `Project tasks for ${projectName}` }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/tasks$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/workspaces/${workspaceId}/tasks\\?projectId=\\d+$`),
+    );
     await expect(page.getByTestId("tasks-page")).toBeVisible();
+    await expect(page.getByTestId("tasks-context-bar")).toBeVisible();
 
     const form = page.getByTestId("tasks-create-form");
     await form.getByLabel("Task name").fill(taskName);

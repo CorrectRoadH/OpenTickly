@@ -107,18 +107,18 @@ export function WorkspaceSettingsPage({
 
       <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-tabs">
         <div className="flex flex-wrap gap-3">
-          <Link
+          <a
             className={sectionLinkClass(section === "general")}
-            to={buildWorkspaceSettingsPathWithSection(workspaceId, "general")}
+            href={buildWorkspaceSettingsPathWithSection(workspaceId, "general")}
           >
             General
-          </Link>
-          <Link
+          </a>
+          <a
             className={sectionLinkClass(section === "branding")}
-            to={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
+            href={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
           >
             Branding
-          </Link>
+          </a>
         </div>
       </AppPanel>
 
