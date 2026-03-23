@@ -8,7 +8,7 @@ import (
 )
 
 /**
- * ConfigFromEnvironment returns runtime config from environment variables and
+ * ConfigFromEnvironment returns startup config from environment variables and
  * repo-root `.env` files, while requiring explicit env for network-boundary
  * settings such as PORT.
  */
@@ -76,12 +76,12 @@ func applyRequiredPortOverride(target *string, value string) error {
 }
 
 /**
- * repositoryEnvironmentGetter resolves runtime config from the process
+ * repositoryEnvironmentGetter resolves startup config from the process
  * environment first, then falls back to repo-root `.env` files for
  * source-based local development.
  */
 func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) string, error) {
-	if hasExplicitRuntimeEnvironment(getEnv) {
+	if hasExplicitStartupEnvironment(getEnv) {
 		return getEnv, nil
 	}
 
@@ -99,11 +99,11 @@ func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) strin
 }
 
 /**
- * hasExplicitRuntimeEnvironment reports whether the process environment already
- * provides the required runtime inputs for deployed or otherwise non-local
+ * hasExplicitStartupEnvironment reports whether the process environment already
+ * provides the required startup inputs for deployed or otherwise non-local
  * startup paths.
  */
-func hasExplicitRuntimeEnvironment(getEnv func(string) string) bool {
+func hasExplicitStartupEnvironment(getEnv func(string) string) bool {
 	return strings.TrimSpace(getEnv("PORT")) != "" &&
 		strings.TrimSpace(getEnv("DATABASE_URL")) != "" &&
 		strings.TrimSpace(getEnv("REDIS_URL")) != ""

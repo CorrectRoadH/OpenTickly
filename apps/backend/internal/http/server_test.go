@@ -223,7 +223,7 @@ func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 		nil,
 		ServerOptions{
 			Logger: logger,
-			Readiness: web.NewRuntimeReadinessProbe(web.RuntimeReadinessConfig{
+			Readiness: web.NewStartupReadinessProbe(web.StartupReadinessConfig{
 				Service:     "opentoggl",
 				DatabaseURL: "postgres://opentoggl@" + closedAddress + "/opentoggl",
 				RedisURL:    "redis://" + redisListener.Addr().String() + "/0",

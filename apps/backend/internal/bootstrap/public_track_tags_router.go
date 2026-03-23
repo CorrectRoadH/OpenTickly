@@ -6,37 +6,41 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceTag(
+func (server *publicTrackOpenAPIServer) GetTags(ctx echo.Context) error {
+	return server.catalog.GetPublicTrackTags(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceTag(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTagParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackTags(ctx)
+	return server.catalog.GetPublicTrackTags(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceTag(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceTag(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.postPublicTrackTags(ctx)
+	return server.catalog.PostPublicTrackTags(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceTag(
+func (server *publicTrackOpenAPIServer) PutWorkspaceTag(
 	ctx echo.Context,
 	workspaceId int,
 	tagId int,
 ) error {
 	_ = workspaceId
 	_ = tagId
-	return server.runtime.putPublicTrackTag(ctx)
+	return server.catalog.PutPublicTrackTag(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceTag(
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceTag(
 	ctx echo.Context,
 	workspaceId int,
 	tagId int,
 ) error {
 	_ = workspaceId
 	_ = tagId
-	return server.runtime.deletePublicTrackTag(ctx)
+	return server.catalog.DeletePublicTrackTag(ctx)
 }

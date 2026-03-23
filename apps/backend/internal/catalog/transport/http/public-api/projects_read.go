@@ -100,6 +100,31 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, projects)
 }
 
+func (handler *Handler) GetPublicTrackProjectTemplates(ctx echo.Context) error {
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	workspaceID, err := handler.publicTrackWorkspaceID(ctx)
+	if err != nil {
+		return err
+	}
+
+	views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectsFilter{
+		OnlyTemplates: true,
+		Page:          1,
+		PerPage:       200,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
+	for _, view := range views {
+		projects = append(projects, projectViewToAPI(view))
+	}
+	return ctx.JSON(http.StatusOK, projects)
+}
+
 func (handler *Handler) GetPublicTrackProject(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {

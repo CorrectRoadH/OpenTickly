@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
 )
@@ -229,6 +230,37 @@ func (service *Service) UpdatePreferences(ctx context.Context, userID int64, cli
 		return err
 	}
 	return service.users.Save(ctx, user)
+}
+
+func (service *Service) ListAlphaFeatures(ctx context.Context, userID int64, client string) ([]domain.AlphaFeature, error) {
+	if err := validatePreferencesClient(client); err != nil {
+		return nil, err
+	}
+
+	user, err := service.users.ByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	enabled := make(map[string]bool, len(user.Preferences().AlphaFeatures))
+	for _, feature := range user.Preferences().AlphaFeatures {
+		enabled[feature.Code] = feature.Enabled
+	}
+
+	codes := make([]string, 0, len(service.knownAlphaFeatures))
+	for code := range service.knownAlphaFeatures {
+		codes = append(codes, code)
+	}
+	sort.Strings(codes)
+
+	features := make([]domain.AlphaFeature, 0, len(codes))
+	for _, code := range codes {
+		features = append(features, domain.AlphaFeature{
+			Code:    code,
+			Enabled: enabled[code],
+		})
+	}
+	return features, nil
 }
 
 func (service *Service) ResetAPIToken(ctx context.Context, userID int64) (string, error) {

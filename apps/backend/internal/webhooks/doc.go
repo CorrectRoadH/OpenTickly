@@ -1,2 +1,2 @@
-// Package webhooks anchors the fixed module boundary for subscription and delivery runtime work.
+// Package webhooks anchors the fixed module boundary for subscription and delivery work.
 package webhooks

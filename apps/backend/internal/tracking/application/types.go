@@ -231,6 +231,17 @@ type CreateExpenseCommand struct {
 	DateOfExpense time.Time
 }
 
+type TimelineEventView struct {
+	ID        int64
+	UserID    int64
+	DesktopID string
+	Filename  string
+	Title     string
+	StartTime int
+	EndTime   int
+	Idle      bool
+}
+
 type Store interface {
 	CreateTimeEntry(context.Context, CreateTimeEntryRecord) (TimeEntryView, error)
 	GetTimeEntry(context.Context, int64, int64, int64) (TimeEntryView, bool, error)
@@ -260,6 +271,10 @@ type Store interface {
 
 	ListExpenses(context.Context, int64, int64) ([]ExpenseView, error)
 	CreateExpense(context.Context, CreateExpenseRecord) (ExpenseView, error)
+
+	ListTimelineEvents(context.Context, int64, int, int) ([]TimelineEventView, error)
+	ReplaceTimelineEvents(context.Context, int64, []TimelineEventView) error
+	DeleteTimelineEvents(context.Context, int64) error
 }
 
 type CatalogQueries interface {

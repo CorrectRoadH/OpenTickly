@@ -14,7 +14,7 @@ import (
 type App struct {
 	Config   Config
 	HTTP     *echo.Echo
-	Platform *platform.Runtime
+	Platform *platform.Handles
 	Modules  []ModuleDescriptor
 }
 
@@ -32,7 +32,7 @@ func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
 
 func NewApp(cfg Config) (*App, error) {
 	cfg = withDefaults(cfg)
-	if err := validateRequiredRuntimeConfig(cfg); err != nil {
+	if err := validateRequiredStartupConfig(cfg); err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func NewApp(cfg Config) (*App, error) {
 		moduleNames = append(moduleNames, module.Name)
 	}
 	health := web.NewHealthSnapshot(cfg.ServiceName, moduleNames)
-	readiness := web.NewRuntimeReadinessProbe(web.RuntimeReadinessConfig{
+	readiness := web.NewStartupReadinessProbe(web.StartupReadinessConfig{
 		Service:     cfg.ServiceName,
 		DatabaseURL: platform.Database.PrimaryDSN(),
 		RedisURL:    platform.Redis.Address(),
@@ -71,29 +71,33 @@ func (app *App) Start() error {
 }
 
 /**
- * validateRequiredRuntimeConfig enforces explicit runtime boundary config in the
+ * validateRequiredStartupConfig enforces explicit startup boundary config in the
  * bootstrap composition root so non-production defaults are never accepted as a
  * normal startup path.
  */
-func validateRequiredRuntimeConfig(cfg Config) error {
+func validateRequiredStartupConfig(cfg Config) error {
 	if strings.TrimSpace(cfg.Server.ListenAddress) == "" {
-		return fmt.Errorf("missing required runtime config server.listen_address")
+		return fmt.Errorf("missing required startup config server.listen_address")
 	}
 	if strings.TrimSpace(cfg.Database.PrimaryDSN) == "" {
-		return fmt.Errorf("missing required runtime config database.primary_dsn")
+		return fmt.Errorf("missing required startup config database.primary_dsn")
 	}
 	if strings.TrimSpace(cfg.Redis.Address) == "" {
-		return fmt.Errorf("missing required runtime config redis.address")
+		return fmt.Errorf("missing required startup config redis.address")
 	}
 	return nil
 }
 
-func newHTTPRouteRegistrar(platform *platform.Runtime) (httpapp.RouteRegistrar, error) {
-	webRoutes, err := newWebRoutes(platform.Database.Pool())
+func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, error) {
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool())
 	if err != nil {
 		return nil, err
 	}
-	publicTrackRoutes, err := newPublicTrackRoutes(platform.Database.Pool())
+	webRoutes, err := newWebRoutes(assembledHandlers)
+	if err != nil {
+		return nil, err
+	}
+	publicTrackRoutes, err := newPublicTrackRoutes(assembledHandlers)
 	if err != nil {
 		return nil, err
 	}

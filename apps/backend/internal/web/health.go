@@ -36,7 +36,7 @@ type ReadinessCheck struct {
 	Message string `json:"message,omitempty"`
 }
 
-type RuntimeReadinessConfig struct {
+type StartupReadinessConfig struct {
 	Service     string
 	DatabaseURL string
 	RedisURL    string
@@ -47,7 +47,7 @@ type staticReadinessProbe struct {
 	report ReadinessReport
 }
 
-type runtimeReadinessProbe struct {
+type startupReadinessProbe struct {
 	service     string
 	databaseURL string
 	redisURL    string
@@ -77,13 +77,13 @@ func NewStaticReadinessProbe(service string) ReadinessProbe {
 	}
 }
 
-func NewRuntimeReadinessProbe(cfg RuntimeReadinessConfig) ReadinessProbe {
+func NewStartupReadinessProbe(cfg StartupReadinessConfig) ReadinessProbe {
 	timeout := cfg.Timeout
 	if timeout <= 0 {
 		timeout = 500 * time.Millisecond
 	}
 
-	return runtimeReadinessProbe{
+	return startupReadinessProbe{
 		service:     cfg.Service,
 		databaseURL: cfg.DatabaseURL,
 		redisURL:    cfg.RedisURL,
@@ -95,7 +95,7 @@ func (probe staticReadinessProbe) Check(context.Context) ReadinessReport {
 	return probe.report
 }
 
-func (probe runtimeReadinessProbe) Check(ctx context.Context) ReadinessReport {
+func (probe startupReadinessProbe) Check(ctx context.Context) ReadinessReport {
 	checks := []ReadinessCheck{
 		probe.configurationCheck(),
 		probe.tcpDependencyCheck(ctx, "postgres", probe.databaseURL, "5432"),
@@ -117,7 +117,7 @@ func (probe runtimeReadinessProbe) Check(ctx context.Context) ReadinessReport {
 	}
 }
 
-func (probe runtimeReadinessProbe) configurationCheck() ReadinessCheck {
+func (probe startupReadinessProbe) configurationCheck() ReadinessCheck {
 	switch {
 	case probe.service == "":
 		return ReadinessCheck{
@@ -141,12 +141,12 @@ func (probe runtimeReadinessProbe) configurationCheck() ReadinessCheck {
 		return ReadinessCheck{
 			Name:    "configuration",
 			Status:  StatusOK,
-			Message: "required runtime configuration loaded",
+			Message: "required startup configuration loaded",
 		}
 	}
 }
 
-func (probe runtimeReadinessProbe) tcpDependencyCheck(
+func (probe startupReadinessProbe) tcpDependencyCheck(
 	ctx context.Context,
 	name string,
 	rawURL string,

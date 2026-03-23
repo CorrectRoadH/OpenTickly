@@ -6,45 +6,62 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectUsers(
+func (server *publicTrackOpenAPIServer) GetMeProjects(
+	ctx echo.Context,
+	params publictrackapi.GetMeProjectsParams,
+) error {
+	_ = params
+	return server.catalog.GetPublicTrackProjects(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetMeProjectsPaginated(ctx echo.Context) error {
+	return server.catalog.GetPublicTrackProjects(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceProjectUsers(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceProjectUsersParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackProjectUsers(ctx)
+	return server.catalog.GetPublicTrackProjectUsers(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetProjects(
+func (server *publicTrackOpenAPIServer) GetProjects(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetProjectsParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackProjects(ctx)
+	return server.catalog.GetPublicTrackProjects(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceProjectCreate(
+func (server *publicTrackOpenAPIServer) GetProjectsTemplates(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.catalog.GetPublicTrackProjectTemplates(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostWorkspaceProjectCreate(
 	ctx echo.Context,
 	workspaceId int,
 ) error {
 	_ = workspaceId
-	return server.runtime.postPublicTrackProjects(ctx)
+	return server.catalog.PostPublicTrackProjects(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) ProjectTaskCount(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ProjectTaskCount(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.projectTaskCount(ctx)
+	return server.catalog.ProjectTaskCount(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) ProjectUserCount(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ProjectUserCount(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.projectUserCount(ctx)
+	return server.catalog.ProjectUserCount(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceProject(
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceProject(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
@@ -52,35 +69,35 @@ func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceProject(
 ) error {
 	_ = workspaceId
 	_ = projectId
-	return server.runtime.deletePublicTrackProject(ctx, params)
+	return server.catalog.DeletePublicTrackProject(ctx, params)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectId(
+func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectId(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
 	_ = workspaceId
 	_ = projectId
-	return server.runtime.getPublicTrackProject(ctx)
+	return server.catalog.GetPublicTrackProject(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceProject(
+func (server *publicTrackOpenAPIServer) PutWorkspaceProject(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
 	_ = workspaceId
 	_ = projectId
-	return server.runtime.putPublicTrackProject(ctx)
+	return server.catalog.PutPublicTrackProject(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostPinnedProject(
+func (server *publicTrackOpenAPIServer) PostPinnedProject(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
 	_ = workspaceId
 	_ = projectId
-	return server.runtime.postPublicTrackPinnedProject(ctx)
+	return server.catalog.PostPublicTrackPinnedProject(ctx)
 }

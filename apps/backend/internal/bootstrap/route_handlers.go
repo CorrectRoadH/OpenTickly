@@ -14,6 +14,8 @@ import (
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
+	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
+	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
@@ -50,6 +52,7 @@ type routeHandlers struct {
 	identityAPI   *identitypublicapi.Handler
 	membershipApp *membershipapplication.Service
 	trackingApp   *trackingapplication.Service
+	governanceApp *governanceapplication.Service
 	userHomes     userHomeRepository
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
@@ -89,6 +92,10 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 	if err != nil {
 		return nil, err
 	}
+	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool))
+	if err != nil {
+		return nil, err
+	}
 
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              identitypostgres.NewUserRepository(pool),
@@ -114,6 +121,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 		identityAPI:   identitypublicapi.NewHandler(identityService),
 		membershipApp: membershipService,
 		trackingApp:   trackingService,
+		governanceApp: governanceService,
 		userHomes:     tenantpostgres.NewUserHomeRepository(pool),
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,

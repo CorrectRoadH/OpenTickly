@@ -48,7 +48,7 @@ type Command struct {
 
 /**
  * PrepareReconcileCommand derives the canonical `pgschema plan/apply` command
- * from the repository schema path and runtime `DATABASE_URL`.
+ * from the repository schema path and startup `DATABASE_URL`.
  */
 func PrepareReconcileCommand(options ReconcileOptions) (Command, error) {
 	mode, err := normalizeReconcileMode(options.Mode)
@@ -116,7 +116,7 @@ func normalizeReconcileMode(mode ReconcileMode) (ReconcileMode, error) {
 }
 
 /**
- * reconcileEnvironment projects the runtime `DATABASE_URL` into the `PG*`
+ * reconcileEnvironment projects the startup `DATABASE_URL` into the `PG*`
  * variables expected by `pgschema`, while preserving unrelated process env.
  */
 func reconcileEnvironment(databaseURL string, baseEnv []string) ([]string, error) {

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestNewAppExposesWave0HealthRuntime(t *testing.T) {
+func TestNewAppExposesWave0HealthSnapshot(t *testing.T) {
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
@@ -26,7 +26,7 @@ func TestNewAppExposesWave0HealthRuntime(t *testing.T) {
 	}
 
 	if app.HTTP == nil {
-		t.Fatal("expected HTTP runtime to be wired")
+		t.Fatal("expected HTTP server to be wired")
 	}
 
 	if len(app.Modules) != 10 {
@@ -64,7 +64,7 @@ func TestNewAppExposesWave0HealthRuntime(t *testing.T) {
 	}
 }
 
-func TestNewAppReadyzUsesRuntimeReadinessProbe(t *testing.T) {
+func TestNewAppReadyzUsesStartupReadinessProbe(t *testing.T) {
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
@@ -87,7 +87,7 @@ func TestNewAppReadyzUsesRuntimeReadinessProbe(t *testing.T) {
 	app.HTTP.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusServiceUnavailable {
-		t.Fatalf("expected /readyz to return 503 when runtime dependencies are not reachable, got %d", recorder.Code)
+		t.Fatalf("expected /readyz to return 503 when startup dependencies are not reachable, got %d", recorder.Code)
 	}
 
 	var response struct {
@@ -112,7 +112,7 @@ func TestNewAppReadyzUsesRuntimeReadinessProbe(t *testing.T) {
 	}
 
 	if len(response.Checks) != 3 {
-		t.Fatalf("expected runtime readiness checks in /readyz response, got %d", len(response.Checks))
+		t.Fatalf("expected startup readiness checks in /readyz response, got %d", len(response.Checks))
 	}
 
 	if response.Checks[0].Name != "configuration" {

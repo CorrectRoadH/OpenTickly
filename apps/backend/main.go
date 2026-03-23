@@ -17,10 +17,10 @@ import (
 func main() {
 	app, err := bootstrap.NewAppFromEnvironment(nil)
 	if err != nil {
-		log.Fatalf("bootstrap api runtime: %v", err)
+		log.Fatalf("bootstrap api startup: %v", err)
 	}
 
 	if err := app.Start(); err != nil {
-		log.Fatalf("start api runtime: %v", err)
+		log.Fatalf("start api startup: %v", err)
 	}
 }

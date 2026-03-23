@@ -38,6 +38,15 @@ type UpdateWorkspaceMemberRateCostCommand struct {
 	LaborCost   *float64
 }
 
+type UpdateWorkspaceMemberCommand struct {
+	WorkspaceID int64
+	MemberID    int64
+	RequestedBy int64
+	Role        *membershipdomain.WorkspaceRole
+	HourlyRate  *float64
+	LaborCost   *float64
+}
+
 type Store interface {
 	EnsureWorkspaceOwner(context.Context, EnsureWorkspaceOwnerCommand) (WorkspaceMemberView, error)
 	ListWorkspaceMembers(context.Context, int64) ([]WorkspaceMemberView, error)

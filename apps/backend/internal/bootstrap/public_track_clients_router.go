@@ -6,82 +6,86 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceClients(
+func (server *publicTrackOpenAPIServer) GetClients(ctx echo.Context) error {
+	return server.catalog.GetPublicTrackClients(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceClients(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceClientsParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackClients(ctx)
+	return server.catalog.GetPublicTrackClients(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceClients(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.postPublicTrackClients(ctx)
+	return server.catalog.PostPublicTrackClients(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) ArchiveClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) ArchiveClients(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.archivePublicTrackClients(ctx)
+	return server.catalog.ArchivePublicTrackClients(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceClientsData(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceClientsData(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.getPublicTrackClientsData(ctx)
+	return server.catalog.GetPublicTrackClientsData(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceClients(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceClients(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.deletePublicTrackClients(ctx)
+	return server.catalog.DeletePublicTrackClients(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceClient(
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceClient(
 	ctx echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
 	_ = workspaceId
 	_ = clientId
-	return server.runtime.deletePublicTrackClient(ctx)
+	return server.catalog.DeletePublicTrackClient(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceClient(
+func (server *publicTrackOpenAPIServer) GetWorkspaceClient(
 	ctx echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
 	_ = workspaceId
 	_ = clientId
-	return server.runtime.getPublicTrackClient(ctx)
+	return server.catalog.GetPublicTrackClient(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceClients(
+func (server *publicTrackOpenAPIServer) PutWorkspaceClients(
 	ctx echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
 	_ = workspaceId
 	_ = clientId
-	return server.runtime.putPublicTrackClient(ctx)
+	return server.catalog.PutPublicTrackClient(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) ArchiveClient(
+func (server *publicTrackOpenAPIServer) ArchiveClient(
 	ctx echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
 	_ = workspaceId
 	_ = clientId
-	return server.runtime.archivePublicTrackClient(ctx)
+	return server.catalog.ArchivePublicTrackClient(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) RestoreClient(
+func (server *publicTrackOpenAPIServer) RestoreClient(
 	ctx echo.Context,
 	workspaceId int,
 	clientId int,
 ) error {
 	_ = workspaceId
 	_ = clientId
-	return server.runtime.restorePublicTrackClient(ctx)
+	return server.catalog.RestorePublicTrackClient(ctx)
 }

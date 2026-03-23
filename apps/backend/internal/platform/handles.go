@@ -15,21 +15,21 @@ type Services interface {
 	services()
 }
 
-type Runtime struct {
+type Handles struct {
 	Database  DatabaseHandle
 	Redis     RedisHandle
 	FileStore FileStoreHandle
 	Jobs      *JobRunner
 }
 
-func NewRuntime(cfg platformconfig.RuntimeConfig) *Runtime {
+func NewHandles(cfg platformconfig.StartupConfig) *Handles {
 	database, err := NewDatabaseHandle(cfg.Database.PrimaryDSN)
 	if err != nil {
 		panic(err)
 	}
 
-	return &Runtime{
-		Database:  database,
+	return &Handles{
+		Database: database,
 		Redis: RedisHandle{
 			address: cfg.Redis.Address,
 		},
@@ -43,7 +43,7 @@ func NewRuntime(cfg platformconfig.RuntimeConfig) *Runtime {
 	}
 }
 
-func (*Runtime) services() {}
+func (*Handles) services() {}
 
 type DatabaseHandle struct {
 	primaryDSN string

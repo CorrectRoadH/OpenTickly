@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func mustRuntimeConfigFromRepositoryEnv(t *testing.T) Config {
+func mustStartupConfigFromRepositoryEnv(t *testing.T) Config {
 	t.Helper()
 
 	values := map[string]string{}
@@ -24,7 +24,7 @@ func mustRuntimeConfigFromRepositoryEnv(t *testing.T) Config {
 		return values[key]
 	})
 	if err != nil {
-		t.Fatalf("load runtime config from repository env: %v", err)
+		t.Fatalf("load startup config from repository env: %v", err)
 	}
 
 	cfg.Server.ListenAddress = ":0"

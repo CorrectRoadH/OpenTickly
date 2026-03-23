@@ -2,9 +2,9 @@ package bootstrap
 
 import platformconfig "opentoggl/backend/apps/backend/internal/platform/config"
 
-// Config keeps the composition root explicit so later waves cannot hide runtime
+// Config keeps the composition root explicit so later waves cannot hide startup
 // dependencies behind globals or a service locator.
-type Config = platformconfig.RuntimeConfig
+type Config = platformconfig.StartupConfig
 type ServerConfig = platformconfig.ServerConfig
 type DatabaseConfig = platformconfig.DatabaseConfig
 type RedisConfig = platformconfig.RedisConfig

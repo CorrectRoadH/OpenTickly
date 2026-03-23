@@ -17,7 +17,7 @@ import (
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 )
 
-func TestWebRoutesServeLiveEchoRuntime(t *testing.T) {
+func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	database := pgtest.Open(t)
 
 	app, err := NewApp(Config{
@@ -423,7 +423,7 @@ func TestPublicTrackRegistersUnimplementedSpecRoutes(t *testing.T) {
 	t.Fatal("expected GET /api/v9/countries to be registered from public-track OpenAPI surface")
 }
 
-func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
+func TestWebServerPersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	database := pgtest.Open(t)
 	cfg := Config{
 		ServiceName: "opentoggl-api",
@@ -470,7 +470,7 @@ func TestWebRuntimePersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	}
 }
 
-func TestWebRuntimeRejectsWritesForDeactivatedUsers(t *testing.T) {
+func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	database := pgtest.Open(t)
 
 	app, err := NewApp(Config{

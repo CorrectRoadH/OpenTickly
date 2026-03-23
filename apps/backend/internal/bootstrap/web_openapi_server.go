@@ -6,94 +6,94 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type bootstrapWebOpenAPIServer struct {
-	runtime *webRuntime
+type webOpenAPIServer struct {
+	handlers *routeHandlers
 }
 
-func newBootstrapWebOpenAPIServer(runtime *webRuntime) webapi.ServerInterface {
-	return &bootstrapWebOpenAPIServer{runtime: runtime}
+func newWebOpenAPIServer(handlers *routeHandlers) webapi.ServerInterface {
+	return &webOpenAPIServer{handlers: handlers}
 }
 
-func (server *bootstrapWebOpenAPIServer) RegisterWebUser(ctx echo.Context) error {
-	return server.runtime.register(ctx)
+func (server *webOpenAPIServer) RegisterWebUser(ctx echo.Context) error {
+	return server.handlers.register(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) LoginWebUser(ctx echo.Context) error {
-	return server.runtime.login(ctx)
+func (server *webOpenAPIServer) LoginWebUser(ctx echo.Context) error {
+	return server.handlers.login(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) LogoutWebUser(ctx echo.Context) error {
-	return server.runtime.logout(ctx)
+func (server *webOpenAPIServer) LogoutWebUser(ctx echo.Context) error {
+	return server.handlers.logout(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) GetWebSession(ctx echo.Context) error {
-	return server.runtime.session(ctx)
+func (server *webOpenAPIServer) GetWebSession(ctx echo.Context) error {
+	return server.handlers.session(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) CreateTask(ctx echo.Context) error {
-	return server.runtime.createTask(ctx)
+func (server *webOpenAPIServer) CreateTask(ctx echo.Context) error {
+	return server.handlers.createTask(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) GetWorkspaceCapabilities(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) GetWorkspaceCapabilities(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.workspaceCapabilities(ctx)
+	return server.handlers.workspaceCapabilities(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) ListWorkspaceMembers(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) ListWorkspaceMembers(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.listWorkspaceMembers(ctx)
+	return server.handlers.listWorkspaceMembers(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) InviteWorkspaceMember(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) InviteWorkspaceMember(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.inviteWorkspaceMember(ctx)
+	return server.handlers.inviteWorkspaceMember(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) RemoveWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
-	_ = workspaceId
-	_ = memberId
-	return server.runtime.removeWorkspaceMember(ctx)
-}
-
-func (server *bootstrapWebOpenAPIServer) DisableWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
+func (server *webOpenAPIServer) RemoveWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
 	_ = workspaceId
 	_ = memberId
-	return server.runtime.disableWorkspaceMember(ctx)
+	return server.handlers.removeWorkspaceMember(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) UpdateWorkspaceMemberRateCost(ctx echo.Context, workspaceId int, memberId int) error {
+func (server *webOpenAPIServer) DisableWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
 	_ = workspaceId
 	_ = memberId
-	return server.runtime.updateWorkspaceMemberRateCost(ctx)
+	return server.handlers.disableWorkspaceMember(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) RestoreWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
+func (server *webOpenAPIServer) UpdateWorkspaceMemberRateCost(ctx echo.Context, workspaceId int, memberId int) error {
 	_ = workspaceId
 	_ = memberId
-	return server.runtime.restoreWorkspaceMember(ctx)
+	return server.handlers.updateWorkspaceMemberRateCost(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) GetWorkspacePermissions(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) RestoreWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error {
 	_ = workspaceId
-	return server.runtime.workspacePermissions(ctx)
+	_ = memberId
+	return server.handlers.restoreWorkspaceMember(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) UpdateWorkspacePermissions(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) GetWorkspacePermissions(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.updateWorkspacePermissions(ctx)
+	return server.handlers.workspacePermissions(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) GetWorkspaceQuota(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) UpdateWorkspacePermissions(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.workspaceQuota(ctx)
+	return server.handlers.updateWorkspacePermissions(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) GetWorkspaceSettings(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) GetWorkspaceQuota(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.workspaceSettings(ctx)
+	return server.handlers.workspaceQuota(ctx)
 }
 
-func (server *bootstrapWebOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, workspaceId int) error {
+func (server *webOpenAPIServer) GetWorkspaceSettings(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.updateWorkspaceSettings(ctx)
+	return server.handlers.workspaceSettings(ctx)
+}
+
+func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.updateWorkspaceSettings(ctx)
 }

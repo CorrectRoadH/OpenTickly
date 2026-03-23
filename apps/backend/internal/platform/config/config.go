@@ -1,8 +1,8 @@
 package config
 
-// RuntimeConfig keeps the composition root explicit while the platform layer is
+// StartupConfig keeps the composition root explicit while the platform layer is
 // still lightweight, so later slices can swap adapters without adding globals.
-type RuntimeConfig struct {
+type StartupConfig struct {
 	ServiceName string
 	Server      ServerConfig
 	Database    DatabaseConfig

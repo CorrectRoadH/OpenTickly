@@ -29,12 +29,7 @@ func (handler *Handler) GetMe(ctx context.Context, credentials domain.BasicCrede
 
 	return Response{
 		StatusCode: 200,
-		Body: map[string]any{
-			"id":        user.ID,
-			"email":     user.Email,
-			"fullname":  user.FullName,
-			"api_token": user.APIToken,
-		},
+		Body: currentUserBody(user),
 	}
 }
 
@@ -51,12 +46,7 @@ func (handler *Handler) PutMe(ctx context.Context, credentials domain.BasicCrede
 
 	return Response{
 		StatusCode: 200,
-		Body: map[string]any{
-			"id":        updated.ID,
-			"email":     updated.Email,
-			"fullname":  updated.FullName,
-			"api_token": updated.APIToken,
-		},
+		Body: currentUserBody(updated),
 	}
 }
 
@@ -145,5 +135,21 @@ func mapError(err error) Response {
 		return Response{StatusCode: 403, Body: "User does not have access to this resource."}
 	default:
 		return Response{StatusCode: 500, Body: "Internal Server Error"}
+	}
+}
+
+func currentUserBody(user application.UserSnapshot) map[string]any {
+	return map[string]any{
+		"id":                   user.ID,
+		"email":                user.Email,
+		"fullname":             user.FullName,
+		"image_url":            nil,
+		"api_token":            user.APIToken,
+		"timezone":             user.Timezone,
+		"default_workspace_id": user.DefaultWorkspaceID,
+		"beginning_of_week":    user.BeginningOfWeek,
+		"country_id":           user.CountryID,
+		"has_password":         user.HasPassword,
+		"2fa_enabled":          user.TwoFactorEnabled,
 	}
 }

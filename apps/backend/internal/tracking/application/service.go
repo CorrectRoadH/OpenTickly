@@ -454,6 +454,30 @@ func (service *Service) CreateExpense(ctx context.Context, command CreateExpense
 	})
 }
 
+func (service *Service) ListTimelineEvents(
+	ctx context.Context,
+	userID int64,
+	startTimestamp int,
+	endTimestamp int,
+) ([]TimelineEventView, error) {
+	return service.store.ListTimelineEvents(ctx, userID, startTimestamp, endTimestamp)
+}
+
+func (service *Service) ReplaceTimelineEvents(
+	ctx context.Context,
+	userID int64,
+	events []TimelineEventView,
+) error {
+	for index := range events {
+		events[index].UserID = userID
+	}
+	return service.store.ReplaceTimelineEvents(ctx, userID, events)
+}
+
+func (service *Service) DeleteTimelineEvents(ctx context.Context, userID int64) error {
+	return service.store.DeleteTimelineEvents(ctx, userID)
+}
+
 func (service *Service) resolveTrackingReferences(
 	ctx context.Context,
 	workspaceID int64,

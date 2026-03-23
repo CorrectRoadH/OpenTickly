@@ -2,32 +2,32 @@ package bootstrap
 
 import "github.com/labstack/echo/v4"
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceGroups(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) GetWorkspaceGroups(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.getPublicTrackGroups(ctx)
+	return server.catalog.GetPublicTrackGroups(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceGroup(ctx echo.Context, workspaceId int) error {
+func (server *publicTrackOpenAPIServer) PostWorkspaceGroup(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
-	return server.runtime.postPublicTrackGroups(ctx)
+	return server.catalog.PostPublicTrackGroups(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceGroup(
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceGroup(
 	ctx echo.Context,
 	workspaceId int,
 	groupId int,
 ) error {
 	_ = workspaceId
 	_ = groupId
-	return server.runtime.deletePublicTrackGroup(ctx)
+	return server.catalog.DeletePublicTrackGroup(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceGroup(
+func (server *publicTrackOpenAPIServer) PutWorkspaceGroup(
 	ctx echo.Context,
 	workspaceId int,
 	groupId int,
 ) error {
 	_ = workspaceId
 	_ = groupId
-	return server.runtime.putPublicTrackGroup(ctx)
+	return server.catalog.PutPublicTrackGroup(ctx)
 }

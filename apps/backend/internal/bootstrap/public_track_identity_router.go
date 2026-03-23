@@ -6,26 +6,52 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetMe(
+func (server *publicTrackOpenAPIServer) GetMe(
 	ctx echo.Context,
 	params publictrackapi.GetMeParams,
 ) error {
 	_ = params
-	return server.runtime.getPublicTrackMe(ctx)
+	return server.identity.GetPublicTrackMe(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutMe(ctx echo.Context) error {
-	return server.runtime.putPublicTrackMe(ctx)
+func (server *publicTrackOpenAPIServer) PutMe(ctx echo.Context) error {
+	return server.identity.PutPublicTrackMe(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetPreferences(ctx echo.Context) error {
-	return server.runtime.getPublicTrackPreferences(ctx)
+func (server *publicTrackOpenAPIServer) GetPreferences(ctx echo.Context) error {
+	return server.identity.GetPublicTrackPreferences(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostPreferences(ctx echo.Context) error {
-	return server.runtime.postPublicTrackPreferences(ctx)
+func (server *publicTrackOpenAPIServer) PostPreferences(ctx echo.Context) error {
+	return server.identity.PostPublicTrackPreferences(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostResetToken(ctx echo.Context) error {
-	return server.runtime.postPublicTrackResetToken(ctx)
+func (server *publicTrackOpenAPIServer) GetPreferencesClient(
+	ctx echo.Context,
+	client publictrackapi.GetPreferencesClientParamsClient,
+) error {
+	return server.identity.GetPublicTrackPreferencesClient(ctx, string(client))
+}
+
+func (server *publicTrackOpenAPIServer) PostPreferencesClient(
+	ctx echo.Context,
+	client publictrackapi.PostPreferencesClientParamsClient,
+) error {
+	return server.identity.PostPublicTrackPreferencesClient(ctx, string(client))
+}
+
+func (server *publicTrackOpenAPIServer) PostResetToken(ctx echo.Context) error {
+	return server.identity.PostPublicTrackResetToken(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetMeFeatures(ctx echo.Context) error {
+	return server.identity.GetPublicTrackMeFeatures(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetMeLogged(ctx echo.Context) error {
+	return server.identity.GetPublicTrackMeLogged(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetMeId(ctx echo.Context) error {
+	return server.identity.GetPublicTrackMeID(ctx)
 }

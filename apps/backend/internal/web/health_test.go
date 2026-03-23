@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-func TestRuntimeReadinessProbeReportsReadyWhenDependenciesAcceptTCPConnections(t *testing.T) {
+func TestStartupReadinessProbeReportsReadyWhenDependenciesAcceptTCPConnections(t *testing.T) {
 	postgresListener := mustListenTCP(t)
 	defer postgresListener.Close()
 
 	redisListener := mustListenTCP(t)
 	defer redisListener.Close()
 
-	probe := NewRuntimeReadinessProbe(RuntimeReadinessConfig{
+	probe := NewStartupReadinessProbe(StartupReadinessConfig{
 		Service:     "opentoggl",
 		DatabaseURL: "postgres://opentoggl@" + postgresListener.Addr().String() + "/opentoggl",
 		RedisURL:    "redis://" + redisListener.Addr().String() + "/0",
@@ -38,12 +38,12 @@ func TestRuntimeReadinessProbeReportsReadyWhenDependenciesAcceptTCPConnections(t
 	}
 }
 
-func TestRuntimeReadinessProbeReportsDependencyFailures(t *testing.T) {
+func TestStartupReadinessProbeReportsDependencyFailures(t *testing.T) {
 	closedListener := mustListenTCP(t)
 	closedAddress := closedListener.Addr().String()
 	closedListener.Close()
 
-	probe := NewRuntimeReadinessProbe(RuntimeReadinessConfig{
+	probe := NewStartupReadinessProbe(StartupReadinessConfig{
 		Service:     "opentoggl",
 		DatabaseURL: "postgres://opentoggl@" + closedAddress + "/opentoggl",
 		RedisURL:    "redis://bad redis target",
@@ -71,8 +71,8 @@ func TestRuntimeReadinessProbeReportsDependencyFailures(t *testing.T) {
 	}
 }
 
-func TestRuntimeReadinessProbeReportsMissingRequiredConfiguration(t *testing.T) {
-	probe := NewRuntimeReadinessProbe(RuntimeReadinessConfig{
+func TestStartupReadinessProbeReportsMissingRequiredConfiguration(t *testing.T) {
+	probe := NewStartupReadinessProbe(StartupReadinessConfig{
 		DatabaseURL: "postgres://opentoggl@127.0.0.1:5432/opentoggl",
 		RedisURL:    "redis://127.0.0.1:6379/0",
 	})

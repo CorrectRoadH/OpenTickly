@@ -46,7 +46,7 @@ func TestNewAppFromEnvironmentFailsWhenDatasourceEnvMissing(t *testing.T) {
 	}
 }
 
-func TestNewAppFailsWithoutExplicitRuntimeDependencyConfig(t *testing.T) {
+func TestNewAppFailsWithoutExplicitStartupDependencyConfig(t *testing.T) {
 	_, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
@@ -54,7 +54,7 @@ func TestNewAppFailsWithoutExplicitRuntimeDependencyConfig(t *testing.T) {
 		},
 	})
 	if err == nil {
-		t.Fatal("expected NewApp to reject missing runtime datasource config")
+		t.Fatal("expected NewApp to reject missing startup datasource config")
 	}
 	if !strings.Contains(err.Error(), "database.primary_dsn") {
 		t.Fatalf("expected missing database.primary_dsn error, got %v", err)

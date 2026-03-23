@@ -6,7 +6,15 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectTasks(
+func (server *publicTrackOpenAPIServer) GetTasks(
+	ctx echo.Context,
+	params publictrackapi.GetTasksParams,
+) error {
+	_ = params
+	return server.catalog.GetPublicTrackTasks(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTasks(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
@@ -15,20 +23,20 @@ func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectTasks(
 	_ = workspaceId
 	_ = projectId
 	_ = params
-	return server.runtime.getPublicTrackProjectTasks(ctx)
+	return server.catalog.GetPublicTrackProjectTasks(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PostWorkspaceProjectTasks(
+func (server *publicTrackOpenAPIServer) PostWorkspaceProjectTasks(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
 ) error {
 	_ = workspaceId
 	_ = projectId
-	return server.runtime.postPublicTrackProjectTask(ctx)
+	return server.catalog.PostPublicTrackProjectTask(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectTask(
+func (server *publicTrackOpenAPIServer) GetWorkspaceProjectTask(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
@@ -37,10 +45,10 @@ func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceProjectTask(
 	_ = workspaceId
 	_ = projectId
 	_ = taskId
-	return server.runtime.getPublicTrackProjectTask(ctx)
+	return server.catalog.GetPublicTrackProjectTask(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceProjectTask(
+func (server *publicTrackOpenAPIServer) PutWorkspaceProjectTask(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
@@ -49,10 +57,10 @@ func (server *bootstrapPublicTrackOpenAPIServer) PutWorkspaceProjectTask(
 	_ = workspaceId
 	_ = projectId
 	_ = taskId
-	return server.runtime.putPublicTrackProjectTask(ctx)
+	return server.catalog.PutPublicTrackProjectTask(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
 	ctx echo.Context,
 	workspaceId int,
 	projectId int,
@@ -61,25 +69,25 @@ func (server *bootstrapPublicTrackOpenAPIServer) DeleteWorkspaceProjectTask(
 	_ = workspaceId
 	_ = projectId
 	_ = taskId
-	return server.runtime.deletePublicTrackProjectTask(ctx)
+	return server.catalog.DeletePublicTrackProjectTask(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceTasks(
+func (server *publicTrackOpenAPIServer) GetWorkspaceTasks(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTasksParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackTasks(ctx)
+	return server.catalog.GetPublicTrackTasks(ctx)
 }
 
-func (server *bootstrapPublicTrackOpenAPIServer) GetWorkspaceTasksBasic(
+func (server *publicTrackOpenAPIServer) GetWorkspaceTasksBasic(
 	ctx echo.Context,
 	workspaceId int,
 	params publictrackapi.GetWorkspaceTasksBasicParams,
 ) error {
 	_ = workspaceId
 	_ = params
-	return server.runtime.getPublicTrackTasksBasic(ctx)
+	return server.catalog.GetPublicTrackTasksBasic(ctx)
 }

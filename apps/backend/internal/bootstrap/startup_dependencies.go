@@ -13,7 +13,7 @@ const startupDependencyProbeTimeout = 3 * time.Second
 
 /**
  * verifyStartupDependencies proves the canonical source-based startup path can
- * reach the real PostgreSQL and Redis dependencies before the HTTP runtime
+ * reach the real PostgreSQL and Redis dependencies before the HTTP server
  * starts serving traffic.
  */
 func verifyStartupDependencies(cfg Config) error {
