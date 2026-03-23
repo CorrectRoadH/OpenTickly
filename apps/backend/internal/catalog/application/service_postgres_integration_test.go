@@ -281,6 +281,155 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	}
 }
 
+func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	service := mustNewCatalogService(t, database)
+
+	clientA, err := service.CreateClient(ctx, catalogapplication.CreateClientCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Client A",
+	})
+	if err != nil {
+		t.Fatalf("create client A: %v", err)
+	}
+	clientB, err := service.CreateClient(ctx, catalogapplication.CreateClientCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Client B",
+	})
+	if err != nil {
+		t.Fatalf("create client B: %v", err)
+	}
+
+	clientsByID, err := service.ListClientsByIDs(ctx, workspaceID, []int64{clientA.ID, clientB.ID})
+	if err != nil {
+		t.Fatalf("list clients by ids: %v", err)
+	}
+	if len(clientsByID) != 2 {
+		t.Fatalf("expected two clients by ids, got %#v", clientsByID)
+	}
+
+	project, err := service.CreateProject(ctx, catalogapplication.CreateProjectCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		ClientID:    &clientA.ID,
+		Name:        "Project A",
+	})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	if _, err := database.Pool.Exec(ctx, `
+		insert into catalog_project_users (project_id, user_id, role)
+		values ($1, $2, 'admin')
+	`, project.ID, userID); err != nil {
+		t.Fatalf("insert project user: %v", err)
+	}
+	if _, err := database.Pool.Exec(ctx, `
+		insert into catalog_tasks (workspace_id, project_id, name, active, created_by)
+		values ($1, $2, 'Task A', true, $3)
+	`, workspaceID, project.ID, userID); err != nil {
+		t.Fatalf("insert project task: %v", err)
+	}
+
+	archivedProjectIDs, err := service.ArchiveClient(ctx, workspaceID, clientA.ID)
+	if err != nil {
+		t.Fatalf("archive client: %v", err)
+	}
+	if len(archivedProjectIDs) != 1 || archivedProjectIDs[0] != project.ID {
+		t.Fatalf("expected archived project id %d, got %#v", project.ID, archivedProjectIDs)
+	}
+
+	archivedClient, err := service.GetClient(ctx, workspaceID, clientA.ID)
+	if err != nil {
+		t.Fatalf("get archived client: %v", err)
+	}
+	if !archivedClient.Archived {
+		t.Fatalf("expected archived client state, got %#v", archivedClient)
+	}
+	archivedProject, err := service.GetProject(ctx, workspaceID, project.ID)
+	if err != nil {
+		t.Fatalf("get archived project: %v", err)
+	}
+	if archivedProject.Active {
+		t.Fatalf("expected archived project to be inactive, got %#v", archivedProject)
+	}
+
+	restoredClient, err := service.RestoreClient(ctx, catalogapplication.RestoreClientCommand{
+		WorkspaceID: workspaceID,
+		ClientID:    clientA.ID,
+		ProjectIDs:  []int64{project.ID},
+	})
+	if err != nil {
+		t.Fatalf("restore client: %v", err)
+	}
+	if restoredClient.Archived {
+		t.Fatalf("expected restored client archived=false, got %#v", restoredClient)
+	}
+	restoredProject, err := service.GetProject(ctx, workspaceID, project.ID)
+	if err != nil {
+		t.Fatalf("get restored project: %v", err)
+	}
+	if !restoredProject.Active {
+		t.Fatalf("expected restored project active=true, got %#v", restoredProject)
+	}
+
+	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Team A",
+	})
+	if err != nil {
+		t.Fatalf("create group: %v", err)
+	}
+	updatedGroup, err := service.UpdateGroup(ctx, workspaceID, group.ID, "Team Alpha")
+	if err != nil {
+		t.Fatalf("update group: %v", err)
+	}
+	if updatedGroup.Name != "Team Alpha" {
+		t.Fatalf("expected updated group name, got %#v", updatedGroup)
+	}
+	if err := service.DeleteGroup(ctx, workspaceID, group.ID); err != nil {
+		t.Fatalf("delete group: %v", err)
+	}
+	if _, err := service.GetGroup(ctx, workspaceID, group.ID); !errors.Is(err, catalogapplication.ErrGroupNotFound) {
+		t.Fatalf("expected ErrGroupNotFound after group delete, got %v", err)
+	}
+
+	taskCounts, err := service.CountProjectTasks(ctx, workspaceID, []int64{project.ID})
+	if err != nil {
+		t.Fatalf("count project tasks: %v", err)
+	}
+	if len(taskCounts) != 1 || taskCounts[0].Count != 1 {
+		t.Fatalf("expected one task count, got %#v", taskCounts)
+	}
+
+	userCounts, err := service.CountProjectUsers(ctx, workspaceID, []int64{project.ID})
+	if err != nil {
+		t.Fatalf("count project users: %v", err)
+	}
+	if len(userCounts) != 1 || userCounts[0].Count != 1 {
+		t.Fatalf("expected one user count, got %#v", userCounts)
+	}
+
+	if err := service.DeleteProject(ctx, workspaceID, project.ID); err != nil {
+		t.Fatalf("delete project: %v", err)
+	}
+	if _, err := service.GetProject(ctx, workspaceID, project.ID); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
+		t.Fatalf("expected ErrProjectNotFound after project delete, got %v", err)
+	}
+
+	if err := service.DeleteClients(ctx, workspaceID, []int64{clientB.ID}); err != nil {
+		t.Fatalf("delete clients: %v", err)
+	}
+	if _, err := service.GetClient(ctx, workspaceID, clientB.ID); !errors.Is(err, catalogapplication.ErrClientNotFound) {
+		t.Fatalf("expected ErrClientNotFound after client delete, got %v", err)
+	}
+}
+
 func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()

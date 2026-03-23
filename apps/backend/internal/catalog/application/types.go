@@ -68,6 +68,11 @@ type ProjectUserView struct {
 	CreatedAt   time.Time
 }
 
+type ProjectCountView struct {
+	ProjectID int64
+	Count     int
+}
+
 type ProjectView struct {
 	ID            int64
 	WorkspaceID   int64
@@ -182,6 +187,13 @@ type UpdateClientCommand struct {
 	Name        *string
 }
 
+type RestoreClientCommand struct {
+	WorkspaceID        int64
+	ClientID           int64
+	RestoreAllProjects bool
+	ProjectIDs         []int64
+}
+
 type UpdateProjectCommand struct {
 	WorkspaceID int64
 	ProjectID   int64
@@ -214,11 +226,18 @@ type UpdateTaskCommand struct {
 
 type Store interface {
 	ListClients(context.Context, int64, ListClientsFilter) ([]ClientView, error)
+	ListClientsByIDs(context.Context, int64, []int64) ([]ClientView, error)
 	GetClient(context.Context, int64, int64) (ClientView, bool, error)
 	CreateClient(context.Context, CreateClientCommand) (ClientView, error)
 	UpdateClient(context.Context, ClientView) error
+	DeleteClients(context.Context, int64, []int64) error
+	ArchiveClientAndProjects(context.Context, int64, int64) ([]int64, error)
+	RestoreClientAndProjects(context.Context, int64, int64, []int64, bool) error
 	ListGroups(context.Context, int64) ([]GroupView, error)
+	GetGroup(context.Context, int64, int64) (GroupView, bool, error)
 	CreateGroup(context.Context, CreateGroupCommand) (GroupView, error)
+	UpdateGroup(context.Context, GroupView) error
+	DeleteGroup(context.Context, int64, int64) error
 	ListTags(context.Context, int64, ListTagsFilter) ([]TagView, error)
 	GetTag(context.Context, int64, int64) (TagView, bool, error)
 	CreateTag(context.Context, CreateTagCommand) (TagView, error)
@@ -229,6 +248,9 @@ type Store interface {
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)
 	UpdateProject(context.Context, ProjectView) error
+	DeleteProject(context.Context, int64, int64) error
+	CountProjectTasks(context.Context, int64, []int64) ([]ProjectCountView, error)
+	CountProjectUsers(context.Context, int64, []int64) ([]ProjectCountView, error)
 	SetProjectPinned(context.Context, int64, int64, bool) error
 	ListTasks(context.Context, int64, ListTasksFilter) (TaskPage, error)
 	GetTask(context.Context, int64, int64) (TaskView, bool, error)

@@ -73,6 +73,36 @@ func (store *Store) GetClient(
 	return client, true, nil
 }
 
+func (store *Store) ListClientsByIDs(
+	ctx context.Context,
+	workspaceID int64,
+	clientIDs []int64,
+) ([]catalogapplication.ClientView, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		`select id, workspace_id, name, archived, created_by, created_at
+		from catalog_clients
+		where workspace_id = $1 and id = any($2)
+		order by id`,
+		workspaceID,
+		int64SliceOrNil(clientIDs),
+	)
+	if err != nil {
+		return nil, writeCatalogError("list catalog clients by ids", err)
+	}
+	defer rows.Close()
+
+	clients := make([]catalogapplication.ClientView, 0, len(clientIDs))
+	for rows.Next() {
+		client, err := scanClient(rows)
+		if err != nil {
+			return nil, writeCatalogError("scan catalog client", err)
+		}
+		clients = append(clients, client)
+	}
+	return clients, rows.Err()
+}
+
 func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalogapplication.GroupView, error) {
 	rows, err := store.pool.Query(
 		ctx,
@@ -93,6 +123,30 @@ func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalo
 		groups = append(groups, group)
 	}
 	return groups, rows.Err()
+}
+
+func (store *Store) GetGroup(
+	ctx context.Context,
+	workspaceID int64,
+	groupID int64,
+) (catalogapplication.GroupView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select id, workspace_id, name, has_users, created_at
+		from catalog_groups
+		where workspace_id = $1 and id = $2`,
+		workspaceID,
+		groupID,
+	)
+
+	var group catalogapplication.GroupView
+	if err := row.Scan(&group.ID, &group.WorkspaceID, &group.Name, &group.HasUsers, &group.CreatedAt); err != nil {
+		if notFound(err) {
+			return catalogapplication.GroupView{}, false, nil
+		}
+		return catalogapplication.GroupView{}, false, writeCatalogError("get catalog group", err)
+	}
+	return group, true, nil
 }
 
 func (store *Store) ListTags(
@@ -277,6 +331,70 @@ func (store *Store) GetProject(
 		return catalogapplication.ProjectView{}, false, writeCatalogError("get catalog project", err)
 	}
 	return project, true, nil
+}
+
+func (store *Store) CountProjectTasks(
+	ctx context.Context,
+	workspaceID int64,
+	projectIDs []int64,
+) ([]catalogapplication.ProjectCountView, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		`select p.id, count(t.id)
+		from catalog_projects p
+		left join catalog_tasks t on t.project_id = p.id
+		where p.workspace_id = $1 and p.id = any($2)
+		group by p.id
+		order by p.id`,
+		workspaceID,
+		int64SliceOrNil(projectIDs),
+	)
+	if err != nil {
+		return nil, writeCatalogError("count project tasks", err)
+	}
+	defer rows.Close()
+
+	counts := make([]catalogapplication.ProjectCountView, 0, len(projectIDs))
+	for rows.Next() {
+		var count catalogapplication.ProjectCountView
+		if err := rows.Scan(&count.ProjectID, &count.Count); err != nil {
+			return nil, writeCatalogError("scan project task count", err)
+		}
+		counts = append(counts, count)
+	}
+	return counts, rows.Err()
+}
+
+func (store *Store) CountProjectUsers(
+	ctx context.Context,
+	workspaceID int64,
+	projectIDs []int64,
+) ([]catalogapplication.ProjectCountView, error) {
+	rows, err := store.pool.Query(
+		ctx,
+		`select p.id, count(pu.user_id)
+		from catalog_projects p
+		left join catalog_project_users pu on pu.project_id = p.id
+		where p.workspace_id = $1 and p.id = any($2)
+		group by p.id
+		order by p.id`,
+		workspaceID,
+		int64SliceOrNil(projectIDs),
+	)
+	if err != nil {
+		return nil, writeCatalogError("count project users", err)
+	}
+	defer rows.Close()
+
+	counts := make([]catalogapplication.ProjectCountView, 0, len(projectIDs))
+	for rows.Next() {
+		var count catalogapplication.ProjectCountView
+		if err := rows.Scan(&count.ProjectID, &count.Count); err != nil {
+			return nil, writeCatalogError("scan project user count", err)
+		}
+		counts = append(counts, count)
+	}
+	return counts, rows.Err()
 }
 
 func (store *Store) ListTasks(

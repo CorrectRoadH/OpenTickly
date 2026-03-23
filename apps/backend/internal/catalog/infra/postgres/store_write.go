@@ -43,6 +43,124 @@ func (store *Store) UpdateClient(ctx context.Context, client catalogapplication.
 	return nil
 }
 
+func (store *Store) DeleteClients(ctx context.Context, workspaceID int64, clientIDs []int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		"delete from catalog_clients where workspace_id = $1 and id = any($2)",
+		workspaceID,
+		int64SliceOrNil(clientIDs),
+	)
+	if err != nil {
+		return writeCatalogError("delete catalog clients", err)
+	}
+	return nil
+}
+
+func (store *Store) ArchiveClientAndProjects(
+	ctx context.Context,
+	workspaceID int64,
+	clientID int64,
+) ([]int64, error) {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return nil, writeCatalogError("begin archive client tx", err)
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(
+		ctx,
+		"update catalog_clients set archived = true where workspace_id = $1 and id = $2",
+		workspaceID,
+		clientID,
+	); err != nil {
+		return nil, writeCatalogError("archive catalog client", err)
+	}
+
+	rows, err := tx.Query(
+		ctx,
+		`update catalog_projects
+		set active = false
+		where workspace_id = $1 and client_id = $2 and active = true
+		returning id`,
+		workspaceID,
+		clientID,
+	)
+	if err != nil {
+		return nil, writeCatalogError("archive catalog client projects", err)
+	}
+	defer rows.Close()
+
+	projectIDs := make([]int64, 0)
+	for rows.Next() {
+		var projectID int64
+		if err := rows.Scan(&projectID); err != nil {
+			return nil, writeCatalogError("scan archived project id", err)
+		}
+		projectIDs = append(projectIDs, projectID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, writeCatalogError("iterate archived project ids", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, writeCatalogError("commit archive client tx", err)
+	}
+	return projectIDs, nil
+}
+
+func (store *Store) RestoreClientAndProjects(
+	ctx context.Context,
+	workspaceID int64,
+	clientID int64,
+	projectIDs []int64,
+	restoreAll bool,
+) error {
+	tx, err := store.pool.Begin(ctx)
+	if err != nil {
+		return writeCatalogError("begin restore client tx", err)
+	}
+	defer tx.Rollback(ctx)
+
+	if _, err := tx.Exec(
+		ctx,
+		"update catalog_clients set archived = false where workspace_id = $1 and id = $2",
+		workspaceID,
+		clientID,
+	); err != nil {
+		return writeCatalogError("restore catalog client", err)
+	}
+
+	if restoreAll {
+		if _, err := tx.Exec(
+			ctx,
+			`update catalog_projects
+			set active = true
+			where workspace_id = $1 and client_id = $2`,
+			workspaceID,
+			clientID,
+		); err != nil {
+			return writeCatalogError("restore all client projects", err)
+		}
+	} else if len(projectIDs) > 0 {
+		if _, err := tx.Exec(
+			ctx,
+			`update catalog_projects
+			set active = true
+			where workspace_id = $1 and client_id = $2 and id = any($3)`,
+			workspaceID,
+			clientID,
+			int64SliceOrNil(projectIDs),
+		); err != nil {
+			return writeCatalogError("restore client projects", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return writeCatalogError("commit restore client tx", err)
+	}
+	return nil
+}
+
 func (store *Store) CreateGroup(
 	ctx context.Context,
 	command catalogapplication.CreateGroupCommand,
@@ -61,6 +179,35 @@ func (store *Store) CreateGroup(
 		return catalogapplication.GroupView{}, writeCatalogError("create catalog group", err)
 	}
 	return group, nil
+}
+
+func (store *Store) UpdateGroup(ctx context.Context, group catalogapplication.GroupView) error {
+	_, err := store.pool.Exec(
+		ctx,
+		`update catalog_groups
+		set name = $3
+		where workspace_id = $1 and id = $2`,
+		group.WorkspaceID,
+		group.ID,
+		group.Name,
+	)
+	if err != nil {
+		return writeCatalogError("update catalog group", err)
+	}
+	return nil
+}
+
+func (store *Store) DeleteGroup(ctx context.Context, workspaceID int64, groupID int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		"delete from catalog_groups where workspace_id = $1 and id = $2",
+		workspaceID,
+		groupID,
+	)
+	if err != nil {
+		return writeCatalogError("delete catalog group", err)
+	}
+	return nil
 }
 
 func (store *Store) CreateTag(
@@ -167,6 +314,19 @@ func (store *Store) SetProjectPinned(ctx context.Context, workspaceID int64, pro
 	)
 	if err != nil {
 		return writeCatalogError("pin catalog project", err)
+	}
+	return nil
+}
+
+func (store *Store) DeleteProject(ctx context.Context, workspaceID int64, projectID int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		"delete from catalog_projects where workspace_id = $1 and id = $2",
+		workspaceID,
+		projectID,
+	)
+	if err != nil {
+		return writeCatalogError("delete catalog project", err)
 	}
 	return nil
 }

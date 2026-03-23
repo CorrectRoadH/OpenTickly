@@ -12,6 +12,7 @@ import (
 var (
 	ErrStoreRequired    = errors.New("catalog store is required")
 	ErrClientNotFound   = errors.New("catalog client not found")
+	ErrGroupNotFound    = errors.New("catalog group not found")
 	ErrProjectNotFound  = errors.New("catalog project not found")
 	ErrTagNotFound      = errors.New("catalog tag not found")
 	ErrTaskNotFound     = errors.New("catalog task not found")
@@ -36,6 +37,23 @@ func (service *Service) ListClients(ctx context.Context, workspaceID int64, filt
 	filter.Name = strings.TrimSpace(filter.Name)
 	filter.Status = normalizeClientStatus(filter.Status)
 	return service.store.ListClients(ctx, workspaceID, filter)
+}
+
+func (service *Service) ListClientsByIDs(ctx context.Context, workspaceID int64, clientIDs []int64) ([]ClientView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if len(clientIDs) == 0 {
+		return []ClientView{}, nil
+	}
+	clients, err := service.store.ListClientsByIDs(ctx, workspaceID, clientIDs)
+	if err != nil {
+		return nil, err
+	}
+	if len(clients) != len(clientIDs) {
+		return nil, ErrClientNotFound
+	}
+	return clients, nil
 }
 
 func (service *Service) CreateClient(ctx context.Context, command CreateClientCommand) (ClientView, error) {
@@ -77,11 +95,73 @@ func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCo
 	return service.loadClient(ctx, command.WorkspaceID, command.ClientID)
 }
 
+func (service *Service) DeleteClients(ctx context.Context, workspaceID int64, clientIDs []int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if len(clientIDs) == 0 {
+		return nil
+	}
+	if _, err := service.ListClientsByIDs(ctx, workspaceID, clientIDs); err != nil {
+		return err
+	}
+	return service.store.DeleteClients(ctx, workspaceID, clientIDs)
+}
+
+func (service *Service) ArchiveClient(ctx context.Context, workspaceID int64, clientID int64) ([]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if _, ok, err := service.store.GetClient(ctx, workspaceID, clientID); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrClientNotFound
+	}
+	return service.store.ArchiveClientAndProjects(ctx, workspaceID, clientID)
+}
+
+func (service *Service) RestoreClient(ctx context.Context, command RestoreClientCommand) (ClientView, error) {
+	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
+		return ClientView{}, err
+	}
+	if _, ok, err := service.store.GetClient(ctx, command.WorkspaceID, command.ClientID); err != nil {
+		return ClientView{}, err
+	} else if !ok {
+		return ClientView{}, ErrClientNotFound
+	}
+	for _, projectID := range command.ProjectIDs {
+		project, ok, err := service.store.GetProject(ctx, command.WorkspaceID, projectID)
+		if err != nil {
+			return ClientView{}, err
+		}
+		if !ok || project.ClientID == nil || *project.ClientID != command.ClientID {
+			return ClientView{}, ErrProjectNotFound
+		}
+	}
+	if err := service.store.RestoreClientAndProjects(
+		ctx,
+		command.WorkspaceID,
+		command.ClientID,
+		command.ProjectIDs,
+		command.RestoreAllProjects || len(command.ProjectIDs) == 0,
+	); err != nil {
+		return ClientView{}, err
+	}
+	return service.loadClient(ctx, command.WorkspaceID, command.ClientID)
+}
+
 func (service *Service) ListGroups(ctx context.Context, workspaceID int64) ([]GroupView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
 	}
 	return service.store.ListGroups(ctx, workspaceID)
+}
+
+func (service *Service) GetGroup(ctx context.Context, workspaceID int64, groupID int64) (GroupView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return GroupView{}, err
+	}
+	return service.loadGroup(ctx, workspaceID, groupID)
 }
 
 func (service *Service) CreateGroup(ctx context.Context, command CreateGroupCommand) (GroupView, error) {
@@ -91,6 +171,37 @@ func (service *Service) CreateGroup(ctx context.Context, command CreateGroupComm
 	}
 	command.Name = name
 	return service.store.CreateGroup(ctx, command)
+}
+
+func (service *Service) UpdateGroup(ctx context.Context, workspaceID int64, groupID int64, name string) (GroupView, error) {
+	current, ok, err := service.store.GetGroup(ctx, workspaceID, groupID)
+	if err != nil {
+		return GroupView{}, err
+	}
+	if !ok {
+		return GroupView{}, ErrGroupNotFound
+	}
+	normalized, err := domain.NormalizeCatalogName(name)
+	if err != nil {
+		return GroupView{}, err
+	}
+	current.Name = normalized
+	if err := service.store.UpdateGroup(ctx, current); err != nil {
+		return GroupView{}, err
+	}
+	return service.loadGroup(ctx, workspaceID, groupID)
+}
+
+func (service *Service) DeleteGroup(ctx context.Context, workspaceID int64, groupID int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if _, ok, err := service.store.GetGroup(ctx, workspaceID, groupID); err != nil {
+		return err
+	} else if !ok {
+		return ErrGroupNotFound
+	}
+	return service.store.DeleteGroup(ctx, workspaceID, groupID)
 }
 
 func (service *Service) ListTags(ctx context.Context, workspaceID int64, filter ListTagsFilter) ([]TagView, error) {
@@ -242,6 +353,46 @@ func (service *Service) SetProjectPinned(ctx context.Context, command SetProject
 		return ProjectView{}, err
 	}
 	return service.loadProject(ctx, command.WorkspaceID, command.ProjectID)
+}
+
+func (service *Service) DeleteProject(ctx context.Context, workspaceID int64, projectID int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+		return err
+	} else if !ok {
+		return ErrProjectNotFound
+	}
+	return service.store.DeleteProject(ctx, workspaceID, projectID)
+}
+
+func (service *Service) CountProjectTasks(ctx context.Context, workspaceID int64, projectIDs []int64) ([]ProjectCountView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	for _, projectID := range projectIDs {
+		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, ErrProjectNotFound
+		}
+	}
+	return service.store.CountProjectTasks(ctx, workspaceID, projectIDs)
+}
+
+func (service *Service) CountProjectUsers(ctx context.Context, workspaceID int64, projectIDs []int64) ([]ProjectCountView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	for _, projectID := range projectIDs {
+		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, ErrProjectNotFound
+		}
+	}
+	return service.store.CountProjectUsers(ctx, workspaceID, projectIDs)
 }
 
 func (service *Service) ListTasks(ctx context.Context, workspaceID int64, filter ListTasksFilter) (TaskPage, error) {
@@ -420,4 +571,15 @@ func (service *Service) loadTag(ctx context.Context, workspaceID int64, tagID in
 		return TagView{}, ErrTagNotFound
 	}
 	return tag, nil
+}
+
+func (service *Service) loadGroup(ctx context.Context, workspaceID int64, groupID int64) (GroupView, error) {
+	group, ok, err := service.store.GetGroup(ctx, workspaceID, groupID)
+	if err != nil {
+		return GroupView{}, err
+	}
+	if !ok {
+		return GroupView{}, ErrGroupNotFound
+	}
+	return group, nil
 }

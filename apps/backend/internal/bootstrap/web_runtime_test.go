@@ -1077,6 +1077,9 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if createGroup.Code != http.StatusOK {
 		t.Fatalf("expected group create status 200, got %d body=%s", createGroup.Code, createGroup.Body.String())
 	}
+	var groupBody map[string]any
+	mustDecodeJSON(t, createGroup.Body.Bytes(), &groupBody)
+	groupID := int64(groupBody["id"].(float64))
 
 	createProject := performAuthorizedJSONRequest(
 		t,
@@ -1286,6 +1289,198 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("expected tasks basic status 200, got %d body=%s", tasksBasic.Code, tasksBasic.Body.String())
 	}
 
+	updateGroup := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPut,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/groups/"+intToString(groupID),
+		map[string]any{"name": "Design Ops"},
+		tokenAuthorization,
+	)
+	if updateGroup.Code != http.StatusOK {
+		t.Fatalf("expected group update status 200, got %d body=%s", updateGroup.Code, updateGroup.Body.String())
+	}
+
+	deleteGroup := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/groups/"+intToString(groupID),
+		nil,
+		tokenAuthorization,
+	)
+	if deleteGroup.Code != http.StatusOK {
+		t.Fatalf("expected group delete status 200, got %d body=%s", deleteGroup.Code, deleteGroup.Body.String())
+	}
+
+	createRemovableClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
+		map[string]any{"name": "Delete Me"},
+		tokenAuthorization,
+	)
+	if createRemovableClient.Code != http.StatusOK {
+		t.Fatalf("expected removable client create status 200, got %d body=%s", createRemovableClient.Code, createRemovableClient.Body.String())
+	}
+	var removableClientBody map[string]any
+	mustDecodeJSON(t, createRemovableClient.Body.Bytes(), &removableClientBody)
+	removableClientID := int64(removableClientBody["id"].(float64))
+
+	clientsData := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/data",
+		[]int64{clientID, removableClientID},
+		tokenAuthorization,
+	)
+	if clientsData.Code != http.StatusOK {
+		t.Fatalf("expected clients data status 200, got %d body=%s", clientsData.Code, clientsData.Body.String())
+	}
+	var clientsDataBody []map[string]any
+	mustDecodeJSON(t, clientsData.Body.Bytes(), &clientsDataBody)
+	if len(clientsDataBody) != 2 {
+		t.Fatalf("expected two clients from clients/data, got %#v", clientsDataBody)
+	}
+
+	archiveClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientID)+"/archive",
+		nil,
+		tokenAuthorization,
+	)
+	if archiveClient.Code != http.StatusOK {
+		t.Fatalf("expected client archive status 200, got %d body=%s", archiveClient.Code, archiveClient.Body.String())
+	}
+	var archiveClientBody []int64
+	mustDecodeJSON(t, archiveClient.Body.Bytes(), &archiveClientBody)
+	if len(archiveClientBody) != 1 || archiveClientBody[0] != projectID {
+		t.Fatalf("expected archived client to return project id %d, got %#v", projectID, archiveClientBody)
+	}
+
+	restoreClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientID)+"/restore",
+		map[string]any{"restore_all_projects": true},
+		tokenAuthorization,
+	)
+	if restoreClient.Code != http.StatusOK {
+		t.Fatalf("expected client restore status 200, got %d body=%s", restoreClient.Code, restoreClient.Body.String())
+	}
+	var restoredClientBody map[string]any
+	mustDecodeJSON(t, restoreClient.Body.Bytes(), &restoredClientBody)
+	if restoredClientBody["archived"] != false {
+		t.Fatalf("expected restored client archived=false, got %#v", restoredClientBody)
+	}
+
+	archiveClients := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/archive",
+		[]int64{clientID},
+		tokenAuthorization,
+	)
+	if archiveClients.Code != http.StatusOK {
+		t.Fatalf("expected bulk client archive status 200, got %d body=%s", archiveClients.Code, archiveClients.Body.String())
+	}
+	var archiveClientsBody []map[string]any
+	mustDecodeJSON(t, archiveClients.Body.Bytes(), &archiveClientsBody)
+	if len(archiveClientsBody) != 1 {
+		t.Fatalf("expected one archive response item, got %#v", archiveClientsBody)
+	}
+
+	restoreClientProjects := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(clientID)+"/restore",
+		map[string]any{"projects": []int64{projectID}},
+		tokenAuthorization,
+	)
+	if restoreClientProjects.Code != http.StatusOK {
+		t.Fatalf("expected client restore by project list status 200, got %d body=%s", restoreClientProjects.Code, restoreClientProjects.Body.String())
+	}
+
+	deleteClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/"+intToString(removableClientID),
+		nil,
+		tokenAuthorization,
+	)
+	if deleteClient.Code != http.StatusOK {
+		t.Fatalf("expected client delete status 200, got %d body=%s", deleteClient.Code, deleteClient.Body.String())
+	}
+
+	createBulkDeleteClient := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients",
+		map[string]any{"name": "Bulk Delete"},
+		tokenAuthorization,
+	)
+	if createBulkDeleteClient.Code != http.StatusOK {
+		t.Fatalf("expected bulk delete client create status 200, got %d body=%s", createBulkDeleteClient.Code, createBulkDeleteClient.Body.String())
+	}
+	var bulkDeleteClientBody map[string]any
+	mustDecodeJSON(t, createBulkDeleteClient.Body.Bytes(), &bulkDeleteClientBody)
+	bulkDeleteClientID := int64(bulkDeleteClientBody["id"].(float64))
+
+	deleteClients := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/clients/delete",
+		[]int64{bulkDeleteClientID},
+		tokenAuthorization,
+	)
+	if deleteClients.Code != http.StatusOK {
+		t.Fatalf("expected bulk client delete status 200, got %d body=%s", deleteClients.Code, deleteClients.Body.String())
+	}
+
+	projectTaskCount := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/task_count",
+		map[string]any{"project_ids": []int64{projectID}},
+		tokenAuthorization,
+	)
+	if projectTaskCount.Code != http.StatusOK {
+		t.Fatalf("expected project task count status 200, got %d body=%s", projectTaskCount.Code, projectTaskCount.Body.String())
+	}
+	var projectTaskCountBody []map[string]int
+	mustDecodeJSON(t, projectTaskCount.Body.Bytes(), &projectTaskCountBody)
+	if len(projectTaskCountBody) != 1 || projectTaskCountBody[0][intToString(projectID)] != 2 {
+		t.Fatalf("expected task count 2 for project %d, got %#v", projectID, projectTaskCountBody)
+	}
+
+	projectUserCount := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/user_count",
+		map[string]any{"project_ids": []int64{projectID}},
+		tokenAuthorization,
+	)
+	if projectUserCount.Code != http.StatusOK {
+		t.Fatalf("expected project user count status 200, got %d body=%s", projectUserCount.Code, projectUserCount.Body.String())
+	}
+	var projectUserCountBody []map[string]int
+	mustDecodeJSON(t, projectUserCount.Body.Bytes(), &projectUserCountBody)
+	if len(projectUserCountBody) != 1 || projectUserCountBody[0][intToString(projectID)] != 1 {
+		t.Fatalf("expected user count 1 for project %d, got %#v", projectID, projectUserCountBody)
+	}
+
 	updateTag := performAuthorizedJSONRequest(
 		t,
 		app,
@@ -1308,6 +1503,42 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	)
 	if deleteProjectTask.Code != http.StatusOK {
 		t.Fatalf("expected project task delete status 200, got %d body=%s", deleteProjectTask.Code, deleteProjectTask.Body.String())
+	}
+
+	deleteProject := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodDelete,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID),
+		nil,
+		tokenAuthorization,
+	)
+	if deleteProject.Code != http.StatusOK {
+		t.Fatalf("expected project delete status 200, got %d body=%s", deleteProject.Code, deleteProject.Body.String())
+	}
+
+	var remainingProjectCount int
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select count(*) from catalog_projects where id = $1",
+		projectID,
+	).Scan(&remainingProjectCount); err != nil {
+		t.Fatalf("count deleted project: %v", err)
+	}
+	if remainingProjectCount != 0 {
+		t.Fatalf("expected deleted project row to be removed, got %d", remainingProjectCount)
+	}
+
+	var seededTaskProjectID *int64
+	if err := database.Pool.QueryRow(
+		context.Background(),
+		"select project_id from catalog_tasks where name = $1",
+		"Prep launch brief",
+	).Scan(&seededTaskProjectID); err != nil {
+		t.Fatalf("load seeded task project id: %v", err)
+	}
+	if seededTaskProjectID != nil {
+		t.Fatalf("expected remaining seeded task to be unassigned from deleted project, got %v", *seededTaskProjectID)
 	}
 
 	deleteTag := performAuthorizedJSONRequest(
