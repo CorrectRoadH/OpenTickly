@@ -539,7 +539,7 @@ export function useStopTimeEntryMutation() {
             workspace_id: workspaceId,
           },
         }),
-    ),
+      ),
     onSuccess: async () => {
       queryClient.setQueryData(currentTimeEntryQueryKey, null);
       await queryClient.invalidateQueries({
@@ -565,9 +565,7 @@ export function useUpdateTimeEntryMutation() {
         billable?: boolean;
         description?: string;
         projectId?: number | null;
-        start?: string;
-        stop?: string | null;
-        tags?: string[];
+        tagIds?: number[];
         taskId?: number | null;
       };
       timeEntryId: number;
@@ -579,9 +577,7 @@ export function useUpdateTimeEntryMutation() {
             billable: request.billable,
             description: request.description,
             project_id: request.projectId ?? undefined,
-            start: request.start,
-            stop: request.stop ?? undefined,
-            tags: request.tags,
+            tag_ids: request.tagIds,
             task_id: request.taskId ?? undefined,
           },
           path: {

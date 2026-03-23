@@ -111,9 +111,11 @@ export function SurfaceMessage({
 
 export function ListView({
   groups,
+  onEditEntry,
   timezone,
 }: {
   groups: EntryGroup[];
+  onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   timezone: string;
 }): ReactElement {
   if (groups.length === 0) {
@@ -165,6 +167,9 @@ export function ListView({
               <button
                 aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
                 className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                onClick={(event) =>
+                  onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
+                }
                 type="button"
               >
                 <TrackingIcon className="size-3.5" name="edit" />
@@ -179,11 +184,13 @@ export function ListView({
 
 export function CalendarView({
   entries,
+  onEditEntry,
   timezone,
   weekDays,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   hours: number[];
+  onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   timezone: string;
   weekDays: Date[];
 }): ReactElement {
@@ -246,6 +253,7 @@ export function CalendarView({
                 <CalendarEventCard
                   entry={entry}
                   key={String(entry.id ?? entry.start)}
+                  onEditEntry={onEditEntry}
                   timezone={timezone}
                 />
               ))}
@@ -347,9 +355,11 @@ export function TimesheetView({
 
 function CalendarEventCard({
   entry,
+  onEditEntry,
   timezone,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   timezone: string;
 }) {
   const start = new Date(entry.start ?? entry.at ?? Date.now());
@@ -359,8 +369,10 @@ function CalendarEventCard({
   const color = resolveEntryColor(entry);
 
   return (
-    <div
-      className="absolute left-1.5 right-1.5 overflow-hidden rounded-[2px] border border-black/25 px-2 py-1 text-[10px] leading-3 text-white"
+    <button
+      aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
+      className="absolute left-1.5 right-1.5 overflow-hidden rounded-[2px] border border-black/25 px-2 py-1 text-left text-[10px] leading-3 text-white transition hover:brightness-110"
+      onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
       style={{
         backgroundColor: colorToOverlay(color),
         borderBottomColor: color,
@@ -368,6 +380,7 @@ function CalendarEventCard({
         top: `${top}px`,
         height: `${Math.min(height, CALENDAR_TOTAL_HEIGHT - top)}px`,
       }}
+      type="button"
     >
       <p className="truncate font-medium">
         {entry.description?.trim() || entry.project_name || "Entry"}
@@ -376,7 +389,7 @@ function CalendarEventCard({
         {entry.project_name ?? "(No project)"}
       </p>
       <p className="mt-1 truncate text-white/75">{formatClockTime(start, timezone)}</p>
-    </div>
+    </button>
   );
 }
 

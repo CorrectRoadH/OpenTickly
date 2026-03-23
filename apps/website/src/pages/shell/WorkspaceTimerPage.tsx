@@ -23,13 +23,24 @@ import {
   ToolbarButton,
   ViewTab,
 } from "../../features/tracking/overview-views.tsx";
+import {
+  TimeEntryEditorDialog,
+  type TimeEntryEditorAnchor,
+} from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import type {
+  GithubComTogglTogglApiInternalModelsProject,
+  GithubComTogglTogglApiInternalModelsTimeEntry,
+} from "../../shared/api/generated/public-track/types.gen.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useCurrentTimeEntryQuery,
+  useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
   useTimeEntriesQuery,
+  useTagsQuery,
+  useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
@@ -52,11 +63,25 @@ export function WorkspaceTimerPage(): ReactElement {
     ...weekRange,
   });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const projectsQuery = useProjectsQuery(workspaceId, "all");
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
+  const tagsQuery = useTagsQuery(workspaceId);
+  const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const [draftDescription, setDraftDescription] = useState("");
+  const [selectedEntry, setSelectedEntry] =
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
+  const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
+    null,
+  );
+  const [selectedDescription, setSelectedDescription] = useState("");
+  const [selectedEntryError, setSelectedEntryError] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
   const runningEntry = currentTimeEntryQuery.data;
+  const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const tagOptions = useMemo(() => normalizeTags(tagsQuery.data), [tagsQuery.data]);
   const runningDurationSeconds = resolveEntryDurationSeconds(
     runningEntry ?? { duration: 0 },
     nowMs,
@@ -114,6 +139,30 @@ export function WorkspaceTimerPage(): ReactElement {
     };
   }, [runningEntry]);
 
+  useEffect(() => {
+    if (!selectedEntry?.id) {
+      return;
+    }
+
+    const refreshedEntry = entries.find((entry) => entry.id === selectedEntry.id);
+
+    if (refreshedEntry) {
+      setSelectedEntry(refreshedEntry);
+      return;
+    }
+
+    if (runningEntry?.id === selectedEntry.id) {
+      setSelectedEntry(runningEntry);
+    }
+  }, [entries, runningEntry, selectedEntry?.id]);
+
+  useEffect(() => {
+    setSelectedDescription(selectedEntry?.description ?? "");
+    setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
+    setSelectedTagIds(selectedEntry?.tag_ids ?? []);
+    setSelectedEntryError(null);
+  }, [selectedEntry]);
+
   async function handleTimerAction() {
     if (runningEntry?.id != null) {
       const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
@@ -131,6 +180,49 @@ export function WorkspaceTimerPage(): ReactElement {
       start: new Date().toISOString(),
     });
     setDraftDescription("");
+  }
+
+  async function handleSelectedEntrySave() {
+    if (!selectedEntry?.id) {
+      return;
+    }
+
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace and cannot be updated.");
+      return;
+    }
+
+    try {
+      const updatedEntry = await updateTimeEntryMutation.mutateAsync({
+        request: {
+          billable: selectedEntry.billable,
+          description: selectedDescription.trim(),
+          projectId: selectedProjectId,
+          tagIds: selectedTagIds,
+          taskId: selectedEntry.task_id ?? selectedEntry.tid,
+        },
+        timeEntryId: selectedEntry.id,
+        workspaceId: selectedWorkspaceId,
+      });
+      setSelectedEntry(updatedEntry);
+      setSelectedEntryError(null);
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }
+
+  function handleEntryEdit(
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    anchorRect: DOMRect,
+  ) {
+    setSelectedEntry(entry);
+    setSelectedEntryAnchor({
+      height: anchorRect.height,
+      left: anchorRect.left,
+      top: anchorRect.top,
+      width: anchorRect.width,
+    });
   }
 
   return (
@@ -263,18 +355,56 @@ export function WorkspaceTimerPage(): ReactElement {
         <SurfaceMessage message={timerErrorMessage} tone="error" />
       ) : null}
       {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "list" ? (
-        <ListView groups={groupedEntries} timezone={timezone} />
+        <ListView groups={groupedEntries} onEditEntry={handleEntryEdit} timezone={timezone} />
       ) : null}
       {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar" ? (
         <CalendarView
           entries={entries}
           hours={calendarHours}
+          onEditEntry={handleEntryEdit}
           timezone={timezone}
           weekDays={weekDays}
         />
       ) : null}
       {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "timesheet" ? (
         <TimesheetView rows={timesheetRows} timezone={timezone} weekDays={weekDays} />
+      ) : null}
+      {selectedEntry && selectedEntryAnchor ? (
+        <TimeEntryEditorDialog
+          anchor={selectedEntryAnchor}
+          description={selectedDescription}
+          entry={selectedEntry}
+          isSaving={updateTimeEntryMutation.isPending}
+          onClose={() => {
+            setSelectedEntry(null);
+            setSelectedEntryAnchor(null);
+            setSelectedEntryError(null);
+          }}
+          onDescriptionChange={setSelectedDescription}
+          onProjectSelect={setSelectedProjectId}
+          onSave={() => {
+            void handleSelectedEntrySave();
+          }}
+          onTagToggle={(tagId) => {
+            setSelectedTagIds((current) =>
+              current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
+            );
+          }}
+          projects={projectOptions
+            .filter((project) => project.id != null)
+            .map((project) => ({
+              clientName: project.client_name ?? undefined,
+              color: resolveProjectColor(project),
+              id: project.id as number,
+              name: project.name ?? "Untitled project",
+            }))}
+          saveError={selectedEntryError}
+          selectedProjectId={selectedProjectId}
+          selectedTagIds={selectedTagIds}
+          tags={tagOptions}
+          timezone={timezone}
+          workspaceName={session.currentWorkspace.name}
+        />
       ) : null}
     </div>
   );
@@ -294,6 +424,89 @@ function resolveTimerErrorMessage(
   }
 
   return "We could not load or update time entries right now.";
+}
+
+function resolveSingleTimerErrorMessage(error: unknown): string {
+  if (error instanceof WebApiError) {
+    if (typeof error.data === "string" && error.data.trim()) {
+      return error.data;
+    }
+
+    if (
+      error.data &&
+      typeof error.data === "object" &&
+      "message" in error.data &&
+      typeof error.data.message === "string"
+    ) {
+      return error.data.message;
+    }
+
+    return error.message;
+  }
+
+  return "We could not update this time entry right now.";
+}
+
+function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
+  if (Array.isArray(data)) {
+    return data.filter((project): project is GithubComTogglTogglApiInternalModelsProject =>
+      Boolean(project && typeof project === "object" && "id" in project),
+    );
+  }
+
+  if (hasProjectArray(data, "projects")) {
+    return data.projects;
+  }
+
+  if (hasProjectArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasProjectArray(
+  value: unknown,
+  key: "data" | "projects",
+): value is Record<typeof key, GithubComTogglTogglApiInternalModelsProject[]> {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
+}
+
+function normalizeTags(data: unknown): { id: number; name: string }[] {
+  if (Array.isArray(data)) {
+    return data.filter((tag): tag is { id: number; name: string } =>
+      Boolean(tag && typeof tag === "object" && "id" in tag && "name" in tag),
+    );
+  }
+
+  if (hasTagArray(data, "tags")) {
+    return data.tags;
+  }
+
+  if (hasTagArray(data, "data")) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function hasTagArray(
+  value: unknown,
+  key: "data" | "tags",
+): value is Record<typeof key, { id: number; name: string }[]> {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
+}
+
+function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProject): string {
+  return project.color || "#5fb0ff";
 }
 
 function formatTrackQueryDate(date: Date): string {
