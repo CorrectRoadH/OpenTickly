@@ -379,10 +379,10 @@ export function WorkspaceTimerPage(): ReactElement {
 
   return (
     <div
-      className="w-full min-w-0 bg-[var(--track-surface)] text-white"
+      className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-[var(--track-surface)] text-white"
       data-testid="tracking-timer-page"
     >
-      <header className="border-b border-[var(--track-border)]">
+      <header className="shrink-0 border-b border-[var(--track-border)]">
         <div className="flex min-h-[84px] flex-wrap items-center gap-x-3 gap-y-3 border-b border-[var(--track-border)] px-5 py-4">
           <div className="min-w-0 flex-1">
             <label className="sr-only" htmlFor="timer-description">
@@ -481,28 +481,32 @@ export function WorkspaceTimerPage(): ReactElement {
           ) : null}
         </div>
       </header>
-
-      {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
-      {timeEntriesQuery.isError ? (
-        <SurfaceMessage message={timerErrorMessage} tone="error" />
-      ) : null}
-      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "list" ? (
-        <ListView groups={groupedEntries} onEditEntry={handleEntryEdit} timezone={timezone} />
-      ) : null}
-      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar" ? (
-        <CalendarView
-          entries={entries}
-          hours={calendarHours}
-          nowMs={nowMs}
-          onEditEntry={handleEntryEdit}
-          runningEntry={runningEntry}
-          timezone={timezone}
-          weekDays={weekDays}
-        />
-      ) : null}
-      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "timesheet" ? (
-        <TimesheetView rows={timesheetRows} timezone={timezone} weekDays={weekDays} />
-      ) : null}
+      <div
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+        data-testid="tracking-timer-scroll-area"
+      >
+        {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
+        {timeEntriesQuery.isError ? (
+          <SurfaceMessage message={timerErrorMessage} tone="error" />
+        ) : null}
+        {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "list" ? (
+          <ListView groups={groupedEntries} onEditEntry={handleEntryEdit} timezone={timezone} />
+        ) : null}
+        {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar" ? (
+          <CalendarView
+            entries={entries}
+            hours={calendarHours}
+            nowMs={nowMs}
+            onEditEntry={handleEntryEdit}
+            runningEntry={runningEntry}
+            timezone={timezone}
+            weekDays={weekDays}
+          />
+        ) : null}
+        {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "timesheet" ? (
+          <TimesheetView rows={timesheetRows} timezone={timezone} weekDays={weekDays} />
+        ) : null}
+      </div>
       {selectedEntry && selectedEntryAnchor ? (
         <TimeEntryEditorDialog
           anchor={selectedEntryAnchor}

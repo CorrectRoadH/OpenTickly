@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { WorkspaceTimerPage } from "./WorkspaceTimerPage.tsx";
@@ -8,6 +8,7 @@ const mockUseSession = vi.fn();
 const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
 const mockUseCreateProjectMutation = vi.fn();
+const mockUseDeleteTimeEntryMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
 const mockUseStartTimeEntryMutation = vi.fn();
 const mockUseStopTimeEntryMutation = vi.fn();
@@ -23,6 +24,7 @@ vi.mock("../../shared/session/session-context.tsx", () => ({
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
   useCreateProjectMutation: () => mockUseCreateProjectMutation(),
+  useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: () => mockUseProjectsQuery(),
   useStartTimeEntryMutation: () => mockUseStartTimeEntryMutation(),
   useStopTimeEntryMutation: () => mockUseStopTimeEntryMutation(),
@@ -32,6 +34,10 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
 }));
 
 describe("WorkspaceTimerPage", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -58,6 +64,10 @@ describe("WorkspaceTimerPage", () => {
     });
 
     mockUseCreateProjectMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    mockUseDeleteTimeEntryMutation.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });
@@ -180,6 +190,79 @@ describe("WorkspaceTimerPage", () => {
     });
   });
 
+  it("shows the selected week range in the toolbar and opens the week range dialog", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-23T09:00:00Z"));
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /2026-03-23 - 2026-03-29/i }));
+
+    expect(screen.getByTestId("week-range-dialog")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "This week" }).getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    expect(screen.getByText("March")).toBeTruthy();
+    expect(screen.getByText("2026")).toBeTruthy();
+  });
+
+  it("changes the queried week when selecting last week from the dialog", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-23T09:00:00Z"));
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /2026-03-23 - 2026-03-29/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Last week" }));
+
+    expect(screen.getByRole("button", { name: /2026-03-16 - 2026-03-22/i })).toBeTruthy();
+    expect(screen.queryByTestId("week-range-dialog")).toBeNull();
+  });
+
+  it("keeps the timer header outside the scrollable content area", () => {
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    const page = screen.getByTestId("tracking-timer-page");
+    const scrollArea = screen.getByTestId("tracking-timer-scroll-area");
+    const weekRangeButton = screen.getByRole("button", {
+      name: /\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}/i,
+    });
+
+    expect(page.firstElementChild?.tagName).toBe("HEADER");
+    expect(scrollArea.parentElement).toBe(page);
+    expect(scrollArea.contains(weekRangeButton)).toBe(false);
+  });
+
   it("closes the editor after saving a calendar entry", async () => {
     const today = new Date();
     const day = String(today.getUTCDate()).padStart(2, "0");
@@ -268,6 +351,46 @@ describe("WorkspaceTimerPage", () => {
     await waitFor(() => {
       expect(stopTimeEntry).toHaveBeenCalledWith({
         timeEntryId: 999,
+        workspaceId: 202,
+      });
+      expect(screen.queryByTestId("time-entry-editor-dialog")).toBeNull();
+    });
+  });
+
+  it("deletes a selected entry from the entry actions menu and closes the editor", async () => {
+    const deleteTimeEntry = vi.fn().mockResolvedValue("deleted");
+    const historicalEntry = createTimeEntryFixture({
+      description: "Delete me",
+      id: 401,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseDeleteTimeEntryMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: deleteTimeEntry,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Delete me" }));
+    fireEvent.click(
+      within(screen.getByTestId("time-entry-editor-dialog")).getByRole("button", {
+        name: "Entry actions",
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete entry" }));
+
+    await waitFor(() => {
+      expect(deleteTimeEntry).toHaveBeenCalledWith({
+        timeEntryId: 401,
         workspaceId: 202,
       });
       expect(screen.queryByTestId("time-entry-editor-dialog")).toBeNull();
