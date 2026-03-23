@@ -153,3 +153,11 @@ func currentUserBody(user application.UserSnapshot) map[string]any {
 		"2fa_enabled":          user.TwoFactorEnabled,
 	}
 }
+
+func preferencesBody(preferences domain.Preferences) map[string]any {
+	return map[string]any{
+		"alpha_features":   preferences.AlphaFeatures,
+		"date_format":      preferences.DateFormat,
+		"timeofday_format": preferences.TimeOfDayFormat,
+	}
+}

@@ -8,6 +8,7 @@ import (
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 
@@ -101,16 +102,33 @@ func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*identityappli
 	}
 
 	credentials, err := publicTrackCredentials(ctx)
-	if err != nil {
+	if err == nil {
+		user, resolveErr := handlers.identityApp.ResolveBasicUser(ctx.Request().Context(), credentials)
+		switch {
+		case resolveErr == nil:
+			ctx.Set(publicTrackUserContextKey, &user)
+			return &user, nil
+		case errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
+			errors.Is(resolveErr, identitydomain.ErrUserDeactivated),
+			errors.Is(resolveErr, identitydomain.ErrUserDeleted):
+			return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		default:
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+	}
+
+	currentSessionID := sessionID(ctx)
+	if currentSessionID == "" {
 		return nil, err
 	}
 
-	user, resolveErr := handlers.identityApp.ResolveBasicUser(ctx.Request().Context(), credentials)
+	user, resolveErr := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), currentSessionID)
 	switch {
 	case resolveErr == nil:
 		ctx.Set(publicTrackUserContextKey, &user)
 		return &user, nil
-	case errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
+	case errors.Is(resolveErr, application.ErrSessionNotFound),
+		errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
 		errors.Is(resolveErr, identitydomain.ErrUserDeactivated),
 		errors.Is(resolveErr, identitydomain.ErrUserDeleted):
 		return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")

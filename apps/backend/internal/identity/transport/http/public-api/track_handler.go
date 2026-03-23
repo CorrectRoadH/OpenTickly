@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 
 	"github.com/labstack/echo/v4"
@@ -21,16 +22,15 @@ func NewPublicTrackHandler(identity *Handler) *PublicTrackHandler {
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMe(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	response := handler.identity.GetMe(ctx.Request().Context(), credentials)
-	return ctx.JSON(response.StatusCode, response.Body)
+	return ctx.JSON(http.StatusOK, currentUserBody(user))
 }
 
 func (handler *PublicTrackHandler) PutPublicTrackMe(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (handler *PublicTrackHandler) PutPublicTrackMe(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	response := handler.identity.PutMe(ctx.Request().Context(), credentials, identitydomain.ProfileUpdate{
+	updated, updateErr := handler.identity.service.UpdateProfile(ctx.Request().Context(), user.ID, identitydomain.ProfileUpdate{
 		CurrentPassword:    lo.FromPtr(request.CurrentPassword),
 		Password:           lo.FromPtr(request.Password),
 		Email:              emailValue(request.Email),
@@ -50,20 +50,28 @@ func (handler *PublicTrackHandler) PutPublicTrackMe(ctx echo.Context) error {
 		CountryID:          int64PointerFromTrackIntPointer(request.CountryId),
 		DefaultWorkspaceID: int64PointerFromTrackIntPointer(request.DefaultWorkspaceId),
 	})
-	return ctx.JSON(response.StatusCode, response.Body)
+	if updateErr != nil {
+		response := mapError(updateErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, currentUserBody(updated))
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackPreferences(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	response := handler.identity.GetPreferences(ctx.Request().Context(), credentials, "web")
-	return ctx.JSON(response.StatusCode, response.Body)
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, "web")
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
 func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -73,25 +81,38 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx echo.Context) 
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	response := handler.identity.PostPreferences(ctx.Request().Context(), credentials, "web", identitydomain.Preferences{
+	if updateErr := handler.identity.service.UpdatePreferences(ctx.Request().Context(), user.ID, "web", identitydomain.Preferences{
 		DateFormat:      lo.FromPtr(request.DateFormat),
 		TimeOfDayFormat: normalizeTrackTimeOfDayFormat(lo.FromPtr(request.TimeofdayFormat)),
 		AlphaFeatures:   alphaFeaturesFromPublicTrack(request.AlphaFeatures),
-	})
-	return ctx.JSON(response.StatusCode, response.Body)
+	}); updateErr != nil {
+		response := mapError(updateErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, "web")
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackPreferencesClient(ctx echo.Context, client string) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	response := handler.identity.GetPreferences(ctx.Request().Context(), credentials, client)
-	return ctx.JSON(response.StatusCode, response.Body)
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, client)
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
 func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx echo.Context, client string) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -101,33 +122,39 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx echo.Con
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	response := handler.identity.PostPreferences(ctx.Request().Context(), credentials, client, identitydomain.Preferences{
+	if updateErr := handler.identity.service.UpdatePreferences(ctx.Request().Context(), user.ID, client, identitydomain.Preferences{
 		DateFormat:      lo.FromPtr(request.DateFormat),
 		TimeOfDayFormat: normalizeTrackTimeOfDayFormat(lo.FromPtr(request.TimeofdayFormat)),
 		AlphaFeatures:   alphaFeaturesFromPublicTrack(request.AlphaFeatures),
-	})
-	return ctx.JSON(response.StatusCode, response.Body)
+	}); updateErr != nil {
+		response := mapError(updateErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, client)
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, preferencesBody(preferences))
 }
 
 func (handler *PublicTrackHandler) PostPublicTrackResetToken(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	response := handler.identity.PostResetToken(ctx.Request().Context(), credentials)
-	return ctx.JSON(response.StatusCode, response.Body)
+	token, resetErr := handler.identity.service.ResetAPIToken(ctx.Request().Context(), user.ID)
+	if resetErr != nil {
+		response := mapError(resetErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, token)
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
-	}
-
-	user, err := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials)
-	if err != nil {
-		response := mapError(err)
-		return ctx.JSON(response.StatusCode, response.Body)
 	}
 	features, err := handler.identity.service.ListAlphaFeatures(ctx.Request().Context(), user.ID, "web")
 	if err != nil {
@@ -153,30 +180,40 @@ func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) er
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMeLogged(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
-	if err != nil {
+	if _, err := handler.resolvePublicTrackUser(ctx); err != nil {
 		return err
-	}
-
-	if _, err := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials); err != nil {
-		response := mapError(err)
-		return ctx.JSON(response.StatusCode, response.Body)
 	}
 	return ctx.NoContent(http.StatusOK)
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx echo.Context) error {
-	credentials, err := credentialsFromBasicAuth(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-
-	user, err := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials)
-	if err != nil {
-		response := mapError(err)
-		return ctx.JSON(response.StatusCode, response.Body)
-	}
 	return ctx.JSON(http.StatusOK, user.ID)
+}
+
+func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (application.UserSnapshot, error) {
+	credentials, err := credentialsFromBasicAuth(ctx)
+	switch {
+	case err == nil:
+		user, resolveErr := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials)
+		if resolveErr != nil {
+			response := mapError(resolveErr)
+			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body)
+		}
+		return user, nil
+	case sessionIDFromTrackContext(ctx) == "":
+		return application.UserSnapshot{}, err
+	default:
+		user, resolveErr := handler.identity.service.ResolveCurrentUser(ctx.Request().Context(), sessionIDFromTrackContext(ctx))
+		if resolveErr != nil {
+			response := mapError(resolveErr)
+			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body)
+		}
+		return user, nil
+	}
 }
 
 func credentialsFromBasicAuth(ctx echo.Context) (identitydomain.BasicCredentials, error) {
@@ -188,6 +225,14 @@ func credentialsFromBasicAuth(ctx echo.Context) (identitydomain.BasicCredentials
 		Username: username,
 		Password: password,
 	}, nil
+}
+
+func sessionIDFromTrackContext(ctx echo.Context) string {
+	cookie, err := ctx.Cookie("opentoggl_session")
+	if err == nil {
+		return cookie.Value
+	}
+	return ""
 }
 
 func normalizeTrackTimeOfDayFormat(value string) string {
