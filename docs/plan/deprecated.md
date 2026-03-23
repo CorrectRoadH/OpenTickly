@@ -645,25 +645,25 @@ apps/website/src/
     - 登录 / 注册 / 会话引导
       - Page flow：`apps/website/src/pages/auth/__tests__/auth-page-flow.test.tsx`
       - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`
-      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
+      - Integration：`apps/backend/internal/identity/application/identity_sessions_test.go`
       - E2E / real-runtime：`apps/website/e2e/app-shell.real-runtime.spec.ts`
     - 当前用户资料 / 偏好 / API token
       - Page flow：`apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx`
       - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`
-      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`
+      - Integration：`apps/backend/internal/identity/application/identity_sessions_test.go`
       - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 profile e2e 仍缺
     - workspace / organization settings
       - Page flow：`apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx`
       - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/http/web_organization_settings_generated_test.go`
-      - Integration：`apps/backend/internal/tenant/application/service_integration_test.go`、`apps/backend/internal/billing/application/service_integration_test.go`
+      - Integration：`apps/backend/internal/tenant/application/organizations_and_workspaces_test.go`、`apps/backend/internal/billing/application/billing_facts_test.go`
       - E2E：当前仅被 shell real-runtime 链间接覆盖；独立 settings e2e 仍缺
     - 进入 workspace 的共享 app shell
       - Page flow：`apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx`
       - Contract：`apps/backend/internal/http/web_routes_test.go`、`apps/backend/internal/identity/transport/http/web/handler_test.go`、`apps/backend/internal/http/web_organization_settings_generated_test.go`
-      - Integration：`apps/backend/internal/identity/application/service_integration_test.go`、`apps/backend/internal/tenant/application/service_integration_test.go`
+      - Integration：`apps/backend/internal/identity/application/identity_sessions_test.go`、`apps/backend/internal/tenant/application/organizations_and_workspaces_test.go`
       - E2E / real-runtime：`apps/website/e2e/app-shell.spec.ts`、`apps/website/e2e/app-shell.real-runtime.spec.ts`
     - 停用用户阻止登录 / 写入与 stop-running-timer 语义
-      - Domain / integration：`apps/backend/internal/identity/domain/user_test.go`、`apps/backend/internal/identity/application/service_integration_test.go`
+      - Domain / integration：`apps/backend/internal/identity/domain/user_test.go`、`apps/backend/internal/identity/application/identity_sessions_test.go`
       - Runtime regression：`apps/backend/internal/bootstrap/wave1_web_runtime_test.go`
 - self-hosted `docker compose` 基线可启动 Wave 1 所需服务，并完成 login + shell + health smoke test
 - `shell`、`profile`、`settings` 的剩余 parity polish、截图/证据提交与跨页面推广工作可在 Wave 1.5 继续补齐，但 Wave 1 不得再把共享 UI 基线、核心信息架构和正式 Figma 主结构留作后续尾项

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
@@ -579,6 +580,124 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 
 	if err := service.DeleteTask(ctx, workspaceID, project.ID, 999); !errors.Is(err, catalogapplication.ErrTaskNotFound) {
 		t.Fatalf("expected ErrTaskNotFound from delete task, got %v", err)
+	}
+}
+
+func TestServicePersistsProjectGroupAssignments(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	service := mustNewCatalogService(t, database)
+
+	project, err := service.CreateProject(ctx, catalogapplication.CreateProjectCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Project Groups",
+	})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Delivery Team",
+	})
+	if err != nil {
+		t.Fatalf("create group: %v", err)
+	}
+
+	projectGroup, err := service.CreateProjectGroup(ctx, catalogapplication.CreateProjectGroupCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   project.ID,
+		GroupID:     group.ID,
+	})
+	if err != nil {
+		t.Fatalf("create project group: %v", err)
+	}
+	if projectGroup.WorkspaceID != workspaceID || projectGroup.ProjectID != project.ID || projectGroup.GroupID != group.ID {
+		t.Fatalf("expected persisted project group assignment, got %#v", projectGroup)
+	}
+
+	projectGroups, err := service.ListProjectGroups(ctx, workspaceID, []int64{project.ID})
+	if err != nil {
+		t.Fatalf("list project groups: %v", err)
+	}
+	if len(projectGroups) != 1 || projectGroups[0].ID != projectGroup.ID {
+		t.Fatalf("expected one project group assignment, got %#v", projectGroups)
+	}
+
+	if err := service.DeleteProjectGroup(ctx, workspaceID, projectGroup.ID); err != nil {
+		t.Fatalf("delete project group: %v", err)
+	}
+
+	projectGroups, err = service.ListProjectGroups(ctx, workspaceID, []int64{project.ID})
+	if err != nil {
+		t.Fatalf("list project groups after delete: %v", err)
+	}
+	if len(projectGroups) != 0 {
+		t.Fatalf("expected no project groups after delete, got %#v", projectGroups)
+	}
+}
+
+func TestServiceReturnsRecurringProjectPeriodWithinBoundary(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	service := mustNewCatalogService(t, database)
+
+	project, err := service.CreateProject(ctx, catalogapplication.CreateProjectCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Recurring Delivery",
+		Recurring:   lo.ToPtr(true),
+	})
+	if err != nil {
+		t.Fatalf("create recurring project: %v", err)
+	}
+
+	periodStart := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
+	periodEnd := time.Date(2026, 3, 31, 0, 0, 0, 0, time.UTC)
+	if _, err := database.Pool.Exec(
+		ctx,
+		`update catalog_projects
+		set recurring_period_start = $2, recurring_period_end = $3
+		where workspace_id = $1 and id = $4`,
+		workspaceID,
+		periodStart,
+		periodEnd,
+		project.ID,
+	); err != nil {
+		t.Fatalf("seed recurring period: %v", err)
+	}
+
+	period, err := service.GetProjectRecurringPeriod(
+		ctx,
+		workspaceID,
+		project.ID,
+		lo.ToPtr(time.Date(2026, 3, 10, 0, 0, 0, 0, time.UTC)),
+		lo.ToPtr(time.Date(2026, 3, 20, 0, 0, 0, 0, time.UTC)),
+	)
+	if err != nil {
+		t.Fatalf("get recurring period: %v", err)
+	}
+	if period == nil || !period.StartDate.Equal(periodStart) || !period.EndDate.Equal(periodEnd) {
+		t.Fatalf("expected recurring period %s..%s, got %#v", periodStart, periodEnd, period)
+	}
+
+	period, err = service.GetProjectRecurringPeriod(
+		ctx,
+		workspaceID,
+		project.ID,
+		lo.ToPtr(time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)),
+		lo.ToPtr(time.Date(2026, 4, 30, 0, 0, 0, 0, time.UTC)),
+	)
+	if err != nil {
+		t.Fatalf("get recurring period outside boundary: %v", err)
+	}
+	if period != nil {
+		t.Fatalf("expected no recurring period outside boundary, got %#v", period)
 	}
 }
 

@@ -75,6 +75,80 @@ func TestServiceReturnsProjectStatisticsFromTrackedEntries(t *testing.T) {
 	}
 }
 
+func TestServiceBuildsWorkspaceDashboardAggregates(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceAndUser(t, ctx, database)
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService)
+
+	project, err := catalogService.CreateProject(ctx, catalogapplication.CreateProjectCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Dashboard Project",
+	})
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+
+	firstStart := time.Now().UTC().Add(-2 * time.Hour).Truncate(time.Second)
+	firstStop := firstStart.Add(45 * time.Minute)
+	if _, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		ProjectID:   lo.ToPtr(project.ID),
+		Description: "Short block",
+		Start:       firstStart,
+		Stop:        &firstStop,
+		CreatedWith: "tracking-dashboard-test",
+	}); err != nil {
+		t.Fatalf("create first dashboard time entry: %v", err)
+	}
+
+	secondStart := firstStart.Add(70 * time.Minute)
+	secondStop := secondStart.Add(90 * time.Minute)
+	if _, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		ProjectID:   lo.ToPtr(project.ID),
+		Description: "Long block",
+		Start:       secondStart,
+		Stop:        &secondStop,
+		CreatedWith: "tracking-dashboard-test",
+	}); err != nil {
+		t.Fatalf("create second dashboard time entry: %v", err)
+	}
+
+	allActivities, err := trackingService.ListWorkspaceDashboardActivities(ctx, workspaceID, nil)
+	if err != nil {
+		t.Fatalf("list dashboard activities: %v", err)
+	}
+	if len(allActivities) != 2 || allActivities[0].Description != "Long block" {
+		t.Fatalf("expected latest dashboard activity first, got %#v", allActivities)
+	}
+
+	topActivities, err := trackingService.ListWorkspaceTopActivities(ctx, workspaceID, nil)
+	if err != nil {
+		t.Fatalf("list top dashboard activities: %v", err)
+	}
+	if len(topActivities) != 2 || topActivities[0].Description != "Long block" {
+		t.Fatalf("expected longest dashboard activity first, got %#v", topActivities)
+	}
+
+	mostActiveUsers, err := trackingService.ListWorkspaceMostActiveUsers(ctx, workspaceID, nil)
+	if err != nil {
+		t.Fatalf("list most active users: %v", err)
+	}
+	if len(mostActiveUsers) != 1 || mostActiveUsers[0].UserID != userID {
+		t.Fatalf("expected one most active user %d, got %#v", userID, mostActiveUsers)
+	}
+	expectedDuration := int(firstStop.Sub(firstStart).Seconds() + secondStop.Sub(secondStart).Seconds())
+	if mostActiveUsers[0].Duration != expectedDuration {
+		t.Fatalf("expected most active duration %d, got %#v", expectedDuration, mostActiveUsers)
+	}
+}
+
 func mustNewTrackingCatalogService(t *testing.T, database *pgtest.Database) *catalogapplication.Service {
 	t.Helper()
 

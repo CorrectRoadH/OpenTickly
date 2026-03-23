@@ -158,6 +158,65 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 	}
 }
 
+func TestServicePersistsAccountPreferenceActions(t *testing.T) {
+	database := pgtest.Open(t)
+	service := newPostgresTestService(database)
+	ctx := context.Background()
+
+	auth, err := service.Register(ctx, application.RegisterInput{
+		Email:    "person@example.com",
+		FullName: "Test Person",
+		Password: "secret1",
+	})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	current, err := service.ResolveCurrentUser(ctx, auth.SessionID)
+	if err != nil {
+		t.Fatalf("resolve current user: %v", err)
+	}
+	if !current.ToSAcceptNeeded {
+		t.Fatalf("expected new user to require ToS acceptance, got %#v", current)
+	}
+	if !current.SendProductEmails {
+		t.Fatalf("expected product emails enabled by default, got %#v", current)
+	}
+	if !current.SendWeeklyReport {
+		t.Fatalf("expected weekly reports enabled by default, got %#v", current)
+	}
+	if current.ProductEmailsDisableCode == "" {
+		t.Fatalf("expected product email disable code to be generated, got %#v", current)
+	}
+	if current.WeeklyReportDisableCode == "" {
+		t.Fatalf("expected weekly report disable code to be generated, got %#v", current)
+	}
+
+	if err := service.AcceptTOS(ctx, auth.User.ID); err != nil {
+		t.Fatalf("accept tos: %v", err)
+	}
+	if err := service.DisableProductEmailsByCode(ctx, current.ProductEmailsDisableCode); err != nil {
+		t.Fatalf("disable product emails: %v", err)
+	}
+	if err := service.DisableWeeklyReportByCode(ctx, current.WeeklyReportDisableCode); err != nil {
+		t.Fatalf("disable weekly report: %v", err)
+	}
+
+	updated, err := service.ResolveCurrentUser(ctx, auth.SessionID)
+	if err != nil {
+		t.Fatalf("resolve updated current user: %v", err)
+	}
+	if updated.ToSAcceptNeeded {
+		t.Fatalf("expected tos flag cleared after acceptance, got %#v", updated)
+	}
+	if updated.SendProductEmails {
+		t.Fatalf("expected product emails disabled, got %#v", updated)
+	}
+	if updated.SendWeeklyReport {
+		t.Fatalf("expected weekly report disabled, got %#v", updated)
+	}
+}
+
 type postgresTestDependencies struct {
 	Users       *identitypostgres.UserRepository
 	Sessions    *identitypostgres.SessionRepository
