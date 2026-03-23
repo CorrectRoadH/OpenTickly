@@ -1,0 +1,41 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": {
+    "gopls": {
+      "env": {
+        "GOFLAGS": "-tags=dev"
+      }
+    },
+    "typescript": {
+      "initialization": {
+        "preferences": {
+          "importModuleSpecifierPreference": "relative"
+        }
+      }
+    },
+    "oxlint": {
+      "disabled": false
+    }
+  },
+  "formatter": {
+    "gofmt": {
+      "env": {
+        "GOFMT": "tabular"
+      }
+    },
+    "oxfmt": {
+      "disabled": false
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "figma": {
+      "type": "remote",
+      "url": "http://127.0.0.1:3845/mcp",
+      "oauth": false
+    }
+  }
+}
