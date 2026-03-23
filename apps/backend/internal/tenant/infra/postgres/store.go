@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samber/lo"
 )
 
 type Store struct {
@@ -479,7 +480,7 @@ func scanWorkspace(row rowScanner) (domain.Workspace, error) {
 		ReportsCollapse:             reportsCollapse,
 		PublicProjectAccess:         domain.WorkspacePublicProjectAccess(publicProjectAccess),
 		ReportLockedAt:              reportLockedAt,
-		ShowTimesheetView:           boolPtr(showTimesheetView),
+		ShowTimesheetView:           lo.ToPtr(showTimesheetView),
 		RequiredTimeEntryFields:     requiredTimeEntryFields,
 	})
 	if err != nil {
@@ -571,10 +572,6 @@ func mustJSON(value any) []byte {
 		panic(err)
 	}
 	return encoded
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
 
 func isForeignKeyViolation(err error) bool {

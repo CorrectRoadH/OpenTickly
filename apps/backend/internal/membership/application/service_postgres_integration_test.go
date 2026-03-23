@@ -15,6 +15,8 @@ import (
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+
+	"github.com/samber/lo"
 )
 
 func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) {
@@ -101,7 +103,7 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 		WorkspaceID: int64(tenantResult.WorkspaceID),
 		RequestedBy: *ownerOne.UserID,
 		Email:       "invitee@example.com",
-		Role:        rolePtr(membershipdomain.WorkspaceRoleAdmin),
+		Role:        lo.ToPtr(membershipdomain.WorkspaceRoleAdmin),
 	})
 	if err != nil {
 		t.Fatalf("invite member: %v", err)
@@ -114,8 +116,8 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 		WorkspaceID: int64(tenantResult.WorkspaceID),
 		MemberID:    ownerTwo.ID,
 		RequestedBy: *ownerOne.UserID,
-		HourlyRate:  float64Ptr(120),
-		LaborCost:   float64Ptr(75),
+		HourlyRate:  lo.ToPtr(120.0),
+		LaborCost:   lo.ToPtr(75.0),
 	})
 	if err != nil {
 		t.Fatalf("update rate cost: %v", err)
@@ -165,12 +167,4 @@ func TestServiceEnsureWorkspaceOwnerRequiresExistingIdentityUserWithPostgresStor
 	if err != membershipapplication.ErrWorkspaceIdentityUserNotFound {
 		t.Fatalf("expected ErrWorkspaceIdentityUserNotFound, got %v", err)
 	}
-}
-
-func rolePtr(role membershipdomain.WorkspaceRole) *membershipdomain.WorkspaceRole {
-	return &role
-}
-
-func float64Ptr(value float64) *float64 {
-	return &value
 }

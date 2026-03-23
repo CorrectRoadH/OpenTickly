@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"opentoggl/backend/apps/backend/internal/catalog/domain"
+
+	"github.com/samber/lo"
 )
 
 var (
@@ -296,7 +298,7 @@ func (service *Service) CreateProject(ctx context.Context, command CreateProject
 	}
 	command.Name = name
 	if command.Active == nil {
-		command.Active = boolPtr(true)
+		command.Active = lo.ToPtr(true)
 	}
 	return service.store.CreateProject(ctx, command)
 }
@@ -401,7 +403,7 @@ func (service *Service) ListTasks(ctx context.Context, workspaceID int64, filter
 	}
 	filter.Search = strings.TrimSpace(filter.Search)
 	if filter.Active == nil && !filter.IncludeAll {
-		filter.Active = boolPtr(true)
+		filter.Active = lo.ToPtr(true)
 	}
 	filter.Page = normalizePage(filter.Page, 1)
 	filter.PerPage = normalizePerPage(filter.PerPage, 50, 200)
@@ -427,7 +429,7 @@ func (service *Service) CreateTask(ctx context.Context, command CreateTaskComman
 	}
 	command.Name = name
 	if command.Active == nil {
-		command.Active = boolPtr(true)
+		command.Active = lo.ToPtr(true)
 	}
 	return service.store.CreateTask(ctx, command)
 }
@@ -534,10 +536,6 @@ func normalizePerPage(value int, fallback int, maximum int) int {
 		return maximum
 	}
 	return value
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
 
 func (service *Service) loadProject(ctx context.Context, workspaceID int64, projectID int64) (ProjectView, error) {

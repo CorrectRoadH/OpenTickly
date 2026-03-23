@@ -9,6 +9,8 @@ import (
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
+
+	"github.com/samber/lo"
 )
 
 type Response struct {
@@ -39,9 +41,9 @@ type WorkspaceSettingsRequest struct {
 		LimitPublicProjectData      bool    `json:"limit_public_project_data"`
 	} `json:"workspace"`
 	Preferences struct {
-		HideStartEndTimes      bool     `json:"hide_start_end_times"`
-		ReportLockedAt         string   `json:"report_locked_at"`
-		ShowTimesheetView      bool     `json:"show_timesheet_view"`
+		HideStartEndTimes       bool     `json:"hide_start_end_times"`
+		ReportLockedAt          string   `json:"report_locked_at"`
+		ShowTimesheetView       bool     `json:"show_timesheet_view"`
 		RequiredTimeEntryFields []string `json:"required_time_entry_fields"`
 	} `json:"preferences"`
 }
@@ -148,7 +150,7 @@ func (handler *Handler) UpdateWorkspaceSettings(
 			ReportsCollapse:             request.Workspace.ReportsCollapse,
 			PublicProjectAccess:         publicProjectAccess(request.Workspace.LimitPublicProjectData),
 			ReportLockedAt:              request.Preferences.ReportLockedAt,
-			ShowTimesheetView:           boolPtr(request.Preferences.ShowTimesheetView),
+			ShowTimesheetView:           lo.ToPtr(request.Preferences.ShowTimesheetView),
 			RequiredTimeEntryFields:     request.Preferences.RequiredTimeEntryFields,
 		},
 	})
@@ -230,10 +232,6 @@ func workspaceDisplayPolicy(hideStartEndTimes bool) tenantdomain.WorkspaceDispla
 		return tenantdomain.WorkspaceDisplayPolicyHideStartEndTimes
 	}
 	return tenantdomain.WorkspaceDisplayPolicyStandard
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
 
 func titleCasePlan(plan billingdomain.Plan) string {

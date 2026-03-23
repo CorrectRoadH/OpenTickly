@@ -7,6 +7,8 @@ import (
 	"slices"
 
 	"opentoggl/backend/apps/backend/internal/billing/domain"
+
+	"github.com/samber/lo"
 )
 
 var ErrCapabilityRuleNotFound = errors.New("billing capability rule not found")
@@ -98,8 +100,8 @@ func (service *Service) WorkspaceCapabilitySnapshot(
 
 	return domain.CapabilitySnapshot{
 		Context: domain.CapabilityContext{
-			OrganizationID: int64Ref(organizationID),
-			WorkspaceID:    int64Ref(workspaceID),
+			OrganizationID: lo.ToPtr(organizationID),
+			WorkspaceID:    lo.ToPtr(workspaceID),
 			Scope:          "workspace",
 		},
 		Capabilities: capabilities,
@@ -195,8 +197,4 @@ func (service *Service) resolveOrganizationAccount(
 		return account, nil
 	}
 	return domain.CommercialAccount{}, fmt.Errorf("%w: organization %d", ErrCommercialAccountNotFound, organizationID)
-}
-
-func int64Ref(value int64) *int64 {
-	return &value
 }

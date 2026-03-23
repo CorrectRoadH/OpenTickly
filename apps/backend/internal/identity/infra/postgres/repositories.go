@@ -11,6 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/samber/lo"
 )
 
 type UserRepository struct {
@@ -222,19 +223,19 @@ func (repo *SessionRepository) Delete(ctx context.Context, sessionID string) err
 
 func scanUser(row rowScanner) (*domain.User, error) {
 	var (
-		id                        int64
-		email                     string
-		fullName                  string
-		passwordHash              string
-		apiToken                  string
-		timezone                  string
-		beginningOfWeek           int
-		countryID                 int64
-		defaultWorkspaceID        int64
-		state                     string
-		preferencesDateFormat     string
-		preferencesTimeOfDay      string
-		preferencesAlphaFeatures  []byte
+		id                       int64
+		email                    string
+		fullName                 string
+		passwordHash             string
+		apiToken                 string
+		timezone                 string
+		beginningOfWeek          int
+		countryID                int64
+		defaultWorkspaceID       int64
+		state                    string
+		preferencesDateFormat    string
+		preferencesTimeOfDay     string
+		preferencesAlphaFeatures []byte
 	)
 
 	if err := row.Scan(
@@ -276,9 +277,9 @@ func scanUser(row rowScanner) (*domain.User, error) {
 
 	if err := user.UpdateProfile(domain.ProfileUpdate{
 		Timezone:           timezone,
-		BeginningOfWeek:    intPtr(beginningOfWeek),
-		CountryID:          int64Ptr(countryID),
-		DefaultWorkspaceID: int64Ptr(defaultWorkspaceID),
+		BeginningOfWeek:    lo.ToPtr(beginningOfWeek),
+		CountryID:          lo.ToPtr(countryID),
+		DefaultWorkspaceID: lo.ToPtr(defaultWorkspaceID),
 	}); err != nil {
 		return nil, fmt.Errorf("hydrate profile for identity user %d: %w", id, err)
 	}
@@ -307,12 +308,4 @@ func scanUser(row rowScanner) (*domain.User, error) {
 	default:
 		return nil, fmt.Errorf("unsupported identity user state %q", state)
 	}
-}
-
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
 }

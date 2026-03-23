@@ -3,6 +3,8 @@ package domain
 import (
 	"fmt"
 	"strings"
+
+	"github.com/samber/lo"
 )
 
 type WorkspaceRoundingMode int
@@ -143,7 +145,7 @@ func NewWorkspaceSettings(input WorkspaceSettingsInput) (WorkspaceSettings, erro
 
 func DefaultWorkspaceSettings() WorkspaceSettings {
 	settings, err := NewWorkspaceSettings(WorkspaceSettingsInput{
-		ShowTimesheetView: boolPtr(true),
+		ShowTimesheetView: lo.ToPtr(true),
 	})
 	if err != nil {
 		panic(err)
@@ -217,8 +219,4 @@ func (settings WorkspaceSettings) ShowTimesheetView() bool {
 
 func (settings WorkspaceSettings) RequiredTimeEntryFields() []string {
 	return append([]string{}, settings.requiredTimeEntryFields...)
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }

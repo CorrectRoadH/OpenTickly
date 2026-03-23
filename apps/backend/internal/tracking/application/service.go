@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type Service struct {
@@ -225,7 +227,7 @@ func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, us
 		TimeEntryID: timeEntryID,
 		UserID:      userID,
 		Stop:        &stop,
-		Duration:    intPtr(int(stop.Sub(current.Start).Seconds())),
+		Duration:    lo.ToPtr(int(stop.Sub(current.Start).Seconds())),
 	})
 }
 
@@ -262,9 +264,9 @@ func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavori
 			ProjectID:   command.ProjectID,
 			TaskID:      command.TaskID,
 			Description: valueOrEmpty(command.Description),
-			Billable:    boolValue(command.Billable),
-			Public:      boolValue(command.Public),
-			Rank:        intValue(command.Rank),
+			Billable:    lo.FromPtr(command.Billable),
+			Public:      lo.FromPtr(command.Public),
+			Rank:        lo.FromPtr(command.Rank),
 			TagIDs:      command.TagIDs,
 		})
 	}
@@ -523,26 +525,11 @@ func cloneTime(value *time.Time) *time.Time {
 	return &cloned
 }
 
-func boolValue(value *bool) bool {
-	return value != nil && *value
-}
-
-func intValue(value *int) int {
-	if value == nil {
-		return 0
-	}
-	return *value
-}
-
 func valueOrEmpty(value *string) string {
 	if value == nil {
 		return ""
 	}
 	return strings.TrimSpace(*value)
-}
-
-func intPtr(value int) *int {
-	return &value
 }
 
 func normalizePage(value int, fallback int) int {

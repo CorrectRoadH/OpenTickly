@@ -11,6 +11,8 @@ import (
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+
+	"github.com/samber/lo"
 )
 
 func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
@@ -82,7 +84,7 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 			ReportsCollapse:             true,
 			PublicProjectAccess:         domain.WorkspacePublicProjectAccessAdmins,
 			ReportLockedAt:              "2026-03-20T00:00:00Z",
-			ShowTimesheetView:           boolPtr(false),
+			ShowTimesheetView:           lo.ToPtr(false),
 			RequiredTimeEntryFields:     []string{"project", "task"},
 		},
 	}); err != nil {
@@ -203,8 +205,4 @@ func mustSubscription(
 		t.Fatalf("new subscription: %v", err)
 	}
 	return subscription
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }

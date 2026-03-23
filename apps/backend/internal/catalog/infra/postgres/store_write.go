@@ -4,6 +4,8 @@ import (
 	"context"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+
+	"github.com/samber/lo"
 )
 
 func (store *Store) CreateClient(
@@ -283,9 +285,9 @@ func (store *Store) CreateProject(
 		command.WorkspaceID,
 		command.ClientID,
 		command.Name,
-		boolValue(command.Active),
-		boolValue(command.Template),
-		boolValue(command.Recurring),
+		lo.FromPtr(command.Active),
+		lo.FromPtr(command.Template),
+		lo.FromPtr(command.Recurring),
 		command.CreatedBy,
 	).Scan(&projectID)
 	if err != nil {
@@ -354,7 +356,7 @@ func (store *Store) CreateTask(
 		command.WorkspaceID,
 		command.ProjectID,
 		command.Name,
-		boolValue(command.Active),
+		lo.FromPtr(command.Active),
 		command.CreatedBy,
 	)
 

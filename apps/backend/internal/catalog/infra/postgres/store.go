@@ -119,10 +119,6 @@ func notFound(err error) bool {
 	return err != nil && err == pgx.ErrNoRows
 }
 
-func boolValue(value *bool) bool {
-	return value != nil && *value
-}
-
 func int64SliceOrNil(values []int64) []int64 {
 	if len(values) == 0 {
 		return nil

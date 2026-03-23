@@ -13,6 +13,8 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
+
+	"github.com/samber/lo"
 )
 
 func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
@@ -43,7 +45,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	renamedClient, err := service.UpdateClient(ctx, catalogapplication.UpdateClientCommand{
 		WorkspaceID: workspaceID,
 		ClientID:    client.ID,
-		Name:        stringPtr(" North Ridge Enterprise "),
+		Name:        lo.ToPtr(" North Ridge Enterprise "),
 	})
 	if err != nil {
 		t.Fatalf("update client: %v", err)
@@ -85,7 +87,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	renamedTag, err := service.UpdateTag(ctx, catalogapplication.UpdateTagCommand{
 		WorkspaceID: workspaceID,
 		TagID:       tag.ID,
-		Name:        stringPtr(" Internal "),
+		Name:        lo.ToPtr(" Internal "),
 	})
 	if err != nil {
 		t.Fatalf("update tag: %v", err)
@@ -99,8 +101,8 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 		CreatedBy:   userID,
 		ClientID:    &client.ID,
 		Name:        "Website Revamp",
-		Template:    boolPtr(true),
-		Recurring:   boolPtr(true),
+		Template:    lo.ToPtr(true),
+		Recurring:   lo.ToPtr(true),
 	})
 	if err != nil {
 		t.Fatalf("create project: %v", err)
@@ -119,8 +121,8 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	updatedProject, err := service.UpdateProject(ctx, catalogapplication.UpdateProjectCommand{
 		WorkspaceID: workspaceID,
 		ProjectID:   project.ID,
-		Name:        stringPtr("Website Launch"),
-		Active:      boolPtr(false),
+		Name:        lo.ToPtr("Website Launch"),
+		Active:      lo.ToPtr(false),
 	})
 	if err != nil {
 		t.Fatalf("update project: %v", err)
@@ -198,7 +200,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	}
 
 	projects, err := service.ListProjects(ctx, workspaceID, catalogapplication.ListProjectsFilter{
-		Active:    boolPtr(false),
+		Active:    lo.ToPtr(false),
 		Page:      1,
 		PerPage:   20,
 		SortField: catalogapplication.ProjectSortFieldCreatedAt,
@@ -234,8 +236,8 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 		WorkspaceID: workspaceID,
 		ProjectID:   project.ID,
 		TaskID:      createdTask.ID,
-		Name:        stringPtr(" Delivery Final "),
-		Active:      boolPtr(false),
+		Name:        lo.ToPtr(" Delivery Final "),
+		Active:      lo.ToPtr(false),
 	})
 	if err != nil {
 		t.Fatalf("update task: %v", err)
@@ -253,7 +255,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	}
 
 	inactiveTasks, err := service.ListTasks(ctx, workspaceID, catalogapplication.ListTasksFilter{
-		Active:    boolPtr(false),
+		Active:    lo.ToPtr(false),
 		Page:      1,
 		PerPage:   50,
 		SortField: catalogapplication.TaskSortFieldCreatedAt,
@@ -447,7 +449,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	if _, err := service.UpdateProject(ctx, catalogapplication.UpdateProjectCommand{
 		WorkspaceID: workspaceID,
 		ProjectID:   999,
-		Name:        stringPtr("Missing"),
+		Name:        lo.ToPtr("Missing"),
 	}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
 		t.Fatalf("expected ErrProjectNotFound from update, got %v", err)
 	}
@@ -463,7 +465,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	if _, err := service.CreateTask(ctx, catalogapplication.CreateTaskCommand{
 		WorkspaceID: workspaceID,
 		CreatedBy:   userID,
-		ProjectID:   int64Ptr(999),
+		ProjectID:   lo.ToPtr(int64(999)),
 		Name:        "Missing project task",
 	}); !errors.Is(err, catalogapplication.ErrProjectNotFound) {
 		t.Fatalf("expected ErrProjectNotFound from create task, got %v", err)
@@ -476,7 +478,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	if _, err := service.UpdateClient(ctx, catalogapplication.UpdateClientCommand{
 		WorkspaceID: workspaceID,
 		ClientID:    999,
-		Name:        stringPtr("Missing"),
+		Name:        lo.ToPtr("Missing"),
 	}); !errors.Is(err, catalogapplication.ErrClientNotFound) {
 		t.Fatalf("expected ErrClientNotFound from update client, got %v", err)
 	}
@@ -488,7 +490,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 	if _, err := service.UpdateTag(ctx, catalogapplication.UpdateTagCommand{
 		WorkspaceID: workspaceID,
 		TagID:       999,
-		Name:        stringPtr("Missing"),
+		Name:        lo.ToPtr("Missing"),
 	}); !errors.Is(err, catalogapplication.ErrTagNotFound) {
 		t.Fatalf("expected ErrTagNotFound from update tag, got %v", err)
 	}
@@ -518,7 +520,7 @@ func TestServiceReturnsProjectNotFoundForMissingProjectMutations(t *testing.T) {
 		WorkspaceID: workspaceID,
 		ProjectID:   project.ID,
 		TaskID:      999,
-		Name:        stringPtr("Missing"),
+		Name:        lo.ToPtr("Missing"),
 	}); !errors.Is(err, catalogapplication.ErrTaskNotFound) {
 		t.Fatalf("expected ErrTaskNotFound from update task, got %v", err)
 	}
@@ -568,16 +570,4 @@ func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pg
 	}
 
 	return int64(workspace.ID()), userID
-}
-
-func stringPtr(value string) *string {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }

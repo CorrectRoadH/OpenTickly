@@ -94,6 +94,7 @@ Code in this repository must be one-way.
 - No parallel entrypoints: if two scripts or commands start, build, test, generate, or verify the same thing, choose one canonical entrypoint and delete the duplicate.
 - No placeholder normalization: placeholder, transitional, fake-runtime, or temporary paths must be tracked as debt with an exit condition; they must not become the default implementation.
 - Insert structural cleanup: if a task reveals duplicate paths, duplicate names, duplicate implementations, or non-one-way dependencies, structural cleanup becomes the immediate priority before more feature expansion.
+- Plain pointer helpers must default to `github.com/samber/lo` (`lo.ToPtr`, `lo.FromPtr`, `lo.FromPtrOr`); do not add new local `boolPtr`/`stringPtr`/`intPtr` helpers unless they perform a real type conversion or clone.
 
 ## Reuse Before Creating
 

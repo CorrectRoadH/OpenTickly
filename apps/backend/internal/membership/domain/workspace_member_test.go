@@ -5,6 +5,8 @@ import (
 	"go/parser"
 	"go/token"
 	"testing"
+
+	"github.com/samber/lo"
 )
 
 func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
@@ -14,8 +16,8 @@ func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
 		"Owner",
 		WorkspaceRoleOwner,
 		WorkspaceMemberStateInvited,
-		float64Ptr(100),
-		float64Ptr(80),
+		lo.ToPtr(100.0),
+		lo.ToPtr(80.0),
 	)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -35,8 +37,8 @@ func TestNewWorkspaceMemberInvalidRole(t *testing.T) {
 		"User Example",
 		WorkspaceRole("superuser"),
 		WorkspaceMemberStateInvited,
-		float64Ptr(100),
-		float64Ptr(80),
+		lo.ToPtr(100.0),
+		lo.ToPtr(80.0),
 	)
 	if err == nil {
 		t.Fatal("expected error for invalid role, got nil")
@@ -50,8 +52,8 @@ func TestNewWorkspaceMemberInvalidState(t *testing.T) {
 		"User Example",
 		WorkspaceRoleOwner,
 		WorkspaceMemberState("pending"),
-		float64Ptr(100),
-		float64Ptr(80),
+		lo.ToPtr(100.0),
+		lo.ToPtr(80.0),
 	)
 	if err == nil {
 		t.Fatal("expected error for invalid state, got nil")
@@ -65,8 +67,8 @@ func TestWorkspaceMemberLifecycleInvitedJoinedDisabledRestoredRemoved(t *testing
 		"Member",
 		WorkspaceRoleMember,
 		WorkspaceMemberStateInvited,
-		float64Ptr(100),
-		float64Ptr(80),
+		lo.ToPtr(100.0),
+		lo.ToPtr(80.0),
 	)
 
 	if err := member.Join(); err != nil {
@@ -120,9 +122,9 @@ func TestWorkspaceMemberLifecycleInvitedJoinedDisabledRestoredRemoved(t *testing
 }
 
 func TestWorkspaceMemberRoleCapabilities(t *testing.T) {
-	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
-	admin, _ := NewWorkspaceMember(2, "admin@example.com", "Admin", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
-	member, _ := NewWorkspaceMember(3, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
+	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
+	admin, _ := NewWorkspaceMember(2, "admin@example.com", "Admin", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
+	member, _ := NewWorkspaceMember(3, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
 
 	if !owner.CanManageMembers() {
 		t.Fatal("expected owner to manage members")
@@ -136,7 +138,7 @@ func TestWorkspaceMemberRoleCapabilities(t *testing.T) {
 }
 
 func TestWorkspaceMemberTransitionValidation(t *testing.T) {
-	invited, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, float64Ptr(0), float64Ptr(0))
+	invited, _ := NewWorkspaceMember(1, "a@example.com", "A", WorkspaceRoleMember, WorkspaceMemberStateInvited, lo.ToPtr(0.0), lo.ToPtr(0.0))
 	if err := invited.Disable(); err != ErrWorkspaceMemberCannotDisableFromState {
 		t.Fatalf("expected ErrWorkspaceMemberCannotDisableFromState, got %v", err)
 	}
@@ -144,12 +146,12 @@ func TestWorkspaceMemberTransitionValidation(t *testing.T) {
 		t.Fatalf("expected ErrWorkspaceMemberNotDisabled, got %v", err)
 	}
 
-	joined, _ := NewWorkspaceMember(2, "b@example.com", "B", WorkspaceRoleMember, WorkspaceMemberStateJoined, float64Ptr(0), float64Ptr(0))
+	joined, _ := NewWorkspaceMember(2, "b@example.com", "B", WorkspaceRoleMember, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
 	if err := joined.Join(); err != ErrWorkspaceMemberNotInvited {
 		t.Fatalf("expected ErrWorkspaceMemberNotInvited, got %v", err)
 	}
 
-	removed, _ := NewWorkspaceMember(3, "c@example.com", "C", WorkspaceRoleMember, WorkspaceMemberStateRemoved, float64Ptr(0), float64Ptr(0))
+	removed, _ := NewWorkspaceMember(3, "c@example.com", "C", WorkspaceRoleMember, WorkspaceMemberStateRemoved, lo.ToPtr(0.0), lo.ToPtr(0.0))
 	if err := removed.Join(); err != ErrWorkspaceMemberRemoved {
 		t.Fatalf("expected ErrWorkspaceMemberRemoved, got %v", err)
 	}
@@ -171,7 +173,7 @@ func TestNewWorkspaceMemberRejectsNegativeRateCost(t *testing.T) {
 		"User Example",
 		WorkspaceRoleMember,
 		WorkspaceMemberStateInvited,
-		float64Ptr(-1),
+		lo.ToPtr(-1.0),
 		nil,
 	)
 	if err != ErrNegativeWorkspaceMemberHourlyRate {
@@ -185,7 +187,7 @@ func TestNewWorkspaceMemberRejectsNegativeRateCost(t *testing.T) {
 		WorkspaceRoleMember,
 		WorkspaceMemberStateInvited,
 		nil,
-		float64Ptr(-1),
+		lo.ToPtr(-1.0),
 	)
 	if err != ErrNegativeWorkspaceMemberLaborCost {
 		t.Fatalf("expected ErrNegativeWorkspaceMemberLaborCost, got %v", err)
@@ -231,8 +233,4 @@ func assertLifecycleStateSequence(
 			t.Fatalf("expected lifecycle fact at index %d to be %s, got %s", i, state, facts[i].State)
 		}
 	}
-}
-
-func float64Ptr(value float64) *float64 {
-	return &value
 }

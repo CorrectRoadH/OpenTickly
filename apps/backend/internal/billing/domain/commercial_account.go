@@ -1,6 +1,10 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/samber/lo"
+)
 
 type CommercialAccount struct {
 	OrganizationID int64
@@ -66,12 +70,8 @@ func (account CommercialAccount) WorkspaceStatus(workspaceID int64) (CommercialS
 	// fact, not a second mutable subscription record.
 	return CommercialStatus{
 		OrganizationID: account.OrganizationID,
-		WorkspaceID:    int64Ref(workspaceID),
+		WorkspaceID:    lo.ToPtr(workspaceID),
 		CustomerID:     account.CustomerID,
 		Subscription:   account.Subscription,
 	}, nil
-}
-
-func int64Ref(value int64) *int64 {
-	return &value
 }

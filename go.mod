@@ -6,6 +6,7 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/redis/go-redis/v9 v9.18.0
+	github.com/samber/lo v1.53.0
 )
 
 require (

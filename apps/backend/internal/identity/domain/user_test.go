@@ -1,6 +1,10 @@
 package domain
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/samber/lo"
+)
 
 func TestRegisterUserSeedsCredentialsAndDefaults(t *testing.T) {
 	user, err := RegisterUser(RegisterParams{
@@ -100,8 +104,8 @@ func TestUpdateProfileRequiresCurrentPasswordToChangePassword(t *testing.T) {
 		Email:           "next@example.com",
 		FullName:        "Renamed Person",
 		Timezone:        "Asia/Shanghai",
-		BeginningOfWeek: intPtr(1),
-		CountryID:       int64Ptr(156),
+		BeginningOfWeek: lo.ToPtr(1),
+		CountryID:       lo.ToPtr(int64(156)),
 	}); err != nil {
 		t.Fatalf("expected valid profile update to succeed: %v", err)
 	}
@@ -129,7 +133,7 @@ func TestPreferencesRejectProtectedAndInvalidFields(t *testing.T) {
 	}
 
 	if err := user.UpdatePreferences(Preferences{
-		ToSAcceptNeeded: boolPtr(true),
+		ToSAcceptNeeded: lo.ToPtr(true),
 	}); err != ErrPreferencesFieldProtected {
 		t.Fatalf("expected protected preference field to be rejected, got %v", err)
 	}
@@ -198,16 +202,4 @@ func TestDeactivatedAndDeletedUsersStayDistinct(t *testing.T) {
 	if err := user.Deactivate(); err != ErrUserDeleted {
 		t.Fatalf("expected deleted user to reject deactivation, got %v", err)
 	}
-}
-
-func intPtr(value int) *int {
-	return &value
-}
-
-func int64Ptr(value int64) *int64 {
-	return &value
-}
-
-func boolPtr(value bool) *bool {
-	return &value
 }
