@@ -1,6 +1,6 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type FormEvent, type ReactElement, useRef, useState } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 
+import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
@@ -11,36 +11,17 @@ type TasksPageProps = {
 
 export function TasksPage({ projectId }: TasksPageProps): ReactElement {
   const session = useSession();
-  const tasksQuery = useTasksQuery(session.currentWorkspace.id, projectId);
-  const createTaskMutation = useCreateTaskMutation(session.currentWorkspace.id, projectId);
+  const workspaceId = session.currentWorkspace.id;
+  const tasksQuery = useTasksQuery(workspaceId, projectId);
+  const createTaskMutation = useCreateTaskMutation(workspaceId, projectId);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const taskNameInputRef = useRef<HTMLInputElement | null>(null);
-  const hasProjectScope = typeof projectId === "number" && Number.isInteger(projectId) && projectId > 0;
+  const [composerOpen, setComposerOpen] = useState(false);
+  const hasProjectScope =
+    typeof projectId === "number" && Number.isInteger(projectId) && projectId > 0;
   const tasks = normalizeTasks(tasksQuery.data);
   const activeCount = tasks.filter((task) => task.active !== false).length;
   const trimmedTaskName = taskName.trim();
-
-  if (tasksQuery.isPending) {
-    return (
-      <AppPanel className="border-white/8 bg-[#1f1f23]">
-        <p className="text-sm text-slate-400">Loading tasks…</p>
-      </AppPanel>
-    );
-  }
-
-  if (tasksQuery.isError) {
-    return (
-      <AppPanel className="border-rose-500/30 bg-[#23181b]">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Tasks</h1>
-          <p className="text-sm leading-6 text-rose-300">
-            Unable to load tasks. Refresh to try again.
-          </p>
-        </div>
-      </AppPanel>
-    );
-  }
 
   async function handleCreateTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,130 +31,185 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
 
     await createTaskMutation.mutateAsync(trimmedTaskName);
     setTaskName("");
+    setComposerOpen(false);
     setStatus("Task created");
   }
 
+  if (tasksQuery.isPending) {
+    return <SurfaceMessage message="Loading tasks..." />;
+  }
+
+  if (tasksQuery.isError) {
+    return <SurfaceMessage message="Unable to load tasks. Refresh to try again." tone="error" />;
+  }
+
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="tasks-page">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Tasks</h1>
-          <p className="text-sm text-slate-500">Task directory</p>
-          <p className="text-sm leading-6 text-slate-400">
-            Keep project-scoped work breakdown, task availability, and quick creation visible from
-            the shared tracking catalog.
-          </p>
+    <div className="min-w-[1384px] bg-[var(--track-surface)] text-white" data-testid="tasks-page">
+      <header className="border-b border-[var(--track-border)]">
+        <div className="flex h-[66px] items-center justify-between px-5">
+          <h1 className="text-[21px] font-medium text-white">Tasks</h1>
+          <button
+            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black disabled:cursor-not-allowed disabled:opacity-50"
+            data-testid="tasks-create-button"
+            disabled={!hasProjectScope}
+            onClick={() => setComposerOpen((value) => !value)}
+            type="button"
+          >
+            <TrackingIcon className="size-3.5" name="plus" />
+            New task
+          </button>
         </div>
-        {hasProjectScope ? (
-          <AppButton onClick={() => taskNameInputRef.current?.focus()} type="button">
-            Create task
-          </AppButton>
-        ) : null}
-      </div>
+        <div className="flex h-[46px] items-center gap-4 border-t border-[var(--track-border)] px-5 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <span>Filters:</span>
+          <FilterChip label={hasProjectScope ? `Project ${projectId}` : "Project required"} />
+          <FilterChip label="Task name" />
+          {status ? (
+            <span className="ml-auto text-[11px] normal-case tracking-normal text-[var(--track-accent-text)]">
+              {status}
+            </span>
+          ) : null}
+        </div>
+      </header>
 
       {hasProjectScope ? (
         <section
-          className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-4"
+          className="border-b border-[var(--track-border)] px-5 py-3 text-[12px] text-[var(--track-text-muted)]"
           data-testid="tasks-context-bar"
         >
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-            Project task management entry
-          </p>
-          <p className="mt-2 text-sm text-slate-300">
-            Opened from project {projectId}. Use this page as the task management entry point
-            for that project context.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <a
-              className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
-              href={`/workspaces/${session.currentWorkspace.id}/projects/${projectId}`}
-            >
-              Project details
-            </a>
-            <a
-              className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
-              href={buildWorkspaceTasksPath({
-                workspaceId: session.currentWorkspace.id,
-              })}
-            >
-              All workspace tasks
-            </a>
-          </div>
+          Project-scoped task management for project {projectId}. Track API creates tasks through a
+          project entry point, so this page is intentionally anchored to that context.
         </section>
-      ) : null}
-
-      {hasProjectScope ? (
-        <form className="mt-6 flex flex-wrap items-end gap-3" data-testid="tasks-create-form" onSubmit={handleCreateTask}>
-          <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
-            Task name
-            <input
-              ref={taskNameInputRef}
-              className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
-              value={taskName}
-              onChange={(event) => setTaskName(event.target.value)}
-            />
-          </label>
-          <AppButton disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending} type="submit">
-            Save task
-          </AppButton>
-          {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
-        </form>
       ) : (
         <section
-          className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-4"
+          className="border-b border-[var(--track-border)] px-5 py-3 text-[12px] text-[var(--track-text-muted)]"
           data-testid="tasks-create-unavailable"
         >
-          <p className="text-sm font-semibold text-white">Create tasks from a project context.</p>
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            Track API creates tasks through a project entry point. Open project tasks from a
-            project row to add or manage tasks for that project.
-          </p>
+          Create tasks from a project context. Open a project's task entry to add the first task.
         </section>
       )}
+
+      {composerOpen && hasProjectScope ? (
+        <form
+          className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3"
+          data-testid="tasks-create-form"
+          onSubmit={handleCreateTask}
+        >
+          <label className="sr-only" htmlFor="task-name">
+            Task name
+          </label>
+          <input
+            className="h-9 w-[320px] rounded-md border border-[var(--track-border)] bg-[#181818] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            id="task-name"
+            onChange={(event) => setTaskName(event.target.value)}
+            placeholder="Task name"
+            value={taskName}
+          />
+          <button
+            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending}
+            type="submit"
+          >
+            Save task
+          </button>
+          <button
+            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            onClick={() => setComposerOpen(false)}
+            type="button"
+          >
+            Cancel
+          </button>
+        </form>
+      ) : null}
 
       {tasks.length > 0 ? (
-        <ul className="mt-6 divide-y divide-white/8" aria-label="Tasks list" data-testid="tasks-list">
-          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
-            Workspace {session.currentWorkspace.id}
-          </li>
-          {tasks.map((task) => {
-            const statusLabel = task.active === false ? "Inactive" : "Active";
-
-            return (
-              <li key={task.id} className="flex items-center justify-between py-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-white">{task.name}</p>
-                  <p className="text-xs text-slate-400">Task · {statusLabel}</p>
-                  <p className="text-[11px] text-slate-500">Workspace {task.workspace_id}</p>
-                </div>
-                <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
-                  {statusLabel}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
+        <div data-testid="tasks-list">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_130px_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <div className="flex h-[34px] items-center">
+              <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+            </div>
+            <div className="flex h-[34px] items-center">Task</div>
+            <div className="flex h-[34px] items-center">Project</div>
+            <div className="flex h-[34px] items-center">Status</div>
+            <div className="flex h-[34px] items-center justify-end" />
+          </div>
+          {tasks.map((task) => (
+            <div
+              className="grid grid-cols-[42px_minmax(0,1fr)_120px_130px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
+              key={task.id}
+            >
+              <div className="flex h-[54px] items-center">
+                <span className="size-2 rounded-full bg-[#00b8ff]" />
+              </div>
+              <div className="flex h-[54px] items-center overflow-hidden">
+                <span className="truncate text-white">{task.name}</span>
+              </div>
+              <div className="flex h-[54px] items-center text-[var(--track-text-muted)]">
+                {hasProjectScope ? `Project ${projectId}` : "Workspace catalog"}
+              </div>
+              <div className="flex h-[54px] items-center text-white">
+                {task.active === false ? "Inactive" : "Active"}
+              </div>
+              <div className="flex h-[54px] items-center justify-end text-[var(--track-text-muted)]">
+                <TrackingIcon className="size-4" name="more" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
-        <section
-          className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-5 text-sm text-slate-300"
+        <div
+          className="px-5 py-10 text-sm text-[var(--track-text-muted)]"
           data-testid="tasks-empty-state"
         >
-          <p className="font-semibold text-white">No tasks in this workspace yet.</p>
-          <p className="mt-2 text-slate-400">
-            {hasProjectScope
-              ? "Create a task to keep project planning and tracked work connected from the same catalog surface."
-              : "Open a project task entry point to create the first task for that project."}
-          </p>
-        </section>
+          {hasProjectScope
+            ? "No tasks in this project yet."
+            : "No tasks in this workspace yet. Open a project task entry point to create the first task."}
+        </div>
       )}
 
-      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="tasks-summary">
-        <p>
-          Showing {tasks.length} tasks in workspace {session.currentWorkspace.id}.
-        </p>
-        <p className="mt-1">Active: {activeCount}</p>
+      <div
+        className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
+        data-testid="tasks-summary"
+      >
+        Showing {tasks.length} tasks in workspace {workspaceId}. Active: {activeCount}.
       </div>
-    </AppPanel>
+
+      {hasProjectScope ? (
+        <div className="px-5 pb-5 pt-1">
+          <a
+            className="text-[11px] text-[var(--track-accent-text)]"
+            href={buildWorkspaceTasksPath({ workspaceId })}
+          >
+            View all workspace tasks
+          </a>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function FilterChip({ label }: { label: string }) {
+  return (
+    <span className="flex h-[26px] items-center rounded-md border border-[var(--track-border)] px-2.5 text-[11px] normal-case tracking-normal text-white">
+      {label}
+    </span>
+  );
+}
+
+function SurfaceMessage({
+  message,
+  tone = "muted",
+}: {
+  message: string;
+  tone?: "error" | "muted";
+}) {
+  return (
+    <div
+      className={`px-5 py-8 text-sm ${
+        tone === "error" ? "text-rose-300" : "text-[var(--track-text-muted)]"
+      }`}
+    >
+      {message}
+    </div>
   );
 }
 
@@ -204,5 +240,9 @@ function hasTaskArray(
   value: unknown,
   key: "data" | "tasks",
 ): value is Record<typeof key, TaskListItem[]> {
-  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
 }

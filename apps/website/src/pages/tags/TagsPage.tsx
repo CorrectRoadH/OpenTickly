@@ -1,51 +1,27 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type FormEvent, type ReactElement, useRef, useState } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 
+import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { useCreateTagMutation, useTagsQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 type TagStatusFilter = "active" | "all" | "inactive";
 
-function emptyStateTitle(statusFilter: TagStatusFilter): string {
-  if (statusFilter === "active") {
-    return "No active tags match this view.";
-  }
-
-  if (statusFilter === "inactive") {
-    return "No inactive tags match this view.";
-  }
-
-  return "No tags in this workspace yet.";
-}
-
 export function TagsPage(): ReactElement {
   const session = useSession();
-  const tagsQuery = useTagsQuery(session.currentWorkspace.id);
-  const createTagMutation = useCreateTagMutation(session.currentWorkspace.id);
+  const workspaceId = session.currentWorkspace.id;
+  const tagsQuery = useTagsQuery(workspaceId);
+  const createTagMutation = useCreateTagMutation(workspaceId);
   const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TagStatusFilter>("all");
-  const tagNameInputRef = useRef<HTMLInputElement | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
 
   if (tagsQuery.isPending) {
-    return (
-      <AppPanel className="border-white/8 bg-[#1f1f23]">
-        <p className="text-sm text-slate-400">Loading tags…</p>
-      </AppPanel>
-    );
+    return <SurfaceMessage message="Loading tags..." />;
   }
 
   if (tagsQuery.isError) {
-    return (
-      <AppPanel className="border-rose-500/30 bg-[#23181b]">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Tags</h1>
-          <p className="text-sm leading-6 text-rose-300">
-            Unable to load tags. Refresh to try again.
-          </p>
-        </div>
-      </AppPanel>
-    );
+    return <SurfaceMessage message="Unable to load tags. Refresh to try again." tone="error" />;
   }
 
   const tags = normalizeTags(tagsQuery.data);
@@ -72,112 +48,182 @@ export function TagsPage(): ReactElement {
 
     await createTagMutation.mutateAsync(trimmedTagName);
     setTagName("");
+    setComposerOpen(false);
     setStatusFilter("all");
     setStatus("Tag created");
   }
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="tags-page">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Tags</h1>
-          <p className="text-sm text-slate-500">Tag directory</p>
-          <p className="text-sm leading-6 text-slate-400">
-            Keep tag usage visible from the shared tracking catalog so list, filter, and detail
-            entry points align with the project page skeleton.
-          </p>
-        </div>
-        <AppButton onClick={() => tagNameInputRef.current?.focus()} type="button">
-          Create tag
-        </AppButton>
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-end gap-3" data-testid="tags-filter-bar">
-        <label className="flex min-w-[14rem] flex-col gap-2 text-sm font-medium text-slate-300">
-          Tag status filter
-          <select
-            aria-label="Tag status filter"
-            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm text-white"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
+    <div className="min-w-[1384px] bg-[var(--track-surface)] text-white" data-testid="tags-page">
+      <header className="border-b border-[var(--track-border)]">
+        <div className="flex h-[66px] items-center justify-between px-5">
+          <h1 className="text-[21px] font-medium text-white">Tags</h1>
+          <button
+            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
+            data-testid="tags-create-button"
+            onClick={() => setComposerOpen((value) => !value)}
+            type="button"
           >
-            <option value="all">All tags</option>
-            <option value="active">Active tags</option>
-            <option value="inactive">Inactive tags</option>
-          </select>
-        </label>
-      </div>
-
-      <form className="mt-4 flex flex-wrap items-end gap-3" data-testid="tags-create-form" onSubmit={handleCreateTag}>
-        <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
-          Tag name
-          <input
-            ref={tagNameInputRef}
-            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
-            value={tagName}
-            onChange={(event) => setTagName(event.target.value)}
-          />
-        </label>
-        <AppButton
-          disabled={trimmedTagName.length === 0 || createTagMutation.isPending}
-          type="submit"
+            <TrackingIcon className="size-3.5" name="plus" />
+            New tag
+          </button>
+        </div>
+        <div
+          className="flex h-[46px] items-center gap-4 border-t border-[var(--track-border)] px-5"
+          data-testid="tags-filter-bar"
         >
-          Save tag
-        </AppButton>
-        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
-      </form>
+          <label className="relative">
+            <select
+              aria-label="Tag status filter"
+              className="h-7 appearance-none rounded-md border border-[var(--track-border)] bg-[#171717] px-3 pr-8 text-[11px] text-white"
+              onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
+              value={statusFilter}
+            >
+              <option value="all">All tags</option>
+              <option value="active">Active tags</option>
+              <option value="inactive">Inactive tags</option>
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
+              <TrackingIcon className="size-3" name="chevron-down" />
+            </span>
+          </label>
+          <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <span>Filters:</span>
+            <FilterChip label="Tag name" />
+            <FilterChip label="Status" />
+          </div>
+          {status ? (
+            <span className="ml-auto text-[11px] text-[var(--track-accent-text)]">{status}</span>
+          ) : null}
+        </div>
+      </header>
+
+      {composerOpen ? (
+        <form
+          className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3"
+          data-testid="tags-create-form"
+          onSubmit={handleCreateTag}
+        >
+          <label className="sr-only" htmlFor="tag-name">
+            Tag name
+          </label>
+          <input
+            className="h-9 w-[320px] rounded-md border border-[var(--track-border)] bg-[#181818] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            id="tag-name"
+            onChange={(event) => setTagName(event.target.value)}
+            placeholder="Tag name"
+            value={tagName}
+          />
+          <button
+            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            disabled={trimmedTagName.length === 0 || createTagMutation.isPending}
+            type="submit"
+          >
+            Save tag
+          </button>
+          <button
+            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            onClick={() => setComposerOpen(false)}
+            type="button"
+          >
+            Cancel
+          </button>
+        </form>
+      ) : null}
 
       {filteredTags.length > 0 ? (
-        <ul className="mt-6 divide-y divide-white/8" aria-label="Tags list" data-testid="tags-list">
-          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
-            Workspace {session.currentWorkspace.id}
-          </li>
-          {filteredTags.map((tag) => {
-            const statusLabel = tag.deleted_at ? "Inactive" : "Active";
-
-            return (
-              <li key={tag.id} className="flex items-center justify-between py-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-white">{tag.name}</p>
-                  <p className="text-xs text-slate-400">Tag · {statusLabel}</p>
-                  <p className="text-[11px] text-slate-500">Workspace {tag.workspace_id}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    aria-label={`Tag details for ${tag.name}`}
-                    className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
-                    href={`/workspaces/${session.currentWorkspace.id}/tags/${tag.id}`}
-                  >
-                    Tag details
-                  </a>
-                  <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
-                    {statusLabel}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        <div data-testid="tags-list">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <div className="flex h-[34px] items-center">
+              <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+            </div>
+            <div className="flex h-[34px] items-center">Tag</div>
+            <div className="flex h-[34px] items-center">Workspace</div>
+            <div className="flex h-[34px] items-center">Status</div>
+            <div className="flex h-[34px] items-center justify-end" />
+          </div>
+          {filteredTags.map((tag) => (
+            <div
+              className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
+              key={tag.id}
+            >
+              <div className="flex h-[54px] items-center">
+                <span className="size-2 rounded-full bg-[#ff64d2]" />
+              </div>
+              <div className="flex h-[54px] items-center overflow-hidden">
+                <a
+                  aria-label={`Tag details for ${tag.name}`}
+                  className="truncate text-white"
+                  href={`/workspaces/${workspaceId}/tags/${tag.id}`}
+                >
+                  {tag.name}
+                </a>
+              </div>
+              <div className="flex h-[54px] items-center text-[var(--track-text-muted)]">
+                Workspace {tag.workspace_id}
+              </div>
+              <div className="flex h-[54px] items-center text-white">
+                {tag.deleted_at ? "Inactive" : "Active"}
+              </div>
+              <div className="flex h-[54px] items-center justify-end text-[var(--track-text-muted)]">
+                <TrackingIcon className="size-4" name="more" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
-        <div
-          className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-6"
-          data-testid="tags-empty-state"
-        >
-          <p className="text-sm font-semibold text-white">{emptyStateTitle(statusFilter)}</p>
-          <p className="mt-1 text-sm text-slate-400">Switch filters or create a tag to continue.</p>
+        <div className="px-5 py-10" data-testid="tags-empty-state">
+          <p className="text-sm text-[var(--track-text-muted)]">{emptyStateTitle(statusFilter)}</p>
         </div>
       )}
 
-      <div className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300" data-testid="tags-summary">
-        <p>
-          Showing {tags.length} tags in workspace {session.currentWorkspace.id}.
-        </p>
-        <p className="mt-1">
-          Active: {activeCount} · Inactive: {inactiveCount}
-        </p>
+      <div
+        className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
+        data-testid="tags-summary"
+      >
+        Showing {tags.length} tags in workspace {workspaceId}. Active: {activeCount} · Inactive:{" "}
+        {inactiveCount}
       </div>
-    </AppPanel>
+    </div>
   );
+}
+
+function FilterChip({ label }: { label: string }) {
+  return (
+    <span className="flex h-[26px] items-center rounded-md border border-[var(--track-border)] px-2.5 text-[11px] normal-case tracking-normal text-white">
+      {label}
+    </span>
+  );
+}
+
+function SurfaceMessage({
+  message,
+  tone = "muted",
+}: {
+  message: string;
+  tone?: "error" | "muted";
+}) {
+  return (
+    <div
+      className={`px-5 py-8 text-sm ${
+        tone === "error" ? "text-rose-300" : "text-[var(--track-text-muted)]"
+      }`}
+    >
+      {message}
+    </div>
+  );
+}
+
+function emptyStateTitle(statusFilter: TagStatusFilter): string {
+  if (statusFilter === "active") {
+    return "No active tags match this view.";
+  }
+
+  if (statusFilter === "inactive") {
+    return "No inactive tags match this view.";
+  }
+
+  return "No tags in this workspace yet.";
 }
 
 type TagListItem = {
@@ -207,5 +253,9 @@ function hasTagArray(
   value: unknown,
   key: "data" | "tags",
 ): value is Record<typeof key, TagListItem[]> {
-  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
 }

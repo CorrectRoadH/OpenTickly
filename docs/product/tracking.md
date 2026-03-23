@@ -113,6 +113,45 @@
 
 ## 页面映射（Figma / Screenshot）
 
+### Figma 原型读取规则
+
+- 本文件引用的 Figma 文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。
+- 读取这个文件的 tracking 相关原型时，必须先以 `Page 1` 左侧 `Layers` 面板中的顶层 layer 清单建立页面索引，再进入具体 node；不能把大页面下 `get_metadata(nodeId=0:1)` 一次返回的截断结果当成真实顶层结构。
+- 当前 `Page 1` 中属于 tracking 的顶层 layer 清单为：
+  - `left nav`
+  - `timer calendar mode`
+  - `timer timesheet mode`
+  - `project list`
+  - `timer listview`
+  - `client`
+- 本册只记录 tracking 自己负责的页面入口；`profile`、`settings`、`integrations webhooks` 虽然也在同一个 Figma page 下，但应分别在各自 PRD 中记录，不在本册展开。
+- 当 MCP / metadata 返回内容不完整时，正确做法是先用 Figma `Layers` 面板确认顶层 layer 名称，再按本文和其他 PRD 中已记录的 node id 读取目标页面；不能根据一次截断响应推断某个页面原型不存在。
+
+### Figma MCP 调用顺序
+
+- 只想确认这个 Figma 文件有几个 page 时，调用 `get_metadata(nodeId="0:0")`，从 `document` 的直接子节点读取 `canvas` 列表。
+- 想确认 `Page 1` 的顶层 layer 时，不要只依赖 `get_metadata(nodeId="0:1")` 的长响应；应先在 Figma `Layers` 面板确认顶层 layer 名称，再把结果记录到 PRD。
+- 想读取某个已知页面原型的结构时，直接对本文记录的 node id 调用 `get_metadata(nodeId="<node-id>")`，例如：
+  - `get_metadata(nodeId="8:3029")` 读取 `timer calendar mode`
+  - `get_metadata(nodeId="12:2948")` 读取 `timer listview`
+  - `get_metadata(nodeId="10:13202")` 读取 `timer timesheet mode`
+- 想实现或核对具体视觉与交互时，不能停在 metadata；必须继续调用 `get_design_context(nodeId="<node-id>")` 获取该页面或组件的设计上下文。
+- 若需要截图证据或视觉比对，再调用 `get_screenshot(nodeId="<node-id>")`；截图用于校对视觉，不替代本文记录的页面语义与边界定义。
+- 若 `get_metadata` 返回被截断、遗漏兄弟层级或难以可靠枚举顶层 layer，则以 Figma `Layers` 面板为顶层索引来源，以本文记录的 node id 为后续 MCP 精确读取入口。
+
+### 按目标页面选择 MCP 入口
+
+- 先按产品边界选 PRD，再按该 PRD 记录的 node id 调 MCP；不要先扫整张 Figma page，再临时猜某个页面应该归谁。
+- 需要共享导航壳层时，调用 `left nav`，node `8:2829`。这适用于 tracking 相关页面共用的 workspace switcher、侧边导航、profile/admin 入口和壳层布局。
+- 需要 `Timer / Calendar` 时，调用 `timer calendar mode`，node `8:3029`。
+- 需要 `Timer / List view` 时，调用 `timer listview`，node `12:2948`。
+- 需要 `Timer / Timesheet` 时，调用 `timer timesheet mode`，node `10:13202`。
+- 需要 `Project page` 时，调用 `project list`，node `10:20028`。即使后续实现包含详情、成员、任务或模板入口，也先以这个页面骨架为 MCP 入口。
+- 需要 `Client page` 时，调用 `client`，node `12:3281`。
+- 需要 `Tag page` 或 `Task page` 时，当前没有独立 tracking Figma node；应按本文定义复用 `project page` 的骨架作为 fallback，而不是从 `Page 1` 里另猜一个近似页面。
+- 如果你只有用户口头描述，例如“timer 页面”“项目页”“客户页”，先把需求归并到本文的页面族名称，再调用对应 node；不要对 `Page 1` 做全量 metadata 后靠文本搜索替代页面映射。
+- 如果本文已经给出 node id，默认直接对该 node 调 `get_metadata` / `get_design_context` / `get_screenshot`；`Page 1` 顶层 layer 清单只用于建立索引，不是默认读取入口。
+
 ### Shared App Shell
 
 - 共享应用壳以 Figma `left nav` 节点 `8:2829` 为参考，文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。

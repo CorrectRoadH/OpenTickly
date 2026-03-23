@@ -1,8 +1,3 @@
 [mcp_servers.figma]
-args = [
-  "-y",
-  "figma-developer-mcp",
-  "--figma-api-key=figd_5IaflQSReoPCzx3Sw0hHBo-xsplVMB8DyPVZD1mw",
-  "--stdio",
-]
-command = "npx"
+type = "http"
+url = "http://127.0.0.1:3845/mcp"

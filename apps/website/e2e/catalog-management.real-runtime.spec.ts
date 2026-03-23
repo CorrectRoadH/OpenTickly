@@ -58,6 +58,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/tags$`));
     await expect(page.getByTestId("tags-page")).toBeVisible();
 
+    await page.getByTestId("tags-create-button").click();
     const form = page.getByTestId("tags-create-form");
     await form.getByLabel("Tag name").fill(tagName);
     await form.getByRole("button", { name: "Save tag" }).click();
@@ -88,18 +89,32 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Projects" }).click();
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/projects(?:\\?status=all)?$`));
-    await page.getByTestId("projects-create-form").getByLabel("Project name").fill(projectName);
-    await page.getByTestId("projects-create-form").getByRole("button", { name: "Save project" }).click();
-    await expect(page.getByTestId("projects-list")).toContainText(projectName);
-    await page.getByRole("link", { name: `Project tasks for ${projectName}` }).click();
-
     await expect(page).toHaveURL(
-      new RegExp(`/workspaces/${workspaceId}/tasks\\?projectId=\\d+$`),
+      new RegExp(`/workspaces/${workspaceId}/projects(?:\\?status=all)?$`),
     );
+    await page.getByTestId("projects-create-button").click();
+    await page.getByTestId("projects-create-form").getByLabel("Project name").fill(projectName);
+    await page
+      .getByTestId("projects-create-form")
+      .getByRole("button", { name: "Save project" })
+      .click();
+    await expect(page.getByTestId("projects-list")).toContainText(projectName);
+    const projectHref = await page
+      .getByTestId("projects-list")
+      .getByRole("link", { name: projectName })
+      .getAttribute("href");
+    const projectId = projectHref?.match(/projects\/(\d+)$/)?.[1];
+
+    expect(projectId).toBeTruthy();
+    await page.goto(
+      new URL(`/workspaces/${workspaceId}/tasks?projectId=${projectId}`, page.url()).toString(),
+    );
+
+    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/tasks\\?projectId=\\d+$`));
     await expect(page.getByTestId("tasks-page")).toBeVisible();
     await expect(page.getByTestId("tasks-context-bar")).toBeVisible();
 
+    await page.getByTestId("tasks-create-button").click();
     const form = page.getByTestId("tasks-create-form");
     await form.getByLabel("Task name").fill(taskName);
     await form.getByRole("button", { name: "Save task" }).click();

@@ -83,7 +83,11 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col">
-              <nav aria-label="Primary" className="min-h-0 flex-1 overflow-y-auto px-0 pb-4 pt-6">
+              <nav
+                aria-label="Primary"
+                className="min-h-0 flex-1 overflow-y-auto px-0 pb-4 pt-6"
+                data-testid="shell-primary-nav"
+              >
                 {primarySections.map((section) => (
                   <section key={section.title} className="mb-6">
                     <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
@@ -108,6 +112,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                           to="/workspaces/$workspaceId"
                         >
                           <div
+                            data-testid="current-timer-card"
                             className={`flex h-7 items-center gap-3 rounded-md px-1.5 text-[14px] font-medium ${
                               onTrackingSurface
                                 ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"

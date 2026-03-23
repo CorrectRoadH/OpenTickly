@@ -26,7 +26,7 @@ test.describe("Story: browse the projects surface", () => {
     );
     await expect(page.getByTestId("projects-page")).toBeVisible();
     await expect(page.getByTestId("projects-filter-bar")).toBeVisible();
-    await expect(page.getByTestId("projects-create-form")).toBeVisible();
+    await expect(page.getByTestId("projects-create-button")).toBeVisible();
     await expect(page.getByTestId("projects-empty-state")).toContainText(
       "No projects in this workspace yet.",
     );

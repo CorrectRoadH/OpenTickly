@@ -80,6 +80,21 @@
 
 ## 页面映射（Figma / Screenshot）
 
+### Figma 原型读取规则
+
+- 本文件引用的 Figma 文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。
+- 读取身份与租户相关原型时，不要从整张 `Page 1` 的 metadata 里猜页面归属；应直接使用本册记录的页面入口。
+- 本册只记录 `profile` 与 `settings` 两个页面入口；同一 Figma page 下的 timer、project、client、integrations webhooks 等页面不在本册展开。
+
+### 按目标页面选择 MCP 入口
+
+- 需要当前用户资料与个人偏好页时，直接调用 `profile`，node `10:14814`。
+- 需要 workspace / organization 设置页时，直接调用 `settings`，node `11:3680`。
+- 如果需求讨论的是账户资料、偏好、安全状态、用户自助入口，默认落到 `profile`。
+- 如果需求讨论的是 workspace / organization 配置、默认币种、默认费率、rounding、显示策略、logo / avatar 等设置，默认落到 `settings`。
+- 如果本文已经给出 node id，默认直接对该 node 调 `get_metadata` / `get_design_context` / `get_screenshot`，不要先对 `Page 1` 做全量 metadata 再靠文本搜索找页面。
+- 若目标页面不是 `profile` 或 `settings`，则这份 PRD 不是 MCP 入口来源，应回到对应产品 PRD 取 node。
+
 ### Profile
 
 - Figma：`profile`，node `10:14814`

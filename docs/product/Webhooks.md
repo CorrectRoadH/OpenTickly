@@ -54,6 +54,19 @@
 
 ## 页面映射（Figma / Screenshot）
 
+### Figma 原型读取规则
+
+- 本文件引用的 Figma 文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。
+- 读取 Webhooks 页面原型时，不要从整张 `Page 1` 的 metadata 里枚举所有 layer 后再猜入口；应直接使用本册记录的 `integrations webhooks` 页面入口。
+- 本册只记录 `integrations webhooks` 这个页面；同一 Figma page 下的 timer、project、profile、settings 等页面不在本册展开。
+
+### 按目标页面选择 MCP 入口
+
+- 需要 Webhooks 首版正式页面时，直接调用 `integrations webhooks`，node `12:3561`。
+- 如果需求讨论的是 subscriptions、filters、validation / ping、delivery history、failure attempts、limits、status 或健康诊断，默认都落到这个 node。
+- 如果本文已经给出 node id，默认直接对该 node 调 `get_metadata` / `get_design_context` / `get_screenshot`，不要先对 `Page 1` 做全量 metadata 再靠文本搜索找页面。
+- 若目标页面不是 Webhooks 正式页面，则这份 PRD 不是 MCP 入口来源，应回到对应产品 PRD 取 node。
+
 - `Integrations / Webhooks`
   - Figma：`integrations webhooks`，node `12:3561`
   - Screenshot：当前没有对应截图，先以 Figma 为主参考
