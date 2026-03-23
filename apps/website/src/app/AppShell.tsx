@@ -18,18 +18,15 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     select: (state) => state.location,
   });
   const logoutMutation = useLogoutMutation();
-  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const session = useSession();
+  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const sections = shellNavigationItems(session);
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
   const workspacePath = `/workspaces/${session.currentWorkspace.id}`;
   const onTrackingSurface = location.pathname === workspacePath;
   const runningEntry = currentTimeEntryQuery.data;
-  const runningEntrySeconds =
-    runningEntry && (runningEntry.workspace_id ?? runningEntry.wid) === session.currentWorkspace.id
-      ? resolveTimeEntryDurationSeconds(runningEntry)
-      : 0;
+  const runningEntrySeconds = runningEntry ? resolveTimeEntryDurationSeconds(runningEntry) : 0;
   const profileInitial = (session.user.fullName || session.user.email || "P")
     .trim()
     .charAt(0)

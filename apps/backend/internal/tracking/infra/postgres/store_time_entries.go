@@ -92,6 +92,53 @@ func (store *Store) GetTimeEntry(
 	return entry, true, nil
 }
 
+func (store *Store) GetTimeEntryForUser(
+	ctx context.Context,
+	userID int64,
+	timeEntryID int64,
+) (trackingapplication.TimeEntryView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select
+			te.id,
+			te.workspace_id,
+			te.user_id,
+			te.client_id,
+			te.project_id,
+			te.task_id,
+			te.description,
+			te.billable,
+			te.start_time,
+			te.stop_time,
+			te.duration_seconds,
+			te.created_with,
+			te.tag_ids,
+			te.expense_ids,
+			te.deleted_at,
+			te.created_at,
+			te.updated_at,
+			c.name,
+			p.name,
+			t.name,
+			p.active
+		from tracking_time_entries te
+		left join catalog_clients c on c.id = te.client_id
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id
+		where te.user_id = $1 and te.id = $2 and te.deleted_at is null`,
+		userID,
+		timeEntryID,
+	)
+	entry, err := scanTimeEntry(row)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows") {
+			return trackingapplication.TimeEntryView{}, false, nil
+		}
+		return trackingapplication.TimeEntryView{}, false, err
+	}
+	return entry, true, nil
+}
+
 func (store *Store) ListTimeEntries(
 	ctx context.Context,
 	workspaceID int64,
@@ -149,6 +196,76 @@ func (store *Store) ListTimeEntries(
 	rows, err := store.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, writeTrackingError("list tracking time entries", err)
+	}
+	defer rows.Close()
+
+	entries := make([]trackingapplication.TimeEntryView, 0)
+	for rows.Next() {
+		entry, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
+func (store *Store) ListTimeEntriesForUser(
+	ctx context.Context,
+	filter trackingapplication.ListTimeEntriesFilter,
+) ([]trackingapplication.TimeEntryView, error) {
+	query := `select
+		te.id,
+		te.workspace_id,
+		te.user_id,
+		te.client_id,
+		te.project_id,
+		te.task_id,
+		te.description,
+		te.billable,
+		te.start_time,
+		te.stop_time,
+		te.duration_seconds,
+		te.created_with,
+		te.tag_ids,
+		te.expense_ids,
+		te.deleted_at,
+		te.created_at,
+		te.updated_at,
+		c.name,
+		p.name,
+		t.name,
+		p.active
+	from tracking_time_entries te
+	left join catalog_clients c on c.id = te.client_id
+	left join catalog_projects p on p.id = te.project_id
+	left join catalog_tasks t on t.id = te.task_id
+	where te.user_id = $1`
+	args := []any{filter.UserID}
+	if !filter.IncludeAll {
+		query += " and te.deleted_at is null"
+	}
+	if filter.Since != nil {
+		args = append(args, filter.Since.UTC())
+		query += " and te.updated_at >= $" + intParam(len(args))
+	}
+	if filter.Before != nil {
+		args = append(args, filter.Before.UTC())
+		query += " and te.start_time < $" + intParam(len(args))
+	}
+	if filter.StartDate != nil {
+		args = append(args, filter.StartDate.UTC())
+		query += " and te.start_time >= $" + intParam(len(args))
+	}
+	if filter.EndDate != nil {
+		args = append(args, filter.EndDate.UTC())
+		query += " and te.start_time <= $" + intParam(len(args))
+	}
+	query += " order by te.start_time, te.id"
+
+	rows, err := store.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, writeTrackingError("list tracking time entries for user", err)
 	}
 	defer rows.Close()
 

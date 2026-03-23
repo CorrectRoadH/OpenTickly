@@ -250,7 +250,9 @@ type TimelineEventView struct {
 type Store interface {
 	CreateTimeEntry(context.Context, CreateTimeEntryRecord) (TimeEntryView, error)
 	GetTimeEntry(context.Context, int64, int64, int64) (TimeEntryView, bool, error)
+	GetTimeEntryForUser(context.Context, int64, int64) (TimeEntryView, bool, error)
 	ListTimeEntries(context.Context, int64, ListTimeEntriesFilter) ([]TimeEntryView, error)
+	ListTimeEntriesForUser(context.Context, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	GetCurrentTimeEntry(context.Context, int64) (TimeEntryView, bool, error)
 	UpdateTimeEntry(context.Context, UpdateTimeEntryRecord) (TimeEntryView, error)
 	DeleteTimeEntry(context.Context, int64, int64, int64) error

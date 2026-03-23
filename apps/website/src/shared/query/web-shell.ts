@@ -21,10 +21,12 @@ import {
   getWorkspaceGroups,
   getWorkspaceTag,
   getWorkspaceTasksBasic,
+  patchWorkspaceStopTimeEntryHandler,
   postPinnedProject,
   postPreferences,
   postResetToken,
   postWorkspaceProjectCreate,
+  postWorkspaceTimeEntries,
   postWorkspaceProjectTasks,
   postWorkspaceClients,
   postWorkspaceGroup,
@@ -399,7 +401,7 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
   });
 }
 
-export function useTimeEntriesQuery(options?: {
+export function useTimeEntriesQuery(options: {
   endDate?: string;
   includeSharing?: boolean;
   startDate?: string;
@@ -435,6 +437,60 @@ export function useCurrentTimeEntryQuery() {
     },
     queryKey: currentTimeEntryQueryKey,
     retry: false,
+  });
+}
+
+export function useStartTimeEntryMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: { description: string; start: string }) =>
+      unwrapWebApiResult(
+        postWorkspaceTimeEntries({
+          body: {
+            created_with: "opentoggl-web",
+            description: request.description,
+            duration: -1,
+            start: request.start,
+            workspace_id: workspaceId,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
+  });
+}
+
+export function useStopTimeEntryMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ timeEntryId, workspaceId }: { timeEntryId: number; workspaceId: number }) =>
+      unwrapWebApiResult(
+        patchWorkspaceStopTimeEntryHandler({
+          path: {
+            time_entry_id: timeEntryId,
+            workspace_id: workspaceId,
+          },
+        }),
+    ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
   });
 }
 

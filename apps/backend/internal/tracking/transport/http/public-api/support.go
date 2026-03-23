@@ -13,6 +13,7 @@ import (
 )
 
 type ScopeAuthorizer interface {
+	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
 	RequirePublicTrackTrackingScope(ctx echo.Context) (int64, *identityapplication.UserSnapshot, error)
 }
 

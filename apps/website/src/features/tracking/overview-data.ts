@@ -31,20 +31,6 @@ const fallbackPalette = [
   "#38d9a9",
 ] as const;
 
-export function filterWorkspaceEntries(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  workspaceId: number,
-): GithubComTogglTogglApiInternalModelsTimeEntry[] {
-  return entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId);
-}
-
-export function matchesWorkspace(
-  entry: GithubComTogglTogglApiInternalModelsTimeEntry | undefined,
-  workspaceId: number,
-) {
-  return entry && (entry.workspace_id ?? entry.wid) === workspaceId;
-}
-
 export function sortTimeEntries(
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
 ): GithubComTogglTogglApiInternalModelsTimeEntry[] {

@@ -15,7 +15,7 @@ import (
 )
 
 func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
-	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -24,6 +24,7 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	if since, ok := queryInt64(ctx, "since"); ok {
 		timeValue := time.Unix(since, 0).UTC()
 		filter.Since = &timeValue
+		filter.IncludeAll = true
 	}
 	if before := strings.TrimSpace(ctx.QueryParam("before")); before != "" {
 		value, parseErr := parseTrackDateTime(before, true)
@@ -47,7 +48,7 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 		filter.EndDate = &value
 	}
 
-	entries, err := handler.tracking.ListTimeEntries(ctx.Request().Context(), workspaceID, filter)
+	entries, err := handler.tracking.ListUserTimeEntries(ctx.Request().Context(), filter)
 	if err != nil {
 		return writePublicTrackTrackingError(err)
 	}
@@ -60,11 +61,11 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) error {
-	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	entries, err := handler.tracking.ListTimeEntries(ctx.Request().Context(), workspaceID, trackingapplication.ListTimeEntriesFilter{
+	entries, err := handler.tracking.ListUserTimeEntries(ctx.Request().Context(), trackingapplication.ListTimeEntriesFilter{
 		UserID: user.ID,
 	})
 	if err != nil {
@@ -78,7 +79,7 @@ func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) err
 }
 
 func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx echo.Context) error {
-	_, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -90,7 +91,7 @@ func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackWebTimer(ctx echo.Context) error {
-	_, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (handler *Handler) GetPublicTrackWebTimer(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackTimeEntryByID(ctx echo.Context) error {
-	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
@@ -110,7 +111,7 @@ func (handler *Handler) GetPublicTrackTimeEntryByID(ctx echo.Context) error {
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	entry, err := handler.tracking.GetTimeEntry(ctx.Request().Context(), workspaceID, user.ID, timeEntryID)
+	entry, err := handler.tracking.GetUserTimeEntry(ctx.Request().Context(), user.ID, timeEntryID)
 	if err != nil {
 		return writePublicTrackTrackingError(err)
 	}

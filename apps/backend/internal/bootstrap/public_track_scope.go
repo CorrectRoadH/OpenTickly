@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
 	"github.com/labstack/echo/v4"
 )
@@ -23,7 +24,17 @@ func (handlers *routeHandlers) RequirePublicTrackWorkspace(ctx echo.Context, wor
 	if err != nil {
 		return err
 	}
-	if home.workspaceID != workspaceID {
+	if home.workspaceID == workspaceID {
+		return nil
+	}
+	workspace, lookupErr := handlers.tenantApp.GetWorkspace(
+		ctx.Request().Context(),
+		tenantdomain.WorkspaceID(workspaceID),
+	)
+	if lookupErr != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	if int64(workspace.OrganizationID) != home.organizationID {
 		return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
 	}
 	return nil

@@ -1,14 +1,12 @@
-import { type ReactElement } from "react";
+import { type ChangeEvent, type ReactElement, useMemo, useState } from "react";
 
 import {
   buildEntryGroups,
   buildTimesheetRows,
-  filterWorkspaceEntries,
   formatClockDuration,
   formatWeekday,
   getCalendarHours,
   getCurrentWeekDays,
-  matchesWorkspace,
   resolveEntryColor,
   resolveEntryDurationSeconds,
   sortTimeEntries,
@@ -26,7 +24,13 @@ import {
   ViewTab,
 } from "../../features/tracking/overview-views.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
-import { useCurrentTimeEntryQuery, useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
+import {
+  useCurrentTimeEntryQuery,
+  useStartTimeEntryMutation,
+  useStopTimeEntryMutation,
+  useTimeEntriesQuery,
+} from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import type { ShellViewMode } from "../../shared/url-state/shell-view.ts";
 
@@ -36,25 +40,30 @@ type WorkspaceOverviewPageProps = {
 
 export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): ReactElement {
   const session = useSession();
-  const timeEntriesQuery = useTimeEntriesQuery();
-  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const workspaceId = session.currentWorkspace.id;
   const timezone = session.user.timezone || "UTC";
-  const entries = sortTimeEntries(
-    filterWorkspaceEntries(timeEntriesQuery.data ?? [], session.currentWorkspace.id),
+  const weekDays = useMemo(() => getCurrentWeekDays(), []);
+  const weekRange = useMemo(
+    () => ({
+      endDate: formatTrackQueryDate(weekDays[6]),
+      startDate: formatTrackQueryDate(weekDays[0]),
+    }),
+    [weekDays],
   );
-  const runningEntry = matchesWorkspace(currentTimeEntryQuery.data, session.currentWorkspace.id)
-    ? currentTimeEntryQuery.data
-    : undefined;
-  const pageTitle =
-    runningEntry?.description?.trim() ||
-    entries.find((entry) => entry.description?.trim())?.description?.trim() ||
-    "What are you working on?";
+  const timeEntriesQuery = useTimeEntriesQuery({
+    ...weekRange,
+  });
+  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
+  const stopTimeEntryMutation = useStopTimeEntryMutation();
+  const [draftDescription, setDraftDescription] = useState("");
+  const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
+  const runningEntry = currentTimeEntryQuery.data;
   const displayProject =
     runningEntry?.project_name ||
     entries.find((entry) => entry.project_name)?.project_name ||
     "No project";
   const displayColor = resolveEntryColor(runningEntry ?? entries[0] ?? {});
-  const weekDays = getCurrentWeekDays();
   const groupedEntries = buildEntryGroups(entries, timezone);
   const trackStrip = summarizeProjects(entries).slice(0, 12);
   const todayKey = new Intl.DateTimeFormat("en-CA", {
@@ -81,6 +90,31 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
   );
   const calendarHours = getCalendarHours(entries, weekDays, timezone);
   const timesheetRows = buildTimesheetRows(entries, weekDays, timezone).slice(0, 18);
+  const timerMutationPending = startTimeEntryMutation.isPending || stopTimeEntryMutation.isPending;
+  const timerErrorMessage = resolveTimerErrorMessage(
+    timeEntriesQuery.error,
+    startTimeEntryMutation.error,
+    stopTimeEntryMutation.error,
+  );
+
+  async function handleTimerAction() {
+    if (runningEntry?.id != null) {
+      const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
+      if (typeof runningWorkspaceId === "number") {
+        await stopTimeEntryMutation.mutateAsync({
+          timeEntryId: runningEntry.id,
+          workspaceId: runningWorkspaceId,
+        });
+      }
+      return;
+    }
+
+    await startTimeEntryMutation.mutateAsync({
+      description: draftDescription.trim(),
+      start: new Date().toISOString(),
+    });
+    setDraftDescription("");
+  }
 
   return (
     <div
@@ -89,7 +123,21 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex h-[84px] items-center gap-3 border-b border-[var(--track-border)] px-5">
-          <div className="min-w-0 flex-1 text-[18px] font-medium text-white">{pageTitle}</div>
+          <div className="min-w-0 flex-1">
+            <label className="sr-only" htmlFor="timer-description">
+              Time entry description
+            </label>
+            <input
+              className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-white"
+              disabled={Boolean(runningEntry)}
+              id="timer-description"
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                setDraftDescription(event.target.value)
+              }
+              placeholder="What are you working on?"
+              value={runningEntry?.description ?? draftDescription}
+            />
+          </div>
           <button
             className="flex h-[30px] items-center gap-2 rounded-md px-3 text-[12px] text-white"
             type="button"
@@ -107,7 +155,12 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
               {formatClockDuration(resolveEntryDurationSeconds(runningEntry ?? { duration: 0 }))}
             </span>
             <button
+              aria-label={runningEntry ? "Stop timer" : "Start timer"}
               className="flex size-[42px] items-center justify-center rounded-full bg-[#ff7a66] text-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+              disabled={timerMutationPending}
+              onClick={() => {
+                void handleTimerAction();
+              }}
               type="button"
             >
               <TrackingIcon className="size-5" name="play-stop" />
@@ -199,7 +252,7 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
 
       {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
       {timeEntriesQuery.isError ? (
-        <SurfaceMessage message="Time entries are temporarily unavailable." tone="error" />
+        <SurfaceMessage message={timerErrorMessage} tone="error" />
       ) : null}
       {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "list" ? (
         <ListView groups={groupedEntries} timezone={timezone} />
@@ -238,4 +291,24 @@ function resolveIsoWeekNumber() {
   const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
 
   return Math.ceil(((date.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function formatTrackQueryDate(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function resolveTimerErrorMessage(
+  timeEntriesError: unknown,
+  startError: unknown,
+  stopError: unknown,
+) {
+  const error = stopError ?? startError ?? timeEntriesError;
+  if (error instanceof WebApiError) {
+    return `Time entries are temporarily unavailable (${error.status}).`;
+  }
+  return "Time entries are temporarily unavailable.";
 }
