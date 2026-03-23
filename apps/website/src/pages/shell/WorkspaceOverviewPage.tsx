@@ -22,7 +22,6 @@ import { useSession } from "../../shared/session/session-context.tsx";
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
-  const organizationName = session.currentOrganization?.name ?? "No organization";
   const memberCount = session.currentOrganization?.userCount ?? 1;
   const weekDays = useMemo(() => getCurrentWeekDays(), []);
   const timezone = session.user.timezone ?? "UTC";
@@ -47,6 +46,16 @@ export function WorkspaceOverviewPage(): ReactElement {
     () => buildProjectCoverage(topActivityQuery.data ?? []),
     [topActivityQuery.data],
   );
+  const overviewProgressPercent = useMemo(
+    () =>
+      [
+        memberCount > 1,
+        teamActivity.activeCount > 0,
+        topProjects.length > 0,
+        projectCoverage.percent > 0,
+      ].filter(Boolean).length * 25,
+    [memberCount, projectCoverage.percent, teamActivity.activeCount, topProjects.length],
+  );
 
   return (
     <div
@@ -55,223 +64,173 @@ export function WorkspaceOverviewPage(): ReactElement {
     >
       <OverviewBackdrop />
 
-      <div className="relative z-10 w-full space-y-3">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-[20px] font-medium leading-[28px] text-white">Admin Overview</h1>
-            <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
+      <div className="relative z-10 flex w-full max-w-[654px] flex-col gap-[10px]">
+        <div className="flex flex-col gap-[6px] lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-[3px]">
+            <h1 className="text-[20px] font-medium leading-[28px] tracking-[-0.02em] text-white">
+              Admin Overview
+            </h1>
+            <p className="text-[11px] leading-[16px] text-[#979797]">
               Set up your organization and keep your team on track
             </p>
           </div>
-          <div className="flex flex-col items-start gap-1 text-[9px] uppercase tracking-[0.04em] text-[#bfbfbf] lg:items-end">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="normal-case tracking-normal text-[#d6d6d6]">Set as default view</span>
-              <div className="flex h-[14px] w-[28px] items-center rounded-full bg-[#2b2b2b] px-[2px]">
-                <div className="size-[10px] rounded-full bg-white" />
+          <div className="flex flex-col items-start gap-[6px] text-[8px] uppercase tracking-[0.04em] text-[#b8b8b8] lg:items-end">
+            <div className="flex h-[12px] flex-wrap items-center gap-[6px]">
+              <span className="normal-case tracking-normal text-[#cfcfcf]">Set as default view</span>
+              <div className="flex h-[12px] w-[24px] items-center rounded-full bg-[#2f2f2f] px-[1px]">
+                <div className="size-[10px] rounded-full bg-[#d8d8d8]" />
               </div>
               <span className="text-[#e57bd9]">Refresh charts</span>
               <span className="text-[#7f7f7f]">0</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="h-[14px] w-[28px] rounded-[4px] bg-[#0b0b0b] shadow-[inset_0_0_0_1px_#2b2b2b]" />
+            <div className="flex h-[12px] items-center gap-[9px]">
+              <div className="h-[12px] w-[80px] rounded-[4px] bg-[#0f0f0f] shadow-[inset_0_0_0_1px_#2b2b2b]" />
               <span className="text-[#c88ec0]">View all plans</span>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-3">
-          <OverviewSurface className="px-3 py-3">
-            <div className="flex h-full flex-col gap-3">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-[40px] font-semibold leading-none text-white">{memberCount}</p>
-                <div className="flex items-center">
-                  {teamActivity.activeMembers.slice(0, 5).map((member, index) => (
-                    <span
-                      className="inline-flex size-[16px] items-center justify-center rounded-full border border-[#1c1c1c] text-[8px] font-semibold text-black"
-                      key={`${member.user_id ?? index}`}
-                      style={{
-                        backgroundColor: memberTint(index),
-                        marginLeft: index === 0 ? 0 : "-4px",
-                      }}
-                    >
-                      {initialsForMember(member)}
-                    </span>
-                  ))}
+        <div className="grid items-start gap-[10px] lg:grid-cols-[minmax(0,430px)_214px]">
+          <div className="flex flex-col gap-[10px]">
+            <OverviewSurface className="bg-[#472443] px-[14px] py-[11px] lg:min-h-[40px]">
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium leading-[16px] tracking-[-0.01em] text-white">
+                    Unlock your admin overview
+                  </p>
+                  <p className="text-[10px] leading-[14px] text-[#cca2c6]">
+                    Finish the steps below to see project and team activity.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-[8px]">
+                  <span className="text-[10px] font-medium leading-none text-white">
+                    {overviewProgressPercent}%
+                  </span>
+                  <div className="h-[3px] w-[54px] rounded-full bg-[#684863]">
+                    <div
+                      className="h-[3px] rounded-full bg-[#d98ad0]"
+                      style={{ width: `${overviewProgressPercent}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] text-[#d0a6ca]">⌄</span>
                 </div>
               </div>
-              <div className="space-y-1">
-                <p className="text-[13px] font-medium leading-[20px] text-white">
-                  Members in your organization
-                </p>
-                <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
-                  {organizationName} currently has {memberCount} members in the active workspace
-                  context.
-                </p>
-              </div>
-              <div className="mt-auto space-y-2">
-                <button
-                  className="inline-flex h-7 items-center rounded-[6px] bg-[#e28dd6] px-4 text-[11px] font-medium text-[#1b1b1b]"
-                  type="button"
-                >
-                  Add teammates
-                </button>
-                <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
-                  Bringing on a large team?{" "}
-                  <span className="text-[#e4bddf] underline decoration-[#e4bddf]/40 underline-offset-2">
-                    book a demo
+            </OverviewSurface>
+
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[219px]">
+              <div className="flex h-full flex-col gap-[10px]">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                    This week summary
+                  </h2>
+                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                    View reports
                   </span>
-                </p>
-              </div>
-            </div>
-          </OverviewSurface>
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-3">
-          <OverviewSurface className="px-3 py-3 xl:col-span-2">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-[14px] font-medium leading-[20px] text-white">
-                  This week summary
-                </h2>
-                <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
-                  View reports
-                </span>
-              </div>
-              <div className="border-t border-[#343434] pt-5">
-                <div className="overflow-x-auto">
-                  <div className="grid min-w-[620px] grid-cols-[38px_minmax(0,1fr)] gap-3">
-                    <div className="relative h-[190px] md:h-[210px]">
-                      <div className="absolute inset-0 flex flex-col justify-between">
-                        {weekSummary.axisLabels.map((axis) => (
-                          <span
-                            className="pr-1 text-[9px] leading-none font-medium text-[#8f8f8f] md:text-[10px]"
-                            key={axis}
-                          >
-                            {axis}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="relative h-[190px] md:h-[210px]">
+                </div>
+                <div className="flex-1 border-t border-[#343434] pt-[12px]">
+                  <div className="overflow-x-auto">
+                    <div className="grid min-w-[394px] grid-cols-[30px_minmax(0,1fr)] gap-[8px]">
+                      <div className="relative h-[132px]">
                         <div className="absolute inset-0 flex flex-col justify-between">
                           {weekSummary.axisLabels.map((axis) => (
-                            <div
-                              className="border-b border-dashed border-[#393939]"
-                              key={`${axis}-line`}
-                            />
+                            <span
+                              className="pr-1 text-[8px] leading-none font-medium text-[#7e7e7e]"
+                              key={axis}
+                            >
+                              {axis}
+                            </span>
                           ))}
                         </div>
+                      </div>
 
-                        <div className="absolute inset-0 grid grid-cols-7 gap-3 px-1 md:gap-5">
-                          {weekSummary.days.map((day) => (
-                            <div className="relative flex h-full items-end justify-center" key={day.label}>
-                              <div className="relative h-full w-[18px] max-w-full">
-                                {day.totalSeconds > 0 ? (
-                                  <>
+                      <div className="space-y-[5px]">
+                        <div className="relative h-[132px]">
+                          <div className="absolute inset-0 flex flex-col justify-between">
+                            {weekSummary.axisLabels.map((axis) => (
+                              <div
+                                className="border-b border-dashed border-[#393939]"
+                                key={`${axis}-line`}
+                              />
+                            ))}
+                          </div>
+
+                          <div className="absolute inset-0 grid grid-cols-7 gap-[6px] px-[2px]">
+                            {weekSummary.days.map((day) => (
+                              <div className="relative flex h-full items-end justify-center" key={day.label}>
+                                <div className="relative h-full w-[26px] max-w-full">
+                                  {day.totalSeconds > 0 ? (
                                     <div
-                                      className="absolute bottom-0 left-1/2 w-[18px] max-w-full -translate-x-1/2 rounded-t-[4px] bg-[#a156af]"
+                                      className="absolute bottom-0 left-1/2 w-[24px] max-w-full -translate-x-1/2 rounded-t-[3px] bg-[#c054be]"
                                       style={{ height: `${day.heightPercent}%` }}
                                     >
-                                      <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[9px] font-medium text-[#8f8f8f] md:text-[10px]">
+                                      <span className="absolute -top-[14px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-medium text-[#7e7e7e]">
                                         {formatClockDuration(day.totalSeconds)}
                                       </span>
                                     </div>
-                                  </>
-                                ) : null}
+                                  ) : null}
+                                </div>
                               </div>
-                            </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-7 gap-[6px] border-t border-[#454545] px-[2px] pt-[5px]">
+                          {weekSummary.days.map((day) => (
+                            <span
+                              className="text-center text-[8px] font-medium leading-[12px] text-[#b7b7b7]"
+                              key={`${day.label}-tick`}
+                            >
+                              {day.label}
+                            </span>
                           ))}
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-3 border-t border-[#454545] px-1 pt-2 md:gap-5">
-                        {weekSummary.days.map((day) => (
-                          <span
-                            className="text-center text-[10px] font-medium leading-[16px] text-[#d5d5d5] md:text-[11px]"
-                            key={`${day.label}-tick`}
-                          >
-                            {day.label}
-                          </span>
-                        ))}
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="flex items-center justify-center gap-2 pt-1 text-[10px] text-[#d5d5d5]">
-                <span className="inline-block h-[7px] w-[23px] rounded-full bg-[#a156af]" />
-                <span>Non-billable</span>
-              </div>
-            </div>
-          </OverviewSurface>
-
-          <OverviewSurface className="px-3 py-3">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-[13px] font-medium leading-[20px] text-white">
-                  Top projects this week
-                </h2>
-                <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
-                  View reports
-                </span>
-              </div>
-              {topProjects.length > 0 ? (
-                <div className="space-y-2">
-                  {topProjects.map((project) => (
-                    <div className="flex items-center gap-2 text-[11px]" key={project.name}>
-                      <span
-                        className="size-[5px] shrink-0 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      <span className="min-w-0 flex-1 truncate text-[#f0f0f0]">{project.name}</span>
-                      <span className="text-[#d5d5d5]">
-                        {formatClockDuration(project.totalSeconds)}
-                      </span>
-                    </div>
-                  ))}
+                <div className="flex items-center justify-center gap-[6px] pt-[2px] text-[8px] text-[#d0d0d0]">
+                  <span className="inline-block h-[4px] w-[18px] rounded-full bg-[#c054be]" />
+                  <span>Non-billable</span>
                 </div>
-              ) : (
-                <OverviewEmptyState message="No tracked projects in this workspace yet." />
-              )}
-            </div>
-          </OverviewSurface>
-        </div>
-
-        <div className="grid gap-3 xl:grid-cols-3">
-          <OverviewSurface className="px-3 py-3 xl:col-span-2">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-[13px] font-medium leading-[20px] text-white">Team activity</h2>
-                <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
-                  View team activity
-                </span>
               </div>
-              <div className="grid gap-6 border-t border-[#2a2a2a] pt-4 md:grid-cols-[104px_minmax(0,1fr)]">
-                <StatRing
-                  accent="#d67ad0"
-                  subtitle={`${teamActivity.activeCount} out of ${memberCount} member${memberCount === 1 ? "" : "s"} tracking`}
-                  title={`${teamActivity.coveragePercent}%`}
-                />
-                <div className="space-y-5">
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <p className="text-[9px] uppercase tracking-[0.04em] text-[#a4a4a4]">
+            </OverviewSurface>
+
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[176px]">
+              <div className="flex h-full flex-col gap-[10px]">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                    Team activity
+                  </h2>
+                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                    View team activity
+                  </span>
+                </div>
+                <div className="flex-1 border-t border-[#2f2f2f] pt-[9px]">
+                  <div className="grid gap-[12px] lg:grid-cols-[108px_minmax(0,1fr)_92px]">
+                    <StatRing
+                      accent="#d67ad0"
+                      percent={teamActivity.coveragePercent}
+                      size={74}
+                      innerSize={50}
+                      subtitle={`${teamActivity.activeCount} out of ${memberCount} member${memberCount === 1 ? "" : "s"} tracking`}
+                      title={`${teamActivity.coveragePercent}%`}
+                    />
+                    <div className="space-y-[6px]">
+                      <p className="text-[8px] font-medium uppercase tracking-[0.04em] text-[#bcbcbc]">
                         Tracking
                       </p>
                       {teamActivity.activeMembers.length > 0 ? (
-                        <div className="space-y-2">
-                          {teamActivity.activeMembers.map((member, index) => (
-                            <div className="flex items-center gap-2" key={`${member.user_id ?? index}`}>
+                        <div className="space-y-[4px]">
+                          {teamActivity.activeMembers.slice(0, 2).map((member, index) => (
+                            <div className="flex items-center gap-[6px]" key={`${member.user_id ?? index}`}>
                               <span
-                                className="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                                className="inline-flex size-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-[#1b1b1b]"
                                 style={{ backgroundColor: memberTint(index + 2) }}
                               >
                                 {initialsForMember(member)}
                               </span>
-                              <div className="min-w-0 text-[11px] leading-[16px]">
+                              <div className="min-w-0 text-[10px] leading-[13px]">
                                 <p className="truncate text-white">{memberLabel(member)}</p>
                                 <p className="text-[#a4a4a4]">
                                   {formatClockDuration(member.duration ?? 0)}
@@ -284,22 +243,18 @@ export function WorkspaceOverviewPage(): ReactElement {
                         <OverviewEmptyState message="No active members yet." />
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <p className="text-[9px] uppercase tracking-[0.04em] text-[#a4a4a4]">
+                    <div className="space-y-[6px]">
+                      <p className="text-[8px] font-medium uppercase tracking-[0.04em] text-[#bcbcbc]">
                         Not tracking
-                      </p>
-                      <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
-                        {Math.max(memberCount - teamActivity.activeCount, 0)} members have no
-                        tracked time this week.
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
+                  <div className="space-y-[3px] pt-[12px]">
+                    <p className="text-[10px] leading-[16px] text-[#cfcfcf]">
                       Bring your team to see the full picture
                     </p>
                     <button
-                      className="inline-flex h-7 items-center bg-transparent px-0 text-[10px] font-semibold uppercase tracking-[0.04em] text-white"
+                      className="inline-flex h-6 items-center bg-transparent px-0 text-[9px] font-semibold uppercase tracking-[0.04em] text-white"
                       type="button"
                     >
                       Invite teammates
@@ -307,24 +262,94 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </div>
                 </div>
               </div>
-            </div>
-          </OverviewSurface>
+            </OverviewSurface>
+          </div>
 
-          <div className="space-y-3">
-            <OverviewSurface className="px-3 py-3">
-              <div className="space-y-4">
-                <h2 className="text-[13px] font-medium leading-[20px] text-white">
+          <div className="flex flex-col gap-[10px]">
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[138px]">
+              <div className="flex h-full flex-col gap-[9px]">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">
+                    {memberCount}
+                  </p>
+                  <MemberAvatarCluster members={teamActivity.activeMembers} />
+                </div>
+                <div className="space-y-[3px]">
+                  <p className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                    Members in your organization
+                  </p>
+                  <p className="max-w-[165px] text-[10px] leading-[14px] text-[#a4a4a4]">
+                    Your insights are incomplete if you&apos;re tracking alone. Invite your team
+                    to see the full picture
+                  </p>
+                </div>
+                <div className="mt-auto space-y-[7px]">
+                  <button
+                    className="inline-flex h-[22px] items-center rounded-[4px] bg-[#df8bd5] px-[13px] text-[9px] font-semibold text-[#1b1b1b]"
+                    type="button"
+                  >
+                    Add teammates
+                  </button>
+                  <p className="text-[10px] leading-[14px] text-[#a4a4a4]">
+                    Bringing on a large team?{" "}
+                    <span className="text-[#e4bddf] underline decoration-[#e4bddf]/40 underline-offset-2">
+                      book a demo
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </OverviewSurface>
+
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[132px]">
+              <div className="flex h-full flex-col gap-[9px]">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                    Top projects this week
+                  </h2>
+                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                    View reports
+                  </span>
+                </div>
+                {topProjects.length > 0 ? (
+                  <div className="space-y-[6px] border-t border-[#2f2f2f] pt-[10px]">
+                    {topProjects.map((project) => (
+                      <div className="flex items-center gap-[7px] text-[10px]" key={project.name}>
+                        <span
+                          className="size-[5px] shrink-0 rounded-full"
+                          style={{ backgroundColor: project.color }}
+                        />
+                        <span className="min-w-0 flex-1 truncate text-[#f0f0f0]">
+                          {project.name}
+                        </span>
+                        <span className="text-[#d5d5d5]">
+                          {formatClockDuration(project.totalSeconds)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <OverviewEmptyState message="No tracked projects in this workspace yet." />
+                )}
+              </div>
+            </OverviewSurface>
+
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[151px]">
+              <div className="flex h-full flex-col gap-[10px]">
+                <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
                   Time tracked to projects
                 </h2>
-                <div className="border-t border-[#2a2a2a] pt-4">
+                <div className="flex-1 border-t border-[#2f2f2f] pt-[9px]">
                   <StatRing
                     accent="#f0c05d"
-                    subtitle={projectCoverage.subtitle}
+                    percent={projectCoverage.percent}
+                    size={84}
+                    innerSize={58}
+                    subtitle={projectCoverage.percent > 0 ? "Keep it this way" : projectCoverage.subtitle}
                     title={`${projectCoverage.percent}%`}
                   />
                 </div>
                 <button
-                  className="inline-flex h-7 items-center px-0 text-[10px] font-semibold uppercase tracking-[0.04em] text-[#c88ec0]"
+                  className="inline-flex h-6 items-center px-0 text-[9px] font-semibold uppercase tracking-[0.04em] text-[#c88ec0]"
                   type="button"
                 >
                   Add member to project
@@ -332,18 +357,20 @@ export function WorkspaceOverviewPage(): ReactElement {
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-3 py-3">
-              <div className="space-y-3">
+            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[119px]">
+              <div className="flex h-full flex-col gap-[9px]">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[13px] font-medium leading-[20px] text-white">FAQ</h2>
-                  <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                    FAQ
+                  </h2>
+                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
                     View more ↗
                   </span>
                 </div>
-                <p className="border-b border-[#2a2a2a] pb-2 text-[11px] leading-[16px] text-[#a4a4a4]">
+                <p className="border-b border-[#2f2f2f] pb-[7px] text-[10px] leading-[14px] text-[#a4a4a4]">
                   The stuff most admins ask us
                 </p>
-                <div className="space-y-1 text-[11px] leading-[16px] text-[#d0d0d0]">
+                <div className="space-y-[2px] text-[10px] leading-[14px] text-[#d0d0d0]">
                   <p>How should I set up my workspace?</p>
                   <p>How do roles and permissions work?</p>
                   <p>How do I set billable rates?</p>
@@ -355,7 +382,7 @@ export function WorkspaceOverviewPage(): ReactElement {
           </div>
         </div>
 
-        <div className="pt-5 text-center text-[10px] text-[#a4a4a4]">
+        <div className="pt-[18px] text-center text-[10px] text-[#9e9e9e]">
           <span>How could this be more useful for you? </span>
           <span className="text-[#d7a2d1] underline decoration-[#d7a2d1]/40 underline-offset-2">
             Let us know.
@@ -373,29 +400,84 @@ function OverviewSurface({
   children: ReactNode;
   className?: string;
 }): ReactElement {
-  return <section className={`rounded-[6px] border border-[#313131] bg-[#1d1d1d] ${className}`}>{children}</section>;
+  return (
+    <section className={`rounded-[6px] border border-[#313131] bg-[#1d1d1d] ${className}`}>
+      {children}
+    </section>
+  );
+}
+
+function MemberAvatarCluster({ members }: { members: ModelsMostActiveUser[] }): ReactElement {
+  const visibleMembers = members.slice(0, 5);
+
+  return (
+    <div className="relative h-[32px] w-[66px] shrink-0">
+      {visibleMembers.map((member, index) => {
+        const positions = [
+          { left: 40, top: 0, size: 12 },
+          { left: 18, top: 4, size: 12 },
+          { left: 52, top: 10, size: 12 },
+          { left: 28, top: 12, size: 22 },
+          { left: 4, top: 14, size: 12 },
+        ];
+        const position = positions[index] ?? positions[positions.length - 1];
+
+        return (
+          <span
+            className="absolute inline-flex items-center justify-center rounded-full border border-[#1d1d1d] font-semibold text-[#1b1b1b]"
+            key={`${member.user_id ?? index}`}
+            style={{
+              backgroundColor: memberTint(index),
+              fontSize: position.size <= 12 ? 7 : 9,
+              height: position.size,
+              left: position.left,
+              top: position.top,
+              width: position.size,
+            }}
+          >
+            {initialsForMember(member)}
+          </span>
+        );
+      })}
+    </div>
+  );
 }
 
 function StatRing({
   accent,
+  percent,
+  innerSize,
+  size,
   subtitle,
   title,
 }: {
   accent: string;
+  percent: number;
+  innerSize: number;
+  size: number;
   subtitle: string;
   title: string;
 }): ReactElement {
+  const sweep = Math.max(0, Math.min(100, percent)) * 3.6;
+
   return (
-    <div className="flex flex-col items-center justify-center gap-3">
+    <div className="flex flex-col items-center justify-center gap-[8px]">
       <div
-        className="grid size-[72px] place-items-center rounded-full"
-        style={{ background: `conic-gradient(${accent} 0deg 360deg, transparent 360deg)` }}
+        className="grid place-items-center rounded-full"
+        style={{
+          background: `conic-gradient(${accent} 0deg ${sweep}deg, #3a3a3a ${sweep}deg 360deg)`,
+          height: size,
+          width: size,
+        }}
       >
-        <div className="grid size-[52px] place-items-center rounded-full bg-[#1d1d1d] text-[18px] font-semibold text-white">
+        <div
+          className="grid place-items-center rounded-full bg-[#1d1d1d] text-[18px] font-semibold text-white"
+          style={{ height: innerSize, width: innerSize }}
+        >
           {title}
         </div>
       </div>
-      <p className="text-[10px] leading-[16px] text-[#a4a4a4]">{subtitle}</p>
+      <p className="text-center text-[9px] leading-[12px] text-[#a4a4a4]">{subtitle}</p>
     </div>
   );
 }
