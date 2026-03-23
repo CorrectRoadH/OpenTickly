@@ -120,4 +120,52 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 	if usersBody[0]["email"] != "org-owner@example.com" {
 		t.Fatalf("expected organization workspace user email org-owner@example.com, got %#v", usersBody[0]["email"])
 	}
+
+	organizationGroups := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/groups",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationGroups.Code != http.StatusOK {
+		t.Fatalf("expected organization groups status 200, got %d body=%s", organizationGroups.Code, organizationGroups.Body.String())
+	}
+	mustDecodeJSON(t, organizationGroups.Body.Bytes(), &groupsBody)
+	if len(groupsBody) != 1 {
+		t.Fatalf("expected one organization group, got %#v", groupsBody)
+	}
+
+	organizationUsers := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/users",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationUsers.Code != http.StatusOK {
+		t.Fatalf("expected organization users status 200, got %d body=%s", organizationUsers.Code, organizationUsers.Body.String())
+	}
+	var orgUsersBody []map[string]any
+	mustDecodeJSON(t, organizationUsers.Body.Bytes(), &orgUsersBody)
+	if len(orgUsersBody) != 1 {
+		t.Fatalf("expected one organization user, got %#v", orgUsersBody)
+	}
+	if int64(orgUsersBody[0]["workspace_count"].(float64)) != 2 {
+		t.Fatalf("expected organization user workspace_count 2, got %#v", orgUsersBody[0]["workspace_count"])
+	}
+
+	organizationUsersDetailed := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/users/detailed",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationUsersDetailed.Code != http.StatusOK {
+		t.Fatalf("expected organization users detailed status 200, got %d body=%s", organizationUsersDetailed.Code, organizationUsersDetailed.Body.String())
+	}
 }
