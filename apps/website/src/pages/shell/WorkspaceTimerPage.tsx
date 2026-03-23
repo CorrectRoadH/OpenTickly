@@ -148,6 +148,14 @@ export function WorkspaceTimerPage(): ReactElement {
   }, [runningEntry]);
 
   useEffect(() => {
+    if (!runningEntry) {
+      document.title = "OpenToggl";
+      return;
+    }
+    document.title = `${formatClockDuration(runningDurationSeconds)} - ${runningEntry.description ?? ""}`;
+  }, [runningEntry, runningDurationSeconds]);
+
+  useEffect(() => {
     if (!selectedEntry?.id) {
       return;
     }
@@ -166,7 +174,7 @@ export function WorkspaceTimerPage(): ReactElement {
 
   useEffect(() => {
     setRunningDescription(runningEntry?.description ?? "");
-  }, [runningEntry?.description, runningEntry?.id]);
+  }, [runningEntry]);
 
   useEffect(() => {
     setSelectedDescription(selectedEntry?.description ?? "");
