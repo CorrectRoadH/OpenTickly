@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   opentoggl:
-    image: ${OPENTOGGL_IMAGE:-ghcr.io/opentoggl/backend:main}
+    image: ghcr.io/opentoggl/backend:main
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: ${OPENTOGGL_PORT:-8080}
