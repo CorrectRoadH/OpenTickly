@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"net/http"
+
 	. "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 
@@ -12,1113 +14,1113 @@ type publicTrackUnimplementedServer struct{}
 var _ publictrackapi.ServerInterface = (*publicTrackUnimplementedServer)(nil)
 
 func (server *publicTrackUnimplementedServer) GetAuditLogs(ctx echo.Context, organizationId int, from string, to string, params GetAuditLogsParams) error {
-	panic("TODO: implement public-track GetAuditLogs")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetSaml2LoginUrl(ctx echo.Context, params GetSaml2LoginUrlParams) error {
-	panic("TODO: implement public-track GetSaml2LoginUrl")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostSaml2Callback(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostSaml2Callback")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteAvatars(ctx echo.Context) error {
-	panic("TODO: implement public-track DeleteAvatars")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostAvatars(ctx echo.Context) error {
-	panic("TODO: implement public-track PostAvatars")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostUseGravatar(ctx echo.Context) error {
-	panic("TODO: implement public-track PostUseGravatar")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetCountries(ctx echo.Context) error {
-	panic("TODO: implement public-track GetCountries")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetCountriesCountryIdSubdivisions(ctx echo.Context, countryId int) error {
-	panic("TODO: implement public-track GetCountriesCountryIdSubdivisions")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetCurrencies(ctx echo.Context) error {
-	panic("TODO: implement public-track GetCurrencies")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetDesktopLogin(ctx echo.Context) error {
-	panic("TODO: implement public-track GetDesktopLogin")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostDesktopLoginTokens(ctx echo.Context) error {
-	panic("TODO: implement public-track PostDesktopLoginTokens")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostUnifiedFeedback(ctx echo.Context) error {
-	panic("TODO: implement public-track PostUnifiedFeedback")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIcal(ctx echo.Context, token string) error {
-	panic("TODO: implement public-track GetIcal")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendar(ctx echo.Context) error {
-	panic("TODO: implement public-track GetIntegrationsCalendar")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendars(ctx echo.Context, params GetIntegrationsCalendarCalendarsParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarCalendars")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarCalendarsSelected(ctx echo.Context, params GetIntegrationsCalendarCalendarsSelectedParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarCalendarsSelected")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarEvents(ctx echo.Context, params GetIntegrationsCalendarEventsParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarEvents")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostIntegrationsCalendarEventsDetailsSuggestion(ctx echo.Context) error {
-	panic("TODO: implement public-track PostIntegrationsCalendarEventsDetailsSuggestion")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostIntegrationsCalendarEventsUpdate(ctx echo.Context) error {
-	panic("TODO: implement public-track PostIntegrationsCalendarEventsUpdate")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarEventsEventIdDetailsSuggestion(ctx echo.Context, eventId int) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarEventsEventIdDetailsSuggestion")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarSetup(ctx echo.Context, params GetIntegrationsCalendarSetupParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarSetup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteIntegrationsCalendarIntegrationId(ctx echo.Context, integrationId int) error {
-	panic("TODO: implement public-track DeleteIntegrationsCalendarIntegrationId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutIntegrationsCalendarIntegrationId(ctx echo.Context, integrationId int) error {
-	panic("TODO: implement public-track PutIntegrationsCalendarIntegrationId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendars(ctx echo.Context, integrationId int, params GetIntegrationsCalendarIntegrationIdCalendarsParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarIntegrationIdCalendars")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostIntegrationsCalendarIntegrationIdCalendarsUpdate(ctx echo.Context, integrationId int) error {
-	panic("TODO: implement public-track PostIntegrationsCalendarIntegrationIdCalendarsUpdate")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchIntegrationsCalendarIntegrationIdCalendarsCalendarId(ctx echo.Context, integrationId int, calendarId int) error {
-	panic("TODO: implement public-track PatchIntegrationsCalendarIntegrationIdCalendarsCalendarId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendarsCalendarIdEventsEventIdAttendees(ctx echo.Context, integrationId int, calendarId int, eventId int) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarIntegrationIdCalendarsCalendarIdEventsEventIdAttendees")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEvents(ctx echo.Context, integrationId int, idCalendar string, params GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEventsParams) error {
-	panic("TODO: implement public-track GetIntegrationsCalendarIntegrationIdCalendarsIdCalendarEvents")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetInvitations(ctx echo.Context, invitationCode string) error {
-	panic("TODO: implement public-track GetInvitations")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetKeys(ctx echo.Context) error {
-	panic("TODO: implement public-track GetKeys")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMe(ctx echo.Context, params GetMeParams) error {
-	panic("TODO: implement public-track GetMe")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutMe(ctx echo.Context) error {
-	panic("TODO: implement public-track PutMe")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeAcceptTos(ctx echo.Context) error {
-	panic("TODO: implement public-track PostMeAcceptTos")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetClients(ctx echo.Context) error {
-	panic("TODO: implement public-track GetClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostCloseAccount(ctx echo.Context) error {
-	panic("TODO: implement public-track PostCloseAccount")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeDisableProductEmails(ctx echo.Context, disableCode string) error {
-	panic("TODO: implement public-track PostMeDisableProductEmails")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeDisableWeeklyReport(ctx echo.Context, weeklyReportCode string) error {
-	panic("TODO: implement public-track PostMeDisableWeeklyReport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostEnableSso(ctx echo.Context) error {
-	panic("TODO: implement public-track PostEnableSso")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeExport(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeExport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeExport(ctx echo.Context) error {
-	panic("TODO: implement public-track PostMeExport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeExportDataUuidZip(ctx echo.Context, uuid string) error {
-	panic("TODO: implement public-track GetMeExportDataUuidZip")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetFavorites(ctx echo.Context) error {
-	panic("TODO: implement public-track GetFavorites")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) CreateFavorite(ctx echo.Context, params CreateFavoriteParams) error {
-	panic("TODO: implement public-track CreateFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) UpdateFavorite(ctx echo.Context, params UpdateFavoriteParams) error {
-	panic("TODO: implement public-track UpdateFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostFavoritesSuggestions(ctx echo.Context) error {
-	panic("TODO: implement public-track PostFavoritesSuggestions")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteFavorite(ctx echo.Context, favoriteId int) error {
-	panic("TODO: implement public-track DeleteFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeFeatures(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeFeatures")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeFlags(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeFlags")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeFlags(ctx echo.Context) error {
-	panic("TODO: implement public-track PostMeFlags")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeId(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeLocation(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeLocation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeLogged(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeLogged")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizations(ctx echo.Context) error {
-	panic("TODO: implement public-track GetOrganizations")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetPreferences(ctx echo.Context) error {
-	panic("TODO: implement public-track GetPreferences")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostPreferences(ctx echo.Context) error {
-	panic("TODO: implement public-track PostPreferences")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetPreferencesClient(ctx echo.Context, client GetPreferencesClientParamsClient) error {
-	panic("TODO: implement public-track GetPreferencesClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostPreferencesClient(ctx echo.Context, client PostPreferencesClientParamsClient) error {
-	panic("TODO: implement public-track PostPreferencesClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeProjects(ctx echo.Context, params GetMeProjectsParams) error {
-	panic("TODO: implement public-track GetMeProjects")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeProjectsPaginated(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeProjectsPaginated")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeletePushServices(ctx echo.Context) error {
-	panic("TODO: implement public-track DeletePushServices")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetPushServices(ctx echo.Context) error {
-	panic("TODO: implement public-track GetPushServices")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostPushServices(ctx echo.Context) error {
-	panic("TODO: implement public-track PostPushServices")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetQuota(ctx echo.Context) error {
-	panic("TODO: implement public-track GetQuota")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostResetToken(ctx echo.Context) error {
-	panic("TODO: implement public-track PostResetToken")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTags(ctx echo.Context) error {
-	panic("TODO: implement public-track GetTags")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTasks(ctx echo.Context, params GetTasksParams) error {
-	panic("TODO: implement public-track GetTasks")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimeEntries(ctx echo.Context, params GetTimeEntriesParams) error {
-	panic("TODO: implement public-track GetTimeEntries")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimeEntriesChecklist(ctx echo.Context) error {
-	panic("TODO: implement public-track GetTimeEntriesChecklist")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetCurrentTimeEntry(ctx echo.Context) error {
-	panic("TODO: implement public-track GetCurrentTimeEntry")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimeEntryById(ctx echo.Context, timeEntryId int, params GetTimeEntryByIdParams) error {
-	panic("TODO: implement public-track GetTimeEntryById")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostMeTimeEntriesSharedWith(ctx echo.Context) error {
-	panic("TODO: implement public-track PostMeTimeEntriesSharedWith")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeTimesheets(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeTimesheets")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetMeTrackReminders(ctx echo.Context) error {
-	panic("TODO: implement public-track GetMeTrackReminders")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWebTimer(ctx echo.Context) error {
-	panic("TODO: implement public-track GetWebTimer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaces(ctx echo.Context) error {
-	panic("TODO: implement public-track GetWorkspaces")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganization(ctx echo.Context) error {
-	panic("TODO: implement public-track PostOrganization")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationAcceptInvitation(ctx echo.Context, invitationCode string) error {
-	panic("TODO: implement public-track PostOrganizationAcceptInvitation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostRejectInvitation(ctx echo.Context, invitationCode string) error {
-	panic("TODO: implement public-track PostRejectInvitation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganization(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganization")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutOrganization(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PutOrganization")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationGroups(ctx echo.Context, organizationId int, params GetOrganizationGroupsParams) error {
-	panic("TODO: implement public-track GetOrganizationGroups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationGroup(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteOrganizationGroup(ctx echo.Context, organizationId int, groupId int) error {
-	panic("TODO: implement public-track DeleteOrganizationGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchOrganizationGroup(ctx echo.Context, organizationId int, groupId int) error {
-	panic("TODO: implement public-track PatchOrganizationGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutOrganizationGroup(ctx echo.Context, organizationId int, groupId int) error {
-	panic("TODO: implement public-track PutOrganizationGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSlackIntegrationRequest(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSlackIntegrationRequest")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationInvitation(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationInvitation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutInvitation(ctx echo.Context, organizationId int, invitationId int) error {
-	panic("TODO: implement public-track PutInvitation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationInvoice(ctx echo.Context, organizationId int, invoiceUid string) error {
-	panic("TODO: implement public-track GetOrganizationInvoice")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationOwner(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationOwner")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOwnershipTransfers(ctx echo.Context, organizationId int, params GetOwnershipTransfersParams) error {
-	panic("TODO: implement public-track GetOwnershipTransfers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOwnershipTransfer(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOwnershipTransfer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOwnershipTransfer(ctx echo.Context, organizationId int, transferId int) error {
-	panic("TODO: implement public-track GetOwnershipTransfer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOwnershipTransferActions(ctx echo.Context, organizationId int, transferId int, action PostOwnershipTransferActionsParamsAction) error {
-	panic("TODO: implement public-track PostOwnershipTransferActions")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationsPaymentsRecords(ctx echo.Context, organizationId int, params GetOrganizationsPaymentsRecordsParams) error {
-	panic("TODO: implement public-track GetOrganizationsPaymentsRecords")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationsPlans(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationsPlans")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationsPlan(ctx echo.Context, organizationId int, planId int) error {
-	panic("TODO: implement public-track GetOrganizationsPlan")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationRoles(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationRoles")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationSegmentation(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationSegmentation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutOrganizationSegmentation(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PutOrganizationSegmentation")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteOrganizationSubscription(ctx echo.Context, organizationId int, params DeleteOrganizationSubscriptionParams) error {
-	panic("TODO: implement public-track DeleteOrganizationSubscription")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationSubscription(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationSubscription")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscription(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscription")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutOrganizationSubscription(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PutOrganizationSubscription")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscriptionCancellationFeedback(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscriptionCancellationFeedback")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetUnifiedCustomer(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetUnifiedCustomer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostUnifiedCustomer(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostUnifiedCustomer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutUnifiedCustomer(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PutUnifiedCustomer")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscriptionDiscountRequest(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscriptionDiscountRequest")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetFeatureUpsellMulti(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetFeatureUpsellMulti")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationInvoiceSummary(ctx echo.Context, organizationId int, params GetOrganizationInvoiceSummaryParams) error {
-	panic("TODO: implement public-track GetOrganizationInvoiceSummary")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationSubscriptionPaymentFailed(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationSubscriptionPaymentFailed")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeletePromotionCode(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track DeletePromotionCode")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostPromotionCode(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostPromotionCode")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationPurchaseOrderPdf(ctx echo.Context, organizationId int, purchaseOrderUid string) error {
-	panic("TODO: implement public-track GetOrganizationPurchaseOrderPdf")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) CreateSetupIntent(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track CreateSetupIntent")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteOrganizationTrial(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track DeleteOrganizationTrial")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscriptionCreateTrial(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscriptionCreateTrial")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscriptionUpgradeRequest(ctx echo.Context, organizationId int, featureId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscriptionUpgradeRequest")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteOrganizationSubscriptionUsageBasedDiscount(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track DeleteOrganizationSubscriptionUsageBasedDiscount")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationSubscriptionUsageBasedDiscount(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationSubscriptionUsageBasedDiscount")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationUsage(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationUsage")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationUsers(ctx echo.Context, organizationId int, params GetOrganizationUsersParams) error {
-	panic("TODO: implement public-track GetOrganizationUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchOrganizationUsers(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PatchOrganizationUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationUsersDetailed(ctx echo.Context, organizationId int, params GetOrganizationUsersDetailedParams) error {
-	panic("TODO: implement public-track GetOrganizationUsersDetailed")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteOrganizationUsersLeave(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track DeleteOrganizationUsersLeave")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutOrganizationUsers(ctx echo.Context, organizationId int, organizationUserId int) error {
-	panic("TODO: implement public-track PutOrganizationUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostOrganizationWorkspaces(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track PostOrganizationWorkspaces")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesStatistics(ctx echo.Context, organizationId int) error {
-	panic("TODO: implement public-track GetOrganizationWorkspacesStatistics")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesGroups(ctx echo.Context, organizationId int, workspaceId int) error {
-	panic("TODO: implement public-track GetOrganizationWorkspacesGroups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOrganizationWorkspacesWorkspaceusers(ctx echo.Context, organizationId int, workspaceId int, params GetOrganizationWorkspacesWorkspaceusersParams) error {
-	panic("TODO: implement public-track GetOrganizationWorkspacesWorkspaceusers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchOrganizationWorkspaceUsers(ctx echo.Context, organizationId int, workspaceId int) error {
-	panic("TODO: implement public-track PatchOrganizationWorkspaceUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostSmailContact(ctx echo.Context) error {
-	panic("TODO: implement public-track PostSmailContact")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostSmailDemo(ctx echo.Context) error {
-	panic("TODO: implement public-track PostSmailDemo")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostSmailMeet(ctx echo.Context) error {
-	panic("TODO: implement public-track PostSmailMeet")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetStatus(ctx echo.Context) error {
-	panic("TODO: implement public-track GetStatus")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetAllPlans(ctx echo.Context) error {
-	panic("TODO: implement public-track GetAllPlans")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetSyncServerMeGoals(ctx echo.Context, params GetSyncServerMeGoalsParams) error {
-	panic("TODO: implement public-track GetSyncServerMeGoals")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteTimeline(ctx echo.Context) error {
-	panic("TODO: implement public-track DeleteTimeline")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimeline(ctx echo.Context, params GetTimelineParams) error {
-	panic("TODO: implement public-track GetTimeline")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostTimeline(ctx echo.Context) error {
-	panic("TODO: implement public-track PostTimeline")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimezones(ctx echo.Context) error {
-	panic("TODO: implement public-track GetTimezones")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetOffsets(ctx echo.Context) error {
-	panic("TODO: implement public-track GetOffsets")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetPublicSubscriptionPlans(ctx echo.Context) error {
-	panic("TODO: implement public-track GetPublicSubscriptionPlans")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspace(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspace")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaces(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PutWorkspaces")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetAlerts(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetAlerts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostAlerts(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostAlerts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteAlerts(ctx echo.Context, workspaceId int, alertId int) error {
-	panic("TODO: implement public-track DeleteAlerts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutAlerts(ctx echo.Context, workspaceId int, alertId int) error {
-	panic("TODO: implement public-track PutAlerts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceClients(ctx echo.Context, workspaceId int, params GetWorkspaceClientsParams) error {
-	panic("TODO: implement public-track GetWorkspaceClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceClients(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) ArchiveClients(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track ArchiveClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceClientsData(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceClientsData")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceClients(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceClient(ctx echo.Context, workspaceId int, clientId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceClient(ctx echo.Context, workspaceId int, clientId int) error {
-	panic("TODO: implement public-track GetWorkspaceClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceClients(ctx echo.Context, workspaceId int, clientId int) error {
-	panic("TODO: implement public-track PutWorkspaceClients")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) ArchiveClient(ctx echo.Context, workspaceId int, clientId int) error {
-	panic("TODO: implement public-track ArchiveClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) RestoreClient(ctx echo.Context, workspaceId int, clientId int) error {
-	panic("TODO: implement public-track RestoreClient")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceCurrencies(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceCurrencies")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceAllActivities(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceAllActivities")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceMostActive(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceMostActive")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTopActivity(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceTopActivity")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetExpense(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetExpense")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostExpense(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostExpense")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceExports(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceExports")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceExports(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceExports")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceExportsDataUuidZip(ctx echo.Context, workspaceId int, uuid string) error {
-	panic("TODO: implement public-track GetWorkspaceExportsDataUuidZip")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceFavorites(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceFavorites")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) CreateWorkspaceFavorite(ctx echo.Context, workspaceId int, params CreateWorkspaceFavoriteParams) error {
-	panic("TODO: implement public-track CreateWorkspaceFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) UpdateWorkspaceFavorite(ctx echo.Context, workspaceId int, params UpdateWorkspaceFavoriteParams) error {
-	panic("TODO: implement public-track UpdateWorkspaceFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceFavoritesSuggestions(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceFavoritesSuggestions")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) WorkspaceDeleteFavorite(ctx echo.Context, workspaceId int, favoriteId int) error {
-	panic("TODO: implement public-track WorkspaceDeleteFavorite")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdGoals(ctx echo.Context, workspaceId int, params GetWorkspacesWorkspaceIdGoalsParams) error {
-	panic("TODO: implement public-track GetWorkspacesWorkspaceIdGoals")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspacesWorkspaceIdGoals(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspacesWorkspaceIdGoals")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspacesWorkspaceIdGoalsGoalId(ctx echo.Context, workspaceId int, goalId int) error {
-	panic("TODO: implement public-track DeleteWorkspacesWorkspaceIdGoalsGoalId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdGoalsGoalId(ctx echo.Context, workspaceId int, goalId int) error {
-	panic("TODO: implement public-track GetWorkspacesWorkspaceIdGoalsGoalId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspacesWorkspaceIdGoalsGoalId(ctx echo.Context, workspaceId int, goalId int) error {
-	panic("TODO: implement public-track PutWorkspacesWorkspaceIdGoalsGoalId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceGroups(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceGroups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceGroup(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceGroup(ctx echo.Context, workspaceId int, groupId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceGroup(ctx echo.Context, workspaceId int, groupId int) error {
-	panic("TODO: implement public-track PutWorkspaceGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceIcalReset(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceIcalReset")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceIcalToggle(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceIcalToggle")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceInvoices(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceInvoices")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceUserInvoice(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceUserInvoice")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceInvoice(ctx echo.Context, workspaceId int, invoiceId int) error {
-	panic("TODO: implement public-track GetWorkspaceInvoice")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceInvoice(ctx echo.Context, workspaceId int, userInvoiceId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceInvoice")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceSso(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceSso")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context, workspaceId int, ssoProfileId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceLinkedSsoProfiles")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceSso(ctx echo.Context, workspaceId int, ssoProfileId int) error {
-	panic("TODO: implement public-track PutWorkspaceSso")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceLogo(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceLogo")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceLogo(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceLogo")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceLogo(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceLogo")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacePaymentReceipts(ctx echo.Context, workspaceId int, paymentId int) error {
-	panic("TODO: implement public-track GetWorkspacePaymentReceipts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacePreferences(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspacePreferences")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspacePreferences(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspacePreferences")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetProjectGroups(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetProjectGroups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostProjectGroup(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostProjectGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteProjectGroup(ctx echo.Context, workspaceId int, projectGroupId int) error {
-	panic("TODO: implement public-track DeleteProjectGroup")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceProjectUsers(ctx echo.Context, workspaceId int, params GetWorkspaceProjectUsersParams) error {
-	panic("TODO: implement public-track GetWorkspaceProjectUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceProjectUsers(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceProjectUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceProjectUsersPaginated(ctx echo.Context, workspaceId int, params PostWorkspaceProjectUsersPaginatedParams) error {
-	panic("TODO: implement public-track PostWorkspaceProjectUsersPaginated")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchWorkspaceProjectUsersIds(ctx echo.Context, workspaceId int, projectUserIds []int) error {
-	panic("TODO: implement public-track PatchWorkspaceProjectUsersIds")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceProjectUsers(ctx echo.Context, workspaceId int, projectUserId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceProjectUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceProjectUsers(ctx echo.Context, workspaceId int, projectUserId int) error {
-	panic("TODO: implement public-track PutWorkspaceProjectUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetProjects(ctx echo.Context, workspaceId int, params GetProjectsParams) error {
-	panic("TODO: implement public-track GetProjects")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceProjectCreate(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceProjectCreate")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspacesWorkspaceIdProjectsBillableAmounts(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspacesWorkspaceIdProjectsBillableAmounts")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) ProjectTaskCount(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track ProjectTaskCount")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetProjectsTemplates(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetProjectsTemplates")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) ProjectUserCount(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track ProjectUserCount")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchWorkspaceProjects(ctx echo.Context, workspaceId int, projectIds string) error {
-	panic("TODO: implement public-track PatchWorkspaceProjects")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceProject(ctx echo.Context, workspaceId int, projectId int, params DeleteWorkspaceProjectParams) error {
-	panic("TODO: implement public-track DeleteWorkspaceProject")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdProjectsProjectId(ctx echo.Context, workspaceId int, projectId int) error {
-	panic("TODO: implement public-track GetWorkspacesWorkspaceIdProjectsProjectId")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceProject(ctx echo.Context, workspaceId int, projectId int) error {
-	panic("TODO: implement public-track PutWorkspaceProject")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceProjectPeriods(ctx echo.Context, workspaceId int, projectId int, params GetWorkspaceProjectPeriodsParams) error {
-	panic("TODO: implement public-track GetWorkspaceProjectPeriods")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostPinnedProject(ctx echo.Context, workspaceId int, projectId int) error {
-	panic("TODO: implement public-track PostPinnedProject")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacesWorkspaceIdProjectsProjectIdStatistics(ctx echo.Context, workspaceId int, projectId int) error {
-	panic("TODO: implement public-track GetWorkspacesWorkspaceIdProjectsProjectIdStatistics")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceProjectTasks(ctx echo.Context, workspaceId int, projectId int, params GetWorkspaceProjectTasksParams) error {
-	panic("TODO: implement public-track GetWorkspaceProjectTasks")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceProjectTasks(ctx echo.Context, workspaceId int, projectId int) error {
-	panic("TODO: implement public-track PostWorkspaceProjectTasks")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchWorkspaceProjectTasks(ctx echo.Context, workspaceId int, projectId int, taskIds string) error {
-	panic("TODO: implement public-track PatchWorkspaceProjectTasks")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceProjectTask(ctx echo.Context, workspaceId int, projectId int, taskId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceProjectTask")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceProjectTask(ctx echo.Context, workspaceId int, projectId int, taskId int) error {
-	panic("TODO: implement public-track GetWorkspaceProjectTask")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceProjectTask(ctx echo.Context, workspaceId int, projectId int, taskId string) error {
-	panic("TODO: implement public-track PutWorkspaceProjectTask")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) CreateRate(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track CreateRate")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetRatesByLevel(ctx echo.Context, workspaceId int, level string, levelId int, params GetRatesByLevelParams) error {
-	panic("TODO: implement public-track GetRatesByLevel")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetSharedReport(ctx echo.Context, workspaceId int, params GetSharedReportParams) error {
-	panic("TODO: implement public-track GetSharedReport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostSharedReport(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostSharedReport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutSharedReport(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PutSharedReport")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) BulkDeleteSavedReportResource(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track BulkDeleteSavedReportResource")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteSavedReportResource(ctx echo.Context, workspaceId int, reportId int) error {
-	panic("TODO: implement public-track DeleteSavedReportResource")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetSavedReportResource(ctx echo.Context, workspaceId int, reportId int) error {
-	panic("TODO: implement public-track GetSavedReportResource")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutSavedReportResource(ctx echo.Context, workspaceId int, reportId int) error {
-	panic("TODO: implement public-track PutSavedReportResource")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceScheduledReports(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceScheduledReports")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceScheduledReports(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceScheduledReports")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceScheduledReports(ctx echo.Context, workspaceId int, reportId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceScheduledReports")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceStatistics(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceStatistics")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceSubscription(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceSubscription")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspacePurchaseOrderPdf(ctx echo.Context, workspaceId int, purchaseOrderId int) error {
-	panic("TODO: implement public-track GetWorkspacePurchaseOrderPdf")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTag(ctx echo.Context, workspaceId int, params GetWorkspaceTagParams) error {
-	panic("TODO: implement public-track GetWorkspaceTag")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchWorkspaceTags(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PatchWorkspaceTags")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceTag(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceTag")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceTag(ctx echo.Context, workspaceId int, tagId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceTag")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceTag(ctx echo.Context, workspaceId int, tagId int) error {
-	panic("TODO: implement public-track PutWorkspaceTag")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTasks(ctx echo.Context, workspaceId int, params GetWorkspaceTasksParams) error {
-	panic("TODO: implement public-track GetWorkspaceTasks")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTasksBasic(ctx echo.Context, workspaceId int, params GetWorkspaceTasksBasicParams) error {
-	panic("TODO: implement public-track GetWorkspaceTasksBasic")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTasksData(ctx echo.Context, workspaceId int, params GetWorkspaceTasksDataParams) error {
-	panic("TODO: implement public-track GetWorkspaceTasksData")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntries(ctx echo.Context, workspaceId int, params PostWorkspaceTimeEntriesParams) error {
-	panic("TODO: implement public-track PostWorkspaceTimeEntries")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchTimeEntries(ctx echo.Context, workspaceId int, timeEntryIds string, params PatchTimeEntriesParams) error {
-	panic("TODO: implement public-track PatchTimeEntries")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceTimeEntries(ctx echo.Context, workspaceId int, timeEntryId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceTimeEntries")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceTimeEntryHandler(ctx echo.Context, workspaceId int, timeEntryId int, params PutWorkspaceTimeEntryHandlerParams) error {
-	panic("TODO: implement public-track PutWorkspaceTimeEntryHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PatchWorkspaceStopTimeEntryHandler(ctx echo.Context, workspaceId int, timeEntryId int) error {
-	panic("TODO: implement public-track PatchWorkspaceStopTimeEntryHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimeEntryConstraints(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceTimeEntryConstraints")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntryConstraints(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceTimeEntryConstraints")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimeEntryInvitations(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceTimeEntryInvitations")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntryInvitationAction(ctx echo.Context, workspaceId int, timeEntryInvitationId int, action string) error {
-	panic("TODO: implement public-track PostWorkspaceTimeEntryInvitationAction")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetTimesheetSetups(ctx echo.Context, workspaceId int, params GetTimesheetSetupsParams) error {
-	panic("TODO: implement public-track GetTimesheetSetups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostTimesheetSetups(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostTimesheetSetups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteTimesheetSetups(ctx echo.Context, workspaceId int, setupId int) error {
-	panic("TODO: implement public-track DeleteTimesheetSetups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutTimesheetSetups(ctx echo.Context, workspaceId int, setupId int) error {
-	panic("TODO: implement public-track PutTimesheetSetups")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetsHandler(ctx echo.Context, workspaceId int, params GetWorkspaceTimesheetsHandlerParams) error {
-	panic("TODO: implement public-track GetWorkspaceTimesheetsHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceTimesheetsBatchHandler(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PutWorkspaceTimesheetsBatchHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetHoursHandler(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceTimesheetHoursHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceTimesheetsHandler(ctx echo.Context, workspaceId int, setupId int, startDate string) error {
-	panic("TODO: implement public-track PutWorkspaceTimesheetsHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetHistoryHandler(ctx echo.Context, workspaceId int, setupId int, startDate string) error {
-	panic("TODO: implement public-track GetWorkspaceTimesheetHistoryHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTimesheetTimeEntriesHandler(ctx echo.Context, workspaceId int, setupId int, startDate string) error {
-	panic("TODO: implement public-track GetWorkspaceTimesheetTimeEntriesHandler")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceTrackReminders(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track GetWorkspaceTrackReminders")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceTrackReminders(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceTrackReminders")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceTrackReminder(ctx echo.Context, workspaceId int, reminderId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceTrackReminder")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceTrackReminder(ctx echo.Context, workspaceId int, reminderId int) error {
-	panic("TODO: implement public-track PutWorkspaceTrackReminder")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceUsers(ctx echo.Context, workspaceId int, params GetWorkspaceUsersParams) error {
-	panic("TODO: implement public-track GetWorkspaceUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PostWorkspaceUsersData(ctx echo.Context, workspaceId int) error {
-	panic("TODO: implement public-track PostWorkspaceUsersData")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceUsers(ctx echo.Context, workspaceId int, userId int) error {
-	panic("TODO: implement public-track PutWorkspaceUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) GetWorkspaceWorkspaceUsers(ctx echo.Context, workspaceId int, params GetWorkspaceWorkspaceUsersParams) error {
-	panic("TODO: implement public-track GetWorkspaceWorkspaceUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) DeleteWorkspaceUser(ctx echo.Context, workspaceId int, workspaceUserId int) error {
-	panic("TODO: implement public-track DeleteWorkspaceUser")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (server *publicTrackUnimplementedServer) PutWorkspaceWorkspaceUsers(ctx echo.Context, workspaceId int, workspaceUserId int) error {
-	panic("TODO: implement public-track PutWorkspaceWorkspaceUsers")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }

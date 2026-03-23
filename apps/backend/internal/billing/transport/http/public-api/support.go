@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -94,7 +95,20 @@ func (handler *Handler) GetPublicTrackOrganizationInvoiceSummary(ctx echo.Contex
 	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+
+	status, err := handler.billing.CommercialStatusForOrganization(ctx.Request().Context(), organizationID)
+	if err != nil {
+		return writeBillingError(err)
+	}
+
+	summary := fmt.Sprintf(
+		`{"organization_id":%d,"customer_id":"%s","plan":"%s","state":"%s"}`,
+		status.OrganizationID,
+		status.CustomerID,
+		status.Subscription.Plan,
+		status.Subscription.State,
+	)
+	return ctx.JSON(http.StatusOK, summary)
 }
 
 func (handler *Handler) GetPublicTrackOrganizationPurchaseOrderPdf(ctx echo.Context) error {

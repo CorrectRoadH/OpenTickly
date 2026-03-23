@@ -165,3 +165,34 @@ func (server *publicTrackOpenAPIServer) PostOwnershipTransferActions(
 	_ = action
 	return server.tenant.PostPublicTrackOwnershipTransferActions(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) PostEnableSso(ctx echo.Context) error {
+	return server.tenant.PostEnableSso(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceSso(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.tenant.GetWorkspaceSso(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PutWorkspaceSso(ctx echo.Context, workspaceId int, ssoProfileId int) error {
+	_ = workspaceId
+	_ = ssoProfileId
+	return server.tenant.PutWorkspaceSso(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context, workspaceId int, ssoProfileId int) error {
+	_ = workspaceId
+	_ = ssoProfileId
+	return server.tenant.DeleteWorkspaceLinkedSsoProfiles(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostSaml2Callback(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.tenant.PostSaml2Callback(ctx, workspaceId)
+}
+
+func (server *publicTrackOpenAPIServer) GetSaml2LoginUrl(ctx echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
+	_ = params
+	return server.tenant.GetSaml2LoginUrl(ctx, params)
+}

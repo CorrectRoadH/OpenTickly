@@ -104,9 +104,68 @@ func workspacePreferencesBody(view tenantapplication.WorkspaceView) publictracka
 	}
 }
 
+// PostEnableSso enables SSO for a workspace.
+func (handler *Handler) PostEnableSso(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// GetWorkspaceSso returns SSO configuration for a workspace.
+func (handler *Handler) GetWorkspaceSso(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// PutWorkspaceSso updates SSO configuration for a workspace.
+func (handler *Handler) PutWorkspaceSso(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// DeleteWorkspaceLinkedSsoProfiles deletes linked SSO profiles for a workspace.
+func (handler *Handler) DeleteWorkspaceLinkedSsoProfiles(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
 func optionalString(value string) *string {
 	if value == "" {
 		return nil
 	}
 	return lo.ToPtr(value)
+}
+
+// GetSaml2LoginUrl returns the SAML2 login URL for a workspace.
+func (handler *Handler) GetSaml2LoginUrl(ctx echo.Context, params publictrackapi.GetSaml2LoginUrlParams) error {
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// PostSaml2Callback handles SAML2 authentication callback.
+func (handler *Handler) PostSaml2Callback(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }

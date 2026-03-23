@@ -109,3 +109,31 @@ func (server *publicTrackOpenAPIServer) GetDesktopLogin(ctx echo.Context) error 
 func (server *publicTrackOpenAPIServer) PostDesktopLoginTokens(ctx echo.Context) error {
 	return server.identity.PostPublicTrackDesktopLoginTokens(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) PostUnifiedFeedback(ctx echo.Context) error {
+	return server.identity.PostUnifiedFeedback(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostSmailContact(ctx echo.Context) error {
+	return server.identity.PostSmailContact(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostSmailDemo(ctx echo.Context) error {
+	return server.identity.PostSmailDemo(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostSmailMeet(ctx echo.Context) error {
+	return server.identity.PostSmailMeet(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetAvatars(ctx echo.Context) error {
+	return server.identity.GetPublicTrackAvatars(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostAvatars(ctx echo.Context) error {
+	return server.identity.PostPublicTrackAvatars(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostUseGravatar(ctx echo.Context) error {
+	return server.identity.PostPublicTrackUseGravatar(ctx)
+}

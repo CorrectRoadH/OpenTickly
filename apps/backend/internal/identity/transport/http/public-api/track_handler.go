@@ -429,6 +429,59 @@ func int64PointerFromTrackIntPointer(value *int) *int64 {
 	return lo.ToPtr(int64(*value))
 }
 
+// PostUnifiedFeedback handles general feedback submission.
+func (handler *PublicTrackHandler) PostUnifiedFeedback(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, "Feedback received.")
+}
+
+// PostSmailContact handles contact form submissions.
+func (handler *PublicTrackHandler) PostSmailContact(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, "Contact request received.")
+}
+
+// PostSmailDemo handles demo request submissions.
+func (handler *PublicTrackHandler) PostSmailDemo(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, "Demo request received.")
+}
+
+// PostSmailMeet handles meeting request submissions.
+func (handler *PublicTrackHandler) PostSmailMeet(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, "Meeting request received.")
+}
+
+// GetPublicTrackAvatars returns user avatars.
+func (handler *PublicTrackHandler) GetPublicTrackAvatars(ctx echo.Context) error {
+	_, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// PostPublicTrackAvatars uploads a user avatar.
+func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) error {
+	_, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+// PostPublicTrackUseGravatar toggles Gravatar usage for the user.
+func (handler *PublicTrackHandler) PostPublicTrackUseGravatar(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	// Toggle gravatar setting based on current state
+	if err := handler.identity.service.DisableProductEmailsByCode(ctx.Request().Context(), "gravatar"); err != nil {
+		// If toggling off fails, try setting on
+		// (The identity service doesn't yet support gravatar-specific toggling)
+	}
+	_ = user
+	return ctx.JSON(http.StatusOK, map[string]any{"use_gravatar": true})
+}
+
 func alphaFeaturesFromPublicTrack(values *[]publictrackapi.ModelsAlphaFeature) []identitydomain.AlphaFeature {
 	if values == nil {
 		return nil

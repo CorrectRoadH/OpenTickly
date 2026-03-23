@@ -34,6 +34,12 @@ func (server *publicTrackOpenAPIServer) GetOrganizationUsage(ctx echo.Context, o
 	return server.billing.GetPublicTrackOrganizationUsage(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) GetOrganizationInvoiceSummary(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationInvoiceSummaryParams) error {
+	_ = organizationId
+	_ = params
+	return server.billing.GetPublicTrackOrganizationInvoiceSummary(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetOrganizationsPaymentsRecords(ctx echo.Context, organizationId int, params publictrackapi.GetOrganizationsPaymentsRecordsParams) error {
 	_ = organizationId
 	_ = params
