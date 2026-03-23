@@ -11,5 +11,10 @@ export function isSectionNavActive(pathname: string, to?: string): boolean {
     return false;
   }
 
+  const settingsBase = to.match(/^(\/\d+\/settings)\/[^/]+$/);
+  if (settingsBase) {
+    return pathname === to || pathname.startsWith(`${settingsBase[1]}/`);
+  }
+
   return pathname === to || pathname.startsWith(`${to}/`);
 }

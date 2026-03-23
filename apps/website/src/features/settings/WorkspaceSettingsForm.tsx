@@ -1,211 +1,327 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type ReactElement } from "react";
-import { useForm } from "react-hook-form";
+import { type ReactElement, useEffect, useRef } from "react";
+import { useForm, useWatch } from "react-hook-form";
 
 import {
   mapWorkspaceSettingsFormToRequest,
   type WorkspaceSettingsFormValues,
 } from "../../shared/forms/settings-form.ts";
+import {
+  CheckboxOption,
+  FieldLabel,
+  HiddenField,
+  LogoCard,
+  RadioGroup,
+  RadioOption,
+  SectionCaption,
+  SettingsCard,
+  textInputClassName,
+  ToggleSection,
+} from "./WorkspaceSettingsFormPrimitives.tsx";
 
 type WorkspaceSettingsFormProps = {
-  brandingHref: string;
   initialValues: WorkspaceSettingsFormValues;
   onSubmit: (request: ReturnType<typeof mapWorkspaceSettingsFormToRequest>) => Promise<void> | void;
+  onSubmitError?: () => void;
+  onSubmitSuccess?: () => void;
 };
 
-const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
-const checkboxClassName =
-  "h-4 w-4 rounded border-white/20 bg-[#111114] text-[#c792d1] focus:ring-[#c792d1]";
-
 export function WorkspaceSettingsForm({
-  brandingHref,
   initialValues,
   onSubmit,
+  onSubmitError,
+  onSubmitSuccess,
 }: WorkspaceSettingsFormProps): ReactElement {
   const form = useForm<WorkspaceSettingsFormValues>({
     defaultValues: initialValues,
   });
+  const values = useWatch({
+    control: form.control,
+  });
+  const requiredTimeEntryFields = form.watch("requiredTimeEntryFields");
+  const lockTimeEntriesEnabled = form.watch("reportLockedAt").trim().length > 0;
+  const lastSavedValuesRef = useRef(JSON.stringify(initialValues));
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlightRef = useRef(false);
+  const pendingRetryRef = useRef(false);
+
+  useEffect(() => {
+    form.reset(initialValues);
+    lastSavedValuesRef.current = JSON.stringify(initialValues);
+  }, [form, initialValues]);
+
+  useEffect(() => {
+    if (!form.formState.isDirty) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      void saveLatestValues();
+    }, 900);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [form.formState.isDirty, values]);
+
+  async function saveLatestValues(): Promise<void> {
+    const latestValues = form.getValues();
+    const serializedValues = JSON.stringify(latestValues);
+
+    if (serializedValues === lastSavedValuesRef.current) {
+      return;
+    }
+
+    if (saveInFlightRef.current) {
+      pendingRetryRef.current = true;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+
+    try {
+      await onSubmit(mapWorkspaceSettingsFormToRequest(latestValues));
+      lastSavedValuesRef.current = serializedValues;
+      form.reset(latestValues);
+      onSubmitSuccess?.();
+    } catch {
+      onSubmitError?.();
+    } finally {
+      saveInFlightRef.current = false;
+
+      if (pendingRetryRef.current) {
+        pendingRetryRef.current = false;
+        void saveLatestValues();
+      }
+    }
+  }
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-form">
-      <form
-        className="space-y-6"
-        onSubmit={form.handleSubmit(async (values) => {
-          await onSubmit(mapWorkspaceSettingsFormToRequest(values));
-        })}
-      >
-        <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-white">General</h2>
-          <p className="text-sm leading-6 text-slate-400">
-            Workspace defaults here flow into tracking and reports behavior, so they stay in the
-            tenant settings surface instead of the profile page.
-          </p>
-        </div>
+    <form className="space-y-5" data-testid="workspace-settings-form">
+      <HiddenField type="hidden" {...form.register("defaultCurrency")} />
+      <HiddenField type="hidden" {...form.register("defaultHourlyRate", { valueAsNumber: true })} />
+      <HiddenField type="hidden" {...form.register("rounding", { valueAsNumber: true })} />
+      <HiddenField type="hidden" {...form.register("roundingMinutes", { valueAsNumber: true })} />
+      <HiddenField type="hidden" {...form.register("logoUrl")} />
 
-        <section
-          className="space-y-4 rounded-xl border border-white/10 bg-[#18181c] p-4"
-          data-testid="workspace-settings-general-section"
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+        <LogoCard />
+        <div className="w-full max-w-[270px] lg:pt-[73px]">
+          <FieldLabel label="Workspace Name" />
+          <input
+            className={textInputClassName}
+            {...form.register("name")}
+            aria-label="Workspace name"
+          />
+        </div>
+      </div>
+
+      <SettingsCard
+        description="Access and visibility rights for team members"
+        title="Team member rights"
+      >
+        <div className="grid gap-6 xl:grid-cols-3">
+          <RadioGroup label="Who can see Team Activity">
+            <RadioOption
+              checked={form.watch("onlyAdminsSeeTeamDashboard")}
+              label="Admins"
+              onChange={() => {
+                form.setValue("onlyAdminsSeeTeamDashboard", true);
+              }}
+            />
+            <RadioOption
+              checked={!form.watch("onlyAdminsSeeTeamDashboard")}
+              label="Everyone"
+              onChange={() => {
+                form.setValue("onlyAdminsSeeTeamDashboard", false);
+              }}
+            />
+          </RadioGroup>
+          <RadioGroup label="Who can create projects and clients">
+            <RadioOption
+              checked={form.watch("onlyAdminsMayCreateProjects")}
+              label="Admins"
+              onChange={() => {
+                form.setValue("onlyAdminsMayCreateProjects", true);
+              }}
+            />
+            <RadioOption
+              checked={!form.watch("onlyAdminsMayCreateProjects")}
+              label="Everyone"
+              onChange={() => {
+                form.setValue("onlyAdminsMayCreateProjects", false);
+              }}
+            />
+          </RadioGroup>
+          <RadioGroup label="Who can create tags">
+            <RadioOption
+              checked={form.watch("onlyAdminsMayCreateTags")}
+              label="Admins"
+              onChange={() => {
+                form.setValue("onlyAdminsMayCreateTags", true);
+              }}
+            />
+            <RadioOption
+              checked={!form.watch("onlyAdminsMayCreateTags")}
+              label="Everyone"
+              onChange={() => {
+                form.setValue("onlyAdminsMayCreateTags", false);
+              }}
+            />
+          </RadioGroup>
+        </div>
+      </SettingsCard>
+
+      <SettingsCard
+        description="How new projects and billing will be set up by default if not defined otherwise"
+        title="Project & Billing defaults"
+      >
+        <div className="space-y-4 py-5">
+          <SectionCaption>Project settings</SectionCaption>
+          <div className="space-y-2">
+            <CheckboxOption
+              checked={form.watch("projectsBillableByDefault")}
+              label={'Set new projects as "billable" by default'}
+              onChange={(checked) => {
+                form.setValue("projectsBillableByDefault", checked);
+              }}
+            />
+            <CheckboxOption
+              checked={!form.watch("projectsPrivateByDefault")}
+              label={'Set new projects as "public" by default'}
+              onChange={(checked) => {
+                form.setValue("projectsPrivateByDefault", !checked);
+              }}
+            />
+            <CheckboxOption
+              checked={form.watch("limitPublicProjectData")}
+              label="Limit public projects data in reports to admins"
+              onChange={(checked) => {
+                form.setValue("limitPublicProjectData", checked);
+              }}
+            />
+            <CheckboxOption
+              checked={form.watch("projectsEnforceBillable")}
+              label="Enforce billable time entries on billable projects"
+              onChange={(checked) => {
+                form.setValue("projectsEnforceBillable", checked);
+              }}
+            />
+          </div>
+        </div>
+      </SettingsCard>
+
+      <SettingsCard
+        description="Set rules to make sure your reports or timesheets are always orderly"
+        title="Time entry and timesheet restrictions"
+      >
+        <ToggleSection
+          checked={requiredTimeEntryFields.length > 0}
+          description="Setting required fields helps to ensure your team fills in all the information you need for accurate reporting"
+          title="Set required fields for new Time entries"
+          onChange={(checked) => {
+            form.setValue("requiredTimeEntryFields", checked ? ["project", "task"] : []);
+          }}
+        />
+        <ToggleSection
+          checked={lockTimeEntriesEnabled}
+          description="This allows to lock existing Time entries and prevent creating new ones before selected date"
+          title="Lock Time entries"
+          onChange={(checked) => {
+            form.setValue(
+              "reportLockedAt",
+              checked ? initialValues.reportLockedAt || "2026-03-20T00:00:00Z" : "",
+            );
+          }}
         >
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Workspace name">
-              <input className={fieldClassName} {...form.register("name")} />
-            </Field>
-            <Field label="Default currency">
-              <input className={fieldClassName} {...form.register("defaultCurrency")} />
-            </Field>
-            <Field label="Default hourly rate">
+          {lockTimeEntriesEnabled ? (
+            <div className="pt-3">
+              <FieldLabel label="Lock date" />
               <input
-                className={fieldClassName}
-                step="0.01"
-                type="number"
-                {...form.register("defaultHourlyRate", { valueAsNumber: true })}
-              />
-            </Field>
-            <Field label="Rounding mode">
-              <input
-                className={fieldClassName}
-                type="number"
-                {...form.register("rounding", { valueAsNumber: true })}
-              />
-            </Field>
-            <Field label="Rounding minutes">
-              <input
-                className={fieldClassName}
-                type="number"
-                {...form.register("roundingMinutes", { valueAsNumber: true })}
-              />
-            </Field>
-            <Field label="Locked time entries before">
-              <input
-                className={fieldClassName}
+                className={textInputClassName}
                 placeholder="2026-03-20T00:00:00Z"
                 {...form.register("reportLockedAt")}
               />
-            </Field>
-          </div>
+            </div>
+          ) : null}
+        </ToggleSection>
+      </SettingsCard>
 
-          <Field label="Required time entry fields">
-            <input
-              className={fieldClassName}
-              value={form.watch("requiredTimeEntryFields").join(", ")}
-              onChange={(event) => {
-                form.setValue(
-                  "requiredTimeEntryFields",
-                  event.target.value
-                    .split(",")
-                    .map((value) => value.trim())
-                    .filter(Boolean),
-                );
+      <SettingsCard
+        description="Define the default approach your team should use to log time. You can opt for simplicity with 'Hide start and end times' mode or choose 'Show start and end times' for detailed time logs with start and end times."
+        title="Time entry settings"
+      >
+        <div className="space-y-4 py-5">
+          <SectionCaption>Default mode</SectionCaption>
+          <div className="space-y-2">
+            <RadioOption
+              checked={form.watch("hideStartEndTimes")}
+              label="Hide start and end times"
+              onChange={() => {
+                form.setValue("hideStartEndTimes", true);
               }}
             />
-          </Field>
-        </section>
-
-        <section className="space-y-4 rounded-xl border border-white/10 bg-[#18181c] p-4">
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-white">Tracking defaults</p>
-            <p className="text-sm leading-6 text-slate-400">
-              These options shape how time entry data appears and behaves across tracking surfaces.
-            </p>
+            <RadioOption
+              checked={!form.watch("hideStartEndTimes")}
+              label="Show start and end times"
+              onChange={() => {
+                form.setValue("hideStartEndTimes", false);
+              }}
+            />
           </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <ToggleField label="Show timesheet view">
-              <input className={checkboxClassName} type="checkbox" {...form.register("showTimesheetView")} />
-            </ToggleField>
-            <ToggleField label="Hide start and end times">
-              <input className={checkboxClassName} type="checkbox" {...form.register("hideStartEndTimes")} />
-            </ToggleField>
-            <ToggleField label="Reports collapse by default">
-              <input className={checkboxClassName} type="checkbox" {...form.register("reportsCollapse")} />
-            </ToggleField>
-            <ToggleField label="Projects billable by default">
-              <input className={checkboxClassName} type="checkbox" {...form.register("projectsBillableByDefault")} />
-            </ToggleField>
-            <ToggleField label="Projects public by default">
-              <input
-                checked={!form.watch("projectsPrivateByDefault")}
-                className={checkboxClassName}
-                type="checkbox"
-                onChange={(event) => {
-                  form.setValue("projectsPrivateByDefault", !event.target.checked);
-                }}
-              />
-            </ToggleField>
-            <ToggleField label="Enforce billable time on billable projects">
-              <input className={checkboxClassName} type="checkbox" {...form.register("projectsEnforceBillable")} />
-            </ToggleField>
-          </div>
-        </section>
-
-        <section
-          className="space-y-4 rounded-xl border border-white/10 bg-[#18181c] p-4"
-          data-testid="workspace-settings-policy-section"
-        >
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-white">Access policy</p>
-            <p className="text-sm leading-6 text-slate-400">
-              Control who can create shared objects and how much public project data members can
-              see by default.
-            </p>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <ToggleField label="Only admins may create projects">
-              <input className={checkboxClassName} type="checkbox" {...form.register("onlyAdminsMayCreateProjects")} />
-            </ToggleField>
-            <ToggleField label="Only admins may create tags">
-              <input className={checkboxClassName} type="checkbox" {...form.register("onlyAdminsMayCreateTags")} />
-            </ToggleField>
-            <ToggleField label="Only admins see team dashboard">
-              <input className={checkboxClassName} type="checkbox" {...form.register("onlyAdminsSeeTeamDashboard")} />
-            </ToggleField>
-            <ToggleField label="Limit public project data to admins">
-              <input className={checkboxClassName} type="checkbox" {...form.register("limitPublicProjectData")} />
-            </ToggleField>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-white/10 bg-[#18181c] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-white">Branding</p>
-              <p className="text-sm leading-6 text-slate-400">
-                Keep logo and avatar entry points discoverable from the settings workbench.
-              </p>
-              <p className="text-sm text-slate-300">
-                Current logo URL: {initialValues.logoUrl || "No logo configured yet."}
-              </p>
-            </div>
-            <a
-              className="rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/8"
-              href={brandingHref}
-            >
-              Manage logo and avatar
-            </a>
-          </div>
-        </section>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <AppButton type="submit">Save workspace settings</AppButton>
         </div>
-      </form>
-    </AppPanel>
-  );
-}
+      </SettingsCard>
 
-function Field(props: { children: ReactElement; label: string }): ReactElement {
-  return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
-      {props.label}
-      {props.children}
-    </label>
-  );
-}
+      <SettingsCard
+        description="Choose how you and your team manage time entries. Opt for the effortless way of handling and viewing them with the Timesheet View."
+        title="Timesheet view settings"
+      >
+        <div className="space-y-2 py-5">
+          <RadioOption
+            checked={!form.watch("showTimesheetView")}
+            label="Hide timesheet view"
+            onChange={() => {
+              form.setValue("showTimesheetView", false);
+            }}
+          />
+          <RadioOption
+            checked={form.watch("showTimesheetView")}
+            label="Show timesheet view"
+            onChange={() => {
+              form.setValue("showTimesheetView", true);
+            }}
+          />
+        </div>
+      </SettingsCard>
 
-function ToggleField(props: { children: ReactElement; label: string }): ReactElement {
-  return (
-    <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-[#141418] px-4 py-3 text-sm font-medium text-slate-300">
-      <span>{props.label}</span>
-      {props.children}
-    </label>
+      <SettingsCard
+        description="Choose how data is presented to simplify the analysis of tracked time"
+        title="Reporting"
+      >
+        <ToggleSection
+          checked={form.watch("reportsCollapse")}
+          description={
+            'Entries that take less than 2% of the donut chart will be included in the "Other" category'
+          }
+          title="Collapse small entries in PDF exports"
+          onChange={(checked) => {
+            form.setValue("reportsCollapse", checked);
+          }}
+        />
+      </SettingsCard>
+
+      <div className="pt-1 text-center text-[12px] font-medium text-[#b1b1b1]">
+        <div className="mx-auto mb-4 h-px w-[200px] bg-[#2a2a2a]" />
+        Need help making Toggl Track fit your team&apos;s needs?{" "}
+        <a className="text-[#fafafa] hover:text-white" href="#">
+          Get a free demo
+        </a>
+      </div>
+    </form>
   );
 }

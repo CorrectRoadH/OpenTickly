@@ -1,30 +1,41 @@
 import { z } from "zod";
 
-const workspaceSettingsSectionSchema = z.enum(["general", "branding"]);
+const workspaceSettingsSectionSchema = z.enum([
+  "general",
+  "csv-import",
+  "data-export",
+  "single-sign-on",
+  "activity",
+  "audit-log",
+]);
 
 export type WorkspaceSettingsSection = z.infer<typeof workspaceSettingsSectionSchema>;
 
-export type WorkspaceSettingsSearch = {
+export type LegacyWorkspaceSettingsSearch = {
   section?: string;
 };
 
-export function parseWorkspaceSettingsSearch(search: WorkspaceSettingsSearch | undefined): {
-  section: WorkspaceSettingsSection;
-} {
-  // Unknown sections should collapse to a stable default so deep links keep working
-  // even while backend/frontend waves land at different times.
+export function normalizeWorkspaceSettingsSection(
+  section: string | undefined,
+): WorkspaceSettingsSection {
+  if (section === "branding") {
+    return "general";
+  }
+
+  return workspaceSettingsSectionSchema.catch("general").parse(section);
+}
+
+export function parseLegacyWorkspaceSettingsSearch(
+  search: LegacyWorkspaceSettingsSearch | undefined,
+): { section?: string } {
   return {
-    section: workspaceSettingsSectionSchema.catch("general").parse(search?.section),
+    section: search?.section,
   };
 }
 
 export function buildWorkspaceSettingsPath(input: {
   workspaceId: number;
-  section: WorkspaceSettingsSection;
+  section?: WorkspaceSettingsSection;
 }): string {
-  const search = new URLSearchParams({
-    section: input.section,
-  });
-
-  return `/workspaces/${input.workspaceId}/settings?${search.toString()}`;
+  return `/${input.workspaceId}/settings/${input.section ?? "general"}`;
 }

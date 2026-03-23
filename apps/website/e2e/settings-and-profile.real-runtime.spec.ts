@@ -40,7 +40,7 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     await expect(profileForm.getByLabel("Timezone")).toHaveValue(timezone);
   });
 
-  test("Given a newly registered admin account, when the user saves workspace settings and opens organization settings, then the saved workspace values persist and the organization form is reachable", async ({
+  test("Given a newly registered admin account, when the user opens settings, then the route and general settings surface match the new workspace URL shape", async ({
     page,
   }) => {
     const email = `settings-runtime-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -59,33 +59,29 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
 
     await page.getByRole("link", { name: "Settings" }).click();
 
-    await expect(page).toHaveURL(
-      new RegExp(`/workspaces/${workspaceId}/settings\\?section=general$`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/general$`));
     await expect(page.getByTestId("workspace-settings-page")).toBeVisible();
 
     const workspaceForm = page.getByTestId("workspace-settings-form");
     await workspaceForm.getByLabel("Workspace name").fill(workspaceName);
-    await workspaceForm.getByLabel("Default currency").fill("EUR");
-    await workspaceForm.getByRole("button", { name: "Save workspace settings" }).click();
 
-    await expect(page.getByText("Workspace settings saved")).toBeVisible();
+    await expect(page.getByTestId("workspace-settings-toast")).toContainText("Success!");
+    await expect(page.getByTestId("workspace-settings-toast")).toContainText(
+      "Your workspace has been updated",
+    );
 
     await page.reload();
     await expect(page.getByTestId("workspace-settings-page")).toBeVisible();
     await expect(workspaceForm.getByLabel("Workspace name")).toHaveValue(workspaceName);
-    await expect(workspaceForm.getByLabel("Default currency")).toHaveValue("EUR");
-    await expect(page.getByTestId("workspace-settings-header")).toContainText(workspaceName);
+    await expect(page.getByRole("heading", { name: "Team member rights" })).toBeVisible();
 
-    await page.getByRole("link", { name: "Branding" }).click();
-    await expect(page).toHaveURL(
-      new RegExp(`/workspaces/${workspaceId}/settings\\?section=branding$`),
+    await page.getByRole("link", { name: "CSV import" }).click();
+    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/csv-import$`));
+    await expect(page.getByText("CSV import is not available yet")).toBeVisible();
+
+    await page.goto(
+      new URL(`/workspaces/${workspaceId}/settings?section=general`, page.url()).toString(),
     );
-    await expect(page.getByTestId("workspace-settings-branding-panel")).toBeVisible();
-
-    await page.getByRole("link", { name: "Organization settings" }).click();
-    await expect(page).toHaveURL(/\/organizations\/\d+\/settings$/);
-    await expect(page.getByTestId("organization-settings-page")).toBeVisible();
-    await expect(page.getByTestId("organization-settings-form")).toBeVisible();
+    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/general$`));
   });
 });

@@ -9,7 +9,11 @@ import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import { parseProjectsSearch } from "../shared/url-state/projects-location.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
-import { parseWorkspaceSettingsSearch } from "../shared/url-state/workspace-settings-location.ts";
+import {
+  buildWorkspaceSettingsPath,
+  normalizeWorkspaceSettingsSection,
+  parseLegacyWorkspaceSettingsSearch,
+} from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
 import { InviteStatusJoinedPage } from "../pages/members/InviteStatusJoinedPage.tsx";
 import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
@@ -143,9 +147,15 @@ const workspaceTagDetailRoute = createRoute({
 
 const workspaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/settings",
-  validateSearch: parseWorkspaceSettingsSearch,
+  path: "/$workspaceId/settings/$section",
   component: WorkspaceSettingsRouteComponent,
+});
+
+const legacyWorkspaceSettingsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/settings",
+  validateSearch: parseLegacyWorkspaceSettingsSearch,
+  component: LegacyWorkspaceSettingsRouteComponent,
 });
 
 const organizationSettingsRoute = createRoute({
@@ -174,6 +184,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceTagsRoute,
   workspaceTagDetailRoute,
   workspaceSettingsRoute,
+  legacyWorkspaceSettingsRoute,
   organizationSettingsRoute,
 ]);
 
@@ -338,12 +349,27 @@ function WorkspaceTagDetailRouteComponent() {
 
 function WorkspaceSettingsRouteComponent() {
   const params = workspaceSettingsRoute.useParams();
-  const search = workspaceSettingsRoute.useSearch();
   const workspaceId = Number(params.workspaceId);
+  const section = normalizeWorkspaceSettingsSection(params.section);
 
   return renderProtectedRoute(
-    <WorkspaceSettingsPage section={search.section} workspaceId={workspaceId} />,
+    <WorkspaceSettingsPage section={section} workspaceId={workspaceId} />,
     workspaceId,
+  );
+}
+
+function LegacyWorkspaceSettingsRouteComponent() {
+  const params = legacyWorkspaceSettingsRoute.useParams();
+  const search = legacyWorkspaceSettingsRoute.useSearch();
+
+  return (
+    <Navigate
+      replace
+      to={buildWorkspaceSettingsPath({
+        section: normalizeWorkspaceSettingsSection(search.section),
+        workspaceId: Number(params.workspaceId),
+      })}
+    />
   );
 }
 

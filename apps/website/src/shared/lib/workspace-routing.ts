@@ -1,4 +1,5 @@
 import type { WorkspaceSettingsSection } from "../url-state/workspace-settings-location.ts";
+import { buildWorkspaceSettingsPath } from "../url-state/workspace-settings-location.ts";
 
 export function buildOverviewPath(): string {
   return "/overview";
@@ -24,11 +25,10 @@ export function buildWorkspaceSettingsPathWithSection(
   workspaceId: number,
   section: WorkspaceSettingsSection = "general",
 ): string {
-  const search = new URLSearchParams({
+  return buildWorkspaceSettingsPath({
     section,
+    workspaceId,
   });
-
-  return `/workspaces/${workspaceId}/settings?${search.toString()}`;
 }
 
 export function buildOrganizationSettingsPath(organizationId: number): string {
@@ -46,8 +46,15 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
     return `${pathname}${section}`;
   }
 
+  if (/^\/\d+\/settings\/[^/]+$/.test(pathname)) {
+    return pathname.replace(/^\/\d+/, `/${workspaceId}`);
+  }
+
   if (/^\/workspaces\/\d+\/settings$/.test(pathname)) {
-    return `/workspaces/${workspaceId}/settings${section}`;
+    return buildWorkspaceSettingsPath({
+      section: "general",
+      workspaceId,
+    });
   }
 
   if (/^\/workspaces\/\d+\/reports$/.test(pathname)) {

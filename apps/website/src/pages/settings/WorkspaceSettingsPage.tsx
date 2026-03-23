@@ -1,17 +1,13 @@
-import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
+import { AppSurfaceState } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
-import { ShellPage } from "../../app/ShellPage.tsx";
 import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettingsForm.tsx";
 import { createWorkspaceSettingsFormValues } from "../../shared/forms/settings-form.ts";
+import { buildWorkspaceSettingsPathWithSection } from "../../shared/lib/workspace-routing.ts";
 import {
-  buildOrganizationSettingsPath,
-  buildWorkspaceSettingsPathWithSection,
-} from "../../shared/lib/workspace-routing.ts";
-import {
-  useWorkspaceSettingsQuery,
   useUpdateWorkspaceSettingsMutation,
+  useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
 import type { WorkspaceSettingsSection } from "../../shared/url-state/workspace-settings-location.ts";
 
@@ -20,182 +16,179 @@ type WorkspaceSettingsPageProps = {
   workspaceId: number;
 };
 
+const settingsTabs: Array<{
+  id: WorkspaceSettingsSection;
+  label: string;
+}> = [
+  { id: "general", label: "General" },
+  { id: "csv-import", label: "CSV import" },
+  { id: "data-export", label: "Data export" },
+  { id: "single-sign-on", label: "Single Sign On" },
+  { id: "activity", label: "Activity" },
+  { id: "audit-log", label: "Audit Log" },
+];
+
 export function WorkspaceSettingsPage({
   section,
   workspaceId,
 }: WorkspaceSettingsPageProps): ReactElement {
   const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
-  const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    description: string;
+    title: string;
+    tone: "error" | "success";
+  } | null>(null);
 
-  if (settingsQuery.isPending) {
-    return (
-      <ShellPage data-testid="workspace-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
-          <AppSurfaceState
-            className="border-white/10 bg-[#18181c] text-slate-300"
-            description="Fetching workspace defaults, branding, and policy settings."
-            title="Loading workspace settings"
-            tone="loading"
-          />
-        </AppPanel>
-      </ShellPage>
-    );
-  }
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
 
-  if (settingsQuery.isError) {
-    return (
-      <ShellPage data-testid="workspace-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
-          <AppSurfaceState
-            className="border-rose-500/30 bg-[#23181b] text-rose-200"
-            description="We could not load workspace settings right now. Refresh or try again shortly."
-            title="Workspace settings unavailable"
-            tone="error"
-          />
-        </AppPanel>
-      </ShellPage>
-    );
-  }
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 2600);
 
-  if (!settingsQuery.data) {
-    return (
-      <ShellPage data-testid="workspace-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
-          <AppSurfaceState
-            className="border-white/10 bg-[#18181c] text-slate-300"
-            description="No workspace settings data was returned for this workspace."
-            title="Workspace settings unavailable"
-            tone="empty"
-          />
-        </AppPanel>
-      </ShellPage>
-    );
-  }
-
-  const organizationId = settingsQuery.data.workspace.organization_id ?? 0;
-  const workspace = settingsQuery.data.workspace;
-  const preferences = settingsQuery.data.preferences;
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [toast]);
 
   return (
-    <ShellPage data-testid="workspace-settings-page">
-      <div className="space-y-4">
-        <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-header">
-          <div className="space-y-5">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-semibold text-white">Workspace settings</h1>
-                <p className="max-w-3xl text-sm leading-6 text-slate-400">
-                  Manage workspace defaults, branding, and member-facing behavior for the current
-                  workspace.
-                </p>
-              </div>
-              <Link
-                className="rounded-lg border border-white/10 bg-white/4 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/8"
-                to={buildOrganizationSettingsPath(organizationId)}
-              >
-                Organization settings
-              </Link>
-            </div>
+    <div className="min-h-full bg-[#151515]" data-testid="workspace-settings-page">
+      <div className="mx-auto max-w-[1384px]">
+        <SettingsHeader activeSection={section} workspaceId={workspaceId} />
+        <div className="px-5 pb-10 pt-5">
+          {settingsQuery.isPending ? (
+            <SettingsState
+              description="Fetching workspace settings and current workspace policy defaults."
+              title="Loading settings"
+              tone="loading"
+            />
+          ) : null}
 
-            <div className="grid gap-3 sm:grid-cols-3">
-              <SummaryCard
-                label="Workspace"
-                value={workspace.name ?? `Workspace ${workspaceId}`}
+          {settingsQuery.isError ? (
+            <SettingsState
+              description="We could not load workspace settings right now. Refresh or try again shortly."
+              title="Settings unavailable"
+              tone="error"
+            />
+          ) : null}
+
+          {!settingsQuery.isPending && !settingsQuery.isError && !settingsQuery.data ? (
+            <SettingsState
+              description="No workspace settings data was returned for this workspace."
+              title="Settings unavailable"
+              tone="empty"
+            />
+          ) : null}
+
+          {settingsQuery.data ? (
+            section === "general" ? (
+              <WorkspaceSettingsForm
+                initialValues={createWorkspaceSettingsFormValues(settingsQuery.data)}
+                onSubmitError={() => {
+                  setToast({
+                    description: "We could not save this change. Try again in a moment.",
+                    title: "Could not save workspace",
+                    tone: "error",
+                  });
+                }}
+                onSubmit={async (request) => {
+                  await updateMutation.mutateAsync(request);
+                }}
+                onSubmitSuccess={() => {
+                  setToast({
+                    description: "Your workspace has been updated",
+                    title: "Success!",
+                    tone: "success",
+                  });
+                }}
               />
-              <SummaryCard label="Currency" value={workspace.default_currency ?? "USD"} />
-              <SummaryCard
-                label="Timesheet view"
-                value={preferences.show_timesheet_view ? "Enabled" : "Hidden"}
+            ) : (
+              <SettingsState
+                description="This section is part of the final settings information architecture, but only General is wired in this build."
+                title={`${settingsTabs.find((tab) => tab.id === section)?.label ?? "Section"} is not available yet`}
+                tone="empty"
               />
-            </div>
-          </div>
-        </AppPanel>
-
-        <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="workspace-settings-tabs">
-          <div className="flex flex-wrap gap-3">
-            <a
-              className={sectionLinkClass(section === "general")}
-              href={buildWorkspaceSettingsPathWithSection(workspaceId, "general")}
-            >
-              General
-            </a>
-            <a
-              className={sectionLinkClass(section === "branding")}
-              href={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
-            >
-              Branding
-            </a>
-          </div>
-        </AppPanel>
-
-        {section === "branding" ? (
-          <AppPanel
-            className="border-white/8 bg-[#1f1f23]"
-            data-testid="workspace-settings-branding-panel"
-          >
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold text-white">Branding assets</h2>
-              <p className="text-sm leading-6 text-slate-400">
-                Keep workspace logo and avatar entry points with the rest of the workspace settings
-                surface.
-              </p>
-              <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
-                <p className="text-xs font-medium uppercase text-slate-500">Current logo URL</p>
-                <p className="mt-2 break-all text-sm text-slate-300">
-                  {workspace.logo_url ?? "No logo configured yet."}
-                </p>
-              </div>
-            </div>
-          </AppPanel>
-        ) : null}
-
-        {status ? (
-          <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
-            {status}
-          </AppInlineNotice>
-        ) : null}
-        {error ? (
-          <AppInlineNotice
-            className="border-rose-500/30 bg-[#23181b] text-rose-200"
-            tone="error"
-          >
-            {error}
-          </AppInlineNotice>
-        ) : null}
-        <WorkspaceSettingsForm
-          brandingHref={buildWorkspaceSettingsPathWithSection(workspaceId, "branding")}
-          initialValues={createWorkspaceSettingsFormValues(settingsQuery.data)}
-          onSubmit={async (request) => {
-            try {
-              await updateMutation.mutateAsync(request);
-              setStatus("Workspace settings saved");
-              setError(null);
-            } catch {
-              setError("Could not save workspace settings");
-              setStatus(null);
-            }
-          }}
-        />
+            )
+          ) : null}
+        </div>
       </div>
-    </ShellPage>
-  );
-}
-
-function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
-      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-2 text-base font-semibold text-white">{value}</p>
+      {toast ? <SettingsToast {...toast} /> : null}
     </div>
   );
 }
 
-function sectionLinkClass(isActive: boolean): string {
-  return `rounded-lg border px-4 py-2 text-sm font-medium ${
-    isActive
-      ? "border-[#8c5495] bg-[#4d2c52] text-white"
-      : "border-white/10 bg-transparent text-slate-300"
-  }`;
+function SettingsHeader(props: {
+  activeSection: WorkspaceSettingsSection;
+  workspaceId: number;
+}): ReactElement {
+  return (
+    <header className="flex h-[66px] items-center border-b border-[#3a3a3a] bg-[#1b1b1b] px-5">
+      <div className="pr-5 text-[16px] font-semibold leading-[20.8px] text-[#fafafa]">Settings</div>
+      <nav className="flex flex-wrap items-center gap-1">
+        {settingsTabs.map((tab) => (
+          <Link
+            className={`rounded-[8px] px-3 py-[6px] text-[14px] font-semibold leading-5 ${
+              props.activeSection === tab.id ? "text-[#cd7fc2]" : "text-[#999] hover:text-[#fafafa]"
+            }`}
+            key={tab.id}
+            to={buildWorkspaceSettingsPathWithSection(props.workspaceId, tab.id)}
+          >
+            <span
+              className={`border-b-2 pb-[2px] ${
+                props.activeSection === tab.id ? "border-[#cd7fc2]" : "border-transparent"
+              }`}
+            >
+              {tab.label}
+            </span>
+          </Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
+
+function SettingsState(props: {
+  description: string;
+  title: string;
+  tone: "empty" | "error" | "loading";
+}): ReactElement {
+  return (
+    <div className="rounded-[8px] border border-[#3a3a3a] bg-[#1b1b1b]">
+      <AppSurfaceState
+        className="border-none bg-transparent text-[#d8d8d8]"
+        description={props.description}
+        title={props.title}
+        tone={props.tone}
+      />
+    </div>
+  );
+}
+
+function SettingsToast(props: {
+  description: string;
+  title: string;
+  tone: "error" | "success";
+}): ReactElement {
+  return (
+    <div
+      className={`fixed bottom-6 right-6 z-50 min-w-[420px] rounded-[16px] border px-8 py-7 shadow-[0px_10px_30px_rgba(0,0,0,0.35)] ${
+        props.tone === "success" ? "border-[#3a3a3a] bg-[#1d1d1d]" : "border-[#6a2e41] bg-[#22161b]"
+      }`}
+      data-testid="workspace-settings-toast"
+    >
+      <p
+        className={`text-[28px] font-semibold leading-[1.1] ${
+          props.tone === "success" ? "text-[#12b76a]" : "text-[#ff6b8f]"
+        }`}
+      >
+        {props.title}
+      </p>
+      <p className="mt-3 text-[24px] font-semibold leading-[1.2] text-[#f5f5f5]">
+        {props.description}
+      </p>
+    </div>
+  );
 }
