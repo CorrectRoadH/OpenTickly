@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -10,6 +11,8 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
+	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -17,18 +20,29 @@ import (
 
 type ScopeAuthorizer interface {
 	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
+	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 }
 
-type Handler struct {
-	membership *membershipapplication.Service
-	scope      ScopeAuthorizer
+type OrganizationLookup interface {
+	GetOrganization(context.Context, tenantdomain.OrganizationID) (tenantapplication.OrganizationView, error)
 }
 
-func NewHandler(membership *membershipapplication.Service, scope ScopeAuthorizer) *Handler {
+type Handler struct {
+	membership    *membershipapplication.Service
+	scope         ScopeAuthorizer
+	organizations OrganizationLookup
+}
+
+func NewHandler(
+	membership *membershipapplication.Service,
+	scope ScopeAuthorizer,
+	organizations OrganizationLookup,
+) *Handler {
 	return &Handler{
-		membership: membership,
-		scope:      scope,
+		membership:    membership,
+		scope:         scope,
+		organizations: organizations,
 	}
 }
 

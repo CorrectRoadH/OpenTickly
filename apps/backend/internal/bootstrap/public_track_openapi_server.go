@@ -38,7 +38,7 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 			handlers.userHomes,
 			handlers,
 		),
-		membership: membershippublicapi.NewHandler(handlers.membershipApp, handlers),
+		membership: membershippublicapi.NewHandler(handlers.membershipApp, handlers, handlers.tenantApp),
 		importing:  importingpublicapi.NewHandler(handlers.importingApp, handlers),
 		catalog:    catalogpublicapi.NewHandler(handlers.catalogApp, handlers),
 		tracking:   trackingpublicapi.NewHandler(handlers.trackingApp, handlers),
