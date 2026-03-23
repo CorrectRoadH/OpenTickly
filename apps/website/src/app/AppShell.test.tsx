@@ -1,0 +1,142 @@
+import { renderToStaticMarkup } from "react-dom/server";
+import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { AppShell } from "./AppShell.tsx";
+
+const mockUseRouterState = vi.fn();
+const mockUseSession = vi.fn();
+const mockUseSessionActions = vi.fn();
+const mockUseCurrentTimeEntryQuery = vi.fn();
+const mockShellNavigationItems = vi.fn();
+
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (
+    <a className={className} href={to}>
+      {children}
+    </a>
+  ),
+  useNavigate: () => vi.fn(),
+  useRouterState: (options?: {
+    select?: (state: { location: { pathname: string; searchStr: string } }) => unknown;
+  }) =>
+    options?.select
+      ? options.select({
+          location: mockUseRouterState(),
+        })
+      : mockUseRouterState(),
+}));
+
+vi.mock("../shared/session/session-context.tsx", () => ({
+  useSession: () => mockUseSession(),
+  useSessionActions: () => mockUseSessionActions(),
+}));
+
+vi.mock("../shared/query/web-shell.ts", () => ({
+  useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
+}));
+
+vi.mock("../shared/lib/shell-navigation.ts", () => ({
+  shellNavigationItems: (...args: unknown[]) => mockShellNavigationItems(...args),
+}));
+
+vi.mock("../features/session/WorkspaceSwitcher.tsx", () => ({
+  WorkspaceSwitcher: () => <div data-testid="workspace-switcher" />,
+}));
+
+describe("AppShell", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockUseRouterState.mockReturnValue({
+      pathname: "/overview",
+      searchStr: "",
+    });
+    mockUseSession.mockReturnValue({
+      availableOrganizations: [],
+      currentOrganization: null,
+      currentWorkspace: {
+        id: 202,
+        name: "North Ridge Delivery",
+      },
+      user: {
+        email: "alex@example.com",
+        fullName: "Alex North",
+        imageUrl: null,
+      },
+    });
+    mockUseSessionActions.mockReturnValue({
+      setCurrentWorkspaceId: vi.fn(),
+    });
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: undefined,
+    });
+    mockShellNavigationItems.mockReturnValue([
+      {
+        items: [
+          {
+            label: "Overview",
+            to: "/overview",
+          },
+        ],
+        title: "Track",
+      },
+      {
+        items: [
+          {
+            label: "Settings",
+            to: "/202/settings/general",
+          },
+        ],
+        title: "Admin",
+      },
+    ]);
+  });
+
+  it("renders the profile rail item as a link to the profile page", () => {
+    const markup = renderToStaticMarkup(
+      <AppShell>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(markup).toContain('href="/profile"');
+    expect(markup).toContain("Profile");
+  });
+
+  it("renders the user avatar image when the session includes one", () => {
+    mockUseSession.mockReturnValue({
+      availableOrganizations: [],
+      currentOrganization: null,
+      currentWorkspace: {
+        id: 202,
+        name: "North Ridge Delivery",
+      },
+      user: {
+        email: "alex@example.com",
+        fullName: "Alex North",
+        imageUrl: "https://cdn.example.com/avatar.png",
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <AppShell>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(markup).toContain('src="https://cdn.example.com/avatar.png"');
+    expect(markup).toContain('alt="Alex North"');
+  });
+
+  it("falls back to the user initial when no avatar image is available", () => {
+    const markup = renderToStaticMarkup(
+      <AppShell>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(markup).toContain(">A</span>");
+    expect(markup).not.toContain('src="https://cdn.example.com/avatar.png"');
+  });
+});

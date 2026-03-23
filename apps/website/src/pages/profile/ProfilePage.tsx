@@ -15,8 +15,11 @@ import {
   useUpdatePreferencesMutation,
   useUpdateProfileMutation,
 } from "../../shared/query/web-shell.ts";
+import { useSession } from "../../shared/session/session-context.tsx";
+import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 export function ProfilePage(): ReactElement {
+  const session = useSession();
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
   const updateProfileMutation = useUpdateProfileMutation();
@@ -69,34 +72,97 @@ export function ProfilePage(): ReactElement {
   }
 
   const preferenceFormValues = createPreferencesFormValues(preferencesQuery.data);
+  const profileName =
+    profileQuery.data.fullname || session.user.fullName || profileQuery.data.email;
+  const hasPassword = profileQuery.data.has_password ? "Enabled" : "Not enabled";
+  const twoFactorStatus = profileQuery.data["2fa_enabled"] ? "Enabled" : "Not enabled";
+  const identityRows = [
+    {
+      label: "Full name",
+      value: profileName || "Unnamed user",
+    },
+    {
+      label: "Email",
+      value: profileQuery.data.email || "No email configured",
+    },
+    {
+      label: "Reports timezone",
+      value: preferencesQuery.data.pg_time_zone_name || profileQuery.data.timezone || "Not set",
+    },
+    {
+      label: "Password sign-in",
+      value: hasPassword,
+    },
+    {
+      label: "2FA sign-in",
+      value: twoFactorStatus,
+    },
+  ];
 
   return (
-    <div className="space-y-4" data-testid="profile-page">
-      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="profile-overview">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-white">Profile</h1>
-            <p className="text-sm leading-6 text-slate-400">
-              Account details, personal defaults, and API access stay on the user profile surface
-              instead of being mixed into workspace administration.
+    <div className="space-y-4 pb-6" data-testid="profile-page">
+      <section className="sticky top-0 z-10 border-b border-white/10 bg-[#161616]/95 px-5 py-4 backdrop-blur">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8b8b8b]">
+              My Profile
             </p>
+            <h1 className="text-[24px] font-semibold leading-none text-white">My Profile</h1>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <SectionSummary
-              description={profileQuery.data.email ?? "No email configured"}
-              eyebrow="Account"
-              metric={profileQuery.data.fullname ?? "Unnamed user"}
-            />
-            <SectionSummary
-              description={`${preferenceFormValues.languageCode} · ${preferenceFormValues.dateFormat}`}
-              eyebrow="Preferences"
-              metric={preferenceFormValues.timezone}
-            />
-            <SectionSummary
-              description={`Default workspace ${profileQuery.data.default_workspace_id ?? 0}`}
-              eyebrow="Security"
-              metric={profileQuery.data.api_token ? "API token active" : "No API token"}
-            />
+          <button
+            className="rounded-full border border-white/10 px-4 py-2 text-xs font-medium text-[#d0d0d0] transition hover:border-white/20 hover:text-white"
+            disabled
+            type="button"
+          >
+            Export account data
+          </button>
+        </div>
+      </section>
+
+      <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="profile-overview">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div className="flex justify-center lg:w-[244px] lg:justify-start">
+            <div className="rounded-[28px] border border-white/10 bg-[#18181c] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+              <UserAvatar
+                className="size-[180px] border border-white/10 bg-[#d08a3c]"
+                imageUrl={profileQuery.data.image_url ?? session.user.imageUrl}
+                name={profileName || "Unnamed user"}
+                textClassName="text-6xl font-semibold"
+              />
+            </div>
+          </div>
+
+          <div className="min-w-0 flex-1 space-y-5">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold text-white">Personal details & preferences</h2>
+              <p className="text-sm leading-6 text-slate-400">
+                Change details, login methods and your password in Account settings.
+              </p>
+            </div>
+
+            <dl className="space-y-3 border-y border-white/10 py-4">
+              {identityRows.map((row) => (
+                <div
+                  className="grid gap-1 text-sm md:grid-cols-[130px_minmax(0,1fr)] md:gap-4"
+                  key={row.label}
+                >
+                  <dt className="font-medium text-[#8b8b8b]">{row.label}</dt>
+                  <dd className="text-white">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                className="rounded-full border border-white/10 bg-[#18181c] px-4 py-2 text-sm font-medium text-white transition hover:border-white/20 hover:bg-[#212126]"
+                type="button"
+              >
+                Account settings
+              </button>
+              <div className="rounded-full border border-dashed border-white/10 px-4 py-2 text-sm text-slate-400">
+                Avatar upload will wire up here once the backend avatar endpoint is implemented.
+              </div>
+            </div>
           </div>
         </div>
       </AppPanel>
@@ -173,24 +239,6 @@ export function ProfilePage(): ReactElement {
           }
         }}
       />
-    </div>
-  );
-}
-
-function SectionSummary({
-  description,
-  eyebrow,
-  metric,
-}: {
-  description: string;
-  eyebrow: string;
-  metric: string;
-}): ReactElement {
-  return (
-    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
-      <p className="text-xs font-medium uppercase text-slate-500">{eyebrow}</p>
-      <p className="mt-2 text-base font-semibold text-white">{metric}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
     </div>
   );
 }

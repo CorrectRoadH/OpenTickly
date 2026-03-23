@@ -13,6 +13,7 @@ import {
   resolveEntryDurationSeconds,
 } from "../features/tracking/overview-data.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
+import { UserAvatar } from "../shared/ui/UserAvatar.tsx";
 import {
   buildOrganizationSettingsPath,
   swapWorkspaceInPath,
@@ -35,10 +36,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
   const isTimerRoute = location.pathname === "/timer";
-  const profileInitial = (session.user.fullName || session.user.email || "P")
-    .trim()
-    .charAt(0)
-    .toUpperCase();
+  const profileName = session.user.fullName || session.user.email || "Profile";
 
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const runningEntry = currentTimeEntryQuery.data;
@@ -83,14 +81,19 @@ export function AppShell({ children }: AppShellProps): ReactElement {
               <TrackingIcon className="h-4 w-[21px]" name="menu" />
             </button>
             <div className="space-y-1">
-              <div className="flex flex-col items-center gap-1 py-1">
-                <div className="flex size-[26px] items-center justify-center overflow-hidden rounded-full border border-[#1b1b1b] bg-[#d94182] text-[11px] font-semibold text-white">
-                  {profileInitial}
-                </div>
-                <span className="text-[8px] font-medium uppercase tracking-[0.08em] text-[#a4a4a4]">
-                  Profile
-                </span>
-              </div>
+              <Link
+                aria-label="Profile"
+                className="flex flex-col items-center gap-1 py-1 text-[#a4a4a4] transition hover:text-white"
+                to="/profile"
+              >
+                <UserAvatar
+                  className="size-[26px] overflow-hidden border border-[#1b1b1b]"
+                  imageUrl={session.user.imageUrl}
+                  name={profileName}
+                  textClassName="text-[11px] font-semibold"
+                />
+                <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
+              </Link>
               <RailButton icon="bell" />
               <RailButton icon="help" />
             </div>
@@ -240,11 +243,12 @@ function RailButton({
   active?: boolean;
   icon: "bell" | "focus" | "help" | "plan" | "track";
 }): ReactElement {
-  const tooltipText = icon === "plan"
-    ? "opentoggl plan is comming"
-    : icon === "focus"
-      ? "opentoggl focus is comming"
-      : undefined;
+  const tooltipText =
+    icon === "plan"
+      ? "opentoggl plan is comming"
+      : icon === "focus"
+        ? "opentoggl focus is comming"
+        : undefined;
 
   return (
     <button
