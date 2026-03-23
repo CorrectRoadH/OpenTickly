@@ -218,22 +218,32 @@ export function CalendarView({
         <div className="flex h-full min-h-0 min-w-[1232px] flex-col">
           <div className="grid shrink-0 grid-cols-[42px_repeat(7,minmax(170px,1fr))] bg-[var(--track-surface)]">
             <div className="border-r border-[var(--track-border)] bg-[var(--track-surface)]" />
-            {days.map(({ date, entries: dayEntries }) => (
+            {days.map(({ date, entries: dayEntries, showNowLine }) => (
               <div
                 className="bg-[var(--track-surface)] px-3 py-3"
                 data-testid={`calendar-day-header-${formatWeekday(date, timezone).toLowerCase()}`}
                 key={date.toISOString()}
               >
                 <div className="flex items-center gap-2">
-                  <div className="flex size-[48px] shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[25px] font-medium leading-none text-[var(--track-accent-text)]">
+                  <div
+                    className={`flex h-[48px] min-w-[60px] shrink-0 items-center justify-center px-3 text-[25px] font-medium leading-none ${
+                      showNowLine
+                        ? "rounded-[999px] bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+                        : "text-white"
+                    }`}
+                  >
                     {date.getDate()}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[var(--track-accent-text)]">
+                    <p
+                      className={`text-[14px] font-semibold uppercase tracking-[0.06em] ${
+                        showNowLine ? "text-[var(--track-accent-text)]" : "text-white"
+                      }`}
+                    >
                       {formatWeekday(date, timezone)}
                     </p>
                     <p className="truncate text-[12px] font-medium tabular-nums text-[var(--track-text-muted)]">
-                    {resolveCalendarHeaderSummary(dayEntries, timezone)}
+                      {resolveCalendarHeaderSummary(dayEntries, timezone)}
                     </p>
                   </div>
                 </div>
