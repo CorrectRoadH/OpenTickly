@@ -87,6 +87,9 @@ func (handler *Handler) GetPublicTrackCurrentTimeEntry(ctx echo.Context) error {
 	if err != nil {
 		return writePublicTrackTrackingError(err)
 	}
+	if entry.ID == 0 {
+		return ctx.JSON(http.StatusOK, nil)
+	}
 	return ctx.JSON(http.StatusOK, timeEntryViewToAPI(entry))
 }
 
@@ -98,6 +101,9 @@ func (handler *Handler) GetPublicTrackWebTimer(ctx echo.Context) error {
 	entry, err := handler.tracking.GetCurrentTimeEntry(ctx.Request().Context(), user.ID)
 	if err != nil {
 		return writePublicTrackTrackingError(err)
+	}
+	if entry.ID == 0 {
+		return ctx.JSON(http.StatusOK, nil)
 	}
 	return ctx.JSON(http.StatusOK, strconv.FormatInt(entry.ID, 10))
 }

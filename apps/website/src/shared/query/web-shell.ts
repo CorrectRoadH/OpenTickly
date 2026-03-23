@@ -14,7 +14,7 @@ import type {
   ModelsAllPreferences,
   WorkspacePayload,
 } from "../api/generated/public-track/types.gen.ts";
-import { WebApiError, unwrapWebApiResult } from "../api/web-client.ts";
+import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   getCurrentTimeEntry,
   getMe,
@@ -485,17 +485,7 @@ export function useTimeEntriesQuery(options: {
 
 export function useCurrentTimeEntryQuery() {
   return useQuery({
-    queryFn: async () => {
-      try {
-        return await unwrapWebApiResult(getCurrentTimeEntry());
-      } catch (error) {
-        if (error instanceof WebApiError && error.status === 404) {
-          return null;
-        }
-
-        throw error;
-      }
-    },
+    queryFn: () => unwrapWebApiResult(getCurrentTimeEntry()),
     queryKey: currentTimeEntryQueryKey,
     retry: false,
   });
@@ -625,7 +615,7 @@ export function useUpdateTimeEntryMutation() {
           body: {
             billable: request.billable,
             description: request.description,
-            project_id: request.projectId === null ? null : request.projectId,
+            project_id: request.projectId === null ? 0 : request.projectId,
             start: request.start,
             stop: request.stop,
             tag_ids: request.tagIds,

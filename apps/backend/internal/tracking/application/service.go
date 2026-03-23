@@ -254,7 +254,7 @@ func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (
 		return TimeEntryView{}, err
 	}
 	if !ok {
-		return TimeEntryView{}, ErrTimeEntryNotFound
+		return TimeEntryView{}, nil
 	}
 	return entry, nil
 }
@@ -269,7 +269,11 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	}
 
 	if command.ProjectID != nil {
-		current.ProjectID = command.ProjectID
+		if *command.ProjectID == 0 {
+			current.ProjectID = nil
+		} else {
+			current.ProjectID = command.ProjectID
+		}
 	}
 	if command.TaskID != nil {
 		current.TaskID = command.TaskID
