@@ -6,6 +6,20 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+func (server *publicTrackOpenAPIServer) GetAuditLogs(
+	ctx echo.Context,
+	organizationId int,
+	from string,
+	to string,
+	params publictrackapi.GetAuditLogsParams,
+) error {
+	_ = organizationId
+	_ = from
+	_ = to
+	_ = params
+	return server.governance.GetPublicTrackAuditLogs(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetWorkspaceTimeEntryConstraints(ctx echo.Context, workspaceId int) error {
 	_ = workspaceId
 	return server.governance.GetPublicTrackTimeEntryConstraints(ctx)

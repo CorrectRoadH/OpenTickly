@@ -8,12 +8,38 @@ import (
 
 var (
 	ErrStoreRequired          = errors.New("governance store is required")
+	ErrInvalidOrganization    = errors.New("governance organization id must be positive")
 	ErrInvalidWorkspace       = errors.New("governance workspace id must be positive")
+	ErrInvalidAuditLogWindow  = errors.New("governance audit log window is invalid")
 	ErrAlertNotFound          = errors.New("governance alert not found")
 	ErrTimesheetSetupNotFound = errors.New("governance timesheet setup not found")
 	ErrTimesheetNotFound      = errors.New("governance timesheet not found")
 	ErrInvalidTimesheetDate   = errors.New("governance timesheet date is invalid")
 )
+
+type AuditLogView struct {
+	ID             int64
+	OrganizationID int64
+	WorkspaceID    *int64
+	EntityType     string
+	EntityID       *int64
+	Action         string
+	UserID         *int64
+	CreatedAt      time.Time
+}
+
+type ListAuditLogsFilter struct {
+	From        time.Time
+	To          time.Time
+	Export      bool
+	WorkspaceID *int64
+	EntityType  string
+	EntityID    *int64
+	Action      string
+	UserID      *int64
+	PageSize    int
+	PageNumber  int
+}
 
 type TimeEntryConstraintsView struct {
 	WorkspaceID                 int64
@@ -190,6 +216,7 @@ type TimelineEventView struct {
 }
 
 type Store interface {
+	ListAuditLogs(context.Context, int64, ListAuditLogsFilter) ([]AuditLogView, error)
 	GetTimeEntryConstraints(context.Context, int64) (TimeEntryConstraintsView, error)
 	SaveTimeEntryConstraints(context.Context, TimeEntryConstraintsView) error
 

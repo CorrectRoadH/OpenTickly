@@ -18,6 +18,7 @@ import (
 type ScopeAuthorizer interface {
 	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
 	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
+	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 }
 
@@ -35,7 +36,9 @@ func NewHandler(governance *governanceapplication.Service, scope ScopeAuthorizer
 
 func writeGovernanceError(err error) error {
 	switch {
-	case errors.Is(err, governanceapplication.ErrInvalidWorkspace),
+	case errors.Is(err, governanceapplication.ErrInvalidOrganization),
+		errors.Is(err, governanceapplication.ErrInvalidWorkspace),
+		errors.Is(err, governanceapplication.ErrInvalidAuditLogWindow),
 		errors.Is(err, governanceapplication.ErrInvalidTimesheetDate):
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	case errors.Is(err, governanceapplication.ErrAlertNotFound),

@@ -115,6 +115,29 @@ func scanTask(scanner scanner) (catalogapplication.TaskView, error) {
 	return task, err
 }
 
+func scanRate(scanner scanner) (catalogapplication.RateView, error) {
+	var rate catalogapplication.RateView
+	err := scanner.Scan(
+		&rate.ID,
+		&rate.WorkspaceID,
+		&rate.Type,
+		&rate.Level,
+		&rate.LevelID,
+		&rate.Amount,
+		&rate.CreatorID,
+		&rate.Start,
+		&rate.End,
+		&rate.RateChangeMode,
+		&rate.CreatedAt,
+		&rate.UpdatedAt,
+		&rate.ProjectID,
+		&rate.ProjectUserID,
+		&rate.PlannedTaskID,
+		&rate.WorkspaceUserID,
+	)
+	return rate, err
+}
+
 func notFound(err error) bool {
 	return err != nil && err == pgx.ErrNoRows
 }

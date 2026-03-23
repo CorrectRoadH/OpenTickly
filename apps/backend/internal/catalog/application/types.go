@@ -294,7 +294,11 @@ type Store interface {
 	SetProjectPinned(context.Context, int64, int64, bool) error
 	ListTasks(context.Context, int64, ListTasksFilter) (TaskPage, error)
 	GetTask(context.Context, int64, int64) (TaskView, bool, error)
+	GetTaskByWorkspace(context.Context, int64, int64) (TaskView, bool, error)
 	CreateTask(context.Context, CreateTaskCommand) (TaskView, error)
 	UpdateTask(context.Context, TaskView) error
 	DeleteTask(context.Context, int64, int64) error
+	GetWorkspaceMemberByID(context.Context, int64, int64) (bool, error)
+	CreateRate(context.Context, CreateRateCommand) (RateView, error)
+	ListRatesByLevel(context.Context, int64, RateLevel, int64, RateType) ([]RateView, error)
 }

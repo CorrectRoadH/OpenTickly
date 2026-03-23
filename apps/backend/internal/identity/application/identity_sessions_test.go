@@ -217,13 +217,44 @@ func TestServicePersistsAccountPreferenceActions(t *testing.T) {
 	}
 }
 
+func TestServiceIssuesDesktopLoginTokensAsSessions(t *testing.T) {
+	database := pgtest.Open(t)
+	service := newPostgresTestService(database)
+	ctx := context.Background()
+
+	auth, err := service.Register(ctx, application.RegisterInput{
+		Email:    "desktop@example.com",
+		FullName: "Desktop User",
+		Password: "secret1",
+	})
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+
+	token, err := service.CreateDesktopLoginToken(ctx, auth.User.ID)
+	if err != nil {
+		t.Fatalf("create desktop login token: %v", err)
+	}
+	if token == "" {
+		t.Fatal("expected desktop login token to be generated")
+	}
+
+	current, err := service.ResolveCurrentUser(ctx, token)
+	if err != nil {
+		t.Fatalf("resolve desktop login token session: %v", err)
+	}
+	if current.ID != auth.User.ID {
+		t.Fatalf("expected desktop login token to resolve user %d, got %d", auth.User.ID, current.ID)
+	}
+}
+
 type postgresTestDependencies struct {
-	Users       *identitypostgres.UserRepository
-	Sessions    *identitypostgres.SessionRepository
+	Users        *identitypostgres.UserRepository
+	Sessions     *identitypostgres.SessionRepository
 	PushServices *identitypostgres.PushServiceRepository
-	JobRecorder *identitypostgres.JobRecorder
-	TimerState  *trackingpostgres.RunningTimerLookup
-	IDs         *identitypostgres.Sequence
+	JobRecorder  *identitypostgres.JobRecorder
+	TimerState   *trackingpostgres.RunningTimerLookup
+	IDs          *identitypostgres.Sequence
 }
 
 func newPostgresTestService(database *pgtest.Database) *application.Service {

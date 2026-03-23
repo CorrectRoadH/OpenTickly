@@ -1,7 +1,9 @@
 package publicapi
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
@@ -157,6 +159,39 @@ func (handler *PublicTrackHandler) PostPublicTrackResetToken(ctx echo.Context) e
 		return ctx.JSON(response.StatusCode, response.Body)
 	}
 	return ctx.JSON(http.StatusOK, token)
+}
+
+func (handler *PublicTrackHandler) GetPublicTrackDesktopLogin(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	token, err := handler.identity.service.CreateDesktopLoginToken(ctx.Request().Context(), user.ID)
+	if err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	location := fmt.Sprintf("opentoggl://desktop-login?login_token=%s", url.QueryEscape(token))
+	return ctx.Redirect(http.StatusFound, location)
+}
+
+func (handler *PublicTrackHandler) PostPublicTrackDesktopLoginTokens(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	token, err := handler.identity.service.CreateDesktopLoginToken(ctx.Request().Context(), user.ID)
+	if err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	return ctx.JSON(http.StatusOK, publictrackapi.DesktopLoginToken{
+		LoginToken: lo.ToPtr(token),
+	})
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) error {

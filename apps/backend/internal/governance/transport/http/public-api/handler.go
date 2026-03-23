@@ -13,6 +13,75 @@ import (
 	"github.com/samber/lo"
 )
 
+type auditLogResponse struct {
+	ID             int64  `json:"id"`
+	OrganizationID int64  `json:"organization_id"`
+	WorkspaceID    *int64 `json:"workspace_id,omitempty"`
+	EntityType     string `json:"entity_type"`
+	EntityID       *int64 `json:"entity_id,omitempty"`
+	Action         string `json:"action"`
+	UserID         *int64 `json:"user_id,omitempty"`
+	CreatedAt      string `json:"created_at"`
+}
+
+func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+
+	from, err := time.Parse(time.RFC3339, strings.TrimSpace(ctx.Param("from")))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	to, err := time.Parse(time.RFC3339, strings.TrimSpace(ctx.Param("to")))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	filter := governanceapplication.ListAuditLogsFilter{
+		From:       from,
+		To:         to,
+		Export:     lo.FromPtr(queryBoolPointer(ctx, "export")),
+		EntityType: ctx.QueryParam("entity_type"),
+		Action:     ctx.QueryParam("action"),
+		PageSize:   queryInt(ctx, "page_size", 50),
+		PageNumber: queryInt(ctx, "page_number", 1),
+	}
+	if workspaceID, ok := optionalQueryInt64(ctx, "workspace_id"); ok {
+		filter.WorkspaceID = lo.ToPtr(workspaceID)
+	}
+	if entityID, ok := optionalQueryInt64(ctx, "entity_id"); ok {
+		filter.EntityID = lo.ToPtr(entityID)
+	}
+	if userID, ok := optionalQueryInt64(ctx, "user_id"); ok {
+		filter.UserID = lo.ToPtr(userID)
+	}
+
+	logs, err := handler.governance.ListAuditLogs(ctx.Request().Context(), organizationID, filter)
+	if err != nil {
+		return writeGovernanceError(err)
+	}
+
+	response := make([]auditLogResponse, 0, len(logs))
+	for _, log := range logs {
+		response = append(response, auditLogResponse{
+			ID:             log.ID,
+			OrganizationID: log.OrganizationID,
+			WorkspaceID:    log.WorkspaceID,
+			EntityType:     log.EntityType,
+			EntityID:       log.EntityID,
+			Action:         log.Action,
+			UserID:         log.UserID,
+			CreatedAt:      log.CreatedAt.UTC().Format(time.RFC3339),
+		})
+	}
+	return ctx.JSON(http.StatusOK, response)
+}
+
 func (handler *Handler) GetPublicTrackTimeEntryConstraints(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
@@ -312,6 +381,30 @@ func (handler *Handler) GetPublicTrackMeTimesheets(ctx echo.Context) error {
 		response = append(response, apiModelTimesheet(timesheet))
 	}
 	return ctx.JSON(http.StatusOK, response)
+}
+
+func optionalQueryInt64(ctx echo.Context, key string) (int64, bool) {
+	value := strings.TrimSpace(ctx.QueryParam(key))
+	if value == "" {
+		return 0, false
+	}
+	parsed, err := strconv.ParseInt(value, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return parsed, true
+}
+
+func queryBoolPointer(ctx echo.Context, key string) *bool {
+	value := strings.TrimSpace(ctx.QueryParam(key))
+	if value == "" {
+		return nil
+	}
+	parsed, err := strconv.ParseBool(value)
+	if err != nil {
+		return nil
+	}
+	return lo.ToPtr(parsed)
 }
 
 func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx echo.Context) error {

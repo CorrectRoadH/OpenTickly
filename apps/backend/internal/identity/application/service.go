@@ -240,6 +240,22 @@ func (service *Service) Logout(ctx context.Context, sessionID string) error {
 	return service.sessions.Delete(ctx, sessionID)
 }
 
+func (service *Service) CreateDesktopLoginToken(ctx context.Context, userID int64) (string, error) {
+	user, err := service.users.ByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	if !user.CanAuthenticate() {
+		return "", user.AuthenticateBasic(domain.BasicCredentials{})
+	}
+
+	authenticated, err := service.issueSession(ctx, user)
+	if err != nil {
+		return "", err
+	}
+	return authenticated.SessionID, nil
+}
+
 func (service *Service) UpdateProfile(ctx context.Context, userID int64, update domain.ProfileUpdate) (UserSnapshot, error) {
 	user, err := service.users.ByID(ctx, userID)
 	if err != nil {

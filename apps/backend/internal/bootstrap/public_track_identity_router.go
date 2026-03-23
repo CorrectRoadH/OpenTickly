@@ -101,3 +101,11 @@ func (server *publicTrackOpenAPIServer) PostPushServices(ctx echo.Context) error
 func (server *publicTrackOpenAPIServer) DeletePushServices(ctx echo.Context) error {
 	return server.identity.DeletePublicTrackPushServices(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) GetDesktopLogin(ctx echo.Context) error {
+	return server.identity.GetPublicTrackDesktopLogin(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostDesktopLoginTokens(ctx echo.Context) error {
+	return server.identity.PostPublicTrackDesktopLoginTokens(ctx)
+}
