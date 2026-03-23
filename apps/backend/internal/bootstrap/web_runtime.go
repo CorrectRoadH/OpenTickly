@@ -27,6 +27,7 @@ import (
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
+	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -52,6 +53,7 @@ type webRuntime struct {
 	identityApp   *identityapplication.Service
 	identityAPI   *identitypublicapi.Handler
 	membershipApp *membershipapplication.Service
+	trackingApp   *trackingapplication.Service
 	userHomes     userHomeRepository
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
@@ -79,6 +81,10 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
 	catalogService, err := catalogapplication.NewService(catalogpostgres.NewStore(pool))
+	if err != nil {
+		return nil, err
+	}
+	trackingService, err := trackingapplication.NewService(trackingpostgres.NewStore(pool), catalogService)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +117,7 @@ func newWebRuntime(pool *pgxpool.Pool) (*webRuntime, error) {
 		identityApp:   identityService,
 		identityAPI:   identitypublicapi.NewHandler(identityService),
 		membershipApp: membershipService,
+		trackingApp:   trackingService,
 		userHomes:     tenantpostgres.NewUserHomeRepository(pool),
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,

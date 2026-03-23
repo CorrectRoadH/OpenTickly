@@ -334,6 +334,13 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 	`, workspaceID, project.ID, userID); err != nil {
 		t.Fatalf("insert project task: %v", err)
 	}
+	if _, err := database.Pool.Exec(ctx, `
+		update catalog_projects
+		set active = false
+		where workspace_id = $1 and id = $2
+	`, workspaceID, project.ID); err != nil {
+		t.Fatalf("pre-archive project: %v", err)
+	}
 
 	archivedProjectIDs, err := service.ArchiveClient(ctx, workspaceID, clientA.ID)
 	if err != nil {

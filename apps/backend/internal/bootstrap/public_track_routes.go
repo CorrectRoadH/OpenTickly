@@ -45,6 +45,7 @@ func newPublicTrackRoutes(pool *pgxpool.Pool) (httpapp.RouteRegistrar, error) {
 				return err
 			},
 		},
+		Skipper: skipPublicTrackOpenAPIValidation,
 	})
 
 	return func(server *echo.Echo) {
@@ -68,6 +69,26 @@ func withAbsoluteTrackPaths(swagger *openapi3.T, basePath string) *openapi3.T {
 	}
 	swagger.Paths = updatedPaths
 	return swagger
+}
+
+func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {
+	if ctx.Request().Method != http.MethodPatch {
+		return false
+	}
+
+	path := strings.TrimSpace(ctx.Request().URL.Path)
+	if !strings.HasPrefix(path, "/api/v9/workspaces/") {
+		return false
+	}
+	if strings.HasSuffix(path, "/stop") || !strings.Contains(path, "/time_entries/") {
+		return false
+	}
+
+	lastSlash := strings.LastIndex(path, "/")
+	if lastSlash < 0 {
+		return false
+	}
+	return strings.Contains(path[lastSlash+1:], ",")
 }
 
 func (runtime *webRuntime) getPublicTrackMe(ctx echo.Context) error {

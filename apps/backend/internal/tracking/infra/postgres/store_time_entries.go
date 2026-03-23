@@ -1,0 +1,370 @@
+package postgres
+
+import (
+	"context"
+	"strconv"
+	"strings"
+	"time"
+
+	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+)
+
+func (store *Store) CreateTimeEntry(
+	ctx context.Context,
+	record trackingapplication.CreateTimeEntryRecord,
+) (trackingapplication.TimeEntryView, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`insert into tracking_time_entries (
+			workspace_id, user_id, client_id, project_id, task_id, description, billable,
+			start_time, stop_time, duration_seconds, created_with, tag_ids, expense_ids
+		) values (
+			$1, $2, $3, $4, $5, $6, $7,
+			$8, $9, $10, $11, $12::jsonb, $13::jsonb
+		)
+		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
+			start_time, stop_time, duration_seconds, created_with, tag_ids,
+			expense_ids, deleted_at, created_at, updated_at,
+			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active`,
+		record.WorkspaceID,
+		record.UserID,
+		record.ClientID,
+		record.ProjectID,
+		record.TaskID,
+		record.Description,
+		record.Billable,
+		record.Start.UTC(),
+		record.Stop,
+		record.Duration,
+		record.CreatedWith,
+		string(marshalInt64JSON(record.TagIDs)),
+		string(marshalInt64JSON(record.ExpenseIDs)),
+	)
+	return scanTimeEntry(row)
+}
+
+func (store *Store) GetTimeEntry(
+	ctx context.Context,
+	workspaceID int64,
+	userID int64,
+	timeEntryID int64,
+) (trackingapplication.TimeEntryView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select
+			te.id,
+			te.workspace_id,
+			te.user_id,
+			te.client_id,
+			te.project_id,
+			te.task_id,
+			te.description,
+			te.billable,
+			te.start_time,
+			te.stop_time,
+			te.duration_seconds,
+			te.created_with,
+			te.tag_ids,
+			te.expense_ids,
+			te.deleted_at,
+			te.created_at,
+			te.updated_at,
+			c.name,
+			p.name,
+			t.name,
+			p.active
+		from tracking_time_entries te
+		left join catalog_clients c on c.id = te.client_id
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id
+		where te.workspace_id = $1 and te.user_id = $2 and te.id = $3 and te.deleted_at is null`,
+		workspaceID,
+		userID,
+		timeEntryID,
+	)
+	entry, err := scanTimeEntry(row)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows") {
+			return trackingapplication.TimeEntryView{}, false, nil
+		}
+		return trackingapplication.TimeEntryView{}, false, err
+	}
+	return entry, true, nil
+}
+
+func (store *Store) ListTimeEntries(
+	ctx context.Context,
+	workspaceID int64,
+	filter trackingapplication.ListTimeEntriesFilter,
+) ([]trackingapplication.TimeEntryView, error) {
+	query := `select
+		te.id,
+		te.workspace_id,
+		te.user_id,
+		te.client_id,
+		te.project_id,
+		te.task_id,
+		te.description,
+		te.billable,
+		te.start_time,
+		te.stop_time,
+		te.duration_seconds,
+		te.created_with,
+		te.tag_ids,
+		te.expense_ids,
+		te.deleted_at,
+		te.created_at,
+		te.updated_at,
+		c.name,
+		p.name,
+		t.name,
+		p.active
+	from tracking_time_entries te
+	left join catalog_clients c on c.id = te.client_id
+	left join catalog_projects p on p.id = te.project_id
+	left join catalog_tasks t on t.id = te.task_id
+	where te.workspace_id = $1 and te.user_id = $2`
+	args := []any{workspaceID, filter.UserID}
+	if !filter.IncludeAll {
+		query += " and te.deleted_at is null"
+	}
+	if filter.Since != nil {
+		args = append(args, filter.Since.UTC())
+		query += " and te.updated_at >= $" + intParam(len(args))
+	}
+	if filter.Before != nil {
+		args = append(args, filter.Before.UTC())
+		query += " and te.start_time < $" + intParam(len(args))
+	}
+	if filter.StartDate != nil {
+		args = append(args, filter.StartDate.UTC())
+		query += " and te.start_time >= $" + intParam(len(args))
+	}
+	if filter.EndDate != nil {
+		args = append(args, filter.EndDate.UTC())
+		query += " and te.start_time <= $" + intParam(len(args))
+	}
+	query += " order by te.start_time, te.id"
+
+	rows, err := store.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, writeTrackingError("list tracking time entries", err)
+	}
+	defer rows.Close()
+
+	entries := make([]trackingapplication.TimeEntryView, 0)
+	for rows.Next() {
+		entry, err := scanTimeEntry(rows)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, entry)
+	}
+	return entries, rows.Err()
+}
+
+func (store *Store) GetCurrentTimeEntry(ctx context.Context, userID int64) (trackingapplication.TimeEntryView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select
+			te.id,
+			te.workspace_id,
+			te.user_id,
+			te.client_id,
+			te.project_id,
+			te.task_id,
+			te.description,
+			te.billable,
+			te.start_time,
+			te.stop_time,
+			te.duration_seconds,
+			te.created_with,
+			te.tag_ids,
+			te.expense_ids,
+			te.deleted_at,
+			te.created_at,
+			te.updated_at,
+			c.name,
+			p.name,
+			t.name,
+			p.active
+		from tracking_running_timers rt
+		join tracking_time_entries te on te.id = rt.time_entry_id
+		left join catalog_clients c on c.id = te.client_id
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id
+		where rt.user_id = $1 and te.deleted_at is null`,
+		userID,
+	)
+	entry, err := scanTimeEntry(row)
+	if err != nil {
+		if strings.Contains(err.Error(), "no rows") {
+			return trackingapplication.TimeEntryView{}, false, nil
+		}
+		return trackingapplication.TimeEntryView{}, false, err
+	}
+	return entry, true, nil
+}
+
+func (store *Store) UpdateTimeEntry(
+	ctx context.Context,
+	record trackingapplication.UpdateTimeEntryRecord,
+) (trackingapplication.TimeEntryView, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`update tracking_time_entries
+		set client_id = $4,
+			project_id = $5,
+			task_id = $6,
+			description = $7,
+			billable = $8,
+			start_time = $9,
+			stop_time = $10,
+			duration_seconds = $11,
+			created_with = $12,
+			tag_ids = $13::jsonb,
+			expense_ids = $14::jsonb,
+			updated_at = now()
+		where workspace_id = $1 and user_id = $2 and id = $3
+		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
+			start_time, stop_time, duration_seconds, created_with, tag_ids,
+			expense_ids, deleted_at, created_at, updated_at,
+			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active`,
+		record.WorkspaceID,
+		record.UserID,
+		record.ID,
+		record.ClientID,
+		record.ProjectID,
+		record.TaskID,
+		record.Description,
+		record.Billable,
+		record.Start.UTC(),
+		record.Stop,
+		record.Duration,
+		record.CreatedWith,
+		string(marshalInt64JSON(record.TagIDs)),
+		string(marshalInt64JSON(record.ExpenseIDs)),
+	)
+	return scanTimeEntry(row)
+}
+
+func (store *Store) DeleteTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		`update tracking_time_entries
+		set deleted_at = now(), updated_at = now()
+		where workspace_id = $1 and user_id = $2 and id = $3`,
+		workspaceID,
+		userID,
+		timeEntryID,
+	)
+	if err != nil {
+		return writeTrackingError("delete tracking time entry", err)
+	}
+	return nil
+}
+
+func (store *Store) SetRunningTimeEntry(ctx context.Context, userID int64, timeEntryID int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		`insert into tracking_running_timers (user_id, time_entry_id)
+		values ($1, $2)
+		on conflict (user_id) do update set
+			time_entry_id = excluded.time_entry_id,
+			started_at = now()`,
+		userID,
+		timeEntryID,
+	)
+	if err != nil {
+		return writeTrackingError("set running time entry", err)
+	}
+	return nil
+}
+
+func (store *Store) ClearRunningTimeEntry(ctx context.Context, userID int64) error {
+	_, err := store.pool.Exec(ctx, "delete from tracking_running_timers where user_id = $1", userID)
+	if err != nil {
+		return writeTrackingError("clear running time entry", err)
+	}
+	return nil
+}
+
+func scanTimeEntry(scanner interface {
+	Scan(dest ...any) error
+}) (trackingapplication.TimeEntryView, error) {
+	var (
+		id            int64
+		workspaceID   int64
+		userID        int64
+		clientID      *int64
+		projectID     *int64
+		taskID        *int64
+		description   string
+		billable      bool
+		start         time.Time
+		stop          *time.Time
+		duration      int
+		createdWith   string
+		tagIDs        []byte
+		expenseIDs    []byte
+		deletedAt     *time.Time
+		createdAt     time.Time
+		updatedAt     time.Time
+		clientName    *string
+		projectName   *string
+		taskName      *string
+		projectActive *bool
+	)
+	if err := scanner.Scan(scanTimeEntryFields(
+		&id,
+		&workspaceID,
+		&userID,
+		&clientID,
+		&projectID,
+		&taskID,
+		&description,
+		&billable,
+		&start,
+		&stop,
+		&duration,
+		&createdWith,
+		&tagIDs,
+		&expenseIDs,
+		&deletedAt,
+		&createdAt,
+		&updatedAt,
+		&clientName,
+		&projectName,
+		&taskName,
+		&projectActive,
+	)...); err != nil {
+		return trackingapplication.TimeEntryView{}, writeTrackingError("scan tracking time entry", err)
+	}
+	return buildTimeEntryView(
+		id,
+		workspaceID,
+		userID,
+		clientID,
+		projectID,
+		taskID,
+		description,
+		billable,
+		start,
+		stop,
+		duration,
+		createdWith,
+		tagIDs,
+		expenseIDs,
+		deletedAt,
+		createdAt,
+		updatedAt,
+		clientName,
+		projectName,
+		taskName,
+		projectActive,
+	), nil
+}
+
+func intParam(value int) string {
+	return strconv.Itoa(value)
+}

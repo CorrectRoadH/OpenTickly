@@ -78,15 +78,15 @@ func (store *Store) ArchiveClientAndProjects(
 
 	rows, err := tx.Query(
 		ctx,
-		`update catalog_projects
-		set active = false
-		where workspace_id = $1 and client_id = $2 and active = true
-		returning id`,
+		`select id
+		from catalog_projects
+		where workspace_id = $1 and client_id = $2
+		order by id`,
 		workspaceID,
 		clientID,
 	)
 	if err != nil {
-		return nil, writeCatalogError("archive catalog client projects", err)
+		return nil, writeCatalogError("list catalog client projects", err)
 	}
 	defer rows.Close()
 
@@ -94,12 +94,23 @@ func (store *Store) ArchiveClientAndProjects(
 	for rows.Next() {
 		var projectID int64
 		if err := rows.Scan(&projectID); err != nil {
-			return nil, writeCatalogError("scan archived project id", err)
+			return nil, writeCatalogError("scan catalog client project id", err)
 		}
 		projectIDs = append(projectIDs, projectID)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, writeCatalogError("iterate archived project ids", err)
+		return nil, writeCatalogError("iterate catalog client project ids", err)
+	}
+
+	if _, err := tx.Exec(
+		ctx,
+		`update catalog_projects
+		set active = false
+		where workspace_id = $1 and client_id = $2 and active = true`,
+		workspaceID,
+		clientID,
+	); err != nil {
+		return nil, writeCatalogError("archive catalog client projects", err)
 	}
 
 	if err := tx.Commit(ctx); err != nil {

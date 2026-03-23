@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -1845,6 +1846,49 @@ func performAuthorizedJSONRequest(
 	authorization string,
 ) *httptest.ResponseRecorder {
 	return performJSONRequestWithMetadata(t, app, method, path, payload, "", authorization)
+}
+
+func performAuthorizedMultipartRequest(
+	t *testing.T,
+	app *App,
+	method string,
+	path string,
+	fields map[string]string,
+	fileField string,
+	fileName string,
+	fileBody []byte,
+	authorization string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	for key, value := range fields {
+		if err := writer.WriteField(key, value); err != nil {
+			t.Fatalf("write multipart field %s: %v", key, err)
+		}
+	}
+
+	part, err := writer.CreateFormFile(fileField, fileName)
+	if err != nil {
+		t.Fatalf("create multipart file: %v", err)
+	}
+	if _, err := part.Write(fileBody); err != nil {
+		t.Fatalf("write multipart file: %v", err)
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close multipart writer: %v", err)
+	}
+
+	request := httptest.NewRequest(method, path, &body)
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	if authorization != "" {
+		request.Header.Set("Authorization", authorization)
+	}
+
+	recorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(recorder, request)
+	return recorder
 }
 
 func performJSONRequestWithMetadata(

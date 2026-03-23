@@ -10995,11 +10995,9 @@ func (w *ServerInterfaceWrapper) PatchTimeEntries(ctx echo.Context) error {
 	}
 
 	// ------------- Path parameter "time_entry_ids" -------------
-	var timeEntryIds string
-
-	err = runtime.BindStyledParameterWithOptions("simple", "time_entry_ids", ctx.Param("time_entry_ids"), &timeEntryIds, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter time_entry_ids: %s", err))
+	timeEntryIds := ctx.Param("time_entry_ids")
+	if timeEntryIds == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid format for parameter time_entry_ids: value is required")
 	}
 
 	ctx.Set(BasicAuthScopes, []string{})
