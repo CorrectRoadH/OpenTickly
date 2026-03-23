@@ -119,4 +119,73 @@ test.describe("Story: manage the running timer", () => {
     expect(after.windowScrollY).toBe(before.windowScrollY);
     expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
   });
+
+  test("Given the timer page calendar view, when the user scrolls the timer content, then the calendar day header stays pinned", async ({
+    page,
+  }) => {
+    const email = `timer-calendar-sticky-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer Calendar Sticky User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
+
+    const mainScroll = page.getByTestId("app-shell-main");
+    const scrollArea = page.getByTestId("tracking-timer-scroll-area");
+    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    const dayHeader = page.getByTestId("calendar-day-header-mon");
+
+    await expect(scrollArea).toBeVisible();
+    await expect(calendarScrollArea).toBeVisible();
+    await expect(dayHeader).toBeVisible();
+
+    await mainScroll.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0;
+    });
+    await scrollArea.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0;
+    });
+    await calendarScrollArea.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0;
+    });
+
+    const before = await dayHeader.evaluate((element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top };
+    });
+
+    const scrollAreaBox = await calendarScrollArea.boundingBox();
+    if (!scrollAreaBox) {
+      throw new Error("Calendar scroll area is not visible.");
+    }
+
+    await page.mouse.move(scrollAreaBox.x + scrollAreaBox.width / 2, scrollAreaBox.y + 120);
+    await page.mouse.wheel(0, 900);
+
+    await expect
+      .poll(async () => ({
+        main: await mainScroll.evaluate((element: HTMLElement) => element.scrollTop),
+        timer: await scrollArea.evaluate((element: HTMLElement) => element.scrollTop),
+        calendar: await calendarScrollArea.evaluate((element: HTMLElement) => element.scrollTop),
+      }))
+      .toEqual({
+        main: 0,
+        timer: 0,
+        calendar: expect.any(Number),
+      });
+
+    const after = await dayHeader.evaluate((element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      return { top: rect.top };
+    });
+
+    expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+  });
 });

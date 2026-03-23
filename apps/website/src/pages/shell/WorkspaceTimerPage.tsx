@@ -482,7 +482,11 @@ export function WorkspaceTimerPage(): ReactElement {
         </div>
       </header>
       <div
-        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+        className={`min-h-0 flex-1 overflow-x-hidden ${
+          !timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar"
+            ? "overflow-y-hidden"
+            : "overflow-y-auto"
+        }`}
         data-testid="tracking-timer-scroll-area"
       >
         {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}

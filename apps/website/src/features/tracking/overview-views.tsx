@@ -213,67 +213,82 @@ export function CalendarView({
   }));
 
   return (
-    <div className="overflow-x-auto border-t border-[var(--track-border)]">
-      <div className="grid min-w-[1232px] grid-cols-[42px_repeat(7,minmax(170px,1fr))]">
-        <div className="border-r border-[var(--track-border)]" />
-        {days.map(({ date, entries: dayEntries }) => (
-          <div
-            className="border-l border-[var(--track-border)] px-3 py-2.5"
-            key={date.toISOString()}
-          >
-            <p className="text-[27px] font-medium text-white">{date.getDate()}</p>
-            <div className="mt-0.5 flex items-center gap-2 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              <span>{formatWeekday(date, timezone)}</span>
-              <span className="truncate text-[10px] normal-case tracking-normal">
-                {resolveCalendarHeaderSummary(dayEntries, timezone)}
-              </span>
-            </div>
+    <div className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)]">
+      <div className="min-h-0 flex-1 overflow-x-auto">
+        <div className="flex h-full min-h-0 min-w-[1232px] flex-col">
+          <div className="grid shrink-0 grid-cols-[42px_repeat(7,minmax(170px,1fr))] bg-[var(--track-surface)]">
+            <div className="border-r border-[var(--track-border)] bg-[var(--track-surface)]" />
+            {days.map(({ date, entries: dayEntries }) => (
+              <div
+                className="bg-[var(--track-surface)] px-3 py-3"
+                data-testid={`calendar-day-header-${formatWeekday(date, timezone).toLowerCase()}`}
+                key={date.toISOString()}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="flex size-[48px] shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[25px] font-medium leading-none text-[var(--track-accent-text)]">
+                    {date.getDate()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-semibold uppercase tracking-[0.06em] text-[var(--track-accent-text)]">
+                      {formatWeekday(date, timezone)}
+                    </p>
+                    <p className="truncate text-[12px] font-medium tabular-nums text-[var(--track-text-muted)]">
+                    {resolveCalendarHeaderSummary(dayEntries, timezone)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
 
-        <div className="border-r border-[var(--track-border)]">
-          {hours.map((hour) => (
-            <div
-              className="flex h-[60px] items-start justify-end border-t border-[var(--track-grid)] px-2 pt-0.5 text-[10px] text-[var(--track-text-muted)]"
-              key={hour}
-            >
-              {String(hour).padStart(2, "0")}:00
-            </div>
-          ))}
-        </div>
+          <div className="min-h-0 flex-1 overflow-y-auto" data-testid="calendar-grid-scroll-area">
+            <div className="grid grid-cols-[42px_repeat(7,minmax(170px,1fr))]">
+              <div className="border-r border-[var(--track-border)]">
+                {hours.map((hour) => (
+                  <div
+                    className="flex h-[60px] items-start justify-end border-t border-[var(--track-grid)] px-2 pt-0.5 text-[10px] text-[var(--track-text-muted)]"
+                    key={hour}
+                  >
+                    {String(hour).padStart(2, "0")}:00
+                  </div>
+                ))}
+              </div>
 
-        {days.map(({ date, entries: dayEntries, showNowLine }) => (
-          <div
-            className="relative border-l border-[var(--track-border)]"
-            key={`${date.toISOString()}-grid`}
-          >
-            <div
-              className="relative"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(to bottom, transparent 0, transparent 59px, var(--track-grid) 59px, var(--track-grid) 60px)",
-                height: `${CALENDAR_TOTAL_HEIGHT}px`,
-              }}
-            >
-              {dayEntries.map((entry) => (
-                <CalendarEventCard
-                  entry={entry}
-                  key={String(entry.id ?? entry.start)}
-                  onEditEntry={onEditEntry}
-                  timezone={timezone}
-                />
+              {days.map(({ date, entries: dayEntries, showNowLine }) => (
+                <div
+                  className="relative border-l border-[var(--track-border)]"
+                  key={`${date.toISOString()}-grid`}
+                >
+                  <div
+                    className="relative"
+                    style={{
+                      backgroundImage:
+                        "repeating-linear-gradient(to bottom, transparent 0, transparent 59px, var(--track-grid) 59px, var(--track-grid) 60px)",
+                      height: `${CALENDAR_TOTAL_HEIGHT}px`,
+                    }}
+                  >
+                    {dayEntries.map((entry) => (
+                      <CalendarEventCard
+                        entry={entry}
+                        key={String(entry.id ?? entry.start)}
+                        onEditEntry={onEditEntry}
+                        timezone={timezone}
+                      />
+                    ))}
+                    {showNowLine ? (
+                      <RunningEntryLine
+                        now={now}
+                        runningEntry={runningEntry}
+                        onEditEntry={onEditEntry}
+                        timezone={timezone}
+                      />
+                    ) : null}
+                  </div>
+                </div>
               ))}
-              {showNowLine ? (
-                <RunningEntryLine
-                  now={now}
-                  runningEntry={runningEntry}
-                  onEditEntry={onEditEntry}
-                  timezone={timezone}
-                />
-              ) : null}
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );
