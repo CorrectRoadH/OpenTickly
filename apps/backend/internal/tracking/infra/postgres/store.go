@@ -6,6 +6,7 @@ import (
 	"time"
 
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+	"opentoggl/backend/apps/backend/internal/xptr"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -42,30 +43,6 @@ func unmarshalInt64JSON(raw []byte) []int64 {
 		return []int64{}
 	}
 	return values
-}
-
-func timePtr(value *time.Time) *time.Time {
-	if value == nil {
-		return nil
-	}
-	cloned := value.UTC()
-	return &cloned
-}
-
-func stringPtr(value *string) *string {
-	if value == nil {
-		return nil
-	}
-	cloned := *value
-	return &cloned
-}
-
-func boolPtr(value *bool) *bool {
-	if value == nil {
-		return nil
-	}
-	cloned := *value
-	return &cloned
 }
 
 func scanTimeEntryFields(
@@ -149,17 +126,17 @@ func buildTimeEntryView(
 		Description:   description,
 		Billable:      billable,
 		Start:         start.UTC(),
-		Stop:          timePtr(stop),
+		Stop:          xptr.CloneUTC(stop),
 		Duration:      duration,
 		CreatedWith:   createdWith,
 		TagIDs:        unmarshalInt64JSON(tagIDs),
 		ExpenseIDs:    unmarshalInt64JSON(expenseIDs),
-		DeletedAt:     timePtr(deletedAt),
+		DeletedAt:     xptr.CloneUTC(deletedAt),
 		CreatedAt:     createdAt.UTC(),
 		UpdatedAt:     updatedAt.UTC(),
-		ClientName:    stringPtr(clientName),
-		ProjectName:   stringPtr(projectName),
-		TaskName:      stringPtr(taskName),
-		ProjectActive: boolPtr(projectActive),
+		ClientName:    xptr.Clone(clientName),
+		ProjectName:   xptr.Clone(projectName),
+		TaskName:      xptr.Clone(taskName),
+		ProjectActive: xptr.Clone(projectActive),
 	}
 }

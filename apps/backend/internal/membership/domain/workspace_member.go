@@ -1,6 +1,10 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+
+	"opentoggl/backend/apps/backend/internal/xptr"
+)
 
 type WorkspaceRole string
 
@@ -75,8 +79,8 @@ func NewWorkspaceMember(
 		FullName:   fullName,
 		Role:       role,
 		State:      state,
-		HourlyRate: cloneOptionalFloat64(hourlyRate),
-		LaborCost:  cloneOptionalFloat64(laborCost),
+		HourlyRate: xptr.Clone(hourlyRate),
+		LaborCost:  xptr.Clone(laborCost),
 	}
 	member.recordLifecycleFact(state)
 	return member, nil
@@ -194,8 +198,8 @@ func (m *WorkspaceMember) UpdateRateCost(hourlyRate, laborCost *float64) error {
 		return err
 	}
 
-	m.HourlyRate = cloneOptionalFloat64(hourlyRate)
-	m.LaborCost = cloneOptionalFloat64(laborCost)
+	m.HourlyRate = xptr.Clone(hourlyRate)
+	m.LaborCost = xptr.Clone(laborCost)
 	return nil
 }
 
@@ -208,8 +212,8 @@ func (m *WorkspaceMember) Clone() *WorkspaceMember {
 	}
 
 	copyMember := *m
-	copyMember.HourlyRate = cloneOptionalFloat64(m.HourlyRate)
-	copyMember.LaborCost = cloneOptionalFloat64(m.LaborCost)
+	copyMember.HourlyRate = xptr.Clone(m.HourlyRate)
+	copyMember.LaborCost = xptr.Clone(m.LaborCost)
 	copyMember.facts = append([]WorkspaceMemberLifecycleFact(nil), m.facts...)
 	return &copyMember
 }
@@ -238,13 +242,4 @@ func isValidWorkspaceMemberState(state WorkspaceMemberState) bool {
 	default:
 		return false
 	}
-}
-
-func cloneOptionalFloat64(value *float64) *float64 {
-	if value == nil {
-		return nil
-	}
-
-	copyValue := *value
-	return &copyValue
 }

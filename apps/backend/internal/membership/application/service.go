@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
+	"opentoggl/backend/apps/backend/internal/xptr"
 )
 
 var (
@@ -151,8 +152,65 @@ func (service *Service) UpdateWorkspaceMemberRateCost(
 		return WorkspaceMemberView{}, err
 	}
 
-	view.HourlyRate = cloneOptionalFloat64(member.HourlyRate)
-	view.LaborCost = cloneOptionalFloat64(member.LaborCost)
+	view.HourlyRate = xptr.Clone(member.HourlyRate)
+	view.LaborCost = xptr.Clone(member.LaborCost)
+	if err := service.store.SaveWorkspaceMember(ctx, view); err != nil {
+		return WorkspaceMemberView{}, err
+	}
+	return view, nil
+}
+
+func (service *Service) UpdateWorkspaceMember(
+	ctx context.Context,
+	command UpdateWorkspaceMemberCommand,
+) (WorkspaceMemberView, error) {
+	if err := service.requireManager(ctx, command.WorkspaceID, command.RequestedBy); err != nil {
+		return WorkspaceMemberView{}, err
+	}
+
+	view, ok, err := service.store.FindWorkspaceMemberByID(ctx, command.WorkspaceID, command.MemberID)
+	if err != nil {
+		return WorkspaceMemberView{}, err
+	}
+	if !ok {
+		return WorkspaceMemberView{}, ErrWorkspaceMemberNotFound
+	}
+
+	member, err := toDomainMember(view)
+	if err != nil {
+		return WorkspaceMemberView{}, err
+	}
+	if command.Role != nil {
+		member, err = membershipdomain.NewWorkspaceMember(
+			view.ID,
+			view.Email,
+			view.FullName,
+			*command.Role,
+			member.State,
+			member.HourlyRate,
+			member.LaborCost,
+		)
+		if err != nil {
+			return WorkspaceMemberView{}, err
+		}
+	}
+	if command.HourlyRate != nil || command.LaborCost != nil {
+		hourlyRate := member.HourlyRate
+		if command.HourlyRate != nil {
+			hourlyRate = command.HourlyRate
+		}
+		laborCost := member.LaborCost
+		if command.LaborCost != nil {
+			laborCost = command.LaborCost
+		}
+		if err := member.UpdateRateCost(hourlyRate, laborCost); err != nil {
+			return WorkspaceMemberView{}, err
+		}
+	}
+
+	view.Role = member.Role
+	view.HourlyRate = xptr.Clone(member.HourlyRate)
+	view.LaborCost = xptr.Clone(member.LaborCost)
 	if err := service.store.SaveWorkspaceMember(ctx, view); err != nil {
 		return WorkspaceMemberView{}, err
 	}
@@ -226,13 +284,4 @@ func toDomainMember(view WorkspaceMemberView) (*membershipdomain.WorkspaceMember
 
 func normalizeEmail(value string) string {
 	return strings.ToLower(strings.TrimSpace(value))
-}
-
-func cloneOptionalFloat64(value *float64) *float64 {
-	if value == nil {
-		return nil
-	}
-
-	copyValue := *value
-	return &copyValue
 }

@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/xptr"
+
 	"github.com/samber/lo"
 )
 
@@ -150,7 +152,7 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		start = command.Start.UTC()
 	}
 	if command.Stop != nil {
-		stop = cloneTime(command.Stop)
+		stop = xptr.CloneUTC(command.Stop)
 	}
 	if command.Duration != nil {
 		duration = *command.Duration
@@ -377,7 +379,7 @@ func (service *Service) UpdateGoal(ctx context.Context, command UpdateGoalComman
 		current.TargetSeconds = *command.TargetSeconds
 	}
 	if command.EndDate != nil {
-		current.EndDate = cloneTime(command.EndDate)
+		current.EndDate = xptr.CloneUTC(command.EndDate)
 	}
 	current.UpdatedAt = service.now()
 
@@ -515,14 +517,6 @@ func normalizeTimeEntryRange(start time.Time, stop *time.Time, duration *int) (t
 		}
 		return start, nil, runningDuration, nil
 	}
-}
-
-func cloneTime(value *time.Time) *time.Time {
-	if value == nil {
-		return nil
-	}
-	cloned := value.UTC()
-	return &cloned
 }
 
 func valueOrEmpty(value *string) string {
