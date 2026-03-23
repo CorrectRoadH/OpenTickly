@@ -33,10 +33,35 @@ services:
     restart: unless-stopped
 
   opentoggl:
-    image: ${OPENTOGGL_IMAGE:-opentoggl:local}
+    image: ${OPENTOGGL_IMAGE:-ghcr.io/opentoggl/backend:main}
+    environment:
+      OPENTOGGL_SERVICE_NAME: opentoggl
+      PORT: ${OPENTOGGL_PORT:-8080}
+      DATABASE_URL: ${OPENTOGGL_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable}
+      REDIS_URL: ${OPENTOGGL_REDIS_URL:-redis://redis:6379/0}
+      OPENTOGGL_FILESTORE_NAMESPACE: ${OPENTOGGL_FILESTORE_NAMESPACE:-opentoggl}
+      OPENTOGGL_JOBS_QUEUE_NAME: ${OPENTOGGL_JOBS_QUEUE_NAME:-default}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${OPENTOGGL_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  opentoggl-local:
+    image: opentoggl:local
     build:
       context: .
       dockerfile: docker/opentoggl.Dockerfile
+    profiles:
+      - local
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: ${OPENTOGGL_PORT:-8080}
