@@ -207,8 +207,7 @@ function renderIcon(name: TrackingIconName): ReactElement {
     case "play":
       return (
         <>
-          <circle cx="8" cy="8" r="6" />
-          <path d="m6.4 5.2 4.2 2.8-4.2 2.8Z" fill="currentColor" stroke="none" />
+          <path d="m4.2 3.6 8.2 4.4-8.2 4.4Z" fill="currentColor" stroke="none" />
         </>
       );
     case "plus":
@@ -272,8 +271,7 @@ function renderIcon(name: TrackingIconName): ReactElement {
     case "stop":
       return (
         <>
-          <circle cx="8" cy="8" r="6" />
-          <rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none" />
+          <rect x="3.8" y="3.8" width="8.4" height="8.4" rx="1.5" fill="currentColor" stroke="none" />
         </>
       );
     case "timesheet":

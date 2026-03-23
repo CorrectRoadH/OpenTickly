@@ -10,6 +10,7 @@ import type {
 import type {
   GithubComTogglTogglApiInternalModelsTimeEntry,
   MePayload,
+  ModelsPostPayload,
   ModelsAllPreferences,
   WorkspacePayload,
 } from "../api/generated/public-track/types.gen.ts";
@@ -33,6 +34,7 @@ import {
   patchWorkspaceStopTimeEntryHandler,
   postPinnedProject,
   postOrganizationWorkspaces,
+  postOrganization,
   postPreferences,
   postResetToken,
   postWorkspaceProjectCreate,
@@ -315,6 +317,24 @@ export function useCreateWorkspaceMutation(organizationId: number) {
       });
       await queryClient.invalidateQueries({
         queryKey: ["organization-settings", organizationId],
+      });
+    },
+  });
+}
+
+export function useCreateOrganizationMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: ModelsPostPayload) =>
+      unwrapWebApiResult(
+        postOrganization({
+          body: request,
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: sessionQueryKey,
       });
     },
   });

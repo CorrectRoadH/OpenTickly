@@ -43,9 +43,9 @@ export function ToolbarButton({
 
 export function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-      {label}
-      <span className="ml-2 text-[12px] font-medium tabular-nums text-white">{value}</span>
+    <p className="flex items-baseline gap-3 text-[12px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+      <span>{label}</span>
+      <span className="text-[18px] font-medium tabular-nums text-white">{value}</span>
     </p>
   );
 }
@@ -296,12 +296,18 @@ function RunningEntryLine({
   if (!clickable || !runningEntry) {
     return (
       <div
-        className="absolute left-0 right-0 z-10 h-5 -translate-y-1/2"
+        className="absolute left-0 right-0 z-10 h-4 -translate-y-1/2"
         data-testid="calendar-now-line"
         style={{ top: `${top}px` }}
       >
-        <span className="absolute left-0 top-1/2 h-[4px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]" />
-        <span className="absolute left-0 top-1/2 block size-8 -translate-y-1/2 rounded-full bg-[#ca74bf]" />
+        <span
+          className="absolute left-0 top-1/2 h-[3px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]"
+          data-testid="calendar-now-line-track"
+        />
+        <span
+          className="absolute left-0 top-1/2 block size-4 -translate-y-1/2 rounded-full bg-[#ca74bf]"
+          data-testid="calendar-now-line-dot"
+        />
       </div>
     );
   }
@@ -309,16 +315,20 @@ function RunningEntryLine({
   return (
     <button
       aria-label={`Edit ${runningEntry.description?.trim() || runningEntry.project_name || "time entry"}`}
-      className="absolute left-0 right-0 z-10 h-5 -translate-y-1/2 cursor-pointer bg-transparent"
+      className="absolute left-0 right-0 z-10 h-4 -translate-y-1/2 cursor-pointer bg-transparent"
       data-testid="calendar-now-line"
       onClick={(event) => onEditEntry?.(runningEntry, event.currentTarget.getBoundingClientRect())}
       style={{ top: `${top}px` }}
       type="button"
     >
-      <span className="absolute left-0 top-1/2 h-[4px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]" />
-      <span className="absolute left-0 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#ca74bf] text-[#231723]">
-        <TrackingIcon className="size-4" name="play" />
-      </span>
+      <span
+        className="absolute left-0 top-1/2 h-[3px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]"
+        data-testid="calendar-now-line-track"
+      />
+      <span
+        className="absolute left-0 top-1/2 block size-4 -translate-y-1/2 rounded-full bg-[#ca74bf]"
+        data-testid="calendar-now-line-dot"
+      />
     </button>
   );
 }
@@ -430,27 +440,25 @@ function CalendarEventCard({
   return (
     <button
       aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-      className="absolute left-1.5 right-1.5 overflow-hidden rounded-[2px] border border-black/25 px-2 py-1 text-left text-[10px] leading-3 text-white transition hover:brightness-110"
+      className="absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] text-white transition hover:brightness-110"
       onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
       style={{
         backgroundColor: colorToOverlay(color),
         backgroundImage: isRunning
           ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
           : undefined,
-        borderBottomColor: color,
-        borderBottomWidth: "2px",
         top: `${top}px`,
         height: `${Math.min(height, CALENDAR_TOTAL_HEIGHT - top)}px`,
       }}
       type="button"
     >
-      <p className="truncate font-medium">
+      <p className="truncate font-semibold">
         {entry.description?.trim() || entry.project_name || "Entry"}
       </p>
-      <p className="mt-1 truncate" style={{ color }}>
+      <p className="mt-0.5 truncate" style={{ color }}>
         {entry.project_name ?? "(No project)"}
       </p>
-      <p className="mt-1 truncate text-white/75">{formatClockTime(start, timezone)}</p>
+      <p className="mt-0.5 truncate text-white/72">{formatClockTime(start, timezone)}</p>
     </button>
   );
 }
@@ -555,5 +563,5 @@ function colorToOverlay(color: string): string {
   const green = Number.parseInt(full.slice(2, 4), 16);
   const blue = Number.parseInt(full.slice(4, 6), 16);
 
-  return `rgba(${red}, ${green}, ${blue}, 0.24)`;
+  return `rgb(${red}, ${green}, ${blue})`;
 }

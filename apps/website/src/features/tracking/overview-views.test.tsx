@@ -27,8 +27,13 @@ describe("CalendarView", () => {
 
     const entryCard = screen.getByRole("button", { name: "Edit 记录思考/rethink" });
 
-    expect(entryCard.style.borderBottomColor).toBe("rgb(198, 178, 63)");
+    expect(entryCard.style.backgroundColor).toBe("rgb(198, 178, 63)");
     expect(entryCard.style.backgroundImage).toContain("repeating-linear-gradient");
+    expect(entryCard.style.borderBottomWidth).toBe("");
+    expect(entryCard.style.borderBottomColor).toBe("");
+    expect(entryCard.className).toContain("left-px");
+    expect(entryCard.className).toContain("right-px");
+    expect(entryCard.className).toContain("rounded-[6px]");
   });
 
   it("renders the pink current-time line on the current day", () => {
@@ -43,8 +48,10 @@ describe("CalendarView", () => {
     );
 
     const nowLine = screen.getByTestId("calendar-now-line");
+    const nowLineDot = screen.getByTestId("calendar-now-line-dot");
 
     expect(nowLine).toBeTruthy();
+    expect(nowLineDot.className).toContain("size-4");
   });
 });
 

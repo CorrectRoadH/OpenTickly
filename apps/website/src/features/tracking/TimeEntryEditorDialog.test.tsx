@@ -36,12 +36,31 @@ describe("TimeEntryEditorDialog", () => {
 
     expect(writeText).not.toHaveBeenCalled();
   });
+
+  it("opens a calendar date picker and preserves the time when changing the start date", () => {
+    const onStartTimeChange = vi.fn();
+
+    render(<DialogHarness onStartTimeChange={onStartTimeChange} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "10:00" }));
+
+    expect(screen.getByTestId("date-picker")).toBeTruthy();
+    expect(screen.getByText("March 2026")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "March 24, 2026" }));
+
+    expect(onStartTimeChange).toHaveBeenCalledTimes(1);
+    const nextDate = onStartTimeChange.mock.calls[0]?.[0] as Date;
+    expect(nextDate.toISOString()).toBe("2026-03-24T10:00:00.000Z");
+  });
 });
 
 function DialogHarness({
+  onStartTimeChange = () => {},
   selectedProjectId = null,
   selectedTagIds = [],
 }: {
+  onStartTimeChange?: (time: Date) => void;
   selectedProjectId?: number | null;
   selectedTagIds?: number[];
 }) {
@@ -65,7 +84,7 @@ function DialogHarness({
       onPrimaryAction={() => {}}
       onProjectSelect={setProjectId}
       onSave={() => {}}
-      onStartTimeChange={() => {}}
+      onStartTimeChange={onStartTimeChange}
       onStopTimeChange={() => {}}
       onTagToggle={(tagId) =>
         setTagIds((current) =>

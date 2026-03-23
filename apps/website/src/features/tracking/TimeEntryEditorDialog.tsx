@@ -13,6 +13,7 @@ import {
   formatClockTime,
   resolveEntryDurationSeconds,
 } from "./overview-data.ts";
+import { buildMonthWeeks, isSameDay } from "./week-range.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 
 export type TimeEntryEditorAnchor = {
@@ -302,11 +303,7 @@ export function TimeEntryEditorDialog({
                 toneColor="#d58ad4"
                 variant={selectedTags.length > 0 ? "tag" : "icon"}
               />
-              <PickerButton
-                active={entry.billable === true}
-                ariaLabel="Billable"
-                icon="dollar"
-              />
+              <PickerButton active={entry.billable === true} ariaLabel="Billable" icon="dollar" />
             </div>
 
             {picker === "project" ? (
@@ -559,17 +556,17 @@ export function TimeEntryEditorDialog({
           </div>
 
           {timePicker ? (
-            <TimePicker
-              time={timePicker === "start" ? start : stop!}
-              onConfirm={(newTime) => {
+            <DatePicker
+              date={timePicker === "start" ? start : stop!}
+              onClose={() => setTimePicker(null)}
+              onSelect={(nextDate) => {
                 if (timePicker === "start") {
-                  onStartTimeChange(newTime);
+                  onStartTimeChange(nextDate);
                 } else {
-                  onStopTimeChange(newTime);
+                  onStopTimeChange(nextDate);
                 }
                 setTimePicker(null);
               }}
-              onClose={() => setTimePicker(null)}
             />
           ) : null}
 
@@ -619,10 +616,7 @@ function PickerButton({
       type="button"
     >
       {variant === "project" && label ? (
-        <span
-          className="size-3 shrink-0 rounded-full"
-          style={{ backgroundColor: color }}
-        />
+        <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       ) : (
         <TrackingIcon className={selected ? "size-5 shrink-0" : "size-5"} name={icon} />
       )}
@@ -699,17 +693,19 @@ function TimeDisplay({
   );
 }
 
-function TimePicker({
+function DatePicker({
+  date,
   onClose,
-  onConfirm,
-  time,
+  onSelect,
 }: {
+  date: Date;
   onClose: () => void;
-  onConfirm: (time: Date) => void;
-  time: Date;
+  onSelect: (date: Date) => void;
 }): ReactElement {
-  const [hours, setHours] = useState(time.getHours());
-  const [minutes, setMinutes] = useState(time.getMinutes());
+  const [visibleMonth, setVisibleMonth] = useState(
+    () => new Date(date.getFullYear(), date.getMonth(), 1),
+  );
+  const weeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -727,7 +723,7 @@ function TimePicker({
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (!target.closest('[data-testid="time-picker"]')) {
+      if (!target.closest('[data-testid="date-picker"]')) {
         onClose();
       }
     }
@@ -738,71 +734,91 @@ function TimePicker({
     };
   }, [onClose]);
 
-  const newTime = new Date(time);
-  newTime.setHours(hours, minutes, 0, 0);
-
   return (
     <div
-      className="absolute z-20 rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] p-4 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
-      data-testid="time-picker"
-      style={{ top: "calc(100% + 8px)", left: 0 }}
+      className="absolute left-0 top-[calc(100%+8px)] z-20 w-[620px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] px-10 pb-8 pt-10 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
+      data-testid="date-picker"
     >
-      <div className="flex items-center gap-3">
-        <div className="flex flex-col items-center">
+      <div className="flex items-start justify-between gap-8">
+        <h3 className="text-[34px] font-semibold tracking-tight text-white">
+          {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
+        </h3>
+        <div className="flex items-center gap-5">
           <button
-            className="size-8 rounded-full bg-white/8 text-white transition hover:bg-white/16"
-            onClick={() => setHours((h) => (h + 1) % 24)}
+            aria-label="Previous month"
+            className="flex size-[64px] items-center justify-center rounded-[14px] border border-[#6a6a70] text-[#d8d8dc] transition hover:border-[#8b8b92] hover:text-white"
+            onClick={() =>
+              setVisibleMonth(
+                (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
+              )
+            }
             type="button"
           >
-            +
+            <TrackingIcon
+              className="size-5"
+              name="chevron-right"
+              style={{ transform: "rotate(180deg)" }}
+            />
           </button>
-          <span className="w-12 py-2 text-center text-[24px] font-semibold tabular-nums text-white">
-            {hours.toString().padStart(2, "0")}
-          </span>
           <button
-            className="size-8 rounded-full bg-white/8 text-white transition hover:bg-white/16"
-            onClick={() => setHours((h) => (h - 1 + 24) % 24)}
+            aria-label="Next month"
+            className="flex size-[64px] items-center justify-center rounded-[14px] border border-[#6a6a70] text-[#d8d8dc] transition hover:border-[#8b8b92] hover:text-white"
+            onClick={() =>
+              setVisibleMonth(
+                (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
+              )
+            }
             type="button"
           >
-            −
-          </button>
-        </div>
-        <span className="pb-6 text-[24px] font-light text-white">:</span>
-        <div className="flex flex-col items-center">
-          <button
-            className="size-8 rounded-full bg-white/8 text-white transition hover:bg-white/16"
-            onClick={() => setMinutes((m) => (m + 5) % 60)}
-            type="button"
-          >
-            +
-          </button>
-          <span className="w-12 py-2 text-center text-[24px] font-semibold tabular-nums text-white">
-            {minutes.toString().padStart(2, "0")}
-          </span>
-          <button
-            className="size-8 rounded-full bg-white/8 text-white transition hover:bg-white/16"
-            onClick={() => setMinutes((m) => (m - 5 + 60) % 60)}
-            type="button"
-          >
-            −
+            <TrackingIcon className="size-5" name="chevron-right" />
           </button>
         </div>
       </div>
-      <div className="mt-4 flex justify-end gap-2">
-        <button
-          className="rounded-[8px] px-4 py-2 text-[14px] font-medium text-[#c9c9ce] transition hover:bg-white/8"
-          onClick={onClose}
-          type="button"
-        >
-          Cancel
-        </button>
-        <button
-          className="rounded-[8px] bg-[#c67abc] px-4 py-2 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca]"
-          onClick={() => onConfirm(newTime)}
-          type="button"
-        >
-          Confirm
-        </button>
+      <div className="mt-8 grid grid-cols-7 gap-x-7 px-1 text-[20px] font-medium text-[#66666b]">
+        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
+          <div className="pb-4 text-center" key={weekday}>
+            {weekday}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1">
+        {weeks.map((week, weekIndex) => (
+          <div
+            className="grid grid-cols-7 gap-x-7 border-t border-[#4b4b50] px-1 py-5"
+            key={`${visibleMonth.toISOString()}-${weekIndex}`}
+          >
+            {week.map((day) => {
+              const inCurrentMonth = day.getMonth() === visibleMonth.getMonth();
+              const selected = isSameDay(day, date);
+
+              return (
+                <button
+                  aria-label={day.toLocaleDateString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  className={`flex h-[54px] w-[54px] items-center justify-center rounded-[14px] text-[22px] font-semibold transition ${
+                    selected
+                      ? "bg-[#c78acd] text-[#241d24]"
+                      : inCurrentMonth
+                        ? "text-[#ededf0] hover:bg-white/6"
+                        : "text-[#5f5f64] hover:bg-white/4"
+                  }`}
+                  key={day.toISOString()}
+                  onClick={() => {
+                    const nextDate = new Date(date);
+                    nextDate.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
+                    onSelect(nextDate);
+                  }}
+                  type="button"
+                >
+                  {day.getDate()}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
