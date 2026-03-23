@@ -146,3 +146,15 @@ func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectI
 	_ = projectId
 	return server.tracking.GetPublicTrackProjectStatistics(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) GetWorkspaceProjectPeriods(
+	ctx echo.Context,
+	workspaceId int,
+	projectId int,
+	params publictrackapi.GetWorkspaceProjectPeriodsParams,
+) error {
+	_ = workspaceId
+	_ = projectId
+	_ = params
+	return server.catalog.GetPublicTrackProjectRecurringPeriod(ctx)
+}

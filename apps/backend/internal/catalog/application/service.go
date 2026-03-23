@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	ErrStoreRequired       = errors.New("catalog store is required")
-	ErrClientNotFound      = errors.New("catalog client not found")
-	ErrGroupNotFound       = errors.New("catalog group not found")
-	ErrProjectNotFound     = errors.New("catalog project not found")
-	ErrProjectUserNotFound = errors.New("catalog project user not found")
-	ErrTagNotFound         = errors.New("catalog tag not found")
-	ErrTaskNotFound        = errors.New("catalog task not found")
-	ErrInvalidWorkspace    = errors.New("catalog workspace id must be positive")
+	ErrStoreRequired        = errors.New("catalog store is required")
+	ErrClientNotFound       = errors.New("catalog client not found")
+	ErrGroupNotFound        = errors.New("catalog group not found")
+	ErrProjectNotFound      = errors.New("catalog project not found")
+	ErrProjectGroupNotFound = errors.New("catalog project group not found")
+	ErrProjectUserNotFound  = errors.New("catalog project user not found")
+	ErrTagNotFound          = errors.New("catalog tag not found")
+	ErrTaskNotFound         = errors.New("catalog task not found")
+	ErrInvalidWorkspace     = errors.New("catalog workspace id must be positive")
 )
 
 type Service struct {

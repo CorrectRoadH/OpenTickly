@@ -52,10 +52,15 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			country_id,
 			default_workspace_id,
 			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
 			preferences_date_format,
 			preferences_time_of_day_format,
 			preferences_alpha_features
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		on conflict (id) do update
 		set email = excluded.email,
 			full_name = excluded.full_name,
@@ -66,6 +71,11 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			country_id = excluded.country_id,
 			default_workspace_id = excluded.default_workspace_id,
 			state = excluded.state,
+			send_product_emails = excluded.send_product_emails,
+			send_weekly_report = excluded.send_weekly_report,
+			tos_accept_needed = excluded.tos_accept_needed,
+			product_emails_disable_code = excluded.product_emails_disable_code,
+			weekly_report_disable_code = excluded.weekly_report_disable_code,
 			preferences_date_format = excluded.preferences_date_format,
 			preferences_time_of_day_format = excluded.preferences_time_of_day_format,
 			preferences_alpha_features = excluded.preferences_alpha_features
@@ -80,6 +90,11 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 		user.CountryID(),
 		user.DefaultWorkspaceID(),
 		string(user.State()),
+		user.SendProductEmails(),
+		user.SendWeeklyReport(),
+		user.ToSAcceptNeeded(),
+		user.ProductEmailsDisableCode(),
+		user.WeeklyReportDisableCode(),
 		user.Preferences().DateFormat,
 		user.Preferences().TimeOfDayFormat,
 		alphaFeatures,
@@ -104,6 +119,11 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 			country_id,
 			default_workspace_id,
 			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
 			preferences_date_format,
 			preferences_time_of_day_format,
 			preferences_alpha_features
@@ -134,6 +154,11 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 			country_id,
 			default_workspace_id,
 			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
 			preferences_date_format,
 			preferences_time_of_day_format,
 			preferences_alpha_features
@@ -164,12 +189,87 @@ func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*doma
 			country_id,
 			default_workspace_id,
 			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
 			preferences_date_format,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
 		where api_token = $1
 	`, token)
+
+	user, err := scanUser(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code string) (*domain.User, error) {
+	row := repo.pool.QueryRow(ctx, `
+		select
+			id,
+			email,
+			full_name,
+			password_hash,
+			api_token,
+			timezone,
+			beginning_of_week,
+			country_id,
+			default_workspace_id,
+			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
+			preferences_date_format,
+			preferences_time_of_day_format,
+			preferences_alpha_features
+		from identity_users
+		where product_emails_disable_code = $1
+	`, code)
+
+	user, err := scanUser(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	return user, nil
+}
+
+func (repo *UserRepository) ByWeeklyReportDisableCode(ctx context.Context, code string) (*domain.User, error) {
+	row := repo.pool.QueryRow(ctx, `
+		select
+			id,
+			email,
+			full_name,
+			password_hash,
+			api_token,
+			timezone,
+			beginning_of_week,
+			country_id,
+			default_workspace_id,
+			state,
+			send_product_emails,
+			send_weekly_report,
+			tos_accept_needed,
+			product_emails_disable_code,
+			weekly_report_disable_code,
+			preferences_date_format,
+			preferences_time_of_day_format,
+			preferences_alpha_features
+		from identity_users
+		where weekly_report_disable_code = $1
+	`, code)
 
 	user, err := scanUser(row)
 	if err != nil {
@@ -233,6 +333,11 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		countryID                int64
 		defaultWorkspaceID       int64
 		state                    string
+		sendProductEmails        bool
+		sendWeeklyReport         bool
+		tosAcceptNeeded          bool
+		productEmailsDisableCode string
+		weeklyReportDisableCode  string
 		preferencesDateFormat    string
 		preferencesTimeOfDay     string
 		preferencesAlphaFeatures []byte
@@ -249,6 +354,11 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		&countryID,
 		&defaultWorkspaceID,
 		&state,
+		&sendProductEmails,
+		&sendWeeklyReport,
+		&tosAcceptNeeded,
+		&productEmailsDisableCode,
+		&weeklyReportDisableCode,
 		&preferencesDateFormat,
 		&preferencesTimeOfDay,
 		&preferencesAlphaFeatures,
@@ -270,6 +380,11 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		Password:     "persisted-secret",
 		PasswordHash: passwordHash,
 		APIToken:     apiToken,
+		SendProductEmails:        lo.ToPtr(sendProductEmails),
+		SendWeeklyReport:         lo.ToPtr(sendWeeklyReport),
+		ToSAcceptNeeded:          lo.ToPtr(tosAcceptNeeded),
+		ProductEmailsDisableCode: productEmailsDisableCode,
+		WeeklyReportDisableCode:  weeklyReportDisableCode,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rebuild identity user %d: %w", id, err)

@@ -258,6 +258,52 @@ func (handler *PublicTrackHandler) GetPublicTrackMeLogged(ctx echo.Context) erro
 	return ctx.NoContent(http.StatusOK)
 }
 
+func (handler *PublicTrackHandler) PostPublicTrackMeAcceptTOS(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	if err := handler.identity.service.AcceptTOS(ctx.Request().Context(), user.ID); err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, "Successful operation.")
+}
+
+func (handler *PublicTrackHandler) PostPublicTrackCloseAccount(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	if err := handler.identity.service.Deactivate(ctx.Request().Context(), user.ID); err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, "Successful operation.")
+}
+
+func (handler *PublicTrackHandler) PostPublicTrackDisableProductEmails(
+	ctx echo.Context,
+	disableCode string,
+) error {
+	if err := handler.identity.service.DisableProductEmailsByCode(ctx.Request().Context(), disableCode); err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, "Successful operation.")
+}
+
+func (handler *PublicTrackHandler) PostPublicTrackDisableWeeklyReport(
+	ctx echo.Context,
+	weeklyReportCode string,
+) error {
+	if err := handler.identity.service.DisableWeeklyReportByCode(ctx.Request().Context(), weeklyReportCode); err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, "Successful operation.")
+}
+
 func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx echo.Context) error {
 	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {

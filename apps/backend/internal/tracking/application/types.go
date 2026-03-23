@@ -50,6 +50,20 @@ type ProjectStatisticsView struct {
 	LatestTimeEntry   *time.Time
 }
 
+type DashboardActivityView struct {
+	ID          int64
+	UserID      int64
+	ProjectID   *int64
+	Description string
+	Duration    int
+	Stop        *time.Time
+}
+
+type MostActiveUserView struct {
+	UserID   int64
+	Duration int
+}
+
 type ListTimeEntriesFilter struct {
 	UserID     int64
 	Since      *time.Time
@@ -253,6 +267,7 @@ type Store interface {
 	GetTimeEntryForUser(context.Context, int64, int64) (TimeEntryView, bool, error)
 	ListTimeEntries(context.Context, int64, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	ListTimeEntriesForUser(context.Context, ListTimeEntriesFilter) ([]TimeEntryView, error)
+	ListWorkspaceTimeEntries(context.Context, int64, *time.Time) ([]TimeEntryView, error)
 	GetCurrentTimeEntry(context.Context, int64) (TimeEntryView, bool, error)
 	UpdateTimeEntry(context.Context, UpdateTimeEntryRecord) (TimeEntryView, error)
 	DeleteTimeEntry(context.Context, int64, int64, int64) error

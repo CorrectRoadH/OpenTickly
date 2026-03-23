@@ -103,10 +103,12 @@ func TestResetAPITokenReturnsSequenceErrorsWithoutSavingUser(t *testing.T) {
 }
 
 type sequenceTestUserRepository struct {
-	byID      map[int64]*domain.User
-	byEmail   map[string]*domain.User
-	byToken   map[string]*domain.User
-	saveCount int
+	byID               map[int64]*domain.User
+	byEmail            map[string]*domain.User
+	byToken            map[string]*domain.User
+	byProductCode      map[string]*domain.User
+	byWeeklyReportCode map[string]*domain.User
+	saveCount          int
 }
 
 func (repo *sequenceTestUserRepository) Save(_ context.Context, user *domain.User) error {
@@ -120,9 +122,17 @@ func (repo *sequenceTestUserRepository) Save(_ context.Context, user *domain.Use
 	if repo.byToken == nil {
 		repo.byToken = map[string]*domain.User{}
 	}
+	if repo.byProductCode == nil {
+		repo.byProductCode = map[string]*domain.User{}
+	}
+	if repo.byWeeklyReportCode == nil {
+		repo.byWeeklyReportCode = map[string]*domain.User{}
+	}
 	repo.byID[user.ID()] = user
 	repo.byEmail[user.Email()] = user
 	repo.byToken[user.APIToken()] = user
+	repo.byProductCode[user.ProductEmailsDisableCode()] = user
+	repo.byWeeklyReportCode[user.WeeklyReportDisableCode()] = user
 	return nil
 }
 
@@ -144,6 +154,22 @@ func (repo *sequenceTestUserRepository) ByEmail(_ context.Context, email string)
 
 func (repo *sequenceTestUserRepository) ByAPIToken(_ context.Context, token string) (*domain.User, error) {
 	user, ok := repo.byToken[token]
+	if !ok {
+		return nil, domain.ErrInvalidCredentials
+	}
+	return user, nil
+}
+
+func (repo *sequenceTestUserRepository) ByProductEmailsDisableCode(_ context.Context, code string) (*domain.User, error) {
+	user, ok := repo.byProductCode[code]
+	if !ok {
+		return nil, domain.ErrInvalidCredentials
+	}
+	return user, nil
+}
+
+func (repo *sequenceTestUserRepository) ByWeeklyReportDisableCode(_ context.Context, code string) (*domain.User, error) {
+	user, ok := repo.byWeeklyReportCode[code]
 	if !ok {
 		return nil, domain.ErrInvalidCredentials
 	}

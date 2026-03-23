@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -94,6 +95,121 @@ func (service *Service) ListTimeEntries(ctx context.Context, workspaceID int64, 
 
 func (service *Service) ListUserTimeEntries(ctx context.Context, filter ListTimeEntriesFilter) ([]TimeEntryView, error) {
 	return service.store.ListTimeEntriesForUser(ctx, filter)
+}
+
+func (service *Service) ListWorkspaceDashboardActivities(
+	ctx context.Context,
+	workspaceID int64,
+	since *time.Time,
+) ([]DashboardActivityView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	if err != nil {
+		return nil, err
+	}
+	activities := make([]DashboardActivityView, 0, len(entries))
+	for _, entry := range entries {
+		activities = append(activities, DashboardActivityView{
+			ID:          entry.ID,
+			UserID:      entry.UserID,
+			ProjectID:   entry.ProjectID,
+			Description: entry.Description,
+			Duration:    entry.Duration,
+			Stop:        entry.Stop,
+		})
+	}
+	slices.SortFunc(activities, func(left DashboardActivityView, right DashboardActivityView) int {
+		return compareDashboardActivityRecency(left, right)
+	})
+	return activities, nil
+}
+
+func (service *Service) ListWorkspaceTopActivities(
+	ctx context.Context,
+	workspaceID int64,
+	since *time.Time,
+) ([]DashboardActivityView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	if err != nil {
+		return nil, err
+	}
+	activities := make([]DashboardActivityView, 0, len(entries))
+	for _, entry := range entries {
+		activities = append(activities, DashboardActivityView{
+			ID:          entry.ID,
+			UserID:      entry.UserID,
+			ProjectID:   entry.ProjectID,
+			Description: entry.Description,
+			Duration:    entry.Duration,
+			Stop:        entry.Stop,
+		})
+	}
+	slices.SortFunc(activities, func(left DashboardActivityView, right DashboardActivityView) int {
+		switch {
+		case left.Duration != right.Duration:
+			if left.Duration > right.Duration {
+				return -1
+			}
+			return 1
+		default:
+			return compareDashboardActivityRecency(left, right)
+		}
+	})
+	return activities, nil
+}
+
+func (service *Service) ListWorkspaceMostActiveUsers(
+	ctx context.Context,
+	workspaceID int64,
+	since *time.Time,
+) ([]MostActiveUserView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if since == nil {
+		defaultSince := service.now().Add(-7 * 24 * time.Hour)
+		since = &defaultSince
+	}
+	entries, err := service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+	if err != nil {
+		return nil, err
+	}
+
+	durationByUser := make(map[int64]int)
+	for _, entry := range entries {
+		durationByUser[entry.UserID] += entry.Duration
+	}
+	users := make([]MostActiveUserView, 0, len(durationByUser))
+	for userID, duration := range durationByUser {
+		users = append(users, MostActiveUserView{
+			UserID:   userID,
+			Duration: duration,
+		})
+	}
+	slices.SortFunc(users, func(left MostActiveUserView, right MostActiveUserView) int {
+		switch {
+		case left.Duration != right.Duration:
+			if left.Duration > right.Duration {
+				return -1
+			}
+			return 1
+		case left.UserID < right.UserID:
+			return -1
+		case left.UserID > right.UserID:
+			return 1
+		default:
+			return 0
+		}
+	})
+	if len(users) > 5 {
+		users = users[:5]
+	}
+	return users, nil
 }
 
 func (service *Service) GetProjectStatistics(
@@ -584,6 +700,30 @@ func normalizePage(value int, fallback int) int {
 		return fallback
 	}
 	return value
+}
+
+func compareDashboardActivityRecency(left DashboardActivityView, right DashboardActivityView) int {
+	leftAt := dashboardActivityTimestamp(left)
+	rightAt := dashboardActivityTimestamp(right)
+	switch {
+	case leftAt.After(rightAt):
+		return -1
+	case leftAt.Before(rightAt):
+		return 1
+	case left.ID > right.ID:
+		return -1
+	case left.ID < right.ID:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func dashboardActivityTimestamp(activity DashboardActivityView) time.Time {
+	if activity.Stop != nil {
+		return activity.Stop.UTC()
+	}
+	return time.Unix(0, 0).UTC()
 }
 
 func IsNotFound(err error) bool {

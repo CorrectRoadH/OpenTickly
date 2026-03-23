@@ -6,6 +6,7 @@ import (
 	governancepublicapi "opentoggl/backend/apps/backend/internal/governance/transport/http/public-api"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identitypublicapi "opentoggl/backend/apps/backend/internal/identity/transport/http/public-api"
+	importingpublicapi "opentoggl/backend/apps/backend/internal/importing/transport/http/public-api"
 	membershippublicapi "opentoggl/backend/apps/backend/internal/membership/transport/http/public-api"
 	platformpublicapi "opentoggl/backend/apps/backend/internal/platform/transport/http/public-api"
 	tenantpublicapi "opentoggl/backend/apps/backend/internal/tenant/transport/http/public-api"
@@ -17,6 +18,7 @@ type publicTrackOpenAPIServer struct {
 	identity   *identitypublicapi.PublicTrackHandler
 	tenant     *tenantpublicapi.Handler
 	membership *membershippublicapi.Handler
+	importing  *importingpublicapi.Handler
 	catalog    *catalogpublicapi.Handler
 	tracking   *trackingpublicapi.Handler
 	governance *governancepublicapi.Handler
@@ -37,6 +39,7 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 			handlers,
 		),
 		membership: membershippublicapi.NewHandler(handlers.membershipApp, handlers),
+		importing:  importingpublicapi.NewHandler(handlers.importingApp, handlers),
 		catalog:    catalogpublicapi.NewHandler(handlers.catalogApp, handlers),
 		tracking:   trackingpublicapi.NewHandler(handlers.trackingApp, handlers),
 		governance: governancepublicapi.NewHandler(handlers.governanceApp, handlers),

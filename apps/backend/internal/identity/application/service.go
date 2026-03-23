@@ -32,6 +32,8 @@ type UserRepository interface {
 	ByID(context.Context, int64) (*domain.User, error)
 	ByEmail(context.Context, string) (*domain.User, error)
 	ByAPIToken(context.Context, string) (*domain.User, error)
+	ByProductEmailsDisableCode(context.Context, string) (*domain.User, error)
+	ByWeeklyReportDisableCode(context.Context, string) (*domain.User, error)
 }
 
 type SessionRepository interface {
@@ -77,16 +79,21 @@ type JobRecord struct {
 }
 
 type UserSnapshot struct {
-	ID                 int64
-	Email              string
-	FullName           string
-	APIToken           string
-	Timezone           string
-	BeginningOfWeek    int
-	CountryID          int64
-	DefaultWorkspaceID int64
-	HasPassword        bool
-	TwoFactorEnabled   bool
+	ID                       int64
+	Email                    string
+	FullName                 string
+	APIToken                 string
+	Timezone                 string
+	BeginningOfWeek          int
+	CountryID                int64
+	DefaultWorkspaceID       int64
+	HasPassword              bool
+	TwoFactorEnabled         bool
+	SendProductEmails        bool
+	SendWeeklyReport         bool
+	ToSAcceptNeeded          bool
+	ProductEmailsDisableCode string
+	WeeklyReportDisableCode  string
 }
 
 type AuthenticatedSession struct {
@@ -330,6 +337,39 @@ func (service *Service) ResetAPIToken(ctx context.Context, userID int64) (string
 	return token, nil
 }
 
+func (service *Service) AcceptTOS(ctx context.Context, userID int64) error {
+	user, err := service.users.ByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if err := user.AcceptTermsOfService(); err != nil {
+		return err
+	}
+	return service.users.Save(ctx, user)
+}
+
+func (service *Service) DisableProductEmailsByCode(ctx context.Context, disableCode string) error {
+	user, err := service.users.ByProductEmailsDisableCode(ctx, disableCode)
+	if err != nil {
+		return err
+	}
+	if err := user.DisableProductEmails(); err != nil {
+		return err
+	}
+	return service.users.Save(ctx, user)
+}
+
+func (service *Service) DisableWeeklyReportByCode(ctx context.Context, weeklyReportCode string) error {
+	user, err := service.users.ByWeeklyReportDisableCode(ctx, weeklyReportCode)
+	if err != nil {
+		return err
+	}
+	if err := user.DisableWeeklyReport(); err != nil {
+		return err
+	}
+	return service.users.Save(ctx, user)
+}
+
 func (service *Service) Deactivate(ctx context.Context, userID int64) error {
 	user, err := service.users.ByID(ctx, userID)
 	if err != nil {
@@ -434,15 +474,20 @@ func validatePreferencesClient(client string) error {
 
 func snapshotFromUser(user *domain.User) UserSnapshot {
 	return UserSnapshot{
-		ID:                 user.ID(),
-		Email:              user.Email(),
-		FullName:           user.FullName(),
-		APIToken:           user.APIToken(),
-		Timezone:           user.Timezone(),
-		BeginningOfWeek:    user.BeginningOfWeek(),
-		CountryID:          user.CountryID(),
-		DefaultWorkspaceID: user.DefaultWorkspaceID(),
-		HasPassword:        user.HasPassword(),
-		TwoFactorEnabled:   false,
+		ID:                       user.ID(),
+		Email:                    user.Email(),
+		FullName:                 user.FullName(),
+		APIToken:                 user.APIToken(),
+		Timezone:                 user.Timezone(),
+		BeginningOfWeek:          user.BeginningOfWeek(),
+		CountryID:                user.CountryID(),
+		DefaultWorkspaceID:       user.DefaultWorkspaceID(),
+		HasPassword:              user.HasPassword(),
+		TwoFactorEnabled:         false,
+		SendProductEmails:        user.SendProductEmails(),
+		SendWeeklyReport:         user.SendWeeklyReport(),
+		ToSAcceptNeeded:          user.ToSAcceptNeeded(),
+		ProductEmailsDisableCode: user.ProductEmailsDisableCode(),
+		WeeklyReportDisableCode:  user.WeeklyReportDisableCode(),
 	}
 }

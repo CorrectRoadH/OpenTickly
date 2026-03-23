@@ -68,11 +68,24 @@ type ProjectUserView struct {
 	CreatedAt   time.Time
 }
 
+type ProjectGroupView struct {
+	ID          int64
+	WorkspaceID int64
+	ProjectID   int64
+	GroupID     int64
+}
+
 type CreateProjectUserCommand struct {
 	WorkspaceID int64
 	ProjectID   int64
 	UserID      int64
 	Manager     bool
+}
+
+type CreateProjectGroupCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	GroupID     int64
 }
 
 type UpdateProjectUserCommand struct {
@@ -85,6 +98,11 @@ type UpdateProjectUserCommand struct {
 type ProjectCountView struct {
 	ProjectID int64
 	Count     int
+}
+
+type RecurringPeriodView struct {
+	StartDate time.Time
+	EndDate   time.Time
 }
 
 type ProjectView struct {
@@ -262,6 +280,10 @@ type Store interface {
 	CreateProjectUser(context.Context, CreateProjectUserCommand) (ProjectUserView, error)
 	UpdateProjectUser(context.Context, ProjectUserView) error
 	DeleteProjectUser(context.Context, int64, int64, int64) error
+	ListProjectGroups(context.Context, int64, []int64) ([]ProjectGroupView, error)
+	GetProjectGroup(context.Context, int64, int64) (ProjectGroupView, bool, error)
+	CreateProjectGroup(context.Context, CreateProjectGroupCommand) (ProjectGroupView, error)
+	DeleteProjectGroup(context.Context, int64, int64) error
 	ListProjects(context.Context, int64, ListProjectsFilter) ([]ProjectView, error)
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)

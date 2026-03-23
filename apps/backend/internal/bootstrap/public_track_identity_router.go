@@ -18,6 +18,28 @@ func (server *publicTrackOpenAPIServer) PutMe(ctx echo.Context) error {
 	return server.identity.PutPublicTrackMe(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) PostMeAcceptTos(ctx echo.Context) error {
+	return server.identity.PostPublicTrackMeAcceptTOS(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostCloseAccount(ctx echo.Context) error {
+	return server.identity.PostPublicTrackCloseAccount(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostMeDisableProductEmails(
+	ctx echo.Context,
+	disableCode string,
+) error {
+	return server.identity.PostPublicTrackDisableProductEmails(ctx, disableCode)
+}
+
+func (server *publicTrackOpenAPIServer) PostMeDisableWeeklyReport(
+	ctx echo.Context,
+	weeklyReportCode string,
+) error {
+	return server.identity.PostPublicTrackDisableWeeklyReport(ctx, weeklyReportCode)
+}
+
 func (server *publicTrackOpenAPIServer) GetPreferences(ctx echo.Context) error {
 	return server.identity.GetPublicTrackPreferences(ctx)
 }

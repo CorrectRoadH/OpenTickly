@@ -30,12 +30,17 @@ const (
 )
 
 type RegisterParams struct {
-	ID           int64
-	Email        string
-	FullName     string
-	Password     string
-	PasswordHash string
-	APIToken     string
+	ID                        int64
+	Email                     string
+	FullName                  string
+	Password                  string
+	PasswordHash              string
+	APIToken                  string
+	SendProductEmails         *bool
+	SendWeeklyReport          *bool
+	ToSAcceptNeeded           *bool
+	ProductEmailsDisableCode  string
+	WeeklyReportDisableCode   string
 }
 
 type BasicCredentials struct {
@@ -67,17 +72,22 @@ type Preferences struct {
 }
 
 type User struct {
-	id                 int64
-	email              string
-	fullName           string
-	passwordHash       string
-	apiToken           string
-	timezone           string
-	beginningOfWeek    int
-	countryID          int64
-	defaultWorkspaceID int64
-	state              UserState
-	preferences        Preferences
+	id                       int64
+	email                    string
+	fullName                 string
+	passwordHash             string
+	apiToken                 string
+	timezone                 string
+	beginningOfWeek          int
+	countryID                int64
+	defaultWorkspaceID       int64
+	state                    UserState
+	sendProductEmails        bool
+	sendWeeklyReport         bool
+	tosAcceptNeeded          bool
+	productEmailsDisableCode string
+	weeklyReportDisableCode  string
+	preferences              Preferences
 }
 
 func RegisterUser(params RegisterParams) (*User, error) {
@@ -97,14 +107,40 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		params.PasswordHash = hashSecret(params.Password)
 	}
 
+	sendProductEmails := true
+	if params.SendProductEmails != nil {
+		sendProductEmails = *params.SendProductEmails
+	}
+	sendWeeklyReport := true
+	if params.SendWeeklyReport != nil {
+		sendWeeklyReport = *params.SendWeeklyReport
+	}
+	tosAcceptNeeded := true
+	if params.ToSAcceptNeeded != nil {
+		tosAcceptNeeded = *params.ToSAcceptNeeded
+	}
+	productEmailsDisableCode := params.ProductEmailsDisableCode
+	if productEmailsDisableCode == "" {
+		productEmailsDisableCode = notificationCode("product-emails", params.APIToken)
+	}
+	weeklyReportDisableCode := params.WeeklyReportDisableCode
+	if weeklyReportDisableCode == "" {
+		weeklyReportDisableCode = notificationCode("weekly-report", params.APIToken)
+	}
+
 	return &User{
-		id:           params.ID,
-		email:        strings.ToLower(strings.TrimSpace(params.Email)),
-		fullName:     strings.TrimSpace(params.FullName),
-		passwordHash: params.PasswordHash,
-		apiToken:     params.APIToken,
-		timezone:     "UTC",
-		state:        UserStateActive,
+		id:                       params.ID,
+		email:                    strings.ToLower(strings.TrimSpace(params.Email)),
+		fullName:                 strings.TrimSpace(params.FullName),
+		passwordHash:             params.PasswordHash,
+		apiToken:                 params.APIToken,
+		timezone:                 "UTC",
+		state:                    UserStateActive,
+		sendProductEmails:        sendProductEmails,
+		sendWeeklyReport:         sendWeeklyReport,
+		tosAcceptNeeded:          tosAcceptNeeded,
+		productEmailsDisableCode: productEmailsDisableCode,
+		weeklyReportDisableCode:  weeklyReportDisableCode,
 		preferences: Preferences{
 			DateFormat:      "YYYY-MM-DD",
 			TimeOfDayFormat: "h:mm A",
@@ -134,6 +170,26 @@ func (user *User) Preferences() Preferences {
 
 func (user *User) APIToken() string {
 	return user.apiToken
+}
+
+func (user *User) SendProductEmails() bool {
+	return user.sendProductEmails
+}
+
+func (user *User) SendWeeklyReport() bool {
+	return user.sendWeeklyReport
+}
+
+func (user *User) ToSAcceptNeeded() bool {
+	return user.tosAcceptNeeded
+}
+
+func (user *User) ProductEmailsDisableCode() string {
+	return user.productEmailsDisableCode
+}
+
+func (user *User) WeeklyReportDisableCode() string {
+	return user.weeklyReportDisableCode
 }
 
 func (user *User) Timezone() string {
@@ -278,6 +334,32 @@ func (user *User) RotateAPIToken(token string) error {
 		return err
 	}
 	user.apiToken = token
+	user.productEmailsDisableCode = notificationCode("product-emails", token)
+	user.weeklyReportDisableCode = notificationCode("weekly-report", token)
+	return nil
+}
+
+func (user *User) AcceptTermsOfService() error {
+	if err := user.ensureMutable(); err != nil {
+		return err
+	}
+	user.tosAcceptNeeded = false
+	return nil
+}
+
+func (user *User) DisableProductEmails() error {
+	if err := user.ensureMutable(); err != nil {
+		return err
+	}
+	user.sendProductEmails = false
+	return nil
+}
+
+func (user *User) DisableWeeklyReport() error {
+	if err := user.ensureMutable(); err != nil {
+		return err
+	}
+	user.sendWeeklyReport = false
 	return nil
 }
 
@@ -312,6 +394,10 @@ func (user *User) ensureMutable() error {
 func hashSecret(value string) string {
 	sum := sha256.Sum256([]byte(value))
 	return hex.EncodeToString(sum[:])
+}
+
+func notificationCode(kind string, apiToken string) string {
+	return hashSecret(kind + ":" + apiToken)
 }
 
 func isSupportedTimeOfDayFormat(value string) bool {

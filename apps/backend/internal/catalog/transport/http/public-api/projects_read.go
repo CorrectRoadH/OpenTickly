@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
@@ -151,6 +152,47 @@ func (handler *Handler) GetPublicTrackProject(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
 }
 
+func (handler *Handler) GetPublicTrackProjectRecurringPeriod(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	projectID, ok := parsePathID(ctx, "project_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	startDate, err := optionalTrackDate(ctx.QueryParam("start_date"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	endDate, err := optionalTrackDate(ctx.QueryParam("end_date"))
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	period, err := handler.catalog.GetProjectRecurringPeriod(ctx.Request().Context(), workspaceID, projectID, startDate, endDate)
+	if err != nil {
+		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	if period == nil {
+		return ctx.JSON(http.StatusOK, publictrackapi.ModelsRecurringPeriod{})
+	}
+	return ctx.JSON(http.StatusOK, publictrackapi.ModelsRecurringPeriod{
+		StartDate: datePointer(period.StartDate),
+		EndDate:   datePointer(period.EndDate),
+	})
+}
+
 func (handler *Handler) ProjectTaskCount(ctx echo.Context) error {
 	return handler.publicTrackProjectCount(ctx, func(ctx echo.Context, workspaceID int64, projectIDs []int64) ([]catalogapplication.ProjectCountView, error) {
 		return handler.catalog.CountProjectTasks(ctx.Request().Context(), workspaceID, projectIDs)
@@ -237,4 +279,16 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 		}
 	}
 	return project
+}
+
+func optionalTrackDate(value string) (*time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse("2006-01-02", value)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }
