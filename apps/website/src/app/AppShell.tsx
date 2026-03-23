@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { type ReactElement, type ReactNode } from "react";
+import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   isOverviewNavActive,
@@ -8,8 +8,14 @@ import {
 } from "./shell-navigation-state.ts";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
+import {
+  buildOrganizationSettingsPath,
+  formatClockDuration,
+  resolveEntryDurationSeconds,
+} from "../features/tracking/overview-data.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { swapWorkspaceInPath } from "../shared/lib/workspace-routing.ts";
+import { useCurrentTimeEntryQuery } from "../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../shared/session/session-context.tsx";
 
 type AppShellProps = {
@@ -30,6 +36,31 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     .trim()
     .charAt(0)
     .toUpperCase();
+
+  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const runningEntry = currentTimeEntryQuery.data;
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!runningEntry) {
+      return;
+    }
+    setNowMs(Date.now());
+    const intervalId = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [runningEntry]);
+
+  const timerBadge = useMemo(() => {
+    if (!runningEntry) {
+      return undefined;
+    }
+    const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
+    return formatClockDuration(seconds);
+  }, [runningEntry, nowMs]);
 
   return (
     <div className="h-dvh overflow-hidden bg-[#161616] text-white" data-testid="app-shell">
@@ -65,7 +96,15 @@ export function AppShell({ children }: AppShellProps): ReactElement {
           <div className="flex min-w-0 flex-1 flex-col bg-[#0d0d0d]">
             <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
               <WorkspaceSwitcher
+                currentOrganization={session.currentOrganization}
                 currentWorkspaceId={session.currentWorkspace.id}
+                inviteMembersPath={`/workspaces/${session.currentWorkspace.id}/members`}
+                managePath={
+                  session.currentOrganization
+                    ? buildOrganizationSettingsPath(session.currentOrganization.id)
+                    : undefined
+                }
+                organizationId={session.currentWorkspace.organizationId}
                 onChange={(workspaceId) => {
                   if (isAccountScopedShellPath(location.pathname)) {
                     setCurrentWorkspaceId(workspaceId);
@@ -76,10 +115,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                     to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
                   });
                 }}
-                workspaces={session.availableWorkspaces.map((workspace) => ({
-                  id: workspace.id,
-                  name: workspace.name,
-                }))}
+                organizations={session.availableOrganizations}
               />
             </div>
 
@@ -104,7 +140,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                                 ? isTimerNavActive(location.pathname, item.to)
                                 : isSectionNavActive(location.pathname, item.to)
                           }
-                          badge={item.badge}
+                          badge={item.label === "Timer" ? timerBadge : item.badge}
                           disabled={item.disabled}
                           key={`${section.title}-${item.label}`}
                           label={item.label}
@@ -170,9 +206,7 @@ function ShellNavItem({
   const content = (
     <div
       className={`flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium ${
-        active
-          ? "bg-[#472443] text-[#f7d0f0]"
-          : "text-[#a4a4a4]"
+        active ? "bg-[#472443] text-[#f7d0f0]" : "text-[#a4a4a4]"
       } ${disabled ? "opacity-55" : "hover:bg-[#1b1b1b] hover:text-white"}`}
     >
       <TrackingIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
