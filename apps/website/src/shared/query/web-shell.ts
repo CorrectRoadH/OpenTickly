@@ -610,10 +610,11 @@ export function useCreateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (name: string) =>
+    mutationFn: ({ color, name }: { color?: string; name: string }) =>
       unwrapWebApiResult(
         postWorkspaceProjectCreate({
           body: {
+            color,
             name,
           },
           path: {

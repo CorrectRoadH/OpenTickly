@@ -44,6 +44,7 @@ import {
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 
 export function WorkspaceTimerPage(): ReactElement {
@@ -72,6 +73,7 @@ export function WorkspaceTimerPage(): ReactElement {
   const tagsQuery = useTagsQuery(workspaceId);
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const [draftDescription, setDraftDescription] = useState("");
+  const [runningDescription, setRunningDescription] = useState("");
   const [selectedEntry, setSelectedEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
   const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
@@ -166,11 +168,44 @@ export function WorkspaceTimerPage(): ReactElement {
   }, [entries, runningEntry, selectedEntry?.id]);
 
   useEffect(() => {
+    setRunningDescription(runningEntry?.description ?? "");
+  }, [runningEntry?.description, runningEntry?.id]);
+
+  useEffect(() => {
     setSelectedDescription(selectedEntry?.description ?? "");
     setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
     setSelectedTagIds(selectedEntry?.tag_ids ?? []);
     setSelectedEntryError(null);
   }, [selectedEntry]);
+
+  async function handleRunningDescriptionCommit() {
+    if (runningEntry?.id == null) {
+      return;
+    }
+
+    const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
+    if (typeof runningWorkspaceId !== "number") {
+      return;
+    }
+
+    const nextDescription = runningDescription.trim();
+    const currentDescription = (runningEntry.description ?? "").trim();
+    if (nextDescription === currentDescription) {
+      return;
+    }
+
+    try {
+      await updateTimeEntryMutation.mutateAsync({
+        request: {
+          description: nextDescription,
+        },
+        timeEntryId: runningEntry.id,
+        workspaceId: runningWorkspaceId,
+      });
+    } catch {
+      // Keep the local draft so the user can retry without losing their change.
+    }
+  }
 
   async function handleTimerAction() {
     if (runningEntry?.id != null) {
@@ -214,8 +249,11 @@ export function WorkspaceTimerPage(): ReactElement {
         timeEntryId: selectedEntry.id,
         workspaceId: selectedWorkspaceId,
       });
-      setSelectedEntry(updatedEntry);
+      if (selectedEntry.id === runningEntry?.id) {
+        setSelectedEntry(updatedEntry);
+      }
       setSelectedEntryError(null);
+      closeSelectedEntryEditor();
     } catch (error) {
       setSelectedEntryError(resolveSingleTimerErrorMessage(error));
     }
@@ -234,12 +272,12 @@ export function WorkspaceTimerPage(): ReactElement {
 
     try {
       if (isRunningTimeEntry(selectedEntry)) {
-        const stoppedEntry = await stopTimeEntryMutation.mutateAsync({
+        await stopTimeEntryMutation.mutateAsync({
           timeEntryId: selectedEntry.id,
           workspaceId: selectedWorkspaceId,
         });
-        setSelectedEntry(stoppedEntry);
         setSelectedEntryError(null);
+        closeSelectedEntryEditor();
         return;
       }
 
@@ -261,7 +299,7 @@ export function WorkspaceTimerPage(): ReactElement {
 
   async function handleSelectedEntryProjectCreate(name: string) {
     try {
-      const project = await createProjectMutation.mutateAsync(name);
+      const project = await createProjectMutation.mutateAsync({ name });
       setSelectedProjectId(project.id ?? null);
       setSelectedEntryError(null);
     } catch (error) {
@@ -283,6 +321,8 @@ export function WorkspaceTimerPage(): ReactElement {
     });
   }
 
+  const timerDescriptionValue = runningEntry?.id != null ? runningDescription : draftDescription;
+
   return (
     <div
       className="w-full min-w-0 bg-[var(--track-surface)] text-white"
@@ -296,13 +336,28 @@ export function WorkspaceTimerPage(): ReactElement {
             </label>
             <input
               className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-white"
-              disabled={Boolean(runningEntry)}
               id="timer-description"
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setDraftDescription(event.target.value)
-              }
+              onBlur={() => {
+                void handleRunningDescriptionCommit();
+              }}
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                if (runningEntry?.id != null) {
+                  setRunningDescription(event.target.value);
+                  return;
+                }
+
+                setDraftDescription(event.target.value);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || runningEntry?.id == null) {
+                  return;
+                }
+
+                event.preventDefault();
+                event.currentTarget.blur();
+              }}
               placeholder="What are you working on?"
-              value={runningEntry?.description ?? draftDescription}
+              value={timerDescriptionValue}
             />
           </div>
           <button
@@ -419,7 +474,9 @@ export function WorkspaceTimerPage(): ReactElement {
         <CalendarView
           entries={entries}
           hours={calendarHours}
+          nowMs={nowMs}
           onEditEntry={handleEntryEdit}
+          runningEntry={runningEntry}
           timezone={timezone}
           weekDays={weekDays}
         />
@@ -577,7 +634,7 @@ function hasTagArray(
 }
 
 function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProject): string {
-  return project.color || "#5fb0ff";
+  return resolveProjectColorValue(project);
 }
 
 function formatTrackQueryDate(date: Date): string {

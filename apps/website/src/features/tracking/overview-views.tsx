@@ -184,17 +184,22 @@ export function ListView({
 
 export function CalendarView({
   entries,
+  nowMs,
+  runningEntry,
   onEditEntry,
   timezone,
   weekDays,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   hours: number[];
+  nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   timezone: string;
   weekDays: Date[];
 }): ReactElement {
   const hours = Array.from({ length: 24 }, (_, index) => index);
+  const now = new Date(nowMs ?? Date.now());
   const days = weekDays.map((day) => ({
     date: day,
     entries: entries
@@ -204,6 +209,7 @@ export function CalendarView({
         const rightStart = new Date(right.start ?? right.at ?? Date.now()).getTime();
         return leftStart - rightStart;
       }),
+    showNowLine: isSameCalendarDate(now, day, timezone),
   }));
 
   return (
@@ -236,7 +242,7 @@ export function CalendarView({
           ))}
         </div>
 
-        {days.map(({ date, entries: dayEntries }) => (
+        {days.map(({ date, entries: dayEntries, showNowLine }) => (
           <div
             className="relative border-l border-[var(--track-border)]"
             key={`${date.toISOString()}-grid`}
@@ -257,11 +263,63 @@ export function CalendarView({
                   timezone={timezone}
                 />
               ))}
+              {showNowLine ? (
+                <RunningEntryLine
+                  now={now}
+                  runningEntry={runningEntry}
+                  onEditEntry={onEditEntry}
+                  timezone={timezone}
+                />
+              ) : null}
             </div>
           </div>
         ))}
       </div>
     </div>
+  );
+}
+
+function RunningEntryLine({
+  now,
+  runningEntry,
+  onEditEntry,
+  timezone,
+}: {
+  now: Date;
+  runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+  onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  timezone: string;
+}) {
+  const top = resolveMinutesSinceMidnight(now, timezone);
+  const clickable = Boolean(runningEntry && isRunningTimeEntry(runningEntry) && onEditEntry);
+
+  if (!clickable || !runningEntry) {
+    return (
+      <div
+        className="absolute left-0 right-0 z-10 h-5 -translate-y-1/2"
+        data-testid="calendar-now-line"
+        style={{ top: `${top}px` }}
+      >
+        <span className="absolute left-0 top-1/2 h-[4px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]" />
+        <span className="absolute left-0 top-1/2 block size-8 -translate-y-1/2 rounded-full bg-[#ca74bf]" />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      aria-label={`Edit ${runningEntry.description?.trim() || runningEntry.project_name || "time entry"}`}
+      className="absolute left-0 right-0 z-10 h-5 -translate-y-1/2 cursor-pointer bg-transparent"
+      data-testid="calendar-now-line"
+      onClick={(event) => onEditEntry?.(runningEntry, event.currentTarget.getBoundingClientRect())}
+      style={{ top: `${top}px` }}
+      type="button"
+    >
+      <span className="absolute left-0 top-1/2 h-[4px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]" />
+      <span className="absolute left-0 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full bg-[#ca74bf] text-[#231723]">
+        <TrackingIcon className="size-4" name="play" />
+      </span>
+    </button>
   );
 }
 
@@ -367,6 +425,7 @@ function CalendarEventCard({
   const top = resolveMinutesSinceMidnight(start, timezone);
   const height = Math.max(22, Math.round(durationSeconds / 60));
   const color = resolveEntryColor(entry);
+  const isRunning = !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 
   return (
     <button
@@ -375,6 +434,9 @@ function CalendarEventCard({
       onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
       style={{
         backgroundColor: colorToOverlay(color),
+        backgroundImage: isRunning
+          ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
+          : undefined,
         borderBottomColor: color,
         borderBottomWidth: "2px",
         top: `${top}px`,
@@ -438,6 +500,27 @@ function isSameDay(
       timeZone: timezone,
       year: "numeric",
     }).format(day)
+  );
+}
+
+function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
+  return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
+}
+
+function isSameCalendarDate(left: Date, right: Date, timezone: string): boolean {
+  return (
+    new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).format(left) ===
+    new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).format(right)
   );
 }
 

@@ -1,4 +1,5 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { isTrackHexColor, pickTrackColorFromSeed } from "../../shared/lib/project-colors.ts";
 
 export type EntryGroup = {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
@@ -19,17 +20,6 @@ export type TimesheetRow = {
   members: number;
   totalSeconds: number;
 };
-
-const fallbackPalette = [
-  "#00b8ff",
-  "#ff5d5d",
-  "#ffcf33",
-  "#00d084",
-  "#ff8a3d",
-  "#ff64d2",
-  "#8f7cff",
-  "#38d9a9",
-] as const;
 
 export function sortTimeEntries(
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
@@ -268,16 +258,10 @@ export function formatHours(seconds: number): string {
 
 export function resolveEntryColor(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
   const directColor = entry.project_color?.trim();
-  if (directColor && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(directColor)) {
+  if (isTrackHexColor(directColor)) {
     return directColor;
   }
 
   const seed = `${entry.project_name ?? entry.client_name ?? entry.description ?? "entry"}`;
-  let hash = 0;
-
-  for (const character of seed) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-
-  return fallbackPalette[hash % fallbackPalette.length];
+  return pickTrackColorFromSeed(seed);
 }

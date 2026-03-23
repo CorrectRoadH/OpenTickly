@@ -1,27 +1,34 @@
-import { type FormEvent, type ReactElement, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useCreateTagMutation, useTagsQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-
-type TagStatusFilter = "active" | "all" | "inactive";
+import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
+import {
+  DirectoryFilterChip,
+  DirectorySurfaceMessage,
+} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
+import { emptyTagsStateTitle, normalizeTags, type TagStatusFilter } from "./tags-page-helpers.ts";
 
 export function TagsPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const tagsQuery = useTagsQuery(workspaceId);
   const createTagMutation = useCreateTagMutation(workspaceId);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TagStatusFilter>("all");
-  const [composerOpen, setComposerOpen] = useState(false);
 
   if (tagsQuery.isPending) {
-    return <SurfaceMessage message="Loading tags..." />;
+    return <DirectorySurfaceMessage message="Loading tags..." />;
   }
 
   if (tagsQuery.isError) {
-    return <SurfaceMessage message="Unable to load tags. Refresh to try again." tone="error" />;
+    return (
+      <DirectorySurfaceMessage message="Unable to load tags. Refresh to try again." tone="error" />
+    );
   }
 
   const tags = normalizeTags(tagsQuery.data);
@@ -40,15 +47,14 @@ export function TagsPage(): ReactElement {
   const inactiveCount = tags.length - activeCount;
   const trimmedTagName = tagName.trim();
 
-  async function handleCreateTag(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleCreateTag() {
     if (trimmedTagName.length === 0) {
       return;
     }
 
     await createTagMutation.mutateAsync(trimmedTagName);
     setTagName("");
-    setComposerOpen(false);
+    setCreateDialogOpen(false);
     setStatusFilter("all");
     setStatus("Tag created");
   }
@@ -61,7 +67,7 @@ export function TagsPage(): ReactElement {
           <button
             className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
             data-testid="tags-create-button"
-            onClick={() => setComposerOpen((value) => !value)}
+            onClick={() => setCreateDialogOpen(true)}
             type="button"
           >
             <TrackingIcon className="size-3.5" name="plus" />
@@ -89,47 +95,14 @@ export function TagsPage(): ReactElement {
           </label>
           <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
-            <FilterChip label="Tag name" />
-            <FilterChip label="Status" />
+            <DirectoryFilterChip label="Tag name" />
+            <DirectoryFilterChip label="Status" />
           </div>
           {status ? (
             <span className="ml-auto text-[11px] text-[var(--track-accent-text)]">{status}</span>
           ) : null}
         </div>
       </header>
-
-      {composerOpen ? (
-        <form
-          className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3"
-          data-testid="tags-create-form"
-          onSubmit={handleCreateTag}
-        >
-          <label className="sr-only" htmlFor="tag-name">
-            Tag name
-          </label>
-          <input
-            className="h-9 w-[320px] rounded-md border border-[var(--track-border)] bg-[#181818] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-            id="tag-name"
-            onChange={(event) => setTagName(event.target.value)}
-            placeholder="Tag name"
-            value={tagName}
-          />
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
-            disabled={trimmedTagName.length === 0 || createTagMutation.isPending}
-            type="submit"
-          >
-            Save tag
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={() => setComposerOpen(false)}
-            type="button"
-          >
-            Cancel
-          </button>
-        </form>
-      ) : null}
 
       {filteredTags.length > 0 ? (
         <div data-testid="tags-list">
@@ -148,7 +121,10 @@ export function TagsPage(): ReactElement {
               key={tag.id}
             >
               <div className="flex h-[54px] items-center">
-                <span className="size-2 rounded-full bg-[#ff64d2]" />
+                <span
+                  className="size-2 rounded-full"
+                  style={{ backgroundColor: resolveProjectColorValue({ name: tag.name }) }}
+                />
               </div>
               <div className="flex h-[54px] items-center overflow-hidden">
                 <a
@@ -173,7 +149,9 @@ export function TagsPage(): ReactElement {
         </div>
       ) : (
         <div className="px-5 py-10" data-testid="tags-empty-state">
-          <p className="text-sm text-[var(--track-text-muted)]">{emptyStateTitle(statusFilter)}</p>
+          <p className="text-sm text-[var(--track-text-muted)]">
+            {emptyTagsStateTitle(statusFilter)}
+          </p>
         </div>
       )}
 
@@ -184,78 +162,22 @@ export function TagsPage(): ReactElement {
         Showing {tags.length} tags in workspace {workspaceId}. Active: {activeCount} · Inactive:{" "}
         {inactiveCount}
       </div>
+
+      {createDialogOpen ? (
+        <CreateNameDialog
+          isPending={createTagMutation.isPending}
+          nameLabel="Tag name"
+          namePlaceholder="Tag name"
+          nameValue={tagName}
+          onClose={() => setCreateDialogOpen(false)}
+          onNameChange={setTagName}
+          onSubmit={() => {
+            void handleCreateTag();
+          }}
+          submitLabel="Create tag"
+          title="Create new tag"
+        />
+      ) : null}
     </div>
-  );
-}
-
-function FilterChip({ label }: { label: string }) {
-  return (
-    <span className="flex h-[26px] items-center rounded-md border border-[var(--track-border)] px-2.5 text-[11px] normal-case tracking-normal text-white">
-      {label}
-    </span>
-  );
-}
-
-function SurfaceMessage({
-  message,
-  tone = "muted",
-}: {
-  message: string;
-  tone?: "error" | "muted";
-}) {
-  return (
-    <div
-      className={`px-5 py-8 text-sm ${
-        tone === "error" ? "text-rose-300" : "text-[var(--track-text-muted)]"
-      }`}
-    >
-      {message}
-    </div>
-  );
-}
-
-function emptyStateTitle(statusFilter: TagStatusFilter): string {
-  if (statusFilter === "active") {
-    return "No active tags match this view.";
-  }
-
-  if (statusFilter === "inactive") {
-    return "No inactive tags match this view.";
-  }
-
-  return "No tags in this workspace yet.";
-}
-
-type TagListItem = {
-  deleted_at?: string | null;
-  id: number;
-  name: string;
-  workspace_id?: number | null;
-};
-
-function normalizeTags(data: unknown): TagListItem[] {
-  if (Array.isArray(data)) {
-    return data as TagListItem[];
-  }
-
-  if (hasTagArray(data, "tags")) {
-    return data.tags;
-  }
-
-  if (hasTagArray(data, "data")) {
-    return data.data;
-  }
-
-  return [];
-}
-
-function hasTagArray(
-  value: unknown,
-  key: "data" | "tags",
-): value is Record<typeof key, TagListItem[]> {
-  return (
-    Boolean(value) &&
-    typeof value === "object" &&
-    Array.isArray((value as Record<string, unknown>)[key])
   );
 }

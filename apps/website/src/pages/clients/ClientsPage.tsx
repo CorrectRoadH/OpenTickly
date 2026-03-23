@@ -2,6 +2,7 @@ import { type FormEvent, type ReactElement, useMemo, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useClientsQuery,
   useCreateClientMutation,
@@ -376,17 +377,5 @@ function isClientActive(client: ClientListItem): boolean {
 }
 
 function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProject): string {
-  if (project.color && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(project.color)) {
-    return project.color;
-  }
-
-  const palette = ["#00b8ff", "#ff5d5d", "#ffcf33", "#00d084", "#ff8a3d", "#ff64d2", "#8f7cff"];
-  const seed = project.name ?? "project";
-  let hash = 0;
-
-  for (const character of seed) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-
-  return palette[hash % palette.length];
+  return resolveProjectColorValue(project);
 }
