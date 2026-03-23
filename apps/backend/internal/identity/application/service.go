@@ -20,6 +20,7 @@ const StopRunningTimerJobName = "identity.deactivated.stop_running_timer"
 type Config struct {
 	Users              UserRepository
 	Sessions           SessionRepository
+	PushServices       PushServiceRepository
 	JobRecorder        JobRecorder
 	RunningTimerLookup RunningTimerLookup
 	IDs                Sequence
@@ -37,6 +38,12 @@ type SessionRepository interface {
 	Put(context.Context, Session) error
 	UserIDBySession(context.Context, string) (int64, error)
 	Delete(context.Context, string) error
+}
+
+type PushServiceRepository interface {
+	ListByUserID(context.Context, int64) ([]domain.PushService, error)
+	Save(context.Context, domain.PushService) error
+	Delete(context.Context, int64, domain.PushServiceToken) error
 }
 
 type JobRecorder interface {
@@ -90,6 +97,7 @@ type AuthenticatedSession struct {
 type Service struct {
 	users              UserRepository
 	sessions           SessionRepository
+	pushServices       PushServiceRepository
 	jobRecorder        JobRecorder
 	runningTimerLookup RunningTimerLookup
 	ids                Sequence
@@ -105,11 +113,50 @@ func NewService(cfg Config) *Service {
 	return &Service{
 		users:              cfg.Users,
 		sessions:           cfg.Sessions,
+		pushServices:       cfg.PushServices,
 		jobRecorder:        cfg.JobRecorder,
 		runningTimerLookup: cfg.RunningTimerLookup,
 		ids:                cfg.IDs,
 		knownAlphaFeatures: knownAlphaFeatures,
 	}
+}
+
+func (service *Service) ListPushServices(ctx context.Context, userID int64) ([]domain.PushService, error) {
+	if _, err := service.users.ByID(ctx, userID); err != nil {
+		return nil, err
+	}
+	if service.pushServices == nil {
+		return []domain.PushService{}, nil
+	}
+	return service.pushServices.ListByUserID(ctx, userID)
+}
+
+func (service *Service) RegisterPushService(ctx context.Context, userID int64, token string) (domain.PushService, error) {
+	pushService, err := domain.NewPushService(userID, token)
+	if err != nil {
+		return domain.PushService{}, err
+	}
+	if _, err := service.users.ByID(ctx, userID); err != nil {
+		return domain.PushService{}, err
+	}
+	if service.pushServices == nil {
+		return pushService, nil
+	}
+	return pushService, service.pushServices.Save(ctx, pushService)
+}
+
+func (service *Service) DeletePushService(ctx context.Context, userID int64, token string) error {
+	pushToken, err := domain.NewPushServiceToken(token)
+	if err != nil {
+		return err
+	}
+	if _, err := service.users.ByID(ctx, userID); err != nil {
+		return err
+	}
+	if service.pushServices == nil {
+		return nil
+	}
+	return service.pushServices.Delete(ctx, userID, pushToken)
 }
 
 func (service *Service) Register(ctx context.Context, input RegisterInput) (AuthenticatedSession, error) {

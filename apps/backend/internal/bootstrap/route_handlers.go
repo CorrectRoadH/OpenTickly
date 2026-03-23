@@ -107,6 +107,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              identitypostgres.NewUserRepository(pool),
 		Sessions:           identitypostgres.NewSessionRepository(pool),
+		PushServices:       identitypostgres.NewPushServiceRepository(pool),
 		JobRecorder:        identitypostgres.NewJobRecorder(pool),
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(pool),
 		IDs:                identitypostgres.NewSequence(pool),

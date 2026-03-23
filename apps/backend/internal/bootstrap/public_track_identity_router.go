@@ -67,3 +67,15 @@ func (server *publicTrackOpenAPIServer) GetMeId(ctx echo.Context) error {
 func (server *publicTrackOpenAPIServer) GetMeLocation(ctx echo.Context) error {
 	return server.identity.GetPublicTrackMeLocation(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) GetPushServices(ctx echo.Context) error {
+	return server.identity.GetPublicTrackPushServices(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostPushServices(ctx echo.Context) error {
+	return server.identity.PostPublicTrackPushServices(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) DeletePushServices(ctx echo.Context) error {
+	return server.identity.DeletePublicTrackPushServices(ctx)
+}

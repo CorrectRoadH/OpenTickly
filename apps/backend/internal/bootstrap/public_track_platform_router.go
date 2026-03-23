@@ -10,10 +10,7 @@ func (server *publicTrackOpenAPIServer) GetCountries(ctx echo.Context) error {
 	return server.platform.GetCountries(ctx)
 }
 
-func (server *publicTrackOpenAPIServer) GetCountriesCountryIdSubdivisions(
-	ctx echo.Context,
-	countryId int,
-) error {
+func (server *publicTrackOpenAPIServer) GetCountriesCountryIdSubdivisions(ctx echo.Context, countryId int) error {
 	return server.platform.GetCountriesCountryIdSubdivisions(ctx, countryId)
 }
 
@@ -31,4 +28,8 @@ func (server *publicTrackOpenAPIServer) GetOffsets(ctx echo.Context) error {
 
 func (server *publicTrackOpenAPIServer) GetWorkspaceCurrencies(ctx echo.Context, workspaceId int) error {
 	return server.platform.GetWorkspaceCurrencies(ctx, workspaceId)
+}
+
+func (server *publicTrackOpenAPIServer) GetKeys(ctx echo.Context) error {
+	return server.platform.GetKeys(ctx)
 }

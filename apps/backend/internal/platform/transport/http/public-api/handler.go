@@ -68,6 +68,12 @@ func (handler *Handler) GetOffsets(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, handler.references.Offsets())
 }
 
+func (handler *Handler) GetKeys(ctx echo.Context) error {
+	return ctx.JSON(http.StatusOK, map[string]any{
+		"keys": []any{},
+	})
+}
+
 func (handler *Handler) GetWorkspaceCurrencies(ctx echo.Context, workspaceID int) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err

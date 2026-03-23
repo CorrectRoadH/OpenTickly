@@ -59,6 +59,8 @@ type UpdateWorkspaceBrandingCommand struct {
 	WorkspaceID      domain.WorkspaceID
 	LogoStorageKey   string
 	AvatarStorageKey string
+	ClearLogo        bool
+	ClearAvatar      bool
 }
 
 type OrganizationView struct {
@@ -273,6 +275,12 @@ func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command Upd
 	}
 
 	branding := workspace.Branding()
+	if command.ClearLogo {
+		branding = branding.WithoutAsset(domain.BrandingAssetKindLogo)
+	}
+	if command.ClearAvatar {
+		branding = branding.WithoutAsset(domain.BrandingAssetKindAvatar)
+	}
 	if command.LogoStorageKey != "" {
 		logo, err := domain.NewBrandingAsset(domain.BrandingAssetKindLogo, command.LogoStorageKey)
 		if err != nil {

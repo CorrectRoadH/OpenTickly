@@ -519,6 +519,7 @@ func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	service := identityapplication.NewService(identityapplication.Config{
 		Users:              identitypostgres.NewUserRepository(app.Platform.Database.Pool()),
 		Sessions:           identitypostgres.NewSessionRepository(app.Platform.Database.Pool()),
+		PushServices:       identitypostgres.NewPushServiceRepository(app.Platform.Database.Pool()),
 		JobRecorder:        identitypostgres.NewJobRecorder(app.Platform.Database.Pool()),
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(app.Platform.Database.Pool()),
 		IDs:                identitypostgres.NewSequence(app.Platform.Database.Pool()),
@@ -1571,6 +1572,173 @@ func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 	}
 }
 
+func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "track-user-scoped@example.com",
+		"fullname": "Track User Scoped User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register response to set session cookie")
+	}
+
+	var bootstrapResponse struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &bootstrapResponse)
+	if bootstrapResponse.CurrentOrganizationID == nil || bootstrapResponse.CurrentWorkspaceID == nil {
+		t.Fatalf("expected bootstrap ids, got %#v", bootstrapResponse)
+	}
+
+	createWorkspace := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/organizations/"+intToString(*bootstrapResponse.CurrentOrganizationID)+"/workspaces",
+		map[string]any{"name": "Second Workspace"},
+		sessionCookie,
+	)
+	if createWorkspace.Code != http.StatusOK {
+		t.Fatalf("expected create workspace status 200, got %d body=%s", createWorkspace.Code, createWorkspace.Body.String())
+	}
+
+	var createWorkspaceBody struct {
+		ID int64 `json:"id"`
+	}
+	mustDecodeJSON(t, createWorkspace.Body.Bytes(), &createWorkspaceBody)
+	secondWorkspaceID := createWorkspaceBody.ID
+	if secondWorkspaceID == 0 {
+		t.Fatalf("expected second workspace id, got %#v", createWorkspaceBody)
+	}
+
+	createTimeEntryRequest := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(secondWorkspaceID)+"/time_entries",
+		bytes.NewReader(mustJSONBytes(t, map[string]any{
+			"created_with": "session-user-scope-test",
+			"description":  "User scoped entry",
+			"duration":     1800,
+			"start":        "2026-03-23T09:00:00Z",
+			"stop":         "2026-03-23T09:30:00Z",
+			"workspace_id": secondWorkspaceID,
+		})),
+	)
+	createTimeEntryRequest.Header.Set("Content-Type", "application/json")
+	createTimeEntryRequest.Header.Set("Cookie", sessionCookie)
+	createTimeEntryRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(createTimeEntryRecorder, createTimeEntryRequest)
+	if createTimeEntryRecorder.Code != http.StatusOK {
+		t.Fatalf("expected create time entry status 200, got %d body=%s", createTimeEntryRecorder.Code, createTimeEntryRecorder.Body.String())
+	}
+	var createdEntry map[string]any
+	mustDecodeJSON(t, createTimeEntryRecorder.Body.Bytes(), &createdEntry)
+	timeEntryID := int64(createdEntry["id"].(float64))
+
+	createRunningEntryRequest := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(secondWorkspaceID)+"/time_entries",
+		bytes.NewReader(mustJSONBytes(t, map[string]any{
+			"created_with": "session-user-scope-test",
+			"description":  "Running user scoped entry",
+			"duration":     -1,
+			"start":        "2026-03-23T10:00:00Z",
+			"workspace_id": secondWorkspaceID,
+		})),
+	)
+	createRunningEntryRequest.Header.Set("Content-Type", "application/json")
+	createRunningEntryRequest.Header.Set("Cookie", sessionCookie)
+	createRunningEntryRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(createRunningEntryRecorder, createRunningEntryRequest)
+	if createRunningEntryRecorder.Code != http.StatusOK {
+		t.Fatalf("expected running time entry status 200, got %d body=%s", createRunningEntryRecorder.Code, createRunningEntryRecorder.Body.String())
+	}
+	var runningEntry map[string]any
+	mustDecodeJSON(t, createRunningEntryRecorder.Body.Bytes(), &runningEntry)
+	runningTimeEntryID := int64(runningEntry["id"].(float64))
+
+	listRequest := httptest.NewRequest(http.MethodGet, "/api/v9/me/time_entries?start_date=2026-03-23&end_date=2026-03-23", nil)
+	listRequest.Header.Set("Cookie", sessionCookie)
+	listRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(listRecorder, listRequest)
+	if listRecorder.Code != http.StatusOK {
+		t.Fatalf("expected list time entries status 200, got %d body=%s", listRecorder.Code, listRecorder.Body.String())
+	}
+
+	var entries []map[string]any
+	mustDecodeJSON(t, listRecorder.Body.Bytes(), &entries)
+	if len(entries) != 2 {
+		t.Fatalf("expected two user-scoped time entries, got %#v", entries)
+	}
+	for _, entry := range entries {
+		if gotWorkspaceID := int64(entry["workspace_id"].(float64)); gotWorkspaceID != secondWorkspaceID {
+			t.Fatalf("expected user-scoped workspace %d, got %#v", secondWorkspaceID, entry)
+		}
+	}
+
+	getByIDRequest := httptest.NewRequest(
+		http.MethodGet,
+		"/api/v9/me/time_entries/"+intToString(timeEntryID),
+		nil,
+	)
+	getByIDRequest.Header.Set("Cookie", sessionCookie)
+	getByIDRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(getByIDRecorder, getByIDRequest)
+	if getByIDRecorder.Code != http.StatusOK {
+		t.Fatalf("expected get time entry by id status 200, got %d body=%s", getByIDRecorder.Code, getByIDRecorder.Body.String())
+	}
+
+	var entryByID map[string]any
+	mustDecodeJSON(t, getByIDRecorder.Body.Bytes(), &entryByID)
+	if gotID := int64(entryByID["id"].(float64)); gotID != timeEntryID {
+		t.Fatalf("expected time entry id %d, got %#v", timeEntryID, entryByID)
+	}
+	if gotWorkspaceID := int64(entryByID["workspace_id"].(float64)); gotWorkspaceID != secondWorkspaceID {
+		t.Fatalf("expected time entry workspace %d, got %#v", secondWorkspaceID, entryByID)
+	}
+
+	currentRequest := httptest.NewRequest(http.MethodGet, "/api/v9/me/time_entries/current", nil)
+	currentRequest.Header.Set("Cookie", sessionCookie)
+	currentRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(currentRecorder, currentRequest)
+	if currentRecorder.Code != http.StatusOK {
+		t.Fatalf("expected current time entry status 200, got %d body=%s", currentRecorder.Code, currentRecorder.Body.String())
+	}
+
+	var currentEntry map[string]any
+	mustDecodeJSON(t, currentRecorder.Body.Bytes(), &currentEntry)
+	if gotID := int64(currentEntry["id"].(float64)); gotID != runningTimeEntryID {
+		t.Fatalf("expected running time entry id %d, got %#v", runningTimeEntryID, currentEntry)
+	}
+	if gotWorkspaceID := int64(currentEntry["workspace_id"].(float64)); gotWorkspaceID != secondWorkspaceID {
+		t.Fatalf("expected running time entry workspace %d, got %#v", secondWorkspaceID, currentEntry)
+	}
+}
+
 func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	database := pgtest.Open(t)
 
@@ -1907,6 +2075,17 @@ func performJSONRequestWithMetadata(
 	recorder := httptest.NewRecorder()
 	app.HTTP.ServeHTTP(recorder, request)
 	return recorder
+}
+
+func mustJSONBytes(t *testing.T, payload any) []byte {
+	t.Helper()
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+
+	return body
 }
 
 func basicAuthorization(username string, password string) string {

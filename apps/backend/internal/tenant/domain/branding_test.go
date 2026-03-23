@@ -35,3 +35,25 @@ func TestWorkspaceBrandingReplacesAssetsByKind(t *testing.T) {
 		t.Fatalf("expected avatar asset to round-trip, got %+v %v", got, ok)
 	}
 }
+
+func TestWorkspaceBrandingWithoutAssetRemovesOnlyRequestedKind(t *testing.T) {
+	logo, err := NewBrandingAsset(BrandingAssetKindLogo, "tenant/workspaces/12/logo.png")
+	if err != nil {
+		t.Fatalf("expected logo asset to be valid: %v", err)
+	}
+
+	avatar, err := NewBrandingAsset(BrandingAssetKindAvatar, "tenant/workspaces/12/avatar.png")
+	if err != nil {
+		t.Fatalf("expected avatar asset to be valid: %v", err)
+	}
+
+	branding := WorkspaceBranding{}.WithAsset(logo).WithAsset(avatar).WithoutAsset(BrandingAssetKindLogo)
+
+	if _, ok := branding.Asset(BrandingAssetKindLogo); ok {
+		t.Fatal("expected logo asset to be removed")
+	}
+
+	if got, ok := branding.Asset(BrandingAssetKindAvatar); !ok || got.StorageKey() != "tenant/workspaces/12/avatar.png" {
+		t.Fatalf("expected avatar asset to stay intact, got %+v %v", got, ok)
+	}
+}

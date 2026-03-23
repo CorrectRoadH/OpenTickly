@@ -66,6 +66,27 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("expected saved alpha feature, got %#v", preferences.AlphaFeatures)
 	}
 
+	if _, err := service.RegisterPushService(ctx, registered.User.ID, "device-token-1"); err != nil {
+		t.Fatalf("register push service: %v", err)
+	}
+	pushServices, err := service.ListPushServices(ctx, registered.User.ID)
+	if err != nil {
+		t.Fatalf("list push services: %v", err)
+	}
+	if len(pushServices) != 1 || pushServices[0].Token().String() != "device-token-1" {
+		t.Fatalf("expected saved push service token, got %#v", pushServices)
+	}
+	if err := service.DeletePushService(ctx, registered.User.ID, "device-token-1"); err != nil {
+		t.Fatalf("delete push service: %v", err)
+	}
+	pushServices, err = service.ListPushServices(ctx, registered.User.ID)
+	if err != nil {
+		t.Fatalf("list push services after delete: %v", err)
+	}
+	if len(pushServices) != 0 {
+		t.Fatalf("expected push services to be empty after delete, got %#v", pushServices)
+	}
+
 	token, err := service.ResetAPIToken(ctx, registered.User.ID)
 	if err != nil {
 		t.Fatalf("reset api token: %v", err)
@@ -140,6 +161,7 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 type postgresTestDependencies struct {
 	Users       *identitypostgres.UserRepository
 	Sessions    *identitypostgres.SessionRepository
+	PushServices *identitypostgres.PushServiceRepository
 	JobRecorder *identitypostgres.JobRecorder
 	TimerState  *trackingpostgres.RunningTimerLookup
 	IDs         *identitypostgres.Sequence
@@ -151,11 +173,12 @@ func newPostgresTestService(database *pgtest.Database) *application.Service {
 
 func newPostgresTestDependencies(database *pgtest.Database) postgresTestDependencies {
 	return postgresTestDependencies{
-		Users:       identitypostgres.NewUserRepository(database.Pool),
-		Sessions:    identitypostgres.NewSessionRepository(database.Pool),
-		JobRecorder: identitypostgres.NewJobRecorder(database.Pool),
-		TimerState:  trackingpostgres.NewRunningTimerLookup(database.Pool),
-		IDs:         identitypostgres.NewSequence(database.Pool),
+		Users:        identitypostgres.NewUserRepository(database.Pool),
+		Sessions:     identitypostgres.NewSessionRepository(database.Pool),
+		PushServices: identitypostgres.NewPushServiceRepository(database.Pool),
+		JobRecorder:  identitypostgres.NewJobRecorder(database.Pool),
+		TimerState:   trackingpostgres.NewRunningTimerLookup(database.Pool),
+		IDs:          identitypostgres.NewSequence(database.Pool),
 	}
 }
 
@@ -163,6 +186,7 @@ func (deps postgresTestDependencies) Config() application.Config {
 	return application.Config{
 		Users:              deps.Users,
 		Sessions:           deps.Sessions,
+		PushServices:       deps.PushServices,
 		JobRecorder:        deps.JobRecorder,
 		RunningTimerLookup: deps.TimerState,
 		IDs:                deps.IDs,

@@ -58,6 +58,17 @@ func (branding WorkspaceBranding) WithAsset(asset BrandingAsset) WorkspaceBrandi
 	return branding
 }
 
+func (branding WorkspaceBranding) WithoutAsset(kind BrandingAssetKind) WorkspaceBranding {
+	switch kind {
+	case BrandingAssetKindLogo:
+		branding.logo = nil
+	case BrandingAssetKindAvatar:
+		branding.avatar = nil
+	}
+
+	return branding
+}
+
 func (branding WorkspaceBranding) Asset(kind BrandingAssetKind) (BrandingAsset, bool) {
 	switch kind {
 	case BrandingAssetKindLogo:

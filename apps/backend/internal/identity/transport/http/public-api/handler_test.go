@@ -125,6 +125,7 @@ func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession) {
 	service := application.NewService(application.Config{
 		Users:              identitypostgres.NewUserRepository(database.Pool),
 		Sessions:           identitypostgres.NewSessionRepository(database.Pool),
+		PushServices:       identitypostgres.NewPushServiceRepository(database.Pool),
 		JobRecorder:        identitypostgres.NewJobRecorder(database.Pool),
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(database.Pool),
 		IDs:                identitypostgres.NewSequence(database.Pool),

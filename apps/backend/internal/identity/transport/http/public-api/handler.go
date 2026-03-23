@@ -128,6 +128,8 @@ func mapError(err error) Response {
 		return Response{StatusCode: 400, Body: "Invalid feature code(s)"}
 	case errors.Is(err, application.ErrUnknownPreferencesClient):
 		return Response{StatusCode: 400, Body: "Unknown client"}
+	case errors.Is(err, domain.ErrPushServiceTokenRequired):
+		return Response{StatusCode: 400, Body: "Field 'fcm_registration_token' is required"}
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, domain.ErrUserDeactivated),
 		errors.Is(err, domain.ErrUserDeleted),
