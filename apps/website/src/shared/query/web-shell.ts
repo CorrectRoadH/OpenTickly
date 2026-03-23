@@ -11,6 +11,7 @@ import type {
   GithubComTogglTogglApiInternalModelsTimeEntry,
   MePayload,
   ModelsAllPreferences,
+  WorkspacePayload,
 } from "../api/generated/public-track/types.gen.ts";
 import { WebApiError, unwrapWebApiResult } from "../api/web-client.ts";
 import {
@@ -28,8 +29,10 @@ import {
   getWorkspaceTag,
   getWorkspaceTasksBasic,
   getWorkspaceTopActivity,
+  deleteWorkspaceTimeEntries,
   patchWorkspaceStopTimeEntryHandler,
   postPinnedProject,
+  postOrganizationWorkspaces,
   postPreferences,
   postResetToken,
   postWorkspaceProjectCreate,
@@ -290,6 +293,30 @@ export function useOrganizationSettingsQuery(organizationId: number) {
         }),
       ),
     queryKey: ["organization-settings", organizationId],
+  });
+}
+
+export function useCreateWorkspaceMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: WorkspacePayload) =>
+      unwrapWebApiResult(
+        postOrganizationWorkspaces({
+          body: request,
+          path: {
+            organization_id: organizationId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: sessionQueryKey,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["organization-settings", organizationId],
+      });
+    },
   });
 }
 
@@ -565,6 +592,8 @@ export function useUpdateTimeEntryMutation() {
         billable?: boolean;
         description?: string;
         projectId?: number | null;
+        start?: string;
+        stop?: string;
         tagIds?: number[];
         taskId?: number | null;
       };
@@ -577,6 +606,8 @@ export function useUpdateTimeEntryMutation() {
             billable: request.billable,
             description: request.description,
             project_id: request.projectId ?? undefined,
+            start: request.start,
+            stop: request.stop,
             tag_ids: request.tagIds,
             task_id: request.taskId ?? undefined,
           },
@@ -596,6 +627,30 @@ export function useUpdateTimeEntryMutation() {
         (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) =>
           current?.id === data.id ? data : current,
       );
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
+  });
+}
+
+export function useDeleteTimeEntryMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ timeEntryId, workspaceId }: { timeEntryId: number; workspaceId: number }) =>
+      unwrapWebApiResult(
+        deleteWorkspaceTimeEntries({
+          path: {
+            time_entry_id: timeEntryId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
       });

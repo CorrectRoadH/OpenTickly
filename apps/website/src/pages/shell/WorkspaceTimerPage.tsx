@@ -4,9 +4,7 @@ import {
   buildEntryGroups,
   buildTimesheetRows,
   formatClockDuration,
-  formatWeekday,
   getCalendarHours,
-  getCurrentWeekDays,
   resolveEntryColor,
   resolveEntryDurationSeconds,
   sortTimeEntries,
@@ -20,14 +18,15 @@ import {
   SummaryStat,
   SurfaceMessage,
   TimesheetView,
-  ToolbarButton,
   ViewTab,
 } from "../../features/tracking/overview-views.tsx";
 import {
   TimeEntryEditorDialog,
   type TimeEntryEditorAnchor,
 } from "../../features/tracking/TimeEntryEditorDialog.tsx";
+import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
@@ -36,11 +35,13 @@ import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useCurrentTimeEntryQuery,
   useCreateProjectMutation,
+  useDeleteTimeEntryMutation,
   useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
-  useTimeEntriesQuery,
   useTagsQuery,
+  useTimeEntriesQuery,
+  useCreateTagMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
@@ -54,7 +55,8 @@ export function WorkspaceTimerPage(): ReactElement {
   const timezone = session.user.timezone || "UTC";
   const [view, setView] = useState<TimerViewMode>("calendar");
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const weekDays = useMemo(() => getCurrentWeekDays(), []);
+  const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
+  const weekDays = useMemo(() => getWeekDaysForDate(selectedWeekDate), [selectedWeekDate]);
   const weekRange = useMemo(
     () => ({
       endDate: formatTrackQueryDate(weekDays[6]),
@@ -71,6 +73,8 @@ export function WorkspaceTimerPage(): ReactElement {
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
   const tagsQuery = useTagsQuery(workspaceId);
+  const createTagMutation = useCreateTagMutation(workspaceId);
+  const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const [draftDescription, setDraftDescription] = useState("");
   const [runningDescription, setRunningDescription] = useState("");
@@ -98,13 +102,6 @@ export function WorkspaceTimerPage(): ReactElement {
   const displayColor = resolveEntryColor(runningEntry ?? entries[0] ?? {});
   const groupedEntries = buildEntryGroups(entries, timezone);
   const trackStrip = summarizeProjects(entries).slice(0, 12);
-  const todayKey = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone,
-    year: "numeric",
-  }).format(new Date());
-  const todayTotalSeconds = sumForDate(entries, todayKey, timezone);
   const weekTotalSeconds = weekDays.reduce(
     (total, day) =>
       total +
@@ -243,6 +240,8 @@ export function WorkspaceTimerPage(): ReactElement {
           billable: selectedEntry.billable,
           description: selectedDescription.trim(),
           projectId: selectedProjectId,
+          start: selectedEntry.start,
+          stop: selectedEntry.stop,
           tagIds: selectedTagIds,
           taskId: selectedEntry.task_id ?? selectedEntry.tid,
         },
@@ -297,6 +296,29 @@ export function WorkspaceTimerPage(): ReactElement {
     }
   }
 
+  async function handleSelectedEntryDelete() {
+    if (!selectedEntry?.id) {
+      return;
+    }
+
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+
+    try {
+      await deleteTimeEntryMutation.mutateAsync({
+        timeEntryId: selectedEntry.id,
+        workspaceId: selectedWorkspaceId,
+      });
+      setSelectedEntryError(null);
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }
+
   async function handleSelectedEntryProjectCreate(name: string) {
     try {
       const project = await createProjectMutation.mutateAsync({ name });
@@ -306,6 +328,30 @@ export function WorkspaceTimerPage(): ReactElement {
       setSelectedEntryError(resolveSingleTimerErrorMessage(error));
       throw error;
     }
+  }
+
+  async function handleSelectedEntryTagCreate(name: string) {
+    try {
+      await createTagMutation.mutateAsync(name);
+      setSelectedEntryError(null);
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+      throw error;
+    }
+  }
+
+  function handleSelectedEntryStartTimeChange(time: Date) {
+    setSelectedEntry((current) => {
+      if (!current) return current;
+      return { ...current, start: time.toISOString() };
+    });
+  }
+
+  function handleSelectedEntryStopTimeChange(time: Date) {
+    setSelectedEntry((current) => {
+      if (!current) return current;
+      return { ...current, stop: time.toISOString() };
+    });
   }
 
   function handleEntryEdit(
@@ -330,7 +376,7 @@ export function WorkspaceTimerPage(): ReactElement {
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[84px] flex-wrap items-center gap-x-3 gap-y-3 border-b border-[var(--track-border)] px-5 py-4">
-          <div className="min-w-[280px] flex-1 basis-[320px]">
+          <div className="min-w-0 flex-1">
             <label className="sr-only" htmlFor="timer-description">
               Time entry description
             </label>
@@ -397,46 +443,11 @@ export function WorkspaceTimerPage(): ReactElement {
 
         <div className="px-5 pb-4 pt-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-wrap items-center gap-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <button
-                  className="flex size-9 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="chevron-right" />
-                </button>
-                <ToolbarButton
-                  icon={view === "calendar" ? "calendar" : "list"}
-                  label={view === "timesheet" ? "This week" : "Today"}
-                  suffix={
-                    view === "timesheet"
-                      ? `W${resolveIsoWeekNumber()}`
-                      : formatWeekday(new Date(), timezone)
-                  }
-                />
-                <button
-                  className="flex size-9 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="chevron-down" />
-                </button>
-              </div>
-              {view !== "timesheet" ? (
-                <SummaryStat label="Today total" value={formatClockDuration(todayTotalSeconds)} />
-              ) : null}
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-6">
+              <WeekRangePicker onSelectDate={setSelectedWeekDate} selectedDate={selectedWeekDate} />
               <SummaryStat label="Week total" value={formatClockDuration(weekTotalSeconds)} />
             </div>
             <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
-              <button
-                className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-[11px] font-medium text-white"
-                type="button"
-              >
-                <span>Week view</span>
-                <TrackingIcon
-                  className="size-3 text-[var(--track-text-muted)]"
-                  name="chevron-down"
-                />
-              </button>
               <div className="flex rounded-md border border-[var(--track-border)] bg-[#111111] p-0.5">
                 <ViewTab currentView={view} onSelect={setView} targetView="calendar" />
                 <ViewTab currentView={view} onSelect={setView} targetView="list" />
@@ -491,10 +502,16 @@ export function WorkspaceTimerPage(): ReactElement {
           description={selectedDescription}
           entry={selectedEntry}
           isCreatingProject={createProjectMutation.isPending}
+          isCreatingTag={createTagMutation.isPending}
+          isDeleting={deleteTimeEntryMutation.isPending}
           isPrimaryActionPending={timerMutationPending}
           isSaving={updateTimeEntryMutation.isPending}
           onClose={closeSelectedEntryEditor}
           onCreateProject={handleSelectedEntryProjectCreate}
+          onCreateTag={handleSelectedEntryTagCreate}
+          onDelete={() => {
+            void handleSelectedEntryDelete();
+          }}
           onDescriptionChange={setSelectedDescription}
           onPrimaryAction={() => {
             void handleSelectedEntryPrimaryAction();
@@ -503,6 +520,8 @@ export function WorkspaceTimerPage(): ReactElement {
           onSave={() => {
             void handleSelectedEntrySave();
           }}
+          onStartTimeChange={handleSelectedEntryStartTimeChange}
+          onStopTimeChange={handleSelectedEntryStopTimeChange}
           onTagToggle={(tagId) => {
             setSelectedTagIds((current) =>
               current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
@@ -635,25 +654,6 @@ function hasTagArray(
 
 function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProject): string {
   return resolveProjectColorValue(project);
-}
-
-function formatTrackQueryDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(date);
-}
-
-function resolveIsoWeekNumber(): number {
-  const now = new Date();
-  const utcDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
-  const day = utcDate.getUTCDay() || 7;
-  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
-
-  return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {

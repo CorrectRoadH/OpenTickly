@@ -7,6 +7,8 @@ type TrackingIconName =
   | "chevron-down"
   | "chevron-right"
   | "clients"
+  | "copy"
+  | "dollar"
   | "edit"
   | "focus"
   | "goals"
@@ -88,6 +90,20 @@ function renderIcon(name: TrackingIconName): ReactElement {
           <circle cx="8" cy="5.2" r="2.1" />
           <path d="M4.3 12.5c.4-2 1.8-3.3 3.7-3.3s3.3 1.3 3.7 3.3" />
           <rect x="2.5" y="2.5" width="11" height="11" rx="2" />
+        </>
+      );
+    case "copy":
+      return (
+        <>
+          <rect x="5.3" y="3.3" width="7" height="8.2" rx="1.4" />
+          <path d="M4.3 10.7H4A1.5 1.5 0 0 1 2.5 9.2V4.8A1.5 1.5 0 0 1 4 3.3h4" />
+        </>
+      );
+    case "dollar":
+      return (
+        <>
+          <path d="M8 2.5v11" />
+          <path d="M10.5 4.5c0-1.1-.9-2-2-2H7.5c-1.1 0-2 .9-2 2s.9 2 2 2v1c1.1 0 2 .9 2 2s-.9 2-2 2H7" />
         </>
       );
     case "edit":
