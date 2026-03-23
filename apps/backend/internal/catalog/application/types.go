@@ -130,13 +130,14 @@ type ListProjectsFilter struct {
 }
 
 type ListTasksFilter struct {
-	Active    *bool
-	ProjectID *int64
-	Search    string
-	Page      int
-	PerPage   int
-	SortField TaskSortField
-	SortOrder SortOrder
+	Active     *bool
+	IncludeAll bool
+	ProjectID  *int64
+	Search     string
+	Page       int
+	PerPage    int
+	SortField  TaskSortField
+	SortOrder  SortOrder
 }
 
 type CreateClientCommand struct {

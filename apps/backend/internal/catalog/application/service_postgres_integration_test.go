@@ -181,7 +181,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 		t.Fatalf("expected one group, got %#v", groups)
 	}
 
-	tags, err := service.ListTags(ctx, workspaceID, catalogapplication.ListTagsFilter{Search: "bill", Page: 1, PerPage: 50})
+	tags, err := service.ListTags(ctx, workspaceID, catalogapplication.ListTagsFilter{Search: "int", Page: 1, PerPage: 50})
 	if err != nil {
 		t.Fatalf("list tags: %v", err)
 	}
@@ -262,7 +262,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list inactive tasks: %v", err)
 	}
-	if inactiveTasks.TotalCount != 1 || len(inactiveTasks.Tasks) != 1 || inactiveTasks.Tasks[0].Name != "Review" {
+	if inactiveTasks.TotalCount != 2 || len(inactiveTasks.Tasks) != 2 || inactiveTasks.Tasks[0].Name != "Delivery Final" || inactiveTasks.Tasks[1].Name != "Review" {
 		t.Fatalf("expected inactive task page, got %#v", inactiveTasks)
 	}
 

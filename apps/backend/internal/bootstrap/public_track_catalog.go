@@ -266,9 +266,10 @@ func (runtime *webRuntime) getPublicTrackProjectTasks(ctx echo.Context) error {
 	}
 
 	filter := catalogapplication.ListTasksFilter{
-		Page:      1,
-		PerPage:   200,
-		ProjectID: &projectID,
+		Page:       1,
+		PerPage:    200,
+		IncludeAll: true,
+		ProjectID:  &projectID,
 	}
 	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue != "" {
 		active, err := strconv.ParseBool(activeValue)
@@ -277,6 +278,7 @@ func (runtime *webRuntime) getPublicTrackProjectTasks(ctx echo.Context) error {
 		}
 		if active {
 			filter.Active = boolPtr(true)
+			filter.IncludeAll = false
 		}
 	}
 
@@ -352,6 +354,8 @@ func (runtime *webRuntime) listPublicTrackTasks(
 		if query.requireActive {
 			filter.Active = boolPtr(true)
 		}
+	} else if strings.EqualFold(activeValue, "both") {
+		filter.IncludeAll = true
 	} else {
 		active, err := strconv.ParseBool(activeValue)
 		if err != nil {

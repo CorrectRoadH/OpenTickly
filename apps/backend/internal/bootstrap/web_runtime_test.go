@@ -1083,7 +1083,7 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		app,
 		http.MethodPost,
 		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
-		map[string]any{"name": "Website Revamp"},
+		map[string]any{"name": "Website Revamp", "client_id": clientID},
 		tokenAuthorization,
 	)
 	if createProject.Code != http.StatusOK {
@@ -1249,7 +1249,7 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks",
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects/"+intToString(projectID)+"/tasks?active=false",
 		nil,
 		tokenAuthorization,
 	)

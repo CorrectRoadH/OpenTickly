@@ -249,7 +249,7 @@ func (service *Service) ListTasks(ctx context.Context, workspaceID int64, filter
 		return TaskPage{}, err
 	}
 	filter.Search = strings.TrimSpace(filter.Search)
-	if filter.Active == nil {
+	if filter.Active == nil && !filter.IncludeAll {
 		filter.Active = boolPtr(true)
 	}
 	filter.Page = normalizePage(filter.Page, 1)
