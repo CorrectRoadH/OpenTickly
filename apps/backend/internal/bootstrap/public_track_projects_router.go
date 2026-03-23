@@ -28,6 +28,41 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceProjectUsers(
 	return server.catalog.GetPublicTrackProjectUsers(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsers(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.catalog.PostPublicTrackProjectUser(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostWorkspaceProjectUsersPaginated(
+	ctx echo.Context,
+	workspaceId int,
+	params publictrackapi.PostWorkspaceProjectUsersPaginatedParams,
+) error {
+	_ = workspaceId
+	_ = params
+	return server.catalog.GetPublicTrackProjectUsers(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) DeleteWorkspaceProjectUsers(
+	ctx echo.Context,
+	workspaceId int,
+	projectUserId int,
+) error {
+	_ = workspaceId
+	_ = projectUserId
+	return server.catalog.DeletePublicTrackProjectUser(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PutWorkspaceProjectUsers(
+	ctx echo.Context,
+	workspaceId int,
+	projectUserId int,
+) error {
+	_ = workspaceId
+	_ = projectUserId
+	return server.catalog.PutPublicTrackProjectUser(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetProjects(
 	ctx echo.Context,
 	workspaceId int,
@@ -100,4 +135,14 @@ func (server *publicTrackOpenAPIServer) PostPinnedProject(
 	_ = workspaceId
 	_ = projectId
 	return server.catalog.PostPublicTrackPinnedProject(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetWorkspacesWorkspaceIdProjectsProjectIdStatistics(
+	ctx echo.Context,
+	workspaceId int,
+	projectId int,
+) error {
+	_ = workspaceId
+	_ = projectId
+	return server.tracking.GetPublicTrackProjectStatistics(ctx)
 }

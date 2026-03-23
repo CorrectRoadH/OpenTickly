@@ -1,0 +1,123 @@
+package bootstrap
+
+import (
+	"context"
+	"net/http"
+	"testing"
+
+	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+)
+
+func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "org-owner@example.com",
+		"fullname": "Org Owner",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	var registerBody struct {
+		User struct {
+			ID int64 `json:"id"`
+		} `json:"user"`
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	organizationID := *registerBody.CurrentOrganizationID
+
+	resetToken := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/me/reset_token",
+		nil,
+		basicAuthorization("org-owner@example.com", "secret1"),
+	)
+	if resetToken.Code != http.StatusOK {
+		t.Fatalf("expected reset token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())
+	}
+	var rotatedToken string
+	mustDecodeJSON(t, resetToken.Body.Bytes(), &rotatedToken)
+	tokenAuthorization := basicAuthorization(rotatedToken, "api_token")
+
+	createWorkspace := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/organizations/"+intToString(organizationID)+"/workspaces",
+		map[string]any{"name": "Ops Workspace"},
+		tokenAuthorization,
+	)
+	if createWorkspace.Code != http.StatusOK {
+		t.Fatalf("expected organization workspace create status 200, got %d body=%s", createWorkspace.Code, createWorkspace.Body.String())
+	}
+
+	var workspaceBody map[string]any
+	mustDecodeJSON(t, createWorkspace.Body.Bytes(), &workspaceBody)
+	workspaceID := int64(workspaceBody["id"].(float64))
+	if int64(workspaceBody["organization_id"].(float64)) != organizationID {
+		t.Fatalf("expected organization id %d, got %#v", organizationID, workspaceBody["organization_id"])
+	}
+
+	if _, err := database.Pool.Exec(
+		context.Background(),
+		"insert into catalog_groups (workspace_id, name, created_by) values ($1, $2, $3)",
+		workspaceID,
+		"Ops Group",
+		registerBody.User.ID,
+	); err != nil {
+		t.Fatalf("seed workspace group: %v", err)
+	}
+
+	organizationWorkspaceGroups := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/workspaces/"+intToString(workspaceID)+"/groups",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationWorkspaceGroups.Code != http.StatusOK {
+		t.Fatalf("expected organization workspace groups status 200, got %d body=%s", organizationWorkspaceGroups.Code, organizationWorkspaceGroups.Body.String())
+	}
+	var groupsBody []map[string]any
+	mustDecodeJSON(t, organizationWorkspaceGroups.Body.Bytes(), &groupsBody)
+	if len(groupsBody) != 1 || groupsBody[0]["name"] != "Ops Group" {
+		t.Fatalf("expected one organization workspace group, got %#v", groupsBody)
+	}
+
+	organizationWorkspaceUsers := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/organizations/"+intToString(organizationID)+"/workspaces/"+intToString(workspaceID)+"/workspace_users",
+		nil,
+		tokenAuthorization,
+	)
+	if organizationWorkspaceUsers.Code != http.StatusOK {
+		t.Fatalf("expected organization workspace users status 200, got %d body=%s", organizationWorkspaceUsers.Code, organizationWorkspaceUsers.Body.String())
+	}
+	var usersBody []map[string]any
+	mustDecodeJSON(t, organizationWorkspaceUsers.Body.Bytes(), &usersBody)
+	if len(usersBody) != 1 {
+		t.Fatalf("expected one organization workspace user, got %#v", usersBody)
+	}
+	if usersBody[0]["email"] != "org-owner@example.com" {
+		t.Fatalf("expected organization workspace user email org-owner@example.com, got %#v", usersBody[0]["email"])
+	}
+}
