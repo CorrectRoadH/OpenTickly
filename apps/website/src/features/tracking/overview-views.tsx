@@ -3,7 +3,6 @@ import { type ReactElement } from "react";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   formatClockDuration,
-  formatClockTime,
   formatEntryRange,
   formatGroupLabel,
   formatHours,
@@ -449,10 +448,12 @@ export function TimesheetView({
 function CalendarEventCard({
   entry,
   onEditEntry,
+  onContinueEntry,
   timezone,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   timezone: string;
 }) {
   const start = new Date(entry.start ?? entry.at ?? Date.now());
@@ -463,10 +464,8 @@ function CalendarEventCard({
   const isRunning = !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 
   return (
-    <button
-      aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-      className="absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] text-white transition hover:brightness-110"
-      onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
+    <div
+      className="absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] transition hover:brightness-110"
       style={{
         backgroundColor: colorToOverlay(color),
         backgroundImage: isRunning
@@ -475,16 +474,42 @@ function CalendarEventCard({
         top: `${top}px`,
         height: `${Math.min(height, CALENDAR_TOTAL_HEIGHT - top)}px`,
       }}
-      type="button"
     >
-      <p className="truncate font-semibold">
-        {entry.description?.trim() || entry.project_name || "Entry"}
-      </p>
-      <p className="mt-0.5 truncate" style={{ color }}>
-        {entry.project_name ?? "(No project)"}
-      </p>
-      <p className="mt-0.5 truncate text-white/72">{formatClockTime(start, timezone)}</p>
-    </button>
+      <button
+        aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
+        className="flex h-full w-full flex-col text-left text-white"
+        onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
+        type="button"
+      >
+        <p className="truncate font-semibold">
+          {entry.description?.trim() || entry.project_name || "Entry"}
+        </p>
+        <p className="mt-0.5 truncate" style={{ color }}>
+          {entry.project_name && entry.client_name
+            ? `${entry.project_name} • ${entry.client_name}`
+            : (entry.project_name ?? "(No project)")}
+        </p>
+        <div className="mt-0.5 flex items-center gap-1 text-white/72">
+          <span>{formatClockDuration(durationSeconds)}</span>
+          {entry.tags && entry.tags.length > 0 && <span className="truncate">{entry.tags[0]}</span>}
+        </div>
+      </button>
+      {isRunning && onContinueEntry && (
+        <button
+          aria-label="Continue time entry"
+          className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-white/60 transition hover:bg-white/10 hover:text-white"
+          onClick={() => onContinueEntry(entry)}
+          type="button"
+        >
+          <svg width="10" height="10" viewBox="0 0 16 16">
+            <path
+              fill="currentColor"
+              d="M13.5 7.13399C14.1667 7.51889 14.1667 8.48114 13.5 8.86604L4.5 14.0622C3.83333 14.4471 3 13.966 3 13.1962L3 2.80386C3 2.03406 3.83333 1.55293 4.5 1.93783L13.5 7.13399Z"
+            />
+          </svg>
+        </button>
+      )}
+    </div>
   );
 }
 

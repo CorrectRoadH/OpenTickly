@@ -271,7 +271,15 @@ function renderIcon(name: TrackingIconName): ReactElement {
     case "stop":
       return (
         <>
-          <rect x="3.8" y="3.8" width="8.4" height="8.4" rx="1.5" fill="currentColor" stroke="none" />
+          <rect
+            x="3.8"
+            y="3.8"
+            width="8.4"
+            height="8.4"
+            rx="1.5"
+            fill="currentColor"
+            stroke="none"
+          />
         </>
       );
     case "timesheet":

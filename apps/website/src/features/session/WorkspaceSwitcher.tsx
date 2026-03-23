@@ -266,7 +266,9 @@ function OrganizationOptionsPanel({
             <TrackingIcon className="size-8" name="overview" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[18px] font-semibold text-white">{organization?.name ?? ""}</h2>
+            <h2 className="truncate text-[18px] font-semibold text-white">
+              {organization?.name ?? ""}
+            </h2>
           </div>
         </div>
 
@@ -311,7 +313,12 @@ function OrganizationOptionsPanel({
           <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#a8a8a8]">
             Organizations
           </p>
-          <ul aria-labelledby={`${listboxId}-label`} className="mt-4 space-y-2" id={listboxId} role="listbox">
+          <ul
+            aria-labelledby={`${listboxId}-label`}
+            className="mt-4 space-y-2"
+            id={listboxId}
+            role="listbox"
+          >
             {organizations.map((entry) => {
               const selected = entry.isCurrent;
 

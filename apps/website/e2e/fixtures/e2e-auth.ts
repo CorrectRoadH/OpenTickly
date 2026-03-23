@@ -23,7 +23,7 @@ export async function registerE2eUser(
   await page.getByRole("button", { name: "Register" }).click();
 
   await page.waitForURL(/\/timer(?:\?.*)?$/);
-  const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
+  const _currentWorkspaceId = await resolveCurrentWorkspaceId(page);
   const session = await readSessionBootstrap(page);
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await expect(page.getByLabel("Organization")).toBeVisible();
@@ -52,7 +52,9 @@ export async function loginE2eUser(
   const session = await readSessionBootstrap(page);
 
   await expect(page.getByLabel("Organization")).toBeVisible();
-  await expect(page.getByLabel("Organization")).toContainText(resolveCurrentOrganizationName(session));
+  await expect(page.getByLabel("Organization")).toContainText(
+    resolveCurrentOrganizationName(session),
+  );
 
   return {
     currentWorkspaceId,
@@ -92,11 +94,14 @@ async function resolveCurrentWorkspaceId(page: Page): Promise<number> {
   return session.current_workspace_id ?? session.workspaces[0]?.id ?? 0;
 }
 
-function resolveCurrentOrganizationName(
-  session: WebSessionBootstrapDto,
-): string {
+function resolveCurrentOrganizationName(session: WebSessionBootstrapDto): string {
   const currentOrganizationId =
-    session.current_organization_id ?? session.workspaces.find((workspace) => workspace.id === session.current_workspace_id)?.organization_id;
+    session.current_organization_id ??
+    session.workspaces.find((workspace) => workspace.id === session.current_workspace_id)
+      ?.organization_id;
 
-  return session.organizations.find((organization) => organization.id === currentOrganizationId)?.name ?? "";
+  return (
+    session.organizations.find((organization) => organization.id === currentOrganizationId)?.name ??
+    ""
+  );
 }
