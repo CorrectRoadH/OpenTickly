@@ -50,6 +50,7 @@
 - 时间记录对象需要完整承载 `workspace_id`、`user_id`、`project_id`、`task_id`、`client_id`、`description`、`billable`、`start`、`stop`、`duration`、`created_with`、`tags` 等公开定义语义。
 - 必须完整支持创建、更新、删除、单条读取、批量读取、批量更新、按时间范围/用户/项目/任务/标签/描述过滤、since 增量同步、停止运行中时间记录等能力。
 - `GET /me/time_entries`、`GET /me/time_entries/current`、`GET /me/time_entries/{time_entry_id}` 属于当前账号的公开读模型；返回边界是 current user，可跨该账号可访问的多个 workspace，不得被当前选中的 workspace、organization 或 session home 隐式收窄。
+- `GET /me/time_entries/current` 当没有运行中的时间条目时返回 `200` + body `null`；这是正式产品语义，不是错误状态，客户端应据此处理而不是依赖 404 响应。
 - `workspace_id` 仍然是每条 time entry 的正式字段和写入归属；`POST /workspaces/{workspace_id}/time_entries`、`PATCH /workspaces/{workspace_id}/time_entries/{time_entry_id}/stop` 等 workspace 路由负责显式写入上下文，但不能反向定义 `/me` 读接口的资源边界。
 - running timer 必须作为正式产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
 - 时间语义必须按引用的公开定义实现 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
