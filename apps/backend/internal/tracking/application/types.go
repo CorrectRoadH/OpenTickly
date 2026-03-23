@@ -45,6 +45,11 @@ type TimeEntryView struct {
 	ProjectActive *bool
 }
 
+type ProjectStatisticsView struct {
+	EarliestTimeEntry *time.Time
+	LatestTimeEntry   *time.Time
+}
+
 type ListTimeEntriesFilter struct {
 	UserID     int64
 	Since      *time.Time
@@ -275,6 +280,7 @@ type Store interface {
 	ListTimelineEvents(context.Context, int64, int, int) ([]TimelineEventView, error)
 	ReplaceTimelineEvents(context.Context, int64, []TimelineEventView) error
 	DeleteTimelineEvents(context.Context, int64) error
+	GetProjectStatistics(context.Context, int64, int64) (ProjectStatisticsView, error)
 }
 
 type CatalogQueries interface {

@@ -68,6 +68,20 @@ type ProjectUserView struct {
 	CreatedAt   time.Time
 }
 
+type CreateProjectUserCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	UserID      int64
+	Manager     bool
+}
+
+type UpdateProjectUserCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	UserID      int64
+	Manager     bool
+}
+
 type ProjectCountView struct {
 	ProjectID int64
 	Count     int
@@ -244,6 +258,10 @@ type Store interface {
 	UpdateTag(context.Context, TagView) error
 	DeleteTag(context.Context, int64, int64) error
 	ListProjectUsers(context.Context, int64, ListProjectUsersFilter) ([]ProjectUserView, error)
+	GetProjectUser(context.Context, int64, int64, int64) (ProjectUserView, bool, error)
+	CreateProjectUser(context.Context, CreateProjectUserCommand) (ProjectUserView, error)
+	UpdateProjectUser(context.Context, ProjectUserView) error
+	DeleteProjectUser(context.Context, int64, int64, int64) error
 	ListProjects(context.Context, int64, ListProjectsFilter) ([]ProjectView, error)
 	GetProject(context.Context, int64, int64) (ProjectView, bool, error)
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)

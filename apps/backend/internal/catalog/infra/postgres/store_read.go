@@ -251,6 +251,33 @@ func (store *Store) ListProjectUsers(
 	return users, rows.Err()
 }
 
+func (store *Store) GetProjectUser(
+	ctx context.Context,
+	workspaceID int64,
+	projectID int64,
+	userID int64,
+) (catalogapplication.ProjectUserView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select pu.project_id, pu.user_id, pu.role, p.workspace_id, pu.created_at
+		from catalog_project_users pu
+		join catalog_projects p on p.id = pu.project_id
+		where p.workspace_id = $1 and pu.project_id = $2 and pu.user_id = $3`,
+		workspaceID,
+		projectID,
+		userID,
+	)
+
+	var view catalogapplication.ProjectUserView
+	if err := row.Scan(&view.ProjectID, &view.UserID, &view.Role, &view.WorkspaceID, &view.CreatedAt); err != nil {
+		if notFound(err) {
+			return catalogapplication.ProjectUserView{}, false, nil
+		}
+		return catalogapplication.ProjectUserView{}, false, writeCatalogError("get catalog project user", err)
+	}
+	return view, true, nil
+}
+
 func (store *Store) ListProjects(
 	ctx context.Context,
 	workspaceID int64,

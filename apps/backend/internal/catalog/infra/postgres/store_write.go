@@ -223,6 +223,63 @@ func (store *Store) DeleteGroup(ctx context.Context, workspaceID int64, groupID 
 	return nil
 }
 
+func (store *Store) CreateProjectUser(
+	ctx context.Context,
+	command catalogapplication.CreateProjectUserCommand,
+) (catalogapplication.ProjectUserView, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`insert into catalog_project_users (project_id, user_id, role)
+		values ($1, $2, $3)
+		returning project_id, user_id, role, created_at`,
+		command.ProjectID,
+		command.UserID,
+		lo.Ternary(command.Manager, "admin", "member"),
+	)
+
+	var view catalogapplication.ProjectUserView
+	view.WorkspaceID = command.WorkspaceID
+	if err := row.Scan(&view.ProjectID, &view.UserID, &view.Role, &view.CreatedAt); err != nil {
+		return catalogapplication.ProjectUserView{}, writeCatalogError("create catalog project user", err)
+	}
+	return view, nil
+}
+
+func (store *Store) UpdateProjectUser(ctx context.Context, view catalogapplication.ProjectUserView) error {
+	_, err := store.pool.Exec(
+		ctx,
+		`update catalog_project_users
+		set role = $3
+		where project_id = $1 and user_id = $2`,
+		view.ProjectID,
+		view.UserID,
+		view.Role,
+	)
+	if err != nil {
+		return writeCatalogError("update catalog project user", err)
+	}
+	return nil
+}
+
+func (store *Store) DeleteProjectUser(ctx context.Context, workspaceID int64, projectID int64, userID int64) error {
+	_, err := store.pool.Exec(
+		ctx,
+		`delete from catalog_project_users pu
+		using catalog_projects p
+		where pu.project_id = p.id
+		  and p.workspace_id = $1
+		  and pu.project_id = $2
+		  and pu.user_id = $3`,
+		workspaceID,
+		projectID,
+		userID,
+	)
+	if err != nil {
+		return writeCatalogError("delete catalog project user", err)
+	}
+	return nil
+}
+
 func (store *Store) CreateTag(
 	ctx context.Context,
 	command catalogapplication.CreateTagCommand,

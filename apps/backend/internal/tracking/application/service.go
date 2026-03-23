@@ -92,6 +92,20 @@ func (service *Service) ListTimeEntries(ctx context.Context, workspaceID int64, 
 	return service.store.ListTimeEntries(ctx, workspaceID, filter)
 }
 
+func (service *Service) GetProjectStatistics(
+	ctx context.Context,
+	workspaceID int64,
+	projectID int64,
+) (ProjectStatisticsView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return ProjectStatisticsView{}, err
+	}
+	if _, err := service.catalog.GetProject(ctx, workspaceID, projectID); err != nil {
+		return ProjectStatisticsView{}, err
+	}
+	return service.store.GetProjectStatistics(ctx, workspaceID, projectID)
+}
+
 func (service *Service) GetTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (TimeEntryView, error) {
 	entry, ok, err := service.store.GetTimeEntry(ctx, workspaceID, userID, timeEntryID)
 	if err != nil {

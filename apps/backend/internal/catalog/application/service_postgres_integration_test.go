@@ -424,6 +424,58 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 		t.Fatalf("expected one user count, got %#v", userCounts)
 	}
 
+	secondUserID := seedCatalogIdentityUser(t, ctx, database, 202, "teammate@example.com", "Teammate User")
+
+	createdProjectUser, err := service.CreateProjectUser(ctx, catalogapplication.CreateProjectUserCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   project.ID,
+		UserID:      secondUserID,
+		Manager:     true,
+	})
+	if err != nil {
+		t.Fatalf("create project user: %v", err)
+	}
+	if createdProjectUser.Role != "admin" {
+		t.Fatalf("expected manager project user role admin, got %#v", createdProjectUser)
+	}
+
+	updatedProjectUser, err := service.UpdateProjectUser(ctx, catalogapplication.UpdateProjectUserCommand{
+		WorkspaceID: workspaceID,
+		ProjectID:   project.ID,
+		UserID:      secondUserID,
+		Manager:     false,
+	})
+	if err != nil {
+		t.Fatalf("update project user: %v", err)
+	}
+	if updatedProjectUser.Role != "member" {
+		t.Fatalf("expected non-manager project user role member, got %#v", updatedProjectUser)
+	}
+
+	projectUsersAfterMutation, err := service.ListProjectUsers(ctx, workspaceID, catalogapplication.ListProjectUsersFilter{
+		ProjectIDs: []int64{project.ID},
+	})
+	if err != nil {
+		t.Fatalf("list project users after mutation: %v", err)
+	}
+	if len(projectUsersAfterMutation) != 2 {
+		t.Fatalf("expected two project users after mutation, got %#v", projectUsersAfterMutation)
+	}
+
+	if err := service.DeleteProjectUser(ctx, workspaceID, project.ID, secondUserID); err != nil {
+		t.Fatalf("delete project user: %v", err)
+	}
+
+	projectUsersAfterDelete, err := service.ListProjectUsers(ctx, workspaceID, catalogapplication.ListProjectUsersFilter{
+		ProjectIDs: []int64{project.ID},
+	})
+	if err != nil {
+		t.Fatalf("list project users after delete: %v", err)
+	}
+	if len(projectUsersAfterDelete) != 1 {
+		t.Fatalf("expected one project user after delete, got %#v", projectUsersAfterDelete)
+	}
+
 	if err := service.DeleteProject(ctx, workspaceID, project.ID); err != nil {
 		t.Fatalf("delete project: %v", err)
 	}
@@ -555,12 +607,27 @@ func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pg
 	}
 
 	userID = 101
+	seedCatalogIdentityUser(t, ctx, database, userID, "catalog@example.com", "Catalog User")
+
+	return int64(workspace.ID()), userID
+}
+
+func seedCatalogIdentityUser(
+	t *testing.T,
+	ctx context.Context,
+	database *pgtest.Database,
+	userID int64,
+	email string,
+	fullName string,
+) int64 {
+	t.Helper()
+
 	user, err := identitydomain.RegisterUser(identitydomain.RegisterParams{
 		ID:       userID,
-		Email:    "catalog@example.com",
-		FullName: "Catalog User",
+		Email:    email,
+		FullName: fullName,
 		Password: "secret1",
-		APIToken: "catalog-api-token",
+		APIToken: email + "-token",
 	})
 	if err != nil {
 		t.Fatalf("register catalog user: %v", err)
@@ -568,6 +635,5 @@ func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pg
 	if err := identitypostgres.NewUserRepository(database.Pool).Save(ctx, user); err != nil {
 		t.Fatalf("save catalog user: %v", err)
 	}
-
-	return int64(workspace.ID()), userID
+	return user.ID()
 }

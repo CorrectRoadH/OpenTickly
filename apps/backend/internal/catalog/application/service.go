@@ -12,13 +12,14 @@ import (
 )
 
 var (
-	ErrStoreRequired    = errors.New("catalog store is required")
-	ErrClientNotFound   = errors.New("catalog client not found")
-	ErrGroupNotFound    = errors.New("catalog group not found")
-	ErrProjectNotFound  = errors.New("catalog project not found")
-	ErrTagNotFound      = errors.New("catalog tag not found")
-	ErrTaskNotFound     = errors.New("catalog task not found")
-	ErrInvalidWorkspace = errors.New("catalog workspace id must be positive")
+	ErrStoreRequired       = errors.New("catalog store is required")
+	ErrClientNotFound      = errors.New("catalog client not found")
+	ErrGroupNotFound       = errors.New("catalog group not found")
+	ErrProjectNotFound     = errors.New("catalog project not found")
+	ErrProjectUserNotFound = errors.New("catalog project user not found")
+	ErrTagNotFound         = errors.New("catalog tag not found")
+	ErrTaskNotFound        = errors.New("catalog task not found")
+	ErrInvalidWorkspace    = errors.New("catalog workspace id must be positive")
 )
 
 type Service struct {
@@ -278,6 +279,67 @@ func (service *Service) ListProjectUsers(
 	return service.store.ListProjectUsers(ctx, workspaceID, filter)
 }
 
+func (service *Service) CreateProjectUser(ctx context.Context, command CreateProjectUserCommand) (ProjectUserView, error) {
+	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
+		return ProjectUserView{}, err
+	}
+	if _, ok, err := service.store.GetProject(ctx, command.WorkspaceID, command.ProjectID); err != nil {
+		return ProjectUserView{}, err
+	} else if !ok {
+		return ProjectUserView{}, ErrProjectNotFound
+	}
+	return service.store.CreateProjectUser(ctx, command)
+}
+
+func (service *Service) UpdateProjectUser(ctx context.Context, command UpdateProjectUserCommand) (ProjectUserView, error) {
+	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
+		return ProjectUserView{}, err
+	}
+	if _, ok, err := service.store.GetProject(ctx, command.WorkspaceID, command.ProjectID); err != nil {
+		return ProjectUserView{}, err
+	} else if !ok {
+		return ProjectUserView{}, ErrProjectNotFound
+	}
+
+	current, ok, err := service.store.GetProjectUser(ctx, command.WorkspaceID, command.ProjectID, command.UserID)
+	if err != nil {
+		return ProjectUserView{}, err
+	}
+	if !ok {
+		return ProjectUserView{}, ErrProjectUserNotFound
+	}
+
+	current.Role = projectUserRole(command.Manager)
+	if err := service.store.UpdateProjectUser(ctx, current); err != nil {
+		return ProjectUserView{}, err
+	}
+	updated, ok, err := service.store.GetProjectUser(ctx, command.WorkspaceID, command.ProjectID, command.UserID)
+	if err != nil {
+		return ProjectUserView{}, err
+	}
+	if !ok {
+		return ProjectUserView{}, ErrProjectUserNotFound
+	}
+	return updated, nil
+}
+
+func (service *Service) DeleteProjectUser(ctx context.Context, workspaceID int64, projectID int64, userID int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+		return err
+	} else if !ok {
+		return ErrProjectNotFound
+	}
+	if _, ok, err := service.store.GetProjectUser(ctx, workspaceID, projectID, userID); err != nil {
+		return err
+	} else if !ok {
+		return ErrProjectUserNotFound
+	}
+	return service.store.DeleteProjectUser(ctx, workspaceID, projectID, userID)
+}
+
 func (service *Service) ListProjects(ctx context.Context, workspaceID int64, filter ListProjectsFilter) ([]ProjectView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err
@@ -512,6 +574,13 @@ func normalizeTaskSortField(field TaskSortField) TaskSortField {
 		return field
 	}
 	return TaskSortFieldName
+}
+
+func projectUserRole(manager bool) string {
+	if manager {
+		return "admin"
+	}
+	return "member"
 }
 
 func normalizeSortOrder(order SortOrder) SortOrder {
