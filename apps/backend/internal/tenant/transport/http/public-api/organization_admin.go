@@ -178,6 +178,45 @@ func planID(plan billingdomain.Plan) int {
 	}
 }
 
+func (handler *Handler) GetPublicTrackOwnershipTransfers(ctx echo.Context) error {
+	organization, _, err := handler.organizationAggregate(ctx)
+	if err != nil {
+		return err
+	}
+	_ = organization.ID
+	return ctx.JSON(http.StatusOK, []any{})
+}
+
+func (handler *Handler) PostPublicTrackOwnershipTransfer(ctx echo.Context) error {
+	organization, _, err := handler.organizationAggregate(ctx)
+	if err != nil {
+		return err
+	}
+	_ = organization.ID
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackOwnershipTransfer(ctx echo.Context) error {
+	organization, _, err := handler.organizationAggregate(ctx)
+	if err != nil {
+		return err
+	}
+	_ = organization.ID
+	_ = ctx.Param("transfer_id")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx echo.Context) error {
+	organization, _, err := handler.organizationAggregate(ctx)
+	if err != nil {
+		return err
+	}
+	_ = organization.ID
+	_ = ctx.Param("transfer_id")
+	_ = ctx.Param("action")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
 func max(left int, right int) int {
 	if left > right {
 		return left

@@ -269,6 +269,16 @@ func (service *Service) DeleteTag(ctx context.Context, workspaceID int64, tagID 
 	return service.store.DeleteTag(ctx, workspaceID, tagID)
 }
 
+func (service *Service) DeleteTags(ctx context.Context, workspaceID int64, tagIDs []int64) error {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return err
+	}
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	return service.store.DeleteTags(ctx, workspaceID, tagIDs)
+}
+
 func (service *Service) ListProjectUsers(
 	ctx context.Context,
 	workspaceID int64,
@@ -650,4 +660,95 @@ func (service *Service) loadGroup(ctx context.Context, workspaceID int64, groupI
 		return GroupView{}, ErrGroupNotFound
 	}
 	return group, nil
+}
+
+func (service *Service) PatchProjects(
+	ctx context.Context,
+	workspaceID int64,
+	projectIDs []int64,
+	commands []PatchProjectCommand,
+) ([]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if len(projectIDs) == 0 {
+		return nil, nil
+	}
+
+	// Load all projects
+	for _, projectID := range projectIDs {
+		if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, ErrProjectNotFound
+		}
+	}
+
+	if err := service.store.PatchProjects(ctx, workspaceID, projectIDs, commands); err != nil {
+		return nil, err
+	}
+	return projectIDs, nil
+}
+
+func (service *Service) PatchTasks(
+	ctx context.Context,
+	workspaceID int64,
+	projectID int64,
+	taskIDs []int64,
+	commands []PatchTaskCommand,
+) ([]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, ErrProjectNotFound
+	}
+	if len(taskIDs) == 0 {
+		return nil, nil
+	}
+
+	for _, taskID := range taskIDs {
+		task, ok, err := service.store.GetTask(ctx, workspaceID, taskID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok || task.ProjectID == nil || *task.ProjectID != projectID {
+			return nil, ErrTaskNotFound
+		}
+	}
+
+	if err := service.store.PatchTasks(ctx, workspaceID, projectID, taskIDs, commands); err != nil {
+		return nil, err
+	}
+	return taskIDs, nil
+}
+
+func (service *Service) PatchProjectUsers(
+	ctx context.Context,
+	workspaceID int64,
+	projectUserIDs [][2]int64,
+	commands []PatchProjectUserCommand,
+) ([][2]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	if len(projectUserIDs) == 0 {
+		return nil, nil
+	}
+
+	for _, pair := range projectUserIDs {
+		projectID, userID := pair[0], pair[1]
+		if _, ok, err := service.store.GetProjectUser(ctx, workspaceID, projectID, userID); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, ErrProjectUserNotFound
+		}
+	}
+
+	if err := service.store.PatchProjectUsers(ctx, workspaceID, projectUserIDs, commands); err != nil {
+		return nil, err
+	}
+	return projectUserIDs, nil
 }

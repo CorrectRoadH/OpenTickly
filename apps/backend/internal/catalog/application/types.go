@@ -256,6 +256,31 @@ type UpdateTaskCommand struct {
 	Active      *bool
 }
 
+type PatchProjectCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	Name        *string
+	ClientID    *int64
+	Active      *bool
+	Template    *bool
+	Recurring   *bool
+}
+
+type PatchTaskCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	TaskID      int64
+	Name        *string
+	Active      *bool
+}
+
+type PatchProjectUserCommand struct {
+	WorkspaceID int64
+	ProjectID   int64
+	UserID      int64
+	Role        string
+}
+
 type Store interface {
 	ListClients(context.Context, int64, ListClientsFilter) ([]ClientView, error)
 	ListClientsByIDs(context.Context, int64, []int64) ([]ClientView, error)
@@ -275,6 +300,7 @@ type Store interface {
 	CreateTag(context.Context, CreateTagCommand) (TagView, error)
 	UpdateTag(context.Context, TagView) error
 	DeleteTag(context.Context, int64, int64) error
+	DeleteTags(context.Context, int64, []int64) error
 	ListProjectUsers(context.Context, int64, ListProjectUsersFilter) ([]ProjectUserView, error)
 	GetProjectUser(context.Context, int64, int64, int64) (ProjectUserView, bool, error)
 	CreateProjectUser(context.Context, CreateProjectUserCommand) (ProjectUserView, error)
@@ -301,4 +327,7 @@ type Store interface {
 	GetWorkspaceMemberByID(context.Context, int64, int64) (bool, error)
 	CreateRate(context.Context, CreateRateCommand) (RateView, error)
 	ListRatesByLevel(context.Context, int64, RateLevel, int64, RateType) ([]RateView, error)
+	PatchProjects(context.Context, int64, []int64, []PatchProjectCommand) error
+	PatchTasks(context.Context, int64, int64, []int64, []PatchTaskCommand) error
+	PatchProjectUsers(context.Context, int64, [][2]int64, []PatchProjectUserCommand) error
 }

@@ -125,6 +125,45 @@ func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "OK")
 }
 
+type tagPatchInput struct {
+	TagID *int `json:"tag_id"`
+	Op    string `json:"op"`
+}
+
+func (handler *Handler) PatchPublicTrackTags(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var patches []tagPatchInput
+	if err := bindPublicTrackJSON(ctx, &patches, false); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	tagIDs := make([]int64, 0, len(patches))
+	for _, patch := range patches {
+		if patch.TagID != nil && patch.Op == "delete" {
+			tagIDs = append(tagIDs, int64(*patch.TagID))
+		}
+	}
+
+	if err := handler.catalog.DeleteTags(ctx.Request().Context(), workspaceID, tagIDs); err != nil {
+		if errors.Is(err, catalogapplication.ErrTagNotFound) {
+			return echo.NewHTTPError(http.StatusBadRequest, "Some tag IDs do not belong to workspace")
+		}
+		return writePublicTrackCatalogError(ctx, err)
+	}
+
+	return ctx.JSON(http.StatusOK, "OK")
+}
+
 func tagViewToAPI(view catalogapplication.TagView) publictrackapi.ModelsTag {
 	return publictrackapi.ModelsTag{
 		At:          timePointer(view.CreatedAt),

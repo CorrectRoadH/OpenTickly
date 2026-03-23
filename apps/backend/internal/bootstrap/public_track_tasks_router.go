@@ -101,3 +101,15 @@ func (server *publicTrackOpenAPIServer) GetWorkspaceTasksData(
 	_ = params
 	return server.catalog.GetPublicTrackWorkspaceTasksData(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) PatchWorkspaceProjectTasks(
+	ctx echo.Context,
+	workspaceId int,
+	projectId int,
+	taskIds string,
+) error {
+	_ = workspaceId
+	_ = projectId
+	_ = taskIds
+	return server.catalog.PatchWorkspaceProjectTasks(ctx)
+}

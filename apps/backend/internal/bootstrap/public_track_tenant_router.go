@@ -136,3 +136,32 @@ func (server *publicTrackOpenAPIServer) GetOrganizationWorkspacesWorkspaceusers(
 	_ = params
 	return server.tenant.GetPublicTrackOrganizationWorkspaceUsers(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) GetOwnershipTransfers(ctx echo.Context, organizationId int, params publictrackapi.GetOwnershipTransfersParams) error {
+	_ = organizationId
+	_ = params
+	return server.tenant.GetPublicTrackOwnershipTransfers(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostOwnershipTransfer(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.tenant.PostPublicTrackOwnershipTransfer(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetOwnershipTransfer(ctx echo.Context, organizationId int, transferId int) error {
+	_ = organizationId
+	_ = transferId
+	return server.tenant.GetPublicTrackOwnershipTransfer(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostOwnershipTransferActions(
+	ctx echo.Context,
+	organizationId int,
+	transferId int,
+	action publictrackapi.PostOwnershipTransferActionsParamsAction,
+) error {
+	_ = organizationId
+	_ = transferId
+	_ = action
+	return server.tenant.PostPublicTrackOwnershipTransferActions(ctx)
+}

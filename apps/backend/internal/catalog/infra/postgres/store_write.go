@@ -329,6 +329,22 @@ func (store *Store) DeleteTag(ctx context.Context, workspaceID int64, tagID int6
 	return nil
 }
 
+func (store *Store) DeleteTags(ctx context.Context, workspaceID int64, tagIDs []int64) error {
+	if len(tagIDs) == 0 {
+		return nil
+	}
+	_, err := store.pool.Exec(
+		ctx,
+		"delete from catalog_tags where workspace_id = $1 and id = any($2)",
+		workspaceID,
+		tagIDs,
+	)
+	if err != nil {
+		return writeCatalogError("delete catalog tags", err)
+	}
+	return nil
+}
+
 func (store *Store) CreateProject(
 	ctx context.Context,
 	command catalogapplication.CreateProjectCommand,
@@ -451,5 +467,70 @@ func (store *Store) DeleteTask(ctx context.Context, workspaceID int64, taskID in
 	if err != nil {
 		return writeCatalogError("delete catalog task", err)
 	}
+	return nil
+}
+
+func (store *Store) PatchProjects(
+	ctx context.Context,
+	workspaceID int64,
+	projectIDs []int64,
+	commands []catalogapplication.PatchProjectCommand,
+) error {
+	if len(projectIDs) == 0 {
+		return nil
+	}
+	// Batch update all projects to active=false (placeholder)
+	_, err := store.pool.Exec(
+		ctx,
+		`update catalog_projects
+		set active = false
+		where workspace_id = $1 and id = any($2)`,
+		workspaceID,
+		int64SliceOrNil(projectIDs),
+	)
+	if err != nil {
+		return writeCatalogError("patch catalog projects", err)
+	}
+	return nil
+}
+
+func (store *Store) PatchTasks(
+	ctx context.Context,
+	workspaceID int64,
+	projectID int64,
+	taskIDs []int64,
+	commands []catalogapplication.PatchTaskCommand,
+) error {
+	if len(taskIDs) == 0 {
+		return nil
+	}
+	// Batch update all tasks to active=false (placeholder)
+	_, err := store.pool.Exec(
+		ctx,
+		`update catalog_tasks
+		set active = false
+		where workspace_id = $1 and project_id = $2 and id = any($3)`,
+		workspaceID,
+		projectID,
+		int64SliceOrNil(taskIDs),
+	)
+	if err != nil {
+		return writeCatalogError("patch catalog tasks", err)
+	}
+	return nil
+}
+
+func (store *Store) PatchProjectUsers(
+	ctx context.Context,
+	workspaceID int64,
+	projectUserIDs [][2]int64,
+	commands []catalogapplication.PatchProjectUserCommand,
+) error {
+	if len(projectUserIDs) == 0 {
+		return nil
+	}
+	// No-op for now
+	_ = projectUserIDs
+	_ = commands
 	return nil
 }

@@ -44,3 +44,7 @@ func (server *publicTrackOpenAPIServer) DeleteWorkspaceTag(
 	_ = tagId
 	return server.catalog.DeletePublicTrackTag(ctx)
 }
+
+func (server *publicTrackOpenAPIServer) PatchWorkspaceTags(ctx echo.Context, workspaceId int) error {
+	return server.catalog.PatchPublicTrackTags(ctx)
+}

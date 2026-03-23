@@ -13,6 +13,7 @@ import (
 
 type ScopeAuthorizer interface {
 	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
+	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 }
 
 func parsePathID(ctx echo.Context, key string) (int64, bool) {
@@ -57,4 +58,252 @@ func writeBillingError(err error) error {
 		return nil
 	}
 	return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+}
+
+// Stubs for billing-related routes.
+
+func (handler *Handler) GetPublicTrackOrganizationsPaymentsRecords(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	_ = ctx.Param("organization_id")
+	return ctx.JSON(http.StatusOK, []any{})
+}
+
+func (handler *Handler) GetPublicTrackOrganizationInvoice(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	_ = ctx.Param("invoice_uid")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackOrganizationInvoiceSummary(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackOrganizationPurchaseOrderPdf(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	_ = ctx.Param("purchase_order_uid")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) DeletePublicTrackOrganizationSubscription(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscription(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PutPublicTrackOrganizationSubscription(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscriptionCancellationFeedback(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackOrganizationSubscriptionPaymentFailed(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscriptionDiscountRequest(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscriptionCreateTrial(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscriptionUpgradeRequest(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	_ = ctx.Param("feature_id")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) DeletePublicTrackOrganizationSubscriptionUsageBasedDiscount(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackOrganizationSubscriptionUsageBasedDiscount(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) DeletePublicTrackOrganizationTrial(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) CreatePublicTrackSetupIntent(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackUnifiedCustomer(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackUnifiedCustomer(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PutPublicTrackUnifiedCustomer(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) DeletePublicTrackPromotionCode(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) PostPublicTrackPromotionCode(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+}
+
+func (handler *Handler) GetPublicTrackFeatureUpsellMulti(ctx echo.Context) error {
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, []any{})
 }
