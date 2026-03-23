@@ -1,43 +1,70 @@
-import { type ReactElement } from "react";
+import { type ReactElement, type ReactNode, useMemo } from "react";
+
+import {
+  formatClockDuration,
+  formatDateKey,
+  formatHours,
+  getCurrentWeekDays,
+} from "../../features/tracking/overview-data.ts";
+import type {
+  DashboardAllActivities,
+  GithubComTogglTogglApiInternalModelsProject,
+  ModelsMostActiveUser,
+} from "../../shared/api/generated/public-track/types.gen.ts";
+import {
+  useProjectsQuery,
+  useWorkspaceAllActivitiesQuery,
+  useWorkspaceMostActiveQuery,
+  useWorkspaceTopActivityQuery,
+} from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
+  const workspaceId = session.currentWorkspace.id;
+  const organizationName = session.currentOrganization?.name ?? "No organization";
   const memberCount = session.currentOrganization?.userCount ?? 1;
-  const trackedProjects = [
-    { color: "#ff9a8a", duration: "2:44:50", name: "波粒时间" },
-    { color: "#88dd83", duration: "0:38:28", name: "处理事务" },
-    { color: "#edd86e", duration: "1:21:18", name: "吃饭/散步/放松" },
-    { color: "#f4c76a", duration: "0:27:58", name: "记录思考 / rethink" },
-    { color: "#ffb96d", duration: "1:30:52", name: "学习与拆解 Agent" },
-  ];
-  const weekBars = [
-    { day: "Mon 03-23", hours: 6.72 },
-    { day: "Tue 03-24", hours: 0 },
-    { day: "Wed 03-25", hours: 0 },
-    { day: "Thu 03-26", hours: 0 },
-    { day: "Fri 03-27", hours: 0 },
-    { day: "Sat 03-28", hours: 0 },
-    { day: "Sun 03-29", hours: 0 },
-  ];
+  const weekDays = useMemo(() => getCurrentWeekDays(), []);
+  const timezone = session.user.timezone ?? "UTC";
+  const projectsQuery = useProjectsQuery(workspaceId, "all");
+  const allActivitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
+  const topActivityQuery = useWorkspaceTopActivityQuery(workspaceId);
+  const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
+  const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const weekSummary = useMemo(
+    () => buildWeekSummary(allActivitiesQuery.data ?? [], weekDays, timezone),
+    [allActivitiesQuery.data, timezone, weekDays],
+  );
+  const topProjects = useMemo(
+    () => buildTopProjects(topActivityQuery.data ?? [], projects),
+    [projects, topActivityQuery.data],
+  );
+  const teamActivity = useMemo(
+    () => buildTeamActivity(mostActiveQuery.data ?? [], memberCount),
+    [memberCount, mostActiveQuery.data],
+  );
+  const projectCoverage = useMemo(
+    () => buildProjectCoverage(topActivityQuery.data ?? []),
+    [topActivityQuery.data],
+  );
 
   return (
     <div
-      className="relative min-h-[728px] overflow-hidden bg-[#161616] px-3 py-4 text-white md:px-4"
+      className="relative overflow-hidden bg-[#161616] px-3 py-4 text-white md:px-4 lg:px-5"
       data-testid="workspace-overview-page"
     >
       <OverviewBackdrop />
 
-      <div className="relative z-10 w-full max-w-[1024px] space-y-[10px]">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="relative z-10 w-full space-y-3">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-1">
             <h1 className="text-[24px] font-semibold leading-[32px] text-white">Admin Overview</h1>
             <p className="text-[12px] leading-[16px] text-[#a4a4a4]">
               Set up your organization and keep your team on track
             </p>
           </div>
-          <div className="flex flex-col items-start gap-1 text-[10px] uppercase tracking-[0.04em] text-[#bfbfbf] md:items-end">
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col items-start gap-1 text-[10px] uppercase tracking-[0.04em] text-[#bfbfbf] lg:items-end">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="normal-case tracking-normal text-[#d6d6d6]">Set as default view</span>
               <div className="flex h-[14px] w-[28px] items-center rounded-full bg-[#2b2b2b] px-[2px]">
                 <div className="size-[10px] rounded-full bg-white" />
@@ -52,42 +79,22 @@ export function WorkspaceOverviewPage(): ReactElement {
           </div>
         </div>
 
-        <div className="grid gap-[10px] lg:grid-cols-[minmax(0,430px)_214px]">
-          <OverviewSurface className="bg-[#42213f] px-4 py-[13px]">
-            <div className="flex items-center gap-4">
-              <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-medium leading-[16px] text-white">
-                  Unlock your admin overview
-                </p>
-                <p className="mt-1 text-[11px] leading-[16px] text-[#cba3c7]">
-                  Finish the steps below to see project and team activity.
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[11px] font-medium text-white">25%</span>
-                <div className="h-[3px] w-[64px] overflow-hidden rounded-full bg-[#5f3a5b]">
-                  <div className="h-full w-1/4 rounded-full bg-[#d686cc]" />
-                </div>
-                <span className="text-[#cba3c7]">⌄</span>
-              </div>
-            </div>
-          </OverviewSurface>
-
+        <div className="grid gap-3 xl:grid-cols-3">
           <OverviewSurface className="px-3 py-3">
             <div className="flex h-full flex-col gap-3">
-              <div className="flex items-start justify-between">
-                <p className="text-[40px] font-semibold leading-[1] text-white">{memberCount}</p>
-                <div className="flex items-center gap-[-2px]">
-                  {["#f9d7f4", "#f9e7cb", "#fff0d4", "#e57bd9", "#fbe5fb"].map((color, index) => (
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-[40px] font-semibold leading-none text-white">{memberCount}</p>
+                <div className="flex items-center">
+                  {teamActivity.activeMembers.slice(0, 5).map((member, index) => (
                     <span
-                      className="relative inline-flex size-[16px] items-center justify-center rounded-full border border-[#1c1c1c] text-[8px] font-semibold text-black"
-                      key={index}
+                      className="inline-flex size-[16px] items-center justify-center rounded-full border border-[#1c1c1c] text-[8px] font-semibold text-black"
+                      key={`${member.user_id ?? index}`}
                       style={{
-                        backgroundColor: color,
+                        backgroundColor: memberTint(index),
                         marginLeft: index === 0 ? 0 : "-4px",
                       }}
                     >
-                      {index === 3 ? "👥" : "•"}
+                      {initialsForMember(member)}
                     </span>
                   ))}
                 </div>
@@ -97,8 +104,8 @@ export function WorkspaceOverviewPage(): ReactElement {
                   Members in your organization
                 </p>
                 <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
-                  Your insights are incomplete if you're tracking alone. Invite your team to see
-                  the full picture.
+                  {organizationName} currently has {memberCount} members in the active workspace
+                  context.
                 </p>
               </div>
               <div className="mt-auto space-y-2">
@@ -119,48 +126,84 @@ export function WorkspaceOverviewPage(): ReactElement {
           </OverviewSurface>
         </div>
 
-        <div className="grid gap-[10px] lg:grid-cols-[minmax(0,430px)_214px]">
-          <OverviewSurface className="px-3 py-3">
+        <div className="grid gap-3 xl:grid-cols-3">
+          <OverviewSurface className="px-3 py-3 xl:col-span-2">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[14px] font-medium leading-[20px] text-white">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-[16px] font-semibold leading-[24px] text-white md:text-[18px]">
                   This week summary
                 </h2>
                 <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
                   View reports
                 </span>
               </div>
-              <div className="grid h-[180px] grid-cols-7 gap-4 border-t border-[#2a2a2a] pt-3">
-                {weekBars.map((bar) => (
-                  <div className="flex h-full flex-col justify-between" key={bar.day}>
-                    <div className="relative flex-1">
+              <div className="border-t border-[#343434] pt-5">
+                <div className="overflow-x-auto">
+                  <div className="grid min-w-[760px] grid-cols-[58px_minmax(0,1fr)] gap-4">
+                    <div className="relative h-[360px] md:h-[420px]">
                       <div className="absolute inset-0 flex flex-col justify-between">
-                        {["7h 30", "6h", "4h 30", "3h", "1h 30", "0h"].map((label) => (
-                          <span className="border-b border-dashed border-[#242424] pb-1 text-[9px] text-[#666]" key={label}>
-                            {label}
+                        {weekSummary.axisLabels.map((axis) => (
+                          <span
+                            className="pr-2 text-[18px] leading-none font-medium text-[#8f8f8f]"
+                            key={axis}
+                          >
+                            {axis}
                           </span>
                         ))}
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 mx-auto h-full w-[26px] rounded-t-[2px] bg-transparent">
-                        {bar.hours > 0 ? (
-                          <div
-                            className="absolute bottom-0 left-0 right-0 rounded-t-[2px] bg-[#cf58c4]"
-                            style={{ height: `${(bar.hours / 7.5) * 100}%` }}
-                          />
-                        ) : null}
-                      </div>
-                      {bar.hours > 0 ? (
-                        <span className="absolute left-1/2 top-[18px] -translate-x-1/2 text-[9px] text-[#cfcfcf]">
-                          6:43:26
-                        </span>
-                      ) : null}
                     </div>
-                    <span className="pt-2 text-center text-[9px] text-[#838383]">{bar.day}</span>
+
+                    <div className="space-y-3">
+                      <div className="relative h-[360px] md:h-[420px]">
+                        <div className="absolute inset-0 flex flex-col justify-between">
+                          {weekSummary.axisLabels.map((axis) => (
+                            <div
+                              className="border-b border-dashed border-[#393939]"
+                              key={`${axis}-line`}
+                            />
+                          ))}
+                        </div>
+
+                        <div className="absolute inset-0 grid grid-cols-7 gap-7 px-1">
+                          {weekSummary.days.map((day) => (
+                            <div className="relative flex h-full items-end justify-center" key={day.label}>
+                              <div className="relative h-full w-[86px] max-w-full">
+                                {day.totalSeconds > 0 ? (
+                                  <>
+                                    <span className="absolute bottom-[calc(var(--bar-height)+8px)] left-1/2 -translate-x-1/2 whitespace-nowrap text-[14px] font-medium leading-none text-[#8f8f8f] [--bar-height:0px]" />
+                                    <div
+                                      className="absolute bottom-0 left-1/2 w-[86px] max-w-full -translate-x-1/2 rounded-t-[6px] bg-[#a156af]"
+                                      style={{ height: `${day.heightPercent}%` }}
+                                    >
+                                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[14px] font-medium text-[#8f8f8f]">
+                                        {formatClockDuration(day.totalSeconds)}
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : null}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-7 gap-7 border-t border-[#454545] px-1 pt-2">
+                        {weekSummary.days.map((day) => (
+                          <span
+                            className="text-center text-[15px] font-medium leading-[20px] text-[#d5d5d5]"
+                            key={`${day.label}-tick`}
+                          >
+                            {day.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                ))}
+                </div>
               </div>
-              <div className="flex items-center justify-center gap-2 text-[9px] text-[#a4a4a4]">
-                <span className="inline-block h-[3px] w-[14px] rounded-full bg-[#cf58c4]" />
+
+              <div className="flex items-center justify-center gap-2 pt-1 text-[11px] text-[#d5d5d5]">
+                <span className="inline-block h-[8px] w-[25px] rounded-full bg-[#a156af]" />
                 <span>Non-billable</span>
               </div>
             </div>
@@ -168,7 +211,7 @@ export function WorkspaceOverviewPage(): ReactElement {
 
           <OverviewSurface className="px-3 py-3">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <h2 className="text-[14px] font-medium leading-[20px] text-white">
                   Top projects this week
                 </h2>
@@ -176,52 +219,79 @@ export function WorkspaceOverviewPage(): ReactElement {
                   View reports
                 </span>
               </div>
-              <div className="space-y-2">
-                {trackedProjects.map((project) => (
-                  <div className="flex items-center gap-2 text-[11px]" key={project.name}>
-                    <span
-                      className="size-[5px] shrink-0 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <span className="min-w-0 flex-1 truncate text-[#f0f0f0]">{project.name}</span>
-                    <span className="text-[#d5d5d5]">{project.duration}</span>
-                  </div>
-                ))}
-              </div>
+              {topProjects.length > 0 ? (
+                <div className="space-y-2">
+                  {topProjects.map((project) => (
+                    <div className="flex items-center gap-2 text-[11px]" key={project.name}>
+                      <span
+                        className="size-[5px] shrink-0 rounded-full"
+                        style={{ backgroundColor: project.color }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-[#f0f0f0]">{project.name}</span>
+                      <span className="text-[#d5d5d5]">
+                        {formatClockDuration(project.totalSeconds)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <OverviewEmptyState message="No tracked projects in this workspace yet." />
+              )}
             </div>
           </OverviewSurface>
         </div>
 
-        <div className="grid gap-[10px] lg:grid-cols-[minmax(0,430px)_214px]">
-          <OverviewSurface className="px-3 py-3">
+        <div className="grid gap-3 xl:grid-cols-3">
+          <OverviewSurface className="px-3 py-3 xl:col-span-2">
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <h2 className="text-[14px] font-medium leading-[20px] text-white">Team activity</h2>
                 <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
                   View team activity
                 </span>
               </div>
               <div className="grid gap-6 border-t border-[#2a2a2a] pt-4 md:grid-cols-[104px_minmax(0,1fr)]">
-                <StatRing accent="#d67ad0" subtitle="1 out of 1 member tracking" title="100%" />
+                <StatRing
+                  accent="#d67ad0"
+                  subtitle={`${teamActivity.activeCount} out of ${memberCount} member${memberCount === 1 ? "" : "s"} tracking`}
+                  title={`${teamActivity.coveragePercent}%`}
+                />
                 <div className="space-y-5">
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
                     <div className="space-y-2">
                       <p className="text-[9px] uppercase tracking-[0.04em] text-[#a4a4a4]">
                         Tracking
                       </p>
-                      <div className="flex items-center gap-2">
-                        <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-[#d94182] text-[9px] font-semibold text-white">
-                          {(session.user.fullName || session.user.email || "C").charAt(0).toUpperCase()}
-                        </span>
-                        <div className="text-[11px] leading-[16px]">
-                          <p className="text-white">{session.user.fullName || session.user.email}</p>
-                          <p className="text-[#a4a4a4]">6:43:26</p>
+                      {teamActivity.activeMembers.length > 0 ? (
+                        <div className="space-y-2">
+                          {teamActivity.activeMembers.map((member, index) => (
+                            <div className="flex items-center gap-2" key={`${member.user_id ?? index}`}>
+                              <span
+                                className="inline-flex size-[18px] items-center justify-center rounded-full text-[9px] font-semibold text-white"
+                                style={{ backgroundColor: memberTint(index + 2) }}
+                              >
+                                {initialsForMember(member)}
+                              </span>
+                              <div className="min-w-0 text-[11px] leading-[16px]">
+                                <p className="truncate text-white">{memberLabel(member)}</p>
+                                <p className="text-[#a4a4a4]">
+                                  {formatClockDuration(member.duration ?? 0)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
+                      ) : (
+                        <OverviewEmptyState message="No active members yet." />
+                      )}
                     </div>
-                    <div>
+                    <div className="space-y-2">
                       <p className="text-[9px] uppercase tracking-[0.04em] text-[#a4a4a4]">
                         Not tracking
+                      </p>
+                      <p className="text-[11px] leading-[16px] text-[#a4a4a4]">
+                        {Math.max(memberCount - teamActivity.activeCount, 0)} members have no
+                        tracked time this week.
                       </p>
                     </div>
                   </div>
@@ -230,7 +300,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                       Bring your team to see the full picture
                     </p>
                     <button
-                      className="inline-flex h-7 items-center rounded-[6px] bg-transparent px-0 text-[10px] font-semibold uppercase tracking-[0.04em] text-white"
+                      className="inline-flex h-7 items-center bg-transparent px-0 text-[10px] font-semibold uppercase tracking-[0.04em] text-white"
                       type="button"
                     >
                       Invite teammates
@@ -241,14 +311,18 @@ export function WorkspaceOverviewPage(): ReactElement {
             </div>
           </OverviewSurface>
 
-          <div className="space-y-[10px]">
+          <div className="space-y-3">
             <OverviewSurface className="px-3 py-3">
               <div className="space-y-4">
                 <h2 className="text-[14px] font-medium leading-[20px] text-white">
                   Time tracked to projects
                 </h2>
                 <div className="border-t border-[#2a2a2a] pt-4">
-                  <StatRing accent="#f0c05d" subtitle="Keep it this way" title="100%" />
+                  <StatRing
+                    accent="#f0c05d"
+                    subtitle={projectCoverage.subtitle}
+                    title={`${projectCoverage.percent}%`}
+                  />
                 </div>
                 <button
                   className="inline-flex h-7 items-center px-0 text-[10px] font-semibold uppercase tracking-[0.04em] text-[#c88ec0]"
@@ -261,7 +335,7 @@ export function WorkspaceOverviewPage(): ReactElement {
 
             <OverviewSurface className="px-3 py-3">
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <h2 className="text-[14px] font-medium leading-[20px] text-white">FAQ</h2>
                   <span className="text-[10px] uppercase tracking-[0.04em] text-[#c88ec0]">
                     View more ↗
@@ -297,14 +371,10 @@ function OverviewSurface({
   children,
   className = "",
 }: {
-  children: ReactElement | ReactElement[] | string;
+  children: ReactNode;
   className?: string;
 }): ReactElement {
-  return (
-    <section className={`rounded-[6px] border border-[#313131] bg-[#1d1d1d] ${className}`}>
-      {children}
-    </section>
-  );
+  return <section className={`rounded-[6px] border border-[#313131] bg-[#1d1d1d] ${className}`}>{children}</section>;
 }
 
 function StatRing({
@@ -320,9 +390,7 @@ function StatRing({
     <div className="flex flex-col items-center justify-center gap-3">
       <div
         className="grid size-[72px] place-items-center rounded-full"
-        style={{
-          background: `conic-gradient(${accent} 0deg 360deg, transparent 360deg)`,
-        }}
+        style={{ background: `conic-gradient(${accent} 0deg 360deg, transparent 360deg)` }}
       >
         <div className="grid size-[52px] place-items-center rounded-full bg-[#1d1d1d] text-[18px] font-semibold text-white">
           {title}
@@ -331,6 +399,10 @@ function StatRing({
       <p className="text-[10px] leading-[16px] text-[#a4a4a4]">{subtitle}</p>
     </div>
   );
+}
+
+function OverviewEmptyState({ message }: { message: string }): ReactElement {
+  return <p className="text-[11px] leading-[16px] text-[#a4a4a4]">{message}</p>;
 }
 
 function OverviewBackdrop(): ReactElement {
@@ -356,4 +428,145 @@ function OverviewBackdrop(): ReactElement {
       />
     </div>
   );
+}
+
+function buildWeekSummary(
+  activities: DashboardAllActivities[],
+  weekDays: Date[],
+  timezone: string,
+) {
+  const totalsByDay = new Map<string, number>();
+
+  for (const activity of activities) {
+    const dateKey = activity.stop ? formatDateKey(new Date(activity.stop), timezone) : null;
+    if (!dateKey) {
+      continue;
+    }
+    totalsByDay.set(dateKey, (totalsByDay.get(dateKey) ?? 0) + resolveDashboardDuration(activity));
+  }
+
+  const maxSeconds = Math.max(
+    ...weekDays.map((day) => totalsByDay.get(formatDateKey(day, timezone)) ?? 0),
+    1800,
+  );
+  const axisMaxSeconds = Math.ceil(maxSeconds / 1800) * 1800;
+
+  return {
+    axisLabels: Array.from({ length: 6 }, (_, index) =>
+      formatAxisLabel(axisMaxSeconds - Math.floor((axisMaxSeconds / 5) * index)),
+    ),
+    days: weekDays.map((day) => {
+      const totalSeconds = totalsByDay.get(formatDateKey(day, timezone)) ?? 0;
+      return {
+        heightPercent: Math.max(0, Math.min(100, (totalSeconds / axisMaxSeconds) * 100)),
+        label: formatShortAxisDay(day),
+        totalSeconds,
+      };
+    }),
+  };
+}
+
+function buildTopProjects(
+  activities: DashboardAllActivities[],
+  projects: GithubComTogglTogglApiInternalModelsProject[],
+) {
+  const projectById = new Map(
+    projects.map((project) => [
+      project.id ?? -1,
+      {
+        color: project.color?.trim() || "#cf58c4",
+        name: project.name?.trim() || "(No project)",
+      },
+    ]),
+  );
+  const grouped = new Map<number, { color: string; name: string; totalSeconds: number }>();
+
+  for (const activity of activities) {
+    const projectId = activity.project_id ?? 0;
+    const project = projectById.get(projectId) ?? {
+      color: "#cf58c4",
+      name: projectId === 0 ? "(No project)" : `Project #${projectId}`,
+    };
+    const current = grouped.get(projectId) ?? { ...project, totalSeconds: 0 };
+    current.totalSeconds += resolveDashboardDuration(activity);
+    grouped.set(projectId, current);
+  }
+
+  return [...grouped.values()].sort((left, right) => right.totalSeconds - left.totalSeconds).slice(0, 5);
+}
+
+function buildTeamActivity(members: ModelsMostActiveUser[], memberCount: number) {
+  const activeCount = members.length;
+  return {
+    activeCount,
+    activeMembers: members.slice(0, 5),
+    coveragePercent: Math.max(0, Math.min(100, Math.round((activeCount / Math.max(memberCount, 1)) * 100))),
+  };
+}
+
+function buildProjectCoverage(activities: DashboardAllActivities[]) {
+  const totalSeconds = activities.reduce((sum, activity) => sum + resolveDashboardDuration(activity), 0);
+  const assignedSeconds = activities.reduce(
+    (sum, activity) =>
+      sum + ((activity.project_id ?? 0) > 0 ? resolveDashboardDuration(activity) : 0),
+    0,
+  );
+
+  return {
+    percent: totalSeconds > 0 ? Math.round((assignedSeconds / totalSeconds) * 100) : 0,
+    subtitle: totalSeconds > 0 ? `${formatHours(assignedSeconds)} tracked this week` : "No tracked project time yet",
+  };
+}
+
+function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
+  if (Array.isArray(data)) {
+    return data as GithubComTogglTogglApiInternalModelsProject[];
+  }
+  if (hasProjectArray(data, "projects")) {
+    return data.projects;
+  }
+  if (hasProjectArray(data, "data")) {
+    return data.data;
+  }
+  return [];
+}
+
+function hasProjectArray(
+  value: unknown,
+  key: "data" | "projects",
+): value is Record<typeof key, GithubComTogglTogglApiInternalModelsProject[]> {
+  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+}
+
+function resolveDashboardDuration(activity: DashboardAllActivities): number {
+  const duration = activity.duration ?? 0;
+  return duration >= 0 ? duration : Math.max(0, Math.floor(Date.now() / 1000) + duration);
+}
+
+function formatAxisLabel(totalSeconds: number): string {
+  const hours = totalSeconds / 3600;
+  if (hours === 0) {
+    return "0h";
+  }
+  return Number.isInteger(hours) ? `${hours}h` : `${Math.floor(hours)}h 30`;
+}
+
+function formatShortAxisDay(day: Date): string {
+  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(day);
+  const month = String(day.getMonth() + 1).padStart(2, "0");
+  const date = String(day.getDate()).padStart(2, "0");
+  return `${weekday} ${month}-${date}`;
+}
+
+function memberTint(index: number): string {
+  return ["#f9d7f4", "#f9e7cb", "#fff0d4", "#e57bd9", "#fbe5fb"][index % 5];
+}
+
+function memberLabel(member: ModelsMostActiveUser): string {
+  return member.fullname?.trim() || member.email?.trim() || `User #${member.user_id ?? "?"}`;
+}
+
+function initialsForMember(member: ModelsMostActiveUser): string {
+  const label = memberLabel(member).replace(/[^A-Za-z0-9\u4e00-\u9fa5 ]/g, "").trim();
+  return label ? label.slice(0, 1).toUpperCase() : "•";
 }

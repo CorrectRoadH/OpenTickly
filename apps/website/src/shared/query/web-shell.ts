@@ -7,7 +7,11 @@ import type {
   WorkspaceMemberInvitationRequestDto,
   WebWorkspaceSettingsDto,
 } from "../api/web-contract.ts";
-import type { MePayload, ModelsAllPreferences } from "../api/generated/public-track/types.gen.ts";
+import type {
+  GithubComTogglTogglApiInternalModelsTimeEntry,
+  MePayload,
+  ModelsAllPreferences,
+} from "../api/generated/public-track/types.gen.ts";
 import { WebApiError, unwrapWebApiResult } from "../api/web-client.ts";
 import {
   getCurrentTimeEntry,
@@ -16,11 +20,14 @@ import {
   getPreferences,
   getProjects,
   getTimeEntries,
+  getWorkspaceAllActivities,
   getWorkspaceProjectUsers,
   getWorkspaceClients,
   getWorkspaceGroups,
+  getWorkspaceMostActive,
   getWorkspaceTag,
   getWorkspaceTasksBasic,
+  getWorkspaceTopActivity,
   patchWorkspaceStopTimeEntryHandler,
   postPinnedProject,
   postPreferences,
@@ -34,6 +41,7 @@ import {
   putOrganization,
   putWorkspaceProject,
   postWorkspaceTag,
+  putWorkspaceTimeEntryHandler,
 } from "../api/public/track/index.ts";
 import {
   disableWorkspaceMember,
@@ -62,6 +70,12 @@ const projectsQueryKey = (workspaceId: number, status: ProjectListStatusFilter) 
 const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
   ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
 const currentTimeEntryQueryKey = ["current-time-entry"] as const;
+const workspaceDashboardAllActivitiesQueryKey = (workspaceId: number) =>
+  ["workspace-dashboard-all-activities", workspaceId] as const;
+const workspaceDashboardMostActiveQueryKey = (workspaceId: number) =>
+  ["workspace-dashboard-most-active", workspaceId] as const;
+const workspaceDashboardTopActivityQueryKey = (workspaceId: number) =>
+  ["workspace-dashboard-top-activity", workspaceId] as const;
 
 export type WorkspacePermissionsDto = Pick<
   WebWorkspaceSettingsDto,
@@ -440,6 +454,48 @@ export function useCurrentTimeEntryQuery() {
   });
 }
 
+export function useWorkspaceAllActivitiesQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceAllActivities({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    queryKey: workspaceDashboardAllActivitiesQueryKey(workspaceId),
+  });
+}
+
+export function useWorkspaceMostActiveQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceMostActive({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    queryKey: workspaceDashboardMostActiveQueryKey(workspaceId),
+  });
+}
+
+export function useWorkspaceTopActivityQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceTopActivity({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    queryKey: workspaceDashboardTopActivityQueryKey(workspaceId),
+  });
+}
+
 export function useStartTimeEntryMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
@@ -486,6 +542,64 @@ export function useStopTimeEntryMutation() {
     ),
     onSuccess: async () => {
       queryClient.setQueryData(currentTimeEntryQueryKey, null);
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
+  });
+}
+
+export function useUpdateTimeEntryMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      request,
+      timeEntryId,
+      workspaceId,
+    }: {
+      request: {
+        billable?: boolean;
+        description?: string;
+        projectId?: number | null;
+        start?: string;
+        stop?: string | null;
+        tags?: string[];
+        taskId?: number | null;
+      };
+      timeEntryId: number;
+      workspaceId: number;
+    }) =>
+      unwrapWebApiResult(
+        putWorkspaceTimeEntryHandler({
+          body: {
+            billable: request.billable,
+            description: request.description,
+            project_id: request.projectId ?? undefined,
+            start: request.start,
+            stop: request.stop ?? undefined,
+            tags: request.tags,
+            task_id: request.taskId ?? undefined,
+          },
+          path: {
+            time_entry_id: timeEntryId,
+            workspace_id: workspaceId,
+          },
+          query: {
+            include_sharing: true,
+            meta: true,
+          },
+        }),
+      ),
+    onSuccess: async (data) => {
+      queryClient.setQueryData(
+        currentTimeEntryQueryKey,
+        (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) =>
+          current?.id === data.id ? data : current,
+      );
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
       });
