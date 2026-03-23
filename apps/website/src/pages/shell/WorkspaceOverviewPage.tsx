@@ -2,6 +2,27 @@ import { Fragment, type ReactElement } from "react";
 import { Link } from "@tanstack/react-router";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import {
+  buildEntryGroups,
+  buildTimesheetRows,
+  filterWorkspaceEntries,
+  formatClockDuration,
+  formatEntryRange,
+  formatGroupLabel,
+  formatHours,
+  formatWeekday,
+  getCalendarHours,
+  getCurrentWeekDays,
+  matchesWorkspace,
+  resolveEntryColor,
+  resolveEntryDurationSeconds,
+  sortTimeEntries,
+  summarizeProjects,
+  sumForDate,
+  type EntryGroup,
+  type TimesheetRow,
+} from "../../features/tracking/overview-data.ts";
+import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { useCurrentTimeEntryQuery, useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import type { ShellViewMode } from "../../shared/url-state/shell-view.ts";
@@ -10,39 +31,11 @@ type WorkspaceOverviewPageProps = {
   view: ShellViewMode;
 };
 
-type EntryGroup = {
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
-  key: string;
-  totalSeconds: number;
-};
-
-type ProjectSummary = {
-  color: string;
-  label: string;
-  totalSeconds: number;
-};
-
-type TimesheetRow = {
-  cells: number[];
-  color: string;
-  label: string;
-  members: number;
-  totalSeconds: number;
-};
-
 export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): ReactElement {
   const session = useSession();
-  const timezone = session.user.timezone || "UTC";
-  const weekDays = getCurrentWeekDays();
-  const weekRange = {
-    endDate: formatApiDate(weekDays[6]!),
-    startDate: formatApiDate(weekDays[0]!),
-  };
-  const timeEntriesQuery = useTimeEntriesQuery({
-    includeSharing: true,
-    ...(view === "list" ? {} : weekRange),
-  });
+  const timeEntriesQuery = useTimeEntriesQuery();
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const timezone = session.user.timezone || "UTC";
   const entries = sortTimeEntries(
     filterWorkspaceEntries(timeEntriesQuery.data ?? [], session.currentWorkspace.id),
   );
@@ -52,89 +45,129 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
   const pageTitle =
     runningEntry?.description?.trim() ||
     entries.find((entry) => entry.description?.trim())?.description?.trim() ||
-    "Time entries";
+    "What are you working on?";
+  const displayProject =
+    runningEntry?.project_name ||
+    entries.find((entry) => entry.project_name)?.project_name ||
+    "No project";
+  const displayColor = resolveEntryColor(runningEntry ?? entries[0] ?? {});
+  const weekDays = getCurrentWeekDays();
   const groupedEntries = buildEntryGroups(entries, timezone);
-  const trackStrip = summarizeProjects(entries).slice(0, 6);
-  const todayTotalSeconds = sumForDate(entries, formatDateKey(new Date(), timezone), timezone);
+  const trackStrip = summarizeProjects(entries).slice(0, 10);
+  const todayTotalSeconds = sumForDate(
+    entries,
+    new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    }).format(new Date()),
+    timezone,
+  );
   const weekTotalSeconds = weekDays.reduce(
-    (total, day) => total + sumForDate(entries, formatDateKey(day, timezone), timezone),
+    (total, day) =>
+      total +
+      sumForDate(
+        entries,
+        new Intl.DateTimeFormat("en-CA", {
+          day: "2-digit",
+          month: "2-digit",
+          timeZone: timezone,
+          year: "numeric",
+        }).format(day),
+        timezone,
+      ),
     0,
   );
   const calendarHours = getCalendarHours(entries, weekDays, timezone);
-  const timesheetRows = buildTimesheetRows(entries, weekDays, timezone).slice(0, 12);
-  const isPending = timeEntriesQuery.isPending;
-  const isError = timeEntriesQuery.isError;
+  const timesheetRows = buildTimesheetRows(entries, weekDays, timezone).slice(0, 18);
 
   return (
-    <div className="min-w-[1080px] border-t border-white/8">
-      <header className="border-b border-white/8 px-4 py-4">
-        <h1 className="text-[30px] font-semibold text-white">{pageTitle}</h1>
-      </header>
-
-      <section className="border-b border-white/8 px-4 py-3">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <ToolbarField label={view === "list" ? "All dates" : "This week"} />
-            <Metric
-              label="Today"
-              value={formatClockDuration(todayTotalSeconds)}
-              visible={view === "list"}
-            />
-            <Metric label="Week total" value={formatClockDuration(weekTotalSeconds)} />
+    <div className="min-w-[1180px] bg-[var(--track-surface)] text-white">
+      <header className="border-b border-[var(--track-border)]">
+        <div className="flex h-[84px] items-center gap-4 border-b border-[var(--track-border)] px-5">
+          <div className="min-w-0 flex-1 text-[18px] font-medium text-white">{pageTitle}</div>
+          <button
+            className="flex h-[30px] items-center gap-2 rounded-md px-3 text-[14px] text-white"
+            type="button"
+          >
+            <span className="size-2 rounded-full" style={{ backgroundColor: displayColor }} />
+            <span>{displayProject}</span>
+          </button>
+          <ChromeIconButton icon="tags" />
+          <ChromeIconButton icon="subscription" />
+          <div className="flex items-center gap-3 rounded-full text-[29px] font-medium tabular-nums text-white">
+            <span>
+              {formatClockDuration(resolveEntryDurationSeconds(runningEntry ?? { duration: 0 }))}
+            </span>
+            <button
+              className="flex size-[42px] items-center justify-center rounded-full bg-[#ff7c66] text-black"
+              type="button"
+            >
+              <TrackingIcon className="size-5" name="play-stop" />
+            </button>
           </div>
-          <div className="flex items-center gap-3">
-            {view === "calendar" ? (
-              <p className="text-sm font-medium text-slate-300">Week view</p>
-            ) : null}
-            <div className="flex overflow-hidden rounded-md border border-white/12">
-              <ViewTab
-                currentView={view}
-                targetView="calendar"
-                workspaceId={session.currentWorkspace.id}
-              />
-              <ViewTab
-                currentView={view}
-                targetView="list"
-                workspaceId={session.currentWorkspace.id}
-              />
-              <ViewTab
-                currentView={view}
-                targetView="timesheet"
-                workspaceId={session.currentWorkspace.id}
-              />
-            </div>
-            <SquareIcon />
-            <SquareIcon />
-          </div>
+          <ChromeIconButton icon="more" />
         </div>
-      </section>
 
-      {trackStrip.length > 0 ? (
-        <section className="border-b border-white/8 px-4 py-2">
-          <div className="flex gap-4 overflow-hidden text-[12px] font-medium text-slate-300">
-            {trackStrip.map((item) => (
-              <div key={item.label} className="min-w-0 flex-1">
-                <p className="truncate" style={{ color: item.color }}>
-                  {item.label}
-                </p>
-                <div
-                  className="mt-1 h-[3px] rounded-full"
-                  style={{ backgroundColor: item.color }}
+        <div className="px-5 pb-4 pt-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <ToolbarButton
+                icon={view === "calendar" ? "calendar" : "list"}
+                label={view === "timesheet" ? "This week" : "Today"}
+                suffix={formatWeekday(new Date(), timezone)}
+              />
+              {view !== "timesheet" ? (
+                <SummaryStat label="Today" value={formatClockDuration(todayTotalSeconds)} />
+              ) : null}
+              <SummaryStat label="Week total" value={formatClockDuration(weekTotalSeconds)} />
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex rounded-md border border-[var(--track-border)] bg-[#111111] p-0.5">
+                <ViewTab
+                  currentView={view}
+                  targetView="calendar"
+                  workspaceId={session.currentWorkspace.id}
+                />
+                <ViewTab
+                  currentView={view}
+                  targetView="list"
+                  workspaceId={session.currentWorkspace.id}
+                />
+                <ViewTab
+                  currentView={view}
+                  targetView="timesheet"
+                  workspaceId={session.currentWorkspace.id}
                 />
               </div>
-            ))}
+              <ChromeIconButton icon="settings" />
+              <ChromeIconButton icon="grid" />
+            </div>
           </div>
-        </section>
-      ) : null}
+          {trackStrip.length > 0 ? (
+            <div className="mt-4 flex h-[30px] gap-0.5 overflow-hidden">
+              {trackStrip.map((item) => (
+                <div key={item.label} className="min-w-0 flex-1">
+                  <div className="truncate text-[11px] font-medium" style={{ color: item.color }}>
+                    {item.label}
+                  </div>
+                  <div className="mt-1 h-1 rounded-full" style={{ backgroundColor: item.color }} />
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </header>
 
-      {isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
-      {isError ? (
+      {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
+      {timeEntriesQuery.isError ? (
         <SurfaceMessage message="Time entries are temporarily unavailable." tone="error" />
       ) : null}
-      {!isPending && !isError && view === "list" ? (
+      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "list" ? (
         <ListView groups={groupedEntries} timezone={timezone} />
       ) : null}
-      {!isPending && !isError && view === "calendar" ? (
+      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar" ? (
         <CalendarView
           entries={entries}
           hours={calendarHours}
@@ -142,91 +175,20 @@ export function WorkspaceOverviewPage({ view }: WorkspaceOverviewPageProps): Rea
           weekDays={weekDays}
         />
       ) : null}
-      {!isPending && !isError && view === "timesheet" ? (
+      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "timesheet" ? (
         <TimesheetView rows={timesheetRows} timezone={timezone} weekDays={weekDays} />
       ) : null}
-    </div>
-  );
-}
 
-function ToolbarField({ label }: { label: string }): ReactElement {
-  return (
-    <button
-      className="flex h-10 min-w-[240px] items-center justify-center rounded-md border border-white/12 bg-[#1b1b1d] px-4 text-sm font-medium text-white"
-      type="button"
-    >
-      {label}
-    </button>
-  );
-}
-
-function Metric({
-  label,
-  value,
-  visible = true,
-}: {
-  label: string;
-  value: string;
-  visible?: boolean;
-}): ReactElement | null {
-  if (!visible) {
-    return null;
-  }
-
-  return (
-    <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400">
-      {label}
-      <span className="ml-2 text-[15px] text-slate-200">{value}</span>
-    </p>
-  );
-}
-
-function ViewTab({
-  currentView,
-  targetView,
-  workspaceId,
-}: {
-  currentView: ShellViewMode;
-  targetView: ShellViewMode;
-  workspaceId: number;
-}): ReactElement {
-  const active = currentView === targetView;
-  const labels: Record<ShellViewMode, string> = {
-    calendar: "Calendar",
-    list: "List view",
-    timesheet: "Timesheet",
-  };
-
-  return (
-    <Link
-      className={`px-5 py-2 text-sm font-medium ${
-        active ? "bg-[#613766] text-[#e5b8ef]" : "bg-[#1b1b1d] text-white"
-      }`}
-      params={{ workspaceId: String(workspaceId) }}
-      search={{ view: targetView }}
-      to="/workspaces/$workspaceId"
-    >
-      {labels[targetView]}
-    </Link>
-  );
-}
-
-function SquareIcon(): ReactElement {
-  return <div className="size-5 rounded-sm border border-white/12 bg-[#1b1b1d]" />;
-}
-
-function SurfaceMessage({
-  message,
-  tone = "muted",
-}: {
-  message: string;
-  tone?: "error" | "muted";
-}): ReactElement {
-  return (
-    <div
-      className={`border-b border-white/8 px-4 py-5 text-sm ${tone === "error" ? "text-rose-200" : "text-slate-400"}`}
-    >
-      {message}
+      {!timeEntriesQuery.isPending && !timeEntriesQuery.isError ? (
+        <div className="border-t border-[var(--track-border)] px-5 py-10">
+          <button
+            className="mx-auto flex h-9 items-center rounded-md bg-[var(--track-accent-soft)] px-5 text-[13px] font-medium text-[var(--track-accent-text)]"
+            type="button"
+          >
+            View full history in reports
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -240,43 +202,51 @@ function ListView({ groups, timezone }: { groups: EntryGroup[]; timezone: string
     <div>
       {groups.map((group) => (
         <section key={group.key}>
-          <div className="grid grid-cols-[40px_minmax(0,1fr)_72px_128px_92px] items-center border-b border-white/8 px-4 py-3">
-            <div className="size-3 rounded-sm border border-white/18" />
-            <p className="text-[15px] font-semibold text-white">
+          <div className="grid grid-cols-[32px_minmax(0,1fr)_110px_126px_82px_40px_30px] items-center border-b border-[var(--track-border)] px-5 py-[13px]">
+            <span className="size-[14px] rounded-[4px] border border-[var(--track-border)]" />
+            <p className="text-[14px] font-semibold text-white">
               {formatGroupLabel(group.key, timezone)}
             </p>
             <span />
             <span />
-            <p className="text-right text-[24px] font-semibold tabular-nums text-[#d8d4ce]">
+            <p className="text-right text-[14px] font-medium tabular-nums text-white">
               {formatClockDuration(group.totalSeconds)}
             </p>
+            <span />
+            <span />
           </div>
           {group.entries.map((entry) => (
             <div
               key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-              className="grid grid-cols-[40px_minmax(0,1fr)_72px_128px_92px] items-center border-b border-white/6 px-4 py-3 text-sm"
+              className="grid grid-cols-[32px_minmax(0,1fr)_110px_126px_82px_40px_30px] items-center border-b border-[var(--track-border)] px-5 py-[13px] text-[13px]"
             >
               <span />
               <div className="min-w-0">
-                <p className="truncate text-[15px] text-[#ece7df]">
+                <p className="truncate text-[13px] text-[#efefef]">
                   {entry.description?.trim() || "(no description)"}
                 </p>
-                <p className="mt-1 truncate text-[12px] text-slate-400">
-                  <span className="mr-2" style={{ color: resolveEntryColor(entry) }}>
-                    {entry.project_name ?? "No project"}
-                  </span>
-                  {entry.tags?.length ? entry.tags.join(" · ") : (entry.client_name ?? "No client")}
+                <p
+                  className="mt-1 truncate text-[12px]"
+                  style={{ color: resolveEntryColor(entry) }}
+                >
+                  {entry.project_name ?? "(No project)"}
                 </p>
               </div>
-              <p className="text-slate-400">
-                {entry.shared_with?.length ? `${entry.shared_with.length} shared` : "-"}
+              <p className="truncate text-[12px] text-[var(--track-text-muted)]">
+                {entry.shared_with?.length ? `${entry.shared_with.length} shared` : ""}
               </p>
-              <p className="text-right tabular-nums text-slate-300">
+              <p className="text-right tabular-nums text-[12px] text-[var(--track-text-muted)]">
                 {formatEntryRange(entry, timezone)}
               </p>
-              <p className="text-right font-semibold tabular-nums text-[#ebe6de]">
+              <p className="text-right tabular-nums text-[12px] text-white">
                 {formatClockDuration(resolveEntryDurationSeconds(entry))}
               </p>
+              <div className="flex justify-center text-[var(--track-text-muted)]">
+                <TrackingIcon className="size-4" name="edit" />
+              </div>
+              <div className="flex justify-end text-[var(--track-text-muted)]">
+                <TrackingIcon className="size-4" name="more" />
+              </div>
             </div>
           ))}
         </section>
@@ -297,50 +267,52 @@ function CalendarView({
   weekDays: Date[];
 }): ReactElement {
   return (
-    <div className="grid grid-cols-[42px_repeat(7,minmax(0,1fr))]">
-      <div className="border-r border-white/8" />
+    <div className="grid grid-cols-[42px_repeat(7,minmax(160px,1fr))] border-t border-[var(--track-border)]">
+      <div className="border-r border-[var(--track-border)]" />
       {weekDays.map((day) => (
-        <div key={day.toISOString()} className="border-l border-b border-white/8 px-3 py-2">
+        <div
+          key={day.toISOString()}
+          className="border-l border-b border-[var(--track-border)] px-3 py-3"
+        >
           <p className="text-[28px] font-semibold text-white">{day.getDate()}</p>
-          <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-slate-400">
+          <p className="text-[12px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             {formatWeekday(day, timezone)}
           </p>
         </div>
       ))}
       {hours.map((hour) => (
         <Fragment key={hour}>
-          <div className="border-r border-b border-white/8 px-2 py-5 text-right text-[11px] text-slate-500">
+          <div className="border-r border-b border-[var(--track-border)] px-2 py-5 text-right text-[11px] text-[var(--track-text-muted)]">
             {String(hour).padStart(2, "0")}:00
           </div>
-          {weekDays.map((day) => {
-            const dayKey = formatDateKey(day, timezone);
-            const hourEntries = entries.filter(
-              (entry) =>
-                formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone) ===
-                  dayKey &&
-                getHourInTimezone(new Date(entry.start ?? entry.at ?? Date.now()), timezone) ===
-                  hour,
-            );
-
-            return (
-              <div key={`${dayKey}-${hour}`} className="border-l border-b border-white/8 px-1 py-1">
-                {hourEntries.map((entry) => (
+          {weekDays.map((day) => (
+            <div
+              key={`${day.toISOString()}-${hour}`}
+              className="min-h-24 border-l border-b border-[var(--track-border)] px-1 py-1"
+            >
+              {entries
+                .filter(
+                  (entry) =>
+                    formatWeekday(new Date(entry.start ?? entry.at ?? Date.now()), timezone) ===
+                    formatWeekday(day, timezone),
+                )
+                .slice(0, 2)
+                .map((entry) => (
                   <div
                     key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-                    className="mb-1 rounded-sm px-2 py-1 text-[11px] leading-4 text-white"
+                    className="mb-1 rounded-[4px] px-2 py-1 text-[11px] leading-4 text-black"
                     style={{ backgroundColor: resolveEntryColor(entry) }}
                   >
                     <p className="truncate">
                       {entry.description?.trim() || entry.project_name || "Entry"}
                     </p>
-                    <p className="truncate text-white/70">
+                    <p className="truncate text-black/70">
                       {formatClockDuration(resolveEntryDurationSeconds(entry))}
                     </p>
                   </div>
                 ))}
-              </div>
-            );
-          })}
+            </div>
+          ))}
         </Fragment>
       ))}
     </div>
@@ -356,18 +328,16 @@ function TimesheetView({
   timezone: string;
   weekDays: Date[];
 }): ReactElement {
-  const dayTotals = weekDays.map((_, dayIndex) =>
-    rows.reduce((total, row) => total + (row.cells[dayIndex] ?? 0), 0),
+  const totals = weekDays.map((_, index) =>
+    rows.reduce((sum, row) => sum + (row.cells[index] ?? 0), 0),
   );
-  const weekTotal = rows.reduce((total, row) => total + row.totalSeconds, 0);
-
-  if (rows.length === 0) {
+  const weekTotal = rows.reduce((sum, row) => sum + row.totalSeconds, 0);
+  if (rows.length === 0)
     return <SurfaceMessage message="No week data available for this workspace." />;
-  }
 
   return (
-    <div className="px-4">
-      <div className="grid grid-cols-[minmax(0,360px)_repeat(7,74px)_80px] border-b border-white/8 py-4 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+    <div className="px-5">
+      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
         <span>Project</span>
         {weekDays.map((day) => (
           <span key={day.toISOString()} className="text-center">
@@ -379,320 +349,118 @@ function TimesheetView({
       {rows.map((row) => (
         <div
           key={row.label}
-          className="grid grid-cols-[minmax(0,360px)_repeat(7,74px)_80px] items-center border-b border-white/8 py-3"
+          className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3"
         >
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium" style={{ color: row.color }}>
+          <div className="min-w-0 pr-3">
+            <p className="truncate text-[13px] font-medium" style={{ color: row.color }}>
               {row.label}
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
               {row.members > 0 ? `${row.members} shared` : "Private"}
             </p>
           </div>
           {row.cells.map((value, index) => (
             <div key={`${row.label}-${index}`} className="flex justify-center">
-              <span className="min-w-[48px] rounded-md border border-white/14 px-2 py-1 text-center text-sm tabular-nums text-slate-200">
-                {value > 0 ? formatHours(value) : ""}
+              <span className="min-w-[35px] rounded-[6px] border border-[var(--track-border)] px-1.5 py-0.5 text-center text-[12px] tabular-nums text-white">
+                {value > 0 ? formatHours(value).replace(" h", "") : ""}
               </span>
             </div>
           ))}
-          <p className="text-right text-sm font-semibold tabular-nums text-[#ece7df]">
+          <p className="text-right text-[12px] tabular-nums text-white">
             {formatHours(row.totalSeconds)}
           </p>
         </div>
       ))}
-      <div className="grid grid-cols-[minmax(0,360px)_repeat(7,74px)_80px] items-center py-4 text-sm font-semibold text-[#ece7df]">
-        <p>Total</p>
-        {dayTotals.map((value, index) => (
-          <p key={index} className="text-center tabular-nums">
-            {value > 0 ? formatHours(value) : "-"}
-          </p>
+      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center py-4 text-[12px] font-medium text-white">
+        <span>Total</span>
+        {totals.map((value, index) => (
+          <span key={index} className="text-center tabular-nums">
+            {value > 0 ? formatHours(value).replace(" h", "") : "-"}
+          </span>
         ))}
-        <p className="text-right tabular-nums">{formatHours(weekTotal)}</p>
+        <span className="text-right tabular-nums">{formatHours(weekTotal)}</span>
       </div>
     </div>
   );
 }
 
-function filterWorkspaceEntries(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  workspaceId: number,
-): GithubComTogglTogglApiInternalModelsTimeEntry[] {
-  return entries.filter((entry) => matchesWorkspace(entry, workspaceId));
-}
-
-function matchesWorkspace(
-  entry: GithubComTogglTogglApiInternalModelsTimeEntry | undefined,
-  workspaceId: number,
-): boolean {
-  if (!entry) {
-    return false;
-  }
-
-  return (entry.workspace_id ?? entry.wid) === workspaceId;
-}
-
-function sortTimeEntries(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-): GithubComTogglTogglApiInternalModelsTimeEntry[] {
-  return [...entries].sort((left, right) => {
-    const leftTime = new Date(left.start ?? left.at ?? 0).getTime();
-    const rightTime = new Date(right.start ?? right.at ?? 0).getTime();
-    return rightTime - leftTime;
-  });
-}
-
-function buildEntryGroups(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  timezone: string,
-): EntryGroup[] {
-  const groups = new Map<string, EntryGroup>();
-
-  for (const entry of entries) {
-    const key = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
-    const existing = groups.get(key);
-    const durationSeconds = resolveEntryDurationSeconds(entry);
-
-    if (existing) {
-      existing.entries.push(entry);
-      existing.totalSeconds += durationSeconds;
-      continue;
-    }
-
-    groups.set(key, {
-      entries: [entry],
-      key,
-      totalSeconds: durationSeconds,
-    });
-  }
-
-  return [...groups.values()];
-}
-
-function summarizeProjects(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-): ProjectSummary[] {
-  const summaries = new Map<string, ProjectSummary>();
-
-  for (const entry of entries) {
-    const label = entry.project_name ?? "No project";
-    const existing = summaries.get(label);
-    const totalSeconds = resolveEntryDurationSeconds(entry);
-
-    if (existing) {
-      existing.totalSeconds += totalSeconds;
-      continue;
-    }
-
-    summaries.set(label, {
-      color: resolveEntryColor(entry),
-      label,
-      totalSeconds,
-    });
-  }
-
-  return [...summaries.values()].sort((left, right) => right.totalSeconds - left.totalSeconds);
-}
-
-function buildTimesheetRows(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  weekDays: Date[],
-  timezone: string,
-): TimesheetRow[] {
-  const rowMap = new Map<string, TimesheetRow>();
-
-  for (const entry of entries) {
-    const dayIndex = weekDays.findIndex(
-      (day) =>
-        formatDateKey(day, timezone) ===
-        formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone),
-    );
-
-    if (dayIndex < 0) {
-      continue;
-    }
-
-    const label = entry.project_name ?? "No project";
-    const existing = rowMap.get(label);
-    const durationSeconds = resolveEntryDurationSeconds(entry);
-
-    if (existing) {
-      existing.cells[dayIndex] += durationSeconds;
-      existing.totalSeconds += durationSeconds;
-      existing.members = Math.max(existing.members, entry.shared_with?.length ?? 0);
-      continue;
-    }
-
-    const cells = new Array(7).fill(0);
-    cells[dayIndex] = durationSeconds;
-    rowMap.set(label, {
-      cells,
-      color: resolveEntryColor(entry),
-      label,
-      members: entry.shared_with?.length ?? 0,
-      totalSeconds: durationSeconds,
-    });
-  }
-
-  return [...rowMap.values()].sort((left, right) => right.totalSeconds - left.totalSeconds);
-}
-
-function sumForDate(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  dateKey: string,
-  timezone: string,
-): number {
-  return entries.reduce((total, entry) => {
-    const entryKey = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
-    return entryKey === dateKey ? total + resolveEntryDurationSeconds(entry) : total;
-  }, 0);
-}
-
-function getCurrentWeekDays(): Date[] {
-  const today = new Date();
-  const midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const dayIndex = midnight.getDay() === 0 ? 6 : midnight.getDay() - 1;
-  const monday = new Date(midnight);
-  monday.setDate(midnight.getDate() - dayIndex);
-
-  return new Array(7).fill(null).map((_, index) => {
-    const day = new Date(monday);
-    day.setDate(monday.getDate() + index);
-    return day;
-  });
-}
-
-function getCalendarHours(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  weekDays: Date[],
-  timezone: string,
-): number[] {
-  const hours = entries
-    .filter((entry) =>
-      weekDays.some(
-        (day) =>
-          formatDateKey(day, timezone) ===
-          formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone),
-      ),
-    )
-    .map((entry) => getHourInTimezone(new Date(entry.start ?? entry.at ?? Date.now()), timezone));
-
-  if (hours.length === 0) {
-    return [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
-  }
-
-  const minHour = Math.max(0, Math.min(...hours) - 1);
-  const maxHour = Math.min(23, Math.max(...hours) + 1);
-  return new Array(maxHour - minHour + 1).fill(null).map((_, index) => minHour + index);
-}
-
-function resolveEntryDurationSeconds(entry: GithubComTogglTogglApiInternalModelsTimeEntry): number {
-  if (typeof entry.duration === "number") {
-    if (entry.duration >= 0) {
-      return entry.duration;
-    }
-
-    return Math.max(0, Math.floor(Date.now() / 1000) + entry.duration);
-  }
-
-  if (entry.start && entry.stop) {
-    return Math.max(
-      0,
-      Math.floor((new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000),
-    );
-  }
-
-  return 0;
-}
-
-function formatDateKey(date: Date, timezone: string): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: timezone,
-    year: "numeric",
-  }).format(date);
-}
-
-function formatApiDate(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-function formatWeekday(date: Date, timezone: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "short",
-  }).format(date);
-}
-
-function formatGroupLabel(dateKey: string, timezone: string): string {
-  const today = formatDateKey(new Date(), timezone);
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterday = formatDateKey(yesterdayDate, timezone);
-
-  if (dateKey === today) {
-    return "Today";
-  }
-
-  if (dateKey === yesterday) {
-    return "Yesterday";
-  }
-
-  return dateKey;
-}
-
-function formatEntryRange(
-  entry: GithubComTogglTogglApiInternalModelsTimeEntry,
-  timezone: string,
-): string {
-  if (!entry.start) {
-    return "-";
-  }
-
-  const start = formatClockTime(new Date(entry.start), timezone);
-  const stop = entry.stop ? formatClockTime(new Date(entry.stop), timezone) : "...";
-  return `${start} - ${stop}`;
-}
-
-function formatClockTime(date: Date, timezone: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: timezone,
-  }).format(date);
-}
-
-function getHourInTimezone(date: Date, timezone: string): number {
-  return Number(
-    new Intl.DateTimeFormat("en-GB", {
-      hour: "2-digit",
-      hour12: false,
-      timeZone: timezone,
-    }).format(date),
+function ViewTab({
+  currentView,
+  targetView,
+  workspaceId,
+}: {
+  currentView: ShellViewMode;
+  targetView: ShellViewMode;
+  workspaceId: number;
+}) {
+  return (
+    <Link
+      className={`rounded-[4px] px-4 py-1.5 text-[12px] font-medium ${currentView === targetView ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]" : "text-white"}`}
+      params={{ workspaceId: String(workspaceId) }}
+      search={{ view: targetView }}
+      to="/workspaces/$workspaceId"
+    >
+      {{ calendar: "Calendar", list: "List view", timesheet: "Timesheet" }[targetView]}
+    </Link>
   );
 }
 
-function formatClockDuration(seconds: number): string {
-  const safeSeconds = Math.max(0, seconds);
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const remainder = safeSeconds % 60;
-
-  return [hours, minutes, remainder].map((value) => String(value).padStart(2, "0")).join(":");
+function ToolbarButton({
+  icon,
+  label,
+  suffix,
+}: {
+  icon: "calendar" | "list";
+  label: string;
+  suffix: string;
+}) {
+  return (
+    <button
+      className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[#181818] px-4 text-[13px] text-white"
+      type="button"
+    >
+      <TrackingIcon className="size-4 text-[var(--track-text-muted)]" name={icon} />
+      <span>{label}</span>
+      <span className="text-[var(--track-text-muted)]">· {suffix}</span>
+    </button>
+  );
 }
 
-function formatHours(seconds: number): string {
-  return `${(seconds / 3600).toFixed(1)} h`;
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="text-[10px] uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
+      {label} <span className="ml-2 text-[12px] font-medium tabular-nums text-white">{value}</span>
+    </p>
+  );
 }
 
-function resolveEntryColor(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
-  if (entry.project_color?.trim()) {
-    return entry.project_color;
-  }
+function ChromeIconButton({
+  icon,
+}: {
+  icon: "grid" | "more" | "settings" | "subscription" | "tags";
+}) {
+  return (
+    <button
+      className="flex size-[30px] items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[#222222] hover:text-white"
+      type="button"
+    >
+      <TrackingIcon className="size-4" name={icon} />
+    </button>
+  );
+}
 
-  const palette = ["#d96aa7", "#d65143", "#d7c44d", "#6aa2e5", "#7dc27d", "#c6bb5a"];
-  const seed = String(entry.project_id ?? entry.project_name ?? entry.id ?? "entry");
-  const hash = [...seed].reduce((total, character) => total + character.charCodeAt(0), 0);
-  return palette[hash % palette.length]!;
+function SurfaceMessage({
+  message,
+  tone = "muted",
+}: {
+  message: string;
+  tone?: "error" | "muted";
+}) {
+  return (
+    <div
+      className={`border-t border-[var(--track-border)] px-5 py-6 text-sm ${tone === "error" ? "text-rose-300" : "text-[var(--track-text-muted)]"}`}
+    >
+      {message}
+    </div>
+  );
 }

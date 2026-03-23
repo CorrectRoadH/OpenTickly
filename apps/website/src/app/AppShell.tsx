@@ -2,9 +2,10 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
+import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
-import { useCurrentTimeEntryQuery, useLogoutMutation } from "../shared/query/web-shell.ts";
 import { swapWorkspaceInPath } from "../shared/lib/workspace-routing.ts";
+import { useCurrentTimeEntryQuery, useLogoutMutation } from "../shared/query/web-shell.ts";
 import { useSession } from "../shared/session/session-context.tsx";
 
 type AppShellProps = {
@@ -19,7 +20,9 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const logoutMutation = useLogoutMutation();
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const session = useSession();
-  const navigationItems = shellNavigationItems(session);
+  const sections = shellNavigationItems(session);
+  const adminSection = sections[sections.length - 1];
+  const primarySections = sections.slice(0, -1);
   const workspacePath = `/workspaces/${session.currentWorkspace.id}`;
   const onTrackingSurface = location.pathname === workspacePath;
   const runningEntry = currentTimeEntryQuery.data;
@@ -27,119 +30,148 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     runningEntry && (runningEntry.workspace_id ?? runningEntry.wid) === session.currentWorkspace.id
       ? resolveTimeEntryDurationSeconds(runningEntry)
       : 0;
-  const runningEntryLabel = formatClockDuration(runningEntrySeconds);
+  const profileInitial = (session.user.fullName || session.user.email || "P")
+    .trim()
+    .charAt(0)
+    .toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-[#191919] text-[#f4f1ec]" data-testid="app-shell">
+    <div className="min-h-dvh bg-[var(--track-canvas)] text-white" data-testid="app-shell">
       <div className="flex min-h-dvh">
-        <aside
-          className="flex w-[164px] shrink-0 border-r border-white/8 bg-[#0b0b0d]"
-          data-testid="app-shell-sidebar"
-        >
-          <div className="flex w-9 flex-col items-center justify-between border-r border-white/8 bg-[#050506] py-3">
-            <div className="space-y-3">
-              <RailIcon accent />
-              <RailIcon />
-              <RailIcon />
-              <RailIcon tiny />
+        <aside className="flex w-[226px] shrink-0 border-r border-[var(--track-border)] bg-[var(--track-panel)]">
+          <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
+            <div className="space-y-0.5">
+              <RailButton active icon="track" />
+              <RailButton icon="plan" />
+              <RailButton icon="focus" />
             </div>
-            <div className="space-y-3 text-center">
-              <div className="space-y-1">
-                <div className="mx-auto flex size-5 items-center justify-center rounded-full bg-[#f08c6c] text-[9px] font-semibold text-[#140d0a]">
-                  P
+            <button
+              aria-label="Navigation rail"
+              className="flex h-10 w-full items-center justify-center text-[var(--track-text-muted)]"
+              type="button"
+            >
+              <TrackingIcon className="h-4 w-[21px]" name="menu" />
+            </button>
+            <div className="space-y-1">
+              <div className="flex flex-col items-center gap-1 py-1">
+                <div className="flex size-[26px] items-center justify-center overflow-hidden rounded-full border border-[#1b1b1b] bg-[#d94182] text-[11px] font-semibold text-white">
+                  {profileInitial}
                 </div>
-                <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                <span className="text-[8px] font-medium uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                   Profile
-                </p>
+                </span>
               </div>
-              <RailIcon tiny />
+              <RailButton icon="bell" />
+              <RailButton icon="help" />
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col px-3 py-3">
-            <WorkspaceSwitcher
-              currentWorkspaceId={session.currentWorkspace.id}
-              onChange={(workspaceId) => {
-                void navigate({
-                  to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
-                });
-              }}
-              workspaces={session.availableWorkspaces.map((workspace) => ({
-                id: workspace.id,
-                name: workspace.name,
-              }))}
-            />
+          <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
+            <div className="px-1.5 pt-2">
+              <WorkspaceSwitcher
+                currentWorkspaceId={session.currentWorkspace.id}
+                onChange={(workspaceId) => {
+                  void navigate({
+                    to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
+                  });
+                }}
+                workspaces={session.availableWorkspaces.map((workspace) => ({
+                  id: workspace.id,
+                  name: workspace.name,
+                }))}
+              />
+            </div>
 
-            <nav aria-label="Primary" className="mt-5 space-y-5" data-testid="shell-primary-nav">
-              {navigationItems.map((section) => (
-                <section key={section.title} className="space-y-2">
-                  <h2 className="px-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    {section.title}
+            <div className="flex min-h-0 flex-1 flex-col">
+              <nav aria-label="Primary" className="min-h-0 flex-1 overflow-y-auto px-0 pb-4 pt-6">
+                {primarySections.map((section) => (
+                  <section key={section.title} className="mb-6">
+                    <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                      {section.title}
+                    </h2>
+                    <div className="mt-2 space-y-0.5">
+                      {section.items.map((item) => (
+                        <ShellNavItem
+                          active={isActivePath(location.pathname, item.to)}
+                          badge={item.badge}
+                          disabled={item.disabled}
+                          key={`${section.title}-${item.label}`}
+                          label={item.label}
+                          to={item.to}
+                        />
+                      ))}
+                      {section.title === "Track" ? (
+                        <Link
+                          className="block px-2"
+                          params={{ workspaceId: String(session.currentWorkspace.id) }}
+                          search={{ view: "list" }}
+                          to="/workspaces/$workspaceId"
+                        >
+                          <div
+                            className={`flex h-7 items-center gap-3 rounded-md px-1.5 text-[14px] font-medium ${
+                              onTrackingSurface
+                                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+                                : "text-[var(--track-text-muted)] hover:bg-[var(--track-surface-raised)]"
+                            }`}
+                          >
+                            <TrackingIcon className="h-4 w-[14px] shrink-0" name="timer" />
+                            <span className="min-w-0 truncate tabular-nums">
+                              {formatClockDuration(runningEntrySeconds)}
+                            </span>
+                            <span className="ml-auto flex size-4 items-center justify-center rounded text-current/80">
+                              <TrackingIcon className="size-[14px]" name="edit" />
+                            </span>
+                          </div>
+                        </Link>
+                      ) : null}
+                    </div>
+                  </section>
+                ))}
+              </nav>
+
+              {adminSection ? (
+                <section className="border-t border-[var(--track-border)] px-0 pb-4 pt-3">
+                  <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                    {adminSection.title}
                   </h2>
-                  <div className="space-y-1">
-                    {section.items.map((item) => (
-                      <NavItem
+                  <div className="mt-2 space-y-0.5">
+                    {adminSection.items.map((item) => (
+                      <ShellNavItem
+                        active={isActivePath(location.pathname, item.to)}
+                        badge={item.badge}
                         disabled={item.disabled}
-                        key={`${section.title}-${item.label}`}
+                        key={`${adminSection.title}-${item.label}`}
                         label={item.label}
-                        pathname={location.pathname}
                         to={item.to}
                       />
                     ))}
-                    {section.title === "Track" ? (
-                      <Link
-                        className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition ${
-                          onTrackingSurface
-                            ? "bg-[#6f466f] text-white"
-                            : "text-slate-300 hover:bg-white/6 hover:text-white"
-                        }`}
-                        search={{ view: "list" }}
-                        to="/workspaces/$workspaceId"
-                        params={{ workspaceId: String(session.currentWorkspace.id) }}
-                      >
-                        <span className="size-2 rounded-full bg-[#f0d3ff]" />
-                        <span className="tabular-nums">{runningEntryLabel}</span>
-                        <span className="ml-auto text-[11px] text-white/70">/</span>
-                      </Link>
-                    ) : null}
+                  </div>
+                  <div className="px-2 pt-3">
+                    <button
+                      className="flex h-9 w-full items-center justify-center rounded-md border border-[var(--track-border)] bg-[#111111] text-[13px] font-medium text-[var(--track-text-muted)] transition hover:bg-[#161616] hover:text-white disabled:opacity-60"
+                      disabled={logoutMutation.isPending}
+                      onClick={() => {
+                        void logoutMutation.mutateAsync().then(() =>
+                          navigate({
+                            to: "/login",
+                          }),
+                        );
+                      }}
+                      type="button"
+                    >
+                      {logoutMutation.isPending ? "Logging out..." : "Log out"}
+                    </button>
                   </div>
                 </section>
-              ))}
-            </nav>
-
-            <div className="mt-auto space-y-3">
-              <div
-                className="rounded-md border border-white/8 px-3 py-2.5"
-                data-testid="current-timer-card"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-slate-400">
-                    {session.currentWorkspace.defaultCurrency ?? "USD"}
-                  </span>
-                  <span className="text-sm font-semibold tabular-nums text-[#f4d79c]">
-                    {runningEntryLabel}
-                  </span>
-                </div>
-              </div>
-              <button
-                className="w-full rounded-md border border-white/8 px-3 py-2 text-left text-sm font-medium text-slate-300 transition hover:bg-white/6 hover:text-white disabled:opacity-60"
-                disabled={logoutMutation.isPending}
-                onClick={() => {
-                  void logoutMutation.mutateAsync().then(() =>
-                    navigate({
-                      to: "/login",
-                    }),
-                  );
-                }}
-                type="button"
-              >
-                {logoutMutation.isPending ? "Logging out..." : "Log out"}
-              </button>
+              ) : null}
             </div>
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1 overflow-x-auto" data-testid="app-shell-main">
+        <main
+          className="min-w-0 flex-1 overflow-x-auto bg-[var(--track-surface)]"
+          data-testid="app-shell-main"
+        >
           {children}
         </main>
       </div>
@@ -147,61 +179,111 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   );
 }
 
-function NavItem({
+function ShellNavItem({
+  active,
+  badge,
   disabled = false,
   label,
-  pathname,
   to,
 }: {
+  active: boolean;
+  badge?: string;
   disabled?: boolean;
   label: string;
-  pathname: string;
   to?: string;
 }): ReactElement {
-  const active = Boolean(to) && pathname === to;
-  const className = `flex items-center rounded-md px-3 py-2 text-sm font-medium transition ${
-    active ? "bg-[#2a2a2c] text-white" : "text-slate-300"
-  } ${disabled ? "cursor-default opacity-55" : "hover:bg-white/6 hover:text-white"}`;
+  const content = (
+    <div
+      className={`flex h-7 items-center gap-3 rounded-md px-1.5 text-[14px] font-medium ${
+        active
+          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+          : "text-[var(--track-text-muted)]"
+      } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface-raised)] hover:text-white"}`}
+    >
+      <TrackingIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
+      <span className="truncate">{label}</span>
+      {badge ? (
+        <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[#b2b2b2]">
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
 
   if (!to || disabled) {
-    return <span className={className}>{label}</span>;
-  }
-
-  if (to.includes("?")) {
-    return (
-      <a className={className} href={to}>
-        {label}
-      </a>
-    );
+    return <div className="px-2">{content}</div>;
   }
 
   return (
-    <Link className={className} to={to}>
-      {label}
+    <Link className="block px-2" to={to}>
+      {content}
     </Link>
   );
 }
 
-function RailIcon({
-  accent = false,
-  tiny = false,
+function RailButton({
+  active = false,
+  icon,
 }: {
-  accent?: boolean;
-  tiny?: boolean;
+  active?: boolean;
+  icon: "bell" | "focus" | "help" | "plan" | "track";
 }): ReactElement {
   return (
-    <div
-      className={`flex items-center justify-center rounded-full border ${
-        accent
-          ? "border-[#c57ccc] bg-[#1f0d22] text-[#f2b7ff]"
-          : "border-white/10 bg-[#121215] text-slate-500"
-      } ${tiny ? "size-4" : "size-5"}`}
+    <button
+      aria-label={icon}
+      className="flex h-10 w-full items-center justify-center"
+      type="button"
     >
-      <div
-        className={`rounded-full ${accent ? "bg-[#f2b7ff]" : "bg-current"} ${tiny ? "size-1.5" : "size-2"}`}
-      />
-    </div>
+      <span
+        className={`flex size-[26px] items-center justify-center rounded-full border ${
+          active
+            ? "border-transparent bg-[var(--track-accent)] text-black"
+            : "border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)]"
+        }`}
+      >
+        <TrackingIcon className="size-4" name={icon} />
+      </span>
+    </button>
   );
+}
+
+function navIconName(label: string) {
+  switch (label) {
+    case "Overview":
+      return "overview";
+    case "Reports":
+      return "reports";
+    case "Approvals":
+      return "approvals";
+    case "Projects":
+      return "projects";
+    case "Clients":
+      return "clients";
+    case "Members":
+      return "members";
+    case "Invoices":
+      return "invoices";
+    case "Tags":
+      return "tags";
+    case "Goals":
+      return "goals";
+    case "Integrations":
+      return "integrations";
+    case "Subscription":
+      return "subscription";
+    case "Settings":
+      return "settings";
+    default:
+      return "overview";
+  }
+}
+
+function isActivePath(pathname: string, to?: string): boolean {
+  if (!to) {
+    return false;
+  }
+
+  return pathname === to || pathname.startsWith(`${to}/`);
 }
 
 function resolveTimeEntryDurationSeconds(entry: { duration?: number }): number {

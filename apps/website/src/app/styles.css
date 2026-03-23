@@ -1,9 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  color: #f4f4f5;
-  background: #151518;
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  --track-canvas: #454545;
+  --track-black: #000000;
+  --track-panel: #0d0d0d;
+  --track-surface: #1b1b1b;
+  --track-surface-muted: #232323;
+  --track-surface-raised: #262626;
+  --track-border: #3a3a3a;
+  --track-border-soft: rgba(255, 255, 255, 0.08);
+  --track-text: #ffffff;
+  --track-text-muted: #a4a4a4;
+  --track-text-soft: #7f7f7f;
+  --track-accent: #e57bd9;
+  --track-accent-soft: #472443;
+  --track-accent-text: #f7d0f0;
+  --track-button: #c878be;
+  color: var(--track-text);
+  background: var(--track-canvas);
+  font-family: Inter, "Avenir Next", "Segoe UI", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -13,9 +28,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, rgba(31, 31, 35, 0.98), rgba(20, 20, 24, 1)),
-    #151518;
+  background: var(--track-canvas);
 }
 
 button,
@@ -32,4 +45,12 @@ a {
 
 #app {
   min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(229, 123, 217, 0.35);
 }

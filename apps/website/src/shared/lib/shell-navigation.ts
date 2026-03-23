@@ -7,6 +7,7 @@ import {
 
 export type ShellNavigationSection = {
   items: Array<{
+    badge?: string;
     disabled?: boolean;
     label: string;
     to?: string;
@@ -68,6 +69,7 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         {
           disabled: true,
           label: "Integrations",
+          badge: "NEW",
         },
       ],
     },
