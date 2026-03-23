@@ -29,10 +29,7 @@ services:
     restart: unless-stopped
 
   opentoggl:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: opentoggl:local
+    image: ghcr.io/correctroadh/opentoggl:main
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: ${OPENTOGGL_PORT:-8080}
