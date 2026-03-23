@@ -29,6 +29,16 @@ func (server *publicTrackOpenAPIServer) GetWorkspace(ctx echo.Context, workspace
 	return server.tenant.GetPublicTrackWorkspace(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) GetWorkspacePreferences(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.tenant.GetPublicTrackWorkspacePreferences(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostWorkspacePreferences(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.tenant.PostPublicTrackWorkspacePreferences(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetWorkspaces(ctx echo.Context) error {
 	return server.tenant.GetPublicTrackWorkspaces(ctx)
 }

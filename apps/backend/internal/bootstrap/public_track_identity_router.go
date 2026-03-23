@@ -48,10 +48,22 @@ func (server *publicTrackOpenAPIServer) GetMeFeatures(ctx echo.Context) error {
 	return server.identity.GetPublicTrackMeFeatures(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) GetMeFlags(ctx echo.Context) error {
+	return server.identity.GetPublicTrackMeFlags(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) PostMeFlags(ctx echo.Context) error {
+	return server.identity.PostPublicTrackMeFlags(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) GetMeLogged(ctx echo.Context) error {
 	return server.identity.GetPublicTrackMeLogged(ctx)
 }
 
 func (server *publicTrackOpenAPIServer) GetMeId(ctx echo.Context) error {
 	return server.identity.GetPublicTrackMeID(ctx)
+}
+
+func (server *publicTrackOpenAPIServer) GetMeLocation(ctx echo.Context) error {
+	return server.identity.GetPublicTrackMeLocation(ctx)
 }

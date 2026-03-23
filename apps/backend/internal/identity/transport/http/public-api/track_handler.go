@@ -7,6 +7,7 @@ import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
+	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
 
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -14,11 +15,18 @@ import (
 )
 
 type PublicTrackHandler struct {
-	identity *Handler
+	identity  *Handler
+	reference *platformapplication.ReferenceService
 }
 
-func NewPublicTrackHandler(identity *Handler) *PublicTrackHandler {
-	return &PublicTrackHandler{identity: identity}
+func NewPublicTrackHandler(
+	identity *Handler,
+	reference *platformapplication.ReferenceService,
+) *PublicTrackHandler {
+	return &PublicTrackHandler{
+		identity:  identity,
+		reference: reference,
+	}
 }
 
 func (handler *PublicTrackHandler) GetPublicTrackMe(ctx echo.Context) error {
@@ -179,6 +187,70 @@ func (handler *PublicTrackHandler) GetPublicTrackMeFeatures(ctx echo.Context) er
 	return ctx.JSON(http.StatusOK, response)
 }
 
+func (handler *PublicTrackHandler) GetPublicTrackMeFlags(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, "web")
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	flags := make(publictrackapi.UserFlags, len(preferences.AlphaFeatures))
+	for _, feature := range preferences.AlphaFeatures {
+		flags[feature.Code] = feature.Enabled
+	}
+	return ctx.JSON(http.StatusOK, flags)
+}
+
+func (handler *PublicTrackHandler) PostPublicTrackMeFlags(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	var payload publictrackapi.UserFlags
+	if err := bindTrackJSON(ctx, &payload); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	preferences, preferencesErr := handler.identity.service.GetPreferences(ctx.Request().Context(), user.ID, "web")
+	if preferencesErr != nil {
+		response := mapError(preferencesErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	features := make([]identitydomain.AlphaFeature, 0, len(payload))
+	for key, value := range payload {
+		enabled, ok := value.(bool)
+		if !ok {
+			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		}
+		features = append(features, identitydomain.AlphaFeature{
+			Code:    key,
+			Enabled: enabled,
+		})
+	}
+
+	if updateErr := handler.identity.service.UpdatePreferences(ctx.Request().Context(), user.ID, "web", identitydomain.Preferences{
+		DateFormat:      preferences.DateFormat,
+		TimeOfDayFormat: preferences.TimeOfDayFormat,
+		AlphaFeatures:   features,
+	}); updateErr != nil {
+		response := mapError(updateErr)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	flags := make(publictrackapi.UserFlags, len(features))
+	for _, feature := range features {
+		flags[feature.Code] = feature.Enabled
+	}
+	return ctx.JSON(http.StatusOK, flags)
+}
+
 func (handler *PublicTrackHandler) GetPublicTrackMeLogged(ctx echo.Context) error {
 	if _, err := handler.resolvePublicTrackUser(ctx); err != nil {
 		return err
@@ -192,6 +264,22 @@ func (handler *PublicTrackHandler) GetPublicTrackMeID(ctx echo.Context) error {
 		return err
 	}
 	return ctx.JSON(http.StatusOK, user.ID)
+}
+
+func (handler *PublicTrackHandler) GetPublicTrackMeLocation(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	response := publictrackapi.MeUserLocationResponse{}
+	if handler.reference != nil {
+		if country, ok := handler.reference.CountryByID(user.CountryID); ok {
+			response.CountryCode = lo.ToPtr(country.Code)
+			response.CountryName = lo.ToPtr(country.Name)
+		}
+	}
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (application.UserSnapshot, error) {
@@ -225,6 +313,10 @@ func credentialsFromBasicAuth(ctx echo.Context) (identitydomain.BasicCredentials
 		Username: username,
 		Password: password,
 	}, nil
+}
+
+func bindTrackJSON(ctx echo.Context, target any) error {
+	return ctx.Bind(target)
 }
 
 func sessionIDFromTrackContext(ctx echo.Context) string {

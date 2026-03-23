@@ -62,6 +62,42 @@ func (handler *Handler) GetPublicTrackTasks(ctx echo.Context) error {
 	})
 }
 
+func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx echo.Context) error {
+	workspaceID, ok := parsePathID(ctx, "workspace_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	pageView, err := handler.catalog.ListTasks(ctx.Request().Context(), workspaceID, catalogapplication.ListTasksFilter{
+		Page:    max(queryInt(ctx, "page", 1), 1),
+		PerPage: max(min(queryInt(ctx, "per_page", 50), 200), 1),
+		Search:  ctx.QueryParam("search"),
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
+	for _, view := range pageView.Tasks {
+		tasks = append(tasks, taskViewToAPI(view))
+	}
+
+	return ctx.JSON(http.StatusOK, publictrackapi.TaskResponse{
+		Data:       &tasks,
+		Page:       lo.ToPtr(pageView.Page),
+		PerPage:    lo.ToPtr(pageView.PerPage),
+		SortField:  lo.ToPtr(defaultTaskSortField(string(pageView.SortField))),
+		SortOrder:  lo.ToPtr(string(pageView.SortOrder)),
+		TotalCount: lo.ToPtr(pageView.TotalCount),
+	})
+}
+
 func (handler *Handler) GetPublicTrackProjectTasks(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {

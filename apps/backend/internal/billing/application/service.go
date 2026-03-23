@@ -32,6 +32,11 @@ type CapabilityCheck struct {
 	InstanceDisabled bool
 }
 
+type PlanCatalogEntry struct {
+	Plan         domain.Plan
+	Capabilities []domain.FeatureCapability
+}
+
 type Service struct {
 	accounts        AccountRepository
 	workspaces      WorkspaceOwnershipLookup
@@ -149,6 +154,35 @@ func (service *Service) CommercialStatusForWorkspace(
 		return domain.CommercialStatus{}, err
 	}
 	return account.WorkspaceStatus(workspaceID)
+}
+
+func (service *Service) AvailablePlans() []PlanCatalogEntry {
+	plans := []domain.Plan{
+		domain.PlanFree,
+		domain.PlanStarter,
+		domain.PlanPremium,
+		domain.PlanEnterprise,
+	}
+
+	entries := make([]PlanCatalogEntry, 0, len(plans))
+	for _, plan := range plans {
+		subscription, err := domain.NewSubscription(plan, domain.SubscriptionStateActive)
+		if err != nil {
+			continue
+		}
+
+		capabilities := make([]domain.FeatureCapability, 0, len(service.capabilityKeys))
+		for _, key := range service.capabilityKeys {
+			capabilities = append(capabilities, service.capabilityRules[key].Snapshot(subscription))
+		}
+
+		entries = append(entries, PlanCatalogEntry{
+			Plan:         plan,
+			Capabilities: capabilities,
+		})
+	}
+
+	return entries
 }
 
 func (service *Service) ProvisionDefaultOrganization(ctx context.Context, organizationID int64) error {
