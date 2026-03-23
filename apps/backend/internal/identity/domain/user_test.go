@@ -139,19 +139,60 @@ func TestPreferencesRejectProtectedAndInvalidFields(t *testing.T) {
 	}
 
 	if err := user.UpdatePreferences(Preferences{
-		DateFormat: "MM/DD/YYYY",
+		DateFormat: "YYYY/MM/DD",
 	}); err != ErrInvalidDateFormat {
 		t.Fatalf("expected invalid date format to be rejected, got %v", err)
 	}
 
 	if err := user.UpdatePreferences(Preferences{
-		DateFormat:      "YYYY-MM-DD",
-		TimeOfDayFormat: "H:MM",
+		CollapseTimeEntries:            lo.ToPtr(true),
+		DateFormat:                     "YYYY-MM-DD",
+		DurationFormat:                 "improved",
+		HideSidebarRight:               lo.ToPtr(false),
+		IsGoalsViewShown:               lo.ToPtr(true),
+		KeyboardShortcutsEnabled:       lo.ToPtr(true),
+		LanguageCode:                   "en-US",
+		ManualEntryMode:                "timer",
+		ManualMode:                     lo.ToPtr(false),
+		ProjectShortcutEnabled:         lo.ToPtr(false),
+		ReportsCollapse:                lo.ToPtr(true),
+		SendAddedToProjectNotification: lo.ToPtr(true),
+		SendDailyProjectInvites:        lo.ToPtr(true),
+		SendProductEmails:              lo.ToPtr(false),
+		SendProductReleaseNotification: lo.ToPtr(true),
+		SendTimerNotifications:         lo.ToPtr(true),
+		SendWeeklyReport:               lo.ToPtr(false),
+		ShowTimeInTitle:                lo.ToPtr(true),
+		TagsShortcutEnabled:            lo.ToPtr(false),
+		TimeOfDayFormat:                "h:mm A",
 		AlphaFeatures: []AlphaFeature{
 			{Code: "calendar-redesign", Enabled: true},
 		},
 	}); err != nil {
 		t.Fatalf("expected valid preference update to succeed: %v", err)
+	}
+
+	preferences := user.Preferences()
+	if !lo.FromPtr(preferences.CollapseTimeEntries) {
+		t.Fatalf("expected collapse time entries preference to persist, got %#v", preferences)
+	}
+	if preferences.DurationFormat != "improved" {
+		t.Fatalf("expected duration format to persist, got %#v", preferences.DurationFormat)
+	}
+	if preferences.LanguageCode != "en-US" {
+		t.Fatalf("expected language code to persist, got %#v", preferences.LanguageCode)
+	}
+	if !lo.FromPtr(preferences.SendTimerNotifications) {
+		t.Fatalf("expected timer notifications preference to persist, got %#v", preferences)
+	}
+	if !lo.FromPtr(preferences.ShowTimeInTitle) {
+		t.Fatalf("expected show time in title preference to persist, got %#v", preferences)
+	}
+	if user.SendProductEmails() {
+		t.Fatalf("expected user-level product email flag to update, got %#v", user.SendProductEmails())
+	}
+	if user.SendWeeklyReport() {
+		t.Fatalf("expected user-level weekly report flag to update, got %#v", user.SendWeeklyReport())
 	}
 }
 

@@ -57,10 +57,27 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
 		on conflict (id) do update
 		set email = excluded.email,
 			full_name = excluded.full_name,
@@ -76,7 +93,24 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			tos_accept_needed = excluded.tos_accept_needed,
 			product_emails_disable_code = excluded.product_emails_disable_code,
 			weekly_report_disable_code = excluded.weekly_report_disable_code,
+			preferences_animation_opt_out = excluded.preferences_animation_opt_out,
+			preferences_collapse_time_entries = excluded.preferences_collapse_time_entries,
 			preferences_date_format = excluded.preferences_date_format,
+			preferences_duration_format = excluded.preferences_duration_format,
+			preferences_hide_sidebar_right = excluded.preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown = excluded.preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled = excluded.preferences_keyboard_shortcuts_enabled,
+			preferences_language_code = excluded.preferences_language_code,
+			preferences_manual_entry_mode = excluded.preferences_manual_entry_mode,
+			preferences_manual_mode = excluded.preferences_manual_mode,
+			preferences_project_shortcut_enabled = excluded.preferences_project_shortcut_enabled,
+			preferences_reports_collapse = excluded.preferences_reports_collapse,
+			preferences_send_added_to_project_notification = excluded.preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites = excluded.preferences_send_daily_project_invites,
+			preferences_send_product_release_notification = excluded.preferences_send_product_release_notification,
+			preferences_send_timer_notifications = excluded.preferences_send_timer_notifications,
+			preferences_show_time_in_title = excluded.preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled = excluded.preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format = excluded.preferences_time_of_day_format,
 			preferences_alpha_features = excluded.preferences_alpha_features
 	`,
@@ -95,7 +129,24 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 		user.ToSAcceptNeeded(),
 		user.ProductEmailsDisableCode(),
 		user.WeeklyReportDisableCode(),
+		lo.FromPtrOr(user.Preferences().AnimationOptOut, false),
+		lo.FromPtrOr(user.Preferences().CollapseTimeEntries, true),
 		user.Preferences().DateFormat,
+		user.Preferences().DurationFormat,
+		lo.FromPtrOr(user.Preferences().HideSidebarRight, false),
+		lo.FromPtrOr(user.Preferences().IsGoalsViewShown, true),
+		lo.FromPtrOr(user.Preferences().KeyboardShortcutsEnabled, true),
+		user.Preferences().LanguageCode,
+		user.Preferences().ManualEntryMode,
+		lo.FromPtrOr(user.Preferences().ManualMode, false),
+		lo.FromPtrOr(user.Preferences().ProjectShortcutEnabled, false),
+		lo.FromPtrOr(user.Preferences().ReportsCollapse, false),
+		lo.FromPtrOr(user.Preferences().SendAddedToProjectNotification, true),
+		lo.FromPtrOr(user.Preferences().SendDailyProjectInvites, true),
+		lo.FromPtrOr(user.Preferences().SendProductReleaseNotification, true),
+		lo.FromPtrOr(user.Preferences().SendTimerNotifications, true),
+		lo.FromPtrOr(user.Preferences().ShowTimeInTitle, true),
+		lo.FromPtrOr(user.Preferences().TagsShortcutEnabled, false),
 		user.Preferences().TimeOfDayFormat,
 		alphaFeatures,
 	)
@@ -124,7 +175,24 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
@@ -159,7 +227,24 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
@@ -194,7 +279,24 @@ func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*doma
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
@@ -229,7 +331,24 @@ func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
@@ -264,7 +383,24 @@ func (repo *UserRepository) ByWeeklyReportDisableCode(ctx context.Context, code 
 			tos_accept_needed,
 			product_emails_disable_code,
 			weekly_report_disable_code,
+			preferences_animation_opt_out,
+			preferences_collapse_time_entries,
 			preferences_date_format,
+			preferences_duration_format,
+			preferences_hide_sidebar_right,
+			preferences_is_goals_view_shown,
+			preferences_keyboard_shortcuts_enabled,
+			preferences_language_code,
+			preferences_manual_entry_mode,
+			preferences_manual_mode,
+			preferences_project_shortcut_enabled,
+			preferences_reports_collapse,
+			preferences_send_added_to_project_notification,
+			preferences_send_daily_project_invites,
+			preferences_send_product_release_notification,
+			preferences_send_timer_notifications,
+			preferences_show_time_in_title,
+			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features
 		from identity_users
@@ -323,24 +459,41 @@ func (repo *SessionRepository) Delete(ctx context.Context, sessionID string) err
 
 func scanUser(row rowScanner) (*domain.User, error) {
 	var (
-		id                       int64
-		email                    string
-		fullName                 string
-		passwordHash             string
-		apiToken                 string
-		timezone                 string
-		beginningOfWeek          int
-		countryID                int64
-		defaultWorkspaceID       int64
-		state                    string
-		sendProductEmails        bool
-		sendWeeklyReport         bool
-		tosAcceptNeeded          bool
-		productEmailsDisableCode string
-		weeklyReportDisableCode  string
-		preferencesDateFormat    string
-		preferencesTimeOfDay     string
-		preferencesAlphaFeatures []byte
+		id                                        int64
+		email                                     string
+		fullName                                  string
+		passwordHash                              string
+		apiToken                                  string
+		timezone                                  string
+		beginningOfWeek                           int
+		countryID                                 int64
+		defaultWorkspaceID                        int64
+		state                                     string
+		sendProductEmails                         bool
+		sendWeeklyReport                          bool
+		tosAcceptNeeded                           bool
+		productEmailsDisableCode                  string
+		weeklyReportDisableCode                   string
+		preferencesAnimationOptOut                bool
+		preferencesCollapseTimeEntries            bool
+		preferencesDateFormat                     string
+		preferencesDurationFormat                 string
+		preferencesHideSidebarRight               bool
+		preferencesIsGoalsViewShown               bool
+		preferencesKeyboardShortcutsEnabled       bool
+		preferencesLanguageCode                   string
+		preferencesManualEntryMode                string
+		preferencesManualMode                     bool
+		preferencesProjectShortcutEnabled         bool
+		preferencesReportsCollapse                bool
+		preferencesSendAddedToProjectNotification bool
+		preferencesSendDailyProjectInvites        bool
+		preferencesSendProductReleaseNotification bool
+		preferencesSendTimerNotifications         bool
+		preferencesShowTimeInTitle                bool
+		preferencesTagsShortcutEnabled            bool
+		preferencesTimeOfDay                      string
+		preferencesAlphaFeatures                  []byte
 	)
 
 	if err := row.Scan(
@@ -359,7 +512,24 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		&tosAcceptNeeded,
 		&productEmailsDisableCode,
 		&weeklyReportDisableCode,
+		&preferencesAnimationOptOut,
+		&preferencesCollapseTimeEntries,
 		&preferencesDateFormat,
+		&preferencesDurationFormat,
+		&preferencesHideSidebarRight,
+		&preferencesIsGoalsViewShown,
+		&preferencesKeyboardShortcutsEnabled,
+		&preferencesLanguageCode,
+		&preferencesManualEntryMode,
+		&preferencesManualMode,
+		&preferencesProjectShortcutEnabled,
+		&preferencesReportsCollapse,
+		&preferencesSendAddedToProjectNotification,
+		&preferencesSendDailyProjectInvites,
+		&preferencesSendProductReleaseNotification,
+		&preferencesSendTimerNotifications,
+		&preferencesShowTimeInTitle,
+		&preferencesTagsShortcutEnabled,
 		&preferencesTimeOfDay,
 		&preferencesAlphaFeatures,
 	); err != nil {
@@ -374,12 +544,12 @@ func scanUser(row rowScanner) (*domain.User, error) {
 	}
 
 	user, err := domain.RegisterUser(domain.RegisterParams{
-		ID:           id,
-		Email:        email,
-		FullName:     fullName,
-		Password:     "persisted-secret",
-		PasswordHash: passwordHash,
-		APIToken:     apiToken,
+		ID:                       id,
+		Email:                    email,
+		FullName:                 fullName,
+		Password:                 "persisted-secret",
+		PasswordHash:             passwordHash,
+		APIToken:                 apiToken,
 		SendProductEmails:        lo.ToPtr(sendProductEmails),
 		SendWeeklyReport:         lo.ToPtr(sendWeeklyReport),
 		ToSAcceptNeeded:          lo.ToPtr(tosAcceptNeeded),
@@ -400,9 +570,29 @@ func scanUser(row rowScanner) (*domain.User, error) {
 	}
 
 	if err := user.UpdatePreferences(domain.Preferences{
-		DateFormat:      preferencesDateFormat,
-		TimeOfDayFormat: preferencesTimeOfDay,
-		AlphaFeatures:   alphaFeatures,
+		AnimationOptOut:                lo.ToPtr(preferencesAnimationOptOut),
+		BeginningOfWeek:                lo.ToPtr(beginningOfWeek),
+		CollapseTimeEntries:            lo.ToPtr(preferencesCollapseTimeEntries),
+		DateFormat:                     preferencesDateFormat,
+		DurationFormat:                 preferencesDurationFormat,
+		HideSidebarRight:               lo.ToPtr(preferencesHideSidebarRight),
+		IsGoalsViewShown:               lo.ToPtr(preferencesIsGoalsViewShown),
+		KeyboardShortcutsEnabled:       lo.ToPtr(preferencesKeyboardShortcutsEnabled),
+		LanguageCode:                   preferencesLanguageCode,
+		ManualEntryMode:                preferencesManualEntryMode,
+		ManualMode:                     lo.ToPtr(preferencesManualMode),
+		ProjectShortcutEnabled:         lo.ToPtr(preferencesProjectShortcutEnabled),
+		ReportsCollapse:                lo.ToPtr(preferencesReportsCollapse),
+		SendAddedToProjectNotification: lo.ToPtr(preferencesSendAddedToProjectNotification),
+		SendDailyProjectInvites:        lo.ToPtr(preferencesSendDailyProjectInvites),
+		SendProductEmails:              lo.ToPtr(sendProductEmails),
+		SendProductReleaseNotification: lo.ToPtr(preferencesSendProductReleaseNotification),
+		SendTimerNotifications:         lo.ToPtr(preferencesSendTimerNotifications),
+		SendWeeklyReport:               lo.ToPtr(sendWeeklyReport),
+		ShowTimeInTitle:                lo.ToPtr(preferencesShowTimeInTitle),
+		TagsShortcutEnabled:            lo.ToPtr(preferencesTagsShortcutEnabled),
+		TimeOfDayFormat:                preferencesTimeOfDay,
+		AlphaFeatures:                  alphaFeatures,
 	}); err != nil {
 		return nil, fmt.Errorf("hydrate preferences for identity user %d: %w", id, err)
 	}

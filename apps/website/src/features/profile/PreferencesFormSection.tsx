@@ -45,12 +45,6 @@ export function PreferencesFormSection({
           <Field label="Duration format">
             <input className={fieldClassName} {...form.register("durationFormat")} />
           </Field>
-          <Field label="Timezone">
-            <input className={fieldClassName} {...form.register("timezone")} />
-          </Field>
-          <Field label="Language code">
-            <input className={fieldClassName} {...form.register("languageCode")} />
-          </Field>
           <Field label="Time of day format">
             <input className={fieldClassName} {...form.register("timeofdayFormat")} />
           </Field>
@@ -72,14 +66,14 @@ export function PreferencesFormSection({
           <ToggleField label="Collapse time entries">
             <input type="checkbox" {...form.register("collapseTimeEntries")} />
           </ToggleField>
-          <ToggleField label="Collapse reports by default">
-            <input type="checkbox" {...form.register("reportsCollapse")} />
+          <ToggleField label="Show goals view">
+            <input type="checkbox" {...form.register("isGoalsViewShown")} />
           </ToggleField>
-          <ToggleField label="Hide right sidebar">
-            <input type="checkbox" {...form.register("hideSidebarRight")} />
+          <ToggleField label="Keyboard shortcuts enabled">
+            <input type="checkbox" {...form.register("keyboardShortcutsEnabled")} />
           </ToggleField>
-          <ToggleField label="Enable manual mode">
-            <input type="checkbox" {...form.register("manualMode")} />
+          <ToggleField label="Show running time in title">
+            <input type="checkbox" {...form.register("showTimeInTitle")} />
           </ToggleField>
         </div>
 

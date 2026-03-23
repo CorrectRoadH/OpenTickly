@@ -10,6 +10,8 @@ import (
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
+
+	"github.com/samber/lo"
 )
 
 func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T) {
@@ -49,8 +51,26 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	}
 
 	if err := service.UpdatePreferences(ctx, registered.User.ID, "web", domain.Preferences{
-		DateFormat:      "YYYY-MM-DD",
-		TimeOfDayFormat: "h:mm A",
+		CollapseTimeEntries:            lo.ToPtr(true),
+		DateFormat:                     "YYYY-MM-DD",
+		DurationFormat:                 "improved",
+		HideSidebarRight:               lo.ToPtr(false),
+		IsGoalsViewShown:               lo.ToPtr(true),
+		KeyboardShortcutsEnabled:       lo.ToPtr(true),
+		LanguageCode:                   "en-US",
+		ManualEntryMode:                "timer",
+		ManualMode:                     lo.ToPtr(false),
+		ProjectShortcutEnabled:         lo.ToPtr(false),
+		ReportsCollapse:                lo.ToPtr(true),
+		SendAddedToProjectNotification: lo.ToPtr(true),
+		SendDailyProjectInvites:        lo.ToPtr(true),
+		SendProductEmails:              lo.ToPtr(false),
+		SendProductReleaseNotification: lo.ToPtr(true),
+		SendTimerNotifications:         lo.ToPtr(true),
+		SendWeeklyReport:               lo.ToPtr(false),
+		ShowTimeInTitle:                lo.ToPtr(true),
+		TagsShortcutEnabled:            lo.ToPtr(false),
+		TimeOfDayFormat:                "h:mm A",
 		AlphaFeatures: []domain.AlphaFeature{
 			{Code: "calendar-redesign", Enabled: true},
 		},
@@ -64,6 +84,22 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	}
 	if len(preferences.AlphaFeatures) != 1 || preferences.AlphaFeatures[0].Code != "calendar-redesign" {
 		t.Fatalf("expected saved alpha feature, got %#v", preferences.AlphaFeatures)
+	}
+	if !lo.FromPtr(preferences.CollapseTimeEntries) || !lo.FromPtr(preferences.ShowTimeInTitle) {
+		t.Fatalf("expected expanded boolean preferences to persist, got %#v", preferences)
+	}
+	if preferences.DurationFormat != "improved" || preferences.ManualEntryMode != "timer" {
+		t.Fatalf("expected string preferences to persist, got %#v", preferences)
+	}
+	if currentAfterPreferences, err := service.ResolveCurrentUser(ctx, registered.SessionID); err != nil {
+		t.Fatalf("resolve current user after preferences: %v", err)
+	} else {
+		if currentAfterPreferences.SendProductEmails {
+			t.Fatalf("expected send product emails to persist through preferences update, got %#v", currentAfterPreferences)
+		}
+		if currentAfterPreferences.SendWeeklyReport {
+			t.Fatalf("expected send weekly report to persist through preferences update, got %#v", currentAfterPreferences)
+		}
 	}
 
 	if _, err := service.RegisterPushService(ctx, registered.User.ID, "device-token-1"); err != nil {

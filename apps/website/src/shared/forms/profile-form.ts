@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-import type {
-  MePayload,
-  ModelsAllPreferences,
-  RelatedUserWithRelated,
-} from "../api/generated/public-track/types.gen.ts";
+import type { MePayload, RelatedUserWithRelated } from "../api/generated/public-track/types.gen.ts";
+import type { ProfilePreferencesDto } from "../query/web-shell.ts";
 
 export const profileFormSchema = z.object({
   email: z.string().email(),
@@ -22,15 +19,22 @@ export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export const preferencesFormSchema = z.object({
   dateFormat: z.string().min(1),
   durationFormat: z.string().min(1),
-  timezone: z.string().min(1),
   beginningOfWeek: z.number().int().min(0).max(6),
   collapseTimeEntries: z.boolean(),
-  languageCode: z.string().min(1),
-  hideSidebarRight: z.boolean(),
-  reportsCollapse: z.boolean(),
-  manualMode: z.boolean(),
-  manualEntryMode: z.string().min(1),
+  isGoalsViewShown: z.boolean(),
+  keyboardShortcutsEnabled: z.boolean(),
+  projectShortcutEnabled: z.boolean(),
+  sendAddedToProjectNotification: z.boolean(),
+  sendDailyProjectInvites: z.boolean(),
+  sendProductEmails: z.boolean(),
+  sendProductReleaseNotification: z.boolean(),
+  sendTimerNotifications: z.boolean(),
+  sendWeeklyReport: z.boolean(),
+  showAnimations: z.boolean(),
+  showTimeInTitle: z.boolean(),
+  tagsShortcutEnabled: z.boolean(),
   timeofdayFormat: z.string().min(1),
+  manualEntryMode: z.string().min(1),
 });
 
 export type PreferencesFormValues = z.infer<typeof preferencesFormSchema>;
@@ -70,48 +74,50 @@ export function mapProfileFormToRequest(values: ProfileFormValues): MePayload {
 }
 
 export function createPreferencesFormValues(
-  preferences: ModelsAllPreferences,
+  preferences: ProfilePreferencesDto,
 ): PreferencesFormValues {
-  const extraPreferences = preferences as Record<string, unknown>;
-
   return {
     dateFormat: preferences.date_format ?? "YYYY-MM-DD",
     durationFormat: preferences.duration_format ?? "improved",
-    timezone: preferences.pg_time_zone_name ?? "UTC",
     beginningOfWeek: preferences.beginningOfWeek ?? 1,
     collapseTimeEntries: preferences.collapseTimeEntries ?? false,
-    languageCode:
-      typeof extraPreferences["language_code"] === "string"
-        ? (extraPreferences["language_code"] as string)
-        : "en-US",
-    hideSidebarRight: preferences.hide_sidebar_right ?? false,
-    reportsCollapse:
-      typeof extraPreferences["reports_collapse"] === "boolean"
-        ? (extraPreferences["reports_collapse"] as boolean)
-        : false,
-    manualMode: preferences.manualMode ?? false,
+    isGoalsViewShown: preferences.is_goals_view_shown ?? true,
+    keyboardShortcutsEnabled: preferences.keyboard_shortcuts_enabled ?? true,
+    projectShortcutEnabled: preferences.project_shortcut_enabled ?? false,
+    sendAddedToProjectNotification: preferences.send_added_to_project_notification ?? true,
+    sendDailyProjectInvites: preferences.send_daily_project_invites ?? true,
+    sendProductEmails: preferences.send_product_emails ?? true,
+    sendProductReleaseNotification: preferences.send_product_release_notification ?? true,
+    sendTimerNotifications: preferences.send_timer_notifications ?? true,
+    sendWeeklyReport: preferences.send_weekly_report ?? true,
+    showAnimations: !(preferences.animation_opt_out ?? false),
+    showTimeInTitle: preferences.showTimeInTitle ?? true,
+    tagsShortcutEnabled: preferences.tags_shortcut_enabled ?? false,
     manualEntryMode: preferences.manualEntryMode ?? "timer",
     timeofdayFormat: preferences.timeofday_format ?? "h:mm a",
   };
 }
 
-export function mapPreferencesFormToRequest(values: PreferencesFormValues): ModelsAllPreferences {
+export function mapPreferencesFormToRequest(values: PreferencesFormValues): ProfilePreferencesDto {
   const parsed = preferencesFormSchema.parse(values);
-  const request: ModelsAllPreferences = {
-    date_format: parsed.dateFormat,
-    duration_format: parsed.durationFormat,
-    pg_time_zone_name: parsed.timezone,
+  return {
+    animation_opt_out: !parsed.showAnimations,
     beginningOfWeek: parsed.beginningOfWeek,
     collapseTimeEntries: parsed.collapseTimeEntries,
-    hide_sidebar_right: parsed.hideSidebarRight,
-    manualMode: parsed.manualMode,
+    date_format: parsed.dateFormat,
+    duration_format: parsed.durationFormat,
+    is_goals_view_shown: parsed.isGoalsViewShown,
+    keyboard_shortcuts_enabled: parsed.keyboardShortcutsEnabled,
     manualEntryMode: parsed.manualEntryMode,
+    project_shortcut_enabled: parsed.projectShortcutEnabled,
+    send_added_to_project_notification: parsed.sendAddedToProjectNotification,
+    send_daily_project_invites: parsed.sendDailyProjectInvites,
+    send_product_emails: parsed.sendProductEmails,
+    send_product_release_notification: parsed.sendProductReleaseNotification,
+    send_timer_notifications: parsed.sendTimerNotifications,
+    send_weekly_report: parsed.sendWeeklyReport,
+    showTimeInTitle: parsed.showTimeInTitle,
+    tags_shortcut_enabled: parsed.tagsShortcutEnabled,
     timeofday_format: parsed.timeofdayFormat,
   };
-
-  const extraRequest = request as Record<string, unknown>;
-  extraRequest["language_code"] = parsed.languageCode;
-  extraRequest["reports_collapse"] = parsed.reportsCollapse;
-
-  return request;
 }

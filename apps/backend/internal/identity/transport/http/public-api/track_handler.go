@@ -21,6 +21,13 @@ type PublicTrackHandler struct {
 	reference *platformapplication.ReferenceService
 }
 
+type publicTrackPreferencesRequest struct {
+	publictrackapi.ModelsAllPreferences
+	LanguageCode    *string `json:"language_code"`
+	ReportsCollapse *bool   `json:"reports_collapse"`
+	AnimationOptOut *bool   `json:"animation_opt_out"`
+}
+
 func NewPublicTrackHandler(
 	identity *Handler,
 	reference *platformapplication.ReferenceService,
@@ -86,16 +93,17 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferences(ctx echo.Context) 
 		return err
 	}
 
-	var request publictrackapi.ModelsAllPreferences
-	if err := ctx.Bind(&request); err != nil {
+	var request publicTrackPreferencesRequest
+	if err := bindTrackJSON(ctx, &request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	if updateErr := handler.identity.service.UpdatePreferences(ctx.Request().Context(), user.ID, "web", identitydomain.Preferences{
-		DateFormat:      lo.FromPtr(request.DateFormat),
-		TimeOfDayFormat: normalizeTrackTimeOfDayFormat(lo.FromPtr(request.TimeofdayFormat)),
-		AlphaFeatures:   alphaFeaturesFromPublicTrack(request.AlphaFeatures),
-	}); updateErr != nil {
+	if updateErr := handler.identity.service.UpdatePreferences(
+		ctx.Request().Context(),
+		user.ID,
+		"web",
+		preferencesFromPublicTrackRequest(request),
+	); updateErr != nil {
 		response := mapError(updateErr)
 		return ctx.JSON(response.StatusCode, response.Body)
 	}
@@ -127,16 +135,17 @@ func (handler *PublicTrackHandler) PostPublicTrackPreferencesClient(ctx echo.Con
 		return err
 	}
 
-	var request publictrackapi.ModelsAllPreferences
-	if err := ctx.Bind(&request); err != nil {
+	var request publicTrackPreferencesRequest
+	if err := bindTrackJSON(ctx, &request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	if updateErr := handler.identity.service.UpdatePreferences(ctx.Request().Context(), user.ID, client, identitydomain.Preferences{
-		DateFormat:      lo.FromPtr(request.DateFormat),
-		TimeOfDayFormat: normalizeTrackTimeOfDayFormat(lo.FromPtr(request.TimeofdayFormat)),
-		AlphaFeatures:   alphaFeaturesFromPublicTrack(request.AlphaFeatures),
-	}); updateErr != nil {
+	if updateErr := handler.identity.service.UpdatePreferences(
+		ctx.Request().Context(),
+		user.ID,
+		client,
+		preferencesFromPublicTrackRequest(request),
+	); updateErr != nil {
 		response := mapError(updateErr)
 		return ctx.JSON(response.StatusCode, response.Body)
 	}
@@ -429,6 +438,36 @@ func int64PointerFromTrackIntPointer(value *int) *int64 {
 	return lo.ToPtr(int64(*value))
 }
 
+func preferencesFromPublicTrackRequest(
+	request publicTrackPreferencesRequest,
+) identitydomain.Preferences {
+	return identitydomain.Preferences{
+		AnimationOptOut:                request.AnimationOptOut,
+		BeginningOfWeek:                request.BeginningOfWeek,
+		CollapseTimeEntries:            request.CollapseTimeEntries,
+		DateFormat:                     lo.FromPtr(request.DateFormat),
+		DurationFormat:                 lo.FromPtr(request.DurationFormat),
+		HideSidebarRight:               request.HideSidebarRight,
+		IsGoalsViewShown:               request.IsGoalsViewShown,
+		KeyboardShortcutsEnabled:       request.KeyboardShortcutsEnabled,
+		LanguageCode:                   lo.FromPtr(request.LanguageCode),
+		ManualEntryMode:                lo.FromPtr(request.ManualEntryMode),
+		ManualMode:                     request.ManualMode,
+		ProjectShortcutEnabled:         request.ProjectShortcutEnabled,
+		ReportsCollapse:                request.ReportsCollapse,
+		SendAddedToProjectNotification: request.SendAddedToProjectNotification,
+		SendDailyProjectInvites:        request.SendDailyProjectInvites,
+		SendProductEmails:              request.SendProductEmails,
+		SendProductReleaseNotification: request.SendProductReleaseNotification,
+		SendTimerNotifications:         request.SendTimerNotifications,
+		SendWeeklyReport:               request.SendWeeklyReport,
+		ShowTimeInTitle:                request.ShowTimeInTitle,
+		TagsShortcutEnabled:            request.TagsShortcutEnabled,
+		TimeOfDayFormat:                normalizeTrackTimeOfDayFormat(lo.FromPtr(request.TimeofdayFormat)),
+		AlphaFeatures:                  alphaFeaturesFromPublicTrack(request.AlphaFeatures),
+	}
+}
+
 // PostUnifiedFeedback handles general feedback submission.
 func (handler *PublicTrackHandler) PostUnifiedFeedback(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, "Feedback received.")
@@ -479,7 +518,11 @@ func (handler *PublicTrackHandler) PostPublicTrackUseGravatar(ctx echo.Context) 
 		// (The identity service doesn't yet support gravatar-specific toggling)
 	}
 	_ = user
-	return ctx.JSON(http.StatusOK, map[string]any{"use_gravatar": true})
+	return ctx.JSON(http.StatusOK, useGravatarResponse{UseGravatar: true})
+}
+
+type useGravatarResponse struct {
+	UseGravatar bool `json:"use_gravatar"`
 }
 
 func alphaFeaturesFromPublicTrack(values *[]publictrackapi.ModelsAlphaFeature) []identitydomain.AlphaFeature {

@@ -98,6 +98,12 @@ export type WorkspacePermissionsEnvelopeDto = {
   workspace: WorkspacePermissionsDto;
 };
 
+export type ProfilePreferencesDto = ModelsAllPreferences & {
+  animation_opt_out?: boolean;
+  language_code?: string;
+  reports_collapse?: boolean;
+};
+
 export type ProjectListStatusFilter = "active" | "all" | "archived";
 
 export function useSessionBootstrapQuery() {
@@ -188,7 +194,7 @@ export function useResetApiTokenMutation() {
 
 export function usePreferencesQuery() {
   return useQuery({
-    queryFn: () => unwrapWebApiResult(getPreferences()),
+    queryFn: () => unwrapWebApiResult(getPreferences()) as Promise<ProfilePreferencesDto>,
     queryKey: ["web-preferences"],
   });
 }
@@ -197,7 +203,7 @@ export function useUpdatePreferencesMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: ModelsAllPreferences) =>
+    mutationFn: (request: ProfilePreferencesDto) =>
       unwrapWebApiResult(postPreferences({ body: request })),
     onSuccess: async () => {
       await queryClient.invalidateQueries({

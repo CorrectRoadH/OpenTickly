@@ -1,47 +1,48 @@
 import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 
+import {
+  createPreferencesFormValues,
+  mapPreferencesFormToRequest,
+  type PreferencesFormValues,
+} from "../../shared/forms/profile-form.ts";
 import {
   useResetApiTokenMutation,
   usePreferencesQuery,
   useProfileQuery,
+  useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const figmaEmailPreferences = [
   {
-    checked: false,
-    key: "send_product_emails",
+    key: "sendProductEmails",
     label: "Toggl Track can send newsletters by email",
   },
   {
-    checked: false,
-    key: "send_weekly_report",
+    key: "sendWeeklyReport",
     label: "Weekly overview of tracked time",
   },
   {
-    checked: true,
-    key: "send_timer_notifications",
+    key: "sendTimerNotifications",
     label: "Email about long running (over 8 hours) time entries",
   },
   {
-    checked: true,
-    key: "send_daily_project_invites",
+    key: "sendDailyProjectInvites",
     label: "Notify me when I'm added to a new project",
   },
-] as const;
+] satisfies ReadonlyArray<{ key: keyof PreferencesFormValues; label: string }>;
 
 const figmaInAppPreferences = [
   {
-    checked: true,
-    key: "send_added_to_project_notification",
+    key: "sendAddedToProjectNotification",
     label: "Notify me when I am added to projects and tasks",
     section: "Projects",
   },
   {
-    checked: true,
-    key: "send_product_release_notification",
+    key: "sendProductReleaseNotification",
     label: "Notify me when a new feature is released",
     section: "Product releases",
   },
@@ -49,62 +50,194 @@ const figmaInAppPreferences = [
 
 const figmaTimerPreferences = [
   {
-    checked: true,
     key: "collapseTimeEntries",
     label: "Group similar time entries",
   },
   {
-    checked: true,
     key: "showTimeInTitle",
     label: "Show running time in the title bar",
   },
   {
-    checked: true,
-    key: "animation_opt_out",
+    key: "showAnimations",
     label: "Show animations",
   },
   {
-    checked: true,
-    key: "is_goals_view_shown",
+    key: "isGoalsViewShown",
     label: "Show goals view",
   },
-] as const;
+] satisfies ReadonlyArray<{ key: keyof PreferencesFormValues; label: string }>;
 
 const figmaShortcutPreferences = [
   {
-    checked: true,
     helper: 'Press question mark "?" to see available keyboard shortcuts',
-    key: "keyboard_shortcuts_enabled",
+    key: "keyboardShortcutsEnabled",
     label: "Allow using keyboard shortcuts",
   },
   {
-    checked: false,
-    key: "project_shortcut_enabled",
+    key: "projectShortcutEnabled",
     label: "Allow using @ shortcut to assign a Project in the Timer Description field",
   },
   {
-    checked: false,
-    key: "tags_shortcut_enabled",
+    key: "tagsShortcutEnabled",
     label: "Allow using # shortcut to assign a Tag in the Timer Description field",
   },
+] satisfies ReadonlyArray<{ helper?: string; key: keyof PreferencesFormValues; label: string }>;
+
+const durationFormatOptions = [
+  { label: "Classic", value: "classic" },
+  { label: "Decimal", value: "decimal" },
+  { label: "Improved (0:47:06)", value: "improved" },
 ] as const;
 
-const timeAndDateOptions = {
-  dateFormat: ["YYYY-MM-DD"],
-  durationFormat: ["Improved (0:47:06)"],
-  firstDayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-  timeFormat: ["24-hour", "12-hour"],
-} as const;
+const dateFormatOptions = [
+  { label: "YYYY-MM-DD", value: "YYYY-MM-DD" },
+  { label: "MM/DD/YYYY", value: "MM/DD/YYYY" },
+  { label: "DD-MM-YYYY", value: "DD-MM-YYYY" },
+  { label: "MM-DD-YYYY", value: "MM-DD-YYYY" },
+  { label: "DD/MM/YYYY", value: "DD/MM/YYYY" },
+  { label: "DD.MM.YYYY", value: "DD.MM.YYYY" },
+] as const;
+
+const timeFormatOptions = [
+  { label: "24-hour", value: "HH:mm" },
+  { label: "12-hour", value: "h:mm A" },
+] as const;
+
+const firstDayOfWeekOptions = [
+  { label: "Sunday", value: 0 },
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+] as const;
 
 const sectionCardClassName = "overflow-hidden rounded-[8px] border border-[#3a3a3a] bg-[#1b1b1b]";
+const defaultPreferencesFormValues: PreferencesFormValues = {
+  beginningOfWeek: 1,
+  collapseTimeEntries: true,
+  dateFormat: "YYYY-MM-DD",
+  durationFormat: "improved",
+  isGoalsViewShown: true,
+  keyboardShortcutsEnabled: true,
+  manualEntryMode: "timer",
+  projectShortcutEnabled: false,
+  sendAddedToProjectNotification: true,
+  sendDailyProjectInvites: true,
+  sendProductEmails: true,
+  sendProductReleaseNotification: true,
+  sendTimerNotifications: true,
+  sendWeeklyReport: true,
+  showAnimations: true,
+  showTimeInTitle: true,
+  tagsShortcutEnabled: false,
+  timeofdayFormat: "HH:mm",
+};
 
 export function ProfilePage(): ReactElement {
   const session = useSession();
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
+  const updatePreferencesMutation = useUpdatePreferencesMutation();
   const resetApiTokenMutation = useResetApiTokenMutation();
   const [apiTokenStatus, setApiTokenStatus] = useState<string | null>(null);
   const [apiTokenError, setApiTokenError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    description: string;
+    title: string;
+    tone: "error" | "success";
+  } | null>(null);
+  const form = useForm<PreferencesFormValues>({
+    defaultValues: defaultPreferencesFormValues,
+  });
+  const watchedPreferences = useWatch({
+    control: form.control,
+  });
+  const lastSavedValuesRef = useRef(JSON.stringify(defaultPreferencesFormValues));
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveInFlightRef = useRef(false);
+  const pendingRetryRef = useRef(false);
+  const preferenceValues = createPreferencesFormValues(preferencesQuery.data ?? {});
+
+  useEffect(() => {
+    form.reset(preferenceValues);
+    lastSavedValuesRef.current = JSON.stringify(preferenceValues);
+  }, [form, preferenceValues]);
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setToast(null);
+    }, 2600);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!form.formState.isDirty) {
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      void saveLatestValues();
+    }, 900);
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [form.formState.isDirty, watchedPreferences]);
+
+  async function saveLatestValues(): Promise<void> {
+    const latestValues = form.getValues();
+    const serializedValues = JSON.stringify(latestValues);
+
+    if (serializedValues === lastSavedValuesRef.current) {
+      return;
+    }
+
+    if (saveInFlightRef.current) {
+      pendingRetryRef.current = true;
+      return;
+    }
+
+    saveInFlightRef.current = true;
+
+    try {
+      await updatePreferencesMutation.mutateAsync(mapPreferencesFormToRequest(latestValues));
+      lastSavedValuesRef.current = serializedValues;
+      form.reset(latestValues);
+      setToast({
+        description: "Your profile preferences have been updated",
+        title: "Success!",
+        tone: "success",
+      });
+    } catch {
+      setToast({
+        description: "We could not save this change. Try again in a moment.",
+        title: "Could not save profile",
+        tone: "error",
+      });
+    } finally {
+      saveInFlightRef.current = false;
+
+      if (pendingRetryRef.current) {
+        pendingRetryRef.current = false;
+        void saveLatestValues();
+      }
+    }
+  }
 
   if (profileQuery.isPending || preferencesQuery.isPending) {
     return (
@@ -145,7 +278,6 @@ export function ProfilePage(): ReactElement {
     );
   }
 
-  const preferencesRecord = preferencesQuery.data as Record<string, unknown>;
   const profileName =
     profileQuery.data.fullname || session.user.fullName || profileQuery.data.email;
   const reportsTimezone = formatReportsTimezone(
@@ -238,9 +370,12 @@ export function ProfilePage(): ReactElement {
             <div className="px-5 py-[15px]">
               {figmaEmailPreferences.map((item) => (
                 <CheckboxRow
-                  checked={preferenceBoolean(preferencesRecord, item.key, item.checked)}
+                  checked={form.watch(item.key)}
                   key={item.key}
                   label={item.label}
+                  onChange={(checked) => {
+                    form.setValue(item.key, checked, { shouldDirty: true });
+                  }}
                 />
               ))}
             </div>
@@ -257,9 +392,12 @@ export function ProfilePage(): ReactElement {
                     {item.section}
                   </p>
                   <CheckboxRow
-                    checked={preferenceBoolean(preferencesRecord, item.key, item.checked)}
                     className="px-0"
+                    checked={form.watch(item.key)}
                     label={item.label}
+                    onChange={(checked) => {
+                      form.setValue(item.key, checked, { shouldDirty: true });
+                    }}
                   />
                 </div>
               ))}
@@ -274,9 +412,12 @@ export function ProfilePage(): ReactElement {
               <div className="w-full max-w-[500px]">
                 {figmaTimerPreferences.map((item) => (
                   <CheckboxRow
-                    checked={preferenceBoolean(preferencesRecord, item.key, item.checked)}
+                    checked={form.watch(item.key)}
                     key={item.key}
                     label={item.label}
+                    onChange={(checked) => {
+                      form.setValue(item.key, checked, { shouldDirty: true });
+                    }}
                   />
                 ))}
               </div>
@@ -323,27 +464,39 @@ export function ProfilePage(): ReactElement {
           >
             <div className="flex flex-wrap gap-0 px-0 py-5">
               <div className="w-[240px] px-5">
-                <FakeSelect
+                <PreferenceSelect
                   label="Duration Display Format"
-                  value={timeAndDateOptions.durationFormat[0]}
+                  onChange={(value) => {
+                    form.setValue("durationFormat", value, { shouldDirty: true });
+                  }}
+                  options={durationFormatOptions}
+                  value={form.watch("durationFormat")}
                 />
-                <FakeSelect
+                <PreferenceSelect
                   label="Time Format"
-                  value={resolveTimeFormat(
-                    String(preferencesQuery.data.timeofday_format ?? "h:mm a"),
-                  )}
+                  onChange={(value) => {
+                    form.setValue("timeofdayFormat", value, { shouldDirty: true });
+                  }}
+                  options={timeFormatOptions}
+                  value={form.watch("timeofdayFormat")}
                 />
               </div>
               <div className="w-[240px] px-5">
-                <FakeSelect
+                <PreferenceSelect
                   label="Date Format"
-                  value={String(
-                    preferencesQuery.data.date_format ?? timeAndDateOptions.dateFormat[0],
-                  )}
+                  onChange={(value) => {
+                    form.setValue("dateFormat", value, { shouldDirty: true });
+                  }}
+                  options={dateFormatOptions}
+                  value={form.watch("dateFormat")}
                 />
-                <FakeSelect
+                <PreferenceNumberSelect
                   label="First day of the week"
-                  value={resolveBeginningOfWeek(Number(preferencesQuery.data.beginningOfWeek ?? 1))}
+                  onChange={(value) => {
+                    form.setValue("beginningOfWeek", value, { shouldDirty: true });
+                  }}
+                  options={firstDayOfWeekOptions}
+                  value={form.watch("beginningOfWeek")}
                 />
               </div>
             </div>
@@ -353,21 +506,23 @@ export function ProfilePage(): ReactElement {
             <div className="grid gap-0 px-0 py-[15px] md:grid-cols-[500px_minmax(0,1fr)]">
               <div className="px-5">
                 <CheckboxRow
-                  checked={preferenceBoolean(
-                    preferencesRecord,
-                    figmaShortcutPreferences[0].key,
-                    figmaShortcutPreferences[0].checked,
-                  )}
+                  checked={form.watch(figmaShortcutPreferences[0].key)}
                   helper={figmaShortcutPreferences[0].helper}
                   label={figmaShortcutPreferences[0].label}
+                  onChange={(checked) => {
+                    form.setValue(figmaShortcutPreferences[0].key, checked, { shouldDirty: true });
+                  }}
                 />
               </div>
               <div className="px-5">
                 {figmaShortcutPreferences.slice(1).map((item) => (
                   <CheckboxRow
-                    checked={preferenceBoolean(preferencesRecord, item.key, item.checked)}
+                    checked={form.watch(item.key)}
                     key={item.key}
                     label={item.label}
+                    onChange={(checked) => {
+                      form.setValue(item.key, checked, { shouldDirty: true });
+                    }}
                   />
                 ))}
               </div>
@@ -473,6 +628,7 @@ export function ProfilePage(): ReactElement {
           </PreferenceCard>
         </div>
       </section>
+      {toast ? <ProfileToast {...toast} /> : null}
     </div>
   );
 }
@@ -511,22 +667,30 @@ function CheckboxRow({
   className = "",
   helper,
   label,
+  onChange,
 }: {
   checked: boolean;
   className?: string;
   helper?: string;
   label: string;
+  onChange: (checked: boolean) => void;
 }): ReactElement {
   return (
-    <div className={`flex items-start px-0 py-[5px] ${className}`.trim()}>
-      <span
-        className={`mt-[3px] mr-[10px] flex size-[14px] shrink-0 items-center justify-center rounded-[4px] border ${
-          checked ? "border-[#cd7fc2] bg-[#cd7fc2]" : "border-[#666666] bg-[#1b1b1b]"
-        }`}
-      >
-        {checked ? (
-          <span className="text-[10px] font-semibold leading-none text-black">✓</span>
-        ) : null}
+    <label className={`flex cursor-pointer items-start px-0 py-[5px] ${className}`.trim()}>
+      <span className="relative mt-[3px] mr-[10px] flex size-[14px] shrink-0 items-center justify-center">
+        <input
+          checked={checked}
+          className="peer absolute inset-0 cursor-pointer opacity-0"
+          onChange={(event) => {
+            onChange(event.target.checked);
+          }}
+          type="checkbox"
+        />
+        <span className="flex size-[14px] items-center justify-center rounded-[4px] border border-[#666666] bg-[#1b1b1b] peer-checked:border-[#cd7fc2] peer-checked:bg-[#cd7fc2]">
+          {checked ? (
+            <span className="text-[10px] font-semibold leading-none text-black">✓</span>
+          ) : null}
+        </span>
       </span>
       <span>
         <span className="block text-[14px] font-medium leading-[normal] text-[#b2b2b2]">
@@ -536,20 +700,76 @@ function CheckboxRow({
           <span className="block pt-[3.54px] text-[12px] leading-4 text-[#999999]">{helper}</span>
         ) : null}
       </span>
-    </div>
+    </label>
   );
 }
 
-function FakeSelect({ label, value }: { label: string; value: string }): ReactElement {
+function PreferenceSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: string) => void;
+  options: ReadonlyArray<{ label: string; value: string }>;
+  value: string;
+}): ReactElement {
   return (
     <div className="pb-[10px]">
       <label className="block text-[11px] font-semibold uppercase leading-[11px] text-[#a4a4a4]">
         {label}
       </label>
-      <div className="relative mt-[10px] h-[39px] w-[200px] rounded-[8px] border border-[#666666] bg-[#1b1b1b] p-px">
-        <div className="h-full px-[10px] py-[10px] text-[14px] font-medium leading-none text-[#999999]">
-          {value}
-        </div>
+      <div className="relative mt-[10px] h-[39px] w-[200px] rounded-[8px] border border-[#666666] bg-[#1b1b1b]">
+        <select
+          className="h-full w-full appearance-none rounded-[8px] bg-transparent px-[10px] text-[14px] font-medium leading-none text-[#999999] outline-none"
+          onChange={(event) => {
+            onChange(event.target.value);
+          }}
+          value={value}
+        >
+          {options.map((option) => (
+            <option className="bg-[#1b1b1b] text-[#999999]" key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <span className="absolute right-3 top-[14px] text-[10px] text-[#999999]">▾</span>
+      </div>
+    </div>
+  );
+}
+
+function PreferenceNumberSelect({
+  label,
+  onChange,
+  options,
+  value,
+}: {
+  label: string;
+  onChange: (value: number) => void;
+  options: ReadonlyArray<{ label: string; value: number }>;
+  value: number;
+}): ReactElement {
+  return (
+    <div className="pb-[10px]">
+      <label className="block text-[11px] font-semibold uppercase leading-[11px] text-[#a4a4a4]">
+        {label}
+      </label>
+      <div className="relative mt-[10px] h-[39px] w-[200px] rounded-[8px] border border-[#666666] bg-[#1b1b1b]">
+        <select
+          className="h-full w-full appearance-none rounded-[8px] bg-transparent px-[10px] text-[14px] font-medium leading-none text-[#999999] outline-none"
+          onChange={(event) => {
+            onChange(Number(event.target.value));
+          }}
+          value={String(value)}
+        >
+          {options.map((option) => (
+            <option className="bg-[#1b1b1b] text-[#999999]" key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <span className="absolute right-3 top-[14px] text-[10px] text-[#999999]">▾</span>
       </div>
     </div>
@@ -573,23 +793,32 @@ function IntegrationTile({ accent, title }: { accent: string; title: string }): 
   );
 }
 
-function preferenceBoolean(
-  preferences: Record<string, unknown>,
-  key: string,
-  fallback: boolean,
-): boolean {
-  return typeof preferences[key] === "boolean" ? (preferences[key] as boolean) : fallback;
-}
-
-function resolveBeginningOfWeek(value: number): string {
-  const labels = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  return labels[value] ?? "Monday";
-}
-
-function resolveTimeFormat(value: string): string {
-  return value === "H:mm" || value === "HH:mm" ? "24-hour" : "24-hour";
-}
-
 function formatReportsTimezone(timezone: string): string {
   return timezone === "Asia/Shanghai" ? "(UTC+08:00) Asia/Shanghai" : timezone;
+}
+
+function ProfileToast(props: {
+  description: string;
+  title: string;
+  tone: "error" | "success";
+}): ReactElement {
+  return (
+    <div
+      className={`fixed bottom-6 right-6 z-50 min-w-[420px] rounded-[16px] border px-8 py-7 shadow-[0px_10px_30px_rgba(0,0,0,0.35)] ${
+        props.tone === "success" ? "border-[#3a3a3a] bg-[#1d1d1d]" : "border-[#6a2e41] bg-[#22161b]"
+      }`}
+      data-testid="profile-preferences-toast"
+    >
+      <p
+        className={`text-[28px] font-semibold leading-[1.1] ${
+          props.tone === "success" ? "text-[#12b76a]" : "text-[#ff6b8f]"
+        }`}
+      >
+        {props.title}
+      </p>
+      <p className="mt-3 text-[24px] font-semibold leading-[1.2] text-[#f5f5f5]">
+        {props.description}
+      </p>
+    </div>
+  );
 }

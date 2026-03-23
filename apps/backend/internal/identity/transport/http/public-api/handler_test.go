@@ -25,13 +25,13 @@ func TestGetMeReturnsCurrentUserForValidBasicAuth(t *testing.T) {
 		t.Fatalf("expected get me status 200, got %d", response.StatusCode)
 	}
 
-	body, ok := response.Body.(map[string]any)
+	body, ok := response.Body.(currentUserResponse)
 	if !ok {
-		t.Fatalf("expected get me body map, got %T", response.Body)
+		t.Fatalf("expected get me body currentUserResponse, got %T", response.Body)
 	}
 
-	if body["email"] != "person@example.com" {
-		t.Fatalf("expected get me email, got %#v", body["email"])
+	if body.Email != "person@example.com" {
+		t.Fatalf("expected get me email, got %#v", body.Email)
 	}
 }
 

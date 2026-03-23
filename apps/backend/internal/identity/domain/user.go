@@ -12,6 +12,7 @@ var (
 	ErrCurrentPasswordRequired   = errors.New("current password must be present to change password")
 	ErrInvalidCredentials        = errors.New("invalid credentials")
 	ErrInvalidDateFormat         = errors.New("value in date_format is invalid")
+	ErrInvalidBeginningOfWeek    = errors.New("value in beginning_of_week is invalid")
 	ErrInvalidEmail              = errors.New("invalid email")
 	ErrInvalidFullName           = errors.New("invalid fullname")
 	ErrInvalidPassword           = errors.New("password should be at least 6 characters")
@@ -30,17 +31,17 @@ const (
 )
 
 type RegisterParams struct {
-	ID                        int64
-	Email                     string
-	FullName                  string
-	Password                  string
-	PasswordHash              string
-	APIToken                  string
-	SendProductEmails         *bool
-	SendWeeklyReport          *bool
-	ToSAcceptNeeded           *bool
-	ProductEmailsDisableCode  string
-	WeeklyReportDisableCode   string
+	ID                       int64
+	Email                    string
+	FullName                 string
+	Password                 string
+	PasswordHash             string
+	APIToken                 string
+	SendProductEmails        *bool
+	SendWeeklyReport         *bool
+	ToSAcceptNeeded          *bool
+	ProductEmailsDisableCode string
+	WeeklyReportDisableCode  string
 }
 
 type BasicCredentials struct {
@@ -65,10 +66,30 @@ type AlphaFeature struct {
 }
 
 type Preferences struct {
-	DateFormat      string
-	TimeOfDayFormat string
-	AlphaFeatures   []AlphaFeature
-	ToSAcceptNeeded *bool
+	AnimationOptOut                *bool
+	BeginningOfWeek                *int
+	CollapseTimeEntries            *bool
+	DateFormat                     string
+	DurationFormat                 string
+	HideSidebarRight               *bool
+	IsGoalsViewShown               *bool
+	KeyboardShortcutsEnabled       *bool
+	LanguageCode                   string
+	ManualEntryMode                string
+	ManualMode                     *bool
+	ProjectShortcutEnabled         *bool
+	ReportsCollapse                *bool
+	SendAddedToProjectNotification *bool
+	SendDailyProjectInvites        *bool
+	SendProductEmails              *bool
+	SendProductReleaseNotification *bool
+	SendTimerNotifications         *bool
+	SendWeeklyReport               *bool
+	ShowTimeInTitle                *bool
+	TagsShortcutEnabled            *bool
+	TimeOfDayFormat                string
+	AlphaFeatures                  []AlphaFeature
+	ToSAcceptNeeded                *bool
 }
 
 type User struct {
@@ -135,6 +156,7 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		passwordHash:             params.PasswordHash,
 		apiToken:                 params.APIToken,
 		timezone:                 "UTC",
+		beginningOfWeek:          1,
 		state:                    UserStateActive,
 		sendProductEmails:        sendProductEmails,
 		sendWeeklyReport:         sendWeeklyReport,
@@ -142,8 +164,28 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		productEmailsDisableCode: productEmailsDisableCode,
 		weeklyReportDisableCode:  weeklyReportDisableCode,
 		preferences: Preferences{
-			DateFormat:      "YYYY-MM-DD",
-			TimeOfDayFormat: "h:mm A",
+			AnimationOptOut:                boolPref(false),
+			BeginningOfWeek:                intPref(1),
+			DateFormat:                     "YYYY-MM-DD",
+			DurationFormat:                 "improved",
+			LanguageCode:                   "en-US",
+			ManualEntryMode:                "timer",
+			TimeOfDayFormat:                "h:mm A",
+			CollapseTimeEntries:            boolPref(true),
+			HideSidebarRight:               boolPref(false),
+			IsGoalsViewShown:               boolPref(true),
+			KeyboardShortcutsEnabled:       boolPref(true),
+			ManualMode:                     boolPref(false),
+			ProjectShortcutEnabled:         boolPref(false),
+			ReportsCollapse:                boolPref(false),
+			SendAddedToProjectNotification: boolPref(true),
+			SendDailyProjectInvites:        boolPref(true),
+			SendProductEmails:              boolPref(sendProductEmails),
+			SendProductReleaseNotification: boolPref(true),
+			SendTimerNotifications:         boolPref(true),
+			SendWeeklyReport:               boolPref(sendWeeklyReport),
+			ShowTimeInTitle:                boolPref(true),
+			TagsShortcutEnabled:            boolPref(false),
 		},
 	}, nil
 }
@@ -289,6 +331,7 @@ func (user *User) UpdateProfile(update ProfileUpdate) error {
 
 	if update.BeginningOfWeek != nil {
 		user.beginningOfWeek = *update.BeginningOfWeek
+		user.preferences.BeginningOfWeek = intPref(*update.BeginningOfWeek)
 	}
 
 	if update.CountryID != nil {
@@ -309,18 +352,84 @@ func (user *User) UpdatePreferences(preferences Preferences) error {
 	if preferences.ToSAcceptNeeded != nil {
 		return ErrPreferencesFieldProtected
 	}
-	if preferences.DateFormat != "" && preferences.DateFormat != "YYYY-MM-DD" {
+	if preferences.BeginningOfWeek != nil && (*preferences.BeginningOfWeek < 0 || *preferences.BeginningOfWeek > 6) {
+		return ErrInvalidBeginningOfWeek
+	}
+	if preferences.DateFormat != "" && !isSupportedDateFormat(preferences.DateFormat) {
 		return ErrInvalidDateFormat
 	}
 	if preferences.TimeOfDayFormat != "" && !isSupportedTimeOfDayFormat(preferences.TimeOfDayFormat) {
 		return ErrInvalidTimeOfDayFormat
 	}
 
+	if preferences.AnimationOptOut != nil {
+		user.preferences.AnimationOptOut = boolPref(*preferences.AnimationOptOut)
+	}
+	if preferences.BeginningOfWeek != nil {
+		user.beginningOfWeek = *preferences.BeginningOfWeek
+		user.preferences.BeginningOfWeek = intPref(*preferences.BeginningOfWeek)
+	}
 	if preferences.DateFormat != "" {
 		user.preferences.DateFormat = preferences.DateFormat
 	}
+	if preferences.DurationFormat != "" {
+		user.preferences.DurationFormat = preferences.DurationFormat
+	}
+	if preferences.LanguageCode != "" {
+		user.preferences.LanguageCode = preferences.LanguageCode
+	}
+	if preferences.ManualEntryMode != "" {
+		user.preferences.ManualEntryMode = preferences.ManualEntryMode
+	}
 	if preferences.TimeOfDayFormat != "" {
 		user.preferences.TimeOfDayFormat = preferences.TimeOfDayFormat
+	}
+	if preferences.CollapseTimeEntries != nil {
+		user.preferences.CollapseTimeEntries = boolPref(*preferences.CollapseTimeEntries)
+	}
+	if preferences.HideSidebarRight != nil {
+		user.preferences.HideSidebarRight = boolPref(*preferences.HideSidebarRight)
+	}
+	if preferences.IsGoalsViewShown != nil {
+		user.preferences.IsGoalsViewShown = boolPref(*preferences.IsGoalsViewShown)
+	}
+	if preferences.KeyboardShortcutsEnabled != nil {
+		user.preferences.KeyboardShortcutsEnabled = boolPref(*preferences.KeyboardShortcutsEnabled)
+	}
+	if preferences.ManualMode != nil {
+		user.preferences.ManualMode = boolPref(*preferences.ManualMode)
+	}
+	if preferences.ProjectShortcutEnabled != nil {
+		user.preferences.ProjectShortcutEnabled = boolPref(*preferences.ProjectShortcutEnabled)
+	}
+	if preferences.ReportsCollapse != nil {
+		user.preferences.ReportsCollapse = boolPref(*preferences.ReportsCollapse)
+	}
+	if preferences.SendAddedToProjectNotification != nil {
+		user.preferences.SendAddedToProjectNotification = boolPref(*preferences.SendAddedToProjectNotification)
+	}
+	if preferences.SendDailyProjectInvites != nil {
+		user.preferences.SendDailyProjectInvites = boolPref(*preferences.SendDailyProjectInvites)
+	}
+	if preferences.SendProductReleaseNotification != nil {
+		user.preferences.SendProductReleaseNotification = boolPref(*preferences.SendProductReleaseNotification)
+	}
+	if preferences.SendTimerNotifications != nil {
+		user.preferences.SendTimerNotifications = boolPref(*preferences.SendTimerNotifications)
+	}
+	if preferences.ShowTimeInTitle != nil {
+		user.preferences.ShowTimeInTitle = boolPref(*preferences.ShowTimeInTitle)
+	}
+	if preferences.TagsShortcutEnabled != nil {
+		user.preferences.TagsShortcutEnabled = boolPref(*preferences.TagsShortcutEnabled)
+	}
+	if preferences.SendProductEmails != nil {
+		user.sendProductEmails = *preferences.SendProductEmails
+		user.preferences.SendProductEmails = boolPref(*preferences.SendProductEmails)
+	}
+	if preferences.SendWeeklyReport != nil {
+		user.sendWeeklyReport = *preferences.SendWeeklyReport
+		user.preferences.SendWeeklyReport = boolPref(*preferences.SendWeeklyReport)
 	}
 	if preferences.AlphaFeatures != nil {
 		user.preferences.AlphaFeatures = append([]AlphaFeature(nil), preferences.AlphaFeatures...)
@@ -337,6 +446,14 @@ func (user *User) RotateAPIToken(token string) error {
 	user.productEmailsDisableCode = notificationCode("product-emails", token)
 	user.weeklyReportDisableCode = notificationCode("weekly-report", token)
 	return nil
+}
+
+func boolPref(value bool) *bool {
+	return &value
+}
+
+func intPref(value int) *int {
+	return &value
 }
 
 func (user *User) AcceptTermsOfService() error {
@@ -398,6 +515,15 @@ func hashSecret(value string) string {
 
 func notificationCode(kind string, apiToken string) string {
 	return hashSecret(kind + ":" + apiToken)
+}
+
+func isSupportedDateFormat(value string) bool {
+	switch value {
+	case "YYYY-MM-DD", "MM/DD/YYYY", "DD-MM-YYYY", "MM-DD-YYYY", "DD/MM/YYYY", "DD.MM.YYYY":
+		return true
+	default:
+		return false
+	}
 }
 
 func isSupportedTimeOfDayFormat(value string) bool {
