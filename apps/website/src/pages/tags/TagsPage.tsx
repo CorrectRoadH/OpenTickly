@@ -54,9 +54,9 @@ export function TagsPage(): ReactElement {
   }
 
   return (
-    <div className="min-w-[1384px] bg-[var(--track-surface)] text-white" data-testid="tags-page">
+    <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="tags-page">
       <header className="border-b border-[var(--track-border)]">
-        <div className="flex h-[66px] items-center justify-between px-5">
+        <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <h1 className="text-[21px] font-medium text-white">Tags</h1>
           <button
             className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
@@ -69,10 +69,10 @@ export function TagsPage(): ReactElement {
           </button>
         </div>
         <div
-          className="flex h-[46px] items-center gap-4 border-t border-[var(--track-border)] px-5"
+          className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="tags-filter-bar"
         >
-          <label className="relative">
+          <label className="relative shrink-0">
             <select
               aria-label="Tag status filter"
               className="h-7 appearance-none rounded-md border border-[var(--track-border)] bg-[#171717] px-3 pr-8 text-[11px] text-white"
@@ -87,7 +87,7 @@ export function TagsPage(): ReactElement {
               <TrackingIcon className="size-3" name="chevron-down" />
             </span>
           </label>
-          <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <FilterChip label="Tag name" />
             <FilterChip label="Status" />

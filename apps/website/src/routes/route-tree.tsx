@@ -3,13 +3,11 @@ import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
-import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import { parseProjectsSearch } from "../shared/url-state/projects-location.ts";
-import { parseShellViewSearch } from "../shared/url-state/shell-view.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
 import { parseWorkspaceSettingsSearch } from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
@@ -19,6 +17,7 @@ import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettings
 import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
 import { WorkspaceOverviewPage } from "../pages/shell/WorkspaceOverviewPage.tsx";
 import { WorkspaceReportsPage } from "../pages/shell/WorkspaceReportsPage.tsx";
+import { WorkspaceTimerPage } from "../pages/shell/WorkspaceTimerPage.tsx";
 import { WorkspaceMembersPage } from "../pages/members/WorkspaceMembersPage.tsx";
 import { PermissionConfigPage } from "../pages/permission-config/PermissionConfigPage.tsx";
 import { ProjectsPage } from "../pages/projects/ProjectsPage.tsx";
@@ -64,9 +63,14 @@ const profileRoute = createRoute({
 
 const workspaceOverviewRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId",
-  validateSearch: parseShellViewSearch,
+  path: "/overview",
   component: WorkspaceOverviewRouteComponent,
+});
+
+const workspaceTimerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/timer",
+  component: WorkspaceTimerRouteComponent,
 });
 
 const workspaceReportsRoute = createRoute({
@@ -157,6 +161,7 @@ export const routeTree = rootRoute.addChildren([
   inviteStatusJoinedRoute,
   profileRoute,
   workspaceOverviewRoute,
+  workspaceTimerRoute,
   workspaceReportsRoute,
   workspaceProjectsRoute,
   workspaceProjectDetailRoute,
@@ -187,7 +192,7 @@ function HomeRouteComponent() {
     return <SessionUnavailablePanel />;
   }
 
-  return <Navigate replace to={resolveHomePath(mapSessionBootstrap(sessionQuery.data))} />;
+  return <Navigate replace to={resolveHomePath()} />;
 }
 
 function ProfileRouteComponent() {
@@ -229,15 +234,15 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
     return <AuthPage mode={mode} />;
   }
 
-  return <Navigate replace to={resolveHomePath(mapSessionBootstrap(sessionQuery.data))} />;
+  return <Navigate replace to={resolveHomePath()} />;
 }
 
 function WorkspaceOverviewRouteComponent() {
-  const params = workspaceOverviewRoute.useParams();
-  const search = workspaceOverviewRoute.useSearch();
-  const workspaceId = Number(params.workspaceId);
+  return renderProtectedRoute(<WorkspaceOverviewPage />);
+}
 
-  return renderProtectedRoute(<WorkspaceOverviewPage view={search.view} />, workspaceId);
+function WorkspaceTimerRouteComponent() {
+  return renderProtectedRoute(<WorkspaceTimerPage />);
 }
 
 function WorkspaceReportsRouteComponent() {

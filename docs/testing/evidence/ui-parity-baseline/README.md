@@ -8,7 +8,7 @@ This evidence bundle closes the baseline chain required by `docs/plan/foundation
 
 | Surface | PRD Source | Figma / Fallback Source | Implementation | Test | Screenshot |
 | --- | --- | --- | --- | --- | --- |
-| Shared App Shell | `docs/product/tracking.md` | Figma `left nav`, node `8:2829` | `apps/website/src/pages/shell/WorkspaceOverviewPage.tsx` and `apps/website/src/pages/shell/WorkspaceReportsPage.tsx` | `apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx` and `apps/website/e2e/shell-profile-settings-parity.spec.ts` | `docs/testing/evidence/ui-parity-baseline/shell-overview.png` |
+| Shared App Shell | `docs/product/tracking.md` + `docs/product/identity-and-tenant.md` | Figma `left nav`, node `8:2829`; `overview` layer fallback | `apps/website/src/pages/shell/WorkspaceOverviewPage.tsx`, `apps/website/src/pages/shell/WorkspaceTimerPage.tsx`, and `apps/website/src/pages/shell/WorkspaceReportsPage.tsx` | `apps/website/src/pages/shell/__tests__/workspace-shell-page-flow.test.tsx` and `apps/website/e2e/shell-profile-settings-parity.spec.ts` | `docs/testing/evidence/ui-parity-baseline/shell-overview.png` |
 | Profile | `docs/product/identity-and-tenant.md` | Figma `profile`, node `10:14814` | `apps/website/src/pages/profile/ProfilePage.tsx` | `apps/website/src/pages/profile/__tests__/profile-page-flow.test.tsx` and `apps/website/e2e/shell-profile-settings-parity.spec.ts` | `docs/testing/evidence/ui-parity-baseline/profile.png` |
 | Settings | `docs/product/identity-and-tenant.md` | Figma `settings`, node `11:3680` | `apps/website/src/pages/settings/WorkspaceSettingsPage.tsx` and `apps/website/src/pages/settings/OrganizationSettingsPage.tsx` | `apps/website/src/pages/settings/__tests__/settings-page-flow.test.tsx` and `apps/website/e2e/shell-profile-settings-parity.spec.ts` | `docs/testing/evidence/ui-parity-baseline/settings-branding.png` |
 
@@ -32,4 +32,3 @@ When page families expand from this baseline, use these explicit sources:
 | Tasks | Fallback | `docs/product/tracking.md` -> use `project page` as fallback skeleton |
 | Tags | Fallback | `docs/product/tracking.md` -> use `project page` as fallback skeleton |
 | Members / Groups / Permission Config | Fallback | `docs/testing/bdd-user-stories.md` current baseline -> left-nav shell fallback until dedicated Figma/source is defined |
-

@@ -21,6 +21,7 @@ test.describe("Story: enter the tracking shell", () => {
     await expect(page.getByLabel("Workspace")).toHaveValue(String(loginSession.currentWorkspaceId));
     await expect(page.getByTestId("app-shell")).toBeVisible();
     await expect(page.getByTestId("shell-primary-nav")).toContainText("Track");
-    await expect(page.getByTestId("current-timer-card")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Overview" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Timer" })).toBeVisible();
   });
 });

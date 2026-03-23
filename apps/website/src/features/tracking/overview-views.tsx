@@ -1,8 +1,6 @@
-import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import type { ShellViewMode } from "../../shared/url-state/shell-view.ts";
 import {
   formatClockDuration,
   formatClockTime,
@@ -15,6 +13,7 @@ import {
   type EntryGroup,
   type TimesheetRow,
 } from "./overview-data.ts";
+import type { TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 
 const CALENDAR_HOUR_HEIGHT = 60;
@@ -68,26 +67,27 @@ export function ChromeIconButton({
 
 export function ViewTab({
   currentView,
+  onSelect,
   targetView,
-  workspaceId,
 }: {
-  currentView: ShellViewMode;
-  targetView: ShellViewMode;
-  workspaceId: number;
+  currentView: TimerViewMode;
+  onSelect: (view: TimerViewMode) => void;
+  targetView: TimerViewMode;
 }) {
   return (
-    <Link
+    <button
+      aria-pressed={currentView === targetView}
       className={`rounded-[4px] px-4 py-1.5 text-[11px] font-medium ${
         currentView === targetView
           ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
           : "text-white"
       }`}
-      params={{ workspaceId: String(workspaceId) }}
-      search={{ view: targetView }}
-      to="/workspaces/$workspaceId"
+      data-state={currentView === targetView ? "active" : "inactive"}
+      onClick={() => onSelect(targetView)}
+      type="button"
     >
       {{ calendar: "Calendar", list: "List view", timesheet: "Timesheet" }[targetView]}
-    </Link>
+    </button>
   );
 }
 
@@ -200,8 +200,8 @@ export function CalendarView({
   }));
 
   return (
-    <div className="border-t border-[var(--track-border)]">
-      <div className="grid grid-cols-[42px_repeat(7,minmax(170px,1fr))]">
+    <div className="overflow-x-auto border-t border-[var(--track-border)]">
+      <div className="grid min-w-[1232px] grid-cols-[42px_repeat(7,minmax(170px,1fr))]">
         <div className="border-r border-[var(--track-border)]" />
         {days.map(({ date, entries: dayEntries }) => (
           <div

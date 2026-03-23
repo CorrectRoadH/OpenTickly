@@ -53,6 +53,8 @@
 - `workspace_id` 仍然是每条 time entry 的正式字段和写入归属；`POST /workspaces/{workspace_id}/time_entries`、`PATCH /workspaces/{workspace_id}/time_entries/{time_entry_id}/stop` 等 workspace 路由负责显式写入上下文，但不能反向定义 `/me` 读接口的资源边界。
 - running timer 必须作为正式产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
 - 时间语义必须按引用的公开定义实现 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
+- Web timer header 的运行时长必须基于当前 running entry 的 `start` 时间实时显示；不要把 raw negative duration 直接当成已消逝秒数渲染。
+- Web timer header 的开始与停止是两个不同的可见状态，必须使用不同图标；当前 Figma / screenshot 未定义的 trailing overflow 按钮不得擅自保留在 timer 控制区。
 
 ## Projects / Clients / Tasks / Tags
 
@@ -157,7 +159,26 @@
 ### Shared App Shell
 
 - 共享应用壳以 Figma `left nav` 节点 `8:2829` 为参考，文件为 `https://www.figma.com/design/IiuYyZAD0bWx9C8BxetnFc/OpenToggl`。
-- workspace switcher、左侧导航、running timer 状态、profile/admin 入口应跨 `timer`、`project`、`client`、`tag` 复用同一壳层，不为每个页面复制一套布局。
+- workspace switcher、左侧导航、profile/admin 入口应跨 `overview`、`timer`、`project`、`client`、`tag` 复用同一壳层，不为每个页面复制一套布局。
+- `Track` 分组下的正式一级入口是 `Overview` 与 `Timer`；不要再把 timer 状态做成一个伪导航卡片来替代正式 `Timer` 导航项。
+
+### 上游 URL 与导航归属
+
+- 本册记录的是 tracking 产品面的正式页面语义，但导航激活态、路由归属和 ID 归属必须同时对照上游 Toggl 的真实 URL 形状，不能只按“看起来像 workspace 子路由”做前缀匹配。
+- `workspace_id` 与 `organization_id` 必须严格区分；不能因为两个 ID 都出现在左侧壳层里，就把它们混成一套路由规则。
+- `overview` 的上游入口是 `https://track.toggl.com/overview`。
+- `timer` 页面族的上游入口是 `https://track.toggl.com/timer`。
+- `overview` 与 `timer` 都是账号级页面入口，不通过 `workspace_id` 进入；当前 workspace 只作为页面上下文，不是这两个页面 pathname 的组成部分。
+- `timer` 的 `calendar`、`list`、`timesheet` 三个 view 在上游 Toggl 中是同一页面内的本地 state 切换，不通过 URL pathname 或 query string 区分；切 view 时地址栏不变化。
+- 直接进入 `https://track.toggl.com/timer` 时，默认激活的 view 是 `calendar`；`list` 与 `timesheet` 只是在同一页面内切换主内容投影。
+- `reports summary` 的上游路径是 `https://track.toggl.com/reports/{organization_id}/summary?...&wid={workspace_id}`。它属于 reports 产品面，不属于 tracking 自己的页面族，但 shared shell 的导航判断需要识别它同时携带 organization 和 workspace 上下文。
+- `approvals` 的上游路径是 `https://track.toggl.com/{workspace_id}/approvals`。
+- `projects` 的上游路径是 `https://track.toggl.com/projects/{workspace_id}/list`。
+- `clients` 的上游路径是 `https://track.toggl.com/{workspace_id}/clients`。
+- `tags` 的上游路径是 `https://track.toggl.com/{workspace_id}/tags`。
+- organization 级团队管理的上游路径是 `https://track.toggl.com/organization/{organization_id}/team?filter=&status=active`。这是 organization 页面，不应按 workspace tracking 页面处理。
+- organization / workspace settings 入口跨域到 `accounts.toggl.com`；当前已知组织入口形状是 `https://accounts.toggl.com/console/organization/{organization_id}/overview/?returnTo=<track-workspace-settings-url>`，其中 `returnTo` 会回到 `https://track.toggl.com/{workspace_id}/settings/general`。这说明 settings/organization console 不是 tracking 页面族内部的同域子路由。
+- 任何 shared shell 或导航高亮实现都必须以“页面归属 + 精确路径形状 + ID 类型”判定当前选中项，不能把 `/overview`、`/timer`、`/reports/{organization_id}/summary`、`/{workspace_id}/approvals`、`/projects/{workspace_id}/list`、`/organization/{organization_id}/team` 误收敛成同一种 workspace 子路径。
 
 ### Timer 页面族
 
@@ -165,18 +186,21 @@
   - Figma：`timer calendar mode`，node `8:3029`
   - Screenshot：[toggl-timer-calendar-view-week.png](../../toggl_screenshots/toggl-timer-calendar-view-week.png)
   - 产品含义：这是同一 `timer` 页面在 `calendar` 视图下的周视图，用时间栅格展示 time entries。
-  - 实现要求：它与 `list view`、`timesheet` 共享同一路由族、日期范围、筛选条件、running timer/header 状态，只替换主内容区投影，不单独定义另一套页面或数据模型。
+  - 实现要求：它与 `list view`、`timesheet` 共享同一页面族、日期范围、筛选条件、running timer/header 状态，只替换主内容区投影，不单独定义另一套页面或数据模型；`calendar` 也是用户直接打开 `timer` 时的默认 landing view。
+  - URL 约束：在上游 Toggl 中，`calendar` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
   - 数据边界：页面读取的是当前账号的 time entries 事实；切换当前 workspace 只改变默认创建目标和其他 workspace-scoped 对象上下文，不能把 `/me/time_entries` 结果再按当前 workspace 本地过滤。
 - `Timer / List view`
   - Figma：`timer listview`，node `12:2948`
   - Screenshot：[toggl-timer-list-view-all-dates.png](../../toggl_screenshots/toggl-timer-list-view-all-dates.png)
   - 产品含义：这是 `timer` 页面按日期分组的明细视图，用线性列表展示 time entries。
   - 实现要求：它读取的仍是同一批 time entries，不应和 `calendar`、`timesheet` 产生不同过滤语义；创建、编辑、停止 timer 的入口要保持一致。
+  - URL 约束：在上游 Toggl 中，`list` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
 - `Timer / Timesheet`
   - Figma：`timer timesheet mode`，node `10:13202`
   - Screenshot：[toggl-timer-timesheet-view-week.png](../../toggl_screenshots/toggl-timer-timesheet-view-week.png)
   - 产品含义：这是 `timer` 页面在 `timesheet` 视图下的聚合呈现，按项目和星期维度显示工作时长。
   - 实现要求：它是 time entries 的聚合读面，不是单独的事务写模型；复制上周、按日合计、按项目行展示等行为都应建立在同一 tracking 事实之上。
+  - URL 约束：在上游 Toggl 中，`timesheet` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
 
 ### Project / Client / Tag 页面
 
@@ -185,16 +209,19 @@
   - Screenshot：[toggl-projects-list.png](../../toggl_screenshots/toggl-projects-list.png)
   - 产品含义：PRD 中按 `project page` 理解，而不是只读列表。它承担项目浏览、过滤、创建、归档/恢复、pin/unpin、成员与任务入口。
   - 实现要求：顶部过滤条、主表格、创建按钮、时间状态/成员/pinned 等列是默认信息架构；详情、成员、任务、模板等流程应从该页面进入或挂接，而不是拆成一组彼此无关的页面。
+  - URL 约束：上游 Toggl 入口路径是 `https://track.toggl.com/projects/{workspace_id}/list`，不是 `/{workspace_id}/projects` 这种简单的 workspace 子路径。
 - `Client page`
   - Figma：`client`，node `12:3281`
   - Screenshot：当前没有对应截图，先以 Figma 为主参考
   - 产品含义：client 是独立产品对象，不是 project 的附属标签。
   - 实现要求：过滤栏、表格骨架、批量操作和详情入口直接参考 `project page` 结构，只把主实体、列定义和过滤条件替换为 client 语义。
+  - URL 约束：上游 Toggl 入口路径是 `https://track.toggl.com/{workspace_id}/clients`。
 - `Tag page`
   - Figma：当前没有单列 node
   - Screenshot：当前没有单列截图
   - 产品含义：tag 仍是正式产品对象，但当前页面结构可以直接参考 `project page`。
   - 实现要求：信息架构、过滤条、表格主体、批量编辑与详情入口可沿用 `project page` 的骨架，只替换为 tag 的字段与操作；后续若补独立 Figma node，再细化视觉与交互差异。
+  - URL 约束：上游 Toggl 入口路径是 `https://track.toggl.com/{workspace_id}/tags`。
 
 ## Web 要求
 

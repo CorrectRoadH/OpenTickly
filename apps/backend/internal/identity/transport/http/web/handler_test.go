@@ -2,6 +2,10 @@ package web
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"strings"
 	"testing"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
@@ -93,6 +97,51 @@ func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
 	loggedOutSession := handler.GetSession(context.Background(), auth.SessionID)
 	if loggedOutSession.StatusCode != 401 {
 		t.Fatalf("expected logged out session status 401, got %d", loggedOutSession.StatusCode)
+	}
+}
+
+func TestGetSessionLogsUnexpectedSessionBootstrapError(t *testing.T) {
+	var logs strings.Builder
+	previousLogger := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	defer func() {
+		slog.SetDefault(previousLogger)
+	}()
+
+	handler := newTestHandlerWithShell(t, failingSessionShellProvider{err: errors.New("shell bootstrap failed")})
+
+	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
+		Email:    "person@example.com",
+		FullName: "Test Person",
+		Password: "secret1",
+	})
+	if err != nil {
+		t.Fatalf("expected register to succeed: %v", err)
+	}
+
+	response := handler.GetSession(context.Background(), auth.SessionID)
+	if response.StatusCode != 500 {
+		t.Fatalf("expected session lookup status 500, got %d", response.StatusCode)
+	}
+
+	lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+	if len(lines) != 1 {
+		t.Fatalf("expected one log line, got %q", logs.String())
+	}
+
+	var record map[string]any
+	if err := json.Unmarshal([]byte(lines[0]), &record); err != nil {
+		t.Fatalf("expected json log line, got %q: %v", lines[0], err)
+	}
+
+	if record["msg"] != "identity web handler error" {
+		t.Fatalf("expected identity error log message, got %#v", record["msg"])
+	}
+	if record["operation"] != "get_session" {
+		t.Fatalf("expected get_session operation, got %#v", record["operation"])
+	}
+	if record["error"] != "shell bootstrap failed" {
+		t.Fatalf("expected original error to be logged, got %#v", record["error"])
 	}
 }
 
@@ -210,4 +259,22 @@ func newTestHandler(t *testing.T) *Handler {
 	})
 
 	return NewHandler(service)
+}
+
+func newTestHandlerWithShell(t *testing.T, shellProvider SessionShellProvider) *Handler {
+	handler := newTestHandler(t)
+	handler.shellProvider = shellProvider
+	handler.logger = slog.Default()
+	return handler
+}
+
+type failingSessionShellProvider struct {
+	err error
+}
+
+func (provider failingSessionShellProvider) SessionShell(
+	context.Context,
+	application.UserSnapshot,
+) (SessionShellData, error) {
+	return SessionShellData{}, provider.err
 }

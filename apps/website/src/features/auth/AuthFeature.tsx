@@ -1,7 +1,6 @@
 import { useState, type ReactElement } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
-import { mapSessionBootstrap } from "../../entities/session/session-bootstrap.ts";
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
@@ -22,13 +21,14 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
     setErrorMessage(null);
 
     try {
-      const session =
-        mode === "login"
-          ? await loginMutation.mutateAsync(payload as LoginRequestDto)
-          : await registerMutation.mutateAsync(payload as RegisterRequestDto);
+      if (mode === "login") {
+        await loginMutation.mutateAsync(payload as LoginRequestDto);
+      } else {
+        await registerMutation.mutateAsync(payload as RegisterRequestDto);
+      }
 
       void navigate({
-        to: resolveHomePath(mapSessionBootstrap(session)),
+        to: resolveHomePath(),
       });
     } catch (error) {
       setErrorMessage(resolveAuthErrorMessage(error));

@@ -171,6 +171,7 @@ export function getCalendarHours(
 
 export function resolveEntryDurationSeconds(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+  nowMs = Date.now(),
 ): number {
   if (typeof entry.duration !== "number") {
     return 0;
@@ -180,7 +181,13 @@ export function resolveEntryDurationSeconds(
     return entry.duration;
   }
 
-  return Math.max(0, Math.floor(Date.now() / 1000) + entry.duration);
+  const runningStart = entry.start ?? entry.at;
+
+  if (runningStart && !entry.stop) {
+    return Math.max(0, Math.floor((nowMs - new Date(runningStart).getTime()) / 1000));
+  }
+
+  return Math.max(0, Math.floor(nowMs / 1000) + entry.duration);
 }
 
 export function formatDateKey(date: Date, timezone: string): string {

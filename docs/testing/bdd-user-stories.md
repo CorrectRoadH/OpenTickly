@@ -28,6 +28,10 @@
   When 用户在 `calendar`、`list`、`timesheet` 之间切换
   Then 每个视图都显示同一个运行中的计时
 
+- Given 用户直接进入 `timer` 页面
+  When 页面首次完成加载
+  Then 默认显示 `calendar` 视图
+
 - Given 用户有一个运行中的计时
   When 用户停止该计时
   Then 系统生成一条正式的时间记录

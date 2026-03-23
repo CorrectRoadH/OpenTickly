@@ -9,6 +9,10 @@ Local development must run source processes directly from the repository root.
 - Do not use `docker compose` as the default local development workflow.
 - Start the frontend from the repository root with `vp run website#dev`.
 - Start the backend from the repository root with `air`.
+- JavaScript / TypeScript toolchain commands must run through `vp` or documented root `vp run ...` entrypoints. Do not invoke `node`, `vitest`, `vite`, `playwright`, `pnpm`, `npm`, or `yarn` directly for normal frontend development, verification, or test runs.
+- Run all website Playwright E2E tests from the repository root with `vp run test:e2e:website`.
+- Run the website real-runtime Playwright suite from the repository root with `vp run test:e2e:website:real-runtime`.
+- When you only need one website E2E file, keep the same root entrypoint and pass the file through: `vp run test:e2e:website -- e2e/<file>.spec.ts`.
 - Local development environment variables must live at the repository root, not under `apps/website`, `apps/backend`, or ad hoc shell wrappers.
 - Documented local development env variables belong in root-level env files such as `.env.example` and `.env.local`.
 - Root `.env.local` is required for source-based local development. `.env.local.example` is only a template and is not itself a runnable local-development env file.

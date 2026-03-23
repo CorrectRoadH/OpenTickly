@@ -1,8 +1,9 @@
 import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
 import {
-  buildWorkspaceOverviewPath,
+  buildOverviewPath,
   buildWorkspaceReportsPath,
   buildWorkspaceSettingsPathWithSection,
+  buildTimerPath,
 } from "./workspace-routing.ts";
 
 export type ShellNavigationSection = {
@@ -22,7 +23,11 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       items: [
         {
           label: "Overview",
-          to: buildWorkspaceOverviewPath(session.currentWorkspace.id),
+          to: buildOverviewPath(),
+        },
+        {
+          label: "Timer",
+          to: buildTimerPath(),
         },
       ],
     },

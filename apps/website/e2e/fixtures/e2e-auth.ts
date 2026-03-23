@@ -20,8 +20,8 @@ export async function registerE2eUser(
 
   await page.getByRole("button", { name: "Register" }).click();
 
-  await page.waitForURL(/\/workspaces\/\d+(?:\?.*)?$/);
-  const currentWorkspaceId = extractWorkspaceId(page.url());
+  await page.waitForURL(/\/timer(?:\?.*)?$/);
+  const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
   await expect(page.getByTestId("app-shell")).toBeVisible();
   await expect(page.getByLabel("Workspace")).toHaveValue(String(currentWorkspaceId));
 }
@@ -39,10 +39,10 @@ export async function loginE2eUser(
   await page.getByLabel("Password").fill(options.password);
 
   await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL(/\/workspaces\/\d+(?:\?.*)?$/);
+  await page.waitForURL(/\/timer(?:\?.*)?$/);
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
-  const currentWorkspaceId = extractWorkspaceId(page.url());
+  const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
 
   await expect(page.getByLabel("Workspace")).toHaveValue(String(currentWorkspaceId));
 
@@ -65,12 +65,6 @@ function resolveAppUrl(appBaseUrl: string, pathname: string): string {
   return new URL(pathname, appBaseUrl).toString();
 }
 
-function extractWorkspaceId(url: string): number {
-  const match = url.match(/\/workspaces\/(\d+)(?:\?.*)?$/);
-
-  if (!match) {
-    throw new Error(`Expected workspace URL after auth flow, got ${url}`);
-  }
-
-  return Number(match[1]);
+async function resolveCurrentWorkspaceId(page: Page): Promise<number> {
+  return Number(await page.getByLabel("Workspace").inputValue());
 }

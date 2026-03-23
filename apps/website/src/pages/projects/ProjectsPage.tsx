@@ -95,11 +95,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
   return (
     <div
-      className="min-w-[1384px] bg-[var(--track-surface)] text-white"
+      className="w-full min-w-0 bg-[var(--track-surface)] text-white"
       data-testid="projects-page"
     >
       <header className="border-b border-[var(--track-border)]">
-        <div className="flex h-[66px] items-center justify-between px-5">
+        <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <h1 className="text-[21px] font-medium text-white">Projects</h1>
           <button
             className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
@@ -112,7 +112,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           </button>
         </div>
         <div
-          className="flex h-[46px] items-center gap-4 border-t border-[var(--track-border)] px-5"
+          className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="projects-filter-bar"
         >
           <label className="relative">
@@ -130,7 +130,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               <TrackingIcon className="size-3" name="chevron-down" />
             </span>
           </label>
-          <div className="flex items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <FilterChip label="Client" />
             <FilterChip label="Member" />

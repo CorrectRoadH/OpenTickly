@@ -36,11 +36,7 @@ export function InviteStatusJoinedPage({
             {workspaceId ? (
               <Link
                 className="rounded-2xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-600"
-                params={{
-                  workspaceId: String(workspaceId),
-                }}
-                search={{ view: "list" }}
-                to="/workspaces/$workspaceId"
+                to="/timer"
               >
                 Open workspace
               </Link>

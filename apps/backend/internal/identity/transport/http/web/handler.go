@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"strings"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
@@ -79,16 +80,21 @@ type SessionShellProvider interface {
 type Handler struct {
 	service       *application.Service
 	shellProvider SessionShellProvider
+	logger        *slog.Logger
 }
 
 func NewHandler(service *application.Service) *Handler {
-	return &Handler{service: service}
+	return &Handler{
+		service: service,
+		logger:  slog.Default(),
+	}
 }
 
 func NewHandlerWithShell(service *application.Service, shellProvider SessionShellProvider) *Handler {
 	return &Handler{
 		service:       service,
 		shellProvider: shellProvider,
+		logger:        slog.Default(),
 	}
 }
 
@@ -99,12 +105,12 @@ func (handler *Handler) Register(ctx context.Context, request RegisterRequest) R
 		Password: request.Password,
 	})
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "register", err)
 	}
 
 	bootstrap, err := handler.sessionBootstrap(ctx, auth.User)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "register", err)
 	}
 
 	return Response{
@@ -120,12 +126,12 @@ func (handler *Handler) Login(ctx context.Context, request LoginRequest) Respons
 		Password: request.Password,
 	})
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "login", err)
 	}
 
 	bootstrap, err := handler.sessionBootstrap(ctx, auth.User)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "login", err)
 	}
 
 	return Response{
@@ -137,7 +143,7 @@ func (handler *Handler) Login(ctx context.Context, request LoginRequest) Respons
 
 func (handler *Handler) Logout(ctx context.Context, sessionID string) Response {
 	if err := handler.service.Logout(ctx, sessionID); err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "logout", err)
 	}
 
 	return Response{StatusCode: 204}
@@ -146,12 +152,12 @@ func (handler *Handler) Logout(ctx context.Context, sessionID string) Response {
 func (handler *Handler) GetSession(ctx context.Context, sessionID string) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "get_session", err)
 	}
 
 	bootstrap, err := handler.sessionBootstrap(ctx, user)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "get_session", err)
 	}
 
 	return Response{
@@ -163,7 +169,7 @@ func (handler *Handler) GetSession(ctx context.Context, sessionID string) Respon
 func (handler *Handler) GetProfile(ctx context.Context, sessionID string) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "get_profile", err)
 	}
 
 	return Response{
@@ -175,7 +181,7 @@ func (handler *Handler) GetProfile(ctx context.Context, sessionID string) Respon
 func (handler *Handler) UpdateProfile(ctx context.Context, sessionID string, request ProfileRequest) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_profile", err)
 	}
 
 	updated, err := handler.service.UpdateProfile(ctx, user.ID, domain.ProfileUpdate{
@@ -189,7 +195,7 @@ func (handler *Handler) UpdateProfile(ctx context.Context, sessionID string, req
 		DefaultWorkspaceID: request.DefaultWorkspaceID,
 	})
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_profile", err)
 	}
 
 	return Response{
@@ -205,12 +211,12 @@ using the minimal web shell response shape.
 func (handler *Handler) ResetAPIToken(ctx context.Context, sessionID string) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "reset_api_token", err)
 	}
 
 	token, err := handler.service.ResetAPIToken(ctx, user.ID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "reset_api_token", err)
 	}
 
 	return Response{
@@ -222,12 +228,12 @@ func (handler *Handler) ResetAPIToken(ctx context.Context, sessionID string) Res
 func (handler *Handler) GetPreferences(ctx context.Context, sessionID string, client string) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "get_preferences", err)
 	}
 
 	preferences, err := handler.service.GetPreferences(ctx, user.ID, client)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "get_preferences", err)
 	}
 
 	return Response{
@@ -239,7 +245,7 @@ func (handler *Handler) GetPreferences(ctx context.Context, sessionID string, cl
 func (handler *Handler) UpdatePreferences(ctx context.Context, sessionID string, client string, request PreferencesRequest) Response {
 	user, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_preferences", err)
 	}
 
 	update := domain.Preferences{
@@ -249,16 +255,16 @@ func (handler *Handler) UpdatePreferences(ctx context.Context, sessionID string,
 	}
 
 	if err := handler.service.UpdatePreferences(ctx, user.ID, client, update); err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_preferences", err)
 	}
 
 	updatedUser, err := handler.service.ResolveCurrentUser(ctx, sessionID)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_preferences", err)
 	}
 	preferences, err := handler.service.GetPreferences(ctx, updatedUser.ID, client)
 	if err != nil {
-		return mapError(err)
+		return handler.mapError(ctx, "update_preferences", err)
 	}
 
 	return Response{
@@ -335,7 +341,7 @@ func preferencesBody(user application.UserSnapshot, preferences domain.Preferenc
 	}
 }
 
-func mapError(err error) Response {
+func (handler *Handler) mapError(ctx context.Context, operation string, err error) Response {
 	switch {
 	case errors.Is(err, domain.ErrInvalidEmail),
 		errors.Is(err, domain.ErrInvalidFullName),
@@ -355,6 +361,11 @@ func mapError(err error) Response {
 		errors.Is(err, domain.ErrUserDeleted):
 		return Response{StatusCode: 403, Body: "User does not have access to this resource."}
 	default:
+		logger := handler.logger
+		if logger == nil {
+			logger = slog.Default()
+		}
+		logger.ErrorContext(ctx, "identity web handler error", "operation", operation, "error", err.Error())
 		return Response{StatusCode: 500, Body: "Internal Server Error"}
 	}
 }

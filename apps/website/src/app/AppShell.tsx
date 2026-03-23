@@ -1,12 +1,16 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 
+import {
+  isOverviewNavActive,
+  isSectionNavActive,
+  isTimerNavActive,
+} from "./shell-navigation-state.ts";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { swapWorkspaceInPath } from "../shared/lib/workspace-routing.ts";
-import { useCurrentTimeEntryQuery, useLogoutMutation } from "../shared/query/web-shell.ts";
-import { useSession } from "../shared/session/session-context.tsx";
+import { useSession, useSessionActions } from "../shared/session/session-context.tsx";
 
 type AppShellProps = {
   children: ReactNode;
@@ -17,26 +21,21 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const location = useRouterState({
     select: (state) => state.location,
   });
-  const logoutMutation = useLogoutMutation();
   const session = useSession();
-  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const { setCurrentWorkspaceId } = useSessionActions();
   const sections = shellNavigationItems(session);
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
-  const workspacePath = `/workspaces/${session.currentWorkspace.id}`;
-  const onTrackingSurface = location.pathname === workspacePath;
-  const runningEntry = currentTimeEntryQuery.data;
-  const runningEntrySeconds = runningEntry ? resolveTimeEntryDurationSeconds(runningEntry) : 0;
   const profileInitial = (session.user.fullName || session.user.email || "P")
     .trim()
     .charAt(0)
     .toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-[var(--track-canvas)] text-white" data-testid="app-shell">
-      <div className="flex min-h-dvh">
-        <aside className="flex w-[226px] shrink-0 border-r border-[var(--track-border)] bg-[var(--track-panel)]">
-          <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
+    <div className="h-dvh overflow-hidden bg-[#161616] text-white" data-testid="app-shell">
+      <div className="flex h-full">
+        <aside className="flex h-full w-[226px] shrink-0 overflow-hidden bg-[#0d0d0d] shadow-[1px_0px_0px_0px_#3a3a3a]">
+          <div className="flex w-[47px] flex-col items-center justify-between border-r border-[#3a3a3a] bg-black py-2">
             <div className="space-y-0.5">
               <RailButton active icon="track" />
               <RailButton icon="plan" />
@@ -44,7 +43,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             </div>
             <button
               aria-label="Navigation rail"
-              className="flex h-10 w-full items-center justify-center text-[var(--track-text-muted)]"
+              className="flex h-[34px] w-full items-center justify-center text-[#a4a4a4]"
               type="button"
             >
               <TrackingIcon className="h-4 w-[21px]" name="menu" />
@@ -54,7 +53,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                 <div className="flex size-[26px] items-center justify-center overflow-hidden rounded-full border border-[#1b1b1b] bg-[#d94182] text-[11px] font-semibold text-white">
                   {profileInitial}
                 </div>
-                <span className="text-[8px] font-medium uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+                <span className="text-[8px] font-medium uppercase tracking-[0.08em] text-[#a4a4a4]">
                   Profile
                 </span>
               </div>
@@ -63,11 +62,16 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
-            <div className="px-1.5 pt-2">
+          <div className="flex min-w-0 flex-1 flex-col bg-[#0d0d0d]">
+            <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
               <WorkspaceSwitcher
                 currentWorkspaceId={session.currentWorkspace.id}
                 onChange={(workspaceId) => {
+                  if (isAccountScopedShellPath(location.pathname)) {
+                    setCurrentWorkspaceId(workspaceId);
+                    return;
+                  }
+
                   void navigate({
                     to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
                   });
@@ -87,13 +91,19 @@ export function AppShell({ children }: AppShellProps): ReactElement {
               >
                 {primarySections.map((section) => (
                   <section key={section.title} className="mb-6">
-                    <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                    <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#a4a4a4]">
                       {section.title}
                     </h2>
                     <div className="mt-2 space-y-0.5">
                       {section.items.map((item) => (
                         <ShellNavItem
-                          active={isActivePath(location.pathname, item.to)}
+                          active={
+                            item.label === "Overview"
+                              ? isOverviewNavActive(location.pathname, item.to)
+                              : item.label === "Timer"
+                                ? isTimerNavActive(location.pathname, item.to)
+                                : isSectionNavActive(location.pathname, item.to)
+                          }
                           badge={item.badge}
                           disabled={item.disabled}
                           key={`${section.title}-${item.label}`}
@@ -101,45 +111,20 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                           to={item.to}
                         />
                       ))}
-                      {section.title === "Track" ? (
-                        <Link
-                          className="block px-2"
-                          params={{ workspaceId: String(session.currentWorkspace.id) }}
-                          search={{ view: "list" }}
-                          to="/workspaces/$workspaceId"
-                        >
-                          <div
-                            data-testid="current-timer-card"
-                            className={`flex h-7 items-center gap-3 rounded-md px-1.5 text-[14px] font-medium ${
-                              onTrackingSurface
-                                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                                : "text-[var(--track-text-muted)] hover:bg-[var(--track-surface-raised)]"
-                            }`}
-                          >
-                            <TrackingIcon className="h-4 w-[14px] shrink-0" name="timer" />
-                            <span className="min-w-0 truncate tabular-nums">
-                              {formatClockDuration(runningEntrySeconds)}
-                            </span>
-                            <span className="ml-auto flex size-4 items-center justify-center rounded text-current/80">
-                              <TrackingIcon className="size-[14px]" name="edit" />
-                            </span>
-                          </div>
-                        </Link>
-                      ) : null}
                     </div>
                   </section>
                 ))}
               </nav>
 
               {adminSection ? (
-                <section className="border-t border-[var(--track-border)] px-0 pb-4 pt-3">
-                  <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                <section className="sticky bottom-0 bg-[#0d0d0d] px-0 pb-[15px] pt-3">
+                  <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#a4a4a4]">
                     {adminSection.title}
                   </h2>
                   <div className="mt-2 space-y-0.5">
                     {adminSection.items.map((item) => (
                       <ShellNavItem
-                        active={isActivePath(location.pathname, item.to)}
+                        active={isSectionNavActive(location.pathname, item.to)}
                         badge={item.badge}
                         disabled={item.disabled}
                         key={`${adminSection.title}-${item.label}`}
@@ -148,22 +133,6 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                       />
                     ))}
                   </div>
-                  <div className="px-2 pt-3">
-                    <button
-                      className="flex h-9 w-full items-center justify-center rounded-md border border-[var(--track-border)] bg-[#111111] text-[13px] font-medium text-[var(--track-text-muted)] transition hover:bg-[#161616] hover:text-white disabled:opacity-60"
-                      disabled={logoutMutation.isPending}
-                      onClick={() => {
-                        void logoutMutation.mutateAsync().then(() =>
-                          navigate({
-                            to: "/login",
-                          }),
-                        );
-                      }}
-                      type="button"
-                    >
-                      {logoutMutation.isPending ? "Logging out..." : "Log out"}
-                    </button>
-                  </div>
                 </section>
               ) : null}
             </div>
@@ -171,14 +140,18 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         </aside>
 
         <main
-          className="min-w-0 flex-1 overflow-x-auto bg-[var(--track-surface)]"
+          className="min-w-0 flex-1 overflow-x-auto overflow-y-auto bg-[#161616]"
           data-testid="app-shell-main"
         >
-          {children}
+          <div className="min-h-full">{children}</div>
         </main>
       </div>
     </div>
   );
+}
+
+function isAccountScopedShellPath(pathname: string): boolean {
+  return pathname === "/overview" || pathname === "/timer";
 }
 
 function ShellNavItem({
@@ -196,16 +169,16 @@ function ShellNavItem({
 }): ReactElement {
   const content = (
     <div
-      className={`flex h-7 items-center gap-3 rounded-md px-1.5 text-[14px] font-medium ${
+      className={`flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium ${
         active
-          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-          : "text-[var(--track-text-muted)]"
-      } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface-raised)] hover:text-white"}`}
+          ? "bg-[#472443] text-[#f7d0f0]"
+          : "text-[#a4a4a4]"
+      } ${disabled ? "opacity-55" : "hover:bg-[#1b1b1b] hover:text-white"}`}
     >
       <TrackingIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
       <span className="truncate">{label}</span>
       {badge ? (
-        <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[#b2b2b2]">
+        <span className="ml-auto rounded-[8px] bg-[#3a3a3a] px-1.5 py-0.5 text-[12px] leading-none text-[#b2b2b2]">
           {badge}
         </span>
       ) : null}
@@ -233,14 +206,14 @@ function RailButton({
   return (
     <button
       aria-label={icon}
-      className="flex h-10 w-full items-center justify-center"
+      className="flex h-10 w-full items-center justify-center py-[7px]"
       type="button"
     >
       <span
         className={`flex size-[26px] items-center justify-center rounded-full border ${
           active
-            ? "border-transparent bg-[var(--track-accent)] text-black"
-            : "border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)]"
+            ? "border-transparent bg-[#e57bd9] text-black"
+            : "border-[#3a3a3a] bg-[#1b1b1b] text-[#a4a4a4]"
         }`}
       >
         <TrackingIcon className="size-4" name={icon} />
@@ -253,6 +226,8 @@ function navIconName(label: string) {
   switch (label) {
     case "Overview":
       return "overview";
+    case "Timer":
+      return "timer";
     case "Reports":
       return "reports";
     case "Approvals":
@@ -278,33 +253,4 @@ function navIconName(label: string) {
     default:
       return "overview";
   }
-}
-
-function isActivePath(pathname: string, to?: string): boolean {
-  if (!to) {
-    return false;
-  }
-
-  return pathname === to || pathname.startsWith(`${to}/`);
-}
-
-function resolveTimeEntryDurationSeconds(entry: { duration?: number }): number {
-  if (typeof entry.duration !== "number") {
-    return 0;
-  }
-
-  if (entry.duration >= 0) {
-    return entry.duration;
-  }
-
-  return Math.max(0, Math.floor(Date.now() / 1000) + entry.duration);
-}
-
-function formatClockDuration(seconds: number): string {
-  const safeSeconds = Math.max(0, seconds);
-  const hours = Math.floor(safeSeconds / 3600);
-  const minutes = Math.floor((safeSeconds % 3600) / 60);
-  const remainder = safeSeconds % 60;
-
-  return [hours, minutes, remainder].map((value) => String(value).padStart(2, "0")).join(":");
 }

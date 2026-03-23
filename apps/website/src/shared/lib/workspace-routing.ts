@@ -1,8 +1,11 @@
-import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
 import type { WorkspaceSettingsSection } from "../url-state/workspace-settings-location.ts";
 
-export function buildWorkspaceOverviewPath(workspaceId: number): string {
-  return `/workspaces/${workspaceId}`;
+export function buildOverviewPath(): string {
+  return "/overview";
+}
+
+export function buildTimerPath(): string {
+  return "/timer";
 }
 
 export function buildWorkspaceReportsPath(workspaceId: number): string {
@@ -32,12 +35,16 @@ export function buildOrganizationSettingsPath(organizationId: number): string {
   return `/organizations/${organizationId}/settings`;
 }
 
-export function resolveHomePath(session: SessionBootstrapViewModel): string {
-  return buildWorkspaceOverviewPath(session.currentWorkspace.id);
+export function resolveHomePath(): string {
+  return buildTimerPath();
 }
 
 export function swapWorkspaceInPath(pathname: string, workspaceId: number, search: string): string {
   const section = search ? `?${search.replace(/^\?/, "")}` : "";
+
+  if (pathname === "/overview" || pathname === "/timer") {
+    return `${pathname}${section}`;
+  }
 
   if (/^\/workspaces\/\d+\/settings$/.test(pathname)) {
     return `/workspaces/${workspaceId}/settings${section}`;
@@ -67,9 +74,5 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
     return `/workspaces/${workspaceId}/tags${section}`;
   }
 
-  if (/^\/workspaces\/\d+$/.test(pathname)) {
-    return `/workspaces/${workspaceId}${section}`;
-  }
-
-  return buildWorkspaceOverviewPath(workspaceId);
+  return buildOverviewPath();
 }

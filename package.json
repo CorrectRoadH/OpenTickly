@@ -7,6 +7,8 @@
     "build": "vp run build -r",
     "check": "vp check && vp run check -r",
     "test": "vp run test -r",
+    "test:e2e:website": "vp run website#test:e2e",
+    "test:e2e:website:real-runtime": "vp run website#test:e2e:real-runtime",
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
     "dev:website": "vp run website#dev",
     "generate:website-api": "vp run generate:website-api:web && vp run generate:website-api:admin && vp run generate:website-api:import && vp run generate:website-api:public-track && vp run generate:website-api:public-reports && vp run generate:website-api:public-webhooks",

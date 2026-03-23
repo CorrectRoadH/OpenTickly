@@ -1,6 +1,10 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
+import {
+  mapSessionBootstrap,
+  type SessionBootstrapViewModel,
+} from "../../entities/session/session-bootstrap.ts";
+import type { WebSessionBootstrapDto } from "../api/web-contract.ts";
 
 export type SessionSnapshot = SessionBootstrapViewModel;
 
@@ -59,14 +63,51 @@ export const defaultSessionSnapshot: SessionSnapshot = {
   workspaceQuota: null,
 };
 
-const SessionContext = createContext<SessionSnapshot | null>(null);
+type SessionContextValue = {
+  session: SessionSnapshot;
+  setCurrentWorkspaceId: (workspaceId: number) => void;
+};
+
+const SessionContext = createContext<SessionContextValue | null>(null);
 
 type SessionProviderProps = {
   children: ReactNode;
-  value: SessionSnapshot;
+  requestedWorkspaceId?: number;
+  sessionBootstrap: WebSessionBootstrapDto;
 };
 
-export function SessionProvider({ children, value }: SessionProviderProps) {
+export function SessionProvider({
+  children,
+  requestedWorkspaceId,
+  sessionBootstrap,
+}: SessionProviderProps) {
+  const fallbackWorkspaceId =
+    sessionBootstrap.current_workspace_id ?? sessionBootstrap.workspaces[0]?.id ?? 0;
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState(
+    requestedWorkspaceId ?? fallbackWorkspaceId,
+  );
+
+  useEffect(() => {
+    if (requestedWorkspaceId != null) {
+      setCurrentWorkspaceId(requestedWorkspaceId);
+    }
+  }, [requestedWorkspaceId]);
+
+  const session = useMemo(
+    () =>
+      mapSessionBootstrap(sessionBootstrap, {
+        requestedWorkspaceId: currentWorkspaceId,
+      }),
+    [currentWorkspaceId, sessionBootstrap],
+  );
+  const value = useMemo(
+    () => ({
+      session,
+      setCurrentWorkspaceId,
+    }),
+    [session],
+  );
+
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
@@ -77,5 +118,17 @@ export function useSession(): SessionSnapshot {
     throw new Error("SessionProvider is required");
   }
 
-  return session;
+  return session.session;
+}
+
+export function useSessionActions(): Pick<SessionContextValue, "setCurrentWorkspaceId"> {
+  const session = useContext(SessionContext);
+
+  if (!session) {
+    throw new Error("SessionProvider is required");
+  }
+
+  return {
+    setCurrentWorkspaceId: session.setCurrentWorkspaceId,
+  };
 }

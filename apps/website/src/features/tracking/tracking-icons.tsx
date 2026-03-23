@@ -20,7 +20,7 @@ type TrackingIconName =
   | "more"
   | "overview"
   | "plan"
-  | "play-stop"
+  | "play"
   | "plus"
   | "profile"
   | "projects"
@@ -30,6 +30,7 @@ type TrackingIconName =
   | "subscription"
   | "tags"
   | "timer"
+  | "stop"
   | "timesheet"
   | "track";
 
@@ -187,11 +188,11 @@ function renderIcon(name: TrackingIconName): ReactElement {
           <path d="m8 4.3 2.4 4.2L8 11.7 5.6 8.5Z" />
         </>
       );
-    case "play-stop":
+    case "play":
       return (
         <>
           <circle cx="8" cy="8" r="6" />
-          <rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none" />
+          <path d="m6.4 5.2 4.2 2.8-4.2 2.8Z" fill="currentColor" stroke="none" />
         </>
       );
     case "plus":
@@ -250,6 +251,13 @@ function renderIcon(name: TrackingIconName): ReactElement {
         <>
           <circle cx="8" cy="8" r="5.3" />
           <path d="M8 5.2V8l2.2 1.5M6 2.8h4" />
+        </>
+      );
+    case "stop":
+      return (
+        <>
+          <circle cx="8" cy="8" r="6" />
+          <rect x="5.7" y="5.7" width="4.6" height="4.6" rx="1" fill="currentColor" stroke="none" />
         </>
       );
     case "timesheet":

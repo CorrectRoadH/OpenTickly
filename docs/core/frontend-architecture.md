@@ -27,7 +27,7 @@
 说明：
 
 - `Vite+` 是工具链，不负责决定 router、query、form、UI framework 方案。
-- `TanStack Router` 适合本项目这种重 URL state、重筛选、重视图切换的应用。
+- `TanStack Router` 适合本项目这种重 URL state、重筛选的应用；但只有真正进入地址栏的视图切换才属于 router 职责。
 - `TanStack Query` 适合 tracking / reports 这类 server state 密集产品面。
 - `baseui` 适合数据密集的表单、表格、popover、drawer、select、date/time 场景。
 - `tailwindcss@4` 是正式约束，不是可选偏好；默认用于页面布局、间距、栅格、响应式和通用 utility class 组合。
@@ -237,11 +237,11 @@ packages/
 - 必须通过 `TanStack Router` search params schema 统一解析
 - 与路由参数、search params 保持双向同步
 - 不能只藏在组件本地 state 里
+- 不要把上游产品中不会改变地址栏的页内视图切换强行塞进 search params
 
 典型例子：
 
 - 日期范围
-- `calendar | list | timesheet` 视图模式
 - 搜索词、过滤器、排序、分页
 - 当前选中的 workspace、report preset、tab
 
@@ -280,6 +280,7 @@ packages/
 典型例子：
 
 - modal 开关
+- `timer` 页内的 `calendar | list | timesheet` 切换
 - hover / expanded / selected row
 - column resize
 - panel collapse
@@ -425,7 +426,7 @@ route params/search params
 - feature 提交 mutation 时使用 input model，不直接把 form data 原样透传给底层
 - 页面切换视图时，只替换投影层，不复制另一套数据模型
 
-这条规则对 `tracking` 的 `calendar/list/timesheet` 尤其重要：它们共享同一路由族、筛选、日期范围和 running timer 状态，只切换主内容投影。
+这条规则对 `tracking` 的 `calendar/list/timesheet` 尤其重要：它们共享同一 `timer` 页面、同一查询/筛选/日期范围和 running timer 状态，只切换主内容投影，不进入 URL。
 
 ## 7. 页面族与壳层
 
@@ -439,10 +440,12 @@ route params/search params
 
 页面族规则：
 
-- `timer` 的 `calendar`、`list`、`timesheet` 是同一路由族
+- `overview` 与 `timer` 是共享壳层下两个独立的账号级页面入口
+- `timer` 的 `calendar`、`list`、`timesheet` 是同一页面内的三个 view，不是三个独立 URL；直接进入 `/timer` 时默认显示 `calendar`
 - `project`、`client`、`tag` 共享相同的信息架构骨架，但实体字段不同
 - `profile` 与 `settings` 必须分离，不混成“一个超大设置页”
 - `integrations webhooks` 在首版是正式产品页，不包装成空 marketplace
+- shell 页面根容器不得写死页面最小宽度；如果某个表格、日历或图表需要更宽的展示面，应把横向滚动限制在该局部内容区，而不是把整个页面根节点设成固定宽度
 
 这些页面语义以对应 `product` 文档为准，前端实现不得擅自重命名成另一套信息架构。
 

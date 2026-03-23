@@ -1,7 +1,6 @@
 import { type ReactElement, type ReactNode } from "react";
 
 import type { WebSessionBootstrapDto } from "../shared/api/web-contract.ts";
-import { mapSessionBootstrap } from "../entities/session/session-bootstrap.ts";
 import { SessionProvider } from "../shared/session/session-context.tsx";
 import { AppShell } from "./AppShell.tsx";
 
@@ -16,12 +15,11 @@ export function AuthenticatedAppFrame({
   requestedWorkspaceId,
   sessionBootstrap,
 }: AuthenticatedAppFrameProps): ReactElement {
-  const session = mapSessionBootstrap(sessionBootstrap, {
-    requestedWorkspaceId,
-  });
-
   return (
-    <SessionProvider value={session}>
+    <SessionProvider
+      requestedWorkspaceId={requestedWorkspaceId}
+      sessionBootstrap={sessionBootstrap}
+    >
       <AppShell>{children}</AppShell>
     </SessionProvider>
   );

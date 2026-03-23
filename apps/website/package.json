@@ -10,7 +10,7 @@
     "check": "vp check",
     "test": "vp exec playwright test",
     "test:e2e": "vp exec playwright test",
-    "test:e2e:real-runtime": "vp exec playwright test e2e/app-shell.real-runtime.spec.ts"
+    "test:e2e:real-runtime": "vp exec playwright test e2e/app-shell.real-runtime.spec.ts e2e/catalog-management.real-runtime.spec.ts e2e/clients-page.real-runtime.spec.ts e2e/permission-config.real-runtime.spec.ts e2e/project-page.real-runtime.spec.ts e2e/settings-and-profile.real-runtime.spec.ts e2e/timer-page.real-runtime.spec.ts"
   },
   "dependencies": {
     "@hey-api/client-fetch": "catalog:",

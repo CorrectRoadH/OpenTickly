@@ -429,7 +429,7 @@ export function useCurrentTimeEntryQuery() {
         return await unwrapWebApiResult(getCurrentTimeEntry());
       } catch (error) {
         if (error instanceof WebApiError && error.status === 404) {
-          return undefined;
+          return null;
         }
 
         throw error;
@@ -459,7 +459,8 @@ export function useStartTimeEntryMutation(workspaceId: number) {
           },
         }),
       ),
-    onSuccess: async () => {
+    onSuccess: async (data) => {
+      queryClient.setQueryData(currentTimeEntryQueryKey, data);
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
       });
@@ -484,6 +485,7 @@ export function useStopTimeEntryMutation() {
         }),
     ),
     onSuccess: async () => {
+      queryClient.setQueryData(currentTimeEntryQueryKey, null);
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
       });
