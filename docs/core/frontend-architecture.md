@@ -15,23 +15,23 @@
 
 当前建议的正式技术栈是：
 
-- runtime：`React`
+- UI framework：`React`
 - toolchain：`Vite+`
 - router：`TanStack Router`
 - server state：`TanStack Query`
 - forms：`react-hook-form` + `zod`
 - UI primitives：`baseui`
 - utility styling：`tailwindcss@4`
-- styling/runtime：`styletron`
+- styling engine：`styletron`
 
 说明：
 
-- `Vite+` 是工具链，不负责决定 router、query、form、UI runtime 方案。
+- `Vite+` 是工具链，不负责决定 router、query、form、UI framework 方案。
 - `TanStack Router` 适合本项目这种重 URL state、重筛选、重视图切换的应用。
 - `TanStack Query` 适合 tracking / reports 这类 server state 密集产品面。
 - `baseui` 适合数据密集的表单、表格、popover、drawer、select、date/time 场景。
 - `tailwindcss@4` 是正式约束，不是可选偏好；默认用于页面布局、间距、栅格、响应式和通用 utility class 组合。
-- `styletron` 继续保留，因为 `baseui` 的 theme、override 和运行时依赖它；这不是与 Tailwind 二选一。
+- `styletron` 继续保留，因为 `baseui` 的 theme、override 和样式引擎依赖它；这不是与 Tailwind 二选一。
 - `packages/web-ui` 是基于 `baseui` 的应用级 UI 包，不另造一套设计系统。
 
 ## 1. 目标目录

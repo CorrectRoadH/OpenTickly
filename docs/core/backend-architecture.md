@@ -4,7 +4,7 @@
 
 - 每个业务模块内部怎样组织
 - command / query / transport / composition 怎么分
-- 事务、权限、异步 job、projector、delivery runtime 放哪
+- 事务、权限、异步 job、projector、delivery 执行链路放哪
 - 跨模块如何协作，哪些依赖不允许出现
 
 系统级蓝图以 `docs/core/architecture-overview.md` 为准；本文档负责把它落到代码结构。
@@ -18,8 +18,20 @@
 
 约束：
 
-- 本文件只能把这些上游定义落成代码结构、模块协作和运行时规则。
+- 本文件只能把这些上游定义落成代码结构、模块协作和启动/装配规则。
 - 本文件不得反向发明或改写领域边界、对象归属、聚合根或关键不变量。
+
+## 0.1 术语收口
+
+本文档统一使用以下术语：
+
+- 进程边界：`apps/backend` 作为 Go 进程入口和宿主
+- 启动输入：`PORT`、`DATABASE_URL`、`REDIS_URL`
+- 装配边界：`bootstrap` / `http` / `platform` 负责的 wiring
+- 异步执行链路：job runner、projector、webhook 投递、import continuation
+- 真实启动验证：进程启动、schema 对齐、依赖连通性、`/readyz`
+
+除非是在引用现有代码标识符或第三方库名，本文档不再把 `runtime` 当作笼统总称使用。
 
 ## 0. OpenAPI 的来源与作用边界
 
@@ -65,7 +77,7 @@
 - request validation smoke / response shape smoke 要求
 - endpoint 到模块 / use case 的映射清单
 
-`apps/backend` 是纯 Go runtime 边界：
+`apps/backend` 是纯 Go 进程边界：
 
 - 不在 `apps/backend` 下维护独立 `package.json`、`tsconfig`、`vite/vitest` 或 TypeScript contract/golden harness
 - OpenAPI 合同证据优先落在 Go transport / bootstrap 测试，以及真正消费这些合同的前端或共享包测试
@@ -76,7 +88,7 @@
 - command / query 划分
 - 事务边界
 - 权限规则
-- job / projector / delivery runtime 设计
+- job / projector / delivery 执行链路设计
 
 因此流程固定为：
 
@@ -86,7 +98,7 @@
 
 额外命名约束：
 
-- transport、生成脚本、生成文件、adapter、handler interface、runtime 组装文件和测试文件，只允许按产品面、能力域或合同边界命名。
+- transport、生成脚本、生成文件、adapter、handler interface、host/bootstrap 组装文件和测试文件，只允许按产品面、能力域或合同边界命名。
 - 当前覆盖范围不足、实现仍在过渡中、或某能力尚未完全接管，都必须记录在 plan/debt，而不是写进代码名。
 
 ## 0.5 后端技术栈与框架结论
@@ -95,24 +107,24 @@
 
 当前目标态的正式结论如下：
 
-- HTTP runtime：`echo`
+- HTTP host framework：`echo`
 - 由 `toggl-*` OpenAPI 驱动的外部公开 API 路由与 handler interface：由 `oapi-codegen` 基于 OpenAPI 全生成
 - 由 `toggl-*` OpenAPI 驱动的外部公开 API request/response validation：由 OpenAPI 生成链路与 `kin-openapi` 驱动
-- Web/internal API runtime：可继续挂在同一 `echo` 实例上，但不反向污染 `transport/http/public-api` 边界
+- Web/internal API host：可继续挂在同一 `echo` 实例上，但不反向污染 `transport/http/public-api` 边界
 - OpenAPI 生成代码：`oapi-codegen`，以外部公开 API transport 为最高优先级生成目标
 - 数据库：`PostgreSQL`
 - 数据库访问：`pgx`
 - PostgreSQL schema 管理：`pgschema`（声明式 desired-state SQL + `plan/apply` 工作流）
 - 事务：显式 `pgx.Tx`
 - Redis：官方 Redis client，由 `platform` 提供连接与最小封装
-- 依赖注入：手写 constructor wiring，不使用运行时 DI 容器，不使用代码生成式 DI
+- 依赖注入：手写 constructor wiring，不使用容器式 DI，不使用代码生成式 DI
 - 后台 job runner：进程内 runner + PostgreSQL job record
 
 解释：
 
 - 外部公开 API 的主要风险不是“框架选错”，而是人工手写路由、参数绑定、校验和响应 shape 后逐步偏离 OpenAPI。
 - 因此外部公开 API 采用 generation-first：OpenAPI 决定路由、参数、DTO、handler interface、validator 与 contract skeleton，人工不再手写这些边界。
-- 在这个前提下，`echo` 的价值是作为成熟的 transport runtime 承载生成产物，而不是承载业务语义。
+- 在这个前提下，`echo` 的价值是作为成熟的 transport host 承载生成产物，而不是承载业务语义。
 - `echo` 只能停留在 `transport` 与 `apps/backend/internal/http`；`application`、`domain`、`infra` 不得依赖 `echo.Context` 或任何 `echo` 类型。
 - DI 明确采用手写装配，而不是 `fx`、`wire`、`dig` 这类容器或生成器；本项目需要的是清晰依赖图、可审查的启动顺序和显式模块边界，而不是额外框架语义。
 - OpenAPI 仍然只生成 transport/contract 边界，不生成 domain/application/infra。
@@ -148,17 +160,17 @@ apps/backend/internal/platform/
 - schema 文件可以按对象族拆分，但合起来必须仍然表达完整 desired state。
 - Blob、job record、bootstrap guard、平台级元数据等共享基础表归 `platform/schema/`。
 - 具体业务表以后分别由各模块 ownership 维护，但仍通过 `pgschema` 汇总到同一 desired state。
-- 不允许在模块内部偷偷引入第二套 schema 入口，例如 `gorm.AutoMigrate()`、运行时即兴 `CREATE TABLE` 或脱离 `pgschema` 的独立 migration CLI。
+- 不允许在模块内部偷偷引入第二套 schema 入口，例如 `gorm.AutoMigrate()`、进程内即兴 `CREATE TABLE` 或脱离 `pgschema` 的独立 migration CLI。
 
 环境约定：
 
-- 应用运行时继续使用 `DATABASE_URL` 作为 Go 后端的主 DSN 输入。
+- 应用启动路径继续使用 `DATABASE_URL` 作为 Go 后端的主 DSN 输入。
 - `pgschema` 命令使用标准 PostgreSQL CLI 环境：`PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE`。
-- 如果仓库根 `.env.local` 同时提供了应用运行时 env 与 `pgschema` 所需 PG* env，它们必须指向同一个数据库实例，不允许形成两套数据库目标。
+- 如果仓库根 `.env.local` 同时提供了应用启动 env 与 `pgschema` 所需 PG* env，它们必须指向同一个数据库实例，不允许形成两套数据库目标。
 
 工作流约定：
 
-- 本地开发：修改 schema SQL 后，先运行 `pgschema plan`，确认 plan 正确，再运行 `pgschema apply`，最后启动或重启 `air` 做真实运行时验证。
+- 本地开发：修改 schema SQL 后，先运行 `pgschema plan`，确认 plan 正确，再运行 `pgschema apply`，最后启动或重启 `air` 做真实启动验证。
 - CI：对 schema 相关变更至少运行一次 `pgschema plan`，并把 plan 结果作为 review 证据。
 - CD / self-hosted：部署流程在应用对外 ready 之前执行 `pgschema apply --auto-approve` 或等价的受控 apply 步骤。
 - 回滚：优先通过 Git 回退 desired-state SQL 后重新执行 `pgschema plan/apply`；如果变更涉及不可逆破坏性 DDL，必须在 review 阶段提前标注和制定数据恢复方案。
@@ -186,7 +198,7 @@ apps/backend/internal/platform/
 特别是 `fx`：
 
 - `fx` 更适合需要大量可插拔 provider、复杂模块生命周期和长期容器化装配约定的大型服务
-- 当前仓库更需要显式、稳定、可逐行审查的构造顺序，而不是运行时容器帮我们“推导出一个图”
+- 当前仓库更需要显式、稳定、可逐行审查的构造顺序，而不是容器式 DI 帮我们“推导出一个图”
 - 如果未来真的出现几十个独立模块、多个独立启动 profile、重复的生命周期编排痛点，再重新评估也不迟；但那必须是显式架构决策，不是为了少写几行 wiring 代码就提前引入
 
 结论：
@@ -201,12 +213,12 @@ apps/backend/internal/platform/
 - `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
 - `infra` 实现 port，但不反向持有 service locator
 - `apps/backend/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
-- `apps/backend/internal/bootstrap` 负责在受控 self-hosted / deployment 流程之外消费已经完成的 `pgschema` 结果；本地 `air` 源码启动与默认应用运行时不得在进程内隐式执行 schema reconcile / apply
+- `apps/backend/internal/bootstrap` 负责在受控 self-hosted / deployment 流程之外消费已经完成的 `pgschema` 结果；本地 `air` 源码启动与默认应用启动路径不得在进程内隐式执行 schema reconcile / apply
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
 - 源码本地开发默认必须通过根目录 `.env.local` 提供数据库/缓存等关键配置；缺少关键 env 时，`bootstrap` 必须失败，不允许伪造可工作默认值
-- `apps/backend/internal/bootstrap` 必须把真实 Postgres / Redis 连接失败视为启动失败；不允许把内存 store、placeholder runtime 或 fake dependency 当成默认装配路径
+- `apps/backend/internal/bootstrap` 必须把真实 Postgres / Redis 连接失败视为启动失败；不允许把内存 store、占位后端路径或 fake dependency 当成默认装配路径
 
 推荐装配形状：
 
@@ -227,7 +239,7 @@ bootstrap.NewApp(cfg)
 -> build module application services
 -> bind generated public API server implementations
 -> register generated public API routes into Echo
--> return app runtime
+-> return app host
 ```
 
 这种装配方式直接服务于测试策略：
@@ -246,7 +258,7 @@ bootstrap.NewApp(cfg)
 3. 验证数据库 schema 已通过仓库 desired state 对齐；本地 `air` 源码启动不得在进程内隐式执行 `pgschema reconcile/apply`
 4. 运行实例级初始化与 bootstrap guard
 5. 构建 platform services、模块 infra、application 与 transport
-6. 启动 HTTP runtime
+6. 启动 HTTP host
 7. 只有当 schema 前置校验、初始化和依赖检查都完成后，`/readyz` 才返回 ready
 
 规则：
@@ -267,20 +279,20 @@ bootstrap.NewApp(cfg)
 - handler 在 transport 层拼接跨请求共享的可变业务状态，而不是调用 application service
 - 为了“临时跑通”把授权、配额、领域规则或错误语义直接硬编码在路由壳层
 - 已有 OpenAPI 合同后，仍持续手写 DTO、route table、bind/validate 入口并把它当成正式边界
-- 在本地源码默认启动路径中，以内存 state、伪仓储或 placeholder runtime 代替真实 Postgres / Redis 依赖
-- 用不表达长期职责的阶段语义给 transport/runtime/adapter/测试命名，并把这些名字继续当作长期实现边界
+- 在本地源码默认启动路径中，以内存 state、伪仓储或占位后端路径代替真实 Postgres / Redis 依赖
+- 用不表达长期职责的阶段语义给 transport/host/adapter/测试命名，并把这些名字继续当作长期实现边界
 
 允许存在的临时过渡实现只限于：
 
 - 在 task packet 中明确标注为过渡态
 - 明确写出退出条件、替换目标和所属波次
-- 不把过渡态测试或占位 runtime 叙事当成正式完成依据
+- 不把过渡态测试或占位后端叙事当成正式完成依据
 
 如果出现以下信号，必须优先做结构治理，而不是继续在其上叠加功能：
 
 - handler 文件持续膨胀，并同时承载 decode、业务规则、状态管理和响应映射
 - transport 测试主要在验证伪状态，而不是验证 OpenAPI / public contract / application 编排
-- 新 endpoint 为了复用“现成状态”继续接入 transport 内 fake runtime，而不是接入对应模块
+- 新 endpoint 为了复用“现成状态”继续接入 transport 内 fake host/fake backend，而不是接入对应模块
 
 ## 0.7 OpenAPI 生成与公开合同工作流
 
@@ -481,13 +493,13 @@ apps/backend/internal/tracking/
 - Redis adapter
 - file store adapter
 - 第三方 provider adapter
-- projector / dispatcher 运行时实现
+- projector / dispatcher 执行实现
 
 规则：
 
 - `infra` 实现 `application` 定义的 port
 - 一个模块的 `infra` 不得 import 另一个模块的 `infra`
-- projector / delivery runtime 属于对应模块的 `infra`，不是 `platform` 的业务替身
+- projector / delivery execution 属于对应模块的 `infra`，不是 `platform` 的业务替身
 
 ### 3.4 `transport`
 
@@ -592,7 +604,7 @@ Query 的特征：
 - 组合层不拥有独立领域规则
 - 如果聚合逻辑本身形成稳定业务能力，应回收进某个业务模块的 `application/query`
 
-## 5.5 `apps/backend` 的运行时边界
+## 5.5 `apps/backend` 的进程与装配边界
 
 `apps/backend` 不是“随便写点 glue code”的目录，它有非常具体的职责：
 
@@ -614,21 +626,21 @@ Query 的特征：
 - 如果逻辑稳定地组合 `tracking + tenant + membership` 的页面数据，它才属于 `apps/backend/internal/web`
 - 如果逻辑只是数据库连接、server 启停、middleware 组合，它属于 `bootstrap` 或 `http`
 
-### 5.5.1 本地开发运行时入口
+### 5.5.1 本地开发启动入口
 
 后端本地开发入口固定为仓库根目录执行的 `air`。
 
 规则：
 
 - `air` 是唯一允许的后端本地源码开发启动入口，不再把 `go run ./apps/backend` 作为日常开发文档化入口。
-- 根级 `.air.toml` 是后端热重载配置的唯一真相源；不允许在 `apps/backend`、根级 `scripts/` 或其他包装层复制第二套 dev runtime 配置。
+- 根级 `.air.toml` 是后端热重载配置的唯一真相源；不允许在 `apps/backend`、根级 `scripts/` 或其他包装层复制第二套 dev 启动配置。
 - `.air.toml` 负责监听源码变化并重建/重启 `./apps/backend`，但不改变正式应用入口；真正的进程入口仍然是 `apps/backend/main.go`。
-- 本地开发与默认运行时边界使用标准 env 名：`PORT`、`DATABASE_URL`、`REDIS_URL`。对数据库、Redis、监听端口这类通用运行时概念，不允许继续发明项目私有平行命名。
+- 本地开发与默认启动边界使用标准 env 名：`PORT`、`DATABASE_URL`、`REDIS_URL`。对数据库、Redis、监听端口这类通用启动概念，不允许继续发明项目私有平行命名。
 - `PORT` 只表达端口号；后端启动时统一监听 `0.0.0.0:<PORT>`，而不是把完整 listen address 暴露为默认 env 合同。
-- `DATABASE_URL` 与 `REDIS_URL` 属于必填运行时输入；缺失时 `bootstrap` 必须直接失败，不允许回退到默认 DSN、内存实现或伪依赖。
-- `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器运行时都不得依赖 `air` 常驻。
-- 本地 `air` 源码启动不得在应用进程内隐式执行 `pgschema reconcile/apply`；schema 变更必须先通过仓库外部受控的 `pgschema plan/apply` 流程完成，再启动或重启后端验证运行时。
-- 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应运行时命令，而不是复用 `air`。
+- `DATABASE_URL` 与 `REDIS_URL` 属于必填启动输入；缺失时 `bootstrap` 必须直接失败，不允许回退到默认 DSN、内存实现或伪依赖。
+- `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器启动都不得依赖 `air` 常驻。
+- 本地 `air` 源码启动不得在应用进程内隐式执行 `pgschema reconcile/apply`；schema 变更必须先通过仓库外部受控的 `pgschema plan/apply` 流程完成，再启动或重启后端验证启动/依赖链路。
+- 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应启动命令，而不是复用 `air`。
 
 ## 6. 权限、套餐和事务
 
@@ -721,7 +733,7 @@ Query Port 负责：
 - domain unit test -> `domain`
 - application integration test -> `application + infra/pg + real tx`
 - transport contract test -> `transport + real validator + real error mapping`
-- async runtime test -> `platform/jobs + <module>/infra job handler`
+- async execution test -> `platform/jobs + <module>/infra job handler`
 
 如果一个实现很难按这四层快速测试，优先判断是边界设计错了，而不是补更多 mock。
 
@@ -740,9 +752,9 @@ Query Port 负责：
 - domain entity
 - application command / query 逻辑
 - 权限与事务规则
-- projector / webhook delivery / import runtime
+- projector / webhook delivery / import execution
 
-## 9. Jobs、Projectors 与 Delivery Runtime
+## 9. Jobs、Projectors 与 Delivery Execution
 
 首版统一采用数据库 `job record`。
 
@@ -752,7 +764,7 @@ Query Port 负责：
 - `platform/jobs`：提供 job runner、lease、retry、调度技术底座
 - `<module>/infra`：实现具体 job handler
 - `reports/infra`：实现 projector
-- `webhooks/infra`：实现 delivery runtime
+- `webhooks/infra`：实现 delivery execution
 - `importing/infra`：实现 continuation / replay / recovery
 
 规则：
@@ -786,11 +798,11 @@ Query Port 负责：
 
 `observability` 的最低要求：
 
-- 后端进程启动成功时必须输出基础 startup log，至少包含监听地址、服务名与关键 runtime mode。
+- 后端进程启动成功时必须输出基础 startup log，至少包含监听地址、服务名与关键 startup profile。
 - HTTP 入口必须具备基础 request log；至少记录 method、path、status、duration 与 request id / trace correlation 字段中的可用子集。
 - `/readyz` 与依赖初始化失败时必须输出可诊断日志，不能只返回静态状态而没有任何后台证据。
 - “进程活着”与“依赖已就绪”必须能从日志与 readiness 结果中区分，不能只靠静态 `200 OK` 冒充可工作后端。
-- 这些日志属于默认运行时要求，不是仅在 debug 模式下才存在的可选能力。
+- 这些日志属于默认启动/交付要求，不是仅在 debug 模式下才存在的可选能力。
 
 ## 11. 后端测试入口
 
@@ -801,7 +813,7 @@ Query Port 负责：
 - `domain` 有单测覆盖不变量
 - `application/commands` 有事务与权限级集成测试
 - `transport/http/public-api` 有合同测试
-- `reports` / `webhooks` / `importing` 的异步运行时有 job 级测试
+- `reports` / `webhooks` / `importing` 的异步执行链路有 job 级测试
 - 外部公开 API endpoint 有 OpenAPI 到 handler / use case 的映射
 
 进一步的结构要求：
@@ -820,5 +832,5 @@ Query Port 负责：
 - query 是否错误地走了 repository 或在线扫 OLTP 大表
 - 权限与 feature gating 是否落在 `application`
 - 是否出现跨模块 `infra` 依赖
-- job、projector、delivery runtime 是否落在正确模块
+- job、projector、delivery execution 是否落在正确模块
 - `platform` 是否被滥用成“公共业务层”

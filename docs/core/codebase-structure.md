@@ -47,7 +47,7 @@
 - `product/` 决定用户可见行为与页面语义。
 - `openapi/` 是 API 边界的直接输入来源，Figma 是 UI 边界的直接输入来源。
 - `domain-model` 决定领域边界、对象归属、聚合根和关键不变量。
-- `core/architecture-overview.md` 决定系统级运行时蓝图。
+- `core/architecture-overview.md` 决定系统级进程与部署蓝图。
 - 本文档与子文档决定代码如何组织、如何依赖、如何测试。
 - `challenges/` 不是当前权威定义。
 
@@ -63,6 +63,54 @@
 禁止在 `product/` 文档里发明实现结构。
 禁止在 `openapi/` 之外重复手写外部公开 API 字段真相。
 
+## 3.1 唯一入口命令与目标结构
+
+文档必须直接写出默认命令，而不是用“runtime”一词笼统代替。
+
+唯一默认入口如下：
+
+```bash
+# source-based local development
+vp run website#dev
+air
+
+# schema workflow
+pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+pgschema apply --file apps/backend/internal/platform/schema/schema.sql
+
+# self-hosted smoke / release-style verification
+docker compose up -d postgres redis
+docker compose up -d --build opentoggl
+```
+
+目标结构也固定如下：
+
+```text
+apps/
+  website/
+    src/
+      app/
+      routes/
+      pages/
+      features/
+      entities/
+      shared/
+  backend/
+    main.go
+    internal/
+      bootstrap/
+      http/
+      web/
+      <business contexts>/
+      platform/
+        schema/
+
+packages/
+  web-ui/
+  shared-contracts/
+  utils/
+```
+
 ## 3.2 本地开发入口与根目录约束
 
 - 本地开发入口统一从仓库根目录触发。
@@ -71,12 +119,12 @@
 - `air` 的根级配置文件固定为仓库根目录 `.air.toml`，其 build/run target 指向 `./apps/backend`；不允许在 `apps/backend` 下再维护第二份热重载入口或平行配置。
 - 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/backend` 或根级 shell 包装脚本。
 - 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
-- 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的运行时输入。
+- 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的启动输入。
 - 后端源码启动默认必须通过 env 显式拿到真实 datasource 配置；缺少 datasource env 时必须立即启动失败，不允许回填可工作的默认数据库地址。
-- 后端连接类与监听类 env 使用标准命名：`PORT`、`DATABASE_URL`、`REDIS_URL`。不允许为默认开发/运行时再发明平行命名如 `*_DATABASE_DSN`、`*_REDIS_ADDRESS`、`*_LISTEN_ADDRESS`。
-- PostgreSQL schema 管理固定使用 `pgschema`。这套工作流允许使用标准 PostgreSQL CLI 环境变量 `PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE` 作为 `pgschema` 输入；它们只服务于 schema tooling，不替代应用运行时的 `DATABASE_URL`。
-- `PORT` 只表达监听端口，不承载“绑定哪个 host”的语义；后端运行时监听地址由实现统一绑定到 `0.0.0.0:<PORT>`。
-- 本地开发默认运行路径必须连接真实 PostgreSQL / Redis 等依赖；不允许以内存 store、placeholder runtime、fake 状态或“临时默认值”作为正常源码开发后端。
+- 后端连接类与监听类 env 使用标准命名：`PORT`、`DATABASE_URL`、`REDIS_URL`。不允许为默认开发/启动路径再发明平行命名如 `*_DATABASE_DSN`、`*_REDIS_ADDRESS`、`*_LISTEN_ADDRESS`。
+- PostgreSQL schema 管理固定使用 `pgschema`。这套工作流允许使用标准 PostgreSQL CLI 环境变量 `PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE` 作为 `pgschema` 输入；它们只服务于 schema tooling，不替代应用启动使用的 `DATABASE_URL`。
+- `PORT` 只表达监听端口，不承载“绑定哪个 host”的语义；后端统一监听 `0.0.0.0:<PORT>`。
+- 本地开发默认运行路径必须连接真实 PostgreSQL / Redis 等依赖；不允许以内存 store、占位后端路径、fake 状态或“临时默认值”作为正常源码开发后端。
 - 不允许新增根级 `scripts/*.sh` 作为本地开发启动、代理或组合入口。
 - `scripts/` 目录不承载日常本地开发职责；如需新增源码开发入口，优先收口到根工具链或正式 CLI。
 - `docker compose` 只描述 self-hosted 交付链路，不作为默认本地开发流程。
@@ -84,13 +132,13 @@
 
 ## 3.3 结构优先级
 
-- 结构收口、技术债治理、运行时入口简化的优先级高于继续扩展产品功能面。
+- 结构收口、技术债治理、启动入口简化的优先级高于继续扩展产品功能面。
 - 如果目录结构、启动命令、self-hosted 交付形态或文档口径仍在漂移，不应继续在其上叠加更多正式功能。
 - 当结构治理与功能开发发生冲突时，先完成结构治理，再继续后续波次功能实现。
 
 ## 3.4 命名必须表达长期职责，不得表达执行阶段
 
-- 长期保留的代码命名只允许表达以下内容：职责、产品面、模块边界、实体/动作语义、运行时边界、合同边界。
+- 长期保留的代码命名只允许表达以下内容：职责、产品面、模块边界、实体/动作语义、启动/宿主边界、合同边界。
 - 代码标识符、文件名、目录名、生成产物名、脚本名、测试套件名和公开合同标签，默认都必须落在上述命名集合里。
 - 计划阶段、执行顺序、交付批次、临时状态、过渡状态不属于允许进入长期实现命名的语义集合。
 - 如果某段实现仍是过渡路径，也必须按职责命名；“它现在仍是过渡实现”只能记录在 plan、debt、历史归档或明确注释中，并附退出条件。
@@ -157,7 +205,7 @@ packages/
 
 - `apps/website` 是当前 Web 产品应用。
 - `apps/backend` 是 Go 后端应用，`main.go` 是唯一进程入口，`internal/*` 同时承载 bootstrap、组合层与业务模块。
-- `apps/backend` 只维护 Go 运行时代码、嵌入式静态占位资源与 Go 测试；不要在该目录再维护 `package.json`、`tsconfig`、`vite/vitest` 或前端测试 harness。
+- `apps/backend` 只维护 Go 进程代码、嵌入式静态占位资源与 Go 测试；不要在该目录再维护 `package.json`、`tsconfig`、`vite/vitest` 或前端测试 harness。
 - `apps/backend/internal/platform/schema/` 是 PostgreSQL desired-state schema 的唯一归属目录，由 `pgschema` 负责 plan/apply，不允许在别处再维护并行 schema 真相源。
 - `packages/` 只放跨应用共享、但不拥有业务流程的代码。
 - 后端业务模块主体位于 `apps/backend/internal/*`，不再额外拆出顶层 `backend/` 目录。
@@ -182,7 +230,7 @@ packages/
 - `tracking`：time entry、running timer、expense
 - `governance`：approval、timesheet、audit、实例治理、API quota
 - `reports`：报表读模型、导出、saved/shared reports
-- `webhooks`：订阅、投递、重试、运行时健康
+- `webhooks`：订阅、投递、重试、投递健康
 - `billing`：plan、subscription、invoice、customer、商业配额
 - `importing`：导入、ID 保留、冲突、审计、重试
 - `platform`：数据库、鉴权、filestore、jobs、可观测性等技术底座
@@ -283,7 +331,7 @@ all modules -> platform
 
 ## 11. 与其他文档的关系
 
-- `docs/core/architecture-overview.md`：定义系统级运行时蓝图
+- `docs/core/architecture-overview.md`：定义系统级进程与部署蓝图
 - [frontend-architecture](./frontend-architecture.md)：定义前端状态、页面、组件与共享包规则
 - [backend-architecture](./backend-architecture.md)：定义后端模块内部结构、协作与组合规则
 - [testing-strategy](./testing-strategy.md)：定义测试矩阵、目录与验收边界

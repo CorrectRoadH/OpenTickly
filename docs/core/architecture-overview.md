@@ -34,10 +34,35 @@
 
 - 前端统一使用 `React + Vite+ + Tailwind CSS 4`，承担完整 Web UI 与管理后台。
 - `Tailwind CSS 4` 是正式前端栈的一部分，不是可选偏好；它负责页面布局、间距、栅格和通用 utility styling。
-- 基于 `baseui` 的组件能力仍保留在前端专题架构中，由 `styletron` 负责其 theme 与 override 运行时。
+- 基于 `baseui` 的组件能力仍保留在前端专题架构中，由 `styletron` 负责其 theme 与 override 样式引擎能力。
 - 后端以 Go 实现，首版采用单个 API 进程承载同步请求与必要后台任务，不拆独立 worker。
 - PostgreSQL schema 以 `pgschema` 管理的声明式 desired-state SQL 作为唯一真相源，不再长期并行维护第二套 schema 工作流。
 - 文件存储首版不引入对象存储，统一通过 PostgreSQL Blob 实现附件、导出物和品牌资源存储。
+
+## 2.1 术语收口
+
+本文档不再把 `runtime` 当作泛化词使用。涉及不同语义时，固定写成以下术语：
+
+- 启动路径：进程如何启动，例如根目录执行 `air`
+- 启动输入：`PORT`、`DATABASE_URL`、`REDIS_URL` 这类启动所需 env
+- 进程结构：单 Go 进程、是否拆独立 `website` 容器、是否拆 worker
+- 装配边界：`bootstrap` / `http` / `platform` 如何把依赖组起来
+- 异步执行链路：job runner、webhook 投递、report projector、import continuation
+- 真实后端验证：浏览器走真路由、真后端、真数据库/依赖的 page flow 或 e2e
+
+本地开发与自托管的默认命令也固定写明，不再用含混术语代替：
+
+```bash
+# source-based local development
+vp run website#dev
+air
+
+# self-hosted smoke / release-style verification
+docker compose up -d postgres redis
+pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+pgschema apply --file apps/backend/internal/platform/schema/schema.sql
+docker compose up -d --build opentoggl
+```
 
 ## 3. 设计原则
 
@@ -50,22 +75,22 @@
 
 - 本地开发默认采用源码直启：前端与后端分别从仓库根目录启动（`vp run website#dev` + `air`）。
 - 本地开发前端由 `Vite` dev server 提供，浏览器请求通过 Vite proxy 转发到 Go API；默认代理目标为 `OPENTOGGL_WEB_PROXY_TARGET`，未设置时指向 `http://127.0.0.1:8080`。
-- 后端本地开发统一通过根级 `.air.toml` 进行热重载；`air` 只用于本地源码开发，CI、生产构建与 self-hosted 运行时不依赖 `air`。
+- 后端本地开发统一通过根级 `.air.toml` 进行热重载；`air` 只用于本地源码开发，CI、生产构建与 self-hosted 发布路径不依赖 `air`。
 - `docker compose` 属于 self-hosted 交付、部署演练和发布态 smoke 验证路径，不是默认本地开发路径。
 - 本地开发所需环境变量统一放在仓库根目录，避免按应用分散配置。
 - 本地开发 env 文件约定也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
 - `.env.local` 是源码本地开发的必需输入；`.env.local.example` 仅用于拷贝生成本机配置。
-- 后端源码开发使用标准运行时 env：`PORT`、`DATABASE_URL`、`REDIS_URL`；这些连接/监听边界不再使用项目私有别名。
+- 后端源码开发使用标准启动 env：`PORT`、`DATABASE_URL`、`REDIS_URL`；这些连接/监听边界不再使用项目私有别名。
 - 后端本地启动不得依赖内置 datasource fallback。若关键 env 缺失，进程必须直接失败，而不是退回内存实现或伪默认配置。
-- 本地开发的 Go 后端默认应连接真实 PostgreSQL 与 Redis；“能启动一个假 runtime”不构成后端可工作。
+- 本地开发的 Go 后端默认应连接真实 PostgreSQL 与 Redis；“能启动一个假后端/占位路径”不构成后端可工作。
 
-### 3.2 单体优先，不先拆多进程运行时
+### 3.2 单体优先，不先拆多进程部署形态
 
-- 首版运行时只保留 `apps/backend` 一个 Go 进程。
-- Web 前端仍作为 `apps/website` 独立构建，但 self-hosted 交付默认采用“先构建前端静态产物，再嵌入 Go 后端二进制并由同一进程提供页面与 API”的单体运行时。
+- 首版只保留 `apps/backend` 一个 Go 进程。
+- Web 前端仍作为 `apps/website` 独立构建，但 self-hosted 交付默认采用“先构建前端静态产物，再嵌入 Go 后端二进制并由同一进程提供页面与 API”的单体交付形态。
 - `reports`、`webhooks`、`import` 在代码结构上隔离，但仍运行在同一个 Go 后端进程内。
 - 不允许为了“看起来先进”而在一开始引入 worker、队列系统或多服务调用复杂度。
-- self-hosted 默认不要求额外引入独立 `website` 容器或 Nginx 运行时；如部署环境已有现成入口层，它只承担 TLS / ingress 职责，不改变默认交付形态。
+- self-hosted 默认不要求额外引入独立 `website` 容器或 Nginx 进程；如部署环境已有现成入口层，它只承担 TLS / ingress 职责，不改变默认交付形态。
 
 ### 3.3 单一事务真相源，读写分离按需演进
 
@@ -73,11 +98,11 @@
 - PostgreSQL 结构定义以仓库内 `pgschema` desired-state SQL 为准；对 live database 的结构收口必须通过 `pgschema plan/apply` 执行。
 - 报表、导出、Webhook、搜索等高读取或异步能力可以通过投影、任务表和缓存解耦。
 - 首版允许从单库起步，但必须保留向独立读模型演进的边界。
-- 源码本地开发默认也遵守同一真相源原则：事务写路径不能以内存 store 或 placeholder runtime 替代 PostgreSQL。
+- 源码本地开发默认也遵守同一真相源原则：事务写路径不能以内存 store 或占位后端路径替代 PostgreSQL。
 
 ### 3.4 公开合同优先于内部实现
 
-- 外部 API 的路径、参数、错误语义、鉴权方式、限流表达和运行时行为优先。
+- 外部 API 的路径、参数、错误语义、鉴权方式、限流表达和请求处理/交付行为优先。
 - 内部模块命名、包结构和存储模型可以为实现效率优化，但不能破坏对外公开定义。
 
 ### 3.5 Workspace 是主业务边界，Organization 是治理边界
@@ -121,7 +146,7 @@ Application Layer
 ├── Identity & Session
 ├── Core API
 ├── Reports API
-├── Webhooks Runtime
+├── Webhooks Delivery
 ├── Import Service
 └── In-Process Background Jobs
 
@@ -279,7 +304,7 @@ Core Mutation
 要求：
 
 - 请求签名、事件 ID、attempt log 和失败终态需要持久化。
-- `validate`、`ping`、`limits`、`status` 不能绕开正式投递运行时。
+- `validate`、`ping`、`limits`、`status` 不能绕开正式投递链路。
 
 ## 7. 数据存储架构
 
@@ -493,17 +518,17 @@ packages/
 
 推荐拓扑：
 
-- Railway Web Service: `opentoggl`（单 Go 运行时，提供 API 与嵌入后的 Web 资源）
+- Railway Web Service: `opentoggl`（单 Go 进程，提供 API 与嵌入后的 Web 资源）
 - Railway PostgreSQL
 - Redis
 
 说明：
 
-- 如果当前仓库或历史部署仍有 `website` 独立运行时，应视为待清理的实现漂移，而非目标拓扑。
+- 如果当前仓库或历史部署仍有 `website` 独立进程/服务，应视为待清理的实现漂移，而非目标拓扑。
 
 特点：
 
-- 尽量减少运行时组件数量。
+- 尽量减少进程与容器数量。
 - 适合首版快速发布和持续迭代。
 
 ### 13.2 Docker Compose 自部署
@@ -516,8 +541,8 @@ packages/
 
 其中：
 
-- `opentoggl` 是单个 Go 运行时容器，同时提供 Web UI 静态资源、SPA 路由回退和 HTTP API。
-- `apps/website` 仍是源码开发入口，但不是 self-hosted 发布态必须单独部署的运行时服务。
+- `opentoggl` 是单个 Go 进程容器，同时提供 Web UI 静态资源、SPA 路由回退和 HTTP API。
+- `apps/website` 仍是源码开发入口，但不是 self-hosted 发布态必须单独部署的服务。
 
 特点：
 
@@ -548,7 +573,7 @@ packages/
 - `docs/core/product-definition.md`：定义产品目标，以及 OpenAPI / Figma / PRD 的依赖关系。
 - `docs/core/codebase-structure.md`：定义前后端目录结构、依赖方向和模块规则。
 - `docs/core/frontend-architecture.md`：定义前端状态管理、组件边界与页面实现结构。
-- `docs/core/backend-architecture.md`：定义后端模块内部结构、组合层与异步运行时规则。
+- `docs/core/backend-architecture.md`：定义后端模块内部结构、组合层与异步执行链路规则。
 - `docs/core/testing-strategy.md`：定义测试矩阵、目录与最低发布门槛。
 - `docs/core/domain-model.md`：定义领域对象、上下文、聚合与不变量。
 - `openapi/*.json`：定义 API 公开合同强约束输入。
