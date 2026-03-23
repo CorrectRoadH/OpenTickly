@@ -96,6 +96,19 @@
 2. 由人工把 endpoint 映射到模块与 use case
 3. 由实现层决定 domain、application、infra 如何协作
 
+固定分层落点如下：
+
+- OpenAPI generated request/response type 只属于 `transport` 合同边界
+- `transport` 负责把 generated type 映射到 `application` command / query input
+- `application` 负责返回 command result、query view、snapshot 或其他应用层结果
+- `transport` 再把这些应用层结果映射回 generated response type
+- `domain` 只承载真正有业务不变量的 entity / value object / domain service，不承接公开 API shape
+
+禁止两种常见漂移：
+
+- 让 `application service` 直接接收或返回 OpenAPI generated type
+- 因为不想映射就把所有结果都包装成所谓 “domain object”，把查询视图、页面组合结果和合同 shape 混进 `domain`
+
 额外命名约束：
 
 - transport、生成脚本、生成文件、adapter、handler interface、host/bootstrap 组装文件和测试文件，只允许按产品面、能力域或合同边界命名。
@@ -309,7 +322,7 @@ OpenAPI 相关工作需要明确区分 4 件事：
 2. 用 `oapi-codegen` 为任何正式 API 边界生成 DTO、参数类型、server interface、Echo 路由与 validator glue
 3. 用 `kin-openapi` 生成或驱动 request/response contract skeleton
 4. 人工维护 endpoint -> module -> use case 映射
-5. 人工只实现 generated server interface 背后的 application adapter 与错误映射
+5. 人工只实现 generated server interface 背后的 transport adapter、application 调用与错误映射
 6. 用 contract test + golden test 证明实现与 OpenAPI 一致
 
 生成产物只允许落在以下边界：
@@ -358,6 +371,7 @@ OpenAPI 相关工作需要明确区分 4 件事：
 
 - generated server interface 的实现
 - transport public error mapping
+- generated DTO 与 application type 之间的显式映射
 - application command/query 调用
 - endpoint 到模块/use case 的归属清单
 
@@ -463,9 +477,17 @@ apps/backend/internal/tracking/
 
 - SQL
 - HTTP DTO
+- OpenAPI generated type
+- application snapshot / query view / page composition result
 - 鉴权上下文解析
 - provider SDK
 - 跨模块 orchestration
+
+补充规则：
+
+- domain object 的判断标准是“是否承载业务不变量与领域语义”，不是“这个结构以后还会复用”
+- 纯查询结果、列表项、聚合读模型、页面拼装结果默认不是 domain object
+- 不要为了避免写 mapper，就把 transport DTO 或 query result 提升成 domain
 
 ### 3.2 `application`
 
@@ -482,6 +504,8 @@ apps/backend/internal/tracking/
 
 - command 负责写模型
 - query 负责读模型或投影视图
+- `application` 输入输出必须是自己的 command、query、result、view、snapshot 或 port 语义，不直接暴露 OpenAPI generated type
+- `application` 可以返回强类型 query view / snapshot；这些类型不因为可序列化就自动成为 domain object
 - 不在 `application` 里直接拼 HTTP 响应
 - 不在 `application` 里写复杂 SQL
 
@@ -516,8 +540,13 @@ apps/backend/internal/tracking/
 - 外部公开 API transport 与 `web` 可以共用同一 `application`
 - 外部公开 API transport 与 `web` 不共享 DTO 与错误映射
 - transport 不是业务流程容器
+- 正式 API 的 request/response body 优先直接使用 OpenAPI generated type
 - 外部公开 API 的 DTO、参数要求和响应 shape 直接以 `openapi/*.json` 为准
 - `web` transport 不应反向污染外部公开 API DTO
+- generated type 不适合作为局部实现细节时，可以在 `transport` 内部定义本地 DTO / mapper，但不得把它下沉到 `application` 或 `domain`
+- `transport` 的核心职责之一就是做两次显式映射：
+  - generated request -> application input
+  - application output -> generated response
 
 ### 3.5 OpenAPI 到模块的映射要求
 

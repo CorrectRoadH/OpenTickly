@@ -17,6 +17,7 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
@@ -301,11 +302,11 @@ func (handlers *routeHandlers) workspacePermissions(ctx echo.Context) error {
 		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
 	}
 
-	return ctx.JSON(http.StatusOK, map[string]any{
-		"only_admins_may_create_projects": workspace.Settings.OnlyAdminsMayCreateProjects(),
-		"only_admins_may_create_tags":     workspace.Settings.OnlyAdminsMayCreateTags(),
-		"only_admins_see_team_dashboard":  workspace.Settings.OnlyAdminsSeeTeamDashboard(),
-		"limit_public_project_data":       workspace.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
+	return ctx.JSON(http.StatusOK, webapi.WorkspacePermissions{
+		OnlyAdminsMayCreateProjects: workspace.Settings.OnlyAdminsMayCreateProjects(),
+		OnlyAdminsMayCreateTags:     workspace.Settings.OnlyAdminsMayCreateTags(),
+		OnlyAdminsSeeTeamDashboard:  workspace.Settings.OnlyAdminsSeeTeamDashboard(),
+		LimitPublicProjectData:      workspace.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
 	})
 }
 
@@ -372,7 +373,7 @@ func (handlers *routeHandlers) workspaceCapabilities(ctx echo.Context) error {
 	if err != nil {
 		return writeTenantResponse(ctx, tenantweb.Response{StatusCode: 404, Body: "Not Found"})
 	}
-	return ctx.JSON(http.StatusOK, body)
+	return ctx.JSON(http.StatusOK, tenantweb.CapabilitySnapshotToWeb(body))
 }
 
 func (handlers *routeHandlers) workspaceQuota(ctx echo.Context) error {
@@ -393,7 +394,7 @@ func (handlers *routeHandlers) workspaceQuota(ctx echo.Context) error {
 	for key, value := range headers {
 		ctx.Response().Header().Set(key, value)
 	}
-	return ctx.JSON(http.StatusOK, body)
+	return ctx.JSON(http.StatusOK, tenantweb.QuotaWindowToWeb(body))
 }
 
 func (handlers *routeHandlers) listWorkspaceMembers(ctx echo.Context) error {
@@ -416,9 +417,7 @@ func (handlers *routeHandlers) listWorkspaceMembers(ctx echo.Context) error {
 	if err != nil {
 		return writeMembershipError(err)
 	}
-	return ctx.JSON(http.StatusOK, map[string]any{
-		"members": membershipBodies(members),
-	})
+	return ctx.JSON(http.StatusOK, webapi.WorkspaceMembersEnvelope{Members: membershipBodies(members)})
 }
 
 func (handlers *routeHandlers) inviteWorkspaceMember(ctx echo.Context) error {
@@ -458,7 +457,7 @@ func (handlers *routeHandlers) inviteWorkspaceMember(ctx echo.Context) error {
 	if _, err := handlers.membershipApp.InviteWorkspaceMember(ctx.Request().Context(), command); err != nil {
 		return writeMembershipError(err)
 	}
-	return ctx.JSON(http.StatusCreated, map[string]any{})
+	return ctx.JSON(http.StatusCreated, struct{}{})
 }
 
 func (handlers *routeHandlers) disableWorkspaceMember(ctx echo.Context) error {
@@ -729,14 +728,14 @@ func (provider *billingBackedSessionShell) SessionShell(
 	}
 
 	return identityweb.SessionShellData{
-		CurrentOrganizationID:    lo.ToPtr(home.organizationID),
-		CurrentWorkspaceID:       lo.ToPtr(home.workspaceID),
+		CurrentOrganizationID:    lo.ToPtr(int(home.organizationID)),
+		CurrentWorkspaceID:       lo.ToPtr(int(home.workspaceID)),
 		OrganizationSubscription: tenantweb.SubscriptionBody(organization.Commercial),
 		WorkspaceSubscription:    tenantweb.SubscriptionBody(workspace.Commercial),
-		Organizations:            []any{tenantweb.OrganizationBody(organization)},
-		Workspaces:               []any{tenantweb.WorkspaceBody(workspace)},
-		WorkspaceCapabilities:    capabilities,
-		WorkspaceQuota:           quota,
+		Organizations:            []webapi.OrganizationSettings{tenantweb.OrganizationBody(organization)},
+		Workspaces:               []webapi.WorkspaceSettings{tenantweb.WorkspaceBody(workspace)},
+		WorkspaceCapabilities:    tenantweb.CapabilitySnapshotToWeb(capabilities),
+		WorkspaceQuota:           tenantweb.QuotaWindowToWeb(quota),
 	}, nil
 }
 
@@ -799,25 +798,33 @@ func (provider *billingBackedSessionShell) ensureWorkspaceOwner(
 	return err
 }
 
-func membershipBodies(members []membershipapplication.WorkspaceMemberView) []map[string]any {
-	bodies := make([]map[string]any, 0, len(members))
+func membershipBodies(members []membershipapplication.WorkspaceMemberView) []webapi.WorkspaceMember {
+	bodies := make([]webapi.WorkspaceMember, 0, len(members))
 	for _, member := range members {
 		bodies = append(bodies, membershipBody(member))
 	}
 	return bodies
 }
 
-func membershipBody(member membershipapplication.WorkspaceMemberView) map[string]any {
-	return map[string]any{
-		"id":           member.ID,
-		"workspace_id": member.WorkspaceID,
-		"email":        member.Email,
-		"name":         member.FullName,
-		"role":         string(member.Role),
-		"status":       string(member.State),
-		"hourly_rate":  member.HourlyRate,
-		"labor_cost":   member.LaborCost,
+func membershipBody(member membershipapplication.WorkspaceMemberView) webapi.WorkspaceMember {
+	return webapi.WorkspaceMember{
+		Email:       member.Email,
+		HourlyRate:  float32PointerFromFloat64(member.HourlyRate),
+		Id:          int(member.ID),
+		LaborCost:   float32PointerFromFloat64(member.LaborCost),
+		Name:        member.FullName,
+		Role:        string(member.Role),
+		Status:      string(member.State),
+		WorkspaceId: int(member.WorkspaceID),
 	}
+}
+
+func float32PointerFromFloat64(value *float64) *float32 {
+	if value == nil {
+		return nil
+	}
+	converted := float32(*value)
+	return &converted
 }
 
 func writeMembershipError(err error) error {

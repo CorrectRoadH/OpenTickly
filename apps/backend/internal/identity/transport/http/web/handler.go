@@ -5,8 +5,11 @@ import (
 	"errors"
 	"strings"
 
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
+
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type Response struct {
@@ -44,14 +47,29 @@ type PreferencesRequest struct {
 }
 
 type SessionShellData struct {
-	CurrentOrganizationID    *int64
-	CurrentWorkspaceID       *int64
-	OrganizationSubscription any
-	WorkspaceSubscription    any
-	Organizations            []any
-	Workspaces               []any
-	WorkspaceCapabilities    any
-	WorkspaceQuota           any
+	CurrentOrganizationID    *int
+	CurrentWorkspaceID       *int
+	OrganizationSubscription webapi.SubscriptionView
+	WorkspaceSubscription    webapi.SubscriptionView
+	Organizations            []webapi.OrganizationSettings
+	Workspaces               []webapi.WorkspaceSettings
+	WorkspaceCapabilities    webapi.CapabilitySnapshot
+	WorkspaceQuota           webapi.QuotaWindow
+}
+
+type PreferencesResponse struct {
+	AlphaFeatures       []domain.AlphaFeature `json:"alpha_features"`
+	BeginningOfWeek     int                   `json:"beginningOfWeek"`
+	CollapseTimeEntries bool                  `json:"collapseTimeEntries"`
+	DateFormat          string                `json:"date_format"`
+	DurationFormat      string                `json:"duration_format"`
+	HideSidebarRight    bool                  `json:"hide_sidebar_right"`
+	LanguageCode        string                `json:"language_code"`
+	ManualEntryMode     string                `json:"manualEntryMode"`
+	ManualMode          bool                  `json:"manualMode"`
+	PgTimeZoneName      string                `json:"pg_time_zone_name"`
+	ReportsCollapse     bool                  `json:"reports_collapse"`
+	TimeOfDayFormat     string                `json:"timeofday_format"`
 }
 
 type SessionShellProvider interface {
@@ -197,9 +215,7 @@ func (handler *Handler) ResetAPIToken(ctx context.Context, sessionID string) Res
 
 	return Response{
 		StatusCode: 200,
-		Body: map[string]any{
-			"api_token": token,
-		},
+		Body:       webapi.CurrentUserAPIToken{ApiToken: token},
 	}
 }
 
@@ -254,80 +270,68 @@ func (handler *Handler) UpdatePreferences(ctx context.Context, sessionID string,
 func (handler *Handler) sessionBootstrap(
 	ctx context.Context,
 	user application.UserSnapshot,
-) (map[string]any, error) {
+) (webapi.SessionBootstrap, error) {
 	shell := SessionShellData{
-		Organizations:         []any{},
-		Workspaces:            []any{},
-		WorkspaceCapabilities: nil,
-		WorkspaceQuota:        nil,
+		Organizations: []webapi.OrganizationSettings{},
+		Workspaces:    []webapi.WorkspaceSettings{},
 	}
 	if handler.shellProvider != nil {
 		resolved, err := handler.shellProvider.SessionShell(ctx, user)
 		if err != nil {
-			return nil, err
+			return webapi.SessionBootstrap{}, err
 		}
 		shell = resolved
 		if shell.Organizations == nil {
-			shell.Organizations = []any{}
+			shell.Organizations = []webapi.OrganizationSettings{}
 		}
 		if shell.Workspaces == nil {
-			shell.Workspaces = []any{}
+			shell.Workspaces = []webapi.WorkspaceSettings{}
 		}
 	}
 
-	return map[string]any{
-		"current_organization_id":   shell.CurrentOrganizationID,
-		"current_workspace_id":      shell.CurrentWorkspaceID,
-		"organization_subscription": shell.OrganizationSubscription,
-		"workspace_subscription":    shell.WorkspaceSubscription,
-		"user": map[string]any{
-			"id":                   user.ID,
-			"email":                user.Email,
-			"fullname":             user.FullName,
-			"api_token":            user.APIToken,
-			"timezone":             user.Timezone,
-			"default_workspace_id": user.DefaultWorkspaceID,
-			"beginning_of_week":    user.BeginningOfWeek,
-			"country_id":           user.CountryID,
-			"has_password":         user.HasPassword,
-			"2fa_enabled":          user.TwoFactorEnabled,
-		},
-		"organizations":          shell.Organizations,
-		"workspaces":             shell.Workspaces,
-		"workspace_capabilities": shell.WorkspaceCapabilities,
-		"workspace_quota":        shell.WorkspaceQuota,
+	return webapi.SessionBootstrap{
+		CurrentOrganizationId:    shell.CurrentOrganizationID,
+		CurrentWorkspaceId:       shell.CurrentWorkspaceID,
+		OrganizationSubscription: shell.OrganizationSubscription,
+		User:                     profileBody(user),
+		WorkspaceSubscription:    shell.WorkspaceSubscription,
+		Organizations:            shell.Organizations,
+		Workspaces:               shell.Workspaces,
+		WorkspaceCapabilities:    shell.WorkspaceCapabilities,
+		WorkspaceQuota:           shell.WorkspaceQuota,
 	}, nil
 }
 
-func profileBody(user application.UserSnapshot) map[string]any {
-	return map[string]any{
-		"id":                   user.ID,
-		"email":                user.Email,
-		"fullname":             user.FullName,
-		"api_token":            user.APIToken,
-		"timezone":             user.Timezone,
-		"default_workspace_id": user.DefaultWorkspaceID,
-		"beginning_of_week":    user.BeginningOfWeek,
-		"country_id":           user.CountryID,
-		"has_password":         user.HasPassword,
-		"2fa_enabled":          user.TwoFactorEnabled,
+func profileBody(user application.UserSnapshot) webapi.CurrentUserProfile {
+	return webapi.CurrentUserProfile{
+		N2faEnabled:        user.TwoFactorEnabled,
+		ApiToken:           user.APIToken,
+		BeginningOfWeek:    user.BeginningOfWeek,
+		CountryId:          int(user.CountryID),
+		DefaultWorkspaceId: int(user.DefaultWorkspaceID),
+		Email:              openapi_types.Email(user.Email),
+		Fullname:           user.FullName,
+		HasPassword:        user.HasPassword,
+		Id:                 int(user.ID),
+		ImageUrl:           nil,
+		Timezone:           user.Timezone,
 	}
 }
 
-func preferencesBody(user application.UserSnapshot, preferences domain.Preferences) map[string]any {
-	return map[string]any{
-		"date_format":         preferences.DateFormat,
-		"timeofday_format":    preferences.TimeOfDayFormat,
-		"alpha_features":      preferences.AlphaFeatures,
-		"duration_format":     "improved",
-		"pg_time_zone_name":   user.Timezone,
-		"beginningOfWeek":     user.BeginningOfWeek,
-		"collapseTimeEntries": false,
-		"language_code":       "en-US",
-		"hide_sidebar_right":  false,
-		"reports_collapse":    false,
-		"manualMode":          false,
-		"manualEntryMode":     "timer",
+func preferencesBody(user application.UserSnapshot, preferences domain.Preferences) PreferencesResponse {
+	return PreferencesResponse{
+		AlphaFeatures:       preferences.AlphaFeatures,
+		BeginningOfWeek:     user.BeginningOfWeek,
+		CollapseTimeEntries: false,
+		DateFormat:          preferences.DateFormat,
+		DurationFormat:      "improved",
+		HideSidebarRight:    false,
+		LanguageCode:        "en-US",
+		ManualEntryMode:     "timer",
+		ManualMode:          false,
+		PgTimeZoneName:      user.Timezone,
+		ReportsCollapse:     false,
+		TimeOfDayFormat:     preferences.TimeOfDayFormat,
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -26,18 +27,12 @@ func TestRegisterReturnsSessionBootstrap(t *testing.T) {
 		t.Fatal("expected register to return a session id")
 	}
 
-	body, ok := response.Body.(map[string]any)
+	body, ok := response.Body.(webapi.SessionBootstrap)
 	if !ok {
-		t.Fatalf("expected register body map, got %T", response.Body)
+		t.Fatalf("expected register body SessionBootstrap, got %T", response.Body)
 	}
-
-	user, ok := body["user"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected register user payload, got %#v", body["user"])
-	}
-
-	if user["email"] != "person@example.com" {
-		t.Fatalf("expected registered user email, got %#v", user["email"])
+	if string(body.User.Email) != "person@example.com" {
+		t.Fatalf("expected registered user email, got %q", body.User.Email)
 	}
 }
 
@@ -64,18 +59,12 @@ func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
 		t.Fatal("expected login to return a session id")
 	}
 
-	body, ok := loginResponse.Body.(map[string]any)
+	body, ok := loginResponse.Body.(webapi.SessionBootstrap)
 	if !ok {
-		t.Fatalf("expected login body map, got %T", loginResponse.Body)
+		t.Fatalf("expected login body SessionBootstrap, got %T", loginResponse.Body)
 	}
-
-	user, ok := body["user"].(map[string]any)
-	if !ok {
-		t.Fatalf("expected login user payload, got %#v", body["user"])
-	}
-
-	if user["email"] != "person@example.com" {
-		t.Fatalf("expected login user email, got %#v", user["email"])
+	if string(body.User.Email) != "person@example.com" {
+		t.Fatalf("expected login user email, got %q", body.User.Email)
 	}
 }
 
@@ -124,14 +113,12 @@ func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
 		t.Fatalf("expected profile status 200, got %d", response.StatusCode)
 	}
 
-	body, ok := response.Body.(map[string]any)
+	body, ok := response.Body.(webapi.CurrentUserProfile)
 	if !ok {
-		t.Fatalf("expected profile body map, got %T", response.Body)
+		t.Fatalf("expected profile body CurrentUserProfile, got %T", response.Body)
 	}
-
-	token, ok := body["api_token"].(string)
-	if !ok || token == "" {
-		t.Fatalf("expected profile api_token string, got %#v", body["api_token"])
+	if body.ApiToken == "" {
+		t.Fatalf("expected profile api_token string, got %#v", body.ApiToken)
 	}
 }
 
@@ -148,13 +135,13 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 	}
 
 	profile := handler.GetProfile(context.Background(), auth.SessionID)
-	profileBody, ok := profile.Body.(map[string]any)
+	profileBody, ok := profile.Body.(webapi.CurrentUserProfile)
 	if !ok {
-		t.Fatalf("expected profile body map, got %T", profile.Body)
+		t.Fatalf("expected profile body CurrentUserProfile, got %T", profile.Body)
 	}
-	originalToken, ok := profileBody["api_token"].(string)
-	if !ok || originalToken == "" {
-		t.Fatalf("expected original profile api_token, got %#v", profileBody["api_token"])
+	originalToken := profileBody.ApiToken
+	if originalToken == "" {
+		t.Fatalf("expected original profile api_token, got %#v", profileBody.ApiToken)
 	}
 
 	reset := handler.ResetAPIToken(context.Background(), auth.SessionID)
@@ -162,28 +149,28 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 		t.Fatalf("expected reset token status 200, got %d", reset.StatusCode)
 	}
 
-	resetBody, ok := reset.Body.(map[string]any)
+	resetBody, ok := reset.Body.(webapi.CurrentUserAPIToken)
 	if !ok {
-		t.Fatalf("expected reset body map, got %T", reset.Body)
+		t.Fatalf("expected reset body CurrentUserAPIToken, got %T", reset.Body)
 	}
-	rotatedToken, ok := resetBody["api_token"].(string)
-	if !ok || rotatedToken == "" {
-		t.Fatalf("expected rotated api_token string, got %#v", resetBody["api_token"])
+	rotatedToken := resetBody.ApiToken
+	if rotatedToken == "" {
+		t.Fatalf("expected rotated api_token string, got %#v", resetBody.ApiToken)
 	}
 	if rotatedToken == originalToken {
 		t.Fatalf("expected rotated token to change, kept %q", rotatedToken)
 	}
 
 	updatedProfile := handler.GetProfile(context.Background(), auth.SessionID)
-	updatedProfileBody, ok := updatedProfile.Body.(map[string]any)
+	updatedProfileBody, ok := updatedProfile.Body.(webapi.CurrentUserProfile)
 	if !ok {
-		t.Fatalf("expected updated profile body map, got %T", updatedProfile.Body)
+		t.Fatalf("expected updated profile body CurrentUserProfile, got %T", updatedProfile.Body)
 	}
-	if updatedProfileBody["api_token"] != rotatedToken {
+	if updatedProfileBody.ApiToken != rotatedToken {
 		t.Fatalf(
 			"expected updated profile api_token %q, got %#v",
 			rotatedToken,
-			updatedProfileBody["api_token"],
+			updatedProfileBody.ApiToken,
 		)
 	}
 }

@@ -80,6 +80,29 @@ When reviewing or implementing code:
 - Structural cleanup, technical debt reduction, and runtime/developer-entrypoint simplification take priority over adding more product surface on top of a drifting foundation.
 - If structure and feature work compete, fix the structure first and only then continue expanding functionality.
 
+## API Contract Rules
+
+API transport must keep the OpenAPI contract explicit.
+
+- For HTTP request and response bodies in API/transport code, prefer OpenAPI-generated structs first.
+- If the schema already exists in `openapi/`, use the generated DTO/type instead of rebuilding the payload with `map[string]any`, `map[any]any`, `map[string]interface{}`, or similar weakly typed containers.
+- If the API shape is real but no generated type exists yet, update the relevant OpenAPI document first, regenerate, and then use the generated type.
+- Only use `map[...]...` in API/transport code when the OpenAPI schema itself is an explicit dictionary/additionalProperties shape. In that case, keep the map type aligned with the generated contract.
+- Do not hand-build JSON envelopes in transport code with dynamic maps when an explicit struct would express the contract.
+- Tests should prefer decoding API responses into explicit structs that match the contract. Use `map[string]any` in tests only when the contract itself is intentionally dynamic.
+
+## Go Strong Typing Rules
+
+Handwritten Go code in this repository must default to explicit types, not `map`.
+
+- Do not introduce handwritten `map[K]V` in normal Go production code across `domain`, `application`, `infra`, `bootstrap`, `transport`, or shared internal packages.
+- This includes lookup tables, sets, ad hoc JSON payloads, generic metadata bags, temporary aggregation structures, and generic option containers.
+- Prefer named structs, dedicated collection types, typed slices plus helper methods, or explicit repositories/services that express the domain shape.
+- If an external boundary is dictionary-shaped, keep that map at the narrowest adapter boundary and convert into strong types immediately after crossing the boundary.
+- Allowed exceptions are limited to generated code and third-party integration boundaries whose contract is inherently dictionary/additionalProperties based.
+- Do not use `map[string]any`, `map[any]any`, `map[string]interface{}`, or similar weak containers in handwritten Go code.
+- Tests should also prefer explicit structs. Only use map-shaped assertions when verifying an intentionally dynamic external contract.
+
 ## Code Principles
 
 Code in this repository must be one-way.

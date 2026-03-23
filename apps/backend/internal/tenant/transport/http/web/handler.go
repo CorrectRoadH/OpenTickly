@@ -7,6 +7,7 @@ import (
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
+	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
@@ -71,9 +72,9 @@ func (handler *Handler) GetOrganizationSettings(ctx context.Context, organizatio
 
 	return Response{
 		StatusCode: 200,
-		Body: map[string]any{
-			"organization": OrganizationBody(view),
-			"subscription": SubscriptionBody(view.Commercial),
+		Body: webapi.OrganizationSettingsEnvelope{
+			Organization: OrganizationBody(view),
+			Subscription: SubscriptionBody(view.Commercial),
 		},
 	}
 }
@@ -100,11 +101,6 @@ func (handler *Handler) GetWorkspaceSettings(ctx context.Context, workspaceID in
 		return mapError(err)
 	}
 
-	organization, err := handler.tenant.GetOrganization(ctx, workspace.OrganizationID)
-	if err != nil {
-		return mapError(err)
-	}
-
 	capabilities, err := handler.billing.WorkspaceCapabilitySnapshot(ctx, workspaceID)
 	if err != nil {
 		return mapError(err)
@@ -116,13 +112,12 @@ func (handler *Handler) GetWorkspaceSettings(ctx context.Context, workspaceID in
 
 	return Response{
 		StatusCode: 200,
-		Body: map[string]any{
-			"organization": OrganizationBody(organization),
-			"workspace":    WorkspaceBody(workspace),
-			"preferences":  WorkspacePreferencesBody(workspace),
-			"subscription": SubscriptionBody(workspace.Commercial),
-			"capabilities": capabilities,
-			"quota":        quota,
+		Body: webapi.WorkspaceSettingsEnvelope{
+			Workspace:    WorkspaceBody(workspace),
+			Preferences:  WorkspacePreferencesBody(workspace),
+			Subscription: SubscriptionBody(workspace.Commercial),
+			Capabilities: CapabilitySnapshotToWeb(capabilities),
+			Quota:        QuotaWindowToWeb(quota),
 		},
 	}
 }
@@ -161,63 +156,64 @@ func (handler *Handler) UpdateWorkspaceSettings(
 	return handler.GetWorkspaceSettings(ctx, workspaceID)
 }
 
-func OrganizationBody(view tenantapplication.OrganizationView) map[string]any {
-	return map[string]any{
-		"id":                         int64(view.ID),
-		"name":                       view.Name,
-		"admin":                      true,
-		"max_workspaces":             12,
-		"pricing_plan_name":          titleCasePlan(view.Commercial.Subscription.Plan),
-		"is_multi_workspace_enabled": true,
-		"user_count":                 len(view.WorkspaceIDs),
+func OrganizationBody(view tenantapplication.OrganizationView) webapi.OrganizationSettings {
+	return webapi.OrganizationSettings{
+		Admin:                   true,
+		Id:                      int(view.ID),
+		IsMultiWorkspaceEnabled: true,
+		MaxWorkspaces:           12,
+		Name:                    view.Name,
+		PricingPlanName:         titleCasePlan(view.Commercial.Subscription.Plan),
+		UserCount:               len(view.WorkspaceIDs),
 	}
 }
 
-func WorkspaceBody(view tenantapplication.WorkspaceView) map[string]any {
-	return map[string]any{
-		"id":                              int64(view.ID),
-		"organization_id":                 int64(view.OrganizationID),
-		"name":                            view.Name,
-		"logo_url":                        brandingURL(view.Branding.LogoStorageKey),
-		"default_currency":                view.Settings.DefaultCurrency(),
-		"default_hourly_rate":             view.Settings.DefaultHourlyRate(),
-		"rounding":                        int(view.Settings.Rounding()),
-		"rounding_minutes":                view.Settings.RoundingMinutes(),
-		"reports_collapse":                view.Settings.ReportsCollapse(),
-		"only_admins_may_create_projects": view.Settings.OnlyAdminsMayCreateProjects(),
-		"only_admins_may_create_tags":     view.Settings.OnlyAdminsMayCreateTags(),
-		"only_admins_see_team_dashboard":  view.Settings.OnlyAdminsSeeTeamDashboard(),
-		"projects_billable_by_default":    view.Settings.ProjectsBillableByDefault(),
-		"projects_private_by_default":     view.Settings.ProjectsPrivateByDefault(),
-		"projects_enforce_billable":       view.Settings.ProjectsEnforceBillable(),
-		"limit_public_project_data":       view.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
-		"admin":                           true,
-		"premium":                         view.Commercial.Subscription.Plan != billingdomain.PlanFree,
-		"role":                            "admin",
+func WorkspaceBody(view tenantapplication.WorkspaceView) webapi.WorkspaceSettings {
+	return webapi.WorkspaceSettings{
+		Admin:                       true,
+		DefaultCurrency:             view.Settings.DefaultCurrency(),
+		DefaultHourlyRate:           float32(view.Settings.DefaultHourlyRate()),
+		Id:                          int(view.ID),
+		LimitPublicProjectData:      view.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
+		LogoUrl:                     brandingURL(view.Branding.LogoStorageKey),
+		Name:                        view.Name,
+		OnlyAdminsMayCreateProjects: view.Settings.OnlyAdminsMayCreateProjects(),
+		OnlyAdminsMayCreateTags:     view.Settings.OnlyAdminsMayCreateTags(),
+		OnlyAdminsSeeTeamDashboard:  view.Settings.OnlyAdminsSeeTeamDashboard(),
+		OrganizationId:              int(view.OrganizationID),
+		Premium:                     view.Commercial.Subscription.Plan != billingdomain.PlanFree,
+		ProjectsBillableByDefault:   view.Settings.ProjectsBillableByDefault(),
+		ProjectsEnforceBillable:     view.Settings.ProjectsEnforceBillable(),
+		ProjectsPrivateByDefault:    view.Settings.ProjectsPrivateByDefault(),
+		ReportsCollapse:             view.Settings.ReportsCollapse(),
+		Role:                        "admin",
+		Rounding:                    int(view.Settings.Rounding()),
+		RoundingMinutes:             view.Settings.RoundingMinutes(),
 	}
 }
 
-func WorkspacePreferencesBody(view tenantapplication.WorkspaceView) map[string]any {
-	return map[string]any{
-		"hide_start_end_times":       view.Settings.HideStartEndTimes(),
-		"report_locked_at":           view.Settings.ReportLockedAt(),
-		"show_timesheet_view":        view.Settings.ShowTimesheetView(),
-		"required_time_entry_fields": view.Settings.RequiredTimeEntryFields(),
+func WorkspacePreferencesBody(view tenantapplication.WorkspaceView) webapi.WorkspacePreferences {
+	return webapi.WorkspacePreferences{
+		HideStartEndTimes:       view.Settings.HideStartEndTimes(),
+		ReportLockedAt:          view.Settings.ReportLockedAt(),
+		RequiredTimeEntryFields: view.Settings.RequiredTimeEntryFields(),
+		ShowTimesheetView:       view.Settings.ShowTimesheetView(),
 	}
 }
 
-func SubscriptionBody(snapshot tenantapplication.CommercialSnapshot) map[string]any {
-	return map[string]any{
-		"plan_name": titleCasePlan(snapshot.Subscription.Plan),
-		"state":     string(snapshot.Subscription.State),
+func SubscriptionBody(snapshot tenantapplication.CommercialSnapshot) webapi.SubscriptionView {
+	return webapi.SubscriptionView{
+		Enterprise: lo.ToPtr(snapshot.Subscription.Plan == billingdomain.PlanEnterprise),
+		PlanName:   titleCasePlan(snapshot.Subscription.Plan),
+		State:      string(snapshot.Subscription.State),
 	}
 }
 
-func brandingURL(storageKey string) string {
+func brandingURL(storageKey string) *string {
 	if storageKey == "" {
-		return ""
+		return lo.ToPtr("")
 	}
-	return "https://cdn.example.com/" + storageKey
+	return lo.ToPtr("https://cdn.example.com/" + storageKey)
 }
 
 func publicProjectAccess(limitPublicProjectData bool) tenantdomain.WorkspacePublicProjectAccess {
