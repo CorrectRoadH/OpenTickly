@@ -89,6 +89,17 @@ func (service *Service) WorkspaceQuotaSnapshot(
 	return account.Quota, account.Quota.Headers(), nil
 }
 
+func (service *Service) OrganizationQuotaSnapshot(
+	ctx context.Context,
+	organizationID int64,
+) (domain.QuotaWindow, map[string]string, error) {
+	account, err := service.resolveOrganizationAccount(ctx, organizationID)
+	if err != nil {
+		return domain.QuotaWindow{}, nil, err
+	}
+	return account.Quota, account.Quota.Headers(), nil
+}
+
 func (service *Service) WorkspaceCapabilitySnapshot(
 	ctx context.Context,
 	workspaceID int64,

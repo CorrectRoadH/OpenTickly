@@ -41,6 +41,6 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 		tracking:   trackingpublicapi.NewHandler(handlers.trackingApp, handlers),
 		governance: governancepublicapi.NewHandler(handlers.governanceApp, handlers),
 		platform:   platformpublicapi.NewHandler(handlers.referenceApp, handlers),
-		billing:    billingpublicapi.NewHandler(handlers.billingApp),
+		billing:    billingpublicapi.NewHandler(handlers.billingApp, handlers),
 	}
 }
