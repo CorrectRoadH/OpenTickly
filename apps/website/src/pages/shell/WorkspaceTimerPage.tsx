@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactElement, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   buildEntryGroups,
@@ -24,6 +24,10 @@ import {
   TimeEntryEditorDialog,
   type TimeEntryEditorAnchor,
 } from "../../features/tracking/TimeEntryEditorDialog.tsx";
+import {
+  TimerComposerSuggestionsDialog,
+  type TimerComposerSuggestionsAnchor,
+} from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
@@ -77,6 +81,8 @@ export function WorkspaceTimerPage(): ReactElement {
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const [draftDescription, setDraftDescription] = useState("");
+  const [draftProjectId, setDraftProjectId] = useState<number | null>(null);
+  const [draftTagIds, setDraftTagIds] = useState<number[]>([]);
   const [runningDescription, setRunningDescription] = useState("");
   const [selectedEntry, setSelectedEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
@@ -87,19 +93,44 @@ export function WorkspaceTimerPage(): ReactElement {
   const [selectedEntryError, setSelectedEntryError] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
+    useState<TimerComposerSuggestionsAnchor | null>(null);
+  const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
   const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
+  const recentTimeEntriesQuery = useTimeEntriesQuery({});
   const runningEntry = currentTimeEntryQuery.data;
   const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
   const tagOptions = useMemo(() => normalizeTags(tagsQuery.data), [tagsQuery.data]);
+  const draftProject = useMemo(
+    () => projectOptions.find((project) => project.id === draftProjectId) ?? null,
+    [draftProjectId, projectOptions],
+  );
+  const draftTags = useMemo(
+    () => tagOptions.filter((tag) => draftTagIds.includes(tag.id)),
+    [draftTagIds, tagOptions],
+  );
+  const recentWorkspaceEntries = useMemo(
+    () =>
+      sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
+        (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
+      ),
+    [recentTimeEntriesQuery.data, workspaceId],
+  );
   const runningDurationSeconds = resolveEntryDurationSeconds(
     runningEntry ?? { duration: 0 },
     nowMs,
   );
   const displayProject =
     runningEntry?.project_name ||
+    draftProject?.name ||
     entries.find((entry) => entry.project_name)?.project_name ||
     "No project";
-  const displayColor = resolveEntryColor(runningEntry ?? entries[0] ?? {});
+  const displayColor =
+    runningEntry != null
+      ? resolveEntryColor(runningEntry)
+      : draftProject != null
+        ? resolveProjectColor(draftProject)
+        : resolveEntryColor(entries[0] ?? {});
   const groupedEntries = buildEntryGroups(entries, timezone);
   const trackStrip = summarizeProjects(entries).slice(0, 12);
   const weekTotalSeconds = weekDays.reduce(
@@ -130,6 +161,10 @@ export function WorkspaceTimerPage(): ReactElement {
     setSelectedEntry(null);
     setSelectedEntryAnchor(null);
     setSelectedEntryError(null);
+  }
+
+  function closeComposerSuggestions() {
+    setComposerSuggestionsAnchor(null);
   }
 
   useEffect(() => {
@@ -174,6 +209,17 @@ export function WorkspaceTimerPage(): ReactElement {
 
   useEffect(() => {
     setRunningDescription(runningEntry?.description ?? "");
+  }, [runningEntry]);
+
+  useEffect(() => {
+    if (!runningEntry) {
+      return;
+    }
+
+    setDraftDescription("");
+    setDraftProjectId(null);
+    setDraftTagIds([]);
+    closeComposerSuggestions();
   }, [runningEntry]);
 
   useEffect(() => {
@@ -226,9 +272,14 @@ export function WorkspaceTimerPage(): ReactElement {
 
     await startTimeEntryMutation.mutateAsync({
       description: draftDescription.trim(),
+      projectId: draftProjectId,
       start: new Date().toISOString(),
+      tagIds: draftTagIds,
     });
     setDraftDescription("");
+    setDraftProjectId(null);
+    setDraftTagIds([]);
+    closeComposerSuggestions();
   }
 
   async function handleSelectedEntrySave() {
@@ -375,6 +426,32 @@ export function WorkspaceTimerPage(): ReactElement {
     });
   }
 
+  function openComposerSuggestions() {
+    if (!timerDescriptionInputRef.current || runningEntry?.id != null) {
+      return;
+    }
+
+    const anchorRect = timerDescriptionInputRef.current.getBoundingClientRect();
+    setComposerSuggestionsAnchor({
+      height: anchorRect.height,
+      left: anchorRect.left,
+      top: anchorRect.top,
+      width: anchorRect.width,
+    });
+  }
+
+  function handleIdleDescriptionFocus() {
+    if (runningEntry?.id != null) {
+      return;
+    }
+
+    if (draftProjectId != null || draftTagIds.length > 0) {
+      return;
+    }
+
+    openComposerSuggestions();
+  }
+
   const timerDescriptionValue = runningEntry?.id != null ? runningDescription : draftDescription;
 
   return (
@@ -391,6 +468,7 @@ export function WorkspaceTimerPage(): ReactElement {
             <input
               className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-white"
               id="timer-description"
+              ref={timerDescriptionInputRef}
               onBlur={() => {
                 void handleRunningDescriptionCommit();
               }}
@@ -410,12 +488,18 @@ export function WorkspaceTimerPage(): ReactElement {
                 event.preventDefault();
                 event.currentTarget.blur();
               }}
+              onFocus={handleIdleDescriptionFocus}
               placeholder="What are you working on?"
               value={timerDescriptionValue}
             />
           </div>
           <button
             className="flex h-[30px] min-w-0 max-w-[220px] shrink items-center gap-2 rounded-md px-3 text-[12px] text-white"
+            onClick={() => {
+              if (runningEntry?.id == null) {
+                openComposerSuggestions();
+              }
+            }}
             type="button"
           >
             <span
@@ -424,7 +508,23 @@ export function WorkspaceTimerPage(): ReactElement {
             />
             <span className="min-w-0 truncate">{displayProject}</span>
           </button>
-          <ChromeIconButton icon="tags" />
+          <button
+            className="flex h-9 min-w-[36px] max-w-[220px] items-center justify-center gap-2 rounded-md px-3 text-[12px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            onClick={() => {
+              if (runningEntry?.id == null) {
+                openComposerSuggestions();
+              }
+            }}
+            type="button"
+          >
+            <TrackingIcon className="size-4 shrink-0" name="tags" />
+            {draftTags.length > 0 ? (
+              <span className="min-w-0 truncate text-white">
+                {draftTags[0]?.name}
+                {draftTags.length > 1 ? ` +${draftTags.length - 1}` : ""}
+              </span>
+            ) : null}
+          </button>
           <ChromeIconButton icon="subscription" />
           <div className="ml-auto flex shrink-0 items-center gap-3">
             <span
@@ -569,6 +669,34 @@ export function WorkspaceTimerPage(): ReactElement {
           }))}
         />
       ) : null}
+      {composerSuggestionsAnchor ? (
+        <TimerComposerSuggestionsDialog
+          anchor={composerSuggestionsAnchor}
+          currentWorkspaceId={workspaceId}
+          onClose={closeComposerSuggestions}
+          onProjectSelect={(projectId) => {
+            setDraftProjectId(projectId);
+            closeComposerSuggestions();
+          }}
+          onTimeEntrySelect={(entry) => {
+            setDraftDescription(entry.description ?? "");
+            setDraftProjectId(resolveTimeEntryProjectId(entry));
+            setDraftTagIds(entry.tag_ids ?? []);
+            closeComposerSuggestions();
+          }}
+          onWorkspaceSelect={(nextWorkspaceId) => {
+            setCurrentWorkspaceId(nextWorkspaceId);
+            closeComposerSuggestions();
+          }}
+          projects={projectOptions}
+          timeEntries={recentWorkspaceEntries}
+          workspaces={session.availableWorkspaces.map((workspace) => ({
+            id: workspace.id,
+            isCurrent: workspace.isCurrent,
+            name: workspace.name,
+          }))}
+        />
+      ) : null}
     </div>
   );
 }
@@ -674,4 +802,15 @@ function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProjec
 
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
   return entry.stop == null || (entry.duration ?? 0) < 0;
+}
+
+function resolveTimeEntryProjectId(
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+): number | null {
+  const projectId = entry.project_id ?? entry.pid ?? null;
+  if (projectId == null || projectId <= 0) {
+    return null;
+  }
+
+  return projectId;
 }

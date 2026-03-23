@@ -7,6 +7,7 @@ import { WorkspaceTimerPage } from "./WorkspaceTimerPage.tsx";
 const mockUseSession = vi.fn();
 const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
+const mockUseCreateTagMutation = vi.fn();
 const mockUseCreateProjectMutation = vi.fn();
 const mockUseDeleteTimeEntryMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
@@ -23,6 +24,7 @@ vi.mock("../../shared/session/session-context.tsx", () => ({
 
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
+  useCreateTagMutation: () => mockUseCreateTagMutation(),
   useCreateProjectMutation: () => mockUseCreateProjectMutation(),
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: () => mockUseProjectsQuery(),
@@ -64,6 +66,10 @@ describe("WorkspaceTimerPage", () => {
     });
 
     mockUseCreateProjectMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    mockUseCreateTagMutation.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });
@@ -186,6 +192,112 @@ describe("WorkspaceTimerPage", () => {
         },
         timeEntryId: 999,
         workspaceId: 202,
+      });
+    });
+  });
+
+  it("opens timer suggestions when focusing the idle description without a draft project or tag", () => {
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [
+        createTimeEntryFixture({
+          description: "Review PR",
+          id: 451,
+          project_id: 77,
+          project_name: "OpenToggl",
+        }),
+      ],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+    mockUseProjectsQuery.mockReturnValue({
+      data: [
+        {
+          active: true,
+          color: "#10b4ff",
+          id: 77,
+          name: "OpenToggl",
+        },
+      ],
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.focus(screen.getByLabelText("Time entry description"));
+
+    const dialog = screen.getByTestId("timer-composer-suggestions-dialog");
+    expect(dialog).toBeTruthy();
+    expect(within(dialog).getByText("Previously tracked time entries")).toBeTruthy();
+    expect(within(dialog).getByRole("button", { name: /Review PR/i })).toBeTruthy();
+  });
+
+  it("applies a previous entry suggestion to the idle timer draft and starts with its project and tags", async () => {
+    const startTimeEntry = vi.fn();
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [
+        createTimeEntryFixture({
+          description: "Deep work",
+          id: 452,
+          project_color: "#10b4ff",
+          project_id: 88,
+          project_name: "OpenToggl",
+          tag_ids: [7, 8],
+          tags: ["Focus", "Build"],
+        }),
+      ],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+    mockUseProjectsQuery.mockReturnValue({
+      data: [
+        {
+          active: true,
+          color: "#10b4ff",
+          id: 88,
+          name: "OpenToggl",
+        },
+      ],
+    });
+    mockUseTagsQuery.mockReturnValue({
+      data: [
+        { id: 7, name: "Focus" },
+        { id: 8, name: "Build" },
+      ],
+    });
+    mockUseStartTimeEntryMutation.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: startTimeEntry,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.focus(screen.getByLabelText("Time entry description"));
+    fireEvent.click(
+      within(screen.getByTestId("timer-composer-suggestions-dialog")).getByRole("button", {
+        name: /Deep work/i,
+      }),
+    );
+
+    expect(screen.getByDisplayValue("Deep work")).toBeTruthy();
+    expect(screen.getAllByText("OpenToggl").length).toBeGreaterThan(0);
+    expect(screen.getByText("Focus +1")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Start timer" }));
+
+    await waitFor(() => {
+      expect(startTimeEntry).toHaveBeenCalledWith({
+        description: "Deep work",
+        projectId: 88,
+        start: expect.any(String),
+        tagIds: [7, 8],
       });
     });
   });

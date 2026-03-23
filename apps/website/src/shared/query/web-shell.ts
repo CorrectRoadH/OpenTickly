@@ -537,14 +537,21 @@ export function useStartTimeEntryMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: { description: string; start: string }) =>
+    mutationFn: (request: {
+      description: string;
+      projectId?: number | null;
+      start: string;
+      tagIds?: number[];
+    }) =>
       unwrapWebApiResult(
         postWorkspaceTimeEntries({
           body: {
             created_with: "opentoggl-web",
             description: request.description,
             duration: -1,
+            project_id: request.projectId === null ? 0 : request.projectId,
             start: request.start,
+            tag_ids: request.tagIds,
             workspace_id: workspaceId,
           },
           path: {
