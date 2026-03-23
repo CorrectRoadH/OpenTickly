@@ -625,7 +625,7 @@ export function useUpdateTimeEntryMutation() {
           body: {
             billable: request.billable,
             description: request.description,
-            project_id: request.projectId ?? undefined,
+            project_id: request.projectId === null ? null : request.projectId,
             start: request.start,
             stop: request.stop,
             tag_ids: request.tagIds,

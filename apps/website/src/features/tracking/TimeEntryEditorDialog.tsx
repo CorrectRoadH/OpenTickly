@@ -163,6 +163,20 @@ export function TimeEntryEditorDialog({
   }, [onClose]);
 
   useEffect(() => {
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-testid="time-entry-editor-dialog"]')) {
+        onClose();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [onClose]);
+
+  useEffect(() => {
     if (picker !== "project") {
       setProjectComposerOpen(false);
       setProjectDraftName("");
