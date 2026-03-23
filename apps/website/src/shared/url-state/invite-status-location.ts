@@ -29,9 +29,7 @@ export type InviteStatusJoinedSearch = {
   workspaceName?: unknown;
 };
 
-export function parseInviteStatusJoinedSearch(
-  search: InviteStatusJoinedSearch | undefined,
-): {
+export function parseInviteStatusJoinedSearch(search: InviteStatusJoinedSearch | undefined): {
   workspaceId?: number;
   workspaceName?: string;
 } {

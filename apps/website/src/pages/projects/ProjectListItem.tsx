@@ -137,8 +137,10 @@ function normalizeProjectMembers(data: unknown): Array<ModelsProjectUser> {
   return [];
 }
 
-function hasMembersArray(
-  value: unknown,
-): value is { members: Array<ModelsProjectUser> } {
-  return Boolean(value) && typeof value === "object" && Array.isArray((value as { members?: unknown }).members);
+function hasMembersArray(value: unknown): value is { members: Array<ModelsProjectUser> } {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as { members?: unknown }).members)
+  );
 }

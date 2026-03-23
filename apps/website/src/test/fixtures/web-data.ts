@@ -353,9 +353,7 @@ export function createClientSummaryFixture(
   };
 }
 
-export function createClientsFixture(
-  overrides?: Partial<ClientListFixture>,
-): ClientListFixture {
+export function createClientsFixture(overrides?: Partial<ClientListFixture>): ClientListFixture {
   return {
     clients: [
       createClientSummaryFixture(),
@@ -369,9 +367,7 @@ export function createClientsFixture(
   };
 }
 
-export function createTagSummaryFixture(
-  overrides?: Partial<TagSummaryFixture>,
-): TagSummaryFixture {
+export function createTagSummaryFixture(overrides?: Partial<TagSummaryFixture>): TagSummaryFixture {
   return {
     id: 701,
     name: "Urgent",

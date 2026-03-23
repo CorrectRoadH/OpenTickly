@@ -1705,7 +1705,7 @@ export type ModelsCurrency = {
   symbol?: string;
 };
 
-export type ModelsDataRetentionDays = 0  ;
+export type ModelsDataRetentionDays = 0;
 
 export type ModelsDecimalSeparator = "," | ".";
 
@@ -2256,12 +2256,7 @@ export type ModelsRate = {
   workspace_user_id?: number;
 };
 
-export type ModelsRateChangeMode =
-  | "override-all"
-  | "override-current"
-  | "start-today"
-  | ""
-   ;
+export type ModelsRateChangeMode = "override-all" | "override-current" | "start-today" | "";
 
 export type ModelsRateType = "billable_rates" | "labor_costs";
 

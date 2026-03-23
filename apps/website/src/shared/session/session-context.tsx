@@ -9,17 +9,33 @@ import type { WebSessionBootstrapDto } from "../api/web-contract.ts";
 export type SessionSnapshot = SessionBootstrapViewModel;
 
 export const defaultSessionSnapshot: SessionSnapshot = {
+  availableOrganizations: [
+    {
+      defaultWorkspaceId: 202,
+      id: 14,
+      isAdmin: true,
+      isCurrent: true,
+      isMultiWorkspaceEnabled: true,
+      maxWorkspaces: 12,
+      name: "North Ridge Org",
+      planName: "Starter",
+      userCount: 8,
+    },
+  ],
   availableWorkspaces: [
     {
       id: 202,
       isCurrent: true,
+      logoUrl: null,
       name: "North Ridge Delivery",
       organizationId: 14,
     },
   ],
   currentOrganization: {
+    defaultWorkspaceId: 202,
     id: 14,
     isAdmin: true,
+    isCurrent: true,
     isMultiWorkspaceEnabled: true,
     maxWorkspaces: 12,
     name: "North Ridge Org",

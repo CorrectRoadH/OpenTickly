@@ -76,7 +76,9 @@ export function WorkspaceOverviewPage(): ReactElement {
           </div>
           <div className="flex flex-col items-start gap-[6px] text-[8px] uppercase tracking-[0.04em] text-[#b8b8b8] lg:items-end">
             <div className="flex h-[12px] flex-wrap items-center gap-[6px]">
-              <span className="normal-case tracking-normal text-[#cfcfcf]">Set as default view</span>
+              <span className="normal-case tracking-normal text-[#cfcfcf]">
+                Set as default view
+              </span>
               <div className="flex h-[12px] w-[24px] items-center rounded-full bg-[#2f2f2f] px-[1px]">
                 <div className="size-[10px] rounded-full bg-[#d8d8d8]" />
               </div>
@@ -156,7 +158,10 @@ export function WorkspaceOverviewPage(): ReactElement {
 
                           <div className="absolute inset-0 grid grid-cols-7 gap-[6px] px-[2px]">
                             {weekSummary.days.map((day) => (
-                              <div className="relative flex h-full items-end justify-center" key={day.label}>
+                              <div
+                                className="relative flex h-full items-end justify-center"
+                                key={day.label}
+                              >
                                 <div className="relative h-full w-[26px] max-w-full">
                                   {day.totalSeconds > 0 ? (
                                     <div
@@ -223,7 +228,10 @@ export function WorkspaceOverviewPage(): ReactElement {
                       {teamActivity.activeMembers.length > 0 ? (
                         <div className="space-y-[4px]">
                           {teamActivity.activeMembers.slice(0, 2).map((member, index) => (
-                            <div className="flex items-center gap-[6px]" key={`${member.user_id ?? index}`}>
+                            <div
+                              className="flex items-center gap-[6px]"
+                              key={`${member.user_id ?? index}`}
+                            >
                               <span
                                 className="inline-flex size-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-[#1b1b1b]"
                                 style={{ backgroundColor: memberTint(index + 2) }}
@@ -279,8 +287,8 @@ export function WorkspaceOverviewPage(): ReactElement {
                     Members in your organization
                   </p>
                   <p className="max-w-[165px] text-[10px] leading-[14px] text-[#a4a4a4]">
-                    Your insights are incomplete if you&apos;re tracking alone. Invite your team
-                    to see the full picture
+                    Your insights are incomplete if you&apos;re tracking alone. Invite your team to
+                    see the full picture
                   </p>
                 </div>
                 <div className="mt-auto space-y-[7px]">
@@ -344,7 +352,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                     percent={projectCoverage.percent}
                     size={84}
                     innerSize={58}
-                    subtitle={projectCoverage.percent > 0 ? "Keep it this way" : projectCoverage.subtitle}
+                    subtitle={
+                      projectCoverage.percent > 0 ? "Keep it this way" : projectCoverage.subtitle
+                    }
                     title={`${projectCoverage.percent}%`}
                   />
                 </div>
@@ -573,7 +583,9 @@ function buildTopProjects(
     grouped.set(projectId, current);
   }
 
-  return [...grouped.values()].sort((left, right) => right.totalSeconds - left.totalSeconds).slice(0, 5);
+  return [...grouped.values()]
+    .sort((left, right) => right.totalSeconds - left.totalSeconds)
+    .slice(0, 5);
 }
 
 function buildTeamActivity(members: ModelsMostActiveUser[], memberCount: number) {
@@ -581,12 +593,18 @@ function buildTeamActivity(members: ModelsMostActiveUser[], memberCount: number)
   return {
     activeCount,
     activeMembers: members.slice(0, 5),
-    coveragePercent: Math.max(0, Math.min(100, Math.round((activeCount / Math.max(memberCount, 1)) * 100))),
+    coveragePercent: Math.max(
+      0,
+      Math.min(100, Math.round((activeCount / Math.max(memberCount, 1)) * 100)),
+    ),
   };
 }
 
 function buildProjectCoverage(activities: DashboardAllActivities[]) {
-  const totalSeconds = activities.reduce((sum, activity) => sum + resolveDashboardDuration(activity), 0);
+  const totalSeconds = activities.reduce(
+    (sum, activity) => sum + resolveDashboardDuration(activity),
+    0,
+  );
   const assignedSeconds = activities.reduce(
     (sum, activity) =>
       sum + ((activity.project_id ?? 0) > 0 ? resolveDashboardDuration(activity) : 0),
@@ -595,7 +613,10 @@ function buildProjectCoverage(activities: DashboardAllActivities[]) {
 
   return {
     percent: totalSeconds > 0 ? Math.round((assignedSeconds / totalSeconds) * 100) : 0,
-    subtitle: totalSeconds > 0 ? `${formatHours(assignedSeconds)} tracked this week` : "No tracked project time yet",
+    subtitle:
+      totalSeconds > 0
+        ? `${formatHours(assignedSeconds)} tracked this week`
+        : "No tracked project time yet",
   };
 }
 
@@ -616,7 +637,11 @@ function hasProjectArray(
   value: unknown,
   key: "data" | "projects",
 ): value is Record<typeof key, GithubComTogglTogglApiInternalModelsProject[]> {
-  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
 }
 
 function resolveDashboardDuration(activity: DashboardAllActivities): number {
@@ -648,6 +673,8 @@ function memberLabel(member: ModelsMostActiveUser): string {
 }
 
 function initialsForMember(member: ModelsMostActiveUser): string {
-  const label = memberLabel(member).replace(/[^A-Za-z0-9\u4e00-\u9fa5 ]/g, "").trim();
+  const label = memberLabel(member)
+    .replace(/[^A-Za-z0-9\u4e00-\u9fa5 ]/g, "")
+    .trim();
   return label ? label.slice(0, 1).toUpperCase() : "•";
 }

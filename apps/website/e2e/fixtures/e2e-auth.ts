@@ -1,5 +1,7 @@
 import { expect, type Page, type TestInfo } from "@playwright/test";
 
+import type { WebSessionBootstrapDto } from "../../src/shared/api/web-contract.ts";
+
 export type E2eWorkspaceSession = {
   currentWorkspaceId: number;
 };
@@ -22,8 +24,12 @@ export async function registerE2eUser(
 
   await page.waitForURL(/\/timer(?:\?.*)?$/);
   const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
+  const session = await readSessionBootstrap(page);
   await expect(page.getByTestId("app-shell")).toBeVisible();
-  await expect(page.getByLabel("Workspace")).toHaveValue(String(currentWorkspaceId));
+  await expect(page.getByLabel("Organization")).toBeVisible();
+  await expect(page.getByLabel("Organization")).toContainText(
+    resolveCurrentOrganizationName(session),
+  );
 }
 
 export async function loginE2eUser(
@@ -43,12 +49,28 @@ export async function loginE2eUser(
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
+  const session = await readSessionBootstrap(page);
 
-  await expect(page.getByLabel("Workspace")).toHaveValue(String(currentWorkspaceId));
+  await expect(page.getByLabel("Organization")).toBeVisible();
+  await expect(page.getByLabel("Organization")).toContainText(resolveCurrentOrganizationName(session));
 
   return {
     currentWorkspaceId,
   };
+}
+
+export async function readSessionBootstrap(page: Page): Promise<WebSessionBootstrapDto> {
+  return page.evaluate(async () => {
+    const response = await fetch("/web/v1/session", {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Session bootstrap request failed with ${response.status}`);
+    }
+
+    return response.json();
+  });
 }
 
 function resolveAppBaseUrl(testInfo: TestInfo): string {
@@ -66,5 +88,15 @@ function resolveAppUrl(appBaseUrl: string, pathname: string): string {
 }
 
 async function resolveCurrentWorkspaceId(page: Page): Promise<number> {
-  return Number(await page.getByLabel("Workspace").inputValue());
+  const session = await readSessionBootstrap(page);
+  return session.current_workspace_id ?? session.workspaces[0]?.id ?? 0;
+}
+
+function resolveCurrentOrganizationName(
+  session: WebSessionBootstrapDto,
+): string {
+  const currentOrganizationId =
+    session.current_organization_id ?? session.workspaces.find((workspace) => workspace.id === session.current_workspace_id)?.organization_id;
+
+  return session.organizations.find((organization) => organization.id === currentOrganizationId)?.name ?? "";
 }

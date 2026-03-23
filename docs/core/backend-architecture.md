@@ -179,7 +179,7 @@ apps/backend/internal/platform/
 
 - 应用启动路径继续使用 `DATABASE_URL` 作为 Go 后端的主 DSN 输入。
 - `pgschema` 命令使用标准 PostgreSQL CLI 环境：`PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE`。
-- 如果仓库根 `.env.local` 同时提供了应用启动 env 与 `pgschema` 所需 PG* env，它们必须指向同一个数据库实例，不允许形成两套数据库目标。
+- 如果仓库根 `.env.local` 同时提供了应用启动 env 与 `pgschema` 所需 PG\* env，它们必须指向同一个数据库实例，不允许形成两套数据库目标。
 
 工作流约定：
 

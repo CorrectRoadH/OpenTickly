@@ -79,9 +79,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
       return (
         <AppPanel className="border-rose-500/30 bg-[#23181b]">
           <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-white">
-              Permission configuration
-            </h1>
+            <h1 className="text-3xl font-semibold text-white">Permission configuration</h1>
             <p className="text-sm leading-6 text-slate-400">Workspace permission policy</p>
             <p className="text-sm leading-6 text-slate-400">Workspace access rules</p>
           </div>
@@ -129,16 +127,12 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         })}
       >
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">
-            Permission configuration
-          </h1>
+          <h1 className="text-3xl font-semibold text-white">Permission configuration</h1>
           <p className="text-sm leading-6 text-slate-500">Workspace permission policy</p>
-          <p className="text-sm leading-6 text-slate-500">
-            Workspace access rules
-          </p>
+          <p className="text-sm leading-6 text-slate-500">Workspace access rules</p>
           <p className="text-sm leading-6 text-slate-400">
-            Keep admin-only creation, dashboard visibility, and public project exposure aligned
-            with the current workspace access policy.
+            Keep admin-only creation, dashboard visibility, and public project exposure aligned with
+            the current workspace access policy.
           </p>
         </div>
 

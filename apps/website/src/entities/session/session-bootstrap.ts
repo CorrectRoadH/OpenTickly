@@ -20,7 +20,9 @@ export type SessionUserViewModel = {
 };
 
 export type SessionOrganizationViewModel = {
+  defaultWorkspaceId: number | null;
   id: number;
+  isCurrent: boolean;
   name: string;
   planName: string | null;
   isAdmin: boolean;
@@ -34,6 +36,7 @@ export type SessionWorkspaceSummaryViewModel = {
   name: string;
   organizationId: number | null;
   isCurrent: boolean;
+  logoUrl: string | null;
 };
 
 export type SessionWorkspaceViewModel = SessionWorkspaceSummaryViewModel & {
@@ -56,6 +59,7 @@ export type SessionWorkspaceViewModel = SessionWorkspaceSummaryViewModel & {
 };
 
 export type SessionBootstrapViewModel = {
+  availableOrganizations: SessionOrganizationViewModel[];
   user: SessionUserViewModel;
   currentOrganization: SessionOrganizationViewModel | null;
   currentWorkspace: SessionWorkspaceViewModel;
@@ -73,22 +77,38 @@ export function mapSessionBootstrap(
   options?: MapSessionBootstrapOptions,
 ): SessionBootstrapViewModel {
   const selectedWorkspace = selectWorkspace(dto.workspaces, dto.current_workspace_id, options);
+  const currentOrganizationId =
+    dto.current_organization_id ?? selectedWorkspace.organization_id ?? null;
 
   return {
+    availableOrganizations: dto.organizations
+      .map((organization) =>
+        mapOrganization(
+          dto.workspaces,
+          organization,
+          organization.id === currentOrganizationId,
+          dto.organization_subscription?.plan_name ?? null,
+        ),
+      )
+      .filter(
+        (organization): organization is SessionOrganizationViewModel => organization !== null,
+      ),
     user: mapUser(dto.user),
     currentOrganization: mapOrganization(
-      dto.organizations,
-      dto.current_organization_id ?? selectedWorkspace.organization_id ?? null,
+      dto.workspaces,
+      dto.organizations.find((entry) => entry.id === currentOrganizationId) ?? null,
+      true,
       dto.organization_subscription?.plan_name ?? null,
     ),
     currentWorkspace: mapWorkspace(selectedWorkspace, true),
     availableWorkspaces: dto.workspaces
       .map((workspace) => mapWorkspace(workspace, workspace.id === selectedWorkspace.id))
-      .map(({ id, name, organizationId, isCurrent }) => ({
+      .map(({ id, name, organizationId, isCurrent, logoUrl }) => ({
         id,
         name,
         organizationId,
         isCurrent,
+        logoUrl,
       })),
     workspaceCapabilities: dto.workspace_capabilities,
     workspaceQuota: dto.workspace_quota,
@@ -135,19 +155,22 @@ function mapUser(dto: WebCurrentUserProfileDto): SessionUserViewModel {
 }
 
 function mapOrganization(
-  organizations: WebOrganizationSettingsDto[],
-  organizationId: number | null,
+  workspaces: WebWorkspaceSettingsDto[],
+  organization: WebOrganizationSettingsDto | null,
+  isCurrent: boolean,
   planName: string | null,
 ): SessionOrganizationViewModel | null {
-  const organization =
-    organizations.find((entry) => entry.id === organizationId) ?? organizations[0];
-
   if (!organization?.id) {
     return null;
   }
 
+  const defaultWorkspaceId =
+    workspaces.find((workspace) => workspace.organization_id === organization.id)?.id ?? null;
+
   return {
+    defaultWorkspaceId,
     id: organization.id,
+    isCurrent,
     name: organization.name ?? "",
     planName: planName ?? organization.pricing_plan_name ?? null,
     isAdmin: organization.admin ?? false,

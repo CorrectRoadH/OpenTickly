@@ -79,14 +79,21 @@ export function GroupsPage(): ReactElement {
             onChange={(event) => setGroupName(event.target.value)}
           />
         </label>
-        <AppButton disabled={trimmedGroupName.length === 0 || createGroupMutation.isPending} type="submit">
+        <AppButton
+          disabled={trimmedGroupName.length === 0 || createGroupMutation.isPending}
+          type="submit"
+        >
           Save group
         </AppButton>
         {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
       </form>
 
       {groups.length > 0 ? (
-        <ul className="mt-6 divide-y divide-white/8" aria-label="Groups list" data-testid="groups-list">
+        <ul
+          className="mt-6 divide-y divide-white/8"
+          aria-label="Groups list"
+          data-testid="groups-list"
+        >
           <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
             Workspace {session.currentWorkspace.id}
           </li>
@@ -160,5 +167,9 @@ function hasGroupArray(
   value: unknown,
   key: "data" | "groups",
 ): value is Record<typeof key, GroupListItem[]> {
-  return Boolean(value) && typeof value === "object" && Array.isArray((value as Record<string, unknown>)[key]);
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
 }

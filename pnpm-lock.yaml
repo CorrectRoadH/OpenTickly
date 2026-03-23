@@ -52,25 +52,6 @@ importers:
         specifier: npm:@voidzero-dev/vite-plus-test@0.1.12
         version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@25.5.0)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(vite@8.0.0(@types/node@25.5.0)(jiti@2.6.1)(yaml@2.8.2))(yaml@2.8.2)'
 
-  apps/backend:
-    dependencies:
-      '@opentoggl/shared-contracts':
-        specifier: workspace:*
-        version: link:../../packages/shared-contracts
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.12.0
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vite-plus:
-        specifier: 'catalog:'
-        version: 0.1.12(@types/node@24.12.0)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(vite@8.0.0(@types/node@24.12.0)(jiti@2.6.1)(yaml@2.8.2))(yaml@2.8.2)
-      vitest:
-        specifier: npm:@voidzero-dev/vite-plus-test@0.1.12
-        version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@24.12.0)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(vite@8.0.0(@types/node@24.12.0)(jiti@2.6.1)(yaml@2.8.2))(yaml@2.8.2)'
-
   apps/website:
     dependencies:
       '@hey-api/client-fetch':

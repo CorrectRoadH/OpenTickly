@@ -110,7 +110,22 @@ curl -fsS http://localhost:8080/healthz
 Output:
 
 ```json
-{"service":"opentoggl-api","status":"ok","modules":["identity","tenant","membership","catalog","tracking","governance","reports","webhooks","billing","importing"]}
+{
+  "service": "opentoggl-api",
+  "status": "ok",
+  "modules": [
+    "identity",
+    "tenant",
+    "membership",
+    "catalog",
+    "tracking",
+    "governance",
+    "reports",
+    "webhooks",
+    "billing",
+    "importing"
+  ]
+}
 ```
 
 Command:
@@ -122,7 +137,25 @@ curl -fsS http://localhost:8080/readyz
 Output:
 
 ```json
-{"service":"opentoggl-api","status":"ok","checks":[{"name":"configuration","status":"ok","message":"required runtime configuration loaded"},{"name":"postgres","status":"ok","target":"127.0.0.1:5432","message":"tcp connectivity ok"},{"name":"redis","status":"ok","target":"127.0.0.1:6379","message":"tcp connectivity ok"}]}
+{
+  "service": "opentoggl-api",
+  "status": "ok",
+  "checks": [
+    { "name": "configuration", "status": "ok", "message": "required runtime configuration loaded" },
+    {
+      "name": "postgres",
+      "status": "ok",
+      "target": "127.0.0.1:5432",
+      "message": "tcp connectivity ok"
+    },
+    {
+      "name": "redis",
+      "status": "ok",
+      "target": "127.0.0.1:6379",
+      "message": "tcp connectivity ok"
+    }
+  ]
+}
 ```
 
 Command:

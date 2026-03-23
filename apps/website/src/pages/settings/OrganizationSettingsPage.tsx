@@ -100,10 +100,7 @@ export function OrganizationSettingsPage({
           </AppInlineNotice>
         ) : null}
         {error ? (
-          <AppInlineNotice
-            className="border-rose-500/30 bg-[#23181b] text-rose-200"
-            tone="error"
-          >
+          <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
             {error}
           </AppInlineNotice>
         ) : null}

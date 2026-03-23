@@ -33,3 +33,4 @@ example
 
 # ralphex progress logs
 .ralphex/progress/
+.gstack/

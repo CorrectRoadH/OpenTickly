@@ -12,11 +12,7 @@ services:
     volumes:
       - opentoggl-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB",
-        ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -33,7 +29,10 @@ services:
     restart: unless-stopped
 
   opentoggl:
-    image: ghcr.io/opentoggl/backend:main
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: opentoggl:local
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
       PORT: ${OPENTOGGL_PORT:-8080}

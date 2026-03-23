@@ -10,7 +10,7 @@ This document defines the self-hosted packaging/rehearsal/release-smoke path onl
 
 Each release must provide these synchronized artifacts:
 
-- `docker/opentoggl.Dockerfile` (single runtime image build)
+- `Dockerfile` (single runtime image build)
 - `docker-compose.yml` (self-hosted runtime baseline)
 - this runbook (`docs/self-hosting/docker-compose.md`)
 

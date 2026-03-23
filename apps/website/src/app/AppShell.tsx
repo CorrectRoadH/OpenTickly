@@ -9,12 +9,14 @@ import {
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
 import {
-  buildOrganizationSettingsPath,
   formatClockDuration,
   resolveEntryDurationSeconds,
 } from "../features/tracking/overview-data.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
-import { swapWorkspaceInPath } from "../shared/lib/workspace-routing.ts";
+import {
+  buildOrganizationSettingsPath,
+  swapWorkspaceInPath,
+} from "../shared/lib/workspace-routing.ts";
 import { useCurrentTimeEntryQuery } from "../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../shared/session/session-context.tsx";
 
@@ -97,14 +99,12 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
               <WorkspaceSwitcher
                 currentOrganization={session.currentOrganization}
-                currentWorkspaceId={session.currentWorkspace.id}
                 inviteMembersPath={`/workspaces/${session.currentWorkspace.id}/members`}
                 managePath={
                   session.currentOrganization
                     ? buildOrganizationSettingsPath(session.currentOrganization.id)
                     : undefined
                 }
-                organizationId={session.currentWorkspace.organizationId}
                 onChange={(workspaceId) => {
                   if (isAccountScopedShellPath(location.pathname)) {
                     setCurrentWorkspaceId(workspaceId);

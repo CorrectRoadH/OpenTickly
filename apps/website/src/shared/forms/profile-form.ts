@@ -48,9 +48,7 @@ export function createProfileFormValues(profile: RelatedUserWithRelated): Profil
   };
 }
 
-export function mapProfileFormToRequest(
-  values: ProfileFormValues,
-): MePayload {
+export function mapProfileFormToRequest(values: ProfileFormValues): MePayload {
   const parsed = profileFormSchema.parse(values);
   const request: MePayload = {
     email: parsed.email,
@@ -97,9 +95,7 @@ export function createPreferencesFormValues(
   };
 }
 
-export function mapPreferencesFormToRequest(
-  values: PreferencesFormValues,
-): ModelsAllPreferences {
+export function mapPreferencesFormToRequest(values: PreferencesFormValues): ModelsAllPreferences {
   const parsed = preferencesFormSchema.parse(values);
   const request: ModelsAllPreferences = {
     date_format: parsed.dateFormat,
