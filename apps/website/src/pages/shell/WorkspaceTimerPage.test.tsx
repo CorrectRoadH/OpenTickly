@@ -5,7 +5,9 @@ import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared
 import { WorkspaceTimerPage } from "./WorkspaceTimerPage.tsx";
 
 const mockUseSession = vi.fn();
+const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
+const mockUseCreateProjectMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
 const mockUseStartTimeEntryMutation = vi.fn();
 const mockUseStopTimeEntryMutation = vi.fn();
@@ -15,10 +17,12 @@ const mockUseUpdateTimeEntryMutation = vi.fn();
 
 vi.mock("../../shared/session/session-context.tsx", () => ({
   useSession: () => mockUseSession(),
+  useSessionActions: () => mockUseSessionActions(),
 }));
 
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
+  useCreateProjectMutation: () => mockUseCreateProjectMutation(),
   useProjectsQuery: () => mockUseProjectsQuery(),
   useStartTimeEntryMutation: () => mockUseStartTimeEntryMutation(),
   useStopTimeEntryMutation: () => mockUseStopTimeEntryMutation(),
@@ -32,14 +36,31 @@ describe("WorkspaceTimerPage", () => {
     vi.clearAllMocks();
 
     mockUseSession.mockReturnValue({
+      availableWorkspaces: [
+        {
+          id: 202,
+          isCurrent: true,
+          name: "North Ridge Delivery",
+        },
+      ],
       currentWorkspace: {
         id: 202,
+        isAdmin: true,
+        name: "North Ridge Delivery",
+        onlyAdminsMayCreateProjects: false,
       },
       user: {
         timezone: "UTC",
       },
     });
+    mockUseSessionActions.mockReturnValue({
+      setCurrentWorkspaceId: vi.fn(),
+    });
 
+    mockUseCreateProjectMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
     mockUseStartTimeEntryMutation.mockReturnValue({
       error: null,
       isPending: false,

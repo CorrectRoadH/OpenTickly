@@ -35,6 +35,7 @@ import type {
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useCurrentTimeEntryQuery,
+  useCreateProjectMutation,
   useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
@@ -42,11 +43,12 @@ import {
   useTagsQuery,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
-import { useSession } from "../../shared/session/session-context.tsx";
+import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 
 export function WorkspaceTimerPage(): ReactElement {
   const session = useSession();
+  const { setCurrentWorkspaceId } = useSessionActions();
   const workspaceId = session.currentWorkspace.id;
   const timezone = session.user.timezone || "UTC";
   const [view, setView] = useState<TimerViewMode>("calendar");
@@ -64,6 +66,7 @@ export function WorkspaceTimerPage(): ReactElement {
   });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const projectsQuery = useProjectsQuery(workspaceId, "all");
+  const createProjectMutation = useCreateProjectMutation(workspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
   const tagsQuery = useTagsQuery(workspaceId);
@@ -123,6 +126,12 @@ export function WorkspaceTimerPage(): ReactElement {
     startTimeEntryMutation.error,
     stopTimeEntryMutation.error,
   );
+
+  function closeSelectedEntryEditor() {
+    setSelectedEntry(null);
+    setSelectedEntryAnchor(null);
+    setSelectedEntryError(null);
+  }
 
   useEffect(() => {
     if (!runningEntry) {
@@ -209,6 +218,55 @@ export function WorkspaceTimerPage(): ReactElement {
       setSelectedEntryError(null);
     } catch (error) {
       setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }
+
+  async function handleSelectedEntryPrimaryAction() {
+    if (!selectedEntry?.id) {
+      return;
+    }
+
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+
+    try {
+      if (isRunningTimeEntry(selectedEntry)) {
+        const stoppedEntry = await stopTimeEntryMutation.mutateAsync({
+          timeEntryId: selectedEntry.id,
+          workspaceId: selectedWorkspaceId,
+        });
+        setSelectedEntry(stoppedEntry);
+        setSelectedEntryError(null);
+        return;
+      }
+
+      if (selectedWorkspaceId !== workspaceId) {
+        setCurrentWorkspaceId(selectedWorkspaceId);
+        closeSelectedEntryEditor();
+        return;
+      }
+
+      await startTimeEntryMutation.mutateAsync({
+        description: selectedDescription.trim() || (selectedEntry.description ?? ""),
+        start: new Date().toISOString(),
+      });
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }
+
+  async function handleSelectedEntryProjectCreate(name: string) {
+    try {
+      const project = await createProjectMutation.mutateAsync(name);
+      setSelectedProjectId(project.id ?? null);
+      setSelectedEntryError(null);
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+      throw error;
     }
   }
 
@@ -372,15 +430,18 @@ export function WorkspaceTimerPage(): ReactElement {
       {selectedEntry && selectedEntryAnchor ? (
         <TimeEntryEditorDialog
           anchor={selectedEntryAnchor}
+          currentWorkspaceId={workspaceId}
           description={selectedDescription}
           entry={selectedEntry}
+          isCreatingProject={createProjectMutation.isPending}
+          isPrimaryActionPending={timerMutationPending}
           isSaving={updateTimeEntryMutation.isPending}
-          onClose={() => {
-            setSelectedEntry(null);
-            setSelectedEntryAnchor(null);
-            setSelectedEntryError(null);
-          }}
+          onClose={closeSelectedEntryEditor}
+          onCreateProject={handleSelectedEntryProjectCreate}
           onDescriptionChange={setSelectedDescription}
+          onPrimaryAction={() => {
+            void handleSelectedEntryPrimaryAction();
+          }}
           onProjectSelect={setSelectedProjectId}
           onSave={() => {
             void handleSelectedEntrySave();
@@ -390,6 +451,12 @@ export function WorkspaceTimerPage(): ReactElement {
               current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
             );
           }}
+          onWorkspaceSelect={(nextWorkspaceId) => {
+            setCurrentWorkspaceId(nextWorkspaceId);
+            closeSelectedEntryEditor();
+          }}
+          primaryActionIcon={isRunningTimeEntry(selectedEntry) ? "stop" : "play"}
+          primaryActionLabel={isRunningTimeEntry(selectedEntry) ? "Stop timer" : "Continue entry"}
           projects={projectOptions
             .filter((project) => project.id != null)
             .map((project) => ({
@@ -403,7 +470,11 @@ export function WorkspaceTimerPage(): ReactElement {
           selectedTagIds={selectedTagIds}
           tags={tagOptions}
           timezone={timezone}
-          workspaceName={session.currentWorkspace.name}
+          workspaces={session.availableWorkspaces.map((workspace) => ({
+            id: workspace.id,
+            isCurrent: workspace.isCurrent,
+            name: workspace.name,
+          }))}
         />
       ) : null}
     </div>
@@ -526,4 +597,8 @@ function resolveIsoWeekNumber(): number {
   const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
 
   return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
+  return entry.stop == null || (entry.duration ?? 0) < 0;
 }
