@@ -5,14 +5,17 @@ commands:
   frontend_e2e: vp run test:e2e:website
   frontend_e2e_single: vp run test:e2e:website -- --workers 1
   backend_test: go test ./apps/backend/internal/... -count=1 -parallel 4
-  backend_unit: go test ./apps/backend/internal/... -count=1 -parallel 4 -run "^Test[^B]"
+  # backend_unit uses explicit package scope boundaries (domain, infra, platform, web, http, testsupport)
+  # to avoid brittle regex-based test-name filtering that can silently skip unrelated tests
+  backend_unit: go test ./apps/backend/internal/billing/... ./apps/backend/internal/catalog/... ./apps/backend/internal/governance/... ./apps/backend/internal/identity/... ./apps/backend/internal/importing/... ./apps/backend/internal/membership/... ./apps/backend/internal/platform/... ./apps/backend/internal/tenant/... ./apps/backend/internal/tracking/... ./apps/backend/internal/web/... ./apps/backend/internal/http/... ./apps/backend/internal/testsupport/... -count=1 -parallel 4
   backend_application: go test ./apps/backend/internal/.../application/... -count=1 -parallel 4
   backend_bootstrap_test: go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4
   # Schema management
   pgschema_plan: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema plan --file apps/backend/internal/platform/schema/schema.sql
   pgschema_apply: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
-  # CI: external Postgres schema preparation - uses DATABASE_URL directly (for CI environments)
-  ci_pgschema_prepare: DATABASE_URL="${DATABASE_URL}" pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
+  # CI: external Postgres schema preparation - forces the dedicated opentoggl_test schema/search_path
+  # uses PGOPTIONS to set search_path, consistent with local pgschema_apply
+  ci_pgschema_prepare: DATABASE_URL="${DATABASE_URL}" PGOPTIONS='-c search_path=opentoggl_test' pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
   cleanup_test_schemas: PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d opentoggl -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN SELECT schema_name FROM information_schema.schemata WHERE schema_name ~ '^opentoggl_test_[0-9]+\$' LOOP EXECUTE 'DROP SCHEMA ' || quote_ident(r.schema_name) || ' CASCADE'; END LOOP; END \$\$;"
 
 services:
