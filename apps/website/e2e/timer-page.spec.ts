@@ -4,8 +4,231 @@ import {
   createProjectForWorkspace,
   createTimeEntryForWorkspace,
   loginE2eUser,
+  readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
+
+test.describe("VAL-REG-002: Workspace scoping regression", () => {
+  /**
+   * VAL-REG-002: Timer page is always scoped to the current workspace
+   *
+   * The timer page family only renders entries whose `workspace_id` matches the current workspace.
+   * After a successful workspace or organization switch, entries from the previous context
+   * disappear across `calendar`, `list`, and `timesheet` without stale cross-workspace leakage.
+   *
+   * This test verifies:
+   * - Entries created in workspace A are visible in all timer views while on workspace A
+   * - After switching to workspace B, entries from workspace A disappear from all timer views
+   * - Entries created in workspace B become visible in all timer views after the switch
+   * - The scoping rule holds consistently across calendar, list, and timesheet
+   */
+  test("VAL-REG-002: workspace switch removes prior-workspace entries and reveals new-workspace entries across all timer views", async ({
+    page,
+  }) => {
+    const email = `workspace-scoping-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const workspaceAEntryDescription = "Entry in workspace A";
+    const workspaceBEntryDescription = "Entry in workspace B";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Workspace Scoping User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Create a project in workspace A so entries appear in all views (including timesheet)
+    const projectAId = await createProjectForWorkspace(page, {
+      name: "Workspace A Project",
+      workspaceId: workspaceAId,
+    });
+
+    // Create time entries for today in workspace A
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    const entryAStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 9, 0, 0));
+    const entryAStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 10, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceAEntryDescription,
+      projectId: projectAId,
+      start: entryAStart.toISOString(),
+      stop: entryAStop.toISOString(),
+      workspaceId: workspaceAId,
+    });
+
+    // Navigate to timer page and verify workspace A entries are visible
+    await page.goto(new URL("/timer", page.url()).toString());
+
+    // Verify entries are visible in calendar view
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // Calendar shows entries as event cards in the grid
+    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollArea).toBeVisible();
+    await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+
+    // Verify entries are visible in list view
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const listViewContainer = page.getByTestId("timer-list-view");
+    await expect(listViewContainer).toBeVisible();
+    await expect(listViewContainer.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+
+    // Verify entries are visible in timesheet view
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const timesheetViewContainer = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainer).toBeVisible();
+    // Timesheet aggregates by project, so verify project row is visible
+    await expect(timesheetViewContainer.locator("text=Workspace A Project")).toBeVisible();
+    // Verify timesheet is not empty
+    await expect(page.getByText("No week data available")).not.toBeVisible();
+
+    // Create a second organization (which creates workspace B) and switch to it
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    // Wait for organization switch to complete by polling session
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    const switchedSession = await readSessionBootstrap(page);
+    const workspaceBId = switchedSession.current_workspace_id;
+
+    // Create a project in workspace B
+    const projectBId = await createProjectForWorkspace(page, {
+      name: "Workspace B Project",
+      workspaceId: workspaceBId,
+    });
+
+    // Create time entry in workspace B
+    const entryBStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 14, 0, 0));
+    const entryBStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 15, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceBEntryDescription,
+      projectId: projectBId,
+      start: entryBStart.toISOString(),
+      stop: entryBStop.toISOString(),
+      workspaceId: workspaceBId,
+    });
+
+    // Now verify that workspace A entries are NOT visible and workspace B entries ARE visible
+    // in all three timer views
+
+    // Verify in calendar view - workspace A entry should be absent, workspace B entry should be present
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // Workspace A entry should NOT be visible
+    await expect(page.locator(`text=${workspaceAEntryDescription}`)).not.toBeVisible();
+    // Workspace B entry should be visible
+    await expect(page.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
+
+    // Verify in list view - workspace A entry should be absent, workspace B entry should be present
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const listViewContainerB = page.getByTestId("timer-list-view");
+    await expect(listViewContainerB).toBeVisible();
+    // Workspace A entry should NOT be visible in list view
+    await expect(
+      listViewContainerB.locator(`text=${workspaceAEntryDescription}`),
+    ).not.toBeVisible();
+    // Workspace B entry should be visible in list view
+    await expect(listViewContainerB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
+
+    // Verify in timesheet view - workspace A project should be absent, workspace B project should be present
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const timesheetViewContainerB = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainerB).toBeVisible();
+    // Workspace A project should NOT be visible in timesheet
+    await expect(timesheetViewContainerB.locator("text=Workspace A Project")).not.toBeVisible();
+    // Workspace B project should be visible in timesheet
+    await expect(timesheetViewContainerB.locator("text=Workspace B Project")).toBeVisible();
+    // Verify timesheet is not showing empty state
+    await expect(page.getByText("No week data available")).not.toBeVisible();
+
+    // Switch back to workspace A and verify workspace A entries return and workspace B entries disappear
+    await organizationButton.click();
+    await expect(workspaceListbox).toBeVisible();
+    // Find and click the original organization (which contains workspace A)
+    const originalOrganizationName = switchedSession.organizations.find(
+      (org) => org.id !== switchedSession.current_organization_id,
+    )?.name;
+
+    if (originalOrganizationName) {
+      await page.getByRole("button", { name: new RegExp(originalOrganizationName) }).click();
+
+      // Wait for switch back to workspace A
+      await expect
+        .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+        .toBe(workspaceAId);
+
+      // Navigate to timer page and verify workspace A entries are back
+      await page.goto(new URL("/timer", page.url()).toString());
+      await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+      // Workspace A entry should be visible again
+      await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+      // Workspace B entry should not be visible
+      await expect(page.locator(`text=${workspaceBEntryDescription}`)).not.toBeVisible();
+
+      // Verify in list view
+      await page.getByRole("button", { name: "List view" }).click();
+      const listViewContainerBack = page.getByTestId("timer-list-view");
+      await expect(
+        listViewContainerBack.locator(`text=${workspaceAEntryDescription}`),
+      ).toBeVisible();
+      await expect(
+        listViewContainerBack.locator(`text=${workspaceBEntryDescription}`),
+      ).not.toBeVisible();
+
+      // Verify in timesheet view
+      await page.getByRole("button", { name: "Timesheet" }).click();
+      const timesheetViewContainerBack = page.getByTestId("timer-timesheet-view");
+      await expect(timesheetViewContainerBack.locator("text=Workspace A Project")).toBeVisible();
+      await expect(
+        timesheetViewContainerBack.locator("text=Workspace B Project"),
+      ).not.toBeVisible();
+    }
+  });
+});
 
 test.describe("Timer page family mainline", () => {
   /**
