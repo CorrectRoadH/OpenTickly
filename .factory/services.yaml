@@ -1,0 +1,40 @@
+commands:
+  install: vp config
+  check: vp run check -r
+  frontend_e2e: vp run test:e2e:website
+  backend_test: go test ./apps/backend/internal/... -count=1 -parallel 4
+  backend_bootstrap_test: go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4
+  pgschema_plan: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema plan --file apps/backend/internal/platform/schema/schema.sql
+  pgschema_apply: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
+
+services:
+  postgres:
+    start: docker compose up -d postgres
+    stop: docker compose stop postgres
+    healthcheck: pg_isready -h localhost -p 5432 -U opentoggl -d opentoggl
+    port: 5432
+    depends_on: []
+
+  redis:
+    start: docker compose up -d redis
+    stop: docker compose stop redis
+    healthcheck: redis-cli -u redis://127.0.0.1:6379/0 ping
+    port: 6379
+    depends_on: []
+
+  api:
+    start: PORT=8080 air
+    stop: printf 'Reused local api runtime on 8080; stop only if this session started it\n'
+    healthcheck: curl -sf http://127.0.0.1:8080/readyz
+    port: 8080
+    depends_on:
+      - postgres
+      - redis
+
+  web:
+    start: vp run website#dev -- --port 5173
+    stop: printf 'Reused local website runtime on 5173; stop only if this session started it\n'
+    healthcheck: curl -sf http://127.0.0.1:5173
+    port: 5173
+    depends_on:
+      - api
