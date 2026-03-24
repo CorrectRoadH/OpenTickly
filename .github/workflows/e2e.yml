@@ -68,7 +68,7 @@ jobs:
         env:
           OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
         run: |
-          vp run website#dev -- --port 5173 &
+          pnpm exec vp run website#dev -- --port 5173 &
           sleep 5
 
       - name: Run E2E tests
