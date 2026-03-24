@@ -149,10 +149,15 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       "aria-pressed",
       "true",
     );
-    // Workspace A entry should NOT be visible
-    await expect(page.locator(`text=${workspaceAEntryDescription}`)).not.toBeVisible();
-    // Workspace B entry should be visible
-    await expect(page.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
+    // Scope assertions to calendar grid to ensure view-local proof
+    const calendarScrollAreaB = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollAreaB).toBeVisible();
+    // Workspace A entry should NOT be visible in calendar
+    await expect(
+      calendarScrollAreaB.locator(`text=${workspaceAEntryDescription}`),
+    ).not.toBeVisible();
+    // Workspace B entry should be visible in calendar
+    await expect(calendarScrollAreaB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
 
     // Verify in list view - workspace A entry should be absent, workspace B entry should be present
     await page.getByRole("button", { name: "List view" }).click();
@@ -204,10 +209,17 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       await page.goto(new URL("/timer", page.url()).toString());
       await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-      // Workspace A entry should be visible again
-      await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
-      // Workspace B entry should not be visible
-      await expect(page.locator(`text=${workspaceBEntryDescription}`)).not.toBeVisible();
+      // Verify in calendar view with scoped locator
+      const calendarScrollAreaBack = page.getByTestId("calendar-grid-scroll-area");
+      await expect(calendarScrollAreaBack).toBeVisible();
+      // Workspace A entry should be visible again in calendar
+      await expect(
+        calendarScrollAreaBack.locator(`text=${workspaceAEntryDescription}`),
+      ).toBeVisible();
+      // Workspace B entry should not be visible in calendar
+      await expect(
+        calendarScrollAreaBack.locator(`text=${workspaceBEntryDescription}`),
+      ).not.toBeVisible();
 
       // Verify in list view
       await page.getByRole("button", { name: "List view" }).click();
