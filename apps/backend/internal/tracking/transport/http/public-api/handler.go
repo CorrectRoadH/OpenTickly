@@ -29,21 +29,21 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	if before := strings.TrimSpace(ctx.QueryParam("before")); before != "" {
 		value, parseErr := parseTrackDateTime(before, true)
 		if parseErr != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 		}
 		filter.Before = &value
 	}
 	if startDate := strings.TrimSpace(ctx.QueryParam("start_date")); startDate != "" {
 		value, parseErr := parseTrackDateTime(startDate, false)
 		if parseErr != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 		}
 		filter.StartDate = &value
 	}
 	if endDate := strings.TrimSpace(ctx.QueryParam("end_date")); endDate != "" {
 		value, parseErr := parseTrackDateTime(endDate, true)
 		if parseErr != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 		}
 		filter.EndDate = &value
 	}
@@ -131,16 +131,16 @@ func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimeentryPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	start, err := parseRequiredTrackRFC3339(payload.Start)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	stop, err := parseOptionalTrackRFC3339(payload.Stop)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	entry, err := handler.tracking.CreateTimeEntry(ctx.Request().Context(), trackingapplication.CreateTimeEntryCommand{
@@ -173,16 +173,16 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimeentryPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	start, err := parseOptionalTrackRFC3339(payload.Start)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	stop, err := parseOptionalTrackRFC3339(payload.Stop)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	entry, err := handler.tracking.UpdateTimeEntry(ctx.Request().Context(), trackingapplication.UpdateTimeEntryCommand{

@@ -74,20 +74,24 @@ export function WorkspaceTimerPage(): ReactElement {
     ...weekRange,
   });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
-  const projectsQuery = useProjectsQuery(workspaceId, "all");
-  const createProjectMutation = useCreateProjectMutation(workspaceId);
+  const [selectedEntry, setSelectedEntry] =
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
+  const selectedEntryWorkspaceId =
+    typeof (selectedEntry?.workspace_id ?? selectedEntry?.wid) === "number"
+      ? (selectedEntry?.workspace_id ?? selectedEntry?.wid)
+      : workspaceId;
+  const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
+  const createProjectMutation = useCreateProjectMutation(selectedEntryWorkspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
-  const tagsQuery = useTagsQuery(workspaceId);
-  const createTagMutation = useCreateTagMutation(workspaceId);
+  const tagsQuery = useTagsQuery(selectedEntryWorkspaceId);
+  const createTagMutation = useCreateTagMutation(selectedEntryWorkspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const [draftDescription, setDraftDescription] = useState("");
   const [draftProjectId, setDraftProjectId] = useState<number | null>(null);
   const [draftTagIds, setDraftTagIds] = useState<number[]>([]);
   const [runningDescription, setRunningDescription] = useState("");
-  const [selectedEntry, setSelectedEntry] =
-    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
   const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
     null,
   );
@@ -100,6 +104,10 @@ export function WorkspaceTimerPage(): ReactElement {
   const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
+  const visibleEntries = useMemo(
+    () => entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId),
+    [entries, workspaceId],
+  );
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
   const runningEntry = currentTimeEntryQuery.data;
   const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
@@ -126,21 +134,21 @@ export function WorkspaceTimerPage(): ReactElement {
   const displayProject =
     runningEntry?.project_name ||
     draftProject?.name ||
-    entries.find((entry) => entry.project_name)?.project_name ||
+    visibleEntries.find((entry) => entry.project_name)?.project_name ||
     "No project";
   const displayColor =
     runningEntry != null
       ? resolveEntryColor(runningEntry)
       : draftProject != null
         ? resolveProjectColor(draftProject)
-        : resolveEntryColor(entries[0] ?? {});
-  const groupedEntries = buildEntryGroups(entries, timezone);
-  const trackStrip = summarizeProjects(entries).slice(0, 12);
+        : resolveEntryColor(visibleEntries[0] ?? {});
+  const groupedEntries = buildEntryGroups(visibleEntries, timezone);
+  const trackStrip = summarizeProjects(visibleEntries).slice(0, 12);
   const weekTotalSeconds = weekDays.reduce(
     (total, day) =>
       total +
       sumForDate(
-        entries,
+        visibleEntries,
         new Intl.DateTimeFormat("en-CA", {
           day: "2-digit",
           month: "2-digit",
@@ -151,8 +159,8 @@ export function WorkspaceTimerPage(): ReactElement {
       ),
     0,
   );
-  const calendarHours = getCalendarHours(entries, weekDays, timezone);
-  const timesheetRows = buildTimesheetRows(entries, weekDays, timezone).slice(0, 18);
+  const calendarHours = getCalendarHours(visibleEntries, weekDays, timezone);
+  const timesheetRows = buildTimesheetRows(visibleEntries, weekDays, timezone).slice(0, 18);
   const timerMutationPending = startTimeEntryMutation.isPending || stopTimeEntryMutation.isPending;
   const timerErrorMessage = resolveTimerErrorMessage(
     timeEntriesQuery.error,
@@ -613,7 +621,7 @@ export function WorkspaceTimerPage(): ReactElement {
         {selectedEntry && selectedEntryAnchor ? (
           <TimeEntryEditorDialog
             anchor={selectedEntryAnchor}
-            currentWorkspaceId={workspaceId}
+            currentWorkspaceId={selectedEntryWorkspaceId}
             description={selectedDescription}
             entry={selectedEntry}
             isCreatingProject={createProjectMutation.isPending}

@@ -258,6 +258,61 @@ func TestServerLogsHandlerErrorsWithInternalCause(t *testing.T) {
 	}
 }
 
+func TestServerLogsClientErrorsWithInternalCauseAndReturnsRealMessage(t *testing.T) {
+	var logs strings.Builder
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	server := NewServerWithOptions(
+		web.NewHealthSnapshot("opentoggl", []string{"identity"}),
+		func(server *echo.Echo) {
+			server.GET("/bad", func(c echo.Context) error {
+				return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").
+					SetInternal(errors.New("tracking time entry values are inconsistent"))
+			})
+		},
+		ServerOptions{
+			Logger: logger,
+		},
+	)
+
+	request := httptest.NewRequest(http.MethodGet, "/bad", nil)
+	recorder := httptest.NewRecorder()
+
+	server.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected /bad to return 400, got %d", recorder.Code)
+	}
+
+	var response map[string]any
+	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
+		t.Fatalf("expected /bad response to be valid json: %v", err)
+	}
+
+	if response["message"] != "tracking time entry values are inconsistent" {
+		t.Fatalf("expected real error message in response, got %#v", response["message"])
+	}
+
+	lines := strings.Split(strings.TrimSpace(logs.String()), "\n")
+	if len(lines) < 2 {
+		t.Fatalf("expected handler error log plus request log, got %q", logs.String())
+	}
+
+	var errorRecord map[string]any
+	if err := json.Unmarshal([]byte(lines[0]), &errorRecord); err != nil {
+		t.Fatalf("expected error log to emit json, got %q: %v", lines[0], err)
+	}
+
+	if errorRecord["msg"] != "http handler error" {
+		t.Fatalf("expected first log message to be handler error, got %#v", errorRecord["msg"])
+	}
+	if errorRecord["error"] != "tracking time entry values are inconsistent" {
+		t.Fatalf("expected client error cause to be logged, got %#v", errorRecord["error"])
+	}
+	if status, ok := errorRecord["status"].(float64); !ok || int(status) != http.StatusBadRequest {
+		t.Fatalf("expected client error status %d, got %#v", http.StatusBadRequest, errorRecord["status"])
+	}
+}
+
 func TestServerReturns503WhenReadinessProbeFails(t *testing.T) {
 	postgresListener := mustListenTCP(t)
 	closedAddress := postgresListener.Addr().String()

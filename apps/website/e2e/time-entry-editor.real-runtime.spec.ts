@@ -111,7 +111,7 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(dialog).not.toBeVisible();
   });
 
-  test("when the user edits the start time from the editor popover, the updated time stays visible before save", async ({
+  test("when the user edits the start time from the editor popover, the updated time is saved", async ({
     page,
   }) => {
     await page
@@ -138,6 +138,22 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
     await datePicker.getByRole("button", { name: "March 23, 2026" }).click();
     await expect(datePicker).not.toBeVisible();
+
+    await dialog.getByRole("button", { name: "Save" }).click();
+
+    await expect(dialog).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first(),
+    ).toBeVisible();
+
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
+    await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
+    await expect(
+      page.getByTestId("time-entry-editor-dialog").getByRole("button", { name: "Edit start time" }),
+    ).toContainText("09:28");
   });
 });
 

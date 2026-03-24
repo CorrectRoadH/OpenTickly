@@ -296,7 +296,7 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 
 	start := current.Start
 	stop := current.Stop
-	duration := current.Duration
+	var duration *int
 	if command.Start != nil {
 		start = command.Start.UTC()
 	}
@@ -304,16 +304,18 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		stop = xptr.CloneUTC(command.Stop)
 	}
 	if command.Duration != nil {
-		duration = *command.Duration
+		duration = command.Duration
+	} else if command.Start == nil && command.Stop == nil {
+		duration = lo.ToPtr(current.Duration)
 	}
 
-	start, stop, duration, err = normalizeTimeEntryRange(start, stop, &duration)
+	start, stop, computedDuration, err := normalizeTimeEntryRange(start, stop, duration)
 	if err != nil {
 		return TimeEntryView{}, err
 	}
 	current.Start = start
 	current.Stop = stop
-	current.Duration = duration
+	current.Duration = computedDuration
 	current.UpdatedAt = service.now()
 
 	updated, err := service.store.UpdateTimeEntry(ctx, UpdateTimeEntryRecord{TimeEntryView: current})

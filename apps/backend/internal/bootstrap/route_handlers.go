@@ -173,6 +173,51 @@ func (handlers *routeHandlers) session(ctx echo.Context) error {
 	return writeIdentityResponse(ctx, response)
 }
 
+func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
+	if response, ok := handlers.authorizeSession(ctx); !ok {
+		return response
+	}
+
+	var request webapi.SessionHomeUpdate
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	}
+
+	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return identityHTTPError(handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx)))
+	}
+
+	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	nextWorkspace, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
+		return int(workspace.ID) == request.WorkspaceId
+	})
+	if !found {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
+			SetInternal(errors.New("requested workspace is not accessible from the current session"))
+	}
+
+	home := &sessionHome{
+		organizationID: int64(nextWorkspace.OrganizationID),
+		workspaceID:    int64(nextWorkspace.ID),
+	}
+	if err := handlers.userHomes.Save(
+		ctx.Request().Context(),
+		user.ID,
+		home.organizationID,
+		home.workspaceID,
+	); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	ctx.Set(currentSessionHomeContextKey, home)
+
+	return handlers.session(ctx)
+}
+
 func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
@@ -551,7 +596,8 @@ func (handlers *routeHandlers) workspaceMemberMutationContext(
 	}
 	user, resolveErr := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if resolveErr != nil {
-		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden").
+			SetInternal(resolveErr)
 	}
 	return workspaceID, memberID, user, nil
 }
@@ -632,7 +678,8 @@ func (handlers *routeHandlers) requireCurrentSessionWorkspace(ctx echo.Context, 
 		return err
 	}
 	if home.workspaceID != workspaceID {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
+			SetInternal(errors.New("requested workspace does not match the current session workspace"))
 	}
 	return nil
 }
@@ -648,18 +695,19 @@ func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome
 		case errors.Is(err, identityapplication.ErrSessionNotFound),
 			errors.Is(err, identitydomain.ErrUserDeactivated),
 			errors.Is(err, identitydomain.ErrUserDeleted):
-			return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+			return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 		default:
-			return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 	}
 
 	organizationID, workspaceID, found, lookupErr := handlers.userHomes.FindByUserID(ctx.Request().Context(), user.ID)
 	switch {
 	case lookupErr != nil:
-		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(lookupErr)
 	case !found:
-		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").
+			SetInternal(errors.New("session home was not found for the current user"))
 	default:
 		home := &sessionHome{
 			organizationID: organizationID,
@@ -734,16 +782,28 @@ func (provider *billingBackedSessionShell) SessionShell(
 	if err != nil {
 		return identityweb.SessionShellData{}, err
 	}
+	organizations, err := provider.tenant.ListOrganizationsByUserID(ctx, user.ID)
+	if err != nil {
+		return identityweb.SessionShellData{}, err
+	}
+	workspaces, err := provider.tenant.ListWorkspacesByUserID(ctx, user.ID)
+	if err != nil {
+		return identityweb.SessionShellData{}, err
+	}
 
 	return identityweb.SessionShellData{
 		CurrentOrganizationID:    lo.ToPtr(int(home.organizationID)),
 		CurrentWorkspaceID:       lo.ToPtr(int(home.workspaceID)),
 		OrganizationSubscription: tenantweb.SubscriptionBody(organization.Commercial),
 		WorkspaceSubscription:    tenantweb.SubscriptionBody(workspace.Commercial),
-		Organizations:            []webapi.OrganizationSettings{tenantweb.OrganizationBody(organization)},
-		Workspaces:               []webapi.WorkspaceSettings{tenantweb.WorkspaceBody(workspace)},
-		WorkspaceCapabilities:    tenantweb.CapabilitySnapshotToWeb(capabilities),
-		WorkspaceQuota:           tenantweb.QuotaWindowToWeb(quota),
+		Organizations: lo.Map(organizations, func(organization tenantapplication.OrganizationView, _ int) webapi.OrganizationSettings {
+			return tenantweb.OrganizationBody(organization)
+		}),
+		Workspaces: lo.Map(workspaces, func(workspace tenantapplication.WorkspaceView, _ int) webapi.WorkspaceSettings {
+			return tenantweb.WorkspaceBody(workspace)
+		}),
+		WorkspaceCapabilities: tenantweb.CapabilitySnapshotToWeb(capabilities),
+		WorkspaceQuota:        tenantweb.QuotaWindowToWeb(quota),
 	}, nil
 }
 

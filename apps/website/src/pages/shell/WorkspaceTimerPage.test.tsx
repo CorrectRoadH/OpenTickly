@@ -28,11 +28,11 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useCreateTagMutation: () => mockUseCreateTagMutation(),
   useCreateProjectMutation: () => mockUseCreateProjectMutation(),
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
-  useProjectsQuery: () => mockUseProjectsQuery(),
+  useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
   useStartTimeEntryMutation: () => mockUseStartTimeEntryMutation(),
   useStopTimeEntryMutation: () => mockUseStopTimeEntryMutation(),
   useTimeEntriesQuery: () => mockUseTimeEntriesQuery(),
-  useTagsQuery: () => mockUseTagsQuery(),
+  useTagsQuery: (...args: unknown[]) => mockUseTagsQuery(...args),
   useUpdateWebSessionMutation: () => mockUseUpdateWebSessionMutation(),
   useUpdateTimeEntryMutation: () => mockUseUpdateTimeEntryMutation(),
 }));
@@ -412,6 +412,41 @@ describe("WorkspaceTimerPage", () => {
     expect(scrollArea.contains(layer)).toBe(true);
     expect(layer.className).toContain("absolute");
     expect(layer.className).not.toContain("fixed");
+  });
+
+  it("loads editor projects and tags for the edited entry workspace", () => {
+    const today = new Date();
+    const day = String(today.getUTCDate()).padStart(2, "0");
+    const month = String(today.getUTCMonth() + 1).padStart(2, "0");
+    const year = today.getUTCFullYear();
+    const historicalEntry = createTimeEntryFixture({
+      description: "Cross-workspace entry",
+      id: 779,
+      start: `${year}-${month}-${day}T12:00:00Z`,
+      stop: `${year}-${month}-${day}T12:30:00Z`,
+      workspace_id: 303,
+      wid: 303,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    expect(mockUseProjectsQuery).toHaveBeenCalledWith(202, "all");
+    expect(mockUseTagsQuery).toHaveBeenCalledWith(202);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Cross-workspace entry" }));
+
+    expect(mockUseProjectsQuery).toHaveBeenLastCalledWith(303, "all");
+    expect(mockUseTagsQuery).toHaveBeenLastCalledWith(303);
   });
 
   it("keeps the edited start time visible in the editor before save", () => {

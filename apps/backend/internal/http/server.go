@@ -104,8 +104,13 @@ func newRequestLogMiddleware(logger *slog.Logger) echo.MiddlewareFunc {
 
 func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorHandler {
 	return func(err error, c echo.Context) {
+		if c.Response().Committed {
+			return
+		}
+
 		status := http.StatusInternalServerError
 		loggedError := err
+		responseError := err
 
 		var httpError *echo.HTTPError
 		if errors.As(err, &httpError) {
@@ -113,9 +118,11 @@ func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorH
 			if httpError.Internal != nil {
 				loggedError = httpError.Internal
 			}
+			responseError = echo.NewHTTPError(status, resolveHTTPErrorMessage(httpError, loggedError)).
+				SetInternal(loggedError)
 		}
 
-		if status >= http.StatusInternalServerError {
+		if status >= http.StatusBadRequest {
 			correlation := requestCorrelationFromRequest(c.Request(), requestIDFromContext(c))
 			fields := []any{
 				"method", c.Request().Method,
@@ -124,11 +131,34 @@ func newHTTPErrorHandler(server *echo.Echo, logger *slog.Logger) echo.HTTPErrorH
 				"error", loggedError.Error(),
 			}
 			fields = append(fields, correlation.logFields()...)
-			logger.ErrorContext(c.Request().Context(), "http handler error", fields...)
+			if status >= http.StatusInternalServerError {
+				logger.ErrorContext(c.Request().Context(), "http handler error", fields...)
+			} else {
+				logger.WarnContext(c.Request().Context(), "http handler error", fields...)
+			}
 		}
 
-		server.DefaultHTTPErrorHandler(err, c)
+		server.DefaultHTTPErrorHandler(responseError, c)
 	}
+}
+
+func resolveHTTPErrorMessage(httpError *echo.HTTPError, fallback error) any {
+	if httpError != nil && httpError.Internal != nil {
+		return httpError.Internal.Error()
+	}
+	if httpError != nil {
+		switch message := httpError.Message.(type) {
+		case string:
+			if strings.TrimSpace(message) != "" {
+				return message
+			}
+		default:
+			if message != nil {
+				return message
+			}
+		}
+	}
+	return fallback.Error()
 }
 
 func logReadinessFailure(c echo.Context, logger *slog.Logger, report web.ReadinessReport) {
