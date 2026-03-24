@@ -12,8 +12,6 @@ describe("swapWorkspaceInPath", () => {
   });
 
   it("swaps the workspace inside the import path", () => {
-    expect(swapWorkspaceInPath("/workspaces/202/import", 417, "")).toBe(
-      "/workspaces/417/import",
-    );
+    expect(swapWorkspaceInPath("/workspaces/202/import", 417, "")).toBe("/workspaces/417/import");
   });
 });

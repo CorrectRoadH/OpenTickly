@@ -79,8 +79,14 @@ export default function Home() {
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
               {[
                 ["Costs less", "Stop paying premium SaaS pricing for basic time tracking."],
-                ["Stays private", "Run it yourself and keep operational data on infrastructure you control."],
-                ["Works for agents", "Give AI and automation the API throughput they actually need."],
+                [
+                  "Stays private",
+                  "Run it yourself and keep operational data on infrastructure you control.",
+                ],
+                [
+                  "Works for agents",
+                  "Give AI and automation the API throughput they actually need.",
+                ],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-2xl border border-fd-border bg-white/3 p-4">
                   <p className="text-sm font-semibold text-fd-foreground">{title}</p>

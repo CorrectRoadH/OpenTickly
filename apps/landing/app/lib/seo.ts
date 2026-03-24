@@ -64,7 +64,8 @@ export function buildSitemapXml(entries: SitemapEntry[], rawSiteUrl?: string): s
       const lines = [`<loc>${escapeXml(buildCanonicalUrl(entry.pathname, rawSiteUrl))}</loc>`];
       if (entry.lastModified) lines.push(`<lastmod>${escapeXml(entry.lastModified)}</lastmod>`);
       if (entry.changeFrequency) lines.push(`<changefreq>${entry.changeFrequency}</changefreq>`);
-      if (typeof entry.priority === "number") lines.push(`<priority>${entry.priority.toFixed(1)}</priority>`);
+      if (typeof entry.priority === "number")
+        lines.push(`<priority>${entry.priority.toFixed(1)}</priority>`);
 
       return `<url>${lines.join("")}</url>`;
     })

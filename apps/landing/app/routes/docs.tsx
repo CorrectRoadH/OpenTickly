@@ -42,9 +42,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
   ) {
     const siteUrl = resolveSiteUrl();
     const pathname =
-      path === "index.mdx"
-        ? "/docs"
-        : `/docs/${path.replace(/\/index\.mdx$|\.mdx$/g, "")}`;
+      path === "index.mdx" ? "/docs" : `/docs/${path.replace(/\/index\.mdx$|\.mdx$/g, "")}`;
     const description = frontmatter.description ?? "OpenToggl documentation";
 
     return (

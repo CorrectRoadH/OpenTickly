@@ -87,8 +87,9 @@ function DialogHarness({
   selectedProjectId?: number | null;
   selectedTagIds?: number[];
 }) {
-  const [entry, setEntry] =
-    useState<GithubComTogglTogglApiInternalModelsTimeEntry>(createTimeEntryFixture(entryOverrides));
+  const [entry, setEntry] = useState<GithubComTogglTogglApiInternalModelsTimeEntry>(
+    createTimeEntryFixture(entryOverrides),
+  );
   const [projectId, setProjectId] = useState<number | null>(selectedProjectId);
   const [tagIds, setTagIds] = useState<number[]>(selectedTagIds);
 
