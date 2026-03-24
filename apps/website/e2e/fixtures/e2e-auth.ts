@@ -22,7 +22,15 @@ export async function registerE2eUser(
 
   await page.getByRole("button", { name: "Register" }).click();
 
-  await page.waitForURL(/\/timer(?:\?.*)?$/);
+  try {
+    await page.waitForURL(/\/timer(?:\?.*)?$/, { timeout: 30000 });
+  } catch (e) {
+    const currentUrl = page.url();
+    const errorText = await page.locator("[role='alert']").textContent().catch(() => "none");
+    const bodyText = await page.locator("body").textContent().catch(() => "none");
+    console.error(`[registerE2eUser] URL did not change to /timer. Current URL: ${currentUrl}, Error: ${errorText}, Body preview: ${bodyText?.slice(0, 200)}`);
+    throw e;
+  }
   const session = await readSessionBootstrap(page);
   const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
   await expect(page.getByTestId("app-shell")).toBeVisible();
