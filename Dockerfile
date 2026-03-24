@@ -40,6 +40,7 @@ RUN chmod +x /usr/local/bin/opentoggl-entrypoint
 ARG OPENTOGGL_VERSION=dev
 LABEL org.opencontainers.image.title="OpenToggl" \
       org.opencontainers.image.description="Single-image OpenToggl runtime (web + API)" \
+      org.opencontainers.image.source="https://github.com/CorrectRoadH/opentoggl" \
       org.opencontainers.image.version="${OPENTOGGL_VERSION}"
 
 RUN adduser -D -u 10001 opentoggl
