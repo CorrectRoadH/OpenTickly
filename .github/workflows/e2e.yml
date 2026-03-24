@@ -1,0 +1,77 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Start postgres and redis
+        run: |
+          docker compose -f docker-compose.yml up -d postgres redis
+          docker compose -f docker-compose.yml wait
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend
+        env:
+          CGO_ENABLED: 0
+        run: go build -o /tmp/opentoggl ./apps/backend
+
+      - name: Build frontend
+        run: pnpm --filter @opentoggl/website run build
+
+      - name: Start backend
+        env:
+          OPENTOGGL_SERVICE_NAME: opentoggl-api
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://localhost:6379/0
+          OPENTOGGL_FILESTORE_NAMESPACE: opentoggl
+          OPENTOGGL_JOBS_QUEUE_NAME: default
+        run: |
+          /tmp/opentoggl &
+          sleep 5
+
+      - name: Wait for backend to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/readyz > /dev/null 2>&1; then
+              echo "Backend is ready"
+              exit 0
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+          echo "Backend failed to start"
+          exit 1
+
+      - name: Start frontend dev server
+        env:
+          OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
+        run: |
+          cd apps/website
+          pnpm exec vite --port 5173 &
+          sleep 5
+
+      - name: Run E2E tests
+        run: |
+          cd apps/website
+          pnpm exec playwright test
