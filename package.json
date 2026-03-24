@@ -12,7 +12,7 @@
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
     "dev:website": "vp run website#dev",
     "dev:landing": "vp run landing#dev",
-    "generate:website-api": "vp run generate:website-api:web && vp run generate:website-api:admin && vp run generate:website-api:import && vp run generate:website-api:public-track && vp run generate:website-api:public-reports && vp run generate:website-api:public-webhooks",
+    "generate:website-api": "vp run generate:website-api:web && vp run generate:website-api:admin && vp run generate:website-api:import && vp run generate:website-api:public-track && vp run generate:website-api:public-reports && vp run generate:website-api:public-webhooks && vp fmt apps/website/src/shared/api/generated",
     "generate:website-api:web": "vp exec openapi-ts -f openapi/configs/openapi-ts.web.config.ts -c @hey-api/client-fetch",
     "generate:website-api:admin": "vp exec openapi-ts -f openapi/configs/openapi-ts.admin.config.ts -c @hey-api/client-fetch",
     "generate:website-api:import": "vp exec openapi-ts -f openapi/configs/openapi-ts.import.config.ts -c @hey-api/client-fetch",

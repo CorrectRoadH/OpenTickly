@@ -4,5 +4,8 @@ export default defineConfig({
   input: {
     path: "./openapi/opentoggl-admin.openapi.json",
   },
-  output: "./apps/website/src/shared/api/generated/admin",
+  output: {
+    header: (ctx) => ["/* eslint-disable */", ...ctx.defaultValue],
+    path: "./apps/website/src/shared/api/generated/admin",
+  },
 });

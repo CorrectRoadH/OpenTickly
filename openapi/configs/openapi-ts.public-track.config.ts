@@ -4,5 +4,8 @@ export default defineConfig({
   input: {
     path: "./openapi/toggl-track-api-v9.swagger.json",
   },
-  output: "./apps/website/src/shared/api/generated/public-track",
+  output: {
+    header: (ctx) => ["/* eslint-disable */", ...ctx.defaultValue],
+    path: "./apps/website/src/shared/api/generated/public-track",
+  },
 });
