@@ -19,11 +19,18 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
+      - name: Start postgres
+        run: |
+          docker compose -f docker-compose.yml up -d postgres
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null; do sleep 1; done'
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Run backend unit tests
-        run: go test -short ./...
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test ./...
 
       - name: Run frontend unit tests
         run: cd apps/website && pnpm exec vitest run
