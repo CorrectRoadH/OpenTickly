@@ -19,7 +19,7 @@ export function GroupsPage(): ReactElement {
 
   if (groupsQuery.isPending) {
     return (
-      <AppPanel className="border-white/8 bg-[#1f1f23]">
+      <AppPanel tone="muted">
         <p className="text-sm text-slate-400">Loading groups…</p>
       </AppPanel>
     );
@@ -27,7 +27,7 @@ export function GroupsPage(): ReactElement {
 
   if (groupsQuery.isError) {
     return (
-      <AppPanel className="border-rose-500/30 bg-[#23181b]">
+      <AppPanel tone="danger">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-white">Groups</h1>
           <p className="text-sm leading-6 text-rose-300">
@@ -50,7 +50,7 @@ export function GroupsPage(): ReactElement {
   }
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="groups-page">
+    <AppPanel data-testid="groups-page" tone="muted">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-white">Groups</h1>

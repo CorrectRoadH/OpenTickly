@@ -3,6 +3,7 @@ export { AppInlineNotice } from "./AppInlineNotice.tsx";
 export { AppPanel } from "./AppPanel.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";
 export type { AppButtonTone } from "./buttonStyles.ts";
+export type { AppSurfaceTone } from "./surfaceStyles.ts";
 export {
   DirectoryFilterChip,
   DirectoryHeaderCell,

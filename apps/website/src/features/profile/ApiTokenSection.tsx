@@ -13,7 +13,7 @@ export function ApiTokenSection({
   token,
 }: ApiTokenSectionProps): ReactElement {
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="api-token-section">
+    <AppPanel data-testid="api-token-section" tone="muted">
       <div className="space-y-5">
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">API token</h2>

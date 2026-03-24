@@ -16,7 +16,7 @@ export function InviteStatusJoinedPage({
 
   return (
     <main className="min-h-screen px-4 py-8">
-      <AppPanel className="mx-auto max-w-2xl bg-white/95">
+      <AppPanel className="mx-auto max-w-2xl" tone="light">
         <div className="space-y-6">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">

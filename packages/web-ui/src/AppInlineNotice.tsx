@@ -8,8 +8,10 @@ type AppInlineNoticeProps = {
 } & HTMLAttributes<HTMLElement>;
 
 const toneStyles: Record<AppInlineNoticeTone, string> = {
-  error: "border-rose-200 bg-rose-50/80 text-rose-800",
-  success: "border-emerald-200 bg-emerald-50/80 text-emerald-800",
+  error:
+    "border-[color:var(--track-state-error-border)] bg-[color:var(--track-state-error-surface)] text-[color:var(--track-state-error-text)]",
+  success:
+    "border-[color:var(--track-state-success-border)] bg-[color:var(--track-state-success-surface)] text-[color:var(--track-state-success-text)]",
 };
 
 export function AppInlineNotice({ children, className, tone, ...props }: AppInlineNoticeProps) {

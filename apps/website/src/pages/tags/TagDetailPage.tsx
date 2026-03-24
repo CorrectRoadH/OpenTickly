@@ -8,7 +8,7 @@ type TagDetailPageProps = {
 
 export function TagDetailPage({ tagId, workspaceId }: TagDetailPageProps): ReactElement {
   return (
-    <AppPanel className="bg-white/95">
+    <AppPanel tone="light">
       <div className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tag details</h1>
         <p className="text-sm leading-6 text-slate-600">

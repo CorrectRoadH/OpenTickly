@@ -23,7 +23,7 @@ export function PreferencesFormSection({
   });
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="preferences-form-section">
+    <AppPanel data-testid="preferences-form-section" tone="muted">
       <form
         className="space-y-5"
         onSubmit={form.handleSubmit(async (values) => {

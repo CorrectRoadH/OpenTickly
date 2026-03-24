@@ -23,7 +23,6 @@ export async function registerE2eUser(
   await page.getByRole("button", { name: "Register" }).click();
 
   await page.waitForURL(/\/timer(?:\?.*)?$/);
-  const _currentWorkspaceId = await resolveCurrentWorkspaceId(page);
   const session = await readSessionBootstrap(page);
   const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
   await expect(page.getByTestId("app-shell")).toBeVisible();

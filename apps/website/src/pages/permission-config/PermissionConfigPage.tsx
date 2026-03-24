@@ -77,7 +77,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
   if (permissionsQuery.isPending || !permissionsQuery.data) {
     if (permissionsQuery.isError) {
       return (
-        <AppPanel className="border-rose-500/30 bg-[#23181b]">
+        <AppPanel tone="danger">
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold text-white">Permission configuration</h1>
             <p className="text-sm leading-6 text-slate-400">Workspace permission policy</p>
@@ -96,14 +96,14 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
     }
 
     return (
-      <AppPanel className="border-white/8 bg-[#1f1f23]">
+      <AppPanel tone="muted">
         <p className="text-sm font-medium text-slate-400">Loading workspace permissions…</p>
       </AppPanel>
     );
   }
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="permission-config-page">
+    <AppPanel data-testid="permission-config-page" tone="muted">
       <form
         className="space-y-6"
         data-testid="permission-config-form"

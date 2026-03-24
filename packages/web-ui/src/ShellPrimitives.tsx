@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, ReactElement, ReactNode } from "react";
 
 import { getButtonClassName } from "./buttonStyles.ts";
+import { getSurfaceClassName } from "./surfaceStyles.ts";
 
 export function DirectoryFilterChip({
   disabled = false,
@@ -79,13 +80,7 @@ export function ShellSurfaceCard({
   children: ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={`rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] ${className}`.trim()}
-    >
-      {children}
-    </div>
-  );
+  return <div className={getSurfaceClassName("default", className)}>{children}</div>;
 }
 
 export function ShellToast({

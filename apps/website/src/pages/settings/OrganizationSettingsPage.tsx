@@ -24,7 +24,7 @@ export function OrganizationSettingsPage({
   if (organizationQuery.isPending) {
     return (
       <ShellPage data-testid="organization-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <AppPanel tone="muted">
           <AppSurfaceState
             className="border-white/10 bg-[#18181c] text-slate-300"
             description="Fetching organization-level configuration and policy values."
@@ -39,7 +39,7 @@ export function OrganizationSettingsPage({
   if (organizationQuery.isError) {
     return (
       <ShellPage data-testid="organization-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <AppPanel tone="muted">
           <AppSurfaceState
             className="border-rose-500/30 bg-[#23181b] text-rose-200"
             description="We could not load organization settings right now. Refresh or try again shortly."
@@ -54,7 +54,7 @@ export function OrganizationSettingsPage({
   if (!organizationQuery.data) {
     return (
       <ShellPage data-testid="organization-settings-page">
-        <AppPanel className="border-white/8 bg-[#1f1f23]">
+        <AppPanel tone="muted">
           <AppSurfaceState
             className="border-white/10 bg-[#18181c] text-slate-300"
             description="No organization settings data was returned for this organization."

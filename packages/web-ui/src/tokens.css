@@ -17,4 +17,13 @@
   --track-button-text: #121212;
   --track-grid: #2c2c2c;
   --track-row-hover: #232323;
+  --track-state-neutral-surface: rgba(255, 255, 255, 0.95);
+  --track-state-neutral-border: #cbd5e1;
+  --track-state-neutral-text: #475569;
+  --track-state-error-surface: rgba(255, 241, 242, 0.8);
+  --track-state-error-border: #fda4af;
+  --track-state-error-text: #9f1239;
+  --track-state-success-surface: rgba(236, 253, 245, 0.8);
+  --track-state-success-border: #86efac;
+  --track-state-success-text: #166534;
 }

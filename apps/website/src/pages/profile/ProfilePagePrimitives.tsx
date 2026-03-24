@@ -194,7 +194,7 @@ export function ProfileHeroCard({
   rows: ReadonlyArray<{ label: string; value: string }>;
 }): ReactElement {
   return (
-    <AppPanel className="border-none bg-transparent p-0 shadow-none">
+    <AppPanel className="p-0" tone="transparent">
       <div className="flex min-h-[331px] items-start">
         <div className="flex h-[331px] w-[268px] items-start p-6">
           <div className="flex size-[220px] items-start rounded-[110px] border border-[var(--track-border)] bg-[var(--track-surface)]">

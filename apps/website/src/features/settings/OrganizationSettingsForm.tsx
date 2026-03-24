@@ -25,7 +25,7 @@ export function OrganizationSettingsForm({
   });
 
   return (
-    <AppPanel className="border-white/8 bg-[#1f1f23]" data-testid="organization-settings-form">
+    <AppPanel data-testid="organization-settings-form" tone="muted">
       <form
         className="space-y-5"
         onSubmit={form.handleSubmit(async (values) => {
