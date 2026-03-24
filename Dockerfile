@@ -5,10 +5,10 @@ WORKDIR /workspace
 RUN npm install -g pnpm@10.32.1
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
-COPY apps ./apps
+COPY apps/website ./apps/website
 COPY packages ./packages
 
-RUN pnpm install --no-frozen-lockfile --ignore-scripts
+RUN pnpm install --filter @opentoggl/website... --no-frozen-lockfile --ignore-scripts
 RUN pnpm --filter @opentoggl/website run build
 
 FROM golang:1.25-alpine AS builder
@@ -29,7 +29,7 @@ WORKDIR /app
 
 COPY --from=builder /out/opentoggl /usr/local/bin/opentoggl
 
-RUN apk add --no-cache ca-certificates wget
+RUN apk add --no-cache ca-certificates wget tzdata
 RUN printf '# required by current bootstrap env loader for runtime startup\n' > /app/.env.local
 
 ARG OPENTOGGL_VERSION=dev
