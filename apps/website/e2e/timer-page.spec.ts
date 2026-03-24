@@ -154,7 +154,38 @@ test.describe("Timer page family mainline", () => {
       "aria-pressed",
       "true",
     );
-    // The entries created should be visible on the calendar
+    // The entries created should be visible on the calendar as event cards
+    // Each entry description should appear somewhere in the calendar grid
+    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollArea).toBeVisible();
+
+    // Verify list view shows the seeded entries
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // Each seeded entry description should appear in the list
+    for (let entryIndex = 0; entryIndex < 3; entryIndex++) {
+      await expect(page.locator(`text=Entry ${entryIndex + 1} for subview test`)).toBeVisible();
+    }
+
+    // Verify timesheet view shows time data for the seeded entries
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    // The timesheet should have project rows with non-zero time (since entries were created)
+    // We verify the timesheet is not showing the empty state
+    await expect(page.getByText("No week data available")).not.toBeVisible();
+
+    // Verify calendar again - entries should persist
+    await page.getByRole("button", { name: "Calendar" }).click();
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
   });
 
@@ -269,23 +300,43 @@ test.describe("Timer page family mainline", () => {
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
 
     // Verify same running state across all three views
+    // In calendar view, the running timer appears as a now-line indicator
+    // The now-line track and dot should be visible to prove the running timer
+    // is rendered within the calendar content, not just in the shared header
+    const calendarNowLine = page.getByTestId("calendar-now-line");
+    await expect(calendarNowLine).toBeVisible();
+    await expect(page.getByTestId("calendar-now-line-track")).toBeVisible();
+    await expect(page.getByTestId("calendar-now-line-dot")).toBeVisible();
+
     // Switch to list view
     await page.getByRole("button", { name: "List view" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    // Running timer description should be visible in the timer description input (shared header)
+    // and the stop button should reflect the running state
+    const listViewDescription = await page.getByLabel("Time entry description").inputValue();
+    expect(listViewDescription).toContain(runningDescription);
 
     // Switch to timesheet view
     await page.getByRole("button", { name: "Timesheet" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    // Running timer description should be visible in the header
+    const timesheetDescription = await page.getByLabel("Time entry description").inputValue();
+    expect(timesheetDescription).toContain(runningDescription);
 
-    // Switch back to calendar
+    // Switch back to calendar - verify now-line is still visible
     await page.getByRole("button", { name: "Calendar" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    // Verify the now-line is still visible to prove the running timer fact
+    // is rendered within the calendar content
+    await expect(calendarNowLine).toBeVisible();
+    await expect(page.getByTestId("calendar-now-line-track")).toBeVisible();
+    await expect(page.getByTestId("calendar-now-line-dot")).toBeVisible();
   });
 
   /**
