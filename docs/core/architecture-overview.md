@@ -256,7 +256,7 @@ Client Request
 
 - 对外响应优先基于事务真相源生成。
 - 公开接口的错误码、校验失败和权限拒绝必须在这里定型。
-- 正式启动链路固定为：建立数据库连接 -> 用 `pgschema` 使 live schema 收口到仓库 desired state -> 执行实例初始化/bootstrap guard -> 再暴露 readiness。
+- 正式启动链路固定为：建立数据库连接 -> 用 `pgschema` 使 live schema 收口到仓库 desired state -> 执行实例初始化/bootstrap guard -> 再暴露 readiness。对于 self-hosted 运行时，这一步由容器 entrypoint 在主 HTTP 进程启动前完成。
 
 ### 6.2 后台任务路径
 

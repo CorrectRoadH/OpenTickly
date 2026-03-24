@@ -6,6 +6,19 @@ import (
 	"testing"
 )
 
+func TestPathPrefersExplicitEnvironmentOverride(t *testing.T) {
+	overridePath := filepath.Join(t.TempDir(), "schema.sql")
+	if err := os.WriteFile(overridePath, []byte("-- test schema\n"), 0o644); err != nil {
+		t.Fatalf("write override schema: %v", err)
+	}
+
+	t.Setenv(schemaPathEnvironmentKey, overridePath)
+
+	if got := Path(); got != overridePath {
+		t.Fatalf("expected schema path override %q, got %q", overridePath, got)
+	}
+}
+
 func TestPathResolvesDesiredStateSchemaFile(t *testing.T) {
 	schemaPath := Path()
 	if filepath.Base(schemaPath) != "schema.sql" {

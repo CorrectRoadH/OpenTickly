@@ -31,7 +31,7 @@ Baseline defaults shipped in compose:
 
 Operator overrides are optional. Use host env vars or an operator-managed env file (for example `.env.self-hosted`, not shipped as a required artifact).
 
-For `pgschema`, export these standard PostgreSQL CLI vars against the same database as `OPENTOGGL_DATABASE_URL`:
+The runtime image entrypoint derives these standard PostgreSQL CLI vars from `OPENTOGGL_DATABASE_URL` / `DATABASE_URL` before invoking `pgschema apply`:
 
 - `PGHOST`
 - `PGPORT`
@@ -45,46 +45,25 @@ For `pgschema`, export these standard PostgreSQL CLI vars against the same datab
 Canonical order is fixed:
 
 1. Start PostgreSQL and Redis
-2. Run `pgschema plan` and `pgschema apply`
-3. Start `opentoggl`
+2. Start `opentoggl`
+3. The `opentoggl` entrypoint runs `pgschema apply --auto-approve`
 4. Verify `/healthz`, `/readyz`, and minimal HTTP smoke
 
 Commands:
 
 ```bash
-docker compose up -d postgres redis
-docker compose ps
-```
-
-```bash
-PGHOST=127.0.0.1 \
-PGPORT=5432 \
-PGDATABASE=opentoggl \
-PGUSER=postgres \
-PGPASSWORD=postgres \
-PGSSLMODE=disable \
-pgschema plan --file apps/backend/internal/platform/schema/schema.sql
-
-PGHOST=127.0.0.1 \
-PGPORT=5432 \
-PGDATABASE=opentoggl \
-PGUSER=postgres \
-PGPASSWORD=postgres \
-PGSSLMODE=disable \
-pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
-```
-
-```bash
-docker compose up -d --build opentoggl
+docker compose up -d --build
 docker compose ps
 ```
 
 If `5432` is already in use on your host, set `OPENTOGGL_POSTGRES_PORT` and matching `PGPORT` explicitly for that run.
 
+If you need review evidence before startup, run `pgschema plan` manually against the same target database before `docker compose up`. The runtime image only automates `apply`.
+
 Readiness semantics:
 
 - `/healthz`: process is alive
-- `/readyz`: PostgreSQL, Redis, schema reconciliation, and required initialization are complete
+- `/readyz`: PostgreSQL, Redis, entrypoint schema reconciliation, and required initialization are complete
 - bootstrap/init for first-admin flows must run after schema apply, never before
 
 ## Smoke Verification
@@ -118,9 +97,9 @@ docker compose down -v
 
 1. Pull or build the target `OPENTOGGL_IMAGE`.
 2. Update runtime config with env overrides if needed (for example `OPENTOGGL_IMAGE`).
-3. Run `pgschema plan` and review output.
-4. Run `pgschema apply --auto-approve`.
-5. Restart `opentoggl` with compose.
+3. Run `pgschema plan` and review output if you need explicit review evidence before restart.
+4. Restart `opentoggl` with compose.
+5. The container entrypoint runs `pgschema apply --auto-approve`.
 6. Re-run smoke verification.
 
 ## Rollback
@@ -128,9 +107,9 @@ docker compose down -v
 Rollback is driven by release artifact state:
 
 1. Revert image tag and desired schema SQL to target release state.
-2. Run `pgschema plan` and review rollback diff.
-3. Run `pgschema apply --auto-approve`.
-4. Restart compose services.
+2. Run `pgschema plan` and review rollback diff if needed.
+3. Restart compose services.
+4. Let the container entrypoint run `pgschema apply --auto-approve` against the reverted desired state.
 5. Re-run smoke verification.
 
 If rollback includes irreversible schema change, restore from backup per release notes.

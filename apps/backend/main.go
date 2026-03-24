@@ -9,18 +9,44 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"opentoggl/backend/apps/backend/internal/bootstrap"
 )
 
 func main() {
-	app, err := bootstrap.NewAppFromEnvironment(nil)
-	if err != nil {
-		log.Fatalf("bootstrap api startup: %v", err)
+	if err := run(os.Args[1:]); err != nil {
+		log.Fatal(err)
 	}
+}
 
-	if err := app.Start(); err != nil {
-		log.Fatalf("start api startup: %v", err)
+func run(args []string) error {
+	switch commandName(args) {
+	case "serve":
+		app, err := bootstrap.NewAppFromEnvironment(nil)
+		if err != nil {
+			return fmt.Errorf("bootstrap api startup: %w", err)
+		}
+
+		if err := app.Start(); err != nil {
+			return fmt.Errorf("start api startup: %w", err)
+		}
+		return nil
+	case "schema-apply":
+		if err := bootstrap.ApplySchemaFromEnvironment(os.Stdout, os.Stderr, nil); err != nil {
+			return fmt.Errorf("apply database schema: %w", err)
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown command %q", commandName(args))
 	}
+}
+
+func commandName(args []string) string {
+	if len(args) == 0 {
+		return "serve"
+	}
+	return args[0]
 }

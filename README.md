@@ -39,6 +39,7 @@ Rules:
 - Review `pgschema plan` before `pgschema apply`
 - Run `air` only after the target database schema has been reconciled
 - `DATABASE_URL` and the `PG*` variables used by `pgschema` must refer to the same PostgreSQL database
+- The self-hosted container image is different: its runtime entrypoint runs `pgschema apply --auto-approve` from `DATABASE_URL` before starting the API process
 
 # Self Hosting
 
@@ -52,29 +53,9 @@ Release artifacts that must ship together:
 
 ## Compose Startup and Smoke
 
-1. Start dependencies: `docker compose up -d postgres redis`
-2. Reconcile schema using `pgschema` against the same PostgreSQL target:
-
-```bash
-PGHOST=127.0.0.1 \
-PGPORT=5432 \
-PGDATABASE=opentoggl \
-PGUSER=postgres \
-PGPASSWORD=postgres \
-PGSSLMODE=disable \
-pgschema plan --file apps/backend/internal/platform/schema/schema.sql
-
-PGHOST=127.0.0.1 \
-PGPORT=5432 \
-PGDATABASE=opentoggl \
-PGUSER=postgres \
-PGPASSWORD=postgres \
-PGSSLMODE=disable \
-pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
-```
-
-3. Start runtime: `docker compose up -d --build opentoggl`
-4. Verify readiness and key-path smoke:
+1. Start runtime and dependencies: `docker compose up -d --build`
+2. The `opentoggl` container entrypoint runs `pgschema apply --auto-approve` against `DATABASE_URL` before the API process binds HTTP
+3. Verify readiness and key-path smoke:
 
 ```bash
 curl -fsS http://localhost:8080/healthz
@@ -83,11 +64,12 @@ curl -fsSI http://localhost:8080/
 ```
 
 Optional operator overrides can still be provided through host env vars or an operator-managed env file passed with `docker compose --env-file`.
+Set `OPENTOGGL_SCHEMA_RECONCILE=skip` only when you intentionally need to bypass the automatic entrypoint reconcile.
 
 ## Upgrade and Rollback
 
-- Upgrade: pull new image + schema files, run `pgschema plan`, run `pgschema apply --auto-approve`, restart `opentoggl`, rerun smoke checks.
-- Rollback: revert desired schema SQL and image tag to the target release, rerun `pgschema plan/apply`, restart `opentoggl`, rerun smoke checks.
+- Upgrade: pull new image, review `pgschema plan` out-of-band if needed, restart `opentoggl`, let the entrypoint re-apply desired state, rerun smoke checks.
+- Rollback: revert desired schema SQL and image tag to the target release, review rollback `pgschema plan` out-of-band if needed, restart `opentoggl`, let the entrypoint reconcile to the target desired state, rerun smoke checks.
 - Persistent data is in the PostgreSQL volume `opentoggl-postgres-data`.
 
 Detailed operator runbook:

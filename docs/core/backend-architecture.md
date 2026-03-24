@@ -185,7 +185,7 @@ apps/backend/internal/platform/
 
 - 本地开发：修改 schema SQL 后，先运行 `pgschema plan`，确认 plan 正确，再运行 `pgschema apply`，最后启动或重启 `air` 做真实启动验证。
 - CI：对 schema 相关变更至少运行一次 `pgschema plan`，并把 plan 结果作为 review 证据。
-- CD / self-hosted：部署流程在应用对外 ready 之前执行 `pgschema apply --auto-approve` 或等价的受控 apply 步骤。
+- CD / self-hosted：部署流程在应用对外 ready 之前执行 `pgschema apply --auto-approve` 或等价的受控 apply 步骤；当前 self-hosted 容器镜像通过 entrypoint 在启动 HTTP server 前完成这一步。
 - 回滚：优先通过 Git 回退 desired-state SQL 后重新执行 `pgschema plan/apply`；如果变更涉及不可逆破坏性 DDL，必须在 review 阶段提前标注和制定数据恢复方案。
 
 ## 0.6 为什么是手写 DI
@@ -226,7 +226,7 @@ apps/backend/internal/platform/
 - `application` 只依赖自己声明的 port、时钟、idempotency、authz/query 接口
 - `infra` 实现 port，但不反向持有 service locator
 - `apps/backend/internal/bootstrap` 负责创建数据库连接、Redis 连接、repo、query service、job runner、handler
-- `apps/backend/internal/bootstrap` 负责在受控 self-hosted / deployment 流程之外消费已经完成的 `pgschema` 结果；本地 `air` 源码启动与默认应用启动路径不得在进程内隐式执行 schema reconcile / apply
+- `apps/backend/internal/bootstrap` 负责在受控 self-hosted / deployment 流程之外消费已经完成的 `pgschema` 结果；本地 `air` 源码启动不得在进程内隐式执行 schema reconcile / apply，而 self-hosted 容器镜像允许由 entrypoint 在 `bootstrap.NewAppFromEnvironment` 之前显式执行一次受控 `pgschema apply`
 - `transport/http/*` 只接收已经构造好的 use case / query handler / auth context decoder
 - 不允许在 handler 内临时 `new` repository
 - 不允许在 `domain` 或 `application` 里读取全局单例
@@ -668,7 +668,7 @@ Query 的特征：
 - `PORT` 只表达端口号；后端启动时统一监听 `0.0.0.0:<PORT>`，而不是把完整 listen address 暴露为默认 env 合同。
 - `DATABASE_URL` 与 `REDIS_URL` 属于必填启动输入；缺失时 `bootstrap` 必须直接失败，不允许回退到默认 DSN、内存实现或伪依赖。
 - `air` 只服务本地源码开发；测试、CI、生产构建、self-hosted 容器启动都不得依赖 `air` 常驻。
-- 本地 `air` 源码启动不得在应用进程内隐式执行 `pgschema reconcile/apply`；schema 变更必须先通过仓库外部受控的 `pgschema plan/apply` 流程完成，再启动或重启后端验证启动/依赖链路。
+- 本地 `air` 源码启动不得在应用进程内隐式执行 `pgschema reconcile/apply`；schema 变更必须先通过仓库外部受控的 `pgschema plan/apply` 流程完成，再启动或重启后端验证启动/依赖链路。self-hosted 容器镜像是单独的发布态边界，允许 entrypoint 在正式二进制启动前基于同一个 `DATABASE_URL` 执行受控 `pgschema apply`。
 - 如果需要描述发布态、smoke test、容器化运行或调试正式二进制，应直接使用 Go 二进制、`docker compose` 或对应启动命令，而不是复用 `air`。
 
 ## 6. 权限、套餐和事务
