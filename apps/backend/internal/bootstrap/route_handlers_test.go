@@ -443,6 +443,7 @@ func TestPublicTrackRegistersUnimplementedSpecRoutes(t *testing.T) {
 
 func TestWebServerPersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("persisted-session")
 	cfg := Config{
 		ServiceName: "opentoggl-api",
 		Server: ServerConfig{
@@ -463,7 +464,7 @@ func TestWebServerPersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 	t.Cleanup(firstApp.Platform.Database.Close)
 
 	register := performJSONRequest(t, firstApp, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "persisted@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Persisted Person",
 		"password": "secret1",
 	}, "")
@@ -490,6 +491,7 @@ func TestWebServerPersistsRegisteredSessionAcrossAppRestart(t *testing.T) {
 
 func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("deactivated-user")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -509,7 +511,7 @@ func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "person@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Test Person",
 		"password": "secret1",
 	}, "")
@@ -553,17 +555,17 @@ func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 	}
 
 	login := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/login", map[string]any{
-		"email":    "person@example.com",
+		"email":    uniqueEmail,
 		"password": "secret1",
 	}, "")
 	if login.Code != http.StatusForbidden {
 		t.Fatalf("expected deactivated login status 403, got %d body=%s", login.Code, login.Body.String())
 	}
 
-	passwordAuthorization := basicAuthorization("person@example.com", "secret1")
+	passwordAuthorization := basicAuthorization(uniqueEmail, "secret1")
 
 	updatedProfile := performAuthorizedJSONRequest(t, app, http.MethodPut, "/api/v9/me", map[string]any{
-		"email":                "person@example.com",
+		"email":                uniqueEmail,
 		"fullname":             "Blocked Rename",
 		"timezone":             "UTC",
 		"beginning_of_week":    1,
@@ -630,6 +632,7 @@ func TestWebServerRejectsWritesForDeactivatedUsers(t *testing.T) {
 
 func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("routes")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -649,7 +652,7 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "routes@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Routes Test",
 		"password": "secret1",
 	}, "")
@@ -664,7 +667,7 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 		body   any
 		cookie string
 	}{
-		{method: http.MethodPost, path: "/web/v1/auth/login", body: map[string]any{"email": "routes@example.com"}},
+		{method: http.MethodPost, path: "/web/v1/auth/login", body: map[string]any{"email": uniqueEmail}},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/settings", body: map[string]any{"workspace": map[string]any{"name": "Updated"}}, cookie: sessionCookie},
 		{method: http.MethodPatch, path: "/web/v1/workspaces/1/permissions", body: map[string]any{"only_admins_may_create_projects": true}, cookie: sessionCookie},
 		{method: http.MethodPost, path: "/web/v1/workspaces/1/members/invitations", body: map[string]any{"role": "member"}, cookie: sessionCookie},
@@ -679,6 +682,9 @@ func TestGeneratedWebRoutesRejectMissingRequiredFields(t *testing.T) {
 
 func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 	database := pgtest.Open(t)
+	ownerEmail := uniqueTestEmail("owner-members")
+	invitedEmail := uniqueTestEmail("invited-members")
+	joinedEmail := uniqueTestEmail("joined-members")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -698,7 +704,7 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	ownerRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "owner-members@example.com",
+		"email":    ownerEmail,
 		"fullname": "Owner Members",
 		"password": "secret1",
 	}, "")
@@ -748,7 +754,7 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 		http.MethodPost,
 		"/web/v1/workspaces/"+intToString(workspaceID)+"/members/invitations",
 		map[string]any{
-			"email": "invited-members@example.com",
+			"email": invitedEmail,
 			"role":  "admin",
 		},
 		ownerCookie,
@@ -762,7 +768,7 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 		context.Background(),
 		"select state from membership_workspace_members where workspace_id = $1 and lower(email) = lower($2)",
 		workspaceID,
-		"invited-members@example.com",
+		invitedEmail,
 	).Scan(&invitedState); err != nil {
 		t.Fatalf("expected invited member row: %v", err)
 	}
@@ -771,7 +777,7 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 	}
 
 	joinedRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "joined-members@example.com",
+		"email":    joinedEmail,
 		"fullname": "Joined Member",
 		"password": "secret1",
 	}, "")
@@ -880,6 +886,7 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 
 func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("track-catalog")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -899,7 +906,7 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "track@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Track User",
 		"password": "secret1",
 	}, "")
@@ -920,7 +927,7 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 
 	workspaceID := *registerBody.CurrentWorkspaceID
 	organizationID := *registerBody.CurrentOrganizationID
-	passwordAuthorization := basicAuthorization("track@example.com", "secret1")
+	passwordAuthorization := basicAuthorization(uniqueEmail, "secret1")
 
 	me := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, passwordAuthorization)
 	if me.Code != http.StatusOK {
@@ -1519,6 +1526,7 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 
 func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("session-track")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -1538,7 +1546,7 @@ func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "session-track@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Session Track User",
 		"password": "secret1",
 	}, "")
@@ -1566,7 +1574,7 @@ func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 
 	var meBody map[string]any
 	mustDecodeJSON(t, me.Body.Bytes(), &meBody)
-	if meBody["email"] != "session-track@example.com" {
+	if meBody["email"] != uniqueEmail {
 		t.Fatalf("expected session-auth /api/v9/me email, got %#v", meBody["email"])
 	}
 
@@ -1592,6 +1600,7 @@ func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 
 func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("track-scoped")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -1611,7 +1620,7 @@ func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) 
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "track-user-scoped@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Track User Scoped User",
 		"password": "secret1",
 	}, "")
@@ -1759,6 +1768,8 @@ func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) 
 
 func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	database := pgtest.Open(t)
+	firstEmail := uniqueTestEmail("cross-owner")
+	secondEmail := uniqueTestEmail("cross-other")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -1778,7 +1789,7 @@ func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	firstRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "owner@example.com",
+		"email":    firstEmail,
 		"fullname": "Owner User",
 		"password": "secret1",
 	}, "")
@@ -1787,7 +1798,7 @@ func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	}
 
 	secondRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "other@example.com",
+		"email":    secondEmail,
 		"fullname": "Other User",
 		"password": "secret1",
 	}, "")
@@ -1804,7 +1815,7 @@ func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 		t.Fatalf("expected first bootstrap ids, got %#v", firstRegisterBody)
 	}
 
-	otherAuthorization := basicAuthorization("other@example.com", "secret1")
+	otherAuthorization := basicAuthorization(secondEmail, "secret1")
 
 	crossWorkspace := performAuthorizedJSONRequest(
 		t,
@@ -1833,6 +1844,8 @@ func TestPublicTrackRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 
 func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	database := pgtest.Open(t)
+	firstEmail := uniqueTestEmail("web-owner")
+	secondEmail := uniqueTestEmail("web-other")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -1852,7 +1865,7 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	firstRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "owner-web@example.com",
+		"email":    firstEmail,
 		"fullname": "Owner Web",
 		"password": "secret1",
 	}, "")
@@ -1862,7 +1875,7 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	firstCookie := firstRegister.Header().Get("Set-Cookie")
 
 	secondRegister := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "other-web@example.com",
+		"email":    secondEmail,
 		"fullname": "Other Web",
 		"password": "secret1",
 	}, "")
@@ -1998,6 +2011,7 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 
 func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnotherOrganization(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("multi-org")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -2017,7 +2031,7 @@ func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnoth
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "multi-org@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Multi Org User",
 		"password": "secret1",
 	}, "")
@@ -2038,7 +2052,7 @@ func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnoth
 			"name":           "Second Org",
 			"workspace_name": "Second Workspace",
 		},
-		basicAuthorization("multi-org@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if createOrganization.Code != http.StatusOK {
 		t.Fatalf(
@@ -2080,7 +2094,7 @@ func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnoth
 		http.MethodGet,
 		"/api/v9/me/organizations",
 		nil,
-		basicAuthorization("multi-org@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if organizationsResponse.Code != http.StatusOK {
 		t.Fatalf(
@@ -2105,7 +2119,7 @@ func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnoth
 		http.MethodGet,
 		"/api/v9/me/workspaces",
 		nil,
-		basicAuthorization("multi-org@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if workspacesResponse.Code != http.StatusOK {
 		t.Fatalf(
@@ -2127,6 +2141,7 @@ func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnoth
 
 func TestUpdateWebSessionSwitchesCurrentHomeWorkspace(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("switch-home")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -2146,7 +2161,7 @@ func TestUpdateWebSessionSwitchesCurrentHomeWorkspace(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "switch-home@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Switch Home User",
 		"password": "secret1",
 	}, "")
@@ -2176,7 +2191,7 @@ func TestUpdateWebSessionSwitchesCurrentHomeWorkspace(t *testing.T) {
 			"name":           "Second Org",
 			"workspace_name": "Second Workspace",
 		},
-		basicAuthorization("switch-home@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if createOrganization.Code != http.StatusOK {
 		t.Fatalf(
@@ -2212,6 +2227,7 @@ func TestUpdateWebSessionSwitchesCurrentHomeWorkspace(t *testing.T) {
 
 func TestPublicTrackWorkspaceAccessUsesMembershipInsteadOfCurrentHomeOrganization(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("multi-org-scope")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -2231,7 +2247,7 @@ func TestPublicTrackWorkspaceAccessUsesMembershipInsteadOfCurrentHomeOrganizatio
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "multi-org-scope@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Multi Org Scope User",
 		"password": "secret1",
 	}, "")

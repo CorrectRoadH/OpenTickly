@@ -11,6 +11,7 @@ import (
 
 func TestPublicTrackRoutesServeTrackingSurface(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("tracking-surface")
 	baseStart := time.Now().UTC().Add(-2 * time.Hour).Truncate(time.Second)
 	secondStart := baseStart.Add(2 * time.Hour)
 	secondStop := secondStart.Add(1 * time.Hour)
@@ -36,7 +37,7 @@ func TestPublicTrackRoutesServeTrackingSurface(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "tracking-surface@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Tracking Surface",
 		"password": "secret1",
 	}, "")
@@ -56,7 +57,7 @@ func TestPublicTrackRoutesServeTrackingSurface(t *testing.T) {
 	}
 
 	workspaceID := *registerBody.CurrentWorkspaceID
-	authorization := basicAuthorization("tracking-surface@example.com", "secret1")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
 
 	createClient := performAuthorizedJSONRequest(
 		t,

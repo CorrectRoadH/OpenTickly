@@ -10,6 +10,7 @@ import (
 
 func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("org-owner")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -23,7 +24,7 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "org-owner@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Org Owner",
 		"password": "secret1",
 	}, "")
@@ -46,7 +47,7 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 		http.MethodPost,
 		"/api/v9/me/reset_token",
 		nil,
-		basicAuthorization("org-owner@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if resetToken.Code != http.StatusOK {
 		t.Fatalf("expected reset token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())
@@ -117,8 +118,8 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 	if len(usersBody) != 1 {
 		t.Fatalf("expected one organization workspace user, got %#v", usersBody)
 	}
-	if usersBody[0]["email"] != "org-owner@example.com" {
-		t.Fatalf("expected organization workspace user email org-owner@example.com, got %#v", usersBody[0]["email"])
+	if usersBody[0]["email"] != uniqueEmail {
+		t.Fatalf("expected organization workspace user email %s, got %#v", uniqueEmail, usersBody[0]["email"])
 	}
 
 	organizationGroups := performAuthorizedJSONRequest(

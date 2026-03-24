@@ -9,6 +9,7 @@ import (
 
 func TestPublicTrackOrganizationBillingReads(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("billing-owner")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -22,7 +23,7 @@ func TestPublicTrackOrganizationBillingReads(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "billing-owner@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Billing Owner",
 		"password": "secret1",
 	}, "")
@@ -42,7 +43,7 @@ func TestPublicTrackOrganizationBillingReads(t *testing.T) {
 		http.MethodPost,
 		"/api/v9/me/reset_token",
 		nil,
-		basicAuthorization("billing-owner@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if resetToken.Code != http.StatusOK {
 		t.Fatalf("expected reset token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())

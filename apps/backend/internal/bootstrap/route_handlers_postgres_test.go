@@ -18,7 +18,10 @@ import (
 )
 
 func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
-	database := pgtest.Open(t)
+	// This test uses hardcoded user ID 101 which can collide with existing data
+	// in the shared opentoggl_test schema. It requires full isolation to test
+	// session persistence behavior correctly without cross-test interference.
+	database := pgtest.OpenEphemeral(t)
 	ctx := context.Background()
 
 	tenantService := mustNewTenantPostgresService(t, database)

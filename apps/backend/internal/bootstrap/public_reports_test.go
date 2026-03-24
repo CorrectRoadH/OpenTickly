@@ -11,6 +11,7 @@ import (
 
 func TestPublicReportsRoutesServeWeeklyAndSummaryData(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("reports-surface")
 	baseStart := time.Date(2026, time.March, 23, 9, 0, 0, 0, time.UTC)
 	secondStart := baseStart.Add(24 * time.Hour)
 	secondStop := secondStart.Add(time.Hour)
@@ -33,7 +34,7 @@ func TestPublicReportsRoutesServeWeeklyAndSummaryData(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "reports-surface@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Reports Surface",
 		"password": "secret1",
 	}, "")
@@ -49,7 +50,7 @@ func TestPublicReportsRoutesServeWeeklyAndSummaryData(t *testing.T) {
 		t.Fatal("expected current workspace id")
 	}
 	workspaceID := *registerBody.CurrentWorkspaceID
-	authorization := basicAuthorization("reports-surface@example.com", "secret1")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
 
 	createProject := performAuthorizedJSONRequest(
 		t,

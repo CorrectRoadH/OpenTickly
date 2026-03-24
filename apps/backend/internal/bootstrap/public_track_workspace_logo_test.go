@@ -10,6 +10,7 @@ import (
 
 func TestPublicTrackWorkspaceLogoLifecycle(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("logo-owner")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -23,7 +24,7 @@ func TestPublicTrackWorkspaceLogoLifecycle(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "logo-owner@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Logo Owner",
 		"password": "secret1",
 	}, "")
@@ -45,7 +46,7 @@ func TestPublicTrackWorkspaceLogoLifecycle(t *testing.T) {
 		http.MethodPost,
 		"/api/v9/me/reset_token",
 		nil,
-		basicAuthorization("logo-owner@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if resetToken.Code != http.StatusOK {
 		t.Fatalf("expected reset token status 200, got %d body=%s", resetToken.Code, resetToken.Body.String())

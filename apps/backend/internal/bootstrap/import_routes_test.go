@@ -12,7 +12,10 @@ import (
 )
 
 func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
-	database := pgtest.Open(t)
+	// This test uses hardcoded import data IDs that can conflict with existing data
+	// in the shared opentoggl_test schema. It requires full isolation.
+	database := pgtest.OpenEphemeral(t)
+	uniqueEmail := uniqueTestEmail("importer")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -32,7 +35,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "importer@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Import User",
 		"password": "secret1",
 	}, "")
@@ -70,7 +73,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 				{"id":7215643,"name":"1 象限","workspace_id":3550374,"creator_id":4970670}
 			]`,
 			"toggl_workspace_3550374_export_test/workspace_users.json": `[
-				{"id":5155401,"uid":4970670,"wid":3550374,"name":"Import User","email":"importer@example.com","active":true,"admin":true,"role":"admin","timezone":"Asia/Shanghai"},
+				{"id":5155401,"uid":4970670,"wid":3550374,"name":"Import User","email":"` + uniqueEmail + `","active":true,"admin":true,"role":"admin","timezone":"Asia/Shanghai"},
 				{"id":5155402,"uid":902,"wid":3550374,"name":"Project User","email":"project-user@example.com","active":true,"admin":false,"role":"member","timezone":"Asia/Shanghai"}
 			]`,
 			"toggl_workspace_3550374_export_test/projects_users/218647578.json": `[
@@ -78,7 +81,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 				{"id":76387655,"project_id":218647578,"user_id":902,"workspace_id":3550374,"manager":false,"rate":null}
 			]`,
 		}),
-		basicAuthorization("importer@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if jobCreate.Code != http.StatusAccepted {
 		t.Fatalf("expected import create status 202, got %d body=%s", jobCreate.Code, jobCreate.Body.String())
@@ -106,7 +109,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		http.MethodGet,
 		"/import/v1/jobs/"+createdJob.JobID,
 		nil,
-		basicAuthorization("importer@example.com", "secret1"),
+		basicAuthorization(uniqueEmail, "secret1"),
 	)
 	if jobStatus.Code != http.StatusOK {
 		t.Fatalf("expected import job status 200, got %d body=%s", jobStatus.Code, jobStatus.Body.String())
@@ -122,7 +125,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t.Fatalf("expected fetched import job status completed, got %#v", fetchedJob)
 	}
 
-	authorization := basicAuthorization("importer@example.com", "secret1")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
 
 	clients := performAuthorizedJSONRequest(
 		t,
@@ -244,7 +247,10 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 }
 
 func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
-	database := pgtest.Open(t)
+	// This test uses hardcoded import data IDs that can conflict with existing data
+	// in the shared opentoggl_test schema. It requires full isolation.
+	database := pgtest.OpenEphemeral(t)
+	uniqueEmail := uniqueTestEmail("csv-importer")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -264,7 +270,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "csv-importer@example.com",
+		"email":    uniqueEmail,
 		"fullname": "CSV Importer",
 		"password": "secret1",
 	}, "")
@@ -280,7 +286,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 		t.Fatalf("expected current workspace id > 0, got %#v", bootstrapResponse.CurrentWorkspaceID)
 	}
 
-	authorization := basicAuthorization("csv-importer@example.com", "secret1")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
 
 	createTag := performAuthorizedJSONRequest(
 		t,

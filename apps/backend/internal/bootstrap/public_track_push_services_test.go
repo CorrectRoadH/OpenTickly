@@ -12,6 +12,7 @@ import (
 
 func TestPublicTrackPushServicesLifecycle(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("push-owner")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -25,7 +26,7 @@ func TestPublicTrackPushServicesLifecycle(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "push-owner@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Push Owner",
 		"password": "secret1",
 	}, "")
@@ -33,7 +34,7 @@ func TestPublicTrackPushServicesLifecycle(t *testing.T) {
 		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
 	}
 
-	authorization := basicAuthorization("push-owner@example.com", "secret1")
+	authorization := basicAuthorization(uniqueEmail, "secret1")
 	subscribe := performAuthorizedJSONRequest(
 		t,
 		app,

@@ -10,6 +10,7 @@ import (
 
 func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("caps-quota")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -29,7 +30,7 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "caps-quota@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Capabilities Quota",
 		"password": "secret1",
 	}, "")

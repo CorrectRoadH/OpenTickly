@@ -12,6 +12,7 @@ import (
 
 func TestPublicTrackProjectUsersAndStatistics(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("project-owner")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -25,7 +26,7 @@ func TestPublicTrackProjectUsersAndStatistics(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "owner@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Owner User",
 		"password": "secret1",
 	}, "")
@@ -42,7 +43,7 @@ func TestPublicTrackProjectUsersAndStatistics(t *testing.T) {
 	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
 	workspaceID := *registerBody.CurrentWorkspaceID
 
-	passwordAuthorization := basicAuthorization("owner@example.com", "secret1")
+	passwordAuthorization := basicAuthorization(uniqueEmail, "secret1")
 
 	resetToken := performAuthorizedJSONRequest(t, app, http.MethodPost, "/api/v9/me/reset_token", nil, passwordAuthorization)
 	if resetToken.Code != http.StatusOK {
