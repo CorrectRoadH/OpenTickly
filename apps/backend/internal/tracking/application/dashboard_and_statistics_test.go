@@ -9,6 +9,7 @@ import (
 	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -24,7 +25,7 @@ func TestServiceReturnsProjectStatisticsFromTrackedEntries(t *testing.T) {
 
 	workspaceID, userID := seedTrackingWorkspaceAndUser(t, ctx, database)
 	catalogService := mustNewTrackingCatalogService(t, database)
-	trackingService := mustNewTrackingService(t, database, catalogService)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
 
 	project, err := catalogService.CreateProject(ctx, catalogapplication.CreateProjectCommand{
 		WorkspaceID: workspaceID,
@@ -81,7 +82,7 @@ func TestServiceBuildsWorkspaceDashboardAggregates(t *testing.T) {
 
 	workspaceID, userID := seedTrackingWorkspaceAndUser(t, ctx, database)
 	catalogService := mustNewTrackingCatalogService(t, database)
-	trackingService := mustNewTrackingService(t, database, catalogService)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
 
 	project, err := catalogService.CreateProject(ctx, catalogapplication.CreateProjectCommand{
 		WorkspaceID: workspaceID,
@@ -163,10 +164,11 @@ func mustNewTrackingService(
 	t *testing.T,
 	database *pgtest.Database,
 	catalogService *catalogapplication.Service,
+	logger log.Logger,
 ) *trackingapplication.Service {
 	t.Helper()
 
-	service, err := trackingapplication.NewService(trackingpostgres.NewStore(database.Pool), catalogService)
+	service, err := trackingapplication.NewService(trackingpostgres.NewStore(database.Pool), catalogService, logger)
 	if err != nil {
 		t.Fatalf("new tracking service: %v", err)
 	}

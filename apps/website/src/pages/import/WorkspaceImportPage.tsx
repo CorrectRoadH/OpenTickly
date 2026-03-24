@@ -3,39 +3,69 @@ import { type ChangeEvent, type ReactElement, useId, useState } from "react";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
-  useCreateImportJobMutation,
+  useCreateArchiveImportJobMutation,
+  useCreateTimeEntriesImportJobMutation,
   useImportJobQuery,
 } from "../../shared/query/import-jobs.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
-export function WorkspaceImportPage(): ReactElement {
-  const fileInputId = useId();
-  const session = useSession();
-  const createImportJobMutation = useCreateImportJobMutation();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [submittedJobId, setSubmittedJobId] = useState<string | null>(null);
-  const importJobQuery = useImportJobQuery(submittedJobId);
+type ImportFlow = "archive" | "time_entries";
 
-  async function handleFileSelection(event: ChangeEvent<HTMLInputElement>) {
+export function WorkspaceImportPage(): ReactElement {
+  const archiveInputId = useId();
+  const csvInputId = useId();
+  const session = useSession();
+  const createArchiveImportJobMutation = useCreateArchiveImportJobMutation();
+  const createTimeEntriesImportJobMutation = useCreateTimeEntriesImportJobMutation();
+  const [organizationName, setOrganizationName] = useState("");
+  const [selectedArchive, setSelectedArchive] = useState<File | null>(null);
+  const [selectedCSV, setSelectedCSV] = useState<File | null>(null);
+  const [submittedJob, setSubmittedJob] = useState<{ id: string; source: ImportFlow } | null>(null);
+  const importJobQuery = useImportJobQuery(submittedJob?.id ?? null);
+
+  async function handleArchiveSelection(event: ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
-    setSelectedFile(nextFile);
+    setSelectedArchive(nextFile);
     if (!nextFile) {
       return;
     }
 
     try {
-      const job = await createImportJobMutation.mutateAsync({
+      const job = await createArchiveImportJobMutation.mutateAsync({
         archive: nextFile,
-        workspaceId: session.currentWorkspace.id,
+        organizationName,
       });
-      setSubmittedJobId(job.job_id);
+      setSubmittedJob({ id: job.job_id, source: "archive" });
     } catch {
-      setSubmittedJobId(null);
+      setSubmittedJob(null);
     }
   }
 
-  const errorMessage = resolveImportErrorMessage(createImportJobMutation.error);
-  const latestStatus = submittedJobId ? (importJobQuery.data?.status ?? "queued") : null;
+  async function handleCSVSelection(event: ChangeEvent<HTMLInputElement>) {
+    const nextFile = event.target.files?.[0] ?? null;
+    setSelectedCSV(nextFile);
+    if (!nextFile) {
+      return;
+    }
+
+    try {
+      const job = await createTimeEntriesImportJobMutation.mutateAsync({
+        archive: nextFile,
+        workspaceId: session.currentWorkspace.id,
+      });
+      setSubmittedJob({ id: job.job_id, source: "time_entries" });
+    } catch {
+      setSubmittedJob(null);
+    }
+  }
+
+  const latestStatus = submittedJob ? (importJobQuery.data?.status ?? "queued") : null;
+  const archiveErrorMessage = resolveArchiveImportErrorMessage(
+    createArchiveImportJobMutation.error,
+  );
+  const timeEntriesErrorMessage = resolveTimeEntriesImportErrorMessage(
+    createTimeEntriesImportJobMutation.error,
+  );
 
   return (
     <div className="w-full min-w-0 bg-[var(--track-surface)] px-5 py-5 text-white">
@@ -48,83 +78,177 @@ export function WorkspaceImportPage(): ReactElement {
               </p>
               <h1 className="mt-2 text-[21px] font-semibold leading-[30px] text-white">Import</h1>
               <p className="mt-2 max-w-2xl text-[14px] leading-6 text-[var(--track-text-muted)]">
-                Upload a Toggl workspace export zip. The backend accepts the archive directly and
-                processes the extracted JSON bundle asynchronously.
+                Import is a two-step migration flow. Step 1 creates a new organization from a Toggl
+                export zip. Step 2 imports time entries CSV into the workspace you are currently
+                viewing.
               </p>
             </div>
             <div className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 py-3 text-right">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-                Workspace
+                Current workspace
               </p>
-              <p className="mt-2 text-[14px] font-medium text-white">{session.currentWorkspace.name}</p>
+              <p className="mt-2 text-[14px] font-medium text-white">
+                {session.currentWorkspace.name}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
-            <div className="flex items-start gap-4">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]">
-                <TrackingIcon className="size-5" name="import" />
+        <div className="grid gap-5 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-5">
+            <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]">
+                  <TrackingIcon className="size-5" name="import" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+                    Step 1
+                  </p>
+                  <h2 className="mt-2 text-[16px] font-semibold leading-[23px] text-white">
+                    Create a new organization from Toggl export zip
+                  </h2>
+                  <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
+                    Upload the original `*.zip` file exported from Toggl. The backend creates a new
+                    organization and its default workspace, then imports the extracted JSON bundle
+                    into that new workspace.
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h2 className="text-[16px] font-semibold leading-[23px] text-white">
-                  Toggl export archive
-                </h2>
-                <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
-                  Select the original `*.zip` file exported from Toggl. The archive should contain
-                  a root folder like
-                  <span className="mx-1 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px] text-white">
-                    toggl_workspace_3550374_export_...
-                  </span>
-                  with JSON files inside.
-                </p>
-              </div>
-            </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <label
-                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-                htmlFor={fileInputId}
-              >
-                <TrackingIcon className="size-3.5" name="plus" />
-                Choose zip
+              <label className="mt-5 block">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+                  New organization name
+                </span>
+                <input
+                  className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
+                  onChange={(event) => {
+                    setOrganizationName(event.target.value);
+                  }}
+                  placeholder="Imported Org"
+                  type="text"
+                  value={organizationName}
+                />
               </label>
-              <input
-                accept=".zip,application/zip"
-                className="sr-only"
-                id={fileInputId}
-                onChange={(event) => {
-                  void handleFileSelection(event);
-                }}
-                type="file"
-              />
-              <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
-                {selectedFile ? selectedFile.name : "No file selected"}
-              </span>
-            </div>
 
-            {createImportJobMutation.isPending ? (
-              <p className="mt-4 text-[13px] text-[var(--track-accent-text)]">Uploading archive…</p>
-            ) : null}
-            {errorMessage ? (
-              <p className="mt-4 text-[13px] text-[#ff8f8f]">{errorMessage}</p>
-            ) : null}
-          </section>
+              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[13px] leading-6 text-[var(--track-text-muted)]">
+                The archive should contain a root folder like
+                <span className="mx-1 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px] text-white">
+                  toggl_workspace_3550374_export_...
+                </span>
+                with JSON files inside.
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <label
+                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                  htmlFor={archiveInputId}
+                >
+                  <TrackingIcon className="size-3.5" name="plus" />
+                  Choose zip
+                </label>
+                <input
+                  accept=".zip,application/zip"
+                  className="sr-only"
+                  disabled={organizationName.trim().length === 0}
+                  id={archiveInputId}
+                  onChange={(event) => {
+                    void handleArchiveSelection(event);
+                  }}
+                  type="file"
+                />
+                <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
+                  {selectedArchive ? selectedArchive.name : "No file selected"}
+                </span>
+              </div>
+
+              {createArchiveImportJobMutation.isPending ? (
+                <p className="mt-4 text-[13px] text-[var(--track-accent-text)]">
+                  Uploading archive…
+                </p>
+              ) : null}
+              {archiveErrorMessage ? (
+                <p className="mt-4 text-[13px] text-[#ff8f8f]">{archiveErrorMessage}</p>
+              ) : null}
+            </section>
+
+            <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
+              <div className="flex items-start gap-4">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#1f3d2b] text-[#8fe0ac]">
+                  <TrackingIcon className="size-5" name="timer" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+                    Step 2
+                  </p>
+                  <h2 className="mt-2 text-[16px] font-semibold leading-[23px] text-white">
+                    Import time entries CSV into current workspace
+                  </h2>
+                  <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
+                    Upload a CSV exported from Toggl time entries. The backend imports rows into
+                    <span className="mx-1 font-medium text-white">
+                      {session.currentWorkspace.name}
+                    </span>
+                    and links them to matching clients, projects, tasks, and tags.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[13px] leading-6 text-[var(--track-text-muted)]">
+                Expected columns include `User`, `Email`, `Project`, `Description`, `Start date`,
+                `Start time`, `Duration`, and `Tags`.
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <label
+                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
+                  htmlFor={csvInputId}
+                >
+                  <TrackingIcon className="size-3.5" name="plus" />
+                  Choose CSV
+                </label>
+                <input
+                  accept=".csv,text/csv"
+                  className="sr-only"
+                  id={csvInputId}
+                  onChange={(event) => {
+                    void handleCSVSelection(event);
+                  }}
+                  type="file"
+                />
+                <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
+                  {selectedCSV ? selectedCSV.name : "No file selected"}
+                </span>
+              </div>
+
+              {createTimeEntriesImportJobMutation.isPending ? (
+                <p className="mt-4 text-[13px] text-[var(--track-accent-text)]">Uploading CSV…</p>
+              ) : null}
+              {timeEntriesErrorMessage ? (
+                <p className="mt-4 text-[13px] text-[#ff8f8f]">{timeEntriesErrorMessage}</p>
+              ) : null}
+            </section>
+          </div>
 
           <aside className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
             <h2 className="text-[16px] font-semibold leading-[23px] text-white">Latest job</h2>
             <div className="mt-4 space-y-4">
-              <SummaryRow label="Job ID" value={submittedJobId ?? "Not started"} />
+              <SummaryRow label="Job ID" value={submittedJob?.id ?? "Not started"} />
               <SummaryRow label="Status" value={latestStatus ?? "Waiting for upload"} />
               <SummaryRow
                 label="Source"
-                value={submittedJobId ? "toggl_export_archive" : "Pending"}
+                value={
+                  submittedJob?.source === "archive"
+                    ? "toggl_export_archive"
+                    : submittedJob?.source === "time_entries"
+                      ? "time_entries_csv"
+                      : "Pending"
+                }
               />
             </div>
             <p className="mt-5 text-[13px] leading-6 text-[var(--track-text-muted)]">
-              This slice uploads the zip to the backend and records the import job. Detailed
-              conflict diagnostics and retry flows can now hang off the same job ID.
+              Each upload creates a job record. Archive import creates a new organization workspace;
+              CSV import targets the workspace shown at the top of this page.
             </p>
           </aside>
         </div>
@@ -144,15 +268,25 @@ function SummaryRow({ label, value }: { label: string; value: string }): ReactEl
   );
 }
 
-function resolveImportErrorMessage(error: unknown): string | null {
+function resolveArchiveImportErrorMessage(error: unknown): string | null {
   if (!(error instanceof WebApiError)) {
     return null;
   }
   if (error.status === 400) {
-    return "The uploaded zip is not a valid Toggl export archive.";
+    return "Enter a new organization name and upload a valid Toggl export zip.";
+  }
+  return "Archive import upload failed. Retry with the original Toggl export zip.";
+}
+
+function resolveTimeEntriesImportErrorMessage(error: unknown): string | null {
+  if (!(error instanceof WebApiError)) {
+    return null;
+  }
+  if (error.status === 400) {
+    return "The uploaded CSV is not a valid Toggl time entries export.";
   }
   if (error.status === 403) {
-    return "You do not have permission to import into this workspace.";
+    return "You do not have permission to import time entries into this workspace.";
   }
-  return "Import upload failed. Retry with the original Toggl export zip.";
+  return "Time entries import failed. Retry with the original Toggl CSV export.";
 }

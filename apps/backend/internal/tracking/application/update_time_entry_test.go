@@ -15,7 +15,7 @@ func TestUpdateTimeEntry_RecomputesDurationWhenStartChangesWithoutExplicitDurati
 
 	workspaceID, userID := seedTrackingWorkspaceAndUser(t, ctx, database)
 	catalogService := mustNewTrackingCatalogService(t, database)
-	trackingService := mustNewTrackingService(t, database, catalogService)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
 
 	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
 	stop := time.Date(2026, 3, 23, 10, 30, 0, 0, time.UTC)

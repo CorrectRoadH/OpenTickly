@@ -1,22 +1,43 @@
-import type { Route } from "./+types/home";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { Link } from "react-router";
 import { baseOptions } from "@/lib/layout.shared";
+import Seo from "@/components/seo";
+import {
+  buildFaqSchema,
+  buildOrganizationSchema,
+  defaultDescription,
+  resolveSiteUrl,
+} from "@/lib/seo";
 
-export function meta(_: Route.MetaArgs) {
-  return [
-    { title: "OpenToggl | Open Source Time Tracking Platform" },
-    {
-      name: "description",
-      content:
-        "OpenToggl is an open source time tracking platform shaped by the public Toggl product surface, with Track, Reports, Webhooks, import tooling, and self-hosting.",
-    },
-  ];
-}
+const faqItems = [
+  {
+    question: "What is OpenToggl?",
+    answer:
+      "OpenToggl is an open source time tracking platform built against the public Toggl product surface, including Track, Reports, Webhooks, import tooling, and a web UI.",
+  },
+  {
+    question: "Can I self-host OpenToggl?",
+    answer:
+      "Yes. OpenToggl is designed for self-hosted deployments with PostgreSQL and Redis, documented startup flow, and explicit readiness checks.",
+  },
+  {
+    question: "Is OpenToggl a Toggl alternative?",
+    answer:
+      "Yes. It is a self-hosted, open source alternative shaped around the same public Toggl-facing API and product surface instead of a loosely similar clone.",
+  },
+];
 
 export default function Home() {
+  const siteUrl = resolveSiteUrl();
+
   return (
     <HomeLayout {...baseOptions()}>
+      <Seo
+        pathname="/"
+        title="Open Source Self-Hosted Time Tracking Platform"
+        description={defaultDescription}
+        schema={[buildOrganizationSchema(siteUrl), buildFaqSchema(faqItems)]}
+      />
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12 md:px-6 md:py-16">
         <section className="landing-hero rounded-3xl border border-fd-border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-12">
           <div className="mx-auto max-w-3xl text-center">
@@ -103,6 +124,24 @@ export default function Home() {
               <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">{item.body}</p>
             </article>
           ))}
+        </section>
+
+        <section className="rounded-3xl border border-fd-border p-6 md:p-8">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
+            <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">
+              The basics people search for before evaluating an open source time tracking
+              platform.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {faqItems.map((item) => (
+              <article key={item.question} className="rounded-2xl border border-fd-border p-5">
+                <h3 className="text-base font-semibold text-fd-foreground">{item.question}</h3>
+                <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">{item.answer}</p>
+              </article>
+            ))}
+          </div>
         </section>
       </main>
     </HomeLayout>

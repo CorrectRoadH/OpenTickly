@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"encoding/base64"

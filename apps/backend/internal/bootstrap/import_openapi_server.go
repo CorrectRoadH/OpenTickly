@@ -13,7 +13,13 @@ type importOpenAPIServer struct {
 
 func newImportOpenAPIServer(handlers *routeHandlers) importapi.ServerInterface {
 	return &importOpenAPIServer{
-		importing: importingpublicapi.NewHandler(handlers.importingApp, handlers),
+		importing: importingpublicapi.NewHandler(
+			handlers.importingApp,
+			handlers,
+			handlers.tenantApp,
+			handlers.membershipApp,
+			handlers.userHomes,
+		),
 	}
 }
 

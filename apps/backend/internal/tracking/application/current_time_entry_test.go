@@ -13,7 +13,7 @@ func TestGetCurrentTimeEntry_ReturnsEmptyViewWhenNoRunningEntry(t *testing.T) {
 
 	_, userID := seedTrackingWorkspaceAndUser(t, ctx, database)
 	catalogService := mustNewTrackingCatalogService(t, database)
-	trackingService := mustNewTrackingService(t, database, catalogService)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
 
 	entry, err := trackingService.GetCurrentTimeEntry(ctx, userID)
 	if err != nil {

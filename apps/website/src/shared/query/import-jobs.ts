@@ -1,17 +1,28 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { getImportJob } from "../api/import/index.ts";
-import { createImportJobUpload, unwrapImportApiResult } from "../api/import-client.ts";
+import {
+  createArchiveImportJobUpload,
+  createTimeEntriesImportJobUpload,
+  unwrapImportApiResult,
+} from "../api/import-client.ts";
 
-export function useCreateImportJobMutation() {
+export function useCreateArchiveImportJobMutation() {
   return useMutation({
     mutationFn: async ({
       archive,
-      workspaceId,
+      organizationName,
     }: {
       archive: File;
-      workspaceId: number;
-    }) => createImportJobUpload({ archive, workspaceId }),
+      organizationName: string;
+    }) => createArchiveImportJobUpload({ archive, organizationName }),
+  });
+}
+
+export function useCreateTimeEntriesImportJobMutation() {
+  return useMutation({
+    mutationFn: async ({ archive, workspaceId }: { archive: File; workspaceId: number }) =>
+      createTimeEntriesImportJobUpload({ archive, workspaceId }),
   });
 }
 

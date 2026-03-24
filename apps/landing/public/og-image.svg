@@ -1,0 +1,19 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#09131B"/>
+  <rect x="46" y="46" width="1108" height="538" rx="32" fill="#10222E" stroke="#2C4457" stroke-width="2"/>
+  <circle cx="144" cy="134" r="18" fill="#46D39A"/>
+  <text x="184" y="146" fill="#E9F2F7" font-size="40" font-family="Arial, Helvetica, sans-serif" font-weight="700">OpenToggl</text>
+  <text x="96" y="266" fill="#F8FBFD" font-size="74" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+    Open source time tracking
+  </text>
+  <text x="96" y="346" fill="#F8FBFD" font-size="74" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+    with self-hosted control
+  </text>
+  <text x="96" y="430" fill="#AFC2D0" font-size="34" font-family="Arial, Helvetica, sans-serif">
+    Toggl-shaped Track, Reports, Webhooks, import tooling, and public docs.
+  </text>
+  <rect x="96" y="484" width="216" height="58" rx="29" fill="#46D39A"/>
+  <text x="134" y="522" fill="#09131B" font-size="28" font-family="Arial, Helvetica, sans-serif" font-weight="700">
+    opentoggl
+  </text>
+</svg>

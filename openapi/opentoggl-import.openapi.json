@@ -12,7 +12,7 @@
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/ImportJobCreateRequest"
               }
@@ -85,15 +85,40 @@
       "ImportJobCreateRequest": {
         "type": "object",
         "properties": {
-          "workspace_id": {
-            "type": "integer"
+          "archive": {
+            "type": "string",
+            "format": "binary"
+          },
+          "organization_name": {
+            "type": "string"
           },
           "source": {
             "type": "string",
-            "enum": ["toggl_export_archive"]
+            "enum": ["toggl_export_archive", "time_entries_csv"]
+          },
+          "workspace_id": {
+            "type": "integer"
           }
         },
-        "required": ["workspace_id", "source"]
+        "required": ["archive", "source"],
+        "oneOf": [
+          {
+            "properties": {
+              "source": {
+                "const": "toggl_export_archive"
+              }
+            },
+            "required": ["organization_name"]
+          },
+          {
+            "properties": {
+              "source": {
+                "const": "time_entries_csv"
+              }
+            },
+            "required": ["workspace_id"]
+          }
+        ]
       },
       "ImportJob": {
         "type": "object",

@@ -10,7 +10,7 @@ export default {
     v8_middleware: true,
   },
   async prerender({ getStaticPaths }) {
-    const paths: string[] = [];
+    const paths: string[] = ["/robots.txt", "/sitemap.xml"];
     const excluded: string[] = [];
 
     for (const path of getStaticPaths()) {

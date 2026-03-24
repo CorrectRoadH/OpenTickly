@@ -54,8 +54,8 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		http.MethodPost,
 		"/import/v1/jobs",
 		map[string]string{
-			"workspace_id": strconv.FormatInt(*bootstrapResponse.CurrentWorkspaceID, 10),
-			"source":       "toggl_export_archive",
+			"organization_name": "Imported Org",
+			"source":            "toggl_export_archive",
 		},
 		"archive",
 		"toggl-export.zip",
@@ -96,8 +96,8 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 	if createdJob.Status != "completed" {
 		t.Fatalf("expected import job status completed, got %#v", createdJob)
 	}
-	if createdJob.WorkspaceID != *bootstrapResponse.CurrentWorkspaceID {
-		t.Fatalf("expected import workspace id %d, got %#v", *bootstrapResponse.CurrentWorkspaceID, createdJob)
+	if createdJob.WorkspaceID == *bootstrapResponse.CurrentWorkspaceID {
+		t.Fatalf("expected import to create a new workspace, got %#v", createdJob)
 	}
 
 	jobStatus := performAuthorizedJSONRequest(
@@ -128,7 +128,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/clients",
+		"/api/v9/workspaces/"+intToString(createdJob.WorkspaceID)+"/clients",
 		nil,
 		authorization,
 	)
@@ -149,7 +149,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/tags",
+		"/api/v9/workspaces/"+intToString(createdJob.WorkspaceID)+"/tags",
 		nil,
 		authorization,
 	)
@@ -169,7 +169,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/projects?name=toggl%20CLI&page=1&sort_field=name&sort_order=ASC&only_templates=false&sort_pinned=true&search=toggl",
+		"/api/v9/workspaces/"+intToString(createdJob.WorkspaceID)+"/projects?name=toggl%20CLI&page=1&sort_field=name&sort_order=ASC&only_templates=false&sort_pinned=true&search=toggl",
 		nil,
 		authorization,
 	)
@@ -191,7 +191,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/workspace_users?includeIndirect=false",
+		"/api/v9/workspaces/"+intToString(createdJob.WorkspaceID)+"/workspace_users?includeIndirect=false",
 		nil,
 		authorization,
 	)
@@ -213,7 +213,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t,
 		app,
 		http.MethodGet,
-		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/project_users?project_ids=218647578",
+		"/api/v9/workspaces/"+intToString(createdJob.WorkspaceID)+"/project_users?project_ids=218647578",
 		nil,
 		authorization,
 	)
@@ -240,6 +240,123 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 	}
 	if importedIdentityUserCount != 1 {
 		t.Fatalf("expected imported identity user to be created, got %d", importedIdentityUserCount)
+	}
+}
+
+func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "csv-importer@example.com",
+		"fullname": "CSV Importer",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	var bootstrapResponse struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &bootstrapResponse)
+	if bootstrapResponse.CurrentWorkspaceID == nil || *bootstrapResponse.CurrentWorkspaceID <= 0 {
+		t.Fatalf("expected current workspace id > 0, got %#v", bootstrapResponse.CurrentWorkspaceID)
+	}
+
+	authorization := basicAuthorization("csv-importer@example.com", "secret1")
+
+	createTag := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/tags",
+		map[string]any{"name": "2 象限"},
+		authorization,
+	)
+	if createTag.Code != http.StatusOK {
+		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
+	}
+
+	createProject := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/workspaces/"+intToString(*bootstrapResponse.CurrentWorkspaceID)+"/projects",
+		map[string]any{"name": "opentoggl"},
+		authorization,
+	)
+	if createProject.Code != http.StatusOK {
+		t.Fatalf("expected project create status 200, got %d body=%s", createProject.Code, createProject.Body.String())
+	}
+
+	jobCreate := performAuthorizedMultipartRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/import/v1/jobs",
+		map[string]string{
+			"workspace_id": strconv.FormatInt(*bootstrapResponse.CurrentWorkspaceID, 10),
+			"source":       "time_entries_csv",
+		},
+		"archive",
+		"time-entries.csv",
+		[]byte("\"User\",\"Email\",\"Client\",\"Project\",\"Task\",\"Description\",\"Billable\",\"Start date\",\"Start time\",\"End date\",\"End time\",\"Duration\",\"Tags\"\n\"CSV Importer\",\"csv-importer@example.com\",\"\",\"opentoggl\",\"\",\"开发 opentoggl；刚刚已完成 toggl CLI 对于 opentoggl 的开发与测试\",\"No\",\"2026-03-24\",\"13:36:00\",\"2026-03-24\",\"14:26:54\",\"00:50:54\",\"2 象限\"\n"),
+		authorization,
+	)
+	if jobCreate.Code != http.StatusAccepted {
+		t.Fatalf("expected csv import create status 202, got %d body=%s", jobCreate.Code, jobCreate.Body.String())
+	}
+
+	var createdJob struct {
+		JobID       string `json:"job_id"`
+		Status      string `json:"status"`
+		WorkspaceID int64  `json:"workspace_id"`
+	}
+	mustDecodeJSON(t, jobCreate.Body.Bytes(), &createdJob)
+	if createdJob.Status != "completed" {
+		t.Fatalf("expected csv import status completed, got %#v", createdJob)
+	}
+
+	timeEntries := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/time_entries?start_date=2026-03-24&end_date=2026-03-24",
+		nil,
+		authorization,
+	)
+	if timeEntries.Code != http.StatusOK {
+		t.Fatalf("expected time entries status 200, got %d body=%s", timeEntries.Code, timeEntries.Body.String())
+	}
+	var timeEntriesBody []struct {
+		Description string `json:"description"`
+		WorkspaceID int64  `json:"workspace_id"`
+		ProjectID   *int64 `json:"project_id"`
+		Duration    int64  `json:"duration"`
+	}
+	mustDecodeJSON(t, timeEntries.Body.Bytes(), &timeEntriesBody)
+	if len(timeEntriesBody) != 1 {
+		t.Fatalf("expected one imported time entry, got %#v", timeEntriesBody)
+	}
+	if timeEntriesBody[0].WorkspaceID != *bootstrapResponse.CurrentWorkspaceID || timeEntriesBody[0].ProjectID == nil || timeEntriesBody[0].Duration != 3054 {
+		t.Fatalf("expected imported time entry to target workspace/project with duration 3054, got %#v", timeEntriesBody)
 	}
 }
 

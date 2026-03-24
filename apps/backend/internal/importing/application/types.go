@@ -11,6 +11,7 @@ const (
 	ExportStateCompleted = "completed"
 
 	ImportSourceTogglExportArchive = "toggl_export_archive"
+	ImportSourceTimeEntriesCSV     = "time_entries_csv"
 	ImportStatusQueued             = "queued"
 	ImportStatusRunning            = "running"
 	ImportStatusCompleted          = "completed"
@@ -72,6 +73,35 @@ type ImportWorkspaceArchiveCommand struct {
 	WorkspaceID int64
 }
 
+type ImportedTimeEntry struct {
+	Billable    bool
+	ClientName  string
+	Description string
+	Duration    int
+	Email       string
+	End         *ImportedTime
+	ProjectName string
+	Start       ImportedTime
+	TagNames    []string
+	TaskName    string
+	UserName    string
+}
+
+type ImportedTimeEntries struct {
+	Items []ImportedTimeEntry
+}
+
+type ImportedTime struct {
+	Value string
+}
+
+type ImportTimeEntriesCommand struct {
+	Entries     ImportedTimeEntries
+	JobID       string
+	RequestedBy int64
+	WorkspaceID int64
+}
+
 type Store interface {
 	ListExports(context.Context, ExportScope, int64) ([]ExportRecordView, error)
 	SaveExport(context.Context, SaveExportCommand) (ExportRecordView, error)
@@ -80,4 +110,5 @@ type Store interface {
 	GetImportJob(context.Context, string) (ImportJobView, bool, error)
 	UpdateImportJob(context.Context, UpdateImportJobCommand) (ImportJobView, error)
 	ImportWorkspaceArchive(context.Context, ImportWorkspaceArchiveCommand) error
+	ImportTimeEntries(context.Context, ImportTimeEntriesCommand) error
 }

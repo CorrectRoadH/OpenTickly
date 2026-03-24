@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
+	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
+	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -21,15 +24,45 @@ type ScopeAuthorizer interface {
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 }
 
-type Handler struct {
-	importing *importingapplication.Service
-	scope     ScopeAuthorizer
+type OrganizationCreator interface {
+	CreateOrganization(
+		ctx context.Context,
+		command tenantapplication.CreateOrganizationCommand,
+	) (tenantapplication.CreateOrganizationResult, error)
 }
 
-func NewHandler(importing *importingapplication.Service, scope ScopeAuthorizer) *Handler {
+type WorkspaceOwnerEnsurer interface {
+	EnsureWorkspaceOwner(
+		ctx context.Context,
+		command membershipapplication.EnsureWorkspaceOwnerCommand,
+	) (membershipapplication.WorkspaceMemberView, error)
+}
+
+type UserHomeRepository interface {
+	Save(ctx context.Context, userID int64, organizationID int64, workspaceID int64) error
+}
+
+type Handler struct {
+	importing *importingapplication.Service
+	homes     UserHomeRepository
+	members   WorkspaceOwnerEnsurer
+	scope     ScopeAuthorizer
+	tenant    OrganizationCreator
+}
+
+func NewHandler(
+	importing *importingapplication.Service,
+	scope ScopeAuthorizer,
+	tenant OrganizationCreator,
+	members WorkspaceOwnerEnsurer,
+	homes UserHomeRepository,
+) *Handler {
 	return &Handler{
 		importing: importing,
+		homes:     homes,
+		members:   members,
 		scope:     scope,
+		tenant:    tenant,
 	}
 }
 
@@ -128,13 +161,9 @@ func (handler *Handler) CreateImportJob(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	workspaceID, err := parseInt64Field(ctx.FormValue("workspace_id"))
+	source, err := parseRequiredStringField(ctx.FormValue("source"))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
-	}
-	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
-		return err
 	}
 
 	uploadedFile, err := ctx.FormFile("archive")
@@ -152,17 +181,14 @@ func (handler *Handler) CreateImportJob(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	}
 
-	job, err := handler.importing.StartWorkspaceImport(
-		ctx.Request().Context(),
-		workspaceID,
-		user.ID,
-		ctx.FormValue("source"),
-		archiveContent,
-	)
-	if err != nil {
-		return writeImportingError(err)
+	switch source {
+	case importingapplication.ImportSourceTogglExportArchive:
+		return handler.createArchiveImportJob(ctx, *user, archiveContent, source)
+	case importingapplication.ImportSourceTimeEntriesCSV:
+		return handler.createTimeEntriesImportJob(ctx, user.ID, archiveContent, source)
+	default:
+		return writeImportingError(importingapplication.ErrImportSourceInvalid)
 	}
-	return ctx.JSON(http.StatusAccepted, importJobBody(job))
 }
 
 func (handler *Handler) GetImportJob(ctx echo.Context, jobID string) error {
@@ -203,6 +229,14 @@ func importJobBody(job importingapplication.ImportJobView) importapi.ImportJob {
 	}
 }
 
+func parseRequiredStringField(value string) (string, error) {
+	normalized := strings.TrimSpace(value)
+	if normalized == "" {
+		return "", errors.New("value is required")
+	}
+	return normalized, nil
+}
+
 func parseInt64Field(value string) (int64, error) {
 	normalized := strings.TrimSpace(value)
 	if normalized == "" {
@@ -213,6 +247,91 @@ func parseInt64Field(value string) (int64, error) {
 		return 0, err
 	}
 	return parsed, nil
+}
+
+func defaultImportedWorkspaceName(user identityapplication.UserSnapshot) string {
+	if strings.TrimSpace(user.FullName) == "" {
+		return "My workspace"
+	}
+	return strings.TrimSpace(user.FullName) + "'s workspace"
+}
+
+func (handler *Handler) createArchiveImportJob(
+	ctx echo.Context,
+	user identityapplication.UserSnapshot,
+	archiveContent []byte,
+	source string,
+) error {
+	organizationName, err := parseRequiredStringField(ctx.FormValue("organization_name"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	createdTenant, err := handler.tenant.CreateOrganization(
+		ctx.Request().Context(),
+		tenantapplication.CreateOrganizationCommand{
+			Name:          organizationName,
+			WorkspaceName: defaultImportedWorkspaceName(user),
+		},
+	)
+	if err != nil {
+		return writeImportingError(err)
+	}
+	if _, err := handler.members.EnsureWorkspaceOwner(
+		ctx.Request().Context(),
+		membershipapplication.EnsureWorkspaceOwnerCommand{
+			WorkspaceID: int64(createdTenant.WorkspaceID),
+			UserID:      user.ID,
+		},
+	); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	job, err := handler.importing.StartWorkspaceImport(
+		ctx.Request().Context(),
+		int64(createdTenant.WorkspaceID),
+		user.ID,
+		source,
+		archiveContent,
+	)
+	if err != nil {
+		return writeImportingError(err)
+	}
+	if job.Status == importingapplication.ImportStatusCompleted {
+		if err := handler.homes.Save(
+			ctx.Request().Context(),
+			user.ID,
+			int64(createdTenant.OrganizationID),
+			int64(createdTenant.WorkspaceID),
+		); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+	}
+	return ctx.JSON(http.StatusAccepted, importJobBody(job))
+}
+
+func (handler *Handler) createTimeEntriesImportJob(
+	ctx echo.Context,
+	userID int64,
+	csvContent []byte,
+	source string,
+) error {
+	workspaceID, err := parseInt64Field(ctx.FormValue("workspace_id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+	job, err := handler.importing.StartWorkspaceTimeEntriesImport(
+		ctx.Request().Context(),
+		workspaceID,
+		userID,
+		source,
+		csvContent,
+	)
+	if err != nil {
+		return writeImportingError(err)
+	}
+	return ctx.JSON(http.StatusAccepted, importJobBody(job))
 }
 
 func writeImportingError(err error) error {

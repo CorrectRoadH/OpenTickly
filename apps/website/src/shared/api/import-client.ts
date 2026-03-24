@@ -12,7 +12,22 @@ type ImportApiResult<TResponse> = Promise<{
 
 export const importClient = generatedImportClient;
 
-export async function createImportJobUpload({
+export async function createArchiveImportJobUpload({
+  archive,
+  organizationName,
+}: {
+  archive: File;
+  organizationName: string;
+}): Promise<ImportJob> {
+  const formData = new FormData();
+  formData.set("archive", archive);
+  formData.set("source", "toggl_export_archive");
+  formData.set("organization_name", organizationName);
+
+  return submitImportJob(formData);
+}
+
+export async function createTimeEntriesImportJobUpload({
   archive,
   workspaceId,
 }: {
@@ -21,9 +36,13 @@ export async function createImportJobUpload({
 }): Promise<ImportJob> {
   const formData = new FormData();
   formData.set("archive", archive);
-  formData.set("source", "toggl_export_archive");
+  formData.set("source", "time_entries_csv");
   formData.set("workspace_id", String(workspaceId));
 
+  return submitImportJob(formData);
+}
+
+async function submitImportJob(formData: FormData): Promise<ImportJob> {
   const response = await fetch("/import/v1/jobs", {
     body: formData,
     credentials: "same-origin",

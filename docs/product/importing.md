@@ -143,13 +143,23 @@ toggl_workspace_{workspace_id}_export_{export_id}/
 
 Toggl Track 导出**不包含**:
 
-- **Time Entries**: 必须通过 API 单独获取
+- **Time Entries**: 必须通过单独的第二步导入
 - **User Groups**: 导出中通常为空
 - **Alerts**: 导出中通常为空
 
 ## 导入策略
 
+导入对用户是两个独立步骤,分别创建两个独立的 import job。
+
 ### 阶段 1: 实体导入
+
+- 用户输入 `organization name`
+- 用户上传 Toggl export zip
+- 后端创建一个**新的 organization**
+- 后端同时为该 organization 创建默认 workspace
+- 后端将 zip 内 JSON 实体导入到这个新 workspace
+
+实体导入顺序:
 
 1. **导入 Clients** → 建立 ID 映射
 2. **导入 Tags** → 建立 ID 映射
@@ -159,16 +169,17 @@ Toggl Track 导出**不包含**:
 
 ### 阶段 2: Time Entry 导入
 
-Time entries 必须通过 API 单独获取:
+- 用户在 import 页面单独上传 time entries CSV
+- 该步骤导入到用户当前选择的 workspace
+- 该步骤不创建新 organization,也不复用阶段 1 的 zip 内容
 
-```
-GET https://api.track.toggl.com/api/v9/me/time_entries
-```
+CSV 导入时需解析:
 
-导入时需解析:
-
-- Project 引用 (使用 project ID 映射)
-- Tag 引用 (使用 tag ID 映射)
+- Project 引用 (按名称匹配或创建)
+- Client 引用 (按名称匹配或创建)
+- Task 引用 (按名称匹配或创建)
+- Tag 引用 (按名称匹配或创建)
+- 用户归属 (按 workspace 成员 email 匹配)
 - 运行中的 entry (stop = null)
 
 ## ID 映射

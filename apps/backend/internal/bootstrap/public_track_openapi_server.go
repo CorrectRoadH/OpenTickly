@@ -15,15 +15,15 @@ import (
 
 type publicTrackOpenAPIServer struct {
 	*publicTrackUnimplementedServer
-	identity    *identitypublicapi.PublicTrackHandler
-	tenant      *tenantpublicapi.Handler
-	membership  *membershippublicapi.Handler
-	importing   *importingpublicapi.Handler
-	catalog     *catalogpublicapi.Handler
-	tracking    *trackingpublicapi.Handler
-	governance  *governancepublicapi.Handler
-	platform    *platformpublicapi.Handler
-	billing     *billingpublicapi.Handler
+	identity   *identitypublicapi.PublicTrackHandler
+	tenant     *tenantpublicapi.Handler
+	membership *membershippublicapi.Handler
+	importing  *importingpublicapi.Handler
+	catalog    *catalogpublicapi.Handler
+	tracking   *trackingpublicapi.Handler
+	governance *governancepublicapi.Handler
+	platform   *platformpublicapi.Handler
+	billing    *billingpublicapi.Handler
 }
 
 func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerInterface {
@@ -39,7 +39,13 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 			handlers,
 		),
 		membership: membershippublicapi.NewHandler(handlers.membershipApp, handlers, handlers.tenantApp),
-		importing:  importingpublicapi.NewHandler(handlers.importingApp, handlers),
+		importing: importingpublicapi.NewHandler(
+			handlers.importingApp,
+			handlers,
+			handlers.tenantApp,
+			handlers.membershipApp,
+			handlers.userHomes,
+		),
 		catalog:    catalogpublicapi.NewHandler(handlers.catalogApp, handlers),
 		tracking:   trackingpublicapi.NewHandler(handlers.trackingApp, handlers),
 		governance: governancepublicapi.NewHandler(handlers.governanceApp, handlers),

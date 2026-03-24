@@ -13,6 +13,8 @@ import browserCollections from "collections/browser";
 import { baseOptions, gitConfig } from "@/lib/layout.shared";
 import { useFumadocsLoader } from "fumadocs-core/source/client";
 import { useMDXComponents } from "@/components/mdx";
+import Seo from "@/components/seo";
+import { buildDocSchema, resolveSiteUrl } from "@/lib/seo";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const slugs = params["*"].split("/").filter((v) => v.length > 0);
@@ -38,12 +40,29 @@ const clientLoader = browserCollections.docs.createClientLoader({
       path: string;
     },
   ) {
+    const siteUrl = resolveSiteUrl();
+    const pathname =
+      path === "index.mdx"
+        ? "/docs"
+        : `/docs/${path.replace(/\/index\.mdx$|\.mdx$/g, "")}`;
+    const description = frontmatter.description ?? "OpenToggl documentation";
+
     return (
       <DocsPage toc={toc}>
-        <title>{frontmatter.title}</title>
-        <meta name="description" content={frontmatter.description} />
+        <Seo
+          pathname={pathname}
+          title={frontmatter.title}
+          description={description}
+          type="article"
+          schema={buildDocSchema({
+            title: frontmatter.title,
+            description,
+            pathname,
+            siteUrl,
+          })}
+        />
         <DocsTitle>{frontmatter.title}</DocsTitle>
-        <DocsDescription>{frontmatter.description}</DocsDescription>
+        <DocsDescription>{description}</DocsDescription>
         <div className="flex flex-row gap-2 items-center border-b -mt-4 pb-6">
           <MarkdownCopyButton markdownUrl={markdownUrl} />
           <ViewOptionsPopover
