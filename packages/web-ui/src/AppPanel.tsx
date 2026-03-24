@@ -8,7 +8,7 @@ type AppPanelProps = {
 export function AppPanel({ children, className, ...props }: AppPanelProps) {
   return (
     <section
-      className={`rounded-xl border border-white/8 bg-[#222225] px-5 py-5 shadow-sm ${className ?? ""}`}
+      className={`rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-5 ${className ?? ""}`}
       {...props}
     >
       {children}

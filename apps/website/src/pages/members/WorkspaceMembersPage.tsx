@@ -9,6 +9,7 @@ import {
   useRestoreWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
+import { ShellPageHeader, ShellPrimaryButton } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 export function WorkspaceMembersPage(): ReactElement {
   const session = useSession();
@@ -50,45 +51,46 @@ export function WorkspaceMembersPage(): ReactElement {
   }
 
   return (
-    <main aria-label="workspace-members" className="space-y-4 p-6">
-      <header className="flex items-start justify-between">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Workspace Members</h1>
-          <p className="text-sm text-gray-600">Members sourced from the workspace contract data.</p>
-        </div>
-        <button
-          type="button"
-          className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
-          Invite members
-        </button>
-      </header>
+    <main
+      aria-label="workspace-members"
+      className="min-h-full space-y-5 bg-[var(--track-surface)] p-5 text-white"
+    >
+      <div className="border-b border-[var(--track-border)]">
+        <ShellPageHeader
+          action={<ShellPrimaryButton type="button">Invite members</ShellPrimaryButton>}
+          title="Workspace Members"
+        />
+      </div>
+
+      <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
+        Members sourced from the workspace contract data.
+      </p>
 
       {membersQuery.isPending ? (
         <section
           aria-label="Workspace members list"
           data-testid="members-list"
-          className="rounded-lg border p-4 text-sm text-gray-600"
+          className="rounded-[8px] border border-[var(--track-border)] p-4 text-[14px] text-[var(--track-text-muted)]"
         >
           Loading members…
         </section>
       ) : null}
 
-      <AppPanel className="bg-white/95">
+      <AppPanel>
         <form className="flex flex-wrap items-end gap-3" onSubmit={handleInviteSubmit}>
-          <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-700">
+          <label className="flex min-w-[18rem] flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             Invite by email
             <input
-              className="rounded-2xl border border-slate-300 px-4 py-3"
+              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-normal normal-case tracking-normal text-white outline-none focus:border-[var(--track-accent-soft)]"
               type="email"
               value={inviteEmail}
               onChange={(event) => setInviteEmail(event.target.value)}
             />
           </label>
-          <label className="flex min-w-[10rem] flex-col gap-2 text-sm font-medium text-slate-700">
+          <label className="flex min-w-[10rem] flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             Role
             <select
-              className="rounded-2xl border border-slate-300 px-4 py-3"
+              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-normal normal-case tracking-normal text-white outline-none focus:border-[var(--track-accent-soft)]"
               value={inviteRole}
               onChange={(event) => setInviteRole(event.target.value)}
             >
@@ -98,7 +100,9 @@ export function WorkspaceMembersPage(): ReactElement {
             </select>
           </label>
           <AppButton type="submit">Send invite</AppButton>
-          {status ? <p className="text-sm font-medium text-emerald-700">{status}</p> : null}
+          {status ? (
+            <p className="text-[12px] font-medium text-[var(--track-accent-text)]">{status}</p>
+          ) : null}
         </form>
       </AppPanel>
 
@@ -106,7 +110,7 @@ export function WorkspaceMembersPage(): ReactElement {
         <section
           aria-label="Workspace members list"
           data-testid="members-list"
-          className="divide-y rounded-lg border"
+          className="divide-y rounded-[8px] border border-[var(--track-border)]"
         >
           {membersQuery.data.members.map((member) => {
             const canDisable = member.status === "joined" || member.status === "restored";
@@ -115,15 +119,17 @@ export function WorkspaceMembersPage(): ReactElement {
             return (
               <article
                 key={member.id}
-                className="grid grid-cols-[2fr_2fr_1fr_auto] gap-2 p-4"
+                className="grid grid-cols-[2fr_2fr_1fr_auto] gap-3 bg-[var(--track-surface)] p-4"
                 data-member-id={member.id}
               >
                 <div>
-                  <div className="font-medium">{member.name}</div>
-                  <div className="text-gray-700">{member.email}</div>
+                  <div className="text-[14px] font-medium text-white">{member.name}</div>
+                  <div className="text-[12px] text-[var(--track-text-muted)]">{member.email}</div>
                 </div>
-                <div className="text-sm text-gray-600">
-                  <div className="text-gray-500 uppercase tracking-wide">{member.role}</div>
+                <div className="text-[12px] text-[var(--track-text-muted)]">
+                  <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-soft)]">
+                    {member.role}
+                  </div>
                   <div>{member.status}</div>
                 </div>
                 <dl className="sr-only">

@@ -21,6 +21,7 @@ type WorkspaceSwitcherProps = {
   inviteMembersPath?: string;
   managePath?: string;
   onChange: (workspaceId: number) => void;
+  onSetDefault?: (workspaceId: number) => void;
   organizations: SessionOrganizationViewModel[];
 };
 
@@ -35,10 +36,13 @@ export function WorkspaceSwitcher({
   inviteMembersPath,
   managePath,
   onChange,
+  onSetDefault,
   organizations,
 }: WorkspaceSwitcherProps): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [optimisticOrganization, setOptimisticOrganization] =
+    useState<SessionOrganizationViewModel | null>(null);
   const [organizationName, setOrganizationName] = useState("");
   const [panelPosition, setPanelPosition] = useState<FloatingPanelPosition | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -46,7 +50,27 @@ export function WorkspaceSwitcher({
   const panelRef = useRef<HTMLDivElement | null>(null!);
   const listboxId = useId();
   const createOrganizationMutation = useCreateOrganizationMutation();
-  const visibleOrganization = currentOrganization ?? organizations[0] ?? null;
+  const displayedOrganizations = mergeOrganizations(organizations, optimisticOrganization);
+  const visibleOrganization =
+    optimisticOrganization ?? currentOrganization ?? displayedOrganizations[0] ?? null;
+
+  useEffect(() => {
+    if (!optimisticOrganization) {
+      return;
+    }
+
+    if (
+      organizations.some((entry) =>
+        matchesOrganization(
+          entry,
+          optimisticOrganization.defaultWorkspaceId,
+          optimisticOrganization.name,
+        ),
+      )
+    ) {
+      setOptimisticOrganization(null);
+    }
+  }, [optimisticOrganization, organizations]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -120,19 +144,22 @@ export function WorkspaceSwitcher({
       return;
     }
 
+    setOptimisticOrganization(null);
     onChange(organization.defaultWorkspaceId);
     setIsOpen(false);
     buttonRef.current?.focus();
   }
 
   async function handleCreateOrganization() {
-    if (!organizationName.trim()) {
+    const nextOrganizationName = organizationName.trim();
+
+    if (!nextOrganizationName) {
       return;
     }
 
     const createdOrganization = await createOrganizationMutation.mutateAsync({
-      name: organizationName.trim(),
-      workspace_name: organizationName.trim(),
+      name: nextOrganizationName,
+      workspace_name: nextOrganizationName,
     });
     const createdWorkspaceId = createdOrganization.workspace_id ?? 0;
 
@@ -140,6 +167,18 @@ export function WorkspaceSwitcher({
     setOrganizationName("");
 
     if (createdWorkspaceId > 0) {
+      setOptimisticOrganization({
+        defaultWorkspaceId: createdWorkspaceId,
+        id: -createdWorkspaceId,
+        isAdmin: true,
+        isDefault: false,
+        isCurrent: true,
+        isMultiWorkspaceEnabled: true,
+        maxWorkspaces: null,
+        name: nextOrganizationName,
+        planName: visibleOrganization?.planName ?? "Free",
+        userCount: 1,
+      });
       onChange(createdWorkspaceId);
     }
   }
@@ -154,10 +193,10 @@ export function WorkspaceSwitcher({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-labelledby={`${listboxId}-label`}
-        className={`flex h-10 w-full items-center gap-2 rounded-[14px] border px-3 text-left text-white outline-none transition ${
+        className={`flex h-9 w-full items-center gap-2 rounded-[8px] border px-3 text-left text-white outline-none transition ${
           isOpen
-            ? "border-[#5a4a57] bg-[#3a3a3a]"
-            : "border-[#4a4a4a] bg-[#3a3a3a] hover:bg-[#444444] focus-visible:border-[#6a325e]"
+            ? "border-[var(--track-accent-soft)] bg-[var(--track-surface-muted)]"
+            : "border-[var(--track-border)] bg-[var(--track-surface-muted)] hover:bg-[var(--track-row-hover)] focus-visible:border-[var(--track-accent-soft)]"
         }`}
         onClick={() => {
           setIsOpen((open) => !open);
@@ -166,10 +205,14 @@ export function WorkspaceSwitcher({
         ref={buttonRef}
         type="button"
       >
-        <span className="min-w-0 flex-1 truncate text-[15px] leading-5 font-semibold text-white">
+        <span className="min-w-0 flex-1 truncate text-[14px] leading-5 font-semibold text-white">
           {visibleOrganization?.name ?? ""}
         </span>
-        <span className={`shrink-0 transition ${isOpen ? "text-white" : "text-[#cfcfcf]"}`}>
+        <span
+          className={`shrink-0 transition ${
+            isOpen ? "text-white" : "text-[var(--track-text-muted)]"
+          }`}
+        >
           <TrackingIcon
             className={`size-4 transition ${isOpen ? "rotate-180" : ""}`}
             name="chevron-down"
@@ -188,8 +231,9 @@ export function WorkspaceSwitcher({
                 setCreateDialogOpen(true);
               }}
               onSelectOrganization={handleSelectOrganization}
+              onSetDefault={onSetDefault}
               organization={visibleOrganization}
-              organizations={organizations}
+              organizations={displayedOrganizations}
               panelPosition={panelPosition}
               panelRef={panelRef}
             />,
@@ -224,12 +268,54 @@ export function WorkspaceSwitcher({
   );
 }
 
+function mergeOrganizations(
+  organizations: SessionOrganizationViewModel[],
+  optimisticOrganization: SessionOrganizationViewModel | null,
+): SessionOrganizationViewModel[] {
+  if (!optimisticOrganization) {
+    return organizations;
+  }
+
+  if (
+    organizations.some((entry) =>
+      matchesOrganization(
+        entry,
+        optimisticOrganization.defaultWorkspaceId,
+        optimisticOrganization.name,
+      ),
+    )
+  ) {
+    return organizations;
+  }
+
+  return [
+    ...organizations.map((entry) => ({
+      ...entry,
+      isCurrent: false,
+    })),
+    optimisticOrganization,
+  ];
+}
+
+function matchesOrganization(
+  organization: SessionOrganizationViewModel,
+  workspaceId: number | null,
+  name: string,
+): boolean {
+  if (workspaceId != null && organization.defaultWorkspaceId === workspaceId) {
+    return true;
+  }
+
+  return organization.name === name;
+}
+
 function OrganizationOptionsPanel({
   inviteMembersPath,
   listboxId,
   managePath,
   onCreateOrganization,
   onSelectOrganization,
+  onSetDefault,
   organization,
   organizations,
   panelPosition,
@@ -240,6 +326,7 @@ function OrganizationOptionsPanel({
   managePath?: string;
   onCreateOrganization: () => void;
   onSelectOrganization: (organization: SessionOrganizationViewModel) => void;
+  onSetDefault?: (workspaceId: number) => void;
   organization: SessionOrganizationViewModel | null;
   organizations: SessionOrganizationViewModel[];
   panelPosition: FloatingPanelPosition;
@@ -247,10 +334,11 @@ function OrganizationOptionsPanel({
 }): ReactElement {
   const planName = organization?.planName ? `${organization.planName} plan` : "Free plan";
   const memberCount = organization?.userCount ?? 1;
+  const [hoveredOrganizationId, setHoveredOrganizationId] = useState<number | null>(null);
 
   return (
     <div
-      className="fixed z-50 rounded-[18px] border border-[#4a4a4a] bg-[#1f1f1f] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.48)]"
+      className="fixed z-50 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.48)]"
       ref={(node) => {
         panelRef.current = node;
       }}
@@ -262,11 +350,11 @@ function OrganizationOptionsPanel({
     >
       <div className="space-y-5">
         <div className="flex items-center gap-5">
-          <div className="flex size-[74px] items-center justify-center rounded-full border border-[#4a4a4a] text-[#7f7f7f]">
+          <div className="flex size-[74px] items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-soft)]">
             <TrackingIcon className="size-8" name="overview" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[18px] font-semibold text-white">
+            <h2 className="truncate text-[16px] font-semibold leading-[23px] text-white">
               {organization?.name ?? ""}
             </h2>
           </div>
@@ -275,14 +363,14 @@ function OrganizationOptionsPanel({
         <div className="grid gap-4 sm:grid-cols-2">
           {managePath ? (
             <Link
-              className="flex h-16 items-center justify-center gap-3 rounded-[14px] border border-[#5a5a5a] text-[16px] font-semibold text-white transition hover:bg-[#2a2a2a]"
+              className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
               to={managePath}
             >
               <TrackingIcon className="size-5" name="settings" />
               <span>Manage</span>
             </Link>
           ) : (
-            <div className="flex h-16 items-center justify-center gap-3 rounded-[14px] border border-[#5a5a5a] text-[16px] font-semibold text-[#8e8e8e]">
+            <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
               <TrackingIcon className="size-5" name="settings" />
               <span>Manage</span>
             </div>
@@ -290,27 +378,27 @@ function OrganizationOptionsPanel({
 
           {inviteMembersPath ? (
             <Link
-              className="flex h-16 items-center justify-center gap-3 rounded-[14px] border border-[#5a5a5a] text-[16px] font-semibold text-white transition hover:bg-[#2a2a2a]"
+              className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
               to={inviteMembersPath}
             >
               <TrackingIcon className="size-5" name="members" />
               <span>Invite members</span>
             </Link>
           ) : (
-            <div className="flex h-16 items-center justify-center gap-3 rounded-[14px] border border-[#5a5a5a] text-[16px] font-semibold text-[#8e8e8e]">
+            <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
               <TrackingIcon className="size-5" name="members" />
               <span>Invite members</span>
             </div>
           )}
         </div>
 
-        <div className="border-t border-[#4a4a4a] pt-5 text-[14px] leading-7 text-[#c8c8c8]">
+        <div className="border-t border-[var(--track-border)] pt-5 text-[14px] leading-6 text-[var(--track-text-muted)]">
           Your organization is currently on {planName} with {memberCount} member
           {memberCount === 1 ? "" : "s"}.
         </div>
 
-        <div className="border-t border-[#4a4a4a] pt-5">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#a8a8a8]">
+        <div className="border-t border-[var(--track-border)] pt-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             Organizations
           </p>
           <ul
@@ -321,42 +409,70 @@ function OrganizationOptionsPanel({
           >
             {organizations.map((entry) => {
               const selected = entry.isCurrent;
+              const showSetDefault =
+                !entry.isDefault && entry.defaultWorkspaceId != null && onSetDefault != null;
 
               return (
                 <li aria-selected={selected} key={entry.id} role="option">
-                  <button
-                    className="flex w-full items-center gap-4 rounded-[12px] px-2 py-3 text-left transition hover:bg-[#2b2b2b]"
-                    onClick={() => {
-                      onSelectOrganization(entry);
+                  <div
+                    className="flex items-center gap-3 rounded-[8px] px-2 py-3 transition hover:bg-[var(--track-row-hover)]"
+                    onMouseEnter={() => {
+                      setHoveredOrganizationId(entry.id);
                     }}
-                    type="button"
+                    onMouseLeave={() => {
+                      setHoveredOrganizationId((current) =>
+                        current === entry.id ? null : current,
+                      );
+                    }}
                   >
-                    <span className="flex size-7 shrink-0 items-center justify-center text-[#7f7f7f]">
-                      <TrackingIcon className="size-5" name="overview" />
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-[16px] font-semibold text-white">
-                      {entry.name}
-                    </span>
-                    {selected ? (
-                      <>
-                        <span className="rounded-full border border-[#5a5a5a] px-3 py-1 text-[12px] font-semibold text-[#d8d8d8]">
+                    <button
+                      className="flex min-w-0 flex-1 items-center gap-4 text-left"
+                      onClick={() => {
+                        onSelectOrganization(entry);
+                      }}
+                      type="button"
+                    >
+                      <span className="flex size-7 shrink-0 items-center justify-center text-[var(--track-text-soft)]">
+                        <TrackingIcon className="size-5" name="overview" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-white">
+                        {entry.name}
+                      </span>
+                    </button>
+                    <div className="ml-auto flex shrink-0 items-center gap-3">
+                      {entry.isDefault ? (
+                        <span className="rounded-full border border-[var(--track-border)] px-3 py-1 text-[11px] font-semibold text-[var(--track-text-muted)]">
                           Default
                         </span>
-                        <span className="text-[#d98ad0]">
-                          <TrackingIcon className="size-4" name="chevron-down" />
+                      ) : null}
+                      {showSetDefault && hoveredOrganizationId === entry.id ? (
+                        <button
+                          aria-label={`Set to default ${entry.name}`}
+                          className="text-[12px] font-semibold text-[var(--track-accent)] transition hover:text-white"
+                          onClick={() => {
+                            onSetDefault(entry.defaultWorkspaceId!);
+                          }}
+                          type="button"
+                        >
+                          Set to default
+                        </button>
+                      ) : null}
+                      {selected ? (
+                        <span className="text-[var(--track-accent)]">
+                          <span className="text-[12px] font-semibold">Selected</span>
                         </span>
-                      </>
-                    ) : null}
-                  </button>
+                      ) : null}
+                    </div>
+                  </div>
                 </li>
               );
             })}
           </ul>
         </div>
 
-        <div className="border-t border-[#4a4a4a] pt-5">
+        <div className="border-t border-[var(--track-border)] pt-5">
           <button
-            className="text-[18px] font-semibold text-white transition hover:text-[#f0d8eb]"
+            className="text-[16px] font-semibold leading-[23px] text-white transition hover:text-[var(--track-accent-text)]"
             onClick={onCreateOrganization}
             type="button"
           >

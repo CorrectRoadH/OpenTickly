@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --track-canvas: #474747;
+  --track-canvas: #1b1b1b;
   --track-black: #000000;
-  --track-panel: #101010;
-  --track-surface: #1f1f1f;
-  --track-surface-muted: #242424;
-  --track-surface-raised: #2a2a2a;
-  --track-border: #363636;
+  --track-panel: #0d0d0d;
+  --track-surface: #1b1b1b;
+  --track-surface-muted: #232323;
+  --track-surface-raised: #242424;
+  --track-border: #3a3a3a;
   --track-border-soft: rgba(255, 255, 255, 0.08);
   --track-text: #ffffff;
   --track-text-muted: #a4a4a4;
-  --track-text-soft: #7f7f7f;
-  --track-accent: #db84d0;
-  --track-accent-soft: #52284d;
-  --track-accent-text: #f3c9eb;
-  --track-button: #d888cc;
+  --track-text-soft: #999999;
+  --track-accent: #e57bd9;
+  --track-accent-soft: #472443;
+  --track-accent-text: #f7d0f0;
+  --track-button: #e57bd9;
   --track-grid: #2c2c2c;
   --track-row-hover: #232323;
   color: var(--track-text);
   background: var(--track-canvas);
-  font-family: Inter, "Avenir Next", "Segoe UI", sans-serif;
+  font-family: Inter, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

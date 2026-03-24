@@ -9,6 +9,11 @@ import {
   useUpdateWorkspaceSettingsMutation,
   useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
+import {
+  ShellPageHeader,
+  ShellSurfaceCard,
+  ShellToast,
+} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import type { WorkspaceSettingsSection } from "../../shared/url-state/workspace-settings-location.ts";
 
 type WorkspaceSettingsPageProps = {
@@ -55,8 +60,8 @@ export function WorkspaceSettingsPage({
   }, [toast]);
 
   return (
-    <div className="min-h-full bg-[#151515]" data-testid="workspace-settings-page">
-      <div className="mx-auto max-w-[1384px]">
+    <div className="min-h-full bg-[var(--track-surface)]" data-testid="workspace-settings-page">
+      <div className="max-w-[1384px]">
         <SettingsHeader activeSection={section} workspaceId={workspaceId} />
         <div className="px-5 pb-10 pt-5">
           {settingsQuery.isPending ? (
@@ -115,7 +120,7 @@ export function WorkspaceSettingsPage({
           ) : null}
         </div>
       </div>
-      {toast ? <SettingsToast {...toast} /> : null}
+      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }
@@ -125,20 +130,24 @@ function SettingsHeader(props: {
   workspaceId: number;
 }): ReactElement {
   return (
-    <header className="flex h-[66px] items-center border-b border-[#3a3a3a] bg-[#1b1b1b] px-5">
-      <div className="pr-5 text-[16px] font-semibold leading-[20.8px] text-[#fafafa]">Settings</div>
-      <nav className="flex flex-wrap items-center gap-1">
+    <header className="border-b border-[var(--track-border)] bg-[var(--track-surface)]">
+      <ShellPageHeader title="Settings" />
+      <nav className="flex flex-wrap items-center gap-1 px-5 pb-3">
         {settingsTabs.map((tab) => (
           <Link
             className={`rounded-[8px] px-3 py-[6px] text-[14px] font-semibold leading-5 ${
-              props.activeSection === tab.id ? "text-[#cd7fc2]" : "text-[#999] hover:text-[#fafafa]"
+              props.activeSection === tab.id
+                ? "text-[var(--track-accent)]"
+                : "text-[var(--track-text-soft)] hover:text-white"
             }`}
             key={tab.id}
             to={buildWorkspaceSettingsPathWithSection(props.workspaceId, tab.id)}
           >
             <span
               className={`border-b-2 pb-[2px] ${
-                props.activeSection === tab.id ? "border-[#cd7fc2]" : "border-transparent"
+                props.activeSection === tab.id
+                  ? "border-[var(--track-accent)]"
+                  : "border-transparent"
               }`}
             >
               {tab.label}
@@ -156,39 +165,13 @@ function SettingsState(props: {
   tone: "empty" | "error" | "loading";
 }): ReactElement {
   return (
-    <div className="rounded-[8px] border border-[#3a3a3a] bg-[#1b1b1b]">
+    <ShellSurfaceCard>
       <AppSurfaceState
-        className="border-none bg-transparent text-[#d8d8d8]"
+        className="border-none bg-transparent text-[var(--track-text-muted)]"
         description={props.description}
         title={props.title}
         tone={props.tone}
       />
-    </div>
-  );
-}
-
-function SettingsToast(props: {
-  description: string;
-  title: string;
-  tone: "error" | "success";
-}): ReactElement {
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 min-w-[420px] rounded-[16px] border px-8 py-7 shadow-[0px_10px_30px_rgba(0,0,0,0.35)] ${
-        props.tone === "success" ? "border-[#3a3a3a] bg-[#1d1d1d]" : "border-[#6a2e41] bg-[#22161b]"
-      }`}
-      data-testid="workspace-settings-toast"
-    >
-      <p
-        className={`text-[28px] font-semibold leading-[1.1] ${
-          props.tone === "success" ? "text-[#12b76a]" : "text-[#ff6b8f]"
-        }`}
-      >
-        {props.title}
-      </p>
-      <p className="mt-3 text-[24px] font-semibold leading-[1.2] text-[#f5f5f5]">
-        {props.description}
-      </p>
-    </div>
+    </ShellSurfaceCard>
   );
 }

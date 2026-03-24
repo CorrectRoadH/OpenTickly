@@ -63,9 +63,9 @@ export function TagsPage(): ReactElement {
     <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="tags-page">
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-medium text-white">Tags</h1>
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Tags</h1>
           <button
-            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
+            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
             data-testid="tags-create-button"
             onClick={() => setCreateDialogOpen(true)}
             type="button"
@@ -81,7 +81,7 @@ export function TagsPage(): ReactElement {
           <label className="relative shrink-0">
             <select
               aria-label="Tag status filter"
-              className="h-7 appearance-none rounded-md border border-[var(--track-border)] bg-[#171717] px-3 pr-8 text-[11px] text-white"
+              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
               onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
               value={statusFilter}
             >
@@ -93,20 +93,20 @@ export function TagsPage(): ReactElement {
               <TrackingIcon className="size-3" name="chevron-down" />
             </span>
           </label>
-          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <DirectoryFilterChip label="Tag name" />
             <DirectoryFilterChip label="Status" />
           </div>
           {status ? (
-            <span className="ml-auto text-[11px] text-[var(--track-accent-text)]">{status}</span>
+            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
           ) : null}
         </div>
       </header>
 
       {filteredTags.length > 0 ? (
         <div data-testid="tags-list">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <div className="flex h-[34px] items-center">
               <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
             </div>

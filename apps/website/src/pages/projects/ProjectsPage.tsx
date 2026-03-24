@@ -124,9 +124,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-medium text-white">Projects</h1>
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Projects</h1>
           <button
-            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
+            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
             data-testid="projects-create-button"
             onClick={() => setCreateDialogOpen(true)}
             type="button"
@@ -142,7 +142,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           <label className="relative">
             <select
               aria-label="Project status filter"
-              className="h-7 appearance-none rounded-md border border-[var(--track-border)] bg-[#171717] px-3 pr-8 text-[11px] text-white"
+              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
               onChange={(event) => void navigateToStatus(event.target.value as ProjectStatusFilter)}
               value={statusFilter}
             >
@@ -154,7 +154,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               <TrackingIcon className="size-3" name="chevron-down" />
             </span>
           </label>
-          <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <DirectoryFilterChip label="Client" />
             <DirectoryFilterChip label="Member" />
@@ -162,7 +162,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             <DirectoryFilterChip disabled label="Template" />
           </div>
           {statusMessage ? (
-            <span className="ml-auto text-[11px] text-[var(--track-accent-text)]">
+            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
               {statusMessage}
             </span>
           ) : null}
@@ -179,7 +179,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       {!projectsQuery.isPending && !projectsQuery.isError ? (
         projects.length > 0 ? (
           <div data-testid="projects-list">
-            <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               <DirectoryHeaderCell />
               <DirectoryHeaderCell>Project</DirectoryHeaderCell>
               <DirectoryHeaderCell>Client</DirectoryHeaderCell>

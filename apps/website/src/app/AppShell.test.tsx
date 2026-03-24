@@ -8,6 +8,9 @@ const mockUseRouterState = vi.fn();
 const mockUseSession = vi.fn();
 const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
+const mockUseProfileQuery = vi.fn();
+const mockUseUpdateProfileMutation = vi.fn();
+const mockUseUpdateWebSessionMutation = vi.fn();
 const mockShellNavigationItems = vi.fn();
 
 vi.mock("@tanstack/react-router", () => ({
@@ -34,6 +37,9 @@ vi.mock("../shared/session/session-context.tsx", () => ({
 
 vi.mock("../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
+  useProfileQuery: () => mockUseProfileQuery(),
+  useUpdateProfileMutation: () => mockUseUpdateProfileMutation(),
+  useUpdateWebSessionMutation: () => mockUseUpdateWebSessionMutation(),
 }));
 
 vi.mock("../shared/lib/shell-navigation.ts", () => ({
@@ -70,6 +76,18 @@ describe("AppShell", () => {
     });
     mockUseCurrentTimeEntryQuery.mockReturnValue({
       data: undefined,
+    });
+    mockUseProfileQuery.mockReturnValue({
+      data: {
+        email: "alex@example.com",
+        fullname: "Alex North",
+      },
+    });
+    mockUseUpdateProfileMutation.mockReturnValue({
+      mutateAsync: vi.fn(),
+    });
+    mockUseUpdateWebSessionMutation.mockReturnValue({
+      mutateAsync: vi.fn(),
     });
     mockShellNavigationItems.mockReturnValue([
       {

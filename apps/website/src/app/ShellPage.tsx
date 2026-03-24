@@ -8,12 +8,12 @@ type ShellPageProps = {
 export function ShellPage({
   children,
   className,
-  widthClassName = "max-w-[1040px]",
+  widthClassName = "max-w-none",
   ...props
 }: ShellPageProps): ReactElement {
   return (
-    <div className={`min-h-full px-6 py-6 ${className ?? ""}`} {...props}>
-      <div className={`mx-auto w-full ${widthClassName}`}>{children}</div>
+    <div className={`min-h-full px-5 py-5 ${className ?? ""}`} {...props}>
+      <div className={`w-full ${widthClassName}`}>{children}</div>
     </div>
   );
 }

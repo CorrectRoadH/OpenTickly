@@ -47,9 +47,9 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
     <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="tasks-page">
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-medium text-white">Tasks</h1>
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Tasks</h1>
           <button
-            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
             data-testid="tasks-create-button"
             disabled={!hasProjectScope}
             onClick={() => setComposerOpen((value) => !value)}
@@ -59,12 +59,12 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
             New task
           </button>
         </div>
-        <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
           <span>Filters:</span>
           <FilterChip label={hasProjectScope ? `Project ${projectId}` : "Project required"} />
           <FilterChip label="Task name" />
           {status ? (
-            <span className="ml-auto text-[11px] normal-case tracking-normal text-[var(--track-accent-text)]">
+            <span className="ml-auto text-[12px] normal-case tracking-normal text-[var(--track-accent-text)]">
               {status}
             </span>
           ) : null}
@@ -98,21 +98,21 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
             Task name
           </label>
           <input
-            className="h-9 w-[320px] rounded-md border border-[var(--track-border)] bg-[#181818] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            className="h-9 w-[320px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
             id="task-name"
             onChange={(event) => setTaskName(event.target.value)}
             placeholder="Task name"
             value={taskName}
           />
           <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            className="flex h-9 items-center rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black disabled:opacity-60"
             disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending}
             type="submit"
           >
             Save task
           </button>
           <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            className="flex h-9 items-center rounded-[8px] border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
             onClick={() => setComposerOpen(false)}
             type="button"
           >
@@ -123,7 +123,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
 
       {tasks.length > 0 ? (
         <div data-testid="tasks-list">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_130px_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_130px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <div className="flex h-[34px] items-center">
               <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
             </div>
@@ -138,7 +138,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
               key={task.id}
             >
               <div className="flex h-[54px] items-center">
-                <span className="size-2 rounded-full bg-[#00b8ff]" />
+                <span className="size-2 rounded-full bg-[var(--track-accent)]" />
               </div>
               <div className="flex h-[54px] items-center overflow-hidden">
                 <span className="truncate text-white">{task.name}</span>
@@ -189,7 +189,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
 
 function FilterChip({ label }: { label: string }) {
   return (
-    <span className="flex h-[26px] items-center rounded-md border border-[var(--track-border)] px-2.5 text-[11px] normal-case tracking-normal text-white">
+    <span className="flex h-[26px] items-center rounded-[8px] border border-[var(--track-border)] px-2.5 text-[11px] normal-case tracking-normal text-white">
       {label}
     </span>
   );

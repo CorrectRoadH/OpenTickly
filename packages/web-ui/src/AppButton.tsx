@@ -7,11 +7,12 @@ export function AppButton(props: ButtonProps) {
       overrides={{
         BaseButton: {
           style: {
-            backgroundColor: "#c792d1",
-            borderColor: "#c792d1",
-            color: "#18181b",
+            backgroundColor: "var(--track-button)",
+            borderColor: "var(--track-button)",
+            color: "#121212",
             fontWeight: 600,
-            borderRadius: "0.75rem",
+            borderRadius: "8px",
+            minHeight: "36px",
           },
         },
       }}

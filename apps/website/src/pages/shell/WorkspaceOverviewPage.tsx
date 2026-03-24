@@ -59,84 +59,88 @@ export function WorkspaceOverviewPage(): ReactElement {
 
   return (
     <div
-      className="relative overflow-hidden bg-[#161616] px-3 py-4 text-white md:px-4 lg:px-5"
+      className="relative overflow-hidden bg-[var(--track-surface)] px-5 py-5 text-[var(--track-text)]"
       data-testid="workspace-overview-page"
     >
       <OverviewBackdrop />
 
-      <div className="relative z-10 flex w-full max-w-[654px] flex-col gap-[10px]">
-        <div className="flex flex-col gap-[6px] lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-[3px]">
-            <h1 className="text-[20px] font-medium leading-[28px] tracking-[-0.02em] text-white">
-              Admin Overview
-            </h1>
-            <p className="text-[11px] leading-[16px] text-[#979797]">
+      <div
+        className="relative z-10 flex w-full flex-col gap-5"
+        data-testid="workspace-overview-content"
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-[21px] font-semibold leading-[30px] text-white">Admin Overview</h1>
+            <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
               Set up your organization and keep your team on track
             </p>
           </div>
-          <div className="flex flex-col items-start gap-[6px] text-[8px] uppercase tracking-[0.04em] text-[#b8b8b8] lg:items-end">
-            <div className="flex h-[12px] flex-wrap items-center gap-[6px]">
-              <span className="normal-case tracking-normal text-[#cfcfcf]">
+          <div className="flex flex-col items-start gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)] lg:items-end">
+            <div className="flex min-h-9 flex-wrap items-center gap-2">
+              <span className="normal-case font-medium tracking-normal text-white">
                 Set as default view
               </span>
-              <div className="flex h-[12px] w-[24px] items-center rounded-full bg-[#2f2f2f] px-[1px]">
-                <div className="size-[10px] rounded-full bg-[#d8d8d8]" />
+              <div className="flex h-[18px] w-[32px] items-center rounded-full bg-[var(--track-border)] px-[2px]">
+                <div className="size-[14px] rounded-full bg-white" />
               </div>
-              <span className="text-[#e57bd9]">Refresh charts</span>
-              <span className="text-[#7f7f7f]">0</span>
+              <span className="text-[var(--track-accent)]">Refresh charts</span>
+              <span className="text-[var(--track-text-soft)]">0</span>
             </div>
-            <div className="flex h-[12px] items-center gap-[9px]">
-              <div className="h-[12px] w-[80px] rounded-[4px] bg-[#0f0f0f] shadow-[inset_0_0_0_1px_#2b2b2b]" />
-              <span className="text-[#c88ec0]">View all plans</span>
+            <div className="flex min-h-9 items-center gap-3">
+              <div className="h-[18px] w-[80px] rounded-[8px] bg-[var(--track-panel)] shadow-[inset_0_0_0_1px_var(--track-border)]" />
+              <span className="text-[var(--track-accent)]">View all plans</span>
             </div>
           </div>
         </div>
 
-        <div className="grid items-start gap-[10px] lg:grid-cols-[minmax(0,430px)_214px]">
-          <div className="flex flex-col gap-[10px]">
-            <OverviewSurface className="bg-[#472443] px-[14px] py-[11px] lg:min-h-[40px]">
+        <div
+          className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+          data-testid="workspace-overview-grid"
+        >
+          <div className="flex flex-col gap-5">
+            <OverviewSurface className="bg-[var(--track-accent-soft)] px-5 py-4">
               <div className="flex items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-medium leading-[16px] tracking-[-0.01em] text-white">
+                  <p className="text-[14px] font-semibold leading-5 text-white">
                     Unlock your admin overview
                   </p>
-                  <p className="text-[10px] leading-[14px] text-[#cca2c6]">
+                  <p className="text-[12px] leading-4 text-[var(--track-accent-text)]">
                     Finish the steps below to see project and team activity.
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-[8px]">
-                  <span className="text-[10px] font-medium leading-none text-white">
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-[12px] font-semibold leading-none text-white">
                     {overviewProgressPercent}%
                   </span>
-                  <div className="h-[3px] w-[54px] rounded-full bg-[#684863]">
+                  <div className="h-1 w-[72px] rounded-full bg-[#684863]">
                     <div
-                      className="h-[3px] rounded-full bg-[#d98ad0]"
+                      className="h-1 rounded-full bg-[var(--track-accent)]"
                       style={{ width: `${overviewProgressPercent}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-[#d0a6ca]">⌄</span>
+                  <span className="text-[12px] text-[var(--track-accent-text)]">⌄</span>
                 </div>
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[219px]">
-              <div className="flex h-full flex-col gap-[10px]">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[240px]">
+              <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
                     View reports
                   </span>
                 </div>
-                <div className="flex-1 border-t border-[#343434] pt-[12px]">
+                <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <div className="overflow-x-auto">
-                    <div className="grid min-w-[394px] grid-cols-[30px_minmax(0,1fr)] gap-[8px]">
+                    <div className="grid min-w-[394px] grid-cols-[30px_minmax(0,1fr)] gap-2">
                       <div className="relative h-[132px]">
                         <div className="absolute inset-0 flex flex-col justify-between">
                           {weekSummary.axisLabels.map((axis) => (
                             <span
-                              className="pr-1 text-[8px] leading-none font-medium text-[#7e7e7e]"
+                              className="pr-1 text-[11px] leading-none text-[var(--track-text-soft)]"
                               key={axis}
                             >
                               {axis}
@@ -145,12 +149,12 @@ export function WorkspaceOverviewPage(): ReactElement {
                         </div>
                       </div>
 
-                      <div className="space-y-[5px]">
+                      <div className="space-y-1.5">
                         <div className="relative h-[132px]">
                           <div className="absolute inset-0 flex flex-col justify-between">
                             {weekSummary.axisLabels.map((axis) => (
                               <div
-                                className="border-b border-dashed border-[#393939]"
+                                className="border-b border-dashed border-[var(--track-border)]"
                                 key={`${axis}-line`}
                               />
                             ))}
@@ -165,10 +169,10 @@ export function WorkspaceOverviewPage(): ReactElement {
                                 <div className="relative h-full w-[26px] max-w-full">
                                   {day.totalSeconds > 0 ? (
                                     <div
-                                      className="absolute bottom-0 left-1/2 w-[24px] max-w-full -translate-x-1/2 rounded-t-[3px] bg-[#c054be]"
+                                      className="absolute bottom-0 left-1/2 w-[24px] max-w-full -translate-x-1/2 rounded-t-[3px] bg-[var(--track-accent)]"
                                       style={{ height: `${day.heightPercent}%` }}
                                     >
-                                      <span className="absolute -top-[14px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-medium text-[#7e7e7e]">
+                                      <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium text-[var(--track-text-soft)]">
                                         {formatClockDuration(day.totalSeconds)}
                                       </span>
                                     </div>
@@ -179,10 +183,10 @@ export function WorkspaceOverviewPage(): ReactElement {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-7 gap-[6px] border-t border-[#454545] px-[2px] pt-[5px]">
+                        <div className="grid grid-cols-7 gap-[6px] border-t border-[var(--track-border)] px-[2px] pt-1.5">
                           {weekSummary.days.map((day) => (
                             <span
-                              className="text-center text-[8px] font-medium leading-[12px] text-[#b7b7b7]"
+                              className="text-center text-[11px] font-medium leading-4 text-[var(--track-text-muted)]"
                               key={`${day.label}-tick`}
                             >
                               {day.label}
@@ -194,25 +198,25 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-[6px] pt-[2px] text-[8px] text-[#d0d0d0]">
-                  <span className="inline-block h-[4px] w-[18px] rounded-full bg-[#c054be]" />
+                <div className="flex items-center justify-center gap-1.5 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
+                  <span className="inline-block h-[4px] w-[18px] rounded-full bg-[var(--track-accent)]" />
                   <span>Non-billable</span>
                 </div>
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[176px]">
-              <div className="flex h-full flex-col gap-[10px]">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[196px]">
+              <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
                     View team activity
                   </span>
                 </div>
-                <div className="flex-1 border-t border-[#2f2f2f] pt-[9px]">
-                  <div className="grid gap-[12px] lg:grid-cols-[108px_minmax(0,1fr)_92px]">
+                <div className="flex-1 border-t border-[var(--track-border)] pt-4">
+                  <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
                     <StatRing
                       accent="#d67ad0"
                       percent={teamActivity.coveragePercent}
@@ -221,26 +225,26 @@ export function WorkspaceOverviewPage(): ReactElement {
                       subtitle={`${teamActivity.activeCount} out of ${memberCount} member${memberCount === 1 ? "" : "s"} tracking`}
                       title={`${teamActivity.coveragePercent}%`}
                     />
-                    <div className="space-y-[6px]">
-                      <p className="text-[8px] font-medium uppercase tracking-[0.04em] text-[#bcbcbc]">
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
                         Tracking
                       </p>
                       {teamActivity.activeMembers.length > 0 ? (
-                        <div className="space-y-[4px]">
+                        <div className="space-y-2">
                           {teamActivity.activeMembers.slice(0, 2).map((member, index) => (
                             <div
-                              className="flex items-center gap-[6px]"
+                              className="flex items-center gap-2"
                               key={`${member.user_id ?? index}`}
                             >
                               <span
-                                className="inline-flex size-[18px] items-center justify-center rounded-full text-[8px] font-semibold text-[#1b1b1b]"
+                                className="inline-flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-[var(--track-surface)]"
                                 style={{ backgroundColor: memberTint(index + 2) }}
                               >
                                 {initialsForMember(member)}
                               </span>
-                              <div className="min-w-0 text-[10px] leading-[13px]">
+                              <div className="min-w-0 text-[14px] leading-5">
                                 <p className="truncate text-white">{memberLabel(member)}</p>
-                                <p className="text-[#a4a4a4]">
+                                <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
                                   {formatClockDuration(member.duration ?? 0)}
                                 </p>
                               </div>
@@ -251,18 +255,18 @@ export function WorkspaceOverviewPage(): ReactElement {
                         <OverviewEmptyState message="No active members yet." />
                       )}
                     </div>
-                    <div className="space-y-[6px]">
-                      <p className="text-[8px] font-medium uppercase tracking-[0.04em] text-[#bcbcbc]">
+                    <div className="space-y-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
                         Not tracking
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-[3px] pt-[12px]">
-                    <p className="text-[10px] leading-[16px] text-[#cfcfcf]">
+                  <div className="space-y-1 pt-4">
+                    <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
                       Bring your team to see the full picture
                     </p>
                     <button
-                      className="inline-flex h-6 items-center bg-transparent px-0 text-[9px] font-semibold uppercase tracking-[0.04em] text-white"
+                      className="inline-flex h-6 items-center bg-transparent px-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]"
                       type="button"
                     >
                       Invite teammates
@@ -273,34 +277,34 @@ export function WorkspaceOverviewPage(): ReactElement {
             </OverviewSurface>
           </div>
 
-          <div className="flex flex-col gap-[10px]">
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[138px]">
-              <div className="flex h-full flex-col gap-[9px]">
+          <div className="flex flex-col gap-5">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[168px]">
+              <div className="flex h-full flex-col gap-3">
                 <div className="flex items-start justify-between gap-3">
                   <p className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">
                     {memberCount}
                   </p>
                   <MemberAvatarCluster members={teamActivity.activeMembers} />
                 </div>
-                <div className="space-y-[3px]">
-                  <p className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                <div className="space-y-1">
+                  <p className="text-[16px] font-semibold leading-[23px] text-white">
                     Members in your organization
                   </p>
-                  <p className="max-w-[165px] text-[10px] leading-[14px] text-[#a4a4a4]">
+                  <p className="max-w-[240px] text-[14px] leading-5 text-[var(--track-text-muted)]">
                     Your insights are incomplete if you&apos;re tracking alone. Invite your team to
                     see the full picture
                   </p>
                 </div>
-                <div className="mt-auto space-y-[7px]">
+                <div className="mt-auto space-y-2">
                   <button
-                    className="inline-flex h-[22px] items-center rounded-[4px] bg-[#df8bd5] px-[13px] text-[9px] font-semibold text-[#1b1b1b]"
+                    className="inline-flex h-9 items-center rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
                     type="button"
                   >
                     Add teammates
                   </button>
-                  <p className="text-[10px] leading-[14px] text-[#a4a4a4]">
+                  <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
                     Bringing on a large team?{" "}
-                    <span className="text-[#e4bddf] underline decoration-[#e4bddf]/40 underline-offset-2">
+                    <span className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2">
                       book a demo
                     </span>
                   </p>
@@ -308,28 +312,26 @@ export function WorkspaceOverviewPage(): ReactElement {
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[132px]">
-              <div className="flex h-full flex-col gap-[9px]">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[156px]">
+              <div className="flex h-full flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
                     View reports
                   </span>
                 </div>
                 {topProjects.length > 0 ? (
-                  <div className="space-y-[6px] border-t border-[#2f2f2f] pt-[10px]">
+                  <div className="space-y-2 border-t border-[var(--track-border)] pt-3">
                     {topProjects.map((project) => (
-                      <div className="flex items-center gap-[7px] text-[10px]" key={project.name}>
+                      <div className="flex items-center gap-2 text-[14px]" key={project.name}>
                         <span
                           className="size-[5px] shrink-0 rounded-full"
                           style={{ backgroundColor: project.color }}
                         />
-                        <span className="min-w-0 flex-1 truncate text-[#f0f0f0]">
-                          {project.name}
-                        </span>
-                        <span className="text-[#d5d5d5]">
+                        <span className="min-w-0 flex-1 truncate text-white">{project.name}</span>
+                        <span className="text-[12px] leading-4 text-[var(--track-text-muted)]">
                           {formatClockDuration(project.totalSeconds)}
                         </span>
                       </div>
@@ -341,12 +343,12 @@ export function WorkspaceOverviewPage(): ReactElement {
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[151px]">
-              <div className="flex h-full flex-col gap-[10px]">
-                <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[170px]">
+              <div className="flex h-full flex-col gap-4">
+                <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                   Time tracked to projects
                 </h2>
-                <div className="flex-1 border-t border-[#2f2f2f] pt-[9px]">
+                <div className="flex-1 border-t border-[var(--track-border)] pt-3">
                   <StatRing
                     accent="#f0c05d"
                     percent={projectCoverage.percent}
@@ -359,7 +361,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   />
                 </div>
                 <button
-                  className="inline-flex h-6 items-center px-0 text-[9px] font-semibold uppercase tracking-[0.04em] text-[#c88ec0]"
+                  className="inline-flex h-6 items-center px-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]"
                   type="button"
                 >
                   Add member to project
@@ -367,20 +369,18 @@ export function WorkspaceOverviewPage(): ReactElement {
               </div>
             </OverviewSurface>
 
-            <OverviewSurface className="px-[12px] py-[11px] lg:min-h-[119px]">
-              <div className="flex h-full flex-col gap-[9px]">
+            <OverviewSurface className="px-5 py-4 lg:min-h-[150px]">
+              <div className="flex h-full flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[13px] font-medium leading-[20px] tracking-[-0.01em] text-white">
-                    FAQ
-                  </h2>
-                  <span className="text-[9px] uppercase tracking-[0.04em] text-[#c88ec0]">
+                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">FAQ</h2>
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
                     View more ↗
                   </span>
                 </div>
-                <p className="border-b border-[#2f2f2f] pb-[7px] text-[10px] leading-[14px] text-[#a4a4a4]">
+                <p className="border-b border-[var(--track-border)] pb-2 text-[14px] leading-5 text-[var(--track-text-muted)]">
                   The stuff most admins ask us
                 </p>
-                <div className="space-y-[2px] text-[10px] leading-[14px] text-[#d0d0d0]">
+                <div className="space-y-1 text-[14px] leading-5 text-[var(--track-text)]">
                   <p>How should I set up my workspace?</p>
                   <p>How do roles and permissions work?</p>
                   <p>How do I set billable rates?</p>
@@ -392,9 +392,9 @@ export function WorkspaceOverviewPage(): ReactElement {
           </div>
         </div>
 
-        <div className="pt-[18px] text-center text-[10px] text-[#9e9e9e]">
+        <div className="pt-5 text-center text-[12px] text-[var(--track-text-soft)]">
           <span>How could this be more useful for you? </span>
-          <span className="text-[#d7a2d1] underline decoration-[#d7a2d1]/40 underline-offset-2">
+          <span className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2">
             Let us know.
           </span>
         </div>
@@ -411,7 +411,9 @@ function OverviewSurface({
   className?: string;
 }): ReactElement {
   return (
-    <section className={`rounded-[6px] border border-[#313131] bg-[#1d1d1d] ${className}`}>
+    <section
+      className={`h-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] ${className}`}
+    >
       {children}
     </section>
   );
@@ -434,7 +436,7 @@ function MemberAvatarCluster({ members }: { members: ModelsMostActiveUser[] }): 
 
         return (
           <span
-            className="absolute inline-flex items-center justify-center rounded-full border border-[#1d1d1d] font-semibold text-[#1b1b1b]"
+            className="absolute inline-flex items-center justify-center rounded-full border border-[var(--track-surface)] font-semibold text-[var(--track-surface)]"
             key={`${member.user_id ?? index}`}
             style={{
               backgroundColor: memberTint(index),
@@ -471,7 +473,7 @@ function StatRing({
   const sweep = Math.max(0, Math.min(100, percent)) * 3.6;
 
   return (
-    <div className="flex flex-col items-center justify-center gap-[8px]">
+    <div className="flex flex-col items-center justify-center gap-2">
       <div
         className="grid place-items-center rounded-full"
         style={{
@@ -481,19 +483,19 @@ function StatRing({
         }}
       >
         <div
-          className="grid place-items-center rounded-full bg-[#1d1d1d] text-[18px] font-semibold text-white"
+          className="grid place-items-center rounded-full bg-[var(--track-surface)] text-[16px] font-semibold text-white"
           style={{ height: innerSize, width: innerSize }}
         >
           {title}
         </div>
       </div>
-      <p className="text-center text-[9px] leading-[12px] text-[#a4a4a4]">{subtitle}</p>
+      <p className="text-center text-[11px] leading-4 text-[var(--track-text-muted)]">{subtitle}</p>
     </div>
   );
 }
 
 function OverviewEmptyState({ message }: { message: string }): ReactElement {
-  return <p className="text-[11px] leading-[16px] text-[#a4a4a4]">{message}</p>;
+  return <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{message}</p>;
 }
 
 function OverviewBackdrop(): ReactElement {
@@ -540,11 +542,12 @@ function buildWeekSummary(
     ...weekDays.map((day) => totalsByDay.get(formatDateKey(day, timezone)) ?? 0),
     1800,
   );
-  const axisMaxSeconds = Math.ceil(maxSeconds / 1800) * 1800;
+  const axisStepSeconds = Math.max(1800, Math.ceil(maxSeconds / 5 / 1800) * 1800);
+  const axisMaxSeconds = axisStepSeconds * 5;
 
   return {
     axisLabels: Array.from({ length: 6 }, (_, index) =>
-      formatAxisLabel(axisMaxSeconds - Math.floor((axisMaxSeconds / 5) * index)),
+      formatAxisLabel(axisMaxSeconds - axisStepSeconds * index),
     ),
     days: weekDays.map((day) => {
       const totalSeconds = totalsByDay.get(formatDateKey(day, timezone)) ?? 0;

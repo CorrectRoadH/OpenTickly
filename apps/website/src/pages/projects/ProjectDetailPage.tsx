@@ -19,6 +19,7 @@ import {
   buildProjectsListPath,
 } from "../../shared/url-state/projects-location.ts";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
+import { ShellPrimaryButton, ShellSurfaceCard } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 type ProjectDetailPageProps = {
   projectId: number;
@@ -75,12 +76,7 @@ export function ProjectDetailPage({
                   Team
                 </a>
               </nav>
-              <button
-                className="rounded-md bg-[var(--track-button)] px-4 py-2 text-[12px] font-medium text-black"
-                type="button"
-              >
-                Edit Project
-              </button>
+              <ShellPrimaryButton type="button">Edit Project</ShellPrimaryButton>
             </div>
           </header>
 
@@ -96,22 +92,22 @@ export function ProjectDetailPage({
 
           {project ? (
             <section className="pt-3">
-              <div className="rounded-lg border border-[var(--track-border)] bg-[#1b1b1b]">
+              <ShellSurfaceCard className="overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-4 text-[13px] text-[var(--track-text-muted)]">
-                  <span className="flex size-4 items-center justify-center rounded-full bg-[#303030] text-[10px] font-semibold text-white">
+                  <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
                     i
                   </span>
                   <p>
                     {project.is_private
                       ? "This project is private."
                       : "Everyone in this Workspace can see this Project."}{" "}
-                    <a className="text-[#d8b0ee] underline" href="#privacy">
+                    <a className="text-[var(--track-accent-text)] underline" href="#privacy">
                       {project.is_private ? "Manage access" : "You can make it private"}
                     </a>
                   </p>
                 </div>
 
-                <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+                <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
                   <HeaderCell label="All members/teams" />
                   <HeaderCell label="Rate">
                     <FeatureBadge label="Starter" tone="starter" />
@@ -170,7 +166,7 @@ export function ProjectDetailPage({
                     ) : null}
                   </ul>
                 )}
-              </div>
+              </ShellSurfaceCard>
             </section>
           ) : null}
         </section>

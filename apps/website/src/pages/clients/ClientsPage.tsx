@@ -84,9 +84,9 @@ export function ClientsPage(): ReactElement {
     <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="clients-page">
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-medium text-white">Clients</h1>
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Clients</h1>
           <button
-            className="flex h-[28px] items-center gap-1 rounded-md bg-[var(--track-button)] px-3 text-[11px] font-medium text-black"
+            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
             data-testid="clients-create-button"
             onClick={() => setComposerOpen((value) => !value)}
             type="button"
@@ -102,7 +102,7 @@ export function ClientsPage(): ReactElement {
           <label className="relative">
             <select
               aria-label="Client status filter"
-              className="h-7 appearance-none rounded-md border border-[var(--track-border)] bg-[#171717] px-3 pr-8 text-[11px] text-white"
+              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
               onChange={(event) => setStatusFilter(event.target.value as ClientStatusFilter)}
               value={statusFilter}
             >
@@ -119,14 +119,14 @@ export function ClientsPage(): ReactElement {
               <TrackingIcon className="size-3.5" name="search" />
             </span>
             <input
-              className="h-7 w-[140px] rounded-md border border-[var(--track-border)] bg-[#171717] pl-8 pr-3 text-[11px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Search clients..."
               value={search}
             />
           </label>
           {statusMessage ? (
-            <span className="ml-auto text-[11px] text-[var(--track-accent-text)]">
+            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
               {statusMessage}
             </span>
           ) : null}
@@ -143,21 +143,21 @@ export function ClientsPage(): ReactElement {
             Client name
           </label>
           <input
-            className="h-9 w-[320px] rounded-md border border-[var(--track-border)] bg-[#181818] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            className="h-9 w-[320px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
             id="client-name"
             onChange={(event) => setClientName(event.target.value)}
             placeholder="Client name"
             value={clientName}
           />
           <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            className="flex h-9 items-center rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black disabled:opacity-60"
             disabled={createClientMutation.isPending || !clientName.trim()}
             type="submit"
           >
             Save client
           </button>
           <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            className="flex h-9 items-center rounded-[8px] border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
             onClick={() => setComposerOpen(false)}
             type="button"
           >
@@ -178,7 +178,7 @@ export function ClientsPage(): ReactElement {
       !projectsQuery.isError ? (
         groupedClients.length > 0 ? (
           <div data-testid="clients-list">
-            <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] border-b border-[var(--track-border)] px-5 text-[9px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               <div className="flex h-[28px] items-center">
                 <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
               </div>
@@ -207,7 +207,7 @@ export function ClientsPage(): ReactElement {
                     </div>
                     <div className="flex h-[26px] items-center gap-2">
                       <span className="truncate text-white">{client.name}</span>
-                      <span className="text-[10px] text-[var(--track-text-muted)]">
+                      <span className="text-[12px] text-[var(--track-text-muted)]">
                         ({clientProjects.length})
                       </span>
                     </div>
@@ -250,7 +250,7 @@ export function ClientsPage(): ReactElement {
               >
                 ‹
               </button>
-              <span className="flex size-5 items-center justify-center rounded-[4px] bg-[#171717] text-white">
+              <span className="flex size-5 items-center justify-center rounded-[4px] bg-[var(--track-surface-muted)] text-white">
                 1
               </span>
               <button
