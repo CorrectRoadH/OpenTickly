@@ -1,8 +1,8 @@
-import { AppPanel } from "@opentoggl/web-ui";
 import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
 import { type ReactNode } from "react";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
+import { PublicMainPanelFrame, PublicMainPanelLoading } from "../app/PublicMainPanelFrame.tsx";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
@@ -477,13 +477,7 @@ function ProtectedRouteBoundary({ children, requestedWorkspaceId }: ProtectedRou
 }
 
 function SessionPendingPanel() {
-  return (
-    <div className="min-h-screen px-4 py-8">
-      <AppPanel className="mx-auto max-w-2xl bg-white/95">
-        <p className="text-sm font-medium text-slate-700">Loading session…</p>
-      </AppPanel>
-    </div>
-  );
+  return <PublicMainPanelLoading />;
 }
 
 function SessionUnavailablePanel() {
@@ -492,18 +486,20 @@ function SessionUnavailablePanel() {
   });
 
   return (
-    <div className="min-h-screen px-4 py-8">
-      <AppPanel className="mx-auto max-w-2xl bg-white/95">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
-          Session unavailable
-        </h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          The shell could not bootstrap the current session from
-          <code className="mx-1 rounded bg-slate-100 px-2 py-1 text-xs">/web/v1/session</code>
-          while rendering {pathname}.
-        </p>
-      </AppPanel>
-    </div>
+    <PublicMainPanelFrame
+      badge="Session Error"
+      description="The shell could not restore your current session from the canonical web session endpoint."
+      sidebarBody="Resolve the session issue first, then continue into login or the requested shell route."
+      title="Session unavailable"
+    >
+      <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">
+        The shell could not bootstrap the current session from
+        <code className="mx-1 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)] px-2 py-1 text-[12px] text-[var(--track-text)]">
+          /web/v1/session
+        </code>
+        while rendering {pathname}.
+      </p>
+    </PublicMainPanelFrame>
   );
 }
 

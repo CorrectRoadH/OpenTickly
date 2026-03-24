@@ -35,7 +35,14 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
     }
   }
 
-  return <AuthForm errorMessage={errorMessage} mode={mode} onSubmit={handleSubmit} />;
+  return (
+    <AuthForm
+      errorMessage={errorMessage}
+      isSubmitting={loginMutation.isPending || registerMutation.isPending}
+      mode={mode}
+      onSubmit={handleSubmit}
+    />
+  );
 }
 
 function resolveAuthErrorMessage(error: unknown): string {
