@@ -8,7 +8,7 @@
 
 OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
-Current self-hosted release status: `v0.0.1` is an extremely early version intended for initial adopters and setup validation, not a polished or feature-complete stable release.
+Project status: OpenToggl is currently in a very early stage. The first self-hosted release is `v0.0.1`, aimed at early adopters who want to try the stack, validate deployment, and track progress as the product matures.
 
 It exists for a simple reason: Toggl is too expensive for many individuals and teams, too closed for private-first workflows, and too rate-limited for serious AI and automation use.
 
