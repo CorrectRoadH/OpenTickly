@@ -130,8 +130,8 @@ function SettingsHeader(props: {
   workspaceId: number;
 }): ReactElement {
   return (
-    <header className="border-b border-[var(--track-border)] bg-[var(--track-surface)]">
-      <ShellPageHeader title="Settings" />
+    <header className="bg-[var(--track-surface)]">
+      <ShellPageHeader bordered title="Settings" />
       <nav className="flex flex-wrap items-center gap-1 px-5 pb-3">
         {settingsTabs.map((tab) => (
           <Link
