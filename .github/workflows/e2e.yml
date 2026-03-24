@@ -25,6 +25,14 @@ jobs:
           docker compose -f docker-compose.yml up -d postgres redis
           timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend
+        env:
+          CGO_ENABLED: 0
+        run: go build -o /tmp/opentoggl ./apps/backend
+
       - name: Create database
         run: |
           docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
@@ -33,14 +41,6 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
         run: /tmp/opentoggl schema-apply
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build backend
-        env:
-          CGO_ENABLED: 0
-        run: go build -o /tmp/opentoggl ./apps/backend
 
       - name: Build frontend
         run: pnpm --filter @opentoggl/website run build
