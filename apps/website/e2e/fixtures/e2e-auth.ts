@@ -25,11 +25,10 @@ export async function registerE2eUser(
   await page.waitForURL(/\/timer(?:\?.*)?$/);
   const _currentWorkspaceId = await resolveCurrentWorkspaceId(page);
   const session = await readSessionBootstrap(page);
+  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
   await expect(page.getByTestId("app-shell")).toBeVisible();
-  await expect(page.getByLabel("Organization")).toBeVisible();
-  await expect(page.getByLabel("Organization")).toContainText(
-    resolveCurrentOrganizationName(session),
-  );
+  await expect(organizationButton).toBeVisible();
+  await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
 }
 
 export async function loginE2eUser(
@@ -50,11 +49,10 @@ export async function loginE2eUser(
 
   const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
   const session = await readSessionBootstrap(page);
+  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
 
-  await expect(page.getByLabel("Organization")).toBeVisible();
-  await expect(page.getByLabel("Organization")).toContainText(
-    resolveCurrentOrganizationName(session),
-  );
+  await expect(organizationButton).toBeVisible();
+  await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
 
   return {
     currentWorkspaceId,
@@ -73,6 +71,73 @@ export async function readSessionBootstrap(page: Page): Promise<WebSessionBootst
 
     return response.json();
   });
+}
+
+export async function createTimeEntryForWorkspace(
+  page: Page,
+  options: {
+    description: string;
+    projectId?: number;
+    start: string;
+    stop: string;
+    workspaceId: number;
+  },
+): Promise<number> {
+  return page.evaluate(async (request) => {
+    const response = await fetch(`/api/v9/workspaces/${request.workspaceId}/time_entries`, {
+      body: JSON.stringify({
+        created_with: "playwright-e2e",
+        description: request.description,
+        duration: Math.round(
+          (Date.parse(request.stop) - Date.parse(request.start)) / 1000,
+        ),
+        project_id: request.projectId,
+        start: request.start,
+        stop: request.stop,
+        workspace_id: request.workspaceId,
+      }),
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Create time entry failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    return payload.id ?? 0;
+  }, options);
+}
+
+export async function createProjectForWorkspace(
+  page: Page,
+  options: {
+    name: string;
+    workspaceId: number;
+  },
+): Promise<number> {
+  return page.evaluate(async (request) => {
+    const response = await fetch(`/api/v9/workspaces/${request.workspaceId}/projects`, {
+      body: JSON.stringify({
+        name: request.name,
+      }),
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Create project failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    return payload.id ?? 0;
+  }, options);
 }
 
 function resolveAppBaseUrl(testInfo: TestInfo): string {

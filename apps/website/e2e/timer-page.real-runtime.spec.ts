@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import {
+  createProjectForWorkspace,
+  createTimeEntryForWorkspace,
+  loginE2eUser,
+  registerE2eUser,
+} from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: manage the running timer", () => {
   test("Given a newly registered account, when the user starts and stops a timer, then the timer controls reflect the running state", async ({
@@ -187,5 +192,66 @@ test.describe("Story: manage the running timer", () => {
     });
 
     expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+  });
+
+  test("Given the user switches to another organization, when they return to timer, then time entries from previously accessible workspaces remain visible", async ({
+    page,
+  }) => {
+    const email = `timer-multi-workspace-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const firstWorkspaceEntryDescription = `Cross workspace entry ${Date.now()}`;
+    const firstWorkspaceProjectName = `Cross workspace project ${Date.now()}`;
+    const entryStart = new Date();
+    entryStart.setUTCHours(9, 0, 0, 0);
+    const entryStop = new Date(entryStart.getTime() + 30 * 60 * 1000);
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer Multi Workspace User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const firstWorkspaceId = loginSession.currentWorkspaceId;
+    const firstWorkspaceProjectId = await createProjectForWorkspace(page, {
+      name: firstWorkspaceProjectName,
+      workspaceId: firstWorkspaceId,
+    });
+
+    await createTimeEntryForWorkspace(page, {
+      description: firstWorkspaceEntryDescription,
+      projectId: firstWorkspaceProjectId,
+      start: entryStart.toISOString(),
+      stop: entryStop.toISOString(),
+      workspaceId: firstWorkspaceId,
+    });
+
+    const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
+    await organizationButton.click();
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog
+      .getByLabel("Organization name")
+      .fill(`Timer Org ${Date.now()}`);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    await expect(organizationButton).not.toContainText("Timer Multi Workspace User Organization");
+
+    await page.goto(new URL(`/workspaces/${firstWorkspaceId}/projects`, page.url()).toString());
+    await expect(page).toHaveURL(
+      new RegExp(`/workspaces/${firstWorkspaceId}/projects(?:\\?status=all)?$`),
+    );
+    await expect(page.getByTestId("projects-page")).toBeVisible();
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    const crossWorkspaceEntry = page.getByRole("button", {
+      name: `Edit ${firstWorkspaceEntryDescription}`,
+    });
+    await expect(crossWorkspaceEntry).toBeVisible();
+    await expect(crossWorkspaceEntry).toContainText(firstWorkspaceProjectName);
   });
 });

@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
-	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
+	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 func (handlers *routeHandlers) RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error) {
@@ -20,24 +21,24 @@ func (handlers *routeHandlers) requirePublicTrackUser(ctx echo.Context) (*identi
 }
 
 func (handlers *routeHandlers) RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error {
-	home, err := handlers.requirePublicTrackHome(ctx)
+	user, err := handlers.requirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	if home.workspaceID == workspaceID {
-		return nil
-	}
-	workspace, lookupErr := handlers.tenantApp.GetWorkspace(
-		ctx.Request().Context(),
-		tenantdomain.WorkspaceID(workspaceID),
-	)
-	if lookupErr != nil {
+
+	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	if int64(workspace.OrganizationID) != home.organizationID {
-		return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+
+	_, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
+		return int64(workspace.ID) == workspaceID
+	})
+	if found {
+		return nil
 	}
-	return nil
+
+	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
 }
 
 func (handlers *routeHandlers) requirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error {
@@ -55,14 +56,24 @@ func (handlers *routeHandlers) RequirePublicTrackHome(
 }
 
 func (handlers *routeHandlers) RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error {
-	home, err := handlers.requirePublicTrackHome(ctx)
+	user, err := handlers.requirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	if home.organizationID != organizationID {
-		return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+
+	organizations, err := handlers.tenantApp.ListOrganizationsByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	return nil
+
+	_, found := lo.Find(organizations, func(organization tenantapplication.OrganizationView) bool {
+		return int64(organization.ID) == organizationID
+	})
+	if found {
+		return nil
+	}
+
+	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
 }
 
 func (handlers *routeHandlers) requirePublicTrackOrganization(ctx echo.Context, organizationID int64) error {

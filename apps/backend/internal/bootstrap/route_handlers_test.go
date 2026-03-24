@@ -1978,6 +1978,318 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	}
 }
 
+func TestSessionBootstrapAndMeEndpointsIncludeAllOrganizationsAfterCreatingAnotherOrganization(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "multi-org@example.com",
+		"fullname": "Multi Org User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register to set session cookie")
+	}
+
+	createOrganization := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/organizations",
+		map[string]any{
+			"name":           "Second Org",
+			"workspace_name": "Second Workspace",
+		},
+		basicAuthorization("multi-org@example.com", "secret1"),
+	)
+	if createOrganization.Code != http.StatusOK {
+		t.Fatalf(
+			"expected create organization status 200, got %d body=%s",
+			createOrganization.Code,
+			createOrganization.Body.String(),
+		)
+	}
+
+	session := performJSONRequest(t, app, http.MethodGet, "/web/v1/session", nil, sessionCookie)
+	if session.Code != http.StatusOK {
+		t.Fatalf("expected session status 200, got %d body=%s", session.Code, session.Body.String())
+	}
+
+	var bootstrapResponse struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+		Organizations         []struct {
+			ID   int64  `json:"id"`
+			Name string `json:"name"`
+		} `json:"organizations"`
+		Workspaces []struct {
+			ID             int64  `json:"id"`
+			Name           string `json:"name"`
+			OrganizationID int64  `json:"organization_id"`
+		} `json:"workspaces"`
+	}
+	mustDecodeJSON(t, session.Body.Bytes(), &bootstrapResponse)
+	if len(bootstrapResponse.Organizations) != 2 {
+		t.Fatalf("expected 2 organizations in session bootstrap, got %#v", bootstrapResponse.Organizations)
+	}
+	if len(bootstrapResponse.Workspaces) != 2 {
+		t.Fatalf("expected 2 workspaces in session bootstrap, got %#v", bootstrapResponse.Workspaces)
+	}
+
+	organizationsResponse := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/organizations",
+		nil,
+		basicAuthorization("multi-org@example.com", "secret1"),
+	)
+	if organizationsResponse.Code != http.StatusOK {
+		t.Fatalf(
+			"expected /me/organizations status 200, got %d body=%s",
+			organizationsResponse.Code,
+			organizationsResponse.Body.String(),
+		)
+	}
+
+	var organizations []struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	}
+	mustDecodeJSON(t, organizationsResponse.Body.Bytes(), &organizations)
+	if len(organizations) != 2 {
+		t.Fatalf("expected 2 organizations from /me/organizations, got %#v", organizations)
+	}
+
+	workspacesResponse := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/workspaces",
+		nil,
+		basicAuthorization("multi-org@example.com", "secret1"),
+	)
+	if workspacesResponse.Code != http.StatusOK {
+		t.Fatalf(
+			"expected /me/workspaces status 200, got %d body=%s",
+			workspacesResponse.Code,
+			workspacesResponse.Body.String(),
+		)
+	}
+
+	var workspaces []struct {
+		ID   int64  `json:"id"`
+		Name string `json:"name"`
+	}
+	mustDecodeJSON(t, workspacesResponse.Body.Bytes(), &workspaces)
+	if len(workspaces) != 2 {
+		t.Fatalf("expected 2 workspaces from /me/workspaces, got %#v", workspaces)
+	}
+}
+
+func TestUpdateWebSessionSwitchesCurrentHomeWorkspace(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "switch-home@example.com",
+		"fullname": "Switch Home User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register to set session cookie")
+	}
+
+	var initialSession struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &initialSession)
+	if initialSession.CurrentWorkspaceID == nil || initialSession.CurrentOrganizationID == nil {
+		t.Fatalf("expected initial session ids, got %#v", initialSession)
+	}
+
+	createOrganization := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/organizations",
+		map[string]any{
+			"name":           "Second Org",
+			"workspace_name": "Second Workspace",
+		},
+		basicAuthorization("switch-home@example.com", "secret1"),
+	)
+	if createOrganization.Code != http.StatusOK {
+		t.Fatalf(
+			"expected create organization status 200, got %d body=%s",
+			createOrganization.Code,
+			createOrganization.Body.String(),
+		)
+	}
+
+	switchSession := performJSONRequest(t, app, http.MethodPatch, "/web/v1/session", map[string]any{
+		"workspace_id": *initialSession.CurrentWorkspaceID,
+	}, sessionCookie)
+	if switchSession.Code != http.StatusOK {
+		t.Fatalf(
+			"expected patch session status 200, got %d body=%s",
+			switchSession.Code,
+			switchSession.Body.String(),
+		)
+	}
+
+	var switched struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, switchSession.Body.Bytes(), &switched)
+	if switched.CurrentWorkspaceID == nil || *switched.CurrentWorkspaceID != *initialSession.CurrentWorkspaceID {
+		t.Fatalf("expected current workspace id %d after switch, got %#v", *initialSession.CurrentWorkspaceID, switched.CurrentWorkspaceID)
+	}
+	if switched.CurrentOrganizationID == nil || *switched.CurrentOrganizationID != *initialSession.CurrentOrganizationID {
+		t.Fatalf("expected current organization id %d after switch, got %#v", *initialSession.CurrentOrganizationID, switched.CurrentOrganizationID)
+	}
+}
+
+func TestPublicTrackWorkspaceAccessUsesMembershipInsteadOfCurrentHomeOrganization(t *testing.T) {
+	database := pgtest.Open(t)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			ListenAddress: ":0",
+		},
+		Database: DatabaseConfig{
+			PrimaryDSN: database.ConnString(),
+		},
+		Redis: RedisConfig{
+			Address: "redis://127.0.0.1:6379/0",
+		},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    "multi-org-scope@example.com",
+		"fullname": "Multi Org Scope User",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+
+	sessionCookie := register.Header().Get("Set-Cookie")
+	if sessionCookie == "" {
+		t.Fatal("expected register response to set session cookie")
+	}
+
+	var initialSession struct {
+		CurrentOrganizationID *int64 `json:"current_organization_id"`
+		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &initialSession)
+	if initialSession.CurrentOrganizationID == nil || initialSession.CurrentWorkspaceID == nil {
+		t.Fatalf("expected initial session ids, got %#v", initialSession)
+	}
+
+	createOrganization := performJSONRequest(
+		t,
+		app,
+		http.MethodPost,
+		"/api/v9/organizations",
+		map[string]any{
+			"name":           "Second Org",
+			"workspace_name": "Second Workspace",
+		},
+		sessionCookie,
+	)
+	if createOrganization.Code != http.StatusOK {
+		t.Fatalf(
+			"expected create organization status 200, got %d body=%s",
+			createOrganization.Code,
+			createOrganization.Body.String(),
+		)
+	}
+
+	var createdOrganization struct {
+		WorkspaceID int64 `json:"workspace_id"`
+	}
+	mustDecodeJSON(t, createOrganization.Body.Bytes(), &createdOrganization)
+	if createdOrganization.WorkspaceID == 0 {
+		t.Fatalf("expected created workspace id, got %#v", createdOrganization)
+	}
+
+	switchSession := performJSONRequest(t, app, http.MethodPatch, "/web/v1/session", map[string]any{
+		"workspace_id": createdOrganization.WorkspaceID,
+	}, sessionCookie)
+	if switchSession.Code != http.StatusOK {
+		t.Fatalf(
+			"expected patch session status 200, got %d body=%s",
+			switchSession.Code,
+			switchSession.Body.String(),
+		)
+	}
+
+	firstWorkspaceTags := performJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/workspaces/"+intToString(*initialSession.CurrentWorkspaceID)+"/tags",
+		nil,
+		sessionCookie,
+	)
+	if firstWorkspaceTags.Code != http.StatusOK {
+		t.Fatalf(
+			"expected first workspace tags status 200 after switching home org, got %d body=%s",
+			firstWorkspaceTags.Code,
+			firstWorkspaceTags.Body.String(),
+		)
+	}
+}
+
 func performJSONRequest(
 	t *testing.T,
 	app *App,

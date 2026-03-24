@@ -55,6 +55,9 @@
 - workspace 负责承载大多数日常业务对象与操作入口。
 - 如果同一类商业状态在 organization 与 workspace 下都可见，workspace 视图默认理解为 organization 合同在 workspace 视角下的公开表达，而不是另一套独立真相。
 - 工作区的默认币种、默认费率、rounding、显示策略等设置都必须影响 tracking 与 reports 的公开行为。
+- Web session 的 `current workspace` / `session home` 只是当前默认上下文，用来决定 shell 默认落点、创建目标和当前展示引用；它不是 public API 的授权边界。
+- 当前用户对某个 workspace 是否有权访问，必须由该用户对该 workspace 的真实 membership / ownership 决定，而不是由“这个 workspace 是否属于当前 session home 的 organization”决定。
+- 当用户切换到另一个 organization 或 workspace 后，之前已可访问的其他 organization / workspace 资源不会因此失权；显式带 `workspace_id` 或 `organization_id` 的公开接口仍应按目标资源的真实访问权限判定。
 
 ## 用户生命周期
 

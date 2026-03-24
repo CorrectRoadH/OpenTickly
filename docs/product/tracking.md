@@ -52,6 +52,8 @@
 - `GET /me/time_entries`、`GET /me/time_entries/current`、`GET /me/time_entries/{time_entry_id}` 属于当前账号的公开读模型；返回边界是 current user，可跨该账号可访问的多个 workspace，不得被当前选中的 workspace、organization 或 session home 隐式收窄。
 - `GET /me/time_entries/current` 当没有运行中的时间条目时返回 `200` + body `null`；这是正式产品语义，不是错误状态，客户端应据此处理而不是依赖 404 响应。
 - `workspace_id` 仍然是每条 time entry 的正式字段和写入归属；`POST /workspaces/{workspace_id}/time_entries`、`PATCH /workspaces/{workspace_id}/time_entries/{time_entry_id}/stop` 等 workspace 路由负责显式写入上下文，但不能反向定义 `/me` 读接口的资源边界。
+- Timer 页面族读取的是当前用户的 `/me/time_entries` 事实集合。切换当前 workspace 只改变默认新建 time entry 的 `workspace_id`、项目/标签等 workspace-scoped catalog 的候选集，以及其他显式 workspace 路由的上下文；不能把 timer 已有 time entries 结果再按当前 workspace 或当前 organization 本地过滤。
+- 同一用户跨多个可访问 workspace 的历史 time entries 必须继续在 timer 的 `calendar`、`list`、`timesheet` 三个视图中保持一致可见；workspace 切换不会把其他 workspace 的历史条目从 `/me` 读模型中抹掉。
 - running timer 必须作为正式产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
 - 时间语义必须按引用的公开定义实现 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
 - Web timer header 的运行时长必须基于当前 running entry 的 `start` 时间实时显示；不要把 raw negative duration 直接当成已消逝秒数渲染。
