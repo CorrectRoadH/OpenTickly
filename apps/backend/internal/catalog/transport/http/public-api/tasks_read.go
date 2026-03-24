@@ -23,8 +23,9 @@ func (handler *Handler) GetPublicTrackTasksBasic(ctx echo.Context) error {
 		return err
 	}
 
-	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
-	for _, view := range pageView.Tasks {
+	trackTasks := filterTrackCompatibleTasks(pageView.Tasks)
+	tasks := make([]publictrackapi.ModelsTask, 0, len(trackTasks))
+	for _, view := range trackTasks {
 		tasks = append(tasks, taskViewToAPI(view))
 	}
 
@@ -47,19 +48,17 @@ func (handler *Handler) GetPublicTrackTasks(ctx echo.Context) error {
 		return err
 	}
 
-	tasks := make([]publictrackapi.ModelsTask, 0, len(pageView.Tasks))
-	for _, view := range pageView.Tasks {
+	trackTasks := filterTrackCompatibleTasks(pageView.Tasks)
+	tasks := make([]publictrackapi.ModelsTask, 0, len(trackTasks))
+	for _, view := range trackTasks {
 		tasks = append(tasks, taskViewToAPI(view))
 	}
 
-	return ctx.JSON(http.StatusOK, publictrackapi.TaskResponse{
-		Data:       &tasks,
-		Page:       lo.ToPtr(pageView.Page),
-		PerPage:    lo.ToPtr(pageView.PerPage),
-		SortField:  lo.ToPtr(defaultTaskSortField(string(pageView.SortField))),
-		SortOrder:  lo.ToPtr(string(pageView.SortOrder)),
-		TotalCount: lo.ToPtr(pageView.TotalCount),
-	})
+	// `/me/tasks` is consumed by Track-compatible clients such as `toggl-cli`,
+	// which expect the classic Track response shape: a bare JSON array.
+	// Returning the newer paginated envelope here breaks those clients with
+	// `invalid type: map, expected a sequence`.
+	return ctx.JSON(http.StatusOK, tasks)
 }
 
 func (handler *Handler) GetPublicTrackWorkspaceTasksData(ctx echo.Context) error {
@@ -206,6 +205,12 @@ func (handler *Handler) listPublicTrackTasks(
 	if activeValue := strings.TrimSpace(ctx.QueryParam("active")); activeValue == "" {
 		if query.requireActive {
 			filter.Active = lo.ToPtr(true)
+		} else {
+			// Track-compatible task listings should include both active and inactive
+			// tasks unless the caller explicitly narrows the filter. The catalog
+			// service defaults to active-only when neither Active nor IncludeAll is
+			// set, so opt into IncludeAll here for `/me/tasks`.
+			filter.IncludeAll = true
 		}
 	} else if strings.EqualFold(activeValue, "both") {
 		filter.IncludeAll = true
@@ -256,4 +261,21 @@ func defaultTaskSortField(value string) string {
 		return "created_at"
 	}
 	return "name"
+}
+
+func filterTrackCompatibleTasks(tasks []catalogapplication.TaskView) []catalogapplication.TaskView {
+	filtered := make([]catalogapplication.TaskView, 0, len(tasks))
+	for _, task := range tasks {
+		// Track's `/me/tasks` contract only lists tasks that belong to a project and
+		// includes `project_id` as a required field. OpenToggl also supports
+		// workspace-level tasks with no project, but exposing them on the Track
+		// compatibility route breaks Track clients that deserialize `project_id` as
+		// required. Keep those tasks available through native routes, but hide them
+		// from Track-compatible task listings.
+		if task.ProjectID == nil {
+			continue
+		}
+		filtered = append(filtered, task)
+	}
+	return filtered
 }

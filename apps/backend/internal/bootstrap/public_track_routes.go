@@ -76,11 +76,16 @@ func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {
 		return false
 	}
 
-	lastSlash := strings.LastIndex(path, "/")
-	if lastSlash < 0 {
-		return false
-	}
-	return strings.Contains(path[lastSlash+1:], ",")
+	// The public Track OpenAPI spec defines both:
+	//   /workspaces/{workspace_id}/time_entries/{time_entry_id}
+	//   /workspaces/{workspace_id}/time_entries/{time_entry_ids}
+	//
+	// OAPI path resolution can misclassify PATCH requests against the batch path
+	// as "method not allowed" because the single-entry path item does not expose
+	// PATCH. Skipping validator matching for batch-style time-entry PATCH keeps
+	// routing deterministic while the request is still validated by the handler
+	// bind + application layer below.
+	return true
 }
 
 func publicTrackCredentials(ctx echo.Context) (identitydomain.BasicCredentials, error) {
