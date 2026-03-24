@@ -10,7 +10,7 @@ describe("shell navigation state", () => {
   it("marks overview active only on the overview route", () => {
     expect(isOverviewNavActive("/overview", "/overview")).toBe(true);
     expect(isOverviewNavActive("/timer", "/overview")).toBe(false);
-    expect(isOverviewNavActive("/workspaces/202/projects", "/overview")).toBe(false);
+    expect(isOverviewNavActive("/projects/202/list", "/overview")).toBe(false);
   });
 
   it("marks timer active only on the timer route", () => {
@@ -20,10 +20,8 @@ describe("shell navigation state", () => {
   });
 
   it("keeps section navigation subtree matching for nested pages", () => {
-    expect(isSectionNavActive("/workspaces/202/projects", "/workspaces/202/projects")).toBe(true);
-    expect(isSectionNavActive("/workspaces/202/projects/14", "/workspaces/202/projects")).toBe(
-      true,
-    );
-    expect(isSectionNavActive("/workspaces/202/clients", "/workspaces/202/projects")).toBe(false);
+    expect(isSectionNavActive("/projects/202/list", "/projects/202/list")).toBe(true);
+    expect(isSectionNavActive("/202/projects/14/team", "/projects/202/list")).toBe(true);
+    expect(isSectionNavActive("/workspaces/202/clients", "/projects/202/list")).toBe(false);
   });
 });

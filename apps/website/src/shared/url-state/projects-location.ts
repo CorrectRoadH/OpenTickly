@@ -17,3 +17,15 @@ export function parseProjectsSearch(search: ProjectsSearch | undefined): {
     status: parsedStatus.success ? parsedStatus.data : "all",
   };
 }
+
+export function buildProjectsListPath(workspaceId: number): string {
+  return `/projects/${workspaceId}/list`;
+}
+
+export function buildProjectTeamPath(workspaceId: number, projectId: number): string {
+  return `/${workspaceId}/projects/${projectId}/team`;
+}
+
+export function buildProjectDashboardPath(workspaceId: number, projectId: number): string {
+  return `/${workspaceId}/projects/${projectId}/dashboard`;
+}

@@ -9,10 +9,12 @@ import type {
   WebWorkspaceSettingsDto,
 } from "../api/web-contract.ts";
 import type {
+  GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
+  ModelsAllPreferences,
   MePayload,
   ModelsPostPayload,
-  ModelsAllPreferences,
+  ModelsProjectStatistics,
   WorkspacePayload,
 } from "../api/generated/public-track/types.gen.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
@@ -24,13 +26,15 @@ import {
   getProjects,
   getTimeEntries,
   getWorkspaceAllActivities,
-  getWorkspaceProjectUsers,
   getWorkspaceClients,
   getWorkspaceGroups,
   getWorkspaceMostActive,
+  getWorkspaceProjectUsers,
   getWorkspaceTag,
   getWorkspaceTasksBasic,
   getWorkspaceTopActivity,
+  getWorkspacesByWorkspaceIdProjectsByProjectId,
+  getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
   deleteWorkspaceTimeEntries,
   patchWorkspaceStopTimeEntryHandler,
   postPinnedProject,
@@ -492,6 +496,36 @@ export function useProjectsQuery(workspaceId: number, status: ProjectListStatusF
         }),
       ),
     queryKey: projectsQueryKey(workspaceId, status),
+  });
+}
+
+export function useProjectDetailQuery(workspaceId: number, projectId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspacesByWorkspaceIdProjectsByProjectId({
+          path: {
+            project_id: projectId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ) as Promise<GithubComTogglTogglApiInternalModelsProject>,
+    queryKey: ["project-detail", workspaceId, projectId],
+  });
+}
+
+export function useProjectStatisticsQuery(workspaceId: number, projectId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics({
+          path: {
+            project_id: projectId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ) as Promise<ModelsProjectStatistics>,
+    queryKey: ["project-statistics", workspaceId, projectId],
   });
 }
 

@@ -1,4 +1,5 @@
 import type { WorkspaceSettingsSection } from "../url-state/workspace-settings-location.ts";
+import { buildProjectsListPath } from "../url-state/projects-location.ts";
 import { buildWorkspaceSettingsPath } from "../url-state/workspace-settings-location.ts";
 
 export function buildOverviewPath(): string {
@@ -11,6 +12,10 @@ export function buildTimerPath(): string {
 
 export function buildWorkspaceReportsPath(workspaceId: number): string {
   return `/workspaces/${workspaceId}/reports`;
+}
+
+export function buildProjectsPath(workspaceId: number): string {
+  return buildProjectsListPath(workspaceId);
 }
 
 export function buildWorkspaceGroupsPath(workspaceId: number): string {
@@ -59,6 +64,14 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
 
   if (/^\/workspaces\/\d+\/reports$/.test(pathname)) {
     return `/workspaces/${workspaceId}/reports${section}`;
+  }
+
+  if (/^\/projects\/\d+\/list$/.test(pathname)) {
+    return `${buildProjectsListPath(workspaceId)}${section}`;
+  }
+
+  if (/^\/\d+\/projects\/\d+\/(dashboard|team)$/.test(pathname)) {
+    return pathname.replace(/^\/\d+/, `/${workspaceId}`);
   }
 
   if (/^\/workspaces\/\d+\/clients$/.test(pathname)) {

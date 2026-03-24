@@ -1,6 +1,7 @@
 import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
 import {
   buildOverviewPath,
+  buildProjectsPath,
   buildWorkspaceReportsPath,
   buildWorkspaceSettingsPathWithSection,
   buildTimerPath,
@@ -49,7 +50,7 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       items: [
         {
           label: "Projects",
-          to: `/workspaces/${session.currentWorkspace.id}/projects`,
+          to: buildProjectsPath(session.currentWorkspace.id),
         },
         {
           label: "Clients",

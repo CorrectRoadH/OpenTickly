@@ -7,7 +7,10 @@ import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
-import { parseProjectsSearch } from "../shared/url-state/projects-location.ts";
+import {
+  buildProjectTeamPath,
+  parseProjectsSearch,
+} from "../shared/url-state/projects-location.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
 import {
   buildWorkspaceSettingsPath,
@@ -85,15 +88,28 @@ const workspaceReportsRoute = createRoute({
 
 const workspaceProjectsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/projects",
+  path: "/projects/$workspaceId/list",
   validateSearch: parseProjectsSearch,
   component: WorkspaceProjectsRouteComponent,
 });
 
 const workspaceProjectDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/projects/$projectId",
+  path: "/$workspaceId/projects/$projectId/team",
   component: WorkspaceProjectDetailRouteComponent,
+});
+
+const legacyWorkspaceProjectsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/projects",
+  validateSearch: parseProjectsSearch,
+  component: LegacyWorkspaceProjectsRouteComponent,
+});
+
+const legacyWorkspaceProjectDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/projects/$projectId",
+  component: LegacyWorkspaceProjectDetailRouteComponent,
 });
 
 const workspaceMembersRoute = createRoute({
@@ -175,6 +191,8 @@ export const routeTree = rootRoute.addChildren([
   workspaceReportsRoute,
   workspaceProjectsRoute,
   workspaceProjectDetailRoute,
+  legacyWorkspaceProjectsRoute,
+  legacyWorkspaceProjectDetailRoute,
   workspaceMembersRoute,
   workspaceClientsRoute,
   workspaceClientDetailRoute,
@@ -271,6 +289,20 @@ function WorkspaceProjectsRouteComponent() {
   return renderProtectedRoute(<ProjectsPage statusFilter={search.status} />, workspaceId);
 }
 
+function LegacyWorkspaceProjectsRouteComponent() {
+  const params = legacyWorkspaceProjectsRoute.useParams();
+  const search = legacyWorkspaceProjectsRoute.useSearch();
+
+  return (
+    <Navigate
+      replace
+      params={{ workspaceId: params.workspaceId }}
+      search={search}
+      to="/projects/$workspaceId/list"
+    />
+  );
+}
+
 function WorkspaceProjectDetailRouteComponent() {
   const params = workspaceProjectDetailRoute.useParams();
   const workspaceId = Number(params.workspaceId);
@@ -279,6 +311,17 @@ function WorkspaceProjectDetailRouteComponent() {
   return renderProtectedRoute(
     <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />,
     workspaceId,
+  );
+}
+
+function LegacyWorkspaceProjectDetailRouteComponent() {
+  const params = legacyWorkspaceProjectDetailRoute.useParams();
+
+  return (
+    <Navigate
+      replace
+      to={buildProjectTeamPath(Number(params.workspaceId), Number(params.projectId))}
+    />
   );
 }
 

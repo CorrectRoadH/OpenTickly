@@ -24,7 +24,10 @@ import {
   DirectorySurfaceMessage,
   DirectoryTableCell,
 } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
-import type { ProjectStatusFilter } from "../../shared/url-state/projects-location.ts";
+import {
+  buildProjectTeamPath,
+  type ProjectStatusFilter,
+} from "../../shared/url-state/projects-location.ts";
 import {
   emptyProjectsStateTitle,
   formatProjectHours,
@@ -61,7 +64,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     await navigate({
       params: { workspaceId: String(workspaceId) },
       search: { status: nextStatus },
-      to: "/workspaces/$workspaceId/projects",
+      to: "/projects/$workspaceId/list",
     });
   }
 
@@ -201,7 +204,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   />
                   <a
                     className="truncate font-medium"
-                    href={`/workspaces/${workspaceId}/projects/${project.id}`}
+                    href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
                     style={{ color: resolveProjectColor(project) }}
                   >
                     {project.name ?? "Untitled project"}

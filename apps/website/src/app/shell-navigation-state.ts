@@ -11,6 +11,11 @@ export function isSectionNavActive(pathname: string, to?: string): boolean {
     return false;
   }
 
+  const projectListMatch = to.match(/^\/projects\/(\d+)\/list$/);
+  if (projectListMatch) {
+    return pathname === to || pathname.startsWith(`/${projectListMatch[1]}/projects/`);
+  }
+
   const settingsBase = to.match(/^(\/\d+\/settings)\/[^/]+$/);
   if (settingsBase) {
     return pathname === to || pathname.startsWith(`${settingsBase[1]}/`);

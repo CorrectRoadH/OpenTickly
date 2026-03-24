@@ -9,6 +9,7 @@ import {
   useProjectsQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { buildProjectTeamPath } from "../../shared/url-state/projects-location.ts";
 
 type ClientStatusFilter = "active" | "all" | "inactive";
 type ClientListItem = {
@@ -229,7 +230,7 @@ export function ClientsPage(): ReactElement {
                             />
                             <a
                               className="truncate"
-                              href={`/workspaces/${workspaceId}/projects/${project.id}`}
+                              href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
                               style={{ color: resolveProjectColor(project) }}
                             >
                               {project.name ?? "Untitled project"}
