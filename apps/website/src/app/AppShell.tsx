@@ -256,7 +256,7 @@ function ShellNavItem({
   }
 
   return (
-    <Link className="block px-2" to={to}>
+    <Link aria-current={active ? "page" : undefined} className="block px-2" to={to}>
       {content}
     </Link>
   );

@@ -231,12 +231,9 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     const timerNavLink = page.getByRole("link", { name: "Timer" });
     await expect(timerNavLink).toBeVisible();
 
-    // Capture Timer nav content div before clicking (active class is on inner div, not the Link)
-    const timerNavContentBefore = timerNavLink.locator("div");
-    const hasActiveClassBefore = await timerNavContentBefore.evaluate((el: HTMLElement) =>
-      el.classList.contains("bg-[var(--track-accent-soft)]"),
-    );
-    expect(hasActiveClassBefore).toBe(false);
+    // Assert: Timer nav does not have aria-current before clicking (not yet on /timer)
+    const hasAriaCurrentBefore = await timerNavLink.getAttribute("aria-current");
+    expect(hasAriaCurrentBefore).toBeNull();
 
     // Click the Timer nav item
     await timerNavLink.click();
@@ -253,12 +250,9 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
       "true",
     );
 
-    // Assert: Timer nav is now active (has the active background class on inner content div)
-    const timerNavContentAfter = timerNavLink.locator("div");
-    const hasActiveClassAfter = await timerNavContentAfter.evaluate((el: HTMLElement) =>
-      el.classList.contains("bg-[var(--track-accent-soft)]"),
-    );
-    expect(hasActiveClassAfter).toBe(true);
+    // Assert: Timer nav is now active via stable aria-current attribute
+    const hasAriaCurrentAfter = await timerNavLink.getAttribute("aria-current");
+    expect(hasAriaCurrentAfter).toBe("page");
 
     // Assert: No console errors
     const consoleErrors: string[] = [];
@@ -270,12 +264,9 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     await page.reload();
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
-    // After reload, Timer nav should still be active since we're on /timer
-    const timerNavContentReload = timerNavLink.locator("div");
-    const hasActiveClassReload = await timerNavContentReload.evaluate((el: HTMLElement) =>
-      el.classList.contains("bg-[var(--track-accent-soft)]"),
-    );
-    expect(hasActiveClassReload).toBe(true);
+    // After reload, Timer nav should still have aria-current since we're on /timer
+    const hasAriaCurrentReload = await timerNavLink.getAttribute("aria-current");
+    expect(hasAriaCurrentReload).toBe("page");
 
     expect(consoleErrors.filter((e) => !e.includes("Download the React DevTools"))).toHaveLength(0);
   });
@@ -366,7 +357,7 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    // Capture state from shell-entry page
+    // Capture state from shell-entry page (calendar view - default)
     const shellEntryCalendarActive = await page
       .getByRole("button", { name: "Calendar" })
       .getAttribute("aria-pressed");
@@ -375,12 +366,34 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
       .isVisible();
     const shellEntryElapsed = await page.getByTestId("timer-elapsed").isVisible();
 
+    // Switch to list view to capture seeded entries on shell-entry page
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Wait for entries to load in list view - wait for at least one Edit button to appear
+    await expect(page.getByRole("button", { name: /Edit Convergence Entry 1/ })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Capture seeded entries visible on shell-entry page (get aria-label which contains description)
+    const shellEntryAriaLabels = await page
+      .getByRole("button", { name: /Edit (Convergence Entry|Pre-existing running)/ })
+      .evaluateAll((buttons) =>
+        buttons.map((btn) => (btn as HTMLButtonElement).getAttribute("aria-label") ?? ""),
+      );
+    const shellEntryDescriptions = shellEntryAriaLabels
+      .map((t) => t.replace("Edit ", ""))
+      .filter((t) => t.includes("Entry") || t.includes("timer"));
+
     // PAGE 2: Navigate to /timer directly (use page.url() as base since page2 hasn't navigated yet)
     await page2.goto(new URL("/timer", page.url()).toString());
     await expect(page2).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page2.getByTestId("tracking-timer-page")).toBeVisible();
 
-    // Capture state from direct-entry page
+    // Capture state from direct-entry page (calendar view - default)
     const directEntryCalendarActive = await page2
       .getByRole("button", { name: "Calendar" })
       .getAttribute("aria-pressed");
@@ -388,6 +401,28 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
       .getByRole("button", { name: "Stop timer" })
       .isVisible();
     const directEntryElapsed = await page2.getByTestId("timer-elapsed").isVisible();
+
+    // Switch to list view to capture seeded entries visible on direct-entry page
+    await page2.getByRole("button", { name: "List view" }).click();
+    await expect(page2.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Wait for entries to load in list view - wait for at least one Edit button to appear
+    await expect(page2.getByRole("button", { name: /Edit Convergence Entry 1/ })).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Capture seeded entries visible on direct-entry page (get aria-label which contains description)
+    const directEntryAriaLabels = await page2
+      .getByRole("button", { name: /Edit (Convergence Entry|Pre-existing running)/ })
+      .evaluateAll((buttons) =>
+        buttons.map((btn) => (btn as HTMLButtonElement).getAttribute("aria-label") ?? ""),
+      );
+    const directEntryDescriptions = directEntryAriaLabels
+      .map((t) => t.replace("Edit ", ""))
+      .filter((t) => t.includes("Entry") || t.includes("timer"));
 
     // Assert: Both pages show the same state (convergence)
     expect(shellEntryCalendarActive).toBe(directEntryCalendarActive);
@@ -401,6 +436,16 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     // The running timer state is the same (even if elapsed time differs slightly, the fact of running is consistent)
     expect(shellEntryRunningTimer).toBe(directEntryRunningTimer);
+
+    // Assert: Same seeded current-workspace facts are visible on both entry paths
+    // The seeded entries should appear on both pages
+    expect(shellEntryDescriptions.length).toBeGreaterThan(0);
+    expect(directEntryDescriptions.length).toBe(shellEntryDescriptions.length);
+
+    // Verify each seeded entry description appears on both pages
+    for (const description of shellEntryDescriptions) {
+      expect(directEntryDescriptions).toContain(description);
+    }
 
     // Assert: No console errors on either page
     const consoleErrorsPage1: string[] = [];
