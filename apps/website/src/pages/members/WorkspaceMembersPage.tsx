@@ -55,12 +55,11 @@ export function WorkspaceMembersPage(): ReactElement {
       aria-label="workspace-members"
       className="min-h-full space-y-5 bg-[var(--track-surface)] p-5 text-white"
     >
-      <div className="border-b border-[var(--track-border)]">
-        <ShellPageHeader
-          action={<ShellPrimaryButton type="button">Invite members</ShellPrimaryButton>}
-          title="Workspace Members"
-        />
-      </div>
+      <ShellPageHeader
+        action={<ShellPrimaryButton type="button">Invite members</ShellPrimaryButton>}
+        bordered
+        title="Workspace Members"
+      />
 
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
         Members sourced from the workspace contract data.

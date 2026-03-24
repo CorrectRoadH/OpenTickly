@@ -22,16 +22,27 @@ export function DirectoryFilterChip({
 
 export function ShellPageHeader({
   action,
+  bordered = false,
+  subtitle,
   title,
 }: {
   action?: ReactNode;
+  bordered?: boolean;
+  subtitle?: string;
   title: string;
 }): ReactElement {
   return (
-    <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-      <h1 className="text-[21px] font-semibold leading-[30px] text-white">{title}</h1>
-      {action ? <div className="shrink-0">{action}</div> : null}
-    </div>
+    <header className={`${bordered ? "border-b border-[var(--track-border)]" : ""}`.trim()}>
+      <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
+        <div className="space-y-1">
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">{title}</h1>
+          {subtitle ? (
+            <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{subtitle}</p>
+          ) : null}
+        </div>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+    </header>
   );
 }
 

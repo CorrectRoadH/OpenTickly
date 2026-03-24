@@ -18,6 +18,10 @@ import {
   useWorkspaceTopActivityQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import {
+  ShellPageHeader,
+  ShellSecondaryButton,
+} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
@@ -68,30 +72,20 @@ export function WorkspaceOverviewPage(): ReactElement {
         className="relative z-10 flex w-full flex-col gap-5"
         data-testid="workspace-overview-content"
       >
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-1">
-            <h1 className="text-[21px] font-semibold leading-[30px] text-white">Admin Overview</h1>
-            <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
-              Set up your organization and keep your team on track
-            </p>
-          </div>
-          <div className="flex flex-col items-start gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)] lg:items-end">
-            <div className="flex min-h-9 flex-wrap items-center gap-2">
-              <span className="normal-case font-medium tracking-normal text-white">
-                Set as default view
-              </span>
-              <div className="flex h-[18px] w-[32px] items-center rounded-full bg-[var(--track-border)] px-[2px]">
-                <div className="size-[14px] rounded-full bg-white" />
-              </div>
-              <span className="text-[var(--track-accent)]">Refresh charts</span>
-              <span className="text-[var(--track-text-soft)]">0</span>
+        <ShellPageHeader
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <ShellSecondaryButton type="button">
+                <span className="normal-case">Set as default view</span>
+              </ShellSecondaryButton>
+              <ShellSecondaryButton type="button">Refresh charts</ShellSecondaryButton>
+              <ShellSecondaryButton type="button">View all plans</ShellSecondaryButton>
             </div>
-            <div className="flex min-h-9 items-center gap-3">
-              <div className="h-[18px] w-[80px] rounded-[8px] bg-[var(--track-panel)] shadow-[inset_0_0_0_1px_var(--track-border)]" />
-              <span className="text-[var(--track-accent)]">View all plans</span>
-            </div>
-          </div>
-        </div>
+          }
+          bordered
+          subtitle="Set up your organization and keep your team on track"
+          title="Admin Overview"
+        />
 
         <div
           className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
