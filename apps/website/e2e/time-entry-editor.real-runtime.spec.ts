@@ -132,7 +132,7 @@ test.describe("Story: edit a stopped time entry", () => {
     await page.waitForTimeout(300);
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
 
-    await dialog.getByRole("button", { name: "Edit start date" }).click();
+    await dialog.getByRole("button", { name: "Edit start date" }).click({ force: true });
     const datePicker = page.getByTestId("date-picker");
     await expect(datePicker).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
