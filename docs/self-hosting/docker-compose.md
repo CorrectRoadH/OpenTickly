@@ -26,6 +26,7 @@ Baseline defaults shipped in compose:
 - `OPENTOGGL_POSTGRES_USER=postgres`
 - `OPENTOGGL_POSTGRES_PASSWORD=postgres`
 - `OPENTOGGL_POSTGRES_PORT=5432`
+- `OPENTOGGL_REDIS_PORT=6379`
 - `OPENTOGGL_DATABASE_URL=postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable`
 - `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
 
@@ -65,6 +66,8 @@ docker compose ps
 ```
 
 If `5432` is already in use on your host, set `OPENTOGGL_POSTGRES_PORT` and matching `PGPORT` explicitly for that run.
+
+If `6379` is already in use on your host, set `OPENTOGGL_REDIS_PORT` explicitly for that run.
 
 If you need review evidence before startup, run `pgschema plan` manually against the same target database before `docker compose up`. The runtime image only automates `apply`.
 
