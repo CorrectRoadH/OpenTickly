@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"testing"
+	"time"
 
 	webapi "opentoggl/backend/apps/backend/internal/http/generated/web"
 	"opentoggl/backend/apps/backend/internal/identity/application"
@@ -17,9 +19,10 @@ import (
 
 func TestRegisterReturnsSessionBootstrap(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	response := handler.Register(context.Background(), RegisterRequest{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -35,16 +38,17 @@ func TestRegisterReturnsSessionBootstrap(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected register body SessionBootstrap, got %T", response.Body)
 	}
-	if string(body.User.Email) != "person@example.com" {
+	if string(body.User.Email) != uniqueEmail {
 		t.Fatalf("expected registered user email, got %q", body.User.Email)
 	}
 }
 
 func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	registered := handler.Register(context.Background(), RegisterRequest{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -53,7 +57,7 @@ func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
 	}
 
 	loginResponse := handler.Login(context.Background(), LoginRequest{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		Password: "secret1",
 	})
 	if loginResponse.StatusCode != 200 {
@@ -67,16 +71,17 @@ func TestLoginLogoutAndSessionLookupsUseSessionTransportState(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected login body SessionBootstrap, got %T", loginResponse.Body)
 	}
-	if string(body.User.Email) != "person@example.com" {
+	if string(body.User.Email) != uniqueEmail {
 		t.Fatalf("expected login user email, got %q", body.User.Email)
 	}
 }
 
 func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -109,9 +114,10 @@ func TestGetSessionLogsUnexpectedSessionBootstrapError(t *testing.T) {
 	}()
 
 	handler := newTestHandlerWithShell(t, failingSessionShellProvider{err: errors.New("shell bootstrap failed")})
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -147,9 +153,10 @@ func TestGetSessionLogsUnexpectedSessionBootstrapError(t *testing.T) {
 
 func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -173,9 +180,10 @@ func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
 
 func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -226,14 +234,15 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 
 func TestLoginMapsInvalidCredentialsToForbidden(t *testing.T) {
 	handler := newTestHandler(t)
+	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 	handler.Register(context.Background(), RegisterRequest{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
 
 	response := handler.Login(context.Background(), LoginRequest{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		Password: "wrong-secret",
 	})
 

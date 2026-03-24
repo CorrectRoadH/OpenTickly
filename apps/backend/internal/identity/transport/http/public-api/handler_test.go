@@ -2,7 +2,9 @@ package publicapi
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -14,10 +16,10 @@ import (
 )
 
 func TestGetMeReturnsCurrentUserForValidBasicAuth(t *testing.T) {
-	handler, _ := newTestHandler(t)
+	handler, _, uniqueEmail := newTestHandler(t)
 
 	response := handler.GetMe(context.Background(), domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	})
 
@@ -30,16 +32,16 @@ func TestGetMeReturnsCurrentUserForValidBasicAuth(t *testing.T) {
 		t.Fatalf("expected get me body currentUserResponse, got %T", response.Body)
 	}
 
-	if body.Email != "person@example.com" {
+	if body.Email != uniqueEmail {
 		t.Fatalf("expected get me email, got %#v", body.Email)
 	}
 }
 
 func TestPutMeMapsProfileValidationErrorsToCompatBody(t *testing.T) {
-	handler, _ := newTestHandler(t)
+	handler, _, uniqueEmail := newTestHandler(t)
 
 	response := handler.PutMe(context.Background(), domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	}, domain.ProfileUpdate{
 		Password: "secret2",
@@ -55,10 +57,10 @@ func TestPutMeMapsProfileValidationErrorsToCompatBody(t *testing.T) {
 }
 
 func TestPreferencesAndResetTokenMapToCompatResponses(t *testing.T) {
-	handler, auth := newTestHandler(t)
+	handler, auth, uniqueEmail := newTestHandler(t)
 
 	preferencesResponse := handler.PostPreferences(context.Background(), domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	}, "web", domain.Preferences{
 		ToSAcceptNeeded: lo.ToPtr(true),
@@ -73,7 +75,7 @@ func TestPreferencesAndResetTokenMapToCompatResponses(t *testing.T) {
 	}
 
 	resetResponse := handler.PostResetToken(context.Background(), domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	})
 
@@ -91,7 +93,7 @@ func TestPreferencesAndResetTokenMapToCompatResponses(t *testing.T) {
 	}
 
 	blockedResponse := handler.PostResetToken(context.Background(), domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	})
 
@@ -105,7 +107,7 @@ func TestPreferencesAndResetTokenMapToCompatResponses(t *testing.T) {
 }
 
 func TestGetLoggedUsesSessionState(t *testing.T) {
-	handler, auth := newTestHandler(t)
+	handler, auth, _ := newTestHandler(t)
 
 	response := handler.GetLogged(context.Background(), auth.SessionID)
 	if response.StatusCode != 200 {
@@ -117,10 +119,13 @@ func TestGetLoggedUsesSessionState(t *testing.T) {
 	}
 }
 
-func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession) {
+func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession, string) {
 	t.Helper()
 
 	database := pgtest.Open(t)
+
+	// Generate unique email to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("public-api-%d@example.com", time.Now().UnixNano())
 
 	service := application.NewService(application.Config{
 		Users:              identitypostgres.NewUserRepository(database.Pool),
@@ -133,7 +138,7 @@ func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession) {
 	})
 
 	auth, err := service.Register(context.Background(), application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -141,5 +146,5 @@ func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession) {
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	return NewHandler(service), auth
+	return NewHandler(service), auth, uniqueEmail
 }

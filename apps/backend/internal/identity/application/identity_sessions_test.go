@@ -3,7 +3,9 @@ package application_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -19,8 +21,11 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	service := newPostgresTestService(database)
 	ctx := context.Background()
 
+	// Generate unique email to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("identity-%d@example.com", time.Now().UnixNano())
+	renamedEmail := fmt.Sprintf("renamed-%d@example.com", time.Now().UnixNano())
 	registered, err := service.Register(ctx, application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -32,22 +37,22 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	if err != nil {
 		t.Fatalf("resolve current user: %v", err)
 	}
-	if current.Email != "person@example.com" {
-		t.Fatalf("expected current user email person@example.com, got %q", current.Email)
+	if current.Email != uniqueEmail {
+		t.Fatalf("expected current user email %s, got %q", uniqueEmail, current.Email)
 	}
 
 	profile, err := service.UpdateProfile(ctx, registered.User.ID, domain.ProfileUpdate{
 		CurrentPassword: "secret1",
 		Password:        "secret2",
-		Email:           "renamed@example.com",
+		Email:           renamedEmail,
 		FullName:        "Renamed Person",
 		Timezone:        "Asia/Shanghai",
 	})
 	if err != nil {
 		t.Fatalf("update profile: %v", err)
 	}
-	if profile.Email != "renamed@example.com" {
-		t.Fatalf("expected updated email renamed@example.com, got %q", profile.Email)
+	if profile.Email != renamedEmail {
+		t.Fatalf("expected updated email %s, got %q", renamedEmail, profile.Email)
 	}
 
 	if err := service.UpdatePreferences(ctx, registered.User.ID, "web", domain.Preferences{
@@ -153,8 +158,10 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 	service := application.NewService(deps.Config())
 	ctx := context.Background()
 
+	// Generate unique email to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("deactivation-%d@example.com", time.Now().UnixNano())
 	auth, err := service.Register(ctx, application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -171,7 +178,7 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 	}
 
 	if _, err := service.LoginBasic(ctx, domain.BasicCredentials{
-		Username: "person@example.com",
+		Username: uniqueEmail,
 		Password: "secret1",
 	}); !errors.Is(err, domain.ErrUserDeactivated) {
 		t.Fatalf("expected deactivated login to fail with ErrUserDeactivated, got %v", err)
@@ -185,7 +192,7 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 		t.Fatalf("expected deactivated business writes to be blocked, got %v", err)
 	}
 
-	jobs, err := deps.JobRecorder.Recorded(ctx)
+	jobs, err := deps.JobRecorder.RecordedForUser(ctx, auth.User.ID)
 	if err != nil {
 		t.Fatalf("recorded jobs: %v", err)
 	}
@@ -199,8 +206,10 @@ func TestServicePersistsAccountPreferenceActions(t *testing.T) {
 	service := newPostgresTestService(database)
 	ctx := context.Background()
 
+	// Generate unique email to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("prefs-%d@example.com", time.Now().UnixNano())
 	auth, err := service.Register(ctx, application.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -258,8 +267,10 @@ func TestServiceIssuesDesktopLoginTokensAsSessions(t *testing.T) {
 	service := newPostgresTestService(database)
 	ctx := context.Background()
 
+	// Generate unique email to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("desktop-%d@example.com", time.Now().UnixNano())
 	auth, err := service.Register(ctx, application.RegisterInput{
-		Email:    "desktop@example.com",
+		Email:    uniqueEmail,
 		FullName: "Desktop User",
 		Password: "secret1",
 	})

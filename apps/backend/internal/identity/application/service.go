@@ -50,6 +50,7 @@ type PushServiceRepository interface {
 
 type JobRecorder interface {
 	Record(context.Context, JobRecord) error
+	RecordedForUser(context.Context, int64) ([]JobRecord, error)
 }
 
 type RunningTimerLookup interface {

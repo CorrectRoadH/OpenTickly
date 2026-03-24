@@ -2,7 +2,9 @@ package application_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
@@ -19,9 +21,22 @@ import (
 	"github.com/samber/lo"
 )
 
+// uniqueTestID generates a unique base identifier for test isolation
+func uniqueTestID(t *testing.T) int64 {
+	return time.Now().UnixNano() % 100000000000 // nanoseconds truncated to avoid overflow
+}
+
 func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
+
+	// Generate unique IDs to avoid collisions when tests run in parallel
+	baseID := uniqueTestID(t)
+	ownerOneID := baseID
+	ownerTwoID := baseID + 1
+	ownerOneEmail := fmt.Sprintf("owner-one-%d@example.com", baseID)
+	ownerTwoEmail := fmt.Sprintf("owner-two-%d@example.com", baseID)
+	inviteeEmail := fmt.Sprintf("invitee-%d@example.com", baseID)
 
 	billingService, err := billingapplication.NewService(
 		billingpostgres.NewAccountRepository(database.Pool),
@@ -58,8 +73,8 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 		email    string
 		fullName string
 	}{
-		{id: 1001, email: "owner-one@example.com", fullName: "Owner One"},
-		{id: 1002, email: "owner-two@example.com", fullName: "Owner Two"},
+		{id: ownerOneID, email: ownerOneEmail, fullName: "Owner One"},
+		{id: ownerTwoID, email: ownerTwoEmail, fullName: "Owner Two"},
 	} {
 		record, registerErr := identitydomain.RegisterUser(identitydomain.RegisterParams{
 			ID:       user.id,
@@ -78,14 +93,14 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 
 	ownerOne, err := service.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
 		WorkspaceID: int64(tenantResult.WorkspaceID),
-		UserID:      1001,
+		UserID:      ownerOneID,
 	})
 	if err != nil {
 		t.Fatalf("ensure owner one: %v", err)
 	}
 	ownerTwo, err := service.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
 		WorkspaceID: int64(tenantResult.WorkspaceID),
-		UserID:      1002,
+		UserID:      ownerTwoID,
 	})
 	if err != nil {
 		t.Fatalf("ensure owner two: %v", err)
@@ -102,7 +117,7 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 	invited, err := service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
 		WorkspaceID: int64(tenantResult.WorkspaceID),
 		RequestedBy: *ownerOne.UserID,
-		Email:       "invitee@example.com",
+		Email:       inviteeEmail,
 		Role:        lo.ToPtr(membershipdomain.WorkspaceRoleAdmin),
 	})
 	if err != nil {

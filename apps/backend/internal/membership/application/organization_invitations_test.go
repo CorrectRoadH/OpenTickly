@@ -2,7 +2,9 @@ package application_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
@@ -19,6 +21,13 @@ import (
 func TestServicePersistsOrganizationInvitations(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
+
+	// Generate unique IDs to avoid collisions when tests run in parallel
+	baseID := time.Now().UnixNano() % 100000000000
+	senderID := baseID
+	senderEmail := fmt.Sprintf("owner-%d@example.com", baseID)
+	inviteeEmail := fmt.Sprintf("invitee-%d@example.com", baseID)
+	inviteeTwoEmail := fmt.Sprintf("invitee-two-%d@example.com", baseID)
 
 	billingService, err := billingapplication.NewService(
 		billingpostgres.NewAccountRepository(database.Pool),
@@ -46,11 +55,11 @@ func TestServicePersistsOrganizationInvitations(t *testing.T) {
 	}
 
 	sender, err := identitydomain.RegisterUser(identitydomain.RegisterParams{
-		ID:       2001,
-		Email:    "owner@example.com",
+		ID:       senderID,
+		Email:    senderEmail,
 		FullName: "Owner User",
 		Password: "secret1",
-		APIToken: "owner-token",
+		APIToken: senderEmail + "-token",
 	})
 	if err != nil {
 		t.Fatalf("register sender: %v", err)
@@ -70,7 +79,7 @@ func TestServicePersistsOrganizationInvitations(t *testing.T) {
 		SenderUserID:     sender.ID(),
 		SenderName:       sender.FullName(),
 		SenderEmail:      sender.Email(),
-		Emails:           []string{"invitee@example.com", "invitee-two@example.com"},
+		Emails:           []string{inviteeEmail, inviteeTwoEmail},
 		Workspaces: []membershipapplication.InvitationWorkspaceAssignment{
 			{WorkspaceID: int64(tenantResult.WorkspaceID)},
 		},
@@ -86,7 +95,7 @@ func TestServicePersistsOrganizationInvitations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get invitation: %v", err)
 	}
-	if loaded.Email != "invitee@example.com" || loaded.OrganizationName != "Membership Org" {
+	if loaded.Email != inviteeEmail || loaded.OrganizationName != "Membership Org" {
 		t.Fatalf("expected loaded invitation metadata, got %#v", loaded)
 	}
 

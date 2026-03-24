@@ -52,3 +52,30 @@ func (recorder *JobRecorder) Recorded(ctx context.Context) ([]application.JobRec
 	}
 	return jobs, nil
 }
+
+// RecordedForUser returns job records filtered by user ID for test isolation.
+func (recorder *JobRecorder) RecordedForUser(ctx context.Context, userID int64) ([]application.JobRecord, error) {
+	rows, err := recorder.pool.Query(ctx, `
+		select job_name, user_id
+		from identity_job_records
+		where user_id = $1
+		order by id
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("query identity job records for user %d: %w", userID, err)
+	}
+	defer rows.Close()
+
+	jobs := []application.JobRecord{}
+	for rows.Next() {
+		var job application.JobRecord
+		if err := rows.Scan(&job.Name, &job.UserID); err != nil {
+			return nil, fmt.Errorf("scan identity job record: %w", err)
+		}
+		jobs = append(jobs, job)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate identity job records: %w", err)
+	}
+	return jobs, nil
+}

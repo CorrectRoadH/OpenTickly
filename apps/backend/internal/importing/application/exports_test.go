@@ -3,7 +3,9 @@ package application_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
@@ -29,8 +31,12 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(database.Pool),
 		IDs:                identitypostgres.NewSequence(database.Pool),
 	})
+
+	// Generate unique email and workspace ID to avoid collisions when tests run in parallel
+	uniqueEmail := fmt.Sprintf("export-user-%d@example.com", time.Now().UnixNano())
+	workspaceID := time.Now().UnixNano() % 100000 // Use a large unique workspace ID
 	auth, err := identityService.Register(ctx, identityapplication.RegisterInput{
-		Email:    "person@example.com",
+		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
 	})
@@ -45,7 +51,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		t.Fatalf("start user export: %v", err)
 	}
 
-	workspaceToken, err := service.StartWorkspaceExport(ctx, 88, auth.User.ID, []string{"timeline", "projects"})
+	workspaceToken, err := service.StartWorkspaceExport(ctx, workspaceID, auth.User.ID, []string{"timeline", "projects"})
 	if err != nil {
 		t.Fatalf("start workspace export: %v", err)
 	}
@@ -58,7 +64,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		t.Fatalf("expected one completed user export, got %#v", userExports)
 	}
 
-	workspaceExports, err := service.ListWorkspaceExports(ctx, 88)
+	workspaceExports, err := service.ListWorkspaceExports(ctx, workspaceID)
 	if err != nil {
 		t.Fatalf("list workspace exports: %v", err)
 	}
@@ -77,7 +83,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		t.Fatalf("expected user archive content, got %#v", userArchive)
 	}
 
-	workspaceArchive, err := service.GetWorkspaceExportArchive(ctx, 88, workspaceToken)
+	workspaceArchive, err := service.GetWorkspaceExportArchive(ctx, workspaceID, workspaceToken)
 	if err != nil {
 		t.Fatalf("get workspace export archive: %v", err)
 	}

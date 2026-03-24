@@ -6,8 +6,12 @@ import (
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 )
 
+// TestSequenceNextUserIDUsesCurrentIdentityUsersSerialSequence tests the sequence
+// behavior directly. It requires full schema isolation since it tests that the
+// sequence starts from 1, which would conflict with other tests using the shared
+// schema. This is a legitimate case for OpenEphemeral().
 func TestSequenceNextUserIDUsesCurrentIdentityUsersSerialSequence(t *testing.T) {
-	database := pgtest.Open(t)
+	database := pgtest.OpenEphemeral(t)
 	sequence := NewSequence(database.Pool)
 
 	first, err := sequence.NextUserID()
