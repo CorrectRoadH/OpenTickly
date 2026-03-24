@@ -29,6 +29,8 @@ import type {
   RemoveWorkspaceMemberResponses,
   RestoreWorkspaceMemberData,
   RestoreWorkspaceMemberResponses,
+  UpdateWebSessionData,
+  UpdateWebSessionResponses,
   UpdateWorkspaceMemberRateCostData,
   UpdateWorkspaceMemberRateCostResponses,
   UpdateWorkspacePermissionsData,
@@ -104,6 +106,21 @@ export const getWebSession = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetWebSessionResponses, unknown, ThrowOnError>({
     url: "/web/v1/session",
     ...options,
+  });
+
+/**
+ * Update the current web session shell context
+ */
+export const updateWebSession = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateWebSessionData, ThrowOnError>,
+) =>
+  (options.client ?? client).patch<UpdateWebSessionResponses, unknown, ThrowOnError>({
+    url: "/web/v1/session",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

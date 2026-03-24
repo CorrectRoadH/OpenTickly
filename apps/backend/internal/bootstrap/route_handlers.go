@@ -175,7 +175,54 @@ func (handlers *routeHandlers) session(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	var request webapi.UpdateWebSessionRequest
+	if err := ctx.Bind(&request); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	if request.WorkspaceId <= 0 {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		switch {
+		case errors.Is(err, identityapplication.ErrSessionNotFound),
+			errors.Is(err, identitydomain.ErrUserDeactivated),
+			errors.Is(err, identitydomain.ErrUserDeleted):
+			return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
+		default:
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		}
+	}
+
+	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	var selectedWorkspace *tenantapplication.WorkspaceView
+	for index := range workspaces {
+		if int64(workspaces[index].ID) == int64(request.WorkspaceId) {
+			selectedWorkspace = &workspaces[index]
+			break
+		}
+	}
+	if selectedWorkspace == nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
+			SetInternal(errors.New("requested workspace is not accessible to the current user"))
+	}
+
+	if err := handlers.userHomes.Save(
+		ctx.Request().Context(),
+		user.ID,
+		int64(selectedWorkspace.OrganizationID),
+		int64(selectedWorkspace.ID),
+	); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	response := handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx))
+	return writeIdentityResponse(ctx, response)
 }
 
 func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {

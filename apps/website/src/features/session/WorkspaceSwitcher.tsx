@@ -21,7 +21,7 @@ type WorkspaceSwitcherProps = {
   inviteMembersPath?: string;
   managePath?: string;
   onChange: (workspaceId: number) => void;
-  onSetDefault?: (workspaceId: number) => void;
+  onSetDefault?: (workspaceId: number) => Promise<void> | void;
   organizations: SessionOrganizationViewModel[];
 };
 
@@ -43,6 +43,9 @@ export function WorkspaceSwitcher({
   const [isOpen, setIsOpen] = useState(false);
   const [optimisticOrganization, setOptimisticOrganization] =
     useState<SessionOrganizationViewModel | null>(null);
+  const [optimisticDefaultWorkspaceId, setOptimisticDefaultWorkspaceId] = useState<number | null>(
+    null,
+  );
   const [organizationName, setOrganizationName] = useState("");
   const [panelPosition, setPanelPosition] = useState<FloatingPanelPosition | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -50,7 +53,10 @@ export function WorkspaceSwitcher({
   const panelRef = useRef<HTMLDivElement | null>(null!);
   const listboxId = useId();
   const createOrganizationMutation = useCreateOrganizationMutation();
-  const displayedOrganizations = mergeOrganizations(organizations, optimisticOrganization);
+  const displayedOrganizations = applyOptimisticDefault(
+    mergeOrganizations(organizations, optimisticOrganization),
+    optimisticDefaultWorkspaceId,
+  );
   const visibleOrganization =
     optimisticOrganization ?? currentOrganization ?? displayedOrganizations[0] ?? null;
 
@@ -71,6 +77,20 @@ export function WorkspaceSwitcher({
       setOptimisticOrganization(null);
     }
   }, [optimisticOrganization, organizations]);
+
+  useEffect(() => {
+    if (optimisticDefaultWorkspaceId == null) {
+      return;
+    }
+
+    if (
+      organizations.some(
+        (entry) => entry.isDefault && entry.defaultWorkspaceId === optimisticDefaultWorkspaceId,
+      )
+    ) {
+      setOptimisticDefaultWorkspaceId(null);
+    }
+  }, [optimisticDefaultWorkspaceId, organizations]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -231,6 +251,7 @@ export function WorkspaceSwitcher({
                 setCreateDialogOpen(true);
               }}
               onSelectOrganization={handleSelectOrganization}
+              onSetDefaultRequested={setOptimisticDefaultWorkspaceId}
               onSetDefault={onSetDefault}
               organization={visibleOrganization}
               organizations={displayedOrganizations}
@@ -297,6 +318,20 @@ function mergeOrganizations(
   ];
 }
 
+function applyOptimisticDefault(
+  organizations: SessionOrganizationViewModel[],
+  optimisticDefaultWorkspaceId: number | null,
+): SessionOrganizationViewModel[] {
+  if (optimisticDefaultWorkspaceId == null) {
+    return organizations;
+  }
+
+  return organizations.map((entry) => ({
+    ...entry,
+    isDefault: entry.defaultWorkspaceId === optimisticDefaultWorkspaceId,
+  }));
+}
+
 function matchesOrganization(
   organization: SessionOrganizationViewModel,
   workspaceId: number | null,
@@ -315,6 +350,7 @@ function OrganizationOptionsPanel({
   managePath,
   onCreateOrganization,
   onSelectOrganization,
+  onSetDefaultRequested,
   onSetDefault,
   organization,
   organizations,
@@ -326,6 +362,7 @@ function OrganizationOptionsPanel({
   managePath?: string;
   onCreateOrganization: () => void;
   onSelectOrganization: (organization: SessionOrganizationViewModel) => void;
+  onSetDefaultRequested: (workspaceId: number | null) => void;
   onSetDefault?: (workspaceId: number) => void;
   organization: SessionOrganizationViewModel | null;
   organizations: SessionOrganizationViewModel[];
@@ -450,7 +487,12 @@ function OrganizationOptionsPanel({
                           aria-label={`Set to default ${entry.name}`}
                           className="text-[12px] font-semibold text-[var(--track-accent)] transition hover:text-white"
                           onClick={() => {
-                            onSetDefault(entry.defaultWorkspaceId!);
+                            onSetDefaultRequested(entry.defaultWorkspaceId!);
+                            void Promise.resolve(onSetDefault(entry.defaultWorkspaceId!)).catch(
+                              () => {
+                                onSetDefaultRequested(null);
+                              },
+                            );
                           }}
                           type="button"
                         >
@@ -458,8 +500,11 @@ function OrganizationOptionsPanel({
                         </button>
                       ) : null}
                       {selected ? (
-                        <span className="text-[var(--track-accent)]">
-                          <span className="text-[12px] font-semibold">Selected</span>
+                        <span
+                          aria-label="Current organization"
+                          className="text-[var(--track-accent)]"
+                        >
+                          <TrackingIcon className="size-4" name="check" />
                         </span>
                       ) : null}
                     </div>

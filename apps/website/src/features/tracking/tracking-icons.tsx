@@ -4,6 +4,7 @@ type TrackingIconName =
   | "approvals"
   | "bell"
   | "calendar"
+  | "check"
   | "chevron-down"
   | "chevron-right"
   | "clients"
@@ -80,6 +81,8 @@ function renderIcon(name: TrackingIconName): ReactElement {
           <path d="M5 2.8v2M11 2.8v2M2.5 6.3h11" />
         </>
       );
+    case "check":
+      return <path d="m4.5 8.2 2.2 2.2 4.8-4.8" />;
     case "chevron-down":
       return <path d="m4.5 6.5 3.5 3 3.5-3" />;
     case "chevron-right":

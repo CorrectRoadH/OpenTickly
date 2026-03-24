@@ -26,3 +26,5 @@ export type {
   WorkspaceSettingsEnvelope as WorkspaceSettingsEnvelopeDto,
   WorkspaceSettingsUpdate as UpdateWorkspaceSettingsRequestDto,
 } from "./web/index.ts";
+
+export type { UpdateWebSessionRequest as UpdateWebSessionRequestDto } from "./web/index.ts";

@@ -22,6 +22,7 @@ export type SessionUserViewModel = {
 export type SessionOrganizationViewModel = {
   defaultWorkspaceId: number | null;
   id: number;
+  isDefault: boolean;
   isCurrent: boolean;
   name: string;
   planName: string | null;
@@ -78,7 +79,12 @@ export function mapSessionBootstrap(
 ): SessionBootstrapViewModel {
   const selectedWorkspace = selectWorkspace(dto.workspaces, dto.current_workspace_id, options);
   const currentOrganizationId =
-    dto.current_organization_id ?? selectedWorkspace.organization_id ?? null;
+    selectedWorkspace.organization_id ?? dto.current_organization_id ?? null;
+  const resolvedDefaultWorkspaceId =
+    dto.user.default_workspace_id ?? dto.workspaces[0]?.id ?? selectedWorkspace.id ?? null;
+  const defaultOrganizationId =
+    dto.workspaces.find((workspace) => workspace.id === resolvedDefaultWorkspaceId)
+      ?.organization_id ?? null;
 
   return {
     availableOrganizations: dto.organizations
@@ -86,6 +92,7 @@ export function mapSessionBootstrap(
         mapOrganization(
           dto.workspaces,
           organization,
+          organization.id === defaultOrganizationId,
           organization.id === currentOrganizationId,
           dto.organization_subscription?.plan_name ?? null,
         ),
@@ -97,6 +104,7 @@ export function mapSessionBootstrap(
     currentOrganization: mapOrganization(
       dto.workspaces,
       dto.organizations.find((entry) => entry.id === currentOrganizationId) ?? null,
+      defaultOrganizationId === currentOrganizationId,
       true,
       dto.organization_subscription?.plan_name ?? null,
     ),
@@ -157,6 +165,7 @@ function mapUser(dto: WebCurrentUserProfileDto): SessionUserViewModel {
 function mapOrganization(
   workspaces: WebWorkspaceSettingsDto[],
   organization: WebOrganizationSettingsDto | null,
+  isDefault: boolean,
   isCurrent: boolean,
   planName: string | null,
 ): SessionOrganizationViewModel | null {
@@ -170,6 +179,7 @@ function mapOrganization(
   return {
     defaultWorkspaceId,
     id: organization.id,
+    isDefault,
     isCurrent,
     name: organization.name ?? "",
     planName: planName ?? organization.pricing_plan_name ?? null,

@@ -124,9 +124,11 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                   if (isAccountScopedShellPath(location.pathname)) {
                     const previousWorkspaceId = session.currentWorkspace.id;
                     setCurrentWorkspaceId(workspaceId);
-                    void updateWebSessionMutation.mutateAsync({ workspace_id: workspaceId }).catch(() => {
-                      setCurrentWorkspaceId(previousWorkspaceId);
-                    });
+                    void updateWebSessionMutation
+                      .mutateAsync({ workspace_id: workspaceId })
+                      .catch(() => {
+                        setCurrentWorkspaceId(previousWorkspaceId);
+                      });
                     return;
                   }
 
@@ -135,7 +137,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                   });
                 }}
                 onSetDefault={(workspaceId) => {
-                  void updateProfileMutation.mutateAsync({
+                  return updateProfileMutation.mutateAsync({
                     default_workspace_id: workspaceId,
                     email: profileQuery.data?.email,
                     fullname: profileQuery.data?.fullname,

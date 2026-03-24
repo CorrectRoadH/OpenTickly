@@ -88,6 +88,32 @@
             }
           }
         }
+      },
+      "patch": {
+        "summary": "Update the current web session shell context",
+        "operationId": "update-web-session",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebSessionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated session bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/web/v1/workspaces/{workspace_id}/settings": {
@@ -977,6 +1003,15 @@
           }
         },
         "required": ["name"]
+      },
+      "UpdateWebSessionRequest": {
+        "type": "object",
+        "properties": {
+          "workspace_id": {
+            "type": "integer"
+          }
+        },
+        "required": ["workspace_id"]
       },
       "UpdateWorkspaceSettingsRequest": {
         "type": "object",

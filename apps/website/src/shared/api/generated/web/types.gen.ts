@@ -147,6 +147,10 @@ export type UpdateOrganizationSettingsRequest = {
   name: string;
 };
 
+export type UpdateWebSessionRequest = {
+  workspace_id: number;
+};
+
 export type UpdateWorkspaceSettingsRequest = {
   name: string;
   default_currency: string;
@@ -359,6 +363,22 @@ export type GetWebSessionResponses = {
 };
 
 export type GetWebSessionResponse = GetWebSessionResponses[keyof GetWebSessionResponses];
+
+export type UpdateWebSessionData = {
+  body: UpdateWebSessionRequest;
+  path?: never;
+  query?: never;
+  url: "/web/v1/session";
+};
+
+export type UpdateWebSessionResponses = {
+  /**
+   * Updated session bootstrap
+   */
+  200: SessionBootstrap;
+};
+
+export type UpdateWebSessionResponse = UpdateWebSessionResponses[keyof UpdateWebSessionResponses];
 
 export type GetWorkspaceSettingsData = {
   body?: never;

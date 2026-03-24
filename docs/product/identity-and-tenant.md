@@ -58,6 +58,9 @@
 - Web session 的 `current workspace` / `session home` 只是当前默认上下文，用来决定 shell 默认落点、创建目标和当前展示引用；它不是 public API 的授权边界。
 - 当前用户对某个 workspace 是否有权访问，必须由该用户对该 workspace 的真实 membership / ownership 决定，而不是由“这个 workspace 是否属于当前 session home 的 organization”决定。
 - 当用户切换到另一个 organization 或 workspace 后，之前已可访问的其他 organization / workspace 资源不会因此失权；显式带 `workspace_id` 或 `organization_id` 的公开接口仍应按目标资源的真实访问权限判定。
+- 当用户没有已保存的 `default_workspace_id` 时，web shell 必须把该用户可访问列表中的第一个 organization 视为唯一默认 organization，而不是把当前临时选中的 organization 误判成默认。
+- organization switcher 在任一时刻只能展示一个 `Default` 标识；当前选中的 organization 需要在行末用 check 标识当前上下文，不能把“当前选中”和“默认 organization”混成同一语义。
+- 非默认 organization 只有在 hover 该行时才显示 `Set to default` 操作，且该操作只更新默认 organization，不改变当前可访问 organization 列表。
 
 ## 用户生命周期
 
