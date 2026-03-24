@@ -99,6 +99,8 @@ type Store interface {
 	) (domain.Workspace, error)
 	GetOrganization(ctx context.Context, organizationID domain.OrganizationID) (domain.Organization, bool, error)
 	GetWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) (domain.Workspace, bool, error)
+	ListOrganizationsByUserID(ctx context.Context, userID int64) ([]domain.Organization, error)
+	ListWorkspacesByUserID(ctx context.Context, userID int64) ([]domain.Workspace, error)
 	SaveOrganization(ctx context.Context, organization domain.Organization) error
 	SaveWorkspace(ctx context.Context, workspace domain.Workspace) error
 	DeleteWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) error
@@ -227,6 +229,66 @@ func (service *Service) GetWorkspace(
 		Branding:       toWorkspaceBrandingView(workspace.Branding()),
 		Commercial:     commercial,
 	}, nil
+}
+
+func (service *Service) ListOrganizationsByUserID(
+	ctx context.Context,
+	userID int64,
+) ([]OrganizationView, error) {
+	organizations, err := service.store.ListOrganizationsByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	views := make([]OrganizationView, 0, len(organizations))
+	for _, organization := range organizations {
+		commercial, commercialErr := service.commercial.CommercialStatusForOrganization(
+			ctx,
+			int64(organization.ID()),
+		)
+		if commercialErr != nil {
+			return nil, commercialErr
+		}
+		views = append(views, OrganizationView{
+			ID:           organization.ID(),
+			Name:         organization.Name(),
+			WorkspaceIDs: organization.WorkspaceIDs(),
+			Commercial:   commercial,
+		})
+	}
+
+	return views, nil
+}
+
+func (service *Service) ListWorkspacesByUserID(
+	ctx context.Context,
+	userID int64,
+) ([]WorkspaceView, error) {
+	workspaces, err := service.store.ListWorkspacesByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	views := make([]WorkspaceView, 0, len(workspaces))
+	for _, workspace := range workspaces {
+		commercial, commercialErr := service.commercial.CommercialStatusForWorkspace(
+			ctx,
+			int64(workspace.ID()),
+		)
+		if commercialErr != nil {
+			return nil, commercialErr
+		}
+		views = append(views, WorkspaceView{
+			ID:             workspace.ID(),
+			OrganizationID: workspace.OrganizationID(),
+			Name:           workspace.Name(),
+			Settings:       workspace.Settings(),
+			Branding:       toWorkspaceBrandingView(workspace.Branding()),
+			Commercial:     commercial,
+		})
+	}
+
+	return views, nil
 }
 
 func (service *Service) UpdateWorkspace(ctx context.Context, command UpdateWorkspaceCommand) error {

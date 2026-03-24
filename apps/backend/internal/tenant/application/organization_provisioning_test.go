@@ -88,6 +88,14 @@ func (store *stubStore) DeleteOrganization(ctx context.Context, organizationID d
 	return nil
 }
 
+func (store *stubStore) ListOrganizationsByUserID(ctx context.Context, userID int64) ([]domain.Organization, error) {
+	panic("unexpected call")
+}
+
+func (store *stubStore) ListWorkspacesByUserID(ctx context.Context, userID int64) ([]domain.Workspace, error) {
+	panic("unexpected call")
+}
+
 type stubCommercialTruthSource struct {
 	provisionedOrganizationID int64
 	provisionErr              error

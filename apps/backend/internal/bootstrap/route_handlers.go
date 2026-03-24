@@ -124,6 +124,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 	shellProvider := newBillingBackedSessionShell(
 		tenantService,
 		billingService,
+		identityService,
 		membershipService,
 		tenantpostgres.NewUserHomeRepository(pool),
 	)
@@ -174,48 +175,7 @@ func (handlers *routeHandlers) session(ctx echo.Context) error {
 }
 
 func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
-	if response, ok := handlers.authorizeSession(ctx); !ok {
-		return response
-	}
-
-	var request webapi.SessionHomeUpdate
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
-	}
-
-	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
-	if err != nil {
-		return identityHTTPError(handlers.identity.GetSession(ctx.Request().Context(), sessionID(ctx)))
-	}
-
-	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-	}
-
-	nextWorkspace, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
-		return int(workspace.ID) == request.WorkspaceId
-	})
-	if !found {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
-			SetInternal(errors.New("requested workspace is not accessible from the current session"))
-	}
-
-	home := &sessionHome{
-		organizationID: int64(nextWorkspace.OrganizationID),
-		workspaceID:    int64(nextWorkspace.ID),
-	}
-	if err := handlers.userHomes.Save(
-		ctx.Request().Context(),
-		user.ID,
-		home.organizationID,
-		home.workspaceID,
-	); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-	}
-	ctx.Set(currentSessionHomeContextKey, home)
-
-	return handlers.session(ctx)
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
 func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {
@@ -732,6 +692,7 @@ func clearSessionCookie(ctx echo.Context) {
 type billingBackedSessionShell struct {
 	tenant     *tenantapplication.Service
 	billing    *billingapplication.Service
+	identity   *identityapplication.Service
 	membership *membershipapplication.Service
 	userHomes  userHomeRepository
 
@@ -746,12 +707,14 @@ type sessionHome struct {
 func newBillingBackedSessionShell(
 	tenant *tenantapplication.Service,
 	billing *billingapplication.Service,
+	identity *identityapplication.Service,
 	membership *membershipapplication.Service,
 	userHomes userHomeRepository,
 ) *billingBackedSessionShell {
 	return &billingBackedSessionShell{
 		tenant:     tenant,
 		billing:    billing,
+		identity:   identity,
 		membership: membership,
 		userHomes:  userHomes,
 	}
@@ -818,6 +781,9 @@ func (provider *billingBackedSessionShell) ensureHome(
 		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
 			return sessionHome{}, err
 		}
+		if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
+			return sessionHome{}, err
+		}
 		return home, nil
 	}
 
@@ -828,6 +794,9 @@ func (provider *billingBackedSessionShell) ensureHome(
 	} else if ok {
 		home := sessionHome{organizationID: organizationID, workspaceID: workspaceID}
 		if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
+			return sessionHome{}, err
+		}
+		if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
 			return sessionHome{}, err
 		}
 		return home, nil
@@ -851,6 +820,9 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
 		return sessionHome{}, err
 	}
+	if err := provider.ensureDefaultWorkspace(ctx, user, home); err != nil {
+		return sessionHome{}, err
+	}
 	return home, nil
 }
 
@@ -862,6 +834,21 @@ func (provider *billingBackedSessionShell) ensureWorkspaceOwner(
 	_, err := provider.membership.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
 		WorkspaceID: home.workspaceID,
 		UserID:      user.ID,
+	})
+	return err
+}
+
+func (provider *billingBackedSessionShell) ensureDefaultWorkspace(
+	ctx context.Context,
+	user identityapplication.UserSnapshot,
+	home sessionHome,
+) error {
+	if user.DefaultWorkspaceID > 0 {
+		return nil
+	}
+
+	_, err := provider.identity.UpdateProfile(ctx, user.ID, identitydomain.ProfileUpdate{
+		DefaultWorkspaceID: lo.ToPtr(home.workspaceID),
 	})
 	return err
 }

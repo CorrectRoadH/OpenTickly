@@ -298,6 +298,104 @@ func (store *Store) GetWorkspace(
 	return workspace, true, nil
 }
 
+func (store *Store) ListOrganizationsByUserID(
+	ctx context.Context,
+	userID int64,
+) ([]domain.Organization, error) {
+	rows, err := store.pool.Query(ctx, `
+		select
+			o.id,
+			o.name,
+			array_agg(distinct w.id order by w.id) as workspace_ids
+		from membership_workspace_members m
+		join tenant_workspaces w on w.id = m.workspace_id
+		join tenant_organizations o on o.id = w.organization_id
+		where m.user_id = $1
+			and m.state <> 'removed'
+		group by o.id, o.name
+		order by o.id
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list organizations for user %d: %w", userID, err)
+	}
+	defer rows.Close()
+
+	organizations := make([]domain.Organization, 0)
+	for rows.Next() {
+		var organizationID int64
+		var name string
+		var workspaceIDs []int64
+		if err := rows.Scan(&organizationID, &name, &workspaceIDs); err != nil {
+			return nil, fmt.Errorf("scan organization for user %d: %w", userID, err)
+		}
+		organization, buildErr := buildOrganization(organizationID, name, workspaceIDs)
+		if buildErr != nil {
+			return nil, buildErr
+		}
+		organizations = append(organizations, organization)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate organizations for user %d: %w", userID, err)
+	}
+
+	return organizations, nil
+}
+
+func (store *Store) ListWorkspacesByUserID(
+	ctx context.Context,
+	userID int64,
+) ([]domain.Workspace, error) {
+	rows, err := store.pool.Query(ctx, `
+		select
+			id,
+			organization_id,
+			name,
+			logo_storage_key,
+			avatar_storage_key,
+			default_currency,
+			default_hourly_rate,
+			rounding,
+			rounding_minutes,
+			display_policy,
+			only_admins_may_create_projects,
+			only_admins_may_create_tags,
+			only_admins_see_team_dashboard,
+			projects_billable_by_default,
+			projects_private_by_default,
+			projects_enforce_billable,
+			reports_collapse,
+			public_project_access,
+			report_locked_at,
+			show_timesheet_view,
+			required_time_entry_fields
+		from tenant_workspaces
+		where id in (
+			select workspace_id
+			from membership_workspace_members
+			where user_id = $1 and state <> 'removed'
+		)
+		order by id
+	`, userID)
+	if err != nil {
+		return nil, fmt.Errorf("list workspaces for user %d: %w", userID, err)
+	}
+	defer rows.Close()
+
+	workspaces := make([]domain.Workspace, 0)
+	for rows.Next() {
+		workspace, err := scanWorkspace(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan workspace for user %d: %w", userID, err)
+		}
+		workspaces = append(workspaces, workspace)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate workspaces for user %d: %w", userID, err)
+	}
+
+	return workspaces, nil
+}
+
 func (store *Store) SaveOrganization(
 	ctx context.Context,
 	organization domain.Organization,
