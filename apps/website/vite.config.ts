@@ -37,6 +37,12 @@ export default defineConfig(({ mode }) => {
         "/api/v9": {
           target: webProxyTarget,
         },
+        "/insights/api/v1": {
+          target: webProxyTarget,
+        },
+        "/reports/api/v3": {
+          target: webProxyTarget,
+        },
         "/web/v1": {
           target: webProxyTarget,
         },
