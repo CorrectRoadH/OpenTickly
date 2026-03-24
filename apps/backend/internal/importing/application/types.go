@@ -44,9 +44,10 @@ type SaveExportCommand struct {
 }
 
 type ImportJobView struct {
-	JobID       string
-	Status      string
-	WorkspaceID int64
+	JobID        string
+	ErrorMessage string
+	Status       string
+	WorkspaceID  int64
 }
 
 type SaveImportJobCommand struct {
@@ -58,10 +59,25 @@ type SaveImportJobCommand struct {
 	WorkspaceID    int64
 }
 
+type UpdateImportJobCommand struct {
+	ErrorMessage string
+	JobID        string
+	Status       string
+}
+
+type ImportWorkspaceArchiveCommand struct {
+	Archive     ImportedArchive
+	JobID       string
+	RequestedBy int64
+	WorkspaceID int64
+}
+
 type Store interface {
 	ListExports(context.Context, ExportScope, int64) ([]ExportRecordView, error)
 	SaveExport(context.Context, SaveExportCommand) (ExportRecordView, error)
 	GetExportArchive(context.Context, ExportScope, int64, string) (ExportArchiveView, bool, error)
 	SaveImportJob(context.Context, SaveImportJobCommand) (ImportJobView, error)
 	GetImportJob(context.Context, string) (ImportJobView, bool, error)
+	UpdateImportJob(context.Context, UpdateImportJobCommand) (ImportJobView, error)
+	ImportWorkspaceArchive(context.Context, ImportWorkspaceArchiveCommand) error
 }

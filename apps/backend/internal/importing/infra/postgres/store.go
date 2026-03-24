@@ -131,7 +131,7 @@ func (store *Store) SaveImportJob(
 			selected_objects,
 			archive_content
 		) values ($1, $2, $3, $4, $5, '', $6, $7)
-		returning token, state, scope_id
+		returning token, state, error_message, scope_id
 	`,
 		string(importingapplication.ExportScopeWorkspace),
 		command.WorkspaceID,
@@ -140,7 +140,7 @@ func (store *Store) SaveImportJob(
 		command.Status,
 		selectedObjects,
 		command.ArchiveContent,
-	).Scan(&record.JobID, &record.Status, &record.WorkspaceID)
+	).Scan(&record.JobID, &record.Status, &record.ErrorMessage, &record.WorkspaceID)
 	if err != nil {
 		return importingapplication.ImportJobView{}, fmt.Errorf("save importing job: %w", err)
 	}
@@ -153,10 +153,10 @@ func (store *Store) GetImportJob(
 ) (importingapplication.ImportJobView, bool, error) {
 	var record importingapplication.ImportJobView
 	err := store.pool.QueryRow(ctx, `
-		select token, state, scope_id
+		select token, state, error_message, scope_id
 		from importing_exports
 		where scope = $1 and token = $2
-	`, string(importingapplication.ExportScopeWorkspace), jobID).Scan(&record.JobID, &record.Status, &record.WorkspaceID)
+	`, string(importingapplication.ExportScopeWorkspace), jobID).Scan(&record.JobID, &record.Status, &record.ErrorMessage, &record.WorkspaceID)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return importingapplication.ImportJobView{}, false, nil
@@ -164,4 +164,27 @@ func (store *Store) GetImportJob(
 		return importingapplication.ImportJobView{}, false, fmt.Errorf("get importing job: %w", err)
 	}
 	return record, true, nil
+}
+
+func (store *Store) UpdateImportJob(
+	ctx context.Context,
+	command importingapplication.UpdateImportJobCommand,
+) (importingapplication.ImportJobView, error) {
+	var record importingapplication.ImportJobView
+	err := store.pool.QueryRow(ctx, `
+		update importing_exports
+		set state = $2,
+			error_message = $3
+		where scope = $1 and token = $4
+		returning token, state, error_message, scope_id
+	`,
+		string(importingapplication.ExportScopeWorkspace),
+		command.Status,
+		command.ErrorMessage,
+		command.JobID,
+	).Scan(&record.JobID, &record.Status, &record.ErrorMessage, &record.WorkspaceID)
+	if err != nil {
+		return importingapplication.ImportJobView{}, fmt.Errorf("update importing job %s: %w", command.JobID, err)
+	}
+	return record, nil
 }
