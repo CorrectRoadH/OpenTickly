@@ -56,6 +56,7 @@ OpenToggl 不把“兼容”当成额外目标，而是直接把 Toggl 当前公
 - [billing-and-subscription](../product/billing-and-subscription.md)
 - [importing](../product/importing.md)
 - [instance-admin](../product/instance-admin.md)
+- [landing](../product/landing.md)
 
 ## 上游输入
 

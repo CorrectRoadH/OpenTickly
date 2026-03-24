@@ -8,6 +8,7 @@
 - Required backend env: `PORT`, `DATABASE_URL`, `REDIS_URL`
 - Required `pgschema` env for schema management: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
 - Frontend: `vp run website#dev`
+- Landing site: `vp run landing#dev`
 - Backend: `air`
 - Backend hot reload config: root `.air.toml`
 - Run `air` from the repository root so bootstrap can load root `.env.local`

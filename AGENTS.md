@@ -8,6 +8,7 @@ Local development must run source processes directly from the repository root.
 
 - Do not use `docker compose` as the default local development workflow.
 - Start the frontend from the repository root with `vp run website#dev`.
+- Start the landing site from the repository root with `vp run landing#dev`.
 - Start the backend from the repository root with `air`.
 - JavaScript / TypeScript toolchain commands must run through `vp` or documented root `vp run ...` entrypoints. Do not invoke `node`, `vitest`, `vite`, `playwright`, `pnpm`, `npm`, or `yarn` directly for normal frontend development, verification, or test runs.
 - Run all website Playwright E2E tests from the repository root with `vp run test:e2e:website`.

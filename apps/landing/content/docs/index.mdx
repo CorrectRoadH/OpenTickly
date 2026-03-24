@@ -1,0 +1,39 @@
+---
+title: What Is OpenToggl
+description: OpenToggl is an open source time tracking platform defined against the public Toggl surface.
+---
+
+OpenToggl is not a generic time tracker inspired by Toggl. It is a project that takes the current public Toggl surface as the implementation target for its own product.
+
+That means the goal is explicit:
+
+- cover `Track API v9`
+- cover `Reports API v3`
+- cover `Webhooks API v1`
+- provide the matching web interface
+- support both hosted and self-hosted runtime shapes
+- add import support for Toggl export data
+
+<Cards>
+  <Card title="Capability Surface" href="/docs/capabilities" />
+  <Card title="Self-Hosting" href="/docs/self-hosting" />
+  <Card title="GitHub Repository" href="https://github.com/CorrectRoadH/opentoggl" />
+</Cards>
+
+## Why this is different
+
+The project does not treat compatibility as a side quest. It treats publicly visible product definitions, API contracts, and the web surface as the source of truth.
+
+That keeps the promise concrete:
+
+- no hand-wavy "similar to Toggl" positioning
+- no API-only first release
+- no hidden split between SaaS and self-hosted capability surface
+- no drift between docs, contracts, and implementation as the intended target
+
+## What you can inspect
+
+- product docs under `docs/`
+- OpenAPI contracts under `openapi/`
+- backend and frontend source under `apps/`
+- self-hosting path documented in the repository

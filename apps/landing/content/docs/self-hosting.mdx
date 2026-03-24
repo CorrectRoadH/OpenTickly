@@ -1,0 +1,24 @@
+---
+title: Self-Hosting
+description: OpenToggl is designed to run as a self-hosted deployment, not only as a hosted demo.
+---
+
+Self-hosting is a first-class part of the product story.
+
+## What that means
+
+- you can inspect the source
+- you can run the stack on your own infrastructure
+- you can control upgrade timing
+- you can keep the same public contract and product surface as the hosted runtime
+
+## Runtime shape
+
+The repository documents a single application image plus PostgreSQL and Redis dependencies. Schema management is handled through `pgschema`, and the documented compose workflow lives in the repository alongside the source.
+
+## Where to start
+
+<Cards>
+  <Card title="Docker Compose guide" href="https://github.com/CorrectRoadH/opentoggl/blob/main/docs/self-hosting/docker-compose.md" />
+  <Card title="Repository README" href="https://github.com/CorrectRoadH/opentoggl/blob/main/README.md" />
+</Cards>

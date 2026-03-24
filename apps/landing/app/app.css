@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/neutral.css';
+@import 'fumadocs-ui/css/preset.css';
+
+:root,
+.dark {
+  --fd-color-primary: #22c7b8;
+  --fd-color-primary-foreground: #06211f;
+  --fd-background: #0a0f14;
+  --fd-foreground: #e8edf2;
+  --fd-muted: #111923;
+  --fd-muted-foreground: #93a1b2;
+  --fd-card: #0f1720;
+  --fd-card-foreground: #e8edf2;
+  --fd-popover: #0f1720;
+  --fd-popover-foreground: #e8edf2;
+  --fd-secondary: #151f2a;
+  --fd-secondary-foreground: #d8e1ea;
+  --fd-accent: #102c2a;
+  --fd-accent-foreground: #b8f1ec;
+  --fd-border: #1d2a36;
+}
+
+html,
+body {
+  background:
+    radial-gradient(circle at top, rgba(34, 199, 184, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.1), transparent 24%),
+    linear-gradient(180deg, #0a0f14 0%, #0d131a 100%);
+  color: var(--fd-foreground);
+}
+
+body {
+  min-height: 100vh;
+}
+
+.landing-hero {
+  background:
+    radial-gradient(circle at top right, rgba(34, 199, 184, 0.14), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 32, 0.98), rgba(11, 18, 26, 0.98));
+}
+
+.landing-capability {
+  background: linear-gradient(180deg, rgba(18, 27, 38, 0.98), rgba(14, 21, 31, 0.98));
+}
+
+.landing-card {
+  background: linear-gradient(180deg, rgba(17, 25, 35, 0.98), rgba(13, 20, 29, 0.98));
+}

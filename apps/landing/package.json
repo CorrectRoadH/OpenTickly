@@ -1,0 +1,41 @@
+{
+  "name": "@opentoggl/landing",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vp dev",
+    "build": "vp exec react-router typegen && vp exec fumadocs-mdx && vp build",
+    "preview": "vp preview",
+    "check": "vp exec react-router typegen && vp exec fumadocs-mdx && tsc --noEmit",
+    "start": "vp exec serve ./build/client --config ./serve.json",
+    "postinstall": "vp exec fumadocs-mdx"
+  },
+  "dependencies": {
+    "@orama/orama": "^3.1.18",
+    "@react-router/node": "^7.13.1",
+    "fumadocs-core": "16.7.5",
+    "fumadocs-mdx": "14.2.11",
+    "fumadocs-ui": "16.7.5",
+    "isbot": "^5.1.36",
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-router": "^7.13.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@react-router/dev": "^7.13.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react-router-devtools": "^6.2.0",
+    "serve": "^14.2.6",
+    "tailwindcss": "^4.2.2",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
+  }
+}
