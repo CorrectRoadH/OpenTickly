@@ -277,17 +277,42 @@ func (service *Service) GetProjectStatistics(
 		return ProjectStatisticsView{}, err
 	}
 	if _, err := service.catalog.GetProject(ctx, workspaceID, projectID); err != nil {
+		service.logger.WarnContext(ctx, "project not found for statistics",
+			"workspace_id", workspaceID,
+			"project_id", projectID,
+			"error", err.Error(),
+		)
 		return ProjectStatisticsView{}, err
 	}
-	return service.store.GetProjectStatistics(ctx, workspaceID, projectID)
+	stats, err := service.store.GetProjectStatistics(ctx, workspaceID, projectID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get project statistics",
+			"workspace_id", workspaceID,
+			"project_id", projectID,
+			"error", err.Error(),
+		)
+		return ProjectStatisticsView{}, err
+	}
+	return stats, nil
 }
 
 func (service *Service) GetTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) (TimeEntryView, error) {
 	entry, ok, err := service.store.GetTimeEntry(ctx, workspaceID, userID, timeEntryID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get time entry",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"entry_id", timeEntryID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "time entry not found",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"entry_id", timeEntryID,
+		)
 		return TimeEntryView{}, ErrTimeEntryNotFound
 	}
 	return entry, nil
@@ -296,9 +321,18 @@ func (service *Service) GetTimeEntry(ctx context.Context, workspaceID int64, use
 func (service *Service) GetUserTimeEntry(ctx context.Context, userID int64, timeEntryID int64) (TimeEntryView, error) {
 	entry, ok, err := service.store.GetTimeEntryForUser(ctx, userID, timeEntryID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get user time entry",
+			"user_id", userID,
+			"entry_id", timeEntryID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "user time entry not found",
+			"user_id", userID,
+			"entry_id", timeEntryID,
+		)
 		return TimeEntryView{}, ErrTimeEntryNotFound
 	}
 	return entry, nil
@@ -307,6 +341,10 @@ func (service *Service) GetUserTimeEntry(ctx context.Context, userID int64, time
 func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (TimeEntryView, error) {
 	entry, ok, err := service.store.GetCurrentTimeEntry(ctx, userID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get current time entry",
+			"user_id", userID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	if !ok {
@@ -543,16 +581,38 @@ func (service *Service) DeleteTimeEntry(ctx context.Context, workspaceID int64, 
 }
 
 func (service *Service) ListFavorites(ctx context.Context, workspaceID int64, userID int64) ([]FavoriteView, error) {
-	return service.store.ListFavorites(ctx, workspaceID, userID)
+	favorites, err := service.store.ListFavorites(ctx, workspaceID, userID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list favorites",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return favorites, nil
 }
 
 func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavoriteCommand) (FavoriteView, error) {
+	service.logger.InfoContext(ctx, "upserting favorite",
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"favorite_id", command.FavoriteID,
+		"project_id", command.ProjectID,
+	)
+
 	if _, err := service.resolveTrackingReferences(ctx, command.WorkspaceID, command.ProjectID, command.TaskID); err != nil {
+		service.logger.WarnContext(ctx, "failed to resolve tracking references for favorite",
+			"workspace_id", command.WorkspaceID,
+			"project_id", command.ProjectID,
+			"task_id", command.TaskID,
+			"error", err.Error(),
+		)
 		return FavoriteView{}, err
 	}
 
 	if command.FavoriteID == nil {
-		return service.store.CreateFavorite(ctx, CreateFavoriteRecord{
+		favorite, err := service.store.CreateFavorite(ctx, CreateFavoriteRecord{
 			WorkspaceID: command.WorkspaceID,
 			UserID:      command.UserID,
 			ProjectID:   command.ProjectID,
@@ -563,10 +623,27 @@ func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavori
 			Rank:        lo.FromPtr(command.Rank),
 			TagIDs:      command.TagIDs,
 		})
+		if err != nil {
+			service.logger.ErrorContext(ctx, "failed to create favorite",
+				"workspace_id", command.WorkspaceID,
+				"user_id", command.UserID,
+				"error", err.Error(),
+			)
+			return FavoriteView{}, err
+		}
+		service.logger.InfoContext(ctx, "favorite created",
+			"favorite_id", favorite.ID,
+		)
+		return favorite, nil
 	}
 
 	favorites, err := service.store.ListFavorites(ctx, command.WorkspaceID, command.UserID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list favorites for update",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"error", err.Error(),
+		)
 		return FavoriteView{}, err
 	}
 	var current *FavoriteView
@@ -577,6 +654,11 @@ func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavori
 		}
 	}
 	if current == nil {
+		service.logger.WarnContext(ctx, "favorite not found for update",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"favorite_id", *command.FavoriteID,
+		)
 		return FavoriteView{}, ErrFavoriteNotFound
 	}
 
@@ -603,35 +685,88 @@ func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavori
 	}
 	current.UpdatedAt = service.now()
 
-	return service.store.UpdateFavorite(ctx, UpdateFavoriteRecord{FavoriteView: *current})
+	updated, err := service.store.UpdateFavorite(ctx, UpdateFavoriteRecord{FavoriteView: *current})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to update favorite",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"favorite_id", *command.FavoriteID,
+			"error", err.Error(),
+		)
+		return FavoriteView{}, err
+	}
+	service.logger.InfoContext(ctx, "favorite updated",
+		"favorite_id", updated.ID,
+	)
+	return updated, nil
 }
 
 func (service *Service) DeleteFavorite(ctx context.Context, workspaceID int64, userID int64, favoriteID int64) error {
+	service.logger.InfoContext(ctx, "deleting favorite",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"favorite_id", favoriteID,
+	)
 	if err := service.store.DeleteFavorite(ctx, workspaceID, userID, favoriteID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete favorite",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"favorite_id", favoriteID,
+			"error", err.Error(),
+		)
 		return err
 	}
+	service.logger.InfoContext(ctx, "favorite deleted",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"favorite_id", favoriteID,
+	)
 	return nil
 }
 
 func (service *Service) ListGoals(ctx context.Context, workspaceID int64, filter ListGoalsFilter) ([]GoalView, error) {
 	filter.Page = normalizePage(filter.Page, 1)
 	filter.PerPage = normalizePage(filter.PerPage, 20)
-	return service.store.ListGoals(ctx, workspaceID, filter)
+	goals, err := service.store.ListGoals(ctx, workspaceID, filter)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list goals",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return goals, nil
 }
 
 func (service *Service) GetGoal(ctx context.Context, workspaceID int64, userID int64, goalID int64) (GoalView, error) {
 	goal, ok, err := service.store.GetGoal(ctx, workspaceID, userID, goalID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get goal",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"goal_id", goalID,
+			"error", err.Error(),
+		)
 		return GoalView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "goal not found",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"goal_id", goalID,
+		)
 		return GoalView{}, ErrGoalNotFound
 	}
 	return goal, nil
 }
 
 func (service *Service) CreateGoal(ctx context.Context, command CreateGoalCommand) (GoalView, error) {
-	return service.store.CreateGoal(ctx, CreateGoalRecord{
+	service.logger.InfoContext(ctx, "creating goal",
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"name", command.Name,
+	)
+	goal, err := service.store.CreateGoal(ctx, CreateGoalRecord{
 		WorkspaceID:   command.WorkspaceID,
 		UserID:        command.UserID,
 		CreatorUserID: command.CreatorUserID,
@@ -648,9 +783,27 @@ func (service *Service) CreateGoal(ctx context.Context, command CreateGoalComman
 		TaskIDs:       command.TaskIDs,
 		TagIDs:        command.TagIDs,
 	})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create goal",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"error", err.Error(),
+		)
+		return GoalView{}, err
+	}
+	service.logger.InfoContext(ctx, "goal created",
+		"goal_id", goal.ID,
+		"workspace_id", command.WorkspaceID,
+	)
+	return goal, nil
 }
 
 func (service *Service) UpdateGoal(ctx context.Context, command UpdateGoalCommand) (GoalView, error) {
+	service.logger.InfoContext(ctx, "updating goal",
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"goal_id", command.GoalID,
+	)
 	current, err := service.GetGoal(ctx, command.WorkspaceID, command.UserID, command.GoalID)
 	if err != nil {
 		return GoalView{}, err
@@ -675,31 +828,85 @@ func (service *Service) UpdateGoal(ctx context.Context, command UpdateGoalComman
 	}
 	current.UpdatedAt = service.now()
 
-	return service.store.UpdateGoal(ctx, UpdateGoalRecord{GoalView: current})
+	updated, err := service.store.UpdateGoal(ctx, UpdateGoalRecord{GoalView: current})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to update goal",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"goal_id", command.GoalID,
+			"error", err.Error(),
+		)
+		return GoalView{}, err
+	}
+	service.logger.InfoContext(ctx, "goal updated",
+		"goal_id", updated.ID,
+		"workspace_id", command.WorkspaceID,
+	)
+	return updated, nil
 }
 
 func (service *Service) DeleteGoal(ctx context.Context, workspaceID int64, userID int64, goalID int64) error {
-	return service.store.DeleteGoal(ctx, workspaceID, userID, goalID)
+	service.logger.InfoContext(ctx, "deleting goal",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"goal_id", goalID,
+	)
+	if err := service.store.DeleteGoal(ctx, workspaceID, userID, goalID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete goal",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"goal_id", goalID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "goal deleted",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"goal_id", goalID,
+	)
+	return nil
 }
 
 func (service *Service) ListReminders(ctx context.Context, workspaceID int64) ([]ReminderView, error) {
-	return service.store.ListReminders(ctx, workspaceID)
+	reminders, err := service.store.ListReminders(ctx, workspaceID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list reminders",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return reminders, nil
 }
 
 func (service *Service) GetReminder(ctx context.Context, workspaceID int64, reminderID int64) (ReminderView, error) {
 	reminder, ok, err := service.store.GetReminder(ctx, workspaceID, reminderID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get reminder",
+			"workspace_id", workspaceID,
+			"reminder_id", reminderID,
+			"error", err.Error(),
+		)
 		return ReminderView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "reminder not found",
+			"workspace_id", workspaceID,
+			"reminder_id", reminderID,
+		)
 		return ReminderView{}, ErrReminderNotFound
 	}
 	return reminder, nil
 }
 
 func (service *Service) UpsertReminder(ctx context.Context, command UpsertReminderCommand) (ReminderView, error) {
+	service.logger.InfoContext(ctx, "upserting reminder",
+		"workspace_id", command.WorkspaceID,
+		"reminder_id", command.ReminderID,
+	)
 	if command.ReminderID == nil {
-		return service.store.CreateReminder(ctx, CreateReminderRecord{
+		reminder, err := service.store.CreateReminder(ctx, CreateReminderRecord{
 			WorkspaceID:          command.WorkspaceID,
 			Frequency:            command.Frequency,
 			ThresholdHours:       command.ThresholdHours,
@@ -708,6 +915,17 @@ func (service *Service) UpsertReminder(ctx context.Context, command UpsertRemind
 			UserIDs:              command.UserIDs,
 			GroupIDs:             command.GroupIDs,
 		})
+		if err != nil {
+			service.logger.ErrorContext(ctx, "failed to create reminder",
+				"workspace_id", command.WorkspaceID,
+				"error", err.Error(),
+			)
+			return ReminderView{}, err
+		}
+		service.logger.InfoContext(ctx, "reminder created",
+			"reminder_id", reminder.ID,
+		)
+		return reminder, nil
 	}
 
 	current, err := service.GetReminder(ctx, command.WorkspaceID, *command.ReminderID)
@@ -721,19 +939,61 @@ func (service *Service) UpsertReminder(ctx context.Context, command UpsertRemind
 	current.UserIDs = append([]int64(nil), command.UserIDs...)
 	current.GroupIDs = append([]int64(nil), command.GroupIDs...)
 	current.UpdatedAt = service.now()
-	return service.store.UpdateReminder(ctx, UpdateReminderRecord{ReminderView: current})
+	updated, err := service.store.UpdateReminder(ctx, UpdateReminderRecord{ReminderView: current})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to update reminder",
+			"workspace_id", command.WorkspaceID,
+			"reminder_id", *command.ReminderID,
+			"error", err.Error(),
+		)
+		return ReminderView{}, err
+	}
+	service.logger.InfoContext(ctx, "reminder updated",
+		"reminder_id", updated.ID,
+	)
+	return updated, nil
 }
 
 func (service *Service) DeleteReminder(ctx context.Context, workspaceID int64, reminderID int64) error {
-	return service.store.DeleteReminder(ctx, workspaceID, reminderID)
+	service.logger.InfoContext(ctx, "deleting reminder",
+		"workspace_id", workspaceID,
+		"reminder_id", reminderID,
+	)
+	if err := service.store.DeleteReminder(ctx, workspaceID, reminderID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete reminder",
+			"workspace_id", workspaceID,
+			"reminder_id", reminderID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "reminder deleted",
+		"workspace_id", workspaceID,
+		"reminder_id", reminderID,
+	)
+	return nil
 }
 
 func (service *Service) ListExpenses(ctx context.Context, workspaceID int64, userID int64) ([]ExpenseView, error) {
-	return service.store.ListExpenses(ctx, workspaceID, userID)
+	expenses, err := service.store.ListExpenses(ctx, workspaceID, userID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list expenses",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return expenses, nil
 }
 
 func (service *Service) CreateExpense(ctx context.Context, command CreateExpenseCommand) (ExpenseView, error) {
-	return service.store.CreateExpense(ctx, CreateExpenseRecord{
+	service.logger.InfoContext(ctx, "creating expense",
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"description", command.Description,
+	)
+	expense, err := service.store.CreateExpense(ctx, CreateExpenseRecord{
 		WorkspaceID:   command.WorkspaceID,
 		UserID:        command.UserID,
 		TimeEntryID:   command.TimeEntryID,
@@ -744,6 +1004,18 @@ func (service *Service) CreateExpense(ctx context.Context, command CreateExpense
 		TotalAmount:   command.TotalAmount,
 		DateOfExpense: command.DateOfExpense,
 	})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create expense",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"error", err.Error(),
+		)
+		return ExpenseView{}, err
+	}
+	service.logger.InfoContext(ctx, "expense created",
+		"expense_id", expense.ID,
+	)
+	return expense, nil
 }
 
 func (service *Service) ListTimelineEvents(
@@ -752,7 +1024,15 @@ func (service *Service) ListTimelineEvents(
 	startTimestamp int,
 	endTimestamp int,
 ) ([]TimelineEventView, error) {
-	return service.store.ListTimelineEvents(ctx, userID, startTimestamp, endTimestamp)
+	events, err := service.store.ListTimelineEvents(ctx, userID, startTimestamp, endTimestamp)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list timeline events",
+			"user_id", userID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return events, nil
 }
 
 func (service *Service) ReplaceTimelineEvents(
@@ -760,14 +1040,35 @@ func (service *Service) ReplaceTimelineEvents(
 	userID int64,
 	events []TimelineEventView,
 ) error {
+	service.logger.InfoContext(ctx, "replacing timeline events",
+		"user_id", userID,
+		"event_count", len(events),
+	)
 	for index := range events {
 		events[index].UserID = userID
 	}
-	return service.store.ReplaceTimelineEvents(ctx, userID, events)
+	if err := service.store.ReplaceTimelineEvents(ctx, userID, events); err != nil {
+		service.logger.ErrorContext(ctx, "failed to replace timeline events",
+			"user_id", userID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	return nil
 }
 
 func (service *Service) DeleteTimelineEvents(ctx context.Context, userID int64) error {
-	return service.store.DeleteTimelineEvents(ctx, userID)
+	service.logger.InfoContext(ctx, "deleting timeline events",
+		"user_id", userID,
+	)
+	if err := service.store.DeleteTimelineEvents(ctx, userID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete timeline events",
+			"user_id", userID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	return nil
 }
 
 func (service *Service) resolveTrackingReferences(
