@@ -29,7 +29,7 @@ export async function registerE2eUser(
     const currentUrl = page.url();
     const response = await responsePromise;
     const responseStatus = response ? response.status() : "no response";
-    const responseBody = response ? await response.text().catch(() => "could not read") : "no response";
+    const responseBody = response ? await response.text().catch(e => `read error: ${e?.message ?? String(e)}`) : "no response";
     const errorText = await page.locator("[role='alert']").textContent().catch(() => "none");
     const bodyHTML = await page.locator("body").innerHTML().catch(() => "none");
     console.error(`[registerE2eUser] URL did not change to /timer. Current URL: ${currentUrl}, Response status: ${responseStatus}, Response body: ${responseBody?.slice(0, 300)}, Error: ${errorText}, BodyHTML: ${bodyHTML?.slice(0, 300)}`);
