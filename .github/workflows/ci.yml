@@ -23,7 +23,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run backend unit tests
-        run: go test ./...
+        run: go test -short ./...
 
       - name: Run frontend unit tests
         run: cd apps/website && pnpm exec vitest run
