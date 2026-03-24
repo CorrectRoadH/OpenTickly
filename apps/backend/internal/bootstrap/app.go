@@ -101,9 +101,14 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 	if err != nil {
 		return nil, err
 	}
+	publicReportsRoutes, err := newPublicReportsRoutes(assembledHandlers)
+	if err != nil {
+		return nil, err
+	}
 
 	return httpapp.ComposeRouteRegistrars(
 		webRoutes,
 		publicTrackRoutes,
+		publicReportsRoutes,
 	), nil
 }

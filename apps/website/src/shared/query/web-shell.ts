@@ -17,6 +17,8 @@ import type {
   ModelsProjectStatistics,
   WorkspacePayload,
 } from "../api/generated/public-track/types.gen.ts";
+import type { SavedWeeklyReportData } from "../api/generated/public-reports/types.gen.ts";
+import { postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries } from "../api/public/reports/index.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   getCurrentTimeEntry,
@@ -87,6 +89,8 @@ const workspaceDashboardMostActiveQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-most-active", workspaceId] as const;
 const workspaceDashboardTopActivityQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-top-activity", workspaceId] as const;
+const workspaceWeeklyReportQueryKey = (workspaceId: number, startDate: string, endDate: string) =>
+  ["workspace-weekly-report", workspaceId, startDate, endDate] as const;
 
 export type WorkspacePermissionsDto = Pick<
   WebWorkspaceSettingsDto,
@@ -597,6 +601,30 @@ export function useWorkspaceTopActivityQuery(workspaceId: number) {
         }),
       ),
     queryKey: workspaceDashboardTopActivityQueryKey(workspaceId),
+  });
+}
+
+export function useWorkspaceWeeklyReportQuery(
+  workspaceId: number,
+  options: {
+    endDate: string;
+    startDate: string;
+  },
+) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
+          body: {
+            end_date: options.endDate,
+            start_date: options.startDate,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ) as Promise<SavedWeeklyReportData>,
+    queryKey: workspaceWeeklyReportQueryKey(workspaceId, options.startDate, options.endDate),
   });
 }
 

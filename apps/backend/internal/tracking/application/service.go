@@ -97,6 +97,17 @@ func (service *Service) ListUserTimeEntries(ctx context.Context, filter ListTime
 	return service.store.ListTimeEntriesForUser(ctx, filter)
 }
 
+func (service *Service) ListWorkspaceTimeEntries(
+	ctx context.Context,
+	workspaceID int64,
+	since *time.Time,
+) ([]TimeEntryView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	return service.store.ListWorkspaceTimeEntries(ctx, workspaceID, since)
+}
+
 func (service *Service) ListWorkspaceDashboardActivities(
 	ctx context.Context,
 	workspaceID int64,

@@ -29,6 +29,7 @@ import (
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
+	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
@@ -57,6 +58,7 @@ type routeHandlers struct {
 	membershipApp *membershipapplication.Service
 	importingApp  *importingapplication.Service
 	trackingApp   *trackingapplication.Service
+	reportsApp    *reportsapplication.Service
 	governanceApp *governanceapplication.Service
 	userHomes     userHomeRepository
 	tenant        *tenantweb.Handler
@@ -103,6 +105,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 	if err != nil {
 		return nil, err
 	}
+	reportsService := reportsapplication.NewService(trackingService, membershipService)
 	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool))
 	if err != nil {
 		return nil, err
@@ -139,6 +142,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 		membershipApp: membershipService,
 		importingApp:  importingService,
 		trackingApp:   trackingService,
+		reportsApp:    reportsService,
 		governanceApp: governanceService,
 		userHomes:     tenantpostgres.NewUserHomeRepository(pool),
 		tenant:        tenantHandler,
