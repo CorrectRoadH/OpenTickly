@@ -33,7 +33,7 @@ services:
       - redis
 
   web:
-    start: vp run website#dev -- --port 5173
+    start: vp run website#dev -- --port 5173 --host 127.0.0.1
     stop: printf 'Reused local website runtime on 5173; stop only if this session started it\n'
     healthcheck: curl -sf http://127.0.0.1:5173
     port: 5173
