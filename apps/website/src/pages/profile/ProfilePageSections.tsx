@@ -1,8 +1,7 @@
-import { AppInlineNotice } from "@opentoggl/web-ui";
+import { AppInlineNotice, ShellSecondaryButton } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
-import { ShellSecondaryButton } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import {
   dateFormatOptions,
   durationFormatOptions,

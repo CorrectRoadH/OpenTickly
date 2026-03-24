@@ -1,5 +1,7 @@
 import type { ButtonHTMLAttributes, ReactElement, ReactNode } from "react";
 
+import { getButtonClassName } from "./buttonStyles.ts";
+
 export function DirectoryFilterChip({
   disabled = false,
   label,
@@ -52,10 +54,7 @@ export function ShellPrimaryButton({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
-      className={`flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black ${className}`.trim()}
-      {...props}
-    >
+    <button className={getButtonClassName("primary", className)} {...props}>
       {children}
     </button>
   );
@@ -67,10 +66,7 @@ export function ShellSecondaryButton({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
-      className={`flex h-9 items-center rounded-[8px] border border-[var(--track-border)] px-4 text-[12px] font-semibold text-[var(--track-text-muted)] ${className}`.trim()}
-      {...props}
-    >
+    <button className={getButtonClassName("secondary", className)} {...props}>
       {children}
     </button>
   );

@@ -1,8 +1,7 @@
 import { type ReactElement, type ReactNode } from "react";
 
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppPanel, ShellSecondaryButton } from "@opentoggl/web-ui";
 
-import { ShellSecondaryButton } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const sectionCardClassName =

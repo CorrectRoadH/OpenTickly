@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useState } from "react";
 
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { AppButton, AppPanel, ShellPageHeader, ShellPrimaryButton } from "@opentoggl/web-ui";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
   useDisableWorkspaceMemberMutation,
@@ -9,7 +9,6 @@ import {
   useRestoreWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
-import { ShellPageHeader, ShellPrimaryButton } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 export function WorkspaceMembersPage(): ReactElement {
   const session = useSession();

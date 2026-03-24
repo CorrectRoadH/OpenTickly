@@ -1,4 +1,10 @@
-import { AppSurfaceState } from "@opentoggl/web-ui";
+import {
+  AppSurfaceState,
+  ShellPageHeader,
+  ShellSecondaryButton,
+  ShellSurfaceCard,
+  ShellToast,
+} from "@opentoggl/web-ui";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
@@ -14,12 +20,6 @@ import {
   useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import {
-  ShellPageHeader,
-  ShellSecondaryButton,
-  ShellSurfaceCard,
-  ShellToast,
-} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import { defaultPreferencesFormValues } from "./ProfilePageData.ts";
 import { ProfileBetaProgramCard, ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
 import {

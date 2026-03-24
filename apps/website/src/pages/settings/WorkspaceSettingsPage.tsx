@@ -1,4 +1,4 @@
-import { AppSurfaceState } from "@opentoggl/web-ui";
+import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard, ShellToast } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useState } from "react";
 
@@ -9,11 +9,6 @@ import {
   useUpdateWorkspaceSettingsMutation,
   useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
-import {
-  ShellPageHeader,
-  ShellSurfaceCard,
-  ShellToast,
-} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import type { WorkspaceSettingsSection } from "../../shared/url-state/workspace-settings-location.ts";
 
 type WorkspaceSettingsPageProps = {

@@ -1,14 +1,11 @@
 import { type ReactElement, useState } from "react";
+import { DirectoryFilterChip, DirectorySurfaceMessage } from "@opentoggl/web-ui";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useCreateTagMutation, useTagsQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
-import {
-  DirectoryFilterChip,
-  DirectorySurfaceMessage,
-} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import { emptyTagsStateTitle, normalizeTags, type TagStatusFilter } from "./tags-page-helpers.ts";
 
 export function TagsPage(): ReactElement {

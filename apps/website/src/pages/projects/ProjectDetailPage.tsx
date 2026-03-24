@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { ShellPrimaryButton, ShellSurfaceCard } from "@opentoggl/web-ui";
 
 import type {
   ModelsProjectStatistics,
@@ -19,7 +20,6 @@ import {
   buildProjectsListPath,
 } from "../../shared/url-state/projects-location.ts";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
-import { ShellPrimaryButton, ShellSurfaceCard } from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 type ProjectDetailPageProps = {
   projectId: number;

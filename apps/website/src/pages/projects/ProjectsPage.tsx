@@ -1,5 +1,11 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, useMemo, useState } from "react";
+import {
+  DirectoryFilterChip,
+  DirectoryHeaderCell,
+  DirectorySurfaceMessage,
+  DirectoryTableCell,
+} from "@opentoggl/web-ui";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -18,12 +24,6 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
-import {
-  DirectoryFilterChip,
-  DirectoryHeaderCell,
-  DirectorySurfaceMessage,
-  DirectoryTableCell,
-} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 import {
   buildProjectTeamPath,
   type ProjectStatusFilter,

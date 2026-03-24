@@ -1,23 +1,13 @@
-import { Button, KIND, SHAPE, type ButtonProps } from "baseui/button";
+import { Button, SHAPE, type ButtonProps } from "baseui/button";
 
-export function AppButton(props: ButtonProps) {
+import { getButtonOverrides, type AppButtonTone } from "./buttonStyles.ts";
+
+type AppButtonProps = Omit<ButtonProps, "kind"> & {
+  tone?: AppButtonTone;
+};
+
+export function AppButton({ overrides, tone = "primary", ...props }: AppButtonProps) {
   return (
-    <Button
-      kind={KIND.secondary}
-      overrides={{
-        BaseButton: {
-          style: {
-            backgroundColor: "var(--track-button)",
-            borderColor: "var(--track-button)",
-            color: "#121212",
-            fontWeight: 600,
-            borderRadius: "8px",
-            minHeight: "36px",
-          },
-        },
-      }}
-      shape={SHAPE.default}
-      {...props}
-    />
+    <Button overrides={getButtonOverrides(tone, overrides)} shape={SHAPE.default} {...props} />
   );
 }

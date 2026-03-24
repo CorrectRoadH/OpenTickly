@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useMemo } from "react";
+import { ShellPageHeader, ShellSecondaryButton } from "@opentoggl/web-ui";
 
 import {
   formatClockDuration,
@@ -18,10 +19,6 @@ import {
   useWorkspaceTopActivityQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import {
-  ShellPageHeader,
-  ShellSecondaryButton,
-} from "../../shared/ui/TrackDirectoryPrimitives.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
