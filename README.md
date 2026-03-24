@@ -8,6 +8,8 @@
 
 OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
+Current self-hosted release status: `v0.0.1` is an extremely early version intended for initial adopters and setup validation, not a polished or feature-complete stable release.
+
 It exists for a simple reason: Toggl is too expensive for many individuals and teams, too closed for private-first workflows, and too rate-limited for serious AI and automation use.
 
 OpenToggl aims to match Toggl's product surface, so you can keep the workflow you already know while taking back control of hosting, data, and API throughput.
@@ -83,3 +85,19 @@ toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com
 - Self-hosting docs: `./docs/self-hosting/docker-compose.md`
 - Product docs: `./docs/product/landing.md`
 - CLI: `https://github.com/CorrectRoadH/toggl-cli`
+
+## Self-Hosting Environment
+
+The default self-hosted Docker Compose baseline uses these runtime values:
+
+- `OPENTOGGL_IMAGE=ghcr.io/correctroadh/opentoggl:latest`
+- `OPENTOGGL_PORT=8080`
+- `OPENTOGGL_POSTGRES_DB=opentoggl`
+- `OPENTOGGL_POSTGRES_USER=postgres`
+- `OPENTOGGL_POSTGRES_PASSWORD=postgres`
+- `OPENTOGGL_POSTGRES_PORT=5432`
+- `OPENTOGGL_REDIS_PORT=6379`
+- `OPENTOGGL_DATABASE_URL=postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable`
+- `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
+
+Override them with host env vars or your own env file if your deployment needs different ports, credentials, or a pinned image tag.

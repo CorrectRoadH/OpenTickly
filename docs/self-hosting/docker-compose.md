@@ -20,7 +20,7 @@ The committed self-hosted baseline is directly usable from `docker-compose.yml` 
 
 Baseline defaults shipped in compose:
 
-- `OPENTOGGL_IMAGE=opentoggl:local`
+- `OPENTOGGL_IMAGE=ghcr.io/correctroadh/opentoggl:latest`
 - `OPENTOGGL_PORT=8080`
 - `OPENTOGGL_POSTGRES_DB=opentoggl`
 - `OPENTOGGL_POSTGRES_USER=postgres`
@@ -31,6 +31,8 @@ Baseline defaults shipped in compose:
 - `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
 
 Operator overrides are optional. Use host env vars or an operator-managed env file (for example `.env.self-hosted`, not shipped as a required artifact).
+
+`latest` is the canonical stable self-hosted tag. Release tags also publish versioned image tags such as `ghcr.io/correctroadh/opentoggl:v1.2.3` for operators who want explicit pinning.
 Operators still configure only `DATABASE_URL` / `OPENTOGGL_DATABASE_URL`; the extra `PG*` and `PGSCHEMA_PLAN_*` variables below are internal runtime projections, not additional required inputs.
 
 The runtime image entrypoint derives these standard PostgreSQL CLI vars from `OPENTOGGL_DATABASE_URL` / `DATABASE_URL` before invoking `pgschema apply`:
