@@ -1,83 +1,85 @@
+[中文](README.zh-CN.md)
+
+<p align="center">
+  <img src="apps/website/public/favicon.svg" alt="OpenToggl icon" width="72" height="72">
+</p>
+
 # OpenToggl
 
-## Local Development
+OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
-- Install backend dev runtime: `go install github.com/air-verse/air@latest`
-- Install PostgreSQL schema tool: `pgschema`
-- Install workspace dependencies and sync the versioned git hooks: `vp install` then `git config core.hooksPath .vite-hooks`
-- The versioned pre-commit hook validates the website build with `vp run website#build`
-- Create root `.env.local` from `.env.local.example` before starting local source processes
-- Required backend env: `PORT`, `DATABASE_URL`, `REDIS_URL`
-- Required `pgschema` env for schema management: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
-- Frontend: `vp run website#dev`
-- Landing site: `vp run landing#dev`
-- Backend: `air`
-- Backend hot reload config: root `.air.toml`
-- Run `air` from the repository root so bootstrap can load root `.env.local`
-- `.env.local.example` is only a template; the canonical source-based backend startup path requires a real root `.env.local`
-- `air` must fail immediately if `.env.local`, `PORT`, `DATABASE_URL`, or `REDIS_URL` is missing
-- `air` must also fail immediately if PostgreSQL or Redis is unreachable; local backend development is expected to connect to the real dependencies you started separately
+It exists for a simple reason: Toggl is too expensive for many individuals and teams, too closed for private-first workflows, and too rate-limited for serious AI and automation use.
 
-## PostgreSQL Schema Workflow
+OpenToggl aims to match Toggl's product surface, so you can keep the workflow you already know while taking back control of hosting, data, and API throughput.
 
-- PostgreSQL schema is managed with `pgschema`
-- Repository desired state is the only schema source of truth
-- Do not apply ad hoc DDL directly to the development database as the canonical path
-- Do not introduce a second migration tool or ORM auto-migrate path
+## Why OpenToggl
 
-Canonical local workflow:
+Toggl works. But for a lot of people, it stops working the moment you care about cost, control, or automation.
 
-```bash
-pgschema plan --file apps/backend/internal/platform/schema/schema.sql
-pgschema apply --file apps/backend/internal/platform/schema/schema.sql
-air
+OpenToggl is built for that gap.
+
+- Free instead of expensive recurring pricing
+- Private-first instead of SaaS-first
+- Self-hostable instead of locked to one vendor
+- AI-friendly instead of rate-limited into uselessness
+- Built to preserve the Toggl-shaped workflow instead of inventing a different product you have to relearn
+
+## Why Not Just Use Toggl
+
+Because the constraints are real.
+
+- Pricing adds up fast
+- Your time data lives on someone else's infrastructure
+- Self-hosting is not the default model
+- Heavy API usage gets punished
+- AI agents need high-rate read and write access, and `30/hour` is nowhere close to enough
+
+If you want a Toggl-compatible workflow without Toggl's pricing, control, and rate-limit constraints, that is exactly what OpenToggl is for.
+
+## Built for AI
+
+Most time-tracking tools were built for humans clicking buttons in a browser.
+
+OpenToggl is also built for agents.
+
+AI workflows need to read projects, tasks, tags, users, reports, and running timers. They need to create and update entries continuously. They need enough HTTP headroom to operate as real software, not as a demo trapped behind tiny hourly limits.
+
+OpenToggl is a better backend for:
+
+- AI agents
+- Automation pipelines
+- CLI-heavy workflows
+- Personal scripts
+- Internal tools
+
+## Private-First
+
+Your time data is operational data.
+
+It reflects what you worked on, when you worked on it, which clients you billed, and how your team spends time. That should be deployable on infrastructure you control.
+
+OpenToggl treats self-hosting as a first-class product direction, not an afterthought.
+
+## Keep the Workflow, Lose the Constraints
+
+OpenToggl does not try to invent a new time-tracking philosophy.
+
+The goal is to match Toggl's product surface as closely as possible, so switching does not mean retraining your team, rebuilding your scripts, or abandoning existing habits.
+
+You keep the workflow.
+You lose the pricing pressure, vendor dependence, and API ceiling.
+
+## Works with `toggl-cli`
+
+OpenToggl works with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so you can use the same CLI workflow against your own instance.
+
+```shell
+toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-Rules:
+## Get Started
 
-- Edit repository schema SQL first
-- Review `pgschema plan` before `pgschema apply`
-- Run `air` only after the target database schema has been reconciled
-- `DATABASE_URL` and the `PG*` variables used by `pgschema` must refer to the same PostgreSQL database
-- The self-hosted container image is different: its runtime entrypoint runs `pgschema apply --auto-approve` from `DATABASE_URL` before starting the API process
-- The runtime image also projects `DATABASE_URL` into `PGSCHEMA_PLAN_*`, so `pgschema apply --file ...` uses the target PostgreSQL server as its plan database instead of requiring embedded PostgreSQL startup
-
-# Self Hosting
-
-Self-hosted delivery uses a single `opentoggl` application image (embedded web + API), plus `postgres` and `redis` dependencies in `docker-compose.yml`.
-
-Release artifacts that must ship together:
-
-- `docker/opentoggl.Dockerfile`
-- `docker-compose.yml`
-- `docs/self-hosting/docker-compose.md`
-
-## Compose Startup and Smoke
-
-1. Start runtime and dependencies: `docker compose up -d --build`
-2. The `opentoggl` container entrypoint runs `pgschema apply --auto-approve` against `DATABASE_URL` before the API process binds HTTP
-3. Verify readiness and key-path smoke:
-
-```bash
-curl -fsS http://localhost:8080/healthz
-curl -fsS http://localhost:8080/readyz
-curl -fsSI http://localhost:8080/
-```
-
-Optional operator overrides can still be provided through host env vars or an operator-managed env file passed with `docker compose --env-file`.
-Set `OPENTOGGL_SCHEMA_RECONCILE=skip` only when you intentionally need to bypass the automatic entrypoint reconcile.
-
-## Upgrade and Rollback
-
-- Upgrade: pull new image, review `pgschema plan` out-of-band if needed, restart `opentoggl`, let the entrypoint re-apply desired state, rerun smoke checks.
-- Rollback: revert desired schema SQL and image tag to the target release, review rollback `pgschema plan` out-of-band if needed, restart `opentoggl`, let the entrypoint reconcile to the target desired state, rerun smoke checks.
-- Persistent data is in the PostgreSQL volume `opentoggl-postgres-data`.
-
-Detailed operator runbook:
-
-- [Docker Compose Startup (Target Shape)](./docs/self-hosting/docker-compose.md)
-
-Verification evidence location:
-
-- `docs/testing/evidence/self-hosted/`
-- `docs/testing/evidence/self-hosted/2026-03-22-compose-smoke.md`
+- Repository: `https://github.com/CorrectRoadH/opentoggl`
+- Self-hosting docs: `./docs/self-hosting/docker-compose.md`
+- Product docs: `./docs/product/landing.md`
+- CLI: `https://github.com/CorrectRoadH/toggl-cli`

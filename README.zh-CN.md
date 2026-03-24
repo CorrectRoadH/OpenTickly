@@ -1,0 +1,87 @@
+[English](README.md)
+
+<p align="center">
+  <img src="apps/website/public/favicon.svg" alt="OpenToggl 图标" width="72" height="72">
+</p>
+
+# OpenToggl
+
+OpenToggl 是一个免费、private-first、AI-friendly 的 Toggl 替代方案。
+
+它存在的原因很简单：对很多个人和团队来说，Toggl 太贵；对重视数据掌控的人来说，它不够 private-first；对 AI 和自动化场景来说，它的 rate limit 又低得几乎无法真正使用。
+
+OpenToggl 的目标是与 Toggl 的产品面保持一致，让你保留熟悉的工作流，同时把部署权、数据控制权和 API 吞吐量拿回来。
+
+## 为什么是 OpenToggl
+
+Toggl 能用。
+
+但一旦你开始在意成本、控制权和自动化，它就很容易不够用了。
+
+OpenToggl 就是为这个缺口而存在的。
+
+- 免费，而不是持续叠加的订阅成本
+- private-first，而不是 SaaS-first
+- 可 self-host，而不是被单一厂商绑定
+- 对 AI 友好，而不是被低 rate limit 卡死
+- 目标是保留 Toggl 式工作流，而不是逼你学习另一套产品
+
+## 为什么不直接用 Toggl
+
+因为这些限制都是真实存在的。
+
+- 价格会很快累积
+- 你的时间数据放在别人的基础设施上
+- self-hosting 不是默认模型
+- 高频 API 使用会被严格限制
+- AI agent 需要高频读写 HTTP API，而 `30/hour` 这种限制远远不够
+
+如果你想保留 Toggl 兼容的工作流，但不想接受 Toggl 在价格、控制权和 rate limit 上的约束，这就是 OpenToggl 的意义。
+
+## 为 AI 而生
+
+大多数时间追踪工具，默认都是为“人在浏览器里点按钮”设计的。
+
+OpenToggl 也为 agent 而设计。
+
+AI 工作流需要高频读取项目、任务、标签、用户、报表和运行中的 timer，也需要持续创建和更新 time entry。它需要足够高的 HTTP 吞吐，才能成为真正可用的软件基础设施，而不是被微小 hourly limit 困住的 demo。
+
+OpenToggl 更适合作为这些场景的后端：
+
+- AI agents
+- 自动化流水线
+- CLI-heavy workflows
+- 个人脚本
+- 内部工具
+
+## Private-First
+
+你的时间数据，本质上就是业务数据。
+
+它记录了你做了什么、什么时候做、给谁做、团队的时间如何分配。这些数据应该可以部署在你自己控制的基础设施上。
+
+OpenToggl 把 self-hosting 当成一等产品方向，而不是附带能力。
+
+## 保留工作流，去掉约束
+
+OpenToggl 不试图发明一种新的时间追踪哲学。
+
+它的目标是尽可能与 Toggl 的产品面保持一致，这样切换过来不意味着你要重新培训团队、重写脚本，或者放弃原有习惯。
+
+你保留工作流。
+你去掉价格压力、厂商绑定和 API 天花板。
+
+## 可与 `toggl-cli` 配合使用
+
+OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 配合使用，所以你可以把同一套 CLI 工作流指向自己的实例。
+
+```shell
+toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
+```
+
+## 开始使用
+
+- 仓库：`https://github.com/CorrectRoadH/opentoggl`
+- Self-hosting 文档：`./docs/self-hosting/docker-compose.md`
+- 产品文档：`./docs/product/landing.md`
+- CLI：`https://github.com/CorrectRoadH/toggl-cli`
