@@ -155,7 +155,7 @@ export function ProfilePage(): ReactElement {
     return (
       <ShellSurfaceCard>
         <AppSurfaceState
-          className="border-none bg-transparent text-rose-200"
+          className="border-none bg-transparent"
           description="We could not load account details right now. Refresh or try again shortly."
           title="Profile unavailable"
           tone="error"

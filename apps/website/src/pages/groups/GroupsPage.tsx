@@ -74,7 +74,7 @@ export function GroupsPage(): ReactElement {
           Group name
           <input
             ref={groupNameInputRef}
-            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white"
+            className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white"
             value={groupName}
             onChange={(event) => setGroupName(event.target.value)}
           />
@@ -85,7 +85,9 @@ export function GroupsPage(): ReactElement {
         >
           Save group
         </AppButton>
-        {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
+        {status ? (
+          <p className="text-sm font-medium text-[var(--track-text-accent)]">{status}</p>
+        ) : null}
       </form>
 
       {groups.length > 0 ? (
@@ -107,7 +109,7 @@ export function GroupsPage(): ReactElement {
                   <p className="text-xs text-slate-400">Group · {statusLabel}</p>
                   <p className="text-[11px] text-slate-500">Workspace {group.workspace_id}</p>
                 </div>
-                <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
+                <span className="rounded-lg border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-3 py-1 text-xs font-medium text-slate-300">
                   {statusLabel}
                 </span>
               </li>
@@ -116,7 +118,7 @@ export function GroupsPage(): ReactElement {
         </ul>
       ) : (
         <section
-          className="mt-6 rounded-xl border border-dashed border-white/12 bg-[#18181c] px-5 py-5 text-sm text-slate-300"
+          className="mt-6 rounded-xl border border-dashed border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-5 py-5 text-sm text-slate-300"
           data-testid="groups-empty-state"
         >
           <p className="font-semibold text-white">No groups in this workspace yet.</p>
@@ -128,7 +130,7 @@ export function GroupsPage(): ReactElement {
       )}
 
       <div
-        className="mt-6 rounded-xl border border-white/10 bg-[#18181c] p-3 text-sm text-slate-300"
+        className="mt-6 rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-3 text-sm text-slate-300"
         data-testid="groups-summary"
       >
         <p className="font-medium text-white">

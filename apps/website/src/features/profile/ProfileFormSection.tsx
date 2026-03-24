@@ -12,7 +12,8 @@ type ProfileFormSectionProps = {
   onSubmit: (request: ReturnType<typeof mapProfileFormToRequest>) => Promise<void> | void;
 };
 
-const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
+const fieldClassName =
+  "rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white";
 
 export function ProfileFormSection({
   initialValues,
@@ -73,7 +74,7 @@ export function ProfileFormSection({
           </Field>
         </div>
 
-        <section className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+        <section className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-4">
           <div className="space-y-1">
             <p className="text-sm font-semibold text-white">Password update</p>
             <p className="text-sm leading-6 text-slate-400">

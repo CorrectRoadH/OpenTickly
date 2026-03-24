@@ -255,9 +255,7 @@ export function ApiTokenStatusNotices(props: {
         </AppInlineNotice>
       ) : null}
       {props.apiTokenError ? (
-        <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
-          {props.apiTokenError}
-        </AppInlineNotice>
+        <AppInlineNotice tone="error">{props.apiTokenError}</AppInlineNotice>
       ) : null}
     </>
   );

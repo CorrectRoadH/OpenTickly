@@ -84,7 +84,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             <p className="text-sm leading-6 text-slate-400">Workspace access rules</p>
           </div>
 
-          <section className="mt-6 rounded-xl border border-rose-500/30 bg-[#1a1214] px-5 py-4 text-sm text-rose-200">
+          <section className="mt-6 rounded-xl border border-rose-500/30 bg-[var(--track-surface-danger-alt)] px-5 py-4 text-sm text-rose-200">
             <p className="font-semibold">Permission policy is temporarily unavailable.</p>
             <p className="mt-2">
               Reload after the workspace settings service recovers. Existing project, member, and
@@ -139,7 +139,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         <div className="space-y-4" data-testid="permission-config-toggles">
           {permissionFields.map((field) => (
             <label
-              className="flex items-start gap-3 rounded-xl border border-white/10 bg-[#18181c] px-4 py-3"
+              className="flex items-start gap-3 rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3"
               key={field.name}
             >
               <input
@@ -161,7 +161,9 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           <AppButton disabled={updateMutation.isPending} type="submit">
             Save permissions
           </AppButton>
-          {status ? <p className="text-sm font-medium text-[#dface3]">{status}</p> : null}
+          {status ? (
+            <p className="text-sm font-medium text-[var(--track-text-accent)]">{status}</p>
+          ) : null}
           {saveError ? <p className="text-sm font-medium text-rose-300">{saveError}</p> : null}
         </div>
       </form>

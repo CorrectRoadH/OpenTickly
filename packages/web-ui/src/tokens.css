@@ -26,4 +26,9 @@
   --track-state-success-surface: rgba(236, 253, 245, 0.8);
   --track-state-success-border: #86efac;
   --track-state-success-text: #166534;
+  --track-input-bg: #18181c;
+  --track-border-input: rgba(255, 255, 255, 0.1);
+  --track-surface-error: #23181b;
+  --track-surface-danger-alt: #1a1214;
+  --track-text-accent: #dface3;
 }

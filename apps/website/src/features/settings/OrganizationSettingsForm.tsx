@@ -14,7 +14,8 @@ type OrganizationSettingsFormProps = {
   ) => Promise<void> | void;
 };
 
-const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
+const fieldClassName =
+  "rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white";
 
 export function OrganizationSettingsForm({
   initialValues,
@@ -68,7 +69,7 @@ export function OrganizationSettingsForm({
 
 function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+    <div className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-4">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>

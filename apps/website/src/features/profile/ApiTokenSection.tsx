@@ -26,7 +26,7 @@ export function ApiTokenSection({
         <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
           Current token
           <input
-            className="rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 font-mono text-sm text-white"
+            className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 font-mono text-sm text-white"
             readOnly
             value={token}
           />

@@ -26,7 +26,6 @@ export function OrganizationSettingsPage({
       <ShellPage data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
-            className="border-white/10 bg-[#18181c] text-slate-300"
             description="Fetching organization-level configuration and policy values."
             title="Loading organization settings"
             tone="loading"
@@ -41,7 +40,6 @@ export function OrganizationSettingsPage({
       <ShellPage data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
-            className="border-rose-500/30 bg-[#23181b] text-rose-200"
             description="We could not load organization settings right now. Refresh or try again shortly."
             title="Organization settings unavailable"
             tone="error"
@@ -56,7 +54,6 @@ export function OrganizationSettingsPage({
       <ShellPage data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
-            className="border-white/10 bg-[#18181c] text-slate-300"
             description="No organization settings data was returned for this organization."
             title="Organization settings unavailable"
             tone="empty"
@@ -69,10 +66,7 @@ export function OrganizationSettingsPage({
   return (
     <ShellPage data-testid="organization-settings-page">
       <div className="space-y-4">
-        <AppPanel
-          className="border-white/8 bg-[#1f1f23]"
-          data-testid="organization-settings-header"
-        >
+        <AppPanel className="border-white/8" data-testid="organization-settings-header">
           <div className="space-y-5">
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold text-white">Organization settings</h1>
@@ -94,16 +88,8 @@ export function OrganizationSettingsPage({
           </div>
         </AppPanel>
 
-        {status ? (
-          <AppInlineNotice className="border-white/10 bg-[#18181c] text-[#dface3]" tone="success">
-            {status}
-          </AppInlineNotice>
-        ) : null}
-        {error ? (
-          <AppInlineNotice className="border-rose-500/30 bg-[#23181b] text-rose-200" tone="error">
-            {error}
-          </AppInlineNotice>
-        ) : null}
+        {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
+        {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
         <OrganizationSettingsForm
           initialValues={createOrganizationSettingsFormValues(organizationQuery.data)}
           onSubmit={async (request) => {
@@ -124,7 +110,7 @@ export function OrganizationSettingsPage({
 
 function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#18181c] p-4">
+    <div className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-4">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
       <p className="mt-2 text-base font-semibold text-white">{value}</p>
     </div>

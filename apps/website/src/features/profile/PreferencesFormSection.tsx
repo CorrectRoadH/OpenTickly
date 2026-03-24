@@ -12,7 +12,8 @@ type PreferencesFormSectionProps = {
   onSubmit: (request: ReturnType<typeof mapPreferencesFormToRequest>) => Promise<void> | void;
 };
 
-const fieldClassName = "rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-white";
+const fieldClassName =
+  "rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white";
 
 export function PreferencesFormSection({
   initialValues,
@@ -94,7 +95,7 @@ function Field(props: { children: ReactElement; label: string }): ReactElement {
 
 function ToggleField(props: { children: ReactElement; label: string }): ReactElement {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-[#18181c] px-4 py-3 text-sm font-medium text-slate-300">
+    <label className="flex items-center justify-between gap-4 rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-sm font-medium text-slate-300">
       <span>{props.label}</span>
       {props.children}
     </label>
