@@ -13,17 +13,17 @@ const faqItems = [
   {
     question: "What is OpenToggl?",
     answer:
-      "OpenToggl is an open source time tracking platform built against the public Toggl product surface, including Track, Reports, Webhooks, import tooling, and a web UI.",
+      "OpenToggl is a free, private-first, AI-friendly alternative to Toggl that aims to preserve the same product surface without the same pricing, hosting, and rate-limit constraints.",
   },
   {
     question: "Can I self-host OpenToggl?",
     answer:
-      "Yes. OpenToggl is designed for self-hosted deployments with PostgreSQL and Redis, documented startup flow, and explicit readiness checks.",
+      "Yes. OpenToggl is built for self-hosting, so you can run time tracking on infrastructure you control instead of depending on a single hosted vendor.",
   },
   {
-    question: "Is OpenToggl a Toggl alternative?",
+    question: "Why is OpenToggl better for AI and automation?",
     answer:
-      "Yes. It is a self-hosted, open source alternative shaped around the same public Toggl-facing API and product surface instead of a loosely similar clone.",
+      "AI agents and automation need high-rate read and write access. OpenToggl is meant to be a better backend for that workload than a service constrained by tiny hourly limits.",
   },
 ];
 
@@ -34,7 +34,7 @@ export default function Home() {
     <HomeLayout {...baseOptions()}>
       <Seo
         pathname="/"
-        title="Open Source Self-Hosted Time Tracking Platform"
+        title="Free Private-First Toggl Alternative"
         description={defaultDescription}
         schema={[buildOrganizationSchema(siteUrl), buildFaqSchema(faqItems)]}
       />
@@ -42,19 +42,27 @@ export default function Home() {
         <section className="landing-hero rounded-3xl border border-fd-border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-12">
           <div className="mx-auto max-w-3xl text-center">
             <p className="inline-flex rounded-full border border-fd-border bg-white/3 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-fd-muted-foreground">
-              Open source. Self-hostable. Toggl-shaped.
+              Free. Private-first. AI-friendly.
             </p>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-fd-foreground md:text-6xl">
-              OpenToggl is the open source time tracking platform built from the public Toggl
-              surface.
+              Keep the Toggl workflow. Lose the price, lock-in, and rate limits.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-fd-muted-foreground md:text-lg">
-              It covers Track API v9, Reports API v3, Webhooks API v1, the web product surface,
-              Toggl export import, and a self-hosted runtime you can inspect, run, and extend.
+              OpenToggl is a free, private-first, AI-friendly alternative to Toggl for people who
+              want the same product shape on infrastructure they control, with enough API headroom
+              for real automation and agents.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a
                 className="rounded-full bg-fd-primary px-5 py-3 text-sm font-semibold text-fd-primary-foreground transition hover:opacity-90"
+                href="https://track.opentoggl.com"
+                rel="noreferrer"
+                target="_blank"
+              >
+                Open Demo
+              </a>
+              <a
+                className="rounded-full border border-fd-border bg-fd-secondary px-5 py-3 text-sm font-semibold text-fd-foreground transition hover:bg-[#1b2734]"
                 href="https://github.com/CorrectRoadH/opentoggl"
                 rel="noreferrer"
                 target="_blank"
@@ -70,9 +78,9 @@ export default function Home() {
             </div>
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
               {[
-                ["Contract-first", "Public API and product surface define the target."],
-                ["Runs self-hosted", "Source, runtime, and deployment path live in the repo."],
-                ["Imports Toggl data", "Bring existing exports into the same platform surface."],
+                ["Costs less", "Stop paying premium SaaS pricing for basic time tracking."],
+                ["Stays private", "Run it yourself and keep operational data on infrastructure you control."],
+                ["Works for agents", "Give AI and automation the API throughput they actually need."],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-2xl border border-fd-border bg-white/3 p-4">
                   <p className="text-sm font-semibold text-fd-foreground">{title}</p>
@@ -85,12 +93,12 @@ export default function Home() {
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            "Track API v9",
-            "Reports API v3",
-            "Webhooks API v1",
-            "Web UI",
-            "Toggl import",
-            "Self-hosting",
+            "Toggl-shaped workflow",
+            "Private-first deployment",
+            "Free to run",
+            "Built for AI agents",
+            "Automation-friendly",
+            "Try the live demo",
           ].map((item) => (
             <div
               key={item}
@@ -105,15 +113,15 @@ export default function Home() {
           {[
             {
               title: "What is OpenToggl?",
-              body: "A direct implementation target for the current public Toggl product surface, not a vague “similar to Toggl” clone.",
+              body: "A serious Toggl alternative built to keep the same overall workflow without forcing you into the same vendor model.",
             },
             {
               title: "Why it exists",
-              body: "To give teams an auditable, open codebase for tracking, reports, and webhooks without inventing a parallel business model first.",
+              body: "Because Toggl is too expensive for many teams, too closed for private-first setups, and too rate-limited for AI-heavy usage.",
             },
             {
-              title: "Why self-host",
-              body: "You control deployment, data, and upgrades while keeping the same public contract as the hosted product surface.",
+              title: "Why try the demo",
+              body: "Open `track.opentoggl.com` to see the product directly, then self-host it when you want the same experience on your own stack.",
             },
           ].map((item) => (
             <article
@@ -130,8 +138,7 @@ export default function Home() {
           <div className="max-w-3xl">
             <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
             <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">
-              The basics people search for before evaluating an open source time tracking
-              platform.
+              The basics people ask before switching to a free, private-first Toggl alternative.
             </p>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
