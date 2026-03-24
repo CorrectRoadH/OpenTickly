@@ -49,11 +49,11 @@
 
 - 时间记录对象需要完整承载 `workspace_id`、`user_id`、`project_id`、`task_id`、`client_id`、`description`、`billable`、`start`、`stop`、`duration`、`created_with`、`tags` 等公开定义语义。
 - 必须完整支持创建、更新、删除、单条读取、批量读取、批量更新、按时间范围/用户/项目/任务/标签/描述过滤、since 增量同步、停止运行中时间记录等能力。
-- `GET /me/time_entries`、`GET /me/time_entries/current`、`GET /me/time_entries/{time_entry_id}` 属于当前账号的公开读模型；返回边界是 current user，可跨该账号可访问的多个 workspace，不得被当前选中的 workspace、organization 或 session home 隐式收窄。
+- `GET /me/time_entries`、`GET /me/time_entries/current`、`GET /me/time_entries/{time_entry_id}` 属于当前账号的公开读模型；返回边界是 current user，可返回该账号在多个 workspace 下的事实数据。
 - `GET /me/time_entries/current` 当没有运行中的时间条目时返回 `200` + body `null`；这是正式产品语义，不是错误状态，客户端应据此处理而不是依赖 404 响应。
-- `workspace_id` 仍然是每条 time entry 的正式字段和写入归属；`POST /workspaces/{workspace_id}/time_entries`、`PATCH /workspaces/{workspace_id}/time_entries/{time_entry_id}/stop` 等 workspace 路由负责显式写入上下文，但不能反向定义 `/me` 读接口的资源边界。
-- Timer 页面族读取的是当前用户的 `/me/time_entries` 事实集合。切换当前 workspace 只改变默认新建 time entry 的 `workspace_id`、项目/标签等 workspace-scoped catalog 的候选集，以及其他显式 workspace 路由的上下文；不能把 timer 已有 time entries 结果再按当前 workspace 或当前 organization 本地过滤。
-- 同一用户跨多个可访问 workspace 的历史 time entries 必须继续在 timer 的 `calendar`、`list`、`timesheet` 三个视图中保持一致可见；workspace 切换不会把其他 workspace 的历史条目从 `/me` 读模型中抹掉。
+- `workspace_id` 仍然是每条 time entry 的正式字段和写入归属；`POST /workspaces/{workspace_id}/time_entries`、`PATCH /workspaces/{workspace_id}/time_entries/{time_entry_id}/stop` 等 workspace 路由负责显式写入上下文。
+- Timer 页面族展示的是当前 workspace 上下文下的 time entries 投影。页面可以基于 `/me/time_entries` 读模型取数，但最终 UI 只允许展示 `workspace_id == current workspace` 的条目；来自其他 workspace 或其他 organization 的 time entries 不得在当前 timer 视图中出现。
+- 当用户切换当前 workspace 或 organization 后，`calendar`、`list`、`timesheet` 三个视图都必须立即切到新的 workspace 作用域；前一个 workspace 的历史 time entries 必须从当前 timer 视图消失。
 - running timer 必须作为正式产品语义单独实现，包括开始、停止、冲突处理、持续时间与开始/结束时间的关系、运行中状态读取。
 - 时间语义必须按引用的公开定义实现 RFC3339 风格输入输出、UTC 存储、用户时区展示、跨日与跨时区行为，并为报表口径提供一致事实来源。
 - Web timer header 的运行时长必须基于当前 running entry 的 `start` 时间实时显示；不要把 raw negative duration 直接当成已消逝秒数渲染。
@@ -191,18 +191,18 @@
   - 产品含义：这是同一 `timer` 页面在 `calendar` 视图下的周视图，用时间栅格展示 time entries。
   - 实现要求：它与 `list view`、`timesheet` 共享同一页面族、日期范围、筛选条件、running timer/header 状态，只替换主内容区投影，不单独定义另一套页面或数据模型；`calendar` 也是用户直接打开 `timer` 时的默认 landing view。
   - URL 约束：在上游 Toggl 中，`calendar` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
-  - 数据边界：页面读取的是当前账号的 time entries 事实；切换当前 workspace 只改变默认创建目标和其他 workspace-scoped 对象上下文，不能把 `/me/time_entries` 结果再按当前 workspace 本地过滤。
+  - 数据边界：页面展示的是当前 workspace 的 time entries；即使底层读取来自 `/me/time_entries`，也必须在进入 `calendar` 投影前按当前 workspace 过滤。
 - `Timer / List view`
   - Figma：`timer listview`，node `12:2948`
   - Screenshot：[toggl-timer-list-view-all-dates.png](../../toggl_screenshots/toggl-timer-list-view-all-dates.png)
   - 产品含义：这是 `timer` 页面按日期分组的明细视图，用线性列表展示 time entries。
-  - 实现要求：它读取的仍是同一批 time entries，不应和 `calendar`、`timesheet` 产生不同过滤语义；创建、编辑、停止 timer 的入口要保持一致。
+  - 实现要求：它读取的仍是同一批当前 workspace time entries，不应和 `calendar`、`timesheet` 产生不同过滤语义；创建、编辑、停止 timer 的入口要保持一致。
   - URL 约束：在上游 Toggl 中，`list` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
 - `Timer / Timesheet`
   - Figma：`timer timesheet mode`，node `10:13202`
   - Screenshot：[toggl-timer-timesheet-view-week.png](../../toggl_screenshots/toggl-timer-timesheet-view-week.png)
   - 产品含义：这是 `timer` 页面在 `timesheet` 视图下的聚合呈现，按项目和星期维度显示工作时长。
-  - 实现要求：它是 time entries 的聚合读面，不是单独的事务写模型；复制上周、按日合计、按项目行展示等行为都应建立在同一 tracking 事实之上。
+  - 实现要求：它是当前 workspace time entries 的聚合读面，不是单独的事务写模型；复制上周、按日合计、按项目行展示等行为都应建立在同一 tracking 事实之上。
   - URL 约束：在上游 Toggl 中，`timesheet` 不是独立 URL；它是 `https://track.toggl.com/timer` 内部的 view state。
 
 ### Project / Client / Tag 页面

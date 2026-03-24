@@ -106,10 +106,8 @@ export function SessionProvider({
   );
 
   useEffect(() => {
-    if (requestedWorkspaceId != null) {
-      setCurrentWorkspaceId(requestedWorkspaceId);
-    }
-  }, [requestedWorkspaceId]);
+    setCurrentWorkspaceId(requestedWorkspaceId ?? fallbackWorkspaceId);
+  }, [fallbackWorkspaceId, requestedWorkspaceId]);
 
   const session = useMemo(
     () =>

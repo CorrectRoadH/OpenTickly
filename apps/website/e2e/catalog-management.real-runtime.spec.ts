@@ -59,9 +59,9 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await expect(page.getByTestId("tags-page")).toBeVisible();
 
     await page.getByTestId("tags-create-button").click();
-    const form = page.getByTestId("tags-create-form");
+    const form = page.getByRole("dialog", { name: "Create new tag" });
     await form.getByLabel("Tag name").fill(tagName);
-    await form.getByRole("button", { name: "Save tag" }).click();
+    await form.getByRole("button", { name: "Create tag" }).click();
 
     await expect(page.getByText("Tag created")).toBeVisible();
     await expect(page.getByTestId("tags-list")).toContainText(tagName);
@@ -90,20 +90,18 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
 
     await page.getByRole("link", { name: "Projects" }).click();
     await expect(page).toHaveURL(
-      new RegExp(`/workspaces/${workspaceId}/projects(?:\\?status=all)?$`),
+      new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`),
     );
     await page.getByTestId("projects-create-button").click();
-    await page.getByTestId("projects-create-form").getByLabel("Project name").fill(projectName);
-    await page
-      .getByTestId("projects-create-form")
-      .getByRole("button", { name: "Save project" })
-      .click();
+    const projectForm = page.getByRole("dialog", { name: "Create new project" });
+    await projectForm.getByLabel("Project name").fill(projectName);
+    await projectForm.getByRole("button", { name: "Create project" }).click();
     await expect(page.getByTestId("projects-list")).toContainText(projectName);
     const projectHref = await page
       .getByTestId("projects-list")
       .getByRole("link", { name: projectName })
       .getAttribute("href");
-    const projectId = projectHref?.match(/projects\/(\d+)$/)?.[1];
+    const projectId = projectHref?.match(/projects\/(\d+)\/team$/)?.[1];
 
     expect(projectId).toBeTruthy();
     await page.goto(

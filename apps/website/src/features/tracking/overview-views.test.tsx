@@ -53,6 +53,37 @@ describe("CalendarView", () => {
     expect(nowLine).toBeTruthy();
     expect(nowLineDot.className).toContain("size-4");
   });
+
+  it("renders time entry with all fields: description, project, client, duration, and tag", () => {
+    render(
+      <CalendarView
+        entries={[
+          createTimeEntryFixture({
+            client_name: "Test Client",
+            description: "Test description",
+            duration: 3600,
+            project_color: "#c67abc",
+            project_name: "Test Project",
+            start: "2026-03-23T10:00:00Z",
+            stop: "2026-03-23T11:00:00Z",
+            tags: ["Test Tag"],
+          }),
+        ]}
+        hours={[10]}
+        nowMs={Date.parse("2026-03-23T10:15:00Z")}
+        timezone="UTC"
+        weekDays={buildWeek("2026-03-23T00:00:00Z")}
+      />,
+    );
+
+    const entryCard = screen.getByRole("button", { name: "Edit Test description" });
+    expect(entryCard).toBeTruthy();
+
+    expect(entryCard).toHaveTextContent("Test description");
+    expect(entryCard).toHaveTextContent("Test Project • Test Client");
+    expect(entryCard).toHaveTextContent("01:00:00");
+    expect(entryCard).toHaveTextContent("Test Tag");
+  });
 });
 
 function buildWeek(startIso: string): Date[] {

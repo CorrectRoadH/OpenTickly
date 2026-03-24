@@ -27,6 +27,9 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new membership postgres service: %v", err)
 	}
+	identityService := identityapplication.NewService(identityapplication.Config{
+		Users: identitypostgres.NewUserRepository(database.Pool),
+	})
 	homes := tenantpostgres.NewUserHomeRepository(database.Pool)
 
 	user := identityapplication.UserSnapshot{
@@ -48,7 +51,13 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 		t.Fatalf("save persisted test user: %v", err)
 	}
 
-	firstProvider := newBillingBackedSessionShell(tenantService, billingService, membershipService, homes)
+	firstProvider := newBillingBackedSessionShell(
+		tenantService,
+		billingService,
+		identityService,
+		membershipService,
+		homes,
+	)
 	firstShell, err := firstProvider.SessionShell(ctx, user)
 	if err != nil {
 		t.Fatalf("first session shell: %v", err)
@@ -57,7 +66,13 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 		t.Fatalf("expected first shell to create tenant home, got %#v", firstShell)
 	}
 
-	secondProvider := newBillingBackedSessionShell(tenantService, billingService, membershipService, homes)
+	secondProvider := newBillingBackedSessionShell(
+		tenantService,
+		billingService,
+		identityService,
+		membershipService,
+		homes,
+	)
 	secondShell, err := secondProvider.SessionShell(ctx, user)
 	if err != nil {
 		t.Fatalf("second session shell: %v", err)

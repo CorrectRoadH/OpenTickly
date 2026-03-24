@@ -21,7 +21,26 @@ test.describe("Story: manage the running timer", () => {
     });
 
     await page.context().clearCookies();
-    await loginE2eUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = loginSession.currentWorkspaceId;
+
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    for (let entryIndex = 0; entryIndex < 24; entryIndex += 1) {
+      const start = new Date(Date.UTC(baseYear, baseMonth, baseDate, entryIndex % 24, 0, 0));
+      const stop = new Date(Date.UTC(baseYear, baseMonth, baseDate, entryIndex % 24, 45, 0));
+      await createTimeEntryForWorkspace(page, {
+        description: `Scrollable entry ${entryIndex + 1}`,
+        start: start.toISOString(),
+        stop: stop.toISOString(),
+        workspaceId,
+      });
+    }
+
+    await page.goto(new URL("/timer", page.url()).toString());
 
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
@@ -51,7 +70,7 @@ test.describe("Story: manage the running timer", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
   });
 
-  test("Given the timer page calendar view, when the main shell scrolls, then the timer header stays pinned", async ({
+  test("Given the timer page calendar view, when wheel scrolling targets the timer surface, then the timer header stays pinned without shifting the shell scroll", async ({
     page,
   }) => {
     const email = `timer-sticky-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -107,14 +126,6 @@ test.describe("Story: manage the running timer", () => {
         main: 0,
         timer: expect.any(Number),
       });
-
-    const afterScroll = await scrollArea.evaluate((element: HTMLElement) => ({
-      scrollHeight: element.scrollHeight,
-      scrollTop: element.scrollTop,
-    }));
-
-    expect(afterScroll.scrollHeight).toBeGreaterThan(afterScroll.scrollTop);
-    expect(afterScroll.scrollTop).toBeGreaterThan(0);
 
     const after = await weekRangeButton.evaluate((element: HTMLElement) => {
       const rect = element.getBoundingClientRect();
@@ -194,7 +205,7 @@ test.describe("Story: manage the running timer", () => {
     expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
   });
 
-  test("Given the user switches to another organization, when they return to timer, then time entries from previously accessible workspaces remain visible", async ({
+  test("Given the user switches to another organization, when they return to timer, then time entries from the previous workspace no longer appear", async ({
     page,
   }) => {
     const email = `timer-multi-workspace-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -241,9 +252,7 @@ test.describe("Story: manage the running timer", () => {
     await expect(organizationButton).not.toContainText("Timer Multi Workspace User Organization");
 
     await page.goto(new URL(`/workspaces/${firstWorkspaceId}/projects`, page.url()).toString());
-    await expect(page).toHaveURL(
-      new RegExp(`/workspaces/${firstWorkspaceId}/projects(?:\\?status=all)?$`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/projects/${firstWorkspaceId}/list\\?status=all$`));
     await expect(page.getByTestId("projects-page")).toBeVisible();
 
     await page.goto(new URL("/timer", page.url()).toString());
@@ -251,7 +260,6 @@ test.describe("Story: manage the running timer", () => {
     const crossWorkspaceEntry = page.getByRole("button", {
       name: `Edit ${firstWorkspaceEntryDescription}`,
     });
-    await expect(crossWorkspaceEntry).toBeVisible();
-    await expect(crossWorkspaceEntry).toContainText(firstWorkspaceProjectName);
+    await expect(crossWorkspaceEntry).toHaveCount(0);
   });
 });

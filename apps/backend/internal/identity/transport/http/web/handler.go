@@ -174,7 +174,7 @@ func (handler *Handler) GetProfile(ctx context.Context, sessionID string) Respon
 
 	return Response{
 		StatusCode: 200,
-		Body:       profileBody(user),
+		Body:       profileBody(user, user.DefaultWorkspaceID),
 	}
 }
 
@@ -200,7 +200,7 @@ func (handler *Handler) UpdateProfile(ctx context.Context, sessionID string, req
 
 	return Response{
 		StatusCode: 200,
-		Body:       profileBody(updated),
+		Body:       profileBody(updated, updated.DefaultWorkspaceID),
 	}
 }
 
@@ -295,11 +295,16 @@ func (handler *Handler) sessionBootstrap(
 		}
 	}
 
+	defaultWorkspaceID := user.DefaultWorkspaceID
+	if defaultWorkspaceID <= 0 && shell.CurrentWorkspaceID != nil {
+		defaultWorkspaceID = int64(*shell.CurrentWorkspaceID)
+	}
+
 	return webapi.SessionBootstrap{
 		CurrentOrganizationId:    shell.CurrentOrganizationID,
 		CurrentWorkspaceId:       shell.CurrentWorkspaceID,
 		OrganizationSubscription: shell.OrganizationSubscription,
-		User:                     profileBody(user),
+		User:                     profileBody(user, defaultWorkspaceID),
 		WorkspaceSubscription:    shell.WorkspaceSubscription,
 		Organizations:            shell.Organizations,
 		Workspaces:               shell.Workspaces,
@@ -308,13 +313,13 @@ func (handler *Handler) sessionBootstrap(
 	}, nil
 }
 
-func profileBody(user application.UserSnapshot) webapi.CurrentUserProfile {
+func profileBody(user application.UserSnapshot, defaultWorkspaceID int64) webapi.CurrentUserProfile {
 	return webapi.CurrentUserProfile{
 		N2faEnabled:        user.TwoFactorEnabled,
 		ApiToken:           user.APIToken,
 		BeginningOfWeek:    user.BeginningOfWeek,
 		CountryId:          int(user.CountryID),
-		DefaultWorkspaceId: int(user.DefaultWorkspaceID),
+		DefaultWorkspaceId: int(defaultWorkspaceID),
 		Email:              openapi_types.Email(user.Email),
 		Fullname:           user.FullName,
 		HasPassword:        user.HasPassword,

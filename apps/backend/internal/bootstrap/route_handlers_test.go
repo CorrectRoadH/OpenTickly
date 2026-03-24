@@ -53,8 +53,9 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 
 	var bootstrapResponse struct {
 		User struct {
-			ID    int64  `json:"id"`
-			Email string `json:"email"`
+			ID                 int64  `json:"id"`
+			Email              string `json:"email"`
+			DefaultWorkspaceID int64  `json:"default_workspace_id"`
 		} `json:"user"`
 		CurrentOrganizationID *int64 `json:"current_organization_id"`
 		CurrentWorkspaceID    *int64 `json:"current_workspace_id"`
@@ -84,6 +85,13 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	}
 	if bootstrapResponse.CurrentWorkspaceID == nil || *bootstrapResponse.CurrentWorkspaceID <= 0 {
 		t.Fatalf("expected current workspace id > 0, got %#v", bootstrapResponse.CurrentWorkspaceID)
+	}
+	if bootstrapResponse.User.DefaultWorkspaceID != *bootstrapResponse.CurrentWorkspaceID {
+		t.Fatalf(
+			"expected bootstrap default workspace id %d, got %d",
+			*bootstrapResponse.CurrentWorkspaceID,
+			bootstrapResponse.User.DefaultWorkspaceID,
+		)
 	}
 	if bootstrapResponse.CurrentOrganizationID == nil || *bootstrapResponse.CurrentOrganizationID <= 0 {
 		t.Fatalf("expected current organization id > 0, got %#v", bootstrapResponse.CurrentOrganizationID)

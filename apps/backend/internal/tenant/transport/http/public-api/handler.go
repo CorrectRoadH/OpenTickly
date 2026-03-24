@@ -60,16 +60,19 @@ func NewHandler(
 }
 
 func (handler *Handler) GetPublicTrackOrganizations(ctx echo.Context) error {
-	organizationID, _, err := handler.scope.RequirePublicTrackHome(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
 
-	view, err := handler.tenant.GetOrganization(ctx.Request().Context(), tenantdomain.OrganizationID(organizationID))
+	organizations, err := handler.tenant.ListOrganizationsByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
 		return mapError(err)
 	}
-	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsMeOrganization{meOrganizationBody(view)})
+
+	return ctx.JSON(http.StatusOK, lo.Map(organizations, func(view tenantapplication.OrganizationView, _ int) publictrackapi.ModelsMeOrganization {
+		return meOrganizationBody(view)
+	}))
 }
 
 func (handler *Handler) GetPublicTrackQuota(ctx echo.Context) error {
@@ -231,51 +234,60 @@ func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackWorkspaces(ctx echo.Context) error {
-	_, workspaceID, err := handler.scope.RequirePublicTrackHome(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
 
-	view, err := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
+	workspaces, err := handler.tenant.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
 		return mapError(err)
 	}
-	projects, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectsFilter{
-		Active:  lo.ToPtr(true),
-		Page:    1,
-		PerPage: 200,
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+
+	response := make([]publictrackapi.WorkspaceWithActiveProjectCount, 0, len(workspaces))
+	for _, view := range workspaces {
+		projects, projectErr := handler.catalog.ListProjects(
+			ctx.Request().Context(),
+			int64(view.ID),
+			catalogapplication.ListProjectsFilter{
+				Active:  lo.ToPtr(true),
+				Page:    1,
+				PerPage: 200,
+			},
+		)
+		if projectErr != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+
+		response = append(response, publictrackapi.WorkspaceWithActiveProjectCount{
+			ActiveProjectCount: lo.ToPtr(len(projects)),
+			Admin:              lo.ToPtr(true),
+			BusinessWs:         lo.ToPtr(view.Commercial.Subscription.Plan == billingdomain.PlanEnterprise),
+			DefaultCurrency:    lo.ToPtr(view.Settings.DefaultCurrency()),
+			DefaultHourlyRate:  float32Ptr(view.Settings.DefaultHourlyRate()),
+			HideStartEndTimes:  lo.ToPtr(view.Settings.HideStartEndTimes()),
+			Id:                 intPointer(int64(view.ID)),
+			LimitPublicProjectData: lo.ToPtr(
+				view.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
+			),
+			LogoUrl:                     lo.ToPtr(brandingURL(view.Branding.LogoStorageKey)),
+			Name:                        lo.ToPtr(view.Name),
+			OnlyAdminsMayCreateProjects: lo.ToPtr(view.Settings.OnlyAdminsMayCreateProjects()),
+			OnlyAdminsMayCreateTags:     lo.ToPtr(view.Settings.OnlyAdminsMayCreateTags()),
+			OnlyAdminsSeeTeamDashboard:  lo.ToPtr(view.Settings.OnlyAdminsSeeTeamDashboard()),
+			OrganizationId:              intPointer(int64(view.OrganizationID)),
+			Premium:                     lo.ToPtr(view.Commercial.Subscription.Plan != billingdomain.PlanFree),
+			ProjectsBillableByDefault:   lo.ToPtr(view.Settings.ProjectsBillableByDefault()),
+			ProjectsEnforceBillable:     lo.ToPtr(view.Settings.ProjectsEnforceBillable()),
+			ProjectsPrivateByDefault:    lo.ToPtr(view.Settings.ProjectsPrivateByDefault()),
+			ReportsCollapse:             lo.ToPtr(view.Settings.ReportsCollapse()),
+			Role:                        lo.ToPtr("admin"),
+			Rounding:                    lo.ToPtr(int(view.Settings.Rounding())),
+			RoundingMinutes:             lo.ToPtr(view.Settings.RoundingMinutes()),
+		})
 	}
 
-	workspace := publictrackapi.WorkspaceWithActiveProjectCount{
-		ActiveProjectCount: lo.ToPtr(len(projects)),
-		Admin:              lo.ToPtr(true),
-		BusinessWs:         lo.ToPtr(view.Commercial.Subscription.Plan == billingdomain.PlanEnterprise),
-		DefaultCurrency:    lo.ToPtr(view.Settings.DefaultCurrency()),
-		DefaultHourlyRate:  float32Ptr(view.Settings.DefaultHourlyRate()),
-		HideStartEndTimes:  lo.ToPtr(view.Settings.HideStartEndTimes()),
-		Id:                 intPointer(int64(view.ID)),
-		LimitPublicProjectData: lo.ToPtr(
-			view.Settings.PublicProjectAccess() == tenantdomain.WorkspacePublicProjectAccessAdmins,
-		),
-		LogoUrl:                     lo.ToPtr(brandingURL(view.Branding.LogoStorageKey)),
-		Name:                        lo.ToPtr(view.Name),
-		OnlyAdminsMayCreateProjects: lo.ToPtr(view.Settings.OnlyAdminsMayCreateProjects()),
-		OnlyAdminsMayCreateTags:     lo.ToPtr(view.Settings.OnlyAdminsMayCreateTags()),
-		OnlyAdminsSeeTeamDashboard:  lo.ToPtr(view.Settings.OnlyAdminsSeeTeamDashboard()),
-		OrganizationId:              intPointer(int64(view.OrganizationID)),
-		Premium:                     lo.ToPtr(view.Commercial.Subscription.Plan != billingdomain.PlanFree),
-		ProjectsBillableByDefault:   lo.ToPtr(view.Settings.ProjectsBillableByDefault()),
-		ProjectsEnforceBillable:     lo.ToPtr(view.Settings.ProjectsEnforceBillable()),
-		ProjectsPrivateByDefault:    lo.ToPtr(view.Settings.ProjectsPrivateByDefault()),
-		ReportsCollapse:             lo.ToPtr(view.Settings.ReportsCollapse()),
-		Role:                        lo.ToPtr("admin"),
-		Rounding:                    lo.ToPtr(int(view.Settings.Rounding())),
-		RoundingMinutes:             lo.ToPtr(view.Settings.RoundingMinutes()),
-	}
-	return ctx.JSON(http.StatusOK, []publictrackapi.WorkspaceWithActiveProjectCount{workspace})
+	return ctx.JSON(http.StatusOK, response)
 }
 
 func (handler *Handler) GetPublicTrackWorkspaceSubscription(ctx echo.Context) error {

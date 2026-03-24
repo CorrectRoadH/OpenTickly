@@ -606,7 +606,7 @@ export function WorkspaceTimerPage(): ReactElement {
         ) : null}
         {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar" ? (
           <CalendarView
-            entries={entries}
+            entries={visibleEntries}
             hours={calendarHours}
             nowMs={nowMs}
             onEditEntry={handleEntryEdit}

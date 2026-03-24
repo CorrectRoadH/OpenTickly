@@ -449,6 +449,47 @@ describe("WorkspaceTimerPage", () => {
     expect(mockUseTagsQuery).toHaveBeenLastCalledWith(303);
   });
 
+  it("renders only current workspace entries in the calendar view", () => {
+    const today = new Date();
+    const day = String(today.getUTCDate()).padStart(2, "0");
+    const month = String(today.getUTCMonth() + 1).padStart(2, "0");
+    const year = today.getUTCFullYear();
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [
+        createTimeEntryFixture({
+          description: "Current workspace entry",
+          id: 780,
+          start: `${year}-${month}-${day}T09:00:00Z`,
+          stop: `${year}-${month}-${day}T09:30:00Z`,
+          workspace_id: 202,
+          wid: 202,
+        }),
+        createTimeEntryFixture({
+          description: "Other workspace entry",
+          id: 781,
+          start: `${year}-${month}-${day}T12:00:00Z`,
+          stop: `${year}-${month}-${day}T12:30:00Z`,
+          workspace_id: 303,
+          wid: 303,
+        }),
+      ],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    expect(screen.getByRole("button", { name: "Edit Current workspace entry" })).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Edit Other workspace entry" }),
+    ).toBeNull();
+  });
+
   it("keeps the edited start time visible in the editor before save", () => {
     const today = new Date();
     const day = String(today.getUTCDate()).padStart(2, "0");
