@@ -81,6 +81,7 @@ jobs:
       - name: Start frontend dev server
         env:
           OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
+          VITE_SITE_ENV: ci
         run: |
           pnpm exec vp run website#dev -- --port 5173 &
           sleep 5
