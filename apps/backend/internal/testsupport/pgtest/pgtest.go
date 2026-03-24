@@ -112,7 +112,6 @@ func requiredDatabaseURL(t *testing.T) string {
 
 	values := map[string]string{}
 	root := repositoryRoot(t)
-	mergeEnvFile(t, values, filepath.Join(root, ".env"), false)
 	mergeEnvFile(t, values, filepath.Join(root, ".env.local"), true)
 
 	value := strings.TrimSpace(values["DATABASE_URL"])

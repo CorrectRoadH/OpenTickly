@@ -118,8 +118,8 @@ packages/
 - 后端本地开发入口是根目录执行的 `air`。
 - `air` 的根级配置文件固定为仓库根目录 `.air.toml`，其 build/run target 指向 `./apps/backend`；不允许在 `apps/backend` 下再维护第二份热重载入口或平行配置。
 - 本地开发环境变量统一位于仓库根目录，不允许把必需 env 分散到 `apps/website`、`apps/backend` 或根级 shell 包装脚本。
-- 本地开发 env 文件命名也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
-- 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.local.example` 只是模板，不是可直接视为“已配置完成”的启动输入。
+- 本地开发 env 约定统一收口在仓库根目录：`.env.example` 是模板，`.env.local` 是本机运行文件。
+- 仓库根目录 `.env.local` 是源码本地开发的必需前置条件；`.env.example` 只是模板，不是可直接视为“已配置完成”的启动输入。
 - 后端源码启动默认必须通过 env 显式拿到真实 datasource 配置；缺少 datasource env 时必须立即启动失败，不允许回填可工作的默认数据库地址。
 - 后端连接类与监听类 env 使用标准命名：`PORT`、`DATABASE_URL`、`REDIS_URL`。不允许为默认开发/启动路径再发明平行命名如 `*_DATABASE_DSN`、`*_REDIS_ADDRESS`、`*_LISTEN_ADDRESS`。
 - PostgreSQL schema 管理固定使用 `pgschema`。这套工作流允许使用标准 PostgreSQL CLI 环境变量 `PGHOST`、`PGPORT`、`PGDATABASE`、`PGUSER`、`PGPASSWORD`、`PGSSLMODE` 作为 `pgschema` 输入；它们只服务于 schema tooling，不替代应用启动使用的 `DATABASE_URL`。

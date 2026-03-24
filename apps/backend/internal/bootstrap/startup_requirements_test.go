@@ -27,6 +27,39 @@ func TestNewAppFromEnvironmentFailsWhenEnvLocalMissing(t *testing.T) {
 	}
 }
 
+func TestNewAppFromEnvironmentIgnoresDotEnvWhenEnvLocalPresent(t *testing.T) {
+	repoRoot := t.TempDir()
+	if err := os.WriteFile(filepath.Join(repoRoot, ".env"), []byte(strings.Join([]string{
+		"PORT=9999",
+		"DATABASE_URL=postgres://wrong@localhost:5432/wrong",
+		"REDIS_URL=redis://127.0.0.1:6390/9",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write .env: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(repoRoot, ".env.local"), []byte(strings.Join([]string{
+		"PORT=8080",
+		"DATABASE_URL=postgres://opentoggl@localhost:5432/opentoggl",
+		"REDIS_URL=redis://127.0.0.1:6379/0",
+	}, "\n")), 0o644); err != nil {
+		t.Fatalf("write .env.local: %v", err)
+	}
+	withWorkingDirectory(t, repoRoot)
+
+	cfg, err := ConfigFromEnvironment(nil)
+	if err != nil {
+		t.Fatalf("load config from environment: %v", err)
+	}
+	if cfg.Server.ListenAddress != "0.0.0.0:8080" {
+		t.Fatalf("expected .env.local PORT to win, got %q", cfg.Server.ListenAddress)
+	}
+	if cfg.Database.PrimaryDSN != "postgres://opentoggl@localhost:5432/opentoggl" {
+		t.Fatalf("expected .env.local DATABASE_URL to win, got %q", cfg.Database.PrimaryDSN)
+	}
+	if cfg.Redis.Address != "redis://127.0.0.1:6379/0" {
+		t.Fatalf("expected .env.local REDIS_URL to win, got %q", cfg.Redis.Address)
+	}
+}
+
 func TestNewAppFromEnvironmentFailsWhenDatasourceEnvMissing(t *testing.T) {
 	repoRoot := t.TempDir()
 	if err := os.WriteFile(filepath.Join(repoRoot, ".env.local"), []byte(strings.Join([]string{

@@ -9,8 +9,8 @@ import (
 
 /**
  * ConfigFromEnvironment returns startup config from environment variables and
- * repo-root `.env` files, while requiring explicit env for network-boundary
- * settings such as PORT.
+ * the canonical repo-root `.env.local` file, while requiring explicit env for
+ * network-boundary settings such as PORT.
  */
 func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	cfg := DefaultConfig()
@@ -77,15 +77,15 @@ func applyRequiredPortOverride(target *string, value string) error {
 
 /**
  * repositoryEnvironmentGetter resolves startup config from the process
- * environment first, then falls back to repo-root `.env` files for
- * source-based local development.
+ * environment first, then falls back to the canonical repo-root `.env.local`
+ * file for source-based local development.
  */
 func repositoryEnvironmentGetter(getEnv func(string) string) (func(string) string, error) {
 	if hasExplicitStartupEnvironment(getEnv) {
 		return getEnv, nil
 	}
 
-	fileValues, err := loadRepositoryEnvFiles()
+	fileValues, err := loadRepositoryEnvFile()
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +110,11 @@ func hasExplicitStartupEnvironment(getEnv func(string) string) bool {
 }
 
 /**
- * loadRepositoryEnvFiles loads `.env` followed by `.env.local` from the current
- * working directory so root-run local development can share one env surface
- * while still requiring the canonical repo-root `.env.local`.
+ * loadRepositoryEnvFile loads the canonical repo-root `.env.local` from the
+ * current working directory for root-run local development.
  */
-func loadRepositoryEnvFiles() (map[string]string, error) {
+func loadRepositoryEnvFile() (map[string]string, error) {
 	values := map[string]string{}
-	if err := mergeEnvFile(values, ".env", false); err != nil {
-		return nil, err
-	}
 	if err := mergeEnvFile(values, ".env.local", true); err != nil {
 		return nil, err
 	}

@@ -14,7 +14,6 @@ func mustStartupConfigFromRepositoryEnv(t *testing.T) Config {
 
 	values := map[string]string{}
 	root := repositoryRootForTests(t)
-	mergeTestEnvFile(t, values, filepath.Join(root, ".env"), false)
 	mergeTestEnvFile(t, values, filepath.Join(root, ".env.local"), true)
 
 	cfg, err := ConfigFromEnvironment(func(key string) string {

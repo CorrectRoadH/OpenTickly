@@ -1,18 +1,53 @@
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite-plus";
-import { loadEnv } from "vite";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const localEnvPath = path.join(workspaceRoot, ".env.local");
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, workspaceRoot, "");
-  const webProxyTarget = env.OPENTOGGL_WEB_PROXY_TARGET ?? "http://127.0.0.1:8080";
+function readLocalEnvironment() {
+  const values: Record<string, string> = {};
+  if (!fs.existsSync(localEnvPath)) {
+    return values;
+  }
+
+  const contents = fs.readFileSync(localEnvPath, "utf8");
+  for (const rawLine of contents.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+
+    const normalizedLine = line.startsWith("export ") ? line.slice(7) : line;
+    const separatorIndex = normalizedLine.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = normalizedLine.slice(0, separatorIndex).trim();
+    const value = normalizedLine
+      .slice(separatorIndex + 1)
+      .trim()
+      .replace(/^(["'])(.*)\1$/, "$2");
+    if (key) {
+      values[key] = value;
+    }
+  }
+
+  return values;
+}
+
+export default defineConfig(() => {
+  const localEnv = readLocalEnvironment();
+  const webProxyTarget =
+    process.env.OPENTOGGL_WEB_PROXY_TARGET ??
+    localEnv.OPENTOGGL_WEB_PROXY_TARGET ??
+    "http://127.0.0.1:8080";
 
   return {
-    envDir: workspaceRoot,
     plugins: [react(), tailwindcss()],
     build: {
       rollupOptions: {

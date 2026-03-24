@@ -15,8 +15,8 @@ Local development must run source processes directly from the repository root.
 - Run the website real-runtime Playwright suite from the repository root with `vp run test:e2e:website:real-runtime`.
 - When you only need one website E2E file, keep the same root entrypoint and pass the file through: `vp run test:e2e:website -- e2e/<file>.spec.ts`.
 - Local development environment variables must live at the repository root, not under `apps/website`, `apps/backend`, or ad hoc shell wrappers.
-- Documented local development env variables belong in root-level env files such as `.env.example` and `.env.local`.
-- Root `.env.local` is required for source-based local development. `.env.local.example` is only a template and is not itself a runnable local-development env file.
+- Documented local development env variables belong in the root-level `.env.example` template and the root-level `.env.local` runtime file.
+- Root `.env.local` is required for source-based local development. `.env.example` is the only committed template and is not itself a runnable local-development env file.
 - The backend local-development path must require explicit datasource configuration from env. If the datasource env is missing, backend startup must fail immediately.
 - The default local backend runtime must connect to real dependencies started outside the app process. It must not silently fall back to in-memory stores, placeholder runtime state, or fabricated dependency defaults.
 - PostgreSQL schema management must use `pgschema` as the single canonical path. Do not introduce a second long-lived migration/schema toolchain or runtime auto-migrate path.

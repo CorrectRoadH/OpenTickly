@@ -43,7 +43,7 @@
 > - 占位页、placeholder runtime、手写 transport 壳层与 Figma 对齐缺口的清理，属于 Wave 2 前高优先级阻塞项，不得作为“实现中自然会顺手解决”的次要事项下放。
 > - 新发现的 duplicate path / duplicate naming / duplicate implementation / internal compat alias 问题视为插队级结构治理项；发现后立即提到当前执行队首，在收口前暂停继续扩张相关功能面。
 > - `air` 只能证明后端开发运行时可热重载启动，不等于“后端已可工作”；数据库迁移、初始化、真实 readiness、依赖连通性与最小 smoke verification 未固定前，一律视为 Wave 2 前阻塞项。
-> - 根目录 `.env.local` 是源码本地开发必需前置条件；`.env.local.example` 仅是模板。缺少 `.env.local`、缺少 datasource env、或默认启动继续落到内存/placeholder runtime，都视为结构未收口。
+> - 根目录 `.env.local` 是源码本地开发必需前置条件；`.env.example` 仅是模板。缺少 `.env.local`、缺少 datasource env、或默认启动继续落到内存/placeholder runtime，都视为结构未收口。
 
 - [ ] 插队 P0：One-Way 结构治理与规范入口收口
   - 状态回退说明（2026-03-21，改回人：Codex）
@@ -198,7 +198,7 @@
   - [x] 在进入 Wave 2 前完成后端启动命令收口：`air`。Refs: `AGENTS.md`、`docs/core/codebase-structure.md`、`docs/core/backend-architecture.md`
   - [ ] 在进入 Wave 2 前固定“后端可工作”的最低标准：`air`、数据库迁移、默认配置注入、首次管理员初始化、真实依赖 readiness、最小 smoke test 必须形成一条可重复执行的链路；单独的热重载启动或静态 `200 OK` 不得再视为完成。Refs: `docs/core/architecture-overview.md`、`docs/core/backend-architecture.md`、`docs/core/testing-strategy.md`、`docs/self-hosting/docker-compose.md`、`docs/product/instance-admin.md`
     - 当前缺口（2026-03-21）：
-      - 仓库虽然已有 `.env.local.example`，但“根 `.env.local` 是必需前置条件、缺少 datasource env 必须启动失败”的规则尚未在代码与验证链中正式落地
+      - 仓库虽然已有 `.env.example` 模板，但“根 `.env.local` 是必需前置条件、缺少 datasource env 必须启动失败”的规则尚未在代码与验证链中正式落地
       - `apps/backend/internal/bootstrap/app.go` 仍通过 `newWave1WebHandlers()` 把 fake runtime 当作默认可用后端装配的一部分，尚未形成“真实依赖 + 正式迁移/初始化”的可重复工作链
       - `apps/backend/internal/bootstrap/config_env.go` 目前只负责 env 读取与默认配置回填，未覆盖数据库迁移、首次管理员初始化或默认实例配置注入
       - `apps/backend/internal/bootstrap/config_env_test.go` 与 `apps/backend/internal/bootstrap/bootstrap_test.go` 当前仍保留一批低信号 config/bootstrap 单元测试，验证重点偏向 env 映射与字段透传，而不是直接证明真实启动链

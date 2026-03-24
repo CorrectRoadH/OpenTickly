@@ -78,8 +78,8 @@ docker compose up -d --build opentoggl
 - 后端本地开发统一通过根级 `.air.toml` 进行热重载；`air` 只用于本地源码开发，CI、生产构建与 self-hosted 发布路径不依赖 `air`。
 - `docker compose` 属于 self-hosted 交付、部署演练和发布态 smoke 验证路径，不是默认本地开发路径。
 - 本地开发所需环境变量统一放在仓库根目录，避免按应用分散配置。
-- 本地开发 env 文件约定也统一收口在仓库根目录，例如 `.env.example`、`.env.local`。
-- `.env.local` 是源码本地开发的必需输入；`.env.local.example` 仅用于拷贝生成本机配置。
+- 本地开发 env 约定统一收口在仓库根目录：`.env.example` 是模板，`.env.local` 是本机运行文件。
+- `.env.local` 是源码本地开发的必需输入；`.env.example` 仅用于拷贝生成本机配置。
 - 后端源码开发使用标准启动 env：`PORT`、`DATABASE_URL`、`REDIS_URL`；这些连接/监听边界不再使用项目私有别名。
 - 后端本地启动不得依赖内置 datasource fallback。若关键 env 缺失，进程必须直接失败，而不是退回内存实现或伪默认配置。
 - 本地开发的 Go 后端默认应连接真实 PostgreSQL 与 Redis；“能启动一个假后端/占位路径”不构成后端可工作。
