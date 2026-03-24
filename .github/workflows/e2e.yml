@@ -36,6 +36,9 @@ jobs:
       - name: Build frontend
         run: pnpm --filter @opentoggl/website run build
 
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
       - name: Start backend
         env:
           OPENTOGGL_SERVICE_NAME: opentoggl-api
@@ -65,8 +68,7 @@ jobs:
         env:
           OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
         run: |
-          cd apps/website
-          pnpm exec vite --port 5173 &
+          vp run website#dev -- --port 5173 &
           sleep 5
 
       - name: Run E2E tests
