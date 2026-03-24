@@ -20,16 +20,20 @@ export async function registerE2eUser(
   await page.getByLabel("Email").fill(options.email);
   await page.getByLabel("Password").fill(options.password);
 
+  const responsePromise = page.waitForResponse(r => r.url().includes("/web/v1/auth/register"), { timeout: 30000 }).catch(() => null);
   await page.getByRole("button", { name: "Register" }).click();
 
   try {
     await page.waitForURL(/\/timer(?:\?.*)?$/, { timeout: 30000 });
-  } catch (e) {
+  } catch {
     const currentUrl = page.url();
+    const response = await responsePromise;
+    const responseStatus = response ? response.status() : "no response";
+    const responseBody = response ? await response.text().catch(() => "could not read") : "no response";
     const errorText = await page.locator("[role='alert']").textContent().catch(() => "none");
-    const bodyText = await page.locator("body").textContent().catch(() => "none");
-    console.error(`[registerE2eUser] URL did not change to /timer. Current URL: ${currentUrl}, Error: ${errorText}, Body preview: ${bodyText?.slice(0, 200)}`);
-    throw e;
+    const bodyHTML = await page.locator("body").innerHTML().catch(() => "none");
+    console.error(`[registerE2eUser] URL did not change to /timer. Current URL: ${currentUrl}, Response status: ${responseStatus}, Response body: ${responseBody?.slice(0, 300)}, Error: ${errorText}, BodyHTML: ${bodyHTML?.slice(0, 300)}`);
+    throw new Error(`Registration failed: URL=${currentUrl}, Response=${responseStatus}`);
   }
   const session = await readSessionBootstrap(page);
   const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
