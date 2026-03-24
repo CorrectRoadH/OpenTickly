@@ -6,7 +6,7 @@ commands:
   backend_bootstrap_test: go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4
   pgschema_plan: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema plan --file apps/backend/internal/platform/schema/schema.sql
   pgschema_apply: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
-  cleanup_test_schemas: PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d opentoggl -c "DROP SCHEMA IF EXISTS opentoggl_test_* CASCADE;"
+  cleanup_test_schemas: PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d opentoggl -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN SELECT schema_name FROM information_schema.schemata WHERE schema_name ~ '^opentoggl_test_[0-9]+\$' LOOP EXECUTE 'DROP SCHEMA ' || quote_ident(r.schema_name) || ' CASCADE'; END LOOP; END \$\$;"
 
 services:
   postgres:
