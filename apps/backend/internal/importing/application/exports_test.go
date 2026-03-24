@@ -34,7 +34,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 
 	// Generate unique email and workspace ID to avoid collisions when tests run in parallel
 	uniqueEmail := fmt.Sprintf("export-user-%d@example.com", time.Now().UnixNano())
-	workspaceID := time.Now().UnixNano() % 100000 // Use a large unique workspace ID
+	workspaceID := time.Now().UnixNano() // Full nanosecond precision for unique workspace ID
 	auth, err := identityService.Register(ctx, identityapplication.RegisterInput{
 		Email:    uniqueEmail,
 		FullName: "Test Person",
