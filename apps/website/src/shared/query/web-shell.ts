@@ -666,6 +666,53 @@ export function useStartTimeEntryMutation(workspaceId: number) {
   });
 }
 
+export function useCreateTimeEntryMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: {
+      billable?: boolean;
+      description?: string;
+      duration: number;
+      projectId?: number | null;
+      start: string;
+      stop: string;
+      tagIds?: number[];
+      taskId?: number | null;
+    }) =>
+      unwrapWebApiResult(
+        postWorkspaceTimeEntries({
+          body: {
+            billable: request.billable,
+            created_with: "opentoggl-web",
+            description: request.description,
+            duration: request.duration,
+            project_id: request.projectId ?? undefined,
+            start: toTrackUtcString(request.start),
+            stop: toTrackUtcString(request.stop),
+            tag_ids: request.tagIds,
+            task_id: request.taskId ?? undefined,
+            workspace_id: workspaceId,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+          query: {
+            meta: true,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
+  });
+}
+
 export function useStopTimeEntryMutation() {
   const queryClient = useQueryClient();
 

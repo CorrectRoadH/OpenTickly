@@ -57,6 +57,7 @@ type TimeEntryEditorDialogProps = {
   onClose: () => void;
   onCreateProject: (name: string) => Promise<void> | void;
   onCreateTag: (name: string) => Promise<void> | void;
+  onDuplicate?: () => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
   onDescriptionChange: (value: string) => void;
   onPrimaryAction?: () => void;
@@ -90,6 +91,7 @@ export function TimeEntryEditorDialog({
   onClose,
   onCreateProject,
   onCreateTag,
+  onDuplicate,
   onDelete,
   onDescriptionChange,
   onPrimaryAction,
@@ -230,18 +232,7 @@ export function TimeEntryEditorDialog({
     onStopTimeChange(nextDate);
   }
 
-  async function handleCopy() {
-    const summary = buildCopySummary({
-      description,
-      projectName: selectedProject?.name ?? entry.project_name,
-      start,
-      stop,
-      tagNames: selectedTags.map((tag) => tag.name),
-      timezone,
-    });
-
-    await globalThis.navigator?.clipboard?.writeText(summary);
-  }
+  const canDuplicate = stop != null && onDuplicate != null;
 
   return (
     <div
@@ -267,16 +258,18 @@ export function TimeEntryEditorDialog({
             >
               <TrackingIcon className="size-4" name={primaryActionIcon} />
             </button>
-            <button
-              aria-label="Copy entry"
-              className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6 disabled:cursor-not-allowed disabled:opacity-60"
-              onClick={() => {
-                void handleCopy();
-              }}
-              type="button"
-            >
-              <TrackingIcon className="size-4" name="copy" />
-            </button>
+            {canDuplicate ? (
+              <button
+                aria-label="Duplicate entry"
+                className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+                onClick={() => {
+                  void onDuplicate?.();
+                }}
+                type="button"
+              >
+                <TrackingIcon className="size-4" name="copy" />
+              </button>
+            ) : null}
             <button
               aria-label="Entry actions"
               className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
@@ -1155,30 +1148,4 @@ function colorToChipBackground(color: string): string {
   const blue = Number.parseInt(full.slice(4, 6), 16);
 
   return `rgba(${red}, ${green}, ${blue}, 0.24)`;
-}
-
-function buildCopySummary({
-  description,
-  projectName,
-  start,
-  stop,
-  tagNames,
-  timezone,
-}: {
-  description: string;
-  projectName?: string;
-  start: Date;
-  stop: Date | null;
-  tagNames: string[];
-  timezone: string;
-}): string {
-  return [
-    description.trim() || "(no description)",
-    projectName ? `Project: ${projectName}` : null,
-    tagNames.length > 0 ? `Tags: ${tagNames.join(", ")}` : null,
-    `Start: ${formatClockTime(start, timezone)}`,
-    stop ? `Stop: ${formatClockTime(stop, timezone)}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
 }

@@ -23,18 +23,24 @@ describe("TimeEntryEditorDialog", () => {
     expect(within(tagButton).getByText("4 象限 +1")).toBeTruthy();
   });
 
-  it("copies the current entry summary", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
+  it("shows the duplicate action for stopped entries", async () => {
+    render(<DialogHarness onDuplicate={() => {}} selectedProjectId={44} selectedTagIds={[7]} />);
 
-    Object.assign(navigator, {
-      clipboard: {
-        writeText,
-      },
-    });
+    expect(screen.getByRole("button", { name: "Duplicate entry" })).toBeTruthy();
+  });
 
-    render(<DialogHarness selectedProjectId={44} selectedTagIds={[7]} />);
+  it("hides the duplicate action for running entries", async () => {
+    render(
+      <DialogHarness
+        entryOverrides={{
+          duration: -1,
+          stop: undefined,
+        }}
+        onDuplicate={() => {}}
+      />,
+    );
 
-    expect(writeText).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Duplicate entry" })).toBeNull();
   });
 
   it("opens a calendar date picker from the calendar icon and preserves the time when changing the start date", () => {
@@ -69,16 +75,20 @@ describe("TimeEntryEditorDialog", () => {
 });
 
 function DialogHarness({
+  entryOverrides,
+  onDuplicate,
   onStartTimeChange = () => {},
   selectedProjectId = null,
   selectedTagIds = [],
 }: {
+  entryOverrides?: Partial<GithubComTogglTogglApiInternalModelsTimeEntry>;
+  onDuplicate?: () => void;
   onStartTimeChange?: (time: Date) => void;
   selectedProjectId?: number | null;
   selectedTagIds?: number[];
 }) {
   const [entry, setEntry] =
-    useState<GithubComTogglTogglApiInternalModelsTimeEntry>(createTimeEntryFixture());
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry>(createTimeEntryFixture(entryOverrides));
   const [projectId, setProjectId] = useState<number | null>(selectedProjectId);
   const [tagIds, setTagIds] = useState<number[]>(selectedTagIds);
 
@@ -95,6 +105,7 @@ function DialogHarness({
       onClose={() => {}}
       onCreateProject={() => {}}
       onCreateTag={() => {}}
+      onDuplicate={onDuplicate}
       onDescriptionChange={() => {}}
       onPrimaryAction={() => {}}
       onProjectSelect={setProjectId}

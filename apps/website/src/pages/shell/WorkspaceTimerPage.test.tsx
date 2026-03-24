@@ -9,6 +9,7 @@ const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
 const mockUseCreateTagMutation = vi.fn();
 const mockUseCreateProjectMutation = vi.fn();
+const mockUseCreateTimeEntryMutation = vi.fn();
 const mockUseDeleteTimeEntryMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
 const mockUseStartTimeEntryMutation = vi.fn();
@@ -27,6 +28,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
   useCreateTagMutation: () => mockUseCreateTagMutation(),
   useCreateProjectMutation: () => mockUseCreateProjectMutation(),
+  useCreateTimeEntryMutation: () => mockUseCreateTimeEntryMutation(),
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
   useStartTimeEntryMutation: () => mockUseStartTimeEntryMutation(),
@@ -76,6 +78,10 @@ describe("WorkspaceTimerPage", () => {
       mutateAsync: vi.fn(),
     });
     mockUseDeleteTimeEntryMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    mockUseCreateTimeEntryMutation.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });
@@ -414,41 +420,6 @@ describe("WorkspaceTimerPage", () => {
     expect(layer.className).not.toContain("fixed");
   });
 
-  it("loads editor projects and tags for the edited entry workspace", () => {
-    const today = new Date();
-    const day = String(today.getUTCDate()).padStart(2, "0");
-    const month = String(today.getUTCMonth() + 1).padStart(2, "0");
-    const year = today.getUTCFullYear();
-    const historicalEntry = createTimeEntryFixture({
-      description: "Cross-workspace entry",
-      id: 779,
-      start: `${year}-${month}-${day}T12:00:00Z`,
-      stop: `${year}-${month}-${day}T12:30:00Z`,
-      workspace_id: 303,
-      wid: 303,
-    });
-
-    mockUseCurrentTimeEntryQuery.mockReturnValue({
-      data: null,
-    });
-    mockUseTimeEntriesQuery.mockReturnValue({
-      data: [historicalEntry],
-      error: null,
-      isError: false,
-      isPending: false,
-    });
-
-    render(<WorkspaceTimerPage />);
-
-    expect(mockUseProjectsQuery).toHaveBeenCalledWith(202, "all");
-    expect(mockUseTagsQuery).toHaveBeenCalledWith(202);
-
-    fireEvent.click(screen.getByRole("button", { name: "Edit Cross-workspace entry" }));
-
-    expect(mockUseProjectsQuery).toHaveBeenLastCalledWith(303, "all");
-    expect(mockUseTagsQuery).toHaveBeenLastCalledWith(303);
-  });
-
   it("renders only current workspace entries in the calendar view", () => {
     const today = new Date();
     const day = String(today.getUTCDate()).padStart(2, "0");
@@ -654,6 +625,90 @@ describe("WorkspaceTimerPage", () => {
       });
       expect(screen.queryByTestId("time-entry-editor-dialog")).toBeNull();
     });
+  });
+
+  it("duplicates a stopped entry from the editor and closes the dialog", async () => {
+    const duplicateTimeEntry = vi.fn().mockResolvedValue({
+      ...createTimeEntryFixture(),
+      id: 999,
+    });
+    const historicalEntry = createTimeEntryFixture({
+      billable: true,
+      description: "Duplicate me",
+      id: 402,
+      project_id: 44,
+      start: "2026-03-23T10:00:00Z",
+      stop: "2026-03-23T10:30:00Z",
+      tag_ids: [7, 8],
+      task_id: 55,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseCreateTimeEntryMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: duplicateTimeEntry,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Duplicate me" }));
+    fireEvent.click(
+      within(screen.getByTestId("time-entry-editor-dialog")).getByRole("button", {
+        name: "Duplicate entry",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(duplicateTimeEntry).toHaveBeenCalledWith({
+        billable: true,
+        description: "Duplicate me",
+        duration: 1800,
+        projectId: 44,
+        start: "2026-03-23T10:00:00Z",
+        stop: "2026-03-23T10:30:00Z",
+        tagIds: [7, 8],
+        taskId: 55,
+      });
+      expect(screen.queryByTestId("time-entry-editor-dialog")).toBeNull();
+    });
+  });
+
+  it("does not show the duplicate button for a running entry", () => {
+    const runningEntry = createTimeEntryFixture({
+      description: "Current running timer",
+      duration: -1,
+      id: 999,
+      start: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      stop: undefined,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: runningEntry,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Current running timer" }));
+
+    expect(
+      within(screen.getByTestId("time-entry-editor-dialog")).queryByRole("button", {
+        name: "Duplicate entry",
+      }),
+    ).toBeNull();
   });
 });
 

@@ -39,6 +39,7 @@ import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useCurrentTimeEntryQuery,
   useCreateProjectMutation,
+  useCreateTimeEntryMutation,
   useDeleteTimeEntryMutation,
   useProjectsQuery,
   useStartTimeEntryMutation,
@@ -83,6 +84,7 @@ export function WorkspaceTimerPage(): ReactElement {
   })();
   const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
   const createProjectMutation = useCreateProjectMutation(selectedEntryWorkspaceId);
+  const createTimeEntryMutation = useCreateTimeEntryMutation(selectedEntryWorkspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
   const tagsQuery = useTagsQuery(selectedEntryWorkspaceId);
@@ -381,6 +383,40 @@ export function WorkspaceTimerPage(): ReactElement {
     }
   }
 
+  async function handleSelectedEntryDuplicate() {
+    if (!selectedEntry?.id) {
+      return;
+    }
+
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+
+    if (isRunningTimeEntry(selectedEntry) || !selectedEntry.start || !selectedEntry.stop) {
+      setSelectedEntryError("Only stopped time entries can be duplicated.");
+      return;
+    }
+
+    try {
+      await createTimeEntryMutation.mutateAsync({
+        billable: selectedEntry.billable,
+        description: selectedDescription.trim(),
+        duration: resolveEntryDurationSeconds(selectedEntry),
+        projectId: selectedProjectId,
+        start: selectedEntry.start,
+        stop: selectedEntry.stop,
+        tagIds: selectedTagIds,
+        taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
+      });
+      setSelectedEntryError(null);
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }
+
   async function handleSelectedEntryProjectCreate(name: string) {
     try {
       const project = await createProjectMutation.mutateAsync({ name });
@@ -633,6 +669,9 @@ export function WorkspaceTimerPage(): ReactElement {
             onClose={closeSelectedEntryEditor}
             onCreateProject={handleSelectedEntryProjectCreate}
             onCreateTag={handleSelectedEntryTagCreate}
+            onDuplicate={() => {
+              void handleSelectedEntryDuplicate();
+            }}
             onDelete={() => {
               void handleSelectedEntryDelete();
             }}
