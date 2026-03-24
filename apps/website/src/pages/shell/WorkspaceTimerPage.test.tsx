@@ -15,6 +15,7 @@ const mockUseStartTimeEntryMutation = vi.fn();
 const mockUseStopTimeEntryMutation = vi.fn();
 const mockUseTimeEntriesQuery = vi.fn();
 const mockUseTagsQuery = vi.fn();
+const mockUseUpdateWebSessionMutation = vi.fn();
 const mockUseUpdateTimeEntryMutation = vi.fn();
 
 vi.mock("../../shared/session/session-context.tsx", () => ({
@@ -32,6 +33,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useStopTimeEntryMutation: () => mockUseStopTimeEntryMutation(),
   useTimeEntriesQuery: () => mockUseTimeEntriesQuery(),
   useTagsQuery: () => mockUseTagsQuery(),
+  useUpdateWebSessionMutation: () => mockUseUpdateWebSessionMutation(),
   useUpdateTimeEntryMutation: () => mockUseUpdateTimeEntryMutation(),
 }));
 
@@ -95,6 +97,10 @@ describe("WorkspaceTimerPage", () => {
     });
     mockUseUpdateTimeEntryMutation.mockReturnValue({
       error: null,
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    mockUseUpdateWebSessionMutation.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });
@@ -373,6 +379,73 @@ describe("WorkspaceTimerPage", () => {
     expect(page.firstElementChild?.tagName).toBe("HEADER");
     expect(scrollArea.parentElement).toBe(page);
     expect(scrollArea.contains(weekRangeButton)).toBe(false);
+  });
+
+  it("renders the entry editor inside the timer scroll area so it scrolls with calendar content", () => {
+    const today = new Date();
+    const day = String(today.getUTCDate()).padStart(2, "0");
+    const month = String(today.getUTCMonth() + 1).padStart(2, "0");
+    const year = today.getUTCFullYear();
+    const historicalEntry = createTimeEntryFixture({
+      description: "Scroll with calendar",
+      id: 777,
+      start: `${year}-${month}-${day}T12:00:00Z`,
+      stop: `${year}-${month}-${day}T12:30:00Z`,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    const scrollArea = screen.getByTestId("tracking-timer-scroll-area");
+    fireEvent.click(screen.getByRole("button", { name: "Edit Scroll with calendar" }));
+
+    const layer = screen.getByTestId("time-entry-editor-layer");
+    expect(scrollArea.contains(layer)).toBe(true);
+    expect(layer.className).toContain("absolute");
+    expect(layer.className).not.toContain("fixed");
+  });
+
+  it("keeps the edited start time visible in the editor before save", () => {
+    const today = new Date();
+    const day = String(today.getUTCDate()).padStart(2, "0");
+    const month = String(today.getUTCMonth() + 1).padStart(2, "0");
+    const year = today.getUTCFullYear();
+    const historicalEntry = createTimeEntryFixture({
+      description: "Edit time before save",
+      id: 778,
+      start: `${year}-${month}-${day}T10:00:00Z`,
+      stop: `${year}-${month}-${day}T10:30:00Z`,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Edit time before save" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit start time" }));
+    const timeInput = screen.getByLabelText("Edit time");
+    fireEvent.change(timeInput, { target: { value: "15:28" } });
+    fireEvent.blur(timeInput);
+
+    expect(screen.getByRole("button", { name: "Edit start time" }).textContent).toContain("15:28");
   });
 
   it("closes the editor after saving a calendar entry", async () => {

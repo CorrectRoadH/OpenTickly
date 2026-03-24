@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   LoginRequestDto,
   RegisterRequestDto,
+  UpdateWebSessionRequestDto,
   UpdateWorkspaceSettingsRequestDto,
   WorkspaceMemberInvitationRequestDto,
   WebWorkspaceSettingsDto,
@@ -61,6 +62,7 @@ import {
   removeWorkspaceMember,
   restoreWorkspaceMember,
   updateWorkspacePermissions,
+  updateWebSession,
   updateWorkspaceSettings,
 } from "../api/web/index.ts";
 
@@ -106,6 +108,19 @@ export type ProfilePreferencesDto = ModelsAllPreferences & {
 
 export type ProjectListStatusFilter = "active" | "all" | "archived";
 
+function toTrackUtcString(value?: string): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toISOString().replace(".000Z", "Z");
+}
+
 export function useSessionBootstrapQuery() {
   return useQuery({
     queryFn: () => unwrapWebApiResult(getWebSession()),
@@ -146,6 +161,18 @@ export function useLogoutMutation() {
     onSuccess: async () => {
       await queryClient.cancelQueries();
       queryClient.clear();
+    },
+  });
+}
+
+export function useUpdateWebSessionMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: UpdateWebSessionRequestDto) =>
+      unwrapWebApiResult(updateWebSession({ body: request })),
+    onSuccess: (data) => {
+      queryClient.setQueryData(sessionQueryKey, data);
     },
   });
 }
@@ -555,8 +582,8 @@ export function useStartTimeEntryMutation(workspaceId: number) {
             created_with: "opentoggl-web",
             description: request.description,
             duration: -1,
-            project_id: request.projectId === null ? 0 : request.projectId,
-            start: request.start,
+            project_id: request.projectId ?? undefined,
+            start: toTrackUtcString(request.start),
             tag_ids: request.tagIds,
             workspace_id: workspaceId,
           },
@@ -628,9 +655,9 @@ export function useUpdateTimeEntryMutation() {
           body: {
             billable: request.billable,
             description: request.description,
-            project_id: request.projectId === null ? 0 : request.projectId,
-            start: request.start,
-            stop: request.stop,
+            project_id: request.projectId ?? undefined,
+            start: toTrackUtcString(request.start),
+            stop: toTrackUtcString(request.stop),
             tag_ids: request.tagIds,
             task_id: request.taskId ?? undefined,
           },

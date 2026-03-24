@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -17,6 +18,8 @@ import { buildMonthWeeks, isSameDay } from "./week-range.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 
 export type TimeEntryEditorAnchor = {
+  containerHeight?: number;
+  containerWidth?: number;
   height: number;
   left: number;
   top: number;
@@ -109,14 +112,17 @@ export function TimeEntryEditorDialog({
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [picker, setPicker] = useState<"project" | "tag" | null>(null);
   const [timePicker, setTimePicker] = useState<"start" | "stop" | null>(null);
+  const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
   const [projectComposerOpen, setProjectComposerOpen] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
   const [tagComposerOpen, setTagComposerOpen] = useState(false);
   const [tagDraftName, setTagDraftName] = useState("");
   const [search, setSearch] = useState("");
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
-  const start = new Date(entry.start ?? entry.at ?? Date.now());
-  const stop = entry.stop ? new Date(entry.stop) : null;
+  const startIso = entry.start ?? entry.at ?? new Date().toISOString();
+  const stopIso = entry.stop ?? null;
+  const start = new Date(startIso);
+  const stop = stopIso ? new Date(stopIso) : null;
   const duration = formatClockDuration(resolveEntryDurationSeconds(entry));
   const position = useMemo(() => resolveEditorPosition(anchor, picker), [anchor, picker]);
   const currentWorkspaceName =
@@ -194,9 +200,35 @@ export function TimeEntryEditorDialog({
 
     if (picker !== null) {
       setTimePicker(null);
+      setTimeEditor(null);
       setActionsMenuOpen(false);
     }
   }, [picker]);
+
+  useEffect(() => {
+    if (timeEditor != null) {
+      setTimePicker(null);
+    }
+  }, [timeEditor]);
+
+  function applyEditedTime(target: "start" | "stop", value: string) {
+    const baseDate = target === "start" ? start : stop;
+    if (!baseDate) {
+      return;
+    }
+
+    const nextDate = applyTimeInputValue(baseDate, value, timezone);
+    if (!nextDate) {
+      return;
+    }
+
+    if (target === "start") {
+      onStartTimeChange(nextDate);
+      return;
+    }
+
+    onStopTimeChange(nextDate);
+  }
 
   async function handleCopy() {
     const summary = buildCopySummary({
@@ -212,9 +244,12 @@ export function TimeEntryEditorDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-40 pointer-events-none" data-testid="time-entry-editor-layer">
+    <div
+      className="pointer-events-none absolute inset-0 z-40"
+      data-testid="time-entry-editor-layer"
+    >
       <div
-        className="pointer-events-auto absolute min-w-[356px] rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] min-w-[356px] overflow-y-auto rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
         data-testid="time-entry-editor-dialog"
         role="dialog"
         aria-modal="false"
@@ -538,16 +573,46 @@ export function TimeEntryEditorDialog({
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-2.5">
                 <TimeDisplay
+                  dateAriaLabel="Edit start date"
+                  editing={timeEditor === "start"}
+                  onDateClick={() => {
+                    setTimeEditor(null);
+                    setTimePicker("start");
+                  }}
+                  onEditEnd={() => {
+                    setTimeEditor(null);
+                  }}
+                  onEditStart={() => {
+                    setTimePicker(null);
+                    setTimeEditor("start");
+                  }}
+                  onTimeCommit={(value) => applyEditedTime("start", value)}
                   time={start}
+                  timeAriaLabel="Edit start time"
+                  timeValue={toTimeInputValue(start, timezone)}
                   timezone={timezone}
-                  onClick={() => setTimePicker("start")}
                 />
                 <span className="shrink-0 text-[22px] font-light text-[#a9a9ae]">→</span>
                 {stop ? (
                   <TimeDisplay
+                    dateAriaLabel="Edit stop date"
+                    editing={timeEditor === "stop"}
+                    onDateClick={() => {
+                      setTimeEditor(null);
+                      setTimePicker("stop");
+                    }}
+                    onEditEnd={() => {
+                      setTimeEditor(null);
+                    }}
+                    onEditStart={() => {
+                      setTimePicker(null);
+                      setTimeEditor("stop");
+                    }}
+                    onTimeCommit={(value) => applyEditedTime("stop", value)}
                     time={stop}
+                    timeAriaLabel="Edit stop time"
+                    timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
                     timezone={timezone}
-                    onClick={() => setTimePicker("stop")}
                   />
                 ) : (
                   <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#b7b7bc]">
@@ -687,23 +752,90 @@ function SearchField({
 }
 
 function TimeDisplay({
-  onClick,
+  dateAriaLabel,
+  editing,
+  onDateClick,
+  onEditEnd,
+  onEditStart,
+  onTimeCommit,
   time,
+  timeAriaLabel,
+  timeValue,
   timezone,
 }: {
-  onClick: () => void;
+  dateAriaLabel: string;
+  editing: boolean;
+  onDateClick: () => void;
+  onEditEnd: () => void;
+  onEditStart: () => void;
+  onTimeCommit: (value: string) => void;
   time: Date;
+  timeAriaLabel: string;
+  timeValue: string;
   timezone: string;
 }): ReactElement {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [draft, setDraft] = useState(timeValue);
+
+  useEffect(() => {
+    if (editing) {
+      setDraft(timeValue);
+    }
+  }, [editing, timeValue]);
+
   return (
-    <button
-      className="flex min-w-[110px] items-center justify-between gap-2 rounded-[10px] border border-[#606066] px-4 py-2.5 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90]"
-      onClick={onClick}
-      type="button"
-    >
-      <span>{formatClockTime(time, timezone)}</span>
-      <TrackingIcon className="size-4 text-[#b9b9be]" name="calendar" />
-    </button>
+    <div className="flex items-center gap-1.5">
+      {editing ? (
+        <label className="block">
+          <span className="sr-only">Edit time</span>
+          <input
+            aria-label="Edit time"
+            autoFocus
+            className="h-[42px] min-w-[110px] rounded-[10px] border border-[#c78acd] bg-[#262628] px-4 text-[14px] font-semibold tabular-nums text-white outline-none"
+            value={draft}
+            inputMode="numeric"
+            onBlur={(event) => {
+              onTimeCommit(event.currentTarget.value);
+              onEditEnd();
+            }}
+            onChange={(event: ChangeEvent<HTMLInputElement>) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                onTimeCommit(inputRef.current?.value ?? draft);
+                onEditEnd();
+                return;
+              }
+
+              if (event.key === "Escape") {
+                setDraft(timeValue);
+                onEditEnd();
+              }
+            }}
+            placeholder="HH:MM"
+            ref={inputRef}
+            spellCheck={false}
+            type="text"
+          />
+        </label>
+      ) : (
+        <button
+          aria-label={timeAriaLabel}
+          className="flex min-w-[110px] items-center rounded-[10px] border border-[#606066] px-4 py-2.5 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90]"
+          onClick={onEditStart}
+          type="button"
+        >
+          <span>{formatClockTime(time, timezone)}</span>
+        </button>
+      )}
+      <button
+        aria-label={dateAriaLabel}
+        className="flex size-[42px] items-center justify-center rounded-[10px] border border-[#606066] text-white transition hover:border-[#8a8a90]"
+        onClick={onDateClick}
+        type="button"
+      >
+        <TrackingIcon className="size-4 text-[#b9b9be]" name="calendar" />
+      </button>
+    </div>
   );
 }
 
@@ -750,11 +882,14 @@ function DatePicker({
 
   return (
     <div
-      className="absolute left-0 top-[calc(100%+8px)] z-20 w-[620px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] px-10 pb-8 pt-10 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
+      aria-labelledby="date-picker-title"
+      aria-modal="false"
+      className="relative z-20 mt-4 w-[620px] max-w-full rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] px-10 pb-8 pt-10 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
       data-testid="date-picker"
+      role="dialog"
     >
       <div className="flex items-start justify-between gap-8">
-        <h3 className="text-[34px] font-semibold tracking-tight text-white">
+        <h3 className="text-[34px] font-semibold tracking-tight text-white" id="date-picker-title">
           {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
         </h3>
         <div className="flex items-center gap-5">
@@ -838,6 +973,139 @@ function DatePicker({
   );
 }
 
+function toTimeInputValue(date: Date, timezone: string): string {
+  const parts = getTimeZoneParts(date, timezone);
+  const hours = String(parts.hours).padStart(2, "0");
+  const minutes = String(parts.minutes).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
+function applyTimeInputValue(date: Date, value: string, timezone: string): Date | null {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    Number.isNaN(hours) ||
+    Number.isNaN(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+
+  const currentParts = getTimeZoneParts(date, timezone);
+  return buildDateInTimeZone(
+    {
+      day: currentParts.day,
+      hours,
+      minutes,
+      month: currentParts.month,
+      year: currentParts.year,
+    },
+    timezone,
+  );
+}
+
+function getTimeZoneParts(
+  date: Date,
+  timezone: string,
+): {
+  day: number;
+  hours: number;
+  minutes: number;
+  month: number;
+  year: number;
+} {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  });
+  const parts = formatter.formatToParts(date);
+
+  return {
+    day: Number(parts.find((part) => part.type === "day")?.value ?? "1"),
+    hours: Number(parts.find((part) => part.type === "hour")?.value ?? "0"),
+    minutes: Number(parts.find((part) => part.type === "minute")?.value ?? "0"),
+    month: Number(parts.find((part) => part.type === "month")?.value ?? "1"),
+    year: Number(parts.find((part) => part.type === "year")?.value ?? "1970"),
+  };
+}
+
+function buildDateInTimeZone(
+  parts: {
+    day: number;
+    hours: number;
+    minutes: number;
+    month: number;
+    year: number;
+  },
+  timezone: string,
+): Date {
+  let candidate = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hours, parts.minutes, 0, 0),
+  );
+
+  for (let iteration = 0; iteration < 3; iteration += 1) {
+    const resolved = getTimeZoneParts(candidate, timezone);
+    const diffMinutes = resolvePartsDifferenceInMinutes(parts, resolved);
+    if (diffMinutes === 0) {
+      break;
+    }
+    candidate = new Date(candidate.getTime() + diffMinutes * 60_000);
+  }
+
+  return candidate;
+}
+
+function resolvePartsDifferenceInMinutes(
+  target: {
+    day: number;
+    hours: number;
+    minutes: number;
+    month: number;
+    year: number;
+  },
+  actual: {
+    day: number;
+    hours: number;
+    minutes: number;
+    month: number;
+    year: number;
+  },
+): number {
+  const targetUtc = Date.UTC(
+    target.year,
+    target.month - 1,
+    target.day,
+    target.hours,
+    target.minutes,
+    0,
+    0,
+  );
+  const actualUtc = Date.UTC(
+    actual.year,
+    actual.month - 1,
+    actual.day,
+    actual.hours,
+    actual.minutes,
+    0,
+    0,
+  );
+
+  return Math.round((targetUtc - actualUtc) / 60_000);
+}
+
 function resolveEditorPosition(
   anchor: TimeEntryEditorAnchor,
   picker: "project" | "tag" | null,
@@ -845,26 +1113,18 @@ function resolveEditorPosition(
   left: number;
   top: number;
 } {
-  if (typeof window === "undefined") {
-    return {
-      left: anchor.left,
-      top: anchor.top,
-    };
-  }
-
   const cardWidth = picker ? 360 : 356;
   const cardHeight = picker ? 470 : 212;
   const padding = 16;
   const preferredLeft = anchor.left + anchor.width + 12;
   const fallbackLeft = anchor.left - cardWidth - 12;
+  const containerWidth = anchor.containerWidth ?? preferredLeft + cardWidth + padding;
+  const containerHeight = anchor.containerHeight ?? anchor.top + cardHeight + padding;
   const left =
-    preferredLeft + cardWidth <= window.innerWidth - padding
+    preferredLeft + cardWidth <= containerWidth - padding
       ? preferredLeft
-      : Math.max(padding, Math.min(window.innerWidth - cardWidth - padding, fallbackLeft));
-  const top = Math.max(
-    padding,
-    Math.min(window.innerHeight - cardHeight - padding, anchor.top - 6),
-  );
+      : Math.max(padding, Math.min(containerWidth - cardWidth - padding, fallbackLeft));
+  const top = Math.max(padding, Math.min(containerHeight - cardHeight - padding, anchor.top - 6));
 
   return { left, top };
 }

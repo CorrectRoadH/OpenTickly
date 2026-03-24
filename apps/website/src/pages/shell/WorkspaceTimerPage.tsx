@@ -46,6 +46,7 @@ import {
   useTagsQuery,
   useTimeEntriesQuery,
   useCreateTagMutation,
+  useUpdateWebSessionMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
@@ -55,6 +56,7 @@ import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 export function WorkspaceTimerPage(): ReactElement {
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
+  const updateWebSessionMutation = useUpdateWebSessionMutation();
   const workspaceId = session.currentWorkspace.id;
   const timezone = session.user.timezone || "UTC";
   const [view, setView] = useState<TimerViewMode>("calendar");
@@ -96,6 +98,7 @@ export function WorkspaceTimerPage(): ReactElement {
   const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
     useState<TimerComposerSuggestionsAnchor | null>(null);
   const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
   const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
   const runningEntry = currentTimeEntryQuery.data;
@@ -167,6 +170,14 @@ export function WorkspaceTimerPage(): ReactElement {
     setComposerSuggestionsAnchor(null);
   }
 
+  function switchWorkspace(nextWorkspaceId: number) {
+    const previousWorkspaceId = workspaceId;
+    setCurrentWorkspaceId(nextWorkspaceId);
+    void updateWebSessionMutation.mutateAsync({ workspace_id: nextWorkspaceId }).catch(() => {
+      setCurrentWorkspaceId(previousWorkspaceId);
+    });
+  }
+
   useEffect(() => {
     if (!runningEntry) {
       return;
@@ -189,23 +200,6 @@ export function WorkspaceTimerPage(): ReactElement {
     }
     document.title = `${formatClockDuration(runningDurationSeconds)} - ${runningEntry.description ?? ""}`;
   }, [runningEntry, runningDurationSeconds]);
-
-  useEffect(() => {
-    if (!selectedEntry?.id) {
-      return;
-    }
-
-    const refreshedEntry = entries.find((entry) => entry.id === selectedEntry.id);
-
-    if (refreshedEntry) {
-      setSelectedEntry(refreshedEntry);
-      return;
-    }
-
-    if (runningEntry?.id === selectedEntry.id) {
-      setSelectedEntry(runningEntry);
-    }
-  }, [entries, runningEntry, selectedEntry?.id]);
 
   useEffect(() => {
     setRunningDescription(runningEntry?.description ?? "");
@@ -340,7 +334,7 @@ export function WorkspaceTimerPage(): ReactElement {
       }
 
       if (selectedWorkspaceId !== workspaceId) {
-        setCurrentWorkspaceId(selectedWorkspaceId);
+        switchWorkspace(selectedWorkspaceId);
         closeSelectedEntryEditor();
         return;
       }
@@ -417,11 +411,16 @@ export function WorkspaceTimerPage(): ReactElement {
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
     anchorRect: DOMRect,
   ) {
+    const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
+    const scrollLeft = scrollAreaRef.current?.scrollLeft ?? 0;
+    const scrollTop = scrollAreaRef.current?.scrollTop ?? 0;
     setSelectedEntry(entry);
     setSelectedEntryAnchor({
+      containerHeight: scrollAreaRef.current?.scrollHeight,
+      containerWidth: scrollAreaRef.current?.clientWidth,
       height: anchorRect.height,
-      left: anchorRect.left,
-      top: anchorRect.top,
+      left: scrollAreaRect ? anchorRect.left - scrollAreaRect.left + scrollLeft : anchorRect.left,
+      top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top + scrollTop : anchorRect.top,
       width: anchorRect.width,
     });
   }
@@ -582,12 +581,13 @@ export function WorkspaceTimerPage(): ReactElement {
         </div>
       </header>
       <div
-        className={`min-h-0 flex-1 overflow-x-hidden ${
+        className={`relative min-h-0 flex-1 overflow-x-hidden ${
           !timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "calendar"
             ? "overflow-y-hidden"
             : "overflow-y-auto"
         }`}
         data-testid="tracking-timer-scroll-area"
+        ref={scrollAreaRef}
       >
         {timeEntriesQuery.isPending ? <SurfaceMessage message="Loading time entries..." /> : null}
         {timeEntriesQuery.isError ? (
@@ -610,65 +610,67 @@ export function WorkspaceTimerPage(): ReactElement {
         {!timeEntriesQuery.isPending && !timeEntriesQuery.isError && view === "timesheet" ? (
           <TimesheetView rows={timesheetRows} timezone={timezone} weekDays={weekDays} />
         ) : null}
-      </div>
-      {selectedEntry && selectedEntryAnchor ? (
-        <TimeEntryEditorDialog
-          anchor={selectedEntryAnchor}
-          currentWorkspaceId={workspaceId}
-          description={selectedDescription}
-          entry={selectedEntry}
-          isCreatingProject={createProjectMutation.isPending}
-          isCreatingTag={createTagMutation.isPending}
-          isDeleting={deleteTimeEntryMutation.isPending}
-          isPrimaryActionPending={timerMutationPending}
-          isSaving={updateTimeEntryMutation.isPending}
-          onClose={closeSelectedEntryEditor}
-          onCreateProject={handleSelectedEntryProjectCreate}
-          onCreateTag={handleSelectedEntryTagCreate}
-          onDelete={() => {
-            void handleSelectedEntryDelete();
-          }}
-          onDescriptionChange={setSelectedDescription}
-          onPrimaryAction={() => {
-            void handleSelectedEntryPrimaryAction();
-          }}
-          onProjectSelect={setSelectedProjectId}
-          onSave={() => {
-            void handleSelectedEntrySave();
-          }}
-          onStartTimeChange={handleSelectedEntryStartTimeChange}
-          onStopTimeChange={handleSelectedEntryStopTimeChange}
-          onTagToggle={(tagId) => {
-            setSelectedTagIds((current) =>
-              current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
-            );
-          }}
-          onWorkspaceSelect={(nextWorkspaceId) => {
-            setCurrentWorkspaceId(nextWorkspaceId);
-            closeSelectedEntryEditor();
-          }}
-          primaryActionIcon={isRunningTimeEntry(selectedEntry) ? "stop" : "play"}
-          primaryActionLabel={isRunningTimeEntry(selectedEntry) ? "Stop timer" : "Continue entry"}
-          projects={projectOptions
-            .filter((project) => project.id != null)
-            .map((project) => ({
-              clientName: project.client_name ?? undefined,
-              color: resolveProjectColor(project),
-              id: project.id as number,
-              name: project.name ?? "Untitled project",
+        {selectedEntry && selectedEntryAnchor ? (
+          <TimeEntryEditorDialog
+            anchor={selectedEntryAnchor}
+            currentWorkspaceId={workspaceId}
+            description={selectedDescription}
+            entry={selectedEntry}
+            isCreatingProject={createProjectMutation.isPending}
+            isCreatingTag={createTagMutation.isPending}
+            isDeleting={deleteTimeEntryMutation.isPending}
+            isPrimaryActionPending={timerMutationPending}
+            isSaving={updateTimeEntryMutation.isPending}
+            onClose={closeSelectedEntryEditor}
+            onCreateProject={handleSelectedEntryProjectCreate}
+            onCreateTag={handleSelectedEntryTagCreate}
+            onDelete={() => {
+              void handleSelectedEntryDelete();
+            }}
+            onDescriptionChange={setSelectedDescription}
+            onPrimaryAction={() => {
+              void handleSelectedEntryPrimaryAction();
+            }}
+            onProjectSelect={setSelectedProjectId}
+            onSave={() => {
+              void handleSelectedEntrySave();
+            }}
+            onStartTimeChange={handleSelectedEntryStartTimeChange}
+            onStopTimeChange={handleSelectedEntryStopTimeChange}
+            onTagToggle={(tagId) => {
+              setSelectedTagIds((current) =>
+                current.includes(tagId)
+                  ? current.filter((id) => id !== tagId)
+                  : [...current, tagId],
+              );
+            }}
+            onWorkspaceSelect={(nextWorkspaceId) => {
+              switchWorkspace(nextWorkspaceId);
+              closeSelectedEntryEditor();
+            }}
+            primaryActionIcon={isRunningTimeEntry(selectedEntry) ? "stop" : "play"}
+            primaryActionLabel={isRunningTimeEntry(selectedEntry) ? "Stop timer" : "Continue entry"}
+            projects={projectOptions
+              .filter((project) => project.id != null)
+              .map((project) => ({
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColor(project),
+                id: project.id as number,
+                name: project.name ?? "Untitled project",
+              }))}
+            saveError={selectedEntryError}
+            selectedProjectId={selectedProjectId}
+            selectedTagIds={selectedTagIds}
+            tags={tagOptions}
+            timezone={timezone}
+            workspaces={session.availableWorkspaces.map((workspace) => ({
+              id: workspace.id,
+              isCurrent: workspace.isCurrent,
+              name: workspace.name,
             }))}
-          saveError={selectedEntryError}
-          selectedProjectId={selectedProjectId}
-          selectedTagIds={selectedTagIds}
-          tags={tagOptions}
-          timezone={timezone}
-          workspaces={session.availableWorkspaces.map((workspace) => ({
-            id: workspace.id,
-            isCurrent: workspace.isCurrent,
-            name: workspace.name,
-          }))}
-        />
-      ) : null}
+          />
+        ) : null}
+      </div>
       {composerSuggestionsAnchor ? (
         <TimerComposerSuggestionsDialog
           anchor={composerSuggestionsAnchor}
@@ -685,7 +687,7 @@ export function WorkspaceTimerPage(): ReactElement {
             closeComposerSuggestions();
           }}
           onWorkspaceSelect={(nextWorkspaceId) => {
-            setCurrentWorkspaceId(nextWorkspaceId);
+            switchWorkspace(nextWorkspaceId);
             closeComposerSuggestions();
           }}
           projects={projectOptions}

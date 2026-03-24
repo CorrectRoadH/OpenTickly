@@ -37,21 +37,34 @@ describe("TimeEntryEditorDialog", () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it("opens a calendar date picker and preserves the time when changing the start date", () => {
+  it("opens a calendar date picker from the calendar icon and preserves the time when changing the start date", () => {
     const onStartTimeChange = vi.fn();
 
     render(<DialogHarness onStartTimeChange={onStartTimeChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "10:00" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit start date" }));
 
-    expect(screen.getByTestId("date-picker")).toBeTruthy();
-    expect(screen.getByText("March 2026")).toBeTruthy();
+    const datePicker = screen.getByRole("dialog", { name: "March 2026" });
+    expect(datePicker).toBeTruthy();
+    expect(within(datePicker).getByText("March 2026")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "March 24, 2026" }));
 
     expect(onStartTimeChange).toHaveBeenCalledTimes(1);
     const nextDate = onStartTimeChange.mock.calls[0]?.[0] as Date;
     expect(nextDate.toISOString()).toBe("2026-03-24T10:00:00.000Z");
+  });
+
+  it("keeps the edited start time visible before save after the field blurs", () => {
+    render(<DialogHarness onStartTimeChange={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit start time" }));
+
+    const timeInput = screen.getByLabelText("Edit time") as HTMLInputElement;
+    fireEvent.change(timeInput, { target: { value: "15:28" } });
+    fireEvent.blur(timeInput);
+
+    expect(screen.getByRole("button", { name: "Edit start time" }).textContent).toContain("15:28");
   });
 });
 
@@ -64,6 +77,9 @@ function DialogHarness({
   selectedProjectId?: number | null;
   selectedTagIds?: number[];
 }) {
+  const [entry, setEntry] = useState<GithubComTogglTogglApiInternalModelsTimeEntry>(
+    createTimeEntryFixture(),
+  );
   const [projectId, setProjectId] = useState<number | null>(selectedProjectId);
   const [tagIds, setTagIds] = useState<number[]>(selectedTagIds);
 
@@ -72,7 +88,7 @@ function DialogHarness({
       anchor={{ height: 40, left: 40, top: 40, width: 160 }}
       currentWorkspaceId={202}
       description="浪费时间"
-      entry={createTimeEntryFixture()}
+      entry={entry}
       isCreatingProject={false}
       isCreatingTag={false}
       isPrimaryActionPending={false}
@@ -84,8 +100,19 @@ function DialogHarness({
       onPrimaryAction={() => {}}
       onProjectSelect={setProjectId}
       onSave={() => {}}
-      onStartTimeChange={onStartTimeChange}
-      onStopTimeChange={() => {}}
+      onStartTimeChange={(time) => {
+        setEntry((current) => ({
+          ...current,
+          start: time.toISOString(),
+        }));
+        onStartTimeChange(time);
+      }}
+      onStopTimeChange={(time) => {
+        setEntry((current) => ({
+          ...current,
+          stop: time.toISOString(),
+        }));
+      }}
       onTagToggle={(tagId) =>
         setTagIds((current) =>
           current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
