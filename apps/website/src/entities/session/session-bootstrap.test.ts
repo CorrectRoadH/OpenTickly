@@ -61,7 +61,7 @@ describe("mapSessionBootstrap", () => {
         }),
       ],
       user: createProfileFixture({
-        default_workspace_id: null,
+        default_workspace_id: 202,
       }),
       workspaces: [
         createWorkspaceFixture({

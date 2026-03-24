@@ -136,8 +136,8 @@ export function AppShell({ children }: AppShellProps): ReactElement {
                     to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
                   });
                 }}
-                onSetDefault={(workspaceId) => {
-                  return updateProfileMutation.mutateAsync({
+                onSetDefault={async (workspaceId) => {
+                  await updateProfileMutation.mutateAsync({
                     default_workspace_id: workspaceId,
                     email: profileQuery.data?.email,
                     fullname: profileQuery.data?.fullname,

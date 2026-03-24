@@ -76,10 +76,11 @@ export function WorkspaceTimerPage(): ReactElement {
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const [selectedEntry, setSelectedEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-  const selectedEntryWorkspaceId =
-    typeof (selectedEntry?.workspace_id ?? selectedEntry?.wid) === "number"
-      ? (selectedEntry?.workspace_id ?? selectedEntry?.wid)
-      : workspaceId;
+  const selectedEntryWorkspaceId: number = (() => {
+    const entryWorkspaceId = selectedEntry?.workspace_id ?? selectedEntry?.wid;
+
+    return typeof entryWorkspaceId === "number" ? entryWorkspaceId : workspaceId;
+  })();
   const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
   const createProjectMutation = useCreateProjectMutation(selectedEntryWorkspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);

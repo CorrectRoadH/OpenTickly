@@ -4,6 +4,8 @@
 
 - Install backend dev runtime: `go install github.com/air-verse/air@latest`
 - Install PostgreSQL schema tool: `pgschema`
+- Install workspace dependencies and sync the versioned git hooks: `vp install` then `git config core.hooksPath .vite-hooks`
+- The versioned pre-commit hook validates the website build with `vp run website#build`
 - Create root `.env.local` from `.env.local.example` before starting local source processes
 - Required backend env: `PORT`, `DATABASE_URL`, `REDIS_URL`
 - Required `pgschema` env for schema management: `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
