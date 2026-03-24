@@ -438,6 +438,21 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	current.Duration = computedDuration
 	current.UpdatedAt = service.now()
 
+	// Check for running timer conflict BEFORE persisting when the result is a running entry.
+	// This matches CreateTimeEntry's pre-mutation conflict check and prevents partial mutations.
+	if stop == nil {
+		existing, ok, err := service.store.GetCurrentTimeEntry(ctx, current.UserID)
+		if err != nil {
+			return TimeEntryView{}, err
+		}
+		if ok && existing.ID != current.ID {
+			service.logger.WarnContext(ctx, "running time entry already exists",
+				"user_id", current.UserID,
+			)
+			return TimeEntryView{}, ErrRunningTimeEntryExists
+		}
+	}
+
 	updated, err := service.store.UpdateTimeEntry(ctx, UpdateTimeEntryRecord{TimeEntryView: current})
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to update time entry",
@@ -449,18 +464,6 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		return TimeEntryView{}, err
 	}
 	if stop == nil {
-		// Check if another running timer already exists before starting a new one
-		existing, ok, err := service.store.GetCurrentTimeEntry(ctx, current.UserID)
-		if err != nil {
-			return TimeEntryView{}, err
-		}
-		if ok && existing.ID != current.ID {
-			// There's a different running timer already
-			service.logger.WarnContext(ctx, "running time entry already exists",
-				"user_id", current.UserID,
-			)
-			return TimeEntryView{}, ErrRunningTimeEntryExists
-		}
 		if err := service.store.SetRunningTimeEntry(ctx, current.UserID, current.ID); err != nil {
 			service.logger.ErrorContext(ctx, "failed to set running time entry after update",
 				"user_id", current.UserID,
