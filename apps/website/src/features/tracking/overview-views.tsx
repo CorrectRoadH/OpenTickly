@@ -122,7 +122,7 @@ export function ListView({
   }
 
   return (
-    <div className="border-t border-[var(--track-border)]">
+    <div className="border-t border-[var(--track-border)]" data-testid="timer-list-view">
       {groups.map((group) => (
         <section key={group.key}>
           <div className="grid grid-cols-[28px_minmax(0,1fr)_90px_110px_92px_28px] items-center border-b border-[var(--track-border)] px-6 py-3">
@@ -376,7 +376,7 @@ export function TimesheetView({
   }
 
   return (
-    <div className="border-t border-[var(--track-border)] px-4">
+    <div className="border-t border-[var(--track-border)] px-4" data-testid="timer-timesheet-view">
       <div className="grid grid-cols-[minmax(280px,1fr)_88px_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
         <span>Project</span>
         <span>Members</span>

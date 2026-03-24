@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import {
+  createProjectForWorkspace,
+  createTimeEntryForWorkspace,
+  loginE2eUser,
+  registerE2eUser,
+} from "./fixtures/e2e-auth.ts";
 
 test.describe("Timer page family mainline", () => {
   /**
@@ -92,19 +97,26 @@ test.describe("Timer page family mainline", () => {
     const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
+    // Create a project so entries appear in all views (including timesheet which groups by project)
+    const projectId = await createProjectForWorkspace(page, {
+      name: "Subviews Test Project",
+      workspaceId,
+    });
+
     // Create time entries for today that will appear across all views
     const now = new Date();
     const baseYear = now.getUTCFullYear();
     const baseMonth = now.getUTCMonth();
     const baseDate = now.getUTCDate();
 
-    // Create 3 entries spread throughout the day
+    // Create 3 entries spread throughout the day, each with the project so they appear in timesheet
     for (let entryIndex = 0; entryIndex < 3; entryIndex++) {
       const hour = 8 + entryIndex * 4;
       const start = new Date(Date.UTC(baseYear, baseMonth, baseDate, hour, 0, 0));
       const stop = new Date(Date.UTC(baseYear, baseMonth, baseDate, hour, 45, 0));
       await createTimeEntryForWorkspace(page, {
         description: `Entry ${entryIndex + 1} for subview test`,
+        projectId,
         start: start.toISOString(),
         stop: stop.toISOString(),
         workspaceId,
@@ -159,26 +171,35 @@ test.describe("Timer page family mainline", () => {
     const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
     await expect(calendarScrollArea).toBeVisible();
 
-    // Verify list view shows the seeded entries
+    // Verify list view shows the seeded entries within the list view content
     await page.getByRole("button", { name: "List view" }).click();
     await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    // Each seeded entry description should appear in the list
+    const listViewContainer = page.getByTestId("timer-list-view");
+    await expect(listViewContainer).toBeVisible();
+    // Each seeded entry description should appear in the list view specifically
     for (let entryIndex = 0; entryIndex < 3; entryIndex++) {
-      await expect(page.locator(`text=Entry ${entryIndex + 1} for subview test`)).toBeVisible();
+      await expect(
+        listViewContainer.locator(`text=Entry ${entryIndex + 1} for subview test`),
+      ).toBeVisible();
     }
 
-    // Verify timesheet view shows time data for the seeded entries
+    // Verify timesheet view shows time data for the seeded entries within the timesheet content
     await page.getByRole("button", { name: "Timesheet" }).click();
     await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    // The timesheet should have project rows with non-zero time (since entries were created)
+    const timesheetViewContainer = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainer).toBeVisible();
+    // The timesheet should have project rows (since entries were created with project)
     // We verify the timesheet is not showing the empty state
     await expect(page.getByText("No week data available")).not.toBeVisible();
+    // Timesheet aggregates entries by project, so individual entry descriptions don't appear.
+    // The project row for "Subviews Test Project" should be visible in the timesheet.
+    await expect(timesheetViewContainer.locator("text=Subviews Test Project")).toBeVisible();
 
     // Verify calendar again - entries should persist
     await page.getByRole("button", { name: "Calendar" }).click();
@@ -265,14 +286,21 @@ test.describe("Timer page family mainline", () => {
     const loginSession = await loginE2eUser(page, test.info(), { email, password });
     const workspaceId = loginSession.currentWorkspaceId;
 
+    // Create a project so the running entry appears in all views (including timesheet)
+    const projectId = await createProjectForWorkspace(page, {
+      name: "Running Timer Test Project",
+      workspaceId,
+    });
+
     // Create a running timer via API before navigating to /timer
     const runningDescription = "Pre-existing running timer";
     await page.evaluate(
-      async ({ workspaceId: wid, description }) => {
+      async ({ workspaceId: wid, projectId: pid, description }) => {
         const response = await fetch(`/api/v9/workspaces/${wid}/time_entries`, {
           body: JSON.stringify({
             created_with: "playwright-e2e",
             description,
+            project_id: pid,
             start: new Date().toISOString(),
             workspace_id: wid,
           }),
@@ -287,7 +315,7 @@ test.describe("Timer page family mainline", () => {
         }
         return response.json();
       },
-      { workspaceId, description: runningDescription },
+      { workspaceId, projectId, description: runningDescription },
     );
 
     // Navigate to timer page - should show the running timer immediately
@@ -313,19 +341,27 @@ test.describe("Timer page family mainline", () => {
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
-    // Running timer description should be visible in the timer description input (shared header)
-    // and the stop button should reflect the running state
-    const listViewDescription = await page.getByLabel("Time entry description").inputValue();
-    expect(listViewDescription).toContain(runningDescription);
+    // Verify the running timer description is visible in the list view CONTENT (not just header)
+    // The list view renders the running entry with an Edit button containing the description
+    const listViewContainer = page.getByTestId("timer-list-view");
+    await expect(listViewContainer).toBeVisible();
+    const listViewEditButton = listViewContainer.getByRole("button", {
+      name: `Edit ${runningDescription}`,
+    });
+    await expect(listViewEditButton).toBeVisible();
 
     // Switch to timesheet view
     await page.getByRole("button", { name: "Timesheet" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
-    // Running timer description should be visible in the header
-    const timesheetDescription = await page.getByLabel("Time entry description").inputValue();
-    expect(timesheetDescription).toContain(runningDescription);
+    // Verify timesheet shows content (not empty state) - timesheet aggregates by project
+    // so individual entry descriptions don't appear, but the project row should be visible
+    const timesheetViewContainer = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainer).toBeVisible();
+    await expect(page.getByText("No week data available")).not.toBeVisible();
+    // The project row for "Running Timer Test Project" should be visible in the timesheet
+    await expect(timesheetViewContainer.locator("text=Running Timer Test Project")).toBeVisible();
 
     // Switch back to calendar - verify now-line is still visible
     await page.getByRole("button", { name: "Calendar" }).click();
