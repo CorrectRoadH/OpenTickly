@@ -14052,7 +14052,11 @@
             "required": true
           },
           {
-            "type": "string",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "collectionFormat": "csv",
             "description": "Numeric IDs of time_entries, separated by comma. E.g.: `204301830,202700150,202687559`. The limit is 100 IDs per request.",
             "name": "time_entry_ids",
             "in": "path",

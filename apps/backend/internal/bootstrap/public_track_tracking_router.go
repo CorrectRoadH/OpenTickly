@@ -192,7 +192,7 @@ func (server *publicTrackOpenAPIServer) PostWorkspaceTimeEntries(
 func (server *publicTrackOpenAPIServer) PatchTimeEntries(
 	ctx echo.Context,
 	workspaceId int,
-	timeEntryIds string,
+	timeEntryIds []int,
 	params publictrackapi.PatchTimeEntriesParams,
 ) error {
 	_ = workspaceId

@@ -1013,7 +1013,7 @@ func (server *publicTrackUnimplementedServer) PostWorkspaceTimeEntries(ctx echo.
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
-func (server *publicTrackUnimplementedServer) PatchTimeEntries(ctx echo.Context, workspaceId int, timeEntryIds string, params PatchTimeEntriesParams) error {
+func (server *publicTrackUnimplementedServer) PatchTimeEntries(ctx echo.Context, workspaceId int, timeEntryIds []int, params PatchTimeEntriesParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
