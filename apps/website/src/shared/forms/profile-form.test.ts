@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  createPreferencesFormValues,
-  mapPreferencesFormToRequest,
-} from "./profile-form.ts";
+import { createPreferencesFormValues, mapPreferencesFormToRequest } from "./profile-form.ts";
 
 describe("profile preferences form mapping", () => {
   it("maps persisted preference payload into form values", () => {

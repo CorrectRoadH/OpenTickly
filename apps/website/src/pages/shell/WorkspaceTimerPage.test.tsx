@@ -485,9 +485,7 @@ describe("WorkspaceTimerPage", () => {
     render(<WorkspaceTimerPage />);
 
     expect(screen.getByRole("button", { name: "Edit Current workspace entry" })).toBeTruthy();
-    expect(
-      screen.queryByRole("button", { name: "Edit Other workspace entry" }),
-    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Edit Other workspace entry" })).toBeNull();
   });
 
   it("keeps the edited start time visible in the editor before save", () => {

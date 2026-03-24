@@ -1,0 +1,102 @@
+---
+title: AI Integration
+description: OpenToggl can be integrated into agent workflows through the maintained toggl-cli fork and its installable skill.
+---
+
+OpenToggl's practical AI integration path is not a vague "AI-ready" claim. It is a tool-driven workflow built around the maintained [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) project.
+
+That repository provides two concrete surfaces for agents:
+
+- a `toggl` CLI for day-to-day operations
+- an installable `SKILL.md` package for agent environments
+
+## The real integration path
+
+The `toggl-cli` fork explicitly positions itself as an actively maintained fork focused on AI agent friendliness and automation workflows. Its README also exposes a one-command skill install flow.
+
+For agent environments, the documented install command is:
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+For direct CLI usage, the documented npm install path is:
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## What the CLI gives agents
+
+The installed `toggl` binary gives agents a narrow, concrete command surface instead of forcing them to handcraft raw HTTP calls for every operation.
+
+Based on the published skill and README, the CLI covers:
+
+- `Track API v9`
+- time entry operations like `start`, `stop`, `continue`, `running`, `show`, `edit`, and `delete`
+- workspace resource operations like `list`, `create`, `rename`, and `delete`
+- user/profile commands like `me` and `preferences`
+- organization inspection commands like `organization list` and `organization show`
+
+That is much more useful for agent workflows than a generic "AI API" promise, because the agent gets a tested, task-shaped interface for common operations.
+
+## OpenToggl-specific relevance
+
+The same `toggl-cli` project also documents support for `OpenToggl self-hosted`.
+
+Its interactive auth flow lets the user choose between:
+
+- official Toggl Track
+- OpenToggl self-hosted
+
+And for OpenToggl it expects the full API URL, for example:
+
+```bash
+https://your-instance.com/api/v9
+```
+
+That means the intended agent flow is:
+
+1. install the skill or CLI
+2. authenticate once
+3. point the tool at either official Toggl Track or an OpenToggl deployment
+4. let the agent use stable CLI commands for normal tracking workflows
+
+## Why use CLI plus skill instead of only OpenAPI
+
+Using `toggl-cli` plus `SKILL.md` gives agents:
+
+- command shapes that already match common user tasks
+- built-in auth flow
+- local caching for read-heavy operations
+- simpler automation loops than hand-assembling every request from scratch
+- a reusable skill package that can be installed into agent environments
+
+The README for `toggl-cli` specifically calls out local HTTP response caching and automatic cache invalidation when data changes. That matters for agent loops because it reduces repeated read calls while keeping mutated state fresh.
+
+## Where OpenToggl itself still matters
+
+The CLI/skill is the execution layer, but OpenToggl still provides the product and deployment target:
+
+- OpenToggl defines the API and product surface the tool can target
+- OpenToggl self-hosting gives you an instance your agents can run against under your control
+- OpenToggl docs and OpenAPI files explain the semantics behind those commands
+
+## Recommended setup for agent workflows
+
+If you want an agent to work with OpenToggl, the practical setup is:
+
+1. Deploy or run OpenToggl.
+2. Install `CorrectRoadH/toggl-cli` as a CLI or skill.
+3. Authenticate the tool against your instance.
+4. Use the CLI command surface for normal operational tasks.
+5. Fall back to OpenAPI and product docs when the agent needs lower-level contract detail.
+
+## References
+
+- `CorrectRoadH/toggl-cli` repository
+- `skills/toggl-cli/SKILL.md`
+- OpenToggl product docs and OpenAPI contracts
+
+OpenToggl does not need a separate AI product line if the agent path through CLI, skill, contracts, and self-hosted runtime is already solid.

@@ -89,9 +89,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Projects" }).click();
-    await expect(page).toHaveURL(
-      new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`),
-    );
+    await expect(page).toHaveURL(new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`));
     await page.getByTestId("projects-create-button").click();
     const projectForm = page.getByRole("dialog", { name: "Create new project" });
     await projectForm.getByLabel("Project name").fill(projectName);

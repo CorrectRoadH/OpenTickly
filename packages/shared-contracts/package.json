@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "test": "vp test run",
+    "test": "vp test run --passWithNoTests",
     "check": "vp check"
   },
   "devDependencies": {

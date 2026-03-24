@@ -3,22 +3,63 @@ title: Self-Hosting
 description: OpenToggl is designed to run as a self-hosted deployment, not only as a hosted demo.
 ---
 
-Self-hosting is a first-class part of the product story.
+Self-hosting is a first-class part of the product story, not an afterthought.
 
-## What that means
+## Baseline shape
 
-- you can inspect the source
-- you can run the stack on your own infrastructure
-- you can control upgrade timing
-- you can keep the same public contract and product surface as the hosted runtime
+The formal self-hosted baseline is:
 
-## Runtime shape
+- one `opentoggl` runtime image
+- one `postgres` dependency
+- one `redis` dependency
 
-The repository documents a single application image plus PostgreSQL and Redis dependencies. Schema management is handled through `pgschema`, and the documented compose workflow lives in the repository alongside the source.
+Schema management is handled through `pgschema`, and the compose workflow is documented in the repository itself.
+
+## Canonical startup order
+
+1. Start `postgres` and `redis`
+2. Run `pgschema plan`
+3. Run `pgschema apply`
+4. Start `opentoggl`
+5. Verify `/healthz`, `/readyz`, and an HTTP smoke check
+
+That order is important because self-hosted startup is defined around the same schema truth and readiness semantics as the rest of the repository.
+
+## What operators control
+
+- deployment timing
+- infrastructure placement
+- environment overrides
+- upgrade and rollback cadence
+- persistent PostgreSQL data
+
+## What stays the same
+
+- the public product contract
+- the self-hosted runtime shape documented in the repo
+- the readiness and smoke verification path
 
 ## Where to start
 
 <Cards>
-  <Card title="Docker Compose guide" href="https://github.com/CorrectRoadH/opentoggl/blob/main/docs/self-hosting/docker-compose.md" />
-  <Card title="Repository README" href="https://github.com/CorrectRoadH/opentoggl/blob/main/README.md" />
+  <Card
+    title="Docker Compose guide"
+    href="https://github.com/CorrectRoadH/opentoggl/blob/main/docs/self-hosting/docker-compose.md"
+  />
+  <Card
+    title="Repository README"
+    href="https://github.com/CorrectRoadH/opentoggl/blob/main/README.md"
+  />
 </Cards>
+
+## Smoke verification
+
+Minimum smoke verification is intentionally small and explicit:
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+curl -fsSI http://localhost:8080/
+```
+
+If these checks fail, the self-hosted baseline is not considered ready.

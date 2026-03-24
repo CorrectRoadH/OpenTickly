@@ -244,9 +244,7 @@ test.describe("Story: manage the running timer", () => {
 
     const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
     await expect(createOrganizationDialog).toBeVisible();
-    await createOrganizationDialog
-      .getByLabel("Organization name")
-      .fill(`Timer Org ${Date.now()}`);
+    await createOrganizationDialog.getByLabel("Organization name").fill(`Timer Org ${Date.now()}`);
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
 
     await expect(organizationButton).not.toContainText("Timer Multi Workspace User Organization");

@@ -1,15 +1,15 @@
-import type { Route } from './+types/home';
-import { HomeLayout } from 'fumadocs-ui/layouts/home';
-import { Link } from 'react-router';
-import { baseOptions } from '@/lib/layout.shared';
+import type { Route } from "./+types/home";
+import { HomeLayout } from "fumadocs-ui/layouts/home";
+import { Link } from "react-router";
+import { baseOptions } from "@/lib/layout.shared";
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_: Route.MetaArgs) {
   return [
-    { title: 'OpenToggl | Open Source Time Tracking Platform' },
+    { title: "OpenToggl | Open Source Time Tracking Platform" },
     {
-      name: 'description',
+      name: "description",
       content:
-        'OpenToggl is an open source time tracking platform shaped by the public Toggl product surface, with Track, Reports, Webhooks, import tooling, and self-hosting.',
+        "OpenToggl is an open source time tracking platform shaped by the public Toggl product surface, with Track, Reports, Webhooks, import tooling, and self-hosting.",
     },
   ];
 }
@@ -24,13 +24,12 @@ export default function Home() {
               Open source. Self-hostable. Toggl-shaped.
             </p>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-fd-foreground md:text-6xl">
-              OpenToggl is the open source time tracking platform built from the
-              public Toggl surface.
+              OpenToggl is the open source time tracking platform built from the public Toggl
+              surface.
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-fd-muted-foreground md:text-lg">
-              It covers Track API v9, Reports API v3, Webhooks API v1, the web
-              product surface, Toggl export import, and a self-hosted runtime you
-              can inspect, run, and extend.
+              It covers Track API v9, Reports API v3, Webhooks API v1, the web product surface,
+              Toggl export import, and a self-hosted runtime you can inspect, run, and extend.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a
@@ -50,9 +49,9 @@ export default function Home() {
             </div>
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
               {[
-                ['Contract-first', 'Public API and product surface define the target.'],
-                ['Runs self-hosted', 'Source, runtime, and deployment path live in the repo.'],
-                ['Imports Toggl data', 'Bring existing exports into the same platform surface.'],
+                ["Contract-first", "Public API and product surface define the target."],
+                ["Runs self-hosted", "Source, runtime, and deployment path live in the repo."],
+                ["Imports Toggl data", "Bring existing exports into the same platform surface."],
               ].map(([title, body]) => (
                 <div key={title} className="rounded-2xl border border-fd-border bg-white/3 p-4">
                   <p className="text-sm font-semibold text-fd-foreground">{title}</p>
@@ -65,12 +64,12 @@ export default function Home() {
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            'Track API v9',
-            'Reports API v3',
-            'Webhooks API v1',
-            'Web UI',
-            'Toggl import',
-            'Self-hosting',
+            "Track API v9",
+            "Reports API v3",
+            "Webhooks API v1",
+            "Web UI",
+            "Toggl import",
+            "Self-hosting",
           ].map((item) => (
             <div
               key={item}
@@ -84,19 +83,16 @@ export default function Home() {
         <section className="grid gap-4 md:grid-cols-3">
           {[
             {
-              title: 'What is OpenToggl?',
-              body:
-                'A direct implementation target for the current public Toggl product surface, not a vague “similar to Toggl” clone.',
+              title: "What is OpenToggl?",
+              body: "A direct implementation target for the current public Toggl product surface, not a vague “similar to Toggl” clone.",
             },
             {
-              title: 'Why it exists',
-              body:
-                'To give teams an auditable, open codebase for tracking, reports, and webhooks without inventing a parallel business model first.',
+              title: "Why it exists",
+              body: "To give teams an auditable, open codebase for tracking, reports, and webhooks without inventing a parallel business model first.",
             },
             {
-              title: 'Why self-host',
-              body:
-                'You control deployment, data, and upgrades while keeping the same public contract as the hosted product surface.',
+              title: "Why self-host",
+              body: "You control deployment, data, and upgrades while keeping the same public contract as the hosted product surface.",
             },
           ].map((item) => (
             <article
@@ -104,9 +100,7 @@ export default function Home() {
               className="landing-card rounded-2xl border border-fd-border p-6 shadow-sm"
             >
               <h2 className="text-xl font-semibold">{item.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">
-                {item.body}
-              </p>
+              <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">{item.body}</p>
             </article>
           ))}
         </section>

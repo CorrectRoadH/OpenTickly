@@ -73,4 +73,3 @@ jobs:
         run: |
           cd apps/website
           pnpm exec playwright test
-

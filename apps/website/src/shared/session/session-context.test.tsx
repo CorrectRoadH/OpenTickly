@@ -3,7 +3,11 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { createOrganizationFixture, createSessionFixture, createWorkspaceFixture } from "../../test/fixtures/web-data.ts";
+import {
+  createOrganizationFixture,
+  createSessionFixture,
+  createWorkspaceFixture,
+} from "../../test/fixtures/web-data.ts";
 import { SessionProvider, useSession } from "./session-context.tsx";
 
 describe("SessionProvider", () => {

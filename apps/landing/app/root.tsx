@@ -5,16 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-} from 'react-router';
-import { RootProvider } from 'fumadocs-ui/provider/react-router';
-import type { Route } from './+types/root';
-import './app.css';
-import SearchDialog from '@/components/search';
-import NotFound from './routes/not-found';
+} from "react-router";
+import { RootProvider } from "fumadocs-ui/provider/react-router";
+import type { Route } from "./+types/root";
+import "./app.css";
+import SearchDialog from "@/components/search";
+import NotFound from "./routes/not-found";
 
-export const links: Route.LinksFunction = () => [
-  { rel: 'icon', href: '/favicon.ico' },
-];
+export const links: Route.LinksFunction = () => [{ rel: "icon", href: "/favicon.ico" }];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -39,13 +37,13 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = 'Request failed';
-  let details = 'The landing site hit an unexpected error.';
+  let message = "Request failed";
+  let details = "The landing site hit an unexpected error.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
     if (error.status === 404) return <NotFound />;
-    message = 'Error';
+    message = "Error";
     details = error.statusText;
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;

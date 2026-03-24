@@ -88,9 +88,7 @@ export async function createTimeEntryForWorkspace(
       body: JSON.stringify({
         created_with: "playwright-e2e",
         description: request.description,
-        duration: Math.round(
-          (Date.parse(request.stop) - Date.parse(request.start)) / 1000,
-        ),
+        duration: Math.round((Date.parse(request.stop) - Date.parse(request.start)) / 1000),
         project_id: request.projectId,
         start: request.start,
         stop: request.stop,
