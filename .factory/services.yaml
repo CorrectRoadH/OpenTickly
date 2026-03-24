@@ -1,11 +1,18 @@
 commands:
   install: vp config
   check: vp run check -r
+  # Fast feedback lanes
   frontend_e2e: vp run test:e2e:website
+  frontend_e2e_single: vp run test:e2e:website -- --workers 1
   backend_test: go test ./apps/backend/internal/... -count=1 -parallel 4
+  backend_unit: go test ./apps/backend/internal/... -count=1 -parallel 4 -run "^Test[^B]"
+  backend_application: go test ./apps/backend/internal/.../application/... -count=1 -parallel 4
   backend_bootstrap_test: go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4
+  # Schema management
   pgschema_plan: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema plan --file apps/backend/internal/platform/schema/schema.sql
   pgschema_apply: PGHOST=localhost PGPORT=5432 PGDATABASE=opentoggl PGUSER=postgres PGPASSWORD=postgres PGOPTIONS='-c search_path=opentoggl_test' pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
+  # CI: external Postgres schema preparation - uses DATABASE_URL directly (for CI environments)
+  ci_pgschema_prepare: DATABASE_URL="${DATABASE_URL}" pgschema apply --file apps/backend/internal/platform/schema/schema.sql --auto-approve
   cleanup_test_schemas: PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d opentoggl -c "DO \$\$ DECLARE r RECORD; BEGIN FOR r IN SELECT schema_name FROM information_schema.schemata WHERE schema_name ~ '^opentoggl_test_[0-9]+\$' LOOP EXECUTE 'DROP SCHEMA ' || quote_ident(r.schema_name) || ' CASCADE'; END LOOP; END \$\$;"
 
 services:
@@ -19,7 +26,7 @@ services:
   redis:
     start: docker compose up -d redis
     stop: docker compose stop redis
-    healthcheck: redis-cli -u redis://127.0.0.1:6379/0 ping
+    healthcheck: python3 -c "import socket,sys; s=socket.create_connection(('127.0.0.1',6379),2); s.sendall(b'*1\\r\\n$4\\r\\nPING\\r\\n'); data=s.recv(64); s.close(); sys.exit(0 if b'PONG' in data else 1)"
     port: 6379
     depends_on: []
 
