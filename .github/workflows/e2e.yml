@@ -41,7 +41,7 @@ jobs:
           OPENTOGGL_SERVICE_NAME: opentoggl-api
           PORT: 8080
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
-          REDIS_URL: redis://localhost:6379/0
+          REDIS_URL: redis://127.0.0.1:6379/0
           OPENTOGGL_FILESTORE_NAMESPACE: opentoggl
           OPENTOGGL_JOBS_QUEUE_NAME: default
         run: |
