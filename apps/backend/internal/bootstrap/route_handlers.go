@@ -677,6 +677,7 @@ func setSessionCookie(ctx echo.Context, sessionID string) {
 		HttpOnly: true,
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
+		Domain:   "localhost",
 	})
 }
 
