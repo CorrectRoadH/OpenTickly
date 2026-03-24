@@ -2420,6 +2420,26 @@ func mustDecodeJSON(t *testing.T, body []byte, target any) {
 	}
 }
 
+func mustBuildZipArchive(t *testing.T, files map[string]string) []byte {
+	t.Helper()
+
+	var buffer bytes.Buffer
+	writer := zip.NewWriter(&buffer)
+	for name, content := range files {
+		entry, err := writer.Create(name)
+		if err != nil {
+			t.Fatalf("create zip entry %s: %v", name, err)
+		}
+		if _, err := entry.Write([]byte(content)); err != nil {
+			t.Fatalf("write zip entry %s: %v", name, err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close zip writer: %v", err)
+	}
+	return buffer.Bytes()
+}
+
 func intToString(value int64) string {
 	return strconv.FormatInt(value, 10)
 }

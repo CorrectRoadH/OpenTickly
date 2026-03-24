@@ -36,3 +36,5 @@ example
 .gstack/
 
 toggl_screenshots
+test-results
+.tmp

@@ -19,6 +19,7 @@ import {
 } from "../shared/url-state/workspace-settings-location.ts";
 import { AuthPage } from "../pages/auth/AuthPage.tsx";
 import { InviteStatusJoinedPage } from "../pages/members/InviteStatusJoinedPage.tsx";
+import { WorkspaceImportPage } from "../pages/import/WorkspaceImportPage.tsx";
 import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
 import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettingsPage.tsx";
 import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
@@ -118,6 +119,12 @@ const workspaceMembersRoute = createRoute({
   component: WorkspaceMembersRouteComponent,
 });
 
+const workspaceImportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/import",
+  component: WorkspaceImportRouteComponent,
+});
+
 const workspaceClientsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/clients",
@@ -194,6 +201,7 @@ export const routeTree = rootRoute.addChildren([
   legacyWorkspaceProjectsRoute,
   legacyWorkspaceProjectDetailRoute,
   workspaceMembersRoute,
+  workspaceImportRoute,
   workspaceClientsRoute,
   workspaceClientDetailRoute,
   workspaceGroupsRoute,
@@ -330,6 +338,13 @@ function WorkspaceMembersRouteComponent() {
   const workspaceId = Number(params.workspaceId);
 
   return renderProtectedRoute(<WorkspaceMembersPage />, workspaceId);
+}
+
+function WorkspaceImportRouteComponent() {
+  const params = workspaceImportRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(<WorkspaceImportPage />, workspaceId);
 }
 
 function WorkspaceClientsRouteComponent() {

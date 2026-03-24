@@ -35,13 +35,18 @@ func TestPrepareReconcileCommandProjectsDatabaseURLIntoPGSchemaInputs(t *testing
 
 	environment := environmentMap(command.Env)
 	for key, want := range map[string]string{
-		"PGHOST":     "db.internal",
-		"PGPORT":     "5433",
-		"PGDATABASE": "opentoggl",
-		"PGUSER":     "alice",
-		"PGPASSWORD": "secret",
-		"PGSSLMODE":  "require",
-		"UNRELATED":  "value",
+		"PGHOST":                 "db.internal",
+		"PGPORT":                 "5433",
+		"PGDATABASE":             "opentoggl",
+		"PGUSER":                 "alice",
+		"PGPASSWORD":             "secret",
+		"PGSSLMODE":              "require",
+		"PGSCHEMA_PLAN_HOST":     "db.internal",
+		"PGSCHEMA_PLAN_PORT":     "5433",
+		"PGSCHEMA_PLAN_DB":       "opentoggl",
+		"PGSCHEMA_PLAN_USER":     "alice",
+		"PGSCHEMA_PLAN_PASSWORD": "secret",
+		"UNRELATED":              "value",
 	} {
 		if got := environment[key]; got != want {
 			t.Fatalf("expected env %s=%q, got %q", key, want, got)
@@ -123,6 +128,11 @@ func TestReconcileExecutesPreparedCommand(t *testing.T) {
 		"  printf 'PGUSER=%s\n' \"$PGUSER\"",
 		"  printf 'PGPASSWORD=%s\n' \"$PGPASSWORD\"",
 		"  printf 'PGSSLMODE=%s\n' \"$PGSSLMODE\"",
+		"  printf 'PGSCHEMA_PLAN_HOST=%s\n' \"$PGSCHEMA_PLAN_HOST\"",
+		"  printf 'PGSCHEMA_PLAN_PORT=%s\n' \"$PGSCHEMA_PLAN_PORT\"",
+		"  printf 'PGSCHEMA_PLAN_DB=%s\n' \"$PGSCHEMA_PLAN_DB\"",
+		"  printf 'PGSCHEMA_PLAN_USER=%s\n' \"$PGSCHEMA_PLAN_USER\"",
+		"  printf 'PGSCHEMA_PLAN_PASSWORD=%s\n' \"$PGSCHEMA_PLAN_PASSWORD\"",
 		"} > \"$CAPTURE_ENV_PATH\"",
 	}, "\n")
 	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
@@ -161,6 +171,12 @@ func TestReconcileExecutesPreparedCommand(t *testing.T) {
 	}
 	if environment["PGSSLMODE"] != "require" {
 		t.Fatalf("expected executed PGSSLMODE %q, got %q", "require", environment["PGSSLMODE"])
+	}
+	if environment["PGSCHEMA_PLAN_HOST"] != "db.internal" {
+		t.Fatalf("expected executed PGSCHEMA_PLAN_HOST %q, got %q", "db.internal", environment["PGSCHEMA_PLAN_HOST"])
+	}
+	if environment["PGSCHEMA_PLAN_DB"] != "opentoggl" {
+		t.Fatalf("expected executed PGSCHEMA_PLAN_DB %q, got %q", "opentoggl", environment["PGSCHEMA_PLAN_DB"])
 	}
 }
 

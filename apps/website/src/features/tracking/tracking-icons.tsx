@@ -15,6 +15,7 @@ type TrackingIconName =
   | "goals"
   | "grid"
   | "help"
+  | "import"
   | "integrations"
   | "invoices"
   | "list"
@@ -146,6 +147,14 @@ function renderIcon(name: TrackingIconName): ReactElement {
           <circle cx="8" cy="8" r="5.5" />
           <path d="M6.5 6.2a1.8 1.8 0 1 1 2.8 1.5c-.7.5-1.1.8-1.1 1.8" />
           <path d="M8 11.7h.01" />
+        </>
+      );
+    case "import":
+      return (
+        <>
+          <path d="M8 2.8v6.2" />
+          <path d="m5.4 6.7 2.6 2.6 2.6-2.6" />
+          <path d="M3.2 11v.8c0 .8.7 1.5 1.5 1.5h6.6c.8 0 1.5-.7 1.5-1.5V11" />
         </>
       );
     case "integrations":

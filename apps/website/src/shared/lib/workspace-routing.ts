@@ -14,6 +14,10 @@ export function buildWorkspaceReportsPath(workspaceId: number): string {
   return `/workspaces/${workspaceId}/reports`;
 }
 
+export function buildWorkspaceImportPath(workspaceId: number): string {
+  return `/workspaces/${workspaceId}/import`;
+}
+
 export function buildProjectsPath(workspaceId: number): string {
   return buildProjectsListPath(workspaceId);
 }
@@ -64,6 +68,10 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
 
   if (/^\/workspaces\/\d+\/reports$/.test(pathname)) {
     return `/workspaces/${workspaceId}/reports${section}`;
+  }
+
+  if (/^\/workspaces\/\d+\/import$/.test(pathname)) {
+    return `/workspaces/${workspaceId}/import${section}`;
   }
 
   if (/^\/projects\/\d+\/list$/.test(pathname)) {

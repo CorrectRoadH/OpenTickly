@@ -27,6 +27,11 @@ var reconcileEnvironmentKeys = []string{
 	"PGUSER",
 	"PGPASSWORD",
 	"PGSSLMODE",
+	"PGSCHEMA_PLAN_HOST",
+	"PGSCHEMA_PLAN_PORT",
+	"PGSCHEMA_PLAN_DB",
+	"PGSCHEMA_PLAN_USER",
+	"PGSCHEMA_PLAN_PASSWORD",
 }
 
 type ReconcileOptions struct {
@@ -126,11 +131,16 @@ func reconcileEnvironment(databaseURL string, baseEnv []string) ([]string, error
 	}
 
 	overrides := map[string]string{
-		"PGHOST":     config.Host,
-		"PGPORT":     strconv.FormatUint(uint64(config.Port), 10),
-		"PGDATABASE": config.Database,
-		"PGUSER":     config.User,
-		"PGPASSWORD": config.Password,
+		"PGHOST":                 config.Host,
+		"PGPORT":                 strconv.FormatUint(uint64(config.Port), 10),
+		"PGDATABASE":             config.Database,
+		"PGUSER":                 config.User,
+		"PGPASSWORD":             config.Password,
+		"PGSCHEMA_PLAN_HOST":     config.Host,
+		"PGSCHEMA_PLAN_PORT":     strconv.FormatUint(uint64(config.Port), 10),
+		"PGSCHEMA_PLAN_DB":       config.Database,
+		"PGSCHEMA_PLAN_USER":     config.User,
+		"PGSCHEMA_PLAN_PASSWORD": config.Password,
 	}
 	if sslMode := extractSSLMode(databaseURL); sslMode != "" {
 		overrides["PGSSLMODE"] = sslMode

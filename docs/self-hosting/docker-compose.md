@@ -30,6 +30,7 @@ Baseline defaults shipped in compose:
 - `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
 
 Operator overrides are optional. Use host env vars or an operator-managed env file (for example `.env.self-hosted`, not shipped as a required artifact).
+Operators still configure only `DATABASE_URL` / `OPENTOGGL_DATABASE_URL`; the extra `PG*` and `PGSCHEMA_PLAN_*` variables below are internal runtime projections, not additional required inputs.
 
 The runtime image entrypoint derives these standard PostgreSQL CLI vars from `OPENTOGGL_DATABASE_URL` / `DATABASE_URL` before invoking `pgschema apply`:
 
@@ -39,6 +40,13 @@ The runtime image entrypoint derives these standard PostgreSQL CLI vars from `OP
 - `PGUSER`
 - `PGPASSWORD`
 - `PGSSLMODE`
+- `PGSCHEMA_PLAN_HOST`
+- `PGSCHEMA_PLAN_PORT`
+- `PGSCHEMA_PLAN_DB`
+- `PGSCHEMA_PLAN_USER`
+- `PGSCHEMA_PLAN_PASSWORD`
+
+The `PGSCHEMA_PLAN_*` projection makes `pgschema apply --file ...` reuse the target PostgreSQL server as its plan database, so release runtimes do not depend on embedded PostgreSQL startup.
 
 ## Startup, Migration, Init, and Readiness
 

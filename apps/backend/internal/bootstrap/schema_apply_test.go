@@ -34,6 +34,11 @@ func TestApplySchemaFromEnvironmentExecutesPGSchemaApply(t *testing.T) {
 		"  printf 'PGUSER=%s\n' \"$PGUSER\"",
 		"  printf 'PGPASSWORD=%s\n' \"$PGPASSWORD\"",
 		"  printf 'PGSSLMODE=%s\n' \"$PGSSLMODE\"",
+		"  printf 'PGSCHEMA_PLAN_HOST=%s\n' \"$PGSCHEMA_PLAN_HOST\"",
+		"  printf 'PGSCHEMA_PLAN_PORT=%s\n' \"$PGSCHEMA_PLAN_PORT\"",
+		"  printf 'PGSCHEMA_PLAN_DB=%s\n' \"$PGSCHEMA_PLAN_DB\"",
+		"  printf 'PGSCHEMA_PLAN_USER=%s\n' \"$PGSCHEMA_PLAN_USER\"",
+		"  printf 'PGSCHEMA_PLAN_PASSWORD=%s\n' \"$PGSCHEMA_PLAN_PASSWORD\"",
 		"} > \"$CAPTURE_ENV_PATH\"",
 	}, "\n")
 	if err := os.WriteFile(scriptPath, []byte(script), 0o755); err != nil {
@@ -91,5 +96,11 @@ func TestApplySchemaFromEnvironmentExecutesPGSchemaApply(t *testing.T) {
 	}
 	if environment["PGSSLMODE"] != "require" {
 		t.Fatalf("expected PGSSLMODE %q, got %q", "require", environment["PGSSLMODE"])
+	}
+	if environment["PGSCHEMA_PLAN_HOST"] != "db.internal" {
+		t.Fatalf("expected PGSCHEMA_PLAN_HOST %q, got %q", "db.internal", environment["PGSCHEMA_PLAN_HOST"])
+	}
+	if environment["PGSCHEMA_PLAN_DB"] != "opentoggl" {
+		t.Fatalf("expected PGSCHEMA_PLAN_DB %q, got %q", "opentoggl", environment["PGSCHEMA_PLAN_DB"])
 	}
 }

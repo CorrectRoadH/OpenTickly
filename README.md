@@ -40,6 +40,7 @@ Rules:
 - Run `air` only after the target database schema has been reconciled
 - `DATABASE_URL` and the `PG*` variables used by `pgschema` must refer to the same PostgreSQL database
 - The self-hosted container image is different: its runtime entrypoint runs `pgschema apply --auto-approve` from `DATABASE_URL` before starting the API process
+- The runtime image also projects `DATABASE_URL` into `PGSCHEMA_PLAN_*`, so `pgschema apply --file ...` uses the target PostgreSQL server as its plan database instead of requiring embedded PostgreSQL startup
 
 # Self Hosting
 
