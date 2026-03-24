@@ -39,7 +39,57 @@ func (database *Database) ConnString() string {
 	return parsed.String()
 }
 
+// Canonical test schema name - all tests share this schema.
+// Isolation inside the schema is achieved through Workspace + User ownership.
+const canonicalSchema = "opentoggl_test"
+
+// Open returns a Database connected to the canonical shared test schema.
+// Tests are isolated inside the shared schema by Workspace + User ownership.
+// This is the preferred test helper for backend tests.
 func Open(t *testing.T) *Database {
+	t.Helper()
+
+	baseDSN := requiredDatabaseURL(t)
+	adminPool, err := pgxpool.New(context.Background(), baseDSN)
+	if err != nil {
+		t.Fatalf("open admin postgres pool: %v", err)
+	}
+
+	// Ensure the canonical schema exists
+	if _, err := adminPool.Exec(context.Background(), "create schema if not exists "+quoteIdentifier(canonicalSchema)); err != nil {
+		adminPool.Close()
+		t.Fatalf("create test schema %s: %v", canonicalSchema, err)
+	}
+
+	testPool, err := newSchemaScopedPool(baseDSN, canonicalSchema)
+	if err != nil {
+		adminPool.Close()
+		t.Fatalf("open schema-scoped postgres pool: %v", err)
+	}
+
+	applySchema(t, testPool)
+
+	database := &Database{
+		Pool:   testPool,
+		admin:  adminPool,
+		schema: canonicalSchema,
+	}
+
+	// Note: we do NOT drop the canonical schema on cleanup since it's shared.
+
+	t.Cleanup(func() {
+		database.Pool.Close()
+		database.admin.Close()
+	})
+
+	return database
+}
+
+// OpenEphemeral returns a Database connected to a unique ephemeral test schema.
+// The schema is created with a timestamp suffix and dropped on cleanup.
+// Use this only when tests require full schema isolation from other tests.
+// Prefer Open() for normal tests that can share the canonical schema.
+func OpenEphemeral(t *testing.T) *Database {
 	t.Helper()
 
 	baseDSN := requiredDatabaseURL(t)
@@ -90,6 +140,18 @@ func newSchemaScopedPool(baseDSN string, schemaName string) (*pgxpool.Pool, erro
 
 func applySchema(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
+
+	// Check if schema already has tables (meaning it was already initialized)
+	// This is safe for the shared canonical schema where we only want to init once
+	var count int
+	err := pool.QueryRow(context.Background(), "select count(*) from information_schema.tables where table_schema = current_schema()").Scan(&count)
+	if err != nil {
+		t.Fatalf("check existing schema tables: %v", err)
+	}
+	if count > 0 {
+		// Schema already initialized, skip applying schema
+		return
+	}
 
 	contents, err := os.ReadFile(schema.Path())
 	if err != nil {
