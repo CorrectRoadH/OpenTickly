@@ -230,6 +230,152 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
   });
 });
 
+test.describe("VAL-REG-004: Current timer and history consistency regression", () => {
+  /**
+   * VAL-REG-004: Current timer and time-entry history stay mutually consistent
+   *
+   * After starting, stopping, or editing tracked time, the current-timer read and
+   * the time-entry history do not contradict each other. The UI does not simultaneously
+   * present a running timer that the history already treats as fully stopped, or vice versa.
+   *
+   * This test verifies:
+   * - After starting: browser shows running state AND current-timer API returns the running entry
+   * - After stopping: browser shows idle state AND current-timer API returns null
+   * - After editing: browser shows updated entry AND current-timer API still returns null
+   */
+  test("VAL-REG-004: current-timer and history stay consistent after start, stop, and edit", async ({
+    page,
+  }) => {
+    const email = `current-history-consistency-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const initialDescription = "Initial entry description";
+    const editedDescription = "Edited entry description";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Current History Consistency User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Phase 1: Start a timer and verify consistency between UI and API
+    await page.getByLabel("Time entry description").fill(initialDescription);
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Verify UI shows running state
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // Verify current-timer API returns the running entry (not null)
+    const runningResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      const body = await response.json();
+      return { status: response.status, body, hasStop: "stop" in body, stopValue: body.stop };
+    });
+    expect(runningResponse.status).toBe(200);
+    expect(runningResponse.body).not.toBeNull();
+    expect(runningResponse.body.description).toBe(initialDescription);
+    // Running entries have no stop time - stop should be absent or null
+    expect(runningResponse.body.stop).toBeFalsy(); // null, undefined, or absent
+
+    // Phase 2: Stop the timer and verify consistency
+    await page.getByRole("button", { name: "Stop timer" }).click();
+
+    // Verify UI shows idle state
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
+
+    // Verify current-timer API returns null (idle state)
+    const stoppedResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(stoppedResponse.status).toBe(200);
+    expect(stoppedResponse.body).toBeNull();
+
+    // Verify the stopped entry appears in history (list view)
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const listViewContainer = page.getByTestId("timer-list-view");
+    await expect(listViewContainer).toBeVisible();
+    // The stopped entry should appear in the list with the initial description
+    const editButton = listViewContainer.getByRole("button", {
+      name: new RegExp(`Edit ${initialDescription}`),
+    });
+    await expect(editButton).toBeVisible();
+
+    // Phase 3: Edit the stopped entry and verify consistency
+    await editButton.click();
+
+    // Wait for the edit dialog to appear
+    const editDialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(editDialog).toBeVisible();
+
+    // Change the description
+    const descriptionInput = editDialog.getByLabel("Description");
+    await descriptionInput.clear();
+    await descriptionInput.fill(editedDescription);
+
+    // Save the edit
+    await editDialog.getByRole("button", { name: "Save" }).click();
+
+    // Wait for dialog to close
+    await expect(editDialog).not.toBeVisible({ timeout: 5000 });
+
+    // Verify the UI shows the updated description in history
+    await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
+
+    // Verify current-timer API STILL returns null (editing stopped entry doesn't start a timer)
+    const afterEditResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(afterEditResponse.status).toBe(200);
+    expect(afterEditResponse.body).toBeNull();
+
+    // Verify the original description is gone from history
+    await expect(listViewContainer.locator(`text=${initialDescription}`)).not.toBeVisible();
+
+    // Phase 4: Start a new timer and verify it doesn't affect the edited history entry
+    await page.getByRole("button", { name: "Calendar" }).click();
+    await page.getByLabel("Time entry description").fill("New running entry");
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Verify UI shows running state for the new entry
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Verify current-timer API returns the new running entry
+    const newRunningResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(newRunningResponse.status).toBe(200);
+    expect(newRunningResponse.body).not.toBeNull();
+    expect(newRunningResponse.body.description).toBe("New running entry");
+
+    // Verify the edited entry is STILL in history (not overwritten)
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
+  });
+});
+
 test.describe("Timer page family mainline", () => {
   /**
    * VAL-TIMER-001: Timer landing defaults to calendar

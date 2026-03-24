@@ -350,3 +350,199 @@ func TestHistoricalEntriesSurviveMemberDisable(t *testing.T) {
 		t.Fatalf("expected disabled-member time entry to still appear in list after disable")
 	}
 }
+
+// TestCurrentTimerAndHistoryStayConsistentAfterStartStopEdit verifies VAL-REG-004:
+// Current timer and time-entry history stay mutually consistent after start, stop, or edit.
+// The UI does not simultaneously present a running timer that the history already treats
+// as fully stopped, or vice versa.
+func TestCurrentTimerAndHistoryStayConsistentAfterStartStopEdit(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "current-history-consistency")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	description := "Consistency test entry"
+	descriptionAfterEdit := "Consistency test entry - edited"
+
+	// Phase 1: Start a timer and verify consistency
+	start := time.Now().UTC()
+	runningEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: description,
+		Start:       start,
+		CreatedWith: "consistency-test",
+	})
+	if err != nil {
+		t.Fatalf("start timer: %v", err)
+	}
+	if runningEntry.Stop != nil {
+		t.Fatalf("expected running entry to have no stop, got %s", *runningEntry.Stop)
+	}
+
+	// Verify current-timer returns the running entry (not null/empty)
+	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current timer while running: %v", err)
+	}
+	if current.ID != runningEntry.ID {
+		t.Fatalf("expected current timer ID %d while running, got %d", runningEntry.ID, current.ID)
+	}
+
+	// Verify history does NOT show a stopped entry (it's still running)
+	entries, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries while running: %v", err)
+	}
+	for _, e := range entries {
+		if e.ID == runningEntry.ID && e.Stop != nil {
+			t.Fatalf("expected running entry to NOT appear with stop in history, but it did (stop=%s)", *e.Stop)
+		}
+	}
+
+	// Phase 2: Stop the timer and verify consistency
+	stop := time.Now().UTC()
+	stoppedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		TimeEntryID: runningEntry.ID,
+		UserID:      userID,
+		Stop:        &stop,
+	})
+	if err != nil {
+		t.Fatalf("stop timer: %v", err)
+	}
+	if stoppedEntry.Stop == nil {
+		t.Fatalf("expected stopped entry to have stop time, got nil")
+	}
+
+	// Verify current-timer returns null (idle state) after stopping
+	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current timer after stopping: %v", err)
+	}
+	if current.ID != 0 {
+		t.Fatalf("expected current timer to be null (ID=0) after stopping, got ID %d", current.ID)
+	}
+
+	// Verify history NOW shows the stopped entry
+	entries, err = trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries after stopping: %v", err)
+	}
+	foundInHistory := false
+	for _, e := range entries {
+		if e.ID == stoppedEntry.ID {
+			foundInHistory = true
+			if e.Stop == nil {
+				t.Fatalf("expected stopped entry in history to have stop time, got nil")
+			}
+			if !e.Stop.Equal(stop) {
+				t.Fatalf("expected stopped entry stop %s, got %s", stop, *e.Stop)
+			}
+			break
+		}
+	}
+	if !foundInHistory {
+		t.Fatalf("expected stopped entry to appear in history after stopping")
+	}
+
+	// Phase 3: Edit the stopped entry and verify consistency
+	newDescription := descriptionAfterEdit
+	editedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID:   workspaceID,
+		TimeEntryID:  stoppedEntry.ID,
+		UserID:       userID,
+		Description:  &newDescription,
+	})
+	if err != nil {
+		t.Fatalf("edit stopped entry: %v", err)
+	}
+	if editedEntry.Description != newDescription {
+		t.Fatalf("expected edited description %q, got %q", newDescription, editedEntry.Description)
+	}
+
+	// Verify current-timer STILL returns null (idle state) after editing stopped entry
+	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current timer after editing stopped entry: %v", err)
+	}
+	if current.ID != 0 {
+		t.Fatalf("expected current timer to still be null (ID=0) after editing stopped entry, got ID %d", current.ID)
+	}
+
+	// Verify history shows the updated entry (not the original)
+	entries, err = trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries after editing: %v", err)
+	}
+	foundInHistory = false
+	for _, e := range entries {
+		if e.ID == editedEntry.ID {
+			foundInHistory = true
+			if e.Description != newDescription {
+				t.Fatalf("expected edited entry in history to have description %q, got %q", newDescription, e.Description)
+			}
+			break
+		}
+	}
+	if !foundInHistory {
+		t.Fatalf("expected edited entry to appear in history after editing")
+	}
+
+	// Phase 4: Start a new timer and verify it doesn't conflict with the edited stopped entry
+	newStart := time.Now().UTC()
+	newRunningEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "New running timer after edit",
+		Start:       newStart,
+		CreatedWith: "consistency-test",
+	})
+	if err != nil {
+		t.Fatalf("start new timer after editing: %v", err)
+	}
+	if newRunningEntry.Stop != nil {
+		t.Fatalf("expected new running entry to have no stop, got %s", *newRunningEntry.Stop)
+	}
+
+	// Verify current-timer returns the NEW running entry
+	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current timer for new running entry: %v", err)
+	}
+	if current.ID != newRunningEntry.ID {
+		t.Fatalf("expected current timer ID %d for new running entry, got %d", newRunningEntry.ID, current.ID)
+	}
+
+	// Verify the edited entry is STILL in history (not overwritten or removed)
+	entries, err = trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries with new running timer: %v", err)
+	}
+	editedEntryStillInHistory := false
+	newRunningEntryInHistory := false
+	for _, e := range entries {
+		if e.ID == editedEntry.ID {
+			editedEntryStillInHistory = true
+		}
+		if e.ID == newRunningEntry.ID && e.Stop == nil {
+			newRunningEntryInHistory = true
+		}
+	}
+	if !editedEntryStillInHistory {
+		t.Fatalf("expected edited entry to still appear in history after starting new timer")
+	}
+	if !newRunningEntryInHistory {
+		t.Fatalf("expected new running entry to appear in history without stop time")
+	}
+}
