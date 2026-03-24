@@ -3,13 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp exec react-router typegen && vp exec fumadocs-mdx && vp build",
-    "preview": "vp preview",
-    "check": "vp exec react-router typegen && vp exec fumadocs-mdx && tsc --noEmit",
-    "start": "vp exec serve ./build/client --config ./serve.json",
-    "postinstall": "vp exec fumadocs-mdx"
+    "dev": "react-router dev",
+    "build": "react-router typegen && fumadocs-mdx && react-router build",
+    "postbuild": "cp ./serve.json ./build/client/serve.json",
+    "preview": "serve -c serve.json ./build/client",
+    "check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
+    "start": "serve -c serve.json ./build/client",
+    "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
     "@orama/orama": "^3.1.18",
@@ -28,14 +30,13 @@
     "@react-router/dev": "^7.13.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/mdx": "^2.0.13",
-    "@types/node": "catalog:",
+    "@types/node": "^24",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "react-router-devtools": "^6.2.0",
     "serve": "^14.2.6",
     "tailwindcss": "^4.2.2",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "vite-plus": "catalog:"
+    "typescript": "^5",
+    "vite": "^8.0.0"
   }
 }
