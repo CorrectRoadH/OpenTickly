@@ -449,6 +449,18 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		return TimeEntryView{}, err
 	}
 	if stop == nil {
+		// Check if another running timer already exists before starting a new one
+		existing, ok, err := service.store.GetCurrentTimeEntry(ctx, current.UserID)
+		if err != nil {
+			return TimeEntryView{}, err
+		}
+		if ok && existing.ID != current.ID {
+			// There's a different running timer already
+			service.logger.WarnContext(ctx, "running time entry already exists",
+				"user_id", current.UserID,
+			)
+			return TimeEntryView{}, ErrRunningTimeEntryExists
+		}
 		if err := service.store.SetRunningTimeEntry(ctx, current.UserID, current.ID); err != nil {
 			service.logger.ErrorContext(ctx, "failed to set running time entry after update",
 				"user_id", current.UserID,
