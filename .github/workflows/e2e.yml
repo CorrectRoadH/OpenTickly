@@ -29,6 +29,11 @@ jobs:
         run: |
           docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
 
+      - name: Apply database schema
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+        run: /tmp/opentoggl schema-apply
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
