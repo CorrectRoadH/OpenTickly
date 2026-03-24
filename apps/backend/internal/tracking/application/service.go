@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/xptr"
 
 	"github.com/samber/lo"
@@ -16,19 +17,23 @@ import (
 type Service struct {
 	store   Store
 	catalog CatalogQueries
+	logger  log.Logger
 	now     func() time.Time
 }
 
-func NewService(store Store, catalog CatalogQueries) (*Service, error) {
+func NewService(store Store, catalog CatalogQueries, logger log.Logger) (*Service, error) {
 	switch {
 	case store == nil:
 		return nil, ErrStoreRequired
 	case catalog == nil:
 		return nil, ErrCatalogQueriesRequired
+	case logger == nil:
+		return nil, fmt.Errorf("logger is required")
 	default:
 		return &Service{
 			store:   store,
 			catalog: catalog,
+			logger:  logger,
 			now: func() time.Time {
 				return time.Now().UTC()
 			},
@@ -41,13 +46,32 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 		return TimeEntryView{}, err
 	}
 
+	service.logger.InfoContext(ctx, "creating time entry",
+		"user_id", command.UserID,
+		"workspace_id", command.WorkspaceID,
+		"project_id", command.ProjectID,
+		"task_id", command.TaskID,
+		"description", command.Description,
+		"billable", command.Billable,
+	)
+
 	clientID, err := service.resolveTrackingReferences(ctx, command.WorkspaceID, command.ProjectID, command.TaskID)
 	if err != nil {
+		service.logger.WarnContext(ctx, "failed to resolve tracking references",
+			"workspace_id", command.WorkspaceID,
+			"project_id", command.ProjectID,
+			"task_id", command.TaskID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 
 	start, stop, duration, err := normalizeTimeEntryRange(command.Start, command.Stop, command.Duration)
 	if err != nil {
+		service.logger.WarnContext(ctx, "invalid time entry range",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 
@@ -55,6 +79,9 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 		if _, ok, err := service.store.GetCurrentTimeEntry(ctx, command.UserID); err != nil {
 			return TimeEntryView{}, err
 		} else if ok {
+			service.logger.WarnContext(ctx, "running time entry already exists",
+				"user_id", command.UserID,
+			)
 			return TimeEntryView{}, ErrRunningTimeEntryExists
 		}
 	}
@@ -75,14 +102,32 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 		ExpenseIDs:  nil,
 	})
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create time entry",
+			"user_id", command.UserID,
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 
 	if stop == nil {
 		if err := service.store.SetRunningTimeEntry(ctx, command.UserID, entry.ID); err != nil {
+			service.logger.ErrorContext(ctx, "failed to set running time entry",
+				"user_id", command.UserID,
+				"entry_id", entry.ID,
+				"error", err.Error(),
+			)
 			return TimeEntryView{}, err
 		}
 	}
+
+	service.logger.InfoContext(ctx, "time entry created",
+		"entry_id", entry.ID,
+		"user_id", command.UserID,
+		"workspace_id", command.WorkspaceID,
+		"duration_seconds", duration,
+		"is_running", stop == nil,
+	)
 	return entry, nil
 }
 
@@ -271,11 +316,28 @@ func (service *Service) GetCurrentTimeEntry(ctx context.Context, userID int64) (
 }
 
 func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeEntryCommand) (TimeEntryView, error) {
+	service.logger.InfoContext(ctx, "updating time entry",
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"entry_id", command.TimeEntryID,
+	)
+
 	current, ok, err := service.store.GetTimeEntry(ctx, command.WorkspaceID, command.UserID, command.TimeEntryID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get time entry for update",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"entry_id", command.TimeEntryID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "time entry not found for update",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"entry_id", command.TimeEntryID,
+		)
 		return TimeEntryView{}, ErrTimeEntryNotFound
 	}
 
@@ -291,6 +353,10 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 	}
 	clientID, err := service.resolveTrackingReferences(ctx, command.WorkspaceID, current.ProjectID, current.TaskID)
 	if err != nil {
+		service.logger.WarnContext(ctx, "failed to resolve tracking references on update",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	current.ClientID = clientID
@@ -322,6 +388,11 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 
 	start, stop, computedDuration, err := normalizeTimeEntryRange(start, stop, duration)
 	if err != nil {
+		service.logger.WarnContext(ctx, "invalid time entry range on update",
+			"workspace_id", command.WorkspaceID,
+			"entry_id", command.TimeEntryID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	current.Start = start
@@ -331,17 +402,40 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 
 	updated, err := service.store.UpdateTimeEntry(ctx, UpdateTimeEntryRecord{TimeEntryView: current})
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to update time entry",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.UserID,
+			"entry_id", command.TimeEntryID,
+			"error", err.Error(),
+		)
 		return TimeEntryView{}, err
 	}
 	if stop == nil {
 		if err := service.store.SetRunningTimeEntry(ctx, current.UserID, current.ID); err != nil {
+			service.logger.ErrorContext(ctx, "failed to set running time entry after update",
+				"user_id", current.UserID,
+				"entry_id", current.ID,
+				"error", err.Error(),
+			)
 			return TimeEntryView{}, err
 		}
 	} else {
 		if err := service.store.ClearRunningTimeEntry(ctx, current.UserID); err != nil {
+			service.logger.ErrorContext(ctx, "failed to clear running time entry after update",
+				"user_id", current.UserID,
+				"entry_id", current.ID,
+				"error", err.Error(),
+			)
 			return TimeEntryView{}, err
 		}
 	}
+
+	service.logger.InfoContext(ctx, "time entry updated",
+		"entry_id", updated.ID,
+		"workspace_id", command.WorkspaceID,
+		"user_id", command.UserID,
+		"duration_seconds", computedDuration,
+	)
 	return updated, nil
 }
 
@@ -396,19 +490,55 @@ func (service *Service) StopTimeEntry(ctx context.Context, workspaceID int64, us
 }
 
 func (service *Service) DeleteTimeEntry(ctx context.Context, workspaceID int64, userID int64, timeEntryID int64) error {
+	service.logger.InfoContext(ctx, "deleting time entry",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"entry_id", timeEntryID,
+	)
+
 	entry, ok, err := service.store.GetTimeEntry(ctx, workspaceID, userID, timeEntryID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get time entry for deletion",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"entry_id", timeEntryID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "time entry not found for deletion",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"entry_id", timeEntryID,
+		)
 		return ErrTimeEntryNotFound
 	}
 	if err := service.store.DeleteTimeEntry(ctx, workspaceID, userID, timeEntryID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete time entry",
+			"workspace_id", workspaceID,
+			"user_id", userID,
+			"entry_id", timeEntryID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if entry.Stop == nil {
-		return service.store.ClearRunningTimeEntry(ctx, userID)
+		if err := service.store.ClearRunningTimeEntry(ctx, userID); err != nil {
+			service.logger.ErrorContext(ctx, "failed to clear running time entry after deletion",
+				"user_id", userID,
+				"entry_id", timeEntryID,
+				"error", err.Error(),
+			)
+			return err
+		}
 	}
+
+	service.logger.InfoContext(ctx, "time entry deleted",
+		"workspace_id", workspaceID,
+		"user_id", userID,
+		"entry_id", timeEntryID,
+	)
 	return nil
 }
 

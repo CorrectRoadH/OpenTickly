@@ -2,9 +2,11 @@ package bootstrap
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
+	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/platform"
 	"opentoggl/backend/apps/backend/internal/web"
 
@@ -89,7 +91,8 @@ func validateRequiredStartupConfig(cfg Config) error {
 }
 
 func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, error) {
-	assembledHandlers, err := newRouteHandlers(platform.Database.Pool())
+	appLogger := log.NewZapLogger(slog.Default())
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), appLogger)
 	if err != nil {
 		return nil, err
 	}

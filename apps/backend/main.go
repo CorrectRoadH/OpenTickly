@@ -10,7 +10,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"opentoggl/backend/apps/backend/internal/bootstrap"
@@ -18,7 +18,8 @@ import (
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
-		log.Fatal(err)
+		slog.Error("command failed", "error", err)
+		os.Exit(1)
 	}
 }
 

@@ -25,6 +25,7 @@ import (
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
@@ -67,7 +68,7 @@ type routeHandlers struct {
 	referenceApp  *platformapplication.ReferenceService
 }
 
-func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers, error) {
 	referenceService, err := platformapplication.NewReferenceService()
 	if err != nil {
 		return nil, err
@@ -96,7 +97,7 @@ func newRouteHandlers(pool *pgxpool.Pool) (*routeHandlers, error) {
 	if err != nil {
 		return nil, err
 	}
-	trackingService, err := trackingapplication.NewService(trackingpostgres.NewStore(pool), catalogService)
+	trackingService, err := trackingapplication.NewService(trackingpostgres.NewStore(pool), catalogService, appLogger)
 	if err != nil {
 		return nil, err
 	}
