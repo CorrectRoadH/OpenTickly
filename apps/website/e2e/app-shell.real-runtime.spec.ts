@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { loginE2eUser, readSessionBootstrap, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import {
+  createTimeEntryForWorkspace,
+  loginE2eUser,
+  readSessionBootstrap,
+  registerE2eUser,
+} from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: enter the tracking shell", () => {
   const defaultBadges = (scope: { locator: (selector: string) => any }) =>
@@ -192,5 +197,239 @@ test.describe("Story: enter the tracking shell", () => {
     await expect(defaultBadges(workspaceListbox)).toHaveCount(1);
     const updatedSession = await readSessionBootstrap(page);
     expect(updatedSession.user.default_workspace_id).toBe(updatedSession.current_workspace_id);
+  });
+});
+
+test.describe("VAL-CROSS: Shell entry convergence", () => {
+  /**
+   * VAL-CROSS-001: Timer is reachable via real shell navigation
+   *
+   * From an authenticated shell session, the user can navigate to Timer by clicking
+   * the visible Timer navigation item. The Timer navigation state becomes active,
+   * and the resulting page matches the same timer page family as direct entry.
+   */
+  test("VAL-CROSS-001: clicking Timer nav item reaches /timer and activates Timer nav state", async ({
+    page,
+  }) => {
+    const email = `cross-shell-nav-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Cross Shell Nav User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    // Start on overview page (after login lands on /timer, navigate away to overview)
+    await page.goto(new URL("/overview", page.url()).toString());
+    await expect(page).toHaveURL(/\/overview(?:\?.*)?$/);
+
+    // Verify Timer nav link is visible
+    const timerNavLink = page.getByRole("link", { name: "Timer" });
+    await expect(timerNavLink).toBeVisible();
+
+    // Capture Timer nav content div before clicking (active class is on inner div, not the Link)
+    const timerNavContentBefore = timerNavLink.locator("div");
+    const hasActiveClassBefore = await timerNavContentBefore.evaluate((el: HTMLElement) =>
+      el.classList.contains("bg-[var(--track-accent-soft)]"),
+    );
+    expect(hasActiveClassBefore).toBe(false);
+
+    // Click the Timer nav item
+    await timerNavLink.click();
+
+    // Assert: URL is /timer
+    await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
+
+    // Assert: Timer page content is visible
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Assert: Calendar is the default view
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Assert: Timer nav is now active (has the active background class on inner content div)
+    const timerNavContentAfter = timerNavLink.locator("div");
+    const hasActiveClassAfter = await timerNavContentAfter.evaluate((el: HTMLElement) =>
+      el.classList.contains("bg-[var(--track-accent-soft)]"),
+    );
+    expect(hasActiveClassAfter).toBe(true);
+
+    // Assert: No console errors
+    const consoleErrors: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrors.push(msg.text());
+      }
+    });
+
+    await page.reload();
+    await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
+    // After reload, Timer nav should still be active since we're on /timer
+    const timerNavContentReload = timerNavLink.locator("div");
+    const hasActiveClassReload = await timerNavContentReload.evaluate((el: HTMLElement) =>
+      el.classList.contains("bg-[var(--track-accent-soft)]"),
+    );
+    expect(hasActiveClassReload).toBe(true);
+
+    expect(consoleErrors.filter((e) => !e.includes("Download the React DevTools"))).toHaveLength(0);
+  });
+
+  /**
+   * VAL-CROSS-002: Direct entry and shell entry converge on the same timer state
+   *
+   * Opening Timer through shell navigation and opening `/timer` directly both produce
+   * the same observable timer state under the same session context: default `calendar`
+   * view, the same running-or-idle header state, and the same seeded current-workspace-scoped facts.
+   */
+  test("VAL-CROSS-002: shell-entry and direct-entry produce same timer state under same session", async ({
+    browser,
+    page,
+  }) => {
+    const email = `cross-convergence-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    // Register and login on page1, seed data
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Cross Convergence User",
+      password,
+    });
+
+    // Clear cookies and re-login to ensure proper auth state
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    // Get workspace ID from the session
+    const session = await readSessionBootstrap(page);
+    const workspaceId = session.current_workspace_id ?? session.workspaces[0]?.id ?? 0;
+
+    // Create time entries for today that will appear across all views
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    // Create entries that will appear in all views
+    for (let entryIndex = 0; entryIndex < 3; entryIndex++) {
+      const hour = 8 + entryIndex * 4;
+      const start = new Date(Date.UTC(baseYear, baseMonth, baseDate, hour, 0, 0));
+      const stop = new Date(Date.UTC(baseYear, baseMonth, baseDate, hour, 45, 0));
+      await createTimeEntryForWorkspace(page, {
+        description: `Convergence Entry ${entryIndex + 1}`,
+        start: start.toISOString(),
+        stop: stop.toISOString(),
+        workspaceId,
+      });
+    }
+
+    // Create a running timer
+    const runningDescription = "Pre-existing running timer for convergence test";
+    await page.evaluate(
+      async ({ workspaceId: wid, description }) => {
+        const response = await fetch(`/api/v9/workspaces/${wid}/time_entries`, {
+          body: JSON.stringify({
+            created_with: "playwright-e2e",
+            description,
+            start: new Date().toISOString(),
+            workspace_id: wid,
+          }),
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "POST",
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to start timer: ${response.status}`);
+        }
+        return response.json();
+      },
+      { workspaceId, description: runningDescription },
+    );
+
+    // Capture storage state from page1's authenticated session
+    const storageState = await page.context().storageState();
+
+    // Create page2 with the same authenticated storage state
+    const context2 = await browser.newContext({ storageState });
+    const page2 = await context2.newPage();
+
+    // PAGE 1: Navigate to /timer via shell click (Timer nav link)
+    await page.goto(new URL("/overview", page.url()).toString());
+    await page.getByRole("link", { name: "Timer" }).click();
+    await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Capture state from shell-entry page
+    const shellEntryCalendarActive = await page
+      .getByRole("button", { name: "Calendar" })
+      .getAttribute("aria-pressed");
+    const shellEntryRunningTimer = await page
+      .getByRole("button", { name: "Stop timer" })
+      .isVisible();
+    const shellEntryElapsed = await page.getByTestId("timer-elapsed").isVisible();
+
+    // PAGE 2: Navigate to /timer directly (use page.url() as base since page2 hasn't navigated yet)
+    await page2.goto(new URL("/timer", page.url()).toString());
+    await expect(page2).toHaveURL(/\/timer(?:\?.*)?$/);
+    await expect(page2.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Capture state from direct-entry page
+    const directEntryCalendarActive = await page2
+      .getByRole("button", { name: "Calendar" })
+      .getAttribute("aria-pressed");
+    const directEntryRunningTimer = await page2
+      .getByRole("button", { name: "Stop timer" })
+      .isVisible();
+    const directEntryElapsed = await page2.getByTestId("timer-elapsed").isVisible();
+
+    // Assert: Both pages show the same state (convergence)
+    expect(shellEntryCalendarActive).toBe(directEntryCalendarActive);
+    expect(shellEntryCalendarActive).toBe("true");
+
+    expect(shellEntryRunningTimer).toBe(directEntryRunningTimer);
+    expect(shellEntryRunningTimer).toBe(true);
+
+    expect(shellEntryElapsed).toBe(directEntryElapsed);
+    expect(shellEntryElapsed).toBe(true);
+
+    // The running timer state is the same (even if elapsed time differs slightly, the fact of running is consistent)
+    expect(shellEntryRunningTimer).toBe(directEntryRunningTimer);
+
+    // Assert: No console errors on either page
+    const consoleErrorsPage1: string[] = [];
+    const consoleErrorsPage2: string[] = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrorsPage1.push(msg.text());
+      }
+    });
+    page2.on("console", (msg) => {
+      if (msg.type() === "error") {
+        consoleErrorsPage2.push(msg.text());
+      }
+    });
+
+    // Reload both pages to verify stability
+    await page.reload();
+    await page2.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page2.getByTestId("tracking-timer-page")).toBeVisible();
+
+    expect(
+      consoleErrorsPage1.filter((e) => !e.includes("Download the React DevTools")),
+    ).toHaveLength(0);
+    expect(
+      consoleErrorsPage2.filter((e) => !e.includes("Download the React DevTools")),
+    ).toHaveLength(0);
+
+    await page2.close();
+    await context2.close();
   });
 });
