@@ -105,10 +105,15 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 	if err != nil {
 		return nil, err
 	}
+	importRoutes, err := newImportRoutes(assembledHandlers)
+	if err != nil {
+		return nil, err
+	}
 
 	return httpapp.ComposeRouteRegistrars(
 		webRoutes,
 		publicTrackRoutes,
 		publicReportsRoutes,
+		importRoutes,
 	), nil
 }

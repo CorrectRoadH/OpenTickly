@@ -109,3 +109,59 @@ func (store *Store) GetExportArchive(
 		Content:  content,
 	}, true, nil
 }
+
+func (store *Store) SaveImportJob(
+	ctx context.Context,
+	command importingapplication.SaveImportJobCommand,
+) (importingapplication.ImportJobView, error) {
+	selectedObjects, err := json.Marshal([]string{command.Source})
+	if err != nil {
+		return importingapplication.ImportJobView{}, fmt.Errorf("marshal import source: %w", err)
+	}
+
+	var record importingapplication.ImportJobView
+	err = store.pool.QueryRow(ctx, `
+		insert into importing_exports (
+			scope,
+			scope_id,
+			requested_by,
+			token,
+			state,
+			error_message,
+			selected_objects,
+			archive_content
+		) values ($1, $2, $3, $4, $5, '', $6, $7)
+		returning token, state, scope_id
+	`,
+		string(importingapplication.ExportScopeWorkspace),
+		command.WorkspaceID,
+		command.RequestedBy,
+		command.JobID,
+		command.Status,
+		selectedObjects,
+		command.ArchiveContent,
+	).Scan(&record.JobID, &record.Status, &record.WorkspaceID)
+	if err != nil {
+		return importingapplication.ImportJobView{}, fmt.Errorf("save importing job: %w", err)
+	}
+	return record, nil
+}
+
+func (store *Store) GetImportJob(
+	ctx context.Context,
+	jobID string,
+) (importingapplication.ImportJobView, bool, error) {
+	var record importingapplication.ImportJobView
+	err := store.pool.QueryRow(ctx, `
+		select token, state, scope_id
+		from importing_exports
+		where scope = $1 and token = $2
+	`, string(importingapplication.ExportScopeWorkspace), jobID).Scan(&record.JobID, &record.Status, &record.WorkspaceID)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return importingapplication.ImportJobView{}, false, nil
+		}
+		return importingapplication.ImportJobView{}, false, fmt.Errorf("get importing job: %w", err)
+	}
+	return record, true, nil
+}
