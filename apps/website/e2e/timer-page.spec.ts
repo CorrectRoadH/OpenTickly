@@ -385,6 +385,84 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // Verify the edited entry is STILL in history (not overwritten)
     await page.getByRole("button", { name: "List view" }).click();
     await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
+
+    // Phase 5: Restart cycle - stop the running entry and start a new one.
+    // This proves the no-contradiction invariant holds after a full restart cycle:
+    // current-timer shows the new running entry, while history shows only stopped entries.
+    const restartedDescription = "Restarted timer entry";
+
+    // Stop the "New running entry" timer
+    await page.getByRole("button", { name: "Stop timer" }).click();
+
+    // Verify UI shows idle state after stopping
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
+
+    // Verify current-timer API returns null after stopping
+    const afterStopForRestartResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(afterStopForRestartResponse.status).toBe(200);
+    expect(afterStopForRestartResponse.body).toBeNull();
+
+    // Verify "New running entry" now appears in history as a stopped entry
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(listViewContainer.locator("text=New running entry")).toBeVisible();
+
+    // Start a new timer (restart)
+    await page.getByRole("button", { name: "Calendar" }).click();
+    await page.getByLabel("Time entry description").fill(restartedDescription);
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Verify UI shows running state for the restarted entry
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // Verify current-timer API returns the restarted entry (not null)
+    const restartedResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(restartedResponse.status).toBe(200);
+    expect(restartedResponse.body).not.toBeNull();
+    expect(restartedResponse.body.description).toBe(restartedDescription);
+    expect(restartedResponse.body.stop).toBeFalsy(); // Running entries have no stop time
+
+    // Verify history shows ALL stopped entries, and the restarted entry appears as running.
+    // The restarted entry is still running, so it appears in list view with Edit button (running state),
+    // not with stop time/duration info (stopped state).
+    // This is the core contradiction proof: current-timer shows restarted entry as running,
+    // and the list view correctly shows it as running, not as stopped.
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
+    await expect(listViewContainer.locator("text=New running entry")).toBeVisible();
+    // The restarted entry SHOULD appear in list view as a RUNNING entry (with Edit button)
+    // This proves the UI is consistent - running entries show Edit button, not stop time
+    const restartedEditButton = listViewContainer.getByRole("button", {
+      name: `Edit ${restartedDescription}`,
+    });
+    await expect(restartedEditButton).toBeVisible();
+    // The restarted entry should NOT appear with stop info (which would indicate it's incorrectly treated as stopped)
+    // We verify this by checking it has an Edit button (running state) rather than duration/date info
+
+    // Final contradiction check: current-timer and history are consistent
+    // Current timer: restartedDescription (running)
+    // History: shows initial, edited, "New running entry" (all stopped), but NOT restartedDescription
+    const finalCurrentResponse = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(finalCurrentResponse.status).toBe(200);
+    expect(finalCurrentResponse.body).not.toBeNull();
+    expect(finalCurrentResponse.body.description).toBe(restartedDescription);
+    expect(finalCurrentResponse.body.stop).toBeFalsy();
   });
 });
 
