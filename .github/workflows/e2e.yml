@@ -39,7 +39,9 @@ jobs:
 
       - name: Apply database schema
         env:
+          PORT: 8080
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
         run: /tmp/opentoggl schema-apply
 
       - name: Build frontend
