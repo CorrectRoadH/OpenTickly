@@ -13,6 +13,8 @@ import (
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+
+	"github.com/samber/lo"
 )
 
 // TestCreateStoppedTimeEntryPersistsFact verifies VAL-ENTRY-001:
@@ -37,6 +39,36 @@ func TestCreateStoppedTimeEntryPersistsFact(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 
+	// Create a task associated with the project
+	task, err := catalogService.CreateTask(ctx, catalogapplication.CreateTaskCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		ProjectID:   &project.ID,
+		Name:        "Entry Lifecycle Task",
+	})
+	if err != nil {
+		t.Fatalf("create task: %v", err)
+	}
+
+	// Create tags
+	tag1, err := catalogService.CreateTag(ctx, catalogapplication.CreateTagCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Documentation",
+	})
+	if err != nil {
+		t.Fatalf("create tag1: %v", err)
+	}
+	tag2, err := catalogService.CreateTag(ctx, catalogapplication.CreateTagCommand{
+		WorkspaceID: workspaceID,
+		CreatedBy:   userID,
+		Name:        "Research",
+	})
+	if err != nil {
+		t.Fatalf("create tag2: %v", err)
+	}
+	tagIDs := []int64{tag1.ID, tag2.ID}
+
 	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
 	stop := time.Date(2026, 3, 23, 11, 30, 0, 0, time.UTC)
 	description := "Writing documentation for tracking module"
@@ -48,6 +80,8 @@ func TestCreateStoppedTimeEntryPersistsFact(t *testing.T) {
 		Start:       start,
 		Stop:        &stop,
 		ProjectID:   &project.ID,
+		TaskID:      &task.ID,
+		TagIDs:      tagIDs,
 		Billable:    true,
 		CreatedWith: "entry-lifecycle-test",
 	})
@@ -84,6 +118,21 @@ func TestCreateStoppedTimeEntryPersistsFact(t *testing.T) {
 		t.Fatalf("expected project ID %d, got %#v", project.ID, created.ProjectID)
 	}
 
+	// Verify task association
+	if created.TaskID == nil || *created.TaskID != task.ID {
+		t.Fatalf("expected task ID %d, got %#v", task.ID, created.TaskID)
+	}
+
+	// Verify tag associations
+	if len(created.TagIDs) != len(tagIDs) {
+		t.Fatalf("expected %d tag IDs, got %d", len(tagIDs), len(created.TagIDs))
+	}
+	for _, expectedTagID := range tagIDs {
+		if !lo.Contains(created.TagIDs, expectedTagID) {
+			t.Fatalf("expected tag IDs %v to contain %d, got %v", tagIDs, expectedTagID, created.TagIDs)
+		}
+	}
+
 	// Verify workspace and user ownership
 	if created.WorkspaceID != workspaceID {
 		t.Fatalf("expected workspace ID %d, got %d", workspaceID, created.WorkspaceID)
@@ -92,7 +141,7 @@ func TestCreateStoppedTimeEntryPersistsFact(t *testing.T) {
 		t.Fatalf("expected user ID %d, got %d", userID, created.UserID)
 	}
 
-	// Direct readback by ID must match
+	// Direct readback by ID must match all associations
 	readback, err := trackingService.GetTimeEntry(ctx, workspaceID, userID, created.ID)
 	if err != nil {
 		t.Fatalf("get time entry by ID: %v", err)
@@ -105,6 +154,20 @@ func TestCreateStoppedTimeEntryPersistsFact(t *testing.T) {
 	}
 	if readback.Duration != expectedDuration {
 		t.Fatalf("expected readback duration %d, got %d", expectedDuration, readback.Duration)
+	}
+	if readback.ProjectID == nil || *readback.ProjectID != project.ID {
+		t.Fatalf("expected readback project ID %d, got %#v", project.ID, readback.ProjectID)
+	}
+	if readback.TaskID == nil || *readback.TaskID != task.ID {
+		t.Fatalf("expected readback task ID %d, got %#v", task.ID, readback.TaskID)
+	}
+	if len(readback.TagIDs) != len(tagIDs) {
+		t.Fatalf("expected readback %d tag IDs, got %d", len(tagIDs), len(readback.TagIDs))
+	}
+	for _, expectedTagID := range tagIDs {
+		if !lo.Contains(readback.TagIDs, expectedTagID) {
+			t.Fatalf("expected readback tag IDs %v to contain %d, got %v", tagIDs, expectedTagID, readback.TagIDs)
+		}
 	}
 }
 
@@ -240,6 +303,92 @@ func TestInvalidTimeRangeIsRejectedWithoutMutation(t *testing.T) {
 	}
 	if readback.Duration != originalDuration {
 		t.Fatalf("expected preserved duration %d, got %d", originalDuration, readback.Duration)
+	}
+}
+
+// TestStartDurationMismatchIsRejectedWithoutMutation verifies VAL-ENTRY-003:
+// If a user provides both explicit stop and duration but they are inconsistent
+// (start + duration != stop), the system rejects the save with a fixed failure
+// result and preserves the prior valid state without partial mutation.
+func TestStartDurationMismatchIsRejectedWithoutMutation(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "duration-mismatch")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// Create a valid entry first
+	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
+	stop := time.Date(2026, 3, 23, 10, 30, 0, 0, time.UTC)
+	entry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "Valid entry",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "duration-mismatch-test",
+	})
+	if err != nil {
+		t.Fatalf("create valid time entry: %v", err)
+	}
+	originalDuration := entry.Duration
+
+	// Attempt to update with stop and duration that don't match - should fail
+	// start (10:00) + duration (60 min = 3600 sec) = stop should be 10:60 -> 11:00
+	// but we provide stop as 10:30, which is inconsistent
+	mismatchedStop := time.Date(2026, 3, 23, 10, 30, 0, 0, time.UTC)
+	wrongDuration := 3600 // 60 minutes, but stop only accounts for 30 minutes
+
+	_, err = trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		TimeEntryID: entry.ID,
+		UserID:      userID,
+		Start:       &start,
+		Stop:        &mismatchedStop,
+		Duration:    &wrongDuration,
+	})
+	if err == nil {
+		t.Fatalf("expected error when start + duration != stop, got nil")
+	}
+	if err != trackingapplication.ErrInvalidTimeRange {
+		t.Fatalf("expected ErrInvalidTimeRange, got %v", err)
+	}
+
+	// Verify prior state is preserved - no partial mutation
+	readback, err := trackingService.GetTimeEntry(ctx, workspaceID, userID, entry.ID)
+	if err != nil {
+		t.Fatalf("get time entry after failed update: %v", err)
+	}
+	if !readback.Start.Equal(start) {
+		t.Fatalf("expected preserved start %s, got %s", start, readback.Start)
+	}
+	if readback.Stop == nil || !readback.Stop.Equal(stop) {
+		t.Fatalf("expected preserved stop %s, got %#v", stop, readback.Stop)
+	}
+	if readback.Duration != originalDuration {
+		t.Fatalf("expected preserved duration %d, got %d", originalDuration, readback.Duration)
+	}
+
+	// Also test create with mismatched stop + duration
+	anotherStart := time.Date(2026, 3, 23, 14, 0, 0, 0, time.UTC)
+	anotherStop := time.Date(2026, 3, 23, 14, 45, 0, 0, time.UTC)
+	anotherWrongDuration := 7200 // 2 hours, but stop only accounts for 45 minutes
+
+	_, err = trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "Should fail on create",
+		Start:       anotherStart,
+		Stop:        &anotherStop,
+		Duration:    &anotherWrongDuration,
+		CreatedWith: "duration-mismatch-test",
+	})
+	if err == nil {
+		t.Fatalf("expected error when creating with start + duration != stop, got nil")
+	}
+	if err != trackingapplication.ErrInvalidTimeRange {
+		t.Fatalf("expected ErrInvalidTimeRange on create, got %v", err)
 	}
 }
 
