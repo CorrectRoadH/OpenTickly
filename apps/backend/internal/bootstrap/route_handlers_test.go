@@ -6,11 +6,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitypostgres "opentoggl/backend/apps/backend/internal/identity/infra/postgres"
@@ -18,8 +20,14 @@ import (
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 )
 
+// uniqueTestEmail generates a unique email for test isolation
+func uniqueTestEmail(prefix string) string {
+	return fmt.Sprintf("%s-%d@example.com", prefix, time.Now().UnixNano())
+}
+
 func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("web-echo")
 
 	app, err := NewApp(Config{
 		ServiceName: "opentoggl-api",
@@ -39,7 +47,7 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	t.Cleanup(app.Platform.Database.Close)
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
-		"email":    "person@example.com",
+		"email":    uniqueEmail,
 		"fullname": "Test Person",
 		"password": "secret1",
 	}, "")
@@ -75,8 +83,8 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	}
 	mustDecodeJSON(t, register.Body.Bytes(), &bootstrapResponse)
 
-	if bootstrapResponse.User.Email != "person@example.com" {
-		t.Fatalf("expected bootstrap email person@example.com, got %q", bootstrapResponse.User.Email)
+	if bootstrapResponse.User.Email != uniqueEmail {
+		t.Fatalf("expected bootstrap email %s, got %q", uniqueEmail, bootstrapResponse.User.Email)
 	}
 	if len(bootstrapResponse.Workspaces) == 0 {
 		t.Fatal("expected at least one workspace in session bootstrap")
@@ -112,7 +120,7 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 		t.Fatalf("expected session status 200, got %d body=%s", session.Code, session.Body.String())
 	}
 
-	passwordAuthorization := basicAuthorization("person@example.com", "secret1")
+	passwordAuthorization := basicAuthorization(uniqueEmail, "secret1")
 
 	profile := performAuthorizedJSONRequest(t, app, http.MethodGet, "/api/v9/me", nil, passwordAuthorization)
 	if profile.Code != http.StatusOK {
@@ -157,8 +165,9 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 		t.Fatalf("expected profile api_token %q after reset, got %#v", rotatedToken, profileAfterResetBody["api_token"])
 	}
 
+	renamedEmail := fmt.Sprintf("renamed-%d@example.com", time.Now().UnixNano())
 	updatedProfile := performAuthorizedJSONRequest(t, app, http.MethodPut, "/api/v9/me", map[string]any{
-		"email":                "renamed@example.com",
+		"email":                renamedEmail,
 		"fullname":             "Renamed Person",
 		"timezone":             "Asia/Shanghai",
 		"beginning_of_week":    1,
@@ -395,7 +404,7 @@ func TestWebRoutesServeLiveEchoServer(t *testing.T) {
 	}
 
 	login := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/login", map[string]any{
-		"email":    "renamed@example.com",
+		"email":    renamedEmail,
 		"password": "secret1",
 	}, "")
 	if login.Code != http.StatusOK {
