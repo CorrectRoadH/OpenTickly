@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router typegen && fumadocs-mdx && react-router build",
-    "postbuild": "cp ./serve.json ./build/client/serve.json",
+    "postbuild": "cp ./serve.json ./build/client/serve.json && rm -rf ./dist && mkdir -p ./dist && cp -R ./build/client/. ./dist/ && cp ./serve.json ./dist/serve.json",
     "preview": "serve -c serve.json ./build/client",
     "check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
     "start": "serve -c serve.json ./build/client",
