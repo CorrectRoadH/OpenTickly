@@ -323,7 +323,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 		},
 		"archive",
 		"time-entries.csv",
-		[]byte("\"User\",\"Email\",\"Client\",\"Project\",\"Task\",\"Description\",\"Billable\",\"Start date\",\"Start time\",\"End date\",\"End time\",\"Duration\",\"Tags\"\n\"CSV Importer\",\"csv-importer@example.com\",\"\",\"opentoggl\",\"\",\"开发 opentoggl；刚刚已完成 toggl CLI 对于 opentoggl 的开发与测试\",\"No\",\"2026-03-24\",\"13:36:00\",\"2026-03-24\",\"14:26:54\",\"00:50:54\",\"2 象限\"\n"),
+		[]byte("\"User\",\"Email\",\"Client\",\"Project\",\"Task\",\"Description\",\"Billable\",\"Start date\",\"Start time\",\"End date\",\"End time\",\"Duration\",\"Tags\"\n\"CSV Importer\",\""+uniqueEmail+"\",\"\",\"opentoggl\",\"\",\"开发 opentoggl；刚刚已完成 toggl CLI 对于 opentoggl 的开发与测试\",\"No\",\"2026-03-24\",\"13:36:00\",\"2026-03-24\",\"14:26:54\",\"00:50:54\",\"2 象限\"\n"),
 		authorization,
 	)
 	if jobCreate.Code != http.StatusAccepted {
