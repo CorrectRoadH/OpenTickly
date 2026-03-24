@@ -1,25 +1,8 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "lsp": {
-    "gopls": {
-      "env": {
-        "GOFLAGS": "-tags=dev"
-      }
-    },
-    "typescript": {
-      "initialization": {
-        "preferences": {
-          "importModuleSpecifierPreference": "relative"
-        }
-      }
-    },
-    "oxlint": {
-      "disabled": false
-    }
-  },
   "formatter": {
     "gofmt": {
-      "env": {
+      "environment": {
         "GOFMT": "tabular"
       }
     },
