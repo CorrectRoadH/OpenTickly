@@ -348,9 +348,17 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     // Capture storage state from page1's authenticated session
     const storageState = await page.context().storageState();
 
+    // Keep both entry paths under the same session prefs baseline.
+    await page.evaluate(() => {
+      localStorage.removeItem("opentoggl:user-prefs:timer-view");
+    });
+
     // Create page2 with the same authenticated storage state
     const context2 = await browser.newContext({ storageState });
     const page2 = await context2.newPage();
+    await page2.addInitScript(() => {
+      window.localStorage.removeItem("opentoggl:user-prefs:timer-view");
+    });
 
     // PAGE 1: Navigate to /timer via shell click (Timer nav link)
     await page.goto(new URL("/overview", page.url()).toString());
@@ -367,28 +375,6 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
       .isVisible();
     const shellEntryElapsed = await page.getByTestId("timer-elapsed").isVisible();
 
-    // Switch to list view to capture seeded entries on shell-entry page
-    await page.getByRole("button", { name: "List view" }).click();
-    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-
-    // Wait for entries to load in list view - wait for at least one Edit button to appear
-    await expect(page.getByRole("button", { name: /Edit Convergence Entry 1/ })).toBeVisible({
-      timeout: 5000,
-    });
-
-    // Capture seeded entries visible on shell-entry page (get aria-label which contains description)
-    const shellEntryAriaLabels = await page
-      .getByRole("button", { name: /Edit (Convergence Entry|Pre-existing running)/ })
-      .evaluateAll((buttons) =>
-        buttons.map((btn) => (btn as HTMLButtonElement).getAttribute("aria-label") ?? ""),
-      );
-    const shellEntryDescriptions = shellEntryAriaLabels
-      .map((t) => t.replace("Edit ", ""))
-      .filter((t) => t.includes("Entry") || t.includes("timer"));
-
     // PAGE 2: Navigate to /timer directly (use page.url() as base since page2 hasn't navigated yet)
     await page2.goto(new URL("/timer", page.url()).toString());
     await expect(page2).toHaveURL(/\/timer(?:\?.*)?$/);
@@ -403,28 +389,6 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
       .isVisible();
     const directEntryElapsed = await page2.getByTestId("timer-elapsed").isVisible();
 
-    // Switch to list view to capture seeded entries visible on direct-entry page
-    await page2.getByRole("button", { name: "List view" }).click();
-    await expect(page2.getByRole("button", { name: "List view" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-
-    // Wait for entries to load in list view - wait for at least one Edit button to appear
-    await expect(page2.getByRole("button", { name: /Edit Convergence Entry 1/ })).toBeVisible({
-      timeout: 5000,
-    });
-
-    // Capture seeded entries visible on direct-entry page (get aria-label which contains description)
-    const directEntryAriaLabels = await page2
-      .getByRole("button", { name: /Edit (Convergence Entry|Pre-existing running)/ })
-      .evaluateAll((buttons) =>
-        buttons.map((btn) => (btn as HTMLButtonElement).getAttribute("aria-label") ?? ""),
-      );
-    const directEntryDescriptions = directEntryAriaLabels
-      .map((t) => t.replace("Edit ", ""))
-      .filter((t) => t.includes("Entry") || t.includes("timer"));
-
     // Assert: Both pages show the same state (convergence)
     expect(shellEntryCalendarActive).toBe(directEntryCalendarActive);
     expect(shellEntryCalendarActive).toBe("true");
@@ -435,17 +399,35 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     expect(shellEntryElapsed).toBe(directEntryElapsed);
     expect(shellEntryElapsed).toBe(true);
 
-    // The running timer state is the same (even if elapsed time differs slightly, the fact of running is consistent)
-    expect(shellEntryRunningTimer).toBe(directEntryRunningTimer);
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page2.getByRole("button", { name: "List view" }).click();
+    await expect(page2.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
 
-    // Assert: Same seeded current-workspace facts are visible on both entry paths
-    // The seeded entries should appear on both pages
-    expect(shellEntryDescriptions.length).toBeGreaterThan(0);
-    expect(directEntryDescriptions.length).toBe(shellEntryDescriptions.length);
+    const expectedDescriptions = [
+      "Convergence Entry 1",
+      "Convergence Entry 2",
+      "Convergence Entry 3",
+      runningDescription,
+    ];
 
-    // Verify each seeded entry description appears on both pages
-    for (const description of shellEntryDescriptions) {
-      expect(directEntryDescriptions).toContain(description);
+    for (const description of expectedDescriptions) {
+      await expect(
+        page.getByRole("button", { name: new RegExp(`Edit ${description}`) }),
+      ).toBeVisible({
+        timeout: 5000,
+      });
+      await expect(
+        page2.getByRole("button", { name: new RegExp(`Edit ${description}`) }),
+      ).toBeVisible({
+        timeout: 5000,
+      });
     }
 
     // Assert: No console errors on either page
