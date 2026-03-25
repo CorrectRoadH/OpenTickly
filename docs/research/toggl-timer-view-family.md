@@ -7,13 +7,6 @@
 > Todo: none
 > Fully implemented: yes
 
-> Mission status
-> Agent: timer-core-cross-workspace-header-backend-proof-and-traceability
-> Status: complete
-> Current code differences: No differences. Backend truth proof added via TestCrossWorkspaceRunningTimerEditStop (regressions_test.go) paired with existing browser E2E coverage. The cross-workspace running header behavior (VAL-TIMER-002, VAL-TIMER-003, VAL-TIMER-004, VAL-CROSS-001, VAL-CROSS-003) is now proven at both backend and browser layers using the same seeded scenario.
-> Todo: none
-> Fully implemented: yes
-
 本文件研究 Timer 页顶部这组三选一视图：
 
 - `Calendar`

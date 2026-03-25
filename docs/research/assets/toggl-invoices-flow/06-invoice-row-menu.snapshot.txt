@@ -1,0 +1,6 @@
+uid=93_0 RootWebArea "12:00:42 • Toggl Track" url="https://track.toggl.com/invoice"
+  uid=111_0 menu focusable focused orientation="vertical"
+    uid=111_1 menuitem "Download"
+    uid=111_2 menuitem "Duplicate"
+    uid=111_3 menuitem "Send to QuickBooks" disableable disabled
+    uid=111_4 menuitem "Delete"

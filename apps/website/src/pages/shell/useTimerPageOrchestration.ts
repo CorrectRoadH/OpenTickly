@@ -1,0 +1,867 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  buildEntryGroups,
+  buildTimesheetRows,
+  getCalendarHours,
+  resolveEntryColor,
+  resolveEntryDurationSeconds,
+  sortTimeEntries,
+  summarizeProjects,
+  sumForDate,
+} from "../../features/tracking/overview-data.ts";
+import type {
+  GithubComTogglTogglApiInternalModelsProject,
+  GithubComTogglTogglApiInternalModelsTimeEntry,
+} from "../../shared/api/generated/public-track/types.gen.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
+import {
+  useCreateProjectMutation,
+  useCreateTagMutation,
+  useCreateTimeEntryMutation,
+  useCurrentTimeEntryQuery,
+  useDeleteTimeEntryMutation,
+  useProjectsQuery,
+  useStartTimeEntryMutation,
+  useStopTimeEntryMutation,
+  useTagsQuery,
+  useTimeEntriesQuery,
+  useUpdateTimeEntryMutation,
+  useUpdateWebSessionMutation,
+} from "../../shared/query/web-shell.ts";
+import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
+import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
+import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
+import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
+
+const TIMER_VIEW_STORAGE_KEY = "opentoggl:user-prefs:timer-view";
+
+function loadPersistedTimerView(): TimerViewMode {
+  try {
+    const stored = localStorage.getItem(TIMER_VIEW_STORAGE_KEY);
+    if (stored === "calendar" || stored === "list" || stored === "timesheet") {
+      return stored;
+    }
+  } catch {
+    // localStorage not available or parse error
+  }
+  return "calendar";
+}
+
+function persistTimerView(view: TimerViewMode): void {
+  try {
+    localStorage.setItem(TIMER_VIEW_STORAGE_KEY, view);
+  } catch {
+    // localStorage not available or write error
+  }
+}
+
+function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
+  return entry.stop == null || (entry.duration ?? 0) < 0;
+}
+
+function resolveSingleTimerErrorMessage(error: unknown): string {
+  if (error instanceof WebApiError) {
+    if (typeof error.data === "string" && error.data.trim()) {
+      return error.data;
+    }
+    if (
+      error.data &&
+      typeof error.data === "object" &&
+      "message" in error.data &&
+      typeof error.data.message === "string"
+    ) {
+      return error.data.message;
+    }
+    return error.message;
+  }
+  return "We could not update this time entry right now.";
+}
+
+function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
+  if (Array.isArray(data)) {
+    return data.filter((project): project is GithubComTogglTogglApiInternalModelsProject =>
+      Boolean(project && typeof project === "object" && "id" in project),
+    );
+  }
+  if (hasProjectArray(data, "projects")) {
+    return data.projects;
+  }
+  if (hasProjectArray(data, "data")) {
+    return data.data;
+  }
+  return [];
+}
+
+function hasProjectArray(
+  value: unknown,
+  key: "data" | "projects",
+): value is Record<typeof key, GithubComTogglTogglApiInternalModelsProject[]> {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
+}
+
+function normalizeTags(data: unknown): { id: number; name: string }[] {
+  if (Array.isArray(data)) {
+    return data.filter((tag): tag is { id: number; name: string } =>
+      Boolean(tag && typeof tag === "object" && "id" in tag && "name" in tag),
+    );
+  }
+  if (hasTagArray(data, "tags")) {
+    return data.tags;
+  }
+  if (hasTagArray(data, "data")) {
+    return data.data;
+  }
+  return [];
+}
+
+function hasTagArray(
+  value: unknown,
+  key: "data" | "tags",
+): value is Record<typeof key, { id: number; name: string }[]> {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    Array.isArray((value as Record<string, unknown>)[key])
+  );
+}
+
+export interface TimerPageOrchestration {
+  // View state
+  view: TimerViewMode;
+  setView: (next: TimerViewMode) => void;
+
+  // Time state
+  nowMs: number;
+  selectedWeekDate: Date;
+  setSelectedWeekDate: (date: Date) => void;
+  weekDays: Date[];
+  weekRange: { endDate: string; startDate: string };
+
+  // Running entry state
+  runningEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+  runningDurationSeconds: number;
+  runningDescription: string;
+  setRunningDescription: (desc: string) => void;
+
+  // Draft state for idle composer
+  draftDescription: string;
+  setDraftDescription: (desc: string) => void;
+  draftProjectId: number | null;
+  setDraftProjectId: (id: number | null) => void;
+  draftTagIds: number[];
+  setDraftTagIds: (ids: number[]) => void;
+  draftTags: { id: number; name: string }[];
+
+  // Display values derived from state
+  displayProject: string;
+  displayColor: string;
+  timerDescriptionValue: string;
+
+  // Selected entry state for popup
+  selectedEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+  setSelectedEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
+  selectedEntryAnchor: TimeEntryEditorAnchor | null;
+  setSelectedEntryAnchor: (anchor: TimeEntryEditorAnchor | null) => void;
+  selectedEntryWorkspaceId: number;
+  selectedDescription: string;
+  setSelectedDescription: (desc: string) => void;
+  selectedEntryError: string | null;
+  setSelectedEntryError: (error: string | null) => void;
+  selectedProjectId: number | null;
+  setSelectedProjectId: (id: number | null) => void;
+  selectedTagIds: number[];
+  setSelectedTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+
+  // Composer suggestions
+  composerSuggestionsAnchor: TimerComposerSuggestionsAnchor | null;
+  setComposerSuggestionsAnchor: (anchor: TimerComposerSuggestionsAnchor | null) => void;
+
+  // Refs
+  timerDescriptionInputRef: React.RefObject<HTMLInputElement | null>;
+  scrollAreaRef: React.RefObject<HTMLDivElement | null>;
+
+  // Query data
+  entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  visibleEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  timeEntriesQuery: ReturnType<typeof useTimeEntriesQuery>;
+  currentTimeEntryQuery: ReturnType<typeof useCurrentTimeEntryQuery>;
+  recentWorkspaceEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  projectOptions: GithubComTogglTogglApiInternalModelsProject[];
+  tagOptions: { id: number; name: string }[];
+  workspaceId: number;
+  timezone: string;
+  weekTotalSeconds: number;
+  groupedEntries: ReturnType<typeof buildEntryGroups>;
+  trackStrip: { color: string; label: string }[];
+  calendarHours: ReturnType<typeof getCalendarHours>;
+  timesheetRows: ReturnType<typeof buildTimesheetRows>;
+
+  // Mutation states
+  timerMutationPending: boolean;
+  timerErrorMessage: string;
+
+  // Handlers
+  handleTimerAction: () => Promise<void>;
+  handleRunningDescriptionCommit: () => Promise<void>;
+  handleSelectedEntrySave: () => Promise<void>;
+  handleSelectedEntryPrimaryAction: () => Promise<void>;
+  handleSelectedEntryDelete: () => Promise<void>;
+  handleSelectedEntryDuplicate: () => Promise<void>;
+  handleSelectedEntryProjectCreate: (name: string) => Promise<void>;
+  handleSelectedEntryTagCreate: (name: string) => Promise<void>;
+  handleSelectedEntryStartTimeChange: (time: Date) => void;
+  handleSelectedEntryStopTimeChange: (time: Date) => void;
+  handleEntryEdit: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    anchorRect: DOMRect,
+  ) => void;
+  handleIdleDescriptionFocus: () => void;
+  closeSelectedEntryEditor: () => void;
+  closeComposerSuggestions: () => void;
+  switchWorkspace: (nextWorkspaceId: number) => void;
+
+  // Query mutations for dialog
+  createProjectMutation: ReturnType<typeof useCreateProjectMutation>;
+  createTagMutation: ReturnType<typeof useCreateTagMutation>;
+  deleteTimeEntryMutation: ReturnType<typeof useDeleteTimeEntryMutation>;
+  createTimeEntryMutation: ReturnType<typeof useCreateTimeEntryMutation>;
+  updateTimeEntryMutation: ReturnType<typeof useUpdateTimeEntryMutation>;
+
+  // Session
+  session: ReturnType<typeof useSession>;
+}
+
+export function useTimerPageOrchestration(): TimerPageOrchestration {
+  const session = useSession();
+  const { setCurrentWorkspaceId } = useSessionActions();
+  const updateWebSessionMutation = useUpdateWebSessionMutation();
+  const workspaceId = session.currentWorkspace.id;
+  const timezone = session.user.timezone || "UTC";
+
+  // View state with persistence
+  const [view, setViewState] = useState<TimerViewMode>(loadPersistedTimerView);
+
+  const setView = useCallback((next: TimerViewMode) => {
+    persistTimerView(next);
+    setViewState(next);
+  }, []);
+
+  // Time state
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
+
+  const weekDays = useMemo(() => getWeekDaysForDate(selectedWeekDate), [selectedWeekDate]);
+
+  const weekRange = useMemo(
+    () => ({
+      endDate: formatTrackQueryDate(weekDays[6]),
+      startDate: formatTrackQueryDate(weekDays[0]),
+    }),
+    [weekDays],
+  );
+
+  // Queries
+  const timeEntriesQuery = useTimeEntriesQuery({ ...weekRange });
+  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+
+  // Running entry state
+  const runningEntry = currentTimeEntryQuery.data ?? null;
+
+  // Draft state for idle composer
+  const [draftDescription, setDraftDescription] = useState("");
+  const [draftProjectId, setDraftProjectId] = useState<number | null>(null);
+  const [draftTagIds, setDraftTagIds] = useState<number[]>([]);
+
+  // Running description state
+  const [runningDescription, setRunningDescription] = useState("");
+
+  // Selected entry state for popup
+  const [selectedEntry, setSelectedEntry] =
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
+  const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
+    null,
+  );
+  const [selectedDescription, setSelectedDescription] = useState("");
+  const [selectedEntryError, setSelectedEntryError] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+
+  // Composer suggestions
+  const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
+    useState<TimerComposerSuggestionsAnchor | null>(null);
+
+  // Refs
+  const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement | null>(null);
+
+  // Derived state for selected entry workspace
+  const selectedEntryWorkspaceId = useMemo(() => {
+    const entryWorkspaceId = selectedEntry?.workspace_id ?? selectedEntry?.wid;
+    return typeof entryWorkspaceId === "number" ? entryWorkspaceId : workspaceId;
+  }, [selectedEntry, workspaceId]);
+
+  // Workspace-scoped queries
+  const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
+  const tagsQuery = useTagsQuery(selectedEntryWorkspaceId);
+  const recentTimeEntriesQuery = useTimeEntriesQuery({});
+
+  // Mutations
+  const createProjectMutation = useCreateProjectMutation(selectedEntryWorkspaceId);
+  const createTimeEntryMutation = useCreateTimeEntryMutation(selectedEntryWorkspaceId);
+  const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
+  const stopTimeEntryMutation = useStopTimeEntryMutation();
+  const createTagMutation = useCreateTagMutation(selectedEntryWorkspaceId);
+  const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
+  const updateTimeEntryMutation = useUpdateTimeEntryMutation();
+
+  // Normalized data
+  const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const tagOptions = useMemo(() => normalizeTags(tagsQuery.data), [tagsQuery.data]);
+
+  // Draft project and tags
+  const draftProject = useMemo(
+    () => projectOptions.find((project) => project.id === draftProjectId) ?? null,
+    [draftProjectId, projectOptions],
+  );
+  const draftTags = useMemo(
+    () => tagOptions.filter((tag) => draftTagIds.includes(tag.id)),
+    [draftTagIds, tagOptions],
+  );
+
+  // Entries
+  const entries = useMemo(
+    () => sortTimeEntries(timeEntriesQuery.data ?? []),
+    [timeEntriesQuery.data],
+  );
+  const visibleEntries = useMemo(
+    () => entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId),
+    [entries, workspaceId],
+  );
+  const recentWorkspaceEntries = useMemo(
+    () =>
+      sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
+        (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
+      ),
+    [recentTimeEntriesQuery.data, workspaceId],
+  );
+
+  // Computed values
+  const runningDurationSeconds = useMemo(
+    () => resolveEntryDurationSeconds(runningEntry ?? { duration: 0 }, nowMs),
+    [runningEntry, nowMs],
+  );
+
+  const displayProject = useMemo(
+    () =>
+      runningEntry?.project_name ||
+      draftProject?.name ||
+      visibleEntries.find((entry) => entry.project_name)?.project_name ||
+      "No project",
+    [runningEntry, draftProject, visibleEntries],
+  );
+
+  const displayColor = useMemo(
+    () =>
+      runningEntry != null
+        ? resolveEntryColor(runningEntry)
+        : draftProject != null
+          ? resolveProjectColorValue(draftProject)
+          : resolveEntryColor(visibleEntries[0] ?? {}),
+    [runningEntry, draftProject, visibleEntries],
+  );
+
+  const timerDescriptionValue = runningEntry?.id != null ? runningDescription : draftDescription;
+
+  // Week total
+  const weekTotalSeconds = useMemo(() => {
+    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    });
+    return weekDays.reduce((total, day) => {
+      return total + sumForDate(visibleEntries, dateFormatter.format(day), timezone);
+    }, 0);
+  }, [weekDays, visibleEntries, timezone]);
+
+  const groupedEntries = useMemo(
+    () => buildEntryGroups(visibleEntries, timezone),
+    [visibleEntries, timezone],
+  );
+
+  const trackStrip = useMemo(
+    () => summarizeProjects(visibleEntries).slice(0, 12),
+    [visibleEntries],
+  );
+
+  const calendarHours = useMemo(
+    () => getCalendarHours(visibleEntries, weekDays, timezone),
+    [visibleEntries, weekDays, timezone],
+  );
+
+  const timesheetRows = useMemo(
+    () => buildTimesheetRows(visibleEntries, weekDays, timezone).slice(0, 18),
+    [visibleEntries, weekDays, timezone],
+  );
+
+  const timerMutationPending = startTimeEntryMutation.isPending || stopTimeEntryMutation.isPending;
+
+  const timerErrorMessage = useMemo(() => {
+    const failure = [
+      startTimeEntryMutation.error,
+      stopTimeEntryMutation.error,
+      timeEntriesQuery.error,
+    ].find((candidate) => candidate instanceof WebApiError);
+    if (failure instanceof WebApiError) {
+      return failure.message;
+    }
+    return "We could not load or update time entries right now.";
+  }, [startTimeEntryMutation.error, stopTimeEntryMutation.error, timeEntriesQuery.error]);
+
+  // Effects
+  useEffect(() => {
+    if (!runningEntry) {
+      return;
+    }
+    setNowMs(Date.now());
+    const intervalId = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [runningEntry]);
+
+  useEffect(() => {
+    setRunningDescription(runningEntry?.description ?? "");
+  }, [runningEntry]);
+
+  useEffect(() => {
+    if (!runningEntry) {
+      return;
+    }
+    setDraftDescription("");
+    setDraftProjectId(null);
+    setDraftTagIds([]);
+    closeComposerSuggestions();
+  }, [runningEntry]);
+
+  useEffect(() => {
+    setSelectedDescription(selectedEntry?.description ?? "");
+    setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
+    setSelectedTagIds(selectedEntry?.tag_ids ?? []);
+    setSelectedEntryError(null);
+  }, [selectedEntry]);
+
+  // Handlers
+  const closeSelectedEntryEditor = useCallback(() => {
+    setSelectedEntry(null);
+    setSelectedEntryAnchor(null);
+    setSelectedEntryError(null);
+  }, []);
+
+  const closeComposerSuggestions = useCallback(() => {
+    setComposerSuggestionsAnchor(null);
+  }, []);
+
+  const switchWorkspace = useCallback(
+    (nextWorkspaceId: number) => {
+      const previousWorkspaceId = workspaceId;
+      setCurrentWorkspaceId(nextWorkspaceId);
+      void updateWebSessionMutation.mutateAsync({ workspace_id: nextWorkspaceId }).catch(() => {
+        setCurrentWorkspaceId(previousWorkspaceId);
+      });
+    },
+    [workspaceId, setCurrentWorkspaceId, updateWebSessionMutation],
+  );
+
+  const handleRunningDescriptionCommit = useCallback(async () => {
+    if (runningEntry?.id == null) {
+      return;
+    }
+    const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
+    if (typeof runningWorkspaceId !== "number") {
+      return;
+    }
+    const nextDescription = runningDescription.trim();
+    const currentDescription = (runningEntry.description ?? "").trim();
+    if (nextDescription === currentDescription) {
+      return;
+    }
+    try {
+      await updateTimeEntryMutation.mutateAsync({
+        request: { description: nextDescription },
+        timeEntryId: runningEntry.id,
+        workspaceId: runningWorkspaceId,
+      });
+    } catch {
+      // Keep the local draft so the user can retry without losing their change.
+    }
+  }, [runningEntry, runningDescription, updateTimeEntryMutation]);
+
+  const handleTimerAction = useCallback(async () => {
+    if (runningEntry?.id != null) {
+      const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
+      if (typeof runningWorkspaceId === "number") {
+        await stopTimeEntryMutation.mutateAsync({
+          timeEntryId: runningEntry.id,
+          workspaceId: runningWorkspaceId,
+        });
+      }
+      return;
+    }
+    await startTimeEntryMutation.mutateAsync({
+      description: draftDescription.trim(),
+      projectId: draftProjectId,
+      start: new Date().toISOString(),
+      tagIds: draftTagIds,
+    });
+    setDraftDescription("");
+    setDraftProjectId(null);
+    setDraftTagIds([]);
+    closeComposerSuggestions();
+  }, [
+    runningEntry,
+    draftDescription,
+    draftProjectId,
+    draftTagIds,
+    startTimeEntryMutation,
+    stopTimeEntryMutation,
+    closeComposerSuggestions,
+  ]);
+
+  const handleSelectedEntrySave = useCallback(async () => {
+    if (!selectedEntry?.id) {
+      return;
+    }
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace and cannot be updated.");
+      return;
+    }
+    try {
+      const updatedEntry = await updateTimeEntryMutation.mutateAsync({
+        request: {
+          billable: selectedEntry.billable,
+          description: selectedDescription.trim(),
+          projectId: selectedProjectId,
+          start: selectedEntry.start,
+          stop: selectedEntry.stop,
+          tagIds: selectedTagIds,
+          taskId: selectedEntry.task_id ?? selectedEntry.tid,
+        },
+        timeEntryId: selectedEntry.id,
+        workspaceId: selectedWorkspaceId,
+      });
+      if (selectedEntry.id === runningEntry?.id) {
+        setSelectedEntry(updatedEntry);
+      }
+      setSelectedEntryError(null);
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }, [
+    selectedEntry,
+    selectedDescription,
+    selectedProjectId,
+    selectedTagIds,
+    runningEntry,
+    updateTimeEntryMutation,
+    closeSelectedEntryEditor,
+  ]);
+
+  const handleSelectedEntryPrimaryAction = useCallback(async () => {
+    if (!selectedEntry?.id) {
+      return;
+    }
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+    try {
+      if (isRunningTimeEntry(selectedEntry)) {
+        await stopTimeEntryMutation.mutateAsync({
+          timeEntryId: selectedEntry.id,
+          workspaceId: selectedWorkspaceId,
+        });
+        setSelectedEntryError(null);
+        closeSelectedEntryEditor();
+        return;
+      }
+      if (selectedWorkspaceId !== workspaceId) {
+        switchWorkspace(selectedWorkspaceId);
+        closeSelectedEntryEditor();
+        return;
+      }
+      await startTimeEntryMutation.mutateAsync({
+        description: selectedDescription.trim() || (selectedEntry.description ?? ""),
+        start: new Date().toISOString(),
+      });
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }, [
+    selectedEntry,
+    selectedDescription,
+    workspaceId,
+    switchWorkspace,
+    startTimeEntryMutation,
+    stopTimeEntryMutation,
+    closeSelectedEntryEditor,
+  ]);
+
+  const handleSelectedEntryDelete = useCallback(async () => {
+    if (!selectedEntry?.id) {
+      return;
+    }
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+    try {
+      await deleteTimeEntryMutation.mutateAsync({
+        timeEntryId: selectedEntry.id,
+        workspaceId: selectedWorkspaceId,
+      });
+      setSelectedEntryError(null);
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }, [selectedEntry, deleteTimeEntryMutation, closeSelectedEntryEditor]);
+
+  const handleSelectedEntryDuplicate = useCallback(async () => {
+    if (!selectedEntry?.id) {
+      return;
+    }
+    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+    if (typeof selectedWorkspaceId !== "number") {
+      setSelectedEntryError("This time entry is missing a workspace.");
+      return;
+    }
+    if (isRunningTimeEntry(selectedEntry) || !selectedEntry.start || !selectedEntry.stop) {
+      setSelectedEntryError("Only stopped time entries can be duplicated.");
+      return;
+    }
+    try {
+      await createTimeEntryMutation.mutateAsync({
+        billable: selectedEntry.billable,
+        description: selectedDescription.trim(),
+        duration: resolveEntryDurationSeconds(selectedEntry),
+        projectId: selectedProjectId,
+        start: selectedEntry.start,
+        stop: selectedEntry.stop,
+        tagIds: selectedTagIds,
+        taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
+      });
+      setSelectedEntryError(null);
+      closeSelectedEntryEditor();
+    } catch (error) {
+      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+    }
+  }, [
+    selectedEntry,
+    selectedDescription,
+    selectedProjectId,
+    selectedTagIds,
+    createTimeEntryMutation,
+    closeSelectedEntryEditor,
+  ]);
+
+  const handleSelectedEntryProjectCreate = useCallback(
+    async (name: string) => {
+      try {
+        const project = await createProjectMutation.mutateAsync({ name });
+        setSelectedProjectId(project.id ?? null);
+        setSelectedEntryError(null);
+      } catch (error) {
+        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+        throw error;
+      }
+    },
+    [createProjectMutation],
+  );
+
+  const handleSelectedEntryTagCreate = useCallback(
+    async (name: string) => {
+      try {
+        await createTagMutation.mutateAsync(name);
+        setSelectedEntryError(null);
+      } catch (error) {
+        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+        throw error;
+      }
+    },
+    [createTagMutation],
+  );
+
+  const handleSelectedEntryStartTimeChange = useCallback((time: Date) => {
+    setSelectedEntry((current) => {
+      if (!current) return current;
+      return { ...current, start: time.toISOString() };
+    });
+  }, []);
+
+  const handleSelectedEntryStopTimeChange = useCallback((time: Date) => {
+    setSelectedEntry((current) => {
+      if (!current) return current;
+      return { ...current, stop: time.toISOString() };
+    });
+  }, []);
+
+  const handleEntryEdit = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
+      const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
+      const scrollLeft = scrollAreaRef.current?.scrollLeft ?? 0;
+      const scrollTop = scrollAreaRef.current?.scrollTop ?? 0;
+      setSelectedEntry(entry);
+      setSelectedEntryAnchor({
+        containerHeight: scrollAreaRef.current?.scrollHeight,
+        containerWidth: scrollAreaRef.current?.clientWidth,
+        height: anchorRect.height,
+        left: scrollAreaRect ? anchorRect.left - scrollAreaRect.left + scrollLeft : anchorRect.left,
+        top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top + scrollTop : anchorRect.top,
+        width: anchorRect.width,
+      });
+    },
+    [],
+  );
+
+  const openComposerSuggestions = useCallback(() => {
+    if (!timerDescriptionInputRef.current || runningEntry?.id != null) {
+      return;
+    }
+    const anchorRect = timerDescriptionInputRef.current.getBoundingClientRect();
+    setComposerSuggestionsAnchor({
+      height: anchorRect.height,
+      left: anchorRect.left,
+      top: anchorRect.top,
+      width: anchorRect.width,
+    });
+  }, [runningEntry]);
+
+  const handleIdleDescriptionFocus = useCallback(() => {
+    if (runningEntry?.id != null) {
+      return;
+    }
+    if (draftProjectId != null || draftTagIds.length > 0) {
+      return;
+    }
+    openComposerSuggestions();
+  }, [runningEntry, draftProjectId, draftTagIds, openComposerSuggestions]);
+
+  return {
+    // View state
+    view,
+    setView,
+
+    // Time state
+    nowMs,
+    selectedWeekDate,
+    setSelectedWeekDate,
+    weekDays,
+    weekRange,
+
+    // Running entry state
+    runningEntry,
+    runningDurationSeconds,
+    runningDescription,
+    setRunningDescription,
+
+    // Draft state
+    draftDescription,
+    setDraftDescription,
+    draftProjectId,
+    setDraftProjectId,
+    draftTagIds,
+    setDraftTagIds,
+    draftTags,
+
+    // Display values
+    displayProject,
+    displayColor,
+    timerDescriptionValue,
+
+    // Selected entry state
+    selectedEntry,
+    setSelectedEntry,
+    selectedEntryAnchor,
+    setSelectedEntryAnchor,
+    selectedEntryWorkspaceId,
+    selectedDescription,
+    setSelectedDescription,
+    selectedEntryError,
+    setSelectedEntryError,
+    selectedProjectId,
+    setSelectedProjectId,
+    selectedTagIds,
+    setSelectedTagIds,
+
+    // Composer suggestions
+    composerSuggestionsAnchor,
+    setComposerSuggestionsAnchor,
+
+    // Refs
+    timerDescriptionInputRef,
+    scrollAreaRef,
+
+    // Query data
+    entries,
+    visibleEntries,
+    timeEntriesQuery,
+    currentTimeEntryQuery,
+    recentWorkspaceEntries,
+    projectOptions,
+    tagOptions,
+    workspaceId,
+    timezone,
+    weekTotalSeconds,
+    groupedEntries,
+    trackStrip,
+    calendarHours,
+    timesheetRows,
+
+    // Mutation states
+    timerMutationPending,
+    timerErrorMessage,
+
+    // Handlers
+    handleTimerAction,
+    handleRunningDescriptionCommit,
+    handleSelectedEntrySave,
+    handleSelectedEntryPrimaryAction,
+    handleSelectedEntryDelete,
+    handleSelectedEntryDuplicate,
+    handleSelectedEntryProjectCreate,
+    handleSelectedEntryTagCreate,
+    handleSelectedEntryStartTimeChange,
+    handleSelectedEntryStopTimeChange,
+    handleEntryEdit,
+    handleIdleDescriptionFocus,
+    closeSelectedEntryEditor,
+    closeComposerSuggestions,
+    switchWorkspace,
+
+    // Query mutations
+    createProjectMutation,
+    createTagMutation,
+    deleteTimeEntryMutation,
+    createTimeEntryMutation,
+    updateTimeEntryMutation,
+
+    // Session
+    session,
+  };
+}
