@@ -36,7 +36,7 @@ export function CalendarPanel({
     <div
       aria-labelledby="calendar-panel-title"
       aria-modal="false"
-      className="w-[320px] rounded-lg border border-[#3f3f44] bg-[#1f1f20] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
+      className="w-[320px] rounded-lg border border-[#3a3a3f] bg-[#1f1f20] py-4 px-3.5 shadow-[0_6px_18px_rgba(0,0,0,0.28)]"
       data-testid={testId ?? "calendar-panel"}
       role="dialog"
     >
