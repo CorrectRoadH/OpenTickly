@@ -246,8 +246,8 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // Assert: Calendar is the default view
-    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
-      "aria-pressed",
+    await expect(page.getByRole("radio", { name: "Calendar" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
 
@@ -368,8 +368,8 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     // Capture state from shell-entry page (calendar view - default)
     const shellEntryCalendarActive = await page
-      .getByRole("button", { name: "Calendar" })
-      .getAttribute("aria-pressed");
+      .getByRole("radio", { name: "Calendar" })
+      .getAttribute("aria-checked");
     const shellEntryRunningTimer = await page
       .getByRole("button", { name: "Stop timer" })
       .isVisible();
@@ -382,8 +382,8 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     // Capture state from direct-entry page (calendar view - default)
     const directEntryCalendarActive = await page2
-      .getByRole("button", { name: "Calendar" })
-      .getAttribute("aria-pressed");
+      .getByRole("radio", { name: "Calendar" })
+      .getAttribute("aria-checked");
     const directEntryRunningTimer = await page2
       .getByRole("button", { name: "Stop timer" })
       .isVisible();
@@ -399,14 +399,14 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     expect(shellEntryElapsed).toBe(directEntryElapsed);
     expect(shellEntryElapsed).toBe(true);
 
-    await page.getByRole("button", { name: "List view" }).click();
-    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
-      "aria-pressed",
+    await page.getByRole("radio", { name: "List view" }).click();
+    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    await page2.getByRole("button", { name: "List view" }).click();
-    await expect(page2.getByRole("button", { name: "List view" })).toHaveAttribute(
-      "aria-pressed",
+    await page2.getByRole("radio", { name: "List view" }).click();
+    await expect(page2.getByRole("radio", { name: "List view" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
 

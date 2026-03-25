@@ -123,12 +123,14 @@ export function ViewTab({
   const isSelected = currentView === targetView;
   return (
     <button
-      aria-pressed={isSelected}
+      aria-checked={isSelected}
       className={`rounded-[4px] px-4 py-1.5 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
         isSelected ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]" : "text-white"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
+      role="radio"
+      tabIndex={isSelected ? 0 : -1}
       type="button"
     >
       {{ calendar: "Calendar", list: "List view", timesheet: "Timesheet" }[targetView]}
