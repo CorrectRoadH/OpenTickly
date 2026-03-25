@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -64,6 +64,53 @@ export function ChromeIconButton({
   );
 }
 
+export function ViewTabGroup({
+  children,
+  label,
+  onSelect,
+  options,
+  value,
+}: {
+  children: React.ReactNode;
+  label: string;
+  onSelect: (view: TimerViewMode) => void;
+  options: TimerViewMode[];
+  value: TimerViewMode;
+}) {
+  const selectedIndex = options.indexOf(value);
+  const groupRef = useRef<HTMLDivElement>(null);
+
+  function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    let nextIndex = selectedIndex;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (selectedIndex + 1) % options.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (selectedIndex - 1 + options.length) % options.length;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    onSelect(options[nextIndex]);
+    // Move focus to the newly selected tab so the user can immediately activate it with Space/Enter
+    requestAnimationFrame(() => {
+      const buttons = groupRef.current?.querySelectorAll<HTMLButtonElement>("button");
+      buttons?.[nextIndex]?.focus();
+    });
+  }
+
+  return (
+    <div
+      aria-label={label}
+      className="flex rounded-md border border-[var(--track-border)] bg-[#111111] p-0.5"
+      onKeyDown={handleKeyDown}
+      ref={groupRef}
+      role="radiogroup"
+    >
+      {children}
+    </div>
+  );
+}
+
 export function ViewTab({
   currentView,
   onSelect,
@@ -73,15 +120,14 @@ export function ViewTab({
   onSelect: (view: TimerViewMode) => void;
   targetView: TimerViewMode;
 }) {
+  const isSelected = currentView === targetView;
   return (
     <button
-      aria-pressed={currentView === targetView}
-      className={`rounded-[4px] px-4 py-1.5 text-[11px] font-medium ${
-        currentView === targetView
-          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-          : "text-white"
+      aria-pressed={isSelected}
+      className={`rounded-[4px] px-4 py-1.5 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
+        isSelected ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]" : "text-white"
       }`}
-      data-state={currentView === targetView ? "active" : "inactive"}
+      data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
       type="button"
     >
@@ -190,6 +236,7 @@ export function CalendarView({
   onResizeEntry,
   onSelectSlot,
   onSelectSubviewDate,
+  onSubviewChange,
   selectedSubviewDateIso,
   subview = "week",
   timezone,
@@ -203,6 +250,7 @@ export function CalendarView({
   onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
   onSelectSlot?: (slot: { dayIso: string; minute: number }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
+  onSubviewChange?: (subview: "day" | "week") => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedSubviewDateIso?: string;
   subview?: "day" | "week";
@@ -211,6 +259,9 @@ export function CalendarView({
 }): ReactElement {
   const hours = Array.from({ length: 24 }, (_, index) => index);
   const now = new Date(nowMs ?? Date.now());
+  const subviewRef = useRef<HTMLDivElement>(null);
+  const subviewOptions: Array<"day" | "week"> = ["day", "week"];
+  const selectedSubviewIndex = subviewOptions.indexOf(subview);
   const days = weekDays.map((day) => ({
     date: day,
     entries: entries
@@ -222,6 +273,23 @@ export function CalendarView({
       }),
     showNowLine: isSameCalendarDate(now, day, timezone),
   }));
+
+  function handleSubviewKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    let nextIndex = selectedSubviewIndex;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      nextIndex = (selectedSubviewIndex + 1) % subviewOptions.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      nextIndex = (selectedSubviewIndex - 1 + subviewOptions.length) % subviewOptions.length;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    onSubviewChange?.(subviewOptions[nextIndex]);
+    requestAnimationFrame(() => {
+      const buttons = subviewRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
+      buttons?.[nextIndex]?.focus();
+    });
+  }
 
   return (
     <div
@@ -237,27 +305,37 @@ export function CalendarView({
           </span>
         </div>
         <div
+          aria-label="Calendar view"
           className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-1"
           data-testid="calendar-subview-controls"
+          onKeyDown={handleSubviewKeyDown}
+          ref={subviewRef}
+          role="radiogroup"
         >
           <button
-            aria-pressed={subview === "day"}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+            aria-checked={subview === "day"}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
               subview === "day"
                 ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
                 : "text-white"
             }`}
+            onClick={() => onSubviewChange?.("day")}
+            role="radio"
+            tabIndex={subview === "day" ? 0 : -1}
             type="button"
           >
             Day
           </button>
           <button
-            aria-pressed={subview === "week"}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+            aria-checked={subview === "week"}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
               subview === "week"
                 ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
                 : "text-white"
             }`}
+            onClick={() => onSubviewChange?.("week")}
+            role="radio"
+            tabIndex={subview === "week" ? 0 : -1}
             type="button"
           >
             Week
