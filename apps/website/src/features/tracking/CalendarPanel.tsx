@@ -36,19 +36,13 @@ export function CalendarPanel({
     <div
       aria-labelledby="calendar-panel-title"
       aria-modal="false"
-      className="w-[320px] rounded-lg border border-[#3f3f44] bg-[#1f1f20] p-5 shadow-[0_16px_48px_rgba(0,0,0,0.4)]"
+      className="w-[320px] rounded-lg border border-[#3f3f44] bg-[#1f1f20] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.3)]"
       data-testid={testId ?? "calendar-panel"}
       role="dialog"
     >
-      {/* Month header */}
-      <div className="mb-5 flex items-center">
-        <h3
-          className="mr-auto text-[18px] font-semibold tracking-tight text-white"
-          id="calendar-panel-title"
-        >
-          {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
-        </h3>
-        <div className="flex items-center gap-1">
+      {/* Month header: symmetric 3-column layout — left nav | title | right nav */}
+      <div className="mb-4 grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-1">
+        <div className="flex justify-start">
           <button
             aria-label="Previous month"
             className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
@@ -65,6 +59,14 @@ export function CalendarPanel({
               style={{ transform: "rotate(180deg)" }}
             />
           </button>
+        </div>
+        <h3
+          className="col-start-2 text-center text-[15px] font-semibold tracking-tight text-white"
+          id="calendar-panel-title"
+        >
+          {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
+        </h3>
+        <div className="flex justify-end">
           <button
             aria-label="Next month"
             className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
@@ -123,7 +125,7 @@ export function CalendarPanel({
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "text-[#5a5a60] hover:bg-white/[.05]"
+                          ? "text-[#48484e] hover:text-[#5a5a60]"
                           : "text-[#ededf0] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
