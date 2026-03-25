@@ -1,22 +1,34 @@
 {
   "featureId": "tracking-security-cross-user-write-isolation",
-  "reviewedAt": "2026-03-25T02:45:04Z",
+  "reviewedAt": "2026-03-25T08:56:49.143013+00:00",
   "commitId": "54b030b",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The added tests cover update, stop, delete, and batch patch denial paths with direct readback, but they do not cover the documented restart/continue-style mutation path required by VAL-SEC-TRACK-003.",
+    "summary": "The commit adds useful service-layer regressions for update/stop/delete/batch denial, but it does not fully satisfy the feature's write-isolation contract because the same-workspace cross-user continue/restart write surface still remained open at this point. The feature description requires an attacker cannot update, stop, delete, or batch-mutate another user's time entries, and the transcript/commit left CreateTimeEntry-based continue/restart outside coverage and implementation until the later fix commit `3b58870`.",
     "issues": [
       {
-        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
-        "line": 670,
+        "file": "apps/backend/internal/tracking/application/service.go",
+        "line": 57,
         "severity": "blocking",
-        "description": "VAL-SEC-TRACK-003 requires same-workspace attackers to be unable to restart or otherwise mutate another user's entry, but the new coverage only exercises update, stop, delete, and batch patch. There is no regression for the documented continue/restart mutation path, so a horizontal-auth gap could remain undetected for that write surface."
+        "description": "`CreateTimeEntry` had no authenticated-caller authorization check in commit `54b030b`, so an attacker who reached the continue/restart surface could still create a new entry for another same-workspace user by supplying that victim `UserID`. This left the feature's promised write-isolation behavior incomplete; the gap was only closed later by commit `3b58870`, which added `WithAuthenticatedUserID` validation and transport propagation."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 1085,
+        "severity": "blocking",
+        "description": "This commit added denial tests for `UpdateTimeEntry`, `StopTimeEntry`, `DeleteTimeEntry`, and `PatchTimeEntries`, but it added no regression for the continue/restart path that creates a new running entry from another user's historical entry. Because the feature description says an attacker cannot mutate another user's time entries and must leave canonical rows unchanged with no partial mutation, the missing `CreateTimeEntry`/continue coverage means the implementation evidence was incomplete. The later fix feature had to add `TestSameWorkspaceUserACannotCreateTimeEntryAsUserB` and `TestSameWorkspaceUserACannotContinueUserBEntryViaCreate` to cover that gap."
       }
     ]
   },
-  "sharedStateObservations": [],
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `backend-test-worker` procedure tells workers to copy expectedBehavior into a checklist, but this review shows a worker can still satisfy only the obvious CRUD mutations and miss a documented write surface that creates entries indirectly (`continue/restart`). The skill should explicitly remind tracking-security workers to enumerate all user-visible write entry points, including create-based continue/restart flows, whenever the feature contract says 'cannot mutate another user's time entries'.",
+      "evidence": "Feature `tracking-security-cross-user-write-isolation` expectedBehavior in mission `features.json` requires broad same-workspace write isolation. Session `05d1ed04-3979-443e-82d2-e072fefff484` handoff claims the feature is complete after adding only update/stop/delete/batch tests in commit `54b030b`; a separate later feature `tracking-security-continue-surface-authorization-fix` (commit `3b58870`) was required to close the remaining continue/restart authorization gap."
+    }
+  ],
   "addressesFailureFrom": null,
-  "summary": "Fail: the feature added strong no-mutation regressions for several write routes, but it does not satisfy VAL-SEC-TRACK-003 completely because the documented restart/continue mutation path is not covered."
+  "summary": "Fail: commit `54b030b` improved write-isolation coverage for several mutation paths, but it did not yet secure or test the continue/restart create surface, so the feature did not fully satisfy its promised same-workspace cross-user write-isolation behavior."
 }

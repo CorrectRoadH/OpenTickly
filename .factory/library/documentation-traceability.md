@@ -23,4 +23,5 @@ Canonical rules for the inline source-doc status blocks required by this mission
 
 - `Todo: none` is valid only when there is no remaining mission work for that doc.
 - `Fully implemented: yes` is valid only when the block no longer lists unresolved differences or todo items.
+- If the corresponding behavior is not yet clearly visible and verifiable on the real `/timer` surface, the block must remain `Status: partial` and `Fully implemented: no`.
 - Feature workers should update the blocks for the source docs they actively rely on; the final doc-audit feature verifies consistency across the entire closed set.

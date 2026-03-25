@@ -1,0 +1,22 @@
+{
+  "featureId": "tracking-security-cross-user-read-surface-proof-fix",
+  "reviewedAt": "2026-03-25T08:56:31.125954+00:00",
+  "commitId": "8334739",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix adds real HTTP-boundary read checks for current timer and history list surfaces, but it does not fully cover the feature contract because the required owner-still-can-read assertion for history/entry-by-id in the same seeded scenario is incomplete.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/bootstrap/public_track_cross_user_security_test.go",
+        "line": 645,
+        "severity": "blocking",
+        "description": "The feature contract requires owner-still-can-read assertions for the owner's own timer/history facts in the same seeded scenario. `TestSameWorkspaceOwnerCanStillReadOwnTimerViaHTTP` proves the attacker's own current timer and direct entry-by-id readback, but it never proves the victim/owner can still read their own history or entry-by-id facts through the HTTP boundary after the attacker-facing isolation checks. The feature's expectedBehavior explicitly includes owner can still read the owner's own timer/history facts, so this leaves the history half under-proven."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the HTTP read-surface fix improves boundary coverage for current timer and history exclusion, but it still misses complete owner-still-can-read proof for history facts in the same scenario, so the feature contract is not fully satisfied."
+}

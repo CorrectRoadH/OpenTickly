@@ -1,0 +1,56 @@
+{
+  "groupId": "editor-flows",
+  "testedAt": "2026-03-25T06:47:50.504714+00:00",
+  "surface": "browser",
+  "isolation": {
+    "frontendUrl": "http://127.0.0.1:5173",
+    "backendUrl": "http://127.0.0.1:8080",
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c"
+  },
+  "toolsUsed": [
+    "curl",
+    "agent-browser"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ENTRY-002",
+      "title": "Editing a stopped entry updates the canonical fact",
+      "status": "blocked",
+      "reason": "Assigned browser surface could not be exercised because the required frontend runtime on http://127.0.0.1:5173 was unavailable (connection refused).",
+      "steps": [
+        {
+          "action": "Check frontend readiness at http://127.0.0.1:5173",
+          "expected": "HTTP response confirming frontend reachability",
+          "observed": "curl failed with connection refused on port 5173"
+        },
+        {
+          "action": "Check backend readiness at http://127.0.0.1:8080/health",
+          "expected": "Positive backend readiness response",
+          "observed": "Backend responded HTTP 404 with JSON body {\"message\":\"no matching operation was found\"}, proving port reachability but not a documented health endpoint"
+        },
+        {
+          "action": "Open frontend in browser automation",
+          "expected": "Timer UI loads for stopped-entry editor validation",
+          "observed": "agent-browser navigation failed with net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "blocked: browser page could not be opened because the frontend runtime was unavailable",
+        "network": "curl http://127.0.0.1:5173 -> connection refused; curl http://127.0.0.1:8080/health -> HTTP 404 {\"message\":\"no matching operation was found\"}; agent-browser open http://127.0.0.1:5173 -> net::ERR_CONNECTION_REFUSED"
+      },
+      "issues": "Runtime readiness failure on the assigned frontend port prevented execution of the user-visible stopped-entry edit flow and the required reopen/readback proof."
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "Frontend runtime on the assigned browser port 5173 was unavailable throughout validation attempts.",
+      "affectedAssertions": [
+        "VAL-ENTRY-002"
+      ],
+      "quickFixAttempted": "Retried with direct curl readiness check and agent-browser navigation; both returned connection refused."
+    }
+  ],
+  "summary": "VAL-ENTRY-002 blocked: backend port 8080 was reachable, but the required frontend port 5173 was not accepting connections, so the stopped-entry editor flow could not be validated through the browser surface."
+}

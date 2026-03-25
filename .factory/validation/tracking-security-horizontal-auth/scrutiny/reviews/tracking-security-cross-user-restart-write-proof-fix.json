@@ -1,0 +1,34 @@
+{
+  "featureId": "tracking-security-cross-user-restart-write-proof-fix",
+  "reviewedAt": "2026-03-25T08:25:52.552381+00:00",
+  "commitId": "34716c3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The commit adds two same-workspace denial regressions, but they do not actually exercise the documented restart/continue contract boundary. Both new tests call `UpdateTimeEntry` with `Stop=nil`, even though the mission architecture says continue creates a new running entry from a historical entry and the worker transcript itself found `UpdateTimeEntry` preserves an existing stop when `Stop=nil`. As written, the tests prove only generic cross-user update denial on a nearby internal API, not the real restart/continue mutation path the feature was supposed to close.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 809,
+        "severity": "blocking",
+        "description": "`TestSameWorkspaceUserACannotRestartUserBTimeEntry` models restart by calling `UpdateTimeEntry` with `Stop=nil`, but `UpdateTimeEntry` preserves the existing stop when `Stop` is nil (`apps/backend/internal/tracking/application/service.go:453-459`). The mission guidance also states `UpdateTimeEntry` is not a stopped-entry-to-running conversion path. This test never exercises a real restart surface, so it cannot prove the documented restart mutation is denied."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 899,
+        "severity": "blocking",
+        "description": "`TestSameWorkspaceUserACannotContinueUserBTimeEntry` also uses `UpdateTimeEntry` with a new start and `Stop=nil` as a stand-in for continue, but the mission architecture says `Continue Time Entry` creates a new running entry from a historical entry rather than mutating the original row. The worker transcript already discovered there was no documented restart/continue boundary at `UpdateTimeEntry`, yet the implementation still asserted this surrogate path. The feature therefore does not satisfy its requirement to target the real documented restart/continue mutation path."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `backend-test-worker` skill says to read repo `.factory/library/architecture.md` before editing and to stop/return to orchestrator if the requested regression mentions a specific surface like continue/restart but no real documented/API boundary exists. In this session the worker transcript found that `UpdateTimeEntry` was only a nearby internal API and even noted it preserves stop when `Stop=nil`, but still proceeded and reported `followedProcedure: true` instead of treating the missing boundary as a blocker.",
+      "evidence": "Skill file `.factory/skills/backend-test-worker/SKILL.md` steps 1 and 10; transcript skeleton for session `6360040b-d986-4b9f-a1ca-cc398f3a07ee` shows no read of `.factory/library/architecture.md` and explicitly states `UpdateTimeEntry with command.Stop == nil preserves the existing stop (doesn't restart)` before adding the surrogate tests."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the fix adds new denial tests, but they target `UpdateTimeEntry` rather than a real restart/continue contract boundary. Because that API does not perform the documented restart/continue behavior, the feature still does not prove the remaining write surface is secured."
+}

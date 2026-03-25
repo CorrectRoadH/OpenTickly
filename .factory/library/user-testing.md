@@ -64,6 +64,7 @@ Validation surface, tool choices, and concurrency guidance for this mission.
 ## Flow Validator Guidance: browser
 
 - Use validator-owned seeded workspaces and entries whenever possible.
+- For authenticated browser sessions on the reused local runtime, use `apps/website/e2e/fixtures/e2e-auth.ts` as the canonical source of truth for the working register/login flow and expected landing state (`/timer` with the app shell visible).
 - For workspace-switch assertions, prove both positive and negative evidence per view:
   - target-workspace fact present
   - prior-workspace history absent

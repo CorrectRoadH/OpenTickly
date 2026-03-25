@@ -1,6 +1,6 @@
 {
   "milestone": "tracking-security-horizontal-auth",
-  "round": 1,
+  "round": 3,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -20,33 +20,58 @@
     }
   },
   "reviewsSummary": {
-    "total": 2,
-    "passed": 0,
-    "failed": 2,
+    "total": 4,
+    "passed": 1,
+    "failed": 3,
     "failedFeatures": [
       "tracking-security-cross-user-read-isolation",
-      "tracking-security-cross-user-write-isolation"
+      "tracking-security-cross-user-write-isolation",
+      "tracking-security-cross-user-restart-write-proof-fix"
     ]
   },
   "blockingIssues": [
     {
       "featureId": "tracking-security-cross-user-read-isolation",
       "severity": "blocking",
-      "description": "VAL-SEC-TRACK-001 is not fully proven. `TestSameWorkspaceUserACannotReadUserBCurrentTimer` only calls `trackingService.GetCurrentTimeEntry(ctx, ownerID)`, and that API accepts only the caller user ID with no target-user selector. Because the store implementation resolves current timers solely by `rt.user_id = $1`, this test demonstrates that user A's own current-timer read stays empty; it does not prove that the tracking read surface denies an attempt by user A to read user B's current timer over the real contract boundary. The feature expected canonical backend read assertions and/or thin transport smoke for attacker visibility, and this test never exercises a route or boundary where an attacker could specify user B as the target."
-    },
-    {
-      "featureId": "tracking-security-cross-user-read-isolation",
-      "severity": "blocking",
-      "description": "VAL-SEC-TRACK-002 is only partially covered. The test checks `ListTimeEntries(..., UserID: ownerID)` and `ListUserTimeEntries(..., UserID: ownerID)`, but both service/store paths are filtered directly by the provided `UserID` (`where te.workspace_id = $1 and te.user_id = $2` / `where te.user_id = $1`). That proves owner-scoped reads return owner data; it does not prove the system rejects or safely scopes an attacker attempt to read user B's history through an actual tracking read surface. There is no transport smoke, no route-level authorization proof, and no exercised path where user A tries to target memberID and is denied."
+      "description": "The same-workspace read-isolation helper derives test user IDs from time.Now().UnixNano() modulo arithmetic, which can collide under the mission's shared-schema parallel test topology and makes the security proof nondeterministic."
     },
     {
       "featureId": "tracking-security-cross-user-write-isolation",
       "severity": "blocking",
-      "description": "VAL-SEC-TRACK-003 requires same-workspace attackers to be unable to restart or otherwise mutate another user's entry, but the new coverage only exercises update, stop, delete, and batch patch. There is no regression for the documented continue/restart mutation path, so a horizontal-auth gap could remain undetected for that write surface."
+      "description": "The original write-isolation feature did not cover the documented restart/continue mutation surface required by VAL-SEC-TRACK-003; it only covered update, stop, delete, and batch patch denial."
+    },
+    {
+      "featureId": "tracking-security-cross-user-restart-write-proof-fix",
+      "severity": "blocking",
+      "description": "The attempted restart/continue fix still does not exercise a real documented continue/restart mutation surface. It treats UpdateTimeEntry with Stop=nil as a stopped-to-running conversion even though the service contract preserves the existing stop and mission guidance says continue should create a new running entry."
     }
   ],
   "appliedUpdates": [],
-  "suggestedGuidanceUpdates": [],
-  "rejectedObservations": [],
-  "previousRound": null
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skill:.factory/skills/backend-test-worker/SKILL.md",
+      "suggestion": "Explicitly forbid time-based pseudo-unique identifiers such as time.Now().UnixNano() for shared-schema parallel backend tests, and require deterministic collision-safe test-owned identity helpers instead.",
+      "evidence": "The failed review for tracking-security-cross-user-read-isolation found time.Now().UnixNano() % 100000000000 in apps/backend/internal/tracking/application/security_regressions_test.go, which undermines repeatable parallel security proof under the shared opentoggl_test schema.",
+      "isSystemic": false
+    },
+    {
+      "target": "skill:.factory/skills/tracking-backend-worker/SKILL.md",
+      "suggestion": "Reinforce that workers must read the required .factory/library architecture and traceability files before implementation, and treat missing prerequisite reads as a process failure instead of optional context.",
+      "evidence": "The tracking-security-cross-user-write-isolation transcript skeleton showed mission-doc and skill reads but not the required .factory/library/architecture.md and .factory/library/documentation-traceability.md reads.",
+      "isSystemic": false
+    },
+    {
+      "target": "skill:.factory/skills/backend-test-worker/SKILL.md",
+      "suggestion": "Emphasize that if a requested regression path cannot be found in the documented or implemented contract, the worker must stop and return to orchestrator instead of inferring semantics through a nearby internal API.",
+      "evidence": "The failed fix feature tracking-security-cross-user-restart-write-proof-fix inferred restart/continue semantics through UpdateTimeEntry with Stop=nil even though service code and mission guidance define continue/restart differently.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Handoffs can contain non-resolvable full commit SHAs and shared-state guidance should be updated immediately.",
+      "reason": "ambiguous"
+    }
+  ],
+  "previousRound": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-security-horizontal-auth/scrutiny/synthesis.json"
 }

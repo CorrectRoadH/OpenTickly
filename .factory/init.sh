@@ -49,7 +49,7 @@ pg_isready -h 127.0.0.1 -p 5432 >/dev/null || {
   exit 1
 }
 
-python3 -c "import socket,sys; s=socket.create_connection(('127.0.0.1',6379),2); s.sendall(b'*1\\r\\n$4\\r\\nPING\\r\\n'); data=s.recv(64); s.close(); sys.exit(0 if b'PONG' in data else 1)" || {
+python3 -c 'import socket,sys; s=socket.create_connection(("127.0.0.1",6379),2); s.sendall(b"*1\r\n$4\r\nPING\r\n"); data=s.recv(64); s.close(); sys.exit(0 if b"PONG" in data else 1)' || {
   echo "Expected reused Redis service on 127.0.0.1:6379"
   exit 1
 }

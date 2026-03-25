@@ -1,0 +1,78 @@
+{
+  "groupId": "timer-flows",
+  "testedAt": "2026-03-25T06:45:40.314739+00:00",
+  "surface": "browser",
+  "isolation": {
+    "frontendUrl": "http://127.0.0.1:5173",
+    "backendUrl": "http://127.0.0.1:8080",
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c",
+    "milestone": "tracking-ui-followup"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CROSS-001",
+      "title": "Timer is reachable via real shell navigation",
+      "status": "blocked",
+      "reason": "Blocked before browser validation because the assigned frontend runtime on http://127.0.0.1:5173 was unreachable on repeated readiness checks.",
+      "steps": [
+        {
+          "action": "Check frontend readiness at http://127.0.0.1:5173/",
+          "expected": "Positive HTTP reachability so browser validation can start",
+          "observed": "curl returned connection refused and agent-browser open failed with net::ERR_CONNECTION_REFUSED"
+        },
+        {
+          "action": "Check backend readiness at http://127.0.0.1:8080/",
+          "expected": "Backend reachable for the same local runtime",
+          "observed": "Backend responded HTTP 404 at root, indicating the process was listening"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "not collected; frontend never became reachable",
+        "network": "Readiness checks only: GET/HEAD http://127.0.0.1:5173/ -> connection refused; GET/HEAD http://127.0.0.1:8080/ -> HTTP 404"
+      },
+      "issues": "Frontend runtime unavailable, so shell login/navigation and /timer document loading could not be exercised."
+    },
+    {
+      "id": "VAL-CROSS-002",
+      "title": "Direct entry and shell entry converge on the same timer state",
+      "status": "blocked",
+      "reason": "Blocked because the assigned frontend runtime on http://127.0.0.1:5173 was unreachable, preventing both shell and direct /timer entry validation under a real browser session.",
+      "steps": [
+        {
+          "action": "Check frontend readiness at http://127.0.0.1:5173/",
+          "expected": "Frontend available for both shell and direct entry paths",
+          "observed": "Repeated connection refused from curl and Playwright/agent-browser"
+        },
+        {
+          "action": "Attempt browser open against frontend URL",
+          "expected": "Application loads so authenticated session setup and timer comparisons can proceed",
+          "observed": "agent-browser page.goto failed with net::ERR_CONNECTION_REFUSED"
+        }
+      ],
+      "evidence": {
+        "screenshots": [],
+        "consoleErrors": "not collected; frontend never loaded",
+        "network": "Readiness checks only: frontend unavailable at 5173; backend listening at 8080 root with HTTP 404"
+      },
+      "issues": "Could not compare shell entry vs direct /timer entry because no browser-visible frontend surface was available."
+    }
+  ],
+  "frictions": [],
+  "blockers": [
+    {
+      "description": "Assigned frontend runtime on port 5173 was down or unreachable throughout validation.",
+      "affectedAssertions": [
+        "VAL-CROSS-001",
+        "VAL-CROSS-002"
+      ],
+      "quickFixAttempted": "Retried HTTP readiness after delay, verified backend separately, attempted agent-browser open, and then closed the browser session."
+    }
+  ],
+  "summary": "Both assigned assertions are blocked because the browser frontend at http://127.0.0.1:5173 was not reachable, while the backend at http://127.0.0.1:8080 was listening. No user-surface timer flow evidence could be captured."
+}

@@ -36,7 +36,11 @@ None.
    impossible under the current documented/API contract, stop and return to orchestrator with the
    exact boundary instead of deleting the failing case and marking the feature complete.
 9. If the feature touches conflict behavior and the exact public rule is still ambiguous, prove consistency and return to orchestrator rather than inventing a new rule.
-10. In the handoff, call out:
+10. If the requested regression mentions a specific read/write surface such as continue, restart,
+    or batch mutation, locate that exact documented/API contract boundary first. If you cannot
+    find a real boundary and only see nearby internal APIs that approximate it, return to
+    orchestrator instead of inferring semantics from those internal calls.
+11. In the handoff, call out:
 
 - the dedicated test-schema path used
 - whether async drain-to-idle was necessary

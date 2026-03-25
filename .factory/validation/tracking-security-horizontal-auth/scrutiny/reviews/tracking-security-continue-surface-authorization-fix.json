@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-security-continue-surface-authorization-fix",
+  "reviewedAt": "2026-03-25T08:54:11.855442+00:00",
+  "commitId": "3b58870",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix addresses the prior failure by moving the proof to the real continue surface: CreateTimeEntry. The new same-workspace attacker regressions demonstrate that an attacker cannot create or continue a victim-owned running entry via CreateTimeEntry, the victim's historical row and current-timer state remain unchanged, and the service now enforces authenticated-user ownership at the application boundary used by the HTTP handler.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-security-horizontal-auth/scrutiny/reviews/tracking-security-cross-user-restart-write-proof-fix.json",
+  "summary": "Pass: this fix closes the prior restart/continue scrutiny failure by identifying CreateTimeEntry as the documented continue surface, adding same-workspace denial/no-mutation proof there, and enforcing caller-versus-command user identity at the service boundary used by the transport layer."
+}
