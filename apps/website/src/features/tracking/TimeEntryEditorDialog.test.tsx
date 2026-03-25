@@ -72,16 +72,50 @@ describe("TimeEntryEditorDialog", () => {
 
     expect(screen.getByRole("button", { name: "Edit start time" }).textContent).toContain("15:28");
   });
+
+  it("shows discard confirmation instead of closing immediately when Escape is pressed with dirty edits", () => {
+    render(<DialogHarness isDirty />);
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(screen.getByTestId("time-entry-editor-discard-confirmation")).toBeTruthy();
+    expect(screen.getByTestId("time-entry-editor-dialog")).toBeTruthy();
+  });
+
+  it("shows discard confirmation instead of closing immediately when the close button is clicked with dirty edits", () => {
+    render(<DialogHarness isDirty />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Close editor" }));
+
+    expect(screen.getByTestId("time-entry-editor-discard-confirmation")).toBeTruthy();
+    expect(screen.getByTestId("time-entry-editor-dialog")).toBeTruthy();
+  });
+
+  it("opens anchored date pickers for start and stop fields", () => {
+    render(<DialogHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit start date" }));
+    expect(screen.getByTestId("date-picker")).toBeTruthy();
+    expect(screen.getByTestId("time-entry-editor-start-date-picker")).toBeTruthy();
+    expect(screen.queryByTestId("time-entry-editor-stop-date-picker")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit stop date" }));
+    expect(screen.getByTestId("date-picker")).toBeTruthy();
+    expect(screen.getByTestId("time-entry-editor-stop-date-picker")).toBeTruthy();
+    expect(screen.queryByTestId("time-entry-editor-start-date-picker")).toBeNull();
+  });
 });
 
 function DialogHarness({
   entryOverrides,
+  isDirty = false,
   onDuplicate,
   onStartTimeChange = () => {},
   selectedProjectId = null,
   selectedTagIds = [],
 }: {
   entryOverrides?: Partial<GithubComTogglTogglApiInternalModelsTimeEntry>;
+  isDirty?: boolean;
   onDuplicate?: () => void;
   onStartTimeChange?: (time: Date) => void;
   selectedProjectId?: number | null;
@@ -101,6 +135,7 @@ function DialogHarness({
       entry={entry}
       isCreatingProject={false}
       isCreatingTag={false}
+      isDirty={isDirty}
       isPrimaryActionPending={false}
       isSaving={false}
       onClose={() => {}}
