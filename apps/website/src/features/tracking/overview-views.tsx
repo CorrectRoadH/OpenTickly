@@ -318,7 +318,7 @@ export function CalendarView({
                     className="flex h-[60px] items-start justify-end border-t border-[var(--track-grid)] px-2 pt-0.5 text-[10px] text-[var(--track-text-muted)]"
                     key={hour}
                   >
-                    {String(hour).padStart(2, "0")}:00
+                    {formatHourLabel(hour)}
                   </div>
                 ))}
               </div>
@@ -741,6 +741,13 @@ function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
   );
 
   return hours * 60 + minutes;
+}
+
+function formatHourLabel(hour: number): string {
+  if (hour === 0) return "12 AM";
+  if (hour === 12) return "12 PM";
+  if (hour < 12) return `${hour} AM`;
+  return `${hour - 12} PM`;
 }
 
 function colorToOverlay(color: string): string {

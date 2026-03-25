@@ -25,6 +25,7 @@ export function WeekRangePicker({
     () => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
   );
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const selectedWeekStart = getWeekStart(selectedDate);
   const weeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
 
@@ -49,6 +50,7 @@ export function WeekRangePicker({
 
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        event.stopPropagation();
         setIsOpen(false);
       }
     }
@@ -60,6 +62,13 @@ export function WeekRangePicker({
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      return;
+    }
+    triggerRef.current?.focus();
   }, [isOpen]);
 
   return (
@@ -76,8 +85,16 @@ export function WeekRangePicker({
         <button
           aria-expanded={isOpen}
           aria-haspopup="dialog"
+          aria-label={`Week range: ${formatWeekRangeLabel(selectedDate)}. Press Enter to open week picker.`}
           className="flex h-14 min-w-[min(100%,34rem)] items-center gap-4 rounded-2xl border border-[var(--track-border)] bg-[#1b1b1b] px-6 text-left text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
           onClick={() => setIsOpen((current) => !current)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setIsOpen((current) => !current);
+            }
+          }}
+          ref={triggerRef}
           type="button"
         >
           <TrackingIcon className="size-5 shrink-0 text-white" name="calendar" />

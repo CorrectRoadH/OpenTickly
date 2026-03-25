@@ -73,7 +73,31 @@ export function formatTrackQueryDate(date: Date): string {
 
 export function formatWeekRangeLabel(date: Date): string {
   const weekDays = getWeekDaysForDate(date);
-  return `${formatTrackQueryDate(weekDays[0])} - ${formatTrackQueryDate(weekDays[DAYS_IN_WEEK - 1])}`;
+  const weekStart = getWeekStart(date);
+  const weekNumber = resolveIsoWeekNumber(date);
+  const today = new Date();
+  const todayWeekStart = getWeekStart(today);
+
+  if (isSameDay(weekStart, todayWeekStart)) {
+    return `This week · W${weekNumber}`;
+  }
+
+  const lastWeekStart = shiftWeek(todayWeekStart, -1);
+  if (isSameDay(weekStart, lastWeekStart)) {
+    return `Last week · W${weekNumber}`;
+  }
+
+  const start = weekDays[0];
+  const end = weekDays[DAYS_IN_WEEK - 1];
+  const startMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(start);
+  const endMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(end);
+  const year = end.getFullYear();
+
+  if (start.getMonth() === end.getMonth()) {
+    return `${startMonth} ${start.getDate()} - ${end.getDate()}, ${year}`;
+  }
+
+  return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${year}`;
 }
 
 export function resolveIsoWeekNumber(date: Date): number {
