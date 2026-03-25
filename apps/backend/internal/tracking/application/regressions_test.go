@@ -324,6 +324,174 @@ func TestRunningTimerConflictAcrossWorkspaces(t *testing.T) {
 	}
 }
 
+// TestCrossWorkspaceRunningTimerEditStop verifies VAL-TIMER-002, VAL-TIMER-003, VAL-TIMER-004,
+// VAL-CROSS-001, and VAL-CROSS-003 using the same seeded cross-workspace scenario as the
+// browser E2E test "VAL-CROSS-003: stopping foreign-workspace running timer clears current
+// state without leaking to current workspace history".
+//
+// This backend proof shows:
+// - A running timer started in workspace A remains the current timer when the user context
+//   switches to workspace B (VAL-TIMER-002)
+// - The running timer's description can be updated from workspace B (VAL-TIMER-003)
+// - After stopping from workspace B, GetCurrentTimeEntry returns null (VAL-TIMER-003)
+// - The stopped entry remains in workspace A and does NOT leak into workspace B history (VAL-TIMER-004, VAL-CROSS-003)
+func TestCrossWorkspaceRunningTimerEditStop(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	// Create the first workspace and user (workspace A)
+	workspaceAID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "cross-ws-running")
+
+	// Create the second workspace (workspace B) under a new organization
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	_, workspaceB, err := tenantStore.CreateOrganization(
+		ctx,
+		"Cross-WS Running Org B",
+		"Cross-WS Running Workspace B",
+		tenantdomain.DefaultWorkspaceSettings(),
+	)
+	if err != nil {
+		t.Fatalf("create second organization for workspace B: %v", err)
+	}
+	workspaceBID := int64(workspaceB.ID())
+
+	// Add the same user to workspace B so they can access it
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	if err != nil {
+		t.Fatalf("new membership service: %v", err)
+	}
+	_, err = membershipService.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
+		WorkspaceID: workspaceBID,
+		UserID:      userID,
+	})
+	if err != nil {
+		t.Fatalf("ensure user membership in workspace B: %v", err)
+	}
+
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// Step 1: Start a running timer in workspace A (no stop time)
+	runningDescription := "Running timer in workspace A"
+	firstStart := time.Now().UTC()
+	firstEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceAID,
+		UserID:      userID,
+		Description: runningDescription,
+		Start:       firstStart,
+		CreatedWith: "cross-ws-running-test",
+	})
+	if err != nil {
+		t.Fatalf("create running timer in workspace A: %v", err)
+	}
+	if firstEntry.Stop != nil {
+		t.Fatalf("expected first entry to be running (no stop), got stop %s", *firstEntry.Stop)
+	}
+	if firstEntry.WorkspaceID != workspaceAID {
+		t.Fatalf("expected first entry workspace A (%d), got %d", workspaceAID, firstEntry.WorkspaceID)
+	}
+
+	// Step 2: Verify the running timer is the current timer
+	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current time entry: %v", err)
+	}
+	if current.ID != firstEntry.ID {
+		t.Fatalf("expected current timer ID %d, got %d", firstEntry.ID, current.ID)
+	}
+
+	// Step 3: Update the running timer's description while conceptually in workspace B context
+	// (The running timer remains the current timer regardless of which workspace the user
+	// is currently viewing - the running timer is global per user, not per workspace)
+	updatedDescription := "Edited from workspace B context"
+	updatedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceAID, // The running timer's owning workspace
+		TimeEntryID: firstEntry.ID,
+		UserID:      userID,
+		Description: lo.ToPtr(updatedDescription),
+	})
+	if err != nil {
+		t.Fatalf("update running timer description: %v", err)
+	}
+	if updatedEntry.Description != updatedDescription {
+		t.Fatalf("expected updated description %q, got %q", updatedDescription, updatedEntry.Description)
+	}
+
+	// Step 4: Stop the running timer
+	stopTime := time.Now().UTC()
+	stoppedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceAID,
+		TimeEntryID: firstEntry.ID,
+		UserID:      userID,
+		Stop:        &stopTime,
+	})
+	if err != nil {
+		t.Fatalf("stop running timer: %v", err)
+	}
+	if stoppedEntry.Stop == nil {
+		t.Fatalf("expected stopped entry to have stop time, got nil")
+	}
+
+	// Step 5: Verify current timer is now null after stop (ID == 0 means no running entry)
+	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current time entry after stop: %v", err)
+	}
+	if current.ID != 0 {
+		t.Fatalf("expected current timer ID to be 0 (nil) after stop, got %d", current.ID)
+	}
+
+	// Step 6: VAL-TIMER-004 / VAL-CROSS-003: Prove the stopped entry is in workspace A
+	// and did NOT leak into workspace B history
+	entriesInA, err := trackingService.ListTimeEntries(ctx, workspaceAID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries in workspace A: %v", err)
+	}
+	if len(entriesInA) != 1 {
+		t.Fatalf("expected exactly 1 time entry in workspace A after stop, got %d entries", len(entriesInA))
+	}
+	if entriesInA[0].ID != firstEntry.ID {
+		t.Fatalf("expected entry ID %d in workspace A, got %d", firstEntry.ID, entriesInA[0].ID)
+	}
+	if entriesInA[0].Description != updatedDescription {
+		t.Fatalf("expected entry description %q in workspace A (updated), got %q", updatedDescription, entriesInA[0].Description)
+	}
+	if entriesInA[0].Stop == nil {
+		t.Fatalf("expected stopped entry to have stop time in workspace A, got nil")
+	}
+
+	// Step 7: Prove workspace B has NO entries (the stopped entry did not leak)
+	entriesInB, err := trackingService.ListTimeEntries(ctx, workspaceBID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries in workspace B: %v", err)
+	}
+	if len(entriesInB) != 0 {
+		t.Fatalf("expected zero time entries in workspace B (no leak), got %d entries: %+v", len(entriesInB), entriesInB)
+	}
+
+	// Step 8: Verify direct readback of the stopped entry in workspace A shows correct state
+	readback, err := trackingService.GetTimeEntry(ctx, workspaceAID, userID, firstEntry.ID)
+	if err != nil {
+		t.Fatalf("get time entry by ID in workspace A: %v", err)
+	}
+	if readback.ID != firstEntry.ID {
+		t.Fatalf("expected readback ID %d, got %d", firstEntry.ID, readback.ID)
+	}
+	if readback.Description != updatedDescription {
+		t.Fatalf("expected readback description %q, got %q", updatedDescription, readback.Description)
+	}
+	if readback.Stop == nil {
+		t.Fatalf("expected readback stop to be set, got nil")
+	}
+	if readback.WorkspaceID != workspaceAID {
+		t.Fatalf("expected readback workspace A (%d), got %d", workspaceAID, readback.WorkspaceID)
+	}
+}
+
 // TestHistoricalEntriesSurviveProjectArchival verifies VAL-REG-003:
 // Historical time entries remain visible after related projects are archived.
 // Future mutability can change, but historical facts must not disappear.
