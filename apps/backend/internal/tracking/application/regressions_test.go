@@ -19,130 +19,14 @@ import (
 	"github.com/samber/lo"
 )
 
-// TestRunningTimerConflictOnUpdateEntryPoint verifies VAL-REG-001:
-// If a user already has a running timer and attempts to start another one via
-// UpdateTimeEntry (by updating a running entry to change its start time), the
-// conflict handling returns ErrRunningTimeEntryExists. This proves the same fixed
-// handling rule for the UpdateTimeEntry entry point.
-func TestRunningTimerConflictOnUpdateEntryPoint(t *testing.T) {
-	database := pgtest.Open(t)
-	ctx := context.Background()
-
-	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "timer-conflict-update")
-	catalogService := mustNewTrackingCatalogService(t, database)
-	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
-
-	// Start the first running timer (no stop time)
-	firstStart := time.Now().UTC()
-	firstEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
-		WorkspaceID: workspaceID,
-		UserID:      userID,
-		Description: "First running timer",
-		Start:       firstStart,
-		CreatedWith: "conflict-test",
-	})
-	if err != nil {
-		t.Fatalf("create first running timer: %v", err)
-	}
-	if firstEntry.Stop != nil {
-		t.Fatalf("expected first entry to be running (no stop), got stop %s", *firstEntry.Stop)
-	}
-
-	// Verify the first timer is the current running timer
-	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
-	if err != nil {
-		t.Fatalf("get current time entry: %v", err)
-	}
-	if current.ID != firstEntry.ID {
-		t.Fatalf("expected current timer ID %d, got %d", firstEntry.ID, current.ID)
-	}
-
-	// Create a second running timer via CreateTimeEntry - this should conflict
-	secondStart := time.Now().UTC()
-	_, err = trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
-		WorkspaceID: workspaceID,
-		UserID:      userID,
-		Description: "Second running timer - should conflict via Create",
-		Start:       secondStart,
-		CreatedWith: "conflict-test",
-	})
-	if err == nil {
-		t.Fatalf("expected conflict error via CreateTimeEntry, got nil")
-	}
-	if err != trackingapplication.ErrRunningTimeEntryExists {
-		t.Fatalf("expected ErrRunningTimeEntryExists from CreateTimeEntry, got %v", err)
-	}
-
-	// Verify the first running timer is still the current running timer
-	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
-	if err != nil {
-		t.Fatalf("get current time entry after CreateTimeEntry conflict: %v", err)
-	}
-	if current.ID != firstEntry.ID {
-		t.Fatalf("expected current timer to still be first entry %d after CreateTimeEntry conflict, got %d", firstEntry.ID, current.ID)
-	}
-
-	// Now try to UPDATE the first running timer with a new start time - this also attempts
-	// to keep it running (since we're not providing a new stop). This should NOT conflict
-	// because we're updating the SAME entry, not starting a new one.
-	newStart := time.Now().UTC()
-	updatedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
-		WorkspaceID: workspaceID,
-		TimeEntryID: firstEntry.ID,
-		UserID:      userID,
-		Start:       &newStart,
-		// Stop is not provided, so the entry stays running
-	})
-	if err != nil {
-		t.Fatalf("update running entry with new start: %v", err)
-	}
-	if updatedEntry.Stop != nil {
-		t.Fatalf("expected updated entry to still be running, got stop %s", *updatedEntry.Stop)
-	}
-	if updatedEntry.ID != firstEntry.ID {
-		t.Fatalf("expected updated entry ID to be %d, got %d", firstEntry.ID, updatedEntry.ID)
-	}
-
-	// Verify the first running timer is still the current running timer (same entry)
-	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
-	if err != nil {
-		t.Fatalf("get current time entry after update: %v", err)
-	}
-	if current.ID != firstEntry.ID {
-		t.Fatalf("expected current timer to still be first entry %d after update, got %d", firstEntry.ID, current.ID)
-	}
-
-	// Stop the first timer
-	stopTime := time.Now().UTC()
-	stoppedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
-		WorkspaceID: workspaceID,
-		TimeEntryID: firstEntry.ID,
-		UserID:      userID,
-		Stop:        &stopTime,
-	})
-	if err != nil {
-		t.Fatalf("stop first running timer: %v", err)
-	}
-	if stoppedEntry.Stop == nil {
-		t.Fatalf("expected stopped entry to have stop time, got nil")
-	}
-
-	// Now we should be able to start a new running timer
-	newTimerStart := time.Now().UTC()
-	newEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
-		WorkspaceID: workspaceID,
-		UserID:      userID,
-		Description: "New running timer after stopping previous",
-		Start:       newTimerStart,
-		CreatedWith: "conflict-test",
-	})
-	if err != nil {
-		t.Fatalf("create running timer after stopping previous: %v", err)
-	}
-	if newEntry.Stop != nil {
-		t.Fatalf("expected new entry to be running, got stop %s", *newEntry.Stop)
-	}
-}
+// NOTE: UpdateTimeEntry is NOT a supported timer-start entry point under the current
+// documented contract (OpenAPI/toggl-track-api-v9). The PUT /workspaces/{workspace_id}/time_entries/{time_entry_id}
+// endpoint updates an existing time entry; it cannot be used to START a new running timer.
+// When UpdateTimeEntry is called without Stop on a stopped entry, the existing stop value
+// is preserved (stop != nil), so no running timer conflict can occur via this path.
+//
+// The only supported timer-start entry point is CreateTimeEntry (POST /workspaces/{workspace_id}/time_entries).
+// VAL-REG-001 is validated by TestRunningTimerConflictOnCreateEntryPoint.
 
 // TestRunningTimerConflictOnCreateEntryPoint verifies VAL-REG-001:
 // If a user already has a running timer and attempts to start another one via
@@ -204,6 +88,31 @@ func TestRunningTimerConflictOnCreateEntryPoint(t *testing.T) {
 	}
 	if current.ID != firstEntry.ID {
 		t.Fatalf("expected current timer to still be first entry %d after conflict, got %d", firstEntry.ID, current.ID)
+	}
+
+	// VAL-REG-001 explicit no-persistence proof: the rejected second-start attempt
+	// must not have persisted a contradictory entry for the rejected description.
+	// Use direct readback via ListTimeEntries to prove no entry with the rejected
+	// description exists in the database.
+	rejectedDescription := "Second running timer - should conflict"
+	entriesAfterConflict, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries after conflict to verify no-persistence: %v", err)
+	}
+	for _, e := range entriesAfterConflict {
+		if e.Description == rejectedDescription {
+			t.Fatalf("rejected second-start attempt persisted entry with description %q (id=%d); VAL-REG-001 requires that the conflict result does not leave a contradictory entry", rejectedDescription, e.ID)
+		}
+	}
+
+	// Also prove the entry count did not increase - only the first running entry exists.
+	if len(entriesAfterConflict) != 1 {
+		t.Fatalf("expected exactly 1 time entry after rejected conflict (only the first running timer), got %d entries", len(entriesAfterConflict))
+	}
+	if entriesAfterConflict[0].ID != firstEntry.ID {
+		t.Fatalf("expected only the first running timer (id=%d) in history after conflict, got id=%d", firstEntry.ID, entriesAfterConflict[0].ID)
 	}
 
 	// Stop the first timer
