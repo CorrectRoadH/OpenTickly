@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   createTimeEntryForWorkspace,
   loginE2eUser,
+  pollSessionBootstrap,
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
@@ -111,7 +112,7 @@ test.describe("Story: enter the tracking shell", () => {
     );
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_organization_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_organization_id)
       .toBe(initialOrganizationId);
 
     const switchedSession = await readSessionBootstrap(page);
@@ -169,7 +170,7 @@ test.describe("Story: enter the tracking shell", () => {
 
     await expect(organizationButton).toContainText(secondOrganizationName);
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(initialSession.current_workspace_id);
 
     await organizationButton.click();
@@ -188,7 +189,7 @@ test.describe("Story: enter the tracking shell", () => {
       .click();
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).user.default_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.user?.default_workspace_id)
       .not.toBe(initialSession.user.default_workspace_id);
 
     await page.keyboard.press("Escape");

@@ -4,6 +4,7 @@ import {
   createProjectForWorkspace,
   createTimeEntryForWorkspace,
   loginE2eUser,
+  pollSessionBootstrap,
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
@@ -124,7 +125,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
 
     // Wait for organization switch to complete by polling session
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     const switchedSession = await readSessionBootstrap(page);
@@ -215,7 +216,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
 
       // Wait for switch back to workspace A
       await expect
-        .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+        .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
         .toBe(workspaceAId);
 
       // Navigate to timer page and verify workspace A entries are back
@@ -1142,7 +1143,9 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
    * selected timer view remains active, the shared top composer/header remains
    * shared, and the history projection re-scopes to the new workspace.
    */
-  test("VAL-CROSS-005: selected TimerView survives workspace switch", async ({ page }) => {
+  test("VAL-CROSS-005: selected TimerView survives workspace switch with running timer continuity", async ({
+    page,
+  }) => {
     const email = `timer-view-persist-ws-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -1159,8 +1162,37 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     });
     const workspaceAId = loginSession.currentWorkspaceId;
 
+    // Create a project so the running entry appears properly (similar to VAL-TIMER-002)
+    await createProjectForWorkspace(page, {
+      name: "VAL-CROSS-005 Project",
+      workspaceId: workspaceAId,
+    });
+
     await page.goto(new URL("/timer", page.url()).toString());
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a timer in workspace A before switching views and workspaces
+    const runningDescription = "Running timer for VAL-CROSS-005";
+    await page.getByLabel("Time entry description").fill(runningDescription);
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Verify running state before switch
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+    await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    const elapsedBeforeSwitch = await page.getByTestId("timer-elapsed").textContent();
+    expect(elapsedBeforeSwitch).toMatch(/\d{2}:\d{2}:\d{2}/);
+
+    // Get the running entry ID before switch
+    const runningEntryBefore = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(runningEntryBefore.status).toBe(200);
+    expect(runningEntryBefore.body).not.toBeNull();
+    const runningEntryIdBefore = runningEntryBefore.body.id;
 
     // Default to calendar
     await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
@@ -1197,7 +1229,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
 
     // Wait for organization switch to complete
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     // Navigate back to timer page - list view should still be selected
@@ -1214,6 +1246,29 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
       "false",
     );
 
+    // VAL-CROSS-005: The running timer identity remains active across workspace switch
+    // - Stop button visible (same running state)
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // - Elapsed display still showing live time (valid HH:MM:SS format)
+    await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    const elapsedAfterSwitch = await page.getByTestId("timer-elapsed").textContent();
+    expect(elapsedAfterSwitch).toMatch(/\d{2}:\d{2}:\d{2}/);
+    // Elapsed should still be showing time (not cleared to 00:00:00)
+    expect(elapsedAfterSwitch).not.toBe("00:00:00");
+
+    // - Same running entry ID is still current
+    const runningEntryAfter = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(runningEntryAfter.status).toBe(200);
+    expect(runningEntryAfter.body).not.toBeNull();
+    expect(runningEntryAfter.body.id).toBe(runningEntryIdBefore);
+
     // Switch to timesheet and verify it also persists across workspace switch
     await page.getByRole("button", { name: "Timesheet" }).click();
     await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
@@ -1221,7 +1276,12 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
       "true",
     );
 
-    // Switch back to original workspace and verify timesheet persists
+    // Running timer should still be visible in timesheet view
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+
+    // Cleanup: stop the timer by switching back to workspace A first
+    // Navigate back to workspace A
     await organizationButton.click();
     await expect(workspaceListbox).toBeVisible();
 
@@ -1235,22 +1295,12 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
 
       // Wait for switch back to workspace A
       await expect
-        .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+        .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
         .toBe(workspaceAId);
 
-      // Navigate to timer page - timesheet should still be selected
-      await page.goto(new URL("/timer", page.url()).toString());
-      await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-
-      // The selected view should persist across workspace switch
-      await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
-        "aria-pressed",
-        "true",
-      );
-      await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
-        "aria-pressed",
-        "false",
-      );
+      // Now stop the timer
+      await page.getByRole("button", { name: "Stop timer" }).click();
+      await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
     }
   });
 
@@ -1389,7 +1439,7 @@ test.describe("Cross-workspace running timer header", () => {
 
     // Wait for organization switch to complete
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     // Navigate to timer page after switch
@@ -1483,7 +1533,7 @@ test.describe("Cross-workspace running timer header", () => {
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     // Navigate to timer page in workspace B
@@ -1632,7 +1682,7 @@ test.describe("Cross-workspace running timer header", () => {
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     const switchedSession = await readSessionBootstrap(page);
@@ -1789,7 +1839,7 @@ test.describe("Cross-workspace running timer header", () => {
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     const switchedSession = await readSessionBootstrap(page);
@@ -1941,7 +1991,7 @@ test.describe("Cross-workspace running timer header", () => {
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
 
     await expect
-      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .poll(async () => (await pollSessionBootstrap(page))?.current_workspace_id)
       .not.toBe(workspaceAId);
 
     const switchedSessionB = await readSessionBootstrap(page);

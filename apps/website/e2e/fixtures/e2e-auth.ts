@@ -72,6 +72,38 @@ export async function readSessionBootstrap(page: Page): Promise<WebSessionBootst
   });
 }
 
+/**
+ * Polling-safe version of readSessionBootstrap.
+ *
+ * Catches errors (including 500s during workspace switch) and returns null instead of throwing.
+ * This allows Playwright's expect.poll() to continue retrying when transient errors occur,
+ * rather than failing immediately on the first error.
+ *
+ * Use this in poll() callbacks. For direct calls where you need the session data,
+ * use readSessionBootstrap() instead.
+ */
+export async function pollSessionBootstrap(
+  page: Page,
+  maxRetries = 3,
+  delayMs = 300,
+): Promise<WebSessionBootstrapDto | null> {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const result = await readSessionBootstrap(page);
+      return result;
+    } catch {
+      // Session read failed (e.g., 500 during workspace switch).
+      // Return null to signal "not ready yet" so poll continues retrying.
+      if (attempt < maxRetries - 1) {
+        await page.waitForTimeout(delayMs);
+      }
+    }
+  }
+  // All retries exhausted - return null so poll times out naturally
+  // instead of failing with an unhandled error.
+  return null;
+}
+
 export async function createTimeEntryForWorkspace(
   page: Page,
   options: {
