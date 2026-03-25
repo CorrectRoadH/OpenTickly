@@ -12,7 +12,7 @@ import {
 } from "../../features/tracking/overview-views.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
-import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
+import { WeekRangePicker, QuickDateShortcuts } from "../../features/tracking/WeekRangePicker.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
@@ -118,6 +118,10 @@ export function WorkspaceTimerPage(): ReactElement {
         <div className="px-5 pb-4 pt-4">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-6">
+              <QuickDateShortcuts
+                onSelectDate={orch.setSelectedWeekDate}
+                selectedDate={orch.selectedWeekDate}
+              />
               <WeekRangePicker
                 onSelectDate={orch.setSelectedWeekDate}
                 selectedDate={orch.selectedWeekDate}

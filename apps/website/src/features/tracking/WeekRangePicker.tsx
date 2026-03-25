@@ -13,6 +13,39 @@ import {
   WEEK_SHORTCUTS,
 } from "./week-range.ts";
 
+export function QuickDateShortcuts({
+  onSelectDate,
+  selectedDate,
+}: {
+  onSelectDate: (date: Date) => void;
+  selectedDate: Date;
+}): ReactElement {
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-0.5">
+      {WEEK_SHORTCUTS.map((shortcut) => {
+        const shortcutDate = shortcut.resolveDate(new Date());
+        const isActive = isSameWeek(shortcutDate, selectedDate);
+
+        return (
+          <button
+            aria-pressed={isActive}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium transition ${
+              isActive
+                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+                : "text-white"
+            }`}
+            key={shortcut.id}
+            onClick={() => onSelectDate(shortcutDate)}
+            type="button"
+          >
+            {shortcut.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function WeekRangePicker({
   onSelectDate,
   selectedDate,

@@ -744,10 +744,10 @@ function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
 }
 
 function formatHourLabel(hour: number): string {
-  if (hour === 0) return "12 AM";
-  if (hour === 12) return "12 PM";
-  if (hour < 12) return `${hour} AM`;
-  return `${hour - 12} PM`;
+  if (hour === 0) return "12:00 AM";
+  if (hour === 12) return "12:00 PM";
+  if (hour < 12) return `${hour}:00 AM`;
+  return `${hour - 12}:00 PM`;
 }
 
 function colorToOverlay(color: string): string {
