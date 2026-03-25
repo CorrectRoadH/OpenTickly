@@ -83,7 +83,7 @@ export function CalendarPanel({
       </div>
 
       {/* Weekday header — tight vertical rhythm, part of the grid */}
-      <div className="mb-1 grid grid-cols-7 gap-1 px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#5a5a60]">
+      <div className="mb-0 grid grid-cols-7 gap-[2px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#5a5a60]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
           <div className="pb-1" key={weekday}>
             {weekday}
@@ -92,10 +92,10 @@ export function CalendarPanel({
       </div>
 
       {/* Day grid */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-[2px]">
         {weeks.map((week, weekIndex) => (
           <div
-            className="grid grid-cols-7 gap-1"
+            className="grid grid-cols-7 gap-[2px]"
             key={`${visibleMonth.toISOString()}-${weekIndex}`}
           >
             {week.map((day) => {
@@ -125,7 +125,7 @@ export function CalendarPanel({
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "text-[#3e3e42] hover:text-[#48484e]"
+                          ? "text-[#38383d] hover:text-[#424247]"
                           : "text-[#ededf0] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
@@ -140,7 +140,7 @@ export function CalendarPanel({
                   {isToday && !selected && !isOutsideMonth ? (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-[#c78acd]"
+                      className="absolute bottom-[3px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#c78acd]"
                     />
                   ) : null}
                 </button>
