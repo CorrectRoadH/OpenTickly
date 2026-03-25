@@ -29,12 +29,12 @@ import {
   useUpdateTimeEntryMutation,
   useUpdateWebSessionMutation,
 } from "../../shared/query/web-shell.ts";
-import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
-import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 
 const TIMER_VIEW_STORAGE_KEY = "opentoggl:user-prefs:timer-view";
 
