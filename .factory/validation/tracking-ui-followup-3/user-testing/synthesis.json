@@ -1,0 +1,21 @@
+{
+  "milestone": "tracking-ui-followup-3",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null,
+  "override": {
+    "status": "accepted",
+    "reason": "Completed implementation features for tracking-ui-followup-3 declare no `fulfills` assertions, so this milestone has no standalone user-testing assertion scope. Current evidence already shows the affected editor and timer-page specs pass under the canonical repo validator (`vp run test -r`), and the validator-only browser/session instability does not change any mission assertion state.",
+    "timestamp": "2026-03-25T19:26:00Z"
+  }
+}

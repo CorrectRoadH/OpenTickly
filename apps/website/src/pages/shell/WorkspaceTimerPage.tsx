@@ -9,6 +9,7 @@ import {
   SurfaceMessage,
   TimesheetView,
   ViewTab,
+  ViewTabGroup,
 } from "../../features/tracking/overview-views.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
@@ -136,11 +137,17 @@ export function WorkspaceTimerPage(): ReactElement {
               />
             </div>
             <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
-              <div className="flex rounded-md border border-[var(--track-border)] bg-[#111111] p-0.5">
+              <ViewTabGroup
+                aria-label="Timer view"
+                label="Timer view"
+                onSelect={orch.setView}
+                options={["calendar", "list", "timesheet"]}
+                value={orch.view}
+              >
                 <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="calendar" />
                 <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="list" />
                 <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="timesheet" />
-              </div>
+              </ViewTabGroup>
               <ChromeIconButton icon="settings" />
             </div>
           </div>

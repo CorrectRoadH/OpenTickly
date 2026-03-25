@@ -1,0 +1,33 @@
+{
+  "featureId": "tracking-ui-timer-view-accessible-controls-fix",
+  "reviewedAt": "2026-03-25T12:18:08.914777+00:00",
+  "commitId": "40f4ba5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix restores Playwright button selectors for the main timer view switcher, but it introduces an accessibility contract regression: the wrapper still exposes radiogroup semantics while the child controls are plain buttons with aria-pressed instead of radios. That mismatched ARIA structure means the implementation does not fully preserve the intended accessibility improvements promised by the feature.",
+    "issues": [
+      {
+        "file": "apps/website/src/features/tracking/overview-views.tsx",
+        "line": 96,
+        "severity": "blocking",
+        "description": "`ViewTabGroup` still declares `role=\"radiogroup\"`, but `ViewTab` children no longer expose `role=\"radio\"`/`aria-checked`; they are plain buttons using `aria-pressed`. A radiogroup requires radio descendants, so assistive tech now sees an invalid composite widget. The feature brief explicitly allowed accessibility changes only if they stayed compatible with the documented semantics, and this breaks that contract while fixing Playwright selectors."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `tracking-frontend-worker` skill requires failing tests first, agent-browser replay for browser-visible changes, and mission status block updates for directly used source docs, but the transcript shows the worker implemented the fix directly, ran only passing validators, did not perform browser replay, and the handoff still marked `followedProcedure: true` with no source-doc updates recorded.",
+      "evidence": "Skill: .factory/skills/tracking-frontend-worker/SKILL.md steps 4, 8, 11-12; transcript skeleton for worker bd32ec8d-9420-4f14-a8fc-c0ee234e52a4 shows direct edit of apps/website/src/features/tracking/overview-views.tsx, no agent-browser invocation, and no doc-status updates; handoff file /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T12-07-07-388Z__tracking-ui-timer-view-accessible-controls-fix__bd32ec8d-9420-4f14-a8fc-c0ee234e52a4.json marks followedProcedure true."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The mission library's documentation-traceability guidance assumes every directly used source doc has an inline mission status block, but docs/testing/bdd-user-stories.md currently has none. That gap makes the frontend-worker procedure impossible to follow literally when a feature relies on the BDD source doc.",
+      "evidence": ".factory/library/documentation-traceability.md requires status blocks in every listed source doc; Grep on docs/testing/bdd-user-stories.md found no Mission status block, while this feature's mission guidance points workers to that doc for validation intent."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: commit 40f4ba5 fixes the immediate E2E discoverability regression, but it leaves the timer view switcher in an invalid ARIA state by combining a radiogroup container with non-radio button children. I also noted worker-procedure drift and a mission traceability gap around missing status blocks in docs/testing/bdd-user-stories.md."
+}

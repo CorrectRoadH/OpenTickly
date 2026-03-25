@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-security-owner-http-readback-proof-fix",
+  "reviewedAt": "2026-03-25T11:43:52.118596+00:00",
+  "commitId": "790fb0f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix adequately closes the prior scrutiny gap. Commit 790fb0f extends the same two attacker-isolation HTTP tests to prove the victim/owner can still read their own entry-by-id facts after the attacker-facing denial checks, which is the exact missing transport-boundary proof called out in the failed review for commit 8334739.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": ".factory/validation/tracking-security-horizontal-auth/scrutiny/reviews/tracking-security-cross-user-read-surface-proof-fix.json",
+  "summary": "Pass: reviewed the prior failing diff and the fix diff, plus the worker transcript skeleton and handoff. The new assertions in apps/backend/internal/bootstrap/public_track_cross_user_security_test.go add owner-side entry-by-id readback after attacker denial for both current-timer and history scenarios, so the same seeded HTTP boundary now proves both attacker exclusion and owner-only visibility without reopening unrelated scope."
+}

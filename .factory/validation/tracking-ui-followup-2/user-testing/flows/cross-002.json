@@ -1,0 +1,73 @@
+{
+  "groupId": "cross-002",
+  "testedAt": "2026-03-25T10:28:26Z",
+  "isolation": {
+    "frontendUrl": "http://127.0.0.1:5173",
+    "backendUrl": "http://127.0.0.1:8080",
+    "browserSession": "val-cross-002",
+    "validatorOwnedSession": "attempted via browser registration/login and isolated backend-created account"
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "curl",
+    "python3"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-CROSS-002",
+      "title": "Direct entry and shell entry converge on the same timer state",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Read mission/browser guidance and confirm reused runtime readiness on ports 5173 and 8080.",
+          "expected": "Both services reachable so browser validation can run.",
+          "observed": "Frontend returned HTTP 200 and backend returned HTTP 404 on HEAD /, confirming reachability."
+        },
+        {
+          "action": "Open the website and authenticate with a validator-owned browser session using the canonical register/login surface.",
+          "expected": "Successful registration or login redirects to /timer with the authenticated shell visible.",
+          "observed": "Browser registration and login stayed on unauthenticated auth pages; prior network capture during login showed POST /web/v1/auth/login followed by authenticated timer-related fetches, but the visible document remained /login and subsequent direct /timer navigation redirected back to /login."
+        },
+        {
+          "action": "Create a separate validator-owned account through the backend auth register endpoint to inspect session behavior.",
+          "expected": "Returned session cookie should support authenticated browser navigation to /timer under the same local runtime.",
+          "observed": "Backend returned 201 with a Set-Cookie header using Domain=localhost. Injecting that cookie into the browser still resulted in /timer redirecting to /login, so a stable authenticated browser session could not be established for shell-vs-direct comparison."
+        },
+        {
+          "action": "Compare Timer opened through shell navigation versus direct /timer entry under the same authenticated session.",
+          "expected": "Both paths show the same default calendar timer state, header state, and workspace-scoped facts.",
+          "observed": "Blocked because the browser session could not remain authenticated on the reused runtime."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "tracking-ui-followup-2/cross-002/landing-annotated.png",
+          "tracking-ui-followup-2/cross-002/post-register-timer.png"
+        ],
+        "consoleErrors": "Browser console repeatedly showed 401 and 403 resource failures on auth/timer attempts; React Grab debug output was also present from the local environment.",
+        "network": "Observed POST /web/v1/auth/login plus timer/session fetches in agent-browser request log, but visible navigation stayed at /login. Direct backend register call returned 201 Created with Set-Cookie: opentoggl_session=...; Domain=localhost; Path=/; HttpOnly; SameSite=Lax."
+      },
+      "issues": "Blocked by inability to establish or preserve a validator-owned authenticated browser session on the reused local runtime, preventing the required shell-vs-direct timer comparison."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The reused runtime exposed a login/register UI, but successful browser auth did not converge to a stable authenticated shell despite authenticated-looking follow-up fetches in the request log.",
+      "resolved": false,
+      "resolution": "Tried browser register, browser login, backend-created validator account, and manual cookie injection; all still redirected /timer to /login.",
+      "affectedAssertions": [
+        "VAL-CROSS-002"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Could not obtain a stable authenticated browser session on the reused runtime, so the assigned shell-navigation vs direct-entry assertion could not be exercised.",
+      "affectedAssertions": [
+        "VAL-CROSS-002"
+      ],
+      "quickFixAttempted": "Verified HTTP readiness, retried browser register/login flows, inspected request log and console output, created a fresh account directly via POST /web/v1/auth/register, and injected the returned session cookie into the browser session."
+    }
+  ],
+  "summary": "VAL-CROSS-002 is blocked on the reused local runtime because the validator-owned browser session could not stay authenticated long enough to compare shell Timer navigation with direct /timer entry."
+}

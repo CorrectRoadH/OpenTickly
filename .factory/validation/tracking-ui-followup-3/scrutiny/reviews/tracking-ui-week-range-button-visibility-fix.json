@@ -1,0 +1,21 @@
+{
+  "featureId": "tracking-ui-week-range-button-visibility-fix",
+  "reviewedAt": "2026-03-25T11:02:50Z",
+  "commitId": "df33d5a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The feature is satisfied by commit df33d5a: the pinned-header timer-page test now targets the stable week-range aria-label prefix rather than the obsolete date-range text format, which matches the current WeekRangePicker contract after commit 5452ae9 changed visible week labels.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The tracking-frontend-worker skill instructs workers to read repo-local library files under /Users/opentoggl-ci/Code/opentoggl/.factory/library/, but the worker handoff for this feature marked followedProcedure true without doing the required agent-browser replay and with no interactive checks. The skill should make the manual browser proof requirement enforceable for already-fixed/no-code features or allow an explicit no-op exception.",
+      "evidence": "tracking-frontend-worker SKILL.md step 11 requires agent-browser replay unless the feature is purely non-visual; handoff 2026-03-25T10-54-38-596Z__tracking-ui-week-range-button-visibility-fix__484289d8-1cc2-45f6-a999-eb53b2bec5a5.json reports interactiveChecks: [] and skillFeedback.followedProcedure: true."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass. The committed selector change in apps/website/e2e/timer-page.spec.ts restores the canonical week-range button locator contract without weakening the sticky-header assertion, and the reviewed evidence shows the affected timer-page E2E coverage and broader checks passed."
+}

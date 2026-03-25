@@ -1,0 +1,34 @@
+{
+  "featureId": "tracking-shell-direct-entry-convergence-regression-fix-2",
+  "reviewedAt": "2026-03-25T09:42:49.985163+00:00",
+  "commitId": "656d5810f11fdcb6ba8fe9e9196656921998e19d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reported fix does not implement a scoped change for the assigned VAL-CROSS-002 regression. The handoff claims convergence was restored by discarding pre-existing uncommitted files, but the recorded commit only changes overview calendar UI code and does not touch the failing shell/direct-entry proof. The repository evidence therefore does not show an implementation that fixed the assigned regression.",
+    "issues": [
+      {
+        "file": "apps/website/e2e/app-shell.real-runtime.spec.ts",
+        "line": 282,
+        "severity": "blocking",
+        "description": "The assigned feature required a concrete fix for the renewed VAL-CROSS-002 divergence, but the reviewed commit does not modify this test or any timer-state convergence code. The handoff says no code changes were needed and attributes the failure to discarded uncommitted files, which means there is no committed implementation proving the fix requested by the feature description."
+      },
+      {
+        "file": ".factory/skills/frontend-test-worker/SKILL.md",
+        "line": 35,
+        "severity": "non_blocking",
+        "description": "The skill explicitly requires the worker to verify that the reported commit directly contains the feature's code changes or else state that the behavior was already fixed by an earlier commit. The handoff instead points at commit 656d581, which only changes overview calendar UI code, so the evidence trail for this feature is inaccurate and makes scrutiny harder."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The frontend-test-worker handoff did not follow the skill's evidence standard for flaky-fix features: it returned success for a 'fix' without a commit that contains any scoped implementation for VAL-CROSS-002.",
+      "evidence": "Handoff 2026-03-25T09-33-37-198Z__tracking-shell-direct-entry-convergence-regression-fix-2__22364c96-83ae-4c52-beb2-20491deb0df6.json reports commit 656d581 and 'No code changes were needed'. `.factory/skills/frontend-test-worker/SKILL.md` says to verify the commitId directly contains the feature's code changes and not to treat rerun-only passes as completion for flaky-fix features. `git show 656d581 --stat` only includes apps/website/src/features/tracking/overview-views.tsx."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail. I reviewed the feature metadata, handoff, transcript skeleton, skill guidance, docs/mission shared state, and commit diff. The assigned VAL-CROSS-002 fix is not represented by the reported commit, so there is no committed implementation proving the renewed shell/direct-entry convergence regression was actually fixed."
+}

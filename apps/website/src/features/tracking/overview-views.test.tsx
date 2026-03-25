@@ -172,7 +172,7 @@ describe("CalendarView", () => {
     );
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Select time range on Monday 23 at 00:00" }),
+      screen.getByRole("button", { name: "Select time range on Monday 23 at 01:00" }),
     );
     fireEvent.click(screen.getByRole("button", { name: "Move entry Movable block" }));
     fireEvent.click(screen.getByRole("button", { name: "Resize start for Movable block" }));
@@ -180,7 +180,7 @@ describe("CalendarView", () => {
 
     expect(onSelectSlot).toHaveBeenCalledWith({
       dayIso: "2026-03-23",
-      minute: 0,
+      minute: 60,
     });
     expect(onMoveEntry).toHaveBeenCalledWith(33, 15);
     expect(onResizeEntry).toHaveBeenNthCalledWith(1, 33, "start", -15);

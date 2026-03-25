@@ -1,12 +1,12 @@
 {
   "milestone": "tracking-security-horizontal-auth",
-  "round": 3,
+  "round": 4,
   "status": "fail",
   "validatorsRun": {
     "test": {
-      "passed": true,
+      "passed": false,
       "command": "cd /Users/opentoggl-ci/Code/opentoggl && vp run test -r",
-      "exitCode": 0
+      "exitCode": 1
     },
     "typecheck": {
       "passed": true,
@@ -20,58 +20,46 @@
     }
   },
   "reviewsSummary": {
-    "total": 4,
-    "passed": 1,
-    "failed": 3,
+    "total": 7,
+    "passed": 2,
+    "failed": 5,
     "failedFeatures": [
+      "tracking-security-continue-surface-authorization-fix",
       "tracking-security-cross-user-read-isolation",
-      "tracking-security-cross-user-write-isolation",
-      "tracking-security-cross-user-restart-write-proof-fix"
+      "tracking-security-cross-user-read-surface-proof-fix",
+      "tracking-security-cross-user-restart-write-proof-fix",
+      "tracking-security-cross-user-write-isolation"
     ]
   },
   "blockingIssues": [
     {
-      "featureId": "tracking-security-cross-user-read-isolation",
+      "featureId": "tracking-security-continue-surface-authorization-fix",
       "severity": "blocking",
-      "description": "The same-workspace read-isolation helper derives test user IDs from time.Now().UnixNano() modulo arithmetic, which can collide under the mission's shared-schema parallel test topology and makes the security proof nondeterministic."
+      "description": "`TestSameWorkspaceUserACannotCreateTimeEntryAsUserB` and `TestSameWorkspaceUserACannotContinueUserBEntryViaCreate` still tolerate successful unauthorized create/continue requests, and the fix never adds direct HTTP/bootstrap proof that the real `POST /time_entries` boundary denies the request."
     },
     {
-      "featureId": "tracking-security-cross-user-write-isolation",
+      "featureId": "tracking-security-cross-user-read-isolation",
       "severity": "blocking",
-      "description": "The original write-isolation feature did not cover the documented restart/continue mutation surface required by VAL-SEC-TRACK-003; it only covered update, stop, delete, and batch patch denial."
+      "description": "The original read-isolation regression only exercised owner-scoped service calls (`GetCurrentTimeEntry`, `ListTimeEntries`, `ListUserTimeEntries`) and did not prove that attacker-visible HTTP tracking read surfaces deny cross-user reads."
+    },
+    {
+      "featureId": "tracking-security-cross-user-read-surface-proof-fix",
+      "severity": "blocking",
+      "description": "The read-surface fix added attacker-facing HTTP proof but still missed owner-still-can-read history or entry-by-id assertions in the same seeded scenario, leaving the history half under-proven until the later owner HTTP readback fix."
     },
     {
       "featureId": "tracking-security-cross-user-restart-write-proof-fix",
       "severity": "blocking",
-      "description": "The attempted restart/continue fix still does not exercise a real documented continue/restart mutation surface. It treats UpdateTimeEntry with Stop=nil as a stopped-to-running conversion even though the service contract preserves the existing stop and mission guidance says continue should create a new running entry."
+      "description": "The restart/continue fix modeled restart via `UpdateTimeEntry(... Stop=nil)` even though that service path preserves stop values and is not the documented continue/create boundary."
+    },
+    {
+      "featureId": "tracking-security-cross-user-write-isolation",
+      "severity": "blocking",
+      "description": "The original write-isolation feature omitted the continue/create mutation surface, so same-workspace attackers still lacked a proven denial path for creating or continuing another user's entry until a later fix feature."
     }
   ],
   "appliedUpdates": [],
-  "suggestedGuidanceUpdates": [
-    {
-      "target": "skill:.factory/skills/backend-test-worker/SKILL.md",
-      "suggestion": "Explicitly forbid time-based pseudo-unique identifiers such as time.Now().UnixNano() for shared-schema parallel backend tests, and require deterministic collision-safe test-owned identity helpers instead.",
-      "evidence": "The failed review for tracking-security-cross-user-read-isolation found time.Now().UnixNano() % 100000000000 in apps/backend/internal/tracking/application/security_regressions_test.go, which undermines repeatable parallel security proof under the shared opentoggl_test schema.",
-      "isSystemic": false
-    },
-    {
-      "target": "skill:.factory/skills/tracking-backend-worker/SKILL.md",
-      "suggestion": "Reinforce that workers must read the required .factory/library architecture and traceability files before implementation, and treat missing prerequisite reads as a process failure instead of optional context.",
-      "evidence": "The tracking-security-cross-user-write-isolation transcript skeleton showed mission-doc and skill reads but not the required .factory/library/architecture.md and .factory/library/documentation-traceability.md reads.",
-      "isSystemic": false
-    },
-    {
-      "target": "skill:.factory/skills/backend-test-worker/SKILL.md",
-      "suggestion": "Emphasize that if a requested regression path cannot be found in the documented or implemented contract, the worker must stop and return to orchestrator instead of inferring semantics through a nearby internal API.",
-      "evidence": "The failed fix feature tracking-security-cross-user-restart-write-proof-fix inferred restart/continue semantics through UpdateTimeEntry with Stop=nil even though service code and mission guidance define continue/restart differently.",
-      "isSystemic": false
-    }
-  ],
-  "rejectedObservations": [
-    {
-      "observation": "Handoffs can contain non-resolvable full commit SHAs and shared-state guidance should be updated immediately.",
-      "reason": "ambiguous"
-    }
-  ],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
   "previousRound": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-security-horizontal-auth/scrutiny/synthesis.json"
 }

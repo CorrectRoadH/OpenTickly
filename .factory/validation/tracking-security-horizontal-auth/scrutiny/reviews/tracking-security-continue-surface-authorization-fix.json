@@ -1,15 +1,34 @@
 {
   "featureId": "tracking-security-continue-surface-authorization-fix",
-  "reviewedAt": "2026-03-25T08:54:11.855442+00:00",
+  "reviewedAt": "2026-03-25T11:44:33.345456+00:00",
   "commitId": "3b58870",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
-  "status": "pass",
+  "status": "fail",
   "codeReview": {
-    "summary": "The fix addresses the prior failure by moving the proof to the real continue surface: CreateTimeEntry. The new same-workspace attacker regressions demonstrate that an attacker cannot create or continue a victim-owned running entry via CreateTimeEntry, the victim's historical row and current-timer state remain unchanged, and the service now enforces authenticated-user ownership at the application boundary used by the HTTP handler.",
-    "issues": []
+    "summary": "The fix correctly moved off the invalid UpdateTimeEntry surrogate and found CreateTimeEntry as the real continue boundary implied by mission architecture, but the new proof still does not adequately close the original failure. The added authorization check exists only in the application service behind an optional context value, and the new tests allow a successful unauthorized create whenever the service returns no error as long as the created row is not stamped with the victim's user ID. Because the tests never assert that the real HTTP continue/create surface itself denies the request, and they tolerate a success path, they do not fully prove the documented unauthorized continue surface is blocked.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 1131,
+        "severity": "blocking",
+        "description": "`TestSameWorkspaceUserACannotCreateTimeEntryAsUserB` still passes if `CreateTimeEntry` returns success, so long as the returned row is not stamped with `memberID`. VAL-SEC-TRACK-003 requires the unauthorized request itself to be denied on the real continue/create surface, not silently rewritten or accepted. The test's `if err == nil { if attackerEntry.UserID == memberID { ... } }` branch leaves a successful unauthorized request unfailed, so it does not prove denial completeness."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 1241,
+        "severity": "blocking",
+        "description": "`TestSameWorkspaceUserACannotContinueUserBEntryViaCreate` has the same hole: it accepts a nil error as long as the created row is not owned by the victim. That means the feature still lacks a direct assertion that the real continue/create request is rejected, which was the exact gap called out in the prior review."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/service.go",
+        "line": 74,
+        "severity": "blocking",
+        "description": "The new authorization guard only runs when `CreateTimeEntry` receives an authenticated user ID through context. Mission guidance required proof on the real documented/API surface, but no transport or bootstrap regression was added for `POST /time_entries`, and the application tests are the only callers that set the new context key. As reviewed evidence, this leaves the acceptance proof incomplete because the real API contract boundary is not directly exercised after the prior failure specifically requested contract-boundary proof."
+      }
+    ]
   },
   "sharedStateObservations": [],
-  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-security-horizontal-auth/scrutiny/reviews/tracking-security-cross-user-restart-write-proof-fix.json",
-  "summary": "Pass: this fix closes the prior restart/continue scrutiny failure by identifying CreateTimeEntry as the documented continue surface, adding same-workspace denial/no-mutation proof there, and enforcing caller-versus-command user identity at the service boundary used by the transport layer."
+  "addressesFailureFrom": ".factory/validation/tracking-security-horizontal-auth/scrutiny/reviews/tracking-security-cross-user-restart-write-proof-fix.json",
+  "summary": "Fail: the worker correctly switched from UpdateTimeEntry to CreateTimeEntry as the continue surface, but the new tests still do not prove that unauthorized continue/create requests are actually denied on the real contract boundary. Both new regressions tolerate a successful request path, and no HTTP/bootstrap proof was added for the documented API surface."
 }

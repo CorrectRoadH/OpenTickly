@@ -197,9 +197,6 @@ export function ListView({
                   <span style={{ color: resolveEntryColor(entry) }}>
                     {entry.project_name ?? "(No project)"}
                   </span>
-                  <span className="text-[var(--track-text-muted)]">
-                    {entry.shared_with?.length ? `${entry.shared_with.length} 余眼` : ""}
-                  </span>
                 </div>
               </div>
               <p className="text-right text-[11px] text-[var(--track-text-muted)]">
@@ -245,7 +242,6 @@ export function CalendarView({
   weekDays,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
-  hours: number[];
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
@@ -755,7 +751,7 @@ function resolveCalendarHeaderSummary(
   timezone: string,
 ): string {
   if (entries.length === 0) {
-    return "00:00-00:00";
+    return "";
   }
 
   const firstEntry = entries[0];
@@ -824,10 +820,7 @@ function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
 }
 
 function formatHourLabel(hour: number): string {
-  if (hour === 0) return "12:00 AM";
-  if (hour === 12) return "12:00 PM";
-  if (hour < 12) return `${hour}:00 AM`;
-  return `${hour - 12}:00 PM`;
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 function colorToOverlay(color: string): string {

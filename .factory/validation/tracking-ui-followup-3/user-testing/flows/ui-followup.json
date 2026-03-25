@@ -1,0 +1,113 @@
+{
+  "groupId": "ui-followup",
+  "testedAt": "2026-03-25T11:22:46.331013+00:00",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c",
+    "appUrl": "http://127.0.0.1:5173",
+    "backendUrl": "http://127.0.0.1:8080",
+    "runtimeReuse": true
+  },
+  "toolsUsed": [
+    "agent-browser",
+    "vp run test:e2e:website"
+  ],
+  "commandsRun": [
+    {
+      "command": "vp run test:e2e:website -- apps/website/e2e/time-entry-editor.real-runtime.spec.ts",
+      "status": "passed",
+      "notes": "6/6 tests passed in 14.9s"
+    },
+    {
+      "command": "vp run test:e2e:website -- apps/website/e2e/timer-page.spec.ts",
+      "status": "failed",
+      "notes": "6 passed, 11 failed; failures consistently could not find role buttons named 'Calendar' or 'List view' and several tests timed out waiting for those controls"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "tracking-ui-followup-3-1",
+      "title": "Pinned-header timer page flow can still find and use the canonical week-range control after scrolling",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Open the local website and attempt to reach the timer page through a fresh browser session",
+          "expected": "Authenticated timer page is reachable for direct UI validation",
+          "observed": "The reused runtime presented unauthenticated login/register surfaces; I could not establish a browser session into /timer from this validator context"
+        },
+        {
+          "action": "Run the requested timer page Playwright suite as fallback evidence",
+          "expected": "Requested suite provides supporting signal for the pinned-header follow-up",
+          "observed": "The suite included two pinned-header checks that passed: 'timer header stays pinned when wheel scrolling targets the timer surface without shifting shell scroll' and 'calendar day header stays pinned when scrolling timer content'"
+        },
+        {
+          "action": "Review timer-page suite failures relevant to view controls",
+          "expected": "Canonical week-range/view controls remain discoverable",
+          "observed": "Many timer-page tests failed because role buttons named 'Calendar' or 'List view' were not found, so direct confirmation of the canonical week-range button after scrolling could not be completed from this session"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "tracking-ui-followup-3/ui-followup/landing-annotated.png"
+        ],
+        "consoleErrors": "Login/register pages showed validation errors after attempted auth interactions and recurring DevTools-side ERR_BLOCKED_BY_CLIENT entries from React Grab; no authenticated timer-page console check was possible",
+        "network": "No authenticated timer-page network trace captured from the validator browser session"
+      },
+      "issues": "Blocked by inability to obtain an authenticated timer-page browser session from the reused runtime, plus conflicting timer-page suite failures around missing 'Calendar'/'List view' controls. The pinned-header subtests inside timer-page.spec.ts passed, but the canonical week-range control was not directly validated through the user surface in this session."
+    },
+    {
+      "id": "tracking-ui-followup-3-2",
+      "title": "Time-entry editor real-runtime flow can use Edit start time without pointer-interception timeouts",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the requested real-runtime time-entry editor Playwright suite",
+          "expected": "The edit-start-time path is exercised without pointer-interception timeout failures",
+          "observed": "The suite passed all 6 tests, including 'when the user edits the start time from the editor popover, the updated time is saved'"
+        },
+        {
+          "action": "Review the specific edit-start-time coverage in the suite",
+          "expected": "Edit start time control remains realistically usable",
+          "observed": "The passing test clicks 'Edit start time', fills the popover time input, saves, reopens the editor, and confirms the updated time persists"
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "tracking-ui-followup-3/ui-followup/landing-annotated.png"
+        ],
+        "consoleErrors": "No browser-surface editor console capture was possible because the validator session never reached /timer; command evidence comes from the passing Playwright real-runtime suite",
+        "network": "Playwright command result: vp run test:e2e:website -- apps/website/e2e/time-entry-editor.real-runtime.spec.ts -> 6 passed"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The mission referenced .factory/library/user-testing.md, but that file was not present on disk.",
+      "resolved": true,
+      "resolution": "Proceeded with the mission AGENTS guidance and the task-specific browser instructions.",
+      "affectedAssertions": [
+        "tracking-ui-followup-3-1",
+        "tracking-ui-followup-3-2"
+      ]
+    },
+    {
+      "description": "Direct browser validation could not reach an authenticated timer page from the reused local runtime. Register attempts stayed on /register and login attempts stayed on /login.",
+      "resolved": false,
+      "resolution": "Used the requested Playwright suites as fallback evidence and recorded the limitation.",
+      "affectedAssertions": [
+        "tracking-ui-followup-3-1"
+      ]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "Authenticated timer-page user-surface validation was unavailable from the browser session, so the canonical week-range button after scrolling could not be directly exercised.",
+      "affectedAssertions": [
+        "tracking-ui-followup-3-1"
+      ],
+      "quickFixAttempted": "Tried both register and login flows in the reused runtime, captured screenshots/diagnostics, and then relied on the requested timer-page Playwright suite for partial evidence."
+    }
+  ],
+  "summary": "Validated two requested follow-up items. The time-entry editor start-time real-runtime path is supported by a fully passing Playwright suite. The pinned-header timer-page follow-up remains blocked for direct browser proof because the validator could not establish an authenticated /timer session, though the requested timer-page suite still showed the two pinned-header scrolling checks passing while many other timer-page assertions failed on missing view controls.",
+  "recommendation": "Treat the time-entry editor follow-up as validated. Treat the pinned-header follow-up as only partially supported: keep the passing pinned-header suite results, but do not synthesize it as fully user-surface validated until an authenticated timer-page browser session is reproducible and the missing Calendar/List view control failures are understood."
+}
