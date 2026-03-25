@@ -151,8 +151,13 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     // in all three timer views
 
     // Verify in calendar view - workspace A entry should be absent, workspace B entry should be present
+    // NOTE: With TimerView persistence (VAL-CROSS-005), the selected view persists across workspace
+    // switch. We explicitly switch to calendar to verify scoping in a known view state, since the
+    // previous view (e.g., timesheet from workspace A) would persist otherwise.
     await page.goto(new URL("/timer", page.url()).toString());
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    // Explicitly select calendar to test workspace scoping in a known view state
+    await page.getByRole("button", { name: "Calendar" }).click();
     await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
       "aria-pressed",
       "true",
@@ -214,8 +219,11 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
         .toBe(workspaceAId);
 
       // Navigate to timer page and verify workspace A entries are back
+      // NOTE: Explicitly select calendar to verify scoping in a known view state, since
+      // TimerView persistence would keep the previously selected view (e.g., timesheet) otherwise.
       await page.goto(new URL("/timer", page.url()).toString());
       await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+      await page.getByRole("button", { name: "Calendar" }).click();
 
       // Verify in calendar view with scoped locator
       const calendarScrollAreaBack = page.getByTestId("calendar-grid-scroll-area");
