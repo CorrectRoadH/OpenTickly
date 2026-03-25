@@ -41,9 +41,9 @@ export function CalendarPanel({
       role="dialog"
     >
       {/* Month header */}
-      <div className="mb-5 flex items-center justify-between gap-4">
+      <div className="mb-5 flex items-center">
         <h3
-          className="text-[18px] font-semibold tracking-tight text-white"
+          className="mr-auto text-[18px] font-semibold tracking-tight text-white"
           id="calendar-panel-title"
         >
           {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
@@ -121,10 +121,10 @@ export function CalendarPanel({
                     selected
                       ? "bg-[#c78acd] text-[#1a1219] hover:bg-[#d499d7]"
                       : isToday && !isOutsideMonth
-                        ? "bg-[#2d2d30] text-white hover:bg-[#3d3d40]"
+                        ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "bg-[#2a2a2c] text-[#5f5f64] hover:bg-[#3a3a3c]"
-                          : "text-[#ededf0] hover:bg-[#2d2d30]"
+                          ? "text-[#5a5a60] hover:bg-white/[.05]"
+                          : "text-[#ededf0] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
                   onClick={() => {
