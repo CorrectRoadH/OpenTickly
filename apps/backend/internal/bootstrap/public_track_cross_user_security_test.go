@@ -182,6 +182,26 @@ func TestSameWorkspaceAttackerCannotReadVictimCurrentTimerViaHTTP(t *testing.T) 
 	if victimCurrentAfterBody == "null" || victimCurrentAfterBody == "null\n" {
 		t.Fatalf("victim's running timer should still be accessible after security check")
 	}
+
+	// Prove victim can still read their own entry-by-id after attacker-facing isolation checks.
+	// This is the owner-readback proof: the victim's data remains accessible to the victim
+	// even after the attacker attempted (and was denied) to read the same entry.
+	victimReadback := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/time_entries/"+intToString(victimEntryID),
+		nil,
+		victimAuth,
+	)
+	if victimReadback.Code != http.StatusOK {
+		t.Fatalf("victim direct readback of own entry after security check: got %d body=%s", victimReadback.Code, victimReadback.Body.String())
+	}
+	var victimOwnEntry map[string]any
+	mustDecodeJSON(t, victimReadback.Body.Bytes(), &victimOwnEntry)
+	if int64(victimOwnEntry["id"].(float64)) != victimEntryID {
+		t.Fatalf("victim direct readback should return own entry ID %d, got %d", victimEntryID, int64(victimOwnEntry["id"].(float64)))
+	}
 }
 
 // TestSameWorkspaceAttackerCannotReadVictimTimeEntryHistoryViaHTTP verifies VAL-SEC-TRACK-002:
@@ -434,6 +454,43 @@ func TestSameWorkspaceAttackerCannotReadVictimTimeEntryHistoryViaHTTP(t *testing
 	mustDecodeJSON(t, victimListAfter.Body.Bytes(), &victimEntriesAfter)
 	if len(victimEntriesAfter) != 2 {
 		t.Fatalf("victim should still see 2 entries after security check, got %d", len(victimEntriesAfter))
+	}
+
+	// Prove victim can still read their own entry-by-id after attacker-facing isolation checks.
+	// This is the owner-readback proof: the victim's data remains accessible to the victim
+	// even after the attacker attempted (and was denied) to read the same entries.
+	victimReadback1 := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/time_entries/"+intToString(victimEntry1ID),
+		nil,
+		victimAuth,
+	)
+	if victimReadback1.Code != http.StatusOK {
+		t.Fatalf("victim direct readback of own entry 1 after security check: got %d", victimReadback1.Code)
+	}
+	var victimOwnEntry1 map[string]any
+	mustDecodeJSON(t, victimReadback1.Body.Bytes(), &victimOwnEntry1)
+	if int64(victimOwnEntry1["id"].(float64)) != victimEntry1ID {
+		t.Fatalf("victim direct readback should return own entry ID %d, got %d", victimEntry1ID, int64(victimOwnEntry1["id"].(float64)))
+	}
+
+	victimReadback2 := performAuthorizedJSONRequest(
+		t,
+		app,
+		http.MethodGet,
+		"/api/v9/me/time_entries/"+intToString(victimEntry2ID),
+		nil,
+		victimAuth,
+	)
+	if victimReadback2.Code != http.StatusOK {
+		t.Fatalf("victim direct readback of own entry 2 after security check: got %d", victimReadback2.Code)
+	}
+	var victimOwnEntry2 map[string]any
+	mustDecodeJSON(t, victimReadback2.Body.Bytes(), &victimOwnEntry2)
+	if int64(victimOwnEntry2["id"].(float64)) != victimEntry2ID {
+		t.Fatalf("victim direct readback should return own entry ID %d, got %d", victimEntry2ID, int64(victimOwnEntry2["id"].(float64)))
 	}
 }
 
