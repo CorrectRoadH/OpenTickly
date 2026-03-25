@@ -264,7 +264,7 @@ export function CalendarView({
   // zoom: -1 = fewer hours (zoomed out), 0 = default, +1 = more hours (zoomed in)
   const hourRanges: Record<number, [number, number]> = {
     "-1": [6, 20],
-    "0": [1, 23],
+    "0": [0, 24],
     "1": [0, 24],
   };
   const [hourStart, hourEnd] = hourRanges[zoom] ?? hourRanges["0"];
@@ -853,7 +853,9 @@ function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
 }
 
 function formatHourLabel(hour: number): string {
-  return `${String(hour).padStart(2, "0")}:00`;
+  const date = new Date();
+  date.setHours(hour, 0, 0, 0);
+  return date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
 }
 
 function colorToOverlay(color: string): string {
