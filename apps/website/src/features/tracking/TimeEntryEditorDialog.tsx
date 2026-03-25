@@ -2,19 +2,21 @@ import {
   type ChangeEvent,
   type ReactElement,
   type ReactNode,
+  type Ref,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { CalendarPanel } from "./CalendarPanel.tsx";
 import {
   formatClockDuration,
   formatClockTime,
   resolveEntryDurationSeconds,
 } from "./overview-data.ts";
-import { buildMonthWeeks, isSameDay } from "./week-range.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 
 export type TimeEntryEditorAnchor = {
@@ -133,6 +135,8 @@ export function TimeEntryEditorDialog({
   const stop = stopIso ? new Date(stopIso) : null;
   const duration = formatClockDuration(resolveEntryDurationSeconds(entry));
   const position = useMemo(() => resolveEditorPosition(anchor, picker), [anchor, picker]);
+  const startDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const stopDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
   const selectedProject = useMemo(
@@ -258,7 +262,7 @@ export function TimeEntryEditorDialog({
       data-testid="time-entry-editor-layer"
     >
       <div
-        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] min-w-[356px] overflow-y-auto rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] min-w-[356px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
         data-testid="time-entry-editor-dialog"
         role="dialog"
         aria-modal="false"
@@ -588,86 +592,117 @@ export function TimeEntryEditorDialog({
             ) : null}
           </div>
 
-          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-4">
-            <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <TimeDisplay
-                  dateAriaLabel="Edit start date"
-                  editing={timeEditor === "start"}
-                  onDateClick={() => {
-                    setTimeEditor(null);
-                    setTimePicker("start");
-                  }}
-                  onEditEnd={() => {
-                    setTimeEditor(null);
-                  }}
-                  onEditStart={() => {
-                    setTimePicker(null);
-                    setTimeEditor("start");
-                  }}
-                  onTimeCommit={(value) => applyEditedTime("start", value)}
-                  time={start}
-                  timeAriaLabel="Edit start time"
-                  timeValue={toTimeInputValue(start, timezone)}
-                  timezone={timezone}
-                />
-                <span className="shrink-0 text-[22px] font-light text-[#a9a9ae]">→</span>
-                {stop ? (
+          <div className="mt-5">
+            <div className="relative flex min-w-0 items-start gap-4">
+              <div className="relative min-w-0 overflow-visible">
+                <div className="flex min-w-0 items-center gap-2.5">
                   <TimeDisplay
-                    dateAriaLabel="Edit stop date"
-                    editing={timeEditor === "stop"}
+                    dateAriaLabel="Edit start date"
+                    datePickerTriggerRef={startDatePickerTriggerRef}
+                    editing={timeEditor === "start"}
                     onDateClick={() => {
                       setTimeEditor(null);
-                      setTimePicker("stop");
+                      setTimePicker("start");
                     }}
                     onEditEnd={() => {
                       setTimeEditor(null);
                     }}
                     onEditStart={() => {
                       setTimePicker(null);
-                      setTimeEditor("stop");
+                      setTimeEditor("start");
                     }}
-                    onTimeCommit={(value) => applyEditedTime("stop", value)}
-                    time={stop}
-                    timeAriaLabel="Edit stop time"
-                    timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
+                    onTimeCommit={(value) => applyEditedTime("start", value)}
+                    time={start}
+                    timeAriaLabel="Edit start time"
+                    timeValue={toTimeInputValue(start, timezone)}
                     timezone={timezone}
                   />
-                ) : (
-                  <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#b7b7bc]">
-                    Running
+                  <span className="shrink-0 text-[22px] font-light text-[#a9a9ae]">→</span>
+                  {stop ? (
+                    <TimeDisplay
+                      dateAriaLabel="Edit stop date"
+                      datePickerTriggerRef={stopDatePickerTriggerRef}
+                      editing={timeEditor === "stop"}
+                      onDateClick={() => {
+                        setTimeEditor(null);
+                        setTimePicker("stop");
+                      }}
+                      onEditEnd={() => {
+                        setTimeEditor(null);
+                      }}
+                      onEditStart={() => {
+                        setTimePicker(null);
+                        setTimeEditor("stop");
+                      }}
+                      onTimeCommit={(value) => applyEditedTime("stop", value)}
+                      time={stop}
+                      timeAriaLabel="Edit stop time"
+                      timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
+                      timezone={timezone}
+                    />
+                  ) : (
+                    <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#b7b7bc]">
+                      Running
+                    </span>
+                  )}
+                  <span className="min-w-0 truncate text-[13px] tabular-nums text-[#b7b7bc]">
+                    {duration}
                   </span>
-                )}
-                <span className="min-w-0 truncate text-[13px] tabular-nums text-[#b7b7bc]">
-                  {duration}
-                </span>
-              </div>
-            </div>
-            <button
-              className="rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={isSaving}
-              onClick={onSave}
-              type="button"
-            >
-              {isSaving ? "Saving..." : "Save"}
-            </button>
-          </div>
+                </div>
 
-          {timePicker ? (
-            <DatePicker
-              date={timePicker === "start" ? start : stop!}
-              testId={`time-entry-editor-${timePicker}-date-picker`}
-              onClose={() => setTimePicker(null)}
-              onSelect={(nextDate) => {
-                if (timePicker === "start") {
-                  onStartTimeChange(nextDate);
-                } else {
-                  onStopTimeChange(nextDate);
-                }
-                setTimePicker(null);
-              }}
-            />
-          ) : null}
+                {timePicker &&
+                (timePicker === "start"
+                  ? startDatePickerTriggerRef.current
+                  : stopDatePickerTriggerRef.current)
+                  ? createPortal(
+                      <div
+                        className="absolute z-50"
+                        style={{
+                          left:
+                            (timePicker === "start"
+                              ? startDatePickerTriggerRef.current
+                              : stopDatePickerTriggerRef.current
+                            )?.getBoundingClientRect().left ?? 0,
+                          top:
+                            ((timePicker === "start"
+                              ? startDatePickerTriggerRef.current
+                              : stopDatePickerTriggerRef.current
+                            )?.getBoundingClientRect().top ?? 0) +
+                            ((timePicker === "start"
+                              ? startDatePickerTriggerRef.current
+                              : stopDatePickerTriggerRef.current
+                            )?.getBoundingClientRect().height ?? 0) +
+                            8,
+                        }}
+                      >
+                        <CalendarPanel
+                          date={timePicker === "start" ? start : stop!}
+                          onClose={() => setTimePicker(null)}
+                          onSelect={(nextDate) => {
+                            if (timePicker === "start") {
+                              onStartTimeChange(nextDate);
+                            } else {
+                              onStopTimeChange(nextDate);
+                            }
+                            setTimePicker(null);
+                          }}
+                          testId={`time-entry-editor-${timePicker}-date-picker`}
+                        />
+                      </div>,
+                      document.body,
+                    )
+                  : null}
+              </div>
+              <button
+                className="shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSaving}
+                onClick={onSave}
+                type="button"
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
 
           {saveError ? <p className="mt-4 text-sm text-rose-300">{saveError}</p> : null}
         </div>
@@ -807,6 +842,7 @@ function SearchField({
 
 function TimeDisplay({
   dateAriaLabel,
+  datePickerTriggerRef,
   editing,
   onDateClick,
   onEditEnd,
@@ -818,6 +854,7 @@ function TimeDisplay({
   timezone,
 }: {
   dateAriaLabel: string;
+  datePickerTriggerRef?: Ref<HTMLButtonElement | null>;
   editing: boolean;
   onDateClick: () => void;
   onEditEnd: () => void;
@@ -885,148 +922,11 @@ function TimeDisplay({
         aria-label={dateAriaLabel}
         className="flex size-[42px] items-center justify-center rounded-[10px] border border-[#606066] text-white transition hover:border-[#8a8a90]"
         onClick={onDateClick}
+        ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
         type="button"
       >
         <TrackingIcon className="size-4 text-[#b9b9be]" name="calendar" />
       </button>
-    </div>
-  );
-}
-
-function DatePicker({
-  date,
-  onClose,
-  onSelect,
-  testId,
-}: {
-  date: Date;
-  onClose: () => void;
-  onSelect: (date: Date) => void;
-  testId?: string;
-}): ReactElement {
-  const [visibleMonth, setVisibleMonth] = useState(
-    () => new Date(date.getFullYear(), date.getMonth(), 1),
-  );
-  const weeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('[data-testid="date-picker"]')) {
-        onClose();
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      aria-labelledby="date-picker-title"
-      aria-modal="false"
-      className="relative z-20 mt-4 w-[620px] max-w-full rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] px-10 pb-8 pt-10 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
-      data-testid="date-picker"
-      data-time-entry-date-picker={testId}
-      {...(testId ? { "data-testid": testId } : {})}
-      role="dialog"
-    >
-      <div className="flex items-start justify-between gap-8">
-        <h3 className="text-[34px] font-semibold tracking-tight text-white" id="date-picker-title">
-          {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
-        </h3>
-        <div className="flex items-center gap-5">
-          <button
-            aria-label="Previous month"
-            className="flex size-[64px] items-center justify-center rounded-[14px] border border-[#6a6a70] text-[#d8d8dc] transition hover:border-[#8b8b92] hover:text-white"
-            onClick={() =>
-              setVisibleMonth(
-                (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
-              )
-            }
-            type="button"
-          >
-            <TrackingIcon
-              className="size-5"
-              name="chevron-right"
-              style={{ transform: "rotate(180deg)" }}
-            />
-          </button>
-          <button
-            aria-label="Next month"
-            className="flex size-[64px] items-center justify-center rounded-[14px] border border-[#6a6a70] text-[#d8d8dc] transition hover:border-[#8b8b92] hover:text-white"
-            onClick={() =>
-              setVisibleMonth(
-                (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
-              )
-            }
-            type="button"
-          >
-            <TrackingIcon className="size-5" name="chevron-right" />
-          </button>
-        </div>
-      </div>
-      <div className="mt-8 grid grid-cols-7 gap-x-7 px-1 text-[20px] font-medium text-[#66666b]">
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
-          <div className="pb-4 text-center" key={weekday}>
-            {weekday}
-          </div>
-        ))}
-      </div>
-      <div className="mt-1">
-        {weeks.map((week, weekIndex) => (
-          <div
-            className="grid grid-cols-7 gap-x-7 border-t border-[#4b4b50] px-1 py-5"
-            key={`${visibleMonth.toISOString()}-${weekIndex}`}
-          >
-            {week.map((day) => {
-              const inCurrentMonth = day.getMonth() === visibleMonth.getMonth();
-              const selected = isSameDay(day, date);
-
-              return (
-                <button
-                  aria-label={day.toLocaleDateString("en-US", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  className={`flex h-[54px] w-[54px] items-center justify-center rounded-[14px] text-[22px] font-semibold transition ${
-                    selected
-                      ? "bg-[#c78acd] text-[#241d24]"
-                      : inCurrentMonth
-                        ? "text-[#ededf0] hover:bg-white/6"
-                        : "text-[#5f5f64] hover:bg-white/4"
-                  }`}
-                  key={day.toISOString()}
-                  onClick={() => {
-                    const nextDate = new Date(date);
-                    nextDate.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
-                    onSelect(nextDate);
-                  }}
-                  type="button"
-                >
-                  {day.getDate()}
-                </button>
-              );
-            })}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
