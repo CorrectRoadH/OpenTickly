@@ -1,0 +1,40 @@
+{
+  "featureId": "tracking-timer-calendar-return-regression-fix",
+  "reviewedAt": "2026-03-25T05:13:38Z",
+  "commitId": "126949014897e5470afb4f084164b27131fe429e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reviewed change does not implement the requested fix. Commit 1269490 only updates the Playwright test to click Calendar after returning to /timer, which works around persisted TimerView state instead of restoring the documented default-calendar behavior for the workspace-switch return flow.",
+    "issues": [
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 154,
+        "severity": "blocking",
+        "description": "After navigating back to /timer in workspace B, the test now clicks the Calendar tab before asserting VAL-REG-002. The feature requires the page itself to land with Calendar active again, so this change masks the regression rather than fixing it."
+      },
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 222,
+        "severity": "blocking",
+        "description": "The same manual Calendar re-selection is repeated when switching back to workspace A. Because the assertions only pass after an extra click, the commit still does not prove or enforce that returning to /timer reactivates Calendar automatically."
+      },
+      {
+        "file": "apps/website/src/pages/shell/useTimerPageOrchestration.ts",
+        "line": 54,
+        "severity": "blocking",
+        "description": "The timer page state still initializes from loadPersistedTimerView() and persists alternate views. The reviewed commit does not change this return-path behavior, so the runtime can still reopen /timer in list or timesheet instead of Calendar after a workspace switch."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker handoff itself says the regression was handled by changing the test, not by a scoped code fix, and no manual/browser confirmation was recorded for a behavior-changing fix review.",
+      "evidence": "Handoff 2026-03-25T03-32-24-006Z__tracking-timer-calendar-return-regression-fix__ee376bf3-e088-4eeb-ad67-7e373ff1ba52.json says in whatWasLeftUndone that the regression is addressed by the test's explicit Calendar click, not by code change; worker-transcripts.jsonl for session ee376bf3-e088-4eeb-ad67-7e373ff1ba52 shows interactiveChecks = []. The frontend-test-worker skill requires code-fix handoffs to point at the commit containing the behavior change and to record browser confirmation or an explicit conflict justification."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: commit 1269490 only updates VAL-REG-002 to click Calendar after returning to /timer, while the timer page still restores persisted view state from local storage. The requested behavior\u2014that the workspace-switch return flow lands on /timer with Calendar active again\u2014remains unimplemented."
+}

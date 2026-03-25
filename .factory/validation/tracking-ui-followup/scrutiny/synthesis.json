@@ -1,0 +1,87 @@
+{
+  "milestone": "tracking-ui-followup",
+  "round": 3,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "vp run test -r",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 5,
+    "passed": 0,
+    "failed": 5,
+    "failedFeatures": [
+      "tracking-timer-calendar-return-regression-fix",
+      "tracking-time-entry-editor-auth-navigation-fix",
+      "tracking-ui-settings-success-toast-regression-fix",
+      "tracking-ui-running-timer-stop-button-regression-fix",
+      "tracking-ui-read-session-bootstrap-flake-fix"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "tracking-timer-calendar-return-regression-fix",
+      "severity": "blocking",
+      "description": "Commit 1269490 only changed the Playwright regression to click Calendar after returning to `/timer`; the runtime still restores persisted TimerView state from local storage, so the requested calendar-by-default return behavior remains unimplemented."
+    },
+    {
+      "featureId": "tracking-time-entry-editor-auth-navigation-fix",
+      "severity": "blocking",
+      "description": "The feature claims commit `568e34d` as the auth-navigation repair, but that diff only edits `apps/website/e2e/timer-page.spec.ts` and does not provide a scoped implementation unit for the editor auth flow."
+    },
+    {
+      "featureId": "tracking-ui-settings-success-toast-regression-fix",
+      "severity": "blocking",
+      "description": "The reviewed handoff points to commit `7835272`, which does not contain the settings success-toast fix; the actual test assertion repair landed earlier in commit `266727a`, so the feature is not traceable to a commit-local implementation."
+    },
+    {
+      "featureId": "tracking-ui-running-timer-stop-button-regression-fix",
+      "severity": "blocking",
+      "description": "The feature attributes the Stop timer stabilization to refactor commit `45e0674`, but the actual Playwright/runtime fix lives in earlier commit `94f7496`, leaving this feature without valid scoped implementation evidence."
+    },
+    {
+      "featureId": "tracking-ui-read-session-bootstrap-flake-fix",
+      "severity": "blocking",
+      "description": "Commit `94f7496` includes the intended `pollSessionBootstrap` stabilization, but it also rewrites `VAL-CROSS-005` into a broader running-timer continuity scenario outside the assigned flake-fix scope."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Tighten `frontend-test-worker` completion rules so handoff `commitId` must directly contain the scoped fix or explicitly state that the work was already satisfied by an earlier commit instead of citing an unrelated green rerun.",
+      "evidence": "Four reviews in this round failed because the submitted handoff commit (`568e34d`, `7835272`, `45e0674`) did not contain the claimed fix even though the repository was green.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "Require flaky-fix and regression-fix features to stay narrowly scoped; if a stabilization commit also rewrites unrelated assertions or expands behavior coverage, the worker should split that work into a separate feature or explain the coupling before handoff.",
+      "evidence": "The `tracking-ui-read-session-bootstrap-flake-fix` review found the intended bootstrap polling fix bundled with an unrelated `VAL-CROSS-005` test rewrite, and the calendar-return fix masked behavior drift by changing the test instead of the runtime.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Apply a shared-state update documenting that the settings success-toast fix lives in commit `266727a` and the Stop timer stabilization lives in `94f7496`.",
+      "reason": "rejected because commit-location breadcrumbs are transient review evidence rather than durable worker guidance; the real issue is inaccurate feature handoff traceability, which belongs in skill guidance."
+    },
+    {
+      "observation": "Escalate missing `agent-browser` narration as a blocking defect for all reviewed frontend-test-worker features.",
+      "reason": "rejected because the blocking problems in this round were masked behavior changes, scope drift, and incorrect commit attribution; lack of browser narration alone was not sufficient to change pass/fail outcomes."
+    }
+  ],
+  "previousRound": ".factory/validation/tracking-ui-followup/scrutiny/synthesis.json"
+}

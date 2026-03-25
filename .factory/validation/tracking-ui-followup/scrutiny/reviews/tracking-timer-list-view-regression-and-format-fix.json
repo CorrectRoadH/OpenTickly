@@ -1,0 +1,21 @@
+{
+  "featureId": "tracking-timer-list-view-regression-and-format-fix",
+  "reviewedAt": "2026-03-25T04:46:51Z",
+  "commitId": "94f7496",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The original feature failed because it only reran validators against commit 568e34d and did not implement the needed stabilization. The fix feature in commit 94f7496 adds poll-safe session bootstrap reads and updates the affected timer-page workspace-switch polls, which directly addresses the prior blocker without weakening the existing VAL-CROSS-001 List-view assertion or the formatter-clean requirement.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The prior failed attempt shows the frontend-test-worker procedure was not enforced strongly enough: the worker returned success with no code changes even though the handoff itself documented a known `readSessionBootstrap` 500 flake that contradicted the feature's fix scope.",
+      "evidence": "Prior handoff /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T04-00-55-268Z__tracking-timer-list-view-regression-and-format-fix__75ac3774-a168-417c-8772-6a7d245ed08b.json reports 'No code changes were required' while also recording transient `readSessionBootstrap` 500s; frontend-test-worker SKILL.md step 11 says rerun-only passes are not enough for flaky-fix features."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/tracking-ui-followup/scrutiny/reviews/tracking-timer-list-view-regression-and-format-fix.json",
+  "summary": "Pass: the fix review confirms the original feature had not implemented the repair, and the later follow-up commit 94f7496 is the concrete code change that resolves the transient workspace-switch session-bootstrap failure behind the VAL-CROSS-001 List-view regression. The updated polling path preserves the existing timer-page assertions and leaves no new blocking code issues in scope."
+}
