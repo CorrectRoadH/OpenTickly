@@ -54,13 +54,40 @@ import { useSession, useSessionActions } from "../../shared/session/session-cont
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 
+const TIMER_VIEW_STORAGE_KEY = "opentoggl:user-prefs:timer-view";
+
+function loadPersistedTimerView(): TimerViewMode {
+  try {
+    const stored = localStorage.getItem(TIMER_VIEW_STORAGE_KEY);
+    if (stored === "calendar" || stored === "list" || stored === "timesheet") {
+      return stored;
+    }
+  } catch {
+    // localStorage not available or parse error
+  }
+  return "calendar";
+}
+
+function persistTimerView(view: TimerViewMode): void {
+  try {
+    localStorage.setItem(TIMER_VIEW_STORAGE_KEY, view);
+  } catch {
+    // localStorage not available or write error
+  }
+}
+
 export function WorkspaceTimerPage(): ReactElement {
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
   const workspaceId = session.currentWorkspace.id;
   const timezone = session.user.timezone || "UTC";
-  const [view, setView] = useState<TimerViewMode>("calendar");
+  const [view, setViewState] = useState<TimerViewMode>(loadPersistedTimerView);
+
+  function setView(next: TimerViewMode): void {
+    persistTimerView(next);
+    setViewState(next);
+  }
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
   const weekDays = useMemo(() => getWeekDaysForDate(selectedWeekDate), [selectedWeekDate]);

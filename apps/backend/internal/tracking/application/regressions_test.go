@@ -147,6 +147,183 @@ func TestRunningTimerConflictOnCreateEntryPoint(t *testing.T) {
 	}
 }
 
+// TestRunningTimerConflictAcrossWorkspaces verifies VAL-TIMER-001:
+// A user can have at most one running timer across all workspaces.
+// If the user already has a running timer in workspace A and attempts to start
+// another running timer in workspace B, the server rejects the second start-capable
+// write with ErrRunningTimeEntryExists, no second running entry is persisted,
+// and GET /me/time_entries/current still returns the original running entry.
+func TestRunningTimerConflictAcrossWorkspaces(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	// Create the first workspace and user
+	workspaceAID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "cross-ws-conflict")
+
+	// Create the second workspace
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	_, workspaceB, err := tenantStore.CreateOrganization(
+		ctx,
+		"Cross-WS Conflict Org B",
+		"Cross-WS Conflict Workspace B",
+		tenantdomain.DefaultWorkspaceSettings(),
+	)
+	if err != nil {
+		t.Fatalf("create second tenant state: %v", err)
+	}
+	workspaceBID := int64(workspaceB.ID())
+
+	// Add the same user to workspace B
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	if err != nil {
+		t.Fatalf("new membership service: %v", err)
+	}
+	_, err = membershipService.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
+		WorkspaceID: workspaceBID,
+		UserID:      userID,
+	})
+	if err != nil {
+		t.Fatalf("ensure user membership in workspace B: %v", err)
+	}
+
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// Start the first running timer in workspace A (no stop time)
+	firstStart := time.Now().UTC()
+	firstEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceAID,
+		UserID:      userID,
+		Description: "Running timer in workspace A",
+		Start:       firstStart,
+		CreatedWith: "cross-ws-conflict-test",
+	})
+	if err != nil {
+		t.Fatalf("create first running timer in workspace A: %v", err)
+	}
+	if firstEntry.Stop != nil {
+		t.Fatalf("expected first entry to be running (no stop), got stop %s", *firstEntry.Stop)
+	}
+	if firstEntry.WorkspaceID != workspaceAID {
+		t.Fatalf("expected first entry workspace A (%d), got %d", workspaceAID, firstEntry.WorkspaceID)
+	}
+
+	// Verify the first timer is the current running timer
+	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current time entry: %v", err)
+	}
+	if current.ID != firstEntry.ID {
+		t.Fatalf("expected current timer ID %d, got %d", firstEntry.ID, current.ID)
+	}
+
+	// Attempt to start a second running timer in workspace B - should be rejected with conflict error
+	secondStart := time.Now().UTC()
+	_, err = trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceBID,
+		UserID:      userID,
+		Description: "Second running timer in workspace B - should conflict",
+		Start:       secondStart,
+		CreatedWith: "cross-ws-conflict-test",
+	})
+	if err == nil {
+		t.Fatalf("expected conflict error when starting second running timer in workspace B, got nil")
+	}
+	if err != trackingapplication.ErrRunningTimeEntryExists {
+		t.Fatalf("expected ErrRunningTimeEntryExists, got %v", err)
+	}
+
+	// Verify the first running timer is still the current running timer
+	current, err = trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current time entry after cross-workspace conflict: %v", err)
+	}
+	if current.ID != firstEntry.ID {
+		t.Fatalf("expected current timer to still be first entry %d after cross-workspace conflict, got %d", firstEntry.ID, current.ID)
+	}
+
+	// VAL-TIMER-001 no-persistence proof: the rejected second-start attempt must not have
+	// persisted a second running entry. Use ListTimeEntries to prove no entry with the
+	// rejected description exists.
+	rejectedDescription := "Second running timer in workspace B - should conflict"
+
+	// Check workspace A entries
+	entriesA, err := trackingService.ListTimeEntries(ctx, workspaceAID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries in workspace A after conflict: %v", err)
+	}
+	for _, e := range entriesA {
+		if e.Description == rejectedDescription {
+			t.Fatalf("rejected second-start attempt persisted entry with description %q in workspace A; VAL-TIMER-001 requires no-persistence", rejectedDescription)
+		}
+	}
+
+	// Check workspace B entries
+	entriesB, err := trackingService.ListTimeEntries(ctx, workspaceBID, trackingapplication.ListTimeEntriesFilter{
+		UserID: userID,
+	})
+	if err != nil {
+		t.Fatalf("list time entries in workspace B after conflict: %v", err)
+	}
+	for _, e := range entriesB {
+		if e.Description == rejectedDescription {
+			t.Fatalf("rejected second-start attempt persisted entry with description %q in workspace B; VAL-TIMER-001 requires no-persistence", rejectedDescription)
+		}
+	}
+
+	// Prove the original running timer is still in workspace A and running
+	if len(entriesA) != 1 {
+		t.Fatalf("expected exactly 1 time entry in workspace A after rejected conflict, got %d entries", len(entriesA))
+	}
+	if entriesA[0].ID != firstEntry.ID {
+		t.Fatalf("expected only the first running timer (id=%d) in workspace A after conflict, got id=%d", firstEntry.ID, entriesA[0].ID)
+	}
+	if entriesA[0].Stop != nil {
+		t.Fatalf("expected first timer to still be running (no stop), got stop %s", *entriesA[0].Stop)
+	}
+
+	// Prove workspace B has no entries at all after the rejected conflict
+	if len(entriesB) != 0 {
+		t.Fatalf("expected zero time entries in workspace B after rejected conflict, got %d entries", len(entriesB))
+	}
+
+	// Stop the first timer and verify a new timer can now be started in any workspace
+	stopTime := time.Now().UTC()
+	stoppedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceAID,
+		TimeEntryID: firstEntry.ID,
+		UserID:      userID,
+		Stop:        &stopTime,
+	})
+	if err != nil {
+		t.Fatalf("stop first running timer: %v", err)
+	}
+	if stoppedEntry.Stop == nil {
+		t.Fatalf("expected stopped entry to have stop time, got nil")
+	}
+
+	// Now we should be able to start a new running timer in workspace B
+	newStart := time.Now().UTC()
+	newEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceBID,
+		UserID:      userID,
+		Description: "New running timer in workspace B after stopping previous",
+		Start:       newStart,
+		CreatedWith: "cross-ws-conflict-test",
+	})
+	if err != nil {
+		t.Fatalf("create running timer in workspace B after stopping previous: %v", err)
+	}
+	if newEntry.Stop != nil {
+		t.Fatalf("expected new entry to be running, got stop %s", *newEntry.Stop)
+	}
+	if newEntry.WorkspaceID != workspaceBID {
+		t.Fatalf("expected new entry workspace B (%d), got %d", workspaceBID, newEntry.WorkspaceID)
+	}
+}
+
 // TestHistoricalEntriesSurviveProjectArchival verifies VAL-REG-003:
 // Historical time entries remain visible after related projects are archived.
 // Future mutability can change, but historical facts must not disappear.

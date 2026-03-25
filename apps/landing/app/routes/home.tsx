@@ -41,16 +41,11 @@ export default function Home() {
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-12 px-4 py-12 md:px-6 md:py-16">
         <section className="landing-hero rounded-3xl border border-fd-border p-8 shadow-[0_24px_80px_rgba(0,0,0,0.35)] md:p-12">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="inline-flex rounded-full border border-fd-border bg-white/3 px-3 py-1 text-xs font-medium uppercase tracking-[0.24em] text-fd-muted-foreground">
-              Free. Private-first. AI-friendly.
-            </p>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-fd-foreground md:text-6xl">
-              Keep the Toggl workflow. Lose the price, lock-in, and rate limits.
+              OpenToggl
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-fd-muted-foreground md:text-lg">
-              OpenToggl is a free, private-first, AI-friendly alternative to Toggl for people who
-              want the same product shape on infrastructure they control, with enough API headroom
-              for real automation and agents.
+              OpenToggl is a free, private-first, AI-friendly alternative to Toggl
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <a
@@ -59,7 +54,7 @@ export default function Home() {
                 rel="noreferrer"
                 target="_blank"
               >
-                Open Demo
+                Live Demo
               </a>
               <a
                 className="rounded-full border border-fd-border bg-fd-secondary px-5 py-3 text-sm font-semibold text-fd-foreground transition hover:bg-[#1b2734]"
@@ -67,13 +62,19 @@ export default function Home() {
                 rel="noreferrer"
                 target="_blank"
               >
-                View GitHub
+                Github
               </a>
               <Link
                 className="rounded-full border border-fd-border bg-fd-secondary px-5 py-3 text-sm font-semibold text-fd-foreground transition hover:bg-[#1b2734]"
                 to="/docs"
               >
-                Read Docs
+                Self-Hosting
+              </Link>
+              <Link
+                className="rounded-full border border-fd-border bg-fd-secondary px-5 py-3 text-sm font-semibold text-fd-foreground transition hover:bg-[#1b2734]"
+                to="https://github.com/CorrectRoadH/toggl-cli"
+              >
+                Toggl Cli
               </Link>
             </div>
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
@@ -100,11 +101,10 @@ export default function Home() {
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             "Toggl-shaped workflow",
-            "Private-first deployment",
-            "Free to run",
+            "Private-first",
+            "Free",
             "Built for AI agents",
             "Automation-friendly",
-            "Try the live demo",
           ].map((item) => (
             <div
               key={item}
@@ -125,10 +125,6 @@ export default function Home() {
               title: "Why it exists",
               body: "Because Toggl is too expensive for many teams, too closed for private-first setups, and too rate-limited for AI-heavy usage.",
             },
-            {
-              title: "Why try the demo",
-              body: "Open `track.opentoggl.com` to see the product directly, then self-host it when you want the same experience on your own stack.",
-            },
           ].map((item) => (
             <article
               key={item.title}
@@ -138,23 +134,6 @@ export default function Home() {
               <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">{item.body}</p>
             </article>
           ))}
-        </section>
-
-        <section className="rounded-3xl border border-fd-border p-6 md:p-8">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl font-semibold tracking-tight">Frequently asked questions</h2>
-            <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">
-              The basics people ask before switching to a free, private-first Toggl alternative.
-            </p>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {faqItems.map((item) => (
-              <article key={item.question} className="rounded-2xl border border-fd-border p-5">
-                <h3 className="text-base font-semibold text-fd-foreground">{item.question}</h3>
-                <p className="mt-3 text-sm leading-6 text-fd-muted-foreground">{item.answer}</p>
-              </article>
-            ))}
-          </div>
         </section>
       </main>
     </HomeLayout>

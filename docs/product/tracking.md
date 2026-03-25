@@ -1,5 +1,12 @@
 # 时间追踪
 
+> Mission status
+> Agent: global-running-timer-contract-and-regressions
+> Status: complete
+> Current code differences: Updated Edge Cases wording from "同一用户在同一 workspace 下" to "同一用户全局只能有一个 running timer（跨所有 workspace）" to reflect the mission-authoritative global per-user rule.
+> Todo: none
+> Fully implemented: yes
+
 ## Goal
 
 这一册定义 time entry、running timer、projects/clients/tasks/tags、timesheets/approvals/expenses 的用户可见行为。
@@ -108,7 +115,7 @@
 
 ## Edge Cases
 
-- 同一用户在同一 workspace 下默认不能维持多个 running timer；发生冲突时，必须有固定处理规则，而不是由不同入口各自决定。
+- 同一用户全局只能有一个 running timer（跨所有 workspace）；发生冲突时，必须有固定处理规则，而不是由不同入口各自决定。
 - time entry 的 `start/stop/duration` 之间出现不自洽输入时，必须返回固定错误，而不是在不同入口做不同自动修正。
 - archived project、停用成员等状态变化，不得静默抹掉历史 time entries。
 - rate、billable、currency 这类会影响 reports 和 billing 结果的字段，不得在 tracking 页面和报表页面出现不同解释。
