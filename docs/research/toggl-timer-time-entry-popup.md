@@ -1,5 +1,12 @@
 # Toggl Timer Time Entry Block 点击弹窗研究
 
+> Mission status
+> Agent: cbb18fd4-9d41-4c0b-bdb9-a6a44cb3324c
+> Status: partial
+> Current code differences: `/timer` now shows an anchored popup shell with shared-composer continuity and dirty-dismissal protection, but the broader popup contract is still not visibly aligned end-to-end with the research doc because calendar interaction parity, popup action/autocomplete parity, and broader real-surface verification remain incomplete.
+> Todo: Finish the remaining visible popup/calendar alignment work on `/timer`, including the missing documented calendar interaction parity and the still-open popup action/autocomplete gaps, then rerun real-surface verification before marking this doc complete.
+> Fully implemented: no
+
 本文件只回答一个问题：
 
 > 在 Calendar view 里点击 `time entry block` 之后，出来的弹窗到底是什么？

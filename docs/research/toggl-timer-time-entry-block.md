@@ -1,5 +1,12 @@
 # Toggl Timer Time Entry Block 研究
 
+> Mission status
+> Agent: calendar-direct-manipulation
+> Status: partial
+> Current code differences: Calendar blocks now expose anchored selection plus explicit move/resize affordance controls for stopped entries and suppress invalid end-resize affordances for running entries, but the live surface still lacks true drag handles and richer locked-entry state styling from the source capture.
+> Todo: replace button-based manipulation affordances with real drag/resize gestures and add locked-entry visual treatment once the underlying constraints model is available on the web surface.
+> Fully implemented: no
+
 本文件聚焦 Calendar view 里的 time entry block，而不是整个日历容器。
 
 ## 1. 渲染基础

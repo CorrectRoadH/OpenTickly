@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -184,16 +184,28 @@ export function ListView({
 export function CalendarView({
   entries,
   nowMs,
+  onMoveEntry,
   runningEntry,
   onEditEntry,
+  onResizeEntry,
+  onSelectSlot,
+  onSelectSubviewDate,
+  selectedSubviewDateIso,
+  subview = "week",
   timezone,
   weekDays,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   hours: number[];
+  onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
+  onSelectSlot?: (slot: { dayIso: string; minute: number }) => void;
+  onSelectSubviewDate?: (dateIso: string) => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+  selectedSubviewDateIso?: string;
+  subview?: "day" | "week";
   timezone: string;
   weekDays: Date[];
 }): ReactElement {
@@ -212,10 +224,52 @@ export function CalendarView({
   }));
 
   return (
-    <div className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)]">
+    <div
+      className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)] bg-[#141415]"
+      data-testid="timer-calendar-view"
+    >
+      <div className="flex shrink-0 items-center justify-between border-b border-[var(--track-border)] bg-[#171718] px-5 py-3">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          <TrackingIcon className="size-3.5" name="calendar" />
+          <span>Calendar</span>
+          <span className="rounded-full border border-[var(--track-border)] px-2 py-0.5 text-[10px] text-white">
+            {subview === "day" ? "Day" : "Week"}
+          </span>
+        </div>
+        <div
+          className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-1"
+          data-testid="calendar-subview-controls"
+        >
+          <button
+            aria-pressed={subview === "day"}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+              subview === "day"
+                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+                : "text-white"
+            }`}
+            type="button"
+          >
+            Day
+          </button>
+          <button
+            aria-pressed={subview === "week"}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium ${
+              subview === "week"
+                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
+                : "text-white"
+            }`}
+            type="button"
+          >
+            Week
+          </button>
+        </div>
+      </div>
       <div className="min-h-0 flex-1 overflow-x-auto">
         <div className="flex h-full min-h-0 min-w-[1232px] flex-col">
-          <div className="grid shrink-0 grid-cols-[42px_repeat(7,minmax(170px,1fr))] bg-[var(--track-surface)]">
+          <div
+            className="sticky top-0 z-20 grid shrink-0 grid-cols-[42px_repeat(7,minmax(170px,1fr))] bg-[var(--track-surface)]"
+            data-testid="calendar-sticky-header"
+          >
             <div className="border-r border-[var(--track-border)] bg-[var(--track-surface)]" />
             {days.map(({ date, entries: dayEntries, showNowLine }) => (
               <div
@@ -223,7 +277,13 @@ export function CalendarView({
                 data-testid={`calendar-day-header-${formatWeekday(date, timezone).toLowerCase()}`}
                 key={date.toISOString()}
               >
-                <div className="flex items-center gap-2">
+                <button
+                  aria-label={`Open day view for ${formatWeekday(date, timezone)} ${date.getDate()}`}
+                  aria-pressed={selectedSubviewDateIso === formatDateIso(date)}
+                  className="flex w-full items-center gap-2 rounded-[16px] text-left transition hover:bg-white/4"
+                  onClick={() => onSelectSubviewDate?.(formatDateIso(date))}
+                  type="button"
+                >
                   <div
                     className={`flex h-[48px] min-w-[60px] shrink-0 items-center justify-center px-3 text-[25px] font-medium leading-none ${
                       showNowLine
@@ -245,7 +305,7 @@ export function CalendarView({
                       {resolveCalendarHeaderSummary(dayEntries, timezone)}
                     </p>
                   </div>
-                </div>
+                </button>
               </div>
             ))}
           </div>
@@ -276,11 +336,27 @@ export function CalendarView({
                       height: `${CALENDAR_TOTAL_HEIGHT}px`,
                     }}
                   >
+                    {hours.map((hour) => (
+                      <button
+                        aria-label={`Select time range on ${formatWeekday(date, timezone)} ${date.getDate()} at ${String(hour).padStart(2, "0")}:00`}
+                        className="absolute inset-x-0 z-0 h-[60px] bg-transparent text-transparent"
+                        key={`${date.toISOString()}-${hour}`}
+                        onClick={() =>
+                          onSelectSlot?.({ dayIso: formatDateIso(date), minute: hour * 60 })
+                        }
+                        style={{ top: `${hour * CALENDAR_HOUR_HEIGHT}px` }}
+                        type="button"
+                      >
+                        Select slot
+                      </button>
+                    ))}
                     {dayEntries.map((entry) => (
                       <CalendarEventCard
                         entry={entry}
                         key={String(entry.id ?? entry.start)}
                         onEditEntry={onEditEntry}
+                        onMoveEntry={onMoveEntry}
+                        onResizeEntry={onResizeEntry}
                         timezone={timezone}
                       />
                     ))}
@@ -449,11 +525,15 @@ function CalendarEventCard({
   entry,
   onEditEntry,
   onContinueEntry,
+  onMoveEntry,
+  onResizeEntry,
   timezone,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onMoveEntry?: (entryId: number, minutesDelta: number) => void;
+  onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
   timezone: string;
 }) {
   const start = new Date(entry.start ?? entry.at ?? Date.now());
@@ -462,6 +542,9 @@ function CalendarEventCard({
   const height = Math.max(22, Math.round(durationSeconds / 60));
   const color = resolveEntryColor(entry);
   const isRunning = !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
+  const [affordancesOpen, setAffordancesOpen] = useState(false);
+  const entryId = typeof entry.id === "number" ? entry.id : null;
+  const allowDirectEdit = !isRunning && entryId != null;
 
   return (
     <div
@@ -494,6 +577,62 @@ function CalendarEventCard({
           {entry.tags && entry.tags.length > 0 && <span className="truncate">{entry.tags[0]}</span>}
         </div>
       </button>
+      <button
+        aria-label={`Entry actions for ${entry.description?.trim() || entry.project_name || "time entry"}`}
+        className="absolute right-1 top-1 flex size-4 items-center justify-center rounded text-white/70 transition hover:bg-white/10 hover:text-white"
+        onClick={() => setAffordancesOpen((current) => !current)}
+        type="button"
+      >
+        <TrackingIcon className="size-3" name="more" />
+      </button>
+      {affordancesOpen ? (
+        <div className="absolute inset-x-1 bottom-1 flex flex-wrap gap-1 rounded-[6px] bg-[#141415]/95 p-1">
+          {allowDirectEdit ? (
+            <>
+              <button
+                aria-label={`Move entry ${entry.description?.trim() || entry.project_name || "time entry"}`}
+                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
+                onClick={() => {
+                  if (entryId != null) {
+                    onMoveEntry?.(entryId, 15);
+                  }
+                }}
+                type="button"
+              >
+                Move +15m
+              </button>
+              <button
+                aria-label={`Resize start for ${entry.description?.trim() || entry.project_name || "time entry"}`}
+                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
+                onClick={() => {
+                  if (entryId != null) {
+                    onResizeEntry?.(entryId, "start", -15);
+                  }
+                }}
+                type="button"
+              >
+                Start -15m
+              </button>
+              <button
+                aria-label={`Resize end for ${entry.description?.trim() || entry.project_name || "time entry"}`}
+                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
+                onClick={() => {
+                  if (entryId != null) {
+                    onResizeEntry?.(entryId, "end", 15);
+                  }
+                }}
+                type="button"
+              >
+                End +15m
+              </button>
+            </>
+          ) : (
+            <span className="px-1.5 py-0.5 text-[9px] text-white/70">
+              Running entries are view-only here
+            </span>
+          )}
+        </div>
+      ) : null}
       {isRunning && onContinueEntry && (
         <button
           aria-label="Continue time entry"
@@ -511,6 +650,10 @@ function CalendarEventCard({
       )}
     </div>
   );
+}
+
+function formatDateIso(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 function TimesheetCell({ seconds }: { seconds: number }) {

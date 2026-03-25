@@ -1,5 +1,12 @@
 # Toggl Timer Time Entry Popup 二级日期弹层研究
 
+> Mission status
+> Agent: cbb18fd4-9d41-4c0b-bdb9-a6a44cb3324c
+> Status: partial
+> Current code differences: `/timer` exposes anchored start and stop date pickers with page-level scrolling, but the popup/date-picker flow is not yet truthfully complete because the surrounding popup and calendar surface still lack fully visible, verifiable parity with the documented Toggl interaction model.
+> Todo: Complete the remaining visible popup/calendar alignment on `/timer`, then rerun real-surface verification to prove the secondary date-picker behavior still matches the documented anchored flow in the final popup shell.
+> Fully implemented: no
+
 本文件只研究一个细节：
 
 > 在 time entry popup 里点击时间字段旁的日历按钮后，二级日期弹层如何定位、如何影响页面高度，以及页面滚动时它怎么处理。

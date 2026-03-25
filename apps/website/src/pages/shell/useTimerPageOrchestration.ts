@@ -62,6 +62,14 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
   return entry.stop == null || (entry.duration ?? 0) < 0;
 }
 
+function areNumberListsEqual(left: number[], right: number[]): boolean {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
+}
+
 function resolveSingleTimerErrorMessage(error: unknown): string {
   if (error instanceof WebApiError) {
     if (typeof error.data === "string" && error.data.trim()) {
@@ -178,6 +186,7 @@ export interface TimerPageOrchestration {
   setSelectedProjectId: (id: number | null) => void;
   selectedTagIds: number[];
   setSelectedTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
+  selectedEntryDirty: boolean;
 
   // Composer suggestions
   composerSuggestionsAnchor: TimerComposerSuggestionsAnchor | null;
@@ -292,6 +301,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const [selectedEntryError, setSelectedEntryError] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [selectedStartIso, setSelectedStartIso] = useState<string | null>(null);
+  const [selectedStopIso, setSelectedStopIso] = useState<string | null>(null);
 
   // Composer suggestions
   const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
@@ -306,6 +317,30 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     const entryWorkspaceId = selectedEntry?.workspace_id ?? selectedEntry?.wid;
     return typeof entryWorkspaceId === "number" ? entryWorkspaceId : workspaceId;
   }, [selectedEntry, workspaceId]);
+
+  const selectedEntryDirty = useMemo(() => {
+    if (!selectedEntry) {
+      return false;
+    }
+
+    const originalProjectId = selectedEntry.project_id ?? selectedEntry.pid ?? null;
+    const originalTagIds = selectedEntry.tag_ids ?? [];
+
+    return (
+      selectedDescription !== (selectedEntry.description ?? "") ||
+      selectedProjectId !== originalProjectId ||
+      !areNumberListsEqual(selectedTagIds, originalTagIds) ||
+      selectedStartIso !== (selectedEntry.start ?? null) ||
+      selectedStopIso !== (selectedEntry.stop ?? null)
+    );
+  }, [
+    selectedDescription,
+    selectedEntry,
+    selectedProjectId,
+    selectedStartIso,
+    selectedStopIso,
+    selectedTagIds,
+  ]);
 
   // Workspace-scoped queries
   const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
@@ -458,6 +493,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setSelectedDescription(selectedEntry?.description ?? "");
     setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
     setSelectedTagIds(selectedEntry?.tag_ids ?? []);
+    setSelectedStartIso(selectedEntry?.start ?? null);
+    setSelectedStopIso(selectedEntry?.stop ?? null);
     setSelectedEntryError(null);
   }, [selectedEntry]);
 
@@ -708,16 +745,20 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   );
 
   const handleSelectedEntryStartTimeChange = useCallback((time: Date) => {
+    const nextIso = time.toISOString();
+    setSelectedStartIso(nextIso);
     setSelectedEntry((current) => {
       if (!current) return current;
-      return { ...current, start: time.toISOString() };
+      return { ...current, start: nextIso };
     });
   }, []);
 
   const handleSelectedEntryStopTimeChange = useCallback((time: Date) => {
+    const nextIso = time.toISOString();
+    setSelectedStopIso(nextIso);
     setSelectedEntry((current) => {
       if (!current) return current;
-      return { ...current, stop: time.toISOString() };
+      return { ...current, stop: nextIso };
     });
   }, []);
 
@@ -726,12 +767,19 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
       const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
       const scrollLeft = scrollAreaRef.current?.scrollLeft ?? 0;
       const scrollTop = scrollAreaRef.current?.scrollTop ?? 0;
+      const containerWidth = scrollAreaRef.current?.clientWidth;
+      const anchorLeft = scrollAreaRect
+        ? anchorRect.left - scrollAreaRect.left + scrollLeft
+        : anchorRect.left;
+      const preferredPlacement =
+        containerWidth != null && anchorLeft > containerWidth / 2 ? "left" : "right";
       setSelectedEntry(entry);
       setSelectedEntryAnchor({
         containerHeight: scrollAreaRef.current?.scrollHeight,
-        containerWidth: scrollAreaRef.current?.clientWidth,
+        containerWidth,
         height: anchorRect.height,
-        left: scrollAreaRect ? anchorRect.left - scrollAreaRect.left + scrollLeft : anchorRect.left,
+        left: anchorLeft,
+        preferredPlacement,
         top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top + scrollTop : anchorRect.top,
         width: anchorRect.width,
       });
@@ -808,6 +856,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setSelectedProjectId,
     selectedTagIds,
     setSelectedTagIds,
+    selectedEntryDirty,
 
     // Composer suggestions
     composerSuggestionsAnchor,

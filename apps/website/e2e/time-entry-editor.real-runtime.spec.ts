@@ -64,7 +64,9 @@ test.describe("Story: edit a stopped time entry", () => {
     expect(closeButtonClasses).toContain("rounded-full");
   });
 
-  test("when the user presses Escape, the editor dialog closes", async ({ page }) => {
+  test("when the user presses Escape with dirty edits, the editor shows discard protection before closing", async ({
+    page,
+  }) => {
     await page
       .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
       .first()
@@ -73,12 +75,25 @@ test.describe("Story: edit a stopped time entry", () => {
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
 
+    await dialog.getByLabel("Time entry description").fill("Dirty edit");
     await page.keyboard.press("Escape");
+
+    const discardPrompt = page.getByTestId("time-entry-editor-discard-confirmation");
+    await expect(discardPrompt).toBeVisible();
+    await discardPrompt.getByRole("button", { name: "Keep editing" }).click();
+    await expect(discardPrompt).not.toBeVisible();
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(discardPrompt).toBeVisible();
+    await discardPrompt.getByRole("button", { name: "Discard" }).click();
 
     await expect(dialog).not.toBeVisible();
   });
 
-  test("when the user clicks the close button, the editor dialog closes", async ({ page }) => {
+  test("when the user clicks the close button with dirty edits, the editor shows discard protection before closing", async ({
+    page,
+  }) => {
     await page
       .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
       .first()
@@ -87,7 +102,12 @@ test.describe("Story: edit a stopped time entry", () => {
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
 
+    await dialog.getByLabel("Time entry description").fill("Dirty edit");
     await dialog.getByRole("button", { name: "Close editor" }).click();
+
+    const discardPrompt = page.getByTestId("time-entry-editor-discard-confirmation");
+    await expect(discardPrompt).toBeVisible();
+    await discardPrompt.getByRole("button", { name: "Discard" }).click();
 
     await expect(dialog).not.toBeVisible();
   });
@@ -133,7 +153,7 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
 
     await dialog.getByRole("button", { name: "Edit start date" }).click();
-    const datePicker = page.getByTestId("date-picker");
+    const datePicker = page.getByTestId("time-entry-editor-start-date-picker");
     await expect(datePicker).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
     await datePicker.getByRole("button", { name: "March 23, 2026" }).click();
@@ -154,6 +174,28 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(
       page.getByTestId("time-entry-editor-dialog").getByRole("button", { name: "Edit start time" }),
     ).toContainText("09:28");
+  });
+
+  test("when the user opens both date controls, each field opens its own anchored picker without leaving /timer", async ({
+    page,
+  }) => {
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
+
+    const dialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(dialog).toBeVisible();
+    await expect(page).toHaveURL(/\/timer$/);
+
+    await dialog.getByRole("button", { name: "Edit start date" }).click();
+    await expect(page.getByTestId("time-entry-editor-start-date-picker")).toBeVisible();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    await dialog.getByRole("button", { name: "Edit stop date" }).click();
+    await expect(page.getByTestId("time-entry-editor-stop-date-picker")).toBeVisible();
+    await expect(page.getByTestId("time-entry-editor-start-date-picker")).not.toBeVisible();
+    await expect(page).toHaveURL(/\/timer$/);
   });
 });
 

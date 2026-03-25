@@ -104,16 +104,43 @@ describe("TimeEntryEditorDialog", () => {
     expect(screen.getByTestId("time-entry-editor-stop-date-picker")).toBeTruthy();
     expect(screen.queryByTestId("time-entry-editor-start-date-picker")).toBeNull();
   });
+
+  it("prefers rendering to the left of the anchor when the anchor is near the right edge", () => {
+    render(
+      <DialogHarness
+        anchor={{
+          containerWidth: 720,
+          height: 40,
+          left: 620,
+          preferredPlacement: "left",
+          top: 40,
+          width: 40,
+        }}
+      />,
+    );
+
+    const dialog = screen.getByTestId("time-entry-editor-dialog");
+    expect(dialog.style.left).toBe("252px");
+  });
 });
 
 function DialogHarness({
   entryOverrides,
+  anchor = { height: 40, left: 40, top: 40, width: 160 },
   isDirty = false,
   onDuplicate,
   onStartTimeChange = () => {},
   selectedProjectId = null,
   selectedTagIds = [],
 }: {
+  anchor?: {
+    containerWidth?: number;
+    height: number;
+    left: number;
+    preferredPlacement?: "left" | "right";
+    top: number;
+    width: number;
+  };
   entryOverrides?: Partial<GithubComTogglTogglApiInternalModelsTimeEntry>;
   isDirty?: boolean;
   onDuplicate?: () => void;
@@ -129,7 +156,7 @@ function DialogHarness({
 
   return (
     <TimeEntryEditorDialog
-      anchor={{ height: 40, left: 40, top: 40, width: 160 }}
+      anchor={anchor}
       currentWorkspaceId={202}
       description="浪费时间"
       entry={entry}

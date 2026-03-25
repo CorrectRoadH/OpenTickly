@@ -214,6 +214,7 @@ export function WorkspaceTimerPage(): ReactElement {
             isCreatingProject={orch.createProjectMutation.isPending}
             isCreatingTag={orch.createTagMutation.isPending}
             isDeleting={orch.deleteTimeEntryMutation.isPending}
+            isDirty={orch.selectedEntryDirty}
             isPrimaryActionPending={orch.timerMutationPending}
             isSaving={orch.updateTimeEntryMutation.isPending}
             onClose={orch.closeSelectedEntryEditor}

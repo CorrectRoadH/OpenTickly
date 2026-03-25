@@ -22,6 +22,7 @@ export type TimeEntryEditorAnchor = {
   containerWidth?: number;
   height: number;
   left: number;
+  preferredPlacement?: "left" | "right";
   top: number;
   width: number;
 };
@@ -118,7 +119,6 @@ export function TimeEntryEditorDialog({
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [picker, setPicker] = useState<"project" | "tag" | null>(null);
   const [timePicker, setTimePicker] = useState<"start" | "stop" | null>(null);
-  const [timePickerAnchor, setTimePickerAnchor] = useState<{ left: number; top: number } | null>(null);
   const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
   const [projectComposerOpen, setProjectComposerOpen] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
@@ -280,6 +280,7 @@ export function TimeEntryEditorDialog({
               <button
                 aria-label="Duplicate entry"
                 className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+                disabled={isDirty}
                 onClick={() => {
                   void onDuplicate?.();
                 }}
@@ -333,6 +334,7 @@ export function TimeEntryEditorDialog({
           <label className="block">
             <span className="sr-only">Time entry description</span>
             <input
+              aria-label="Time entry description"
               className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[#8f8f95]"
               id="time-entry-editor-title"
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
@@ -654,6 +656,7 @@ export function TimeEntryEditorDialog({
           {timePicker ? (
             <DatePicker
               date={timePicker === "start" ? start : stop!}
+              testId={`time-entry-editor-${timePicker}-date-picker`}
               onClose={() => setTimePicker(null)}
               onSelect={(nextDate) => {
                 if (timePicker === "start") {
@@ -668,6 +671,40 @@ export function TimeEntryEditorDialog({
 
           {saveError ? <p className="mt-4 text-sm text-rose-300">{saveError}</p> : null}
         </div>
+
+        {showDiscardConfirmation ? (
+          <div
+            className="absolute inset-0 z-30 flex items-center justify-center rounded-[14px] bg-[rgba(15,15,16,0.82)] px-6"
+            data-testid="time-entry-editor-discard-confirmation"
+          >
+            <div className="w-full max-w-[280px] rounded-[14px] border border-[#4a4a50] bg-[#242426] p-4 shadow-[0_16px_32px_rgba(0,0,0,0.38)]">
+              <h3 className="text-[16px] font-semibold text-white">Discard changes?</h3>
+              <p className="mt-2 text-[13px] text-[#c0c0c5]">
+                You have unsaved changes in this time entry. Discard them before closing?
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  className="rounded-[10px] border border-[#5d5d62] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
+                  onClick={() => setShowDiscardConfirmation(false)}
+                  type="button"
+                >
+                  Keep editing
+                </button>
+                <button
+                  className="rounded-[10px] bg-[#ff7a66] px-3 py-2 text-[13px] font-semibold text-[#241d24] transition hover:brightness-110"
+                  onClick={() => {
+                    setShowDiscardConfirmation(false);
+                    onDiscard?.();
+                    onClose();
+                  }}
+                  type="button"
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -860,10 +897,12 @@ function DatePicker({
   date,
   onClose,
   onSelect,
+  testId,
 }: {
   date: Date;
   onClose: () => void;
   onSelect: (date: Date) => void;
+  testId?: string;
 }): ReactElement {
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(date.getFullYear(), date.getMonth(), 1),
@@ -903,6 +942,8 @@ function DatePicker({
       aria-modal="false"
       className="relative z-20 mt-4 w-[620px] max-w-full rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] px-10 pb-8 pt-10 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
       data-testid="date-picker"
+      data-time-entry-date-picker={testId}
+      {...(testId ? { "data-testid": testId } : {})}
       role="dialog"
     >
       <div className="flex items-start justify-between gap-8">
@@ -1137,10 +1178,23 @@ function resolveEditorPosition(
   const fallbackLeft = anchor.left - cardWidth - 12;
   const containerWidth = anchor.containerWidth ?? preferredLeft + cardWidth + padding;
   const containerHeight = anchor.containerHeight ?? anchor.top + cardHeight + padding;
-  const left =
-    preferredLeft + cardWidth <= containerWidth - padding
-      ? preferredLeft
-      : Math.max(padding, Math.min(containerWidth - cardWidth - padding, fallbackLeft));
+  const canPlaceRight = preferredLeft + cardWidth <= containerWidth - padding;
+  const canPlaceLeft = fallbackLeft >= padding;
+  const left = (() => {
+    if (anchor.preferredPlacement === "left" && canPlaceLeft) {
+      return fallbackLeft;
+    }
+    if (anchor.preferredPlacement === "right" && canPlaceRight) {
+      return preferredLeft;
+    }
+    if (canPlaceRight) {
+      return preferredLeft;
+    }
+    if (canPlaceLeft) {
+      return fallbackLeft;
+    }
+    return Math.max(padding, Math.min(containerWidth - cardWidth - padding, fallbackLeft));
+  })();
   const top = Math.max(padding, Math.min(containerHeight - cardHeight - padding, anchor.top - 6));
 
   return { left, top };

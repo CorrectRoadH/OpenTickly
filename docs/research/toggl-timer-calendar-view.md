@@ -1,5 +1,12 @@
 # Toggl Timer Calendar View 研究
 
+> Mission status
+> Agent: calendar-direct-manipulation
+> Status: partial
+> Current code differences: `/timer` calendar now ships sticky header chrome, emphasized current-time indicator, header drill-down buttons, and empty-slot selection hooks, but still uses a lightweight custom grid instead of the documented react-big-calendar + drag-and-drop stack.
+> Todo: land real drag/resize gesture handling plus full day/week subview switching semantics on the live surface.
+> Fully implemented: no
+
 本文件只研究 `Timer` 页中的 `Calendar view`。
 
 ## 1. 实现结论
