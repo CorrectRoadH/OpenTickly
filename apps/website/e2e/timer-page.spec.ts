@@ -1316,3 +1316,711 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
   });
 });
+
+test.describe("Cross-workspace running timer header", () => {
+  /**
+   * VAL-TIMER-002: Global running timer remains visible after workspace switch
+   *
+   * When a running timer belongs to workspace A and the user switches the current workspace
+   * to workspace B, the shared top timer composer/header remains visible and still shows
+   * that same running entry instead of clearing it because of the workspace mismatch.
+   */
+  test("VAL-TIMER-002: running timer header persists across workspace switch", async ({ page }) => {
+    const email = `cross-ws-running-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Cross Workspace Running User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a timer in workspace A
+    await page.getByLabel("Time entry description").fill("Running in workspace A");
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Verify running state in workspace A
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // Get the current timer entry ID before switch
+    const currentTimerBefore = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(currentTimerBefore.status).toBe(200);
+    expect(currentTimerBefore.body).not.toBeNull();
+    const runningEntryIdBefore = currentTimerBefore.body.id;
+    const runningWorkspaceIdBefore =
+      currentTimerBefore.body.workspace_id ?? currentTimerBefore.body.wid;
+
+    // Create a second organization (which creates workspace B) and switch to it
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    // Wait for organization switch to complete
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    // Navigate to timer page after switch
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // VAL-TIMER-002 core assertion: running timer is STILL visible in the header
+    // after switching to workspace B (even though the running timer belongs to workspace A)
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // Verify the elapsed display is showing live time (not cleared)
+    await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+    const elapsedText = await page.getByTestId("timer-elapsed").textContent();
+    expect(elapsedText).toMatch(/\d{2}:\d{2}:\d{2}/);
+
+    // Verify the current-timer API returns the SAME running entry ID after switch
+    const currentTimerAfter = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(currentTimerAfter.status).toBe(200);
+    expect(currentTimerAfter.body).not.toBeNull();
+    expect(currentTimerAfter.body.id).toBe(runningEntryIdBefore);
+    // Verify workspace_id of the running entry is still workspace A
+    expect(currentTimerAfter.body.workspace_id ?? currentTimerAfter.body.wid).toBe(
+      runningWorkspaceIdBefore,
+    );
+
+    // Cleanup: stop the timer
+    await page.getByRole("button", { name: "Stop timer" }).click();
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+  });
+
+  /**
+   * VAL-TIMER-003: Cross-workspace running timer remains editable and stoppable
+   *
+   * When the current workspace differs from the running timer's workspace, the user
+   * can still edit the running timer's supported top-composer fields (description)
+   * and can stop it from that same surface without being forced back to the owning workspace.
+   * After stop, GET /me/time_entries/current returns HTTP 200 with body null.
+   */
+  test("VAL-TIMER-003: running timer is editable and stoppable from a foreign workspace", async ({
+    page,
+  }) => {
+    const email = `foreign-edit-stop-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Foreign Edit Stop User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a timer in workspace A
+    await page.getByLabel("Time entry description").fill("Original description in workspace A");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Create workspace B
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    // Navigate to timer page in workspace B
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // VAL-TIMER-003: Running timer is still visible in workspace B (foreign workspace)
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Edit the running timer's description from workspace B
+    // The description input should show the running timer's current description
+    const descriptionInput = page.getByLabel("Time entry description");
+    await expect(descriptionInput).toHaveValue("Original description in workspace A");
+
+    // Change the description while in workspace B
+    await descriptionInput.clear();
+    await descriptionInput.fill("Edited from workspace B");
+
+    // Blur to commit the edit
+    await descriptionInput.blur();
+
+    // Wait a moment for the edit to be sent
+    await page.waitForTimeout(500);
+
+    // Verify the edit was persisted by checking the current-timer API
+    const afterEdit = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(afterEdit.status).toBe(200);
+    expect(afterEdit.body).not.toBeNull();
+    expect(afterEdit.body.description).toBe("Edited from workspace B");
+
+    // Now stop the running timer from workspace B
+    await page.getByRole("button", { name: "Stop timer" }).click();
+
+    // VAL-TIMER-003: After stopping, timer should return to idle state
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
+
+    // Verify current-timer API returns null after stop
+    const afterStop = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(afterStop.status).toBe(200);
+    expect(afterStop.body).toBeNull();
+  });
+
+  /**
+   * VAL-TIMER-004: Timer history remains scoped to the current workspace
+   *
+   * The calendar, list, and timesheet timer views only project historical entries
+   * whose workspace_id matches the current workspace. After a workspace switch,
+   * historical entries from the previous workspace disappear from all three history views.
+   */
+  test("VAL-TIMER-004: history views are scoped to current workspace across all three views", async ({
+    page,
+  }) => {
+    const email = `history-scope-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const workspaceAEntryDescription = "Entry only in workspace A";
+    const workspaceBEntryDescription = "Entry only in workspace B";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "History Scope User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Create a project in workspace A for timesheet visibility
+    const projectAId = await createProjectForWorkspace(page, {
+      name: "Workspace A Project",
+      workspaceId: workspaceAId,
+    });
+
+    // Create time entry in workspace A
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    const entryAStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 9, 0, 0));
+    const entryAStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 10, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceAEntryDescription,
+      projectId: projectAId,
+      start: entryAStart.toISOString(),
+      stop: entryAStop.toISOString(),
+      workspaceId: workspaceAId,
+    });
+
+    // Navigate to timer page in workspace A
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Verify workspace A entry is visible in all three views
+    // Calendar view
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    const calendarScrollAreaA = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollAreaA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+
+    // List view
+    await page.getByRole("button", { name: "List view" }).click();
+    const listViewContainerA = page.getByTestId("timer-list-view");
+    await expect(listViewContainerA).toBeVisible();
+    await expect(listViewContainerA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+
+    // Timesheet view
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    const timesheetViewContainerA = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainerA.locator("text=Workspace A Project")).toBeVisible();
+
+    // Create workspace B
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    const switchedSession = await readSessionBootstrap(page);
+    const workspaceBId = switchedSession.current_workspace_id;
+
+    // Create a project in workspace B
+    const projectBId = await createProjectForWorkspace(page, {
+      name: "Workspace B Project",
+      workspaceId: workspaceBId,
+    });
+
+    // Create time entry in workspace B
+    const entryBStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 14, 0, 0));
+    const entryBStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 15, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceBEntryDescription,
+      projectId: projectBId,
+      start: entryBStart.toISOString(),
+      stop: entryBStop.toISOString(),
+      workspaceId: workspaceBId,
+    });
+
+    // Navigate to timer page in workspace B
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // VAL-TIMER-004: Verify workspace A entries are ABSENT from all three views
+    // and workspace B entries are PRESENT
+
+    // Calendar view - explicitly select calendar to have known view state
+    await page.getByRole("button", { name: "Calendar" }).click();
+    const calendarScrollAreaB = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollAreaB).toBeVisible();
+    // Workspace A entry should NOT be visible
+    await expect(
+      calendarScrollAreaB.locator(`text=${workspaceAEntryDescription}`),
+    ).not.toBeVisible();
+    // Workspace B entry should be visible
+    await expect(calendarScrollAreaB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
+
+    // List view
+    await page.getByRole("button", { name: "List view" }).click();
+    const listViewContainerB = page.getByTestId("timer-list-view");
+    await expect(listViewContainerB).toBeVisible();
+    await expect(
+      listViewContainerB.locator(`text=${workspaceAEntryDescription}`),
+    ).not.toBeVisible();
+    await expect(listViewContainerB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
+
+    // Timesheet view
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    const timesheetViewContainerB = page.getByTestId("timer-timesheet-view");
+    // Workspace A project should NOT be visible
+    await expect(timesheetViewContainerB.locator("text=Workspace A Project")).not.toBeVisible();
+    // Workspace B project should be visible
+    await expect(timesheetViewContainerB.locator("text=Workspace B Project")).toBeVisible();
+    // Timesheet should not be empty
+    await expect(page.getByText("No week data available")).not.toBeVisible();
+  });
+
+  /**
+   * VAL-CROSS-001: Workspace switch preserves global running timer while re-scoping history
+   *
+   * If the user starts a running timer in workspace A and then switches to workspace B,
+   * the running timer remains visible and operable in the top composer while the history
+   * projections (calendar, list, timesheet) immediately re-scope to workspace B only.
+   */
+  test("VAL-CROSS-001: workspace switch preserves global running timer while re-scoping history", async ({
+    page,
+  }) => {
+    const email = `cross-preserve-history-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const workspaceAEntryDescription = "Stopped entry in workspace A";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Cross Preserve History User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Create a project in workspace A
+    const projectAId = await createProjectForWorkspace(page, {
+      name: "Workspace A Cross Project",
+      workspaceId: workspaceAId,
+    });
+
+    // Create a stopped time entry in workspace A
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    const entryAStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 9, 0, 0));
+    const entryAStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 10, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceAEntryDescription,
+      projectId: projectAId,
+      start: entryAStart.toISOString(),
+      stop: entryAStop.toISOString(),
+      workspaceId: workspaceAId,
+    });
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a running timer in workspace A
+    await page.getByLabel("Time entry description").fill("Running timer that crosses workspaces");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Get the running entry ID
+    const runningEntryBefore = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(runningEntryBefore.status).toBe(200);
+    expect(runningEntryBefore.body).not.toBeNull();
+    const runningEntryId = runningEntryBefore.body.id;
+
+    // Verify the stopped workspace A entry is visible in list view while on workspace A
+    await page.getByRole("button", { name: "List view" }).click();
+    const listViewContainerA = page.getByTestId("timer-list-view");
+    await expect(listViewContainerA).toBeVisible();
+    await expect(listViewContainerA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
+
+    // Switch to workspace B
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    const switchedSession = await readSessionBootstrap(page);
+    const workspaceBId = switchedSession.current_workspace_id;
+
+    // Create a project and entry in workspace B so the list view renders properly
+    const projectBId = await createProjectForWorkspace(page, {
+      name: "Workspace B Cross Project",
+      workspaceId: workspaceBId,
+    });
+
+    const entryBStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 14, 0, 0));
+    const entryBStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 15, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: "Entry in workspace B",
+      projectId: projectBId,
+      start: entryBStart.toISOString(),
+      stop: entryBStop.toISOString(),
+      workspaceId: workspaceBId,
+    });
+
+    // Navigate to timer page in workspace B
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // VAL-CROSS-001: Running timer is still visible after switch
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-elapsed")).toBeVisible();
+
+    // Verify the same running entry ID is still current
+    const runningEntryAfter = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(runningEntryAfter.status).toBe(200);
+    expect(runningEntryAfter.body).not.toBeNull();
+    expect(runningEntryAfter.body.id).toBe(runningEntryId);
+
+    // VAL-CROSS-001: History re-scopes to workspace B - workspace A entry should be absent
+    // Explicitly switch to list view to test history re-scoping
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.waitForTimeout(500);
+    const listViewContainerB = page.getByTestId("timer-list-view");
+    await expect(listViewContainerB).toBeVisible();
+    // Workspace A stopped entry should NOT be visible in workspace B's history
+    await expect(
+      listViewContainerB.locator(`text=${workspaceAEntryDescription}`),
+    ).not.toBeVisible();
+
+    // Cleanup: stop the running timer
+    await page.getByRole("button", { name: "Stop timer" }).click();
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+  });
+
+  /**
+   * VAL-CROSS-003: Stopping a foreign-workspace running timer clears global current state cleanly
+   *
+   * When the visible running timer belongs to another workspace, stopping it from the current
+   * workspace clears the global current-timer read model, leaves the stopped entry in its
+   * original workspace, and does not inject that stopped foreign entry into the current
+   * workspace's history views.
+   */
+  test("VAL-CROSS-003: stopping foreign-workspace running timer clears current state without leaking to current workspace history", async ({
+    page,
+  }) => {
+    const email = `foreign-stop-clean-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    const workspaceAEntryDescription = "Stopped entry in workspace A before switch";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Foreign Stop Clean User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    // Create a project in workspace A
+    const projectAId = await createProjectForWorkspace(page, {
+      name: "Workspace A Clean Project",
+      workspaceId: workspaceAId,
+    });
+
+    // Create a stopped time entry in workspace A (this will serve as workspace A history)
+    const now = new Date();
+    const baseYear = now.getUTCFullYear();
+    const baseMonth = now.getUTCMonth();
+    const baseDate = now.getUTCDate();
+
+    const entryAStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 9, 0, 0));
+    const entryAStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 10, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: workspaceAEntryDescription,
+      projectId: projectAId,
+      start: entryAStart.toISOString(),
+      stop: entryAStop.toISOString(),
+      workspaceId: workspaceAId,
+    });
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a running timer in workspace A
+    const runningDescription = "Running timer that will be stopped from workspace B";
+    await page.getByLabel("Time entry description").fill(runningDescription);
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Get the running entry ID and workspace
+    const runningEntryBefore = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(runningEntryBefore.status).toBe(200);
+    expect(runningEntryBefore.body).not.toBeNull();
+
+    // Switch to workspace B
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    const switchedSessionB = await readSessionBootstrap(page);
+    const workspaceBId = switchedSessionB.current_workspace_id;
+
+    // Create a project and entry in workspace B so the list view renders properly
+    const projectBId = await createProjectForWorkspace(page, {
+      name: "Workspace B Clean Project",
+      workspaceId: workspaceBId,
+    });
+
+    const entryBStart = new Date(Date.UTC(baseYear, baseMonth, baseDate, 14, 0, 0));
+    const entryBStop = new Date(Date.UTC(baseYear, baseMonth, baseDate, 15, 0, 0));
+    await createTimeEntryForWorkspace(page, {
+      description: "Entry in workspace B",
+      projectId: projectBId,
+      start: entryBStart.toISOString(),
+      stop: entryBStop.toISOString(),
+      workspaceId: workspaceBId,
+    });
+
+    // Navigate to timer page in workspace B
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Verify the running timer is visible in workspace B (foreign workspace)
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    // Stop the foreign-workspace running timer from workspace B
+    await page.getByRole("button", { name: "Stop timer" }).click();
+
+    // VAL-CROSS-003: After stopping, timer should return to idle state
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
+
+    // Verify current-timer API returns null after stop
+    const afterStop = await page.evaluate(async () => {
+      const response = await fetch("/api/v9/me/time_entries/current", {
+        credentials: "include",
+      });
+      return { status: response.status, body: await response.json() };
+    });
+    expect(afterStop.status).toBe(200);
+    expect(afterStop.body).toBeNull();
+
+    // VAL-CROSS-003: The stopped foreign-workspace entry should NOT appear in workspace B's history
+    // Check all three views: calendar, list, and timesheet
+
+    // Calendar view
+    await page.getByRole("button", { name: "Calendar" }).click();
+    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    await expect(calendarScrollArea).toBeVisible();
+    // The stopped running timer description should NOT appear in workspace B's calendar
+    // (it was started in workspace A, so it should not leak into workspace B history)
+    await expect(calendarScrollArea.locator(`text=${runningDescription}`)).not.toBeVisible();
+
+    // List view
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page.waitForTimeout(500);
+    const listViewContainer = page.getByTestId("timer-list-view");
+    await expect(listViewContainer).toBeVisible();
+    // The stopped running timer description should NOT appear in workspace B's list
+    await expect(listViewContainer.locator(`text=${runningDescription}`)).not.toBeVisible();
+    // The original workspace A entry should also NOT appear in workspace B's list
+    await expect(listViewContainer.locator(`text=${workspaceAEntryDescription}`)).not.toBeVisible();
+
+    // Timesheet view
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    const timesheetViewContainer = page.getByTestId("timer-timesheet-view");
+    await expect(timesheetViewContainer).toBeVisible();
+    // Workspace A project should NOT appear in workspace B's timesheet
+    await expect(
+      timesheetViewContainer.locator("text=Workspace A Clean Project"),
+    ).not.toBeVisible();
+    // Workspace B project SHOULD appear in workspace B's timesheet
+    await expect(timesheetViewContainer.locator("text=Workspace B Clean Project")).toBeVisible();
+  });
+});
