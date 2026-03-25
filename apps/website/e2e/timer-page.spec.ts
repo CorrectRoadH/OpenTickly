@@ -953,7 +953,7 @@ test.describe("Timer page family mainline", () => {
     const mainScroll = page.getByTestId("app-shell-main");
     const scrollArea = page.getByTestId("tracking-timer-scroll-area");
     const weekRangeButton = page.getByRole("button", {
-      name: /\d{4}-\d{2}-\d{2} - \d{4}-\d{2}-\d{2}/,
+      name: /Week range:/i,
     });
 
     await expect(scrollArea).toBeVisible();
