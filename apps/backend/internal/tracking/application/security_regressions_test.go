@@ -1058,3 +1058,245 @@ func TestSameWorkspaceBatchMutationExcludesUnauthorizedEntries(t *testing.T) {
 		t.Fatalf("VAL-SEC-TRACK-004: user B should still have exactly 2 entries, got %d", len(memberEntries))
 	}
 }
+
+// TestSameWorkspaceUserACannotCreateTimeEntryAsUserB verifies VAL-SEC-TRACK-003:
+// "Continue Time Entry creates a new running entry from a historical entry" per mission architecture.
+// The attack vector is: if user A calls CreateTimeEntry with UserID=userB's ID, they would
+// create an entry on user B's account. The service layer must validate that a caller can only
+// create entries for themselves, not for other workspace members.
+// A denied write must leave user B's entry count unchanged and must not create a new
+// running timer on user B's account.
+func TestSameWorkspaceUserACannotCreateTimeEntryAsUserB(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, ownerID, memberID := seedTwoUsersInOneWorkspace(t, ctx, database, "sec-create-as")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// User B creates a stopped time entry
+	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
+	stop := time.Date(2026, 3, 23, 11, 0, 0, 0, time.UTC)
+	_, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID,
+		Description: "User B's historical entry",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "security-test",
+	})
+	if err != nil {
+		t.Fatalf("user B create entry: %v", err)
+	}
+	originalMemberEntryCount := 1
+
+	// Verify user B's initial state
+	memberEntriesBefore, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: memberID,
+	})
+	if err != nil {
+		t.Fatalf("list user B entries before attack: %v", err)
+	}
+	if len(memberEntriesBefore) != originalMemberEntryCount {
+		t.Fatalf("user B should have %d entry initially, got %d", originalMemberEntryCount, len(memberEntriesBefore))
+	}
+
+	// Verify user B's current timer is null before attack
+	memberCurrentBefore, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer before attack: %v", err)
+	}
+	if memberCurrentBefore.ID != 0 {
+		t.Fatalf("user B should have no running timer before attack, got ID %d", memberCurrentBefore.ID)
+	}
+
+	// VAL-SEC-TRACK-003: user A (attacker) attempts to create a time entry on user B's account.
+	// Per the architecture, "continue" creates a new running entry from a historical entry.
+	// The attacker sets the authenticated user ID in context to their own (ownerID) but
+	// tries to create an entry with UserID=memberID (user B's ID).
+	// The service must validate that the caller can only create entries for themselves.
+	newStart := time.Now().UTC()
+	attackerCtx := trackingapplication.WithAuthenticatedUserID(ctx, ownerID)
+	attackerEntry, err := trackingService.CreateTimeEntry(attackerCtx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID, // Attacker uses victim B's UserID but their context says ownerID
+		Description: "Attacker trying to create entry as user B",
+		Start:       newStart,
+		CreatedWith: "security-test-attack",
+	})
+
+	// The service layer must deny this - the authenticated user (ownerID) cannot create
+	// entries with a different UserID (memberID). The service returns ErrTimeEntryNotFound
+	// to avoid information leakage about whether the target user exists.
+	if err == nil {
+		// Attack succeeded - user A created an entry on user B's account
+		if attackerEntry.UserID == memberID {
+			t.Fatalf("VAL-SEC-TRACK-003: user A called CreateTimeEntry with UserID=memberID and succeeded; this would allow creating entries on other users' accounts")
+		}
+	}
+	// If err is not ErrTimeEntryNotFound, that's also a problem - it means the validation didn't work correctly
+	if err != nil && err != trackingapplication.ErrTimeEntryNotFound {
+		t.Fatalf("expected ErrTimeEntryNotFound for unauthorized create, got: %v", err)
+	}
+
+	// VAL-SEC-TRACK-003 core assertion: user B's entry count must not increase.
+	memberEntriesAfter, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: memberID,
+	})
+	if err != nil {
+		t.Fatalf("list user B entries after denied create: %v", err)
+	}
+	if len(memberEntriesAfter) != originalMemberEntryCount {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's entry count changed after denied create; expected %d, got %d", originalMemberEntryCount, len(memberEntriesAfter))
+	}
+
+	// VAL-SEC-TRACK-003 core assertion: user B's current timer must still be null.
+	memberCurrentAfter, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer after denied create: %v", err)
+	}
+	if memberCurrentAfter.ID != 0 {
+		t.Fatalf("VAL-SEC-TRACK-003: user B has a running timer after denied create; expected null/ID=0, got ID %d", memberCurrentAfter.ID)
+	}
+
+	// Verify user A's entry list is still empty (attacker gained no new entries)
+	ownerEntries, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: ownerID,
+	})
+	if err != nil {
+		t.Fatalf("list user A entries after denied create: %v", err)
+	}
+	if len(ownerEntries) != 0 {
+		t.Fatalf("user A should not have any entries after denied create, got %d entries", len(ownerEntries))
+	}
+}
+
+// TestSameWorkspaceUserACannotContinueUserBEntryViaCreate verifies VAL-SEC-TRACK-003:
+// The architecture states "Continue Time Entry creates a new running entry from a historical
+// entry; it must not mutate the original historical fact." This test proves that user A
+// cannot "continue" user B's historical entry by creating a new running entry that appears
+// to be owned by user B. The original historical entry must remain unchanged and no new
+// running timer should appear on user B's account.
+func TestSameWorkspaceUserACannotContinueUserBEntryViaCreate(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, ownerID, memberID := seedTwoUsersInOneWorkspace(t, ctx, database, "sec-continue-create")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// User B creates a stopped time entry (the entry to be "continued")
+	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
+	stop := time.Date(2026, 3, 23, 11, 0, 0, 0, time.UTC)
+	memberEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID,
+		Description: "User B's historical entry to continue",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "security-test",
+	})
+	if err != nil {
+		t.Fatalf("user B create entry: %v", err)
+	}
+	originalDescription := memberEntry.Description
+	originalStart := memberEntry.Start
+	originalStop := *memberEntry.Stop
+	originalDuration := memberEntry.Duration
+
+	// Verify user B's initial state - one stopped entry, no running timer
+	memberEntriesBefore, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: memberID,
+	})
+	if err != nil {
+		t.Fatalf("list user B entries before attack: %v", err)
+	}
+	if len(memberEntriesBefore) != 1 {
+		t.Fatalf("user B should have 1 entry initially, got %d", len(memberEntriesBefore))
+	}
+
+	memberCurrentBefore, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer before attack: %v", err)
+	}
+	if memberCurrentBefore.ID != 0 {
+		t.Fatalf("user B should have no running timer before attack, got ID %d", memberCurrentBefore.ID)
+	}
+
+	// VAL-SEC-TRACK-003: user A attempts to "continue" user B's entry.
+	// Per architecture, "continue" creates a NEW running entry from a historical entry.
+	// The attacker sets authenticated user ID in context to ownerID (their own identity)
+	// but tries to create an entry with UserID=memberID (user B's ID).
+	attackerDescription := "User A continuing as User B"
+	newStart := time.Now().UTC()
+	attackerCtx := trackingapplication.WithAuthenticatedUserID(ctx, ownerID)
+	attackerEntry, err := trackingService.CreateTimeEntry(attackerCtx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID, // Attacker uses victim B's UserID but their context says ownerID
+		Description: attackerDescription,
+		Start:       newStart,
+		CreatedWith: "security-test-attack",
+	})
+
+	// The service must deny this authorization check - either by returning error,
+	// or by creating an entry with the attacker's actual UserID (ownerID).
+	if err == nil {
+		// If no error, check if the entry was created with the wrong user ID
+		if attackerEntry.UserID == memberID {
+			t.Fatalf("VAL-SEC-TRACK-003: user A created a running entry with UserID=memberID; this would allow continuing entries on other users' accounts")
+		}
+	}
+	// If err is not ErrTimeEntryNotFound, that's also a problem - validation didn't work
+	if err != nil && err != trackingapplication.ErrTimeEntryNotFound {
+		t.Fatalf("expected ErrTimeEntryNotFound for unauthorized continue, got: %v", err)
+	}
+
+	// VAL-SEC-TRACK-003: user B's original historical entry must remain UNCHANGED.
+	memberReadback, err := trackingService.GetTimeEntry(ctx, workspaceID, memberID, memberEntry.ID)
+	if err != nil {
+		t.Fatalf("user B direct readback after denied continue: %v", err)
+	}
+	if memberReadback.Description != originalDescription {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's original entry description was changed; expected %q, got %q", originalDescription, memberReadback.Description)
+	}
+	if !memberReadback.Start.Equal(originalStart) {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's original entry start was changed; expected %s, got %s", originalStart, memberReadback.Start)
+	}
+	if memberReadback.Stop == nil || !memberReadback.Stop.Equal(originalStop) {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's original entry stop was changed; expected %s, got %#v", originalStop, memberReadback.Stop)
+	}
+	if memberReadback.Duration != originalDuration {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's original entry duration was changed; expected %d, got %d", originalDuration, memberReadback.Duration)
+	}
+
+	// VAL-SEC-TRACK-003: user B's entry count must still be exactly 1 (original entry unchanged)
+	memberEntriesAfter, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: memberID,
+	})
+	if err != nil {
+		t.Fatalf("list user B entries after denied continue: %v", err)
+	}
+	if len(memberEntriesAfter) != 1 {
+		t.Fatalf("VAL-SEC-TRACK-003: user B should still have exactly 1 entry, got %d", len(memberEntriesAfter))
+	}
+
+	// VAL-SEC-TRACK-003: user B's current timer must still be null (no unauthorized running entry created)
+	memberCurrentAfter, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer after denied continue: %v", err)
+	}
+	if memberCurrentAfter.ID != 0 {
+		t.Fatalf("VAL-SEC-TRACK-003: user B has a running timer after denied continue; expected null/ID=0, got ID %d", memberCurrentAfter.ID)
+	}
+
+	// Verify user A's entry list is still empty (attacker created no entries)
+	ownerEntries, err := trackingService.ListTimeEntries(ctx, workspaceID, trackingapplication.ListTimeEntriesFilter{
+		UserID: ownerID,
+	})
+	if err != nil {
+		t.Fatalf("list user A entries after denied continue: %v", err)
+	}
+	if len(ownerEntries) != 0 {
+		t.Fatalf("user A should not have any entries after denied continue, got %d entries", len(ownerEntries))
+	}
+}

@@ -21,6 +21,28 @@ type Service struct {
 	now     func() time.Time
 }
 
+// contextKeyAuthenticatedUserID is the context key for storing the authenticated user ID.
+// The HTTP transport layer sets this value in context before calling service methods.
+// Service methods use this to validate authorization.
+type contextKeyAuthenticatedUserID struct{}
+
+var authenticatedUserIDKey = contextKeyAuthenticatedUserID{}
+
+// WithAuthenticatedUserID returns a new context with the authenticated user ID set.
+// This should be called by the HTTP transport layer before invoking service methods.
+func WithAuthenticatedUserID(ctx context.Context, userID int64) context.Context {
+	return context.WithValue(ctx, authenticatedUserIDKey, userID)
+}
+
+// getAuthenticatedUserID extracts the authenticated user ID from context, if set.
+// Returns (userID, true) if set, or (0, false) if not set.
+func getAuthenticatedUserID(ctx context.Context) (int64, bool) {
+	if userID, ok := ctx.Value(authenticatedUserIDKey).(int64); ok {
+		return userID, true
+	}
+	return 0, false
+}
+
 func NewService(store Store, catalog CatalogQueries, logger log.Logger) (*Service, error) {
 	switch {
 	case store == nil:
@@ -44,6 +66,19 @@ func NewService(store Store, catalog CatalogQueries, logger log.Logger) (*Servic
 func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeEntryCommand) (TimeEntryView, error) {
 	if err := requireWorkspaceID(command.WorkspaceID); err != nil {
 		return TimeEntryView{}, err
+	}
+
+	// Security: Validate that the caller is authorized to create entries for this UserID.
+	// The authenticated user ID should be set in context by the HTTP transport layer.
+	// If set, enforce that command.UserID matches the authenticated caller.
+	if authenticatedUserID, ok := getAuthenticatedUserID(ctx); ok {
+		if command.UserID != authenticatedUserID {
+			service.logger.WarnContext(ctx, "create time entry denied: caller user_id mismatch",
+				"command_user_id", command.UserID,
+				"authenticated_user_id", authenticatedUserID,
+			)
+			return TimeEntryView{}, ErrTimeEntryNotFound
+		}
 	}
 
 	service.logger.InfoContext(ctx, "creating time entry",

@@ -143,7 +143,10 @@ func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
-	entry, err := handler.tracking.CreateTimeEntry(ctx.Request().Context(), trackingapplication.CreateTimeEntryCommand{
+	// Set authenticated user ID in context for service-level authorization validation.
+	ctxWithAuth := trackingapplication.WithAuthenticatedUserID(ctx.Request().Context(), user.ID)
+
+	entry, err := handler.tracking.CreateTimeEntry(ctxWithAuth, trackingapplication.CreateTimeEntryCommand{
 		WorkspaceID: workspaceID,
 		UserID:      user.ID,
 		Billable:    lo.FromPtr(payload.Billable),
