@@ -8,35 +8,26 @@
 
 OpenToggl 是一个免费、private-first、AI-friendly 的 Toggl 替代方案。
 
+> 项目状态：OpenToggl 目前仍处于非常早期阶段。
+
 它存在的原因很简单：对很多个人和团队来说，Toggl 太贵；对重视数据掌控的人来说，它不够 private-first；对 AI 和自动化场景来说，它的 rate limit 又低得几乎无法真正使用。
 
 OpenToggl 的目标是与 Toggl 的产品面保持一致，让你保留熟悉的工作流，同时把部署权、数据控制权和 API 吞吐量拿回来。
 
 ## 为什么是 OpenToggl
 
-Toggl 能用。
-
-但一旦你开始在意成本、控制权和自动化，它就很容易不够用了。
+Toggl 能用，但当成本、控制权或自动化不再是可以妥协的事情时，它就不再合适了。
 
 OpenToggl 就是为这个缺口而存在的。
 
 - 免费，而不是持续叠加的订阅成本
-- private-first，而不是 SaaS-first
+- private-first，而不是把你的时间数据放在别人的基础设施上
 - 可 self-host，而不是被单一厂商绑定
 - 对 AI 友好，而不是被低 rate limit 卡死
 - 目标是保留 Toggl 式工作流，而不是逼你学习另一套产品
+- 更适合高频 API 使用，`30/hour` 对真正的 agent 和自动化来说远远不够
 
-## 为什么不直接用 Toggl
-
-因为这些限制都是真实存在的。
-
-- 价格会很快累积
-- 你的时间数据放在别人的基础设施上
-- self-hosting 不是默认模型
-- 高频 API 使用会被严格限制
-- AI agent 需要高频读写 HTTP API，而 `30/hour` 这种限制远远不够
-
-如果你想保留 Toggl 兼容的工作流，但不想接受 Toggl 在价格、控制权和 rate limit 上的约束，这就是 OpenToggl 的意义。
+如果你想保留 Toggl 兼容的工作流，但不想接受它在价格压力、厂商绑定和 API 天花板上的约束，这就是 OpenToggl 的意义。
 
 ## 为 AI 而生
 
@@ -83,5 +74,4 @@ toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com
 
 - 仓库：`https://github.com/CorrectRoadH/opentoggl`
 - Self-hosting 文档：`./docs/self-hosting/docker-compose.md`
-- 产品文档：`./docs/product/landing.md`
 - CLI：`https://github.com/CorrectRoadH/toggl-cli`
