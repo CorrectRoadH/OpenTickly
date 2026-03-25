@@ -182,6 +182,8 @@ Non-TDD work still requires verification proportional to the change.
 
 - Not requiring TDD does not mean "no verification".
 - Documentation-only changes should be checked for internal consistency and affected reference updates.
+- Documentation-only work must not trigger `vp check`, `vp test`, frontend builds, or other JS/TS validator runs unless the same change also modifies code or runtime/tooling configuration that those validators cover.
+- Root Vite+ ignore rules are expected to exclude `docs/**` from formatting, lint, and staged-file validation so docs processing does not enter the JS toolchain by default.
 - Infra/config/bootstrap/runtime changes should be verified with the relevant commands, startup checks, readiness checks, smoke checks, or other direct runtime evidence needed to prove the change.
 - Purely mechanical or structural refactors should run the narrowest checks that prove no behavior regressed.
 - Do not add low-signal tests for documentation-only changes just to satisfy a ritual. Add or run tests when they prove behavior, compatibility, or runtime safety.
