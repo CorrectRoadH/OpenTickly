@@ -37,7 +37,10 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
     const workspaceAId = loginSession.currentWorkspaceId;
 
     // Create a project in workspace A so entries appear in all views (including timesheet)
@@ -101,7 +104,10 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
 
     // Create a second organization (which creates workspace B) and switch to it
     const secondOrganizationName = `Organization ${Date.now()}`;
-    const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
 
     await organizationButton.click();
     const workspaceListbox = page.getByRole("listbox");
@@ -109,7 +115,9 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
 
     await page.getByRole("button", { name: "Create organization" }).click();
 
-    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
     await expect(createOrganizationDialog).toBeVisible();
     await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
@@ -290,7 +298,12 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
         credentials: "include",
       });
       const body = await response.json();
-      return { status: response.status, body, hasStop: "stop" in body, stopValue: body.stop };
+      return {
+        status: response.status,
+        body,
+        hasStop: "stop" in body,
+        stopValue: body.stop,
+      };
     });
     expect(runningResponse.status).toBe(200);
     expect(runningResponse.body).not.toBeNull();
@@ -553,7 +566,10 @@ test.describe("Timer page family mainline", () => {
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
     const workspaceId = loginSession.currentWorkspaceId;
 
     // Create a project so entries appear in all views (including timesheet which groups by project)
@@ -742,7 +758,10 @@ test.describe("Timer page family mainline", () => {
     });
 
     await page.context().clearCookies();
-    const loginSession = await loginE2eUser(page, test.info(), { email, password });
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
     const workspaceId = loginSession.currentWorkspaceId;
 
     // Create a project so the running entry appears in all views (including timesheet)
@@ -1035,5 +1054,257 @@ test.describe("Timer page family mainline", () => {
     });
 
     expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+  });
+});
+
+test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
+  /**
+   * VAL-ENTRY-001: Timer view persists after page refresh
+   *
+   * After selecting a non-default timer view (list or timesheet), the selected view
+   * persists after page refresh instead of resetting to calendar.
+   */
+  test("VAL-ENTRY-001: selected TimerView persists after refresh", async ({ page }) => {
+    const email = `timer-view-persist-refresh-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer View Persist User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Default to calendar
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Switch to list view
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Refresh the page
+    await page.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // The selected view should persist - list should still be active after refresh
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    // Switch to timesheet view
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Refresh and verify timesheet persists
+    await page.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+  });
+
+  /**
+   * VAL-CROSS-005: Selected timer view survives workspace switch
+   *
+   * If the user is on list or timesheet and then switches workspace, the same
+   * selected timer view remains active, the shared top composer/header remains
+   * shared, and the history projection re-scopes to the new workspace.
+   */
+  test("VAL-CROSS-005: selected TimerView survives workspace switch", async ({ page }) => {
+    const email = `timer-view-persist-ws-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer View Workspace Switch User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const loginSession = await loginE2eUser(page, test.info(), {
+      email,
+      password,
+    });
+    const workspaceAId = loginSession.currentWorkspaceId;
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Default to calendar
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Switch to list view
+    await page.getByRole("button", { name: "List view" }).click();
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Create a second organization (which creates workspace B) and switch to it
+    const secondOrganizationName = `Organization ${Date.now()}`;
+    const organizationButton = page.getByRole("button", {
+      exact: true,
+      name: "Organization",
+    });
+
+    await organizationButton.click();
+    const workspaceListbox = page.getByRole("listbox");
+    await expect(workspaceListbox).toBeVisible();
+
+    await page.getByRole("button", { name: "Create organization" }).click();
+
+    const createOrganizationDialog = page.getByRole("dialog", {
+      name: "New organization",
+    });
+    await expect(createOrganizationDialog).toBeVisible();
+    await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
+    await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
+
+    // Wait for organization switch to complete
+    await expect
+      .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+      .not.toBe(workspaceAId);
+
+    // Navigate back to timer page - list view should still be selected
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // The selected view should persist across workspace switch
+    await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.getByRole("button", { name: "Calendar" })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    // Switch to timesheet and verify it also persists across workspace switch
+    await page.getByRole("button", { name: "Timesheet" }).click();
+    await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+
+    // Switch back to original workspace and verify timesheet persists
+    await organizationButton.click();
+    await expect(workspaceListbox).toBeVisible();
+
+    const switchedSession = await readSessionBootstrap(page);
+    const originalOrganizationName = switchedSession.organizations.find(
+      (org) => org.id !== switchedSession.current_organization_id,
+    )?.name;
+
+    if (originalOrganizationName) {
+      await page.getByRole("button", { name: new RegExp(originalOrganizationName) }).click();
+
+      // Wait for switch back to workspace A
+      await expect
+        .poll(async () => (await readSessionBootstrap(page)).current_workspace_id)
+        .toBe(workspaceAId);
+
+      // Navigate to timer page - timesheet should still be selected
+      await page.goto(new URL("/timer", page.url()).toString());
+      await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+      // The selected view should persist across workspace switch
+      await expect(page.getByRole("button", { name: "Timesheet" })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      );
+      await expect(page.getByRole("button", { name: "List view" })).toHaveAttribute(
+        "aria-pressed",
+        "false",
+      );
+    }
+  });
+
+  /**
+   * VAL-TIMER-005: Timer header reflects true running state
+   *
+   * The top timer surface shows distinct idle and running states. When running,
+   * the displayed duration advances from the entry `start` time rather than
+   * rendering the raw stored negative duration value, and the visible primary
+   * control is a stop action; when idle, the start action is shown and the
+   * live duration no longer advances.
+   */
+  test("VAL-TIMER-005: running timer header shows live elapsed from start time", async ({
+    page,
+  }) => {
+    const email = `timer-running-header-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Timer Running Header User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Idle state: start button visible, elapsed shows 00:00:00
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
+    const idleElapsed = await page.getByTestId("timer-elapsed").textContent();
+    expect(idleElapsed).toBe("00:00:00");
+
+    // Start a timer
+    await page.getByLabel("Time entry description").fill("Test running timer");
+    await page.getByRole("button", { name: "Start timer" }).click();
+
+    // Running state: stop button visible, elapsed shows live time
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
+
+    // Elapsed should show live time in HH:MM:SS format (not a raw negative duration)
+    const runningElapsed1 = await page.getByTestId("timer-elapsed").textContent();
+    expect(runningElapsed1).toMatch(/\d{2}:\d{2}:\d{2}/);
+    // Should not show a stale value like what might come from raw duration
+    expect(runningElapsed1).not.toContain("492847");
+
+    // Wait and verify elapsed updates (advances from start time)
+    await page.waitForTimeout(1500);
+    const runningElapsed2 = await page.getByTestId("timer-elapsed").textContent();
+    expect(runningElapsed2).toMatch(/\d{2}:\d{2}:\d{2}/);
+    // The second reading should be greater than the first (time is advancing)
+    expect(runningElapsed2).not.toBe(runningElapsed1);
+
+    // Stop the timer
+    await page.getByRole("button", { name: "Stop timer" }).click();
+
+    // Back to idle state
+    await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
   });
 });

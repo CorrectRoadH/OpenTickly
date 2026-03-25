@@ -1,5 +1,12 @@
 # Toggl Timer 视图家族研究：Calendar / List / Timesheet
 
+> Mission status
+> Agent: shared-timer-page-state-and-view-preference
+> Status: complete
+> Current code differences: No differences. Implementation matches documented behavior: views are view modes on the same `/timer` route, view preference is persisted to localStorage via `opentoggl:user-prefs:timer-view`, and switching views keeps URL stable.
+> Todo: none
+> Fully implemented: yes
+
 本文件研究 Timer 页顶部这组三选一视图：
 
 - `Calendar`

@@ -1,5 +1,12 @@
 # Toggl Timer 顶部录入表单研究
 
+> Mission status
+> Agent: shared-timer-page-state-and-view-preference
+> Status: complete
+> Current code differences: No differences. Implementation matches documented behavior: the top composer is shared across calendar/list/timesheet views, running timer shows live elapsed time from `start` time, and running entry edits persist immediately.
+> Todo: none
+> Fully implemented: yes
+
 本文件研究 Timer 页最上方这一条主录入表单，也就是：
 
 - `Add a description`
