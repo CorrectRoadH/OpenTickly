@@ -121,11 +121,11 @@ export function CalendarPanel({
                   aria-selected={selected}
                   className={`group relative flex size-10 items-center justify-center rounded-md text-[14px] font-semibold transition ${
                     selected
-                      ? "bg-[#c78acd] text-[#1a1219] hover:bg-[#d499d7]"
+                      ? "bg-[#b77fc0] text-[#1a1219] hover:bg-[#bf86c7]"
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "text-[#38383d] hover:text-[#424247]"
+                          ? "text-[#36363a] hover:text-[#3d3d42]"
                           : "text-[#ededf0] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
@@ -140,7 +140,7 @@ export function CalendarPanel({
                   {isToday && !selected && !isOutsideMonth ? (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-[3px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#c78acd]"
+                      className="absolute bottom-[4px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#c78acd]"
                     />
                   ) : null}
                 </button>
