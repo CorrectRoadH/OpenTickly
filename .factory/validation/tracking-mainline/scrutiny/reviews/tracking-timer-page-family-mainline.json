@@ -1,0 +1,34 @@
+{
+  "featureId": "tracking-timer-page-family-mainline",
+  "reviewedAt": "2026-03-24T19:32:06.246947Z",
+  "commitId": "dab07ff",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds broad Playwright coverage for the timer page family, but the committed diff for this feature does not fully satisfy the milestone contract because two required view-local proofs were missing from the reviewed commit.",
+    "issues": [
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 157,
+        "severity": "blocking",
+        "description": "VAL-TIMER-002 requires the same seeded facts to remain observable across calendar, list, and timesheet. In the reviewed commit, the test only switches back to calendar and asserts the page is visible; it never proves any seeded entry is rendered within the calendar view itself, so a regression where calendar drops the seeded facts while list/timesheet still show them would pass."
+      },
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 277,
+        "severity": "blocking",
+        "description": "VAL-TIMER-004 requires view-local proof that the same running timer remains visible across calendar, list, and timesheet. In the reviewed commit, after seeding a running timer the test only re-checks shared header state while switching views and does not assert any running-timer fact inside the calendar/list/timesheet content. That misses exactly the page-family fork regression the mission contract calls out."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker marked skill compliance as complete even though the reviewed commit did not provide the required view-local assertions for every timer subview. The skill already contains the right rule, but the transcript shows the implementation stopped at shared-header proof in the reviewed commit.",
+      "evidence": ".factory/skills/frontend-test-worker/SKILL.md step 7 requires at least one view-local assertion per subview; commit dab07ff apps/website/e2e/timer-page.spec.ts lines 157-165 and 277-294 only verify shared page/header state on calendar and the cross-view running-timer case."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the reviewed commit adds the timer mainline spec, but it does not yet prove seeded facts in calendar for VAL-TIMER-002 or view-local running-timer visibility across all timer subviews for VAL-TIMER-004. Report written for scrutiny follow-up."
+}

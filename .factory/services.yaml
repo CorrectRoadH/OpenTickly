@@ -1,0 +1,42 @@
+commands:
+  install: vp config
+  check: vp run check -r
+  test: vp run test -r
+  frontend_timer_e2e: vp run test:e2e:website -- e2e/timer-page.spec.ts --workers 2
+  frontend_timer_e2e_single: vp run test:e2e:website -- e2e/timer-page.spec.ts --workers 1
+  frontend_entry_editor_e2e_single: vp run test:e2e:website -- e2e/time-entry-editor.real-runtime.spec.ts --workers 1
+  backend_tracking: go test ./apps/backend/internal/tracking/... -count=1 -parallel 4
+  backend_bootstrap: go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4
+  docs_traceability_check: rg -n "Mission status|Agent:|Status:|Current code differences:|Todo:|Fully implemented:" docs/product/tracking.md docs/research/toggl-timer-*.md
+
+services:
+  postgres:
+    start: pg_isready -h 127.0.0.1 -p 5432
+    stop: printf 'Reused local postgres on 5432; do not stop from this mission\n'
+    healthcheck: pg_isready -h 127.0.0.1 -p 5432
+    port: 5432
+    depends_on: []
+
+  redis:
+    start: python3 -c "import socket,sys; s=socket.create_connection(('127.0.0.1',6379),2); s.sendall(b'*1\\r\\n$4\\r\\nPING\\r\\n'); data=s.recv(64); s.close(); sys.exit(0 if b'PONG' in data else 1)"
+    stop: printf 'Reused local redis on 6379; do not stop from this mission\n'
+    healthcheck: python3 -c "import socket,sys; s=socket.create_connection(('127.0.0.1',6379),2); s.sendall(b'*1\\r\\n$4\\r\\nPING\\r\\n'); data=s.recv(64); s.close(); sys.exit(0 if b'PONG' in data else 1)"
+    port: 6379
+    depends_on: []
+
+  api:
+    start: curl -sf http://127.0.0.1:8080/readyz >/dev/null
+    stop: printf 'Reused local api runtime on 8080; stop only if this session started it\n'
+    healthcheck: curl -sf http://127.0.0.1:8080/readyz
+    port: 8080
+    depends_on:
+      - postgres
+      - redis
+
+  web:
+    start: curl -sf http://127.0.0.1:5173 >/dev/null
+    stop: printf 'Reused local website runtime on 5173; stop only if this session started it\n'
+    healthcheck: curl -sf http://127.0.0.1:5173
+    port: 5173
+    depends_on:
+      - api

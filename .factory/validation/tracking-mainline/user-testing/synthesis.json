@@ -1,0 +1,29 @@
+{
+  "milestone": "tracking-mainline",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 12,
+    "passed": 12,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [
+    "VAL-CROSS-001",
+    "VAL-CROSS-002",
+    "VAL-ENTRY-001",
+    "VAL-ENTRY-002",
+    "VAL-ENTRY-003",
+    "VAL-ENTRY-004",
+    "VAL-ENTRY-005",
+    "VAL-TIMER-001",
+    "VAL-TIMER-002",
+    "VAL-TIMER-003",
+    "VAL-TIMER-004",
+    "VAL-TIMER-005"
+  ],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null
+}

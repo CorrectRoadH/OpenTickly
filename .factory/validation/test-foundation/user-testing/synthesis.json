@@ -1,0 +1,26 @@
+{
+  "milestone": "test-foundation",
+  "round": 1,
+  "status": "fail",
+  "override": {
+    "status": "accepted",
+    "reason": "The `test-foundation` milestone intentionally contains no `fulfills`-mapped user-visible assertions, so there is nothing for user-testing to execute yet. This validator is accepted as setup-only for the milestone. The Redis healthcheck drift noted during setup was corrected in `.factory/services.yaml` by replacing the unavailable `redis-cli` dependency with a Python socket-based PING check.",
+    "timestamp": "2026-03-24T18:19:00Z"
+  },
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [
+    {
+      "id": "test-foundation-setup",
+      "blockedBy": "No fulfills-derived user-testing assertions were assigned to milestone test-foundation; dedicated schema proof via direct psql also timed out during bounded checks."
+    }
+  ],
+  "appliedUpdates": [],
+  "previousRound": null
+}

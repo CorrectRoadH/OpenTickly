@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-workspace-scoping-regressions",
+  "reviewedAt": "2026-03-24T20:40:55.306308+00:00",
+  "commitId": "a353646f7d2e25c01b9afcdb3f6e818d81666291",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The reviewed feature adds VAL-REG-002 coverage that seeds distinct workspace facts, switches organization/workspace context, and proves current-workspace scoping across calendar, list, and timesheet. The later fix commit 6f1763a addresses the original scrutiny gap by scoping the post-switch calendar checks to the calendar grid, so the combined feature pair now satisfies the documented timer page-family workspace-scoping requirement.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/reviews/tracking-workspace-calendar-proof-fix.json",
+  "summary": "Pass: reviewed transcript skeleton, handoffs, and both diffs for commits a353646f7d2e25c01b9afcdb3f6e818d81666291 and 6f1763a. The original feature covers workspace/org switching across timer calendar/list/timesheet, and the follow-up fix closes the prior failure by making the calendar post-switch assertions view-local via `calendar-grid-scroll-area`, leaving no blocking issues."
+}

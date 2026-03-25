@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-create-entry-conflict-no-persistence-fix",
+  "reviewedAt": "2026-03-25T02:14:13.757537+00:00",
+  "commitId": "28f9318",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix addresses the prior VAL-REG-001 gap by strengthening TestRunningTimerConflictOnCreateEntryPoint with canonical no-persistence proof and by updating the handoff to point at the actual implementation commit 28f9318. The new assertions directly read back time entries after the rejected CreateTimeEntry call, fail if the rejected description was persisted, and verify the entry count remains exactly one while preserving the documented boundary that UpdateTimeEntry with Stop=nil is not a supported timer-start path.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-followup/scrutiny/synthesis.json",
+  "summary": "Pass: the follow-up fix closes the earlier scrutiny findings by adding explicit no-persistence assertions for the rejected CreateTimeEntry conflict path and by referencing the correct implementation commit in the worker handoff. No blocking code or shared-state issues were found in scope."
+}

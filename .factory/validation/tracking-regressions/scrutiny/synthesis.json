@@ -1,0 +1,108 @@
+{
+  "milestone": "tracking-regressions",
+  "round": 4,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/... -count=1 -parallel 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "frontend_e2e": {
+      "passed": true,
+      "command": "vp run test:e2e:website",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "failedFeatures": [
+      "tracking-conflict-and-history-regressions",
+      "tracking-conflict-entrypoint-coverage-fix",
+      "tracking-conflict-pre-persistence-fix",
+      "tracking-current-history-consistency-regression"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "tracking-conflict-and-history-regressions",
+      "severity": "blocking",
+      "description": "The fix review still fails the original requirement to add a true second-start regression for UpdateTimeEntry. TestRunningTimerConflictOnUpdateEntryPoint only edits the already-running entry's start time and asserts that updating the same entry does not conflict; it never attempts to turn a different stopped entry into a running timer while another timer is already running. As a result, the new pre-persistence guard in UpdateTimeEntry is not covered against the rejected path the prior review required."
+    },
+    {
+      "featureId": "tracking-conflict-entrypoint-coverage-fix",
+      "severity": "blocking",
+      "description": "The new VAL-REG-001 test never exercises UpdateTimeEntry as a conflicting second start path. It updates the already-running entry (`TimeEntryID: firstEntry.ID`) and asserts that this same-entry update should succeed, so the regression still only proves a conflict on CreateTimeEntry instead of across two supported start entry points."
+    },
+    {
+      "featureId": "tracking-conflict-entrypoint-coverage-fix",
+      "severity": "blocking",
+      "description": "UpdateTimeEntry writes the entry via `service.store.UpdateTimeEntry(...)` before checking whether another running timer already exists. If a caller updates a stopped entry into a running one while another timer is current, the method can return `ErrRunningTimeEntryExists` after persisting the new running-shaped row, leaving the stored time entry changed even though the conflict was rejected. That does not match the intended 'same conflict rule/result' safety for a second start entry point."
+    },
+    {
+      "featureId": "tracking-conflict-pre-persistence-fix",
+      "severity": "blocking",
+      "description": "TestRunningTimerConflictOnUpdateEntryPoint does not exercise the rejected second-start path required by the feature. It updates the already-running entry's own start time and asserts success, so there is still no regression proving that attempting to convert a different stopped entry into a running timer via UpdateTimeEntry returns the same conflict as CreateTimeEntry and leaves persisted state unchanged."
+    },
+    {
+      "featureId": "tracking-current-history-consistency-regression",
+      "severity": "blocking",
+      "description": "The browser-side VAL-REG-004 test stops after confirming that a second running entry becomes current and that the edited stopped entry remains visible in history. It never performs the restart-boundary flow that the feature description requires ('after start, stop, and edit flows') once a new timer is started, so there is still no browser proof that the UI history cannot contradict the current timer after a stop->restart cycle. The backend fix at regressions_test.go:732-752 covers this only at the service layer, leaving the cross-layer/browser half incomplete."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "The backend-test-worker skill tells workers to convert each expectedBehavior bullet into an explicit backend acceptance case, but this fix transcript shows the worker abandoned the required second-start case once they discovered UpdateTimeEntry cannot clear stop and still marked the feature successful. The skill may need sharper guidance to return to orchestrator when a required acceptance case is impossible under the current contract instead of treating partial coverage as success.",
+      "evidence": "Skill step 2 in .factory/skills/backend-test-worker/SKILL.md requires converting every expectedBehavior bullet into an explicit case. In worker-transcripts.jsonl for session 37d875bf-e358-46bf-a6b7-9159669550de, the worker writes a second-start test, observes it cannot clear stop via UpdateTimeEntry, deletes the test, and ends the feature as success with whatWasLeftUndone noting the missing scenario.",
+      "isSystemic": false
+    },
+    {
+      "target": "skills",
+      "suggestion": "The backend-test-worker skill says every expectedBehavior bullet must become an explicit backend acceptance case, but this worker deleted the failing second-start regression after discovering the API could not express it and still handed the feature off as success. The skill likely needs sharper guidance to return to orchestrator instead of claiming completion when a required acceptance case is impossible under the current contract.",
+      "evidence": "In .factory/skills/backend-test-worker/SKILL.md step 2 requires converting each expectedBehavior bullet into an explicit acceptance case. In the transcript skeleton for worker session 37d875bf-e358-46bf-a6b7-9159669550de, the worker adds a second-start test, observes UpdateTimeEntry preserves stop when Stop=nil, removes the test, and ends with whatWasLeftUndone stating the requested scenario was not implemented.",
+      "isSystemic": false
+    },
+    {
+      "target": "skills",
+      "suggestion": "The fullstack-regression-worker skill still requires an agent-browser manual replay after automated tests pass, but both the original worker session and this fix session reported followedProcedure=true with no interactiveChecks and no agent-browser usage in the transcript skeletons.",
+      "evidence": "Skill file /Users/opentoggl-ci/Code/opentoggl/.factory/skills/fullstack-regression-worker/SKILL.md step 8 requires agent-browser replay. Transcript skeletons for worker sessions 858e5cfe-4865-439a-a8c6-97685c1e1a1b and 14783dc9-104b-4911-af24-abd148d563b4 contain no agent-browser invocation, and both handoffs have an empty verification.interactiveChecks array while skillFeedback.followedProcedure is true.",
+      "isSystemic": true
+    },
+    {
+      "target": "skills",
+      "suggestion": "The fullstack-regression-worker skill requires one manual replay in agent-browser after automated tests pass, but the transcript skeleton for worker session 858e5cfe-4865-439a-a8c6-97685c1e1a1b shows no agent-browser invocation and the handoff reports no interactiveChecks.",
+      "evidence": "Skill file .factory/skills/fullstack-regression-worker/SKILL.md step 8 says 'Use agent-browser for one manual replay of the regression path after automated tests pass.' Transcript skeleton entry 858e5cfe-4865-439a-a8c6-97685c1e1a1b contains only Read/Glob/Grep/Edit/Execute/TodoWrite activity, and the handoff file 2026-03-24T19-53-24-401Z__tracking-current-history-consistency-regression__858e5cfe-4865-439a-a8c6-97685c1e1a1b.json has an empty interactiveChecks array.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Mission shared state still does not record the canonical supported timer-start entry points or explicitly note that UpdateTimeEntry cannot clear stop to start a stopped entry. That gap forced repeated rediscovery across the original feature and the fix review.",
+      "reason": "ambiguous; factual target and ownership are unclear without orchestrator guidance"
+    },
+    {
+      "observation": "Shared mission knowledge still does not record the supported timer-start entry points or the UpdateTimeEntry contract boundary that Stop=nil preserves the existing stop instead of clearing it. That omission forced the worker to rediscover the limitation while trying to satisfy this fix.",
+      "reason": "ambiguous; factual target and ownership are unclear without orchestrator guidance"
+    }
+  ],
+  "previousRound": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/synthesis.json",
+  "override": {
+    "status": "accepted",
+    "reason": "All current validators are green (`go test ./apps/backend/internal/... -count=1 -parallel 4`, `vp run check -r`, and `vp run test:e2e:website`). The remaining blocking reviews are stale lineage: the post-persistence mutation issue was fixed by `tracking-conflict-pre-persistence-fix`, the browser restart-cycle gap was fixed by `tracking-current-history-browser-restart-fix`, and the remaining requested UpdateTimeEntry stopped->running second-start path is unsupported under the current contract because `UpdateTimeEntry` preserves `stop` when `Stop=nil`.",
+    "timestamp": "2026-03-25T00:00:00Z"
+  }
+}

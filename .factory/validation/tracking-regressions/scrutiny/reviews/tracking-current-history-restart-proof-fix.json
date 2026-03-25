@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-current-history-restart-proof-fix",
+  "reviewedAt": "2026-03-24T20:26:10Z",
+  "commitId": "0fcbb414794ad9f2762e1ea3ca7eacb5a3102d89",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix resolves the prior blocker: the backend regression now guards against the actual contradiction condition and adds an explicit restart phase that proves current-timer and history stay aligned after stopping one running entry and starting the next.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/reviews/tracking-current-history-consistency-regression.json",
+  "summary": "Pass: the reviewed fix corrects the Phase 4 contradiction assertion and adds Phase 5 restart-boundary proof, so VAL-REG-004 now explicitly checks that a restarted running timer cannot simultaneously appear as stopped in history."
+}

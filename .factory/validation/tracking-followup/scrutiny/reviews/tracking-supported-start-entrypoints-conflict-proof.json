@@ -1,0 +1,21 @@
+{
+  "featureId": "tracking-supported-start-entrypoints-conflict-proof",
+  "reviewedAt": "2026-03-25T02:14:19.555638+00:00",
+  "commitId": "28f9318",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The follow-up fix at commit 28f9318 closes the original no-persistence gap for the narrowed VAL-REG-001 contract. The regression now proves both the fixed conflict result on CreateTimeEntry and that the rejected second-start description was not persisted, while explicitly preserving the documented boundary that UpdateTimeEntry with Stop=nil is not a supported timer-start path.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The original feature handoff cited an unrelated commit and claimed the no-persistence requirement was already satisfied without an explicit acceptance assertion. The follow-up fix corrected the test, but the backend-test-worker skill/checklist still allowed the earlier handoff to mark followedProcedure=true despite missing one expectedBehavior bullet.",
+      "evidence": "Original handoff /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T01-54-41-180Z__tracking-supported-start-entrypoints-conflict-proof__6e224639-1599-40de-983d-703c04379571.json cites commit b2ca481, while commit 28f9318 adds the actual no-persistence assertions in apps/backend/internal/tracking/application/regressions_test.go:93-110."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Pass: reviewing the original feature together with the follow-up fix shows VAL-REG-001 is now adequately covered under the narrowed CreateTimeEntry-only contract. Commit 28f9318 adds direct no-persistence proof, and no remaining blocking or non-blocking code issues were found for this scoped review."
+}

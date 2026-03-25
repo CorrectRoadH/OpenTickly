@@ -1,0 +1,45 @@
+{
+  "featureId": "shared-timer-page-state-and-view-preference",
+  "reviewedAt": "2026-03-25T00:00:00Z",
+  "commitId": "199a1bffb102d7b81502dd1dd3a8c714cfa2555b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature only partially implements the requested timer-page refactor. It does persist the selected TimerView and adds coverage for view persistence plus running-header elapsed time, but the commit does not split page orchestration out of WorkspaceTimerPage and its new tests do not prove the shared top composer/header state survives view switches or workspace switches as required by the feature description and expected behavior.",
+    "issues": [
+      {
+        "file": "apps/website/src/pages/shell/WorkspaceTimerPage.tsx",
+        "line": 79,
+        "severity": "blocking",
+        "description": "The feature description explicitly required splitting page orchestration out of WorkspaceTimerPage, but the timer page orchestration still lives in this single ~900-line shell component. The change only adds localStorage-based view persistence at lines 57-89 instead of extracting the shared page-family state into a separate orchestrator/state boundary. That leaves the core refactor requirement unmet."
+      },
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 1145,
+        "severity": "blocking",
+        "description": "The new VAL-CROSS-005 test asserts only that the selected view button remains pressed after a workspace switch. It does not prove the required shared top composer/header state or running-timer identity remain shared across view switches and workspace switches, so the expected behavior is under-tested and unsupported by this feature's evidence."
+      },
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 1266,
+        "severity": "non_blocking",
+        "description": "The running-header test checks that the elapsed string changes after 1.5 seconds, but it never samples or asserts the stopped state becomes non-advancing after stop, even though VAL-TIMER-005 requires idle state to stop live advancement. Coverage is therefore incomplete for the documented idle/running distinction."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker handoff claimed `followedProcedure: true`, but the transcript shows it did not perform the skill-required manual browser replay with agent-browser and recorded no interactiveChecks. The skill currently requires a real story-path replay after automated tests for browser-visible features.",
+      "evidence": "tracking-frontend-worker/SKILL.md step 10 requires agent-browser replay; handoff verification.interactiveChecks is empty and the transcript contains no agent-browser invocation for worker session 442c155c-bbdc-4b1e-8778-b89780c6fd87."
+    },
+    {
+      "area": "services",
+      "observation": "The worker used non-canonical JS formatting commands (`npx @biomejs/biome ...` and an attempted `npx prettier ...`) even though mission guidance says normal frontend toolchain commands must go through canonical root vp entrypoints. The command surface in services.yaml does not capture a sanctioned formatting lane for this case.",
+      "evidence": "Transcript skeleton for worker session 442c155c-bbdc-4b1e-8778-b89780c6fd87 shows `npx prettier --write ...` and `npx @biomejs/biome format --write ...`; CLAUDE.md / AGENTS.md says JS/TS toolchain commands must run through `vp` or documented root `vp run ...` entrypoints."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed. The commit proves TimerView persistence and updates source-doc status blocks, but it does not complete the required orchestration refactor out of WorkspaceTimerPage and it lacks evidence that shared top-composer/header state remains shared across view and workspace changes."
+}

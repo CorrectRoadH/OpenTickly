@@ -1,0 +1,28 @@
+{
+  "featureId": "tracking-current-history-consistency-regression",
+  "reviewedAt": "2026-03-24T20:41:08Z",
+  "commitId": "055e042",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The original VAL-REG-004 feature added useful start/stop/edit coverage plus a browser proof, and the follow-up fix correctly closes the backend restart-boundary gap from the prior review. However, the feature still does not fully satisfy its cross-layer requirement because the browser regression never exercises the restart flow and therefore does not prove browser-visible history/current-timer convergence after a new timer starts following the edit path.",
+    "issues": [
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 258,
+        "severity": "blocking",
+        "description": "The browser-side VAL-REG-004 test stops after confirming that a second running entry becomes current and that the edited stopped entry remains visible in history. It never performs the restart-boundary flow that the feature description requires ('after start, stop, and edit flows') once a new timer is started, so there is still no browser proof that the UI history cannot contradict the current timer after a stop->restart cycle. The backend fix at regressions_test.go:732-752 covers this only at the service layer, leaving the cross-layer/browser half incomplete."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The fullstack-regression-worker skill requires one manual replay in agent-browser after automated tests pass, but the transcript skeleton for worker session 858e5cfe-4865-439a-a8c6-97685c1e1a1b shows no agent-browser invocation and the handoff reports no interactiveChecks.",
+      "evidence": "Skill file .factory/skills/fullstack-regression-worker/SKILL.md step 8 says 'Use agent-browser for one manual replay of the regression path after automated tests pass.' Transcript skeleton entry 858e5cfe-4865-439a-a8c6-97685c1e1a1b contains only Read/Glob/Grep/Edit/Execute/TodoWrite activity, and the handoff file 2026-03-24T19-53-24-401Z__tracking-current-history-consistency-regression__858e5cfe-4865-439a-a8c6-97685c1e1a1b.json has an empty interactiveChecks array."
+    }
+  ],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/reviews/tracking-current-history-restart-proof-fix.json",
+  "summary": "Fail: the backend fix addresses the original restart-boundary service-layer gap, but the feature still lacks a browser-side restart-cycle proof, so the claimed cross-layer convergence after start/stop/edit flows is not fully demonstrated."
+}

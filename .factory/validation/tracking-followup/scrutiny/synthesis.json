@@ -1,0 +1,40 @@
+{
+  "milestone": "tracking-followup",
+  "round": 2,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/... -count=1 -parallel 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "skills",
+      "suggestion": "Reinforce backend-test-worker completion checks so handoffs cannot claim followedProcedure=true when an expectedBehavior bullet was only inferred from existing coverage instead of being proven by an explicit acceptance assertion and correct implementation commit reference.",
+      "evidence": "Original handoff /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T01-54-41-180Z__tracking-supported-start-entrypoints-conflict-proof__6e224639-1599-40de-983d-703c04379571.json cites commit b2ca481, while commit 28f9318 adds the actual no-persistence assertions in apps/backend/internal/tracking/application/regressions_test.go:93-110.",
+      "isSystemic": false
+    }
+  ],
+  "rejectedObservations": [],
+  "previousRound": ".factory/validation/tracking-followup/scrutiny/synthesis.json"
+}

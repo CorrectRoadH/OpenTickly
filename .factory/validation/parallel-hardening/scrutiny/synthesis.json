@@ -1,0 +1,40 @@
+{
+  "milestone": "parallel-hardening",
+  "round": 2,
+  "status": "pass",
+  "validatorsRun": {
+    "check": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "backend_test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/... -count=1 -parallel 4",
+      "exitCode": 0
+    },
+    "frontend_e2e": {
+      "passed": true,
+      "command": "vp run test:e2e:website",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": {
+    "round": 1,
+    "status": "fail",
+    "failedFeatures": ["parallel-hardening-and-ci-fast-feedback"],
+    "synthesisPath": ".factory/validation/parallel-hardening/scrutiny/synthesis.json",
+    "resolvedByFeature": "parallel-hardening-lane-boundary-and-ci-schema-fix",
+    "resolvedByCommit": "b2ca481"
+  }
+}

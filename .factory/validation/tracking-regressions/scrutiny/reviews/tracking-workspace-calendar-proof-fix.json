@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-workspace-calendar-proof-fix",
+  "reviewedAt": "2026-03-24T20:26:05.922433+00:00",
+  "commitId": "6f1763a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix resolves the prior blocker by moving the calendar post-switch presence/absence checks onto the calendar grid container itself, while preserving the existing list and timesheet view-local assertions for VAL-REG-002.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/reviews/tracking-workspace-scoping-regressions.json",
+  "summary": "Pass: commit 6f1763a fixes the prior workspace-scoping review failure by replacing page-wide calendar text assertions with calendar-grid-scroll-area scoped locators after switching away and back. The feature pair now provides view-local proof across calendar, list, and timesheet for VAL-REG-002."
+}

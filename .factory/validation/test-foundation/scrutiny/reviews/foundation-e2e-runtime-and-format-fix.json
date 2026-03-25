@@ -1,0 +1,21 @@
+{
+  "featureId": "foundation-e2e-runtime-and-format-fix",
+  "reviewedAt": "2026-03-24T17:54:42.634369+00:00",
+  "commitId": "e21fb7c72f8f3bf6b7d435c157bbdd5e7af5c3a2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The commit implements the feature contract: it renames the E2E smoke file to match the mission naming rule, updates the smoke spec to use the runtime host that matches the backend session cookie domain, verifies backend readiness through the documented frontend proxy, and aligns the shared web start command with the reusable 5173 runtime.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "services",
+      "observation": "The feature made the web runtime depend on binding Vite to 127.0.0.1, but mission shared state does not yet record that host-binding requirement alongside the existing 5173/8080 port rules.",
+      "evidence": ".factory/services.yaml:36 now starts the web service with `vp run website#dev -- --port 5173 --host 127.0.0.1`, while .factory/library/environment.md only documents port reuse and readiness probes, not the host-binding requirement that fixed the browser lane on macOS."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed the worker transcript skeleton, handoff, and commit e21fb7c. The implementation satisfies the feature description and expected behavior with no blocking or non-blocking code issues found; only a shared-state documentation gap remains around the newly required 127.0.0.1 web host binding."
+}

@@ -1,0 +1,15 @@
+{
+  "featureId": "timer-view-persistence-regression-alignment",
+  "reviewedAt": "2026-03-25T03:51:56.429103+00:00",
+  "commitId": "126949014897e5470afb4f084164b27131fe429e",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The commit narrowly updates VAL-REG-002 so workspace-scoping assertions no longer depend on an implicit calendar reset after workspace switch. The added explicit calendar selection preserves the scoping proof in a known view state and matches the persisted TimerView contract.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed the worker transcript skeleton, handoff, skill instructions, and commit 1269490. The test-only change correctly aligns VAL-REG-002 with persisted TimerView behavior without weakening the cross-workspace history assertions, and I found no blocking or non-blocking issues."
+}

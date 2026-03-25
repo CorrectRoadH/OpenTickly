@@ -1,0 +1,66 @@
+{
+  "groupId": "backend-followup",
+  "testedAt": "2026-03-25T02:29:37Z",
+  "isolation": {
+    "appUrl": "http://127.0.0.1:8080",
+    "webUrl": "http://127.0.0.1:5173",
+    "databaseHost": "127.0.0.1:5432",
+    "databaseName": "opentoggl",
+    "testSchema": "opentoggl_test",
+    "assignedAssertions": [
+      "VAL-REG-001"
+    ],
+    "surface": "backend",
+    "boundaryNotes": [
+      "Reused the local backend runtime on 8080 and website runtime on 5173 after positive readiness checks.",
+      "Validation evidence came from the narrowed Postgres-backed Go regression that targets VAL-REG-001 under the follow-up contract boundary."
+    ]
+  },
+  "toolsUsed": [
+    "Read",
+    "Grep",
+    "Execute",
+    "go test",
+    "curl"
+  ],
+  "assertions": [
+    {
+      "id": "VAL-REG-001",
+      "title": "Running timer conflict rule is fixed for the supported start entry point",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Review follow-up mission guidance, product docs, and tracking regression source for the narrowed supported timer-start entry point set.",
+          "expected": "The contract should explicitly narrow VAL-REG-001 to CreateTimeEntry and require no contradictory persistence on rejection.",
+          "observed": "Mission guidance, architecture notes, and regressions_test.go all agree that CreateTimeEntry is the only supported timer-start entry point under the current contract, while UpdateTimeEntry with Stop=nil is not a start path."
+        },
+        {
+          "action": "Run go test ./apps/backend/internal/tracking/... -count=1 -parallel 4 -run TestRunningTimerConflictOnCreateEntryPoint",
+          "expected": "The narrowed regression should pass and prove the fixed conflict result plus explicit no-persistence for the rejected second CreateTimeEntry attempt.",
+          "observed": "The Postgres-backed test passed in 1.442s across tracking packages. The regression source asserts ErrRunningTimeEntryExists, verifies the original running timer remains current, checks no entry with the rejected description was persisted, and confirms the entry count stays exactly one after the rejected second-start attempt."
+        },
+        {
+          "action": "Check reused runtime readiness with curl against /readyz and the website root.",
+          "expected": "Shared local runtimes should be reachable before relying on them for user-testing environment readiness.",
+          "observed": "Backend /readyz returned status ok with configuration, postgres, and redis checks passing; the website root on 5173 also responded successfully."
+        }
+      ],
+      "evidence": {
+        "commands": [
+          "curl -sf http://127.0.0.1:8080/readyz",
+          "curl -sf http://127.0.0.1:5173",
+          "go test ./apps/backend/internal/tracking/... -count=1 -parallel 4 -run TestRunningTimerConflictOnCreateEntryPoint"
+        ],
+        "sourceFiles": [
+          "apps/backend/internal/tracking/application/regressions_test.go"
+        ],
+        "runtime": "Local backend and website runtimes were both reachable on the mission-boundary ports 8080 and 5173.",
+        "schema": "The regression uses pgtest.Open() and mission guidance that target the dedicated opentoggl_test schema for test writes."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [],
+  "blockers": [],
+  "summary": "Validated VAL-REG-001 under the narrowed follow-up contract: the CreateTimeEntry conflict regression passed and explicitly proved no contradictory second entry was persisted."
+}

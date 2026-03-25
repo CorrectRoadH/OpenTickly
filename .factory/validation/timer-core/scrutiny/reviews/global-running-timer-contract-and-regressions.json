@@ -1,0 +1,33 @@
+{
+  "featureId": "global-running-timer-contract-and-regressions",
+  "reviewedAt": "2026-03-25T03:51:53.384128+00:00",
+  "commitId": "54b030b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reviewed commit does not implement the assigned feature. Commit 54b030b only adds same-workspace cross-user security regressions in security_regressions_test.go, while the requested global running-timer contract change lives in the current working tree outside that commit. The feature handoff therefore misattributes unrelated changes and provides no committed evidence for the required docs update or cross-workspace running-timer regression.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 1,
+        "severity": "blocking",
+        "description": "Commit 54b030b changes only security_regressions_test.go and contains no implementation or regression coverage for the assigned global running-timer feature. The required cross-workspace running-timer regression and tracking contract update are absent from the reviewed commit, so the feature is not actually delivered by the submitted commit."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker claimed to follow the tracking-backend-worker procedure, but the committed artifact does not match the feature or handoff. The skill expects the handoff commit to contain the backend/doc changes being reported, yet this run ended with a commit for unrelated same-workspace security regressions.",
+      "evidence": "Handoff references commitId 54b030b and claims updates to docs/product/tracking.md plus regressions_test.go. `git show --stat 54b030b` shows only apps/backend/internal/tracking/application/security_regressions_test.go changed."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The transcript indicates the actual global-running-timer changes were left uncommitted in the working tree while an unrelated commit was attached to the feature. Reviewers need to compare the handoff commit against the working tree to detect this mismatch.",
+      "evidence": "Current tree contains docs/product/tracking.md mission block/global rule text and TestRunningTimerConflictAcrossWorkspaces in apps/backend/internal/tracking/application/regressions_test.go, but `git diff 54b030b^ 54b030b -- docs/product/tracking.md apps/backend/internal/tracking/application/regressions_test.go` is empty."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the submitted commit for this feature is unrelated to the claimed implementation, so the feature lacks committed evidence for the required contract and regression changes."
+}

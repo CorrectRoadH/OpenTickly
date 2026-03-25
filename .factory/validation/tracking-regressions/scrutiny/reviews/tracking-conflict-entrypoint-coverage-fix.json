@@ -1,0 +1,28 @@
+{
+  "featureId": "tracking-conflict-entrypoint-coverage-fix",
+  "reviewedAt": "2026-03-24T20:26:24Z",
+  "commitId": "1b268a3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix adds a second assertion around UpdateTimeEntry, but it does not actually prove a second supported timer-start entry point. The new test only updates the already-running entry and explicitly asserts that this same-entry update must not conflict, while the service change persists the entry update before checking for a competing running timer. As a result, VAL-REG-001 still lacks evidence that two distinct start paths enforce the same conflict rule/result.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/regressions_test.go",
+        "line": 81,
+        "severity": "blocking",
+        "description": "The new VAL-REG-001 test never exercises UpdateTimeEntry as a conflicting second start path. It updates the already-running entry (`TimeEntryID: firstEntry.ID`) and asserts that this same-entry update should succeed, so the regression still only proves a conflict on CreateTimeEntry instead of across two supported start entry points."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/service.go",
+        "line": 449,
+        "severity": "blocking",
+        "description": "UpdateTimeEntry writes the entry via `service.store.UpdateTimeEntry(...)` before checking whether another running timer already exists. If a caller updates a stopped entry into a running one while another timer is current, the method can return `ErrRunningTimeEntryExists` after persisting the new running-shaped row, leaving the stored time entry changed even though the conflict was rejected. That does not match the intended 'same conflict rule/result' safety for a second start entry point."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-regressions/scrutiny/reviews/tracking-conflict-and-history-regressions.json",
+  "summary": "Fail: the fix does not clear the original blocker because the new test does not prove a second conflicting start path, and the UpdateTimeEntry conflict check happens after persistence, so the second entry point is not safely aligned with CreateTimeEntry."
+}

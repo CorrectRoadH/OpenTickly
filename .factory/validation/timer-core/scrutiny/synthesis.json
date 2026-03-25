@@ -1,0 +1,91 @@
+{
+  "milestone": "timer-core",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": false,
+      "command": "vp run test -r",
+      "exitCode": 1
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/tracking/... -count=1 -parallel 4 && go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4 && vp run test:e2e:website -- e2e/timer-page.spec.ts --workers 1",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 4,
+    "passed": 1,
+    "failed": 3,
+    "failedFeatures": [
+      "cross-workspace-running-header",
+      "global-running-timer-contract-and-regressions",
+      "shared-timer-page-state-and-view-preference"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "cross-workspace-running-header",
+      "severity": "blocking",
+      "description": "The feature review found the fullstack commit only added browser E2E coverage and omitted the required source-doc status-block updates for the directly used timer docs."
+    },
+    {
+      "featureId": "cross-workspace-running-header",
+      "severity": "blocking",
+      "description": "The reviewed fullstack evidence did not include a backend-truth proof for the same cross-workspace edit/stop/current-timer scenario, so the feature does not satisfy the shared backend+browser proof contract."
+    },
+    {
+      "featureId": "global-running-timer-contract-and-regressions",
+      "severity": "blocking",
+      "description": "The submitted commit 54b030b contains only unrelated security regression changes, while the claimed tracking doc and cross-workspace regression work was left outside the reviewed commit."
+    },
+    {
+      "featureId": "shared-timer-page-state-and-view-preference",
+      "severity": "blocking",
+      "description": "The feature did not complete the requested structural refactor because page orchestration still lives inside WorkspaceTimerPage instead of being split into a separate state/orchestration boundary."
+    },
+    {
+      "featureId": "shared-timer-page-state-and-view-preference",
+      "severity": "blocking",
+      "description": "The new VAL-CROSS-005 coverage proves selected view persistence only; it does not prove shared top-composer/header state and running-timer identity continuity across view and workspace changes."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": "tracking-fullstack-worker skill",
+      "suggestion": "Clarify whether proof-only follow-up features may skip source-doc status-block updates and backend-test additions when the implementation already exists, or keep the current requirements and strengthen enforcement.",
+      "evidence": "Feature `cross-workspace-running-header` passed worker completion with only Playwright test changes even though the skill requires doc-block updates and one shared backend+browser proof path.",
+      "isSystemic": true
+    },
+    {
+      "target": "tracking-frontend-worker skill",
+      "suggestion": "Strengthen enforcement or review checks around mandatory agent-browser replay and canonical vp-only JS tool usage in frontend worker runs.",
+      "evidence": "Feature `shared-timer-page-state-and-view-preference` reported followedProcedure true despite no agent-browser invocation and transcript use of npx formatting commands outside the canonical vp toolchain.",
+      "isSystemic": true
+    },
+    {
+      "target": "tracking-backend-worker skill",
+      "suggestion": "Add an explicit end-of-run verification step that the handoff commit diff matches the files and behavior claimed in the worker handoff before EndFeatureRun succeeds.",
+      "evidence": "Feature `global-running-timer-contract-and-regressions` handed off commit 54b030b while the claimed doc/regression changes were not in that commit.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Add a services.yaml formatting command for ad hoc prettier/biome use.",
+      "reason": "Rejected because the repo guidance already says JS/TS toolchain commands should go through canonical vp entrypoints rather than expanding alternate command surfaces."
+    },
+    {
+      "observation": "Document reviewer advice to always compare the working tree against the handoff commit.",
+      "reason": "Rejected as a library update because it is procedural reviewer guidance better handled in skill/orchestrator instructions than in factual codebase knowledge."
+    }
+  ],
+  "previousRound": null
+}

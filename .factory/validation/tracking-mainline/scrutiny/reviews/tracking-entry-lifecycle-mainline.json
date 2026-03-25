@@ -1,0 +1,34 @@
+{
+  "featureId": "tracking-entry-lifecycle-mainline",
+  "reviewedAt": "2026-03-24T19:31:50Z",
+  "commitId": "e8d0ccd",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds real-Postgres lifecycle coverage and a thin idle-current transport smoke, but it still misses one documented invalid-input case and duplicates an existing idle-current application assertion.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/time_entry_lifecycle_test.go",
+        "line": 239,
+        "severity": "blocking",
+        "description": "VAL-ENTRY-003 requires rejecting both `stop < start` and `start + duration != stop`. The committed suite only covered the stop-before-start path; the mismatched `start + duration != stop` case described in the feature and milestone contract was not part of commit `e8d0ccd`, so the feature did not fully satisfy the invalid time-range rejection requirement."
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/time_entry_lifecycle_test.go",
+        "line": 399,
+        "severity": "non_blocking",
+        "description": "`TestGetCurrentTimeEntryReturnsNullWhenIdle` duplicates the pre-existing `TestGetCurrentTimeEntry_ReturnsEmptyViewWhenNoRunningEntry` instead of extending the existing test surface, which goes against the repo's reuse-first guidance and adds maintenance churn without new signal."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-test-worker skill correctly says to convert fulfilled assertions into explicit acceptance cases, but this worker still ended the feature without covering the full documented invalid-range matrix for VAL-ENTRY-003. The skill may need a stronger reminder to enumerate every acceptance bullet from `expectedBehavior` / `fulfills` before concluding coverage is complete.",
+      "evidence": "Feature contract lists invalid `start`/`stop`/`duration` inputs broadly; commit `e8d0ccd` only added `TestInvalidTimeRangeIsRejectedWithoutMutation` for `stop < start` and the transcript handoff still claimed full VAL-ENTRY-003 coverage."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the feature's new backend tests are mostly aligned, but commit `e8d0ccd` did not actually cover the full invalid-time-range requirement because it omitted the `start + duration != stop` rejection case mandated by VAL-ENTRY-003."
+}

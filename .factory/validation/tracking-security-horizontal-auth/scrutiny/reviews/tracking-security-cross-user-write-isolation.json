@@ -1,0 +1,22 @@
+{
+  "featureId": "tracking-security-cross-user-write-isolation",
+  "reviewedAt": "2026-03-25T02:45:04Z",
+  "commitId": "54b030b",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The added tests cover update, stop, delete, and batch patch denial paths with direct readback, but they do not cover the documented restart/continue-style mutation path required by VAL-SEC-TRACK-003.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 670,
+        "severity": "blocking",
+        "description": "VAL-SEC-TRACK-003 requires same-workspace attackers to be unable to restart or otherwise mutate another user's entry, but the new coverage only exercises update, stop, delete, and batch patch. There is no regression for the documented continue/restart mutation path, so a horizontal-auth gap could remain undetected for that write surface."
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the feature added strong no-mutation regressions for several write routes, but it does not satisfy VAL-SEC-TRACK-003 completely because the documented restart/continue mutation path is not covered."
+}

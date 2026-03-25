@@ -1,0 +1,39 @@
+{
+  "milestone": "tracking-regressions",
+  "round": 1,
+  "status": "fail",
+  "assertionsSummary": {
+    "total": 4,
+    "passed": 3,
+    "failed": 0,
+    "blocked": 1
+  },
+  "passedAssertions": ["VAL-REG-002", "VAL-REG-003", "VAL-REG-004"],
+  "failedAssertions": [],
+  "blockedAssertions": [
+    {
+      "id": "VAL-REG-001",
+      "blockedBy": "Blocked by contract/coverage gap: current repository evidence does not prove a second conflicting timer-start entry point beyond CreateTimeEntry, and prior scrutiny explicitly marks VAL-REG-001 unresolved on that basis."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "user-testing.md",
+      "description": "Added flow validator guidance sections for browser and backend isolation boundaries used by tracking-regressions validators.",
+      "source": "setup"
+    }
+  ],
+  "previousRound": null,
+  "override": {
+    "status": "accepted",
+    "reason": "VAL-REG-002, VAL-REG-003, and VAL-REG-004 passed. VAL-REG-001 is deferred because the blocker matches the already-accepted scrutiny finding: current mission guidance now records that UpdateTimeEntry preserves stop when Stop=nil, so the requested stopped-to-running second-start path is unsupported under the current contract. The assertion has been moved to follow-up feature `tracking-supported-start-entrypoints-conflict-proof` in an unsealed milestone.",
+    "timestamp": "2026-03-25T00:10:00Z",
+    "deferredAssertions": [
+      {
+        "id": "VAL-REG-001",
+        "movedToFeatureId": "tracking-supported-start-entrypoints-conflict-proof",
+        "reason": "Needs explicit enumeration of supported timer-start entry points before further regression work."
+      }
+    ]
+  }
+}

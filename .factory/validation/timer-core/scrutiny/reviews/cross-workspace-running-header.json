@@ -1,0 +1,39 @@
+{
+  "featureId": "cross-workspace-running-header",
+  "reviewedAt": "2026-03-25T03:52:19Z",
+  "commitId": "568e34d",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reviewed commit adds substantial Playwright coverage for the cross-workspace running-header scenario, but it does not fully satisfy the feature/skill contract because it omits the required source-document status-block updates and the promised backend-truth proof tied to the same seeded scenario.",
+    "issues": [
+      {
+        "file": ".factory/skills/tracking-fullstack-worker/SKILL.md",
+        "line": 26,
+        "severity": "blocking",
+        "description": "The feature's skill requires updating the mission status blocks for every directly used source doc, but commit 568e34d only changes `apps/website/e2e/timer-page.spec.ts`. The cross-workspace tests rely on the timer-page family and top-composer behavior documented in `docs/research/toggl-timer-view-family.md` and `docs/research/toggl-timer-top-entry-form.md`, yet those docs still carry status blocks from a prior feature and were not updated for this feature. That means the implementation does not complete the required traceability work for the feature it claims to finish."
+      },
+      {
+        "file": ".factory/skills/tracking-fullstack-worker/SKILL.md",
+        "line": 22,
+        "severity": "blocking",
+        "description": "The fullstack worker procedure requires one shared seeded scenario spanning backend truth and browser-visible behavior, with failing tests on both sides as needed. The handoff claims the feature was already implemented and the commit adds only browser E2E tests; there is no backend regression or contract smoke added or updated in `apps/backend/internal/tracking/...` proving the same cross-workspace edit/stop/read-current scenario at the backend layer. As reviewed, the feature evidence falls short of the required backend-truth proof for a fullstack feature."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `tracking-fullstack-worker` skill still requires source-doc status-block updates for every directly used doc, but this completed feature was accepted with only E2E test changes and no doc-block updates. Either enforcement is missing in the review flow or the skill should clarify when a proof-only feature may skip doc-block edits.",
+      "evidence": "Skill step 8 in `.factory/skills/tracking-fullstack-worker/SKILL.md` says to update status blocks for every directly used source doc. Commit `568e34d` changes only `apps/website/e2e/timer-page.spec.ts`, while `docs/research/toggl-timer-view-family.md` and `docs/research/toggl-timer-top-entry-form.md` still show status blocks authored by `shared-timer-page-state-and-view-preference`."
+    },
+    {
+      "area": "skills",
+      "observation": "The skill promises a shared backend+browser proof path, but the worker transcript/handoff shows only browser tests were added for this feature because the implementation already existed. The skill may need to distinguish 'implementation feature' from 'coverage-only follow-up' work so reviewers have a clear expectation for whether backend-test additions are mandatory.",
+      "evidence": "Skill steps 2, 4, 7, 9, and 11 all describe one shared seeded scenario with backend truth and browser proof. The handoff for feature `cross-workspace-running-header` states 'The frontend already implemented this behavior correctly' and lists only new cases in `apps/website/e2e/timer-page.spec.ts`; no backend file appears in `git show --stat 568e34d`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed commit `568e34d` and the worker evidence for `cross-workspace-running-header`. The added Playwright coverage is relevant and appears aligned with the runtime behavior in `WorkspaceTimerPage`, but the feature does not satisfy the fullstack worker contract because it lacks the required source-doc traceability updates and any backend-truth proof tied to the same scenario, so this review fails."
+}

@@ -1,0 +1,97 @@
+{
+  "groupId": "browser-regressions",
+  "testedAt": "2026-03-24T21:09:12.225037+00:00",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c",
+    "appUrl": "http://127.0.0.1:5173",
+    "apiUrl": "http://127.0.0.1:8080",
+    "ports": {
+      "website": 5173,
+      "backend": 8080
+    },
+    "assignedAssertions": ["VAL-REG-002", "VAL-REG-004"]
+  },
+  "toolsUsed": ["agent-browser", "vp run test:e2e:website"],
+  "commandsRun": [
+    {
+      "command": "vp run test:e2e:website -- apps/website/e2e/timer-page.spec.ts --grep VAL-REG-002|VAL-REG-004",
+      "exitCode": 0,
+      "observation": "2 targeted timer-page regression tests passed in 5.7s, covering VAL-REG-002 and VAL-REG-004."
+    },
+    {
+      "command": "agent-browser --session browser-regressions get url",
+      "exitCode": 0,
+      "observation": "Agent-browser session remained reachable at http://127.0.0.1:5173/login."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-REG-002",
+      "title": "Timer page is always scoped to the current workspace",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the targeted timer-page E2E regression for workspace scoping.",
+          "expected": "Workspace A facts disappear and Workspace B facts appear across calendar, list, and timesheet after workspace switch, with calendar assertions scoped to the calendar grid.",
+          "observed": "`VAL-REG-002: workspace switch removes prior-workspace entries and reveals new-workspace entries across all timer views` passed. Existing E2E coverage seeds workspace-specific entries/projects, switches organization/workspace, then proves absence/presence in calendar-grid-scroll-area, timer-list-view, and timer-timesheet-view; switching back restores Workspace A facts."
+        },
+        {
+          "action": "Capture current browser surface evidence from the reused local runtime.",
+          "expected": "Browser session is reachable and suitable for UI evidence capture within the assigned runtime boundary.",
+          "observed": "Agent-browser reached `http://127.0.0.1:5173/login` and saved an annotated screenshot from the assigned local runtime. Direct anonymous browser replay hit auth gates, so the narrowest reliable proof remained the passing real-runtime E2E plus runtime screenshot evidence."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "tracking-regressions/browser-regressions/initial-timer-page.png",
+          "tracking-regressions/browser-regressions/timer-after-register.png"
+        ],
+        "consoleErrors": "Anonymous browser replay showed expected auth-gated 401/403 resource errors on login/register pages; no assertion-specific console defect was needed because the pass decision relied on the targeted Playwright regression.",
+        "network": "Playwright proof from `vp run test:e2e:website -- apps/website/e2e/timer-page.spec.ts --grep \"VAL-REG-002|VAL-REG-004\"`: VAL-REG-002 passed; test implementation exercises workspace/org switch success and scoped presence/absence checks across `/timer` calendar/list/timesheet projections."
+      },
+      "issues": null
+    },
+    {
+      "id": "VAL-REG-004",
+      "title": "Current timer and time-entry history stay mutually consistent",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Run the targeted timer-page E2E regression for current/history consistency.",
+          "expected": "Start, stop, edit, and restart flows keep `/me/time_entries/current` and timer history non-contradictory.",
+          "observed": "`VAL-REG-004: current-timer and history stay consistent after start, stop, and edit` passed. Existing E2E coverage verifies: current-timer returns a running entry after start, `200 null` after stop and after editing a stopped entry, a new running entry does not overwrite stopped history, and the Phase 5 stop->restart cycle keeps the restarted entry running in both current-timer and list-view state."
+        },
+        {
+          "action": "Cross-check that the browser proof being exercised is the restart-boundary fix accepted by scrutiny.",
+          "expected": "The repo should contain accepted browser-side restart-cycle proof for VAL-REG-004.",
+          "observed": "Scrutiny review `tracking-current-history-browser-restart-fix.json` is `pass` and states commit `5789bc4` closes the missing browser restart-cycle gap by extending VAL-REG-004 through stop -> restart in `apps/website/e2e/timer-page.spec.ts`."
+        }
+      ],
+      "evidence": {
+        "screenshots": [
+          "tracking-regressions/browser-regressions/initial-timer-page.png",
+          "tracking-regressions/browser-regressions/timer-after-register.png"
+        ],
+        "consoleErrors": "Anonymous browser replay showed auth-gated 401/403 errors while unauthenticated; the validated regression itself passed under Playwright with no reported console failure.",
+        "network": "Playwright proof from `vp run test:e2e:website -- apps/website/e2e/timer-page.spec.ts --grep \"VAL-REG-002|VAL-REG-004\"`: VAL-REG-004 passed, including fetch checks for `GET /api/v9/me/time_entries/current` returning running payloads or `200 null` at the expected points and the final restart-boundary no-contradiction invariant."
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The mission prompt referenced `.factory/library/user-testing.md`, but that file was absent under both the mission directory and repo-visible `.factory/library` path, so validation proceeded using mission AGENTS guidance, the validation contract, and existing accepted E2E/scrutiny evidence.",
+      "resolved": true,
+      "resolution": "Used the available mission boundary guidance plus the repo's implemented timer-page regressions and scrutiny pass reports to determine the narrowest acceptable proof path.",
+      "affectedAssertions": ["VAL-REG-002", "VAL-REG-004"]
+    },
+    {
+      "description": "Direct manual browser replay with agent-browser could not complete an authenticated end-to-end flow in the shared runtime: registration redirected back to login and produced auth-gated 401/403 errors, so a fresh manual session was not a stable proof source.",
+      "resolved": true,
+      "resolution": "Relied on the already-implemented targeted Playwright regressions against the reused local runtimes, then attached runtime screenshots and noted the auth-gated console behavior separately instead of overstating manual browser proof.",
+      "affectedAssertions": ["VAL-REG-002", "VAL-REG-004"]
+    }
+  ],
+  "blockers": [],
+  "summary": "Tested 2 assigned assertions. VAL-REG-002 passed via the targeted timer-page workspace-scoping regression and accepted scrutiny fix; VAL-REG-004 passed via the targeted timer-page current/history regression including the restart-cycle proof accepted by scrutiny. Manual agent-browser replay was limited by auth-gated local runtime behavior, so the narrowest reliable proof came from the passing real browser E2E lane plus captured runtime screenshots."
+}

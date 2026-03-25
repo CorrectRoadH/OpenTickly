@@ -1,0 +1,21 @@
+{
+  "featureId": "tracking-current-history-browser-restart-fix",
+  "reviewedAt": "2026-03-24T20:51:35Z",
+  "commitId": "5789bc4",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix directly closes the prior browser-side restart-cycle gap by extending VAL-REG-004 through stop -> restart in the timer-page E2E. The original feature's backend proof was already in place, and this follow-up commit adds the missing browser evidence that the current timer surface and list-view history stay aligned after the restart boundary.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The fullstack-regression-worker skill still requires an agent-browser manual replay after automated tests pass, but both the original worker session and this fix session reported followedProcedure=true with no interactiveChecks and no agent-browser usage in the transcript skeletons.",
+      "evidence": "Skill file /Users/opentoggl-ci/Code/opentoggl/.factory/skills/fullstack-regression-worker/SKILL.md step 8 requires agent-browser replay. Transcript skeletons for worker sessions 858e5cfe-4865-439a-a8c6-97685c1e1a1b and 14783dc9-104b-4911-af24-abd148d563b4 contain no agent-browser invocation, and both handoffs have an empty verification.interactiveChecks array while skillFeedback.followedProcedure is true."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/tracking-regressions/scrutiny/reviews/tracking-current-history-consistency-regression.json",
+  "summary": "Pass: reviewed the original and fix diffs plus both transcript skeletons. The original failure was the missing browser restart-cycle proof, and commit 5789bc4 resolves it by extending the VAL-REG-004 E2E through stop -> restart so browser-visible current-timer and history consistency are now covered at the restart boundary."
+}

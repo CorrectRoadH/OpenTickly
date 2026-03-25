@@ -1,0 +1,39 @@
+{
+  "featureId": "parallel-hardening-and-ci-fast-feedback",
+  "reviewedAt": "2026-03-24T21:27:04Z",
+  "commitId": "c819ea2",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature adds lane metadata and a configurable Playwright worker count, but it does not fully implement the promised lane separation or CI schema preparation hardening. The most serious issue is that the new backend_unit lane is defined by a regex that arbitrarily excludes every test whose name starts with 'TestB', which is not a real unit/application boundary and can silently skip unrelated tests. In addition, the CI schema-preparation command does not force the dedicated opentoggl_test search_path, so CI can apply the schema to whatever default schema DATABASE_URL resolves to instead of the required dedicated test schema.",
+    "issues": [
+      {
+        "file": ".factory/services.yaml",
+        "line": 8,
+        "severity": "blocking",
+        "description": "`backend_unit` is implemented as `go test ./apps/backend/internal/... -run \"^Test[^B]\"`, which filters by test-name prefix rather than separating unit/application/concurrency lanes by package or explicit scope. This skips every test whose name begins with `TestB` regardless of type and does not provide the explicit lane boundary required by the feature description."
+      },
+      {
+        "file": ".factory/services.yaml",
+        "line": 15,
+        "severity": "blocking",
+        "description": "`ci_pgschema_prepare` runs `pgschema apply` against `${DATABASE_URL}` without constraining the search_path to `opentoggl_test`. The feature requires CI to provision and prepare the dedicated test schema through the same canonical path used locally, but this command can apply to the database URL's default schema instead of the required dedicated test schema."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `test-platform-worker` skill requires using `agent-browser` for browser-visible readiness/smoke checks when website runtime work is involved, but this worker only ran `vp run test:e2e:website -- --list` and did not perform any browser smoke or readiness validation. The skill may need to clarify when parallel-lane hardening can rely on listing/tests alone versus requiring a browser interaction.",
+      "evidence": "Transcript skeleton for session 595316c1-e08f-489c-b9be-92eb3fb49aa6 shows no `agent-browser` usage and the handoff's `interactiveChecks` is empty despite changing Playwright/browser-lane configuration."
+    },
+    {
+      "area": "conventions",
+      "observation": "Shared guidance now records backend unit/application lanes, but the implementation uses a brittle test-name regex (`^Test[^B]`) instead of a documented package- or layer-based convention for lane separation. AGENTS.md and library guidance do not define how backend test lanes must be carved up, which likely enabled this incorrect lane boundary.",
+      "evidence": ".factory/services.yaml:8-9 defines `backend_unit` with `-run \"^Test[^B]\"` and `backend_application` by package path, while `.factory/library/testing-lanes.md` claims explicit lane boundaries without documenting the expected selection rule."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the feature improves documentation and exposes new commands, but it does not correctly separate backend lanes and does not guarantee CI schema preparation targets the dedicated `opentoggl_test` schema."
+}

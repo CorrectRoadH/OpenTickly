@@ -1,0 +1,113 @@
+{
+  "groupId": "backend-regressions",
+  "testedAt": "2026-03-24T21:09:33Z",
+  "isolation": {
+    "appUrl": "http://127.0.0.1:8080",
+    "databaseHost": "127.0.0.1:5432",
+    "databaseName": "opentoggl",
+    "testSchema": "opentoggl_test",
+    "assignedAssertions": ["VAL-REG-001", "VAL-REG-003"],
+    "surface": "backend",
+    "boundaryNotes": [
+      "Used only the local backend runtime on 8080 and evidence from narrow backend tests.",
+      "Validation writes occurred only through repo tests that target the dedicated opentoggl_test schema."
+    ]
+  },
+  "toolsUsed": ["Read", "Grep", "Execute", "curl", "go test", "psql"],
+  "assertions": [
+    {
+      "id": "VAL-REG-001",
+      "title": "Running timer conflict rule is fixed across entry points",
+      "status": "blocked",
+      "steps": [
+        {
+          "action": "Review validation contract, mission guidance, regressions test coverage, and prior scrutiny for supported timer-start entry points.",
+          "expected": "Evidence should show every supported start entry point enforces the same fixed conflict result.",
+          "observed": "Current code and prior scrutiny show only CreateTimeEntry is proven as a conflicting second-start path; UpdateTimeEntry preserves existing stop when Stop=nil and the current test only updates the already-running entry."
+        },
+        {
+          "action": "Run go test ./apps/backend/internal/tracking/application -run 'TestRunningTimerConflictOn(CreateEntryPoint|UpdateEntryPoint)' -count=1 -v with Postgres access.",
+          "expected": "Narrow tests should prove conflict handling across all supported start entry points.",
+          "observed": "Both tests passed, but TestRunningTimerConflictOnUpdateEntryPoint only proves same-entry running update succeeds; it does not prove a second conflicting start entry point."
+        },
+        {
+          "action": "Check local runtime reachability with curl against /api/v9/me/time_entries/current.",
+          "expected": "Runtime should be reachable for supplemental backend evidence.",
+          "observed": "Runtime responded 403 for invalid credentials, confirming reachability only; no validator-owned runtime account details were available for deeper API replay."
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "tracking-regressions/backend-regressions/go-test-regressions.log",
+          "tracking-regressions/backend-regressions/runtime-current-time-entry-http.txt",
+          "tracking-regressions/backend-regressions/schema-proof.txt"
+        ],
+        "commands": [
+          "go test ./apps/backend/internal/tracking/application -run 'TestRunningTimerConflictOn(CreateEntryPoint|UpdateEntryPoint)|TestHistoricalEntriesSurvive(ProjectArchival|MemberDisable)' -count=1 -v",
+          "curl -i http://127.0.0.1:8080/api/v9/me/time_entries/current",
+          "psql -Atqc \"select schema_name from information_schema.schemata where schema_name like 'opentoggl_test%' order by schema_name;\""
+        ],
+        "runtime": "GET /api/v9/me/time_entries/current -> 403 with invalid credentials (reachability proof only)",
+        "schema": "Database opentoggl contains dedicated schema opentoggl_test"
+      },
+      "issues": "Blocked by contract/coverage gap: current repository evidence does not prove a second conflicting timer-start entry point beyond CreateTimeEntry, and prior scrutiny explicitly marks VAL-REG-001 unresolved on that basis."
+    },
+    {
+      "id": "VAL-REG-003",
+      "title": "Historical entries survive related object lifecycle changes",
+      "status": "pass",
+      "steps": [
+        {
+          "action": "Review regression tests for project archival and member disable behavior.",
+          "expected": "Coverage should preserve historical entry visibility after related project/member lifecycle changes.",
+          "observed": "Two dedicated tests exist: TestHistoricalEntriesSurviveProjectArchival and TestHistoricalEntriesSurviveMemberDisable."
+        },
+        {
+          "action": "Run go test ./apps/backend/internal/tracking/application -run 'TestHistoricalEntriesSurvive(ProjectArchival|MemberDisable)' -count=1 -v against Postgres-backed tests.",
+          "expected": "Both lifecycle regressions should pass with real backend persistence.",
+          "observed": "Both tests passed, proving direct readback and list visibility persist after project archival and member disable."
+        },
+        {
+          "action": "Inspect PostgreSQL schemas for dedicated test schema usage.",
+          "expected": "Dedicated opentoggl_test schema should exist for validation-owned test data.",
+          "observed": "Schema proof shows opentoggl_test exists in the local Postgres database used by tests."
+        }
+      ],
+      "evidence": {
+        "artifacts": [
+          "tracking-regressions/backend-regressions/go-test-regressions.log",
+          "tracking-regressions/backend-regressions/schema-proof.txt"
+        ],
+        "commands": [
+          "go test ./apps/backend/internal/tracking/application -run 'TestRunningTimerConflictOn(CreateEntryPoint|UpdateEntryPoint)|TestHistoricalEntriesSurvive(ProjectArchival|MemberDisable)' -count=1 -v",
+          "psql -Atqc \"select schema_name from information_schema.schemata where schema_name like 'opentoggl_test%' order by schema_name;\""
+        ],
+        "network": "Real Postgres-backed service-layer reads/lists exercised by go test passed for both archival and member-disable cases",
+        "schema": "Database opentoggl contains dedicated schema opentoggl_test"
+      },
+      "issues": null
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Mission prompt described a shared test schema as opentoggl_test on localhost:5432, but PostgreSQL exposes database opentoggl with schema opentoggl_test instead of a database named opentoggl_test.",
+      "resolved": true,
+      "resolution": "Verified dedicated schema existence inside database opentoggl and relied on repo tests already wired to that schema pattern.",
+      "affectedAssertions": ["VAL-REG-001", "VAL-REG-003"]
+    },
+    {
+      "description": "No validator-owned runtime credentials were provided for direct authenticated API replay against the shared backend runtime.",
+      "resolved": true,
+      "resolution": "Used narrow implemented Go regression coverage plus runtime reachability and schema evidence, which was the narrowest proof available within scope.",
+      "affectedAssertions": ["VAL-REG-001"]
+    }
+  ],
+  "blockers": [
+    {
+      "description": "VAL-REG-001 remains unproven because the current UpdateTimeEntry regression does not exercise a conflicting second-start path, and mission/shared scrutiny already documents that gap.",
+      "affectedAssertions": ["VAL-REG-001"],
+      "quickFixAttempted": "Reviewed current implementation, scrutiny artifacts, and ran the narrow regression tests to confirm the present evidence boundary."
+    }
+  ],
+  "summary": "Tested 2 assertions with narrow backend evidence: VAL-REG-003 passed via Postgres-backed regression tests; VAL-REG-001 is blocked because current repo evidence still does not prove a second conflicting start entry point beyond CreateTimeEntry."
+}

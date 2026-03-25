@@ -1,0 +1,108 @@
+{
+  "milestone": "test-foundation",
+  "round": 4,
+  "status": "fail",
+  "override": {
+    "status": "accepted",
+    "reason": "All current validators are green (`vp run check -r`, `vp run test:e2e:website`, `go test ./apps/backend/internal/... -count=1 -parallel 4`, and bootstrap tests). The remaining blocking review findings are stale historical reviews superseded by later completed fix features: runtime alignment by `foundation-e2e-runtime-and-format-fix`, shared-schema implementation by `foundation-pgtest-shared-schema-implementation`, CSV import bootstrap fix by `foundation-bootstrap-csv-import-email-fix`, and concrete async-sensitive guardrail usage by `foundation-async-real-path-usage-fix`.",
+    "timestamp": "2026-03-24T18:09:30Z"
+  },
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "vp run test:e2e:website",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "backend_test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/... -count=1 -parallel 4",
+      "exitCode": 0
+    },
+    "backend_bootstrap_test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/bootstrap/... -count=1 -parallel 4",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 8,
+    "passed": 4,
+    "failed": 4,
+    "failedFeatures": [
+      "foundation-runtime-schema-alignment",
+      "foundation-test-topology-and-browser-lane",
+      "foundation-pgtest-shared-schema-implementation",
+      "foundation-browser-lane-and-async-usage-fix"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "foundation-runtime-schema-alignment",
+      "severity": "blocking",
+      "description": "The reviewed feature fixed comma-separated PATCH time_entry_ids binding but did not deliver the promised 5173/8080 local runtime/readiness alignment work, and the session evidence still showed frontend 5173 unreachable."
+    },
+    {
+      "featureId": "foundation-test-topology-and-browser-lane",
+      "severity": "blocking",
+      "description": "The reviewed feature normalized ephemeral opentoggl_test_* schemas instead of implementing the required shared opentoggl_test topology, omitted concrete async guardrails, and lacked the required browser smoke proof."
+    },
+    {
+      "featureId": "foundation-pgtest-shared-schema-implementation",
+      "severity": "blocking",
+      "description": "The reviewed feature left TestImportRoutesAcceptTimeEntriesCSVUpload unresolved at the time and only demonstrated async queue/drain helpers in synthetic platform tests rather than wiring them into a real async-sensitive path."
+    },
+    {
+      "featureId": "foundation-browser-lane-and-async-usage-fix",
+      "severity": "blocking",
+      "description": "The reviewed feature added browser smoke proof under a non-canonical .real-runtime.spec.ts filename and kept async coverage at helper-only synthetic tests instead of a real async-sensitive backend path."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": ".factory/skills/test-platform-worker/SKILL.md",
+      "suggestion": "Require workers not to claim topology/runtime fixes as complete unless the implementation and verification evidence in the same feature cover the full contract, especially when shared-state files are being updated.",
+      "evidence": "foundation-runtime-schema-alignment and foundation-shared-schema-and-async-guardrails-fix both showed mismatch between the reviewed feature scope/evidence and what shared-state guidance claimed was already true.",
+      "isSystemic": true
+    },
+    {
+      "target": ".factory/skills/test-platform-worker/SKILL.md",
+      "suggestion": "Clarify that browser-lane features must finish in the canonical E2E state: new Playwright E2E files should use standard *.spec.ts naming and should reuse existing auth/runtime helpers where available.",
+      "evidence": "foundation-browser-lane-and-async-usage-fix introduced foundation-smoke.real-runtime.spec.ts and reimplemented auth/bootstrap inline, both of which were corrected later.",
+      "isSystemic": true
+    },
+    {
+      "target": ".factory/library/environment.md",
+      "suggestion": "Document that the reused website runtime on port 5173 must bind to 127.0.0.1 for the browser lane fix on this checkout, alongside the existing 5173/8080 readiness rules.",
+      "evidence": "foundation-e2e-runtime-and-format-fix now relies on `.factory/services.yaml` using `vp run website#dev -- --port 5173 --host 127.0.0.1`, but the library guidance still only records the ports and readiness probes.",
+      "isSystemic": false
+    },
+    {
+      "target": ".factory/skills/backend-test-worker/SKILL.md",
+      "suggestion": "Reinforce repository exploration expectations and repo-local shared-state paths so workers avoid wasting steps on shell find/cat usage or the wrong absolute services path.",
+      "evidence": "foundation-bootstrap-csv-import-email-fix first probed /Users/opentoggl-ci/.factory/services.yaml, and foundation-importing-export-isolation-fix used shell find/cat even though repo guidance prefers Read/Grep/Glob and the services file lives under the repo root.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Update shared-state guidance to say async helper coverage is already fully implemented everywhere.",
+      "reason": "rejected because reviews still show the concrete async-sensitive-path requirement was not satisfied by the originally reviewed features."
+    },
+    {
+      "observation": "Apply an immediate services/library update based on the failed foundation-test-topology-and-browser-lane cleanup command review.",
+      "reason": "rejected because the current repository already contains the corrected query-driven cleanup command, so no additional update is needed in this scrutiny round."
+    }
+  ],
+  "previousRound": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/test-foundation/scrutiny/synthesis.json"
+}

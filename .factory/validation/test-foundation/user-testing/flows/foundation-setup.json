@@ -1,0 +1,62 @@
+{
+  "groupId": "foundation-setup",
+  "testedAt": "2026-03-24T18:16:10.088910+00:00",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c",
+    "repoRoot": "/Users/opentoggl-ci/Code/opentoggl",
+    "backendUrl": "http://127.0.0.1:8080",
+    "frontendUrl": "http://127.0.0.1:5173",
+    "schema": "opentoggl_test",
+    "mode": "read-only except report write"
+  },
+  "toolsUsed": ["Read", "LS", "curl", "python3", "psql", "git status"],
+  "assertions": [],
+  "overallStatus": "blocked",
+  "verificationObservations": [
+    {
+      "check": "fulfills-derived assertions for milestone",
+      "observed": "No fulfills-derived assertions were assigned for test-foundation; this pass was limited to setup validation evidence."
+    },
+    {
+      "check": "validation contract scope",
+      "observed": "Mission contract lists user-testable assertions overall, but validation-state shows all are pending and none are mapped into this foundation flow."
+    },
+    {
+      "check": "backend runtime readiness",
+      "observed": "GET /readyz on http://127.0.0.1:8080 returned 200 with service=opentoggl-api status=ok and postgres/redis checks ok."
+    },
+    {
+      "check": "frontend runtime readiness",
+      "observed": "GET / on http://127.0.0.1:5173 returned 200 OK with HTML response."
+    },
+    {
+      "check": "local port availability",
+      "observed": "TCP connections succeeded for 127.0.0.1:8080, 127.0.0.1:5173, and 127.0.0.1:5432."
+    },
+    {
+      "check": "dedicated schema readiness",
+      "observed": "Direct psql readback for schema opentoggl_test could not be completed because local psql connection attempts timed out within bounded checks, so schema readiness remains unproven from this flow."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Shared guidance file /Users/opentoggl-ci/.factory/library/user-testing.md was not present, so only mission-local guidance could be applied.",
+      "resolved": true,
+      "resolution": "Used mission AGENTS.md testing guidance and parent task instructions instead.",
+      "affectedAssertions": []
+    }
+  ],
+  "blockers": [
+    {
+      "description": "No fulfills-derived user-testable assertions were assigned to the test-foundation milestone flow.",
+      "affectedAssertions": [],
+      "quickFixAttempted": "Reviewed validation-contract.md and validation-state.json to confirm there were no mapped assertions for this flow."
+    },
+    {
+      "description": "Dedicated schema opentoggl_test could not be proven via direct psql readback because local psql connectivity timed out during bounded read-only checks.",
+      "affectedAssertions": [],
+      "quickFixAttempted": "Retried schema existence query with explicit host/port and connect timeout; command still timed out."
+    }
+  ],
+  "summary": "Foundation setup flow is blocked for assertion execution: no fulfills-derived assertions were assigned. Reused backend/frontend runtimes are reachable and backend readiness passed, but dedicated schema readiness could not be directly verified from bounded psql checks."
+}

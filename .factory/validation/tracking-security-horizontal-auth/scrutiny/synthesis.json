@@ -1,0 +1,52 @@
+{
+  "milestone": "tracking-security-horizontal-auth",
+  "round": 1,
+  "status": "fail",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "cd /Users/opentoggl-ci/Code/opentoggl && vp run test -r",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "cd /Users/opentoggl-ci/Code/opentoggl && vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "cd /Users/opentoggl-ci/Code/opentoggl && vp run check -r",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "failedFeatures": [
+      "tracking-security-cross-user-read-isolation",
+      "tracking-security-cross-user-write-isolation"
+    ]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "tracking-security-cross-user-read-isolation",
+      "severity": "blocking",
+      "description": "VAL-SEC-TRACK-001 is not fully proven. `TestSameWorkspaceUserACannotReadUserBCurrentTimer` only calls `trackingService.GetCurrentTimeEntry(ctx, ownerID)`, and that API accepts only the caller user ID with no target-user selector. Because the store implementation resolves current timers solely by `rt.user_id = $1`, this test demonstrates that user A's own current-timer read stays empty; it does not prove that the tracking read surface denies an attempt by user A to read user B's current timer over the real contract boundary. The feature expected canonical backend read assertions and/or thin transport smoke for attacker visibility, and this test never exercises a route or boundary where an attacker could specify user B as the target."
+    },
+    {
+      "featureId": "tracking-security-cross-user-read-isolation",
+      "severity": "blocking",
+      "description": "VAL-SEC-TRACK-002 is only partially covered. The test checks `ListTimeEntries(..., UserID: ownerID)` and `ListUserTimeEntries(..., UserID: ownerID)`, but both service/store paths are filtered directly by the provided `UserID` (`where te.workspace_id = $1 and te.user_id = $2` / `where te.user_id = $1`). That proves owner-scoped reads return owner data; it does not prove the system rejects or safely scopes an attacker attempt to read user B's history through an actual tracking read surface. There is no transport smoke, no route-level authorization proof, and no exercised path where user A tries to target memberID and is denied."
+    },
+    {
+      "featureId": "tracking-security-cross-user-write-isolation",
+      "severity": "blocking",
+      "description": "VAL-SEC-TRACK-003 requires same-workspace attackers to be unable to restart or otherwise mutate another user's entry, but the new coverage only exercises update, stop, delete, and batch patch. There is no regression for the documented continue/restart mutation path, so a horizontal-auth gap could remain undetected for that write surface."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [],
+  "rejectedObservations": [],
+  "previousRound": null
+}

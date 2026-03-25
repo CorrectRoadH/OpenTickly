@@ -1,0 +1,28 @@
+{
+  "featureId": "foundation-runtime-schema-alignment",
+  "reviewedAt": "2026-03-24T17:54:36Z",
+  "commitId": "26b74ec",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The commit fixes the comma-separated PATCH time_entry_ids binding bug and aligns the generated wrapper with the OpenAPI contract, but it does not implement the full feature contract because it dropped the required local-validation-path work around reusable 5173 readiness proof.",
+    "issues": [
+      {
+        "file": "openapi/toggl-track-api-v9.swagger.json",
+        "line": 14053,
+        "severity": "blocking",
+        "description": "The worker only changed the PATCH time_entry_ids parameter binding path. The feature contract also required unblocking the local validation path around reusable frontend 5173/backend 8080 readiness and preserving the canonical source-based runtime story, but the diff contains no change to runtime validation tooling, readiness orchestration, or browser-path wiring. The handoff even records that 5173 was unreachable during the session, so the implementation did not satisfy the expectedBehavior items about HTTP-probed 8080/5173 validation on one canonical local path."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "services",
+      "observation": "The worker transcript showed repeated shell checks against frontend port 5173 and observed it was down, but still completed the feature without adding any service/startup proof or browser validation path. The skill says website/browser runtime changes should use agent-browser once the runtime is reachable, yet no such proof appears in the transcript skeleton or handoff.",
+      "evidence": "test-platform-worker SKILL.md step 5 requires agent-browser for browser startup/shell reachability when website/browser readiness is involved; worker transcript for session 9b330472-5754-415f-9364-6d60e4257e76 shows curl to 127.0.0.1:5173 failing with exit code 7 and no agent-browser usage before EndFeatureRun success."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Fail: the code change correctly fixes comma-separated PATCH time_entry_ids binding, but the reviewed feature did not deliver the full local-runtime/readiness alignment promised by the feature contract, and the session evidence shows frontend 5173 readiness remained unresolved."
+}

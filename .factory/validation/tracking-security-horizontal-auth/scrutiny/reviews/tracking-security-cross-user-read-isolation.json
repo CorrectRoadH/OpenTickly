@@ -1,0 +1,28 @@
+{
+  "featureId": "tracking-security-cross-user-read-isolation",
+  "reviewedAt": "2026-03-25T02:45:46.885689+00:00",
+  "commitId": "bfca64c3f4bff9a97e60e87b09e9e79e7a6a73c1",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The new tests add useful same-workspace multi-user coverage, but they do not fully satisfy the feature contract for VAL-SEC-TRACK-001 and VAL-SEC-TRACK-002 because they exercise only service methods that are already user-scoped by construction and never prove that an attacker cannot request another user’s tracking reads through the transport/read surfaces themselves.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 106,
+        "severity": "blocking",
+        "description": "VAL-SEC-TRACK-001 is not fully proven. `TestSameWorkspaceUserACannotReadUserBCurrentTimer` only calls `trackingService.GetCurrentTimeEntry(ctx, ownerID)`, and that API accepts only the caller user ID with no target-user selector. Because the store implementation resolves current timers solely by `rt.user_id = $1`, this test demonstrates that user A's own current-timer read stays empty; it does not prove that the tracking read surface denies an attempt by user A to read user B's current timer over the real contract boundary. The feature expected canonical backend read assertions and/or thin transport smoke for attacker visibility, and this test never exercises a route or boundary where an attacker could specify user B as the target." 
+      },
+      {
+        "file": "apps/backend/internal/tracking/application/security_regressions_test.go",
+        "line": 179,
+        "severity": "blocking",
+        "description": "VAL-SEC-TRACK-002 is only partially covered. The test checks `ListTimeEntries(..., UserID: ownerID)` and `ListUserTimeEntries(..., UserID: ownerID)`, but both service/store paths are filtered directly by the provided `UserID` (`where te.workspace_id = $1 and te.user_id = $2` / `where te.user_id = $1`). That proves owner-scoped reads return owner data; it does not prove the system rejects or safely scopes an attacker attempt to read user B's history through an actual tracking read surface. There is no transport smoke, no route-level authorization proof, and no exercised path where user A tries to target memberID and is denied." 
+      }
+    ]
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: the feature adds valuable regression tests, but they only verify self-scoped application queries and do not yet prove the contract-required attacker-denial behavior for cross-user tracking reads at the real read surface."
+}

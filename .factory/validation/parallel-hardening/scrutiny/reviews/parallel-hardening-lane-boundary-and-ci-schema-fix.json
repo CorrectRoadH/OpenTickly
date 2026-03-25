@@ -1,0 +1,15 @@
+{
+  "featureId": "parallel-hardening-lane-boundary-and-ci-schema-fix",
+  "reviewedAt": "2026-03-24T21:37:58Z",
+  "commitId": "b2ca481",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix commit resolves both blocking findings from the prior review. `backend_unit` now uses explicit package-scope boundaries instead of a brittle test-name regex, and `ci_pgschema_prepare` now forces `search_path=opentoggl_test` through the same canonical `pgschema` path used locally.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/parallel-hardening/scrutiny/reviews/parallel-hardening-and-ci-fast-feedback.json",
+  "summary": "Pass: the rerun fix adequately addresses the original scrutiny failures by replacing regex-based backend lane selection with explicit package boundaries and by constraining CI schema preparation to the dedicated `opentoggl_test` search_path. Mission guidance, shared testing-lane documentation, and the final services command definitions are now aligned on those rules."
+}

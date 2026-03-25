@@ -1,0 +1,34 @@
+{
+  "featureId": "foundation-pgtest-shared-schema-implementation",
+  "reviewedAt": "2026-03-24T17:55:12Z",
+  "commitId": "6b6dcf5",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The reviewed commit preserves the canonical shared-schema `pgtest.Open()` path and converts many bootstrap tests to unique test-owned emails, but it does not actually complete the feature contract because a previously failing bootstrap path remains broken and the async guardrails are only demonstrated in platform-only helper tests rather than integrated into an async-sensitive feature path.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/bootstrap/import_routes_test.go",
+        "line": 248,
+        "severity": "blocking",
+        "description": "`TestImportRoutesAcceptTimeEntriesCSVUpload` is still left failing by this feature's own handoff. The feature contract explicitly required the remaining bootstrap collisions under shared-schema execution to be refactored or intentionally isolated so the previously colliding bootstrap paths no longer fail. This test was moved to `pgtest.OpenEphemeral()` but still remained broken due to importer identity mismatch, so the implementation did not finish the promised bootstrap-package remediation."
+      },
+      {
+        "file": "apps/backend/internal/platform/async_test.go",
+        "line": 13,
+        "severity": "blocking",
+        "description": "The async queue-prefix / worker-ownership / drain-to-idle requirement is only exercised in synthetic platform tests that simulate work with goroutines and a bare `JobRunner`. The reviewed commit does not wire the new async helpers into any real async-sensitive backend path such as import/export/bootstrap flows, so scrutiny still cannot verify that production-facing test lanes use test-owned queue configuration and drain-to-idle behavior concretely rather than only by demonstration scaffolding."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "knowledge",
+      "observation": "Mission shared-state files describe async queue guardrails as if they are established across the test topology, but the reviewed implementation only adds helper definitions plus platform-only demonstration tests. Workers could still assume import/export/bootstrap tests already enforce these guardrails concretely when they do not.",
+      "evidence": "`.factory/library/architecture.md` and `.factory/library/environment.md` state queue-prefix / drain-to-idle rules as canonical. In code, `apps/backend/internal/testsupport/async.go` is only consumed by `apps/backend/internal/platform/async_test.go`, with no reviewed bootstrap/import/export call sites using `NewTestQueueConfig` or `DrainHelper`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/test-foundation/scrutiny/reviews/foundation-pgtest-shared-schema-implementation.json",
+  "summary": "Review failed again: the commit improves shared-schema safety, but it still leaves one of the previously failing bootstrap scenarios unresolved and does not make async guardrails concrete in an actual async-sensitive test path."
+}

@@ -1,0 +1,56 @@
+{
+  "featureId": "foundation-test-topology-and-browser-lane",
+  "reviewedAt": "2026-03-25T00:00:00Z",
+  "commitId": "3fc7566",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature commit still fails the contract. It documented an ephemeral-schema topology that conflicts with the mission's required shared `opentoggl_test` schema, added a broken cleanup command, and did not provide the required browser smoke proof. Later repository changes now add async helper scaffolding elsewhere, but those changes were not part of the reviewed commit and do not change this feature's outcome.",
+    "issues": [
+      {
+        "file": ".factory/library/environment.md",
+        "line": 12,
+        "severity": "blocking",
+        "description": "The new guidance contradicts itself and the mission boundary: line 12 says mission tests must use one dedicated test schema named `opentoggl_test`, but lines 14-15 redefine the implementation around ephemeral `opentoggl_test_{timestamp}` schemas. The feature requirement was to establish one shared dedicated test schema managed by `pgschema`, not to document the pre-existing per-test schema drift."
+      },
+      {
+        "file": ".factory/library/architecture.md",
+        "line": 21,
+        "severity": "blocking",
+        "description": "The committed architecture guidance codifies ephemeral per-test schemas created by `pgtest.Open()`, which does not satisfy the feature's expected behavior that backend tests share one external Postgres service while remaining isolated inside the dedicated test schema. No implementation change was made to move tests onto the mandated shared schema topology."
+      },
+      {
+        "file": ".factory/library/architecture.md",
+        "line": 23,
+        "severity": "blocking",
+        "description": "The feature was supposed to make queue names, worker ownership, and drain-to-idle rules explicit and reproducible, but commit `3fc7566` only notes that queue name is configurable via `OPENTOGGL_JOBS_QUEUE_NAME`. It does not establish a concrete queue-prefix convention, worker ownership guardrail, or drain-to-idle procedure as part of the reviewed feature."
+      },
+      {
+        "file": ".factory/services.yaml",
+        "line": 9,
+        "severity": "non_blocking",
+        "description": "`cleanup_test_schemas` uses `DROP SCHEMA IF EXISTS opentoggl_test_* CASCADE;`, but PostgreSQL does not treat `*` as a wildcard in identifiers. The command will not clean orphaned ephemeral schemas as documented, so the newly added recovery command is ineffective."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker marked `followedProcedure: true`, but the skill requires a real browser smoke check with `agent-browser` when runtime/browser safety is in scope. The transcript for session `a0158d73-1a34-4172-b2e8-b7e89924814a` only used readiness curls and `vp run test:e2e:website -- --list`; no browser smoke evidence was gathered.",
+      "evidence": ".factory/skills/test-platform-worker/SKILL.md requires `agent-browser` for one real story path; the session transcript and handoff for `a0158d73-1a34-4172-b2e8-b7e89924814a` contain no `Skill(agent-browser)` call and no interactive browser proof."
+    },
+    {
+      "area": "knowledge",
+      "observation": "This feature introduced shared-state drift by normalizing ephemeral schemas in `.factory/library/*` even though the mission AGENTS contract required one dedicated `opentoggl_test` schema. Later repo changes corrected the library files, confirming the original feature guidance was not the right canonical state.",
+      "evidence": "Mission AGENTS at `/Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/AGENTS.md` requires a dedicated `opentoggl_test` schema, while commit `3fc7566` added `.factory/library/environment.md` and `.factory/library/architecture.md` describing `opentoggl_test_{timestamp}` schemas; current files now describe shared-schema `pgtest.Open()` usage instead."
+    },
+    {
+      "area": "services",
+      "observation": "The newly documented cleanup command is broken because PostgreSQL identifier syntax does not support shell-style `*` wildcards in `DROP SCHEMA IF EXISTS`. If schema cleanup is needed, `.factory/services.yaml` should record a working query-driven command.",
+      "evidence": ".factory/services.yaml:9 defines `DROP SCHEMA IF EXISTS opentoggl_test_* CASCADE;`, which PostgreSQL parses as a literal schema name, not a pattern."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Review failed: commit `3fc7566` documented the wrong topology, omitted the required browser smoke proof, and added a broken cleanup command. Subsequent repository changes do not change that this feature itself did not implement its contract."
+}

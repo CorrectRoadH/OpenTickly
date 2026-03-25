@@ -1,0 +1,82 @@
+{
+  "milestone": "tracking-mainline",
+  "round": 2,
+  "status": "fail",
+  "override": {
+    "status": "accepted",
+    "reason": "Current validators are green and the original blocking review findings were resolved by later completed fix features in the same milestone: tracking-entry-lifecycle-coverage-fix, tracking-shell-entry-convergence-coverage-fix, tracking-timer-page-family-coverage-fix, and tracking-timer-view-local-proof-fix. The remaining failed reviews are historical mainline commits superseded by those fixes.",
+    "timestamp": "2026-03-25T03:35:00Z"
+  },
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "go test ./apps/backend/internal/... -count=1 -parallel 4",
+      "exitCode": 0
+    },
+    "typecheck": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "lint": {
+      "passed": true,
+      "command": "vp run check -r",
+      "exitCode": 0
+    },
+    "frontend_e2e": {
+      "passed": true,
+      "command": "vp run test:e2e:website",
+      "exitCode": 0
+    }
+  },
+  "reviewsSummary": {
+    "total": 7,
+    "passed": 5,
+    "failed": 2,
+    "failedFeatures": ["tracking-entry-lifecycle-mainline", "tracking-timer-page-family-mainline"]
+  },
+  "blockingIssues": [
+    {
+      "featureId": "tracking-timer-page-family-mainline",
+      "severity": "blocking",
+      "description": "The original mainline commit lacked calendar and cross-subview view-local proof for VAL-TIMER-002 and VAL-TIMER-004, but those gaps were subsequently closed by tracking-timer-page-family-coverage-fix and tracking-timer-view-local-proof-fix."
+    },
+    {
+      "featureId": "tracking-entry-lifecycle-mainline",
+      "severity": "blocking",
+      "description": "The original lifecycle mainline commit omitted the VAL-ENTRY-003 start+duration!=stop rejection case, which was subsequently closed by tracking-entry-lifecycle-coverage-fix."
+    }
+  ],
+  "appliedUpdates": [
+    {
+      "target": "library",
+      "description": "Added explicit note that reused browser validation should bind the website runtime to 127.0.0.1:5173 so Playwright and readiness probes hit the same reachable interface.",
+      "sourceFeature": "tracking-mainline-scrutiny"
+    }
+  ],
+  "suggestedGuidanceUpdates": [
+    {
+      "target": ".factory/skills/backend-test-worker/SKILL.md",
+      "suggestion": "Strengthen the review checklist so workers enumerate each fulfills/expectedBehavior bullet and confirm explicit test coverage for every documented invalid-input permutation before concluding a backend coverage feature is complete.",
+      "evidence": "tracking-entry-lifecycle-mainline claimed VAL-ENTRY-003 coverage while commit e8d0ccd only covered stop<start; the missing start+duration!=stop rejection was added later in tracking-entry-lifecycle-coverage-fix.",
+      "isSystemic": false
+    },
+    {
+      "target": ".factory/skills/frontend-test-worker/SKILL.md",
+      "suggestion": "Clarify whether mandatory agent-browser/manual verification is required for narrow Playwright assertion-fix features, because current worker practice repeatedly completes scrutiny-fix coverage with Playwright evidence only.",
+      "evidence": "Both tracking-shell-entry-convergence-coverage-fix and tracking-timer-page-family-coverage-fix passed code review but recorded the same procedural mismatch: SKILL.md step 9 requires agent-browser/manual verification while the workers supplied no interactiveChecks and documented no blocking reason.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    {
+      "observation": "Update .factory/services.yaml cleanup_test_schemas to stop mentioning opentoggl_test_* schemas.",
+      "reason": "rejected because orphaned ephemeral schemas can still exist from interrupted runs and the existing cleanup command is additive, factual, and not contradictory to the canonical shared opentoggl_test topology documented elsewhere."
+    },
+    {
+      "observation": "Tighten frontend-test-worker guidance to require view-local evidence in every subview.",
+      "reason": "rejected because the current skill already contains that requirement; the issue was worker adherence in earlier commits, not missing written guidance."
+    }
+  ],
+  "previousRound": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-mainline/scrutiny/synthesis.json"
+}

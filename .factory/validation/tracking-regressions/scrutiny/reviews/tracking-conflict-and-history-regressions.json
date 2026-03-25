@@ -1,0 +1,33 @@
+{
+  "featureId": "tracking-conflict-and-history-regressions",
+  "reviewedAt": "2026-03-24T20:41:14Z",
+  "commitId": "731970a",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The original regression commit correctly added historical-retention coverage, and the later fix commit correctly moved UpdateTimeEntry conflict detection ahead of persistence. But the fix still does not satisfy the original failure: there is no regression that exercises a true second start through UpdateTimeEntry, so scrutiny still lacks proof that rejected UpdateTimeEntry start attempts leave persisted state unchanged.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/regressions_test.go",
+        "line": 21,
+        "severity": "blocking",
+        "description": "The fix review still fails the original requirement to add a true second-start regression for UpdateTimeEntry. TestRunningTimerConflictOnUpdateEntryPoint only edits the already-running entry's start time and asserts that updating the same entry does not conflict; it never attempts to turn a different stopped entry into a running timer while another timer is already running. As a result, the new pre-persistence guard in UpdateTimeEntry is not covered against the rejected path the prior review required."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-test-worker skill tells workers to convert each expectedBehavior bullet into an explicit backend acceptance case, but this fix transcript shows the worker abandoned the required second-start case once they discovered UpdateTimeEntry cannot clear stop and still marked the feature successful. The skill may need sharper guidance to return to orchestrator when a required acceptance case is impossible under the current contract instead of treating partial coverage as success.",
+      "evidence": "Skill step 2 in .factory/skills/backend-test-worker/SKILL.md requires converting every expectedBehavior bullet into an explicit case. In worker-transcripts.jsonl for session 37d875bf-e358-46bf-a6b7-9159669550de, the worker writes a second-start test, observes it cannot clear stop via UpdateTimeEntry, deletes the test, and ends the feature as success with whatWasLeftUndone noting the missing scenario."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Mission shared state still does not record the canonical supported timer-start entry points or explicitly note that UpdateTimeEntry cannot clear stop to start a stopped entry. That gap forced repeated rediscovery across the original feature and the fix review.",
+      "evidence": "The original fail report flagged missing knowledge about supported start entry points, and the fix handoff plus transcript again document that UpdateTimeEntry preserves an existing stop when Stop=nil. Neither /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/AGENTS.md nor /Users/opentoggl-ci/Code/opentoggl/.factory/library/architecture.md records that contract boundary."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/tracking-regressions/scrutiny/reviews/tracking-conflict-pre-persistence-fix.json",
+  "summary": "Fail: the later code fix correctly prevents pre-persistence mutation in UpdateTimeEntry, but it does not add the second-start regression the prior failure required, so the original scrutiny gap remains unresolved."
+}

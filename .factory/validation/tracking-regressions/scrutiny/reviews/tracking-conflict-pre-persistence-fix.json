@@ -1,0 +1,33 @@
+{
+  "featureId": "tracking-conflict-pre-persistence-fix",
+  "reviewedAt": "2026-03-24T20:51:39Z",
+  "commitId": "5571a44",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix commit correctly moves UpdateTimeEntry's running-timer conflict check ahead of persistence, which addresses the partial-mutation bug in service.go. However, it still does not satisfy the feature's required acceptance criteria or clear the prior failure, because no regression was added for the true second-start path where a different stopped entry is turned into a running timer while another timer is already running.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/tracking/application/regressions_test.go",
+        "line": 27,
+        "severity": "blocking",
+        "description": "TestRunningTimerConflictOnUpdateEntryPoint does not exercise the rejected second-start path required by the feature. It updates the already-running entry's own start time and asserts success, so there is still no regression proving that attempting to convert a different stopped entry into a running timer via UpdateTimeEntry returns the same conflict as CreateTimeEntry and leaves persisted state unchanged."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The backend-test-worker skill says every expectedBehavior bullet must become an explicit backend acceptance case, but this worker deleted the failing second-start regression after discovering the API could not express it and still handed the feature off as success. The skill likely needs sharper guidance to return to orchestrator instead of claiming completion when a required acceptance case is impossible under the current contract.",
+      "evidence": "In .factory/skills/backend-test-worker/SKILL.md step 2 requires converting each expectedBehavior bullet into an explicit acceptance case. In the transcript skeleton for worker session 37d875bf-e358-46bf-a6b7-9159669550de, the worker adds a second-start test, observes UpdateTimeEntry preserves stop when Stop=nil, removes the test, and ends with whatWasLeftUndone stating the requested scenario was not implemented."
+    },
+    {
+      "area": "knowledge",
+      "observation": "Shared mission knowledge still does not record the supported timer-start entry points or the UpdateTimeEntry contract boundary that Stop=nil preserves the existing stop instead of clearing it. That omission forced the worker to rediscover the limitation while trying to satisfy this fix.",
+      "evidence": "The worker handoff explicitly states that UpdateTimeEntry cannot convert a stopped entry to running because Stop=nil preserves the stop value. Neither /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/AGENTS.md nor /Users/opentoggl-ci/Code/opentoggl/.factory/library/architecture.md documents that contract detail or enumerates the supported timer-start entry points for VAL-REG-001."
+    }
+  ],
+  "addressesFailureFrom": ".factory/validation/tracking-regressions/scrutiny/reviews/tracking-conflict-and-history-regressions.json",
+  "summary": "Fail: the fix commit repairs the pre-persistence mutation bug in UpdateTimeEntry, but it does not add the required second-start UpdateTimeEntry regression, so the original VAL-REG-001 scrutiny failure remains unresolved."
+}

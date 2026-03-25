@@ -1,0 +1,20 @@
+{
+  "milestone": "parallel-hardening",
+  "round": 1,
+  "status": "pass",
+  "assertionsSummary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0
+  },
+  "passedAssertions": [],
+  "failedAssertions": [],
+  "blockedAssertions": [],
+  "appliedUpdates": [],
+  "previousRound": null,
+  "notes": [
+    "No completed implementation feature in milestone parallel-hardening declares fulfills assertions, so there were no pending user-visible assertions to validate or partition into flow validators.",
+    "Verified reused local runtimes were already reachable at http://127.0.0.1:8080/readyz and http://127.0.0.1:5173 before synthesis."
+  ]
+}

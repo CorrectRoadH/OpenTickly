@@ -1,0 +1,15 @@
+{
+  "featureId": "tracking-entry-lifecycle-coverage-fix",
+  "reviewedAt": "2026-03-24T19:31:15Z",
+  "commitId": "7e777e3",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The fix fully addresses the prior scrutiny failure. It extends the stopped-entry lifecycle coverage to assert task and tag association persistence on create/readback and adds explicit mismatch rejection coverage for the start+duration!=stop case on both update and create paths, with no new correctness issues found in the reviewed scope.",
+    "issues": []
+  },
+  "sharedStateObservations": [],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-mainline/scrutiny/reviews/tracking-entry-lifecycle-mainline.json",
+  "summary": "Reviewed the fix handoff, transcript skeleton, backend-test-worker skill, prior failed review, and both commits e8d0ccd and 7e777e3. The follow-up commit closes the missing VAL-ENTRY-001 task/tag persistence proof and the missing VAL-ENTRY-003 start+duration!=stop rejection proof, so the original scrutiny failure is resolved."
+}

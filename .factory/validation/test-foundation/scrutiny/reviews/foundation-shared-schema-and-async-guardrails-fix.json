@@ -1,0 +1,21 @@
+{
+  "featureId": "foundation-shared-schema-and-async-guardrails-fix",
+  "reviewedAt": "2026-03-24T17:54:57Z",
+  "commitId": "8bfa66f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass",
+  "codeReview": {
+    "summary": "The originally reviewed commit only fixed shared-state prose and the schema-cleanup command, so it failed its own fix contract at the time. In the current repository state, the previously missing shared-schema implementation is now present in `pgtest.Open()`, and concrete async queue/drain helper usage exists in code, so the earlier scrutiny failure has been addressed overall with no remaining issue attributable to this feature alone.",
+    "issues": []
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `test-platform-worker` skill needs a stronger rule that worker-facing shared-state files must not claim canonical topology changes unless the underlying code path changed in the same feature or the worker explicitly scopes the note as pending follow-up.",
+      "evidence": "The reviewed handoff for commit `8bfa66f` said `pgtest.Open()` was left unchanged, yet `.factory/library/environment.md` and `.factory/library/architecture.md` were updated to claim `pgtest.Open()` used `opentoggl_test`. This drift triggered the prior scrutiny failure even though the repository has since been corrected in `apps/backend/internal/testsupport/pgtest/pgtest.go`."
+    }
+  ],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/test-foundation/scrutiny/reviews/foundation-shared-schema-and-async-guardrails-fix.json",
+  "summary": "Reviewed the originally failed fix against its handoff, diff, transcript skeleton, skill guidance, and current repository state. The commit `8bfa66f` by itself overstated shared-schema alignment, but the current repo now has `pgtest.Open()` on the canonical shared `opentoggl_test` schema plus concrete async helper usage, so the original blocking gap has been fixed and no new code issue remains for this feature line."
+}

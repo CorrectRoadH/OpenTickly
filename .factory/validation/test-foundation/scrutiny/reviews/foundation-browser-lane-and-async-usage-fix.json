@@ -1,0 +1,45 @@
+{
+  "featureId": "foundation-browser-lane-and-async-usage-fix",
+  "reviewedAt": "2026-03-25T00:00:00Z",
+  "commitId": "61f3356e7d58cdf0ffbe53def215a389984048fa",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The feature does not fully implement the contract. The async additions only unit-test the helper primitives in isolation rather than wiring them into a real async-sensitive path, and the browser proof added under the committed feature used a non-canonical `.real-runtime.spec.ts` filename that directly hard-coded URLs instead of following the repository's E2E helper pattern.",
+    "issues": [
+      {
+        "file": "apps/backend/internal/platform/async_test.go",
+        "line": 17,
+        "severity": "blocking",
+        "description": "The new async tests only exercise `testsupport.NewTestQueueConfig()` and `DrainHelper` with synthetic goroutines / a bare `JobRunner`; they never wire the helpers into an existing async-sensitive backend path. The feature contract required at least one real async-sensitive test path to concretely use queue prefix, worker ownership, and drain-to-idle behavior, so this remains documentation-level proof rather than implementation coverage."
+      },
+      {
+        "file": "apps/website/e2e/foundation-smoke.real-runtime.spec.ts",
+        "line": 1,
+        "severity": "blocking",
+        "description": "The committed browser smoke proof landed under a `.real-runtime.spec.ts` filename even though mission guidance and `.factory/library/testing-lanes.md` say new E2E files must use normal `*.spec.ts` names because E2E already implies real runtime. This violated the canonical lane contract and later had to be renamed in a follow-up feature, so the reviewed feature did not actually leave the browser lane in the required final state."
+      },
+      {
+        "file": "apps/website/e2e/foundation-smoke.real-runtime.spec.ts",
+        "line": 15,
+        "severity": "non_blocking",
+        "description": "The smoke spec hard-codes `http://localhost:5173` URLs and manually performs registration instead of using the existing E2E auth helpers (`apps/website/e2e/fixtures/e2e-auth.ts`) that already resolve the configured base URL and assert shell readiness. Reusing the helpers would better match repository conventions and avoid duplicating setup logic."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The `test-platform-worker` skill tells workers to use `agent-browser` for a real browser smoke check when touching browser-visible runtime behavior, but this worker's transcript shows no `Skill(agent-browser)` invocation and relied only on Playwright file creation plus `--list` output.",
+      "evidence": "Skill: .factory/skills/test-platform-worker/SKILL.md step 5; transcript skeleton for worker session ca3e4229-a0c1-4805-a69a-64c0e834e71a contains no agent-browser tool call; handoff verification only reports `vp run test:e2e:website -- --list`."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The repository already has shared Playwright auth helpers for registration/login/session bootstrap, but the worker reimplemented those steps inline in the smoke test instead of following the established pattern. This convention is not captured in shared mission state.",
+      "evidence": "Existing helper: apps/website/e2e/fixtures/e2e-auth.ts; committed spec in git show 61f3356 adds direct form-fill/fetch logic instead of calling `registerE2eUser` or `readSessionBootstrap`."
+    }
+  ],
+  "addressesFailureFrom": null,
+  "summary": "Reviewed commit 61f3356 and the worker transcript/handoff. Fails review because the async coverage is only helper-level synthetic testing rather than a real async-sensitive path, and the browser proof was committed under the non-canonical `.real-runtime.spec.ts` naming that the mission explicitly forbids for new E2E files."
+}
