@@ -1,12 +1,12 @@
 {
   "featureId": "tracking-time-entry-editor-auth-navigation-fix",
-  "reviewedAt": "2026-03-25T05:14:34.578821+00:00",
+  "reviewedAt": "2026-03-25T05:26:27.163056+00:00",
   "commitId": "568e34d",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The reviewed feature does not contain a scoped implementation for the stated editor auth-navigation regression. The worker only reran tests and attached unrelated commit `568e34d`, while the actual auth-helper stabilization lives in earlier commits outside this feature, so the feature does not satisfy its description as an implementation unit.",
+    "summary": "The rerun/fix review still fails because the feature handoff does not point to a commit that implements the scoped auth-navigation repair. The attached commit only adds timer-page coverage, while the editor auth helper stabilization cited in the handoff predates this feature, so there is no auditable feature-local fix for the assigned regression.",
     "issues": [
       {
         "file": ".factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T03-50-49-542Z__tracking-time-entry-editor-auth-navigation-fix__958fdf47-fd52-41e7-895a-b616f1796d55.json",
@@ -16,24 +16,24 @@
       },
       {
         "file": ".factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T03-50-49-542Z__tracking-time-entry-editor-auth-navigation-fix__958fdf47-fd52-41e7-895a-b616f1796d55.json",
-        "line": 9,
+        "line": 10,
         "severity": "blocking",
-        "description": "This feature returned success without producing a feature-scoped implementation. The handoff says the issue was already resolved by earlier commits (`7bd0687`, `a7f3363`, `4fcb0d3`, `8260520`), but those commits predate this feature and mostly add/remove temporary debug logging around `registerE2eUser`; they are not tied to this feature handoff and do not create an auditable implementation unit for `tracking-time-entry-editor-auth-navigation-fix`."
+        "description": "The handoff claims the regression was already fixed by earlier commits (`7bd0687`, `a7f3363`, `4fcb0d3`, `8260520`), but those commits predate this feature and are not packaged as the scoped implementation unit requested for `tracking-time-entry-editor-auth-navigation-fix`. As reviewed, the fix feature reports a green rerun rather than a traceable repair commit."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The `frontend-test-worker` procedure is still being bypassed in practice for rerun-only flaky-fix work: this worker claimed success after green reruns without proving that the reported commit directly contained the stabilization change.",
-      "evidence": "`.factory/skills/frontend-test-worker/SKILL.md` step 10 requires verifying that the reported commit directly contains the feature's code changes, and step 11 forbids treating a rerun-only pass as completion for a flaky-fix feature. The transcript skeleton for worker `958fdf47-fd52-41e7-895a-b616f1796d55` shows only test reruns and git inspection before the handoff attached unrelated commit `568e34d`."
+      "observation": "The `frontend-test-worker` procedure is still being bypassed for rerun-only flaky-fix work: this worker reported success after green reruns without proving that the handoff commit directly contains the stabilization change.",
+      "evidence": "`.factory/skills/frontend-test-worker/SKILL.md` steps 10-11 require the handoff commit to directly contain the fix and forbid treating a rerun-only pass as completion for flaky-fix features. The transcript skeleton for worker `958fdf47-fd52-41e7-895a-b616f1796d55` shows test reruns plus git inspection before the handoff attached unrelated commit `568e34d`."
     },
     {
       "area": "knowledge",
-      "observation": "The repo-level shared state documents the `frontend-entry-editor` lane but does not capture that the auth-helper stabilization for this lane currently lives in `apps/website/e2e/fixtures/e2e-auth.ts` and may already be satisfied by earlier commits, which made this worker spend time rediscovering history instead of reviewing one canonical fix unit.",
-      "evidence": "`.factory/library/testing-lanes.md` lists the `frontend-entry-editor` lane, while `git log -- apps/website/e2e/time-entry-editor.real-runtime.spec.ts apps/website/e2e/fixtures/e2e-auth.ts` shows the only auth-helper stabilization in recent history is commit `94f7496` on `e2e-auth.ts`, not the feature's attached commit `568e34d`."
+      "observation": "The shared testing-lane documentation identifies the `frontend-entry-editor` lane but does not capture that this lane's auth setup currently depends on `apps/website/e2e/fixtures/e2e-auth.ts`, which is where the earlier auth-helper changes landed.",
+      "evidence": "`.factory/library/testing-lanes.md` lists the `frontend-entry-editor` lane, and `git log -- apps/website/e2e/time-entry-editor.real-runtime.spec.ts apps/website/e2e/fixtures/e2e-auth.ts` shows the recent auth-related commits (`7bd0687`, `a7f3363`, `4fcb0d3`, `8260520`) all targeted `apps/website/e2e/fixtures/e2e-auth.ts`, not the commit attached in this feature handoff."
     }
   ],
-  "addressesFailureFrom": null,
-  "summary": "Fail: the feature handoff proves the tests are green but does not implement or accurately reference the editor auth-navigation fix. The attached commit is unrelated to the editor lane, so scrutiny cannot accept this feature as the requested repair."
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-ui-followup/scrutiny/reviews/tracking-time-entry-editor-auth-navigation-fix.json",
+  "summary": "Fail: the rerun proved the suite is green, but this fix feature still does not provide a scoped, traceable implementation for the editor auth-navigation regression. The attached commit is unrelated to the editor lane, so the original scrutiny failure remains unresolved."
 }

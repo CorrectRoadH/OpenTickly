@@ -1,41 +1,44 @@
 ---
 title: Self-Hosting
-description: Self-host OpenToggl with PostgreSQL and Redis using the documented runtime shape, schema flow, and readiness checks.
+description: Self-host OpenToggl with a simple Docker Compose quick start.
 ---
 
-Self-hosting is a first-class part of the product story, not an afterthought.
+You can run OpenToggl with Docker Compose.
 
-## Baseline shape
+## Quick start
 
-The formal self-hosted baseline is:
+```bash
+mkdir -p opentoggl-self-hosted
+cd opentoggl-self-hosted
 
-- one `opentoggl` runtime image
-- one `postgres` dependency
-- one `redis` dependency
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
 
-Schema management is handled through `pgschema`, and the compose workflow is documented in the repository itself. In the self-hosted image, the runtime entrypoint applies desired state from `DATABASE_URL` before the API process starts.
+docker compose up -d
+docker compose ps
+```
 
-## Canonical startup order
+This starts:
 
-1. Start `postgres`, `redis`, and `opentoggl`
-2. The `opentoggl` entrypoint runs `pgschema apply`
-3. Verify `/healthz`, `/readyz`, and an HTTP smoke check
+- `opentoggl`
+- `postgres`
+- `redis`
 
-That order is important because self-hosted startup is defined around the same schema truth and readiness semantics as the rest of the repository.
+Then check that it is ready:
 
-## What operators control
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+curl -fsSI http://localhost:8080/
+```
 
-- deployment timing
-- infrastructure placement
-- environment overrides
-- upgrade and rollback cadence
-- persistent PostgreSQL data
+If those commands pass, the instance is up.
 
-## What stays the same
+## Notes
 
-- the public product contract
-- the self-hosted runtime shape documented in the repo
-- the readiness and smoke verification path
+- Default app URL: `http://localhost:8080`
+- If port `8080`, `5432`, or `6379` is already in use, override the compose env values before startup
+- The container applies schema state automatically during startup
 
 ## Where to start
 

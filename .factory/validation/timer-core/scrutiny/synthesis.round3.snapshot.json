@@ -1,6 +1,6 @@
 {
   "milestone": "timer-core",
-  "round": 4,
+  "round": 3,
   "status": "fail",
   "validatorsRun": {
     "test": {
@@ -55,10 +55,6 @@
       "isSystemic": true
     }
   ],
-  "orchestratorOverride": {
-    "timestamp": "2026-03-25T05:30:00Z",
-    "reason": "Scrutiny failure is overridden because the duplicate active mission status blocks cited for `timer-core-cross-workspace-header-backend-proof-and-traceability` were already corrected by follow-up feature `timer-core-source-doc-status-block-dedup`; current file state in `docs/research/toggl-timer-view-family.md` and `docs/research/toggl-timer-top-entry-form.md` shows exactly one active `Mission status` block in each file."
-  },
   "rejectedObservations": [],
-  "previousRound": ".factory/validation/timer-core/scrutiny/synthesis.json"
+  "previousRound": ".factory/validation/timer-core/scrutiny/synthesis.round2.json"
 }

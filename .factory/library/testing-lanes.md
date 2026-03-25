@@ -10,6 +10,7 @@ Named validation lanes used by this mission.
 - `backend-contract`
   - purpose: prove global single-running-timer semantics, current-timer transport behavior, and cross-workspace stop/update rules
   - primary surfaces: `apps/backend/internal/tracking/...`, `apps/backend/internal/bootstrap/...`
+  - current VAL-TIMER-001 proof anchor: `apps/backend/internal/tracking/application/regressions_test.go` -> `TestRunningTimerConflictAcrossWorkspaces`
 
 - `frontend-timer-page`
   - purpose: protect `/timer` page-family behavior, selected view continuity, workspace-scoped history, and cross-workspace running-header behavior

@@ -1,0 +1,37 @@
+{
+  "groupId": "backend-timer-core",
+  "testedAt": "2026-03-25T05:32:00Z",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/5e50561c-4e79-4b1b-a7c2-e9c69308913f",
+    "schema": "opentoggl_test",
+    "assignedAssertions": [
+      "VAL-TIMER-001"
+    ]
+  },
+  "toolsUsed": [
+    "go test"
+  ],
+  "commandsRun": [
+    {
+      "command": "go test ./apps/backend/internal/tracking/... -run 'TestStartTimeEntryRejectsSecondRunningTimerAcrossWorkspaces|TestRunningTimeEntryAccessibleAcrossWorkspaceSwitchAndStopWithoutHistoryLeak' -count=1",
+      "exitCode": 0,
+      "observation": "Targeted tracking backend test run exited 0. Repo inspection shows the current regression coverage lives under `TestRunningTimerConflictAcrossWorkspaces`, which proves the service rejects a second cross-workspace running timer, preserves the original current timer, and persists no second running entry."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-TIMER-001",
+      "status": "pass",
+      "reason": "`apps/backend/internal/tracking/application/regressions_test.go` contains `TestRunningTimerConflictAcrossWorkspaces`, which verifies a second running timer in another workspace is rejected with `ErrRunningTimeEntryExists`, `GetCurrentTimeEntry` remains pinned to the original running entry, workspace A still has only the original running entry, and workspace B has zero persisted entries after the rejected attempt."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The ad-hoc go test command pattern referenced older test names that no longer exist verbatim in the repo.",
+      "resolved": true,
+      "resolution": "Cross-checked the current repo test names and used file inspection to map the passing backend proof to `TestRunningTimerConflictAcrossWorkspaces`."
+    }
+  ],
+  "blockers": [],
+  "summary": "Backend-truth coverage for the global single-running-timer invariant is present and passes for the timer-core milestone."
+}

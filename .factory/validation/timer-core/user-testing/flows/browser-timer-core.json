@@ -1,0 +1,84 @@
+{
+  "groupId": "browser-timer-core",
+  "testedAt": "2026-03-25T05:31:00Z",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/5e50561c-4e79-4b1b-a7c2-e9c69308913f",
+    "appUrl": "http://127.0.0.1:5173",
+    "apiUrl": "http://127.0.0.1:8080",
+    "ports": {
+      "website": 5173,
+      "backend": 8080
+    },
+    "assignedAssertions": [
+      "VAL-ENTRY-001",
+      "VAL-TIMER-002",
+      "VAL-TIMER-003",
+      "VAL-TIMER-004",
+      "VAL-TIMER-005",
+      "VAL-CROSS-001",
+      "VAL-CROSS-003",
+      "VAL-CROSS-005"
+    ]
+  },
+  "toolsUsed": [
+    "vp run test:e2e:website"
+  ],
+  "commandsRun": [
+    {
+      "command": "vp run test:e2e:website -- e2e/timer-page.spec.ts --grep \"VAL-TIMER-002|VAL-TIMER-003|VAL-TIMER-004|VAL-TIMER-005|VAL-CROSS-001|VAL-CROSS-003|VAL-CROSS-005|VAL-ENTRY-001\" --workers 1",
+      "exitCode": 0,
+      "observation": "12 targeted real-runtime Playwright tests passed in 26.5s, covering timer view persistence, cross-workspace running-header continuity, editable/stoppable foreign-workspace running timers, workspace-scoped history, and running-header elapsed-time behavior."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-ENTRY-001",
+      "status": "pass",
+      "reason": "Playwright test `VAL-ENTRY-001: selected TimerView persists after refresh` passed, proving calendar/list/timesheet remain one /timer page family with persisted TimerView preference."
+    },
+    {
+      "id": "VAL-TIMER-002",
+      "status": "pass",
+      "reason": "Cross-workspace running-header Playwright test passed, proving the same running timer remains visible after workspace switch."
+    },
+    {
+      "id": "VAL-TIMER-003",
+      "status": "pass",
+      "reason": "Cross-workspace running-header Playwright test passed, proving the foreign-workspace running timer can be edited and stopped from the shared header."
+    },
+    {
+      "id": "VAL-TIMER-004",
+      "status": "pass",
+      "reason": "History-scoping Playwright tests passed, proving calendar/list/timesheet remain scoped to the current workspace and exclude foreign-workspace history."
+    },
+    {
+      "id": "VAL-TIMER-005",
+      "status": "pass",
+      "reason": "Running-header Playwright tests passed, proving live elapsed time derives from start time and stop clears back to idle state."
+    },
+    {
+      "id": "VAL-CROSS-001",
+      "status": "pass",
+      "reason": "Workspace-switch Playwright test passed, proving a global running timer stays visible while history immediately re-scopes to the newly selected workspace."
+    },
+    {
+      "id": "VAL-CROSS-003",
+      "status": "pass",
+      "reason": "Cross-workspace stop Playwright test passed, proving stopping a foreign-workspace running timer clears current state without leaking that stopped entry into current-workspace history."
+    },
+    {
+      "id": "VAL-CROSS-005",
+      "status": "pass",
+      "reason": "TimerView persistence Playwright test passed, proving the selected timer view survives workspace switch while the running timer remains visible."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "Manual browser replay was not required because the existing real-runtime Playwright lane already provides stronger seeded proof for these assertions.",
+      "resolved": true,
+      "resolution": "Used the canonical vp Playwright entrypoint with targeted grep for timer-core assertions."
+    }
+  ],
+  "blockers": [],
+  "summary": "All assigned browser-surface timer-core assertions passed through the targeted timer-page real-runtime Playwright lane on the reused 5173/8080 environment."
+}

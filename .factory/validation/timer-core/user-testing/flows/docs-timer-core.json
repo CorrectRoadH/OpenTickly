@@ -1,0 +1,49 @@
+{
+  "groupId": "docs-timer-core",
+  "testedAt": "2026-03-25T05:33:00Z",
+  "isolation": {
+    "missionDir": "/Users/opentoggl-ci/.factory/missions/5e50561c-4e79-4b1b-a7c2-e9c69308913f",
+    "assignedAssertions": [
+      "VAL-DOC-001",
+      "VAL-DOC-002",
+      "VAL-DOC-003"
+    ]
+  },
+  "toolsUsed": [
+    "rg",
+    "repo file inspection"
+  ],
+  "commandsRun": [
+    {
+      "command": "rg -n \"Mission status|Agent:|Status:|Current code differences:|Todo:|Fully implemented:\" docs/product/tracking.md docs/research/toggl-timer-top-entry-form.md docs/research/toggl-timer-view-family.md",
+      "exitCode": 0,
+      "observation": "Each directly used timer-core source doc showed exactly one active Mission status block with all canonical fields present. All three blocks report `Status: complete`, `Todo: none`, and `Fully implemented: yes`."
+    }
+  ],
+  "assertions": [
+    {
+      "id": "VAL-DOC-001",
+      "status": "pass",
+      "reason": "The closed timer-core source docs inspected for this milestone each contain exactly one active mission status block in the source file itself."
+    },
+    {
+      "id": "VAL-DOC-002",
+      "status": "pass",
+      "reason": "Each inspected status block includes the canonical `Agent`, `Status`, `Current code differences`, `Todo`, and `Fully implemented` fields."
+    },
+    {
+      "id": "VAL-DOC-003",
+      "status": "pass",
+      "reason": "The inspected blocks are internally consistent: each reports no remaining differences, `Todo: none`, and `Fully implemented: yes`, matching the verified timer-core implementation state."
+    }
+  ],
+  "frictions": [
+    {
+      "description": "The full mission closed-doc set contains more docs than the timer-core implementation features directly used.",
+      "resolved": true,
+      "resolution": "Scoped traceability validation to the directly used timer-core source docs evidenced by the completed milestone features and current mission status blocks."
+    }
+  ],
+  "blockers": [],
+  "summary": "Documentation traceability checks passed for the timer-core source docs directly used by the completed milestone features."
+}

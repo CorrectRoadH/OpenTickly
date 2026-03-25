@@ -1,0 +1,34 @@
+{
+  "featureId": "timer-core-cross-workspace-header-backend-proof-and-traceability",
+  "reviewedAt": "2026-03-25T05:14:27Z",
+  "commitId": "7835272",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "fail",
+  "codeReview": {
+    "summary": "The fix now adds the missing backend regression tied to the same seeded cross-workspace scenario as the existing browser proof, so the original backend-proof gap is closed. However, the feature still fails the mission traceability requirement because the directly used source docs were not updated in place; the worker appended second active mission status blocks instead of maintaining exactly one active block per file.",
+    "issues": [
+      {
+        "file": "docs/research/toggl-timer-view-family.md",
+        "line": 10,
+        "severity": "blocking",
+        "description": "Commit 7835272 appends a second active mission status block rather than updating the existing one. Mission AGENTS.md and .factory/library/documentation-traceability.md require exactly one active mission status block in each directly used source doc, so this file still violates the source-doc status-block contract."
+      },
+      {
+        "file": "docs/research/toggl-timer-top-entry-form.md",
+        "line": 10,
+        "severity": "blocking",
+        "description": "Commit 7835272 appends a second active mission status block rather than updating the existing one. Because the file already had an active block at the top, the traceability requirement remains unsatisfied here as well."
+      }
+    ]
+  },
+  "sharedStateObservations": [
+    {
+      "area": "skills",
+      "observation": "The worker followed the fullstack proof flow for backend/browser evidence, but the source-doc update step is still easy to misapply. Shared guidance should explicitly say to update the existing active mission block and never append a second one, because multiple workers have treated \u201cadd active mission status blocks\u201d as permission to duplicate them.",
+      "evidence": "tracking-fullstack-worker step 8 and mission AGENTS.md both require one active mission block per directly used doc, yet commit 7835272 adds duplicate blocks to docs/research/toggl-timer-view-family.md and docs/research/toggl-timer-top-entry-form.md."
+    }
+  ],
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/timer-core/scrutiny/reviews/timer-core-cross-workspace-header-backend-proof-and-traceability.json",
+  "summary": "Reviewed fix commit 7835272 and the worker transcript/handoff. The backend-truth proof is now present and aligned with the browser scenario, but the feature still fails overall because both required research docs contain duplicate active mission status blocks, so the traceability/source-doc requirement remains unmet."
+}

@@ -1,28 +1,34 @@
 {
   "featureId": "tracking-ui-running-timer-stop-button-regression-fix",
-  "reviewedAt": "2026-03-25T05:14:18.712361+00:00",
+  "reviewedAt": "2026-03-25T05:26:47.668476+00:00",
   "commitId": "45e067442aa1cbb68ce0d36c48e29384b9fcdcdb",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The reported handoff does not match the scoped implementation for this feature. The feature description requires a fix that restores the Stop timer assertion by addressing the real regression path, but the cited commit is a later refactor that does not touch the Playwright assertion path or the pollSessionBootstrap stabilization that actually fixed the flake.",
+    "summary": "The rerun handoff still fails review. The repository contains a real fix for the Stop timer regression, but this feature attributes the result to refactor commit 45e0674 instead of the actual stabilization commit 94f7496, so the scoped fix evidence still does not satisfy the feature requirement.",
     "issues": [
       {
         "file": ".factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T05-09-12-142Z__tracking-ui-running-timer-stop-button-regression-fix__cf4b2c45-e870-4d52-b347-41f05142563f.json",
         "line": 6,
         "severity": "blocking",
-        "description": "The handoff claims commit `45e0674` implemented this fix, but that commit is a timer-page refactor plus unrelated docs/research asset changes and does not modify `apps/website/e2e/timer-page.spec.ts` or `apps/website/e2e/fixtures/e2e-auth.ts`, where the actual stabilization lives. The concrete fix for transient workspace-switch session errors is in commit `94f7496`, so this feature does not provide a scoped implementation commit that directly contains the claimed behavior fix."
+        "description": "The handoff reports commit 45e0674 as the implementation commit even though that diff only refactors WorkspaceTimerPage into useTimerPageOrchestration and adds unrelated docs/research assets. It does not touch apps/website/e2e/timer-page.spec.ts or apps/website/e2e/fixtures/e2e-auth.ts, where the Stop timer stabilization actually landed."
+      },
+      {
+        "file": "apps/website/e2e/timer-page.spec.ts",
+        "line": 128,
+        "severity": "blocking",
+        "description": "The running-timer assertion path was restored by switching workspace-change poll callbacks to pollSessionBootstrap and keeping Stop timer assertions intact, but those changes live in commit 94f7496 rather than the reviewed feature commit. The rerun therefore still lacks a scoped implementation unit that directly contains the claimed fix."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The worker marked `frontend-test-worker` as followed even though the skill explicitly says that if the behavior was already fixed by an earlier commit or no scoped implementation was needed, the handoff must say so instead of pointing at an unrelated commit. This review found the actual fix in `94f7496`, while the handoff points at `45e0674`.",
-      "evidence": ".factory/skills/frontend-test-worker/SKILL.md step 10 requires the handoff commitId to directly contain the feature changes; the worker transcript and handoff instead report commit `45e067442aa1cbb68ce0d36c48e29384b9fcdcdb`, while `git show --stat 94f74960a076c6dba6ba112823a8dd4329f07743` is the commit that adds `pollSessionBootstrap` and updates `timer-page.spec.ts`."
+      "observation": "frontend-test-worker guidance already says rerun-only success is not enough for a flaky-fix and that the handoff commit must directly contain the fix or explicitly say the behavior was already fixed earlier. The worker transcript identified 94f7496 as the real pollSessionBootstrap stabilization but still handed off unrelated refactor commit 45e0674 as the feature commit.",
+      "evidence": ".factory/skills/frontend-test-worker/SKILL.md steps 10-11 require direct commit traceability for fixes; worker transcript for session cf4b2c45-e870-4d52-b347-41f05142563f states \"the issue has been addressed by the previous worker's commit 94f7496\" before ending the feature run with commitId 45e067442aa1cbb68ce0d36c48e29384b9fcdcdb."
     }
   ],
-  "addressesFailureFrom": null,
-  "summary": "Fail: the Stop timer regression appears fixed in the repository, but this feature handoff misattributes the fix to an unrelated refactor commit, so the scoped implementation evidence does not satisfy the feature review requirements."
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-ui-followup/scrutiny/reviews/tracking-ui-running-timer-stop-button-regression-fix.json",
+  "summary": "Fail: the Stop timer regression is green in the repo, but this rerun still does not provide scoped fix evidence because it points to unrelated refactor commit 45e0674 instead of the actual pollSessionBootstrap stabilization in 94f7496."
 }

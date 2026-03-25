@@ -52,11 +52,13 @@ type TimeEntryEditorDialogProps = {
   isCreatingProject: boolean;
   isCreatingTag: boolean;
   isDeleting?: boolean;
+  isDirty?: boolean;
   isPrimaryActionPending: boolean;
   isSaving: boolean;
   onClose: () => void;
   onCreateProject: (name: string) => Promise<void> | void;
   onCreateTag: (name: string) => Promise<void> | void;
+  onDiscard?: () => void;
   onDuplicate?: () => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
   onDescriptionChange: (value: string) => void;
@@ -86,11 +88,13 @@ export function TimeEntryEditorDialog({
   isCreatingProject,
   isCreatingTag,
   isDeleting = false,
+  isDirty = false,
   isPrimaryActionPending,
   isSaving,
   onClose,
   onCreateProject,
   onCreateTag,
+  onDiscard,
   onDuplicate,
   onDelete,
   onDescriptionChange,
@@ -114,6 +118,7 @@ export function TimeEntryEditorDialog({
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
   const [picker, setPicker] = useState<"project" | "tag" | null>(null);
   const [timePicker, setTimePicker] = useState<"start" | "stop" | null>(null);
+  const [timePickerAnchor, setTimePickerAnchor] = useState<{ left: number; top: number } | null>(null);
   const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
   const [projectComposerOpen, setProjectComposerOpen] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
@@ -121,6 +126,7 @@ export function TimeEntryEditorDialog({
   const [tagDraftName, setTagDraftName] = useState("");
   const [search, setSearch] = useState("");
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
+  const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
   const startIso = entry.start ?? entry.at ?? new Date().toISOString();
   const stopIso = entry.stop ?? null;
   const start = new Date(startIso);
@@ -160,6 +166,14 @@ export function TimeEntryEditorDialog({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        if (showDiscardConfirmation) {
+          setShowDiscardConfirmation(false);
+          return;
+        }
+        if (isDirty) {
+          setShowDiscardConfirmation(true);
+          return;
+        }
         onClose();
       }
     }
@@ -168,12 +182,16 @@ export function TimeEntryEditorDialog({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [onClose, isDirty, showDiscardConfirmation]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement;
       if (!target.closest('[data-testid="time-entry-editor-dialog"]')) {
+        if (isDirty) {
+          setShowDiscardConfirmation(true);
+          return;
+        }
         onClose();
       }
     }
@@ -182,7 +200,7 @@ export function TimeEntryEditorDialog({
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [onClose]);
+  }, [onClose, isDirty]);
 
   useEffect(() => {
     if (picker !== "project") {
@@ -298,7 +316,13 @@ export function TimeEntryEditorDialog({
           <button
             aria-label="Close editor"
             className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[#b9b9be] transition hover:bg-white/6 hover:text-white"
-            onClick={onClose}
+            onClick={() => {
+              if (isDirty) {
+                setShowDiscardConfirmation(true);
+                return;
+              }
+              onClose();
+            }}
             type="button"
           >
             ×

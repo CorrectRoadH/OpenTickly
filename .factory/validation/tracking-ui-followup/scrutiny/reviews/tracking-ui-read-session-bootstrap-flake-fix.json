@@ -1,28 +1,28 @@
 {
   "featureId": "tracking-ui-read-session-bootstrap-flake-fix",
-  "reviewedAt": "2026-03-25T05:14:01.938555+00:00",
+  "reviewedAt": "2026-03-25T05:26:57.837105+00:00",
   "commitId": "94f74960a076c6dba6ba112823a8dd4329f07743",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The commit does add a polling-safe session bootstrap helper and updates workspace-switch polls to use it, which addresses the reported transient 500 failure mode. However, the same commit also rewrites the existing VAL-CROSS-005 timer-page test to assert running-timer continuity, a scope expansion that was not part of the assigned flake fix and that duplicated behavior already being added in a follow-up commit. That unrelated test rewrite means the scoped fix commit was not limited to stabilizing readSessionBootstrap polling.",
+    "summary": "The fix commit does add a polling-safe session bootstrap helper and updates workspace-switch polls to use it, which addresses the reported transient 500 failure mode. But the same commit also broadens VAL-CROSS-005 into a running-timer continuity scenario with new setup, assertions, and cleanup that is outside the scoped flake fix and was split into its own follow-up commit immediately afterward.",
     "issues": [
       {
         "file": "apps/website/e2e/timer-page.spec.ts",
         "line": 1146,
         "severity": "blocking",
-        "description": "This flaky-fix feature was scoped to stabilizing readSessionBootstrap polling after workspace switch, but the same commit also rewrote VAL-CROSS-005 into a running-timer continuity scenario with new setup, assertions, and cleanup. That broad behavior/test expansion is unrelated to the bootstrap 500 flake and overlaps follow-up work that landed immediately afterward, so the feature commit does not stay scoped to the requested stabilization change."
+        "description": "This feature was scoped to stabilizing readSessionBootstrap polling after workspace switch, but commit 94f7496 also rewrote VAL-CROSS-005 into a broader running-timer continuity scenario with extra project setup, timer start/stop flow, and current-timer identity assertions. The frontend-test-worker skill requires flaky-fix work to stay narrowly scoped, and git history shows this broader proof was subsequently isolated in commit a7b08e0, so the reviewed commit is not cleanly limited to the assigned session-bootstrap stabilization."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The frontend-test-worker skill tells workers to use agent-browser for manual verification unless browser-only risk is absent or tooling conflicts block it, but the reviewed transcript completed without any browser-tool attempt and without recording a blocker or rationale in the handoff.",
-      "evidence": "Skill file .factory/skills/frontend-test-worker/SKILL.md step 9 requires agent-browser or a recorded exception; transcript skeleton for workerSessionId 73a1e049-5714-415f-ab21-fd3577c7ab24 shows only file/tool/test commands and the handoff's interactiveChecks array is empty."
+      "observation": "The handoff marked skill procedure as followed even though the worker skipped the skill's required manual browser verification path without recording a blocking reason or exception.",
+      "evidence": ".factory/skills/frontend-test-worker/SKILL.md step 9 requires agent-browser verification or a documented exception; workerSessionId 73a1e049-5714-415f-ab21-fd3577c7ab24 recorded no interactive checks in the handoff and the transcript skeleton shows no browser-tool attempt."
     }
   ],
-  "addressesFailureFrom": null,
-  "summary": "Fail: the commit contains the intended pollSessionBootstrap stabilization, but it also folds in a larger VAL-CROSS-005 test rewrite outside the requested flake-fix scope, so the reviewed feature is not cleanly limited to the assigned session-bootstrap fix."
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-ui-followup/scrutiny/reviews/tracking-ui-read-session-bootstrap-flake-fix.json",
+  "summary": "Fail: commit 94f7496 contains the intended pollSessionBootstrap stabilization, but it also bundles an unrelated VAL-CROSS-005 running-timer test expansion, so the fix review still fails on scope discipline and traceability."
 }

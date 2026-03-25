@@ -1,28 +1,33 @@
 {
   "featureId": "tracking-ui-settings-success-toast-regression-fix",
-  "reviewedAt": "2026-03-25T05:13:56.841848+00:00",
+  "reviewedAt": "2026-03-25T05:26:48.281913+00:00",
   "commitId": "7835272",
   "transcriptSkeletonReviewed": true,
   "diffReviewed": true,
   "status": "fail",
   "codeReview": {
-    "summary": "The current implementation and runtime-facing test already prove the canonical Success toast and persistence behavior, but this feature handoff points at commit 7835272, whose scoped diff does not contain the settings toast fix. The actual fix landed earlier in commit 266727a, so the feature does not satisfy the worker-skill requirement to identify the commit that directly contains the feature change.",
+    "summary": "The runtime and current Playwright spec now prove the canonical visible success confirmation after saving workspace settings, but the reviewed fix feature still fails because the worker handoff cites commit 7835272 even though that commit does not contain any settings-toast change. The actual assertion repair was already landed in commit 266727a, so this rerun/fix feature is not traceable to a scoped implementation unit that matches its description.",
     "issues": [
       {
         "file": "apps/website/e2e/settings-and-profile.real-runtime.spec.ts",
         "line": 64,
         "severity": "blocking",
-        "description": "The handoff claims commit 7835272 implemented this settings toast regression fix, but that commit only changes backend tracking regressions and docs; it does not touch the settings/profile spec or settings UI. The real fix is in earlier commit 266727a, which replaced the nonexistent workspace-settings-toast test id assertion with the visible Success!/Your workspace has been updated text assertions. This feature therefore lacks a commit-local implementation matching its claimed scope."
+        "description": "The reviewed handoff attributes this fix to commit 7835272, but git show 7835272 contains only backend tracking regression work and no changes to the settings/profile Playwright spec or settings UI. The success-toast assertion repair at lines 64-65 was actually introduced earlier in commit 266727a, so the feature does not satisfy the skill requirement that a claimed code fix point to the commit that directly contains the scoped change."
       }
     ]
   },
   "sharedStateObservations": [
     {
       "area": "skills",
-      "observation": "The frontend-test-worker skill explicitly requires the handoff commitId to directly contain the feature code changes or to say that no scoped implementation was needed instead of pointing at an unrelated commit. This worker reported commit 7835272 even though the settings toast fix landed in 266727a.",
-      "evidence": "Skill: .factory/skills/frontend-test-worker/SKILL.md step 10; handoff: /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T04-59-09-502Z__tracking-ui-settings-success-toast-regression-fix__a3cb088e-fadd-43dc-b23a-95405668ea5b.json; git show 7835272 --stat shows only backend/docs changes; git show 266727a -- apps/website/e2e/settings-and-profile.real-runtime.spec.ts contains the toast assertion fix."
+      "observation": "The frontend-test-worker skill already says rerun-only passes must not claim success for fix features and that handoff commitId must directly contain the scoped fix. This worker still handed off commit 7835272 after confirming the regression had already been fixed by commit 266727a.",
+      "evidence": "Skill: /Users/opentoggl-ci/Code/opentoggl/.factory/skills/frontend-test-worker/SKILL.md steps 10-11; transcript skeleton for worker session a3cb088e-fadd-43dc-b23a-95405668ea5b shows the worker discovered commit 266727a fixed apps/website/e2e/settings-and-profile.real-runtime.spec.ts:64-65, then ended the feature with commitId 7835272. Handoff file: /Users/opentoggl-ci/.factory/missions/e037dfea-351f-4685-b798-ddaaec9dfb1c/handoffs/2026-03-25T04-59-09-502Z__tracking-ui-settings-success-toast-regression-fix__a3cb088e-fadd-43dc-b23a-95405668ea5b.json."
+    },
+    {
+      "area": "knowledge",
+      "observation": "The skill instructs workers to read .factory/library/user-testing.md, but this repo stores the file at .factory/library/user-testing.md under the repository root, not in the mission home directory. The worker transcript shows confusion around skill-path resolution and also reported a nonexistent external skill path as a discovered issue.",
+      "evidence": "Repo library listing: /Users/opentoggl-ci/Code/opentoggl/.factory/library/user-testing.md exists; attempted read of /Users/opentoggl-ci/.factory/library/user-testing.md fails with ENOENT; transcript skeleton records exploration of skill paths before proceeding."
     }
   ],
-  "addressesFailureFrom": null,
-  "summary": "Fail: the underlying toast regression is already fixed and the current test remains strong, but this reviewed feature does not point to a commit that actually implements the fix, so the assigned feature handoff is not traceable to its claimed scoped change."
+  "addressesFailureFrom": "/Users/opentoggl-ci/Code/opentoggl/.factory/validation/tracking-ui-followup/scrutiny/reviews/tracking-ui-settings-success-toast-regression-fix.json",
+  "summary": "Fail: the settings success toast is currently implemented and the test is correctly aligned to the visible Success!/Your workspace has been updated confirmation, but this rerun feature still does not provide a matching scoped fix commit because the cited handoff commit is unrelated to the actual repair."
 }
