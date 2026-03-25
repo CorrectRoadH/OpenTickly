@@ -2,7 +2,7 @@ import { defineConfig } from "vite-plus";
 
 export default defineConfig({
   fmt: {
-    ignorePatterns: ["docs/upstream/**", "openapi/**"],
+    ignorePatterns: ["docs/upstream/**", "openapi/**", ".factory/**"],
   },
   staged: {
     "vite.config.ts": "vp check --fix",
@@ -14,7 +14,7 @@ export default defineConfig({
     "openapi/*.json": "vp check --fix",
   },
   lint: {
-    ignorePatterns: ["docs/upstream/**", "openapi/**"],
+    ignorePatterns: ["docs/upstream/**", "openapi/**", ".factory/**"],
     options: { typeAware: true, typeCheck: true },
   },
   test: {
