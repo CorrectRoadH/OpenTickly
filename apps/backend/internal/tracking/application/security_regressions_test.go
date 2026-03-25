@@ -452,10 +452,10 @@ func TestSameWorkspaceUserACannotUpdateUserBTimeEntry(t *testing.T) {
 	// using user A's userID - this must be denied.
 	newDescription := "User A's malicious update attempt"
 	_, err = trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
-		WorkspaceID:   workspaceID,
-		TimeEntryID:   memberEntry.ID,
-		UserID:        ownerID, // Attacker using their own userID
-		Description:   &newDescription,
+		WorkspaceID: workspaceID,
+		TimeEntryID: memberEntry.ID,
+		UserID:      ownerID, // Attacker using their own userID
+		Description: &newDescription,
 	})
 	// The write must be denied - either by returning an error or by not mutating the entry.
 	// If it returns ErrTimeEntryNotFound, that's the correct denial (authorization failure
@@ -784,6 +784,188 @@ func TestSameWorkspaceUserACannotPatchUserBTimeEntries(t *testing.T) {
 	// ownerReadback.Description would be attackerPatchDescription. We check this is NOT the case.
 	if ownerReadback.Description == attackerPatchDescription {
 		t.Fatalf("VAL-SEC-TRACK-004: user A's own entry was partially mutated by failed batch; description changed to attacker value %q", attackerPatchDescription)
+	}
+}
+
+// TestSameWorkspaceUserACannotRestartUserBTimeEntry verifies VAL-SEC-TRACK-003:
+// If user A and user B belong to the same workspace, user A cannot restart
+// user B's stopped time entry through the tracking write routes.
+// "Restart" means calling UpdateTimeEntry with Stop=nil to clear the stop time
+// and turn a stopped entry back into a running timer.
+// A denied write must leave the canonical stored facts for user B unchanged.
+func TestSameWorkspaceUserACannotRestartUserBTimeEntry(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, ownerID, memberID := seedTwoUsersInOneWorkspace(t, ctx, database, "sec-restart")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// User B creates a stopped time entry
+	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
+	stop := time.Date(2026, 3, 23, 11, 0, 0, 0, time.UTC)
+	memberEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID,
+		Description: "User B's stopped entry to restart",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "security-test",
+	})
+	if err != nil {
+		t.Fatalf("user B create stopped entry: %v", err)
+	}
+	if memberEntry.Stop == nil {
+		t.Fatalf("user B's entry should have a stop time")
+	}
+	originalStop := *memberEntry.Stop
+
+	// Verify user B's current timer is null (idle state) before restart attempt
+	memberCurrentBefore, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer before restart attempt: %v", err)
+	}
+	if memberCurrentBefore.ID != 0 {
+		t.Fatalf("user B should have no running timer before restart attempt, got ID %d", memberCurrentBefore.ID)
+	}
+
+	// VAL-SEC-TRACK-003: user A (owner) attempts to restart user B's stopped entry
+	// by calling UpdateTimeEntry with Stop=nil (to clear the stop time and make it running).
+	// This must be denied because GetTimeEntry requires (workspaceID, userID, timeEntryID)
+	// to match - user A's userID won't find user B's entry.
+	_, err = trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		TimeEntryID: memberEntry.ID,
+		UserID:      ownerID, // Attacker using their own userID
+		Stop:        nil,     // nil to attempt to clear stop and restart
+	})
+	// The write must be denied - GetTimeEntry won't find user B's entry with user A's userID.
+	if err != nil && err != trackingapplication.ErrTimeEntryNotFound {
+		t.Fatalf("UpdateTimeEntry with attacker userID (restart attempt) should return error, got: %v", err)
+	}
+
+	// VAL-SEC-TRACK-003 core assertion: direct readback proves user B's entry is still stopped.
+	// If the restart had succeeded, Stop would be nil and the entry would be running.
+	memberReadback, err := trackingService.GetTimeEntry(ctx, workspaceID, memberID, memberEntry.ID)
+	if err != nil {
+		t.Fatalf("user B direct readback after denied restart: %v", err)
+	}
+	if memberReadback.Stop == nil {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's entry was restarted by attacker; Stop should still be set, got nil")
+	}
+	if !memberReadback.Stop.Equal(originalStop) {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's entry stop time was changed by attacker restart attempt; expected %s, got %s", originalStop, *memberReadback.Stop)
+	}
+
+	// Also verify via GetCurrentTimeEntry that user B still has no running timer
+	// (the denied restart did not create a running timer for user B)
+	memberCurrentAfter, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer after denied restart: %v", err)
+	}
+	if memberCurrentAfter.ID != 0 {
+		t.Fatalf("VAL-SEC-TRACK-003: user B has a running timer after denied restart; expected null/ID=0, got ID %d", memberCurrentAfter.ID)
+	}
+
+	// Verify user A's current timer is still null (attacker cannot see/control user B's state)
+	ownerCurrent, err := trackingService.GetCurrentTimeEntry(ctx, ownerID)
+	if err != nil {
+		t.Fatalf("user A get current timer after denied restart: %v", err)
+	}
+	if ownerCurrent.ID != 0 {
+		t.Fatalf("user A's current timer should be null/empty after denied restart, got ID %d", ownerCurrent.ID)
+	}
+}
+
+// TestSameWorkspaceUserACannotContinueUserBTimeEntry verifies VAL-SEC-TRACK-003:
+// If user A and user B belong to the same workspace, user A cannot "continue"
+// user B's stopped time entry by modifying it to be running.
+// This tests the case where the attacker provides a new Start time without a Stop
+// to try to turn a stopped entry into a running timer.
+// A denied write must leave the canonical stored facts for user B unchanged.
+func TestSameWorkspaceUserACannotContinueUserBTimeEntry(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, ownerID, memberID := seedTwoUsersInOneWorkspace(t, ctx, database, "sec-continue")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	// User B creates a stopped time entry
+	start := time.Date(2026, 3, 23, 10, 0, 0, 0, time.UTC)
+	stop := time.Date(2026, 3, 23, 11, 0, 0, 0, time.UTC)
+	memberEntry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      memberID,
+		Description: "User B's stopped entry to continue",
+		Start:       start,
+		Stop:        &stop,
+		CreatedWith: "security-test",
+	})
+	if err != nil {
+		t.Fatalf("user B create stopped entry: %v", err)
+	}
+	if memberEntry.Stop == nil {
+		t.Fatalf("user B's entry should have a stop time")
+	}
+	originalStop := *memberEntry.Stop
+
+	// Verify user B's current timer is null (idle state) before continue attempt
+	memberCurrentBefore, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer before continue attempt: %v", err)
+	}
+	if memberCurrentBefore.ID != 0 {
+		t.Fatalf("user B should have no running timer before continue attempt, got ID %d", memberCurrentBefore.ID)
+	}
+
+	// VAL-SEC-TRACK-003: user A (owner) attempts to "continue" user B's stopped entry
+	// by calling UpdateTimeEntry with a new Start time but no Stop (to make it running).
+	// This must be denied because GetTimeEntry requires (workspaceID, userID, timeEntryID)
+	// to match - user A's userID won't find user B's entry.
+	newStart := time.Now().UTC()
+	_, err = trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		TimeEntryID: memberEntry.ID,
+		UserID:      ownerID, // Attacker using their own userID
+		Start:       &newStart,
+		Stop:        nil, // nil to attempt to make it a running entry
+	})
+	// The write must be denied - GetTimeEntry won't find user B's entry with user A's userID.
+	if err != nil && err != trackingapplication.ErrTimeEntryNotFound {
+		t.Fatalf("UpdateTimeEntry with attacker userID (continue attempt) should return error, got: %v", err)
+	}
+
+	// VAL-SEC-TRACK-003 core assertion: direct readback proves user B's entry is still stopped.
+	// If the continue had succeeded, Stop would be nil and the entry would be running.
+	memberReadback, err := trackingService.GetTimeEntry(ctx, workspaceID, memberID, memberEntry.ID)
+	if err != nil {
+		t.Fatalf("user B direct readback after denied continue: %v", err)
+	}
+	if memberReadback.Stop == nil {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's entry was continued by attacker; Stop should still be set, got nil")
+	}
+	if !memberReadback.Stop.Equal(originalStop) {
+		t.Fatalf("VAL-SEC-TRACK-003: user B's entry stop time was changed by attacker continue attempt; expected %s, got %s", originalStop, *memberReadback.Stop)
+	}
+
+	// Also verify via GetCurrentTimeEntry that user B still has no running timer
+	// (the denied continue did not create a running timer for user B)
+	memberCurrentAfter, err := trackingService.GetCurrentTimeEntry(ctx, memberID)
+	if err != nil {
+		t.Fatalf("user B get current timer after denied continue: %v", err)
+	}
+	if memberCurrentAfter.ID != 0 {
+		t.Fatalf("VAL-SEC-TRACK-003: user B has a running timer after denied continue; expected null/ID=0, got ID %d", memberCurrentAfter.ID)
+	}
+
+	// Verify user A's current timer is still null (attacker cannot see/control user B's state)
+	ownerCurrent, err := trackingService.GetCurrentTimeEntry(ctx, ownerID)
+	if err != nil {
+		t.Fatalf("user A get current timer after denied continue: %v", err)
+	}
+	if ownerCurrent.ID != 0 {
+		t.Fatalf("user A's current timer should be null/empty after denied continue, got ID %d", ownerCurrent.ID)
 	}
 }
 
