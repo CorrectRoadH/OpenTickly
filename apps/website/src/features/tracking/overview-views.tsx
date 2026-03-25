@@ -236,10 +236,13 @@ export function CalendarView({
   onSelectSlot,
   onSelectSubviewDate,
   onSubviewChange,
+  onZoomIn,
+  onZoomOut,
   selectedSubviewDateIso,
   subview = "week",
   timezone,
   weekDays,
+  zoom = 0,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
@@ -249,13 +252,23 @@ export function CalendarView({
   onSelectSlot?: (slot: { dayIso: string; minute: number }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
   onSubviewChange?: (subview: "day" | "week") => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedSubviewDateIso?: string;
   subview?: "day" | "week";
   timezone: string;
   weekDays: Date[];
+  zoom?: number;
 }): ReactElement {
-  const hours = Array.from({ length: 24 }, (_, index) => index);
+  // zoom: -1 = fewer hours (zoomed out), 0 = default, +1 = more hours (zoomed in)
+  const hourRanges: Record<number, [number, number]> = {
+    "-1": [6, 20],
+    "0": [1, 23],
+    "1": [0, 24],
+  };
+  const [hourStart, hourEnd] = hourRanges[zoom] ?? hourRanges["0"];
+  const hours = Array.from({ length: hourEnd - hourStart }, (_, index) => hourStart + index);
   const now = new Date(nowMs ?? Date.now());
   const subviewRef = useRef<HTMLDivElement>(null);
   const subviewOptions: Array<"day" | "week"> = ["day", "week"];
@@ -337,6 +350,26 @@ export function CalendarView({
             type="button"
           >
             Week
+          </button>
+        </div>
+        <div className="flex items-center gap-1" data-testid="calendar-zoom-controls">
+          <button
+            aria-label="Decrease zoom"
+            className="flex size-7 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            disabled={zoom <= -1}
+            onClick={onZoomOut}
+            type="button"
+          >
+            <TrackingIcon className="size-3" name="minus" />
+          </button>
+          <button
+            aria-label="Increase zoom"
+            className="flex size-7 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            disabled={zoom >= 1}
+            onClick={onZoomIn}
+            type="button"
+          >
+            <TrackingIcon className="size-3" name="plus" />
           </button>
         </div>
       </div>

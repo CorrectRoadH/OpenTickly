@@ -153,7 +153,7 @@ export function getCalendarHours(
   });
 
   if (hours.size === 0) {
-    return Array.from({ length: 8 }, (_, index) => index + 9);
+    return Array.from({ length: 22 }, (_, index) => index + 1);
   }
 
   return [...hours].sort((left, right) => left - right);

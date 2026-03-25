@@ -21,6 +21,7 @@ type TrackingIconName =
   | "list"
   | "members"
   | "menu"
+  | "minus"
   | "more"
   | "overview"
   | "plan"
@@ -193,6 +194,8 @@ function renderIcon(name: TrackingIconName): ReactElement {
           <path d="m10.5 8 2-2M10.5 8l2 2" />
         </>
       );
+    case "minus":
+      return <path d="M3 8h10" />;
     case "more":
       return (
         <>

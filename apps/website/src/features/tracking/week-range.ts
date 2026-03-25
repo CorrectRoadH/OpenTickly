@@ -91,13 +91,12 @@ export function formatWeekRangeLabel(date: Date): string {
   const end = weekDays[DAYS_IN_WEEK - 1];
   const startMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(start);
   const endMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(end);
-  const year = end.getFullYear();
 
   if (start.getMonth() === end.getMonth()) {
-    return `${startMonth} ${start.getDate()} - ${end.getDate()}, ${year}`;
+    return `W${weekNumber} (${startMonth} ${start.getDate()} - ${end.getDate()})`;
   }
 
-  return `${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()}, ${year}`;
+  return `W${weekNumber} (${startMonth} ${start.getDate()} - ${endMonth} ${end.getDate()})`;
 }
 
 export function resolveIsoWeekNumber(date: Date): number {

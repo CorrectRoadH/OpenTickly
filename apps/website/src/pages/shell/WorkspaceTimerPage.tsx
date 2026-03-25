@@ -202,9 +202,12 @@ export function WorkspaceTimerPage(): ReactElement {
             hours={orch.calendarHours}
             nowMs={orch.nowMs}
             onEditEntry={orch.handleEntryEdit}
+            onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
+            onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
             runningEntry={orch.runningEntry}
             timezone={orch.timezone}
             weekDays={orch.weekDays}
+            zoom={orch.calendarZoom}
           />
         ) : null}
         {!orch.timeEntriesQuery.isPending &&

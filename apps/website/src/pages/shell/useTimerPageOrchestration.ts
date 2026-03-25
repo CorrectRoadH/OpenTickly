@@ -144,6 +144,8 @@ export interface TimerPageOrchestration {
   // View state
   view: TimerViewMode;
   setView: (next: TimerViewMode) => void;
+  calendarZoom: number;
+  setCalendarZoom: (zoom: number) => void;
 
   // Time state
   nowMs: number;
@@ -260,6 +262,13 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const setView = useCallback((next: TimerViewMode) => {
     persistTimerView(next);
     setViewState(next);
+  }, []);
+
+  // Calendar zoom level: -1 = zoomed out (fewer hours), 0 = default, +1 = zoomed in (more hours)
+  const [calendarZoom, setCalendarZoomState] = useState(0);
+
+  const setCalendarZoom = useCallback((zoom: number) => {
+    setCalendarZoomState(Math.max(-1, Math.min(1, zoom)));
   }, []);
 
   // Time state
@@ -814,6 +823,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     // View state
     view,
     setView,
+    calendarZoom,
+    setCalendarZoom,
 
     // Time state
     nowMs,
