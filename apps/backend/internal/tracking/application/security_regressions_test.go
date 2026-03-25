@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,6 +16,21 @@ import (
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 )
+
+// securityTestIDCounter provides within-run uniqueness for security test IDs.
+// The counter increments atomically to ensure parallel test safety within a single run.
+var securityTestIDCounter int64 = 0
+
+// nextSecurityBaseID returns a collision-safe base ID for security test user creation.
+// It combines the current nanosecond time (for cross-run uniqueness, avoiding stale data
+// collisions) with an atomic counter (for within-run parallel test uniqueness).
+// This replaces the problematic time.Now().UnixNano() % 100000000000 pattern that
+// caused collisions under parallel execution.
+func nextSecurityBaseID() int64 {
+	nano := time.Now().UnixNano()
+	offset := atomic.AddInt64(&securityTestIDCounter, 1)
+	return nano + offset
+}
 
 // seedTwoUsersInOneWorkspace creates a workspace with two users (owner and member)
 // in the same workspace, returning workspaceID, ownerUserID, memberUserID.
@@ -34,8 +50,8 @@ func seedTwoUsersInOneWorkspace(t *testing.T, ctx context.Context, database *pgt
 	}
 	workspaceID = int64(workspace.ID())
 
-	// Create unique IDs based on timestamp to avoid parallel test conflicts
-	baseID := time.Now().UnixNano() % 100000000000
+	// Create unique IDs using deterministic counter for parallel-safe execution
+	baseID := nextSecurityBaseID()
 	ownerUserID = baseID
 	memberUserID = baseID + 1
 
