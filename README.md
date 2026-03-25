@@ -8,7 +8,7 @@
 
 OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
-Project status: OpenToggl is currently in a very early stage. The first self-hosted release is `v0.0.1`, aimed at early adopters who want to try the stack, validate deployment, and track progress as the product matures.
+> Project status: OpenToggl is currently in a very early stage.
 
 It exists for a simple reason: Toggl is too expensive for many individuals and teams, too closed for private-first workflows, and too rate-limited for serious AI and automation use.
 
@@ -16,27 +16,18 @@ OpenToggl aims to match Toggl's product surface, so you can keep the workflow yo
 
 ## Why OpenToggl
 
-Toggl works. But for a lot of people, it stops working the moment you care about cost, control, or automation.
+Toggl works until cost, control, or automation stop being negotiable.
 
 OpenToggl is built for that gap.
 
 - Free instead of expensive recurring pricing
-- Private-first instead of SaaS-first
+- Private-first instead of keeping your time data on someone else's infrastructure
 - Self-hostable instead of locked to one vendor
 - AI-friendly instead of rate-limited into uselessness
 - Built to preserve the Toggl-shaped workflow instead of inventing a different product you have to relearn
+- Better suited for heavy API usage, where `30/hour` is nowhere close to enough for real agents and automation
 
-## Why Not Just Use Toggl
-
-Because the constraints are real.
-
-- Pricing adds up fast
-- Your time data lives on someone else's infrastructure
-- Self-hosting is not the default model
-- Heavy API usage gets punished
-- AI agents need high-rate read and write access, and `30/hour` is nowhere close to enough
-
-If you want a Toggl-compatible workflow without Toggl's pricing, control, and rate-limit constraints, that is exactly what OpenToggl is for.
+If you want a Toggl-compatible workflow without Toggl's pricing pressure, vendor dependence, and API ceiling, that is exactly what OpenToggl is for.
 
 ## Built for AI
 
@@ -83,21 +74,4 @@ toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com
 
 - Repository: `https://github.com/CorrectRoadH/opentoggl`
 - Self-hosting docs: `./docs/self-hosting/docker-compose.md`
-- Product docs: `./docs/product/landing.md`
 - CLI: `https://github.com/CorrectRoadH/toggl-cli`
-
-## Self-Hosting Environment
-
-The default self-hosted Docker Compose baseline uses these runtime values:
-
-- `OPENTOGGL_IMAGE=ghcr.io/correctroadh/opentoggl:latest`
-- `OPENTOGGL_PORT=8080`
-- `OPENTOGGL_POSTGRES_DB=opentoggl`
-- `OPENTOGGL_POSTGRES_USER=postgres`
-- `OPENTOGGL_POSTGRES_PASSWORD=postgres`
-- `OPENTOGGL_POSTGRES_PORT=5432`
-- `OPENTOGGL_REDIS_PORT=6379`
-- `OPENTOGGL_DATABASE_URL=postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable`
-- `OPENTOGGL_REDIS_URL=redis://redis:6379/0`
-
-Override them with host env vars or your own env file if your deployment needs different ports, credentials, or a pinned image tag.
