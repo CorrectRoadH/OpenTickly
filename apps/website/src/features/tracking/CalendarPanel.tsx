@@ -40,9 +40,9 @@ export function CalendarPanel({
       data-testid={testId ?? "calendar-panel"}
       role="dialog"
     >
-      {/* Month header: symmetric 3-column layout — left nav | title | right nav */}
-      <div className="mb-4 grid grid-cols-[2.5rem_1fr_2.5rem] items-center gap-1">
-        <div className="flex justify-start">
+      {/* Month header: strict 3-column layout — fixed-width left nav | centered title | fixed-width right nav */}
+      <div className="mb-3 grid grid-cols-[2.5rem_1fr_2.5rem] items-center">
+        <div className="flex size-6 items-center justify-start">
           <button
             aria-label="Previous month"
             className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
@@ -61,12 +61,12 @@ export function CalendarPanel({
           </button>
         </div>
         <h3
-          className="col-start-2 text-center text-[15px] font-semibold tracking-tight text-white"
+          className="col-start-2 text-center text-[14px] font-semibold leading-5 text-white"
           id="calendar-panel-title"
         >
           {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
         </h3>
-        <div className="flex justify-end">
+        <div className="flex size-6 items-center justify-end">
           <button
             aria-label="Next month"
             className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
@@ -82,10 +82,10 @@ export function CalendarPanel({
         </div>
       </div>
 
-      {/* Weekday header */}
-      <div className="mb-1.5 grid grid-cols-7 gap-1 px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#5a5a60]">
+      {/* Weekday header — tight vertical rhythm, part of the grid */}
+      <div className="mb-1 grid grid-cols-7 gap-1 px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#5a5a60]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
-          <div className="pb-2" key={weekday}>
+          <div className="pb-1" key={weekday}>
             {weekday}
           </div>
         ))}
@@ -125,7 +125,7 @@ export function CalendarPanel({
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "text-[#48484e] hover:text-[#5a5a60]"
+                          ? "text-[#3e3e42] hover:text-[#48484e]"
                           : "text-[#ededf0] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
