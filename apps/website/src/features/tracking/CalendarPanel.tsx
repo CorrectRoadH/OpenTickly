@@ -83,7 +83,7 @@ export function CalendarPanel({
       </div>
 
       {/* Weekday header — tight vertical rhythm, part of the grid */}
-      <div className="mb-0 grid grid-cols-7 gap-[2px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#5a5a60]">
+      <div className="mb-0 grid grid-cols-7 gap-[2px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#54545a]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
           <div className="pb-1" key={weekday}>
             {weekday}
@@ -119,9 +119,9 @@ export function CalendarPanel({
                     year: "numeric",
                   })}
                   aria-selected={selected}
-                  className={`group relative flex size-10 items-center justify-center rounded-md text-[14px] font-semibold transition ${
+                  className={`group relative flex size-10 items-center justify-center rounded-full text-[14px] font-semibold transition ${
                     selected
-                      ? "bg-[#b77fc0] text-[#1a1219] hover:bg-[#bf86c7]"
+                      ? "bg-[#b77fc0] text-[#1a1219] hover:bg-[#bc84c4]"
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
