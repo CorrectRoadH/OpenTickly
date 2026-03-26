@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
 import { TrackingIcon } from "./tracking-icons.tsx";
 
@@ -22,6 +22,26 @@ export function ManualModeComposer({
   const [stopTime, setStopTime] = useState(() => formatTimeHHMM(now, timezone));
   const [startDate, setStartDate] = useState(() => formatDateISO(now, timezone));
   const [stopDate, setStopDate] = useState(() => formatDateISO(now, timezone));
+
+  /**
+   * Auto-bump stop date to the next day when stop time is earlier than start
+   * time on the same date (cross-midnight scenario, e.g. 23:00 -> 01:00).
+   */
+  useEffect(() => {
+    if (startDate !== stopDate) {
+      return;
+    }
+    const startMs = parseLocalDateTime(startDate, startTime, timezone);
+    const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
+    if (startMs == null || stopMs == null) {
+      return;
+    }
+    if (stopMs <= startMs) {
+      const nextDay = new Date(startMs);
+      nextDay.setDate(nextDay.getDate() + 1);
+      setStopDate(formatDateISO(nextDay, timezone));
+    }
+  }, [startDate, startTime, stopDate, stopTime, timezone]);
 
   const durationDisplay = useMemo(() => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
