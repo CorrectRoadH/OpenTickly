@@ -1,6 +1,14 @@
 import type { ReactElement } from "react";
 
 import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-data.ts";
+import type { SliceDimension } from "./useReportsPageState.ts";
+import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
+
+const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
+  { label: "Projects", value: "projects" },
+  { label: "Clients", value: "clients" },
+  { label: "Members", value: "members" },
+];
 
 const Y_AXIS_LABELS = ["16h 15", "13h", "9h 45", "6h 30", "3h 15", "0h"] as const;
 const MAX_CHART_SECONDS = 16 * 3600 + 15 * 60;
@@ -62,11 +70,18 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
 
 export function DistributionPanel({
   distributionSegments,
+  onSliceByChange,
+  sliceBy,
   totalDuration,
 }: {
   distributionSegments: ReportsDistributionSegment[];
+  onSliceByChange: (dim: SliceDimension) => void;
+  sliceBy: SliceDimension;
   totalDuration: string;
 }): ReactElement {
+  const sliceLabel =
+    sliceBy === "projects" ? "Project" : sliceBy === "clients" ? "Client" : "Member";
+
   return (
     <section
       className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
@@ -74,18 +89,19 @@ export function DistributionPanel({
     >
       <div className="flex items-start justify-between gap-2">
         <h2 className="max-w-[140px] text-[16px] font-semibold leading-[23px] text-white">
-          Project distribution
+          {sliceLabel} distribution
         </h2>
-        <button
-          className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-          type="button"
-        >
-          Slice by: Projects
-        </button>
+        <ReportsSelectDropdown
+          label="Slice by"
+          onChange={onSliceByChange}
+          options={SLICE_OPTIONS}
+          testId="reports-slice-by"
+          value={sliceBy}
+        />
       </div>
       <div className="mt-8 flex justify-center">
         <div
-          aria-label="Project distribution chart"
+          aria-label={`${sliceLabel} distribution chart`}
           className="flex size-[180px] items-center justify-center rounded-full"
           style={{ background: buildDistributionBackground(distributionSegments) }}
         >
@@ -94,7 +110,7 @@ export function DistributionPanel({
               {totalDuration}
             </p>
             <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-              Project
+              {sliceLabel}
             </p>
           </div>
         </div>

@@ -32,11 +32,13 @@ export type ReportsBreakdownMemberRow = {
 };
 
 export type ReportsBreakdownRow = {
+  clientName?: string;
   color: string;
   duration: string;
   memberCount: number;
   members: ReportsBreakdownMemberRow[];
   name: string;
+  seconds: number;
   shareLabel: string;
   shareValue: number;
 };
@@ -64,6 +66,7 @@ type MemberAccumulator = {
 };
 
 type ProjectBreakdownAccumulator = {
+  clientName: string;
   color: string;
   memberIds: Set<number>;
   members: Map<number, MemberAccumulator>;
@@ -123,11 +126,13 @@ export function buildReportsPageModel(args: {
         }));
 
       return {
+        clientName: project.clientName,
         color: project.color,
         duration: formatClockDuration(project.totalSeconds),
         memberCount: project.memberIds.size || 1,
         members,
         name: project.name,
+        seconds: project.totalSeconds,
         shareLabel: `${shareValue.toFixed(2)}%`,
         shareValue,
       };
@@ -182,6 +187,7 @@ function applyWeeklyRowToModel(
   const projectName = row.project_name?.trim() || "(No project)";
   const userId = row.user_id ?? 0;
   const currentProject = totalsByProject.get(projectName) ?? {
+    clientName: row.client_name?.trim() || "",
     color: resolveProjectColorValue({
       color: row.project_hex_color ?? row.project_color,
       name: projectName,
@@ -228,6 +234,15 @@ function formatWeekLabel(dateKey: string): string {
 function sumValues(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0);
 }
+
+export {
+  extractUniqueClients,
+  extractUniqueMembers,
+  filterReportRows,
+  regroupByClient,
+  regroupByEntry,
+  regroupByMember,
+} from "./reports-regroup.ts";
 
 function buildRangeLabel(
   startDate: string,

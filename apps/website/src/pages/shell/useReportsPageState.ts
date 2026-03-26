@@ -12,7 +12,14 @@ export type ReportsFilters = {
   tagIds: number[];
 };
 
+export type BreakdownDimension = "projects" | "clients" | "entries";
+export type SliceDimension = "projects" | "clients" | "members";
+
 type ReportsPageState = {
+  /** How the breakdown table groups rows */
+  breakdownBy: BreakdownDimension;
+  /** Selected client names for filtering */
+  clientFilter: string[];
   /** The active date range sent to the query */
   dateRange: ReportsDateRange;
   /** Set of expanded breakdown row names */
@@ -23,12 +30,24 @@ type ReportsPageState = {
   goNext: () => void;
   /** Navigate to the previous period */
   goPrev: () => void;
+  /** Selected member names for filtering */
+  memberFilter: string[];
   /** Whether the period picker dropdown is open */
   periodPickerOpen: boolean;
   /** Select a named time period */
   selectPeriod: (period: ReportsTimePeriod) => void;
+  /** Update the breakdown dimension */
+  setBreakdownBy: (dim: BreakdownDimension) => void;
+  /** Update the client filter */
+  setClientFilter: (names: string[]) => void;
+  /** Update the member filter */
+  setMemberFilter: (names: string[]) => void;
   /** Toggle the period picker dropdown */
   setPeriodPickerOpen: (open: boolean) => void;
+  /** Update the slice dimension */
+  setSliceBy: (dim: SliceDimension) => void;
+  /** How the donut chart groups slices */
+  sliceBy: SliceDimension;
   /** Toggle a breakdown row's expanded state */
   toggleRow: (name: string) => void;
   /** Update filters */
@@ -49,6 +68,10 @@ export function useReportsPageState(timezone: string, weekStartsOn: number): Rep
   const [filters, setFilters] = useState<ReportsFilters>({ projectIds: [], tagIds: [] });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [periodPickerOpen, setPeriodPickerOpen] = useState(false);
+  const [breakdownBy, setBreakdownBy] = useState<BreakdownDimension>("projects");
+  const [sliceBy, setSliceBy] = useState<SliceDimension>("projects");
+  const [memberFilter, setMemberFilter] = useState<string[]>([]);
+  const [clientFilter, setClientFilter] = useState<string[]>([]);
 
   const goPrev = useCallback(() => {
     setDateRange((prev) => shiftWeekRange(prev, "prev"));
@@ -83,14 +106,22 @@ export function useReportsPageState(timezone: string, weekStartsOn: number): Rep
   }, []);
 
   return {
+    breakdownBy,
+    clientFilter,
     dateRange,
     expandedRows,
     filters,
     goNext,
     goPrev,
+    memberFilter,
     periodPickerOpen,
     selectPeriod,
+    setBreakdownBy,
+    setClientFilter,
+    setMemberFilter,
     setPeriodPickerOpen,
+    setSliceBy,
+    sliceBy,
     toggleRow,
     updateFilters,
   };

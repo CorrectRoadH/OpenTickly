@@ -1,10 +1,20 @@
 import type { ReactElement } from "react";
 
 import type { ReportsBreakdownRow } from "./reports-page-data.ts";
+import type { BreakdownDimension } from "./useReportsPageState.ts";
+import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
+
+const BREAKDOWN_OPTIONS: { label: string; value: BreakdownDimension }[] = [
+  { label: "Projects", value: "projects" },
+  { label: "Clients", value: "clients" },
+  { label: "Entries", value: "entries" },
+];
 
 type BreakdownPanelProps = {
+  breakdownBy: BreakdownDimension;
   breakdownRows: ReportsBreakdownRow[];
   expandedRows: Set<string>;
+  onBreakdownByChange: (dim: BreakdownDimension) => void;
   toggleRow: (name: string) => void;
 };
 
@@ -13,10 +23,19 @@ type BreakdownPanelProps = {
  * Each project row has an expand button that reveals member sub-rows.
  */
 export function ReportsBreakdownPanel({
+  breakdownBy,
   breakdownRows,
   expandedRows,
+  onBreakdownByChange,
   toggleRow,
 }: BreakdownPanelProps): ReactElement {
+  const headerLabel =
+    breakdownBy === "projects"
+      ? "Project | Member"
+      : breakdownBy === "clients"
+        ? "Client | Member"
+        : "Entry";
+
   return (
     <section
       className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
@@ -32,9 +51,13 @@ export function ReportsBreakdownPanel({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ToolbarButton>Breakdown by: Projects</ToolbarButton>
-          <ToolbarButton>and: Members</ToolbarButton>
-          <ToolbarButton>Filters</ToolbarButton>
+          <ReportsSelectDropdown
+            label="Breakdown by"
+            onChange={onBreakdownByChange}
+            options={BREAKDOWN_OPTIONS}
+            testId="reports-breakdown-by"
+            value={breakdownBy}
+          />
         </div>
       </div>
 
@@ -44,7 +67,7 @@ export function ReportsBreakdownPanel({
       >
         <div className="grid grid-cols-[28px_minmax(0,1fr)_98px_98px_24px] items-center gap-3 border-b border-[var(--track-border)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           <span />
-          <span>Project | Member</span>
+          <span>{headerLabel}</span>
           <span>Duration</span>
           <span>Duration %</span>
           <span className="text-right text-base leading-none">+</span>
@@ -79,29 +102,37 @@ function BreakdownRow({
   onToggle: () => void;
   row: ReportsBreakdownRow;
 }): ReactElement {
+  const hasMembers = row.members.length > 0;
+
   return (
     <li className="border-b border-[var(--track-border)] last:border-b-0">
       <div className="grid grid-cols-[28px_minmax(0,1fr)_98px_98px_24px] items-center gap-3 px-4 py-4">
-        <button
-          className={`text-left text-[13px] transition-transform ${expanded ? "rotate-90" : ""} text-[var(--track-text-soft)]`}
-          data-testid={`reports-expand-${row.name}`}
-          onClick={onToggle}
-          type="button"
-        >
-          &gt;
-        </button>
+        {hasMembers ? (
+          <button
+            className={`text-left text-[13px] transition-transform ${expanded ? "rotate-90" : ""} text-[var(--track-text-soft)]`}
+            data-testid={`reports-expand-${row.name}`}
+            onClick={onToggle}
+            type="button"
+          >
+            &gt;
+          </button>
+        ) : (
+          <span />
+        )}
         <div className="min-w-0">
           <div className="flex items-center gap-3">
             <span className="size-2 rounded-full" style={{ backgroundColor: row.color }} />
             <p className="truncate text-[14px] font-medium text-white">{row.name}</p>
-            <span className="text-[13px] text-[var(--track-text-soft)]">({row.memberCount})</span>
+            {hasMembers ? (
+              <span className="text-[13px] text-[var(--track-text-soft)]">({row.memberCount})</span>
+            ) : null}
           </div>
         </div>
         <span className="text-[14px] font-medium tabular-nums text-white">{row.duration}</span>
         <span className="text-[14px] font-medium tabular-nums text-white">{row.shareLabel}</span>
         <span />
       </div>
-      {expanded && row.members.length > 0 ? (
+      {expanded && hasMembers ? (
         <ul data-testid={`reports-members-${row.name}`}>
           {row.members.map((member) => (
             <li
@@ -122,16 +153,5 @@ function BreakdownRow({
         </ul>
       ) : null}
     </li>
-  );
-}
-
-function ToolbarButton({ children }: { children: string }) {
-  return (
-    <button
-      className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-      type="button"
-    >
-      {children}
-    </button>
   );
 }

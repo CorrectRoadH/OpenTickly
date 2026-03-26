@@ -10,7 +10,24 @@ import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
 import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
 import { ReportsPeriodPicker } from "./ReportsPeriodPicker.tsx";
-import { buildReportsPageModel } from "./reports-page-data.ts";
+import {
+  ReportsSurfaceMessage,
+  ReportsTabPlaceholder,
+  SummaryMetrics,
+  ToolbarButton,
+  TopTab,
+} from "./ReportsSharedWidgets.tsx";
+import { ReportsStringFilterDropdown } from "./ReportsStringFilterDropdown.tsx";
+import { exportReportCsv } from "./reports-export.ts";
+import {
+  buildReportsPageModel,
+  extractUniqueClients,
+  extractUniqueMembers,
+  filterReportRows,
+  regroupByClient,
+  regroupByEntry,
+  regroupByMember,
+} from "./reports-page-data.ts";
 import { useReportsPageState } from "./useReportsPageState.ts";
 
 const SUMMARY_TABS = ["Summary", "Detailed", "Workload", "Profitability", "My reports"] as const;
@@ -35,23 +52,47 @@ export function WorkspaceReportsPage(): ReactElement {
     tagIds: state.filters.tagIds,
   });
 
+  const memberOptions = useMemo(
+    () => extractUniqueMembers(weeklyReportQuery.data),
+    [weeklyReportQuery.data],
+  );
+
+  const clientOptions = useMemo(
+    () => extractUniqueClients(weeklyReportQuery.data),
+    [weeklyReportQuery.data],
+  );
+
+  const filteredReport = useMemo(
+    () => filterReportRows(weeklyReportQuery.data, state.memberFilter, state.clientFilter),
+    [weeklyReportQuery.data, state.memberFilter, state.clientFilter],
+  );
+
   const liveModel = useMemo(
     () =>
       buildReportsPageModel({
         endDate: state.dateRange.endDate,
-        report: weeklyReportQuery.data,
+        report: filteredReport,
         startDate: state.dateRange.startDate,
         timezone,
         weekStartsOn,
       }),
-    [
-      state.dateRange.endDate,
-      state.dateRange.startDate,
-      timezone,
-      weekStartsOn,
-      weeklyReportQuery.data,
-    ],
+    [state.dateRange.endDate, state.dateRange.startDate, filteredReport, timezone, weekStartsOn],
   );
+
+  const displayBreakdownRows = useMemo(() => {
+    if (state.breakdownBy === "clients") return regroupByClient(liveModel.breakdownRows);
+    if (state.breakdownBy === "entries") return regroupByEntry(liveModel.breakdownRows);
+    return liveModel.breakdownRows;
+  }, [liveModel.breakdownRows, state.breakdownBy]);
+
+  const displayDistributionSegments = useMemo(() => {
+    if (state.sliceBy === "projects") return liveModel.distributionSegments;
+    const regrouped =
+      state.sliceBy === "clients"
+        ? regroupByClient(liveModel.breakdownRows)
+        : regroupByMember(liveModel.breakdownRows);
+    return regrouped.slice(0, 10).map((r) => ({ color: r.color, value: r.shareValue }));
+  }, [liveModel.breakdownRows, liveModel.distributionSegments, state.sliceBy]);
 
   const projectOptions = useMemo(
     () =>
@@ -90,7 +131,14 @@ export function WorkspaceReportsPage(): ReactElement {
             <div className="flex flex-wrap items-center gap-2">
               <ToolbarButton>Rounding off</ToolbarButton>
               <ToolbarButton>Create invoice</ToolbarButton>
-              <ToolbarButton>Export</ToolbarButton>
+              <button
+                className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
+                data-testid="reports-export"
+                onClick={() => exportReportCsv(displayBreakdownRows, liveModel.totalDuration)}
+                type="button"
+              >
+                Export
+              </button>
               <ToolbarButton>Settings</ToolbarButton>
               <button
                 className="h-9 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
@@ -100,54 +148,14 @@ export function WorkspaceReportsPage(): ReactElement {
               </button>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2 py-3" data-testid="reports-filter-bar">
-            <div className="relative flex overflow-visible rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[12px]">
-              <button
-                className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
-                data-testid="reports-prev"
-                onClick={state.goPrev}
-                type="button"
-              >
-                Prev
-              </button>
-              <button
-                className="h-8 border-x border-[var(--track-border)] px-4 font-semibold text-white"
-                data-testid="reports-range-label"
-                onClick={() => state.setPeriodPickerOpen(!state.periodPickerOpen)}
-                type="button"
-              >
-                {liveModel.rangeLabel}
-              </button>
-              <button
-                className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
-                data-testid="reports-next"
-                onClick={state.goNext}
-                type="button"
-              >
-                Next
-              </button>
-              <ReportsPeriodPicker
-                onClose={() => state.setPeriodPickerOpen(false)}
-                onSelect={state.selectPeriod}
-                open={state.periodPickerOpen}
-              />
-            </div>
-            <ToolbarButton>Member</ToolbarButton>
-            <ToolbarButton>Client</ToolbarButton>
-            <ReportsFilterDropdown
-              label="Project"
-              onChange={(ids) => state.updateFilters({ projectIds: ids })}
-              options={projectOptions}
-              selected={state.filters.projectIds}
-            />
-            <ReportsFilterDropdown
-              label="Tag"
-              onChange={(ids) => state.updateFilters({ tagIds: ids })}
-              options={tagOptions}
-              selected={state.filters.tagIds}
-            />
-            <ToolbarButton>Description</ToolbarButton>
-          </div>
+          <ReportsFilterBar
+            clientOptions={clientOptions}
+            liveModel={liveModel}
+            memberOptions={memberOptions}
+            projectOptions={projectOptions}
+            state={state}
+            tagOptions={tagOptions}
+          />
         </div>
       </section>
 
@@ -168,13 +176,17 @@ export function WorkspaceReportsPage(): ReactElement {
               <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
                 <DurationChart weekRows={liveModel.weekRows} />
                 <DistributionPanel
-                  distributionSegments={liveModel.distributionSegments}
+                  distributionSegments={displayDistributionSegments}
+                  onSliceByChange={state.setSliceBy}
+                  sliceBy={state.sliceBy}
                   totalDuration={liveModel.totalDuration}
                 />
               </div>
               <ReportsBreakdownPanel
-                breakdownRows={liveModel.breakdownRows}
+                breakdownBy={state.breakdownBy}
+                breakdownRows={displayBreakdownRows}
                 expandedRows={state.expandedRows}
+                onBreakdownByChange={state.setBreakdownBy}
                 toggleRow={state.toggleRow}
               />
             </>
@@ -187,112 +199,79 @@ export function WorkspaceReportsPage(): ReactElement {
   );
 }
 
-function SummaryMetrics({
-  metrics,
+function ReportsFilterBar({
+  clientOptions,
+  liveModel,
+  memberOptions,
+  projectOptions,
+  state,
+  tagOptions,
 }: {
-  metrics: ReturnType<typeof buildReportsPageModel>["metrics"];
-}): ReactElement {
+  clientOptions: string[];
+  liveModel: ReturnType<typeof buildReportsPageModel>;
+  memberOptions: string[];
+  projectOptions: { id: number; label: string }[];
+  state: ReturnType<typeof useReportsPageState>;
+  tagOptions: { id: number; label: string }[];
+}) {
   return (
-    <section
-      className="mt-5 grid overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] lg:grid-cols-4"
-      data-testid="reports-summary-metrics"
-    >
-      {metrics.map((metric, index) => (
-        <div
-          className={`px-5 py-4 ${index === metrics.length - 1 ? "" : "border-b border-[var(--track-border)] lg:border-b-0 lg:border-r"}`}
-          key={metric.title}
+    <div className="flex flex-wrap items-center gap-2 py-3" data-testid="reports-filter-bar">
+      <div className="relative flex overflow-visible rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[12px]">
+        <button
+          className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
+          data-testid="reports-prev"
+          onClick={state.goPrev}
+          type="button"
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            {metric.title}
-          </p>
-          <p className="mt-3 text-[16px] font-semibold leading-[23px] tabular-nums text-white">
-            {metric.value}
-          </p>
-        </div>
-      ))}
-    </section>
-  );
-}
-
-function TopTab({
-  active = false,
-  children,
-  onClick,
-}: {
-  active?: boolean;
-  children: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      aria-current={active ? "page" : undefined}
-      className={`border-b-2 pb-3 text-[14px] font-medium ${
-        active
-          ? "border-[var(--track-accent)] text-[var(--track-accent-text)]"
-          : "border-transparent text-[var(--track-text-muted)]"
-      }`}
-      onClick={onClick}
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ToolbarButton({ children }: { children: string }) {
-  return (
-    <button
-      className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-      type="button"
-    >
-      {children}
-    </button>
-  );
-}
-
-function ReportsSurfaceMessage({
-  message,
-  tone = "default",
-}: {
-  message: string;
-  tone?: "default" | "error";
-}) {
-  return (
-    <div
-      className={`mt-5 rounded-[8px] border px-4 py-3 text-[14px] ${
-        tone === "error"
-          ? "border-[#6b3f4d] bg-[#2d1d24] text-[#ffced9]"
-          : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
-      }`}
-    >
-      {message}
-    </div>
-  );
-}
-
-const REPORT_TAB_DESCRIPTIONS: Record<Exclude<ReportsTab, "Summary">, string> = {
-  Detailed:
-    "The Detailed report shows individual time entries with description, project, client, duration, start/end times, tags, and billable status.",
-  Workload:
-    "The Workload report shows team member workload distribution across the selected period.",
-  Profitability:
-    "The Profitability report shows project profitability analysis comparing tracked time against budgets and rates.",
-  "My reports": "My reports lets you save and manage custom report views for quick access.",
-};
-
-function ReportsTabPlaceholder({ tab }: { tab: Exclude<ReportsTab, "Summary"> }) {
-  return (
-    <section
-      className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-8"
-      data-testid={`reports-${tab.toLowerCase().replace(/\s+/g, "-")}-placeholder`}
-    >
-      <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-        <h2 className="text-[21px] font-semibold text-white">{tab}</h2>
-        <p className="max-w-[480px] text-[14px] leading-5 text-[var(--track-text-muted)]">
-          {REPORT_TAB_DESCRIPTIONS[tab]}
-        </p>
-        <p className="text-[13px] font-medium text-[var(--track-text-soft)]">Coming soon</p>
+          Prev
+        </button>
+        <button
+          className="h-8 border-x border-[var(--track-border)] px-4 font-semibold text-white"
+          data-testid="reports-range-label"
+          onClick={() => state.setPeriodPickerOpen(!state.periodPickerOpen)}
+          type="button"
+        >
+          {liveModel.rangeLabel}
+        </button>
+        <button
+          className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
+          data-testid="reports-next"
+          onClick={state.goNext}
+          type="button"
+        >
+          Next
+        </button>
+        <ReportsPeriodPicker
+          onClose={() => state.setPeriodPickerOpen(false)}
+          onSelect={state.selectPeriod}
+          open={state.periodPickerOpen}
+        />
       </div>
-    </section>
+      <ReportsStringFilterDropdown
+        label="Member"
+        onChange={state.setMemberFilter}
+        options={memberOptions}
+        selected={state.memberFilter}
+      />
+      <ReportsStringFilterDropdown
+        label="Client"
+        onChange={state.setClientFilter}
+        options={clientOptions}
+        selected={state.clientFilter}
+      />
+      <ReportsFilterDropdown
+        label="Project"
+        onChange={(ids) => state.updateFilters({ projectIds: ids })}
+        options={projectOptions}
+        selected={state.filters.projectIds}
+      />
+      <ReportsFilterDropdown
+        label="Tag"
+        onChange={(ids) => state.updateFilters({ tagIds: ids })}
+        options={tagOptions}
+        selected={state.filters.tagIds}
+      />
+      <ToolbarButton>Description</ToolbarButton>
+    </div>
   );
 }

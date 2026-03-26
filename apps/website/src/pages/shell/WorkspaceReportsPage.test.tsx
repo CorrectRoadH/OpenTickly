@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { WorkspaceReportsPage } from "./WorkspaceReportsPage.tsx";
 
 vi.mock("../../shared/query/web-shell.ts", () => ({
+  useProjectsQuery: () => ({ data: [] }),
+  useTagsQuery: () => ({ data: [] }),
   useWorkspaceWeeklyReportQuery: () => ({
     data: [],
     isError: false,
@@ -35,5 +37,27 @@ describe("WorkspaceReportsPage", () => {
     expect(markup).toContain("This week . W");
     expect(markup).not.toContain("text-[22px]");
     expect(markup).not.toContain("rounded-[14px]");
+  });
+
+  it("renders prev/next navigation buttons with click handlers", () => {
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+
+    expect(markup).toContain('data-testid="reports-prev"');
+    expect(markup).toContain('data-testid="reports-next"');
+    expect(markup).toContain('data-testid="reports-range-label"');
+  });
+
+  it("renders project and tag filter dropdowns", () => {
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+
+    expect(markup).toContain('data-testid="reports-filter-project"');
+    expect(markup).toContain('data-testid="reports-filter-tag"');
+  });
+
+  it("renders breakdown expand buttons with test ids", () => {
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+
+    expect(markup).toContain('data-testid="reports-breakdown-table"');
+    expect(markup).toContain("No tracked time for this period yet.");
   });
 });
