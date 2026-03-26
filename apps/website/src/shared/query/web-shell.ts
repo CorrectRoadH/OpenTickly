@@ -95,8 +95,6 @@ const workspaceDashboardMostActiveQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-most-active", workspaceId] as const;
 const workspaceDashboardTopActivityQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-top-activity", workspaceId] as const;
-const workspaceWeeklyReportQueryKey = (workspaceId: number, startDate: string, endDate: string) =>
-  ["workspace-weekly-report", workspaceId, startDate, endDate] as const;
 
 export type WorkspacePermissionsDto = Pick<
   WebWorkspaceSettingsDto,
@@ -610,12 +608,16 @@ export function useWorkspaceTopActivityQuery(workspaceId: number) {
   });
 }
 
+export type WeeklyReportQueryOptions = {
+  endDate: string;
+  projectIds?: number[];
+  startDate: string;
+  tagIds?: number[];
+};
+
 export function useWorkspaceWeeklyReportQuery(
   workspaceId: number,
-  options: {
-    endDate: string;
-    startDate: string;
-  },
+  options: WeeklyReportQueryOptions,
 ) {
   return useQuery({
     queryFn: () =>
@@ -623,14 +625,23 @@ export function useWorkspaceWeeklyReportQuery(
         postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
           body: {
             end_date: options.endDate,
+            project_ids: options.projectIds?.length ? options.projectIds : undefined,
             start_date: options.startDate,
+            tag_ids: options.tagIds?.length ? options.tagIds : undefined,
           },
           path: {
             workspace_id: workspaceId,
           },
         }),
       ) as Promise<SavedWeeklyReportData>,
-    queryKey: workspaceWeeklyReportQueryKey(workspaceId, options.startDate, options.endDate),
+    queryKey: [
+      "workspace-weekly-report",
+      workspaceId,
+      options.startDate,
+      options.endDate,
+      options.projectIds ?? [],
+      options.tagIds ?? [],
+    ] as const,
   });
 }
 

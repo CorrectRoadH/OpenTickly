@@ -4,6 +4,15 @@ import type {
 } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration, formatDateKey } from "../../features/tracking/overview-data.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import {
+  formatRangeDate,
+  getDateRangeKeys,
+  getIsoWeekNumber,
+  getWeekDateKeys,
+} from "./reports-date-utils.ts";
+
+export type { ReportsDateRange, ReportsTimePeriod } from "./reports-date-utils.ts";
+export { getDateRangeForPeriod, shiftWeekRange } from "./reports-date-utils.ts";
 
 export type ReportsPageMetric = {
   title: "Total Hours" | "Billable Hours" | "Amount" | "Average Daily Hours";
@@ -16,10 +25,17 @@ export type ReportsDayRow = {
   value: string;
 };
 
+export type ReportsBreakdownMemberRow = {
+  duration: string;
+  name: string;
+  seconds: number;
+};
+
 export type ReportsBreakdownRow = {
   color: string;
   duration: string;
   memberCount: number;
+  members: ReportsBreakdownMemberRow[];
   name: string;
   shareLabel: string;
   shareValue: number;
@@ -42,9 +58,15 @@ export type ReportsPageModel = {
   weekRows: ReportsDayRow[];
 };
 
+type MemberAccumulator = {
+  name: string;
+  totalSeconds: number;
+};
+
 type ProjectBreakdownAccumulator = {
   color: string;
   memberIds: Set<number>;
+  members: Map<number, MemberAccumulator>;
   name: string;
   totalSeconds: number;
 };
@@ -52,32 +74,37 @@ type ProjectBreakdownAccumulator = {
 export function buildReportsPageModel(args: {
   report?: SavedWeeklyReportData;
   now?: Date;
+  startDate?: string;
+  endDate?: string;
   timezone: string;
   weekStartsOn?: number;
 }): ReportsPageModel {
-  const weekDateKeys = getWeekDateKeys(args.timezone, args.weekStartsOn ?? 1, args.now);
-  const startDate = weekDateKeys[0] ?? formatDateKey(args.now ?? new Date(), args.timezone);
-  const endDate = weekDateKeys[weekDateKeys.length - 1] ?? startDate;
+  const dateKeys =
+    args.startDate && args.endDate
+      ? getDateRangeKeys(args.startDate, args.endDate)
+      : getWeekDateKeys(args.timezone, args.weekStartsOn ?? 1, args.now);
+  const startDate = dateKeys[0] ?? formatDateKey(args.now ?? new Date(), args.timezone);
+  const endDate = dateKeys[dateKeys.length - 1] ?? startDate;
   const totalsByProject = new Map<string, ProjectBreakdownAccumulator>();
   const totalsByDay = new Map<string, number>();
 
   let billableSeconds = 0;
 
   (args.report?.report ?? []).forEach((row) => {
-    applyWeeklyRowToModel(row, totalsByDay, totalsByProject, weekDateKeys);
+    applyWeeklyRowToModel(row, totalsByDay, totalsByProject, dateKeys);
     billableSeconds += sumValues(row.billable_seconds ?? []);
   });
   const totalSeconds =
     args.report?.totals?.seconds ??
-    weekDateKeys.reduce((sum, key) => sum + (totalsByDay.get(key) ?? 0), 0);
+    dateKeys.reduce((sum, key) => sum + (totalsByDay.get(key) ?? 0), 0);
 
-  const trackedDays = weekDateKeys.reduce(
+  const trackedDays = dateKeys.reduce(
     (count, key) => count + ((totalsByDay.get(key) ?? 0) > 0 ? 1 : 0),
     0,
   );
   const averageDailyHours = trackedDays > 0 ? totalSeconds / 3600 / trackedDays : 0;
 
-  const weekRows = weekDateKeys.map((dateKey) => ({
+  const weekRows = dateKeys.map((dateKey) => ({
     label: formatWeekLabel(dateKey),
     seconds: totalsByDay.get(dateKey) ?? 0,
     value: formatReadableDuration(totalsByDay.get(dateKey) ?? 0),
@@ -87,11 +114,19 @@ export function buildReportsPageModel(args: {
     .sort((left, right) => right.totalSeconds - left.totalSeconds)
     .map((project) => {
       const shareValue = totalSeconds > 0 ? (project.totalSeconds / totalSeconds) * 100 : 0;
+      const members = [...project.members.values()]
+        .sort((a, b) => b.totalSeconds - a.totalSeconds)
+        .map((m) => ({
+          duration: formatClockDuration(m.totalSeconds),
+          name: m.name,
+          seconds: m.totalSeconds,
+        }));
 
       return {
         color: project.color,
         duration: formatClockDuration(project.totalSeconds),
         memberCount: project.memberIds.size || 1,
+        members,
         name: project.name,
         shareLabel: `${shareValue.toFixed(2)}%`,
         shareValue,
@@ -111,7 +146,13 @@ export function buildReportsPageModel(args: {
       { title: "Amount", value: "-" },
       { title: "Average Daily Hours", value: `${averageDailyHours.toFixed(2)} Hours` },
     ],
-    rangeLabel: `This week . W${getIsoWeekNumber(startDate)}`,
+    rangeLabel: buildRangeLabel(
+      startDate,
+      endDate,
+      args.timezone,
+      args.weekStartsOn ?? 1,
+      args.now,
+    ),
     startDate,
     totalDuration: formatClockDuration(totalSeconds),
     totalSeconds,
@@ -136,7 +177,7 @@ function applyWeeklyRowToModel(
   row: WeeklyDataRow,
   totalsByDay: Map<string, number>,
   totalsByProject: Map<string, ProjectBreakdownAccumulator>,
-  weekDateKeys: string[],
+  dateKeys: string[],
 ) {
   const projectName = row.project_name?.trim() || "(No project)";
   const userId = row.user_id ?? 0;
@@ -146,21 +187,26 @@ function applyWeeklyRowToModel(
       name: projectName,
     }),
     memberIds: new Set<number>(),
+    members: new Map<number, MemberAccumulator>(),
     name: projectName,
     totalSeconds: 0,
   };
 
   currentProject.memberIds.add(userId);
+  const memberName = row.user_name?.trim() || `User ${userId}`;
+  const memberAcc = currentProject.members.get(userId) ?? { name: memberName, totalSeconds: 0 };
 
   (row.seconds ?? []).forEach((seconds, index) => {
-    const dateKey = weekDateKeys[index];
+    const dateKey = dateKeys[index];
     if (!dateKey) {
       return;
     }
     currentProject.totalSeconds += seconds;
+    memberAcc.totalSeconds += seconds;
     totalsByDay.set(dateKey, (totalsByDay.get(dateKey) ?? 0) + seconds);
   });
 
+  currentProject.members.set(userId, memberAcc);
   totalsByProject.set(projectName, currentProject);
 }
 
@@ -179,39 +225,33 @@ function formatWeekLabel(dateKey: string): string {
   return `${weekday} ${monthDay}`;
 }
 
-function getWeekDateKeys(timezone: string, weekStartsOn: number, now = new Date()): string[] {
-  const todayKey = formatDateKey(now, timezone);
-  const todayDate = new Date(`${todayKey}T00:00:00Z`);
-  const weekday = todayDate.getUTCDay();
-  const offset = (weekday - normalizeWeekStart(weekStartsOn) + 7) % 7;
-  const startDate = new Date(todayDate);
-  startDate.setUTCDate(todayDate.getUTCDate() - offset);
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(startDate);
-    day.setUTCDate(startDate.getUTCDate() + index);
-    return day.toISOString().slice(0, 10);
-  });
-}
-
-function getIsoWeekNumber(dateKey: string): number {
-  const date = new Date(`${dateKey}T00:00:00Z`);
-  const day = date.getUTCDay() || 7;
-  const thursday = new Date(date);
-  thursday.setUTCDate(date.getUTCDate() + 4 - day);
-  const yearStart = new Date(Date.UTC(thursday.getUTCFullYear(), 0, 1));
-
-  return Math.ceil(((thursday.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-}
-
-function normalizeWeekStart(weekStartsOn: number): number {
-  if (weekStartsOn >= 0 && weekStartsOn <= 6) {
-    return weekStartsOn;
-  }
-
-  return 1;
-}
-
 function sumValues(values: number[]): number {
   return values.reduce((sum, value) => sum + value, 0);
+}
+
+function buildRangeLabel(
+  startDate: string,
+  endDate: string,
+  timezone: string,
+  weekStartsOn: number,
+  now?: Date,
+): string {
+  const currentWeekKeys = getWeekDateKeys(timezone, weekStartsOn, now);
+  const currentWeekStart = currentWeekKeys[0] ?? "";
+  const currentWeekEnd = currentWeekKeys[currentWeekKeys.length - 1] ?? "";
+
+  if (startDate === currentWeekStart && endDate === currentWeekEnd) {
+    return `This week . W${getIsoWeekNumber(startDate)}`;
+  }
+
+  const weekNumber = getIsoWeekNumber(startDate);
+  const startD = new Date(`${startDate}T00:00:00Z`);
+  const endD = new Date(`${endDate}T00:00:00Z`);
+  const dayCount = Math.round((endD.getTime() - startD.getTime()) / 86400000) + 1;
+
+  if (dayCount === 7) {
+    return `W${weekNumber} . ${formatRangeDate(startDate)} - ${formatRangeDate(endDate)}`;
+  }
+
+  return `${formatRangeDate(startDate)} - ${formatRangeDate(endDate)}`;
 }
