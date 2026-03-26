@@ -40,8 +40,8 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           to: buildWorkspaceReportsPath(session.currentWorkspace.id),
         },
         {
-          disabled: true,
           label: "Approvals",
+          to: `/workspaces/${session.currentWorkspace.id}/approvals`,
         },
       ],
     },
@@ -61,25 +61,25 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           to: `/workspaces/${session.currentWorkspace.id}/members`,
         },
         {
-          disabled: true,
           label: "Billable rates",
+          to: `/workspaces/${session.currentWorkspace.id}/billable-rates`,
         },
         {
-          disabled: true,
           label: "Invoices",
+          to: `/workspaces/${session.currentWorkspace.id}/invoices`,
         },
         {
           label: "Tags",
           to: `/workspaces/${session.currentWorkspace.id}/tags`,
         },
         {
-          disabled: true,
           label: "Goals",
+          to: `/workspaces/${session.currentWorkspace.id}/goals`,
         },
         {
-          disabled: true,
           label: "Integrations",
           badge: "NEW",
+          to: `/workspaces/${session.currentWorkspace.id}/integrations`,
         },
       ],
     },
@@ -87,8 +87,8 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       title: "Admin",
       items: [
         {
-          disabled: true,
           label: "Subscription",
+          to: `/workspaces/${session.currentWorkspace.id}/subscription`,
         },
         {
           label: "Settings",

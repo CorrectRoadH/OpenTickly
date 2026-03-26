@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildEntryGroups,
   buildTimesheetRows,
+  formatDateKey,
   getCalendarHours,
   resolveEntryColor,
   resolveEntryDurationSeconds,
@@ -309,6 +310,11 @@ export interface TimerPageOrchestration {
     entryId: number,
     edge: "start" | "end",
     minutesDelta: number,
+  ) => Promise<void>;
+  handleTimesheetCellEdit: (
+    projectLabel: string,
+    dayIndex: number,
+    durationSeconds: number,
   ) => Promise<void>;
   handleEntryEdit: (
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
@@ -1097,6 +1103,115 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     [updateTimeEntryMutation, visibleEntries],
   );
 
+  const handleTimesheetCellEdit = useCallback(
+    async (projectLabel: string, dayIndex: number, durationSeconds: number) => {
+      if (dayIndex < 0 || dayIndex >= weekDays.length) return;
+
+      const dayKey = formatDateKey(weekDays[dayIndex], timezone);
+
+      // Find entries matching this project label and day
+      const matchingEntries = visibleEntries.filter((entry) => {
+        const entryLabel = entry.project_name?.trim() || "(No project)";
+        const entryDay = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
+        return entryLabel === projectLabel && entryDay === dayKey;
+      });
+
+      if (matchingEntries.length === 0 && durationSeconds > 0) {
+        // No entries exist for this cell. Create a new entry for that day.
+        const dayDate = weekDays[dayIndex];
+        const start = new Date(dayDate);
+        start.setHours(9, 0, 0, 0);
+        const stop = new Date(start.getTime() + durationSeconds * 1000);
+
+        await createTimeEntryMutation.mutateAsync({
+          billable: false,
+          description: "",
+          duration: durationSeconds,
+          projectId: null,
+          start: start.toISOString(),
+          stop: stop.toISOString(),
+          tagIds: [],
+        });
+        return;
+      }
+
+      if (matchingEntries.length === 1) {
+        // Update the single entry's duration by adjusting its stop time
+        const entry = matchingEntries[0];
+        const entryWid = entry.workspace_id ?? entry.wid;
+        if (typeof entry.id !== "number" || typeof entryWid !== "number" || !entry.start) return;
+
+        if (durationSeconds === 0) {
+          // Delete the entry when duration set to zero
+          await deleteTimeEntryMutation.mutateAsync({
+            timeEntryId: entry.id,
+            workspaceId: entryWid,
+          });
+          return;
+        }
+
+        const startMs = new Date(entry.start).getTime();
+        const nextStop = new Date(startMs + durationSeconds * 1000);
+
+        await updateTimeEntryMutation.mutateAsync({
+          request: {
+            billable: entry.billable,
+            description: entry.description ?? "",
+            projectId: entry.project_id ?? entry.pid ?? null,
+            start: entry.start,
+            stop: toTrackIso(nextStop),
+            tagIds: entry.tag_ids ?? [],
+            taskId: entry.task_id ?? entry.tid ?? null,
+          },
+          timeEntryId: entry.id,
+          workspaceId: entryWid,
+        });
+        return;
+      }
+
+      // Multiple entries: update the first entry to carry the new total, proportionally
+      // For simplicity, adjust the first entry
+      const currentTotal = matchingEntries.reduce(
+        (sum, e) => sum + resolveEntryDurationSeconds(e),
+        0,
+      );
+      if (currentTotal === 0) return;
+
+      const firstEntry = matchingEntries[0];
+      const firstWid = firstEntry.workspace_id ?? firstEntry.wid;
+      if (typeof firstEntry.id !== "number" || typeof firstWid !== "number" || !firstEntry.start)
+        return;
+
+      const firstDuration = resolveEntryDurationSeconds(firstEntry);
+      const diff = durationSeconds - currentTotal;
+      const newFirstDuration = Math.max(0, firstDuration + diff);
+      const startMs = new Date(firstEntry.start).getTime();
+      const nextStop = new Date(startMs + newFirstDuration * 1000);
+
+      await updateTimeEntryMutation.mutateAsync({
+        request: {
+          billable: firstEntry.billable,
+          description: firstEntry.description ?? "",
+          projectId: firstEntry.project_id ?? firstEntry.pid ?? null,
+          start: firstEntry.start,
+          stop: toTrackIso(nextStop),
+          tagIds: firstEntry.tag_ids ?? [],
+          taskId: firstEntry.task_id ?? firstEntry.tid ?? null,
+        },
+        timeEntryId: firstEntry.id,
+        workspaceId: firstWid,
+      });
+    },
+    [
+      createTimeEntryMutation,
+      deleteTimeEntryMutation,
+      timezone,
+      updateTimeEntryMutation,
+      visibleEntries,
+      weekDays,
+    ],
+  );
+
   const handleEntryEdit = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
       const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
@@ -1293,6 +1408,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     handleContinueEntry,
     handleCalendarEntryMove,
     handleCalendarEntryResize,
+    handleTimesheetCellEdit,
     handleEntryEdit,
     handleIdleDescriptionFocus,
     closeSelectedEntryEditor,

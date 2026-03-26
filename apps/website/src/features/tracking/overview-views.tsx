@@ -952,10 +952,12 @@ export function CalendarView({
 }
 
 export function TimesheetView({
+  onCellEdit,
   rows,
   timezone,
   weekDays,
 }: {
+  onCellEdit?: (projectLabel: string, dayIndex: number, durationSeconds: number) => void;
   rows: TimesheetRow[];
   timezone: string;
   weekDays: Date[];
@@ -994,7 +996,10 @@ export function TimesheetView({
           </div>
           {row.cells.map((seconds, index) => (
             <div className="flex justify-center" key={`${row.label}-${index}`}>
-              <TimesheetCell seconds={seconds} />
+              <TimesheetCell
+                onCommit={(durationSeconds) => onCellEdit?.(row.label, index, durationSeconds)}
+                seconds={seconds}
+              />
             </div>
           ))}
           <span className="text-right text-[12px] font-medium text-white">
@@ -1012,7 +1017,7 @@ export function TimesheetView({
         </button>
         {weekDays.map((_, index) => (
           <div className="flex justify-center" key={`placeholder-${index}`}>
-            <TimesheetCell seconds={0} />
+            <TimesheetCell seconds={0} onCommit={undefined} />
           </div>
         ))}
         <span />
@@ -1137,18 +1142,99 @@ function formatDayTotal(totalSeconds: number): string {
   return `${hours}:${minutes}:${seconds}`;
 }
 
-function TimesheetCell({ seconds }: { seconds: number }) {
+function TimesheetCell({
+  onCommit,
+  seconds,
+}: {
+  onCommit?: (durationSeconds: number) => void;
+  seconds: number;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  function beginEditing() {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    setDraft(
+      secs > 0
+        ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+        : `${hours}:${String(minutes).padStart(2, "0")}`,
+    );
+    setIsEditing(true);
+  }
+
+  function commitEdit() {
+    setIsEditing(false);
+    const parsed = parseTimesheetDuration(draft);
+    if (parsed != null && parsed !== seconds) {
+      onCommit?.(parsed);
+    }
+  }
+
+  function cancelEdit() {
+    setIsEditing(false);
+  }
+
+  if (isEditing) {
+    return (
+      <input
+        autoFocus
+        className="flex h-5 min-w-[36px] w-[52px] items-center justify-center rounded-[6px] border border-[#e57bd9] bg-[#202020] px-1 text-center text-[10px] font-medium text-white outline-none"
+        onBlur={commitEdit}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commitEdit();
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            cancelEdit();
+          }
+        }}
+        type="text"
+        value={draft}
+      />
+    );
+  }
+
   return (
     <span
-      className={`flex h-5 min-w-[36px] items-center justify-center rounded-[6px] border px-2 text-[10px] font-medium ${
+      className={`flex h-5 min-w-[36px] cursor-pointer items-center justify-center rounded-[6px] border px-2 text-[10px] font-medium ${
         seconds > 0
-          ? "border-[#4a4a4a] bg-[#202020] text-white"
-          : "border-[#3b3b3b] bg-transparent text-transparent"
+          ? "border-[#4a4a4a] bg-[#202020] text-white hover:border-[#666]"
+          : "border-[#3b3b3b] bg-transparent text-transparent hover:border-[#555] hover:text-[var(--track-text-muted)]"
       }`}
+      onClick={beginEditing}
     >
-      {seconds > 0 ? formatHours(seconds) : "0"}
+      {seconds > 0 ? formatHours(seconds) : "0:00"}
     </span>
   );
+}
+
+function parseTimesheetDuration(value: string): number | null {
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+
+  // h:mm:ss
+  const hmsMatch = /^(\d+):(\d{1,2}):(\d{1,2})$/.exec(trimmed);
+  if (hmsMatch) {
+    return Number(hmsMatch[1]) * 3600 + Number(hmsMatch[2]) * 60 + Number(hmsMatch[3]);
+  }
+
+  // h:mm
+  const hmMatch = /^(\d+):(\d{1,2})$/.exec(trimmed);
+  if (hmMatch) {
+    return Number(hmMatch[1]) * 3600 + Number(hmMatch[2]) * 60;
+  }
+
+  // plain number (hours)
+  const numMatch = /^(\d+(?:\.\d+)?)$/.exec(trimmed);
+  if (numMatch) {
+    return Math.round(Number(numMatch[1]) * 3600);
+  }
+
+  return null;
 }
 
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {

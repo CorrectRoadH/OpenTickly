@@ -360,6 +360,9 @@ export function WorkspaceTimerPage(): ReactElement {
         !orch.timeEntriesQuery.isError &&
         orch.view === "timesheet" ? (
           <TimesheetView
+            onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
+              void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
+            }}
             rows={orch.timesheetRows}
             timezone={orch.timezone}
             weekDays={orch.weekDays}

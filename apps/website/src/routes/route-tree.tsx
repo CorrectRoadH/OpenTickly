@@ -36,6 +36,7 @@ import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { TasksPage } from "../pages/tasks/TasksPage.tsx";
 import { TagsPage } from "../pages/tags/TagsPage.tsx";
 import { TagDetailPage } from "../pages/tags/TagDetailPage.tsx";
+import { PlaceholderPage } from "../pages/shell/PlaceholderPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
 const homeRoute = createRoute({
@@ -168,6 +169,42 @@ const workspaceTagDetailRoute = createRoute({
   component: WorkspaceTagDetailRouteComponent,
 });
 
+const workspaceApprovalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/approvals",
+  component: WorkspaceApprovalsRouteComponent,
+});
+
+const workspaceBillableRatesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/billable-rates",
+  component: WorkspaceBillableRatesRouteComponent,
+});
+
+const workspaceInvoicesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/invoices",
+  component: WorkspaceInvoicesRouteComponent,
+});
+
+const workspaceGoalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/goals",
+  component: WorkspaceGoalsRouteComponent,
+});
+
+const workspaceIntegrationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/integrations",
+  component: WorkspaceIntegrationsRouteComponent,
+});
+
+const workspaceSubscriptionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/subscription",
+  component: WorkspaceSubscriptionRouteComponent,
+});
+
 const workspaceSettingsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/$workspaceId/settings/$section",
@@ -209,6 +246,12 @@ export const routeTree = rootRoute.addChildren([
   workspaceTasksRoute,
   workspaceTagsRoute,
   workspaceTagDetailRoute,
+  workspaceApprovalsRoute,
+  workspaceBillableRatesRoute,
+  workspaceInvoicesRoute,
+  workspaceGoalsRoute,
+  workspaceIntegrationsRoute,
+  workspaceSubscriptionRoute,
   workspaceSettingsRoute,
   legacyWorkspaceSettingsRoute,
   organizationSettingsRoute,
@@ -401,6 +444,84 @@ function WorkspaceTagDetailRouteComponent() {
 
   return renderProtectedRoute(
     <TagDetailPage tagId={tagId} workspaceId={workspaceId} />,
+    workspaceId,
+  );
+}
+
+function WorkspaceApprovalsRouteComponent() {
+  const params = workspaceApprovalsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Review and approve time entries submitted by your team members."
+      title="Approvals"
+    />,
+    workspaceId,
+  );
+}
+
+function WorkspaceBillableRatesRouteComponent() {
+  const params = workspaceBillableRatesRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Configure billable rates for your workspace members and projects."
+      title="Billable Rates"
+    />,
+    workspaceId,
+  );
+}
+
+function WorkspaceInvoicesRouteComponent() {
+  const params = workspaceInvoicesRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Create and manage invoices based on your tracked time entries."
+      title="Invoices"
+    />,
+    workspaceId,
+  );
+}
+
+function WorkspaceGoalsRouteComponent() {
+  const params = workspaceGoalsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Set and track time-based goals for yourself and your team."
+      title="Goals"
+    />,
+    workspaceId,
+  );
+}
+
+function WorkspaceIntegrationsRouteComponent() {
+  const params = workspaceIntegrationsRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Connect your favorite tools and services with your workspace."
+      title="Integrations"
+    />,
+    workspaceId,
+  );
+}
+
+function WorkspaceSubscriptionRouteComponent() {
+  const params = workspaceSubscriptionRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(
+    <PlaceholderPage
+      description="Manage your workspace subscription plan and billing details."
+      title="Subscription"
+    />,
     workspaceId,
   );
 }
