@@ -386,6 +386,15 @@ export function TimeEntryEditorDialog({
                     void onFavorite?.();
                   }}
                 />
+                {selectedProjectId ? (
+                  <a
+                    className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4"
+                    href={`/projects/${currentWorkspaceId}/list`}
+                    onClick={() => setActionsMenuOpen(false)}
+                  >
+                    Go to project
+                  </a>
+                ) : null}
                 <ActionMenuButton
                   label="Copy start link"
                   onClick={() => {
