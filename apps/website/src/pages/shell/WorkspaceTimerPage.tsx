@@ -24,10 +24,10 @@ import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
 export function WorkspaceTimerPage(): ReactElement {
-  const orch = useTimerPageOrchestration();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
+  const orch = useTimerPageOrchestration({ showAllEntries });
 
   return (
     <div

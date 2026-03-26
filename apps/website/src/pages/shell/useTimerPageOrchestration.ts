@@ -305,7 +305,7 @@ export interface TimerPageOrchestration {
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
   handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
-  handleCalendarSlotCreate: (slot: { dayIso: string; minute: number }) => Promise<void>;
+  handleCalendarSlotCreate: (slot: { end: Date; start: Date }) => Promise<void>;
   handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
   handleCalendarEntryResize: (
     entryId: number,
@@ -337,7 +337,10 @@ export interface TimerPageOrchestration {
   session: ReturnType<typeof useSession>;
 }
 
-export function useTimerPageOrchestration(): TimerPageOrchestration {
+export function useTimerPageOrchestration(options?: {
+  showAllEntries?: boolean;
+}): TimerPageOrchestration {
+  const showAllEntries = options?.showAllEntries ?? false;
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
@@ -502,8 +505,11 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     [timeEntriesQuery.data],
   );
   const visibleEntries = useMemo(
-    () => entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId),
-    [entries, workspaceId],
+    () =>
+      showAllEntries
+        ? entries
+        : entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId),
+    [entries, showAllEntries, workspaceId],
   );
   const recentWorkspaceEntries = useMemo(
     () =>
@@ -1239,16 +1245,17 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   );
 
   const handleCalendarSlotCreate = useCallback(
-    async (slot: { dayIso: string; minute: number }) => {
-      const startDate = new Date(`${slot.dayIso}T00:00:00`);
-      startDate.setMinutes(slot.minute);
-      const endDate = new Date(startDate.getTime() + 30 * 60_000);
+    async (slot: { end: Date; start: Date }) => {
+      const startDate = slot.start;
+      const endDate = slot.end;
+
+      const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
 
       try {
         const created = await createTimeEntryMutation.mutateAsync({
           billable: false,
           description: "",
-          duration: 1800,
+          duration: durationSeconds > 0 ? durationSeconds : 1800,
           projectId: null,
           start: toTrackIso(startDate),
           stop: toTrackIso(endDate),

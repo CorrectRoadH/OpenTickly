@@ -720,7 +720,7 @@ export function CalendarView({
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
-  onSelectSlot?: (slot: { dayIso: string; minute: number }) => void;
+  onSelectSlot?: (slot: { end: Date; start: Date }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
@@ -937,12 +937,11 @@ export function CalendarView({
               onEditEntry?.(event.entry, target.getBoundingClientRect());
             }
           }}
-          onSelectSlot={({ slots }: SlotInfo) => {
-            const first = slots[0];
-            if (first) {
+          onSelectSlot={(slotInfo: SlotInfo) => {
+            if (slotInfo.start && slotInfo.end) {
               onSelectSlot?.({
-                dayIso: formatDateIso(first),
-                minute: first.getHours() * 60 + first.getMinutes(),
+                end: slotInfo.end,
+                start: slotInfo.start,
               });
             }
           }}

@@ -881,10 +881,9 @@ export function TimeEntryEditorDialog({
                   : null}
               </div>
               <button
-                className="shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
+                className="relative z-10 shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
-                onPointerDown={(event) => {
-                  event.preventDefault();
+                onClick={() => {
                   if (!isSaving) {
                     void onSave();
                   }
