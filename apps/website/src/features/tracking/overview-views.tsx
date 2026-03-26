@@ -471,7 +471,7 @@ export function ListView({
                         $
                       </span>
                     ) : null}
-                    <span className="w-[110px] text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
+                    <span className="whitespace-nowrap text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
                       {formatEntryRange(entry, timezone)}
                     </span>
                     <span className="w-[72px] text-right text-[13px] font-semibold tabular-nums">

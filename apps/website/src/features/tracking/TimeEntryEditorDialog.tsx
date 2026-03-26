@@ -337,18 +337,17 @@ export function TimeEntryEditorDialog({
                 primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
               }
               data-testid="time-entry-editor-primary-action"
-              className="flex items-center gap-2 rounded-full bg-[#523732] px-3 py-2 text-[13px] font-medium text-[#ff7a66] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex size-8 items-center justify-center rounded-full bg-[#523732] text-[#ff7a66] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!onPrimaryAction || isPrimaryActionPending}
               onClick={onPrimaryAction}
               type="button"
             >
               <TrackingIcon className="size-4" name={primaryActionIcon} />
-              <span>{primaryActionLabel}</span>
             </button>
             {canDuplicate ? (
               <button
                 aria-label="Duplicate entry"
-                className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium text-[#ededf0] transition hover:bg-white/6"
+                className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
                 disabled={isDirty}
                 onClick={() => {
                   void onDuplicate?.();
@@ -356,17 +355,15 @@ export function TimeEntryEditorDialog({
                 type="button"
               >
                 <TrackingIcon className="size-4" name="copy" />
-                <span>Duplicate Time Entry</span>
               </button>
             ) : null}
             <button
               aria-label="Entry actions"
-              className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium text-[#ededf0] transition hover:bg-white/6"
+              className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
               onClick={() => setActionsMenuOpen((current) => !current)}
               type="button"
             >
               <TrackingIcon className="size-4" name="more" />
-              <span>More actions</span>
             </button>
             {actionsMenuOpen ? (
               <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">

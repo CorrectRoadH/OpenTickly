@@ -1,6 +1,5 @@
 import type { SessionBootstrapViewModel } from "../../entities/session/session-bootstrap.ts";
 import {
-  buildWorkspaceImportPath,
   buildOverviewPath,
   buildProjectsPath,
   buildWorkspaceReportsPath,
@@ -64,10 +63,6 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         {
           disabled: true,
           label: "Billable rates",
-        },
-        {
-          label: "Import",
-          to: buildWorkspaceImportPath(session.currentWorkspace.id),
         },
         {
           disabled: true,
