@@ -509,6 +509,9 @@ export function WorkspaceTimerPage(): ReactElement {
               onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
                 void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
               }}
+              onCopyLastWeek={() => {
+                void orch.handleCopyLastWeek();
+              }}
               rows={orch.timesheetRows}
               timezone={orch.timezone}
               weekDays={orch.weekDays}
@@ -614,6 +617,7 @@ export function WorkspaceTimerPage(): ReactElement {
           anchor={orch.composerSuggestionsAnchor}
           currentWorkspaceId={orch.workspaceId}
           onClose={orch.closeComposerSuggestions}
+          query={orch.timerDescriptionValue}
           onProjectSelect={(projectId) => {
             orch.setDraftProjectId(projectId);
             orch.closeComposerSuggestions();

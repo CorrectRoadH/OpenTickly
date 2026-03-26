@@ -16,7 +16,7 @@ import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
 } from "../../shared/api/generated/public-track/types.gen.ts";
-import { WebApiError } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import {
   useBulkDeleteTimeEntriesMutation,
   useBulkEditTimeEntriesMutation,
@@ -44,6 +44,7 @@ import type {
   TimerViewMode,
 } from "../../features/tracking/timer-view-mode.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
+import { getTimeEntries } from "../../shared/api/public/track/index.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 
@@ -314,6 +315,7 @@ export interface TimerPageOrchestration {
     edge: "start" | "end",
     minutesDelta: number,
   ) => Promise<void>;
+  handleCopyLastWeek: () => Promise<void>;
   handleTimesheetCellEdit: (
     projectLabel: string,
     dayIndex: number,
@@ -1258,6 +1260,52 @@ export function useTimerPageOrchestration(options?: {
     ],
   );
 
+  const handleCopyLastWeek = useCallback(async () => {
+    const lastWeekDate = new Date(weekDays[0]);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    const lastWeekDays = getWeekDaysForDate(lastWeekDate, beginningOfWeek);
+    const lastWeekStart = formatTrackQueryDate(lastWeekDays[0]);
+    const lastWeekEnd = formatTrackQueryDate(lastWeekDays[6]);
+
+    const lastWeekEntries = await unwrapWebApiResult(
+      getTimeEntries({
+        query: {
+          end_date: lastWeekEnd,
+          meta: true,
+          start_date: lastWeekStart,
+        },
+      }),
+    );
+
+    const filtered = (lastWeekEntries ?? []).filter(
+      (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+        const wid = entry.workspace_id ?? entry.wid;
+        return wid === workspaceId && entry.start && entry.stop;
+      },
+    );
+
+    for (const entry of filtered) {
+      if (!entry.start || !entry.stop) continue;
+      const startMs = new Date(entry.start).getTime();
+      const stopMs = new Date(entry.stop).getTime();
+      const shiftMs = 7 * 24 * 60 * 60 * 1000;
+      const newStart = new Date(startMs + shiftMs);
+      const newStop = new Date(stopMs + shiftMs);
+      const durationSec = Math.round((stopMs - startMs) / 1000);
+
+      await createTimeEntryMutation.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        duration: durationSec,
+        projectId: entry.project_id ?? entry.pid ?? null,
+        start: toTrackIso(newStart),
+        stop: toTrackIso(newStop),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+    }
+  }, [weekDays, beginningOfWeek, workspaceId, createTimeEntryMutation]);
+
   const handleEntryEdit = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
       const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
@@ -1494,6 +1542,7 @@ export function useTimerPageOrchestration(options?: {
     handleCalendarSlotCreate,
     handleCalendarEntryMove,
     handleCalendarEntryResize,
+    handleCopyLastWeek,
     handleTimesheetCellEdit,
     handleEntryEdit,
     handleIdleDescriptionFocus,

@@ -1027,11 +1027,13 @@ export function CalendarView({
 
 export function TimesheetView({
   onCellEdit,
+  onCopyLastWeek,
   rows,
   timezone,
   weekDays,
 }: {
   onCellEdit?: (projectLabel: string, dayIndex: number, durationSeconds: number) => void;
+  onCopyLastWeek?: () => void;
   rows: TimesheetRow[];
   timezone: string;
   weekDays: Date[];
@@ -1096,6 +1098,7 @@ export function TimesheetView({
         <div className="flex items-center gap-4">
           <button
             className="w-fit rounded-md border border-[var(--track-border)] bg-[#171717] px-3 py-2 text-[11px] normal-case tracking-normal text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={onCopyLastWeek}
             type="button"
           >
             Copy last week

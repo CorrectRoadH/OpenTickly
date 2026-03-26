@@ -22,6 +22,7 @@ type TimerComposerSuggestionsDialogProps = {
   onTimeEntrySelect: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onWorkspaceSelect: (workspaceId: number) => void;
   projects: GithubComTogglTogglApiInternalModelsProject[];
+  query?: string;
   timeEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   workspaces: Array<{
     id: number;
@@ -38,6 +39,7 @@ export function TimerComposerSuggestionsDialog({
   onTimeEntrySelect,
   onWorkspaceSelect,
   projects,
+  query,
   timeEntries,
   workspaces,
 }: TimerComposerSuggestionsDialogProps): ReactElement {
@@ -45,8 +47,14 @@ export function TimerComposerSuggestionsDialog({
   const position = useMemo(() => resolveDialogPosition(anchor), [anchor]);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
-  const previousEntries = useMemo(() => buildPreviousEntries(timeEntries), [timeEntries]);
-  const suggestedProjects = useMemo(() => buildProjectSuggestions(projects), [projects]);
+  const previousEntries = useMemo(
+    () => filterByQuery(buildPreviousEntries(timeEntries), query),
+    [timeEntries, query],
+  );
+  const suggestedProjects = useMemo(
+    () => filterProjectsByQuery(buildProjectSuggestions(projects), query),
+    [projects, query],
+  );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -237,4 +245,30 @@ function buildEntryKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): st
     String(entry.project_id ?? entry.pid ?? 0),
     (entry.tag_ids ?? []).join(","),
   ].join("::");
+}
+
+function filterByQuery(
+  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
+  query?: string,
+): GithubComTogglTogglApiInternalModelsTimeEntry[] {
+  const trimmed = query?.trim().toLowerCase();
+  if (!trimmed) return entries;
+  return entries.filter((entry) => {
+    const desc = (entry.description ?? "").toLowerCase();
+    const project = (entry.project_name ?? "").toLowerCase();
+    return desc.includes(trimmed) || project.includes(trimmed);
+  });
+}
+
+function filterProjectsByQuery(
+  projects: GithubComTogglTogglApiInternalModelsProject[],
+  query?: string,
+): GithubComTogglTogglApiInternalModelsProject[] {
+  const trimmed = query?.trim().toLowerCase();
+  if (!trimmed) return projects;
+  return projects.filter((project) => {
+    const name = (project.name ?? "").toLowerCase();
+    const client = (project.client_name ?? "").toLowerCase();
+    return name.includes(trimmed) || client.includes(trimmed);
+  });
 }
