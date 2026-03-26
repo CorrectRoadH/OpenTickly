@@ -11,6 +11,7 @@ import {
   ViewTab,
   ViewTabGroup,
 } from "../../features/tracking/overview-views.tsx";
+import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
@@ -54,7 +55,11 @@ export function WorkspaceTimerPage(): ReactElement {
                 event.currentTarget.blur();
               }}
               onFocus={orch.handleIdleDescriptionFocus}
-              placeholder="What are you working on?"
+              placeholder={
+                orch.timerInputMode === "manual" && orch.runningEntry == null
+                  ? "What have you done?"
+                  : "What are you working on?"
+              }
               value={orch.timerDescriptionValue}
             />
           </div>
@@ -90,27 +95,38 @@ export function WorkspaceTimerPage(): ReactElement {
             <span className="text-[16px] font-semibold">$</span>
           </button>
           <div className="ml-auto flex shrink-0 items-center gap-3">
-            <span
-              className="text-[29px] font-medium tabular-nums text-white"
-              data-testid="timer-elapsed"
-            >
-              {orch.runningDurationSeconds > 0
-                ? formatClockDuration(orch.runningDurationSeconds)
-                : "0:00:00"}
-            </span>
-            <button
-              aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-              className="flex size-[42px] items-center justify-center rounded-full bg-[#e57bd9] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-              data-icon={orch.runningEntry ? "stop" : "play"}
-              data-testid="timer-action-button"
-              disabled={orch.timerMutationPending}
-              onClick={() => {
-                void orch.handleTimerAction();
-              }}
-              type="button"
-            >
-              <TrackingIcon className="size-5" name={orch.runningEntry ? "stop" : "play"} />
-            </button>
+            {orch.timerInputMode === "manual" && orch.runningEntry == null ? (
+              <ManualModeComposer
+                onAddTimeEntry={(_start, _stop) => {
+                  /* Manual entry creation will be implemented in a follow-up */
+                }}
+                timezone={orch.timezone}
+              />
+            ) : (
+              <>
+                <span
+                  className="text-[29px] font-medium tabular-nums text-white"
+                  data-testid="timer-elapsed"
+                >
+                  {orch.runningDurationSeconds > 0
+                    ? formatClockDuration(orch.runningDurationSeconds)
+                    : "0:00:00"}
+                </span>
+                <button
+                  aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
+                  className="flex size-[42px] items-center justify-center rounded-full bg-[#e57bd9] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                  data-icon={orch.runningEntry ? "stop" : "play"}
+                  data-testid="timer-action-button"
+                  disabled={orch.timerMutationPending}
+                  onClick={() => {
+                    void orch.handleTimerAction();
+                  }}
+                  type="button"
+                >
+                  <TrackingIcon className="size-5" name={orch.runningEntry ? "stop" : "play"} />
+                </button>
+              </>
+            )}
             <button
               aria-label={
                 orch.timerInputMode === "automatic"

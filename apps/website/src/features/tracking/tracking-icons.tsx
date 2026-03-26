@@ -8,6 +8,7 @@ type TrackingIconName =
   | "chevron-down"
   | "chevron-right"
   | "clients"
+  | "close"
   | "copy"
   | "dollar"
   | "edit"
@@ -38,7 +39,8 @@ type TrackingIconName =
   | "timer"
   | "stop"
   | "timesheet"
-  | "track";
+  | "track"
+  | "trash";
 
 type TrackingIconProps = ComponentPropsWithoutRef<"svg"> & {
   name: TrackingIconName;
@@ -90,6 +92,12 @@ function renderIcon(name: TrackingIconName): ReactElement {
       return <path d="m4.5 6.5 3.5 3 3.5-3" />;
     case "chevron-right":
       return <path d="m6 4.5 3.5 3.5L6 11.5" />;
+    case "close":
+      return (
+        <>
+          <path d="m4.5 4.5 7 7M11.5 4.5l-7 7" />
+        </>
+      );
     case "clients":
       return (
         <>
@@ -311,6 +319,14 @@ function renderIcon(name: TrackingIconName): ReactElement {
         <>
           <path d="M3 4.5h10M3 8h10M3 11.5h10" />
           <path d="M5.5 3v10M10.5 3v10" />
+        </>
+      );
+    case "trash":
+      return (
+        <>
+          <path d="M3.5 5h9M6 5V3.8a.8.8 0 0 1 .8-.8h2.4a.8.8 0 0 1 .8.8V5" />
+          <path d="M4.5 5v7.2a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V5" />
+          <path d="M6.8 7.5v3M9.2 7.5v3" />
         </>
       );
     case "track":

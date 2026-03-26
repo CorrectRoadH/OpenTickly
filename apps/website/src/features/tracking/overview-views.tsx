@@ -23,6 +23,12 @@ import {
   type EntryGroup,
   type TimesheetRow,
 } from "./overview-data.ts";
+import {
+  BulkActionToolbar,
+  BulkEditDialog,
+  DeleteConfirmDialog,
+  useListSelection,
+} from "./list-bulk-actions.tsx";
 import type { TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 const withDragAndDrop =
@@ -223,96 +229,159 @@ export function ListView({
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   timezone: string;
 }): ReactElement {
+  const {
+    clearSelection,
+    isGroupFullySelected,
+    isGroupPartiallySelected,
+    selectedIds,
+    toggleEntry,
+    toggleGroup,
+  } = useListSelection(groups);
+  const [bulkEditOpen, setBulkEditOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   if (groups.length === 0) {
     return <SurfaceMessage message="No time entries in this workspace yet." />;
   }
 
   return (
     <div className="border-t border-[var(--track-border)]" data-testid="timer-list-view">
-      {groups.map((group) => (
-        <section key={group.key}>
-          <div className="grid grid-cols-[28px_minmax(0,1fr)_90px_110px_92px_28px] items-center border-b border-[var(--track-border)] px-6 py-3">
-            <input
-              aria-label={`Select all entries for ${formatGroupLabel(group.key, timezone)}`}
-              className="size-[13px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent"
-              type="checkbox"
-            />
-            <p className="text-[13px] font-medium text-white">
-              {formatGroupLabel(group.key, timezone)}
-            </p>
-            <span />
-            <span />
-            <p className="text-right text-[12px] font-medium tabular-nums text-white">
-              {formatClockDuration(group.totalSeconds)}
-            </p>
-            <span />
-          </div>
-          {group.entries.map((entry) => (
-            <div
-              key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-              className="group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
-            >
+      {selectedIds.size > 0 ? (
+        <BulkActionToolbar
+          count={selectedIds.size}
+          onClear={clearSelection}
+          onDelete={() => setDeleteConfirmOpen(true)}
+          onEdit={() => setBulkEditOpen(true)}
+        />
+      ) : null}
+
+      {bulkEditOpen ? (
+        <BulkEditDialog count={selectedIds.size} onClose={() => setBulkEditOpen(false)} />
+      ) : null}
+
+      {deleteConfirmOpen ? (
+        <DeleteConfirmDialog
+          count={selectedIds.size}
+          onCancel={() => setDeleteConfirmOpen(false)}
+          onConfirm={() => {
+            setDeleteConfirmOpen(false);
+            clearSelection();
+          }}
+        />
+      ) : null}
+
+      {groups.map((group) => {
+        const groupChecked = isGroupFullySelected(group);
+        const groupIndeterminate = isGroupPartiallySelected(group);
+        return (
+          <section key={group.key}>
+            <div className="grid grid-cols-[28px_minmax(0,1fr)_90px_110px_92px_28px] items-center border-b border-[var(--track-border)] px-6 py-3">
               <input
-                aria-label={`Select ${entry.description?.trim() || "time entry"}`}
-                className="size-[13px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent"
+                aria-label={`Select all entries for ${formatGroupLabel(group.key, timezone)}`}
+                checked={groupChecked}
+                className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
+                  groupChecked || groupIndeterminate
+                    ? "border-[#e57bd9] bg-[#e57bd9]"
+                    : "border-[var(--track-border)]"
+                }`}
+                onChange={() => toggleGroup(group)}
+                ref={(el) => {
+                  if (el) el.indeterminate = groupIndeterminate;
+                }}
                 type="checkbox"
               />
-              <div className="flex min-w-0 items-center gap-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium">
-                    {entry.description?.trim() || "(no description)"}
-                  </p>
-                </div>
-                {entry.project_name ? (
-                  <span
-                    className="flex shrink-0 items-center gap-1.5 text-[12px]"
-                    style={{ color: resolveEntryColor(entry) }}
-                  >
-                    <span
-                      className="size-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: resolveEntryColor(entry) }}
-                    />
-                    <span className="max-w-[160px] truncate">{entry.project_name}</span>
-                  </span>
-                ) : null}
-              </div>
-              <div className="flex shrink-0 items-center gap-2 pl-4">
-                {entry.tags && entry.tags.length > 0 ? (
-                  <TrackingIcon className="size-3.5 text-[var(--track-text-muted)]" name="tags" />
-                ) : null}
-                {entry.billable ? (
-                  <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
-                    $
-                  </span>
-                ) : null}
-                <span className="w-[110px] text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
-                  {formatEntryRange(entry, timezone)}
-                </span>
-                <span className="w-[72px] text-right text-[13px] font-semibold tabular-nums">
-                  {formatClockDuration(resolveEntryDurationSeconds(entry))}
-                </span>
-                <button
-                  aria-label={`Continue ${entry.description?.trim() || "time entry"}`}
-                  className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="play" />
-                </button>
-                <button
-                  aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
-                  className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-                  onClick={(event) =>
-                    onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
-                  }
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="more" />
-                </button>
-              </div>
+              <p className="text-[13px] font-medium text-white">
+                {formatGroupLabel(group.key, timezone)}
+              </p>
+              <span />
+              <span />
+              <p className="text-right text-[12px] font-medium tabular-nums text-white">
+                {formatClockDuration(group.totalSeconds)}
+              </p>
+              <span />
             </div>
-          ))}
-        </section>
-      ))}
+            {group.entries.map((entry) => {
+              const entryId = entry.id;
+              const isSelected = typeof entryId === "number" && selectedIds.has(entryId);
+              return (
+                <div
+                  key={String(entry.id ?? `${entry.start}-${entry.description}`)}
+                  className={`group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)] ${
+                    isSelected ? "bg-[var(--track-row-hover)]" : ""
+                  }`}
+                >
+                  <input
+                    aria-label={`Select ${entry.description?.trim() || "time entry"}`}
+                    checked={isSelected}
+                    className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
+                      isSelected ? "border-[#e57bd9] bg-[#e57bd9]" : "border-[var(--track-border)]"
+                    }`}
+                    onChange={() => {
+                      if (typeof entryId === "number") toggleEntry(entryId);
+                    }}
+                    type="checkbox"
+                  />
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">
+                        {entry.description?.trim() || "(no description)"}
+                      </p>
+                    </div>
+                    {entry.project_name ? (
+                      <span
+                        className="flex shrink-0 items-center gap-1.5 text-[12px]"
+                        style={{ color: resolveEntryColor(entry) }}
+                      >
+                        <span
+                          className="size-1.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: resolveEntryColor(entry) }}
+                        />
+                        <span className="max-w-[160px] truncate">{entry.project_name}</span>
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 pl-4">
+                    {entry.tags && entry.tags.length > 0 ? (
+                      <TrackingIcon
+                        className="size-3.5 text-[var(--track-text-muted)]"
+                        name="tags"
+                      />
+                    ) : null}
+                    {entry.billable ? (
+                      <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
+                        $
+                      </span>
+                    ) : null}
+                    <span className="w-[110px] text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
+                      {formatEntryRange(entry, timezone)}
+                    </span>
+                    <span className="w-[72px] text-right text-[13px] font-semibold tabular-nums">
+                      {formatClockDuration(resolveEntryDurationSeconds(entry))}
+                    </span>
+                    <button
+                      aria-label={`Continue ${entry.description?.trim() || "time entry"}`}
+                      className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                      type="button"
+                    >
+                      <TrackingIcon className="size-3" name="play" />
+                    </button>
+                    <button
+                      aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
+                      className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                      onClick={(event) =>
+                        onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
+                      }
+                      type="button"
+                    >
+                      <TrackingIcon className="size-3" name="more" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </section>
+        );
+      })}
     </div>
   );
 }
