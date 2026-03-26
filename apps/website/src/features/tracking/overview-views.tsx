@@ -608,7 +608,7 @@ export function TimesheetView({
             />
             <span className="truncate text-[12px] text-white">{row.label}</span>
           </div>
-          <span className="text-[11px] text-[var(--track-text-muted)]">{row.members} 余眼</span>
+          <span className="text-[11px] text-[var(--track-text-muted)]">{row.members}</span>
           {row.cells.map((seconds, index) => (
             <div className="flex justify-center" key={`${row.label}-${index}`}>
               <TimesheetCell seconds={seconds} />
