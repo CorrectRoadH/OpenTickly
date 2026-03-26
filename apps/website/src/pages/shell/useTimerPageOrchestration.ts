@@ -180,6 +180,7 @@ export interface TimerPageOrchestration {
   nowMs: number;
   selectedWeekDate: Date;
   setSelectedWeekDate: (date: Date) => void;
+  beginningOfWeek: number;
   weekDays: Date[];
   weekRange: { endDate: string; startDate: string };
 
@@ -326,7 +327,11 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
 
-  const weekDays = useMemo(() => getWeekDaysForDate(selectedWeekDate), [selectedWeekDate]);
+  const beginningOfWeek = session.user.beginningOfWeek ?? 1;
+  const weekDays = useMemo(
+    () => getWeekDaysForDate(selectedWeekDate, beginningOfWeek),
+    [selectedWeekDate, beginningOfWeek],
+  );
 
   const weekRange = useMemo(
     () => ({
@@ -1068,6 +1073,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setCalendarZoom,
 
     // Time state
+    beginningOfWeek,
     nowMs,
     selectedWeekDate,
     setSelectedWeekDate,

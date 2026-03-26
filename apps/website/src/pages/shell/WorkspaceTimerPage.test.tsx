@@ -64,6 +64,7 @@ describe("WorkspaceTimerPage", () => {
         onlyAdminsMayCreateProjects: false,
       },
       user: {
+        beginningOfWeek: 1,
         timezone: "UTC",
       },
     });
@@ -643,6 +644,101 @@ describe("WorkspaceTimerPage", () => {
         start: expect.any(String),
         tagIds: [7, 8],
         taskId: 55,
+      });
+    });
+  });
+
+  it("persists calendar drag move gestures through the update mutation", async () => {
+    const updateTimeEntry = vi.fn().mockResolvedValue(createTimeEntryFixture());
+    const historicalEntry = createTimeEntryFixture({
+      description: "Drag me",
+      id: 410,
+      start: "2026-03-23T10:00:00Z",
+      stop: "2026-03-23T10:30:00Z",
+      tag_ids: [7, 8],
+      task_id: 55,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+    mockUseUpdateTimeEntryMutation.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: updateTimeEntry,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.pointerDown(screen.getByTestId("calendar-entry-move-410"), { clientY: 100 });
+    fireEvent.pointerUp(screen.getByTestId("calendar-entry-410"), { clientY: 130 });
+
+    await waitFor(() => {
+      expect(updateTimeEntry).toHaveBeenCalledWith({
+        request: {
+          billable: false,
+          description: "Drag me",
+          projectId: 44,
+          start: "2026-03-23T10:30:00Z",
+          stop: "2026-03-23T11:00:00Z",
+          tagIds: [7, 8],
+          taskId: 55,
+        },
+        timeEntryId: 410,
+        workspaceId: 202,
+      });
+    });
+  });
+
+  it("persists calendar resize gestures through the update mutation", async () => {
+    const updateTimeEntry = vi.fn().mockResolvedValue(createTimeEntryFixture());
+    const historicalEntry = createTimeEntryFixture({
+      description: "Resize me",
+      id: 411,
+      start: "2026-03-23T10:00:00Z",
+      stop: "2026-03-23T10:30:00Z",
+      tag_ids: [7],
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+    mockUseUpdateTimeEntryMutation.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: updateTimeEntry,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.pointerDown(screen.getByTestId("calendar-entry-resize-start-411"), { clientY: 100 });
+    fireEvent.pointerUp(screen.getByTestId("calendar-entry-411"), { clientY: 70 });
+
+    await waitFor(() => {
+      expect(updateTimeEntry).toHaveBeenCalledWith({
+        request: {
+          billable: false,
+          description: "Resize me",
+          projectId: 44,
+          start: "2026-03-23T09:30:00Z",
+          stop: "2026-03-23T10:30:00Z",
+          tagIds: [7],
+          taskId: null,
+        },
+        timeEntryId: 411,
+        workspaceId: 202,
       });
     });
   });

@@ -16,15 +16,17 @@ import {
 export function QuickDateShortcuts({
   onSelectDate,
   selectedDate,
+  weekStartsOn = 1,
 }: {
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
+  weekStartsOn?: number;
 }): ReactElement {
   return (
     <div className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-0.5">
       {WEEK_SHORTCUTS.map((shortcut) => {
         const shortcutDate = shortcut.resolveDate(new Date());
-        const isActive = isSameWeek(shortcutDate, selectedDate);
+        const isActive = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
 
         return (
           <button
@@ -49,9 +51,11 @@ export function QuickDateShortcuts({
 export function WeekRangePicker({
   onSelectDate,
   selectedDate,
+  weekStartsOn = 1,
 }: {
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
+  weekStartsOn?: number;
 }): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const [visibleMonth, setVisibleMonth] = useState(
@@ -59,8 +63,11 @@ export function WeekRangePicker({
   );
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const selectedWeekStart = getWeekStart(selectedDate);
-  const weeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
+  const selectedWeekStart = getWeekStart(selectedDate, weekStartsOn);
+  const weeks = useMemo(
+    () => buildMonthWeeks(visibleMonth, weekStartsOn),
+    [visibleMonth, weekStartsOn],
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -118,7 +125,7 @@ export function WeekRangePicker({
         <button
           aria-expanded={isOpen}
           aria-haspopup="dialog"
-          aria-label={`Week range: ${formatWeekRangeLabel(selectedDate)}. Press Enter to open week picker.`}
+          aria-label={`Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`}
           className="flex h-9 items-center gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-left text-white"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
@@ -135,7 +142,7 @@ export function WeekRangePicker({
             name="calendar"
           />
           <span className="truncate text-[13px] font-medium">
-            {formatWeekRangeLabel(selectedDate)}
+            {formatWeekRangeLabel(selectedDate, weekStartsOn)}
           </span>
           <TrackingIcon
             className="ml-auto size-3 shrink-0 text-[var(--track-text-muted)]"
@@ -165,7 +172,7 @@ export function WeekRangePicker({
               <div className="flex flex-col gap-3">
                 {WEEK_SHORTCUTS.map((shortcut) => {
                   const shortcutDate = shortcut.resolveDate(new Date());
-                  const isActive = isSameWeek(shortcutDate, selectedDate);
+                  const isActive = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
 
                   return (
                     <button
@@ -237,7 +244,7 @@ export function WeekRangePicker({
               <div className="mt-4 flex flex-col gap-2">
                 {weeks.map((week) => {
                   const weekStart = week[0];
-                  const isSelectedWeek = isSameWeek(weekStart, selectedWeekStart);
+                  const isSelectedWeek = isSameWeek(weekStart, selectedWeekStart, weekStartsOn);
 
                   return (
                     <button

@@ -54,13 +54,15 @@ type CalendarEvent = {
   title: string;
 };
 
-const calendarLocalizer = dateFnsLocalizer({
-  format,
-  getDay,
-  locales: { "en-US": enUS },
-  parse,
-  startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn: 1 }),
-});
+function buildCalendarLocalizer(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1) {
+  return dateFnsLocalizer({
+    format,
+    getDay,
+    locales: { "en-US": enUS },
+    parse,
+    startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn }),
+  });
+}
 
 function CalendarTimeSlotWrapper({
   children,
@@ -329,6 +331,7 @@ export function CalendarView({
   subview = "week",
   timezone,
   weekDays,
+  weekStartsOn = 1,
   zoom = 0,
 }: {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
@@ -345,9 +348,11 @@ export function CalendarView({
   subview?: "day" | "week";
   timezone: string;
   weekDays: Date[];
+  weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   zoom?: number;
 }): ReactElement {
   const now = new Date(nowMs ?? Date.now());
+  const calendarLocalizer = useMemo(() => buildCalendarLocalizer(weekStartsOn), [weekStartsOn]);
   const calendarDate = useMemo(() => {
     if (subview === "day" && selectedSubviewDateIso) {
       return new Date(`${selectedSubviewDateIso}T00:00:00Z`);
@@ -764,7 +769,7 @@ function TimesheetCell({ seconds }: { seconds: number }) {
           : "border-[#3b3b3b] bg-transparent text-transparent"
       }`}
     >
-      {seconds > 0 ? formatHours(seconds).replace(" h", "") : "0"}
+      {seconds > 0 ? formatHours(seconds) : "0"}
     </span>
   );
 }

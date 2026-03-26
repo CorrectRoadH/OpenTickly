@@ -144,6 +144,7 @@ export function WorkspaceTimerPage(): ReactElement {
             <WeekRangePicker
               onSelectDate={orch.setSelectedWeekDate}
               selectedDate={orch.selectedWeekDate}
+              weekStartsOn={orch.beginningOfWeek}
             />
             <SummaryStat
               label="Week total"
@@ -227,6 +228,7 @@ export function WorkspaceTimerPage(): ReactElement {
             runningEntry={orch.runningEntry}
             timezone={orch.timezone}
             weekDays={orch.weekDays}
+            weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
             zoom={orch.calendarZoom}
           />
         ) : null}

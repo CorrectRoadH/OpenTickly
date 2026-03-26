@@ -317,6 +317,8 @@ function navIconName(label: string) {
       return "clients";
     case "Members":
       return "members";
+    case "Billable rates":
+      return "dollar";
     case "Import":
       return "import";
     case "Invoices":

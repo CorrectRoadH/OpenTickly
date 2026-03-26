@@ -39,8 +39,8 @@ export const WEEK_SHORTCUTS: WeekShortcut[] = [
   },
 ];
 
-export function getWeekDaysForDate(date: Date): Date[] {
-  const start = getWeekStart(date);
+export function getWeekDaysForDate(date: Date, weekStartsOn = 1): Date[] {
+  const start = getWeekStart(date, weekStartsOn);
 
   return Array.from({ length: DAYS_IN_WEEK }, (_, index) => {
     const day = new Date(start);
@@ -49,10 +49,14 @@ export function getWeekDaysForDate(date: Date): Date[] {
   });
 }
 
-export function getWeekStart(date: Date): Date {
+/**
+ * Returns the start of the week containing `date`.
+ * `weekStartsOn` uses JS getDay() convention: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+ */
+export function getWeekStart(date: Date, weekStartsOn = 1): Date {
   const start = new Date(date);
   const weekday = start.getDay();
-  const delta = weekday === 0 ? -6 : 1 - weekday;
+  const delta = ((weekday - weekStartsOn + DAYS_IN_WEEK) % DAYS_IN_WEEK) * -1;
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() + delta);
   return start;
@@ -71,12 +75,12 @@ export function formatTrackQueryDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-export function formatWeekRangeLabel(date: Date): string {
-  const weekDays = getWeekDaysForDate(date);
-  const weekStart = getWeekStart(date);
+export function formatWeekRangeLabel(date: Date, weekStartsOn = 1): string {
+  const weekDays = getWeekDaysForDate(date, weekStartsOn);
+  const weekStart = getWeekStart(date, weekStartsOn);
   const weekNumber = resolveIsoWeekNumber(date);
   const today = new Date();
-  const todayWeekStart = getWeekStart(today);
+  const todayWeekStart = getWeekStart(today, weekStartsOn);
 
   if (isSameDay(weekStart, todayWeekStart)) {
     return `This week · W${weekNumber}`;
@@ -108,9 +112,9 @@ export function resolveIsoWeekNumber(date: Date): number {
   return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-export function buildMonthWeeks(visibleMonth: Date): Date[][] {
+export function buildMonthWeeks(visibleMonth: Date, weekStartsOn = 1): Date[][] {
   const firstDayOfMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
-  const firstGridDay = getWeekStart(firstDayOfMonth);
+  const firstGridDay = getWeekStart(firstDayOfMonth, weekStartsOn);
   const weeks: Date[][] = [];
 
   for (let weekIndex = 0; weekIndex < 6; weekIndex += 1) {
@@ -135,6 +139,6 @@ export function isSameDay(left: Date, right: Date): boolean {
   );
 }
 
-export function isSameWeek(left: Date, right: Date): boolean {
-  return isSameDay(getWeekStart(left), getWeekStart(right));
+export function isSameWeek(left: Date, right: Date, weekStartsOn = 1): boolean {
+  return isSameDay(getWeekStart(left, weekStartsOn), getWeekStart(right, weekStartsOn));
 }

@@ -62,6 +62,10 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           to: `/workspaces/${session.currentWorkspace.id}/members`,
         },
         {
+          disabled: true,
+          label: "Billable rates",
+        },
+        {
           label: "Import",
           to: buildWorkspaceImportPath(session.currentWorkspace.id),
         },

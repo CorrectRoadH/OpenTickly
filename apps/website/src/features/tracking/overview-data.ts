@@ -121,11 +121,15 @@ export function sumForDate(
   }, 0);
 }
 
-export function getCurrentWeekDays(): Date[] {
+/**
+ * Returns the 7 days of the current week.
+ * `weekStartsOn` uses JS getDay() convention: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+ */
+export function getCurrentWeekDays(weekStartsOn = 1): Date[] {
   const today = new Date();
   const start = new Date(today);
   const weekday = start.getDay();
-  const delta = weekday === 0 ? -6 : 1 - weekday;
+  const delta = ((weekday - weekStartsOn + 7) % 7) * -1;
   start.setDate(start.getDate() + delta);
 
   return Array.from({ length: 7 }, (_, index) => {
@@ -278,8 +282,10 @@ export function formatClockDuration(seconds: number): string {
 }
 
 export function formatHours(seconds: number): string {
-  const hours = Math.round((seconds / 3600) * 10) / 10;
-  return `${hours.toFixed(hours % 1 === 0 ? 0 : 1)} h`;
+  const totalMinutes = Math.round(seconds / 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}:${String(minutes).padStart(2, "0")}`;
 }
 
 export function resolveEntryColor(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {

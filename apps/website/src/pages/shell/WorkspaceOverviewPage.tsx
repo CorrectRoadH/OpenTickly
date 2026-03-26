@@ -24,7 +24,8 @@ export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const memberCount = session.currentOrganization?.userCount ?? 1;
-  const weekDays = useMemo(() => getCurrentWeekDays(), []);
+  const beginningOfWeek = session.user.beginningOfWeek ?? 1;
+  const weekDays = useMemo(() => getCurrentWeekDays(beginningOfWeek), [beginningOfWeek]);
   const timezone = session.user.timezone ?? "UTC";
   const projectsQuery = useProjectsQuery(workspaceId, "all");
   const allActivitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
