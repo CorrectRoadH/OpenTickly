@@ -137,6 +137,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 	if err != nil {
 		return err
 	}
+	applySummaryPostFilters(&query, request)
 	report, err := handler.reports.BuildSummaryReport(ctx.Request().Context(), query)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
@@ -189,6 +190,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 	if err != nil {
 		return err
 	}
+	applyBasePostFilters(&query, request)
 	report, err := handler.reports.BuildWeeklyReport(ctx.Request().Context(), query)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
@@ -253,6 +255,42 @@ func buildQuery(
 		Timezone:    user.Timezone,
 		WorkspaceID: workspaceID,
 	}, nil
+}
+
+// applyBasePostFilters copies filter fields from a BasePost request into the
+// application Query so the reports service can narrow results.
+func applyBasePostFilters(query *reportsapplication.Query, request publicreportsapi.BasePost) {
+	if request.ProjectIds != nil {
+		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
+	}
+	if request.TagIds != nil {
+		query.TagIDs = intsToInt64s(*request.TagIds)
+	}
+	if request.Description != nil {
+		query.Description = *request.Description
+	}
+}
+
+// applySummaryPostFilters copies filter fields from a SummaryReportPost request
+// into the application Query.
+func applySummaryPostFilters(query *reportsapplication.Query, request publicreportsapi.SummaryReportPost) {
+	if request.ProjectIds != nil {
+		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
+	}
+	if request.TagIds != nil {
+		query.TagIDs = intsToInt64s(*request.TagIds)
+	}
+	if request.Description != nil {
+		query.Description = *request.Description
+	}
+}
+
+func intsToInt64s(values []int) []int64 {
+	result := make([]int64, len(values))
+	for index, value := range values {
+		result[index] = int64(value)
+	}
+	return result
 }
 
 func (handler *Handler) requireReportsScope(

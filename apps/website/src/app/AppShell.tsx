@@ -126,8 +126,8 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       className="flex h-dvh flex-col overflow-hidden bg-[var(--track-surface)] text-[var(--track-text)]"
       data-testid="app-shell"
     >
-      {/* Mobile top bar -- visible below md breakpoint */}
-      <div className="flex h-[56px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 md:hidden">
+      {/* Mobile top bar -- visible below lg breakpoint */}
+      <div className="flex h-[56px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 lg:hidden">
         <button
           aria-label="Toggle menu"
           className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/6 hover:text-white"
@@ -141,7 +141,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
       {/* Mobile sidebar overlay */}
       {mobileMenuOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <div
             aria-label="Close menu"
             className="absolute inset-0 bg-black/50"
@@ -162,8 +162,8 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       ) : null}
 
       <div className="flex min-h-0 flex-1">
-        {/* Desktop sidebar -- hidden below md breakpoint */}
-        <aside className="hidden h-full w-[226px] shrink-0 overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] md:flex">
+        {/* Desktop sidebar -- hidden below lg breakpoint */}
+        <aside className="hidden h-full w-[226px] shrink-0 overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
           <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
             <div className="space-y-0.5">
               <RailButton active icon="track" />

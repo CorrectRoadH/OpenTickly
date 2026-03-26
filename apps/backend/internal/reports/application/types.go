@@ -3,9 +3,12 @@ package application
 import "time"
 
 type Query struct {
+	Description string
 	EndDate     time.Time
+	ProjectIDs  []int64
 	RequestedBy int64
 	StartDate   time.Time
+	TagIDs      []int64
 	Timezone    string
 	WorkspaceID int64
 }

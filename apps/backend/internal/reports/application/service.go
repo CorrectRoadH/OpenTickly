@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
@@ -61,6 +62,10 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 	for _, entry := range entries {
 		dayIndex, ok := reportDayIndex(entry, query, location)
 		if !ok {
+			continue
+		}
+
+		if !matchesQueryFilters(entry, query) {
 			continue
 		}
 
@@ -202,6 +207,53 @@ func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (Su
 type weeklyRowKey struct {
 	projectID int64
 	userID    int64
+}
+
+// matchesQueryFilters returns true when the entry passes all active filters
+// (project_ids, tag_ids, description substring) on the query.
+func matchesQueryFilters(entry trackingapplication.TimeEntryView, query Query) bool {
+	if len(query.ProjectIDs) > 0 {
+		entryProjectID := derefInt64(entry.ProjectID)
+		matched := false
+		for _, pid := range query.ProjectIDs {
+			if pid == entryProjectID {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if len(query.TagIDs) > 0 {
+		matched := false
+		for _, filterTag := range query.TagIDs {
+			for _, entryTag := range entry.TagIDs {
+				if filterTag == entryTag {
+					matched = true
+					break
+				}
+			}
+			if matched {
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	if query.Description != "" {
+		if !strings.Contains(
+			strings.ToLower(entry.Description),
+			strings.ToLower(query.Description),
+		) {
+			return false
+		}
+	}
+
+	return true
 }
 
 func buildTrackedWeekdays(startDate time.Time, dayCount int, location *time.Location) []time.Time {
