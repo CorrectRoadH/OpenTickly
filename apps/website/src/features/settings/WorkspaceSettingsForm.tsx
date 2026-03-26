@@ -131,14 +131,14 @@ export function WorkspaceSettingsForm({
               checked={form.watch("onlyAdminsSeeTeamDashboard")}
               label="Admins"
               onChange={() => {
-                form.setValue("onlyAdminsSeeTeamDashboard", true);
+                form.setValue("onlyAdminsSeeTeamDashboard", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsSeeTeamDashboard")}
               label="Everyone"
               onChange={() => {
-                form.setValue("onlyAdminsSeeTeamDashboard", false);
+                form.setValue("onlyAdminsSeeTeamDashboard", false, { shouldDirty: true });
               }}
             />
           </RadioGroup>
@@ -147,14 +147,14 @@ export function WorkspaceSettingsForm({
               checked={form.watch("onlyAdminsMayCreateProjects")}
               label="Admins"
               onChange={() => {
-                form.setValue("onlyAdminsMayCreateProjects", true);
+                form.setValue("onlyAdminsMayCreateProjects", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsMayCreateProjects")}
               label="Everyone"
               onChange={() => {
-                form.setValue("onlyAdminsMayCreateProjects", false);
+                form.setValue("onlyAdminsMayCreateProjects", false, { shouldDirty: true });
               }}
             />
           </RadioGroup>
@@ -163,14 +163,14 @@ export function WorkspaceSettingsForm({
               checked={form.watch("onlyAdminsMayCreateTags")}
               label="Admins"
               onChange={() => {
-                form.setValue("onlyAdminsMayCreateTags", true);
+                form.setValue("onlyAdminsMayCreateTags", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsMayCreateTags")}
               label="Everyone"
               onChange={() => {
-                form.setValue("onlyAdminsMayCreateTags", false);
+                form.setValue("onlyAdminsMayCreateTags", false, { shouldDirty: true });
               }}
             />
           </RadioGroup>
@@ -188,28 +188,28 @@ export function WorkspaceSettingsForm({
               checked={form.watch("projectsBillableByDefault")}
               label={'Set new projects as "billable" by default'}
               onChange={(checked) => {
-                form.setValue("projectsBillableByDefault", checked);
+                form.setValue("projectsBillableByDefault", checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={!form.watch("projectsPrivateByDefault")}
               label={'Set new projects as "public" by default'}
               onChange={(checked) => {
-                form.setValue("projectsPrivateByDefault", !checked);
+                form.setValue("projectsPrivateByDefault", !checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={form.watch("limitPublicProjectData")}
               label="Limit public projects data in reports to admins"
               onChange={(checked) => {
-                form.setValue("limitPublicProjectData", checked);
+                form.setValue("limitPublicProjectData", checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={form.watch("projectsEnforceBillable")}
               label="Enforce billable time entries on billable projects"
               onChange={(checked) => {
-                form.setValue("projectsEnforceBillable", checked);
+                form.setValue("projectsEnforceBillable", checked, { shouldDirty: true });
               }}
             />
           </div>
@@ -225,7 +225,9 @@ export function WorkspaceSettingsForm({
           description="Setting required fields helps to ensure your team fills in all the information you need for accurate reporting"
           title="Set required fields for new Time entries"
           onChange={(checked) => {
-            form.setValue("requiredTimeEntryFields", checked ? ["project", "task"] : []);
+            form.setValue("requiredTimeEntryFields", checked ? ["project", "task"] : [], {
+              shouldDirty: true,
+            });
           }}
         />
         <ToggleSection
@@ -236,6 +238,7 @@ export function WorkspaceSettingsForm({
             form.setValue(
               "reportLockedAt",
               checked ? initialValues.reportLockedAt || "2026-03-20T00:00:00Z" : "",
+              { shouldDirty: true },
             );
           }}
         >
@@ -263,14 +266,14 @@ export function WorkspaceSettingsForm({
               checked={form.watch("hideStartEndTimes")}
               label="Hide start and end times"
               onChange={() => {
-                form.setValue("hideStartEndTimes", true);
+                form.setValue("hideStartEndTimes", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("hideStartEndTimes")}
               label="Show start and end times"
               onChange={() => {
-                form.setValue("hideStartEndTimes", false);
+                form.setValue("hideStartEndTimes", false, { shouldDirty: true });
               }}
             />
           </div>
@@ -286,14 +289,14 @@ export function WorkspaceSettingsForm({
             checked={!form.watch("showTimesheetView")}
             label="Hide timesheet view"
             onChange={() => {
-              form.setValue("showTimesheetView", false);
+              form.setValue("showTimesheetView", false, { shouldDirty: true });
             }}
           />
           <RadioOption
             checked={form.watch("showTimesheetView")}
             label="Show timesheet view"
             onChange={() => {
-              form.setValue("showTimesheetView", true);
+              form.setValue("showTimesheetView", true, { shouldDirty: true });
             }}
           />
         </div>
@@ -310,7 +313,7 @@ export function WorkspaceSettingsForm({
           }
           title="Collapse small entries in PDF exports"
           onChange={(checked) => {
-            form.setValue("reportsCollapse", checked);
+            form.setValue("reportsCollapse", checked, { shouldDirty: true });
           }}
         />
       </SettingsCard>

@@ -61,6 +61,8 @@ import {
   putWorkspaceClients,
   putWorkspaceProject,
   postWorkspaceTag,
+  putWorkspaceTag,
+  deleteWorkspaceTag,
   putWorkspaceTimeEntryHandler,
 } from "../api/public/track/index.ts";
 import {
@@ -1328,6 +1330,51 @@ export function useCreateTagMutation(workspaceId: number) {
             name,
           },
           path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["tags", workspaceId],
+      });
+    },
+  });
+}
+
+export function useUpdateTagMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ tagId, name }: { tagId: number; name: string }) =>
+      unwrapWebApiResult(
+        putWorkspaceTag({
+          body: {
+            name,
+          },
+          path: {
+            tag_id: tagId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["tags", workspaceId],
+      });
+    },
+  });
+}
+
+export function useDeleteTagMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (tagId: number) =>
+      unwrapWebApiResult(
+        deleteWorkspaceTag({
+          path: {
+            tag_id: tagId,
             workspace_id: workspaceId,
           },
         }),

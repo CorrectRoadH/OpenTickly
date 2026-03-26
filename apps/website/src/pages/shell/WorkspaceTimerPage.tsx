@@ -57,6 +57,7 @@ export function WorkspaceTimerPage(): ReactElement {
   );
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
   const orch = useTimerPageOrchestration({ showAllEntries });
 
   const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
@@ -96,6 +97,29 @@ export function WorkspaceTimerPage(): ReactElement {
       }
     };
   }, []);
+
+  const handleTimesheetAddRow = useCallback(
+    (projectId: number | null) => {
+      setTimesheetAddRowOpen(false);
+      if (orch.weekDays.length === 0) return;
+      const firstDay = orch.weekDays[0];
+      const start = new Date(firstDay);
+      start.setHours(9, 0, 0, 0);
+      const stop = new Date(start);
+      stop.setSeconds(stop.getSeconds() + 1);
+      void orch.createTimeEntryMutation.mutateAsync({
+        billable: false,
+        description: "",
+        duration: 1,
+        projectId,
+        start: start.toISOString(),
+        stop: stop.toISOString(),
+        tagIds: [],
+        taskId: null,
+      });
+    },
+    [orch.weekDays, orch.createTimeEntryMutation],
+  );
 
   const handleGlobalKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -501,17 +525,31 @@ export function WorkspaceTimerPage(): ReactElement {
           {!orch.timeEntriesQuery.isPending &&
           !orch.timeEntriesQuery.isError &&
           orch.view === "timesheet" ? (
-            <TimesheetView
-              onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
-                void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
-              }}
-              onCopyLastWeek={() => {
-                void orch.handleCopyLastWeek();
-              }}
-              rows={orch.timesheetRows}
-              timezone={orch.timezone}
-              weekDays={orch.weekDays}
-            />
+            <div className="relative">
+              <TimesheetView
+                onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
+                onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
+                  void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
+                }}
+                onCopyLastWeek={() => {
+                  void orch.handleCopyLastWeek();
+                }}
+                rows={orch.timesheetRows}
+                timezone={orch.timezone}
+                weekDays={orch.weekDays}
+              />
+              {timesheetAddRowOpen ? (
+                <TimesheetAddRowPicker
+                  onClose={() => setTimesheetAddRowOpen(false)}
+                  onSelect={handleTimesheetAddRow}
+                  projectOptions={orch.projectOptions}
+                  workspaceName={
+                    orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+                    "Workspace"
+                  }
+                />
+              ) : null}
+            </div>
           ) : null}
           {orch.selectedEntry && orch.selectedEntryAnchor ? (
             <TimeEntryEditorDialog
@@ -1030,4 +1068,79 @@ function resolveTimeEntryProjectId(entry: {
     return null;
   }
   return projectId;
+}
+
+/**
+ * Self-contained project picker for the timesheet "Add row" button.
+ * Manages its own search state and filters projects accordingly.
+ */
+function TimesheetAddRowPicker({
+  onClose,
+  onSelect,
+  projectOptions,
+  workspaceName,
+}: {
+  onClose: () => void;
+  onSelect: (projectId: number | null) => void;
+  projectOptions: {
+    client_name?: string | null;
+    color?: string | null;
+    id?: number | null;
+    name?: string | null;
+  }[];
+  workspaceName: string;
+}): ReactElement {
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const projects = useMemo(
+    () =>
+      projectOptions
+        .filter((p) => p.id != null)
+        .map((p) => ({
+          clientName: p.client_name ?? undefined,
+          color: resolveProjectColorValue(p),
+          id: p.id as number,
+          name: p.name ?? "Untitled project",
+        })),
+    [projectOptions],
+  );
+
+  const filteredProjects = useMemo(
+    () =>
+      search.trim()
+        ? projects.filter(
+            (p) =>
+              p.name.toLowerCase().includes(search.toLowerCase()) ||
+              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
+          )
+        : projects,
+    [projects, search],
+  );
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  return (
+    <div
+      className="absolute bottom-12 left-4 z-50 w-[280px]"
+      onMouseDown={(e) => e.preventDefault()}
+      ref={containerRef}
+    >
+      <ProjectPickerDropdown
+        filteredProjects={filteredProjects}
+        onSearch={setSearch}
+        onSelect={onSelect}
+        search={search}
+        workspaceName={workspaceName}
+      />
+    </div>
+  );
 }

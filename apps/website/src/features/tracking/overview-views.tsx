@@ -1026,12 +1026,14 @@ export function CalendarView({
 }
 
 export function TimesheetView({
+  onAddRow,
   onCellEdit,
   onCopyLastWeek,
   rows,
   timezone,
   weekDays,
 }: {
+  onAddRow?: () => void;
   onCellEdit?: (projectLabel: string, dayIndex: number, durationSeconds: number) => void;
   onCopyLastWeek?: () => void;
   rows: TimesheetRow[];
@@ -1082,6 +1084,7 @@ export function TimesheetView({
       <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3 text-[12px] text-[var(--track-text-muted)]">
         <button
           className="flex items-center gap-2 text-left transition hover:text-white"
+          onClick={onAddRow}
           type="button"
         >
           <TrackingIcon className="size-3.5" name="plus" />

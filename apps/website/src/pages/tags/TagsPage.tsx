@@ -3,9 +3,15 @@ import { DirectoryFilterChip, DirectorySurfaceMessage } from "@opentoggl/web-ui"
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
-import { useCreateTagMutation, useTagsQuery } from "../../shared/query/web-shell.ts";
+import {
+  useCreateTagMutation,
+  useDeleteTagMutation,
+  useUpdateTagMutation,
+  useTagsQuery,
+} from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
+import { TagRowActions } from "./TagRowActions.tsx";
 import { emptyTagsStateTitle, normalizeTags, type TagStatusFilter } from "./tags-page-helpers.ts";
 
 export function TagsPage(): ReactElement {
@@ -13,6 +19,8 @@ export function TagsPage(): ReactElement {
   const workspaceId = session.currentWorkspace.id;
   const tagsQuery = useTagsQuery(workspaceId);
   const createTagMutation = useCreateTagMutation(workspaceId);
+  const updateTagMutation = useUpdateTagMutation(workspaceId);
+  const deleteTagMutation = useDeleteTagMutation(workspaceId);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -138,8 +146,21 @@ export function TagsPage(): ReactElement {
               <div className="flex h-[54px] items-center text-white">
                 {tag.deleted_at ? "Inactive" : "Active"}
               </div>
-              <div className="flex h-[54px] items-center justify-end text-[var(--track-text-muted)]">
-                <TrackingIcon className="size-4" name="more" />
+              <div className="flex h-[54px] items-center justify-end">
+                <TagRowActions
+                  tagId={tag.id}
+                  tagName={tag.name}
+                  onDelete={(tagId) => {
+                    void deleteTagMutation.mutateAsync(tagId).then(() => {
+                      setStatus("Tag deleted");
+                    });
+                  }}
+                  onRename={(tagId, name) => {
+                    void updateTagMutation.mutateAsync({ tagId, name }).then(() => {
+                      setStatus("Tag renamed");
+                    });
+                  }}
+                />
               </div>
             </div>
           ))}
