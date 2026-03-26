@@ -429,6 +429,11 @@ export function useTimerPageOrchestration(options?: {
   const [selectedStartIso, setSelectedStartIso] = useState<string | null>(null);
   const [selectedStopIso, setSelectedStopIso] = useState<string | null>(null);
 
+  // Track which entry ID is currently open so the initialization effect only
+  // fires when a genuinely different entry is selected, not when the entry
+  // object is updated in-place (e.g. via time edits).
+  const selectedEntryIdRef = useRef<number | null>(null);
+
   // Composer suggestions
   const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
     useState<TimerComposerSuggestionsAnchor | null>(null);
@@ -635,6 +640,14 @@ export function useTimerPageOrchestration(options?: {
   }, [runningEntry]);
 
   useEffect(() => {
+    const entryId = selectedEntry?.id ?? null;
+    if (entryId === selectedEntryIdRef.current) {
+      // Same entry — do not reinitialize editable fields. This avoids
+      // resetting description/project/tags when start or stop time is
+      // edited in-place (which updates the entry object).
+      return;
+    }
+    selectedEntryIdRef.current = entryId;
     setSelectedDescription(selectedEntry?.description ?? "");
     setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
     setSelectedTagIds(selectedEntry?.tag_ids ?? []);
@@ -645,6 +658,7 @@ export function useTimerPageOrchestration(options?: {
 
   // Handlers
   const closeSelectedEntryEditor = useCallback(() => {
+    selectedEntryIdRef.current = null;
     setSelectedEntry(null);
     setSelectedEntryAnchor(null);
     setSelectedEntryError(null);

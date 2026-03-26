@@ -95,7 +95,7 @@ export function WorkspaceTimerPage(): ReactElement {
           <button
             aria-label={orch.draftBillable ? "Set as non-billable" : "Set as billable"}
             className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
-              orch.draftBillable && orch.runningEntry?.id == null
+              (orch.runningEntry?.id != null ? orch.runningEntry.billable : orch.draftBillable)
                 ? "text-[#e57bd9]"
                 : "text-[var(--track-text-muted)] hover:text-white"
             }`}
@@ -527,7 +527,11 @@ function TimerBarProjectPicker({
     id?: number | null;
     name?: string | null;
   }[];
-  runningEntry: { id?: number | null } | null;
+  runningEntry: {
+    id?: number | null;
+    project_id?: number | null;
+    pid?: number | null;
+  } | null;
   workspaceName: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
@@ -559,15 +563,24 @@ function TimerBarProjectPicker({
     [projects, search],
   );
 
-  const selectedProject = projects.find((p) => p.id === draftProjectId);
-  const hasProject = draftProjectId != null && runningEntry?.id == null;
+  // When a running entry exists, display its project; otherwise use draft project
+  const displayProjectId =
+    runningEntry?.id != null
+      ? (runningEntry.project_id ?? runningEntry.pid ?? null)
+      : draftProjectId;
+  const selectedProject = projects.find((p) => p.id === displayProjectId);
+  const hasProject = displayProjectId != null;
 
   return (
     <div className="relative" ref={containerRef}>
       <button
         aria-label={`Add a project${selectedProject ? `: ${selectedProject.name}` : ""}`}
-        className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
-          hasProject ? "text-[#e57bd9]" : "text-[var(--track-text-muted)] hover:text-white"
+        className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
+          selectedProject
+            ? "h-9 max-w-[180px] px-2 text-[#e57bd9]"
+            : hasProject
+              ? "size-9 text-[#e57bd9]"
+              : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
           if (runningEntry?.id == null) {
@@ -582,7 +595,22 @@ function TimerBarProjectPicker({
         }}
         type="button"
       >
-        <TrackingIcon className="size-4" name="projects" />
+        {selectedProject ? (
+          <span
+            className="size-2.5 shrink-0 rounded-full"
+            style={{ backgroundColor: selectedProject.color }}
+          />
+        ) : (
+          <TrackingIcon className="size-4 shrink-0" name="projects" />
+        )}
+        {selectedProject ? (
+          <span
+            className="min-w-0 truncate text-[13px] font-medium"
+            style={{ color: selectedProject.color }}
+          >
+            {selectedProject.name}
+          </span>
+        ) : null}
       </button>
       {open ? (
         <div
@@ -613,13 +641,25 @@ function TimerBarTagPicker({
 }: {
   draftTagIds: number[];
   onTagToggle: (tagId: number) => void;
-  runningEntry: { id?: number | null } | null;
+  runningEntry: { id?: number | null; tag_ids?: number[] | null } | null;
   tagOptions: { id: number; name: string }[];
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasTags = draftTagIds.length > 0 && runningEntry?.id == null;
+
+  // When a running entry exists, display its tags; otherwise use draft tags
+  const displayTagIds = runningEntry?.id != null ? (runningEntry.tag_ids ?? []) : draftTagIds;
+  const hasTags = displayTagIds.length > 0;
+  const displayTags = useMemo(
+    () => tagOptions.filter((tag) => displayTagIds.includes(tag.id)),
+    [tagOptions, displayTagIds],
+  );
+  const tagLabel = useMemo(() => {
+    if (displayTags.length === 0) return undefined;
+    if (displayTags.length === 1) return displayTags[0]?.name;
+    return `${displayTags[0]?.name ?? "Tag"} +${displayTags.length - 1}`;
+  }, [displayTags]);
 
   const filteredTags = useMemo(
     () =>
@@ -632,9 +672,13 @@ function TimerBarTagPicker({
   return (
     <div className="relative" ref={containerRef}>
       <button
-        aria-label="Select tags"
-        className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
-          hasTags ? "text-[#e57bd9]" : "text-[var(--track-text-muted)] hover:text-white"
+        aria-label={tagLabel ? `Tags: ${tagLabel}` : "Select tags"}
+        className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
+          hasTags
+            ? tagLabel
+              ? "h-9 max-w-[160px] px-2 text-[#e57bd9]"
+              : "size-9 text-[#e57bd9]"
+            : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
           if (runningEntry?.id == null) {
@@ -649,7 +693,10 @@ function TimerBarTagPicker({
         }}
         type="button"
       >
-        <TrackingIcon className="size-4" name="tags" />
+        <TrackingIcon className="size-4 shrink-0" name="tags" />
+        {tagLabel ? (
+          <span className="min-w-0 truncate text-[13px] font-medium">{tagLabel}</span>
+        ) : null}
       </button>
       {open ? (
         <div
