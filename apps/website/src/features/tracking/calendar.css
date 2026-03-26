@@ -1,0 +1,211 @@
+/* react-big-calendar base + drag-and-drop */
+@import "react-big-calendar/lib/css/react-big-calendar.css";
+@import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
+/*
+ * Dark-theme overrides to match Toggl Track calendar.
+ * All values sampled from the production Toggl UI.
+ */
+
+/* ── Calendar container ── */
+.rbc-calendar {
+  color: #fafafa;
+  font-family: inherit;
+}
+
+.rbc-time-view {
+  background: #1b1b1b;
+  border: none;
+}
+
+/* ── Header row (day columns) ── */
+.rbc-time-header {
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.rbc-time-header-content {
+  border-left: 1px solid #2a2a2a;
+}
+
+.rbc-header {
+  background: transparent;
+  border-bottom: none;
+  color: #fafafa;
+  padding: 0;
+  font-weight: 500;
+  font-size: 12px;
+  text-align: left;
+  overflow: visible;
+}
+
+.rbc-header + .rbc-header {
+  border-left: 1px solid #2a2a2a;
+}
+
+.rbc-header.rbc-today {
+  color: #e57bd9;
+}
+
+.rbc-button-link {
+  color: inherit;
+  font: inherit;
+}
+
+/* ── Time gutter (left labels) ── */
+.rbc-time-header-gutter {
+  background: transparent;
+}
+
+.rbc-time-gutter .rbc-timeslot-group {
+  border-bottom: 1px solid transparent;
+  min-height: 60px;
+}
+
+.rbc-time-gutter .rbc-label {
+  color: #999;
+  font-size: 11px;
+  padding: 0 8px;
+}
+
+/* ── Time content area ── */
+.rbc-time-content {
+  border-top: 1px solid #2a2a2a;
+}
+
+.rbc-time-content > .rbc-time-gutter {
+  border-right: 1px solid #2a2a2a;
+}
+
+/* ── Day columns / slot grid ── */
+.rbc-day-slot .rbc-timeslot-group {
+  border-bottom: 1px solid #3a3a3a;
+  min-height: 60px;
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: none;
+}
+
+.rbc-timeslot-group:first-child .rbc-time-slot:first-child {
+  border-top: none;
+}
+
+.rbc-day-slot + .rbc-day-slot {
+  border-left: 1px solid #2a2a2a;
+}
+
+/* Today column highlight */
+.rbc-today {
+  background: rgba(229, 123, 217, 0.04);
+}
+
+/* ── Events ── */
+.rbc-event {
+  border: none !important;
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 1.25;
+  padding: 2px 4px;
+  color: #fafafa;
+  overflow: hidden;
+}
+
+.rbc-event:focus {
+  outline: 1px solid rgba(229, 123, 217, 0.6);
+  outline-offset: 1px;
+}
+
+.rbc-event-label {
+  display: none;
+}
+
+.rbc-event-content {
+  font-size: 11px;
+}
+
+/* Running entry stripe pattern */
+.rbc-event-running {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 10px,
+    rgba(255, 255, 255, 0.08) 10px 20px
+  ) !important;
+}
+
+/* ── Selection / slot selection ── */
+.rbc-slot-selection {
+  background: rgba(229, 123, 217, 0.2);
+  border: 1px solid rgba(229, 123, 217, 0.4);
+  color: #fafafa;
+  font-size: 11px;
+}
+
+/* ── Current time indicator ── */
+.rbc-current-time-indicator {
+  background-color: #cd7fc2;
+  height: 3px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.rbc-current-time-indicator::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%) rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background-color: #cd7fc2;
+  border-radius: 2px;
+}
+
+/* ── Drag and drop ── */
+.rbc-addons-dnd .rbc-addons-dnd-resize-ns-anchor {
+  z-index: 10;
+}
+
+.rbc-addons-dnd .rbc-addons-dnd-resize-ns-anchor .rbc-addons-dnd-resize-ns-icon {
+  display: none;
+}
+
+.rbc-addons-dnd-dragged-event {
+  opacity: 0.5;
+}
+
+/* ── Scrollbar ── */
+.rbc-time-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rbc-time-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rbc-time-content::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 3px;
+}
+
+/* ── Misc cleanup ── */
+.rbc-allday-cell {
+  display: none;
+}
+
+.rbc-time-view .rbc-allday-cell + .rbc-time-header-content {
+  border-top: none;
+}
+
+.rbc-toolbar {
+  display: none;
+}
+
+/* Fade-in animation for events */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

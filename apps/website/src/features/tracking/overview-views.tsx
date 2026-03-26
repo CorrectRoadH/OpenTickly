@@ -1,4 +1,14 @@
-import { type ReactElement, useRef, useState } from "react";
+import { type ReactElement, useMemo, useRef, useState } from "react";
+import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
+import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
+import type { EventProps, SlotInfo } from "react-big-calendar";
+import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
+import { format } from "date-fns/format";
+import { getDay } from "date-fns/getDay";
+import { parse } from "date-fns/parse";
+import { startOfWeek } from "date-fns/startOfWeek";
+import { enUS } from "date-fns/locale/en-US";
+import "./calendar.css";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -9,19 +19,58 @@ import {
   formatWeekday,
   resolveEntryColor,
   resolveEntryDurationSeconds,
+  sumForDate,
   type EntryGroup,
   type TimesheetRow,
 } from "./overview-data.ts";
 import type { TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
-import {
-  beginCalendarDrag,
-  resolveCalendarDragMinutes,
-  type CalendarDragSession,
-} from "./calendar-dnd.ts";
+const withDragAndDrop =
+  typeof withDragAndDropModule === "function"
+    ? withDragAndDropModule
+    : (
+        withDragAndDropModule as {
+          default?: typeof withDragAndDropModule;
+        }
+      ).default;
 
-const CALENDAR_HOUR_HEIGHT = 60;
-const CALENDAR_TOTAL_HEIGHT = CALENDAR_HOUR_HEIGHT * 24;
+if (!withDragAndDrop) {
+  throw new Error("react-big-calendar drag-and-drop addon failed to load");
+}
+
+const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
+
+type CalendarEvent = {
+  allDay: false;
+  end: Date;
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  id: number;
+  resource: {
+    color: string;
+    isLocked: boolean;
+    isRunning: boolean;
+  };
+  start: Date;
+  title: string;
+};
+
+const calendarLocalizer = dateFnsLocalizer({
+  format,
+  getDay,
+  locales: { "en-US": enUS },
+  parse,
+  startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn: 1 }),
+});
+
+function CalendarTimeSlotWrapper({
+  children,
+}: {
+  children?: React.ReactNode;
+  resource?: unknown;
+  value?: Date;
+}) {
+  return <>{children}</>;
+}
 
 export function ToolbarButton({
   icon,
@@ -235,12 +284,10 @@ export function CalendarView({
   entries,
   nowMs,
   onMoveEntry,
-  runningEntry,
   onEditEntry,
   onResizeEntry,
   onSelectSlot,
   onSelectSubviewDate,
-  onSubviewChange,
   onZoomIn,
   onZoomOut,
   selectedSubviewDateIso,
@@ -256,7 +303,6 @@ export function CalendarView({
   onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
   onSelectSlot?: (slot: { dayIso: string; minute: number }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
-  onSubviewChange?: (subview: "day" | "week") => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
@@ -266,284 +312,230 @@ export function CalendarView({
   weekDays: Date[];
   zoom?: number;
 }): ReactElement {
-  // zoom: -1 = fewer hours (zoomed out), 0 = default, +1 = more hours (zoomed in)
-  const hourRanges: Record<number, [number, number]> = {
-    "-1": [6, 20],
-    "0": [0, 24],
-    "1": [0, 24],
-  };
-  const [hourStart, hourEnd] = hourRanges[zoom] ?? hourRanges["0"];
-  const hours = Array.from({ length: hourEnd - hourStart }, (_, index) => hourStart + index);
   const now = new Date(nowMs ?? Date.now());
-  const subviewRef = useRef<HTMLDivElement>(null);
-  const subviewOptions: Array<"day" | "week"> = ["day", "week"];
-  const selectedSubviewIndex = subviewOptions.indexOf(subview);
-  const days = weekDays.map((day) => ({
-    date: day,
-    entries: entries
-      .filter((entry) => isSameDay(entry, day, timezone))
-      .sort((left, right) => {
-        const leftStart = new Date(left.start ?? left.at ?? Date.now()).getTime();
-        const rightStart = new Date(right.start ?? right.at ?? Date.now()).getTime();
-        return leftStart - rightStart;
-      }),
-    showNowLine: isSameCalendarDate(now, day, timezone),
-  }));
-
-  function handleSubviewKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
-    let nextIndex = selectedSubviewIndex;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-      nextIndex = (selectedSubviewIndex + 1) % subviewOptions.length;
-    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-      nextIndex = (selectedSubviewIndex - 1 + subviewOptions.length) % subviewOptions.length;
-    } else {
-      return;
+  const calendarDate = useMemo(() => {
+    if (subview === "day" && selectedSubviewDateIso) {
+      return new Date(`${selectedSubviewDateIso}T00:00:00Z`);
     }
-    event.preventDefault();
-    onSubviewChange?.(subviewOptions[nextIndex]);
-    requestAnimationFrame(() => {
-      const buttons = subviewRef.current?.querySelectorAll<HTMLButtonElement>('[role="radio"]');
-      buttons?.[nextIndex]?.focus();
+    return weekDays[0] ?? now;
+  }, [now, selectedSubviewDateIso, subview, weekDays]);
+  const events = useMemo<CalendarEvent[]>(
+    () =>
+      entries
+        .filter(
+          (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
+            typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
+        )
+        .map((entry) => {
+          const start = new Date(entry.start ?? entry.at ?? Date.now());
+          const end = entry.stop
+            ? new Date(entry.stop)
+            : new Date(start.getTime() + resolveEntryDurationSeconds(entry, nowMs) * 1000);
+
+          return {
+            allDay: false,
+            end,
+            entry,
+            id: entry.id,
+            resource: {
+              color: resolveEntryColor(entry),
+              isLocked: false,
+              isRunning: isRunningTimeEntry(entry),
+            },
+            start,
+            title: entry.description?.trim() || entry.project_name || "Entry",
+          };
+        }),
+    [entries, nowMs],
+  );
+  const dailyTotals = useMemo(() => {
+    const totals = new Map<string, number>();
+    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
     });
-  }
+    for (const day of weekDays) {
+      const key = dateFormatter.format(day);
+      totals.set(key, sumForDate(entries, key, timezone));
+    }
+    return totals;
+  }, [entries, weekDays, timezone]);
+
+  const today = useMemo(() => new Date(), []);
+
+  const currentView = subview === "day" ? Views.DAY : Views.WEEK;
+  const minTime = useMemo(() => {
+    const date = new Date(calendarDate);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }, [calendarDate]);
+  const maxTime = useMemo(() => {
+    const date = new Date(calendarDate);
+    date.setHours(23, 59, 59, 999);
+    return date;
+  }, [calendarDate]);
+  const step = zoom > 0 ? 15 : 30;
+  const timeslots = zoom > 0 ? 4 : 2;
 
   return (
     <div
-      className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)] bg-[#141415]"
+      className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)] bg-[#1b1b1b]"
       data-testid="timer-calendar-view"
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-[var(--track-border)] bg-[#171718] px-5 py-3">
-        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-          <TrackingIcon className="size-3.5" name="calendar" />
-          <span>Calendar</span>
-          <span className="rounded-full border border-[var(--track-border)] px-2 py-0.5 text-[10px] text-white">
-            {subview === "day" ? "Day" : "Week"}
-          </span>
-        </div>
-        <div
-          aria-label="Calendar view"
-          className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-1"
-          data-testid="calendar-subview-controls"
-          onKeyDown={handleSubviewKeyDown}
-          ref={subviewRef}
-          role="radiogroup"
-        >
-          <button
-            aria-checked={subview === "day"}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
-              subview === "day"
-                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                : "text-white"
-            }`}
-            onClick={() => onSubviewChange?.("day")}
-            role="radio"
-            tabIndex={subview === "day" ? 0 : -1}
-            type="button"
-          >
-            Day
-          </button>
-          <button
-            aria-checked={subview === "week"}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
-              subview === "week"
-                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                : "text-white"
-            }`}
-            onClick={() => onSubviewChange?.("week")}
-            role="radio"
-            tabIndex={subview === "week" ? 0 : -1}
-            type="button"
-          >
-            Week
-          </button>
-        </div>
-        <div className="flex items-center gap-1" data-testid="calendar-zoom-controls">
-          <button
-            aria-label="Decrease zoom"
-            className="flex size-7 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            disabled={zoom <= -1}
-            onClick={onZoomOut}
-            type="button"
-          >
-            <TrackingIcon className="size-3" name="minus" />
-          </button>
-          <button
-            aria-label="Increase zoom"
-            className="flex size-7 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-            disabled={zoom >= 1}
-            onClick={onZoomIn}
-            type="button"
-          >
-            <TrackingIcon className="size-3" name="plus" />
-          </button>
-        </div>
-      </div>
-      <div className="min-h-0 flex-1 overflow-x-auto">
-        <div className="flex h-full min-h-0 min-w-[1232px] flex-col">
-          <div
-            className="sticky top-0 z-20 grid shrink-0 grid-cols-[42px_repeat(7,minmax(170px,1fr))] bg-[var(--track-surface)]"
-            data-testid="calendar-sticky-header"
-          >
-            <div className="border-r border-[var(--track-border)] bg-[var(--track-surface)]" />
-            {days.map(({ date, entries: dayEntries, showNowLine }) => (
-              <div
-                className="bg-[var(--track-surface)] px-3 py-3"
-                data-testid={`calendar-day-header-${formatWeekday(date, timezone).toLowerCase()}`}
-                key={date.toISOString()}
-              >
-                <button
-                  aria-label={`Open day view for ${formatWeekday(date, timezone)} ${date.getDate()}`}
-                  aria-pressed={selectedSubviewDateIso === formatDateIso(date)}
-                  className="flex w-full items-center gap-2 rounded-[16px] text-left transition hover:bg-white/4"
-                  onClick={() => onSelectSubviewDate?.(formatDateIso(date))}
-                  type="button"
-                >
-                  <div
-                    className={`flex h-[48px] min-w-[60px] shrink-0 items-center justify-center px-3 text-[25px] font-medium leading-none ${
-                      showNowLine
-                        ? "rounded-[999px] bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                        : "text-white"
+      <div className="min-h-0 flex-1 overflow-auto" data-testid="calendar-grid-scroll-area">
+        <DnDCalendar
+          components={{
+            event: (props: EventProps<CalendarEvent>) => (
+              <CalendarEventCard event={props.event} onEditEntry={onEditEntry} />
+            ),
+            header: ({ date }: { date: Date }) => {
+              const dayNum = date.getDate();
+              const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
+                .format(date)
+                .toUpperCase();
+              const dateKey = new Intl.DateTimeFormat("en-CA", {
+                day: "2-digit",
+                month: "2-digit",
+                timeZone: timezone,
+                year: "numeric",
+              }).format(date);
+              const totalSeconds = dailyTotals.get(dateKey) ?? 0;
+              const isToday =
+                date.getFullYear() === today.getFullYear() &&
+                date.getMonth() === today.getMonth() &&
+                date.getDate() === today.getDate();
+              return (
+                <div className="flex w-full items-center gap-2 px-2 py-2">
+                  <span
+                    className={`text-[22px] font-semibold leading-none ${
+                      isToday ? "text-[#e57bd9]" : "text-white"
                     }`}
                   >
-                    {date.getDate()}
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={`text-[14px] font-semibold uppercase tracking-[0.06em] ${
-                        showNowLine ? "text-[var(--track-accent-text)]" : "text-white"
+                    {dayNum}
+                  </span>
+                  <span className="flex flex-col items-start leading-tight">
+                    <span
+                      className={`text-[10px] font-medium tracking-wide ${
+                        isToday ? "text-[#e57bd9]" : "text-[#999]"
                       }`}
                     >
-                      {formatWeekday(date, timezone)}
-                    </p>
-                    <p className="truncate text-[12px] font-medium tabular-nums text-[var(--track-text-muted)]">
-                      {resolveCalendarHeaderSummary(dayEntries, timezone)}
-                    </p>
-                  </div>
+                      {dayName}
+                    </span>
+                    <span className="text-[10px] tabular-nums text-[#999]">
+                      {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
+                    </span>
+                  </span>
+                </div>
+              );
+            },
+            timeGutterHeader: () => (
+              <div
+                className="flex items-center justify-center gap-1 py-2"
+                data-testid="calendar-zoom-controls"
+              >
+                <button
+                  aria-label="Decrease zoom"
+                  className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                  disabled={zoom <= -1}
+                  onClick={onZoomOut}
+                  type="button"
+                >
+                  <TrackingIcon className="size-3" name="minus" />
+                </button>
+                <button
+                  aria-label="Increase zoom"
+                  className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                  disabled={zoom >= 1}
+                  onClick={onZoomIn}
+                  type="button"
+                >
+                  <TrackingIcon className="size-3" name="plus" />
                 </button>
               </div>
-            ))}
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto" data-testid="calendar-grid-scroll-area">
-            <div className="grid grid-cols-[42px_repeat(7,minmax(170px,1fr))]">
-              <div className="border-r border-[var(--track-border)]">
-                {hours.map((hour) => (
-                  <div
-                    className="flex h-[60px] items-start justify-end border-t border-[var(--track-grid)] px-2 pt-0.5 text-[10px] text-[var(--track-text-muted)]"
-                    key={hour}
-                  >
-                    {formatHourLabel(hour)}
-                  </div>
-                ))}
-              </div>
-
-              {days.map(({ date, entries: dayEntries, showNowLine }) => (
-                <div
-                  className="relative border-l border-[var(--track-border)]"
-                  key={`${date.toISOString()}-grid`}
-                >
-                  <div
-                    className="relative"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(to bottom, transparent 0, transparent 59px, var(--track-grid) 59px, var(--track-grid) 60px)",
-                      height: `${CALENDAR_TOTAL_HEIGHT}px`,
-                    }}
-                  >
-                    {hours.map((hour) => (
-                      <button
-                        aria-label={`Select time range on ${formatWeekday(date, timezone)} ${date.getDate()} at ${String(hour).padStart(2, "0")}:00`}
-                        className="absolute inset-x-0 z-0 h-[60px] bg-transparent text-transparent"
-                        key={`${date.toISOString()}-${hour}`}
-                        onClick={() =>
-                          onSelectSlot?.({ dayIso: formatDateIso(date), minute: hour * 60 })
-                        }
-                        style={{ top: `${hour * CALENDAR_HOUR_HEIGHT}px` }}
-                        type="button"
-                      >
-                        Select slot
-                      </button>
-                    ))}
-                    {dayEntries.map((entry) => (
-                      <CalendarEventCard
-                        entry={entry}
-                        key={String(entry.id ?? entry.start)}
-                        onEditEntry={onEditEntry}
-                        onMoveEntry={onMoveEntry}
-                        onResizeEntry={onResizeEntry}
-                        timezone={timezone}
-                      />
-                    ))}
-                    {showNowLine ? (
-                      <RunningEntryLine
-                        now={now}
-                        runningEntry={runningEntry}
-                        onEditEntry={onEditEntry}
-                        timezone={timezone}
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+            ),
+            timeSlotWrapper: CalendarTimeSlotWrapper,
+          }}
+          date={calendarDate}
+          defaultView={Views.WEEK}
+          getNow={() => now}
+          draggableAccessor={(event) => !event.resource.isLocked && !event.resource.isRunning}
+          endAccessor={(event) => event.end}
+          eventPropGetter={(event) => ({
+            className: event.resource.isRunning ? "rbc-event-running" : undefined,
+            style: {
+              backgroundColor: colorToOverlay(event.resource.color),
+              border: "none",
+              color: "#fafafa",
+            },
+          })}
+          events={events}
+          localizer={calendarLocalizer}
+          max={maxTime}
+          messages={{
+            day: "Day",
+            next: "Next",
+            previous: "Previous",
+            today: "Today",
+            week: "Week",
+          }}
+          min={minTime}
+          onDrillDown={(date) => onSelectSubviewDate?.(formatDateIso(date))}
+          onEventDrop={({ event, start, end }: EventInteractionArgs<CalendarEvent>) => {
+            const nextStart = new Date(start);
+            const nextEnd = new Date(end);
+            const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+            if (minutesDelta !== 0) {
+              void onMoveEntry?.(event.id, minutesDelta);
+            }
+            if (event.entry.stop && nextEnd.getTime() !== event.end.getTime()) {
+              void onResizeEntry?.(
+                event.id,
+                "end",
+                Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000),
+              );
+            }
+          }}
+          onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
+            const nextStart = new Date(start);
+            const nextEnd = new Date(end);
+            const startDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+            const endDelta = Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000);
+            if (startDelta !== 0) {
+              void onResizeEntry?.(event.id, "start", startDelta);
+            } else if (endDelta !== 0) {
+              void onResizeEntry?.(event.id, "end", endDelta);
+            }
+          }}
+          onNavigate={() => undefined}
+          onSelectEvent={(event, nativeEvent) => {
+            const target = nativeEvent.currentTarget;
+            if (target instanceof HTMLElement) {
+              onEditEntry?.(event.entry, target.getBoundingClientRect());
+            }
+          }}
+          onSelectSlot={({ slots }: SlotInfo) => {
+            const first = slots[0];
+            if (first) {
+              onSelectSlot?.({
+                dayIso: formatDateIso(first),
+                minute: first.getHours() * 60 + first.getMinutes(),
+              });
+            }
+          }}
+          resizable
+          resizableAccessor={(event) => !event.resource.isLocked && !event.resource.isRunning}
+          selectable
+          startAccessor={(event) => event.start}
+          step={step}
+          timeslots={timeslots}
+          toolbar={false}
+          view={currentView}
+          views={[Views.WEEK, Views.DAY]}
+        />
       </div>
     </div>
-  );
-}
-
-function RunningEntryLine({
-  now,
-  runningEntry,
-  onEditEntry,
-  timezone,
-}: {
-  now: Date;
-  runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
-  onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
-  timezone: string;
-}) {
-  const top = resolveMinutesSinceMidnight(now, timezone);
-  const clickable = Boolean(runningEntry && isRunningTimeEntry(runningEntry) && onEditEntry);
-
-  if (!clickable || !runningEntry) {
-    return (
-      <div
-        className="absolute left-0 right-0 z-10 h-4 -translate-y-1/2"
-        data-testid="calendar-now-line"
-        style={{ top: `${top}px` }}
-      >
-        <span
-          className="absolute left-0 top-1/2 h-[3px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]"
-          data-testid="calendar-now-line-track"
-        />
-        <span
-          className="absolute left-0 top-1/2 block size-4 -translate-y-1/2 rounded-full bg-[#ca74bf]"
-          data-testid="calendar-now-line-dot"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <button
-      aria-label={`Edit ${runningEntry.description?.trim() || runningEntry.project_name || "time entry"}`}
-      className="absolute left-0 right-0 z-10 h-4 -translate-y-1/2 cursor-pointer bg-transparent"
-      data-testid="calendar-now-line"
-      onClick={(event) => onEditEntry?.(runningEntry, event.currentTarget.getBoundingClientRect())}
-      style={{ top: `${top}px` }}
-      type="button"
-    >
-      <span
-        className="absolute left-0 top-1/2 h-[3px] w-full -translate-y-1/2 rounded-full bg-[#ca74bf]"
-        data-testid="calendar-now-line-track"
-      />
-      <span
-        className="absolute left-0 top-1/2 block size-4 -translate-y-1/2 rounded-full bg-[#ca74bf]"
-        data-testid="calendar-now-line-dot"
-      />
-    </button>
   );
 }
 
@@ -636,99 +628,39 @@ export function TimesheetView({
 }
 
 function CalendarEventCard({
-  entry,
+  event,
   onEditEntry,
-  onContinueEntry,
-  onMoveEntry,
-  onResizeEntry,
-  timezone,
 }: {
-  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  event: CalendarEvent;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
-  onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
-  onMoveEntry?: (entryId: number, minutesDelta: number) => void;
-  onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
-  timezone: string;
 }) {
-  const start = new Date(entry.start ?? entry.at ?? Date.now());
+  const entry = event.entry;
   const durationSeconds = resolveEntryDurationSeconds(entry);
-  const top = resolveMinutesSinceMidnight(start, timezone);
-  const height = Math.max(22, Math.round(durationSeconds / 60));
-  const color = resolveEntryColor(entry);
-  const isRunning = !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
+  const color = event.resource.color;
+  const isRunning = event.resource.isRunning;
   const [affordancesOpen, setAffordancesOpen] = useState(false);
-  const [dragSession, setDragSession] = useState<CalendarDragSession | null>(null);
-  const entryId = typeof entry.id === "number" ? entry.id : null;
-  const allowDirectEdit = !isRunning && entryId != null;
-
-  function finishDrag(clientY: number) {
-    if (!dragSession || entryId == null) {
-      return;
-    }
-
-    const minutesDelta = resolveCalendarDragMinutes(dragSession, clientY);
-    if (minutesDelta !== 0) {
-      if (dragSession.gesture.kind === "move") {
-        onMoveEntry?.(entryId, minutesDelta);
-      } else {
-        onResizeEntry?.(entryId, dragSession.gesture.edge, minutesDelta);
-      }
-    }
-    setDragSession(null);
-  }
+  const entryId = event.id;
+  const allowDirectEdit = !event.resource.isLocked && !isRunning;
 
   return (
     <div
-      className={`group absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] transition hover:brightness-110 ${
-        dragSession ? "ring-1 ring-white/60" : ""
-      } ${allowDirectEdit ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`group h-full overflow-hidden rounded-none border-none px-1.5 py-1 text-left text-[14px] font-medium leading-[1.15] text-white transition hover:brightness-110 ${
+        allowDirectEdit ? "cursor-grab" : "cursor-default"
+      }`}
       data-testid={`calendar-entry-${entryId ?? "unknown"}`}
-      onPointerMove={(event) => {
-        if (dragSession) {
-          event.preventDefault();
-        }
-      }}
-      onPointerUp={(event) => finishDrag(event.clientY)}
       style={{
         backgroundColor: colorToOverlay(color),
         backgroundImage: isRunning
           ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
           : undefined,
-        top: `${top}px`,
-        height: `${Math.min(height, CALENDAR_TOTAL_HEIGHT - top)}px`,
+        animation: "fadeIn 0.15s linear",
+        overflow: "visible",
       }}
     >
-      {allowDirectEdit ? (
-        <button
-          aria-label={`Move entry ${entry.description?.trim() || entry.project_name || "time entry"}`}
-          className="absolute inset-0 z-0 cursor-grab bg-transparent"
-          data-testid={`calendar-entry-move-${entryId}`}
-          onPointerDown={(event) => {
-            if (entryId == null) {
-              return;
-            }
-            setDragSession(beginCalendarDrag(entryId, { kind: "move" }, event));
-          }}
-          type="button"
-        />
-      ) : null}
-      {allowDirectEdit ? (
-        <button
-          aria-label={`Resize start for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-          className="absolute inset-x-2 top-0 z-20 h-2 cursor-row-resize rounded-t bg-white/20 opacity-0 transition group-hover:opacity-100 hover:opacity-100"
-          data-testid={`calendar-entry-resize-start-${entryId}`}
-          onPointerDown={(event) => {
-            if (entryId == null) {
-              return;
-            }
-            setDragSession(beginCalendarDrag(entryId, { edge: "start", kind: "resize" }, event));
-          }}
-          type="button"
-        />
-      ) : null}
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
         className="relative z-10 flex h-full w-full flex-col text-left text-white"
+        data-testid={`calendar-entry-move-${entryId}`}
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
@@ -758,84 +690,29 @@ function CalendarEventCard({
           aria-label={`Resize end for ${entry.description?.trim() || entry.project_name || "time entry"}`}
           className="absolute inset-x-2 bottom-0 z-20 h-2 cursor-row-resize rounded-b bg-white/20 opacity-0 transition hover:opacity-100"
           data-testid={`calendar-entry-resize-end-${entryId}`}
-          onPointerDown={(event) => {
-            if (entryId == null) {
-              return;
-            }
-            setDragSession(beginCalendarDrag(entryId, { edge: "end", kind: "resize" }, event));
-          }}
           type="button"
         />
       ) : null}
       {affordancesOpen ? (
         <div className="absolute inset-x-1 bottom-1 flex flex-wrap gap-1 rounded-[6px] bg-[#141415]/95 p-1">
-          {allowDirectEdit ? (
-            <>
-              <button
-                aria-label={`Move entry ${entry.description?.trim() || entry.project_name || "time entry"}`}
-                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
-                onClick={() => {
-                  if (entryId != null) {
-                    onMoveEntry?.(entryId, 15);
-                  }
-                }}
-                type="button"
-              >
-                Move +15m
-              </button>
-              <button
-                aria-label={`Resize start for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
-                onClick={() => {
-                  if (entryId != null) {
-                    onResizeEntry?.(entryId, "start", -15);
-                  }
-                }}
-                type="button"
-              >
-                Start -15m
-              </button>
-              <button
-                aria-label={`Resize end for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-                className="rounded bg-white/8 px-1.5 py-0.5 text-[9px] text-white"
-                onClick={() => {
-                  if (entryId != null) {
-                    onResizeEntry?.(entryId, "end", 15);
-                  }
-                }}
-                type="button"
-              >
-                End +15m
-              </button>
-            </>
-          ) : (
-            <span className="px-1.5 py-0.5 text-[9px] text-white/70">
-              Running entries are view-only here
-            </span>
-          )}
+          <span className="px-1.5 py-0.5 text-[9px] text-white/70">
+            {allowDirectEdit ? "Drag or resize to adjust" : "Running entries are view-only here"}
+          </span>
         </div>
       ) : null}
-      {isRunning && onContinueEntry && (
-        <button
-          aria-label="Continue time entry"
-          className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-0.5 text-white/60 transition hover:bg-white/10 hover:text-white"
-          onClick={() => onContinueEntry(entry)}
-          type="button"
-        >
-          <svg width="10" height="10" viewBox="0 0 16 16">
-            <path
-              fill="currentColor"
-              d="M13.5 7.13399C14.1667 7.51889 14.1667 8.48114 13.5 8.86604L4.5 14.0622C3.83333 14.4471 3 13.966 3 13.1962L3 2.80386C3 2.03406 3.83333 1.55293 4.5 1.93783L13.5 7.13399Z"
-            />
-          </svg>
-        </button>
-      )}
     </div>
   );
 }
 
 function formatDateIso(date: Date): string {
   return date.toISOString().slice(0, 10);
+}
+
+function formatDayTotal(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+  const seconds = String(totalSeconds % 60).padStart(2, "0");
+  return `${hours}:${minutes}:${seconds}`;
 }
 
 function TimesheetCell({ seconds }: { seconds: number }) {
@@ -852,83 +729,8 @@ function TimesheetCell({ seconds }: { seconds: number }) {
   );
 }
 
-function resolveCalendarHeaderSummary(
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
-  timezone: string,
-): string {
-  if (entries.length === 0) {
-    return "";
-  }
-
-  const firstEntry = entries[0];
-  return formatEntryRange(firstEntry, timezone);
-}
-
-function isSameDay(
-  entry: GithubComTogglTogglApiInternalModelsTimeEntry,
-  day: Date,
-  timezone: string,
-) {
-  const entryDate = new Date(entry.start ?? entry.at ?? Date.now());
-  return (
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: timezone,
-      year: "numeric",
-    }).format(entryDate) ===
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: timezone,
-      year: "numeric",
-    }).format(day)
-  );
-}
-
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
-}
-
-function isSameCalendarDate(left: Date, right: Date, timezone: string): boolean {
-  return (
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: timezone,
-      year: "numeric",
-    }).format(left) ===
-    new Intl.DateTimeFormat("en-CA", {
-      day: "2-digit",
-      month: "2-digit",
-      timeZone: timezone,
-      year: "numeric",
-    }).format(right)
-  );
-}
-
-function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
-  const hours = Number(
-    new Intl.DateTimeFormat("en-US", {
-      hour: "2-digit",
-      hour12: false,
-      timeZone: timezone,
-    }).format(date),
-  );
-  const minutes = Number(
-    new Intl.DateTimeFormat("en-US", {
-      minute: "2-digit",
-      timeZone: timezone,
-    }).format(date),
-  );
-
-  return hours * 60 + minutes;
-}
-
-function formatHourLabel(hour: number): string {
-  const date = new Date();
-  date.setHours(hour, 0, 0, 0);
-  return date.toLocaleTimeString("en-US", { hour: "numeric", hour12: true });
 }
 
 function colorToOverlay(color: string): string {
