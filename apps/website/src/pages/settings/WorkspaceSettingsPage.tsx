@@ -137,7 +137,7 @@ function SettingsSectionContent(props: {
     default:
       return (
         <SettingsState
-          description="This section is part of the final settings information architecture, but only General is wired in this build."
+          description="This feature is coming soon."
           title={`${settingsTabs.find((tab) => tab.id === props.section)?.label ?? "Section"} is not available yet`}
           tone="empty"
         />

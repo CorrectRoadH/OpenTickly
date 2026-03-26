@@ -1,14 +1,17 @@
 import { ShellSurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useMemo } from "react";
 
-import { useWorkspaceAllActivitiesQuery } from "../../shared/query/web-shell.ts";
+import {
+  useWorkspaceAllActivitiesQuery,
+  useWorkspaceMembersQuery,
+} from "../../shared/query/web-shell.ts";
 import type { DashboardAllActivities } from "../../shared/api/generated/public-track/types.gen.ts";
 
 function formatActivityTimestamp(isoStop: string | undefined): string {
   if (!isoStop) return "In progress";
   try {
     const d = new Date(isoStop);
-    return d.toLocaleString(undefined, {
+    return d.toLocaleString("en-US", {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -38,16 +41,23 @@ type AuditLogRow = {
   action: string;
   date: string;
   duration: string;
-  userId: number;
+  userName: string;
 };
 
-function mapToRows(activities: DashboardAllActivities[]): AuditLogRow[] {
-  return activities.map((a) => ({
-    action: describeAction(a),
-    date: formatActivityTimestamp(a.stop),
-    duration: formatActivityDuration(a.duration),
-    userId: a.user_id ?? 0,
-  }));
+function mapToRows(
+  activities: DashboardAllActivities[],
+  memberNameById: Map<number, string>,
+): AuditLogRow[] {
+  return activities.map((a) => {
+    const userId = a.user_id ?? 0;
+    const userName = memberNameById.get(userId) ?? `User ${userId}`;
+    return {
+      action: describeAction(a),
+      date: formatActivityTimestamp(a.stop),
+      duration: formatActivityDuration(a.duration),
+      userName,
+    };
+  });
 }
 
 type SettingsAuditLogProps = {
@@ -56,8 +66,20 @@ type SettingsAuditLogProps = {
 
 export function SettingsAuditLog({ workspaceId }: SettingsAuditLogProps): ReactElement {
   const activitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
+  const membersQuery = useWorkspaceMembersQuery(workspaceId);
 
-  const rows = useMemo(() => mapToRows(activitiesQuery.data ?? []), [activitiesQuery.data]);
+  const memberNameById = useMemo(() => {
+    const lookup = new Map<number, string>();
+    for (const m of membersQuery.data?.members ?? []) {
+      if (m.id && m.name) lookup.set(m.id, m.name);
+    }
+    return lookup;
+  }, [membersQuery.data]);
+
+  const rows = useMemo(
+    () => mapToRows(activitiesQuery.data ?? [], memberNameById),
+    [activitiesQuery.data, memberNameById],
+  );
 
   return (
     <ShellSurfaceCard>
@@ -96,7 +118,7 @@ export function SettingsAuditLog({ workspaceId }: SettingsAuditLogProps): ReactE
                 {rows.map((row, idx) => (
                   <tr className="border-b border-[var(--track-border)] last:border-b-0" key={idx}>
                     <td className="py-2 pr-4 text-[var(--track-text-muted)]">{row.date}</td>
-                    <td className="py-2 pr-4 text-[var(--track-text-soft)]">User {row.userId}</td>
+                    <td className="py-2 pr-4 text-[var(--track-text-soft)]">{row.userName}</td>
                     <td className="py-2 pr-4 text-white">{row.action}</td>
                     <td className="py-2 text-[var(--track-text-muted)]">{row.duration}</td>
                   </tr>
