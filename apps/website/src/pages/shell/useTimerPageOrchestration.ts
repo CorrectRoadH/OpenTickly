@@ -720,13 +720,17 @@ export function useTimerPageOrchestration(options?: {
       }
       return;
     }
+    const descriptionToStart = draftDescription.trim();
     await startTimeEntryMutation.mutateAsync({
       billable: draftBillable,
-      description: draftDescription.trim(),
+      description: descriptionToStart,
       projectId: draftProjectId,
       start: new Date().toISOString(),
       tagIds: draftTagIds,
     });
+    // Seed runningDescription immediately so the timer bar shows the
+    // description without waiting for the currentTimeEntry query to refetch.
+    setRunningDescription(descriptionToStart);
     setDraftDescription("");
     setDraftProjectId(null);
     setDraftTagIds([]);
@@ -745,14 +749,16 @@ export function useTimerPageOrchestration(options?: {
 
   const handleContinueEntry = useCallback(
     async (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+      const continuedDescription = (entry.description ?? "").trim();
       await startTimeEntryMutation.mutateAsync({
         billable: entry.billable,
-        description: (entry.description ?? "").trim(),
+        description: continuedDescription,
         projectId: entry.project_id ?? entry.pid ?? null,
         start: new Date().toISOString(),
         tagIds: entry.tag_ids ?? [],
         taskId: entry.task_id ?? entry.tid ?? null,
       });
+      setRunningDescription(continuedDescription);
     },
     [startTimeEntryMutation],
   );

@@ -209,3 +209,14 @@
     opacity: 1;
   }
 }
+
+/* Pulsing dot for running time entries in list view */
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}

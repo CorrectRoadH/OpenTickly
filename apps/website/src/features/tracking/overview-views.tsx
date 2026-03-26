@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useRef, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -488,7 +488,15 @@ export function ListView({
                           onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
                         }
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-1 items-center gap-2">
+                          {isRunningTimeEntry(renderEntry) ? (
+                            <span
+                              className="size-2 shrink-0 rounded-full bg-[#e57bd9]"
+                              style={{
+                                animation: "pulse-dot 1.4s ease-in-out infinite",
+                              }}
+                            />
+                          ) : null}
                           <p
                             className={`truncate font-medium ${renderEntry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
                           >
@@ -1113,11 +1121,34 @@ function CalendarEventCard({
   const color = event.resource.color;
   const isRunning = event.resource.isRunning;
   const [affordancesOpen, setAffordancesOpen] = useState(false);
+  const [showStartTime, setShowStartTime] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
   const entryId = event.id;
   const allowDirectEdit = !event.resource.isLocked && !isRunning;
 
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const check = () => setShowStartTime(el.offsetHeight >= 45);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const startTimeLabel = useMemo(() => {
+    if (!entry.start) return null;
+    const d = new Date(entry.start);
+    const h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, "0");
+    const ampm = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 || 12;
+    return `${h12}:${m} ${ampm}`;
+  }, [entry.start]);
+
   return (
     <div
+      ref={cardRef}
       className={`group h-full overflow-hidden rounded-none border-none px-1.5 py-1 text-left text-[14px] font-medium leading-[1.15] text-white transition hover:brightness-110 ${
         allowDirectEdit ? "cursor-grab" : "cursor-default"
       }`}
@@ -1133,31 +1164,38 @@ function CalendarEventCard({
     >
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="relative z-10 flex h-full w-full items-start gap-1 text-left text-[11px] text-white"
+        className="relative z-10 flex h-full w-full flex-col items-start gap-0.5 text-left text-[11px] text-white"
         data-testid={`calendar-entry-move-${entryId}`}
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
-        <span
-          className={`truncate font-medium leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
-        >
-          {entry.description?.trim() || "Add description"}
-        </span>
-        {entry.project_name ? (
-          <span className="shrink-0 leading-tight text-white/70">
-            {entry.project_name}
-            {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
+        {showStartTime && startTimeLabel ? (
+          <span className="shrink-0 text-[10px] font-semibold leading-tight text-white/80">
+            {startTimeLabel}
           </span>
         ) : null}
-        <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/70">
-          {formatClockDuration(durationSeconds)}
-        </span>
-        {entry.billable ? (
-          <span className="shrink-0 font-semibold leading-tight text-white/70">$</span>
-        ) : null}
-        {entry.tags && entry.tags.length > 0 ? (
-          <span className="shrink-0 leading-tight text-white/70">{entry.tags[0]}</span>
-        ) : null}
+        <div className="flex w-full items-start gap-1">
+          <span
+            className={`truncate font-medium leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+          >
+            {entry.description?.trim() || "Add description"}
+          </span>
+          {entry.project_name ? (
+            <span className="shrink-0 leading-tight text-white/70">
+              {entry.project_name}
+              {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
+            </span>
+          ) : null}
+          <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/70">
+            {formatClockDuration(durationSeconds)}
+          </span>
+          {entry.billable ? (
+            <span className="shrink-0 font-semibold leading-tight text-white/70">$</span>
+          ) : null}
+          {entry.tags && entry.tags.length > 0 ? (
+            <span className="shrink-0 leading-tight text-white/70">{entry.tags[0]}</span>
+          ) : null}
+        </div>
       </button>
       <button
         aria-label={`Entry actions for ${entry.description?.trim() || entry.project_name || "time entry"}`}

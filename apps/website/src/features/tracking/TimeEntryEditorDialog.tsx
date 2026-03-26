@@ -134,6 +134,7 @@ export function TimeEntryEditorDialog({
   const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
   const [projectComposerOpen, setProjectComposerOpen] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
+  const [projectCreateError, setProjectCreateError] = useState<string | null>(null);
   const [tagComposerOpen, setTagComposerOpen] = useState(false);
   const [tagDraftName, setTagDraftName] = useState("");
   const [search, setSearch] = useState("");
@@ -657,17 +658,33 @@ export function TimeEntryEditorDialog({
                         if (!trimmed || isCreatingProject) {
                           return;
                         }
-                        await onCreateProject(trimmed);
-                        setProjectDraftName("");
-                        setProjectComposerOpen(false);
-                        setSearch("");
+                        setProjectCreateError(null);
+                        try {
+                          await onCreateProject(trimmed);
+                          setProjectDraftName("");
+                          setProjectComposerOpen(false);
+                          setSearch("");
+                        } catch (err) {
+                          const message =
+                            err instanceof Error ? err.message : "Project name already exists";
+                          setProjectCreateError(
+                            message.toLowerCase().includes("name")
+                              ? message
+                              : "Project name already exists",
+                          );
+                        }
                       })();
                     }}
                   >
                     <div className="flex items-center gap-2">
                       <input
-                        className="h-10 flex-1 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096]"
-                        onChange={(event) => setProjectDraftName(event.target.value)}
+                        className={`h-10 flex-1 rounded-[10px] border bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096] ${
+                          projectCreateError ? "border-rose-400" : "border-[#5d5d62]"
+                        }`}
+                        onChange={(event) => {
+                          setProjectDraftName(event.target.value);
+                          setProjectCreateError(null);
+                        }}
                         placeholder="Project name"
                         value={projectDraftName}
                       />
@@ -679,6 +696,9 @@ export function TimeEntryEditorDialog({
                         {isCreatingProject ? "Creating..." : "Create"}
                       </button>
                     </div>
+                    {projectCreateError ? (
+                      <p className="mt-1.5 text-[12px] text-rose-400">{projectCreateError}</p>
+                    ) : null}
                   </form>
                 ) : (
                   <div className="border-t border-white/6 px-4 pb-1 pt-3">
