@@ -5,7 +5,7 @@ import {
   ShellSurfaceCard,
   ShellToast,
 } from "@opentoggl/web-ui";
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import {
@@ -57,7 +57,11 @@ export function ProfilePage(): ReactElement {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInFlightRef = useRef(false);
   const pendingRetryRef = useRef(false);
-  const preferenceValues = createPreferencesFormValues(preferencesQuery.data ?? {});
+  const preferenceData = preferencesQuery.data;
+  const preferenceValues = useMemo(
+    () => createPreferencesFormValues(preferenceData ?? {}),
+    [preferenceData],
+  );
 
   useEffect(() => {
     form.reset(preferenceValues);

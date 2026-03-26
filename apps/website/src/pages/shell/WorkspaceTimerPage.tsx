@@ -584,8 +584,17 @@ function TimerBarTagPicker({
   tagOptions: { id: number; name: string }[];
 }): ReactElement {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const hasTags = draftTagIds.length > 0 && runningEntry?.id == null;
+
+  const filteredTags = useMemo(
+    () =>
+      search.trim()
+        ? tagOptions.filter((tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
+        : tagOptions,
+    [tagOptions, search],
+  );
 
   return (
     <div className="relative" ref={containerRef}>
@@ -597,6 +606,7 @@ function TimerBarTagPicker({
         onClick={() => {
           if (runningEntry?.id == null) {
             setOpen((prev) => !prev);
+            setSearch("");
           }
         }}
         onBlur={(e) => {
@@ -616,11 +626,22 @@ function TimerBarTagPicker({
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[#999]">
             Tags
           </div>
-          {tagOptions.length === 0 ? (
-            <div className="px-3 py-2 text-[13px] text-[#999]">No tags available</div>
+          <div className="px-3 pb-2">
+            <input
+              className="h-8 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2.5 text-[13px] text-white outline-none placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)]"
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tags"
+              type="text"
+              value={search}
+            />
+          </div>
+          {filteredTags.length === 0 ? (
+            <div className="px-3 py-2 text-[13px] text-[#999]">
+              {tagOptions.length === 0 ? "No tags available" : "No matching tags"}
+            </div>
           ) : (
             <div className="max-h-[200px] overflow-y-auto">
-              {tagOptions.map((tag) => {
+              {filteredTags.map((tag) => {
                 const isSelected = draftTagIds.includes(tag.id);
                 return (
                   <button
