@@ -2,23 +2,29 @@ import { type FormEvent, type ReactElement, useMemo, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
-import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useClientsQuery,
   useCreateClientMutation,
+  useDeleteClientMutation,
   useProjectsQuery,
+  useRenameClientMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { buildProjectTeamPath } from "../../shared/url-state/projects-location.ts";
+import { ClientRowActions } from "./ClientRowActions.tsx";
+import {
+  type ClientListItem,
+  type ClientStatusFilter,
+  emptyStateTitle,
+  isClientActive,
+  normalizeClients,
+  normalizeProjects,
+  resolveProjectColor,
+} from "./clients-data.ts";
 
-type ClientStatusFilter = "active" | "all" | "inactive";
-type ClientListItem = {
-  active?: boolean | null;
-  archived?: boolean | null;
-  id: number;
-  name: string;
-  wid?: number | null;
-  workspace_id?: number | null;
+type GroupedClient = {
+  client: ClientListItem;
+  projects: GithubComTogglTogglApiInternalModelsProject[];
 };
 
 export function ClientsPage(): ReactElement {
@@ -27,6 +33,8 @@ export function ClientsPage(): ReactElement {
   const clientsQuery = useClientsQuery(workspaceId);
   const projectsQuery = useProjectsQuery(workspaceId, "all");
   const createClientMutation = useCreateClientMutation(workspaceId);
+  const renameClientMutation = useRenameClientMutation(workspaceId);
+  const deleteClientMutation = useDeleteClientMutation(workspaceId);
   const [clientName, setClientName] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -177,90 +185,15 @@ export function ClientsPage(): ReactElement {
       !clientsQuery.isError &&
       !projectsQuery.isError ? (
         groupedClients.length > 0 ? (
-          <div data-testid="clients-list">
-            <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <div className="flex h-[28px] items-center">
-                <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
-              </div>
-              <div className="flex h-[28px] items-center" />
-              <div className="flex h-[28px] items-center">Clients | Projects</div>
-              <div className="flex h-[28px] items-center justify-end" />
-            </div>
-            {groupedClients.map(({ client, projects: clientProjects }) => {
-              const collapsed = collapsedIds.includes(client.id);
-              return (
-                <div key={client.id}>
-                  <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]">
-                    <div className="h-[26px]" />
-                    <div className="flex h-[26px] items-center">
-                      <button
-                        aria-label={`${collapsed ? "Expand" : "Collapse"} ${client.name}`}
-                        className="flex size-6 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                        onClick={() => toggleClient(client.id)}
-                        type="button"
-                      >
-                        <TrackingIcon
-                          className="size-3"
-                          name={collapsed ? "chevron-right" : "chevron-down"}
-                        />
-                      </button>
-                    </div>
-                    <div className="flex h-[26px] items-center gap-2">
-                      <span className="truncate text-white">{client.name}</span>
-                      <span className="text-[12px] text-[var(--track-text-muted)]">
-                        ({clientProjects.length})
-                      </span>
-                    </div>
-                    <div className="flex h-[26px] items-center justify-end text-[var(--track-text-muted)]">
-                      <TrackingIcon className="size-3.5" name="more" />
-                    </div>
-                  </div>
-                  {!collapsed
-                    ? clientProjects.map((project) => (
-                        <div
-                          className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
-                          key={`${client.id}-${project.id}`}
-                        >
-                          <div className="h-[26px]" />
-                          <div className="h-[26px]" />
-                          <div className="flex h-[26px] items-center gap-2 pl-6">
-                            <span
-                              className="size-1.5 rounded-full"
-                              style={{ backgroundColor: resolveProjectColor(project) }}
-                            />
-                            <a
-                              className="truncate"
-                              href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
-                              style={{ color: resolveProjectColor(project) }}
-                            >
-                              {project.name ?? "Untitled project"}
-                            </a>
-                          </div>
-                          <div className="h-[26px]" />
-                        </div>
-                      ))
-                    : null}
-                </div>
-              );
-            })}
-            <div className="flex items-center justify-center gap-2 px-5 py-4 text-[11px] text-[var(--track-text-muted)]">
-              <button
-                className="flex size-5 items-center justify-center rounded-[4px] border border-[var(--track-border)]"
-                type="button"
-              >
-                ‹
-              </button>
-              <span className="flex size-5 items-center justify-center rounded-[4px] bg-[var(--track-surface-muted)] text-white">
-                1
-              </span>
-              <button
-                className="flex size-5 items-center justify-center rounded-[4px] border border-[var(--track-border)]"
-                type="button"
-              >
-                ›
-              </button>
-            </div>
-          </div>
+          <ClientListTable
+            collapsedIds={collapsedIds}
+            deleteClientMutation={deleteClientMutation}
+            groupedClients={groupedClients}
+            renameClientMutation={renameClientMutation}
+            setStatusMessage={setStatusMessage}
+            toggleClient={toggleClient}
+            workspaceId={workspaceId}
+          />
         ) : (
           <div className="px-5 py-10">
             <p className="text-sm text-[var(--track-text-muted)]">
@@ -285,6 +218,125 @@ export function ClientsPage(): ReactElement {
   );
 }
 
+function ClientListTable({
+  collapsedIds,
+  deleteClientMutation,
+  groupedClients,
+  renameClientMutation,
+  setStatusMessage,
+  toggleClient,
+  workspaceId,
+}: {
+  collapsedIds: number[];
+  deleteClientMutation: ReturnType<typeof useDeleteClientMutation>;
+  groupedClients: GroupedClient[];
+  renameClientMutation: ReturnType<typeof useRenameClientMutation>;
+  setStatusMessage: (msg: string) => void;
+  toggleClient: (id: number) => void;
+  workspaceId: number;
+}): ReactElement {
+  return (
+    <div data-testid="clients-list">
+      <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+        <div className="flex h-[28px] items-center">
+          <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+        </div>
+        <div className="flex h-[28px] items-center" />
+        <div className="flex h-[28px] items-center">Clients | Projects</div>
+        <div className="flex h-[28px] items-center justify-end" />
+      </div>
+      {groupedClients.map(({ client, projects: clientProjects }) => {
+        const collapsed = collapsedIds.includes(client.id);
+        return (
+          <div key={client.id}>
+            <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]">
+              <div className="h-[26px]" />
+              <div className="flex h-[26px] items-center">
+                <button
+                  aria-label={`${collapsed ? "Expand" : "Collapse"} ${client.name}`}
+                  className="flex size-6 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                  onClick={() => toggleClient(client.id)}
+                  type="button"
+                >
+                  <TrackingIcon
+                    className="size-3"
+                    name={collapsed ? "chevron-right" : "chevron-down"}
+                  />
+                </button>
+              </div>
+              <div className="flex h-[26px] items-center gap-2">
+                <span className="truncate text-white">{client.name}</span>
+                <span className="text-[12px] text-[var(--track-text-muted)]">
+                  ({clientProjects.length})
+                </span>
+              </div>
+              <div className="flex h-[26px] items-center justify-end">
+                <ClientRowActions
+                  clientId={client.id}
+                  clientName={client.name}
+                  onDelete={(id) => {
+                    deleteClientMutation.mutate(id, {
+                      onSuccess: () => setStatusMessage("Client deleted"),
+                    });
+                  }}
+                  onRename={(id, name) => {
+                    renameClientMutation.mutate(
+                      { clientId: id, name },
+                      { onSuccess: () => setStatusMessage("Client renamed") },
+                    );
+                  }}
+                />
+              </div>
+            </div>
+            {!collapsed
+              ? clientProjects.map((project) => (
+                  <div
+                    className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
+                    key={`${client.id}-${project.id}`}
+                  >
+                    <div className="h-[26px]" />
+                    <div className="h-[26px]" />
+                    <div className="flex h-[26px] items-center gap-2 pl-6">
+                      <span
+                        className="size-1.5 rounded-full"
+                        style={{ backgroundColor: resolveProjectColor(project) }}
+                      />
+                      <a
+                        className="truncate"
+                        href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
+                        style={{ color: resolveProjectColor(project) }}
+                      >
+                        {project.name ?? "Untitled project"}
+                      </a>
+                    </div>
+                    <div className="h-[26px]" />
+                  </div>
+                ))
+              : null}
+          </div>
+        );
+      })}
+      <div className="flex items-center justify-center gap-2 px-5 py-4 text-[11px] text-[var(--track-text-muted)]">
+        <button
+          className="flex size-5 items-center justify-center rounded-[4px] border border-[var(--track-border)]"
+          type="button"
+        >
+          &#x2039;
+        </button>
+        <span className="flex size-5 items-center justify-center rounded-[4px] bg-[var(--track-surface-muted)] text-white">
+          1
+        </span>
+        <button
+          className="flex size-5 items-center justify-center rounded-[4px] border border-[var(--track-border)]"
+          type="button"
+        >
+          &#x203A;
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SurfaceMessage({
   message,
   tone = "muted",
@@ -301,82 +353,4 @@ function SurfaceMessage({
       {message}
     </div>
   );
-}
-
-function emptyStateTitle(statusFilter: ClientStatusFilter): string {
-  if (statusFilter === "active") {
-    return "No active clients match this view.";
-  }
-
-  if (statusFilter === "inactive") {
-    return "No inactive clients match this view.";
-  }
-
-  return "No clients in this workspace yet.";
-}
-
-function normalizeClients(data: unknown): ClientListItem[] {
-  if (Array.isArray(data)) {
-    return data as ClientListItem[];
-  }
-
-  if (hasClientArray(data, "clients")) {
-    return data.clients;
-  }
-
-  if (hasClientArray(data, "data")) {
-    return data.data;
-  }
-
-  return [];
-}
-
-function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
-  if (Array.isArray(data)) {
-    return data as GithubComTogglTogglApiInternalModelsProject[];
-  }
-
-  if (hasProjectArray(data, "projects")) {
-    return data.projects;
-  }
-
-  if (hasProjectArray(data, "data")) {
-    return data.data;
-  }
-
-  return [];
-}
-
-function hasClientArray(
-  value: unknown,
-  key: "clients" | "data",
-): value is Record<typeof key, ClientListItem[]> {
-  return (
-    Boolean(value) &&
-    typeof value === "object" &&
-    Array.isArray((value as Record<string, unknown>)[key])
-  );
-}
-
-function hasProjectArray(
-  value: unknown,
-  key: "data" | "projects",
-): value is Record<typeof key, GithubComTogglTogglApiInternalModelsProject[]> {
-  return (
-    Boolean(value) &&
-    typeof value === "object" &&
-    Array.isArray((value as Record<string, unknown>)[key])
-  );
-}
-
-function isClientActive(client: ClientListItem): boolean {
-  if (typeof client.archived === "boolean") {
-    return !client.archived;
-  }
-
-  return client.active !== false;
-}
-
-function resolveProjectColor(project: GithubComTogglTogglApiInternalModelsProject): string {
-  return resolveProjectColorValue(project);
 }

@@ -40,6 +40,7 @@ import {
   getWorkspacesByWorkspaceIdProjectsByProjectId,
   getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
   createWorkspaceFavorite,
+  deleteWorkspaceClient,
   deleteWorkspaceProject,
   deleteWorkspaceTimeEntries,
   patchTimeEntries,
@@ -57,6 +58,7 @@ import {
   postWorkspaceGroup,
   putMe,
   putOrganization,
+  putWorkspaceClients,
   putWorkspaceProject,
   postWorkspaceTag,
   putWorkspaceTimeEntryHandler,
@@ -609,6 +611,7 @@ export function useWorkspaceTopActivityQuery(workspaceId: number) {
 }
 
 export type WeeklyReportQueryOptions = {
+  description?: string;
   endDate: string;
   projectIds?: number[];
   startDate: string;
@@ -624,6 +627,7 @@ export function useWorkspaceWeeklyReportQuery(
       unwrapWebApiResult(
         postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries({
           body: {
+            description: options.description?.trim() || undefined,
             end_date: options.endDate,
             project_ids: options.projectIds?.length ? options.projectIds : undefined,
             start_date: options.startDate,
@@ -641,6 +645,7 @@ export function useWorkspaceWeeklyReportQuery(
       options.endDate,
       options.projectIds ?? [],
       options.tagIds ?? [],
+      options.description?.trim() ?? "",
     ] as const,
   });
 }
@@ -1163,6 +1168,43 @@ export function useCreateClientMutation(workspaceId: number) {
           path: {
             workspace_id: workspaceId,
           },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["clients", workspaceId],
+      });
+    },
+  });
+}
+
+export function useRenameClientMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ clientId, name }: { clientId: number; name: string }) =>
+      unwrapWebApiResult(
+        putWorkspaceClients({
+          body: { name },
+          path: { workspace_id: workspaceId, client_id: clientId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["clients", workspaceId],
+      });
+    },
+  });
+}
+
+export function useDeleteClientMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (clientId: number) =>
+      unwrapWebApiResult(
+        deleteWorkspaceClient({
+          path: { workspace_id: workspaceId, client_id: clientId },
         }),
       ),
     onSuccess: async () => {

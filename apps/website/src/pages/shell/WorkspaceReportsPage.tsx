@@ -7,6 +7,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
+import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
 import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
 import { ReportsPeriodPicker } from "./ReportsPeriodPicker.tsx";
@@ -46,6 +47,7 @@ export function WorkspaceReportsPage(): ReactElement {
   const tagsQuery = useTagsQuery(workspaceId);
 
   const weeklyReportQuery = useWorkspaceWeeklyReportQuery(workspaceId, {
+    description: state.filters.description,
     endDate: state.dateRange.endDate,
     projectIds: state.filters.projectIds,
     startDate: state.dateRange.startDate,
@@ -271,7 +273,10 @@ function ReportsFilterBar({
         options={tagOptions}
         selected={state.filters.tagIds}
       />
-      <ToolbarButton>Description</ToolbarButton>
+      <ReportsDescriptionFilter
+        onChange={(value) => state.updateFilters({ description: value })}
+        value={state.filters.description}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import type {
 import {
   useProjectsQuery,
   useWorkspaceAllActivitiesQuery,
+  useWorkspaceMembersQuery,
   useWorkspaceMostActiveQuery,
   useWorkspaceTopActivityQuery,
 } from "../../shared/query/web-shell.ts";
@@ -31,6 +32,16 @@ export function WorkspaceOverviewPage(): ReactElement {
   const allActivitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
   const topActivityQuery = useWorkspaceTopActivityQuery(workspaceId);
   const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
+  const membersQuery = useWorkspaceMembersQuery(workspaceId);
+  const memberNameById = useMemo(() => {
+    const lookup = new Map<number, string>();
+    const members = membersQuery.data?.members ?? [];
+    for (const m of members) {
+      if (m.id && m.name) lookup.set(m.id, m.name);
+      if (m.id && m.email && !lookup.has(m.id)) lookup.set(m.id, m.email);
+    }
+    return lookup;
+  }, [membersQuery.data]);
   const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
   const weekSummary = useMemo(
     () => buildWeekSummary(allActivitiesQuery.data ?? [], weekDays, timezone),
@@ -232,10 +243,12 @@ export function WorkspaceOverviewPage(): ReactElement {
                                 className="inline-flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-[var(--track-surface)]"
                                 style={{ backgroundColor: memberTint(index + 2) }}
                               >
-                                {initialsForMember(member)}
+                                {initialsForMember(member, memberNameById)}
                               </span>
                               <div className="min-w-0 text-[14px] leading-5">
-                                <p className="truncate text-white">{memberLabel(member)}</p>
+                                <p className="truncate text-white">
+                                  {memberLabel(member, memberNameById)}
+                                </p>
                                 <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
                                   {formatClockDuration(member.duration ?? 0)}
                                 </p>
@@ -276,7 +289,10 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <p className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">
                     {memberCount}
                   </p>
-                  <MemberAvatarCluster members={teamActivity.activeMembers} />
+                  <MemberAvatarCluster
+                    members={teamActivity.activeMembers}
+                    nameById={memberNameById}
+                  />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[16px] font-semibold leading-[23px] text-white">
@@ -411,7 +427,13 @@ function OverviewSurface({
   );
 }
 
-function MemberAvatarCluster({ members }: { members: ModelsMostActiveUser[] }): ReactElement {
+function MemberAvatarCluster({
+  members,
+  nameById,
+}: {
+  members: ModelsMostActiveUser[];
+  nameById: Map<number, string>;
+}): ReactElement {
   const visibleMembers = members.slice(0, 5);
 
   return (
@@ -439,7 +461,7 @@ function MemberAvatarCluster({ members }: { members: ModelsMostActiveUser[] }): 
               width: position.size,
             }}
           >
-            {initialsForMember(member)}
+            {initialsForMember(member, nameById)}
           </span>
         );
       })}
@@ -663,12 +685,17 @@ function memberTint(index: number): string {
   return ["#f9d7f4", "#f9e7cb", "#fff0d4", "#e57bd9", "#fbe5fb"][index % 5];
 }
 
-function memberLabel(member: ModelsMostActiveUser): string {
-  return member.fullname?.trim() || member.email?.trim() || `User #${member.user_id ?? "?"}`;
+function memberLabel(member: ModelsMostActiveUser, nameById?: Map<number, string>): string {
+  return (
+    member.fullname?.trim() ||
+    member.email?.trim() ||
+    (member.user_id != null ? nameById?.get(member.user_id) : undefined) ||
+    `User #${member.user_id ?? "?"}`
+  );
 }
 
-function initialsForMember(member: ModelsMostActiveUser): string {
-  const label = memberLabel(member)
+function initialsForMember(member: ModelsMostActiveUser, nameById?: Map<number, string>): string {
+  const label = memberLabel(member, nameById)
     .replace(/[^A-Za-z0-9\u4e00-\u9fa5 ]/g, "")
     .trim();
   return label ? label.slice(0, 1).toUpperCase() : "•";

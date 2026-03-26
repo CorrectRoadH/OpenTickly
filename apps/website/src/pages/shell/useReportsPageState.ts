@@ -8,6 +8,7 @@ import {
 } from "./reports-date-utils.ts";
 
 export type ReportsFilters = {
+  description: string;
   projectIds: number[];
   tagIds: number[];
 };
@@ -65,7 +66,11 @@ export function useReportsPageState(timezone: string, weekStartsOn: number): Rep
   );
 
   const [dateRange, setDateRange] = useState<ReportsDateRange>(initialRange);
-  const [filters, setFilters] = useState<ReportsFilters>({ projectIds: [], tagIds: [] });
+  const [filters, setFilters] = useState<ReportsFilters>({
+    description: "",
+    projectIds: [],
+    tagIds: [],
+  });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [periodPickerOpen, setPeriodPickerOpen] = useState(false);
   const [breakdownBy, setBreakdownBy] = useState<BreakdownDimension>("projects");
