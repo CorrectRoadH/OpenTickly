@@ -574,8 +574,10 @@ export function TimeEntryEditorDialog({
               <PickerButton
                 active={entry.billable === true}
                 ariaLabel="Billable"
+                ariaPressed={entry.billable === true}
                 icon="dollar"
                 onClick={onBillableToggle}
+                toneColor="#e57bd9"
               />
             </div>
 
@@ -1152,6 +1154,7 @@ function ActionMenuButton({
 function PickerButton({
   active = false,
   ariaLabel,
+  ariaPressed,
   icon,
   label,
   onClick,
@@ -1160,6 +1163,7 @@ function PickerButton({
 }: {
   active?: boolean;
   ariaLabel: string;
+  ariaPressed?: boolean;
   icon: "dollar" | "projects" | "subscription" | "tags";
   label?: string;
   onClick?: () => void;
@@ -1172,19 +1176,22 @@ function PickerButton({
   return (
     <button
       aria-label={ariaLabel}
+      aria-pressed={ariaPressed}
       className={`flex items-center justify-center transition ${
         selected
           ? "h-10 max-w-[168px] gap-2 rounded-[14px] px-3 text-[14px] font-semibold"
           : "size-10 rounded-[12px]"
       } ${
-        selected
-          ? ""
-          : active
-            ? "bg-white/8 text-white"
-            : "text-[#909096] hover:bg-white/5 hover:text-white"
+        selected ? "" : active ? "bg-white/8" : "text-[#909096] hover:bg-white/5 hover:text-white"
       }`}
       onClick={onClick}
-      style={selected ? { backgroundColor: colorToChipBackground(color), color } : undefined}
+      style={
+        selected
+          ? { backgroundColor: colorToChipBackground(color), color }
+          : active && toneColor
+            ? { color: toneColor }
+            : undefined
+      }
       type="button"
     >
       {variant === "project" && label ? (

@@ -201,9 +201,15 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-1.5 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
-                  <span className="inline-block h-[4px] w-[18px] rounded-full bg-[var(--track-accent)]" />
-                  <span>Non-billable</span>
+                <div className="flex items-center justify-center gap-4 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block h-[4px] w-[18px] rounded-full bg-[#e57bd9]" />
+                    <span>Billable</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="inline-block h-[4px] w-[18px] rounded-full bg-[var(--track-accent)]" />
+                    <span>Non-billable</span>
+                  </span>
                 </div>
               </div>
             </OverviewSurface>
