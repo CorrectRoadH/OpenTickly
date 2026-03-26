@@ -46,9 +46,6 @@ export function ReportsBreakdownPanel({
           <h2 className="text-[16px] font-semibold leading-[23px] text-white">
             Project and member breakdown
           </h2>
-          <p className="mt-2 text-[14px] leading-5 text-[var(--track-text-muted)]">
-            Summary reports now reflect live tracking facts for this workspace and week.
-          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <ReportsSelectDropdown

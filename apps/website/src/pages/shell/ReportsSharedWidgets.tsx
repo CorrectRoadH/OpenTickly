@@ -50,10 +50,11 @@ export function TopTab({
   );
 }
 
-export function ToolbarButton({ children }: { children: string }) {
+export function ToolbarButton({ children, onClick }: { children: string; onClick?: () => void }) {
   return (
     <button
       className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
+      onClick={onClick}
       type="button"
     >
       {children}
