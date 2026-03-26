@@ -162,6 +162,10 @@ export function WorkspaceTimerPage(): ReactElement {
               <AllDatesLabel />
             ) : (
               <WeekRangePicker
+                onDayShortcutSelect={(date) => {
+                  orch.setCalendarSubview("day");
+                  orch.setSelectedWeekDate(date);
+                }}
                 onSelectDate={orch.setSelectedWeekDate}
                 selectedDate={orch.selectedWeekDate}
                 weekStartsOn={orch.beginningOfWeek}

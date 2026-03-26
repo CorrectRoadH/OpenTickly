@@ -14,10 +14,12 @@ import {
 } from "./week-range.ts";
 
 export function QuickDateShortcuts({
+  onDayShortcutSelect,
   onSelectDate,
   selectedDate,
   weekStartsOn = 1,
 }: {
+  onDayShortcutSelect?: (date: Date) => void;
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
   weekStartsOn?: number;
@@ -37,7 +39,13 @@ export function QuickDateShortcuts({
                 : "text-white"
             }`}
             key={shortcut.id}
-            onClick={() => onSelectDate(shortcutDate)}
+            onClick={() => {
+              if ((shortcut.id === "today" || shortcut.id === "yesterday") && onDayShortcutSelect) {
+                onDayShortcutSelect(shortcutDate);
+              } else {
+                onSelectDate(shortcutDate);
+              }
+            }}
             type="button"
           >
             {shortcut.label}
@@ -49,10 +57,12 @@ export function QuickDateShortcuts({
 }
 
 export function WeekRangePicker({
+  onDayShortcutSelect,
   onSelectDate,
   selectedDate,
   weekStartsOn = 1,
 }: {
+  onDayShortcutSelect?: (date: Date) => void;
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
   weekStartsOn?: number;
@@ -192,7 +202,14 @@ export function WeekRangePicker({
                       }`}
                       key={shortcut.id}
                       onClick={() => {
-                        onSelectDate(shortcutDate);
+                        if (
+                          (shortcut.id === "today" || shortcut.id === "yesterday") &&
+                          onDayShortcutSelect
+                        ) {
+                          onDayShortcutSelect(shortcutDate);
+                        } else {
+                          onSelectDate(shortcutDate);
+                        }
                         setIsOpen(false);
                       }}
                       type="button"
