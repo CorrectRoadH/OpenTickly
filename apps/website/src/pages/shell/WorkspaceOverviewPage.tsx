@@ -1,4 +1,6 @@
-import { type ReactElement, type ReactNode, useMemo } from "react";
+import { type ReactElement, type ReactNode, useCallback, useMemo } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { ShellPageHeader, ShellSecondaryButton } from "@opentoggl/web-ui";
 
 import {
@@ -59,6 +61,19 @@ export function WorkspaceOverviewPage(): ReactElement {
     () => buildProjectCoverage(topActivityQuery.data ?? []),
     [topActivityQuery.data],
   );
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const handleRefreshCharts = useCallback(() => {
+    void queryClient.invalidateQueries({
+      predicate: (query) => {
+        const key = query.queryKey[0];
+        return typeof key === "string" && key.startsWith("workspace-dashboard-");
+      },
+    });
+  }, [queryClient]);
+  const handleViewAllPlans = useCallback(() => {
+    void navigate({ to: `/workspaces/${workspaceId}/subscription` });
+  }, [navigate, workspaceId]);
   const overviewProgressPercent = useMemo(
     () =>
       [
@@ -84,11 +99,12 @@ export function WorkspaceOverviewPage(): ReactElement {
         <ShellPageHeader
           action={
             <div className="flex flex-wrap items-center gap-2">
-              <ShellSecondaryButton type="button">
-                <span className="normal-case">Set as default view</span>
+              <ShellSecondaryButton onClick={handleRefreshCharts} type="button">
+                Refresh charts
               </ShellSecondaryButton>
-              <ShellSecondaryButton type="button">Refresh charts</ShellSecondaryButton>
-              <ShellSecondaryButton type="button">View all plans</ShellSecondaryButton>
+              <ShellSecondaryButton onClick={handleViewAllPlans} type="button">
+                View all plans
+              </ShellSecondaryButton>
             </div>
           }
           bordered

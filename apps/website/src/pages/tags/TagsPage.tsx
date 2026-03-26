@@ -141,7 +141,7 @@ export function TagsPage(): ReactElement {
                 </a>
               </div>
               <div className="flex h-[54px] items-center text-[var(--track-text-muted)]">
-                Workspace {tag.workspace_id}
+                {session.currentWorkspace.name}
               </div>
               <div className="flex h-[54px] items-center text-white">
                 {tag.deleted_at ? "Inactive" : "Active"}
@@ -177,8 +177,8 @@ export function TagsPage(): ReactElement {
         className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
         data-testid="tags-summary"
       >
-        Showing {tags.length} tags in workspace {workspaceId}. Active: {activeCount} · Inactive:{" "}
-        {inactiveCount}
+        Showing {tags.length} tags in {session.currentWorkspace.name}. Active: {activeCount} ·
+        Inactive: {inactiveCount}
       </div>
 
       {createDialogOpen ? (
