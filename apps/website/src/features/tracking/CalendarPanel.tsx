@@ -54,14 +54,14 @@ export function CalendarPanel({
             type="button"
           >
             <TrackingIcon
-              className="size-3.5"
+              className="size-[15px]"
               name="chevron-right"
               style={{ transform: "rotate(180deg)" }}
             />
           </button>
         </div>
         <h3
-          className="col-start-2 text-center text-[14px] font-semibold leading-5 text-white"
+          className="col-start-2 text-center text-[14px] font-medium leading-5 text-white"
           id="calendar-panel-title"
         >
           {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
@@ -77,13 +77,13 @@ export function CalendarPanel({
             }
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="chevron-right" />
+            <TrackingIcon className="size-[15px]" name="chevron-right" />
           </button>
         </div>
       </div>
 
       {/* Weekday header — tight vertical rhythm, part of the grid */}
-      <div className="mb-0 grid grid-cols-7 gap-[2px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#54545a]">
+      <div className="mb-0 grid grid-cols-7 gap-[3px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.04em] text-[#54545a]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
           <div className="pb-1" key={weekday}>
             {weekday}
@@ -95,7 +95,7 @@ export function CalendarPanel({
       <div className="flex flex-col gap-[2px]">
         {weeks.map((week, weekIndex) => (
           <div
-            className="grid grid-cols-7 gap-[2px]"
+            className="grid grid-cols-7 gap-[3px]"
             key={`${visibleMonth.toISOString()}-${weekIndex}`}
           >
             {week.map((day) => {
