@@ -410,7 +410,7 @@ export function ListView({
               return (
                 <div
                   key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-                  className={`group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)] ${
+                  className={`group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-3 text-[13px] text-white hover:bg-[var(--track-row-hover)] ${
                     isSelected ? "bg-[var(--track-row-hover)]" : ""
                   }`}
                 >
@@ -471,10 +471,10 @@ export function ListView({
                         $
                       </span>
                     ) : null}
-                    <span className="whitespace-nowrap text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
+                    <span className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)]">
                       {formatEntryRange(entry, timezone)}
                     </span>
-                    <span className="w-[72px] text-right text-[13px] font-semibold tabular-nums">
+                    <span className="w-[72px] text-right text-[13px] font-normal tabular-nums">
                       {formatClockDuration(resolveEntryDurationSeconds(entry))}
                     </span>
                     <button
@@ -1086,7 +1086,7 @@ function CalendarEventCard({
             {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
           </span>
         ) : null}
-        <span className="shrink-0 tabular-nums leading-tight text-white/70">
+        <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/70">
           {formatClockDuration(durationSeconds)}
         </span>
         {entry.billable ? (

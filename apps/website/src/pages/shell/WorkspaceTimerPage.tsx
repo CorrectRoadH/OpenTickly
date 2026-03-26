@@ -29,13 +29,13 @@ export function WorkspaceTimerPage(): ReactElement {
       data-testid="tracking-timer-page"
     >
       <header className="shrink-0 border-b border-[var(--track-border)]">
-        <div className="flex min-h-[84px] flex-wrap items-center gap-x-3 gap-y-3 border-b border-[var(--track-border)] px-5 py-4">
+        <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
           <div className="min-w-0 flex-1">
             <label className="sr-only" htmlFor="timer-description">
               Time entry description
             </label>
             <input
-              className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-[var(--track-text-muted)]"
+              className="h-10 w-full bg-transparent text-[14px] font-medium text-white outline-none placeholder:text-[var(--track-text-muted)]"
               id="timer-description"
               ref={orch.timerDescriptionInputRef as unknown as React.LegacyRef<HTMLInputElement>}
               onBlur={() => {

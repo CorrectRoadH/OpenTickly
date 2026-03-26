@@ -163,24 +163,32 @@ export function WeekRangePicker({
         <div
           aria-label="Select week range"
           aria-modal="false"
-          className="absolute left-0 top-[calc(100%+16px)] z-30 w-[min(100vw-4rem,59rem)] rounded-3xl border border-[var(--track-border)] bg-[#1b1b1b] p-8 shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[568px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.24)]"
           data-testid="week-range-dialog"
           role="dialog"
         >
-          <div className="grid gap-8 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <div className="border-b border-[var(--track-border)] pb-6 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-8">
-              <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-4">
+            <div className="border-r border-[var(--track-border)] pr-4">
+              <div className="flex flex-col gap-1">
                 {WEEK_SHORTCUTS.map((shortcut) => {
                   const shortcutDate = shortcut.resolveDate(new Date());
-                  const isActive = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
+                  const weekMatch = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
+                  let isActive = false;
+                  if (shortcut.id === "this-week") {
+                    isActive = weekMatch;
+                  } else if (shortcut.id === "last-week") {
+                    isActive = weekMatch;
+                  }
+                  // Today/Yesterday are never independently active in the week
+                  // picker popup -- the week-level shortcuts take visual priority.
 
                   return (
                     <button
                       aria-pressed={isActive}
-                      className={`w-full rounded-2xl px-4 py-3 text-left text-[18px] font-medium transition ${
+                      className={`w-full rounded-lg px-2 py-[7px] text-left text-[14px] transition ${
                         isActive
-                          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                          : "text-[#cfcfcf] hover:bg-[var(--track-row-hover)] hover:text-white"
+                          ? "bg-[rgba(183,68,171,0.15)] font-semibold text-[var(--track-accent-text)]"
+                          : "font-medium text-[#cfcfcf] hover:bg-[var(--track-row-hover)] hover:text-white"
                       }`}
                       key={shortcut.id}
                       onClick={() => {
@@ -197,10 +205,10 @@ export function WeekRangePicker({
             </div>
 
             <div>
-              <div className="mb-8 flex items-center justify-between gap-4">
+              <div className="mb-3 flex items-center justify-between gap-2">
                 <button
                   aria-label="Previous month"
-                  className="flex size-14 items-center justify-center rounded-2xl border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-lg border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() =>
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1),
@@ -208,21 +216,17 @@ export function WeekRangePicker({
                   }
                   type="button"
                 >
-                  <TrackingIcon className="size-4 rotate-180" name="chevron-right" />
+                  <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
                 </button>
-                <h2 className="flex items-center gap-3 text-[28px] font-semibold tracking-[0.01em] text-white">
+                <h2 className="flex items-center gap-2 text-[20px] font-semibold tracking-[0.01em] text-white">
                   <span>
                     {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
                   </span>
                   <span>{visibleMonth.getFullYear()}</span>
-                  <TrackingIcon
-                    className="size-4 text-[var(--track-text-muted)]"
-                    name="chevron-down"
-                  />
                 </h2>
                 <button
                   aria-label="Next month"
-                  className="flex size-14 items-center justify-center rounded-2xl border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                  className="flex size-7 items-center justify-center rounded-lg border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() =>
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1),
@@ -230,18 +234,18 @@ export function WeekRangePicker({
                   }
                   type="button"
                 >
-                  <TrackingIcon className="size-4" name="chevron-right" />
+                  <TrackingIcon className="size-3" name="chevron-right" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] items-center gap-y-2 text-center text-[15px] font-medium text-[var(--track-text-muted)]">
+              <div className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-center text-[11px] font-semibold text-[var(--track-text-muted)]">
                 <span />
                 {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label) => (
                   <span key={label}>{label}</span>
                 ))}
               </div>
 
-              <div className="mt-4 flex flex-col gap-2">
+              <div className="mt-1 flex flex-col">
                 {weeks.map((week) => {
                   const weekStart = week[0];
                   const isSelectedWeek = isSameWeek(weekStart, selectedWeekStart, weekStartsOn);
@@ -249,7 +253,7 @@ export function WeekRangePicker({
                   return (
                     <button
                       aria-label={`Select week ${formatTrackQueryDate(week[0])} to ${formatTrackQueryDate(week[6])}`}
-                      className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] items-center gap-y-2 rounded-2xl px-2 py-2 text-left transition hover:bg-[var(--track-row-hover)]"
+                      className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-left transition hover:bg-[var(--track-row-hover)]"
                       key={weekStart.toISOString()}
                       onClick={() => {
                         onSelectDate(weekStart);
@@ -257,19 +261,29 @@ export function WeekRangePicker({
                       }}
                       type="button"
                     >
-                      <span className="pr-3 text-[18px] font-medium text-[var(--track-text-muted)]">
-                        W{resolveIsoWeekNumber(weekStart)}
+                      <span className="text-[12px] font-medium text-[var(--track-text-muted)]">
+                        {resolveIsoWeekNumber(weekStart)}
                       </span>
                       {week.map((day, index) => {
-                        const isEdge = index === 0 || index === week.length - 1;
+                        const isStart = index === 0;
+                        const isEnd = index === week.length - 1;
                         const isInVisibleMonth = day.getMonth() === visibleMonth.getMonth();
+                        const isToday = isSameDay(day, new Date());
+
+                        const selectedBorderRadius = isStart
+                          ? "rounded-l-lg"
+                          : isEnd
+                            ? "rounded-r-lg"
+                            : "";
 
                         return (
                           <span
-                            className={`flex h-12 items-center justify-center text-[20px] font-medium ${
+                            className={`flex h-[29px] items-center justify-center text-[14px] font-medium ${
                               isSelectedWeek
-                                ? `bg-[var(--track-accent-soft)] text-[var(--track-accent-text)] ${
-                                    isEdge ? "rounded-2xl" : ""
+                                ? `${
+                                    isStart || isEnd
+                                      ? `bg-[#b744ab] text-white ${selectedBorderRadius}`
+                                      : "bg-[rgba(183,68,171,0.2)] text-[var(--track-accent-text)]"
                                   }`
                                 : isInVisibleMonth
                                   ? "text-white"
@@ -279,8 +293,8 @@ export function WeekRangePicker({
                           >
                             <span
                               className={
-                                isSameDay(day, new Date()) && !isSelectedWeek
-                                  ? "rounded-full border border-[var(--track-border)] px-3 py-1"
+                                isToday && !isSelectedWeek
+                                  ? "flex size-[26px] items-center justify-center rounded-full border border-[var(--track-border)]"
                                   : ""
                               }
                             >
