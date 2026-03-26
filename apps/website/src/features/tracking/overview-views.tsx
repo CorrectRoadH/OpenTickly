@@ -113,13 +113,23 @@ export function SummaryStat({ label, value }: { label: string; value: string }) 
 }
 
 export function ChromeIconButton({
+  "aria-label": ariaLabel,
+  active,
   icon,
+  onClick,
 }: {
+  "aria-label"?: string;
+  active?: boolean;
   icon: "grid" | "more" | "settings" | "subscription" | "tags";
+  onClick?: () => void;
 }) {
   return (
     <button
-      className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+      aria-label={ariaLabel}
+      className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] hover:text-white ${
+        active ? "text-white" : "text-[var(--track-text-muted)]"
+      }`}
+      onClick={onClick}
       type="button"
     >
       <TrackingIcon className="size-4" name={icon} />

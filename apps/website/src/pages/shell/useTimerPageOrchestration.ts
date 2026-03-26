@@ -305,6 +305,7 @@ export interface TimerPageOrchestration {
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
   handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
+  handleCalendarSlotCreate: (slot: { dayIso: string; minute: number }) => Promise<void>;
   handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
   handleCalendarEntryResize: (
     entryId: number,
@@ -1237,6 +1238,44 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     [],
   );
 
+  const handleCalendarSlotCreate = useCallback(
+    async (slot: { dayIso: string; minute: number }) => {
+      const startDate = new Date(`${slot.dayIso}T00:00:00`);
+      startDate.setMinutes(slot.minute);
+      const endDate = new Date(startDate.getTime() + 30 * 60_000);
+
+      try {
+        const created = await createTimeEntryMutation.mutateAsync({
+          billable: false,
+          description: "",
+          duration: 1800,
+          projectId: null,
+          start: toTrackIso(startDate),
+          stop: toTrackIso(endDate),
+          tagIds: [],
+        });
+
+        if (created?.id != null) {
+          const fakeRect: DOMRect = {
+            bottom: 300,
+            height: 40,
+            left: 400,
+            right: 600,
+            top: 260,
+            width: 200,
+            x: 400,
+            y: 260,
+            toJSON: () => ({}),
+          };
+          handleEntryEdit(created, fakeRect);
+        }
+      } catch {
+        // Creation failed — mutation error state is already tracked
+      }
+    },
+    [createTimeEntryMutation, handleEntryEdit],
+  );
+
   const openComposerSuggestions = useCallback(() => {
     if (!timerDescriptionInputRef.current || runningEntry?.id != null) {
       return;
@@ -1406,6 +1445,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     handleSelectedEntryStartTimeChange,
     handleSelectedEntryStopTimeChange,
     handleContinueEntry,
+    handleCalendarSlotCreate,
     handleCalendarEntryMove,
     handleCalendarEntryResize,
     handleTimesheetCellEdit,
