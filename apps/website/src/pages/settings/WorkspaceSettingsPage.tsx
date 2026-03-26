@@ -2,9 +2,13 @@ import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard, ShellToast } from "
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
+import { SettingsAuditLog } from "../../features/settings/SettingsAuditLog.tsx";
+import { SettingsDataExport } from "../../features/settings/SettingsDataExport.tsx";
 import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettingsForm.tsx";
 import { createWorkspaceSettingsFormValues } from "../../shared/forms/settings-form.ts";
 import { buildWorkspaceSettingsPathWithSection } from "../../shared/lib/workspace-routing.ts";
+import type { UpdateWorkspaceSettingsRequestDto } from "../../shared/api/web-contract.ts";
 import {
   useUpdateWorkspaceSettingsMutation,
   useWorkspaceSettingsQuery,
@@ -76,40 +80,69 @@ export function WorkspaceSettingsPage({
           ) : null}
 
           {settingsQuery.data ? (
-            section === "general" ? (
-              <WorkspaceSettingsForm
-                initialValues={createWorkspaceSettingsFormValues(settingsQuery.data)}
-                onSubmitError={() => {
-                  setToast({
-                    description: "We could not save this change. Try again in a moment.",
-                    title: "Could not save workspace",
-                    tone: "error",
-                  });
-                }}
-                onSubmit={async (request) => {
-                  await updateMutation.mutateAsync(request);
-                }}
-                onSubmitSuccess={() => {
-                  setToast({
-                    description: "Your workspace has been updated",
-                    title: "Success!",
-                    tone: "success",
-                  });
-                }}
-              />
-            ) : (
-              <SettingsState
-                description="This section is part of the final settings information architecture, but only General is wired in this build."
-                title={`${settingsTabs.find((tab) => tab.id === section)?.label ?? "Section"} is not available yet`}
-                tone="empty"
-              />
-            )
+            <SettingsSectionContent
+              onSubmit={async (request) => {
+                await updateMutation.mutateAsync(request);
+              }}
+              onSubmitError={() => {
+                setToast({
+                  description: "We could not save this change. Try again in a moment.",
+                  title: "Could not save workspace",
+                  tone: "error",
+                });
+              }}
+              onSubmitSuccess={() => {
+                setToast({
+                  description: "Your workspace has been updated",
+                  title: "Success!",
+                  tone: "success",
+                });
+              }}
+              section={section}
+              settingsData={settingsQuery.data}
+              workspaceId={workspaceId}
+            />
           ) : null}
         </div>
       </div>
       {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
+}
+
+function SettingsSectionContent(props: {
+  onSubmit: (request: UpdateWorkspaceSettingsRequestDto) => Promise<void> | void;
+  onSubmitError: () => void;
+  onSubmitSuccess: () => void;
+  section: WorkspaceSettingsSection;
+  settingsData: Parameters<typeof createWorkspaceSettingsFormValues>[0];
+  workspaceId: number;
+}): ReactElement {
+  switch (props.section) {
+    case "general":
+      return (
+        <WorkspaceSettingsForm
+          initialValues={createWorkspaceSettingsFormValues(props.settingsData)}
+          onSubmit={props.onSubmit}
+          onSubmitError={props.onSubmitError}
+          onSubmitSuccess={props.onSubmitSuccess}
+        />
+      );
+    case "data-export":
+      return <SettingsDataExport />;
+    case "audit-log":
+      return <SettingsAuditLog workspaceId={props.workspaceId} />;
+    case "activity":
+      return <SettingsActivity workspaceId={props.workspaceId} />;
+    default:
+      return (
+        <SettingsState
+          description="This section is part of the final settings information architecture, but only General is wired in this build."
+          title={`${settingsTabs.find((tab) => tab.id === props.section)?.label ?? "Section"} is not available yet`}
+          tone="empty"
+        />
+      );
+  }
 }
 
 function SettingsHeader(props: {
