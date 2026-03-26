@@ -102,6 +102,13 @@ export function ProfilePage(): ReactElement {
     };
   }, [form.formState.isDirty, watchedPreferences]);
 
+  useEffect(() => {
+    if (window.location.hash) {
+      const el = document.getElementById(window.location.hash.slice(1));
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
   async function saveLatestValues(): Promise<void> {
     const latestValues = form.getValues();
     const serializedValues = JSON.stringify(latestValues);
@@ -209,13 +216,6 @@ export function ProfilePage(): ReactElement {
       { shouldDirty: true },
     );
   };
-
-  useEffect(() => {
-    if (window.location.hash) {
-      const el = document.getElementById(window.location.hash.slice(1));
-      el?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, []);
 
   return (
     <div className="space-y-4 pb-6" data-testid="profile-page">
