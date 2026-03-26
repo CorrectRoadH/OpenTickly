@@ -33,7 +33,7 @@ export function WorkspaceTimerPage(): ReactElement {
               Time entry description
             </label>
             <input
-              className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-white"
+              className="h-10 w-full bg-transparent text-[18px] font-medium text-white outline-none placeholder:text-[var(--track-text-muted)]"
               id="timer-description"
               ref={orch.timerDescriptionInputRef as unknown as React.LegacyRef<HTMLInputElement>}
               onBlur={() => {
