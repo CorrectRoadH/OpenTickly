@@ -188,7 +188,7 @@ export function ViewTab({
   return (
     <button
       aria-checked={isSelected}
-      className={`px-5 py-1.5 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${radiusClass} ${
+      className={`px-5 py-1 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${radiusClass} ${
         isSelected ? "bg-[#381e35] text-[#cd7fc2]" : "bg-[#1b1b1b] text-[#fafafa]"
       }`}
       data-state={isSelected ? "active" : "inactive"}
@@ -345,8 +345,10 @@ export function ListView({
                   />
                   <div className="flex min-w-0 items-center gap-4">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-medium">
-                        {entry.description?.trim() || "(no description)"}
+                      <p
+                        className={`truncate font-medium ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+                      >
+                        {entry.description?.trim() || "Add description"}
                       </p>
                     </div>
                     {entry.project_name ? (
@@ -794,8 +796,10 @@ function CalendarEventCard({
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
-        <span className="truncate font-medium leading-tight">
-          {entry.description?.trim() || "(no description)"}
+        <span
+          className={`truncate font-medium leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+        >
+          {entry.description?.trim() || "Add description"}
         </span>
         {entry.project_name ? (
           <span className="shrink-0 leading-tight text-white/70">

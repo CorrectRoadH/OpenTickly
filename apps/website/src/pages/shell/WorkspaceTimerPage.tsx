@@ -163,6 +163,12 @@ export function WorkspaceTimerPage(): ReactElement {
               weekStartsOn={orch.beginningOfWeek}
             />
             <SummaryStat
+              label="Today total"
+              value={
+                orch.todayTotalSeconds > 0 ? formatClockDuration(orch.todayTotalSeconds) : "0:00:00"
+              }
+            />
+            <SummaryStat
               label="Week total"
               value={
                 orch.weekTotalSeconds > 0 ? formatClockDuration(orch.weekTotalSeconds) : "00:00:00"

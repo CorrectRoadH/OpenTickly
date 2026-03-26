@@ -255,8 +255,8 @@ export function formatEntryRange(
 
 export function formatClockTime(date: Date, timezone: string): string {
   return new Intl.DateTimeFormat("en-US", {
-    hour: "2-digit",
-    hour12: false,
+    hour: "numeric",
+    hour12: true,
     minute: "2-digit",
     timeZone: timezone,
   }).format(date);

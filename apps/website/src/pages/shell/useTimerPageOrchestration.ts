@@ -241,6 +241,7 @@ export interface TimerPageOrchestration {
   tagOptions: { id: number; name: string }[];
   workspaceId: number;
   timezone: string;
+  todayTotalSeconds: number;
   weekTotalSeconds: number;
   groupedEntries: ReturnType<typeof buildEntryGroups>;
   trackStrip: { color: string; label: string }[];
@@ -489,6 +490,18 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   );
 
   const timerDescriptionValue = runningEntry?.id != null ? runningDescription : draftDescription;
+
+  // Today total
+  const todayTotalSeconds = useMemo(() => {
+    const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: timezone,
+      year: "numeric",
+    });
+    const todayKey = dateFormatter.format(new Date());
+    return sumForDate(visibleEntries, todayKey, timezone);
+  }, [visibleEntries, timezone]);
 
   // Week total
   const weekTotalSeconds = useMemo(() => {
@@ -1183,6 +1196,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     tagOptions,
     workspaceId,
     timezone,
+    todayTotalSeconds,
     weekTotalSeconds,
     groupedEntries,
     trackStrip,
