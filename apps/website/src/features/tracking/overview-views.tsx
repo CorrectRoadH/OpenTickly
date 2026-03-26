@@ -155,7 +155,7 @@ export function ViewTabGroup({
   return (
     <div
       aria-label={label}
-      className="flex rounded-md border border-[var(--track-border)] bg-[#111111] p-0.5"
+      className="flex"
       onKeyDown={handleKeyDown}
       ref={groupRef}
       role="radiogroup"
@@ -175,11 +175,13 @@ export function ViewTab({
   targetView: TimerViewMode;
 }) {
   const isSelected = currentView === targetView;
+  const radiusClass =
+    targetView === "calendar" ? "rounded-l-lg" : targetView === "timesheet" ? "rounded-r-lg" : "";
   return (
     <button
       aria-checked={isSelected}
-      className={`rounded-[4px] px-4 py-1.5 text-[11px] font-medium focus-visible:outline-1 focus-visible:outline-offset-1 ${
-        isSelected ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]" : "text-white"
+      className={`px-5 py-1.5 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${radiusClass} ${
+        isSelected ? "bg-[#381e35] text-[#cd7fc2]" : "bg-[#1b1b1b] text-[#fafafa]"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}

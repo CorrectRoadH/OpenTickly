@@ -142,16 +142,16 @@ export function WorkspaceTimerPage(): ReactElement {
             </div>
           </div>
           {orch.trackStrip.length > 0 ? (
-            <div className="mt-4 flex h-[30px] gap-0.5 overflow-hidden">
+            <div className="mt-3 flex h-[22px] gap-px overflow-hidden">
               {orch.trackStrip.map((item) => (
                 <div className="min-w-0 flex-1" key={item.label}>
-                  <div className="truncate text-[10px] font-medium" style={{ color: item.color }}>
+                  <div
+                    className="truncate text-[10px] font-medium uppercase tracking-wide"
+                    style={{ color: item.color }}
+                  >
                     {item.label}
                   </div>
-                  <div
-                    className="mt-1 h-0.5 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
+                  <div className="mt-0.5 h-[3px]" style={{ backgroundColor: item.color }} />
                 </div>
               ))}
             </div>
