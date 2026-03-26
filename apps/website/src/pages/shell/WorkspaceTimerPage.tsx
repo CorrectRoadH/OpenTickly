@@ -187,23 +187,10 @@ export function WorkspaceTimerPage(): ReactElement {
                 <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="timesheet" />
               </ViewTabGroup>
               <ChromeIconButton icon="settings" />
+              <ChromeIconButton icon="grid" />
             </div>
           </div>
-          {orch.trackStrip.length > 0 ? (
-            <div className="mt-3 flex h-[22px] gap-px overflow-hidden">
-              {orch.trackStrip.map((item) => (
-                <div className="min-w-0 flex-1" key={item.label}>
-                  <div
-                    className="truncate text-[10px] font-medium uppercase tracking-wide"
-                    style={{ color: item.color }}
-                  >
-                    {item.label}
-                  </div>
-                  <div className="mt-0.5 h-[3px]" style={{ backgroundColor: item.color }} />
-                </div>
-              ))}
-            </div>
-          ) : null}
+          {orch.trackStrip.length > 0 ? <ProjectFilterStrip items={orch.trackStrip} /> : null}
         </div>
       </header>
       <div
@@ -392,6 +379,42 @@ export function WorkspaceTimerPage(): ReactElement {
           }))}
         />
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Horizontal project filter strip with proportional-width colored bars.
+ * Each segment is sized by its share of total tracked seconds.
+ */
+function ProjectFilterStrip({
+  items,
+}: {
+  items: { color: string; label: string; totalSeconds: number }[];
+}): ReactElement {
+  const totalSeconds = items.reduce((sum, item) => sum + item.totalSeconds, 0);
+
+  return (
+    <div className="mt-3 flex h-[22px] overflow-hidden" data-testid="project-filter-strip">
+      {items.map((item) => {
+        const pct =
+          totalSeconds > 0 ? (item.totalSeconds / totalSeconds) * 100 : 100 / items.length;
+        return (
+          <div
+            className="min-w-0 overflow-hidden border-r border-[var(--track-surface)] last:border-r-0"
+            key={item.label}
+            style={{ width: `${pct}%` }}
+          >
+            <div
+              className="truncate px-1.5 text-[10px] font-medium uppercase tracking-wide"
+              style={{ color: item.color }}
+            >
+              {item.label}
+            </div>
+            <div className="mt-0.5 h-[3px]" style={{ backgroundColor: item.color }} />
+          </div>
+        );
+      })}
     </div>
   );
 }

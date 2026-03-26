@@ -244,7 +244,7 @@ export interface TimerPageOrchestration {
   todayTotalSeconds: number;
   weekTotalSeconds: number;
   groupedEntries: ReturnType<typeof buildEntryGroups>;
-  trackStrip: { color: string; label: string }[];
+  trackStrip: { color: string; label: string; totalSeconds: number }[];
   calendarHours: ReturnType<typeof getCalendarHours>;
   timesheetRows: ReturnType<typeof buildTimesheetRows>;
 
