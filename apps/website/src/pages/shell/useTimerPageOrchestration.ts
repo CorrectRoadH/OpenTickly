@@ -35,7 +35,11 @@ import {
 import type { BulkEditUpdates } from "../../features/tracking/BulkEditDialog.tsx";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
-import type { TimerInputMode, TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
+import type {
+  CalendarSubview,
+  TimerInputMode,
+  TimerViewMode,
+} from "../../features/tracking/timer-view-mode.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
@@ -57,6 +61,28 @@ function loadPersistedTimerView(): TimerViewMode {
 function persistTimerView(view: TimerViewMode): void {
   try {
     localStorage.setItem(TIMER_VIEW_STORAGE_KEY, view);
+  } catch {
+    // localStorage not available or write error
+  }
+}
+
+const CALENDAR_SUBVIEW_STORAGE_KEY = "opentoggl:user-prefs:calendar-subview";
+
+function loadPersistedCalendarSubview(): CalendarSubview {
+  try {
+    const stored = localStorage.getItem(CALENDAR_SUBVIEW_STORAGE_KEY);
+    if (stored === "day" || stored === "five-day" || stored === "week") {
+      return stored;
+    }
+  } catch {
+    // localStorage not available or parse error
+  }
+  return "week";
+}
+
+function persistCalendarSubview(subview: CalendarSubview): void {
+  try {
+    localStorage.setItem(CALENDAR_SUBVIEW_STORAGE_KEY, subview);
   } catch {
     // localStorage not available or write error
   }
@@ -174,6 +200,8 @@ export interface TimerPageOrchestration {
   // View state
   view: TimerViewMode;
   setView: (next: TimerViewMode) => void;
+  calendarSubview: CalendarSubview;
+  setCalendarSubview: (next: CalendarSubview) => void;
   timerInputMode: TimerInputMode;
   setTimerInputMode: (next: TimerInputMode) => void;
   calendarZoom: number;
@@ -273,6 +301,7 @@ export interface TimerPageOrchestration {
   handleSelectedEntryTagCreate: (name: string) => Promise<void>;
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
+  handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
   handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
   handleCalendarEntryResize: (
     entryId: number,
@@ -312,6 +341,16 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const setView = useCallback((next: TimerViewMode) => {
     persistTimerView(next);
     setViewState(next);
+  }, []);
+
+  // Calendar subview state with persistence
+  const [calendarSubview, setCalendarSubviewState] = useState<CalendarSubview>(
+    loadPersistedCalendarSubview,
+  );
+
+  const setCalendarSubview = useCallback((next: CalendarSubview) => {
+    persistCalendarSubview(next);
+    setCalendarSubviewState(next);
   }, []);
 
   // Timer input mode state with persistence
@@ -663,6 +702,20 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     stopTimeEntryMutation,
     closeComposerSuggestions,
   ]);
+
+  const handleContinueEntry = useCallback(
+    async (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+      await startTimeEntryMutation.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        projectId: entry.project_id ?? entry.pid ?? null,
+        start: new Date().toISOString(),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+    },
+    [startTimeEntryMutation],
+  );
 
   const handleSelectedEntrySave = useCallback(async () => {
     if (!selectedEntry?.id) {
@@ -1129,6 +1182,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     // View state
     view,
     setView,
+    calendarSubview,
+    setCalendarSubview,
     timerInputMode,
     setTimerInputMode,
     calendarZoom,
@@ -1226,6 +1281,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     handleSelectedEntrySplit,
     handleSelectedEntryStartTimeChange,
     handleSelectedEntryStopTimeChange,
+    handleContinueEntry,
     handleCalendarEntryMove,
     handleCalendarEntryResize,
     handleEntryEdit,

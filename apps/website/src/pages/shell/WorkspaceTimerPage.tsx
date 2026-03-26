@@ -2,6 +2,7 @@ import type * as React from "react";
 import { type ChangeEvent, type ReactElement } from "react";
 
 import {
+  CalendarSubviewSelect,
   CalendarView,
   ChromeIconButton,
   ListView,
@@ -166,12 +167,16 @@ export function WorkspaceTimerPage(): ReactElement {
                 weekStartsOn={orch.beginningOfWeek}
               />
             )}
-            <SummaryStat
-              label="Today total"
-              value={
-                orch.todayTotalSeconds > 0 ? formatClockDuration(orch.todayTotalSeconds) : "0:00:00"
-              }
-            />
+            {orch.view !== "calendar" ? (
+              <SummaryStat
+                label="Today total"
+                value={
+                  orch.todayTotalSeconds > 0
+                    ? formatClockDuration(orch.todayTotalSeconds)
+                    : "0:00:00"
+                }
+              />
+            ) : null}
             <SummaryStat
               label="Week total"
               value={
@@ -179,6 +184,12 @@ export function WorkspaceTimerPage(): ReactElement {
               }
             />
             <div className="ml-auto flex items-center gap-3">
+              {orch.view === "calendar" ? (
+                <CalendarSubviewSelect
+                  onChange={orch.setCalendarSubview}
+                  value={orch.calendarSubview}
+                />
+              ) : null}
               <ViewTabGroup
                 aria-label="Timer view"
                 label="Timer view"
@@ -225,7 +236,39 @@ export function WorkspaceTimerPage(): ReactElement {
             onBulkEdit={(ids, updates) => {
               void orch.handleBulkEdit(ids, updates);
             }}
+            onContinueEntry={(entry) => {
+              void orch.handleContinueEntry(entry);
+            }}
+            onDeleteEntry={(entry) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.deleteTimeEntryMutation.mutateAsync({
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
+            }}
+            onDuplicateEntry={(entry) => {
+              if (entry.start && entry.stop) {
+                const durationSec = Math.round(
+                  (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+                );
+                void orch.createTimeEntryMutation.mutateAsync({
+                  billable: entry.billable,
+                  description: (entry.description ?? "").trim(),
+                  duration: durationSec,
+                  projectId: entry.project_id ?? entry.pid ?? null,
+                  start: entry.start,
+                  stop: entry.stop,
+                  tagIds: entry.tag_ids ?? [],
+                  taskId: entry.task_id ?? entry.tid ?? null,
+                });
+              }
+            }}
             onEditEntry={orch.handleEntryEdit}
+            onFavoriteEntry={() => {
+              // Pin as favorite is handled through the editor dialog
+            }}
             projects={orch.projectOptions
               .filter((project) => project.id != null)
               .map((project) => ({
@@ -258,6 +301,7 @@ export function WorkspaceTimerPage(): ReactElement {
             onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
             onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
             runningEntry={orch.runningEntry}
+            subview={orch.calendarSubview}
             timezone={orch.timezone}
             weekDays={orch.weekDays}
             weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}

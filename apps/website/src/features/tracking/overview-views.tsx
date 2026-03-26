@@ -29,7 +29,7 @@ import {
   DeleteConfirmDialog,
   useListSelection,
 } from "./list-bulk-actions.tsx";
-import type { TimerViewMode } from "./timer-view-mode.ts";
+import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 const withDragAndDrop =
   typeof withDragAndDropModule === "function"
@@ -123,6 +123,71 @@ export function ChromeIconButton({
     >
       <TrackingIcon className="size-4" name={icon} />
     </button>
+  );
+}
+
+const CALENDAR_SUBVIEW_LABELS: Record<CalendarSubview, string> = {
+  day: "Day view",
+  "five-day": "5 days view",
+  week: "Week view",
+};
+
+const CALENDAR_SUBVIEW_OPTIONS: CalendarSubview[] = ["week", "five-day", "day"];
+
+export function CalendarSubviewSelect({
+  onChange,
+  value,
+}: {
+  onChange: (next: CalendarSubview) => void;
+  value: CalendarSubview;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-label="Calendar sub-view"
+        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-[13px] font-medium text-white transition hover:border-[#555]"
+        data-testid="calendar-subview-select"
+        onClick={() => setOpen((prev) => !prev)}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <span>{CALENDAR_SUBVIEW_LABELS[value]}</span>
+        <TrackingIcon className="size-3 text-[var(--track-text-muted)]" name="chevron-down" />
+      </button>
+      {open ? (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 w-[160px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
+          role="listbox"
+        >
+          {CALENDAR_SUBVIEW_OPTIONS.map((option) => (
+            <button
+              aria-selected={option === value}
+              className={`flex w-full items-center px-3 py-2 text-[13px] transition hover:bg-[var(--track-row-hover)] ${
+                option === value ? "font-semibold text-[#e57bd9]" : "text-white"
+              }`}
+              key={option}
+              onClick={() => {
+                onChange(option);
+                setOpen(false);
+              }}
+              role="option"
+              type="button"
+            >
+              {CALENDAR_SUBVIEW_LABELS[option]}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -223,7 +288,11 @@ export function ListView({
   groups,
   onBulkDelete,
   onBulkEdit,
+  onContinueEntry,
+  onDeleteEntry,
+  onDuplicateEntry,
   onEditEntry,
+  onFavoriteEntry,
   projects,
   tags,
   timezone,
@@ -232,7 +301,11 @@ export function ListView({
   groups: EntryGroup[];
   onBulkDelete?: (ids: number[]) => void;
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
+  onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onDeleteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onDuplicateEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  onFavoriteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   projects?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
   tags?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
   timezone: string;
@@ -342,7 +415,12 @@ export function ListView({
                     }}
                     type="checkbox"
                   />
-                  <div className="flex min-w-0 items-center gap-4">
+                  <div
+                    className="flex min-w-0 cursor-pointer items-center gap-4"
+                    onClick={(event) =>
+                      onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
+                    }
+                  >
                     <div className="min-w-0 flex-1">
                       <p
                         className={`truncate font-medium ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
@@ -384,20 +462,17 @@ export function ListView({
                     <button
                       aria-label={`Continue ${entry.description?.trim() || "time entry"}`}
                       className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                      onClick={() => onContinueEntry?.(entry)}
                       type="button"
                     >
                       <TrackingIcon className="size-3" name="play" />
                     </button>
-                    <button
-                      aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
-                      className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-                      onClick={(event) =>
-                        onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
-                      }
-                      type="button"
-                    >
-                      <TrackingIcon className="size-3" name="more" />
-                    </button>
+                    <ListRowMoreActions
+                      entry={entry}
+                      onDelete={onDeleteEntry}
+                      onDuplicate={onDuplicateEntry}
+                      onFavorite={onFavoriteEntry}
+                    />
                   </div>
                 </div>
               );
@@ -405,6 +480,94 @@ export function ListView({
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function ListRowMoreActions({
+  entry,
+  onDelete,
+  onDuplicate,
+  onFavorite,
+}: {
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  onDelete?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onDuplicate?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onFavorite?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const label = entry.description?.trim() || "time entry";
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-label={`More actions for ${label}`}
+        className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+        onClick={() => setOpen((prev) => !prev)}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <TrackingIcon className="size-3" name="more" />
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 top-full z-50 mt-1 w-[180px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
+          role="menu"
+        >
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
+              onDuplicate?.(entry);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Duplicate
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
+              onFavorite?.(entry);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Pin as favorite
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
+              // Copy the entry start time as a link
+              const startLink = `${window.location.origin}/timer?start=${entry.start ?? ""}`;
+              void navigator.clipboard.writeText(startLink);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Copy start link
+          </button>
+          <div className="my-1 border-t border-[var(--track-border)]" />
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
+              onDelete?.(entry);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Delete
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -437,7 +600,7 @@ export function CalendarView({
   onZoomOut?: () => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedSubviewDateIso?: string;
-  subview?: "day" | "week";
+  subview?: CalendarSubview;
   timezone: string;
   weekDays: Date[];
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
@@ -497,7 +660,8 @@ export function CalendarView({
 
   const today = useMemo(() => new Date(), []);
 
-  const currentView = subview === "day" ? Views.DAY : Views.WEEK;
+  const currentView =
+    subview === "day" ? Views.DAY : subview === "five-day" ? Views.WORK_WEEK : Views.WEEK;
   const minTime = useMemo(() => {
     const date = new Date(calendarDate);
     date.setHours(0, 0, 0, 0);
@@ -664,7 +828,7 @@ export function CalendarView({
           timeslots={timeslots}
           toolbar={false}
           view={currentView}
-          views={[Views.WEEK, Views.DAY]}
+          views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
         />
       </div>
     </div>
