@@ -109,7 +109,7 @@ export function WeekRangePicker({
       <div className="flex items-center gap-3">
         <button
           aria-label="Previous week"
-          className="flex size-9 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+          className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
           onClick={() => onSelectDate(shiftWeek(selectedDate, -1))}
           type="button"
         >
@@ -119,7 +119,7 @@ export function WeekRangePicker({
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label={`Week range: ${formatWeekRangeLabel(selectedDate)}. Press Enter to open week picker.`}
-          className="flex h-14 min-w-[min(100%,34rem)] items-center gap-4 rounded-2xl border border-[var(--track-border)] bg-[#1b1b1b] px-6 text-left text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.03)]"
+          className="flex h-9 items-center gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-left text-white"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -130,8 +130,11 @@ export function WeekRangePicker({
           ref={triggerRef}
           type="button"
         >
-          <TrackingIcon className="size-5 shrink-0 text-white" name="calendar" />
-          <span className="truncate text-[18px] font-medium tracking-[0.01em]">
+          <TrackingIcon
+            className="size-4 shrink-0 text-[var(--track-text-muted)]"
+            name="calendar"
+          />
+          <span className="truncate text-[13px] font-medium">
             {formatWeekRangeLabel(selectedDate)}
           </span>
           <TrackingIcon
@@ -141,7 +144,7 @@ export function WeekRangePicker({
         </button>
         <button
           aria-label="Next week"
-          className="flex size-9 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#1b1b1b] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+          className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
           onClick={() => onSelectDate(shiftWeek(selectedDate, 1))}
           type="button"
         >

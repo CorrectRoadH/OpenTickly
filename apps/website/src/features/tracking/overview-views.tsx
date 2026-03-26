@@ -96,9 +96,9 @@ export function ToolbarButton({
 
 export function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <p className="flex items-baseline gap-3 text-[12px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+    <p className="flex items-baseline gap-2 text-[11px] uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
       <span>{label}</span>
-      <span className="text-[18px] font-medium tabular-nums text-white">{value}</span>
+      <span className="text-[14px] font-semibold tabular-nums text-white">{value}</span>
     </p>
   );
 }

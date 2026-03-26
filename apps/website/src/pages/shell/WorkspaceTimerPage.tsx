@@ -13,7 +13,7 @@ import {
 } from "../../features/tracking/overview-views.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
-import { WeekRangePicker, QuickDateShortcuts } from "../../features/tracking/WeekRangePicker.tsx";
+import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
@@ -117,26 +117,18 @@ export function WorkspaceTimerPage(): ReactElement {
         </div>
 
         <div className="px-5 pb-4 pt-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-6">
-              <QuickDateShortcuts
-                onSelectDate={orch.setSelectedWeekDate}
-                selectedDate={orch.selectedWeekDate}
-              />
-              <WeekRangePicker
-                onSelectDate={orch.setSelectedWeekDate}
-                selectedDate={orch.selectedWeekDate}
-              />
-              <SummaryStat
-                label="Week total"
-                value={
-                  orch.weekTotalSeconds > 0
-                    ? formatClockDuration(orch.weekTotalSeconds)
-                    : "00:00:00"
-                }
-              />
-            </div>
-            <div className="flex w-full flex-wrap items-center justify-start gap-3 lg:w-auto lg:justify-end">
+          <div className="flex items-center gap-4">
+            <WeekRangePicker
+              onSelectDate={orch.setSelectedWeekDate}
+              selectedDate={orch.selectedWeekDate}
+            />
+            <SummaryStat
+              label="Week total"
+              value={
+                orch.weekTotalSeconds > 0 ? formatClockDuration(orch.weekTotalSeconds) : "00:00:00"
+              }
+            />
+            <div className="ml-auto flex items-center gap-3">
               <ViewTabGroup
                 aria-label="Timer view"
                 label="Timer view"
@@ -201,6 +193,12 @@ export function WorkspaceTimerPage(): ReactElement {
             entries={orch.visibleEntries}
             nowMs={orch.nowMs}
             onEditEntry={orch.handleEntryEdit}
+            onMoveEntry={(entryId, minutesDelta) => {
+              void orch.handleCalendarEntryMove(entryId, minutesDelta);
+            }}
+            onResizeEntry={(entryId, edge, minutesDelta) => {
+              void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
+            }}
             onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
             onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
             runningEntry={orch.runningEntry}
