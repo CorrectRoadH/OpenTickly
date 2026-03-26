@@ -323,7 +323,7 @@ export function TimeEntryEditorDialog({
       data-testid="time-entry-editor-layer"
     >
       <div
-        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] min-w-[356px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] w-[440px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
         data-testid="time-entry-editor-dialog"
         role="dialog"
         aria-modal="false"
@@ -1434,7 +1434,7 @@ function resolveEditorPosition(
   left: number;
   top: number;
 } {
-  const cardWidth = picker ? 360 : 356;
+  const cardWidth = picker ? 460 : 440;
   const cardHeight = picker ? 470 : 212;
   const padding = 16;
   const preferredLeft = anchor.left + anchor.width + 12;
@@ -1443,7 +1443,7 @@ function resolveEditorPosition(
   const containerHeight = anchor.containerHeight ?? anchor.top + cardHeight + padding;
   const canPlaceRight = preferredLeft + cardWidth <= containerWidth - padding;
   const canPlaceLeft = fallbackLeft >= padding;
-  const left = (() => {
+  const unclamped = (() => {
     if (anchor.preferredPlacement === "left" && canPlaceLeft) {
       return fallbackLeft;
     }
@@ -1458,6 +1458,8 @@ function resolveEditorPosition(
     }
     return Math.max(padding, Math.min(containerWidth - cardWidth - padding, fallbackLeft));
   })();
+  // Final clamp: ensure the dialog never exceeds the container right edge
+  const left = Math.max(padding, Math.min(unclamped, containerWidth - cardWidth - padding));
   const top = Math.max(padding, Math.min(containerHeight - cardHeight - padding, anchor.top - 6));
 
   return { left, top };

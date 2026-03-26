@@ -349,8 +349,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     [weekDays],
   );
 
-  // Queries
-  const timeEntriesQuery = useTimeEntriesQuery({ ...weekRange });
+  // Queries — list view fetches all entries (no date range), other views use the selected week
+  const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? {} : { ...weekRange });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
 
   // Running entry state
