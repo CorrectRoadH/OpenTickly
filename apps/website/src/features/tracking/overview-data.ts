@@ -163,25 +163,34 @@ export function getCalendarHours(
   return [...hours].sort((left, right) => left - right);
 }
 
+/**
+ * Resolves the effective duration of a time entry in seconds.
+ *
+ * Priority order:
+ * 1. If both start and stop are present, compute (stop - start) in seconds.
+ *    This handles entries with unreliable stored duration values (e.g. CLI-created).
+ * 2. If running (no stop, negative duration), compute elapsed from start.
+ * 3. If duration is non-negative, use it directly.
+ */
 export function resolveEntryDurationSeconds(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   nowMs = Date.now(),
 ): number {
-  if (typeof entry.duration !== "number") {
-    return 0;
+  if (entry.start && entry.stop) {
+    const startMs = new Date(entry.start).getTime();
+    const stopMs = new Date(entry.stop).getTime();
+    return Math.max(0, Math.round((stopMs - startMs) / 1000));
   }
 
-  if (entry.duration >= 0) {
+  if (typeof entry.duration === "number" && entry.duration < 0 && entry.start) {
+    return Math.max(0, Math.floor((nowMs - new Date(entry.start).getTime()) / 1000));
+  }
+
+  if (typeof entry.duration === "number" && entry.duration >= 0) {
     return entry.duration;
   }
 
-  const runningStart = entry.start ?? entry.at;
-
-  if (runningStart && !entry.stop) {
-    return Math.max(0, Math.floor((nowMs - new Date(runningStart).getTime()) / 1000));
-  }
-
-  return Math.max(0, Math.floor(nowMs / 1000) + entry.duration);
+  return 0;
 }
 
 export function formatDateKey(date: Date, timezone: string): string {

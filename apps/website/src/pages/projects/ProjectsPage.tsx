@@ -304,19 +304,20 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       {!projectsQuery.isPending && !projectsQuery.isError ? (
         projects.length > 0 ? (
           <div data-testid="projects-list">
-            <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+            <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_110px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               <DirectoryHeaderCell />
               <DirectoryHeaderCell>Project</DirectoryHeaderCell>
               <DirectoryHeaderCell>Client</DirectoryHeaderCell>
               <DirectoryHeaderCell>Timeframe</DirectoryHeaderCell>
               <DirectoryHeaderCell>Time status</DirectoryHeaderCell>
+              <DirectoryHeaderCell>Billable status</DirectoryHeaderCell>
               <DirectoryHeaderCell>Team</DirectoryHeaderCell>
               <DirectoryHeaderCell>Pinned</DirectoryHeaderCell>
               <DirectoryHeaderCell />
             </div>
             {projects.map((project) => (
               <div
-                className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_94px_56px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
+                className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_110px_94px_56px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
                 key={project.id}
               >
                 <div className="flex h-[54px] items-center">
@@ -340,6 +341,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   {project.current_period?.start_date ?? project.start_date ?? "-"}
                 </DirectoryTableCell>
                 <DirectoryTableCell>{formatProjectHours(project)}</DirectoryTableCell>
+                <DirectoryTableCell>
+                  {project.billable ? "Billable" : "Non-billable"}
+                </DirectoryTableCell>
                 <DirectoryTableCell>
                   {project.is_private ? "Private" : "Everyone"}
                 </DirectoryTableCell>
