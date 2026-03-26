@@ -69,7 +69,15 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const addProjectMemberMutation = useAddProjectMemberMutation(workspaceId);
   const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
   const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
-  const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const projects = useMemo(() => {
+    const all = normalizeProjects(projectsQuery.data);
+    // "Show All, except Archived" (statusFilter="all") passes active:undefined to the API which
+    // returns everything including archived. Filter inactive projects out client-side.
+    if (statusFilter === "all") {
+      return all.filter((p) => p.active !== false);
+    }
+    return all;
+  }, [projectsQuery.data, statusFilter]);
   const workspaceMembers = useMemo(
     () =>
       (workspaceUsersQuery.data ?? [])
