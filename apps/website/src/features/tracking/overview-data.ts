@@ -199,11 +199,37 @@ export function formatWeekday(date: Date, timezone: string): string {
 export function formatGroupLabel(dateKey: string, timezone: string): string {
   const [year, month, day] = dateKey.split("-");
   const date = new Date(`${year}-${month}-${day}T00:00:00Z`);
+
+  const now = new Date();
+  const todayKey = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).format(now);
+
+  if (dateKey === todayKey) {
+    return "Today";
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).format(yesterday);
+
+  if (dateKey === yesterdayKey) {
+    return "Yesterday";
+  }
+
   const formatter = new Intl.DateTimeFormat("en-US", {
     day: "numeric",
     month: "short",
     timeZone: timezone,
-    weekday: "long",
+    weekday: "short",
   });
 
   return formatter.format(date);
@@ -248,7 +274,7 @@ export function formatClockDuration(seconds: number): string {
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const remainder = safeSeconds % 60;
 
-  return [hours, minutes, remainder].map((value) => String(value).padStart(2, "0")).join(":");
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }
 
 export function formatHours(seconds: number): string {

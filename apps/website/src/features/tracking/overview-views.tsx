@@ -244,36 +244,61 @@ export function ListView({
           {group.entries.map((entry) => (
             <div
               key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-              className="grid grid-cols-[28px_minmax(0,1fr)_90px_110px_92px_28px] items-center px-6 py-2.5 text-[12px] text-white"
+              className="group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
             >
               <span />
-              <div className="min-w-0">
-                <p className="truncate">{entry.description?.trim() || "(no description)"}</p>
-                <div className="mt-1 flex items-center gap-2 text-[11px]">
-                  <span style={{ color: resolveEntryColor(entry) }}>
-                    {entry.project_name ?? "(No project)"}
-                  </span>
+              <div className="flex min-w-0 items-center gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">
+                    {entry.description?.trim() || "(no description)"}
+                  </p>
                 </div>
+                {entry.project_name ? (
+                  <span
+                    className="flex shrink-0 items-center gap-1.5 text-[12px]"
+                    style={{ color: resolveEntryColor(entry) }}
+                  >
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: resolveEntryColor(entry) }}
+                    />
+                    <span className="max-w-[160px] truncate">{entry.project_name}</span>
+                  </span>
+                ) : null}
               </div>
-              <p className="text-right text-[11px] text-[var(--track-text-muted)]">
-                {entry.shared_with?.length ? `${entry.shared_with.length} 余眼` : ""}
-              </p>
-              <p className="text-right font-medium tabular-nums text-[var(--track-text-muted)]">
-                {formatEntryRange(entry, timezone)}
-              </p>
-              <p className="text-right font-medium tabular-nums text-white">
-                {formatClockDuration(resolveEntryDurationSeconds(entry))}
-              </p>
-              <button
-                aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
-                className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                onClick={(event) =>
-                  onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
-                }
-                type="button"
-              >
-                <TrackingIcon className="size-3.5" name="edit" />
-              </button>
+              <div className="flex shrink-0 items-center gap-2 pl-4">
+                {entry.tags && entry.tags.length > 0 ? (
+                  <TrackingIcon className="size-3.5 text-[var(--track-text-muted)]" name="tags" />
+                ) : null}
+                {entry.billable ? (
+                  <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
+                    $
+                  </span>
+                ) : null}
+                <span className="w-[110px] text-right text-[12px] tabular-nums text-[var(--track-text-muted)]">
+                  {formatEntryRange(entry, timezone)}
+                </span>
+                <span className="w-[72px] text-right text-[13px] font-semibold tabular-nums">
+                  {formatClockDuration(resolveEntryDurationSeconds(entry))}
+                </span>
+                <button
+                  aria-label={`Continue ${entry.description?.trim() || "time entry"}`}
+                  className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                  type="button"
+                >
+                  <TrackingIcon className="size-3" name="play" />
+                </button>
+                <button
+                  aria-label={`Edit ${entry.description?.trim() || "time entry"}`}
+                  className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                  onClick={(event) =>
+                    onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
+                  }
+                  type="button"
+                >
+                  <TrackingIcon className="size-3" name="more" />
+                </button>
+              </div>
             </div>
           ))}
         </section>
