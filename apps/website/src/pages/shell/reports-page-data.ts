@@ -45,6 +45,8 @@ export type ReportsBreakdownRow = {
 
 export type ReportsDistributionSegment = {
   color: string;
+  duration: string;
+  label: string;
   value: number;
 };
 
@@ -142,6 +144,8 @@ export function buildReportsPageModel(args: {
     breakdownRows,
     distributionSegments: breakdownRows.slice(0, 10).map((row) => ({
       color: row.color,
+      duration: row.duration,
+      label: row.name,
       value: row.shareValue,
     })),
     endDate,

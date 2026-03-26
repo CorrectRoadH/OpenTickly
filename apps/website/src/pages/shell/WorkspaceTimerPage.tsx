@@ -169,11 +169,7 @@ export function WorkspaceTimerPage(): ReactElement {
                 event.currentTarget.blur();
               }}
               onFocus={orch.handleIdleDescriptionFocus}
-              placeholder={
-                orch.timerInputMode === "manual" && orch.runningEntry == null
-                  ? "What have you done?"
-                  : "What are you working on?"
-              }
+              placeholder="What are you working on?"
               value={orch.timerDescriptionValue}
             />
           </div>

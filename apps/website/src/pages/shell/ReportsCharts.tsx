@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 
 import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-data.ts";
 import type { SliceDimension } from "./useReportsPageState.ts";
@@ -13,7 +13,19 @@ const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
 const Y_AXIS_LABELS = ["16h 15", "13h", "9h 45", "6h 30", "3h 15", "0h"] as const;
 const MAX_CHART_SECONDS = 16 * 3600 + 15 * 60;
 
+const DAY_NAMES: Record<string, string> = {
+  Mon: "Monday",
+  Tue: "Tuesday",
+  Wed: "Wednesday",
+  Thu: "Thursday",
+  Fri: "Friday",
+  Sat: "Saturday",
+  Sun: "Sunday",
+};
+
 export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): ReactElement {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
   return (
     <section
       className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
@@ -34,17 +46,27 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
               ))}
             </div>
             <div className="relative z-10 flex h-full items-end gap-4 pb-6">
-              {weekRows.map((row) => (
+              {weekRows.map((row, index) => (
                 <div
-                  className="flex flex-1 flex-col items-center justify-end gap-3"
+                  className="relative flex flex-1 flex-col items-center justify-end gap-3"
                   key={row.label}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
                 >
+                  {hoveredIndex === index ? (
+                    <div className="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+                      <span>{DAY_NAMES[row.label] ?? row.label}</span>
+                      <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
+                        {row.value}
+                      </span>
+                    </div>
+                  ) : null}
                   <span className="text-[11px] font-medium tabular-nums text-[var(--track-text-soft)]">
                     {row.value}
                   </span>
                   <div className="flex h-full w-full items-end">
                     <div
-                      className="w-full rounded-t-md bg-[var(--track-accent)]"
+                      className="w-full rounded-t-md bg-[var(--track-accent)] transition-opacity hover:opacity-80"
                       style={{
                         height:
                           row.seconds === 0 ? "2px" : `${(row.seconds / MAX_CHART_SECONDS) * 100}%`,
@@ -100,37 +122,117 @@ export function DistributionPanel({
         />
       </div>
       <div className="mt-8 flex justify-center">
-        <div
-          aria-label={`${sliceLabel} distribution chart`}
-          className="flex size-[180px] items-center justify-center rounded-full"
-          style={{ background: buildDistributionBackground(distributionSegments) }}
-        >
-          <div className="flex size-[106px] flex-col items-center justify-center rounded-full bg-[var(--track-surface)] text-center">
-            <p className="text-[16px] font-semibold leading-[23px] tabular-nums text-white">
-              {totalDuration}
-            </p>
-            <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-              {sliceLabel}
-            </p>
-          </div>
-        </div>
+        <DonutChart
+          label={sliceLabel}
+          segments={distributionSegments}
+          totalDuration={totalDuration}
+        />
       </div>
     </section>
   );
 }
 
-function buildDistributionBackground(segments: Array<{ color: string; value: number }>): string {
-  if (segments.length === 0) {
-    return "conic-gradient(var(--track-border) 0deg 360deg)";
-  }
+const DONUT_SIZE = 180;
+const DONUT_STROKE = 37;
+const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2;
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 
-  let currentDegree = 0;
+/**
+ * SVG-based donut chart with per-segment hover tooltips.
+ * Each segment is a <circle> with stroke-dasharray/stroke-dashoffset.
+ */
+function DonutChart({
+  label,
+  segments,
+  totalDuration,
+}: {
+  label: string;
+  segments: ReportsDistributionSegment[];
+  totalDuration: string;
+}): ReactElement {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  return `conic-gradient(${segments
-    .map((segment) => {
-      const start = currentDegree;
-      currentDegree += (segment.value / 100) * 360;
-      return `${segment.color} ${start}deg ${currentDegree}deg`;
-    })
-    .join(", ")})`;
+  // Build cumulative offsets for each segment
+  const segmentArcs = buildSegmentArcs(segments);
+
+  return (
+    <div
+      className="relative flex items-center justify-center"
+      style={{ width: DONUT_SIZE, height: DONUT_SIZE }}
+    >
+      <svg
+        aria-label={`${label} distribution chart`}
+        className="absolute inset-0"
+        height={DONUT_SIZE}
+        viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
+        width={DONUT_SIZE}
+      >
+        {segments.length === 0 ? (
+          <circle
+            cx={DONUT_SIZE / 2}
+            cy={DONUT_SIZE / 2}
+            fill="none"
+            r={DONUT_RADIUS}
+            stroke="var(--track-border)"
+            strokeWidth={DONUT_STROKE}
+          />
+        ) : (
+          segmentArcs.map((arc, index) => (
+            <circle
+              cx={DONUT_SIZE / 2}
+              cy={DONUT_SIZE / 2}
+              fill="none"
+              key={index}
+              onMouseEnter={() => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              r={DONUT_RADIUS}
+              stroke={arc.color}
+              strokeDasharray={`${arc.dashLength} ${DONUT_CIRCUMFERENCE - arc.dashLength}`}
+              strokeDashoffset={-arc.offset}
+              strokeWidth={hoveredIndex === index ? DONUT_STROKE + 4 : DONUT_STROKE}
+              style={{
+                cursor: "pointer",
+                transform: "rotate(-90deg)",
+                transformOrigin: "center",
+                transition: "stroke-width 0.15s ease",
+              }}
+            />
+          ))
+        )}
+      </svg>
+      {/* Center label */}
+      <div className="relative z-10 flex size-[106px] flex-col items-center justify-center rounded-full bg-[var(--track-surface)] text-center">
+        <p className="text-[16px] font-semibold leading-[23px] tabular-nums text-white">
+          {totalDuration}
+        </p>
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+          {label}
+        </p>
+      </div>
+      {/* Tooltip */}
+      {hoveredIndex != null && segments[hoveredIndex] ? (
+        <div className="pointer-events-none absolute -top-10 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-3 py-2 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+          <span>{segments[hoveredIndex].label}</span>
+          <span className="ml-2 tabular-nums text-[var(--track-text-soft)]">
+            {segments[hoveredIndex].duration}
+          </span>
+          <span className="ml-2 text-[var(--track-text-muted)]">
+            {segments[hoveredIndex].value.toFixed(1)}%
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function buildSegmentArcs(
+  segments: ReportsDistributionSegment[],
+): Array<{ color: string; dashLength: number; offset: number }> {
+  let cumulativeOffset = 0;
+  return segments.map((segment) => {
+    const dashLength = (segment.value / 100) * DONUT_CIRCUMFERENCE;
+    const arc = { color: segment.color, dashLength, offset: cumulativeOffset };
+    cumulativeOffset += dashLength;
+    return arc;
+  });
 }

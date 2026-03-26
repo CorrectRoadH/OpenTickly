@@ -94,7 +94,9 @@ export function WorkspaceReportsPage(): ReactElement {
       state.sliceBy === "clients"
         ? regroupByClient(liveModel.breakdownRows)
         : regroupByMember(liveModel.breakdownRows);
-    return regrouped.slice(0, 10).map((r) => ({ color: r.color, value: r.shareValue }));
+    return regrouped
+      .slice(0, 10)
+      .map((r) => ({ color: r.color, duration: r.duration, label: r.name, value: r.shareValue }));
   }, [liveModel.breakdownRows, liveModel.distributionSegments, state.sliceBy]);
 
   const projectOptions = useMemo(
