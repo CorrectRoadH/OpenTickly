@@ -11,6 +11,7 @@ import {
 import { createPortal } from "react-dom";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { DEFAULT_PROJECT_COLOR, TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
 import { CalendarPanel } from "./CalendarPanel.tsx";
 import {
   formatClockDuration,
@@ -59,7 +60,7 @@ type TimeEntryEditorDialogProps = {
   isPrimaryActionPending: boolean;
   isSaving: boolean;
   onClose: () => void;
-  onCreateProject: (name: string) => Promise<void> | void;
+  onCreateProject: (name: string, color?: string) => Promise<void> | void;
   onCreateTag: (name: string) => Promise<void> | void;
   onBillableToggle?: () => void;
   onDiscard?: () => void;
@@ -134,6 +135,8 @@ export function TimeEntryEditorDialog({
   const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
   const [projectComposerOpen, setProjectComposerOpen] = useState(false);
   const [projectDraftName, setProjectDraftName] = useState("");
+  const [projectDraftColor, setProjectDraftColor] = useState<string>(DEFAULT_PROJECT_COLOR);
+  const [projectColorPickerOpen, setProjectColorPickerOpen] = useState(false);
   const [projectCreateError, setProjectCreateError] = useState<string | null>(null);
   const [tagComposerOpen, setTagComposerOpen] = useState(false);
   const [tagDraftName, setTagDraftName] = useState("");
@@ -660,8 +663,10 @@ export function TimeEntryEditorDialog({
                         }
                         setProjectCreateError(null);
                         try {
-                          await onCreateProject(trimmed);
+                          await onCreateProject(trimmed, projectDraftColor);
                           setProjectDraftName("");
+                          setProjectDraftColor(DEFAULT_PROJECT_COLOR);
+                          setProjectColorPickerOpen(false);
                           setProjectComposerOpen(false);
                           setSearch("");
                         } catch (err) {
@@ -677,6 +682,44 @@ export function TimeEntryEditorDialog({
                     }}
                   >
                     <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <button
+                          aria-label="Select project color"
+                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#5d5d62] bg-[#262628]"
+                          onClick={() => setProjectColorPickerOpen((current) => !current)}
+                          type="button"
+                        >
+                          <span
+                            className="size-5 rounded-full border border-black/20"
+                            style={{ backgroundColor: projectDraftColor }}
+                          />
+                        </button>
+                        {projectColorPickerOpen ? (
+                          <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+                            {TRACK_COLOR_SWATCHES.map((option) => (
+                              <button
+                                aria-label={`Select color ${option}`}
+                                className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                                  projectDraftColor === option
+                                    ? "border-white/80 bg-white/8"
+                                    : "border-transparent hover:border-white/25"
+                                }`}
+                                key={option}
+                                onClick={() => {
+                                  setProjectDraftColor(option);
+                                  setProjectColorPickerOpen(false);
+                                }}
+                                type="button"
+                              >
+                                <span
+                                  className="h-5 w-5 rounded-full border border-black/20"
+                                  style={{ backgroundColor: option }}
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                       <input
                         className={`h-10 flex-1 rounded-[10px] border bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096] ${
                           projectCreateError ? "border-rose-400" : "border-[#5d5d62]"

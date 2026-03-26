@@ -1,5 +1,5 @@
 import { AppInlineNotice, ShellSecondaryButton } from "@opentoggl/web-ui";
-import { type ReactElement } from "react";
+import { type ReactElement, useCallback, useEffect, useState } from "react";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
 import {
@@ -282,11 +282,14 @@ export function ApiTokenSection(props: {
       title="API Token"
     >
       <div className="px-[18px] py-[15px]">
-        <input
-          className="h-[37px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text-muted)]"
-          readOnly
-          value={props.apiToken}
-        />
+        <div className="flex items-center gap-2">
+          <input
+            className="h-[37px] flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text-muted)]"
+            readOnly
+            value={props.apiToken}
+          />
+          <ApiTokenCopyButton token={props.apiToken} />
+        </div>
         <div className="mt-4 space-y-1 text-[14px] font-medium leading-5 text-[var(--track-text)]">
           <p>You&apos;ve used 0 / 30 requests in personal company (Free)</p>
           <p>You&apos;ve used 0 / 30 requests from user specific requests quota</p>
@@ -296,5 +299,67 @@ export function ApiTokenSection(props: {
         </div>
       </div>
     </PreferenceCard>
+  );
+}
+
+function ApiTokenCopyButton(props: { token: string }): ReactElement {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [copied]);
+
+  const handleCopy = useCallback(() => {
+    void navigator.clipboard.writeText(props.token).then(() => {
+      setCopied(true);
+    });
+  }, [props.token]);
+
+  return (
+    <button
+      aria-label={copied ? "Copied" : "Copy API token"}
+      className="flex h-[37px] w-[37px] shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] transition hover:text-white"
+      onClick={handleCopy}
+      type="button"
+    >
+      {copied ? (
+        <svg
+          aria-hidden="true"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 16 16"
+        >
+          <path d="m4.5 8.2 2.2 2.2 4.8-4.8" />
+        </svg>
+      ) : (
+        <svg
+          aria-hidden="true"
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.7"
+          viewBox="0 0 16 16"
+        >
+          <rect x="5.3" y="3.3" width="7" height="8.2" rx="1.4" />
+          <path d="M4.3 10.7H4A1.5 1.5 0 0 1 2.5 9.2V4.8A1.5 1.5 0 0 1 4 3.3h4" />
+        </svg>
+      )}
+    </button>
   );
 }

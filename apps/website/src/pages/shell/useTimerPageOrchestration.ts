@@ -298,7 +298,7 @@ export interface TimerPageOrchestration {
   handleSelectedEntryDelete: () => Promise<void>;
   handleSelectedEntryFavorite: () => Promise<void>;
   handleSelectedEntryDuplicate: () => Promise<void>;
-  handleSelectedEntryProjectCreate: (name: string) => Promise<void>;
+  handleSelectedEntryProjectCreate: (name: string, color?: string) => Promise<void>;
   handleSelectedEntrySuggestionSelect: (
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   ) => void;
@@ -913,9 +913,9 @@ export function useTimerPageOrchestration(options?: {
   ]);
 
   const handleSelectedEntryProjectCreate = useCallback(
-    async (name: string) => {
+    async (name: string, color?: string) => {
       try {
-        const project = await createProjectMutation.mutateAsync({ name });
+        const project = await createProjectMutation.mutateAsync({ color, name });
         setSelectedProjectId(project.id ?? null);
         setSelectedEntryError(null);
       } catch (error) {

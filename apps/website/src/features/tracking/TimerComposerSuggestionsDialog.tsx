@@ -140,6 +140,7 @@ export function TimerComposerSuggestionsDialog({
                     onClick={() => onTimeEntrySelect(entry)}
                     type="button"
                   >
+                    <TrackingIcon className="size-4 shrink-0 text-[#a0a0a5]" name="track" />
                     <span className="truncate text-[16px] font-medium text-[#cfcfd4]">
                       {entry.description?.trim() || projectLabel}
                     </span>
