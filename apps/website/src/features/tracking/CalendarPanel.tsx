@@ -36,7 +36,7 @@ export function CalendarPanel({
     <div
       aria-labelledby="calendar-panel-title"
       aria-modal="false"
-      className="w-[320px] rounded-lg border border-[#3a3a3f] bg-[#1f1f20] py-[14px] px-3.5 shadow-[0_6px_18px_rgba(0,0,0,0.28)]"
+      className="w-[320px] rounded-lg border border-[#3a3a3f] bg-[#1f1f20] py-[12px] px-3.5 shadow-[0_6px_18px_rgba(0,0,0,0.28)]"
       data-testid={testId ?? "calendar-panel"}
       role="dialog"
     >
@@ -83,7 +83,7 @@ export function CalendarPanel({
       </div>
 
       {/* Weekday header — tight vertical rhythm, part of the grid */}
-      <div className="mb-0 grid grid-cols-7 gap-[3px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.03em] text-[#54545a]">
+      <div className="mb-0 grid grid-cols-7 gap-[3px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.03em] leading-[14px] text-[#54545a]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
           <div className="pb-1" key={weekday}>
             {weekday}
@@ -119,7 +119,7 @@ export function CalendarPanel({
                     year: "numeric",
                   })}
                   aria-selected={selected}
-                  className={`group relative flex size-10 items-center justify-center rounded-full text-[14px] font-semibold transition ${
+                  className={`group relative flex size-10 items-center justify-center rounded-full text-[15px] font-semibold transition ${
                     selected
                       ? "bg-[#b77fc0] text-[#2b222b] hover:bg-[#bc84c4]"
                       : isToday && !isOutsideMonth
