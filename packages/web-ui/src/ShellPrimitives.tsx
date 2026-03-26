@@ -12,10 +12,8 @@ export function DirectoryFilterChip({
 }) {
   return (
     <span
-      className={`flex h-[26px] items-center gap-1 rounded-md border px-2.5 text-[11px] normal-case tracking-normal ${
-        disabled
-          ? "border-[var(--track-border)] text-[#5d5d5d]"
-          : "border-[var(--track-border)] text-white"
+      className={`flex h-[34px] items-center gap-1 rounded-lg px-2 text-[14px] normal-case tracking-normal ${
+        disabled ? "text-[#5d5d5d]" : "text-white"
       }`}
     >
       {label}

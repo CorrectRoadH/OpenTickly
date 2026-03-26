@@ -74,7 +74,7 @@ export function WorkspaceTimerPage(): ReactElement {
             }}
             type="button"
           >
-            <TrackingIcon className="size-4" name="grid" />
+            <TrackingIcon className="size-4" name="projects" />
           </button>
           <button
             aria-label="Select tags"

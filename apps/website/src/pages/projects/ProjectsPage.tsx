@@ -282,6 +282,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             <span>Filters:</span>
             <DirectoryFilterChip label="Client" />
             <DirectoryFilterChip label="Member" />
+            <DirectoryFilterChip label="Billable" />
             <DirectoryFilterChip label="Project name" />
             <DirectoryFilterChip disabled label="Template" />
           </div>
