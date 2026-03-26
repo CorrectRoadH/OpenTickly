@@ -180,6 +180,40 @@ describe("CalendarView", () => {
     expect(onResizeEntry).toHaveBeenNthCalledWith(1, 33, "start", -15);
     expect(onResizeEntry).toHaveBeenNthCalledWith(2, 33, "end", 15);
   });
+
+  it("supports pointer-based drag move and resize gestures", () => {
+    const onMoveEntry = vi.fn();
+    const onResizeEntry = vi.fn();
+
+    render(
+      <CalendarView
+        entries={[
+          createTimeEntryFixture({
+            description: "Draggable block",
+            id: 41,
+          }),
+        ]}
+        nowMs={Date.parse("2026-03-23T10:15:00Z")}
+        onMoveEntry={onMoveEntry}
+        onResizeEntry={onResizeEntry}
+        timezone="UTC"
+        weekDays={buildWeek("2026-03-23T00:00:00Z")}
+      />,
+    );
+
+    fireEvent.pointerDown(screen.getByTestId("calendar-entry-move-41"), { clientY: 100 });
+    fireEvent.pointerUp(screen.getByTestId("calendar-entry-41"), { clientY: 130 });
+
+    fireEvent.pointerDown(screen.getByTestId("calendar-entry-resize-start-41"), { clientY: 100 });
+    fireEvent.pointerUp(screen.getByTestId("calendar-entry-41"), { clientY: 70 });
+
+    fireEvent.pointerDown(screen.getByTestId("calendar-entry-resize-end-41"), { clientY: 100 });
+    fireEvent.pointerUp(screen.getByTestId("calendar-entry-41"), { clientY: 145 });
+
+    expect(onMoveEntry).toHaveBeenCalledWith(41, 30);
+    expect(onResizeEntry).toHaveBeenNthCalledWith(1, 41, "start", -30);
+    expect(onResizeEntry).toHaveBeenNthCalledWith(2, 41, "end", 45);
+  });
 });
 
 function buildWeek(startIso: string): Date[] {

@@ -105,6 +105,16 @@ describe("TimeEntryEditorDialog", () => {
     expect(screen.queryByTestId("time-entry-editor-start-date-picker")).toBeNull();
   });
 
+  it("keeps the editor open after selecting a start date while dirty", () => {
+    render(<DialogHarness isDirty />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit start date" }));
+    fireEvent.click(screen.getByRole("button", { name: "March 24, 2026" }));
+
+    expect(screen.getByTestId("time-entry-editor-dialog")).toBeTruthy();
+    expect(screen.queryByTestId("time-entry-editor-discard-confirmation")).toBeNull();
+  });
+
   it("prefers rendering to the left of the anchor when the anchor is near the right edge", () => {
     render(
       <DialogHarness

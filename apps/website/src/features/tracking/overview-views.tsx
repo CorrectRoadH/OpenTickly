@@ -14,6 +14,11 @@ import {
 } from "./overview-data.ts";
 import type { TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
+import {
+  beginCalendarDrag,
+  resolveCalendarDragMinutes,
+  type CalendarDragSession,
+} from "./calendar-dnd.ts";
 
 const CALENDAR_HOUR_HEIGHT = 60;
 const CALENDAR_TOTAL_HEIGHT = CALENDAR_HOUR_HEIGHT * 24;
@@ -652,12 +657,38 @@ function CalendarEventCard({
   const color = resolveEntryColor(entry);
   const isRunning = !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
   const [affordancesOpen, setAffordancesOpen] = useState(false);
+  const [dragSession, setDragSession] = useState<CalendarDragSession | null>(null);
   const entryId = typeof entry.id === "number" ? entry.id : null;
   const allowDirectEdit = !isRunning && entryId != null;
 
+  function finishDrag(clientY: number) {
+    if (!dragSession || entryId == null) {
+      return;
+    }
+
+    const minutesDelta = resolveCalendarDragMinutes(dragSession, clientY);
+    if (minutesDelta !== 0) {
+      if (dragSession.gesture.kind === "move") {
+        onMoveEntry?.(entryId, minutesDelta);
+      } else {
+        onResizeEntry?.(entryId, dragSession.gesture.edge, minutesDelta);
+      }
+    }
+    setDragSession(null);
+  }
+
   return (
     <div
-      className="absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] transition hover:brightness-110"
+      className={`group absolute left-px right-px overflow-hidden rounded-[6px] px-1.5 py-1 text-left text-[9px] leading-[1.15] transition hover:brightness-110 ${
+        dragSession ? "ring-1 ring-white/60" : ""
+      } ${allowDirectEdit ? "cursor-grab active:cursor-grabbing" : ""}`}
+      data-testid={`calendar-entry-${entryId ?? "unknown"}`}
+      onPointerMove={(event) => {
+        if (dragSession) {
+          event.preventDefault();
+        }
+      }}
+      onPointerUp={(event) => finishDrag(event.clientY)}
       style={{
         backgroundColor: colorToOverlay(color),
         backgroundImage: isRunning
@@ -667,9 +698,37 @@ function CalendarEventCard({
         height: `${Math.min(height, CALENDAR_TOTAL_HEIGHT - top)}px`,
       }}
     >
+      {allowDirectEdit ? (
+        <button
+          aria-label={`Move entry ${entry.description?.trim() || entry.project_name || "time entry"}`}
+          className="absolute inset-0 z-0 cursor-grab bg-transparent"
+          data-testid={`calendar-entry-move-${entryId}`}
+          onPointerDown={(event) => {
+            if (entryId == null) {
+              return;
+            }
+            setDragSession(beginCalendarDrag(entryId, { kind: "move" }, event));
+          }}
+          type="button"
+        />
+      ) : null}
+      {allowDirectEdit ? (
+        <button
+          aria-label={`Resize start for ${entry.description?.trim() || entry.project_name || "time entry"}`}
+          className="absolute inset-x-2 top-0 z-20 h-2 cursor-row-resize rounded-t bg-white/20 opacity-0 transition group-hover:opacity-100 hover:opacity-100"
+          data-testid={`calendar-entry-resize-start-${entryId}`}
+          onPointerDown={(event) => {
+            if (entryId == null) {
+              return;
+            }
+            setDragSession(beginCalendarDrag(entryId, { edge: "start", kind: "resize" }, event));
+          }}
+          type="button"
+        />
+      ) : null}
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="flex h-full w-full flex-col text-left text-white"
+        className="relative z-10 flex h-full w-full flex-col text-left text-white"
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
@@ -688,12 +747,26 @@ function CalendarEventCard({
       </button>
       <button
         aria-label={`Entry actions for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="absolute right-1 top-1 flex size-4 items-center justify-center rounded text-white/70 transition hover:bg-white/10 hover:text-white"
+        className="absolute right-1 top-1 z-20 flex size-4 items-center justify-center rounded text-white/70 transition hover:bg-white/10 hover:text-white"
         onClick={() => setAffordancesOpen((current) => !current)}
         type="button"
       >
         <TrackingIcon className="size-3" name="more" />
       </button>
+      {allowDirectEdit ? (
+        <button
+          aria-label={`Resize end for ${entry.description?.trim() || entry.project_name || "time entry"}`}
+          className="absolute inset-x-2 bottom-0 z-20 h-2 cursor-row-resize rounded-b bg-white/20 opacity-0 transition hover:opacity-100"
+          data-testid={`calendar-entry-resize-end-${entryId}`}
+          onPointerDown={(event) => {
+            if (entryId == null) {
+              return;
+            }
+            setDragSession(beginCalendarDrag(entryId, { edge: "end", kind: "resize" }, event));
+          }}
+          type="button"
+        />
+      ) : null}
       {affordancesOpen ? (
         <div className="absolute inset-x-1 bottom-1 flex flex-wrap gap-1 rounded-[6px] bg-[#141415]/95 p-1">
           {allowDirectEdit ? (

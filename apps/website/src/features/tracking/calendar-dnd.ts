@@ -31,10 +31,7 @@ export function beginCalendarDrag(
   };
 }
 
-export function resolveCalendarDragMinutes(
-  session: CalendarDragSession,
-  clientY: number,
-): number {
+export function resolveCalendarDragMinutes(session: CalendarDragSession, clientY: number): number {
   const deltaPixels = clientY - session.originClientY;
   const quarterHour = 15;
   return Math.round(deltaPixels / quarterHour) * quarterHour;

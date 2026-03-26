@@ -69,7 +69,7 @@ type TimeEntryEditorDialogProps = {
   onFavorite?: () => Promise<void> | void;
   onPrimaryAction?: () => void;
   onProjectSelect: (projectId: number | null) => void;
-  onSave: () => void;
+  onSave: () => Promise<void> | void;
   onSplit?: () => Promise<void> | void;
   onStartTimeChange: (time: Date) => void;
   onStopTimeChange: (time: Date) => void;
@@ -215,7 +215,11 @@ export function TimeEntryEditorDialog({
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (!target.closest('[data-testid="time-entry-editor-dialog"]')) {
+      if (
+        !target.closest('[data-testid="time-entry-editor-dialog"]') &&
+        !target.closest('[data-testid="time-entry-editor-start-date-picker"]') &&
+        !target.closest('[data-testid="time-entry-editor-stop-date-picker"]')
+      ) {
         if (isDirty) {
           setShowDiscardConfirmation(true);
           return;
@@ -455,7 +459,10 @@ export function TimeEntryEditorDialog({
               value={description}
             />
           </label>
-          {descriptionSuggestionsOpen && !timeEditor && timePicker == null ? (
+          {descriptionSuggestionsOpen &&
+          descriptionMode !== "default" &&
+          !timeEditor &&
+          timePicker == null ? (
             <DescriptionSuggestionsSurface
               currentWorkspaceName={currentWorkspaceName}
               entryDescription={description}
@@ -844,8 +851,13 @@ export function TimeEntryEditorDialog({
               </div>
               <button
                 className="shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={descriptionSuggestionsOpen || isSaving}
-                onClick={onSave}
+                disabled={isSaving}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  if (!isSaving) {
+                    void onSave();
+                  }
+                }}
                 type="button"
               >
                 {isSaving ? "Saving..." : "Save"}
