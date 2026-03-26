@@ -298,6 +298,7 @@ export function SurfaceMessage({
 
 export function ListView({
   groups,
+  nowMs,
   onBillableToggle,
   onBulkDelete,
   onBulkEdit,
@@ -314,6 +315,7 @@ export function ListView({
   workspaceName,
 }: {
   groups: EntryGroup[];
+  nowMs?: number;
   onBillableToggle?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onBulkDelete?: (ids: number[]) => void;
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
@@ -541,7 +543,7 @@ export function ListView({
                         {formatEntryRange(renderEntry, timezone)}
                       </span>
                       <span className="w-[72px] text-right text-[13px] font-normal tabular-nums">
-                        {formatClockDuration(resolveEntryDurationSeconds(renderEntry))}
+                        {formatClockDuration(resolveEntryDurationSeconds(renderEntry, nowMs))}
                       </span>
                       <button
                         aria-label={`Continue ${renderEntry.description?.trim() || "time entry"}`}

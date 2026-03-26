@@ -390,6 +390,7 @@ export function WorkspaceTimerPage(): ReactElement {
           orch.view === "list" ? (
             <ListView
               groups={orch.groupedEntries}
+              nowMs={orch.nowMs}
               onBulkDelete={(ids) => {
                 void orch.handleBulkDelete(ids);
               }}
