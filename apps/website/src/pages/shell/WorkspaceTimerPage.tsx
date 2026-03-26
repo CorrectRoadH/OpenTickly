@@ -20,7 +20,11 @@ import {
   ViewTab,
   ViewTabGroup,
 } from "../../features/tracking/overview-views.tsx";
-import { DisplaySettingsPopover } from "../../features/tracking/DisplaySettingsPopover.tsx";
+import {
+  type DisplaySettings,
+  DisplaySettingsPopover,
+  readDisplaySettings,
+} from "../../features/tracking/DisplaySettingsPopover.tsx";
 import { GoalsFavoritesSidebar } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
 import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
@@ -48,6 +52,9 @@ export function WorkspaceTimerPage(): ReactElement {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(() =>
+    readDisplaySettings(),
+  );
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orch = useTimerPageOrchestration({ showAllEntries });
@@ -343,6 +350,7 @@ export function WorkspaceTimerPage(): ReactElement {
                 {settingsOpen ? (
                   <DisplaySettingsPopover
                     onClose={() => setSettingsOpen(false)}
+                    onDisplaySettingsChange={setDisplaySettings}
                     onToggleShowAllEntries={() => setShowAllEntries((prev) => !prev)}
                     showAllEntries={showAllEntries}
                   />
@@ -470,6 +478,7 @@ export function WorkspaceTimerPage(): ReactElement {
           !orch.timeEntriesQuery.isError &&
           orch.view === "calendar" ? (
             <CalendarView
+              calendarHours={displaySettings.calendarHours}
               entries={orch.visibleEntries}
               nowMs={orch.nowMs}
               onEditEntry={orch.handleEntryEdit}

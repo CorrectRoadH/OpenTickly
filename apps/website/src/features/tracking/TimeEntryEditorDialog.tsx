@@ -325,6 +325,16 @@ export function TimeEntryEditorDialog({
     }
   }, [timeEditor]);
 
+  const [timeInputError, setTimeInputError] = useState<"start" | "stop" | null>(null);
+
+  useEffect(() => {
+    if (timeInputError == null) {
+      return;
+    }
+    const timer = window.setTimeout(() => setTimeInputError(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [timeInputError]);
+
   function applyEditedTime(target: "start" | "stop", value: string) {
     const baseDate = target === "start" ? start : stop;
     if (!baseDate) {
@@ -333,9 +343,11 @@ export function TimeEntryEditorDialog({
 
     const nextDate = applyTimeInputValue(baseDate, value, timezone);
     if (!nextDate) {
+      setTimeInputError(target);
       return;
     }
 
+    setTimeInputError(null);
     if (target === "start") {
       onStartTimeChange(nextDate);
       return;
@@ -849,6 +861,7 @@ export function TimeEntryEditorDialog({
                     dateAriaLabel="Edit start date"
                     datePickerTriggerRef={startDatePickerTriggerRef}
                     editing={timeEditor === "start"}
+                    hasError={timeInputError === "start"}
                     onDateClick={() => {
                       setTimeEditor(null);
                       setTimePicker("start");
@@ -873,6 +886,7 @@ export function TimeEntryEditorDialog({
                       dateAriaLabel="Edit stop date"
                       datePickerTriggerRef={stopDatePickerTriggerRef}
                       editing={timeEditor === "stop"}
+                      hasError={timeInputError === "stop"}
                       onDateClick={() => {
                         setTimeEditor(null);
                         setTimePicker("stop");
@@ -1235,6 +1249,7 @@ function TimeDisplay({
   dateAriaLabel,
   datePickerTriggerRef,
   editing,
+  hasError = false,
   onDateClick,
   onEditEnd,
   onEditStart,
@@ -1248,6 +1263,7 @@ function TimeDisplay({
   dateAriaLabel: string;
   datePickerTriggerRef?: Ref<HTMLButtonElement | null>;
   editing: boolean;
+  hasError?: boolean;
   onDateClick: () => void;
   onEditEnd: () => void;
   onEditStart: () => void;
@@ -1266,16 +1282,21 @@ function TimeDisplay({
     }
   }, [editing, timeValue]);
 
+  const borderColor = hasError ? "border-rose-400" : "border-[#606066]";
+
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="relative flex items-center gap-1.5">
       {editing ? (
         <label className="block">
           <span className="sr-only">Edit time</span>
           <input
             aria-label="Edit time"
+            aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className="h-[42px] min-w-[110px] rounded-[10px] border border-[#c78acd] bg-[#262628] px-4 text-[14px] font-semibold tabular-nums text-white outline-none"
+            className={`h-[42px] min-w-[110px] rounded-[10px] border bg-[#262628] px-4 text-[14px] font-semibold tabular-nums text-white outline-none ${
+              hasError ? "border-rose-400" : "border-[#c78acd]"
+            }`}
             value={draft}
             inputMode="numeric"
             onBlur={(event) => {
@@ -1304,7 +1325,7 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className="flex min-w-[110px] items-center rounded-[10px] border border-[#606066] px-4 py-2.5 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90]"
+          className={`flex min-w-[110px] items-center rounded-[10px] border px-4 py-2.5 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
@@ -1320,6 +1341,9 @@ function TimeDisplay({
       >
         <TrackingIcon className="size-4 text-[#b9b9be]" name="calendar" />
       </button>
+      {hasError ? (
+        <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">Invalid time</span>
+      ) : null}
     </div>
   );
 }

@@ -756,6 +756,7 @@ function ListRowProjectPicker({
 }
 
 export function CalendarView({
+  calendarHours = "all",
   entries,
   nowMs,
   onMoveEntry,
@@ -772,6 +773,7 @@ export function CalendarView({
   weekStartsOn = 1,
   zoom = 0,
 }: {
+  calendarHours?: "all" | "business";
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
@@ -847,14 +849,18 @@ export function CalendarView({
     subview === "day" ? Views.DAY : subview === "five-day" ? Views.WORK_WEEK : Views.WEEK;
   const minTime = useMemo(() => {
     const date = new Date(calendarDate);
-    date.setHours(0, 0, 0, 0);
+    date.setHours(calendarHours === "business" ? 9 : 0, 0, 0, 0);
     return date;
-  }, [calendarDate]);
+  }, [calendarDate, calendarHours]);
   const maxTime = useMemo(() => {
     const date = new Date(calendarDate);
-    date.setHours(23, 59, 59, 999);
+    if (calendarHours === "business") {
+      date.setHours(17, 0, 0, 0);
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
     return date;
-  }, [calendarDate]);
+  }, [calendarDate, calendarHours]);
   const step = zoom > 0 ? 15 : 30;
   const timeslots = zoom > 0 ? 4 : 2;
 

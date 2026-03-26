@@ -1,11 +1,14 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from "react";
-
 import {
-  isOverviewNavActive,
-  isSectionNavActive,
-  isTimerNavActive,
-} from "./shell-navigation-state.ts";
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
 import {
@@ -45,6 +48,12 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const primarySections = sections.slice(0, -1);
   const isTimerRoute = location.pathname === "/timer";
   const profileName = session.user.fullName || session.user.email || "Profile";
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const runningEntry = currentTimeEntryQuery.data;
@@ -71,13 +80,90 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     return formatClockDuration(seconds);
   }, [runningEntry, nowMs]);
 
+  function handleWorkspaceChange(workspaceId: number) {
+    if (isAccountScopedShellPath(location.pathname)) {
+      const previousWorkspaceId = session.currentWorkspace.id;
+      setCurrentWorkspaceId(workspaceId);
+      void updateWebSessionMutation.mutateAsync({ workspace_id: workspaceId }).catch(() => {
+        setCurrentWorkspaceId(previousWorkspaceId);
+      });
+      return;
+    }
+
+    void navigate({
+      to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
+    });
+  }
+
+  async function handleSetDefault(workspaceId: number) {
+    await updateProfileMutation.mutateAsync({
+      default_workspace_id: workspaceId,
+      email: profileQuery.data?.email,
+      fullname: profileQuery.data?.fullname,
+    });
+  }
+
+  const workspaceSwitcherProps = {
+    currentOrganization: session.currentOrganization,
+    inviteMembersPath: `/workspaces/${session.currentWorkspace.id}/members`,
+    managePath: session.currentOrganization
+      ? buildOrganizationSettingsPath(session.currentOrganization.id)
+      : undefined,
+    onChange: handleWorkspaceChange,
+    onSetDefault: handleSetDefault,
+    organizations: session.availableOrganizations,
+  };
+
+  const navProps = {
+    adminSection,
+    pathname: location.pathname,
+    primarySections,
+    timerBadge,
+  };
+
   return (
     <div
-      className="h-dvh overflow-hidden bg-[var(--track-surface)] text-[var(--track-text)]"
+      className="flex h-dvh flex-col overflow-hidden bg-[var(--track-surface)] text-[var(--track-text)]"
       data-testid="app-shell"
     >
-      <div className="flex h-full">
-        <aside className="flex h-full w-[226px] shrink-0 overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)]">
+      {/* Mobile top bar -- visible below md breakpoint */}
+      <div className="flex h-[56px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 md:hidden">
+        <button
+          aria-label="Toggle menu"
+          className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/6 hover:text-white"
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          type="button"
+        >
+          <TrackingIcon className="size-5" name="menu" />
+        </button>
+        <span className="text-[15px] font-semibold text-white">opentoggl</span>
+      </div>
+
+      {/* Mobile sidebar overlay */}
+      {mobileMenuOpen ? (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            aria-label="Close menu"
+            className="absolute inset-0 bg-black/50"
+            onClick={closeMobileMenu}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") closeMobileMenu();
+            }}
+            role="button"
+            tabIndex={-1}
+          />
+          <aside className="relative z-10 flex h-full w-[226px] flex-col overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)]">
+            <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
+              <WorkspaceSwitcher {...workspaceSwitcherProps} />
+            </div>
+            <SidebarNavSections {...navProps} />
+          </aside>
+        </div>
+      ) : null}
+
+      <div className="flex min-h-0 flex-1">
+        {/* Desktop sidebar -- hidden below md breakpoint */}
+        <aside className="hidden h-full w-[226px] shrink-0 overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] md:flex">
           <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
             <div className="space-y-0.5">
               <RailButton active icon="track" />
@@ -112,94 +198,9 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
           <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
             <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
-              <WorkspaceSwitcher
-                currentOrganization={session.currentOrganization}
-                inviteMembersPath={`/workspaces/${session.currentWorkspace.id}/members`}
-                managePath={
-                  session.currentOrganization
-                    ? buildOrganizationSettingsPath(session.currentOrganization.id)
-                    : undefined
-                }
-                onChange={(workspaceId) => {
-                  if (isAccountScopedShellPath(location.pathname)) {
-                    const previousWorkspaceId = session.currentWorkspace.id;
-                    setCurrentWorkspaceId(workspaceId);
-                    void updateWebSessionMutation
-                      .mutateAsync({ workspace_id: workspaceId })
-                      .catch(() => {
-                        setCurrentWorkspaceId(previousWorkspaceId);
-                      });
-                    return;
-                  }
-
-                  void navigate({
-                    to: swapWorkspaceInPath(location.pathname, workspaceId, location.searchStr),
-                  });
-                }}
-                onSetDefault={async (workspaceId) => {
-                  await updateProfileMutation.mutateAsync({
-                    default_workspace_id: workspaceId,
-                    email: profileQuery.data?.email,
-                    fullname: profileQuery.data?.fullname,
-                  });
-                }}
-                organizations={session.availableOrganizations}
-              />
+              <WorkspaceSwitcher {...workspaceSwitcherProps} />
             </div>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <nav
-                aria-label="Primary"
-                className="min-h-0 flex-1 overflow-y-auto px-0 pb-4 pt-6"
-                data-testid="shell-primary-nav"
-              >
-                {primarySections.map((section) => (
-                  <section key={section.title} className="mb-6">
-                    <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                      {section.title}
-                    </h2>
-                    <div className="mt-2 space-y-0.5">
-                      {section.items.map((item) => (
-                        <ShellNavItem
-                          active={
-                            item.label === "Overview"
-                              ? isOverviewNavActive(location.pathname, item.to)
-                              : item.label === "Timer"
-                                ? isTimerNavActive(location.pathname, item.to)
-                                : isSectionNavActive(location.pathname, item.to)
-                          }
-                          badge={item.label === "Timer" ? timerBadge : item.badge}
-                          disabled={item.disabled}
-                          key={`${section.title}-${item.label}`}
-                          label={item.label}
-                          to={item.to}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </nav>
-
-              {adminSection ? (
-                <section className="sticky bottom-0 bg-[var(--track-panel)] px-0 pb-[15px] pt-3">
-                  <h2 className="px-4 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                    {adminSection.title}
-                  </h2>
-                  <div className="mt-2 space-y-0.5">
-                    {adminSection.items.map((item) => (
-                      <ShellNavItem
-                        active={isSectionNavActive(location.pathname, item.to)}
-                        badge={item.badge}
-                        disabled={item.disabled}
-                        key={`${adminSection.title}-${item.label}`}
-                        label={item.label}
-                        to={item.to}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-            </div>
+            <SidebarNavSections {...navProps} />
           </div>
         </aside>
 
@@ -218,48 +219,6 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
 function isAccountScopedShellPath(pathname: string): boolean {
   return pathname === "/overview" || pathname === "/timer";
-}
-
-function ShellNavItem({
-  active,
-  badge,
-  disabled = false,
-  label,
-  to,
-}: {
-  active: boolean;
-  badge?: string;
-  disabled?: boolean;
-  label: string;
-  to?: string;
-}): ReactElement {
-  const content = (
-    <div
-      className={`flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium ${
-        active
-          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-          : "text-[var(--track-text-muted)]"
-      } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
-    >
-      <TrackingIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
-      <span className="truncate">{label}</span>
-      {badge ? (
-        <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
-          {badge}
-        </span>
-      ) : null}
-    </div>
-  );
-
-  if (!to || disabled) {
-    return <div className="px-2">{content}</div>;
-  }
-
-  return (
-    <Link aria-current={active ? "page" : undefined} className="block px-2" to={to}>
-      {content}
-    </Link>
-  );
 }
 
 function RailButton({
@@ -299,41 +258,4 @@ function RailButton({
       ) : null}
     </button>
   );
-}
-
-function navIconName(label: string) {
-  switch (label) {
-    case "Overview":
-      return "overview";
-    case "Timer":
-      return "timer";
-    case "Reports":
-      return "reports";
-    case "Approvals":
-      return "approvals";
-    case "Projects":
-      return "projects";
-    case "Clients":
-      return "clients";
-    case "Members":
-      return "members";
-    case "Billable rates":
-      return "dollar";
-    case "Import":
-      return "import";
-    case "Invoices":
-      return "invoices";
-    case "Tags":
-      return "tags";
-    case "Goals":
-      return "goals";
-    case "Integrations":
-      return "integrations";
-    case "Subscription":
-      return "subscription";
-    case "Settings":
-      return "settings";
-    default:
-      return "overview";
-  }
 }
