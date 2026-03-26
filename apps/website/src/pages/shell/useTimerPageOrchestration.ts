@@ -228,6 +228,8 @@ export interface TimerPageOrchestration {
   setDraftProjectId: (id: number | null) => void;
   draftTagIds: number[];
   setDraftTagIds: (ids: number[]) => void;
+  draftBillable: boolean;
+  setDraftBillable: (billable: boolean) => void;
   draftTags: { id: number; name: string }[];
 
   // Display values derived from state
@@ -399,6 +401,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const [draftDescription, setDraftDescription] = useState("");
   const [draftProjectId, setDraftProjectId] = useState<number | null>(null);
   const [draftTagIds, setDraftTagIds] = useState<number[]>([]);
+  const [draftBillable, setDraftBillable] = useState(false);
 
   // Running description state
   const [runningDescription, setRunningDescription] = useState("");
@@ -614,6 +617,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setDraftDescription("");
     setDraftProjectId(null);
     setDraftTagIds([]);
+    setDraftBillable(false);
     closeComposerSuggestions();
   }, [runningEntry]);
 
@@ -684,6 +688,7 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
       return;
     }
     await startTimeEntryMutation.mutateAsync({
+      billable: draftBillable,
       description: draftDescription.trim(),
       projectId: draftProjectId,
       start: new Date().toISOString(),
@@ -692,9 +697,11 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setDraftDescription("");
     setDraftProjectId(null);
     setDraftTagIds([]);
+    setDraftBillable(false);
     closeComposerSuggestions();
   }, [
     runningEntry,
+    draftBillable,
     draftDescription,
     draftProjectId,
     draftTagIds,
@@ -1210,6 +1217,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     setDraftProjectId,
     draftTagIds,
     setDraftTagIds,
+    draftBillable,
+    setDraftBillable,
     draftTags,
 
     // Display values

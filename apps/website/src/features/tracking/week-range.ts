@@ -68,6 +68,34 @@ export function shiftWeek(date: Date, deltaWeeks: number): Date {
   return next;
 }
 
+export function shiftDay(date: Date, deltaDays: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + deltaDays);
+  return next;
+}
+
+/**
+ * Formats a day label for the day-view range picker trigger.
+ * Returns "Today · Thu", "Yesterday · Wed", or "Mar 26, 2026" for other dates.
+ */
+export function formatDayLabel(date: Date): string {
+  const today = new Date();
+  const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
+
+  if (isSameDay(date, today)) {
+    return `Today \u00B7 ${dayName}`;
+  }
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameDay(date, yesterday)) {
+    return `Yesterday \u00B7 ${dayName}`;
+  }
+
+  const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+  return `${month} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
 export function formatTrackQueryDate(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");

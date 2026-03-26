@@ -1,5 +1,5 @@
 import type * as React from "react";
-import { type ChangeEvent, type ReactElement } from "react";
+import { type ChangeEvent, type ReactElement, useMemo, useRef, useState } from "react";
 
 import {
   CalendarSubviewSelect,
@@ -12,6 +12,7 @@ import {
   ViewTab,
   ViewTabGroup,
 } from "../../features/tracking/overview-views.tsx";
+import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
@@ -64,33 +65,40 @@ export function WorkspaceTimerPage(): ReactElement {
               value={orch.timerDescriptionValue}
             />
           </div>
+          <TimerBarProjectPicker
+            draftProjectId={orch.draftProjectId}
+            onProjectSelect={orch.setDraftProjectId}
+            projectOptions={orch.projectOptions}
+            runningEntry={orch.runningEntry}
+            workspaceName={
+              orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+              "Workspace"
+            }
+          />
+          <TimerBarTagPicker
+            draftTagIds={orch.draftTagIds}
+            onTagToggle={(tagId) => {
+              orch.setDraftTagIds(
+                orch.draftTagIds.includes(tagId)
+                  ? orch.draftTagIds.filter((id) => id !== tagId)
+                  : [...orch.draftTagIds, tagId],
+              );
+            }}
+            runningEntry={orch.runningEntry}
+            tagOptions={orch.tagOptions}
+          />
           <button
-            aria-label={`Add a project${orch.displayProject !== "No project" ? `: ${orch.displayProject}` : ""}`}
-            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            aria-label={orch.draftBillable ? "Set as non-billable" : "Set as billable"}
+            className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
+              orch.draftBillable && orch.runningEntry?.id == null
+                ? "text-[#e57bd9]"
+                : "text-[var(--track-text-muted)] hover:text-white"
+            }`}
             onClick={() => {
               if (orch.runningEntry?.id == null) {
-                orch.handleIdleDescriptionFocus();
+                orch.setDraftBillable(!orch.draftBillable);
               }
             }}
-            type="button"
-          >
-            <TrackingIcon className="size-4" name="projects" />
-          </button>
-          <button
-            aria-label="Select tags"
-            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-            onClick={() => {
-              if (orch.runningEntry?.id == null) {
-                orch.handleIdleDescriptionFocus();
-              }
-            }}
-            type="button"
-          >
-            <TrackingIcon className="size-4" name="tags" />
-          </button>
-          <button
-            aria-label="Billable"
-            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
             type="button"
           >
             <span className="text-[16px] font-semibold">$</span>
@@ -162,11 +170,17 @@ export function WorkspaceTimerPage(): ReactElement {
               <AllDatesLabel />
             ) : (
               <WeekRangePicker
+                mode={orch.calendarSubview === "day" ? "day" : "week"}
                 onDayShortcutSelect={(date) => {
                   orch.setCalendarSubview("day");
                   orch.setSelectedWeekDate(date);
                 }}
-                onSelectDate={orch.setSelectedWeekDate}
+                onSelectDate={(date) => {
+                  orch.setSelectedWeekDate(date);
+                  if (orch.calendarSubview === "day") {
+                    // Stay in day mode when navigating via arrows or calendar click
+                  }
+                }}
                 selectedDate={orch.selectedWeekDate}
                 weekStartsOn={orch.beginningOfWeek}
               />
@@ -190,7 +204,13 @@ export function WorkspaceTimerPage(): ReactElement {
             <div className="ml-auto flex items-center gap-3">
               {orch.view === "calendar" ? (
                 <CalendarSubviewSelect
-                  onChange={orch.setCalendarSubview}
+                  onChange={(next) => {
+                    orch.setCalendarSubview(next);
+                    if (next === "day" && orch.calendarSubview !== "day") {
+                      // When switching to day view, default to today
+                      orch.setSelectedWeekDate(new Date());
+                    }
+                  }}
                   value={orch.calendarSubview}
                 />
               ) : null}
@@ -454,6 +474,179 @@ export function WorkspaceTimerPage(): ReactElement {
             name: workspace.name,
           }))}
         />
+      ) : null}
+    </div>
+  );
+}
+
+function TimerBarProjectPicker({
+  draftProjectId,
+  onProjectSelect,
+  projectOptions,
+  runningEntry,
+  workspaceName,
+}: {
+  draftProjectId: number | null;
+  onProjectSelect: (id: number | null) => void;
+  projectOptions: {
+    client_name?: string | null;
+    color?: string | null;
+    id?: number | null;
+    name?: string | null;
+  }[];
+  runningEntry: { id?: number | null } | null;
+  workspaceName: string;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const projects = useMemo(
+    () =>
+      projectOptions
+        .filter((p) => p.id != null)
+        .map((p) => ({
+          clientName: p.client_name ?? undefined,
+          color: resolveProjectColorValue(p),
+          id: p.id as number,
+          name: p.name ?? "Untitled project",
+        })),
+    [projectOptions],
+  );
+
+  const filteredProjects = useMemo(
+    () =>
+      search.trim()
+        ? projects.filter(
+            (p) =>
+              p.name.toLowerCase().includes(search.toLowerCase()) ||
+              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
+          )
+        : projects,
+    [projects, search],
+  );
+
+  const selectedProject = projects.find((p) => p.id === draftProjectId);
+  const hasProject = draftProjectId != null && runningEntry?.id == null;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-label={`Add a project${selectedProject ? `: ${selectedProject.name}` : ""}`}
+        className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
+          hasProject ? "text-[#e57bd9]" : "text-[var(--track-text-muted)] hover:text-white"
+        }`}
+        onClick={() => {
+          if (runningEntry?.id == null) {
+            setOpen((prev) => !prev);
+            setSearch("");
+          }
+        }}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <TrackingIcon className="size-4" name="projects" />
+      </button>
+      {open ? (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 w-[280px]"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <ProjectPickerDropdown
+            filteredProjects={filteredProjects}
+            onSearch={setSearch}
+            onSelect={(projectId) => {
+              setOpen(false);
+              onProjectSelect(projectId);
+            }}
+            search={search}
+            workspaceName={workspaceName}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TimerBarTagPicker({
+  draftTagIds,
+  onTagToggle,
+  runningEntry,
+  tagOptions,
+}: {
+  draftTagIds: number[];
+  onTagToggle: (tagId: number) => void;
+  runningEntry: { id?: number | null } | null;
+  tagOptions: { id: number; name: string }[];
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const hasTags = draftTagIds.length > 0 && runningEntry?.id == null;
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-label="Select tags"
+        className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
+          hasTags ? "text-[#e57bd9]" : "text-[var(--track-text-muted)] hover:text-white"
+        }`}
+        onClick={() => {
+          if (runningEntry?.id == null) {
+            setOpen((prev) => !prev);
+          }
+        }}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <TrackingIcon className="size-4" name="tags" />
+      </button>
+      {open ? (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 w-[220px] rounded-xl border border-[#3d3d42] bg-[#1f1f20] py-2 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[#999]">
+            Tags
+          </div>
+          {tagOptions.length === 0 ? (
+            <div className="px-3 py-2 text-[13px] text-[#999]">No tags available</div>
+          ) : (
+            <div className="max-h-[200px] overflow-y-auto">
+              {tagOptions.map((tag) => {
+                const isSelected = draftTagIds.includes(tag.id);
+                return (
+                  <button
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-white/5 ${
+                      isSelected ? "text-[#e57bd9]" : "text-white"
+                    }`}
+                    key={tag.id}
+                    onClick={() => onTagToggle(tag.id)}
+                    type="button"
+                  >
+                    <span
+                      className={`flex size-4 items-center justify-center rounded border text-[10px] ${
+                        isSelected
+                          ? "border-[#e57bd9] bg-[#e57bd9] text-white"
+                          : "border-[var(--track-border)]"
+                      }`}
+                    >
+                      {isSelected ? "\u2713" : ""}
+                    </span>
+                    <span className="truncate">{tag.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
       ) : null}
     </div>
   );

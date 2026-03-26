@@ -3,12 +3,14 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { TrackingIcon } from "./tracking-icons.tsx";
 import {
   buildMonthWeeks,
+  formatDayLabel,
   formatTrackQueryDate,
   formatWeekRangeLabel,
   getWeekStart,
   isSameDay,
   isSameWeek,
   resolveIsoWeekNumber,
+  shiftDay,
   shiftWeek,
   WEEK_SHORTCUTS,
 } from "./week-range.ts";
@@ -57,11 +59,13 @@ export function QuickDateShortcuts({
 }
 
 export function WeekRangePicker({
+  mode = "week",
   onDayShortcutSelect,
   onSelectDate,
   selectedDate,
   weekStartsOn = 1,
 }: {
+  mode?: "day" | "week";
   onDayShortcutSelect?: (date: Date) => void;
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
@@ -125,9 +129,11 @@ export function WeekRangePicker({
     <div className="relative" ref={rootRef}>
       <div className="flex items-center gap-3">
         <button
-          aria-label="Previous week"
+          aria-label={mode === "day" ? "Previous day" : "Previous week"}
           className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
-          onClick={() => onSelectDate(shiftWeek(selectedDate, -1))}
+          onClick={() =>
+            onSelectDate(mode === "day" ? shiftDay(selectedDate, -1) : shiftWeek(selectedDate, -1))
+          }
           type="button"
         >
           <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
@@ -135,7 +141,11 @@ export function WeekRangePicker({
         <button
           aria-expanded={isOpen}
           aria-haspopup="dialog"
-          aria-label={`Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`}
+          aria-label={
+            mode === "day"
+              ? `Day: ${formatDayLabel(selectedDate)}. Press Enter to open day picker.`
+              : `Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`
+          }
           className="flex h-9 items-center gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-left text-white"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
@@ -152,7 +162,9 @@ export function WeekRangePicker({
             name="calendar"
           />
           <span className="truncate text-[13px] font-medium">
-            {formatWeekRangeLabel(selectedDate, weekStartsOn)}
+            {mode === "day"
+              ? formatDayLabel(selectedDate)
+              : formatWeekRangeLabel(selectedDate, weekStartsOn)}
           </span>
           <TrackingIcon
             className="ml-auto size-3 shrink-0 text-[var(--track-text-muted)]"
@@ -160,9 +172,11 @@ export function WeekRangePicker({
           />
         </button>
         <button
-          aria-label="Next week"
+          aria-label={mode === "day" ? "Next day" : "Next week"}
           className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
-          onClick={() => onSelectDate(shiftWeek(selectedDate, 1))}
+          onClick={() =>
+            onSelectDate(mode === "day" ? shiftDay(selectedDate, 1) : shiftWeek(selectedDate, 1))
+          }
           type="button"
         >
           <TrackingIcon className="size-3" name="chevron-right" />
@@ -265,7 +279,55 @@ export function WeekRangePicker({
               <div className="mt-1 flex flex-col">
                 {weeks.map((week) => {
                   const weekStart = week[0];
-                  const isSelectedWeek = isSameWeek(weekStart, selectedWeekStart, weekStartsOn);
+                  const isSelectedWeek =
+                    mode === "week" && isSameWeek(weekStart, selectedWeekStart, weekStartsOn);
+
+                  if (mode === "day") {
+                    return (
+                      <div
+                        className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-left"
+                        key={weekStart.toISOString()}
+                      >
+                        <span className="text-[12px] font-medium text-[var(--track-text-muted)]">
+                          {resolveIsoWeekNumber(weekStart)}
+                        </span>
+                        {week.map((day) => {
+                          const isInVisibleMonth = day.getMonth() === visibleMonth.getMonth();
+                          const isToday = isSameDay(day, new Date());
+                          const isDaySelected = isSameDay(day, selectedDate);
+
+                          return (
+                            <button
+                              aria-label={`Select ${formatTrackQueryDate(day)}`}
+                              className={`flex h-[29px] items-center justify-center text-[14px] font-medium transition hover:bg-[var(--track-row-hover)] ${
+                                isDaySelected
+                                  ? "rounded-lg bg-[#b744ab] text-white"
+                                  : isInVisibleMonth
+                                    ? "text-white"
+                                    : "text-[var(--track-text-muted)]"
+                              }`}
+                              key={day.toISOString()}
+                              onClick={() => {
+                                onSelectDate(day);
+                                setIsOpen(false);
+                              }}
+                              type="button"
+                            >
+                              <span
+                                className={
+                                  isToday && !isDaySelected
+                                    ? "flex size-[26px] items-center justify-center rounded-full border border-[var(--track-border)]"
+                                    : ""
+                                }
+                              >
+                                {day.getDate()}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
 
                   return (
                     <button
