@@ -40,3 +40,8 @@ a {
 ::selection {
   background: rgba(229, 123, 217, 0.35);
 }
+
+*:focus-visible {
+  outline: 2px solid #e57bd9;
+  outline-offset: 2px;
+}

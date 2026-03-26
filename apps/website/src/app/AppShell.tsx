@@ -230,9 +230,9 @@ function RailButton({
 }): ReactElement {
   const tooltipText =
     icon === "plan"
-      ? "opentoggl plan is comming"
+      ? "opentoggl plan is coming"
       : icon === "focus"
-        ? "opentoggl focus is comming"
+        ? "opentoggl focus is coming"
         : undefined;
 
   return (
