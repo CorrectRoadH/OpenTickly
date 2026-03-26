@@ -3,6 +3,7 @@ package publicapi
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -213,7 +214,8 @@ func (handler *Handler) PatchPublicTrackTimeEntries(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	rawIDs := strings.TrimSpace(ctx.Param("time_entry_ids"))
+	rawIDsParam := strings.TrimSpace(ctx.Param("time_entry_ids"))
+	rawIDs, _ := url.PathUnescape(rawIDsParam)
 	timeEntryIDs, parseErr := parseCSVInt64s(rawIDs)
 	if parseErr != nil || len(timeEntryIDs) == 0 {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")

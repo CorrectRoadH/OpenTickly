@@ -241,8 +241,18 @@ export function WorkspaceTimerPage(): ReactElement {
           <div className="ml-auto flex shrink-0 items-center gap-3">
             {orch.timerInputMode === "manual" && orch.runningEntry == null ? (
               <ManualModeComposer
-                onAddTimeEntry={(_start, _stop) => {
-                  /* Manual entry creation will be implemented in a follow-up */
+                onAddTimeEntry={(start, stop) => {
+                  const durationSec = Math.round((stop.getTime() - start.getTime()) / 1000);
+                  void orch.createTimeEntryMutation.mutateAsync({
+                    billable: orch.draftBillable,
+                    description: orch.timerDescriptionValue.trim(),
+                    duration: durationSec,
+                    projectId: orch.draftProjectId ?? null,
+                    start: start.toISOString(),
+                    stop: stop.toISOString(),
+                    tagIds: orch.draftTagIds ?? [],
+                    taskId: null,
+                  });
                 }}
                 timezone={orch.timezone}
               />
