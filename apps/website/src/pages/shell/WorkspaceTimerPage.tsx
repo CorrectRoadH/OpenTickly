@@ -47,7 +47,11 @@ type DeletedEntrySnapshot = {
   taskId: number | null;
 };
 
-export function WorkspaceTimerPage(): ReactElement {
+type WorkspaceTimerPageProps = {
+  initialDate?: Date;
+};
+
+export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
@@ -58,7 +62,7 @@ export function WorkspaceTimerPage(): ReactElement {
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
-  const orch = useTimerPageOrchestration({ showAllEntries });
+  const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
 
   const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
     if (deleteToastTimerRef.current) {

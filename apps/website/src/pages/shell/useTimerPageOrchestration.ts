@@ -342,9 +342,11 @@ export interface TimerPageOrchestration {
 }
 
 export function useTimerPageOrchestration(options?: {
+  initialDate?: Date;
   showAllEntries?: boolean;
 }): TimerPageOrchestration {
   const showAllEntries = options?.showAllEntries ?? false;
+  const initialDate = options?.initialDate;
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
@@ -388,7 +390,7 @@ export function useTimerPageOrchestration(options?: {
 
   // Time state
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date());
+  const [selectedWeekDate, setSelectedWeekDate] = useState(() => initialDate ?? new Date());
 
   const beginningOfWeek = session.user.beginningOfWeek ?? 1;
   const weekDays = useMemo(

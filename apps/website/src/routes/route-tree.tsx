@@ -12,6 +12,7 @@ import {
   parseProjectsSearch,
 } from "../shared/url-state/projects-location.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
+import { parseTimerSearch, resolveTimerSearchDate } from "../shared/url-state/timer-location.ts";
 import {
   buildWorkspaceSettingsPath,
   normalizeWorkspaceSettingsSection,
@@ -79,6 +80,7 @@ const workspaceOverviewRoute = createRoute({
 const workspaceTimerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/timer",
+  validateSearch: parseTimerSearch,
   component: WorkspaceTimerRouteComponent,
 });
 
@@ -322,7 +324,10 @@ function WorkspaceOverviewRouteComponent() {
 }
 
 function WorkspaceTimerRouteComponent() {
-  return renderProtectedRoute(<WorkspaceTimerPage />);
+  const search = workspaceTimerRoute.useSearch();
+  const initialDate = resolveTimerSearchDate(search.date);
+
+  return renderProtectedRoute(<WorkspaceTimerPage initialDate={initialDate} />);
 }
 
 function WorkspaceReportsRouteComponent() {
