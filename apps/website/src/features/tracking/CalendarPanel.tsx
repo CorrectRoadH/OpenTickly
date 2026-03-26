@@ -45,7 +45,7 @@ export function CalendarPanel({
         <div className="flex size-6 items-center justify-start">
           <button
             aria-label="Previous month"
-            className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
+            className="flex w-6 h-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(
                 (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
@@ -61,7 +61,7 @@ export function CalendarPanel({
           </button>
         </div>
         <h3
-          className="col-start-2 text-center text-[14px] font-medium leading-5 text-white"
+          className="col-start-2 text-center text-[14px] font-medium leading-[19px] text-white"
           id="calendar-panel-title"
         >
           {visibleMonth.toLocaleString("en-US", { month: "long", year: "numeric" })}
@@ -69,7 +69,7 @@ export function CalendarPanel({
         <div className="flex size-6 items-center justify-end">
           <button
             aria-label="Next month"
-            className="flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
+            className="flex w-6 h-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(
                 (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
@@ -121,7 +121,7 @@ export function CalendarPanel({
                   aria-selected={selected}
                   className={`group relative flex size-10 items-center justify-center rounded-full text-[14px] font-semibold transition ${
                     selected
-                      ? "bg-[#b77fc0] text-[#1a1219] hover:bg-[#bc84c4]"
+                      ? "bg-[#b77fc0] text-[#2b222b] hover:bg-[#bc84c4]"
                       : isToday && !isOutsideMonth
                         ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
