@@ -111,6 +111,31 @@ export function WorkspaceTimerPage(): ReactElement {
             >
               <TrackingIcon className="size-5" name={orch.runningEntry ? "stop" : "play"} />
             </button>
+            <button
+              aria-label={
+                orch.timerInputMode === "automatic"
+                  ? "Switch to manual mode"
+                  : "Switch to automatic mode"
+              }
+              className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+              data-testid="timer-input-mode-toggle"
+              onClick={() => {
+                orch.setTimerInputMode(
+                  orch.timerInputMode === "automatic" ? "manual" : "automatic",
+                );
+              }}
+              title={
+                orch.timerInputMode === "automatic"
+                  ? "Switch to manual mode"
+                  : "Switch to automatic mode"
+              }
+              type="button"
+            >
+              <TrackingIcon
+                className="size-3.5"
+                name={orch.timerInputMode === "automatic" ? "manual-mode" : "timer"}
+              />
+            </button>
           </div>
         </div>
 

@@ -19,6 +19,7 @@ type TrackingIconName =
   | "integrations"
   | "invoices"
   | "list"
+  | "manual-mode"
   | "members"
   | "menu"
   | "minus"
@@ -176,6 +177,14 @@ function renderIcon(name: TrackingIconName): ReactElement {
         <>
           <path d="M3 4.5h10M3 8h10M3 11.5h10" />
           <path d="M2 4.5h.01M2 8h.01M2 11.5h.01" />
+        </>
+      );
+    case "manual-mode":
+      return (
+        <>
+          <path d="M3.5 5.5v5M12.5 5.5v5" />
+          <path d="M3.5 8h9" />
+          <path d="M6.5 5.5 3.5 8l3 2.5M9.5 5.5l3 2.5-3 2.5" />
         </>
       );
     case "members":

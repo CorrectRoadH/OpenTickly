@@ -32,7 +32,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
-import type { TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
+import type { TimerInputMode, TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
@@ -59,6 +59,28 @@ function persistTimerView(view: TimerViewMode): void {
   }
 }
 
+const TIMER_INPUT_MODE_STORAGE_KEY = "opentoggl:user-prefs:timer-input-mode";
+
+function loadPersistedTimerInputMode(): TimerInputMode {
+  try {
+    const stored = localStorage.getItem(TIMER_INPUT_MODE_STORAGE_KEY);
+    if (stored === "automatic" || stored === "manual") {
+      return stored;
+    }
+  } catch {
+    // localStorage not available or parse error
+  }
+  return "automatic";
+}
+
+function persistTimerInputMode(mode: TimerInputMode): void {
+  try {
+    localStorage.setItem(TIMER_INPUT_MODE_STORAGE_KEY, mode);
+  } catch {
+    // localStorage not available or write error
+  }
+}
+
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
   return entry.stop == null || (entry.duration ?? 0) < 0;
 }
@@ -69,6 +91,10 @@ function areNumberListsEqual(left: number[], right: number[]): boolean {
   }
 
   return left.every((value, index) => value === right[index]);
+}
+
+function toTrackIso(date: Date): string {
+  return date.toISOString().replace(".000Z", "Z");
 }
 
 function resolveSingleTimerErrorMessage(error: unknown): string {
@@ -145,6 +171,8 @@ export interface TimerPageOrchestration {
   // View state
   view: TimerViewMode;
   setView: (next: TimerViewMode) => void;
+  timerInputMode: TimerInputMode;
+  setTimerInputMode: (next: TimerInputMode) => void;
   calendarZoom: number;
   setCalendarZoom: (zoom: number) => void;
 
@@ -236,6 +264,12 @@ export interface TimerPageOrchestration {
   handleSelectedEntryTagCreate: (name: string) => Promise<void>;
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
+  handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
+  handleCalendarEntryResize: (
+    entryId: number,
+    edge: "start" | "end",
+    minutesDelta: number,
+  ) => Promise<void>;
   handleEntryEdit: (
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
     anchorRect: DOMRect,
@@ -269,6 +303,16 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const setView = useCallback((next: TimerViewMode) => {
     persistTimerView(next);
     setViewState(next);
+  }, []);
+
+  // Timer input mode state with persistence
+  const [timerInputMode, setTimerInputModeState] = useState<TimerInputMode>(
+    loadPersistedTimerInputMode,
+  );
+
+  const setTimerInputMode = useCallback((next: TimerInputMode) => {
+    persistTimerInputMode(next);
+    setTimerInputModeState(next);
   }, []);
 
   // Calendar zoom level: -1 = zoomed out (fewer hours), 0 = default, +1 = zoomed in (more hours)
@@ -885,6 +929,87 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     });
   }, []);
 
+  const handleCalendarEntryMove = useCallback(
+    async (entryId: number, minutesDelta: number) => {
+      if (minutesDelta === 0) {
+        return;
+      }
+
+      const targetEntry = visibleEntries.find((entry) => entry.id === entryId);
+      if (!targetEntry?.start) {
+        return;
+      }
+
+      const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+      if (typeof workspaceForEntry !== "number") {
+        return;
+      }
+
+      const nextStart = new Date(new Date(targetEntry.start).getTime() + minutesDelta * 60_000);
+      const nextStop = targetEntry.stop
+        ? new Date(new Date(targetEntry.stop).getTime() + minutesDelta * 60_000)
+        : undefined;
+
+      await updateTimeEntryMutation.mutateAsync({
+        request: {
+          billable: targetEntry.billable,
+          description: targetEntry.description ?? "",
+          projectId: targetEntry.project_id ?? targetEntry.pid ?? null,
+          start: toTrackIso(nextStart),
+          stop: nextStop ? toTrackIso(nextStop) : undefined,
+          tagIds: targetEntry.tag_ids ?? [],
+          taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+        },
+        timeEntryId: entryId,
+        workspaceId: workspaceForEntry,
+      });
+    },
+    [updateTimeEntryMutation, visibleEntries],
+  );
+
+  const handleCalendarEntryResize = useCallback(
+    async (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+      if (minutesDelta === 0) {
+        return;
+      }
+
+      const targetEntry = visibleEntries.find((entry) => entry.id === entryId);
+      if (!targetEntry?.start || !targetEntry.stop) {
+        return;
+      }
+
+      const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+      if (typeof workspaceForEntry !== "number") {
+        return;
+      }
+
+      const startMs = new Date(targetEntry.start).getTime();
+      const stopMs = new Date(targetEntry.stop).getTime();
+      const deltaMs = minutesDelta * 60_000;
+      const nextStartMs = edge === "start" ? startMs + deltaMs : startMs;
+      const nextStopMs = edge === "end" ? stopMs + deltaMs : stopMs;
+
+      if (nextStartMs >= nextStopMs) {
+        return;
+      }
+
+      await updateTimeEntryMutation.mutateAsync({
+        request: {
+          billable: targetEntry.billable,
+          description: targetEntry.description ?? "",
+          projectId: targetEntry.project_id ?? targetEntry.pid ?? null,
+          start: toTrackIso(new Date(nextStartMs)),
+          stop: toTrackIso(new Date(nextStopMs)),
+          tagIds: targetEntry.tag_ids ?? [],
+          taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+        },
+        timeEntryId: entryId,
+        workspaceId: workspaceForEntry,
+      });
+    },
+    [updateTimeEntryMutation, visibleEntries],
+  );
+
   const handleEntryEdit = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
       const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
@@ -937,6 +1062,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     // View state
     view,
     setView,
+    timerInputMode,
+    setTimerInputMode,
     calendarZoom,
     setCalendarZoom,
 
@@ -1026,6 +1153,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     handleSelectedEntrySplit,
     handleSelectedEntryStartTimeChange,
     handleSelectedEntryStopTimeChange,
+    handleCalendarEntryMove,
+    handleCalendarEntryResize,
     handleEntryEdit,
     handleIdleDescriptionFocus,
     closeSelectedEntryEditor,

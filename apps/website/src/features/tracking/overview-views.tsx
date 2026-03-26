@@ -230,7 +230,11 @@ export function ListView({
       {groups.map((group) => (
         <section key={group.key}>
           <div className="grid grid-cols-[28px_minmax(0,1fr)_90px_110px_92px_28px] items-center border-b border-[var(--track-border)] px-6 py-3">
-            <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+            <input
+              aria-label={`Select all entries for ${formatGroupLabel(group.key, timezone)}`}
+              className="size-[13px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent"
+              type="checkbox"
+            />
             <p className="text-[13px] font-medium text-white">
               {formatGroupLabel(group.key, timezone)}
             </p>
@@ -246,7 +250,11 @@ export function ListView({
               key={String(entry.id ?? `${entry.start}-${entry.description}`)}
               className="group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
             >
-              <span />
+              <input
+                aria-label={`Select ${entry.description?.trim() || "time entry"}`}
+                className="size-[13px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent"
+                type="checkbox"
+              />
               <div className="flex min-w-0 items-center gap-4">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">
@@ -586,9 +594,8 @@ export function TimesheetView({
 
   return (
     <div className="border-t border-[var(--track-border)] px-4" data-testid="timer-timesheet-view">
-      <div className="grid grid-cols-[minmax(280px,1fr)_88px_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
         <span>Project</span>
-        <span>Members</span>
         {weekDays.map((day) => (
           <span className="text-center" key={day.toISOString()}>
             {formatWeekday(day, timezone)}
@@ -598,7 +605,7 @@ export function TimesheetView({
       </div>
       {rows.map((row) => (
         <div
-          className="grid grid-cols-[minmax(280px,1fr)_88px_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3"
+          className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3"
           key={row.label}
         >
           <div className="flex min-w-0 items-center gap-2 pr-4">
@@ -608,7 +615,6 @@ export function TimesheetView({
             />
             <span className="truncate text-[12px] text-white">{row.label}</span>
           </div>
-          <span className="text-[11px] text-[var(--track-text-muted)]">{row.members}</span>
           {row.cells.map((seconds, index) => (
             <div className="flex justify-center" key={`${row.label}-${index}`}>
               <TimesheetCell seconds={seconds} />
@@ -619,7 +625,7 @@ export function TimesheetView({
           </span>
         </div>
       ))}
-      <div className="grid grid-cols-[minmax(280px,1fr)_88px_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3 text-[12px] text-[var(--track-text-muted)]">
+      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3 text-[12px] text-[var(--track-text-muted)]">
         <button
           className="flex items-center gap-2 text-left transition hover:text-white"
           type="button"
@@ -627,7 +633,6 @@ export function TimesheetView({
           <TrackingIcon className="size-3.5" name="plus" />
           <span>Add row</span>
         </button>
-        <span />
         {weekDays.map((_, index) => (
           <div className="flex justify-center" key={`placeholder-${index}`}>
             <TimesheetCell seconds={0} />
@@ -635,14 +640,16 @@ export function TimesheetView({
         ))}
         <span />
       </div>
-      <div className="grid grid-cols-[minmax(280px,1fr)_88px_repeat(7,55px)_72px] items-center py-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-        <button
-          className="w-fit rounded-md border border-[var(--track-border)] bg-[#171717] px-3 py-2 text-[11px] normal-case tracking-normal text-white transition hover:bg-[var(--track-row-hover)]"
-          type="button"
-        >
-          Copy last week
-        </button>
-        <span>Total</span>
+      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center py-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        <div className="flex items-center gap-4">
+          <button
+            className="w-fit rounded-md border border-[var(--track-border)] bg-[#171717] px-3 py-2 text-[11px] normal-case tracking-normal text-white transition hover:bg-[var(--track-row-hover)]"
+            type="button"
+          >
+            Copy last week
+          </button>
+          <span>Total</span>
+        </div>
         {totals.map((seconds, index) => (
           <span className="text-center text-white" key={`total-${index}`}>
             {seconds > 0 ? formatHours(seconds) : "-"}
@@ -686,21 +693,29 @@ function CalendarEventCard({
     >
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="relative z-10 flex h-full w-full flex-col text-left text-[11px] text-white"
+        className="relative z-10 flex h-full w-full items-start gap-1 text-left text-[11px] text-white"
         data-testid={`calendar-entry-move-${entryId}`}
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
-        <p className="truncate font-medium leading-tight">
-          {entry.description?.trim() || entry.project_name || "Entry"}
-        </p>
-        <div className="mt-auto flex items-center gap-1 text-[10px] text-white/70">
-          <span className="tabular-nums">{formatClockDuration(durationSeconds)}</span>
-          {entry.billable ? <span className="font-semibold">$</span> : null}
-          {entry.tags && entry.tags.length > 0 ? (
-            <TrackingIcon className="size-2.5" name="tags" />
-          ) : null}
-        </div>
+        <span className="truncate font-medium leading-tight">
+          {entry.description?.trim() || "(no description)"}
+        </span>
+        {entry.project_name ? (
+          <span className="shrink-0 leading-tight text-white/70">
+            {entry.project_name}
+            {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
+          </span>
+        ) : null}
+        <span className="shrink-0 tabular-nums leading-tight text-white/70">
+          {formatClockDuration(durationSeconds)}
+        </span>
+        {entry.billable ? (
+          <span className="shrink-0 font-semibold leading-tight text-white/70">$</span>
+        ) : null}
+        {entry.tags && entry.tags.length > 0 ? (
+          <span className="shrink-0 leading-tight text-white/70">{entry.tags[0]}</span>
+        ) : null}
       </button>
       <button
         aria-label={`Entry actions for ${entry.description?.trim() || entry.project_name || "time entry"}`}
