@@ -42,6 +42,7 @@ import {
   createWorkspaceFavorite,
   deleteWorkspaceProject,
   deleteWorkspaceTimeEntries,
+  patchTimeEntries,
   patchWorkspaceStopTimeEntryHandler,
   postWorkspaceProjectUsers,
   postPinnedProject,
@@ -1281,6 +1282,70 @@ export function useCreateTagMutation(workspaceId: number) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["tags", workspaceId],
+      });
+    },
+  });
+}
+
+export type BulkEditPatchOperation = {
+  op: "add" | "remove" | "replace";
+  path: string;
+  value: unknown;
+};
+
+export function useBulkEditTimeEntriesMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      operations,
+      timeEntryIds,
+    }: {
+      operations: BulkEditPatchOperation[];
+      timeEntryIds: number[];
+    }) =>
+      unwrapWebApiResult(
+        patchTimeEntries({
+          body: operations,
+          path: {
+            time_entry_ids: timeEntryIds.join(","),
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
+      });
+    },
+  });
+}
+
+export function useBulkDeleteTimeEntriesMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (timeEntryIds: number[]) => {
+      for (const timeEntryId of timeEntryIds) {
+        await unwrapWebApiResult(
+          deleteWorkspaceTimeEntries({
+            path: {
+              time_entry_id: timeEntryId,
+              workspace_id: workspaceId,
+            },
+          }),
+        );
+      }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["time-entries"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: currentTimeEntryQueryKey,
       });
     },
   });

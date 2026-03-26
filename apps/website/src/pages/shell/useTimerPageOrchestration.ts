@@ -16,6 +16,8 @@ import type {
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
+  useBulkDeleteTimeEntriesMutation,
+  useBulkEditTimeEntriesMutation,
   useCreateWorkspaceFavoriteMutation,
   useCreateProjectMutation,
   useCreateTagMutation,
@@ -30,6 +32,7 @@ import {
   useUpdateTimeEntryMutation,
   useUpdateWebSessionMutation,
 } from "../../shared/query/web-shell.ts";
+import type { BulkEditUpdates } from "../../features/tracking/BulkEditDialog.tsx";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import type { TimerInputMode, TimerViewMode } from "../../features/tracking/timer-view-mode.ts";
@@ -248,6 +251,10 @@ export interface TimerPageOrchestration {
   timerMutationPending: boolean;
   timerErrorMessage: string;
 
+  // Bulk action handlers
+  handleBulkEdit: (ids: number[], updates: BulkEditUpdates) => Promise<void>;
+  handleBulkDelete: (ids: number[]) => Promise<void>;
+
   // Handlers
   handleTimerAction: () => Promise<void>;
   handleRunningDescriptionCommit: () => Promise<void>;
@@ -422,6 +429,8 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
   const createTagMutation = useCreateTagMutation(selectedEntryWorkspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
+  const bulkEditMutation = useBulkEditTimeEntriesMutation(workspaceId);
+  const bulkDeleteMutation = useBulkDeleteTimeEntriesMutation(workspaceId);
 
   // Normalized data
   const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
@@ -1053,6 +1062,46 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     });
   }, [runningEntry]);
 
+  const handleBulkEdit = useCallback(
+    async (ids: number[], updates: BulkEditUpdates) => {
+      const operations: { op: "add" | "remove" | "replace"; path: string; value: unknown }[] = [];
+
+      if (updates.description != null) {
+        operations.push({ op: "replace", path: "/description", value: updates.description });
+      }
+      if (updates.projectId !== undefined) {
+        operations.push({
+          op: "replace",
+          path: "/project_id",
+          value: updates.projectId ?? 0,
+        });
+      }
+      if (updates.tagIds != null && updates.tagIds.length > 0) {
+        operations.push({ op: "add", path: "/tag_ids", value: updates.tagIds });
+      }
+      if (updates.removeExistingTags) {
+        operations.push({ op: "remove", path: "/tag_ids", value: [] });
+      }
+      if (updates.billable != null) {
+        operations.push({ op: "replace", path: "/billable", value: updates.billable });
+      }
+
+      if (operations.length === 0) {
+        return;
+      }
+
+      await bulkEditMutation.mutateAsync({ operations, timeEntryIds: ids });
+    },
+    [bulkEditMutation],
+  );
+
+  const handleBulkDelete = useCallback(
+    async (ids: number[]) => {
+      await bulkDeleteMutation.mutateAsync(ids);
+    },
+    [bulkDeleteMutation],
+  );
+
   const handleIdleDescriptionFocus = useCallback(() => {
     if (runningEntry?.id != null) {
       return;
@@ -1143,6 +1192,10 @@ export function useTimerPageOrchestration(): TimerPageOrchestration {
     // Mutation states
     timerMutationPending,
     timerErrorMessage,
+
+    // Bulk action handlers
+    handleBulkEdit,
+    handleBulkDelete,
 
     // Handlers
     handleTimerAction,

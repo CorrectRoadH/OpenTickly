@@ -222,12 +222,22 @@ export function SurfaceMessage({
 
 export function ListView({
   groups,
+  onBulkDelete,
+  onBulkEdit,
   onEditEntry,
+  projects,
+  tags,
   timezone,
+  workspaceName,
 }: {
   groups: EntryGroup[];
+  onBulkDelete?: (ids: number[]) => void;
+  onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
+  projects?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
+  tags?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
   timezone: string;
+  workspaceName?: string;
 }): ReactElement {
   const {
     clearSelection,
@@ -256,7 +266,18 @@ export function ListView({
       ) : null}
 
       {bulkEditOpen ? (
-        <BulkEditDialog count={selectedIds.size} onClose={() => setBulkEditOpen(false)} />
+        <BulkEditDialog
+          count={selectedIds.size}
+          onClose={() => setBulkEditOpen(false)}
+          onSave={(updates) => {
+            onBulkEdit?.([...selectedIds], updates);
+            setBulkEditOpen(false);
+            clearSelection();
+          }}
+          projects={projects ?? []}
+          tags={tags ?? []}
+          workspaceName={workspaceName ?? "Workspace"}
+        />
       ) : null}
 
       {deleteConfirmOpen ? (
@@ -264,6 +285,7 @@ export function ListView({
           count={selectedIds.size}
           onCancel={() => setDeleteConfirmOpen(false)}
           onConfirm={() => {
+            onBulkDelete?.([...selectedIds]);
             setDeleteConfirmOpen(false);
             clearSelection();
           }}

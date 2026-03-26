@@ -222,8 +222,27 @@ export function WorkspaceTimerPage(): ReactElement {
         orch.view === "list" ? (
           <ListView
             groups={orch.groupedEntries}
+            onBulkDelete={(ids) => {
+              void orch.handleBulkDelete(ids);
+            }}
+            onBulkEdit={(ids, updates) => {
+              void orch.handleBulkEdit(ids, updates);
+            }}
             onEditEntry={orch.handleEntryEdit}
+            projects={orch.projectOptions
+              .filter((project) => project.id != null)
+              .map((project) => ({
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColorValue(project),
+                id: project.id as number,
+                name: project.name ?? "Untitled project",
+              }))}
+            tags={orch.tagOptions}
             timezone={orch.timezone}
+            workspaceName={
+              orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+              "Workspace"
+            }
           />
         ) : null}
         {!orch.timeEntriesQuery.isPending &&
