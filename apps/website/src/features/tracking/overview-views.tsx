@@ -411,8 +411,8 @@ export function CalendarView({
               return (
                 <div className="flex w-full items-center gap-2 px-2 py-2">
                   <span
-                    className={`text-[22px] font-semibold leading-none ${
-                      isToday ? "text-[#e57bd9]" : "text-white"
+                    className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
+                      isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
                     }`}
                   >
                     {dayNum}
@@ -661,22 +661,20 @@ function CalendarEventCard({
     >
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="relative z-10 flex h-full w-full flex-col text-left text-white"
+        className="relative z-10 flex h-full w-full flex-col text-left text-[11px] text-white"
         data-testid={`calendar-entry-move-${entryId}`}
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
-        <p className="truncate font-semibold">
+        <p className="truncate font-medium leading-tight">
           {entry.description?.trim() || entry.project_name || "Entry"}
         </p>
-        <p className="mt-0.5 truncate" style={{ color }}>
-          {entry.project_name && entry.client_name
-            ? `${entry.project_name} • ${entry.client_name}`
-            : (entry.project_name ?? "(No project)")}
-        </p>
-        <div className="mt-0.5 flex items-center gap-1 text-white/72">
-          <span>{formatClockDuration(durationSeconds)}</span>
-          {entry.tags && entry.tags.length > 0 && <span className="truncate">{entry.tags[0]}</span>}
+        <div className="mt-auto flex items-center gap-1 text-[10px] text-white/70">
+          <span className="tabular-nums">{formatClockDuration(durationSeconds)}</span>
+          {entry.billable ? <span className="font-semibold">$</span> : null}
+          {entry.tags && entry.tags.length > 0 ? (
+            <TrackingIcon className="size-2.5" name="tags" />
+          ) : null}
         </div>
       </button>
       <button
