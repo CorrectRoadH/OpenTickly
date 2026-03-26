@@ -167,7 +167,7 @@ export function WorkspaceTimerPage(): ReactElement {
                 weekStartsOn={orch.beginningOfWeek}
               />
             )}
-            {orch.view !== "calendar" ? (
+            {orch.view === "list" ? (
               <SummaryStat
                 label="Today total"
                 value={
@@ -268,6 +268,30 @@ export function WorkspaceTimerPage(): ReactElement {
             onEditEntry={orch.handleEntryEdit}
             onFavoriteEntry={() => {
               // Pin as favorite is handled through the editor dialog
+            }}
+            onBillableToggle={(entry) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { billable: !entry.billable },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
+            }}
+            onSplitEntry={() => {
+              // Split is a complex feature — placeholder for now
+              window.alert("Split is not yet available.");
+            }}
+            onProjectChange={(entry, projectId) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { projectId },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
             }}
             projects={orch.projectOptions
               .filter((project) => project.id != null)

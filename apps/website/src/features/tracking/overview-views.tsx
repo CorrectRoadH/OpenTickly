@@ -29,6 +29,7 @@ import {
   DeleteConfirmDialog,
   useListSelection,
 } from "./list-bulk-actions.tsx";
+import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import { TrackingIcon } from "./tracking-icons.tsx";
 const withDragAndDrop =
@@ -286,6 +287,7 @@ export function SurfaceMessage({
 
 export function ListView({
   groups,
+  onBillableToggle,
   onBulkDelete,
   onBulkEdit,
   onContinueEntry,
@@ -293,12 +295,15 @@ export function ListView({
   onDuplicateEntry,
   onEditEntry,
   onFavoriteEntry,
+  onProjectChange,
+  onSplitEntry,
   projects,
   tags,
   timezone,
   workspaceName,
 }: {
   groups: EntryGroup[];
+  onBillableToggle?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onBulkDelete?: (ids: number[]) => void;
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
@@ -306,6 +311,11 @@ export function ListView({
   onDuplicateEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onFavoriteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onProjectChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number | null,
+  ) => void;
+  onSplitEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   projects?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
   tags?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
   timezone: string;
@@ -415,31 +425,39 @@ export function ListView({
                     }}
                     type="checkbox"
                   />
-                  <div
-                    className="flex min-w-0 cursor-pointer items-center gap-4"
-                    onClick={(event) =>
-                      onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
-                    }
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={`truncate font-medium ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
-                      >
-                        {entry.description?.trim() || "Add description"}
-                      </p>
-                    </div>
-                    {entry.project_name ? (
-                      <span
-                        className="flex shrink-0 items-center gap-1.5 text-[12px]"
-                        style={{ color: resolveEntryColor(entry) }}
-                      >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <div
+                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-4"
+                      onClick={(event) =>
+                        onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
+                      }
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className={`truncate font-medium ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+                        >
+                          {entry.description?.trim() || "Add description"}
+                        </p>
+                      </div>
+                      {entry.project_name ? (
                         <span
-                          className="size-1.5 shrink-0 rounded-full"
-                          style={{ backgroundColor: resolveEntryColor(entry) }}
-                        />
-                        <span className="max-w-[160px] truncate">{entry.project_name}</span>
-                      </span>
-                    ) : null}
+                          className="flex shrink-0 items-center gap-1.5 text-[12px]"
+                          style={{ color: resolveEntryColor(entry) }}
+                        >
+                          <span
+                            className="size-1.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: resolveEntryColor(entry) }}
+                          />
+                          <span className="max-w-[160px] truncate">{entry.project_name}</span>
+                        </span>
+                      ) : null}
+                    </div>
+                    <ListRowProjectPicker
+                      entry={entry}
+                      onProjectChange={onProjectChange}
+                      projects={projects ?? []}
+                      workspaceName={workspaceName ?? "Workspace"}
+                    />
                   </div>
                   <div className="flex shrink-0 items-center gap-2 pl-4">
                     {entry.tags && entry.tags.length > 0 ? (
@@ -469,9 +487,11 @@ export function ListView({
                     </button>
                     <ListRowMoreActions
                       entry={entry}
+                      onBillableToggle={onBillableToggle}
                       onDelete={onDeleteEntry}
                       onDuplicate={onDuplicateEntry}
                       onFavorite={onFavoriteEntry}
+                      onSplit={onSplitEntry}
                     />
                   </div>
                 </div>
@@ -486,14 +506,18 @@ export function ListView({
 
 function ListRowMoreActions({
   entry,
+  onBillableToggle,
   onDelete,
   onDuplicate,
   onFavorite,
+  onSplit,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  onBillableToggle?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDelete?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDuplicate?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onFavorite?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onSplit?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -523,12 +547,34 @@ function ListRowMoreActions({
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
             onClick={() => {
               setOpen(false);
+              onBillableToggle?.(entry);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            {entry.billable ? "Set as non-billable" : "Set as billable"}
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
               onDuplicate?.(entry);
             }}
             role="menuitem"
             type="button"
           >
             Duplicate
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              setOpen(false);
+              onSplit?.(entry);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Split
           </button>
           <button
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
@@ -566,6 +612,76 @@ function ListRowMoreActions({
           >
             Delete
           </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ListRowProjectPicker({
+  entry,
+  onProjectChange,
+  projects,
+  workspaceName,
+}: {
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  onProjectChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number | null,
+  ) => void;
+  projects: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
+  workspaceName: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const label = entry.description?.trim() || "time entry";
+
+  const filteredProjects = useMemo(
+    () =>
+      search.trim()
+        ? projects.filter(
+            (p) =>
+              p.name.toLowerCase().includes(search.toLowerCase()) ||
+              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
+          )
+        : projects,
+    [projects, search],
+  );
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-label={`Change project for ${label}`}
+        className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
+        onClick={() => {
+          setOpen((prev) => !prev);
+          setSearch("");
+        }}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <TrackingIcon className="size-3.5" name="projects" />
+      </button>
+      {open ? (
+        <div
+          className="absolute left-0 top-full z-50 mt-1 w-[280px]"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <ProjectPickerDropdown
+            filteredProjects={filteredProjects}
+            onSearch={setSearch}
+            onSelect={(projectId) => {
+              setOpen(false);
+              onProjectChange?.(entry, projectId);
+            }}
+            search={search}
+            workspaceName={workspaceName}
+          />
         </div>
       ) : null}
     </div>
