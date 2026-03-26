@@ -2,9 +2,18 @@ import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared
 import { isTrackHexColor, pickTrackColorFromSeed } from "../../shared/lib/project-colors.ts";
 
 export type EntryGroup = {
-  entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  entries: DisplayEntry[];
   key: string;
   totalSeconds: number;
+};
+
+export type DisplayEntry = GithubComTogglTogglApiInternalModelsTimeEntry & {
+  /** When collapsed, the number of individual entries in this group. */
+  _groupCount?: number;
+  /** The individual entry IDs that were collapsed into this row. */
+  _groupEntryIds?: number[];
+  /** The individual entries that were collapsed into this row. */
+  _groupEntries?: GithubComTogglTogglApiInternalModelsTimeEntry[];
 };
 
 export type ProjectSummary = {
@@ -256,10 +265,10 @@ export function formatEntryRange(
   const stop = entry.stop ? new Date(entry.stop) : undefined;
 
   if (!stop) {
-    return `${formatClockTime(start, timezone)} - running`;
+    return `${formatClockTime(start, timezone)} \u2013 running`;
   }
 
-  return `${formatClockTime(start, timezone)} - ${formatClockTime(stop, timezone)}`;
+  return `${formatClockTime(start, timezone)} \u2013 ${formatClockTime(stop, timezone)}`;
 }
 
 export function formatClockTime(date: Date, timezone: string): string {
@@ -295,6 +304,61 @@ export function formatHours(seconds: number): string {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   return `${hours}:${String(minutes).padStart(2, "0")}`;
+}
+
+/**
+ * Within each date group, collapses entries that share the same
+ * description + project_id + tag_ids into a single display row.
+ * The collapsed row carries the summed duration, a count badge,
+ * and the individual entry IDs for later expansion.
+ */
+export function collapseSimilarEntries(groups: EntryGroup[]): EntryGroup[] {
+  return groups.map((group) => {
+    const buckets = new Map<string, GithubComTogglTogglApiInternalModelsTimeEntry[]>();
+
+    for (const entry of group.entries) {
+      const key = buildSimilarityKey(entry);
+      const bucket = buckets.get(key);
+      if (bucket) {
+        bucket.push(entry);
+      } else {
+        buckets.set(key, [entry]);
+      }
+    }
+
+    const collapsedEntries: DisplayEntry[] = [];
+    for (const bucket of buckets.values()) {
+      if (bucket.length === 1) {
+        collapsedEntries.push(bucket[0]);
+        continue;
+      }
+      const totalDuration = bucket.reduce((sum, e) => sum + resolveEntryDurationSeconds(e), 0);
+      const representative: DisplayEntry = {
+        ...bucket[0],
+        duration: totalDuration,
+        _groupCount: bucket.length,
+        _groupEntryIds: bucket
+          .map((e) => e.id)
+          .filter((id): id is number => typeof id === "number"),
+        _groupEntries: bucket,
+      };
+      collapsedEntries.push(representative);
+    }
+
+    const totalSeconds = collapsedEntries.reduce(
+      (sum, e) => sum + resolveEntryDurationSeconds(e),
+      0,
+    );
+
+    return { ...group, entries: collapsedEntries, totalSeconds };
+  });
+}
+
+function buildSimilarityKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
+  const desc = (entry.description ?? "").trim().toLowerCase();
+  const projectId = entry.project_id ?? entry.pid ?? 0;
+  const tagIds = [...(entry.tag_ids ?? [])].sort((a, b) => a - b).join(",");
+  return `${desc}|${projectId}|${tagIds}`;
 }
 
 export function resolveEntryColor(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {

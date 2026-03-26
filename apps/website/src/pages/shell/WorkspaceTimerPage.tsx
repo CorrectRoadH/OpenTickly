@@ -1,5 +1,13 @@
 import type * as React from "react";
-import { type ChangeEvent, type ReactElement, useMemo, useRef, useState } from "react";
+import {
+  type ChangeEvent,
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import {
   CalendarSubviewSelect,
@@ -14,6 +22,7 @@ import {
 } from "../../features/tracking/overview-views.tsx";
 import { DisplaySettingsPopover } from "../../features/tracking/DisplaySettingsPopover.tsx";
 import { GoalsFavoritesSidebar } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
+import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
@@ -27,7 +36,47 @@ export function WorkspaceTimerPage(): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const orch = useTimerPageOrchestration({ showAllEntries });
+
+  const handleGlobalKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        (target instanceof HTMLElement && target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === "?") {
+        event.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+        return;
+      }
+
+      if (event.key === "n") {
+        event.preventDefault();
+        orch.timerDescriptionInputRef.current?.focus();
+        return;
+      }
+
+      if (event.key === "s" && orch.runningEntry?.id != null) {
+        event.preventDefault();
+        void orch.handleTimerAction();
+      }
+    },
+    [orch.runningEntry, orch.handleTimerAction, orch.timerDescriptionInputRef],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, [handleGlobalKeyDown]);
 
   return (
     <div
@@ -480,6 +529,7 @@ export function WorkspaceTimerPage(): ReactElement {
         </div>
         {sidebarOpen ? <GoalsFavoritesSidebar /> : null}
       </div>
+      {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
       {orch.composerSuggestionsAnchor ? (
         <TimerComposerSuggestionsDialog
           anchor={orch.composerSuggestionsAnchor}

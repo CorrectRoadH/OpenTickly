@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildEntryGroups,
   buildTimesheetRows,
+  collapseSimilarEntries,
   formatDateKey,
   getCalendarHours,
   resolveEntryColor,
@@ -25,6 +26,7 @@ import {
   useCreateTimeEntryMutation,
   useCurrentTimeEntryQuery,
   useDeleteTimeEntryMutation,
+  usePreferencesQuery,
   useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
@@ -400,6 +402,10 @@ export function useTimerPageOrchestration(options?: {
     [weekDays],
   );
 
+  // Preferences
+  const preferencesQuery = usePreferencesQuery();
+  const collapseTimeEntries = preferencesQuery.data?.collapseTimeEntries ?? true;
+
   // Queries — list view fetches all entries (no date range), other views use the selected week
   const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? {} : { ...weekRange });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
@@ -576,10 +582,10 @@ export function useTimerPageOrchestration(options?: {
     }, 0);
   }, [weekDays, visibleEntries, timezone]);
 
-  const groupedEntries = useMemo(
-    () => buildEntryGroups(visibleEntries, timezone),
-    [visibleEntries, timezone],
-  );
+  const groupedEntries = useMemo(() => {
+    const groups = buildEntryGroups(visibleEntries, timezone);
+    return collapseTimeEntries ? collapseSimilarEntries(groups) : groups;
+  }, [visibleEntries, timezone, collapseTimeEntries]);
 
   const trackStrip = useMemo(
     () => summarizeProjects(visibleEntries).slice(0, 12),

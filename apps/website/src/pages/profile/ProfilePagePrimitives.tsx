@@ -11,15 +11,17 @@ export function PreferenceCard({
   action,
   children,
   description,
+  id,
   title,
 }: {
   action?: ReactElement;
   children: ReactNode;
   description?: string;
+  id?: string;
   title: string;
 }): ReactElement {
   return (
-    <section className={sectionCardClassName}>
+    <section className={sectionCardClassName} id={id}>
       <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-[18px]">
         <div>
           <h2 className="text-[14px] font-semibold leading-[22.96px] text-white">{title}</h2>

@@ -89,7 +89,11 @@ export function TimerPageSection(props: {
   ) => void;
 }): ReactElement {
   return (
-    <PreferenceCard description="Define your preferences for a better workflow" title="Timer page">
+    <PreferenceCard
+      description="Define your preferences for a better workflow"
+      id="timer-page"
+      title="Timer page"
+    >
       <div className="px-5 py-[15px]">
         <div className="w-full max-w-[500px]">
           {figmaTimerPreferences.map((item) => (
@@ -152,6 +156,7 @@ export function TimeAndDateSection(props: {
   return (
     <PreferenceCard
       description="Choose how your times are shown across Toggl Track"
+      id="time-and-date"
       title="Time and date"
     >
       <div className="flex flex-wrap gap-0 px-0 py-5">
@@ -204,7 +209,7 @@ export function KeyboardShortcutsSection(props: {
   ) => void;
 }): ReactElement {
   return (
-    <PreferenceCard title="Keyboard shortcuts">
+    <PreferenceCard id="shortcuts" title="Keyboard shortcuts">
       <div className="grid gap-0 px-0 py-[15px] md:grid-cols-[500px_minmax(0,1fr)]">
         <div className="px-5">
           <CheckboxRow

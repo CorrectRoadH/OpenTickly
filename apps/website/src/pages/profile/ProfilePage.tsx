@@ -210,6 +210,13 @@ export function ProfilePage(): ReactElement {
     );
   };
 
+  useEffect(() => {
+    if (window.location.hash) {
+      const el = document.getElementById(window.location.hash.slice(1));
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
   return (
     <div className="space-y-4 pb-6" data-testid="profile-page">
       <section className="sticky top-0 z-10 bg-[var(--track-surface)]">

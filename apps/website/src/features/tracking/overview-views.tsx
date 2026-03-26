@@ -20,6 +20,7 @@ import {
   resolveEntryColor,
   resolveEntryDurationSeconds,
   sumForDate,
+  type DisplayEntry,
   type EntryGroup,
   type TimesheetRow,
 } from "./overview-data.ts";
@@ -341,6 +342,7 @@ export function ListView({
   } = useListSelection(groups);
   const [bulkEditOpen, setBulkEditOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set());
 
   if (groups.length === 0) {
     return <SurfaceMessage message="No time entries in this workspace yet." />;
@@ -415,97 +417,144 @@ export function ListView({
               <span />
             </div>
             {group.entries.map((entry) => {
-              const entryId = entry.id;
-              const isSelected = typeof entryId === "number" && selectedIds.has(entryId);
-              return (
-                <div
-                  key={String(entry.id ?? `${entry.start}-${entry.description}`)}
-                  className={`group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-3 text-[13px] text-white hover:bg-[var(--track-row-hover)] ${
-                    isSelected ? "bg-[var(--track-row-hover)]" : ""
-                  }`}
-                >
-                  <input
-                    aria-label={`Select ${entry.description?.trim() || "time entry"}`}
-                    checked={isSelected}
-                    className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
-                      isSelected ? "border-[#e57bd9] bg-[#e57bd9]" : "border-[var(--track-border)]"
+              const displayEntry = entry as DisplayEntry;
+              const groupCount = displayEntry._groupCount ?? 0;
+              const groupKey = `${group.key}-${entry.id}-${entry.description}`;
+              const isExpanded = expandedGroupKeys.has(groupKey);
+              const entriesToRender =
+                groupCount > 1 && isExpanded ? (displayEntry._groupEntries ?? [entry]) : [entry];
+
+              return entriesToRender.map((renderEntry, subIdx) => {
+                const entryId = renderEntry.id;
+                const isSelected = typeof entryId === "number" && selectedIds.has(entryId);
+                const isCollapsedRow = groupCount > 1 && !isExpanded && subIdx === 0;
+                return (
+                  <div
+                    key={String(
+                      renderEntry.id ?? `${renderEntry.start}-${renderEntry.description}-${subIdx}`,
+                    )}
+                    className={`group grid grid-cols-[28px_minmax(0,1fr)_auto] items-center border-b border-[var(--track-border)]/30 px-6 py-3 text-[13px] text-white hover:bg-[var(--track-row-hover)] ${
+                      isSelected ? "bg-[var(--track-row-hover)]" : ""
                     }`}
-                    onChange={() => {
-                      if (typeof entryId === "number") toggleEntry(entryId);
-                    }}
-                    type="checkbox"
-                  />
-                  <div className="flex min-w-0 items-center gap-2">
-                    <div
-                      className="flex min-w-0 flex-1 cursor-pointer items-center gap-4"
-                      onClick={(event) =>
-                        onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())
-                      }
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className={`truncate font-medium ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+                  >
+                    <input
+                      aria-label={`Select ${renderEntry.description?.trim() || "time entry"}`}
+                      checked={isSelected}
+                      className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
+                        isSelected
+                          ? "border-[#e57bd9] bg-[#e57bd9]"
+                          : "border-[var(--track-border)]"
+                      }`}
+                      onChange={() => {
+                        if (typeof entryId === "number") toggleEntry(entryId);
+                      }}
+                      type="checkbox"
+                    />
+                    <div className="flex min-w-0 items-center gap-2">
+                      {isCollapsedRow ? (
+                        <button
+                          aria-label={`Expand ${groupCount} similar entries`}
+                          className="flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[#666] hover:text-white"
+                          onClick={() => {
+                            setExpandedGroupKeys((prev) => {
+                              const next = new Set(prev);
+                              next.add(groupKey);
+                              return next;
+                            });
+                          }}
+                          type="button"
                         >
-                          {entry.description?.trim() || "Add description"}
-                        </p>
-                      </div>
-                      {entry.project_name ? (
-                        <span
-                          className="flex shrink-0 items-center gap-1.5 text-[12px]"
-                          style={{ color: resolveEntryColor(entry) }}
+                          {groupCount}
+                        </button>
+                      ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
+                        <button
+                          aria-label="Collapse similar entries"
+                          className="flex size-6 shrink-0 items-center justify-center rounded-md border border-[#e57bd9] text-[11px] font-semibold tabular-nums text-[#e57bd9] hover:bg-[#e57bd9]/10"
+                          onClick={() => {
+                            setExpandedGroupKeys((prev) => {
+                              const next = new Set(prev);
+                              next.delete(groupKey);
+                              return next;
+                            });
+                          }}
+                          type="button"
                         >
+                          {groupCount}
+                        </button>
+                      ) : null}
+                      <div
+                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-4"
+                        onClick={(event) =>
+                          onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
+                        }
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className={`truncate font-medium ${renderEntry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+                          >
+                            {renderEntry.description?.trim() || "Add description"}
+                          </p>
+                        </div>
+                        {renderEntry.project_name ? (
                           <span
-                            className="size-1.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: resolveEntryColor(entry) }}
-                          />
-                          <span className="max-w-[160px] truncate">{entry.project_name}</span>
+                            className="flex shrink-0 items-center gap-1.5 text-[12px]"
+                            style={{ color: resolveEntryColor(renderEntry) }}
+                          >
+                            <span
+                              className="size-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: resolveEntryColor(renderEntry) }}
+                            />
+                            <span className="max-w-[160px] truncate">
+                              {renderEntry.project_name}
+                            </span>
+                          </span>
+                        ) : null}
+                      </div>
+                      <ListRowProjectPicker
+                        entry={renderEntry}
+                        onProjectChange={onProjectChange}
+                        projects={projects ?? []}
+                        workspaceName={workspaceName ?? "Workspace"}
+                      />
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2 pl-4">
+                      {renderEntry.tags && renderEntry.tags.length > 0 ? (
+                        <TrackingIcon
+                          className="size-3.5 text-[var(--track-text-muted)]"
+                          name="tags"
+                        />
+                      ) : null}
+                      {renderEntry.billable ? (
+                        <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
+                          $
                         </span>
                       ) : null}
-                    </div>
-                    <ListRowProjectPicker
-                      entry={entry}
-                      onProjectChange={onProjectChange}
-                      projects={projects ?? []}
-                      workspaceName={workspaceName ?? "Workspace"}
-                    />
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 pl-4">
-                    {entry.tags && entry.tags.length > 0 ? (
-                      <TrackingIcon
-                        className="size-3.5 text-[var(--track-text-muted)]"
-                        name="tags"
-                      />
-                    ) : null}
-                    {entry.billable ? (
-                      <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
-                        $
+                      <span className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)]">
+                        {formatEntryRange(renderEntry, timezone)}
                       </span>
-                    ) : null}
-                    <span className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)]">
-                      {formatEntryRange(entry, timezone)}
-                    </span>
-                    <span className="w-[72px] text-right text-[13px] font-normal tabular-nums">
-                      {formatClockDuration(resolveEntryDurationSeconds(entry))}
-                    </span>
-                    <button
-                      aria-label={`Continue ${entry.description?.trim() || "time entry"}`}
-                      className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-                      onClick={() => onContinueEntry?.(entry)}
-                      type="button"
-                    >
-                      <TrackingIcon className="size-3" name="play" />
-                    </button>
-                    <ListRowMoreActions
-                      entry={entry}
-                      onBillableToggle={onBillableToggle}
-                      onDelete={onDeleteEntry}
-                      onDuplicate={onDuplicateEntry}
-                      onFavorite={onFavoriteEntry}
-                      onSplit={onSplitEntry}
-                    />
+                      <span className="w-[72px] text-right text-[13px] font-normal tabular-nums">
+                        {formatClockDuration(resolveEntryDurationSeconds(renderEntry))}
+                      </span>
+                      <button
+                        aria-label={`Continue ${renderEntry.description?.trim() || "time entry"}`}
+                        className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                        onClick={() => onContinueEntry?.(renderEntry)}
+                        type="button"
+                      >
+                        <TrackingIcon className="size-3" name="play" />
+                      </button>
+                      <ListRowMoreActions
+                        entry={renderEntry}
+                        onBillableToggle={onBillableToggle}
+                        onDelete={onDeleteEntry}
+                        onDuplicate={onDuplicateEntry}
+                        onFavorite={onFavoriteEntry}
+                        onSplit={onSplitEntry}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
+                );
+              });
             })}
           </section>
         );
