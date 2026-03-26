@@ -726,7 +726,7 @@ export function CalendarView({
   const calendarLocalizer = useMemo(() => buildCalendarLocalizer(weekStartsOn), [weekStartsOn]);
   const calendarDate = useMemo(() => {
     if (subview === "day" && selectedSubviewDateIso) {
-      return new Date(`${selectedSubviewDateIso}T00:00:00Z`);
+      return new Date(`${selectedSubviewDateIso}T00:00:00`);
     }
     return weekDays[0] ?? now;
   }, [now, selectedSubviewDateIso, subview, weekDays]);
@@ -1124,7 +1124,10 @@ function CalendarEventCard({
 }
 
 function formatDateIso(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatDayTotal(totalSeconds: number): string {

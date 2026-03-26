@@ -194,6 +194,23 @@ export function TimeEntryEditorDialog({
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
+        // If a nested picker/menu is open, close it instead of triggering discard
+        if (picker != null) {
+          setPicker(null);
+          return;
+        }
+        if (timePicker != null) {
+          setTimePicker(null);
+          return;
+        }
+        if (actionsMenuOpen) {
+          setActionsMenuOpen(false);
+          return;
+        }
+        if (descriptionSuggestionsOpen) {
+          setDescriptionSuggestionsOpen(false);
+          return;
+        }
         if (showDiscardConfirmation) {
           setShowDiscardConfirmation(false);
           return;
@@ -210,7 +227,15 @@ export function TimeEntryEditorDialog({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose, isDirty, showDiscardConfirmation]);
+  }, [
+    onClose,
+    isDirty,
+    showDiscardConfirmation,
+    picker,
+    timePicker,
+    actionsMenuOpen,
+    descriptionSuggestionsOpen,
+  ]);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
