@@ -57,6 +57,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const [memberRole, setMemberRole] = useState<"manager" | "regular">("regular");
   const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [projectEditorError, setProjectEditorError] = useState<string | null>(null);
   const projectsQuery = useProjectsQuery(workspaceId, statusFilter);
   const workspaceUsersQuery = useWorkspaceUsersQuery(workspaceId);
   const createProjectMutation = useCreateProjectMutation(workspaceId);
@@ -125,6 +126,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setProjectTemplate(false);
     setMemberRole("regular");
     setSelectedMemberIds([]);
+    setProjectEditorError(null);
   }
 
   function openEditDialog(project: GithubComTogglTogglApiInternalModelsProject) {
@@ -148,40 +150,44 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       return;
     }
 
-    const project =
-      editorMode === "edit" && editorProject?.id != null
-        ? await updateProjectMutation.mutateAsync({
-            color: projectColor,
-            isPrivate: projectPrivate,
-            name: trimmedName,
-            projectId: editorProject.id,
-            template: projectTemplate,
-          })
-        : await createProjectMutation.mutateAsync({
-            color: projectColor,
-            isPrivate: projectPrivate,
-            name: trimmedName,
-            template: projectTemplate,
+    try {
+      const project =
+        editorMode === "edit" && editorProject?.id != null
+          ? await updateProjectMutation.mutateAsync({
+              color: projectColor,
+              isPrivate: projectPrivate,
+              name: trimmedName,
+              projectId: editorProject.id,
+              template: projectTemplate,
+            })
+          : await createProjectMutation.mutateAsync({
+              color: projectColor,
+              isPrivate: projectPrivate,
+              name: trimmedName,
+              template: projectTemplate,
+            });
+
+      const projectId = project.id ?? editorProject?.id;
+      if (projectId != null) {
+        const pendingMemberIds = selectedMemberIds.filter(
+          (memberId) => !existingProjectMemberIds.includes(memberId),
+        );
+        for (const memberId of pendingMemberIds) {
+          await addProjectMemberMutation.mutateAsync({
+            isManager: memberRole === "manager",
+            projectId,
+            userId: memberId,
           });
-
-    const projectId = project.id ?? editorProject?.id;
-    if (projectId != null) {
-      const pendingMemberIds = selectedMemberIds.filter(
-        (memberId) => !existingProjectMemberIds.includes(memberId),
-      );
-      for (const memberId of pendingMemberIds) {
-        await addProjectMemberMutation.mutateAsync({
-          isManager: memberRole === "manager",
-          projectId,
-          userId: memberId,
-        });
+        }
       }
-    }
 
-    closeEditor();
-    setStatusMessage(editorMode === "edit" ? "Project updated" : "Project created");
-    if (statusFilter !== "all") {
-      await navigateToStatus("all");
+      closeEditor();
+      setStatusMessage(editorMode === "edit" ? "Project updated" : "Project created");
+      if (statusFilter !== "all") {
+        await navigateToStatus("all");
+      }
+    } catch {
+      setProjectEditorError("Project name already exists");
     }
   }
 
@@ -405,15 +411,22 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       {editorMode ? (
         <ProjectEditorDialog
           color={projectColor}
+          error={projectEditorError}
           isPending={mutationPending}
           isPrivate={projectPrivate}
           memberRole={memberRole}
           members={workspaceMembers}
           name={projectName}
-          onClose={closeEditor}
+          onClose={() => {
+            closeEditor();
+            setProjectEditorError(null);
+          }}
           onColorChange={setProjectColor}
           onMemberRoleChange={setMemberRole}
-          onNameChange={setProjectName}
+          onNameChange={(value) => {
+            setProjectName(value);
+            setProjectEditorError(null);
+          }}
           onPrivacyChange={setProjectPrivate}
           onSubmit={() => {
             void handleSubmitProject();

@@ -870,6 +870,7 @@ export function useTimerPageOrchestration(options?: {
       closeSelectedEntryEditor();
     } catch (error) {
       setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+      throw error;
     }
   }, [selectedEntry, deleteTimeEntryMutation, closeSelectedEntryEditor]);
 

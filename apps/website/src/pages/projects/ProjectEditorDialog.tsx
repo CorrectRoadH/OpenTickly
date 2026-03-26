@@ -17,6 +17,7 @@ export type ProjectEditorMember = {
 
 type ProjectEditorDialogProps = {
   color: string;
+  error?: string | null;
   isPending?: boolean;
   isPrivate: boolean;
   memberRole: "manager" | "regular";
@@ -38,6 +39,7 @@ type ProjectEditorDialogProps = {
 
 export function ProjectEditorDialog({
   color,
+  error,
   isPending = false,
   isPrivate,
   memberRole,
@@ -128,12 +130,16 @@ export function ProjectEditorDialog({
             </span>
             <input
               aria-label="Project name"
-              className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className={`h-11 w-full rounded-md border bg-[#262628] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)] ${
+                error ? "border-rose-400" : "border-[var(--track-border)]"
+              }`}
               onChange={(event) => onNameChange(event.target.value)}
               placeholder="Project name"
               value={name}
             />
-            {!trimmedName ? (
+            {error ? (
+              <span className="mt-2 block text-[12px] text-rose-400">{error}</span>
+            ) : !trimmedName ? (
               <span className="mt-2 block text-[12px] text-[#ff9f8f]">
                 Please enter a Project name
               </span>

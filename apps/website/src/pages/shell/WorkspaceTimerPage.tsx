@@ -32,12 +32,63 @@ import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
+type DeletedEntrySnapshot = {
+  billable: boolean;
+  description: string;
+  duration: number;
+  projectId: number | null;
+  start: string;
+  stop: string;
+  tagIds: number[];
+  taskId: number | null;
+};
+
 export function WorkspaceTimerPage(): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
+  const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orch = useTimerPageOrchestration({ showAllEntries });
+
+  const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
+    if (deleteToastTimerRef.current) {
+      clearTimeout(deleteToastTimerRef.current);
+    }
+    setDeleteToast(snapshot);
+    deleteToastTimerRef.current = setTimeout(() => {
+      setDeleteToast(null);
+      deleteToastTimerRef.current = null;
+    }, 5000);
+  }, []);
+
+  const handleUndoDelete = useCallback(() => {
+    if (!deleteToast) return;
+    if (deleteToastTimerRef.current) {
+      clearTimeout(deleteToastTimerRef.current);
+      deleteToastTimerRef.current = null;
+    }
+    void orch.createTimeEntryMutation.mutateAsync({
+      billable: deleteToast.billable,
+      description: deleteToast.description,
+      duration: deleteToast.duration,
+      projectId: deleteToast.projectId,
+      start: deleteToast.start,
+      stop: deleteToast.stop,
+      tagIds: deleteToast.tagIds,
+      taskId: deleteToast.taskId,
+    });
+    setDeleteToast(null);
+  }, [deleteToast, orch.createTimeEntryMutation]);
+
+  useEffect(() => {
+    return () => {
+      if (deleteToastTimerRef.current) {
+        clearTimeout(deleteToastTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleGlobalKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -131,6 +182,9 @@ export function WorkspaceTimerPage(): ReactElement {
           />
           <TimerBarTagPicker
             draftTagIds={orch.draftTagIds}
+            onCreateTag={async (name) => {
+              await orch.createTagMutation.mutateAsync(name);
+            }}
             onTagToggle={(tagId) => {
               orch.setDraftTagIds(
                 orch.draftTagIds.includes(tagId)
@@ -340,10 +394,15 @@ export function WorkspaceTimerPage(): ReactElement {
               onDeleteEntry={(entry) => {
                 const wid = entry.workspace_id ?? entry.wid;
                 if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.deleteTimeEntryMutation.mutateAsync({
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
+                  const snapshot = snapshotEntryForUndo(entry);
+                  void orch.deleteTimeEntryMutation
+                    .mutateAsync({
+                      timeEntryId: entry.id,
+                      workspaceId: wid,
+                    })
+                    .then(() => {
+                      if (snapshot) showDeleteToast(snapshot);
+                    });
                 }
               }}
               onDuplicateEntry={(entry) => {
@@ -465,7 +524,17 @@ export function WorkspaceTimerPage(): ReactElement {
                 void orch.handleSelectedEntryDuplicate();
               }}
               onDelete={() => {
-                void orch.handleSelectedEntryDelete();
+                const snapshot = orch.selectedEntry
+                  ? snapshotEntryForUndo(orch.selectedEntry)
+                  : null;
+                void orch
+                  .handleSelectedEntryDelete()
+                  .then(() => {
+                    if (snapshot) showDeleteToast(snapshot);
+                  })
+                  .catch(() => {
+                    // Error is already displayed in the editor via selectedEntryError
+                  });
               }}
               onDescriptionChange={orch.setSelectedDescription}
               onFavorite={() => {
@@ -558,8 +627,48 @@ export function WorkspaceTimerPage(): ReactElement {
           }))}
         />
       ) : null}
+      {deleteToast ? (
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+          <span className="text-[14px] text-white">Time entry deleted</span>
+          <button
+            className="text-[14px] font-semibold text-[#e57bd9] transition hover:text-[#f09de6]"
+            onClick={handleUndoDelete}
+            type="button"
+          >
+            Undo
+          </button>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function snapshotEntryForUndo(entry: {
+  billable?: boolean | null;
+  description?: string | null;
+  duration?: number | null;
+  project_id?: number | null;
+  pid?: number | null;
+  start?: string | null;
+  stop?: string | null;
+  tag_ids?: number[] | null;
+  task_id?: number | null;
+  tid?: number | null;
+}): DeletedEntrySnapshot | null {
+  if (!entry.start || !entry.stop) return null;
+  const durationSec = Math.round(
+    (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+  );
+  return {
+    billable: entry.billable ?? false,
+    description: (entry.description ?? "").trim(),
+    duration: durationSec,
+    projectId: entry.project_id ?? entry.pid ?? null,
+    start: entry.start,
+    stop: entry.stop,
+    tagIds: entry.tag_ids ?? [],
+    taskId: entry.task_id ?? entry.tid ?? null,
+  };
 }
 
 function TimerBarProjectPicker({
@@ -685,15 +794,18 @@ function TimerBarProjectPicker({
 
 function TimerBarTagPicker({
   draftTagIds,
+  onCreateTag,
   onTagToggle,
   runningEntry,
   tagOptions,
 }: {
   draftTagIds: number[];
+  onCreateTag?: (name: string) => Promise<unknown>;
   onTagToggle: (tagId: number) => void;
   runningEntry: { id?: number | null; tag_ids?: number[] | null } | null;
   tagOptions: { id: number; name: string }[];
 }): ReactElement {
+  const [isCreating, setIsCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -765,11 +877,9 @@ function TimerBarTagPicker({
               value={search}
             />
           </div>
-          {filteredTags.length === 0 ? (
-            <div className="px-3 py-2 text-[13px] text-[#999]">
-              {tagOptions.length === 0 ? "No tags available" : "No matching tags"}
-            </div>
-          ) : (
+          {filteredTags.length === 0 && !search.trim() ? (
+            <div className="px-3 py-2 text-[13px] text-[#999]">No tags available</div>
+          ) : filteredTags.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
               {filteredTags.map((tag) => {
                 const isSelected = draftTagIds.includes(tag.id);
@@ -796,7 +906,31 @@ function TimerBarTagPicker({
                 );
               })}
             </div>
-          )}
+          ) : null}
+          {search.trim() &&
+          onCreateTag &&
+          !tagOptions.some((t) => t.name.toLowerCase() === search.trim().toLowerCase()) ? (
+            <button
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#e57bd9] transition hover:bg-white/5 disabled:opacity-60"
+              disabled={isCreating}
+              onClick={() => {
+                const trimmed = search.trim();
+                setIsCreating(true);
+                void onCreateTag(trimmed)
+                  .then((result) => {
+                    const newTag = result as { id?: number } | undefined;
+                    if (typeof newTag?.id === "number") {
+                      onTagToggle(newTag.id);
+                    }
+                    setSearch("");
+                  })
+                  .finally(() => setIsCreating(false));
+              }}
+              type="button"
+            >
+              {isCreating ? "Creating..." : `Create tag \u201c${search.trim()}\u201d`}
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

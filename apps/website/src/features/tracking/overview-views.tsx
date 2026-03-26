@@ -1033,10 +1033,6 @@ export function TimesheetView({
   );
   const weekTotal = rows.reduce((sum, row) => sum + row.totalSeconds, 0);
 
-  if (rows.length === 0) {
-    return <SurfaceMessage message="No week data available for this workspace." />;
-  }
-
   return (
     <div className="border-t border-[var(--track-border)] px-4" data-testid="timer-timesheet-view">
       <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
