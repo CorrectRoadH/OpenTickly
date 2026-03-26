@@ -59,7 +59,8 @@ export function WorkspaceTimerPage(): ReactElement {
             />
           </div>
           <button
-            className="flex h-[30px] min-w-0 max-w-[220px] shrink items-center gap-2 rounded-md px-3 text-[12px] text-white"
+            aria-label={`Add a project${orch.displayProject !== "No project" ? `: ${orch.displayProject}` : ""}`}
+            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
             onClick={() => {
               if (orch.runningEntry?.id == null) {
                 orch.handleIdleDescriptionFocus();
@@ -67,14 +68,11 @@ export function WorkspaceTimerPage(): ReactElement {
             }}
             type="button"
           >
-            <span
-              className="size-2 shrink-0 rounded-full"
-              style={{ backgroundColor: orch.displayColor }}
-            />
-            <span className="min-w-0 truncate">{orch.displayProject}</span>
+            <TrackingIcon className="size-4" name="grid" />
           </button>
           <button
-            className="flex h-9 min-w-[36px] max-w-[220px] items-center justify-center gap-2 rounded-md px-3 text-[12px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            aria-label="Select tags"
+            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
             onClick={() => {
               if (orch.runningEntry?.id == null) {
                 orch.handleIdleDescriptionFocus();
@@ -82,15 +80,15 @@ export function WorkspaceTimerPage(): ReactElement {
             }}
             type="button"
           >
-            <TrackingIcon className="size-4 shrink-0" name="tags" />
-            {orch.draftTags.length > 0 ? (
-              <span className="min-w-0 truncate text-white">
-                {orch.draftTags[0]?.name}
-                {orch.draftTags.length > 1 ? ` +${orch.draftTags.length - 1}` : ""}
-              </span>
-            ) : null}
+            <TrackingIcon className="size-4" name="tags" />
           </button>
-          <ChromeIconButton icon="subscription" />
+          <button
+            aria-label="Billable"
+            className="flex size-9 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            type="button"
+          >
+            <span className="text-[16px] font-semibold">$</span>
+          </button>
           <div className="ml-auto flex shrink-0 items-center gap-3">
             <span
               className="text-[29px] font-medium tabular-nums text-white"
@@ -98,11 +96,11 @@ export function WorkspaceTimerPage(): ReactElement {
             >
               {orch.runningDurationSeconds > 0
                 ? formatClockDuration(orch.runningDurationSeconds)
-                : "00:00:00"}
+                : "0:00:00"}
             </span>
             <button
               aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-              className="flex size-[42px] items-center justify-center rounded-full bg-[#ff7a66] text-black shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+              className="flex size-[42px] items-center justify-center rounded-full bg-[#e57bd9] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
               data-icon={orch.runningEntry ? "stop" : "play"}
               data-testid="timer-action-button"
               disabled={orch.timerMutationPending}
@@ -334,7 +332,7 @@ function formatClockDuration(totalSeconds: number): string {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function resolveTimeEntryProjectId(entry: {
