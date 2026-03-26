@@ -10,6 +10,7 @@ const mockUseCurrentTimeEntryQuery = vi.fn();
 const mockUseCreateTagMutation = vi.fn();
 const mockUseCreateProjectMutation = vi.fn();
 const mockUseCreateTimeEntryMutation = vi.fn();
+const mockUseCreateWorkspaceFavoriteMutation = vi.fn();
 const mockUseDeleteTimeEntryMutation = vi.fn();
 const mockUseProjectsQuery = vi.fn();
 const mockUseStartTimeEntryMutation = vi.fn();
@@ -29,6 +30,7 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useCreateTagMutation: () => mockUseCreateTagMutation(),
   useCreateProjectMutation: () => mockUseCreateProjectMutation(),
   useCreateTimeEntryMutation: () => mockUseCreateTimeEntryMutation(),
+  useCreateWorkspaceFavoriteMutation: () => mockUseCreateWorkspaceFavoriteMutation(),
   useDeleteTimeEntryMutation: () => mockUseDeleteTimeEntryMutation(),
   useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
   useStartTimeEntryMutation: () => mockUseStartTimeEntryMutation(),
@@ -74,6 +76,10 @@ describe("WorkspaceTimerPage", () => {
       mutateAsync: vi.fn(),
     });
     mockUseCreateTagMutation.mockReturnValue({
+      isPending: false,
+      mutateAsync: vi.fn(),
+    });
+    mockUseCreateWorkspaceFavoriteMutation.mockReturnValue({
       isPending: false,
       mutateAsync: vi.fn(),
     });
@@ -584,6 +590,60 @@ describe("WorkspaceTimerPage", () => {
         workspaceId: 202,
       });
       expect(screen.queryByTestId("time-entry-editor-dialog")).toBeNull();
+    });
+  });
+
+  it("continues a stopped entry with its saved metadata", async () => {
+    const startTimeEntry = vi.fn().mockResolvedValue({
+      ...createTimeEntryFixture(),
+      duration: -1,
+      id: 555,
+      stop: undefined,
+    });
+    const historicalEntry = createTimeEntryFixture({
+      billable: true,
+      description: "Continue me",
+      id: 403,
+      project_id: 44,
+      start: "2026-03-23T10:00:00Z",
+      stop: "2026-03-23T10:30:00Z",
+      tag_ids: [7, 8],
+      task_id: 55,
+    });
+
+    mockUseCurrentTimeEntryQuery.mockReturnValue({
+      data: null,
+    });
+    mockUseStartTimeEntryMutation.mockReturnValue({
+      error: null,
+      isPending: false,
+      mutateAsync: startTimeEntry,
+    });
+    mockUseTimeEntriesQuery.mockReturnValue({
+      data: [historicalEntry],
+      error: null,
+      isError: false,
+      isPending: false,
+    });
+
+    render(<WorkspaceTimerPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Continue me" }));
+    fireEvent.click(
+      within(screen.getByTestId("time-entry-editor-dialog")).getByRole("button", {
+        name: "Continue Time Entry",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(startTimeEntry).toHaveBeenCalledWith({
+        billable: true,
+        description: "Continue me",
+        projectId: 44,
+        start: expect.any(String),
+        tagIds: [7, 8],
+        taskId: 55,
+      });
     });
   });
 

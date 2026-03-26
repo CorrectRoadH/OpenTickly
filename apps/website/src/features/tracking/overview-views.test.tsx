@@ -18,7 +18,6 @@ describe("CalendarView", () => {
             stop: undefined,
           }),
         ]}
-        hours={[9]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         timezone="UTC"
         weekDays={buildWeek("2026-03-23T00:00:00Z")}
@@ -40,7 +39,6 @@ describe("CalendarView", () => {
     render(
       <CalendarView
         entries={[]}
-        hours={[10]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         timezone="UTC"
         weekDays={buildWeek("2026-03-23T00:00:00Z")}
@@ -69,7 +67,6 @@ describe("CalendarView", () => {
             tags: ["Test Tag"],
           }),
         ]}
-        hours={[10]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         timezone="UTC"
         weekDays={buildWeek("2026-03-23T00:00:00Z")}
@@ -89,7 +86,6 @@ describe("CalendarView", () => {
     render(
       <CalendarView
         entries={[]}
-        hours={[10]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         onSelectSlot={vi.fn()}
         onSelectSubviewDate={vi.fn()}
@@ -127,7 +123,6 @@ describe("CalendarView", () => {
             stop: undefined,
           }),
         ]}
-        hours={[10]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         timezone="UTC"
         weekDays={buildWeek("2026-03-23T00:00:00Z")}
@@ -161,7 +156,6 @@ describe("CalendarView", () => {
             id: 33,
           }),
         ]}
-        hours={[10]}
         nowMs={Date.parse("2026-03-23T10:15:00Z")}
         onMoveEntry={onMoveEntry}
         onResizeEntry={onResizeEntry}

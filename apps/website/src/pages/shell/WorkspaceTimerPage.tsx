@@ -199,7 +199,6 @@ export function WorkspaceTimerPage(): ReactElement {
         orch.view === "calendar" ? (
           <CalendarView
             entries={orch.visibleEntries}
-            hours={orch.calendarHours}
             nowMs={orch.nowMs}
             onEditEntry={orch.handleEntryEdit}
             onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
@@ -234,6 +233,7 @@ export function WorkspaceTimerPage(): ReactElement {
             onClose={orch.closeSelectedEntryEditor}
             onCreateProject={orch.handleSelectedEntryProjectCreate}
             onCreateTag={orch.handleSelectedEntryTagCreate}
+            onBillableToggle={orch.handleSelectedEntryBillableToggle}
             onDuplicate={() => {
               void orch.handleSelectedEntryDuplicate();
             }}
@@ -241,6 +241,9 @@ export function WorkspaceTimerPage(): ReactElement {
               void orch.handleSelectedEntryDelete();
             }}
             onDescriptionChange={orch.setSelectedDescription}
+            onFavorite={() => {
+              void orch.handleSelectedEntryFavorite();
+            }}
             onPrimaryAction={() => {
               void orch.handleSelectedEntryPrimaryAction();
             }}
@@ -248,8 +251,12 @@ export function WorkspaceTimerPage(): ReactElement {
             onSave={() => {
               void orch.handleSelectedEntrySave();
             }}
+            onSplit={() => {
+              void orch.handleSelectedEntrySplit();
+            }}
             onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
             onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
+            onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
             onTagToggle={(tagId) => {
               orch.setSelectedTagIds((current) =>
                 current.includes(tagId)
@@ -269,7 +276,7 @@ export function WorkspaceTimerPage(): ReactElement {
             primaryActionLabel={
               orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
                 ? "Stop timer"
-                : "Continue entry"
+                : "Continue Time Entry"
             }
             projects={orch.projectOptions
               .filter((project) => project.id != null)
@@ -279,6 +286,7 @@ export function WorkspaceTimerPage(): ReactElement {
                 id: project.id as number,
                 name: project.name ?? "Untitled project",
               }))}
+            recentEntries={orch.recentWorkspaceEntries}
             saveError={orch.selectedEntryError}
             selectedProjectId={orch.selectedProjectId}
             selectedTagIds={orch.selectedTagIds}

@@ -12,6 +12,7 @@ import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
   ModelsAllPreferences,
+  ModelsSimpleWorkspaceUser,
   MePayload,
   ModelsPostPayload,
   ModelsProjectStatistics,
@@ -32,13 +33,17 @@ import {
   getWorkspaceGroups,
   getWorkspaceMostActive,
   getWorkspaceProjectUsers,
+  getWorkspaceUsers,
   getWorkspaceTag,
   getWorkspaceTasksBasic,
   getWorkspaceTopActivity,
   getWorkspacesByWorkspaceIdProjectsByProjectId,
   getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
+  createWorkspaceFavorite,
+  deleteWorkspaceProject,
   deleteWorkspaceTimeEntries,
   patchWorkspaceStopTimeEntryHandler,
+  postWorkspaceProjectUsers,
   postPinnedProject,
   postOrganizationWorkspaces,
   postOrganization,
@@ -633,20 +638,24 @@ export function useStartTimeEntryMutation(workspaceId: number) {
 
   return useMutation({
     mutationFn: (request: {
+      billable?: boolean;
       description: string;
       projectId?: number | null;
       start: string;
       tagIds?: number[];
+      taskId?: number | null;
     }) =>
       unwrapWebApiResult(
         postWorkspaceTimeEntries({
           body: {
+            billable: request.billable,
             created_with: "opentoggl-web",
             description: request.description,
             duration: -1,
             project_id: request.projectId ?? undefined,
             start: toTrackUtcString(request.start),
             tag_ids: request.tagIds,
+            task_id: request.taskId ?? undefined,
             workspace_id: workspaceId,
           },
           path: {
@@ -824,14 +833,65 @@ export function useCreateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ color, name }: { color?: string; name: string }) =>
+    mutationFn: ({
+      color,
+      isPrivate,
+      name,
+      template,
+    }: {
+      color?: string;
+      isPrivate?: boolean;
+      name: string;
+      template?: boolean;
+    }) =>
       unwrapWebApiResult(
         postWorkspaceProjectCreate({
           body: {
             color,
+            is_private: isPrivate,
             name,
+            template,
           },
           path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useUpdateProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      color,
+      isPrivate,
+      name,
+      projectId,
+      template,
+    }: {
+      color?: string;
+      isPrivate?: boolean;
+      name: string;
+      projectId: number;
+      template?: boolean;
+    }) =>
+      unwrapWebApiResult(
+        putWorkspaceProject({
+          body: {
+            color,
+            is_private: isPrivate,
+            name,
+            template,
+          },
+          path: {
+            project_id: projectId,
             workspace_id: workspaceId,
           },
         }),
@@ -942,6 +1002,7 @@ export function useUnpinProjectMutation(workspaceId: number) {
 
 export function useProjectMembersQuery(workspaceId: number, projectId: number) {
   return useQuery({
+    enabled: projectId > 0,
     queryFn: () =>
       unwrapWebApiResult(
         getWorkspaceProjectUsers({
@@ -954,6 +1015,112 @@ export function useProjectMembersQuery(workspaceId: number, projectId: number) {
         }),
       ),
     queryKey: ["project-members", workspaceId, projectId],
+  });
+}
+
+export function useWorkspaceUsersQuery(workspaceId: number) {
+  return useQuery<Array<ModelsSimpleWorkspaceUser>>({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceUsers({
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    queryKey: ["workspace-users", workspaceId],
+  });
+}
+
+export function useAddProjectMemberMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      isManager = false,
+      projectId,
+      userId,
+    }: {
+      isManager?: boolean;
+      projectId: number;
+      userId: number;
+    }) =>
+      unwrapWebApiResult(
+        postWorkspaceProjectUsers({
+          body: {
+            manager: isManager,
+            project_id: projectId,
+            user_id: userId,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async (_, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: ["project-members", workspaceId, variables.projectId],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useDeleteProjectMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectId: number) =>
+      unwrapWebApiResult(
+        deleteWorkspaceProject({
+          path: {
+            project_id: projectId,
+            workspace_id: workspaceId,
+          },
+          query: {
+            teDeletionMode: "unassign",
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["projects", workspaceId],
+      });
+    },
+  });
+}
+
+export function useCreateWorkspaceFavoriteMutation(workspaceId: number) {
+  return useMutation({
+    mutationFn: ({
+      billable,
+      description,
+      projectId,
+      tagIds,
+      taskId,
+    }: {
+      billable?: boolean;
+      description?: string;
+      projectId?: number | null;
+      tagIds?: number[];
+      taskId?: number | null;
+    }) =>
+      unwrapWebApiResult(
+        createWorkspaceFavorite({
+          body: {
+            billable,
+            description,
+            project_id: projectId ?? undefined,
+            tag_ids: tagIds,
+            task_id: taskId ?? undefined,
+          },
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
   });
 }
 

@@ -61,20 +61,25 @@ type TimeEntryEditorDialogProps = {
   onClose: () => void;
   onCreateProject: (name: string) => Promise<void> | void;
   onCreateTag: (name: string) => Promise<void> | void;
+  onBillableToggle?: () => void;
   onDiscard?: () => void;
   onDuplicate?: () => Promise<void> | void;
   onDelete?: () => Promise<void> | void;
   onDescriptionChange: (value: string) => void;
+  onFavorite?: () => Promise<void> | void;
   onPrimaryAction?: () => void;
   onProjectSelect: (projectId: number | null) => void;
   onSave: () => void;
+  onSplit?: () => Promise<void> | void;
   onStartTimeChange: (time: Date) => void;
   onStopTimeChange: (time: Date) => void;
+  onSuggestionEntrySelect?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onTagToggle: (tagId: number) => void;
   onWorkspaceSelect: (workspaceId: number) => void;
   primaryActionIcon: "play" | "stop";
   primaryActionLabel: string;
   projects: TimeEntryEditorProject[];
+  recentEntries?: GithubComTogglTogglApiInternalModelsTimeEntry[];
   saveError?: string | null;
   selectedProjectId?: number | null;
   selectedTagIds: number[];
@@ -97,20 +102,25 @@ export function TimeEntryEditorDialog({
   onClose,
   onCreateProject,
   onCreateTag,
+  onBillableToggle,
   onDiscard,
   onDuplicate,
   onDelete,
   onDescriptionChange,
+  onFavorite,
   onPrimaryAction,
   onProjectSelect,
   onSave,
+  onSplit,
   onStartTimeChange,
   onStopTimeChange,
+  onSuggestionEntrySelect,
   onTagToggle,
   onWorkspaceSelect,
   primaryActionIcon,
   primaryActionLabel,
   projects,
+  recentEntries = [],
   saveError,
   selectedProjectId,
   selectedTagIds,
@@ -129,6 +139,7 @@ export function TimeEntryEditorDialog({
   const [search, setSearch] = useState("");
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
+  const [descriptionSuggestionsOpen, setDescriptionSuggestionsOpen] = useState(false);
   const startIso = entry.start ?? entry.at ?? new Date().toISOString();
   const stopIso = entry.stop ?? null;
   const start = new Date(startIso);
@@ -147,8 +158,15 @@ export function TimeEntryEditorDialog({
     () => tags.filter((tag) => selectedTagIds.includes(tag.id)),
     [selectedTagIds, tags],
   );
+  const descriptionMode = useMemo(() => resolveDescriptionMode(description), [description]);
+  const descriptionQuery = useMemo(() => description.slice(1).trim().toLowerCase(), [description]);
   const filteredProjects = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query =
+      picker === "project"
+        ? search.trim().toLowerCase()
+        : descriptionMode === "project"
+          ? descriptionQuery
+          : search.trim().toLowerCase();
     if (!query) {
       return projects;
     }
@@ -157,15 +175,21 @@ export function TimeEntryEditorDialog({
       const haystack = `${project.name} ${project.clientName ?? ""}`.toLowerCase();
       return haystack.includes(query);
     });
-  }, [projects, search]);
+  }, [descriptionMode, descriptionQuery, picker, projects, search]);
   const filteredTags = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query =
+      picker === "tag"
+        ? search.trim().toLowerCase()
+        : descriptionMode === "tag"
+          ? descriptionQuery
+          : search.trim().toLowerCase();
     if (!query) {
       return tags;
     }
 
     return tags.filter((tag) => tag.name.toLowerCase().includes(query));
-  }, [search, tags]);
+  }, [descriptionMode, descriptionQuery, picker, search, tags]);
+  const suggestionEntries = useMemo(() => buildSuggestionEntries(recentEntries), [recentEntries]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -230,6 +254,39 @@ export function TimeEntryEditorDialog({
   }, [picker]);
 
   useEffect(() => {
+    if (descriptionMode === "project") {
+      setPicker(null);
+      setDescriptionSuggestionsOpen(true);
+      return;
+    }
+
+    if (descriptionMode === "tag") {
+      setPicker(null);
+      setDescriptionSuggestionsOpen(true);
+      return;
+    }
+
+    if (descriptionMode === "billable") {
+      setDescriptionSuggestionsOpen(true);
+      setPicker(null);
+      return;
+    }
+
+    if (!description.trim()) {
+      setDescriptionSuggestionsOpen(true);
+      return;
+    }
+
+    setDescriptionSuggestionsOpen(false);
+  }, [description, descriptionMode]);
+
+  useEffect(() => {
+    if (timeEditor != null || timePicker != null) {
+      setDescriptionSuggestionsOpen(false);
+    }
+  }, [timeEditor, timePicker]);
+
+  useEffect(() => {
     if (timeEditor != null) {
       setTimePicker(null);
     }
@@ -272,18 +329,22 @@ export function TimeEntryEditorDialog({
         <div className="flex items-center justify-between gap-4">
           <div className="relative flex items-center gap-3">
             <button
-              aria-label={primaryActionLabel}
-              className="flex size-9 items-center justify-center rounded-full bg-[#523732] text-[#ff7a66] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              aria-label={
+                primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
+              }
+              data-testid="time-entry-editor-primary-action"
+              className="flex items-center gap-2 rounded-full bg-[#523732] px-3 py-2 text-[13px] font-medium text-[#ff7a66] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={!onPrimaryAction || isPrimaryActionPending}
               onClick={onPrimaryAction}
               type="button"
             >
               <TrackingIcon className="size-4" name={primaryActionIcon} />
+              <span>{primaryActionLabel}</span>
             </button>
             {canDuplicate ? (
               <button
                 aria-label="Duplicate entry"
-                className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+                className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium text-[#ededf0] transition hover:bg-white/6"
                 disabled={isDirty}
                 onClick={() => {
                   void onDuplicate?.();
@@ -291,18 +352,56 @@ export function TimeEntryEditorDialog({
                 type="button"
               >
                 <TrackingIcon className="size-4" name="copy" />
+                <span>Duplicate Time Entry</span>
               </button>
             ) : null}
             <button
               aria-label="Entry actions"
-              className="flex size-7 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+              className="flex items-center gap-2 rounded-full px-3 py-2 text-[13px] font-medium text-[#ededf0] transition hover:bg-white/6"
               onClick={() => setActionsMenuOpen((current) => !current)}
               type="button"
             >
               <TrackingIcon className="size-4" name="more" />
+              <span>More actions</span>
             </button>
             {actionsMenuOpen ? (
-              <div className="absolute left-0 top-11 z-20 min-w-[180px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
+              <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
+                <ActionMenuButton
+                  disabled={!onSplit}
+                  label="Split"
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    void onSplit?.();
+                  }}
+                />
+                <ActionMenuButton
+                  disabled={!onFavorite}
+                  label="Pin as favorite"
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    void onFavorite?.();
+                  }}
+                />
+                <ActionMenuButton
+                  label="Copy start link"
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    void copyToClipboard(
+                      typeof window === "undefined"
+                        ? (entry.start ?? "")
+                        : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
+                    );
+                  }}
+                />
+                {description.trim() ? (
+                  <ActionMenuButton
+                    label="Copy description"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      void copyToClipboard(description.trim());
+                    }}
+                  />
+                ) : null}
                 <button
                   aria-label="Delete entry"
                   className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#ffb4aa] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
@@ -335,19 +434,62 @@ export function TimeEntryEditorDialog({
         </div>
 
         <div className="mt-7">
+          <div
+            className="absolute right-5 top-[88px] z-0 h-0 w-[140px]"
+            data-testid={timeEditor != null ? "time-entry-editor-active-time-edit" : undefined}
+          />
           <label className="block">
             <span className="sr-only">Time entry description</span>
             <input
               aria-label="Time entry description"
               className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[#8f8f95]"
               id="time-entry-editor-title"
+              onBlur={() => {
+                window.setTimeout(() => setDescriptionSuggestionsOpen(false), 120);
+              }}
               onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 onDescriptionChange(event.target.value)
               }
+              onFocus={() => setDescriptionSuggestionsOpen(true)}
               placeholder="Add a description"
               value={description}
             />
           </label>
+          {descriptionSuggestionsOpen && !timeEditor && timePicker == null ? (
+            <DescriptionSuggestionsSurface
+              currentWorkspaceName={currentWorkspaceName}
+              entryDescription={description}
+              entryMode={descriptionMode}
+              onBillableToggle={() => {
+                onBillableToggle?.();
+                if (descriptionMode === "billable") {
+                  onDescriptionChange("");
+                }
+                setDescriptionSuggestionsOpen(false);
+              }}
+              onProjectSelect={(projectId) => {
+                onProjectSelect(projectId);
+                if (descriptionMode === "project") {
+                  onDescriptionChange("");
+                }
+                setDescriptionSuggestionsOpen(false);
+              }}
+              onSuggestionEntrySelect={(suggestion) => {
+                onSuggestionEntrySelect?.(suggestion);
+                setDescriptionSuggestionsOpen(false);
+              }}
+              onTagSelect={(tagId) => {
+                onTagToggle(tagId);
+                if (descriptionMode === "tag") {
+                  onDescriptionChange("");
+                }
+                setDescriptionSuggestionsOpen(false);
+              }}
+              projects={filteredProjects}
+              suggestionEntries={suggestionEntries}
+              tags={filteredTags}
+            />
+          ) : null}
 
           <div className="relative mt-5">
             <div className="flex items-center gap-4 text-[#a9a9ae]">
@@ -375,7 +517,12 @@ export function TimeEntryEditorDialog({
                 toneColor="#d58ad4"
                 variant={selectedTags.length > 0 ? "tag" : "icon"}
               />
-              <PickerButton active={entry.billable === true} ariaLabel="Billable" icon="dollar" />
+              <PickerButton
+                active={entry.billable === true}
+                ariaLabel="Billable"
+                icon="dollar"
+                onClick={onBillableToggle}
+              />
             </div>
 
             {picker === "project" ? (
@@ -597,6 +744,7 @@ export function TimeEntryEditorDialog({
               <div className="relative min-w-0 overflow-visible">
                 <div className="flex min-w-0 items-center gap-2.5">
                   <TimeDisplay
+                    dialogRootTestId="time-entry-editor-dialog"
                     dateAriaLabel="Edit start date"
                     datePickerTriggerRef={startDatePickerTriggerRef}
                     editing={timeEditor === "start"}
@@ -620,6 +768,7 @@ export function TimeEntryEditorDialog({
                   <span className="shrink-0 text-[22px] font-light text-[#a9a9ae]">→</span>
                   {stop ? (
                     <TimeDisplay
+                      dialogRootTestId="time-entry-editor-dialog"
                       dateAriaLabel="Edit stop date"
                       datePickerTriggerRef={stopDatePickerTriggerRef}
                       editing={timeEditor === "stop"}
@@ -695,7 +844,7 @@ export function TimeEntryEditorDialog({
               </div>
               <button
                 className="shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isSaving}
+                disabled={descriptionSuggestionsOpen || isSaving}
                 onClick={onSave}
                 type="button"
               >
@@ -742,6 +891,142 @@ export function TimeEntryEditorDialog({
         ) : null}
       </div>
     </div>
+  );
+}
+
+function DescriptionSuggestionsSurface({
+  currentWorkspaceName,
+  entryDescription,
+  entryMode,
+  onBillableToggle,
+  onProjectSelect,
+  onSuggestionEntrySelect,
+  onTagSelect,
+  projects,
+  suggestionEntries,
+  tags,
+}: {
+  currentWorkspaceName: string;
+  entryDescription: string;
+  entryMode: "billable" | "default" | "project" | "tag";
+  onBillableToggle?: () => void;
+  onProjectSelect: (projectId: number) => void;
+  onSuggestionEntrySelect: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onTagSelect: (tagId: number) => void;
+  projects: TimeEntryEditorProject[];
+  suggestionEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  tags: TimeEntryEditorTag[];
+}) {
+  return (
+    <div className="absolute left-0 top-[calc(100%+12px)] z-20 w-[360px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] py-3 shadow-[0_14px_32px_rgba(0,0,0,0.34)]">
+      <div className="flex items-center justify-between gap-3 border-b border-white/6 px-4 pb-3">
+        <div className="min-w-0">
+          <p className="truncate text-[14px] font-semibold text-white">{currentWorkspaceName}</p>
+          <p className="text-[12px] text-[#8f8f95]">Change</p>
+        </div>
+      </div>
+      {entryMode === "billable" ? (
+        <div className="px-4 pt-3">
+          <button
+            className="flex w-full items-center justify-between rounded-[10px] px-3 py-3 text-left text-[14px] text-white transition hover:bg-white/4"
+            onClick={onBillableToggle}
+            type="button"
+          >
+            <span>Billable hours</span>
+            <TrackingIcon className="size-4 text-[#d58ad4]" name="dollar" />
+          </button>
+        </div>
+      ) : null}
+      {(entryMode === "default" || entryDescription.trim().length === 0) &&
+      suggestionEntries.length > 0 ? (
+        <div className="px-4 pt-3">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+            Previously tracked time entries
+          </p>
+          <div className="mt-2 space-y-1">
+            {suggestionEntries.map((suggestion) => (
+              <button
+                className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
+                key={buildSuggestionKey(suggestion)}
+                onClick={() => onSuggestionEntrySelect(suggestion)}
+                type="button"
+              >
+                <span className="truncate text-[14px] font-medium text-white">
+                  {suggestion.description?.trim() || suggestion.project_name || "No description"}
+                </span>
+                <span className="truncate text-[12px] text-[#8f8f95]">
+                  {suggestion.project_name || "No project"}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {(entryMode === "default" || entryMode === "project") && projects.length > 0 ? (
+        <div className="px-4 pt-3">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+            Projects
+          </p>
+          <div className="mt-2 space-y-1">
+            {projects.map((project) => (
+              <button
+                className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
+                key={project.id}
+                onClick={() => onProjectSelect(project.id)}
+                type="button"
+              >
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: project.color }}
+                />
+                <span className="truncate text-[14px] font-medium text-white">{project.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {entryMode === "tag" ? (
+        <div className="px-4 pt-3">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+            Tags
+          </p>
+          <div className="mt-2 space-y-1">
+            {tags.map((tag) => (
+              <button
+                className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
+                key={tag.id}
+                onClick={() => onTagSelect(tag.id)}
+                type="button"
+              >
+                <TrackingIcon className="size-4 shrink-0 text-[#cf8dcc]" name="tags" />
+                <span className="truncate text-[14px] font-medium text-white">{tag.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ActionMenuButton({
+  disabled = false,
+  label,
+  onClick,
+}: {
+  disabled?: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
+      {label}
+    </button>
   );
 }
 
@@ -841,6 +1126,7 @@ function SearchField({
 }
 
 function TimeDisplay({
+  dialogRootTestId,
   dateAriaLabel,
   datePickerTriggerRef,
   editing,
@@ -853,6 +1139,7 @@ function TimeDisplay({
   timeValue,
   timezone,
 }: {
+  dialogRootTestId?: string;
   dateAriaLabel: string;
   datePickerTriggerRef?: Ref<HTMLButtonElement | null>;
   editing: boolean;
@@ -882,6 +1169,7 @@ function TimeDisplay({
           <input
             aria-label="Edit time"
             autoFocus
+            data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
             className="h-[42px] min-w-[110px] rounded-[10px] border border-[#c78acd] bg-[#262628] px-4 text-[14px] font-semibold tabular-nums text-white outline-none"
             value={draft}
             inputMode="numeric"
@@ -1062,6 +1350,60 @@ function resolvePartsDifferenceInMinutes(
   );
 
   return Math.round((targetUtc - actualUtc) / 60_000);
+}
+
+function resolveDescriptionMode(value: string): "billable" | "default" | "project" | "tag" {
+  if (value.startsWith("@")) {
+    return "project";
+  }
+
+  if (value.startsWith("#")) {
+    return "tag";
+  }
+
+  if (value.startsWith("$")) {
+    return "billable";
+  }
+
+  return "default";
+}
+
+function buildSuggestionEntries(
+  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
+): GithubComTogglTogglApiInternalModelsTimeEntry[] {
+  const seen = new Set<string>();
+  const suggestions: GithubComTogglTogglApiInternalModelsTimeEntry[] = [];
+
+  for (const entry of entries) {
+    const key = buildSuggestionKey(entry);
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    suggestions.push(entry);
+    if (suggestions.length >= 6) {
+      break;
+    }
+  }
+
+  return suggestions;
+}
+
+function buildSuggestionKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
+  return [
+    entry.description?.trim() ?? "",
+    entry.project_id ?? entry.pid ?? "",
+    (entry.tag_ids ?? []).join(","),
+  ].join("::");
+}
+
+async function copyToClipboard(value: string): Promise<void> {
+  if (!value || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+    return;
+  }
+
+  await navigator.clipboard.writeText(value);
 }
 
 function resolveEditorPosition(

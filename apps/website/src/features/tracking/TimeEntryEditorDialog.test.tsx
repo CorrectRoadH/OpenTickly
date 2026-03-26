@@ -166,13 +166,16 @@ function DialogHarness({
       isPrimaryActionPending={false}
       isSaving={false}
       onClose={() => {}}
+      onBillableToggle={() => {}}
       onCreateProject={() => {}}
       onCreateTag={() => {}}
       onDuplicate={onDuplicate}
       onDescriptionChange={() => {}}
+      onFavorite={() => {}}
       onPrimaryAction={() => {}}
       onProjectSelect={setProjectId}
       onSave={() => {}}
+      onSplit={() => {}}
       onStartTimeChange={(time) => {
         setEntry((current) => ({
           ...current,
@@ -186,6 +189,7 @@ function DialogHarness({
           stop: time.toISOString(),
         }));
       }}
+      onSuggestionEntrySelect={() => {}}
       onTagToggle={(tagId) =>
         setTagIds((current) =>
           current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
@@ -201,6 +205,7 @@ function DialogHarness({
           name: "Waste time",
         },
       ]}
+      recentEntries={[]}
       selectedProjectId={projectId}
       selectedTagIds={tagIds}
       tags={[

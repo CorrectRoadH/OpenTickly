@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 import {
   DirectoryFilterChip,
   DirectoryHeaderCell,
@@ -12,18 +12,21 @@ import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/a
 import {
   DEFAULT_PROJECT_COLOR,
   resolveProjectColorValue,
-  TRACK_COLOR_SWATCHES,
 } from "../../shared/lib/project-colors.ts";
 import {
+  useAddProjectMemberMutation,
   useArchiveProjectMutation,
   useCreateProjectMutation,
+  useDeleteProjectMutation,
   usePinProjectMutation,
+  useProjectMembersQuery,
   useProjectsQuery,
   useRestoreProjectMutation,
   useUnpinProjectMutation,
+  useUpdateProjectMutation,
+  useWorkspaceUsersQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
 import {
   buildProjectTeamPath,
   type ProjectStatusFilter,
@@ -33,6 +36,8 @@ import {
   formatProjectHours,
   normalizeProjects,
 } from "./projects-page-helpers.ts";
+import { ProjectEditorDialog } from "./ProjectEditorDialog.tsx";
+import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
 
 type ProjectsPageProps = {
   statusFilter: ProjectStatusFilter;
@@ -42,23 +47,66 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const navigate = useNavigate();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
+  const [editorProject, setEditorProject] =
+    useState<GithubComTogglTogglApiInternalModelsProject | null>(null);
   const [projectName, setProjectName] = useState("");
   const [projectColor, setProjectColor] = useState<string>(DEFAULT_PROJECT_COLOR);
+  const [projectPrivate, setProjectPrivate] = useState(false);
+  const [projectTemplate, setProjectTemplate] = useState(false);
+  const [memberRole, setMemberRole] = useState<"manager" | "regular">("regular");
+  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const projectsQuery = useProjectsQuery(workspaceId, statusFilter);
+  const workspaceUsersQuery = useWorkspaceUsersQuery(workspaceId);
   const createProjectMutation = useCreateProjectMutation(workspaceId);
+  const updateProjectMutation = useUpdateProjectMutation(workspaceId);
   const archiveProjectMutation = useArchiveProjectMutation(workspaceId);
   const restoreProjectMutation = useRestoreProjectMutation(workspaceId);
   const pinProjectMutation = usePinProjectMutation(workspaceId);
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
+  const addProjectMemberMutation = useAddProjectMemberMutation(workspaceId);
+  const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
+  const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
   const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const workspaceMembers = useMemo(
+    () =>
+      (workspaceUsersQuery.data ?? [])
+        .filter((member) => member.id != null && member.inactive !== true)
+        .map((member) => ({
+          email: member.email ?? undefined,
+          id: member.id as number,
+          name: member.fullname?.trim() || member.email?.trim() || `User ${member.id}`,
+        })),
+    [workspaceUsersQuery.data],
+  );
+  const existingProjectMemberIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (projectMembersQuery.data ?? [])
+            .map((member) => member.user_id)
+            .filter((memberId): memberId is number => typeof memberId === "number"),
+        ),
+      ),
+    [projectMembersQuery.data],
+  );
   const mutationPending =
     createProjectMutation.isPending ||
+    updateProjectMutation.isPending ||
     archiveProjectMutation.isPending ||
     restoreProjectMutation.isPending ||
     pinProjectMutation.isPending ||
-    unpinProjectMutation.isPending;
+    unpinProjectMutation.isPending ||
+    addProjectMemberMutation.isPending ||
+    deleteProjectMutation.isPending;
+
+  useEffect(() => {
+    if (editorMode !== "edit" || !editorProject?.id) {
+      return;
+    }
+    setSelectedMemberIds(existingProjectMemberIds);
+  }, [editorMode, editorProject?.id, existingProjectMemberIds]);
 
   async function navigateToStatus(nextStatus: ProjectStatusFilter) {
     await navigate({
@@ -68,20 +116,70 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     });
   }
 
-  async function handleCreateProject() {
+  function openCreateDialog() {
+    setEditorMode("create");
+    setEditorProject(null);
+    setProjectName("");
+    setProjectColor(DEFAULT_PROJECT_COLOR);
+    setProjectPrivate(false);
+    setProjectTemplate(false);
+    setMemberRole("regular");
+    setSelectedMemberIds([]);
+  }
+
+  function openEditDialog(project: GithubComTogglTogglApiInternalModelsProject) {
+    setEditorMode("edit");
+    setEditorProject(project);
+    setProjectName(project.name ?? "");
+    setProjectColor(resolveProjectColor(project));
+    setProjectPrivate(project.is_private === true);
+    setProjectTemplate(project.template === true);
+    setMemberRole("regular");
+  }
+
+  function closeEditor() {
+    setEditorMode(null);
+    setEditorProject(null);
+  }
+
+  async function handleSubmitProject() {
     const trimmedName = projectName.trim();
     if (!trimmedName) {
       return;
     }
 
-    await createProjectMutation.mutateAsync({
-      color: projectColor,
-      name: trimmedName,
-    });
-    setProjectColor(DEFAULT_PROJECT_COLOR);
-    setProjectName("");
-    setCreateDialogOpen(false);
-    setStatusMessage("Project created");
+    const project =
+      editorMode === "edit" && editorProject?.id != null
+        ? await updateProjectMutation.mutateAsync({
+            color: projectColor,
+            isPrivate: projectPrivate,
+            name: trimmedName,
+            projectId: editorProject.id,
+            template: projectTemplate,
+          })
+        : await createProjectMutation.mutateAsync({
+            color: projectColor,
+            isPrivate: projectPrivate,
+            name: trimmedName,
+            template: projectTemplate,
+          });
+
+    const projectId = project.id ?? editorProject?.id;
+    if (projectId != null) {
+      const pendingMemberIds = selectedMemberIds.filter(
+        (memberId) => !existingProjectMemberIds.includes(memberId),
+      );
+      for (const memberId of pendingMemberIds) {
+        await addProjectMemberMutation.mutateAsync({
+          isManager: memberRole === "manager",
+          projectId,
+          userId: memberId,
+        });
+      }
+    }
+
+    closeEditor();
+    setStatusMessage(editorMode === "edit" ? "Project updated" : "Project created");
     if (statusFilter !== "all") {
       await navigateToStatus("all");
     }
@@ -117,6 +215,32 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setStatusMessage(`Restored ${project.name}`);
   }
 
+  async function handleTemplateToggle(project: GithubComTogglTogglApiInternalModelsProject) {
+    if (project.id == null) {
+      return;
+    }
+
+    await updateProjectMutation.mutateAsync({
+      color: resolveProjectColor(project),
+      isPrivate: project.is_private === true,
+      name: project.name ?? "Untitled project",
+      projectId: project.id,
+      template: project.template !== true,
+    });
+    setStatusMessage(
+      project.template ? `Removed template ${project.name}` : `Templated ${project.name}`,
+    );
+  }
+
+  async function handleDelete(project: GithubComTogglTogglApiInternalModelsProject) {
+    if (project.id == null || !window.confirm(`Delete ${project.name}?`)) {
+      return;
+    }
+
+    await deleteProjectMutation.mutateAsync(project.id);
+    setStatusMessage(`Deleted ${project.name}`);
+  }
+
   return (
     <div
       className="w-full min-w-0 bg-[var(--track-surface)] text-white"
@@ -128,7 +252,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           <button
             className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
             data-testid="projects-create-button"
-            onClick={() => setCreateDialogOpen(true)}
+            onClick={openCreateDialog}
             type="button"
           >
             <TrackingIcon className="size-3.5" name="plus" />
@@ -233,14 +357,21 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   </button>
                 </div>
                 <div className="flex h-[54px] items-center justify-end">
-                  <button
-                    aria-label={`${project.active ? "Archive" : "Restore"} ${project.name}`}
-                    className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                    onClick={() => void handleArchiveToggle(project)}
-                    type="button"
-                  >
-                    <TrackingIcon className="size-4" name="more" />
-                  </button>
+                  <ProjectRowActionsMenu
+                    onAddMember={() => openEditDialog(project)}
+                    onArchiveToggle={() => {
+                      void handleArchiveToggle(project);
+                    }}
+                    onDelete={() => {
+                      void handleDelete(project);
+                    }}
+                    onEdit={() => openEditDialog(project)}
+                    onTemplateToggle={() => {
+                      void handleTemplateToggle(project);
+                    }}
+                    project={project}
+                    workspaceId={workspaceId}
+                  />
                 </div>
               </div>
             ))}
@@ -266,24 +397,34 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         </div>
       ) : null}
 
-      {createDialogOpen ? (
-        <CreateNameDialog
-          colorOptions={TRACK_COLOR_SWATCHES}
+      {editorMode ? (
+        <ProjectEditorDialog
+          color={projectColor}
           isPending={mutationPending}
-          nameLabel="Project name"
-          namePlaceholder="Project name"
-          nameValue={projectName}
-          onClose={() => {
-            setCreateDialogOpen(false);
-          }}
-          onColorSelect={setProjectColor}
+          isPrivate={projectPrivate}
+          memberRole={memberRole}
+          members={workspaceMembers}
+          name={projectName}
+          onClose={closeEditor}
+          onColorChange={setProjectColor}
+          onMemberRoleChange={setMemberRole}
           onNameChange={setProjectName}
+          onPrivacyChange={setProjectPrivate}
           onSubmit={() => {
-            void handleCreateProject();
+            void handleSubmitProject();
           }}
-          selectedColor={projectColor}
-          submitLabel="Create project"
-          title="Create new project"
+          onTemplateChange={setProjectTemplate}
+          onToggleMember={(memberId) =>
+            setSelectedMemberIds((current) =>
+              current.includes(memberId)
+                ? current.filter((id) => id !== memberId)
+                : [...current, memberId],
+            )
+          }
+          selectedMemberIds={selectedMemberIds}
+          submitLabel={editorMode === "edit" ? "Save" : "Create project"}
+          template={projectTemplate}
+          title={editorMode === "edit" ? "Edit Project" : "Create new project"}
         />
       ) : null}
     </div>
