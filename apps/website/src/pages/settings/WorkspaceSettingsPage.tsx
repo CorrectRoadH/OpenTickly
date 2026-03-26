@@ -59,14 +59,6 @@ export function WorkspaceSettingsPage({
       <div className="max-w-[1384px]">
         <SettingsHeader activeSection={section} workspaceId={workspaceId} />
         <div className="px-5 pb-10 pt-5">
-          {settingsQuery.isPending ? (
-            <SettingsState
-              description="Fetching workspace settings and current workspace policy defaults."
-              title="Loading settings"
-              tone="loading"
-            />
-          ) : null}
-
           {settingsQuery.isError ? (
             <SettingsState
               description="We could not load workspace settings right now. Refresh or try again shortly."

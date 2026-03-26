@@ -61,7 +61,9 @@ export function WorkspaceMembersPage(): ReactElement {
       />
 
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
-        Members sourced from the workspace contract data.
+        {membersQuery.isSuccess
+          ? `${membersQuery.data.members.length} member${membersQuery.data.members.length === 1 ? "" : "s"} in this workspace`
+          : "Manage workspace members and invitations."}
       </p>
 
       {membersQuery.isPending ? (

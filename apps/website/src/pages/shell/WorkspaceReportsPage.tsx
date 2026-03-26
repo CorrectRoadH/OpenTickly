@@ -18,6 +18,7 @@ import {
   ToolbarButton,
   TopTab,
 } from "./ReportsSharedWidgets.tsx";
+import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsStringFilterDropdown } from "./ReportsStringFilterDropdown.tsx";
 import { exportReportCsv } from "./reports-export.ts";
 import {
@@ -194,6 +195,13 @@ export function WorkspaceReportsPage(): ReactElement {
             </>
           ) : null}
         </>
+      ) : activeTab === "Detailed" ? (
+        <ReportsDetailedView
+          clientFilter={state.clientFilter}
+          dateRange={state.dateRange}
+          filters={state.filters}
+          memberFilter={state.memberFilter}
+        />
       ) : (
         <ReportsTabPlaceholder tab={activeTab} />
       )}
