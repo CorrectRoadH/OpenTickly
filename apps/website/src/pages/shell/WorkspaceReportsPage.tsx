@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import {
   useProjectsQuery,
@@ -29,14 +29,85 @@ import {
   regroupByClient,
   regroupByEntry,
   regroupByMember,
+  type ReportsBreakdownRow,
+  type ReportsPageModel,
 } from "./reports-page-data.ts";
 import { useReportsPageState } from "./useReportsPageState.ts";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+
+/** Round seconds up to the nearest 15-minute block (900 seconds). */
+function roundTo15Min(seconds: number): number {
+  if (seconds <= 0) return 0;
+  return Math.ceil(seconds / 900) * 900;
+}
+
+function applyRoundingToModel(model: ReportsPageModel): ReportsPageModel {
+  const roundedBreakdownRows: ReportsBreakdownRow[] = model.breakdownRows.map((row) => {
+    const rounded = roundTo15Min(row.seconds);
+    return {
+      ...row,
+      duration: formatClockDuration(rounded),
+      members: row.members.map((m) => ({
+        ...m,
+        duration: formatClockDuration(roundTo15Min(m.seconds)),
+      })),
+      seconds: rounded,
+    };
+  });
+  const roundedTotal = roundedBreakdownRows.reduce((sum, r) => sum + r.seconds, 0);
+  const recalculated = roundedBreakdownRows.map((row) => ({
+    ...row,
+    shareLabel: `${roundedTotal > 0 ? ((row.seconds / roundedTotal) * 100).toFixed(2) : "0.00"}%`,
+    shareValue: roundedTotal > 0 ? (row.seconds / roundedTotal) * 100 : 0,
+  }));
+  const roundedWeekRows = model.weekRows.map((r) => {
+    const rs = roundTo15Min(r.seconds);
+    return { ...r, seconds: rs, value: formatClockDuration(rs) };
+  });
+  const billableMetric = model.metrics.find((m) => m.title === "Billable Hours");
+  const billableSeconds = billableMetric ? parseDurationToSeconds(billableMetric.value) : 0;
+  const trackedDays = roundedWeekRows.filter((r) => r.seconds > 0).length;
+  const avgDaily = trackedDays > 0 ? roundedTotal / 3600 / trackedDays : 0;
+
+  return {
+    ...model,
+    breakdownRows: recalculated,
+    distributionSegments: recalculated.slice(0, 10).map((r) => ({
+      color: r.color,
+      duration: r.duration,
+      label: r.name,
+      value: r.shareValue,
+    })),
+    metrics: [
+      { title: "Total Hours", value: formatClockDuration(roundedTotal) },
+      { title: "Billable Hours", value: formatClockDuration(roundTo15Min(billableSeconds)) },
+      { title: "Amount", value: "-" },
+      { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
+    ],
+    totalDuration: formatClockDuration(roundedTotal),
+    totalSeconds: roundedTotal,
+    weekRows: roundedWeekRows,
+  };
+}
+
+function parseDurationToSeconds(value: string): number {
+  const parts = value.split(":");
+  if (parts.length === 3) {
+    return Number(parts[0]) * 3600 + Number(parts[1]) * 60 + Number(parts[2]);
+  }
+  if (parts.length === 2) {
+    return Number(parts[0]) * 3600 + Number(parts[1]) * 60;
+  }
+  return 0;
+}
 
 const SUMMARY_TABS = ["Summary", "Detailed", "Workload", "Profitability", "My reports"] as const;
 type ReportsTab = (typeof SUMMARY_TABS)[number];
 
 export function WorkspaceReportsPage(): ReactElement {
   const [activeTab, setActiveTab] = useState<ReportsTab>("Summary");
+  const [roundingEnabled, setRoundingEnabled] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
   const session = useSession();
   const timezone = session.user.timezone ?? "UTC";
   const weekStartsOn = session.user.beginningOfWeek ?? 1;
@@ -82,22 +153,35 @@ export function WorkspaceReportsPage(): ReactElement {
     [state.dateRange.endDate, state.dateRange.startDate, filteredReport, timezone, weekStartsOn],
   );
 
+  const displayModel = useMemo(
+    () => (roundingEnabled ? applyRoundingToModel(liveModel) : liveModel),
+    [liveModel, roundingEnabled],
+  );
+
+  const handleShareReport = useCallback(() => {
+    const url = window.location.href;
+    void navigator.clipboard.writeText(url).then(() => {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 3000);
+    });
+  }, []);
+
   const displayBreakdownRows = useMemo(() => {
-    if (state.breakdownBy === "clients") return regroupByClient(liveModel.breakdownRows);
-    if (state.breakdownBy === "entries") return regroupByEntry(liveModel.breakdownRows);
-    return liveModel.breakdownRows;
-  }, [liveModel.breakdownRows, state.breakdownBy]);
+    if (state.breakdownBy === "clients") return regroupByClient(displayModel.breakdownRows);
+    if (state.breakdownBy === "entries") return regroupByEntry(displayModel.breakdownRows);
+    return displayModel.breakdownRows;
+  }, [displayModel.breakdownRows, state.breakdownBy]);
 
   const displayDistributionSegments = useMemo(() => {
-    if (state.sliceBy === "projects") return liveModel.distributionSegments;
+    if (state.sliceBy === "projects") return displayModel.distributionSegments;
     const regrouped =
       state.sliceBy === "clients"
-        ? regroupByClient(liveModel.breakdownRows)
-        : regroupByMember(liveModel.breakdownRows);
+        ? regroupByClient(displayModel.breakdownRows)
+        : regroupByMember(displayModel.breakdownRows);
     return regrouped
       .slice(0, 10)
       .map((r) => ({ color: r.color, duration: r.duration, label: r.name, value: r.shareValue }));
-  }, [liveModel.breakdownRows, liveModel.distributionSegments, state.sliceBy]);
+  }, [displayModel.breakdownRows, displayModel.distributionSegments, state.sliceBy]);
 
   const projectOptions = useMemo(
     () =>
@@ -134,12 +218,23 @@ export function WorkspaceReportsPage(): ReactElement {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <ToolbarButton>Rounding off</ToolbarButton>
+              <button
+                className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
+                  roundingEnabled
+                    ? "border-[#e57bd9] bg-[#381e35] text-[#e57bd9]"
+                    : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+                }`}
+                data-testid="reports-rounding-toggle"
+                onClick={() => setRoundingEnabled((prev) => !prev)}
+                type="button"
+              >
+                {roundingEnabled ? "Rounding on" : "Rounding off"}
+              </button>
               <ToolbarButton>Create invoice</ToolbarButton>
               <button
                 className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
                 data-testid="reports-export"
-                onClick={() => exportReportCsv(displayBreakdownRows, liveModel.totalDuration)}
+                onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
                 type="button"
               >
                 Export
@@ -147,6 +242,8 @@ export function WorkspaceReportsPage(): ReactElement {
               <ToolbarButton>Settings</ToolbarButton>
               <button
                 className="h-9 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
+                data-testid="reports-save-share"
+                onClick={handleShareReport}
                 type="button"
               >
                 Save and share
@@ -166,7 +263,7 @@ export function WorkspaceReportsPage(): ReactElement {
 
       {activeTab === "Summary" ? (
         <>
-          <SummaryMetrics metrics={liveModel.metrics} />
+          <SummaryMetrics metrics={displayModel.metrics} />
           {weeklyReportQuery.isPending ? (
             <ReportsSurfaceMessage message="Loading report data..." />
           ) : null}
@@ -179,12 +276,12 @@ export function WorkspaceReportsPage(): ReactElement {
           {!weeklyReportQuery.isPending && !weeklyReportQuery.isError ? (
             <>
               <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-                <DurationChart weekRows={liveModel.weekRows} />
+                <DurationChart weekRows={displayModel.weekRows} />
                 <DistributionPanel
                   distributionSegments={displayDistributionSegments}
                   onSliceByChange={state.setSliceBy}
                   sliceBy={state.sliceBy}
-                  totalDuration={liveModel.totalDuration}
+                  totalDuration={displayModel.totalDuration}
                 />
               </div>
               <ReportsBreakdownPanel
@@ -207,6 +304,11 @@ export function WorkspaceReportsPage(): ReactElement {
       ) : (
         <ReportsTabPlaceholder tab={activeTab} />
       )}
+      {shareToast ? (
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+          <span className="text-[14px] text-white">Report link copied to clipboard</span>
+        </div>
+      ) : null}
     </div>
   );
 }

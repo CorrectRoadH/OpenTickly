@@ -112,11 +112,15 @@ export function buildTimesheetRows(
     }
 
     current.members = Math.max(current.members, entry.shared_with?.length ?? 0);
-    current.totalSeconds += duration;
     rows.set(label, current);
   });
 
-  return [...rows.values()].sort((left, right) => right.totalSeconds - left.totalSeconds);
+  return [...rows.values()]
+    .map((row) => ({
+      ...row,
+      totalSeconds: row.cells.reduce((sum, cell) => sum + cell, 0),
+    }))
+    .sort((left, right) => right.totalSeconds - left.totalSeconds);
 }
 
 export function sumForDate(
