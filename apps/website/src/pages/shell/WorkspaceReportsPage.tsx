@@ -244,7 +244,18 @@ export function WorkspaceReportsPage({
                 {roundingEnabled ? "Rounding on" : "Rounding off"}
               </button>
               <ToolbarButton
-                onClick={() => void navigate({ to: `/workspaces/${workspaceId}/invoices` })}
+                onClick={() => {
+                  const projectsParam = displayModel.breakdownRows
+                    .filter((r) => r.seconds > 0)
+                    .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
+                    .join(",");
+                  const search = projectsParam
+                    ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
+                    : "";
+                  void navigate({
+                    to: `/workspaces/${workspaceId}/invoices/new${search}`,
+                  });
+                }}
               >
                 Create invoice
               </ToolbarButton>

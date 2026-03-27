@@ -59,7 +59,11 @@ type ReportsPageState = {
  * Manages all interactive state for the Reports page:
  * date range navigation, filters, and breakdown row expansion.
  */
-export function useReportsPageState(timezone: string, weekStartsOn: number): ReportsPageState {
+export function useReportsPageState(
+  timezone: string,
+  weekStartsOn: number,
+  initialProjectIds?: number[],
+): ReportsPageState {
   const initialRange = useMemo(
     () => getDateRangeForPeriod("this_week", timezone, weekStartsOn),
     [timezone, weekStartsOn],
@@ -68,7 +72,7 @@ export function useReportsPageState(timezone: string, weekStartsOn: number): Rep
   const [dateRange, setDateRange] = useState<ReportsDateRange>(initialRange);
   const [filters, setFilters] = useState<ReportsFilters>({
     description: "",
-    projectIds: [],
+    projectIds: initialProjectIds ?? [],
     tagIds: [],
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());

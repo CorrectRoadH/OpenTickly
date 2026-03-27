@@ -1,6 +1,7 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement } from "react";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
   DirectoryHeaderCell,
   DirectorySurfaceMessage,
@@ -12,11 +13,9 @@ import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/
 import {
   deleteWorkspaceInvoice,
   getWorkspaceInvoices,
-  postWorkspaceUserInvoice,
 } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { InvoiceEditorDialog, type InvoiceFormData } from "./InvoiceEditorDialog.tsx";
 import { InvoiceRowActionsMenu } from "./InvoiceRowActionsMenu.tsx";
 
 function invoicesQueryKey(workspaceId: number) {
@@ -32,24 +31,6 @@ function useInvoicesQuery(workspaceId: number) {
         }),
       ),
     queryKey: invoicesQueryKey(workspaceId),
-  });
-}
-
-function useCreateInvoiceMutation(workspaceId: number) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (body: ModelsUserInvoice) =>
-      unwrapWebApiResult(
-        postWorkspaceUserInvoice({
-          body,
-          path: { workspace_id: workspaceId },
-        }),
-      ),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: invoicesQueryKey(workspaceId),
-      });
-    },
   });
 }
 
@@ -90,44 +71,12 @@ function formatInvoiceTotal(invoice: ModelsUserInvoice): string {
 export function InvoicesPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
+  const navigate = useNavigate();
   const invoicesQuery = useInvoicesQuery(workspaceId);
-  const createMutation = useCreateInvoiceMutation(workspaceId);
   const deleteMutation = useDeleteInvoiceMutation(workspaceId);
 
-  const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
-  const [editingInvoice, setEditingInvoice] = useState<ModelsUserInvoice | null>(null);
-
-  function openCreateDialog() {
-    setEditorMode("create");
-    setEditingInvoice(null);
-  }
-
-  function openEditDialog(invoice: ModelsUserInvoice) {
-    setEditorMode("edit");
-    setEditingInvoice(invoice);
-  }
-
-  function closeEditor() {
-    setEditorMode(null);
-    setEditingInvoice(null);
-  }
-
-  async function handleSubmit(data: InvoiceFormData) {
-    const body: ModelsUserInvoice = {
-      billing_address: data.billing_address,
-      currency: data.currency,
-      date: data.date,
-      document_id: data.document_id,
-      due_date: data.due_date,
-      items: data.items.map((item) => ({
-        amount: item.amount,
-        description: item.description,
-        quantity: item.quantity,
-      })),
-      message: data.message,
-    };
-    await createMutation.mutateAsync(body);
-    closeEditor();
+  function navigateToEditor() {
+    void navigate({ to: `/workspaces/${workspaceId}/invoices/new` });
   }
 
   async function handleDelete(invoice: ModelsUserInvoice) {
@@ -150,7 +99,6 @@ export function InvoicesPage(): ReactElement {
   }
 
   const invoices: ModelsUserInvoice[] = invoicesQuery.data ?? [];
-  const mutationPending = createMutation.isPending || deleteMutation.isPending;
 
   return (
     <div
@@ -164,7 +112,7 @@ export function InvoicesPage(): ReactElement {
             <button
               className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white"
               data-testid="invoices-create-button"
-              onClick={openCreateDialog}
+              onClick={navigateToEditor}
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -221,7 +169,7 @@ export function InvoicesPage(): ReactElement {
                 <InvoiceRowActionsMenu
                   invoice={invoice}
                   onDelete={() => void handleDelete(invoice)}
-                  onEdit={() => openEditDialog(invoice)}
+                  onEdit={() => navigateToEditor()}
                 />
               </div>
             </div>
@@ -239,15 +187,6 @@ export function InvoicesPage(): ReactElement {
       >
         {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"} in workspace.
       </div>
-
-      {editorMode ? (
-        <InvoiceEditorDialog
-          invoice={editingInvoice}
-          isPending={mutationPending}
-          onClose={closeEditor}
-          onSubmit={(data) => void handleSubmit(data)}
-        />
-      ) : null}
     </div>
   );
 }

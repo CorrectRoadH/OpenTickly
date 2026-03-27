@@ -41,6 +41,7 @@ import { ApprovalsPage } from "../pages/approvals/ApprovalsPage.tsx";
 import { BillableRatesPage } from "../pages/billable-rates/BillableRatesPage.tsx";
 import { GoalsPage } from "../pages/goals/GoalsPage.tsx";
 import { IntegrationsPage } from "../pages/integrations/IntegrationsPage.tsx";
+import { InvoiceEditorPage } from "../pages/invoices/InvoiceEditorPage.tsx";
 import { InvoicesPage } from "../pages/invoices/InvoicesPage.tsx";
 import { SubscriptionPage } from "../pages/subscription/SubscriptionPage.tsx";
 import { rootRoute } from "./root-route.tsx";
@@ -194,6 +195,12 @@ const workspaceInvoicesRoute = createRoute({
   component: WorkspaceInvoicesRouteComponent,
 });
 
+const workspaceInvoiceNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/invoices/new",
+  component: WorkspaceInvoiceNewRouteComponent,
+});
+
 const workspaceGoalsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/goals",
@@ -255,6 +262,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceTagDetailRoute,
   workspaceApprovalsRoute,
   workspaceBillableRatesRoute,
+  workspaceInvoiceNewRoute,
   workspaceInvoicesRoute,
   workspaceGoalsRoute,
   workspaceIntegrationsRoute,
@@ -470,6 +478,13 @@ function WorkspaceBillableRatesRouteComponent() {
   const workspaceId = Number(params.workspaceId);
 
   return renderProtectedRoute(<BillableRatesPage />, workspaceId);
+}
+
+function WorkspaceInvoiceNewRouteComponent() {
+  const params = workspaceInvoiceNewRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(<InvoiceEditorPage />, workspaceId);
 }
 
 function WorkspaceInvoicesRouteComponent() {
