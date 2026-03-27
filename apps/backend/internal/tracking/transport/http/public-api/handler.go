@@ -34,14 +34,19 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 		}
 		filter.Before = &value
 	}
-	if startDate := strings.TrimSpace(ctx.QueryParam("start_date")); startDate != "" {
+	startDate := strings.TrimSpace(ctx.QueryParam("start_date"))
+	endDate := strings.TrimSpace(ctx.QueryParam("end_date"))
+	if (startDate != "" && endDate == "") || (startDate == "" && endDate != "") {
+		return echo.NewHTTPError(http.StatusBadRequest, "start_date and end_date are both required")
+	}
+	if startDate != "" {
 		value, parseErr := parseTrackDateTime(startDate, false)
 		if parseErr != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 		}
 		filter.StartDate = &value
 	}
-	if endDate := strings.TrimSpace(ctx.QueryParam("end_date")); endDate != "" {
+	if endDate != "" {
 		value, parseErr := parseTrackDateTime(endDate, true)
 		if parseErr != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
