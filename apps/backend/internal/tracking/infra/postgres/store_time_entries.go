@@ -11,6 +11,9 @@ import (
 
 const tagNamesSubquery = `(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(te.tag_ids)::bigint)))`
 
+// tagNamesReturning is the same subquery but without the te. alias, for use in RETURNING clauses.
+const tagNamesReturning = `(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(tag_ids)::bigint)))`
+
 func (store *Store) CreateTimeEntry(
 	ctx context.Context,
 	record trackingapplication.CreateTimeEntryRecord,
@@ -28,7 +31,7 @@ func (store *Store) CreateTimeEntry(
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
 			expense_ids, deleted_at, created_at, updated_at,
 			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active,
-			`+tagNamesSubquery+``,
+			`+tagNamesReturning+``,
 		record.WorkspaceID,
 		record.UserID,
 		record.ClientID,
@@ -416,7 +419,7 @@ func (store *Store) UpdateTimeEntry(
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
 			expense_ids, deleted_at, created_at, updated_at,
 			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active,
-			`+tagNamesSubquery+``,
+			`+tagNamesReturning+``,
 		record.WorkspaceID,
 		record.UserID,
 		record.ID,
