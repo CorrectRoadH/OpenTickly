@@ -37,8 +37,12 @@ import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { TasksPage } from "../pages/tasks/TasksPage.tsx";
 import { TagsPage } from "../pages/tags/TagsPage.tsx";
 import { TagDetailPage } from "../pages/tags/TagDetailPage.tsx";
+import { ApprovalsPage } from "../pages/approvals/ApprovalsPage.tsx";
+import { BillableRatesPage } from "../pages/billable-rates/BillableRatesPage.tsx";
 import { GoalsPage } from "../pages/goals/GoalsPage.tsx";
-import { PlaceholderPage } from "../pages/shell/PlaceholderPage.tsx";
+import { IntegrationsPage } from "../pages/integrations/IntegrationsPage.tsx";
+import { InvoicesPage } from "../pages/invoices/InvoicesPage.tsx";
+import { SubscriptionPage } from "../pages/subscription/SubscriptionPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
 const homeRoute = createRoute({
@@ -458,39 +462,21 @@ function WorkspaceApprovalsRouteComponent() {
   const params = workspaceApprovalsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Review and approve time entries submitted by your team members."
-      title="Approvals"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<ApprovalsPage />, workspaceId);
 }
 
 function WorkspaceBillableRatesRouteComponent() {
   const params = workspaceBillableRatesRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Configure billable rates for your workspace members and projects."
-      title="Billable Rates"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<BillableRatesPage />, workspaceId);
 }
 
 function WorkspaceInvoicesRouteComponent() {
   const params = workspaceInvoicesRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Create and manage invoices based on your tracked time entries."
-      title="Invoices"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<InvoicesPage />, workspaceId);
 }
 
 function WorkspaceGoalsRouteComponent() {
@@ -504,26 +490,14 @@ function WorkspaceIntegrationsRouteComponent() {
   const params = workspaceIntegrationsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Connect your favorite tools and services with your workspace."
-      title="Integrations"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<IntegrationsPage />, workspaceId);
 }
 
 function WorkspaceSubscriptionRouteComponent() {
   const params = workspaceSubscriptionRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Manage your workspace subscription plan and billing details."
-      title="Subscription"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<SubscriptionPage />, workspaceId);
 }
 
 function WorkspaceSettingsRouteComponent() {
