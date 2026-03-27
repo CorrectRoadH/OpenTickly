@@ -13,7 +13,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -56,3 +56,8 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             OPENTOGGL_VERSION=${{ github.sha }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
