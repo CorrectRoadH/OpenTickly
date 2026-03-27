@@ -86,8 +86,7 @@ export function WorkspaceImportPage(): ReactElement {
     } catch (error) {
       setSubmittedJob(null);
       setToast({
-        description:
-          resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
+        description: resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
         title: "Import failed",
         tone: "error",
       });
