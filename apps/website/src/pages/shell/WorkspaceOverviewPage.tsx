@@ -22,6 +22,30 @@ import {
   useWorkspaceTopActivityQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
+
+const FAQ_ITEMS = [
+  {
+    label: "How should I set up my workspace?",
+    url: "https://support.toggl.com/en/articles/8556318-premium-onboarding-guide-for-toggl-track-admin#h_a65e688ec0",
+  },
+  {
+    label: "How do roles and permissions work?",
+    url: "https://support.toggl.com/en/articles/2216605-access-rights-and-privileges",
+  },
+  {
+    label: "How do I set billable rates?",
+    url: "https://support.toggl.com/en/articles/2216967-billable-rates",
+  },
+  {
+    label: "How can I ensure accurate time tracking?",
+    url: "https://toggl.com/track/setting-up-data-integrity-foundations",
+  },
+  {
+    label: "How do I create and use reports?",
+    url: "https://toggl.com/blog/new-toggl-track-reports",
+  },
+] as const;
 
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
@@ -142,103 +166,57 @@ export function WorkspaceOverviewPage(): ReactElement {
               </div>
             </OverviewSurface>
 
+            {/* This week summary — Recharts bar chart matching Toggl */}
             <OverviewSurface className="px-5 py-4 lg:min-h-[240px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
+                  <a
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
+                    href="/reports"
+                  >
                     View reports
-                  </span>
+                  </a>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
-                  <div className="overflow-x-auto">
-                    <div className="grid min-w-[394px] grid-cols-[30px_minmax(0,1fr)] gap-2">
-                      <div className="relative h-[132px]">
-                        <div className="absolute inset-0 flex flex-col justify-between">
-                          {weekSummary.axisLabels.map((axis) => (
-                            <span
-                              className="pr-1 text-[11px] leading-none text-[var(--track-text-soft)]"
-                              key={axis}
-                            >
-                              {axis}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <div className="relative h-[132px]">
-                          <div className="absolute inset-0 flex flex-col justify-between">
-                            {weekSummary.axisLabels.map((axis) => (
-                              <div
-                                className="border-b border-dashed border-[var(--track-border)]"
-                                key={`${axis}-line`}
-                              />
-                            ))}
-                          </div>
-
-                          <div className="absolute inset-0 grid grid-cols-7 gap-[6px] px-[2px]">
-                            {weekSummary.days.map((day) => (
-                              <div
-                                className="relative flex h-full items-end justify-center"
-                                key={day.label}
-                              >
-                                <div className="relative h-full w-[26px] max-w-full">
-                                  {day.totalSeconds > 0 ? (
-                                    <div
-                                      className="absolute bottom-0 left-1/2 w-[24px] max-w-full -translate-x-1/2 rounded-t-[3px] bg-[var(--track-accent)]"
-                                      style={{ height: `${day.heightPercent}%` }}
-                                    >
-                                      <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-medium text-[var(--track-text-soft)]">
-                                        {formatClockDuration(day.totalSeconds)}
-                                      </span>
-                                    </div>
-                                  ) : null}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-7 gap-[6px] border-t border-[var(--track-border)] px-[2px] pt-1.5">
-                          {weekSummary.days.map((day) => (
-                            <span
-                              className="text-center text-[11px] font-medium leading-4 text-[var(--track-text-muted)]"
-                              key={`${day.label}-tick`}
-                            >
-                              {day.label}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <OverviewWeekChart
+                    axisLabels={weekSummary.axisLabels}
+                    axisMaxSeconds={weekSummary.axisMaxSeconds}
+                    days={weekSummary.days}
+                  />
                 </div>
-
                 <div className="flex items-center justify-center gap-4 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-[4px] w-[18px] rounded-full bg-[#e57bd9]" />
+                    <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
+                      <rect fill="#e57bd9" height={6} rx={3} width={16} />
+                    </svg>
                     <span>Billable</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-[4px] w-[18px] rounded-full bg-[var(--track-accent)]" />
+                    <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
+                      <rect fill="#B744AB" height={6} rx={3} width={16} />
+                    </svg>
                     <span>Non-billable</span>
                   </span>
                 </div>
               </div>
             </OverviewSurface>
 
+            {/* Team activity */}
             <OverviewSurface className="px-5 py-4 lg:min-h-[196px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
+                  <a
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
+                    href={`/reports/${workspaceId}/workload?wsid=${workspaceId}`}
+                  >
                     View team activity
-                  </span>
+                  </a>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
@@ -304,6 +282,7 @@ export function WorkspaceOverviewPage(): ReactElement {
             </OverviewSurface>
           </div>
 
+          {/* Right column */}
           <div className="flex flex-col gap-5">
             <OverviewSurface className="px-5 py-4 lg:min-h-[168px]">
               <div className="flex h-full flex-col gap-3">
@@ -334,9 +313,14 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </button>
                   <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
                     Bringing on a large team?{" "}
-                    <span className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2">
+                    <a
+                      className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2"
+                      href="https://toggl.com/track/demo-request/"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
                       book a demo
-                    </span>
+                    </a>
                   </p>
                 </div>
               </div>
@@ -348,9 +332,12 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
+                  <a
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
+                    href="/reports"
+                  >
                     View reports
-                  </span>
+                  </a>
                 </div>
                 {topProjects.length > 0 ? (
                   <div className="space-y-2 border-t border-[var(--track-border)] pt-3">
@@ -375,9 +362,17 @@ export function WorkspaceOverviewPage(): ReactElement {
 
             <OverviewSurface className="px-5 py-4 lg:min-h-[170px]">
               <div className="flex h-full flex-col gap-4">
-                <h2 className="text-[16px] font-semibold leading-[23px] text-white">
-                  Time tracked to projects
-                </h2>
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+                    Time tracked to projects
+                  </h2>
+                  <a
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
+                    href="/reports/detailed"
+                  >
+                    View reports
+                  </a>
+                </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-3">
                   <StatRing
                     accent="#f0c05d"
@@ -403,19 +398,34 @@ export function WorkspaceOverviewPage(): ReactElement {
               <div className="flex h-full flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">FAQ</h2>
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]">
-                    View more ↗
-                  </span>
+                  <a
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
+                    href="https://community.toggl.com/"
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    View more
+                    <svg fill="none" height={10} viewBox="0 0 10 10" width={10}>
+                      <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth={1.5} />
+                    </svg>
+                  </a>
                 </div>
                 <p className="border-b border-[var(--track-border)] pb-2 text-[14px] leading-5 text-[var(--track-text-muted)]">
                   The stuff most admins ask us
                 </p>
-                <div className="space-y-1 text-[14px] leading-5 text-[var(--track-text)]">
-                  <p>How should I set up my workspace?</p>
-                  <p>How do roles and permissions work?</p>
-                  <p>How do I set billable rates?</p>
-                  <p>How can I ensure accurate time tracking?</p>
-                  <p>How do I create and use reports?</p>
+                <div className="space-y-1 text-[14px] leading-5">
+                  {FAQ_ITEMS.map((item) => (
+                    <p key={item.label}>
+                      <a
+                        className="text-[var(--track-text)] no-underline hover:text-white"
+                        href={item.url}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {item.label}
+                      </a>
+                    </p>
+                  ))}
                 </div>
               </div>
             </OverviewSurface>
@@ -585,12 +595,16 @@ function buildWeekSummary(
     axisLabels: Array.from({ length: 6 }, (_, index) =>
       formatAxisLabel(axisMaxSeconds - axisStepSeconds * index),
     ),
+    axisMaxSeconds,
     days: weekDays.map((day) => {
       const totalSeconds = totalsByDay.get(formatDateKey(day, timezone)) ?? 0;
+      const { weekday, date, label } = formatShortAxisDay(day);
       return {
+        date,
         heightPercent: Math.max(0, Math.min(100, (totalSeconds / axisMaxSeconds) * 100)),
-        label: formatShortAxisDay(day),
+        label,
         totalSeconds,
+        weekday,
       };
     }),
   };
@@ -615,7 +629,7 @@ function buildTopProjects(
     const projectId = activity.project_id ?? 0;
     const project = projectById.get(projectId) ?? {
       color: "#cf58c4",
-      name: projectId === 0 ? "(No project)" : `Project #${projectId}`,
+      name: projectId === 0 ? "Without project" : `Project #${projectId}`,
     };
     const current = grouped.get(projectId) ?? { ...project, totalSeconds: 0 };
     current.totalSeconds += resolveDashboardDuration(activity);
@@ -696,11 +710,11 @@ function formatAxisLabel(totalSeconds: number): string {
   return Number.isInteger(hours) ? `${hours}h` : `${Math.floor(hours)}h 30`;
 }
 
-function formatShortAxisDay(day: Date): string {
+function formatShortAxisDay(day: Date): { weekday: string; date: string; label: string } {
   const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(day);
   const month = String(day.getMonth() + 1).padStart(2, "0");
-  const date = String(day.getDate()).padStart(2, "0");
-  return `${weekday} ${month}-${date}`;
+  const d = String(day.getDate()).padStart(2, "0");
+  return { weekday, date: `${month}/${d}`, label: `${weekday} ${month}/${d}` };
 }
 
 function memberTint(index: number): string {
