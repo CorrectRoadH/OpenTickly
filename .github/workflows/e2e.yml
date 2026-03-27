@@ -87,6 +87,8 @@ jobs:
           sleep 5
 
       - name: Run E2E tests
+        env:
+          PLAYWRIGHT_WORKERS: "4"
         run: |
           cd apps/website
           pnpm exec playwright test
