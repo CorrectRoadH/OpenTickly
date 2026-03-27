@@ -1,7 +1,7 @@
-import { type FormEvent, type ReactElement, useState } from "react";
+import { type ReactElement, useMemo, useState } from "react";
+import { DirectorySurfaceMessage } from "@opentoggl/web-ui";
 
-import { AppButton, AppPanel, ShellPageHeader, ShellPrimaryButton } from "@opentoggl/web-ui";
-import { useSession } from "../../shared/session/session-context.tsx";
+import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
   useInviteWorkspaceMemberMutation,
@@ -9,6 +9,29 @@ import {
   useRestoreWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
+import { useSession } from "../../shared/session/session-context.tsx";
+import { InviteMemberDialog } from "./InviteMemberDialog.tsx";
+import { MemberRowActions } from "./MemberRowActions.tsx";
+
+type MemberStatusFilter = "all" | "active" | "disabled" | "invited";
+
+function resolveMemberStatusLabel(status: string): string {
+  switch (status) {
+    case "joined":
+    case "restored":
+      return "Active";
+    case "disabled":
+      return "Disabled";
+    case "invited":
+      return "Invited";
+    default:
+      return status;
+  }
+}
+
+function isActiveMember(status: string): boolean {
+  return status === "joined" || status === "restored";
+}
 
 export function WorkspaceMembersPage(): ReactElement {
   const session = useSession();
@@ -18,151 +41,219 @@ export function WorkspaceMembersPage(): ReactElement {
   const disableMutation = useDisableWorkspaceMemberMutation(workspaceId);
   const restoreMutation = useRestoreWorkspaceMemberMutation(workspaceId);
   const removeMutation = useRemoveWorkspaceMemberMutation(workspaceId);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const [status, setStatus] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
+  const [search, setSearch] = useState("");
 
-  async function handleInviteSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  const members = useMemo(() => membersQuery.data?.members ?? [], [membersQuery.data]);
 
-    await inviteMutation.mutateAsync({
-      email: inviteEmail,
-      role: inviteRole,
+  const filteredMembers = useMemo(() => {
+    return members.filter((member) => {
+      if (statusFilter === "active" && !isActiveMember(member.status)) return false;
+      if (statusFilter === "disabled" && member.status !== "disabled") return false;
+      if (statusFilter === "invited" && member.status !== "invited") return false;
+
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        return member.name.toLowerCase().includes(q) || member.email.toLowerCase().includes(q);
+      }
+
+      return true;
     });
+  }, [members, statusFilter, search]);
+
+  const activeCount = members.filter((m) => isActiveMember(m.status)).length;
+  const disabledCount = members.filter((m) => m.status === "disabled").length;
+  const invitedCount = members.filter((m) => m.status === "invited").length;
+
+  async function handleInvite() {
+    const trimmed = inviteEmail.trim();
+    if (!trimmed) return;
+
+    await inviteMutation.mutateAsync({ email: trimmed, role: inviteRole });
     setInviteEmail("");
     setInviteRole("member");
+    setInviteDialogOpen(false);
     setStatus("Invitation sent");
   }
 
-  async function handleDisableMember(memberId: number) {
-    await disableMutation.mutateAsync(memberId);
-    setStatus("Member disabled");
+  if (membersQuery.isPending) {
+    return <DirectorySurfaceMessage message="Loading members..." />;
   }
 
-  async function handleRestoreMember(memberId: number) {
-    await restoreMutation.mutateAsync(memberId);
-    setStatus("Member restored");
-  }
-
-  async function handleRemoveMember(memberId: number) {
-    await removeMutation.mutateAsync(memberId);
-    setStatus("Member removed");
+  if (membersQuery.isError) {
+    return (
+      <DirectorySurfaceMessage
+        message="Unable to load members. Refresh to try again."
+        tone="error"
+      />
+    );
   }
 
   return (
-    <main
-      aria-label="workspace-members"
-      className="min-h-full space-y-5 bg-[var(--track-surface)] p-5 text-white"
-    >
-      <ShellPageHeader
-        action={<ShellPrimaryButton type="button">Invite members</ShellPrimaryButton>}
-        bordered
-        title="Workspace Members"
-      />
-
-      <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
-        {membersQuery.isSuccess
-          ? `${membersQuery.data.members.length} member${membersQuery.data.members.length === 1 ? "" : "s"} in this workspace`
-          : "Manage workspace members and invitations."}
-      </p>
-
-      {membersQuery.isPending ? (
-        <section
-          aria-label="Workspace members list"
-          data-testid="members-list"
-          className="rounded-[8px] border border-[var(--track-border)] p-4 text-[14px] text-[var(--track-text-muted)]"
+    <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="members-page">
+      <header className="border-b border-[var(--track-border)]">
+        <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
+          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Members</h1>
+          <button
+            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
+            data-testid="members-invite-button"
+            onClick={() => setInviteDialogOpen(true)}
+            type="button"
+          >
+            <TrackingIcon className="size-3.5" name="plus" />
+            Invite member
+          </button>
+        </div>
+        <div
+          className="flex min-h-[46px] flex-wrap items-center gap-3 border-t border-[var(--track-border)] px-5 py-2"
+          data-testid="members-filter-bar"
         >
-          Loading members…
-        </section>
-      ) : null}
-
-      <AppPanel>
-        <form className="flex flex-wrap items-end gap-3" onSubmit={handleInviteSubmit}>
-          <label className="flex min-w-[18rem] flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            Invite by email
+          <label className="relative shrink-0">
+            <select
+              aria-label="Member status filter"
+              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
+              onChange={(event) => setStatusFilter(event.target.value as MemberStatusFilter)}
+              value={statusFilter}
+            >
+              <option value="all">All members</option>
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+              <option value="invited">Invited</option>
+            </select>
+            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
+              <TrackingIcon className="size-3" name="chevron-down" />
+            </span>
+          </label>
+          <label className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
+              <TrackingIcon className="size-3.5" name="search" />
+            </span>
             <input
-              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-normal normal-case tracking-normal text-white outline-none focus:border-[var(--track-accent-soft)]"
-              type="email"
-              value={inviteEmail}
-              onChange={(event) => setInviteEmail(event.target.value)}
+              className="h-9 w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search members..."
+              value={search}
             />
           </label>
-          <label className="flex min-w-[10rem] flex-col gap-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            Role
-            <select
-              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-normal normal-case tracking-normal text-white outline-none focus:border-[var(--track-accent-soft)]"
-              value={inviteRole}
-              onChange={(event) => setInviteRole(event.target.value)}
-            >
-              <option value="member">Member</option>
-              <option value="admin">Admin</option>
-              <option value="owner">Owner</option>
-            </select>
-          </label>
-          <AppButton type="submit">Send invite</AppButton>
           {status ? (
-            <p className="text-[12px] font-medium text-[var(--track-accent-text)]">{status}</p>
+            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
           ) : null}
-        </form>
-      </AppPanel>
+        </div>
+      </header>
 
-      {membersQuery.isSuccess ? (
-        <section
-          aria-label="Workspace members list"
-          data-testid="members-list"
-          className="divide-y rounded-[8px] border border-[var(--track-border)]"
-        >
-          {membersQuery.data.members.map((member) => {
+      {filteredMembers.length > 0 ? (
+        <div data-testid="members-list" aria-label="Workspace members list">
+          <div className="grid grid-cols-[42px_minmax(0,2fr)_100px_100px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+            <div className="flex h-[34px] items-center">
+              <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+            </div>
+            <div className="flex h-[34px] items-center">Name</div>
+            <div className="flex h-[34px] items-center">Role</div>
+            <div className="flex h-[34px] items-center">Status</div>
+            <div className="flex h-[34px] items-center justify-end" />
+          </div>
+          {filteredMembers.map((member) => {
             const canDisable = member.status === "joined" || member.status === "restored";
             const canRestore = member.status === "disabled";
 
             return (
-              <article
-                key={member.id}
-                className="grid grid-cols-[2fr_2fr_1fr_auto] gap-3 bg-[var(--track-surface)] p-4"
+              <div
+                className="grid grid-cols-[42px_minmax(0,2fr)_100px_100px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
                 data-member-id={member.id}
+                key={member.id}
               >
-                <div>
-                  <div className="text-[14px] font-medium text-white">{member.name}</div>
-                  <div className="text-[12px] text-[var(--track-text-muted)]">{member.email}</div>
+                <div className="flex h-[54px] items-center">
+                  <span className="flex size-6 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold uppercase text-[var(--track-text-muted)]">
+                    {member.name.charAt(0)}
+                  </span>
                 </div>
-                <div className="text-[12px] text-[var(--track-text-muted)]">
-                  <div className="text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-soft)]">
-                    {member.role}
-                  </div>
-                  <div>{member.status}</div>
+                <div className="flex h-[54px] flex-col justify-center overflow-hidden">
+                  <span className="truncate text-white">{member.name}</span>
+                  <span className="truncate text-[11px] text-[var(--track-text-muted)]">
+                    {member.email}
+                  </span>
                 </div>
-                <dl className="sr-only">
-                  <div>
-                    <dt>Member ID</dt>
-                    <dd>{member.id}</dd>
-                  </div>
-                  <div>
-                    <dt>Workspace ID</dt>
-                    <dd>{member.workspace_id}</dd>
-                  </div>
-                </dl>
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  {canDisable ? (
-                    <AppButton type="button" onClick={() => void handleDisableMember(member.id)}>
-                      Disable
-                    </AppButton>
-                  ) : null}
-                  {canRestore ? (
-                    <AppButton type="button" onClick={() => void handleRestoreMember(member.id)}>
-                      Restore
-                    </AppButton>
-                  ) : null}
-                  <AppButton type="button" onClick={() => void handleRemoveMember(member.id)}>
-                    Remove
-                  </AppButton>
+                <div className="flex h-[54px] items-center text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                  {member.role}
                 </div>
-              </article>
+                <div className="flex h-[54px] items-center">
+                  <span
+                    className={`inline-flex h-5 items-center rounded-[4px] px-1.5 text-[10px] font-medium uppercase tracking-[0.04em] ${
+                      isActiveMember(member.status)
+                        ? "bg-emerald-900/40 text-emerald-400"
+                        : member.status === "disabled"
+                          ? "bg-rose-900/40 text-rose-400"
+                          : "bg-amber-900/40 text-amber-400"
+                    }`}
+                  >
+                    {resolveMemberStatusLabel(member.status)}
+                  </span>
+                </div>
+                <div className="flex h-[54px] items-center justify-end">
+                  <MemberRowActions
+                    canDisable={canDisable}
+                    canRestore={canRestore}
+                    memberId={member.id}
+                    memberName={member.name}
+                    onDisable={(id) => {
+                      void disableMutation.mutateAsync(id).then(() => {
+                        setStatus("Member disabled");
+                      });
+                    }}
+                    onRemove={(id) => {
+                      void removeMutation.mutateAsync(id).then(() => {
+                        setStatus("Member removed");
+                      });
+                    }}
+                    onRestore={(id) => {
+                      void restoreMutation.mutateAsync(id).then(() => {
+                        setStatus("Member restored");
+                      });
+                    }}
+                  />
+                </div>
+              </div>
             );
           })}
-        </section>
+        </div>
+      ) : (
+        <div className="px-5 py-10" data-testid="members-empty-state">
+          <p className="text-sm text-[var(--track-text-muted)]">
+            {search.trim()
+              ? "No members match your search."
+              : statusFilter !== "all"
+                ? `No ${statusFilter} members.`
+                : "No members in this workspace yet. Invite someone to get started."}
+          </p>
+        </div>
+      )}
+
+      <div
+        className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
+        data-testid="members-summary"
+      >
+        {members.length} member{members.length === 1 ? "" : "s"} in {session.currentWorkspace.name}.
+        Active: {activeCount} · Disabled: {disabledCount} · Invited: {invitedCount}
+      </div>
+
+      {inviteDialogOpen ? (
+        <InviteMemberDialog
+          email={inviteEmail}
+          isPending={inviteMutation.isPending}
+          onClose={() => setInviteDialogOpen(false)}
+          onEmailChange={setInviteEmail}
+          onRoleChange={setInviteRole}
+          onSubmit={() => {
+            void handleInvite();
+          }}
+          role={inviteRole}
+        />
       ) : null}
-    </main>
+    </div>
   );
 }
 
