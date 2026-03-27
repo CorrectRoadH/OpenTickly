@@ -1708,6 +1708,32 @@ func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) 
 	mustDecodeJSON(t, createRunningEntryRecorder.Body.Bytes(), &runningEntry)
 	runningTimeEntryID := int64(runningEntry["id"].(float64))
 
+	// GET /me/time_entries is workspace-scoped via user's home workspace.
+	// The user's home is the first workspace, so listing returns 0 entries
+	// from that workspace. Entries created in secondWorkspaceID are not visible.
+	listHomeRequest := httptest.NewRequest(http.MethodGet, "/api/v9/me/time_entries?start_date=2026-03-23&end_date=2026-03-23", nil)
+	listHomeRequest.Header.Set("Cookie", sessionCookie)
+	listHomeRecorder := httptest.NewRecorder()
+	app.HTTP.ServeHTTP(listHomeRecorder, listHomeRequest)
+	if listHomeRecorder.Code != http.StatusOK {
+		t.Fatalf("expected list time entries status 200, got %d body=%s", listHomeRecorder.Code, listHomeRecorder.Body.String())
+	}
+
+	var homeEntries []map[string]any
+	mustDecodeJSON(t, listHomeRecorder.Body.Bytes(), &homeEntries)
+	if len(homeEntries) != 0 {
+		t.Fatalf("expected zero entries in home workspace, got %d", len(homeEntries))
+	}
+
+	// Switch the user's home to secondWorkspaceID, then list again — should see 2 entries.
+	switchHome := performJSONRequest(t, app, http.MethodPut, "/web/v1/me/home", map[string]any{
+		"organization_id": *bootstrapResponse.CurrentOrganizationID,
+		"workspace_id":    secondWorkspaceID,
+	}, sessionCookie)
+	if switchHome.Code != http.StatusOK && switchHome.Code != http.StatusNoContent {
+		t.Fatalf("expected switch home status 200/204, got %d body=%s", switchHome.Code, switchHome.Body.String())
+	}
+
 	listRequest := httptest.NewRequest(http.MethodGet, "/api/v9/me/time_entries?start_date=2026-03-23&end_date=2026-03-23", nil)
 	listRequest.Header.Set("Cookie", sessionCookie)
 	listRecorder := httptest.NewRecorder()
@@ -1719,11 +1745,11 @@ func TestPublicTrackMeTimeEntriesRemainUserScopedAcrossWorkspaces(t *testing.T) 
 	var entries []map[string]any
 	mustDecodeJSON(t, listRecorder.Body.Bytes(), &entries)
 	if len(entries) != 2 {
-		t.Fatalf("expected two user-scoped time entries, got %#v", entries)
+		t.Fatalf("expected two workspace-scoped time entries, got %d", len(entries))
 	}
 	for _, entry := range entries {
 		if gotWorkspaceID := int64(entry["workspace_id"].(float64)); gotWorkspaceID != secondWorkspaceID {
-			t.Fatalf("expected user-scoped workspace %d, got %#v", secondWorkspaceID, entry)
+			t.Fatalf("expected workspace %d, got %#v", secondWorkspaceID, entry)
 		}
 	}
 

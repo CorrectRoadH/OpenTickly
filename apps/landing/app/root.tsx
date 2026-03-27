@@ -12,7 +12,7 @@ import "./app.css";
 import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
 
-export const links: Route.LinksFunction = () => [{ rel: "icon", href: "/favicon.ico" }];
+export const links: Route.LinksFunction = () => [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (

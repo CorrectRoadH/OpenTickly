@@ -65,12 +65,13 @@ type MostActiveUserView struct {
 }
 
 type ListTimeEntriesFilter struct {
-	UserID     int64
-	Since      *time.Time
-	Before     *time.Time
-	StartDate  *time.Time
-	EndDate    *time.Time
-	IncludeAll bool
+	UserID      int64
+	WorkspaceID int64
+	Since       *time.Time
+	Before      *time.Time
+	StartDate   *time.Time
+	EndDate     *time.Time
+	IncludeAll  bool
 }
 
 type CreateTimeEntryCommand struct {

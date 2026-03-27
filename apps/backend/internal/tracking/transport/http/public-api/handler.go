@@ -16,12 +16,12 @@ import (
 )
 
 func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
-	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 
-	filter := trackingapplication.ListTimeEntriesFilter{UserID: user.ID}
+	filter := trackingapplication.ListTimeEntriesFilter{UserID: user.ID, WorkspaceID: workspaceID}
 	if since, ok := queryInt64(ctx, "since"); ok {
 		timeValue := time.Unix(since, 0).UTC()
 		filter.Since = &timeValue
@@ -62,12 +62,13 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 }
 
 func (handler *Handler) GetPublicTrackTimeEntriesChecklist(ctx echo.Context) error {
-	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	workspaceID, user, err := handler.scope.RequirePublicTrackTrackingScope(ctx)
 	if err != nil {
 		return err
 	}
 	entries, err := handler.tracking.ListUserTimeEntries(ctx.Request().Context(), trackingapplication.ListTimeEntriesFilter{
-		UserID: user.ID,
+		UserID:      user.ID,
+		WorkspaceID: workspaceID,
 	})
 	if err != nil {
 		return writePublicTrackTrackingError(err)

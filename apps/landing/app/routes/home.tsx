@@ -1,7 +1,7 @@
 import { HomeLayout } from "fumadocs-ui/layouts/home";
 import { ArrowUpRight, Github, Terminal } from "lucide-react";
 import { Link } from "react-router";
-import HomeProductMock from "@/components/home-product-mock";
+import HomeHeroScreenshots from "@/components/home-hero-screenshots";
 import { baseOptions } from "@/lib/layout.shared";
 import Seo from "@/components/seo";
 import {
@@ -117,6 +117,7 @@ export default function Home() {
                 </span>
               ))}
             </div>
+            <HomeHeroScreenshots />
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
               {heroHighlights.map(([title, body]) => (
                 <div key={title} className="rounded-2xl border border-fd-border bg-white/3 p-4">
@@ -125,7 +126,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <HomeProductMock />
           </div>
         </section>
 

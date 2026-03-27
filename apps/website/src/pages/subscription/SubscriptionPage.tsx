@@ -106,7 +106,7 @@ export function SubscriptionPage(): ReactElement {
               </p>
               <a
                 className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--track-accent)] hover:underline"
-                href="https://github.com/joinhometeam/opentoggl"
+                href="https://github.com/CorrectRoadH/opentoggl"
                 rel="noopener noreferrer"
                 target="_blank"
               >

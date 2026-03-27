@@ -1,4 +1,4 @@
-package application
+package application_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 
+	"opentoggl/backend/apps/backend/internal/billing/application"
 	"opentoggl/backend/apps/backend/internal/billing/domain"
 	postgresinfra "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
 )
@@ -30,7 +31,7 @@ func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 
 	repository := postgresinfra.NewAccountRepository(database.Pool)
 	workspaces := postgresinfra.NewWorkspaceOwnershipLookup(database.Pool)
-	service, err := NewService(
+	service, err := application.NewService(
 		repository,
 		workspaces,
 		[]domain.CapabilityRule{
@@ -118,7 +119,7 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		t.Fatalf("create tenant organization for billing test: %v", err)
 	}
 
-	provisioningService, err := NewService(
+	provisioningService, err := application.NewService(
 		postgresinfra.NewAccountRepository(database.Pool),
 		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
 		[]domain.CapabilityRule{
@@ -139,7 +140,7 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		t.Fatalf("delete billing account: %v", err)
 	}
 
-	service, err := NewService(
+	service, err := application.NewService(
 		postgresinfra.NewAccountRepository(database.Pool),
 		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
 		[]domain.CapabilityRule{
@@ -150,8 +151,8 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		t.Fatalf("new billing service: %v", err)
 	}
 
-	if _, err := service.CommercialStatusForWorkspace(ctx, int64(workspace.ID())); !errors.Is(err, ErrCommercialAccountNotFound) {
-		t.Fatalf("expected ErrCommercialAccountNotFound, got %v", err)
+	if _, err := service.CommercialStatusForWorkspace(ctx, int64(workspace.ID())); !errors.Is(err, application.ErrCommercialAccountNotFound) {
+		t.Fatalf("expected application.ErrCommercialAccountNotFound, got %v", err)
 	}
 }
 
@@ -170,7 +171,7 @@ func TestServiceProvisionsDefaultBillingAccount(t *testing.T) {
 		t.Fatalf("create tenant organization for billing test: %v", err)
 	}
 
-	service, err := NewService(
+	service, err := application.NewService(
 		postgresinfra.NewAccountRepository(database.Pool),
 		postgresinfra.NewWorkspaceOwnershipLookup(database.Pool),
 		[]domain.CapabilityRule{
