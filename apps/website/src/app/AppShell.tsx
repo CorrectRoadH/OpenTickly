@@ -1,15 +1,19 @@
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   type ReactElement,
   type ReactNode,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
+import { createPortal } from "react-dom";
+
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
+import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
 import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
 import {
   formatClockDuration,
@@ -23,6 +27,7 @@ import {
 } from "../shared/lib/workspace-routing.ts";
 import {
   useCurrentTimeEntryQuery,
+  useLogoutMutation,
   useProfileQuery,
   useUpdateProfileMutation,
   useUpdateWebSessionMutation,
@@ -178,19 +183,11 @@ export function AppShell({ children }: AppShellProps): ReactElement {
               <TrackingIcon className="h-4 w-[21px]" name="menu" />
             </button>
             <div className="space-y-1">
-              <Link
-                aria-label="Profile"
-                className="flex flex-col items-center gap-1 py-1 text-[var(--track-text-muted)] transition hover:text-white"
-                to="/profile"
-              >
-                <UserAvatar
-                  className="size-[26px] overflow-hidden border border-[var(--track-surface)]"
-                  imageUrl={session.user.imageUrl}
-                  name={profileName}
-                  textClassName="text-[11px] font-semibold"
-                />
-                <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
-              </Link>
+              <ProfileMenuButton
+                email={session.user.email}
+                imageUrl={session.user.imageUrl}
+                name={profileName}
+              />
               <RailButton icon="bell" />
               <RailButton icon="help" />
             </div>
@@ -219,6 +216,165 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
 function isAccountScopedShellPath(pathname: string): boolean {
   return pathname === "/overview" || pathname === "/timer";
+}
+
+function ProfileMenuButton({
+  email,
+  imageUrl,
+  name,
+}: {
+  email: string;
+  imageUrl?: string | null;
+  name: string;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [panelPosition, setPanelPosition] = useState<{ left: number; bottom: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const logoutMutation = useLogoutMutation();
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (!buttonRef.current?.contains(target) && !panelRef.current?.contains(target)) {
+        setOpen(false);
+      }
+    }
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !buttonRef.current) return;
+    function updatePosition() {
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setPanelPosition({
+        left: rect.right + 12,
+        bottom: window.innerHeight - rect.bottom,
+      });
+    }
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        aria-label="Profile menu"
+        className="flex flex-col items-center gap-1 py-1 text-[var(--track-text-muted)] transition hover:text-white"
+        onClick={() => setOpen((prev) => !prev)}
+        ref={buttonRef}
+        type="button"
+      >
+        <UserAvatar
+          className="size-[26px] overflow-hidden border border-[var(--track-surface)]"
+          imageUrl={imageUrl}
+          name={name}
+          textClassName="text-[11px] font-semibold"
+        />
+        <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
+      </button>
+
+      {open && panelPosition
+        ? createPortal(
+            <div
+              className="fixed z-50 w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_rgba(0,0,0,0.48)]"
+              ref={panelRef}
+              role="menu"
+              style={{
+                left: panelPosition.left,
+                bottom: panelPosition.bottom,
+              }}
+            >
+              {/* User info */}
+              <div className="flex items-center gap-3 px-5 py-4">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[16px] font-semibold text-white">{name}</p>
+                  <p className="truncate text-[13px] text-[var(--track-text-muted)]">{email}</p>
+                </div>
+                <UserAvatar
+                  className="size-[40px] shrink-0 overflow-hidden"
+                  imageUrl={imageUrl}
+                  name={name}
+                  textClassName="text-[15px] font-semibold"
+                />
+              </div>
+
+              <div className="mx-4 border-t border-[var(--track-border)]" />
+
+              {/* Menu items */}
+              <div className="py-1">
+                <button
+                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  onClick={() => {
+                    setOpen(false);
+                    void navigate({ to: "/profile" });
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Profile settings
+                </button>
+                <button
+                  className="flex w-full items-center justify-between px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  onClick={() => {
+                    setOpen(false);
+                    setShortcutsOpen(true);
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  <span>Keyboard shortcuts</span>
+                  <kbd className="flex size-[22px] items-center justify-center rounded-[5px] border border-[var(--track-border)] text-[12px] font-medium text-[var(--track-text-muted)]">
+                    ?
+                  </kbd>
+                </button>
+              </div>
+
+              <div className="mx-4 border-t border-[var(--track-border)]" />
+
+              <div className="py-1">
+                <button
+                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  onClick={() => {
+                    setOpen(false);
+                    void logoutMutation.mutateAsync().then(() => {
+                      window.location.href = "/";
+                    });
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+
+      {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
+    </>
+  );
 }
 
 function RailButton({
