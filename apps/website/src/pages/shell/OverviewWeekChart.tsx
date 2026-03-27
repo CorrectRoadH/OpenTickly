@@ -53,11 +53,7 @@ export function OverviewWeekChart({
   return (
     <ResponsiveContainer height={300} width="100%">
       <BarChart data={data} margin={{ top: 20, right: 10, left: 0, bottom: 0 }}>
-        <CartesianGrid
-          stroke="var(--track-border)"
-          strokeDasharray="2 2"
-          vertical={false}
-        />
+        <CartesianGrid stroke="var(--track-border)" strokeDasharray="2 2" vertical={false} />
         <XAxis
           axisLine={{ stroke: "var(--track-border)", strokeWidth: 2 }}
           dataKey="name"
@@ -76,10 +72,7 @@ export function OverviewWeekChart({
         <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
           <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
           {data.map((entry) => (
-            <Cell
-              fill={entry.seconds > 0 ? BAR_COLOR : BAR_EMPTY_COLOR}
-              key={entry.name}
-            />
+            <Cell fill={entry.seconds > 0 ? BAR_COLOR : BAR_EMPTY_COLOR} key={entry.name} />
           ))}
         </Bar>
       </BarChart>
@@ -118,9 +111,7 @@ function HourAxisTick(props: Record<string, unknown>): ReactElement {
     axisLabels: string[];
     axisMaxSeconds: number;
   };
-  const tickIndex = Math.round(
-    (1 - payload.value / axisMaxSeconds) * (axisLabels.length - 1),
-  );
+  const tickIndex = Math.round((1 - payload.value / axisMaxSeconds) * (axisLabels.length - 1));
   const label = axisLabels[tickIndex] ?? "";
   return (
     <text

@@ -175,7 +175,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </h2>
                   <a
                     className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href="/reports"
+                    href={`/workspaces/${workspaceId}/reports`}
                   >
                     View reports
                   </a>
@@ -213,7 +213,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </h2>
                   <a
                     className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href={`/reports/${workspaceId}/workload?wsid=${workspaceId}`}
+                    href={`/workspaces/${workspaceId}/reports`}
                   >
                     View team activity
                   </a>
@@ -334,7 +334,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </h2>
                   <a
                     className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href="/reports"
+                    href={`/workspaces/${workspaceId}/reports`}
                   >
                     View reports
                   </a>
@@ -368,7 +368,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </h2>
                   <a
                     className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href="/reports/detailed"
+                    href={`/workspaces/${workspaceId}/reports`}
                   >
                     View reports
                   </a>
