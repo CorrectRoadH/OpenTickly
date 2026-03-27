@@ -21,12 +21,12 @@ type GoalStatusFilter = "active" | "archived";
 
 function formatComparisonLabel(comparison?: string): string {
   switch (comparison) {
+    case "more_than":
     case "gte":
       return "at least";
+    case "less_than":
     case "lte":
-      return "at most";
-    case "equal":
-      return "exactly";
+      return "less than";
     default:
       return comparison ?? "";
   }
@@ -35,11 +35,11 @@ function formatComparisonLabel(comparison?: string): string {
 function formatRecurrenceLabel(recurrence?: string): string {
   switch (recurrence) {
     case "daily":
-      return "everyday";
+      return "every day";
     case "weekly":
       return "every week";
-    case "monthly":
-      return "every month";
+    case "daily_workdays":
+      return "weekdays";
     default:
       return recurrence ?? "";
   }
