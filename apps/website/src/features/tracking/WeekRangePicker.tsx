@@ -62,12 +62,15 @@ export function WeekRangePicker({
   mode = "week",
   onDayShortcutSelect,
   onSelectDate,
+  onWeekShortcutSelect,
   selectedDate,
   weekStartsOn = 1,
 }: {
   mode?: "day" | "week";
   onDayShortcutSelect?: (date: Date) => void;
   onSelectDate: (date: Date) => void;
+  /** Called when Today/Yesterday/This week/Last week shortcuts switch to week mode. */
+  onWeekShortcutSelect?: (date: Date) => void;
   selectedDate: Date;
   weekStartsOn?: number;
 }): ReactElement {
@@ -127,10 +130,11 @@ export function WeekRangePicker({
 
   return (
     <div className="relative" ref={rootRef}>
-      <div className="flex items-center gap-3">
+      {/* Outer pill: prev arrow + label trigger + next arrow in one bordered container */}
+      <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] text-white">
         <button
           aria-label={mode === "day" ? "Previous day" : "Previous week"}
-          className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
+          className="flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white"
           onClick={() =>
             onSelectDate(mode === "day" ? shiftDay(selectedDate, -1) : shiftWeek(selectedDate, -1))
           }
@@ -146,7 +150,7 @@ export function WeekRangePicker({
               ? `Day: ${formatDayLabel(selectedDate)}. Press Enter to open day picker.`
               : `Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`
           }
-          className="flex h-9 items-center gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-left text-white"
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 px-1 text-left"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -166,14 +170,16 @@ export function WeekRangePicker({
               ? formatDayLabel(selectedDate)
               : formatWeekRangeLabel(selectedDate, weekStartsOn)}
           </span>
-          <TrackingIcon
-            className="ml-auto size-3 shrink-0 text-[var(--track-text-muted)]"
-            name="chevron-down"
-          />
+          {mode === "day" ? (
+            <TrackingIcon
+              className="ml-1 size-3 shrink-0 text-[var(--track-text-muted)]"
+              name="chevron-down"
+            />
+          ) : null}
         </button>
         <button
           aria-label={mode === "day" ? "Next day" : "Next week"}
-          className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
+          className="flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white"
           onClick={() =>
             onSelectDate(mode === "day" ? shiftDay(selectedDate, 1) : shiftWeek(selectedDate, 1))
           }
@@ -203,7 +209,8 @@ export function WeekRangePicker({
                   if (shortcut.id === "today" || shortcut.id === "yesterday") {
                     isActive = mode === "day" && isSameDay(shortcutDate, selectedDate);
                   } else {
-                    isActive = mode === "week" && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
+                    isActive =
+                      mode === "week" && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
                   }
 
                   return (
@@ -223,7 +230,12 @@ export function WeekRangePicker({
                             onSelectDate(shortcutDate);
                           }
                         } else {
-                          onSelectDate(shortcutDate);
+                          // This week / Last week always navigate to week mode
+                          if (onWeekShortcutSelect) {
+                            onWeekShortcutSelect(shortcutDate);
+                          } else {
+                            onSelectDate(shortcutDate);
+                          }
                         }
                         setIsOpen(false);
                       }}
@@ -251,8 +263,7 @@ export function WeekRangePicker({
                   <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
                 </button>
                 <h2 className="text-[16px] font-semibold text-white">
-                  {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
-                  {" "}
+                  {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}{" "}
                   {visibleMonth.getFullYear()}
                 </h2>
                 <button

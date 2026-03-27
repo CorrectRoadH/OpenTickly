@@ -324,11 +324,12 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                   orch.setCalendarSubview("day");
                   orch.setSelectedWeekDate(date);
                 }}
+                onWeekShortcutSelect={(date) => {
+                  orch.setCalendarSubview("week");
+                  orch.setSelectedWeekDate(date);
+                }}
                 onSelectDate={(date) => {
                   orch.setSelectedWeekDate(date);
-                  if (orch.calendarSubview === "day") {
-                    // Stay in day mode when navigating via arrows or calendar click
-                  }
                 }}
                 selectedDate={orch.selectedWeekDate}
                 weekStartsOn={orch.beginningOfWeek}
@@ -524,7 +525,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                 void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
               }}
               onSelectSlot={(slot) => {
-                void orch.handleCalendarSlotCreate(slot);
+                 orch.handleCalendarSlotCreate(slot);
               }}
               onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
               onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
@@ -575,42 +576,67 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               isCreatingTag={orch.createTagMutation.isPending}
               isDeleting={orch.deleteTimeEntryMutation.isPending}
               isDirty={orch.selectedEntryDirty}
+              isNewEntry={orch.isNewEntry}
               isPrimaryActionPending={orch.timerMutationPending}
-              isSaving={orch.updateTimeEntryMutation.isPending}
+              isSaving={
+                orch.isNewEntry
+                  ? orch.createTimeEntryMutation.isPending
+                  : orch.updateTimeEntryMutation.isPending
+              }
               onClose={orch.closeSelectedEntryEditor}
               onCreateProject={orch.handleSelectedEntryProjectCreate}
               onCreateTag={orch.handleSelectedEntryTagCreate}
               onBillableToggle={orch.handleSelectedEntryBillableToggle}
-              onDuplicate={() => {
-                void orch.handleSelectedEntryDuplicate();
-              }}
-              onDelete={() => {
-                const snapshot = orch.selectedEntry
-                  ? snapshotEntryForUndo(orch.selectedEntry)
-                  : null;
-                void orch
-                  .handleSelectedEntryDelete()
-                  .then(() => {
-                    if (snapshot) showDeleteToast(snapshot);
-                  })
-                  .catch(() => {
-                    // Error is already displayed in the editor via selectedEntryError
-                  });
-              }}
+              onDuplicate={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryDuplicate();
+                    }
+              }
+              onDelete={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      const snapshot = orch.selectedEntry
+                        ? snapshotEntryForUndo(orch.selectedEntry)
+                        : null;
+                      void orch
+                        .handleSelectedEntryDelete()
+                        .then(() => {
+                          if (snapshot) showDeleteToast(snapshot);
+                        })
+                        .catch(() => {
+                          // Error is already displayed in the editor via selectedEntryError
+                        });
+                    }
+              }
               onDescriptionChange={orch.setSelectedDescription}
-              onFavorite={() => {
-                void orch.handleSelectedEntryFavorite();
-              }}
-              onPrimaryAction={() => {
-                void orch.handleSelectedEntryPrimaryAction();
-              }}
+              onFavorite={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryFavorite();
+                    }
+              }
+              onPrimaryAction={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryPrimaryAction();
+                    }
+              }
               onProjectSelect={orch.setSelectedProjectId}
               onSave={() => {
                 void orch.handleSelectedEntrySave();
               }}
-              onSplit={() => {
-                void orch.handleSelectedEntrySplit();
-              }}
+              onSplit={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntrySplit();
+                    }
+              }
               onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
               onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
               onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
