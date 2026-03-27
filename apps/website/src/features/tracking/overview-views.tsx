@@ -805,65 +805,125 @@ export function CalendarView({
     }
     return weekDays[0] ?? now;
   }, [now, selectedSubviewDateIso, subview, weekDays]);
-  const events = useMemo<CalendarEvent[]>(() => {
-    // Include the running entry even if the time-entries query hasn't yet
-    // returned it (e.g. immediately after starting a new timer). This avoids
-    // a gap between "timer bar shows running" and "calendar shows the block".
-    const entryIds = new Set(entries.map((e) => e.id));
-    const allEntries =
-      runningEntry != null && typeof runningEntry.id === "number" && !entryIds.has(runningEntry.id)
-        ? [...entries, runningEntry]
-        : entries;
-
+  // Build stopped/draft events without nowMs so they stay referentially
+  // stable while a timer is running (nowMs ticks every second).
+  const stoppedEvents = useMemo<CalendarEvent[]>(() => {
     const DRAFT_ENTRY_ID = -1;
     const MIN_SLOT_MS = 15 * 60 * 1000;
 
-    function toCalendarEvent(
-      entry: GithubComTogglTogglApiInternalModelsTimeEntry & { id: number },
-      isDraft: boolean,
-    ): CalendarEvent {
-      const start = new Date(entry.start ?? entry.at ?? Date.now());
-      const rawEnd = entry.stop ? new Date(entry.stop) : new Date(nowMs ?? Date.now());
-      const end =
-        rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
-          ? new Date(start.getTime() + MIN_SLOT_MS)
-          : rawEnd;
-
-      return {
-        allDay: false,
-        end,
-        entry,
-        id: entry.id,
-        resource: {
-          color: resolveEntryColor(entry),
-          isDraft,
-          isLocked: false,
-          isRunning: isRunningTimeEntry(entry),
-        },
-        start,
-        title: entry.description?.trim() || entry.project_name || "Entry",
-      };
-    }
-
-    const calendarEvents: CalendarEvent[] = allEntries
+    const calendarEvents: CalendarEvent[] = entries
       .filter(
         (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
-          typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
+          typeof entry.id === "number" &&
+          Boolean(entry.start ?? entry.at) &&
+          !isRunningTimeEntry(entry),
       )
-      .map((entry) => toCalendarEvent(entry, false));
+      .map((entry) => {
+        const start = new Date(entry.start ?? entry.at ?? Date.now());
+        const rawEnd = new Date(entry.stop!);
+        const end =
+          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
+            ? new Date(start.getTime() + MIN_SLOT_MS)
+            : rawEnd;
+        return {
+          allDay: false,
+          end,
+          entry,
+          id: entry.id,
+          resource: {
+            color: resolveEntryColor(entry),
+            isDraft: false,
+            isLocked: false,
+            isRunning: false,
+          },
+          start,
+          title: entry.description?.trim() || entry.project_name || "Entry",
+        };
+      });
 
-    // Add draft entry as a visible calendar block so the editor popup can
-    // anchor to its real DOM position instead of using a hardcoded rect.
     if (draftEntry != null && draftEntry.start) {
       const draftWithId = {
         ...draftEntry,
         id: DRAFT_ENTRY_ID,
       } as GithubComTogglTogglApiInternalModelsTimeEntry & { id: number };
-      calendarEvents.push(toCalendarEvent(draftWithId, true));
+      const start = new Date(draftWithId.start ?? Date.now());
+      const rawEnd = draftWithId.stop ? new Date(draftWithId.stop) : start;
+      const end =
+        rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
+          ? new Date(start.getTime() + MIN_SLOT_MS)
+          : rawEnd;
+      calendarEvents.push({
+        allDay: false,
+        end,
+        entry: draftWithId,
+        id: draftWithId.id,
+        resource: {
+          color: resolveEntryColor(draftWithId),
+          isDraft: true,
+          isLocked: false,
+          isRunning: false,
+        },
+        start,
+        title: draftWithId.description?.trim() || draftWithId.project_name || "Entry",
+      });
     }
 
     return calendarEvents;
-  }, [draftEntry, entries, nowMs, runningEntry]);
+  }, [draftEntry, entries]);
+
+  // Build the running entry event separately — it depends on nowMs which
+  // ticks every second, but this only rebuilds one event instead of all.
+  const events = useMemo<CalendarEvent[]>(() => {
+    const MIN_SLOT_MS = 15 * 60 * 1000;
+
+    // Include the running entry even if the time-entries query hasn't yet
+    // returned it (e.g. immediately after starting a new timer).
+    const entryIds = new Set(entries.map((e) => e.id));
+    const runningEntries: GithubComTogglTogglApiInternalModelsTimeEntry[] = [];
+    if (runningEntry != null && typeof runningEntry.id === "number" && !entryIds.has(runningEntry.id)) {
+      runningEntries.push(runningEntry);
+    }
+    // Also pick up any running entries already in the entries list
+    for (const entry of entries) {
+      if (typeof entry.id === "number" && isRunningTimeEntry(entry)) {
+        runningEntries.push(entry);
+      }
+    }
+
+    if (runningEntries.length === 0) {
+      return stoppedEvents;
+    }
+
+    const runningEvents: CalendarEvent[] = runningEntries
+      .filter(
+        (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
+          typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
+      )
+      .map((entry) => {
+        const start = new Date(entry.start ?? entry.at ?? Date.now());
+        const rawEnd = new Date(nowMs ?? Date.now());
+        const end =
+          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
+            ? new Date(start.getTime() + MIN_SLOT_MS)
+            : rawEnd;
+        return {
+          allDay: false,
+          end,
+          entry,
+          id: entry.id,
+          resource: {
+            color: resolveEntryColor(entry),
+            isDraft: false,
+            isLocked: false,
+            isRunning: true,
+          },
+          start,
+          title: entry.description?.trim() || entry.project_name || "Entry",
+        };
+      });
+
+    return [...stoppedEvents, ...runningEvents];
+  }, [stoppedEvents, entries, nowMs, runningEntry]);
   const dailyTotals = useMemo(() => {
     const totals = new Map<string, number>();
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -980,7 +1040,7 @@ export function CalendarView({
           }}
           date={calendarDate}
           defaultView={Views.WEEK}
-          getNow={() => now}
+          getNow={() => new Date()}
           draggableAccessor={(event) =>
             !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
           }
@@ -1215,7 +1275,6 @@ function CalendarEventCard({
         backgroundImage: isRunning
           ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
           : undefined,
-        animation: "fadeIn 0.15s linear",
       }}
     >
       <button

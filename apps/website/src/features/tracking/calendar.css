@@ -160,21 +160,21 @@
 /* ── Current time indicator ── */
 .rbc-current-time-indicator {
   background-color: #cd7fc2;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
   position: relative;
+  z-index: 3;
 }
 
 .rbc-current-time-indicator::before {
   content: "";
   position: absolute;
-  left: -5px;
+  left: -4px;
   top: 50%;
   transform: translateY(-50%) rotate(45deg);
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background-color: #cd7fc2;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 
 /* ── Drag and drop ── */
