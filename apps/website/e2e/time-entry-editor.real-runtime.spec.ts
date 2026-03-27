@@ -197,6 +197,41 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(page.getByTestId("time-entry-editor-start-date-picker")).not.toBeVisible();
     await expect(page).toHaveURL(/\/timer$/);
   });
+
+  test("when the user drags a calendar entry, its saved start and stop times change", async ({
+    page,
+  }) => {
+    const entryButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    const before = await page.evaluate(() => {
+      const button = document.querySelector('[aria-label^="Edit Time entry to edit"]');
+      return button ? button.getBoundingClientRect().toJSON() : null;
+    });
+    expect(before).not.toBeNull();
+    const moveHandle = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    await expect(moveHandle).toBeVisible();
+
+    const handleBox = await moveHandle.boundingBox();
+    expect(handleBox).not.toBeNull();
+
+    if (handleBox) {
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + 8);
+      await page.mouse.down();
+      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + 38, { steps: 8 });
+      await page.mouse.up();
+    }
+
+    await page.waitForTimeout(1000);
+    const dragResult = await page.evaluate(
+      () => (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult ?? null,
+    );
+    expect(dragResult).not.toBeNull();
+
+    await entryButton.click({ force: true });
+    const dialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("10:30");
+    await expect(dialog.getByRole("button", { name: "Edit stop time" })).toContainText("11:00");
+  });
 });
 
 async function createStoppedTimeEntry(

@@ -4,9 +4,9 @@ type ColorSeed = {
 };
 
 export const TRACK_COLOR_SWATCHES = [
-  "#2da1ff",
+  "#1a4a7f",
   "#7e6cff",
-  "#d35f93",
+  "#c04a9f",
   "#e28c1c",
   "#d5af1f",
   "#65b741",

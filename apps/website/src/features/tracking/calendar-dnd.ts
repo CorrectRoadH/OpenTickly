@@ -15,6 +15,10 @@ export type CalendarDragSession = {
   originClientY: number;
 };
 
+export type CalendarDragBindings = {
+  onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
+};
+
 export function beginCalendarDrag(
   entryId: number,
   gesture: CalendarDragGesture,
@@ -22,7 +26,6 @@ export function beginCalendarDrag(
 ): CalendarDragSession {
   event.preventDefault();
   event.stopPropagation();
-  event.currentTarget.setPointerCapture?.(event.pointerId);
 
   return {
     entryId,
@@ -35,4 +38,18 @@ export function resolveCalendarDragMinutes(session: CalendarDragSession, clientY
   const deltaPixels = clientY - session.originClientY;
   const quarterHour = 15;
   return Math.round(deltaPixels / quarterHour) * quarterHour;
+}
+
+export function bindCalendarDragSession(
+  _session: CalendarDragSession,
+  onFinish: (clientY: number) => void,
+): () => void {
+  function handlePointerUp(event: PointerEvent) {
+    onFinish(event.clientY);
+  }
+
+  window.addEventListener("pointerup", handlePointerUp, { once: true });
+  return () => {
+    window.removeEventListener("pointerup", handlePointerUp);
+  };
 }
