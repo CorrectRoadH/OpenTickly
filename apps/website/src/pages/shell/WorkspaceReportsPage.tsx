@@ -1,5 +1,7 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
+import { useNavigate } from "@tanstack/react-router";
+
 import {
   useProjectsQuery,
   useTagsQuery,
@@ -104,7 +106,13 @@ function parseDurationToSeconds(value: string): number {
 const SUMMARY_TABS = ["Summary", "Detailed", "Workload", "Profitability", "My reports"] as const;
 type ReportsTab = (typeof SUMMARY_TABS)[number];
 
-export function WorkspaceReportsPage(): ReactElement {
+type WorkspaceReportsPageProps = {
+  initialProjectId?: number;
+};
+
+export function WorkspaceReportsPage({
+  initialProjectId,
+}: WorkspaceReportsPageProps): ReactElement {
   const [activeTab, setActiveTab] = useState<ReportsTab>("Summary");
   const [roundingEnabled, setRoundingEnabled] = useState(false);
   const [shareToast, setShareToast] = useState(false);
@@ -112,8 +120,13 @@ export function WorkspaceReportsPage(): ReactElement {
   const timezone = session.user.timezone ?? "UTC";
   const weekStartsOn = session.user.beginningOfWeek ?? 1;
   const workspaceId = session.currentWorkspace.id;
+  const navigate = useNavigate();
 
-  const state = useReportsPageState(timezone, weekStartsOn);
+  const initialProjectIds = useMemo(
+    () => (initialProjectId != null ? [initialProjectId] : undefined),
+    [initialProjectId],
+  );
+  const state = useReportsPageState(timezone, weekStartsOn, initialProjectIds);
 
   const projectsQuery = useProjectsQuery(workspaceId);
   const tagsQuery = useTagsQuery(workspaceId);
@@ -230,7 +243,11 @@ export function WorkspaceReportsPage(): ReactElement {
               >
                 {roundingEnabled ? "Rounding on" : "Rounding off"}
               </button>
-              <ToolbarButton disabled>Create invoice</ToolbarButton>
+              <ToolbarButton
+                onClick={() => void navigate({ to: `/workspaces/${workspaceId}/invoices` })}
+              >
+                Create invoice
+              </ToolbarButton>
               <button
                 className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
                 data-testid="reports-export"
@@ -239,7 +256,11 @@ export function WorkspaceReportsPage(): ReactElement {
               >
                 Export
               </button>
-              <ToolbarButton disabled>Settings</ToolbarButton>
+              <ToolbarButton
+                onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}
+              >
+                Settings
+              </ToolbarButton>
               <button
                 className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
                   shareToast

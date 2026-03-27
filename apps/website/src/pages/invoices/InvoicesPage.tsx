@@ -1,6 +1,6 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DirectoryHeaderCell,
   DirectorySurfaceMessage,
@@ -9,9 +9,19 @@ import {
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
-import { getWorkspaceInvoices } from "../../shared/api/public/track/index.ts";
+import {
+  deleteWorkspaceInvoice,
+  getWorkspaceInvoices,
+  postWorkspaceUserInvoice,
+} from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { InvoiceEditorDialog, type InvoiceFormData } from "./InvoiceEditorDialog.tsx";
+import { InvoiceRowActionsMenu } from "./InvoiceRowActionsMenu.tsx";
+
+function invoicesQueryKey(workspaceId: number) {
+  return ["workspaces", workspaceId, "invoices"];
+}
 
 function useInvoicesQuery(workspaceId: number) {
   return useQuery({
@@ -21,21 +31,49 @@ function useInvoicesQuery(workspaceId: number) {
           path: { workspace_id: workspaceId },
         }),
       ),
-    queryKey: ["workspaces", workspaceId, "invoices"],
+    queryKey: invoicesQueryKey(workspaceId),
+  });
+}
+
+function useCreateInvoiceMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: ModelsUserInvoice) =>
+      unwrapWebApiResult(
+        postWorkspaceUserInvoice({
+          body,
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: invoicesQueryKey(workspaceId),
+      });
+    },
+  });
+}
+
+function useDeleteInvoiceMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userInvoiceId: number) =>
+      unwrapWebApiResult(
+        deleteWorkspaceInvoice({
+          path: { user_invoice_id: userInvoiceId, workspace_id: workspaceId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: invoicesQueryKey(workspaceId),
+      });
+    },
   });
 }
 
 function formatInvoiceDate(dateString: string | undefined): string {
-  if (!dateString) {
-    return "-";
-  }
-
+  if (!dateString) return "-";
   const date = new Date(dateString);
-
-  if (Number.isNaN(date.getTime())) {
-    return dateString;
-  }
-
+  if (Number.isNaN(date.getTime())) return dateString;
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   const year = date.getFullYear();
@@ -53,6 +91,50 @@ export function InvoicesPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const invoicesQuery = useInvoicesQuery(workspaceId);
+  const createMutation = useCreateInvoiceMutation(workspaceId);
+  const deleteMutation = useDeleteInvoiceMutation(workspaceId);
+
+  const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
+  const [editingInvoice, setEditingInvoice] = useState<ModelsUserInvoice | null>(null);
+
+  function openCreateDialog() {
+    setEditorMode("create");
+    setEditingInvoice(null);
+  }
+
+  function openEditDialog(invoice: ModelsUserInvoice) {
+    setEditorMode("edit");
+    setEditingInvoice(invoice);
+  }
+
+  function closeEditor() {
+    setEditorMode(null);
+    setEditingInvoice(null);
+  }
+
+  async function handleSubmit(data: InvoiceFormData) {
+    const body: ModelsUserInvoice = {
+      billing_address: data.billing_address,
+      currency: data.currency,
+      date: data.date,
+      document_id: data.document_id,
+      due_date: data.due_date,
+      items: data.items.map((item) => ({
+        amount: item.amount,
+        description: item.description,
+        quantity: item.quantity,
+      })),
+      message: data.message,
+    };
+    await createMutation.mutateAsync(body);
+    closeEditor();
+  }
+
+  async function handleDelete(invoice: ModelsUserInvoice) {
+    if (invoice.user_invoice_id == null) return;
+    if (!window.confirm(`Delete invoice "${invoice.document_id ?? ""}"?`)) return;
+    await deleteMutation.mutateAsync(invoice.user_invoice_id);
+  }
 
   if (invoicesQuery.isPending) {
     return <DirectorySurfaceMessage message="Loading invoices..." />;
@@ -68,6 +150,7 @@ export function InvoicesPage(): ReactElement {
   }
 
   const invoices: ModelsUserInvoice[] = invoicesQuery.data ?? [];
+  const mutationPending = createMutation.isPending || deleteMutation.isPending;
 
   return (
     <div
@@ -78,6 +161,15 @@ export function InvoicesPage(): ReactElement {
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <h1 className="text-[21px] font-semibold leading-[30px] text-white">Invoices</h1>
           <div className="flex items-center gap-2">
+            <button
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white"
+              data-testid="invoices-create-button"
+              onClick={openCreateDialog}
+              type="button"
+            >
+              <TrackingIcon className="size-3.5" name="plus" />
+              Create invoice
+            </button>
             <button
               className="flex h-9 items-center gap-1 rounded-[8px] border border-[var(--track-border)] px-4 text-[12px] font-semibold text-white"
               data-testid="invoices-connect-quickbooks"
@@ -126,14 +218,11 @@ export function InvoicesPage(): ReactElement {
                 <span>{formatInvoiceTotal(invoice)}</span>
               </DirectoryTableCell>
               <div className="flex h-[54px] items-center justify-end">
-                <button
-                  aria-label={`Actions for invoice ${invoice.document_id ?? ""}`}
-                  className="flex size-6 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  onClick={() => {}}
-                  type="button"
-                >
-                  <TrackingIcon className="size-3.5" name="more" />
-                </button>
+                <InvoiceRowActionsMenu
+                  invoice={invoice}
+                  onDelete={() => void handleDelete(invoice)}
+                  onEdit={() => openEditDialog(invoice)}
+                />
               </div>
             </div>
           ))}
@@ -150,6 +239,15 @@ export function InvoicesPage(): ReactElement {
       >
         {invoices.length} {invoices.length === 1 ? "invoice" : "invoices"} in workspace.
       </div>
+
+      {editorMode ? (
+        <InvoiceEditorDialog
+          invoice={editingInvoice}
+          isPending={mutationPending}
+          onClose={closeEditor}
+          onSubmit={(data) => void handleSubmit(data)}
+        />
+      ) : null}
     </div>
   );
 }

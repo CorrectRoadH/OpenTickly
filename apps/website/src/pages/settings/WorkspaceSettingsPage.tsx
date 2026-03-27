@@ -4,6 +4,7 @@ import { type ReactElement, useEffect, useState } from "react";
 
 import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
 import { SettingsAuditLog } from "../../features/settings/SettingsAuditLog.tsx";
+import { SettingsCsvImport } from "../../features/settings/SettingsCsvImport.tsx";
 import { SettingsDataExport } from "../../features/settings/SettingsDataExport.tsx";
 import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettingsForm.tsx";
 import { createWorkspaceSettingsFormValues } from "../../shared/forms/settings-form.ts";
@@ -128,6 +129,8 @@ function SettingsSectionContent(props: {
           onSubmitSuccess={props.onSubmitSuccess}
         />
       );
+    case "csv-import":
+      return <SettingsCsvImport workspaceId={props.workspaceId} />;
     case "data-export":
       return <SettingsDataExport />;
     case "audit-log":

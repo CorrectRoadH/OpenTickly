@@ -1,8 +1,10 @@
 import { ShellSurfaceCard } from "@opentoggl/web-ui";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
-import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -58,6 +60,45 @@ function downloadBlob(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
+function buildAndDownloadPdf(
+  entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
+  startDate: string,
+  endDate: string,
+): void {
+  const filtered = entries.filter((e) => (e.duration ?? 0) >= 0);
+  const doc = new jsPDF({ orientation: "landscape" });
+
+  doc.setFontSize(18);
+  doc.text("Time Entries Export", 14, 20);
+  doc.setFontSize(11);
+  doc.text(`Date range: ${startDate} to ${endDate}`, 14, 28);
+  doc.text(`Total entries: ${filtered.length}`, 14, 34);
+
+  const head = [
+    ["Description", "Project", "Client", "Start", "Stop", "Duration", "Billable", "Tags"],
+  ];
+  const body = filtered.map((e) => [
+    e.description ?? "",
+    e.project_name ?? "",
+    e.client_name ?? "",
+    e.start ?? "",
+    e.stop ?? "",
+    formatDuration(e.duration ?? 0),
+    e.billable ? "Yes" : "No",
+    (e.tags ?? []).join(", "),
+  ]);
+
+  autoTable(doc, {
+    body,
+    head,
+    startY: 40,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [44, 44, 44] },
+  });
+
+  doc.save(`time-entries-${startDate}-to-${endDate}.pdf`);
+}
+
 type ExportFormat = "csv" | "pdf";
 
 export function SettingsDataExport(): ReactElement {
@@ -85,9 +126,7 @@ export function SettingsDataExport(): ReactElement {
         const csv = buildCsv(entriesQuery.data);
         downloadBlob(csv, `time-entries-${startDate}-to-${endDate}.csv`);
       } else {
-        /* PDF export is not yet supported; fall back to CSV */
-        const csv = buildCsv(entriesQuery.data);
-        downloadBlob(csv, `time-entries-${startDate}-to-${endDate}.csv`);
+        buildAndDownloadPdf(entriesQuery.data, startDate, endDate);
       }
     } finally {
       setExporting(false);
@@ -163,12 +202,6 @@ export function SettingsDataExport(): ReactElement {
               : `${entryCount} entries in selected range`}
           </span>
         </div>
-
-        {format === "pdf" ? (
-          <p className="text-[12px] text-[var(--track-text-muted)]">
-            PDF export is unavailable. The export will download as CSV.
-          </p>
-        ) : null}
       </div>
     </ShellSurfaceCard>
   );

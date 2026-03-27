@@ -14,12 +14,17 @@ import (
 )
 
 type Handler struct {
-	billing *billingapplication.Service
-	scope   ScopeAuthorizer
+	billing  *billingapplication.Service
+	invoices *billingapplication.InvoiceService
+	scope    ScopeAuthorizer
 }
 
-func NewHandler(billing *billingapplication.Service, scope ScopeAuthorizer) *Handler {
-	return &Handler{billing: billing, scope: scope}
+func NewHandler(
+	billing *billingapplication.Service,
+	invoices *billingapplication.InvoiceService,
+	scope ScopeAuthorizer,
+) *Handler {
+	return &Handler{billing: billing, invoices: invoices, scope: scope}
 }
 
 func (handler *Handler) GetPublicTrackPlans(ctx echo.Context) error {

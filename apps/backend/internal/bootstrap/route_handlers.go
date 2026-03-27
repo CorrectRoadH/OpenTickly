@@ -65,6 +65,7 @@ type routeHandlers struct {
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
 	billingApp    *billingapplication.Service
+	invoiceApp    *billingapplication.InvoiceService
 	referenceApp  *platformapplication.ReferenceService
 }
 
@@ -82,6 +83,14 @@ func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers,
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	invoiceService, err := billingapplication.NewInvoiceService(
+		billingpostgres.NewInvoiceStore(pool),
+		appLogger,
 	)
 	if err != nil {
 		return nil, err
@@ -149,6 +158,7 @@ func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers,
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,
 		billingApp:    billingService,
+		invoiceApp:    invoiceService,
 		referenceApp:  referenceService,
 	}, nil
 }

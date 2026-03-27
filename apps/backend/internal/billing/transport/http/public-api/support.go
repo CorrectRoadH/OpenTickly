@@ -7,6 +7,7 @@ import (
 	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -15,6 +16,7 @@ import (
 type ScopeAuthorizer interface {
 	RequirePublicTrackOrganization(ctx echo.Context, organizationID int64) error
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
 }
 
 func parsePathID(ctx echo.Context, key string) (int64, bool) {
