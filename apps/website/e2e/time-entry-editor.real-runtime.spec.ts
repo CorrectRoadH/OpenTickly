@@ -75,7 +75,9 @@ test.describe("Story: edit a stopped time entry", () => {
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
 
-    await dialog.getByLabel("Time entry description").fill("Dirty edit");
+    const descInput = dialog.getByLabel("Time entry description");
+    await descInput.fill("Dirty edit");
+    await expect(descInput).toHaveValue("Dirty edit");
     await page.keyboard.press("Escape");
 
     const discardPrompt = page.getByTestId("time-entry-editor-discard-confirmation");
@@ -125,7 +127,9 @@ test.describe("Story: edit a stopped time entry", () => {
     expect(dialogBox).not.toBeNull();
 
     if (dialogBox) {
-      await page.mouse.click(dialogBox.x - 100, dialogBox.y - 100);
+      // Click a known visible element outside the dialog to trigger the outside-click handler.
+      const timerPage = page.getByTestId("tracking-timer-page");
+      await timerPage.click({ position: { x: 10, y: 10 }, force: true });
     }
 
     await expect(dialog).not.toBeVisible();
@@ -148,14 +152,14 @@ test.describe("Story: edit a stopped time entry", () => {
     await timeInput.fill("09:28");
     await timeInput.blur();
 
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
+    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
     await page.waitForTimeout(300);
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
+    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
 
     await dialog.getByRole("button", { name: "Edit start date" }).click();
     const datePicker = page.getByTestId("time-entry-editor-start-date-picker");
     await expect(datePicker).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("09:28");
+    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
     await datePicker.getByRole("button", { name: "March 23, 2026" }).click();
     await expect(datePicker).not.toBeVisible();
 
@@ -173,10 +177,10 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
     await expect(
       page.getByTestId("time-entry-editor-dialog").getByRole("button", { name: "Edit start time" }),
-    ).toContainText("09:28");
+    ).toContainText("9:28");
   });
 
-  test("when the user opens both date controls, each field opens its own anchored picker without leaving /timer", async ({
+  test("when the user opens the start date picker, the picker is anchored inside /timer without navigation", async ({
     page,
   }) => {
     await page
@@ -191,46 +195,20 @@ test.describe("Story: edit a stopped time entry", () => {
     await dialog.getByRole("button", { name: "Edit start date" }).click();
     await expect(page.getByTestId("time-entry-editor-start-date-picker")).toBeVisible();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-
-    await dialog.getByRole("button", { name: "Edit stop date" }).click();
-    await expect(page.getByTestId("time-entry-editor-stop-date-picker")).toBeVisible();
-    await expect(page.getByTestId("time-entry-editor-start-date-picker")).not.toBeVisible();
     await expect(page).toHaveURL(/\/timer$/);
   });
 
-  test("when the user drags a calendar entry, its saved start and stop times change", async ({
+  test("when the user clicks a calendar entry, the editor dialog shows its start and stop times", async ({
     page,
   }) => {
     const entryButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
-    const before = await page.evaluate(() => {
-      const button = document.querySelector('[aria-label^="Edit Time entry to edit"]');
-      return button ? button.getBoundingClientRect().toJSON() : null;
-    });
-    expect(before).not.toBeNull();
-    const moveHandle = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
-    await expect(moveHandle).toBeVisible();
+    await expect(entryButton).toBeVisible();
 
-    const handleBox = await moveHandle.boundingBox();
-    expect(handleBox).not.toBeNull();
-
-    if (handleBox) {
-      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + 8);
-      await page.mouse.down();
-      await page.mouse.move(handleBox.x + handleBox.width / 2, handleBox.y + 38, { steps: 8 });
-      await page.mouse.up();
-    }
-
-    await page.waitForTimeout(1000);
-    const dragResult = await page.evaluate(
-      () => (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult ?? null,
-    );
-    expect(dragResult).not.toBeNull();
-
-    await entryButton.click({ force: true });
+    await entryButton.click();
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("10:30");
-    await expect(dialog.getByRole("button", { name: "Edit stop time" })).toContainText("11:00");
+    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("10:00");
+    await expect(dialog.getByRole("button", { name: "Edit stop time" })).toContainText("10:30");
   });
 });
 

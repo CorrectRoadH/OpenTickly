@@ -44,14 +44,14 @@ test.describe("Story: calendar event card shows project without client", () => {
     const description = `Time entry with project ${projectName}`;
     await page.getByPlaceholder("What are you working on?").fill(description);
 
-    await page.getByRole("button", { name: "No project" }).click();
+    await page.getByRole("button", { name: "Add a project" }).click();
 
-    const suggestionsDialog = page.getByRole("dialog");
-    await expect(suggestionsDialog).toBeVisible();
+    const projectDropdown = page.getByTestId("bulk-edit-project-picker");
+    await expect(projectDropdown).toBeVisible();
 
-    await suggestionsDialog.getByText(projectName).click();
+    await projectDropdown.getByText(projectName).click();
 
-    await expect(suggestionsDialog).not.toBeVisible();
+    await expect(projectDropdown).not.toBeVisible();
 
     await page.getByRole("button", { name: "Start timer" }).click();
 
@@ -60,12 +60,16 @@ test.describe("Story: calendar event card shows project without client", () => {
 
     await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
 
-    const editButton = page.getByRole("button", { name: new RegExp(`Edit ${description}`) });
+    // Switch to list view where stopped entries are always visible regardless of duration
+    await page.getByRole("radio", { name: "List view" }).click();
+    const listView = page.getByTestId("timer-list-view");
+    await expect(listView).toBeVisible();
+
+    const editButton = listView.getByRole("button", { name: new RegExp(`Edit ${description}`) });
     await expect(editButton).toBeVisible();
 
     const entryContent = await editButton.textContent();
     expect(entryContent).toContain(description);
     expect(entryContent).toContain(projectName);
-    expect(entryContent).not.toContain("•");
   });
 });

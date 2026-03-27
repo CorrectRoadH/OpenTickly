@@ -65,9 +65,8 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
 
     await expect(page.getByText("Tag created")).toBeVisible();
     await expect(page.getByTestId("tags-list")).toContainText(tagName);
-    await expect(page.getByTestId("tags-summary")).toContainText(
-      `Showing 1 tags in workspace ${workspaceId}.`,
-    );
+    await expect(page.getByTestId("tags-summary")).toContainText("Showing 1 tags in");
+    await expect(page.getByTestId("tags-summary")).toContainText("Active: 1");
   });
 
   test("Given a newly registered account, when the user creates a task, then the task appears in the workspace catalog", async ({

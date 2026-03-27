@@ -71,7 +71,7 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
 
     await page.getByRole("link", { name: "CSV import" }).click();
     await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/csv-import$`));
-    await expect(page.getByText("CSV import is not available yet")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "CSV Import" })).toBeVisible();
 
     await page.goto(
       new URL(`/workspaces/${workspaceId}/settings?section=general`, page.url()).toString(),

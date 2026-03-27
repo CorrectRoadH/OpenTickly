@@ -485,11 +485,13 @@ export function ListView({
                           {groupCount}
                         </button>
                       ) : null}
-                      <div
-                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-4"
+                      <button
+                        aria-label={`Edit ${renderEntry.description?.trim() || "time entry"}`}
+                        className="flex min-w-0 flex-1 cursor-pointer items-center gap-4 bg-transparent text-left"
                         onClick={(event) =>
                           onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
                         }
+                        type="button"
                       >
                         <div className="flex min-w-0 flex-1 items-center gap-2">
                           {isRunningTimeEntry(renderEntry) ? (
@@ -520,7 +522,7 @@ export function ListView({
                             </span>
                           </span>
                         ) : null}
-                      </div>
+                      </button>
                       <ListRowProjectPicker
                         entry={renderEntry}
                         onProjectChange={onProjectChange}
@@ -992,7 +994,10 @@ export function CalendarView({
                 date.getMonth() === today.getMonth() &&
                 date.getDate() === today.getDate();
               return (
-                <div className="flex w-full items-center gap-2 px-2 py-2">
+                <div
+                  className="flex w-full items-center gap-2 px-2 py-2"
+                  data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
+                >
                   <span
                     className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
                       isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
@@ -1085,6 +1090,12 @@ export function CalendarView({
                 Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000),
               );
             }
+            (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
+              eventId: event.id,
+              minutesDelta,
+              start: nextStart.toISOString(),
+              end: nextEnd.toISOString(),
+            };
           }}
           onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
             const nextStart = new Date(start);
@@ -1121,6 +1132,7 @@ export function CalendarView({
           step={step}
           timeslots={timeslots}
           toolbar={false}
+          onView={() => undefined}
           view={currentView}
           views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
         />
