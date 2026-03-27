@@ -57,6 +57,7 @@ type TimeEntryEditorDialogProps = {
   isCreatingTag: boolean;
   isDeleting?: boolean;
   isDirty?: boolean;
+  isNewEntry?: boolean;
   isPrimaryActionPending: boolean;
   isSaving: boolean;
   onClose: () => void;
@@ -98,6 +99,7 @@ export function TimeEntryEditorDialog({
   isCreatingTag,
   isDeleting = false,
   isDirty = false,
+  isNewEntry = false,
   isPrimaryActionPending,
   isSaving,
   onClose,
@@ -969,7 +971,7 @@ export function TimeEntryEditorDialog({
                 }}
                 type="button"
               >
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? (isNewEntry ? "Adding..." : "Saving...") : isNewEntry ? "Add" : "Save"}
               </button>
             </div>
           </div>

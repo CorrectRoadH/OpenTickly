@@ -525,7 +525,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                 void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
               }}
               onSelectSlot={(slot) => {
-                 orch.handleCalendarSlotCreate(slot);
+                orch.handleCalendarSlotCreate(slot);
               }}
               onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
               onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}

@@ -256,6 +256,7 @@ export interface TimerPageOrchestration {
   selectedTagIds: number[];
   setSelectedTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
   selectedEntryDirty: boolean;
+  isNewEntry: boolean;
 
   // Composer suggestions
   composerSuggestionsAnchor: TimerComposerSuggestionsAnchor | null;
@@ -308,7 +309,7 @@ export interface TimerPageOrchestration {
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
   handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
-  handleCalendarSlotCreate: (slot: { end: Date; start: Date }) => Promise<void>;
+  handleCalendarSlotCreate: (slot: { end: Date; start: Date }) => void;
   handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
   handleCalendarEntryResize: (
     entryId: number,
@@ -438,6 +439,7 @@ export function useTimerPageOrchestration(options?: {
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [selectedStartIso, setSelectedStartIso] = useState<string | null>(null);
   const [selectedStopIso, setSelectedStopIso] = useState<string | null>(null);
+  const [isNewEntry, setIsNewEntry] = useState(false);
 
   // Track which entry ID is currently open so the initialization effect only
   // fires when a genuinely different entry is selected, not when the entry
@@ -663,7 +665,7 @@ export function useTimerPageOrchestration(options?: {
 
   useEffect(() => {
     const entryId = selectedEntry?.id ?? null;
-    if (entryId === selectedEntryIdRef.current) {
+    if (entryId != null && entryId === selectedEntryIdRef.current) {
       // Same entry — do not reinitialize editable fields. This avoids
       // resetting description/project/tags when start or stop time is
       // edited in-place (which updates the entry object).
@@ -684,6 +686,7 @@ export function useTimerPageOrchestration(options?: {
     setSelectedEntry(null);
     setSelectedEntryAnchor(null);
     setSelectedEntryError(null);
+    setIsNewEntry(false);
   }, []);
 
   const closeComposerSuggestions = useCallback(() => {
@@ -780,7 +783,34 @@ export function useTimerPageOrchestration(options?: {
   );
 
   const handleSelectedEntrySave = useCallback(async () => {
-    if (!selectedEntry?.id) {
+    if (!selectedEntry) {
+      return;
+    }
+
+    // New entry: create via API, then close
+    if (isNewEntry) {
+      try {
+        const durationSeconds = selectedEntry.duration ?? 1800;
+        await createTimeEntryMutation.mutateAsync({
+          billable: selectedEntry.billable,
+          description: selectedDescription.trim(),
+          duration: durationSeconds > 0 ? durationSeconds : 1800,
+          projectId: selectedProjectId,
+          start: selectedEntry.start ?? toTrackIso(new Date()),
+          stop: selectedEntry.stop ?? toTrackIso(new Date()),
+          tagIds: selectedTagIds,
+          taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
+        });
+        setSelectedEntryError(null);
+        closeSelectedEntryEditor();
+      } catch (error) {
+        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+      }
+      return;
+    }
+
+    // Existing entry: update via API
+    if (!selectedEntry.id) {
       return;
     }
     const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
@@ -816,6 +846,8 @@ export function useTimerPageOrchestration(options?: {
     selectedProjectId,
     selectedTagIds,
     runningEntry,
+    isNewEntry,
+    createTimeEntryMutation,
     updateTimeEntryMutation,
     closeSelectedEntryEditor,
   ]);
@@ -1334,42 +1366,43 @@ export function useTimerPageOrchestration(options?: {
   );
 
   const handleCalendarSlotCreate = useCallback(
-    async (slot: { end: Date; start: Date }) => {
+    (slot: { end: Date; start: Date }) => {
+      // If editor is already open, just close it — don't create a new entry
+      if (selectedEntry != null) {
+        closeSelectedEntryEditor();
+        return;
+      }
+
       const startDate = slot.start;
       const endDate = slot.end;
-
       const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
 
-      try {
-        const created = await createTimeEntryMutation.mutateAsync({
-          billable: false,
-          description: "",
-          duration: durationSeconds > 0 ? durationSeconds : 1800,
-          projectId: null,
-          start: toTrackIso(startDate),
-          stop: toTrackIso(endDate),
-          tagIds: [],
-        });
+      const draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry = {
+        billable: false,
+        description: "",
+        duration: durationSeconds > 0 ? durationSeconds : 1800,
+        start: toTrackIso(startDate),
+        stop: toTrackIso(endDate),
+        workspace_id: workspaceId,
+        tag_ids: [],
+      };
 
-        if (created?.id != null) {
-          const fakeRect: DOMRect = {
-            bottom: 300,
-            height: 40,
-            left: 400,
-            right: 600,
-            top: 260,
-            width: 200,
-            x: 400,
-            y: 260,
-            toJSON: () => ({}),
-          };
-          handleEntryEdit(created, fakeRect);
-        }
-      } catch {
-        // Creation failed — mutation error state is already tracked
-      }
+      setIsNewEntry(true);
+
+      const fakeRect: DOMRect = {
+        bottom: 300,
+        height: 40,
+        left: 400,
+        right: 600,
+        top: 260,
+        width: 200,
+        x: 400,
+        y: 260,
+        toJSON: () => ({}),
+      };
+      handleEntryEdit(draftEntry, fakeRect);
     },
-    [createTimeEntryMutation, handleEntryEdit],
+    [selectedEntry, closeSelectedEntryEditor, workspaceId, handleEntryEdit],
   );
 
   const openComposerSuggestions = useCallback(() => {
@@ -1491,6 +1524,7 @@ export function useTimerPageOrchestration(options?: {
     selectedTagIds,
     setSelectedTagIds,
     selectedEntryDirty,
+    isNewEntry,
 
     // Composer suggestions
     composerSuggestionsAnchor,
