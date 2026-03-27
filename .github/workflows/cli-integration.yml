@@ -1,0 +1,75 @@
+name: CLI Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cli-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Start postgres and redis
+        run: |
+          docker compose -f docker-compose.yml up -d postgres redis
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend
+        env:
+          CGO_ENABLED: 0
+        run: go build -o /tmp/opentoggl ./apps/backend
+
+      - name: Create database
+        run: |
+          docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
+
+      - name: Install pgschema
+        run: GOBIN=/usr/local/bin go install github.com/pgplex/pgschema@v1.7.3
+
+      - name: Apply database schema
+        env:
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: /tmp/opentoggl schema-apply
+
+      - name: Start backend
+        env:
+          OPENTOGGL_SERVICE_NAME: opentoggl-api
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
+          OPENTOGGL_FILESTORE_NAMESPACE: opentoggl
+          OPENTOGGL_JOBS_QUEUE_NAME: default
+        run: |
+          /tmp/opentoggl &
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/readyz > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for backend... ($i/30)"
+            sleep 2
+          done
+
+      - name: Install toggl CLI
+        run: npm install -g @correctroadh/toggl-cli
+
+      - name: Run CLI integration tests
+        env:
+          OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
+          OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
+        run: pnpm run test:cli

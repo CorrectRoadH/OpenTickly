@@ -9,7 +9,7 @@
     "test": "vp run test -r",
     "test:e2e:website": "vp run website#test:e2e",
     "test:e2e:website:real-runtime": "vp run website#test:e2e:real-runtime",
-    "test:cli": "vitest run --config tests/cli-integration/vitest.config.ts",
+    "test:cli": "vp test run --config tests/cli-integration/vitest.config.ts",
     "ready": "vp fmt && vp lint && vp run test -r && vp run build -r",
     "dev:website": "vp run website#dev",
     "dev:landing": "vp run landing#dev",
