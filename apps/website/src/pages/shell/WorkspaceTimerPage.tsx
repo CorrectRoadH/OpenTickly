@@ -355,8 +355,10 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           <div className="flex items-center gap-4">
             <WeekRangePicker
               mode={
-                orch.view === "list" && orch.listDateRange == null
-                  ? "all-dates"
+                orch.view === "list"
+                  ? orch.listDateRange == null
+                    ? "all-dates"
+                    : "week"
                   : orch.calendarSubview === "day"
                     ? "day"
                     : "week"
