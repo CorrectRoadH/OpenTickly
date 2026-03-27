@@ -5,7 +5,7 @@ import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { getTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { getWeekStart, getISOWeekNumber, isCurrentWeek } from "./approvals-helpers.ts";
+import { getISOWeekNumber, isCurrentWeek } from "./approvals-helpers.ts";
 import { FilterButton, WeekPicker } from "./ApprovalsPrimitives.tsx";
 
 export function ApprovalsPage(): ReactElement {
