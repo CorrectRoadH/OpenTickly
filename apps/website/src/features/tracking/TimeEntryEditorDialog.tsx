@@ -397,19 +397,6 @@ export function TimeEntryEditorDialog({
                 <TrackingIcon className="size-4" name={primaryActionIcon} />
               )}
             </button>
-            {canDuplicate ? (
-              <button
-                aria-label="Duplicate entry"
-                className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
-                disabled={isDirty}
-                onClick={() => {
-                  void onDuplicate?.();
-                }}
-                type="button"
-              >
-                <TrackingIcon className="size-4" name="copy" />
-              </button>
-            ) : null}
             <button
               aria-label="Entry actions"
               className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
@@ -420,6 +407,16 @@ export function TimeEntryEditorDialog({
             </button>
             {actionsMenuOpen ? (
               <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
+                {canDuplicate ? (
+                  <ActionMenuButton
+                    disabled={isDirty}
+                    label="Duplicate"
+                    onClick={() => {
+                      setActionsMenuOpen(false);
+                      void onDuplicate?.();
+                    }}
+                  />
+                ) : null}
                 <ActionMenuButton
                   disabled={!onSplit}
                   label="Split"
@@ -875,6 +872,7 @@ export function TimeEntryEditorDialog({
                   datePickerTriggerRef={startDatePickerTriggerRef}
                   editing={timeEditor === "start"}
                   hasError={timeInputError === "start"}
+                  hideDateButton
                   onDateClick={() => {
                     setTimeEditor(null);
                     setTimePicker("start");
@@ -912,6 +910,7 @@ export function TimeEntryEditorDialog({
                     datePickerTriggerRef={stopDatePickerTriggerRef}
                     editing={timeEditor === "stop"}
                     hasError={timeInputError === "stop"}
+                    hideDateButton
                     onDateClick={() => {
                       setTimeEditor(null);
                       setTimePicker("stop");
@@ -1285,6 +1284,7 @@ function TimeDisplay({
   datePickerTriggerRef,
   editing,
   hasError = false,
+  hideDateButton = false,
   onDateClick,
   onEditEnd,
   onEditStart,
@@ -1299,6 +1299,7 @@ function TimeDisplay({
   datePickerTriggerRef?: Ref<HTMLButtonElement | null>;
   editing: boolean;
   hasError?: boolean;
+  hideDateButton?: boolean;
   onDateClick: () => void;
   onEditEnd: () => void;
   onEditStart: () => void;
@@ -1329,7 +1330,7 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[38px] w-[88px] rounded-[10px] border bg-[#262628] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
+            className={`h-[38px] min-w-0 rounded-[10px] border bg-[#262628] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
               hasError ? "border-rose-400" : "border-[#c78acd]"
             }`}
             value={draft}
@@ -1360,22 +1361,24 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex h-[38px] w-[88px] items-center rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
+          className={`flex h-[38px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
           <span>{formatClockTime(time, timezone)}</span>
         </button>
       )}
-      <button
-        aria-label={dateAriaLabel}
-        className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[#606066] text-[#b9b9be] transition hover:border-[#8a8a90] hover:text-white"
-        onClick={onDateClick}
-        ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
-        type="button"
-      >
-        <TrackingIcon className="size-4" name="calendar" />
-      </button>
+      {!hideDateButton ? (
+        <button
+          aria-label={dateAriaLabel}
+          className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[#606066] text-[#b9b9be] transition hover:border-[#8a8a90] hover:text-white"
+          onClick={onDateClick}
+          ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
+          type="button"
+        >
+          <TrackingIcon className="size-4" name="calendar" />
+        </button>
+      ) : null}
       {hasError ? (
         <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">Invalid time</span>
       ) : null}
