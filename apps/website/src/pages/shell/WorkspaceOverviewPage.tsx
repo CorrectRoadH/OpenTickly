@@ -98,6 +98,9 @@ export function WorkspaceOverviewPage(): ReactElement {
   const handleViewAllPlans = useCallback(() => {
     void navigate({ to: `/workspaces/${workspaceId}/subscription` });
   }, [navigate, workspaceId]);
+  const handleViewReports = useCallback(() => {
+    void navigate({ to: `/workspaces/${workspaceId}/reports` });
+  }, [navigate, workspaceId]);
   const overviewProgressPercent = useMemo(
     () =>
       [
@@ -173,12 +176,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <a
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href={`/workspaces/${workspaceId}/reports`}
-                  >
+                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
                     View reports
-                  </a>
+                  </button>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <OverviewWeekChart
@@ -211,12 +211,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <a
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href={`/workspaces/${workspaceId}/reports`}
-                  >
+                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
                     View team activity
-                  </a>
+                  </button>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
@@ -332,12 +329,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <a
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href={`/workspaces/${workspaceId}/reports`}
-                  >
+                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
                     View reports
-                  </a>
+                  </button>
                 </div>
                 {topProjects.length > 0 ? (
                   <div className="space-y-2 border-t border-[var(--track-border)] pt-3">
@@ -366,12 +360,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Time tracked to projects
                   </h2>
-                  <a
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href={`/workspaces/${workspaceId}/reports`}
-                  >
+                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
                     View reports
-                  </a>
+                  </button>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-3">
                   <StatRing
