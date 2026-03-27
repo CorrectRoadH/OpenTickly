@@ -380,12 +380,22 @@ export function TimeEntryEditorDialog({
                 primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
               }
               data-testid="time-entry-editor-primary-action"
-              className="flex size-8 items-center justify-center rounded-full bg-[#523732] text-[#ff7a66] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`flex size-9 items-center justify-center rounded-full transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${
+                primaryActionIcon === "stop"
+                  ? "bg-[#e07000] text-white"
+                  : "bg-[#c67abc] text-[#241d24]"
+              }`}
               disabled={!onPrimaryAction || isPrimaryActionPending}
               onClick={onPrimaryAction}
               type="button"
             >
-              <TrackingIcon className="size-4" name={primaryActionIcon} />
+              {primaryActionIcon === "stop" ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <rect width="14" height="14" rx="2" fill="currentColor" />
+                </svg>
+              ) : (
+                <TrackingIcon className="size-4" name={primaryActionIcon} />
+              )}
             </button>
             {canDuplicate ? (
               <button
@@ -486,9 +496,9 @@ export function TimeEntryEditorDialog({
           </button>
         </div>
 
-        <div className="mt-7">
+        <div className="mt-5">
           <div
-            className="absolute right-5 top-[88px] z-0 h-0 w-[140px]"
+            className="absolute right-5 top-[72px] z-0 h-0 w-[140px]"
             data-testid={timeEditor != null ? "time-entry-editor-active-time-edit" : undefined}
           />
           <label className="block">
@@ -857,122 +867,138 @@ export function TimeEntryEditorDialog({
           </div>
 
           <div className="mt-5">
-            <div className="relative flex min-w-0 items-start gap-4">
-              <div className="relative min-w-0 overflow-visible">
-                <div className="flex min-w-0 items-center gap-2.5">
+            <div className="relative min-w-0 overflow-visible">
+              <div className="flex min-w-0 items-center gap-2">
+                <TimeDisplay
+                  dialogRootTestId="time-entry-editor-dialog"
+                  dateAriaLabel="Edit start date"
+                  datePickerTriggerRef={startDatePickerTriggerRef}
+                  editing={timeEditor === "start"}
+                  hasError={timeInputError === "start"}
+                  onDateClick={() => {
+                    setTimeEditor(null);
+                    setTimePicker("start");
+                  }}
+                  onEditEnd={() => {
+                    setTimeEditor(null);
+                  }}
+                  onEditStart={() => {
+                    setTimePicker(null);
+                    setTimeEditor("start");
+                  }}
+                  onTimeCommit={(value) => applyEditedTime("start", value)}
+                  time={start}
+                  timeAriaLabel="Edit start time"
+                  timeValue={toTimeInputValue(start, timezone)}
+                  timezone={timezone}
+                />
+                <svg
+                  aria-hidden="true"
+                  className="shrink-0 text-[#606066]"
+                  fill="none"
+                  height="8"
+                  viewBox="0 0 12 8"
+                  width="15"
+                >
+                  <g fill="currentColor" fillRule="evenodd">
+                    <rect height="2" width="7" x="0" y="3" />
+                    <polygon points="7 8, 7 0, 12 4" />
+                  </g>
+                </svg>
+                {stop ? (
                   <TimeDisplay
                     dialogRootTestId="time-entry-editor-dialog"
-                    dateAriaLabel="Edit start date"
-                    datePickerTriggerRef={startDatePickerTriggerRef}
-                    editing={timeEditor === "start"}
-                    hasError={timeInputError === "start"}
+                    dateAriaLabel="Edit stop date"
+                    datePickerTriggerRef={stopDatePickerTriggerRef}
+                    editing={timeEditor === "stop"}
+                    hasError={timeInputError === "stop"}
                     onDateClick={() => {
                       setTimeEditor(null);
-                      setTimePicker("start");
+                      setTimePicker("stop");
                     }}
                     onEditEnd={() => {
                       setTimeEditor(null);
                     }}
                     onEditStart={() => {
                       setTimePicker(null);
-                      setTimeEditor("start");
+                      setTimeEditor("stop");
                     }}
-                    onTimeCommit={(value) => applyEditedTime("start", value)}
-                    time={start}
-                    timeAriaLabel="Edit start time"
-                    timeValue={toTimeInputValue(start, timezone)}
+                    onTimeCommit={(value) => applyEditedTime("stop", value)}
+                    time={stop}
+                    timeAriaLabel="Edit stop time"
+                    timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
                     timezone={timezone}
                   />
-                  <span className="shrink-0 text-[22px] font-light text-[#a9a9ae]">→</span>
-                  {stop ? (
-                    <TimeDisplay
-                      dialogRootTestId="time-entry-editor-dialog"
-                      dateAriaLabel="Edit stop date"
-                      datePickerTriggerRef={stopDatePickerTriggerRef}
-                      editing={timeEditor === "stop"}
-                      hasError={timeInputError === "stop"}
-                      onDateClick={() => {
-                        setTimeEditor(null);
-                        setTimePicker("stop");
-                      }}
-                      onEditEnd={() => {
-                        setTimeEditor(null);
-                      }}
-                      onEditStart={() => {
-                        setTimePicker(null);
-                        setTimeEditor("stop");
-                      }}
-                      onTimeCommit={(value) => applyEditedTime("stop", value)}
-                      time={stop}
-                      timeAriaLabel="Edit stop time"
-                      timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
-                      timezone={timezone}
-                    />
-                  ) : (
-                    <span className="shrink-0 text-[14px] font-semibold tabular-nums text-[#b7b7bc]">
-                      Running
-                    </span>
-                  )}
-                  <span className="min-w-0 truncate text-[13px] tabular-nums text-[#b7b7bc]">
-                    {duration}
+                ) : (
+                  <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[#606066] px-3 text-[14px] font-semibold tabular-nums text-[#606066]">
+                    Running
                   </span>
-                </div>
-
-                {timePicker &&
-                (timePicker === "start"
-                  ? startDatePickerTriggerRef.current
-                  : stopDatePickerTriggerRef.current)
-                  ? createPortal(
-                      <div
-                        className="absolute z-50"
-                        style={{
-                          left:
-                            (timePicker === "start"
-                              ? startDatePickerTriggerRef.current
-                              : stopDatePickerTriggerRef.current
-                            )?.getBoundingClientRect().left ?? 0,
-                          top:
-                            ((timePicker === "start"
-                              ? startDatePickerTriggerRef.current
-                              : stopDatePickerTriggerRef.current
-                            )?.getBoundingClientRect().top ?? 0) +
-                            ((timePicker === "start"
-                              ? startDatePickerTriggerRef.current
-                              : stopDatePickerTriggerRef.current
-                            )?.getBoundingClientRect().height ?? 0) +
-                            8,
-                        }}
-                      >
-                        <CalendarPanel
-                          date={timePicker === "start" ? start : stop!}
-                          onClose={() => setTimePicker(null)}
-                          onSelect={(nextDate) => {
-                            if (timePicker === "start") {
-                              onStartTimeChange(nextDate);
-                            } else {
-                              onStopTimeChange(nextDate);
-                            }
-                            setTimePicker(null);
-                          }}
-                          testId={`time-entry-editor-${timePicker}-date-picker`}
-                        />
-                      </div>,
-                      document.body,
-                    )
-                  : null}
+                )}
+                <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[#b7b7bc]">
+                  {duration}
+                </span>
+                <button
+                  className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[#c67abc] px-5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={isSaving}
+                  onClick={() => {
+                    if (!isSaving) {
+                      void onSave();
+                    }
+                  }}
+                  type="button"
+                >
+                  {isSaving
+                    ? isNewEntry
+                      ? "Adding..."
+                      : "Saving..."
+                    : isNewEntry
+                      ? "Add"
+                      : "Save"}
+                </button>
               </div>
-              <button
-                className="relative z-10 shrink-0 rounded-[10px] bg-[#c67abc] px-6 py-2.5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={isSaving}
-                onClick={() => {
-                  if (!isSaving) {
-                    void onSave();
-                  }
-                }}
-                type="button"
-              >
-                {isSaving ? (isNewEntry ? "Adding..." : "Saving...") : isNewEntry ? "Add" : "Save"}
-              </button>
+
+              {timePicker &&
+              (timePicker === "start"
+                ? startDatePickerTriggerRef.current
+                : stopDatePickerTriggerRef.current)
+                ? createPortal(
+                    <div
+                      className="absolute z-50"
+                      style={{
+                        left:
+                          (timePicker === "start"
+                            ? startDatePickerTriggerRef.current
+                            : stopDatePickerTriggerRef.current
+                          )?.getBoundingClientRect().left ?? 0,
+                        top:
+                          ((timePicker === "start"
+                            ? startDatePickerTriggerRef.current
+                            : stopDatePickerTriggerRef.current
+                          )?.getBoundingClientRect().top ?? 0) +
+                          ((timePicker === "start"
+                            ? startDatePickerTriggerRef.current
+                            : stopDatePickerTriggerRef.current
+                          )?.getBoundingClientRect().height ?? 0) +
+                          8,
+                      }}
+                    >
+                      <CalendarPanel
+                        date={timePicker === "start" ? start : stop!}
+                        onClose={() => setTimePicker(null)}
+                        onSelect={(nextDate) => {
+                          if (timePicker === "start") {
+                            onStartTimeChange(nextDate);
+                          } else {
+                            onStopTimeChange(nextDate);
+                          }
+                          setTimePicker(null);
+                        }}
+                        testId={`time-entry-editor-${timePicker}-date-picker`}
+                      />
+                    </div>,
+                    document.body,
+                  )
+                : null}
             </div>
           </div>
 
@@ -1303,7 +1329,7 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[42px] min-w-[110px] rounded-[10px] border bg-[#262628] px-4 text-[14px] font-semibold tabular-nums text-white outline-none ${
+            className={`h-[38px] w-[88px] rounded-[10px] border bg-[#262628] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
               hasError ? "border-rose-400" : "border-[#c78acd]"
             }`}
             value={draft}
@@ -1334,7 +1360,7 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex min-w-[110px] items-center rounded-[10px] border px-4 py-2.5 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
+          className={`flex h-[38px] w-[88px] items-center rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
@@ -1343,12 +1369,12 @@ function TimeDisplay({
       )}
       <button
         aria-label={dateAriaLabel}
-        className="flex size-[42px] items-center justify-center rounded-[10px] border border-[#606066] text-white transition hover:border-[#8a8a90]"
+        className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[#606066] text-[#b9b9be] transition hover:border-[#8a8a90] hover:text-white"
         onClick={onDateClick}
         ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
         type="button"
       >
-        <TrackingIcon className="size-4 text-[#b9b9be]" name="calendar" />
+        <TrackingIcon className="size-4" name="calendar" />
       </button>
       {hasError ? (
         <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">Invalid time</span>
