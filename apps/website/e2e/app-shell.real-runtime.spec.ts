@@ -380,6 +380,10 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     await expect(page2).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page2.getByTestId("tracking-timer-page")).toBeVisible();
 
+    // Wait for running timer state to load on direct-entry page before capturing
+    await expect(page2.getByRole("button", { name: "Stop timer" })).toBeVisible();
+    await expect(page2.getByTestId("timer-elapsed")).toBeVisible();
+
     // Capture state from direct-entry page (calendar view - default)
     const directEntryCalendarActive = await page2
       .getByRole("radio", { name: "Calendar" })
