@@ -9,6 +9,7 @@ catalog:
   "@types/node": ^24
   "@types/react-big-calendar": ^1.16.3
   date-fns: ^4.1.0
+  execa: ^9.6.1
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.7
   react-big-calendar: ^1.19.4
