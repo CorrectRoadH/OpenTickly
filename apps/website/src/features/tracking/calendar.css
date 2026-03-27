@@ -82,6 +82,16 @@
   min-height: 60px;
 }
 
+/*
+ * RBC default adds margin-right: 10px to .rbc-events-container to leave
+ * a visual gap on the right of every event column. We remove it so that
+ * non-overlapping events (including the running entry) fill the full column
+ * width with no right gap.
+ */
+.rbc-day-slot .rbc-events-container {
+  margin-right: 0;
+}
+
 .rbc-day-slot .rbc-time-slot {
   border-top: none;
 }
@@ -123,8 +133,15 @@
   font-size: 11px;
 }
 
-/* Running entry stripe pattern */
+/* Running entry stripe pattern.
+ * RBC positions events with position:absolute using left+width inline styles.
+ * Setting right:10px alone has no effect because left+width takes priority.
+ * We must also override width:auto so the browser resolves width from
+ * left+right instead, giving the 10px trailing gap that visually distinguishes
+ * running entries from completed entries that fill the column edge-to-edge. */
 .rbc-event-running {
+  width: auto !important;
+  right: 10px !important;
   background-image: repeating-linear-gradient(
     135deg,
     transparent 0 10px,

@@ -48,6 +48,7 @@ if (!withDragAndDrop) {
 
 const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
 
+
 type CalendarEvent = {
   allDay: false;
   end: Date;
@@ -768,6 +769,7 @@ export function CalendarView({
   onSelectSubviewDate,
   onZoomIn,
   onZoomOut,
+  runningEntry,
   selectedSubviewDateIso,
   subview = "week",
   timezone,
@@ -801,35 +803,58 @@ export function CalendarView({
     }
     return weekDays[0] ?? now;
   }, [now, selectedSubviewDateIso, subview, weekDays]);
-  const events = useMemo<CalendarEvent[]>(
-    () =>
-      entries
-        .filter(
-          (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
-            typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
-        )
-        .map((entry) => {
-          const start = new Date(entry.start ?? entry.at ?? Date.now());
-          const end = entry.stop
-            ? new Date(entry.stop)
-            : new Date(start.getTime() + resolveEntryDurationSeconds(entry, nowMs) * 1000);
+  const events = useMemo<CalendarEvent[]>(() => {
+    // Include the running entry even if the time-entries query hasn't yet
+    // returned it (e.g. immediately after starting a new timer). This avoids
+    // a gap between "timer bar shows running" and "calendar shows the block".
+    const entryIds = new Set(entries.map((e) => e.id));
+    const allEntries =
+      runningEntry != null &&
+      typeof runningEntry.id === "number" &&
+      !entryIds.has(runningEntry.id)
+        ? [...entries, runningEntry]
+        : entries;
 
-          return {
-            allDay: false,
-            end,
-            entry,
-            id: entry.id,
-            resource: {
-              color: resolveEntryColor(entry),
-              isLocked: false,
-              isRunning: isRunningTimeEntry(entry),
-            },
-            start,
-            title: entry.description?.trim() || entry.project_name || "Entry",
-          };
-        }),
-    [entries, nowMs],
-  );
+    return allEntries
+      .filter(
+        (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
+          typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
+      )
+      .map((entry) => {
+        const start = new Date(entry.start ?? entry.at ?? Date.now());
+        // Completed entries use their recorded stop time. Running entries use
+        // the current wall-clock time so `end` stays at "now" and never drifts
+        // ahead of later entries, keeping overlap grouping stable.
+        const rawEnd = entry.stop ? new Date(entry.stop) : new Date(nowMs ?? Date.now());
+        // The calendar grid has a minimum slot height of 15 minutes (step=30,
+        // timeslots=2 or step=15, timeslots=4 — both give 15 min/slot).
+        // Entries shorter than 15 minutes would get height ≈ 0, which causes
+        // the no-overlap algorithm to treat them as isolated points and assign
+        // each its own full-width column instead of splitting with neighbours.
+        // Clamping end to start+15min ensures every entry has a nonzero slot
+        // height so collision detection works correctly, and makes sub-15-min
+        // entries render at exactly one slot height — consistent with the grid.
+        const MIN_SLOT_MS = 15 * 60 * 1000;
+        const end =
+          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
+            ? new Date(start.getTime() + MIN_SLOT_MS)
+            : rawEnd;
+
+        return {
+          allDay: false,
+          end,
+          entry,
+          id: entry.id,
+          resource: {
+            color: resolveEntryColor(entry),
+            isLocked: false,
+            isRunning: isRunningTimeEntry(entry),
+          },
+          start,
+          title: entry.description?.trim() || entry.project_name || "Entry",
+        };
+      });
+  }, [entries, nowMs, runningEntry]);
   const dailyTotals = useMemo(() => {
     const totals = new Map<string, number>();
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -949,6 +974,7 @@ export function CalendarView({
           getNow={() => now}
           draggableAccessor={(event) => !event.resource.isLocked && !event.resource.isRunning}
           endAccessor={(event) => event.end}
+          dayLayoutAlgorithm="no-overlap"
           eventPropGetter={(event) => ({
             className: event.resource.isRunning ? "rbc-event-running" : undefined,
             style: {
@@ -1169,7 +1195,6 @@ function CalendarEventCard({
           ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
           : undefined,
         animation: "fadeIn 0.15s linear",
-        overflow: "visible",
       }}
     >
       <button
