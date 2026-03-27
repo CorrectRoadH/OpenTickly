@@ -1,6 +1,6 @@
 import { ShellPageHeader, ShellSurfaceCard, ShellToast } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactElement, useCallback, useEffect, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type {
@@ -9,6 +9,7 @@ import type {
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { createRate, getRatesByLevel } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { useWorkspaceUsersQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 const CURRENCIES = [
@@ -184,7 +185,7 @@ export function BillableRatesPage(): ReactElement {
             onSave={handleSave}
           />
 
-          <WorkspaceMemberRatesSection />
+          <WorkspaceMemberRatesSection workspaceId={workspaceId} />
         </div>
       </div>
 
@@ -399,7 +400,20 @@ function CurrencyField(props: {
   );
 }
 
-function WorkspaceMemberRatesSection(): ReactElement {
+function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): ReactElement {
+  const membersQuery = useWorkspaceUsersQuery(workspaceId);
+  const members = useMemo(
+    () =>
+      (membersQuery.data ?? [])
+        .filter((m) => m.id != null && m.inactive !== true)
+        .map((m) => ({
+          id: m.id as number,
+          name: m.fullname?.trim() || m.email?.trim() || `User ${m.id}`,
+          email: m.email ?? "",
+        })),
+    [membersQuery.data],
+  );
+
   return (
     <ShellSurfaceCard>
       <div className="p-5">
@@ -431,16 +445,190 @@ function WorkspaceMemberRatesSection(): ReactElement {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="px-4 py-6 text-center text-[var(--track-text-muted)]" colSpan={3}>
-                  Member rates will be available when the workspace member list is loaded.
-                </td>
-              </tr>
+              {membersQuery.isPending ? (
+                <tr>
+                  <td className="px-4 py-6 text-center text-[var(--track-text-muted)]" colSpan={3}>
+                    Loading members...
+                  </td>
+                </tr>
+              ) : members.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-center text-[var(--track-text-muted)]" colSpan={3}>
+                    No active workspace members found.
+                  </td>
+                </tr>
+              ) : (
+                members.map((member) => (
+                  <MemberRateRow key={member.id} member={member} workspaceId={workspaceId} />
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
     </ShellSurfaceCard>
+  );
+}
+
+type MemberInfo = {
+  email: string;
+  id: number;
+  name: string;
+};
+
+function MemberRateRow({
+  member,
+  workspaceId,
+}: {
+  member: MemberInfo;
+  workspaceId: number;
+}): ReactElement {
+  const rateQuery = useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getRatesByLevel({
+          path: {
+            workspace_id: workspaceId,
+            level: "workspace_user",
+            level_id: member.id,
+          },
+          query: { type: "billable_rates" },
+        }),
+      ),
+    queryKey: ["member-rate", workspaceId, member.id],
+  });
+  const laborQuery = useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getRatesByLevel({
+          path: {
+            workspace_id: workspaceId,
+            level: "workspace_user",
+            level_id: member.id,
+          },
+          query: { type: "labor_costs" },
+        }),
+      ),
+    queryKey: ["member-labor", workspaceId, member.id],
+  });
+
+  const queryClient = useQueryClient();
+  const saveMutation = useMutation({
+    mutationFn: (request: RatesCreationRequest) =>
+      unwrapWebApiResult(
+        createRate({
+          path: { workspace_id: workspaceId },
+          body: request,
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["member-rate", workspaceId, member.id],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["member-labor", workspaceId, member.id],
+      });
+    },
+  });
+
+  const activeRate = findActiveRate(rateQuery.data as ModelsRate[] | undefined);
+  const activeLabor = findActiveRate(laborQuery.data as ModelsRate[] | undefined);
+
+  const [rateValue, setRateValue] = useState("");
+  const [laborValue, setLaborValue] = useState("");
+  const [dirty, setDirty] = useState(false);
+
+  useEffect(() => {
+    setRateValue(formatRateAmount(activeRate?.amount));
+    setLaborValue(formatRateAmount(activeLabor?.amount));
+    setDirty(false);
+  }, [activeRate?.amount, activeLabor?.amount]);
+
+  function handleSave() {
+    const rateAmount = parseFloat(rateValue) || 0;
+    const laborAmount = parseFloat(laborValue) || 0;
+
+    saveMutation.mutate(
+      {
+        level: "workspace_user",
+        level_id: member.id,
+        amount: rateAmount * 100,
+        mode: "override-all",
+        type: "billable_rates",
+      },
+      {
+        onSuccess: () => {
+          if (laborAmount > 0) {
+            saveMutation.mutate({
+              level: "workspace_user",
+              level_id: member.id,
+              amount: laborAmount * 100,
+              mode: "override-all",
+              type: "labor_costs",
+            });
+          }
+          setDirty(false);
+        },
+      },
+    );
+  }
+
+  return (
+    <tr className="border-b border-[var(--track-border)] last:border-b-0">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[11px] font-semibold text-[var(--track-accent)]">
+            {member.name.charAt(0).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[13px] text-[var(--track-text)]">{member.name}</div>
+            {member.email ? (
+              <div className="truncate text-[11px] text-[var(--track-text-muted)]">
+                {member.email}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1">
+          <input
+            className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+            inputMode="decimal"
+            onChange={(e) => {
+              setRateValue(e.target.value);
+              setDirty(true);
+            }}
+            placeholder="0.00"
+            type="text"
+            value={rateQuery.isPending ? "..." : rateValue}
+          />
+          {dirty ? (
+            <button
+              className="rounded-[6px] bg-[var(--track-accent)] px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+              disabled={saveMutation.isPending}
+              onClick={handleSave}
+              type="button"
+            >
+              Save
+            </button>
+          ) : null}
+        </div>
+      </td>
+      <td className="px-4 py-3">
+        <input
+          className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+          inputMode="decimal"
+          onChange={(e) => {
+            setLaborValue(e.target.value);
+            setDirty(true);
+          }}
+          placeholder="0.00"
+          type="text"
+          value={laborQuery.isPending ? "..." : laborValue}
+        />
+      </td>
+    </tr>
   );
 }
 
