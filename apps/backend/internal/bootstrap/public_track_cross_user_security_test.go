@@ -284,6 +284,20 @@ func TestSameWorkspaceAttackerCannotReadVictimTimeEntryHistoryViaHTTP(t *testing
 		t.Fatalf("add victim to workspace: %v", err)
 	}
 
+	// Switch victim's home to attacker's workspace so GET /me/time_entries
+	// resolves to the workspace where victim's entries are created.
+	_, err = database.Pool.Exec(
+		context.Background(),
+		`UPDATE web_user_homes SET organization_id = (
+			SELECT organization_id FROM tenant_workspaces WHERE id = $1
+		), workspace_id = $1 WHERE user_id = $2`,
+		workspaceID,
+		victimBody.User.ID,
+	)
+	if err != nil {
+		t.Fatalf("switch victim home to attacker workspace: %v", err)
+	}
+
 	attackerAuth := basicAuthorization(attackerEmail, "secret1")
 	victimAuth := basicAuthorization(victimEmail, "secret1")
 
