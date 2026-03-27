@@ -257,6 +257,7 @@ export interface TimerPageOrchestration {
   setSelectedTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
   selectedEntryDirty: boolean;
   isNewEntry: boolean;
+  calendarDraftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
 
   // Composer suggestions
   composerSuggestionsAnchor: TimerComposerSuggestionsAnchor | null;
@@ -687,6 +688,7 @@ export function useTimerPageOrchestration(options?: {
     setSelectedEntryAnchor(null);
     setSelectedEntryError(null);
     setIsNewEntry(false);
+    setCalendarDraftEntry(null);
   }, []);
 
   const closeComposerSuggestions = useCallback(() => {
@@ -1365,11 +1367,15 @@ export function useTimerPageOrchestration(options?: {
     [],
   );
 
+  const [calendarDraftEntry, setCalendarDraftEntry] =
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
+
   const handleCalendarSlotCreate = useCallback(
     (slot: { end: Date; start: Date }) => {
       // If editor is already open, just close it — don't create a new entry
       if (selectedEntry != null) {
         closeSelectedEntryEditor();
+        setCalendarDraftEntry(null);
         return;
       }
 
@@ -1388,21 +1394,12 @@ export function useTimerPageOrchestration(options?: {
       };
 
       setIsNewEntry(true);
-
-      const fakeRect: DOMRect = {
-        bottom: 300,
-        height: 40,
-        left: 400,
-        right: 600,
-        top: 260,
-        width: 200,
-        x: 400,
-        y: 260,
-        toJSON: () => ({}),
-      };
-      handleEntryEdit(draftEntry, fakeRect);
+      // Set draft entry so CalendarView renders it; the CalendarEventCard
+      // auto-open effect will call handleEntryEdit with the real DOM rect.
+      setCalendarDraftEntry(draftEntry);
+      setSelectedEntry(draftEntry);
     },
-    [selectedEntry, closeSelectedEntryEditor, workspaceId, handleEntryEdit],
+    [selectedEntry, closeSelectedEntryEditor, workspaceId],
   );
 
   const openComposerSuggestions = useCallback(() => {
@@ -1525,6 +1522,7 @@ export function useTimerPageOrchestration(options?: {
     setSelectedTagIds,
     selectedEntryDirty,
     isNewEntry,
+    calendarDraftEntry,
 
     // Composer suggestions
     composerSuggestionsAnchor,

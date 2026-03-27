@@ -515,6 +515,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           orch.view === "calendar" ? (
             <CalendarView
               calendarHours={displaySettings.calendarHours}
+              draftEntry={orch.calendarDraftEntry}
               entries={orch.visibleEntries}
               nowMs={orch.nowMs}
               onEditEntry={orch.handleEntryEdit}

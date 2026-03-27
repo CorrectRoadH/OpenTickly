@@ -48,7 +48,6 @@ if (!withDragAndDrop) {
 
 const DnDCalendar = withDragAndDrop<CalendarEvent>(Calendar);
 
-
 type CalendarEvent = {
   allDay: false;
   end: Date;
@@ -56,6 +55,7 @@ type CalendarEvent = {
   id: number;
   resource: {
     color: string;
+    isDraft: boolean;
     isLocked: boolean;
     isRunning: boolean;
   };
@@ -760,6 +760,7 @@ function ListRowProjectPicker({
 
 export function CalendarView({
   calendarHours = "all",
+  draftEntry,
   entries,
   nowMs,
   onMoveEntry,
@@ -778,6 +779,7 @@ export function CalendarView({
   zoom = 0,
 }: {
   calendarHours?: "all" | "business";
+  draftEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
@@ -809,52 +811,59 @@ export function CalendarView({
     // a gap between "timer bar shows running" and "calendar shows the block".
     const entryIds = new Set(entries.map((e) => e.id));
     const allEntries =
-      runningEntry != null &&
-      typeof runningEntry.id === "number" &&
-      !entryIds.has(runningEntry.id)
+      runningEntry != null && typeof runningEntry.id === "number" && !entryIds.has(runningEntry.id)
         ? [...entries, runningEntry]
         : entries;
 
-    return allEntries
+    const DRAFT_ENTRY_ID = -1;
+    const MIN_SLOT_MS = 15 * 60 * 1000;
+
+    function toCalendarEvent(
+      entry: GithubComTogglTogglApiInternalModelsTimeEntry & { id: number },
+      isDraft: boolean,
+    ): CalendarEvent {
+      const start = new Date(entry.start ?? entry.at ?? Date.now());
+      const rawEnd = entry.stop ? new Date(entry.stop) : new Date(nowMs ?? Date.now());
+      const end =
+        rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
+          ? new Date(start.getTime() + MIN_SLOT_MS)
+          : rawEnd;
+
+      return {
+        allDay: false,
+        end,
+        entry,
+        id: entry.id,
+        resource: {
+          color: resolveEntryColor(entry),
+          isDraft,
+          isLocked: false,
+          isRunning: isRunningTimeEntry(entry),
+        },
+        start,
+        title: entry.description?.trim() || entry.project_name || "Entry",
+      };
+    }
+
+    const calendarEvents: CalendarEvent[] = allEntries
       .filter(
         (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
           typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
       )
-      .map((entry) => {
-        const start = new Date(entry.start ?? entry.at ?? Date.now());
-        // Completed entries use their recorded stop time. Running entries use
-        // the current wall-clock time so `end` stays at "now" and never drifts
-        // ahead of later entries, keeping overlap grouping stable.
-        const rawEnd = entry.stop ? new Date(entry.stop) : new Date(nowMs ?? Date.now());
-        // The calendar grid has a minimum slot height of 15 minutes (step=30,
-        // timeslots=2 or step=15, timeslots=4 — both give 15 min/slot).
-        // Entries shorter than 15 minutes would get height ≈ 0, which causes
-        // the no-overlap algorithm to treat them as isolated points and assign
-        // each its own full-width column instead of splitting with neighbours.
-        // Clamping end to start+15min ensures every entry has a nonzero slot
-        // height so collision detection works correctly, and makes sub-15-min
-        // entries render at exactly one slot height — consistent with the grid.
-        const MIN_SLOT_MS = 15 * 60 * 1000;
-        const end =
-          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
-            ? new Date(start.getTime() + MIN_SLOT_MS)
-            : rawEnd;
+      .map((entry) => toCalendarEvent(entry, false));
 
-        return {
-          allDay: false,
-          end,
-          entry,
-          id: entry.id,
-          resource: {
-            color: resolveEntryColor(entry),
-            isLocked: false,
-            isRunning: isRunningTimeEntry(entry),
-          },
-          start,
-          title: entry.description?.trim() || entry.project_name || "Entry",
-        };
-      });
-  }, [entries, nowMs, runningEntry]);
+    // Add draft entry as a visible calendar block so the editor popup can
+    // anchor to its real DOM position instead of using a hardcoded rect.
+    if (draftEntry != null && draftEntry.start) {
+      const draftWithId = {
+        ...draftEntry,
+        id: DRAFT_ENTRY_ID,
+      } as GithubComTogglTogglApiInternalModelsTimeEntry & { id: number };
+      calendarEvents.push(toCalendarEvent(draftWithId, true));
+    }
+
+    return calendarEvents;
+  }, [draftEntry, entries, nowMs, runningEntry]);
   const dailyTotals = useMemo(() => {
     const totals = new Map<string, number>();
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
@@ -972,15 +981,18 @@ export function CalendarView({
           date={calendarDate}
           defaultView={Views.WEEK}
           getNow={() => now}
-          draggableAccessor={(event) => !event.resource.isLocked && !event.resource.isRunning}
+          draggableAccessor={(event) =>
+            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+          }
           endAccessor={(event) => event.end}
           dayLayoutAlgorithm="no-overlap"
           eventPropGetter={(event) => ({
             className: event.resource.isRunning ? "rbc-event-running" : undefined,
             style: {
               backgroundColor: colorToOverlay(event.resource.color),
-              border: "none",
+              border: event.resource.isDraft ? "1px dashed rgba(229,123,217,0.6)" : "none",
               color: "#fafafa",
+              opacity: event.resource.isDraft ? 0.7 : undefined,
             },
           })}
           events={events}
@@ -1037,7 +1049,9 @@ export function CalendarView({
             }
           }}
           resizable
-          resizableAccessor={(event) => !event.resource.isLocked && !event.resource.isRunning}
+          resizableAccessor={(event) =>
+            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+          }
           selectable
           startAccessor={(event) => event.start}
           step={step}
@@ -1160,7 +1174,8 @@ function CalendarEventCard({
   const [showStartTime, setShowStartTime] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const entryId = event.id;
-  const allowDirectEdit = !event.resource.isLocked && !isRunning;
+  const isDraft = event.resource.isDraft;
+  const allowDirectEdit = !event.resource.isLocked && !isRunning && !isDraft;
 
   useEffect(() => {
     const el = cardRef.current;
@@ -1171,6 +1186,12 @@ function CalendarEventCard({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Draft entries auto-open the editor anchored to their real DOM position
+  useEffect(() => {
+    if (!isDraft || !cardRef.current) return;
+    onEditEntry?.(entry, cardRef.current.getBoundingClientRect());
+  }, [isDraft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startTimeLabel = useMemo(() => {
     if (!entry.start) return null;
