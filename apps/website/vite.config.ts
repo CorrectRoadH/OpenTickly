@@ -81,6 +81,10 @@ export default defineConfig(() => {
         "/web/v1": {
           target: webProxyTarget,
         },
+        // Import API — do not remove, required for Toggl data migration
+        "/import/v1": {
+          target: webProxyTarget,
+        },
       },
     },
     test: {

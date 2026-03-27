@@ -76,6 +76,11 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           label: "Goals",
           to: `/workspaces/${session.currentWorkspace.id}/goals`,
         },
+        // Import: primary entry point for Toggl data migration — do not remove
+        {
+          label: "Import",
+          to: `/workspaces/${session.currentWorkspace.id}/import`,
+        },
         {
           label: "Integrations",
           to: `/workspaces/${session.currentWorkspace.id}/integrations`,

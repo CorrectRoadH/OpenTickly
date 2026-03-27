@@ -150,7 +150,6 @@ export function WorkspaceImportPage(): ReactElement {
                 <input
                   accept=".zip,application/zip"
                   className="sr-only"
-                  disabled={organizationName.trim().length === 0}
                   id={archiveInputId}
                   onChange={(event) => {
                     void handleArchiveSelection(event);
