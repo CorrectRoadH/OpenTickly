@@ -187,40 +187,41 @@ export function WeekRangePicker({
         <div
           aria-label="Select week range"
           aria-modal="false"
-          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[568px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] p-4 shadow-[0_2px_8px_rgba(0,0,0,0.24)]"
+          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[480px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
           data-testid="week-range-dialog"
           role="dialog"
         >
-          <div className="grid grid-cols-[160px_minmax(0,1fr)] gap-4">
-            <div className="border-r border-[var(--track-border)] pr-4">
-              <div className="flex flex-col gap-1">
+          <div className="grid grid-cols-[148px_minmax(0,1fr)] gap-0">
+            <div className="pr-3">
+              <div className="flex flex-col gap-0.5">
                 {WEEK_SHORTCUTS.map((shortcut) => {
                   const shortcutDate = shortcut.resolveDate(new Date());
-                  const weekMatch = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
+                  // Today/Yesterday are active only when in day mode and the
+                  // selected date matches that day. This week/Last week are
+                  // active when in week mode and the selected week matches.
                   let isActive = false;
-                  if (shortcut.id === "this-week") {
-                    isActive = weekMatch;
-                  } else if (shortcut.id === "last-week") {
-                    isActive = weekMatch;
+                  if (shortcut.id === "today" || shortcut.id === "yesterday") {
+                    isActive = mode === "day" && isSameDay(shortcutDate, selectedDate);
+                  } else {
+                    isActive = mode === "week" && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
                   }
-                  // Today/Yesterday are never independently active in the week
-                  // picker popup -- the week-level shortcuts take visual priority.
 
                   return (
                     <button
                       aria-pressed={isActive}
-                      className={`w-full rounded-lg px-2 py-[7px] text-left text-[14px] transition ${
+                      className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
                         isActive
-                          ? "bg-[rgba(183,68,171,0.15)] font-semibold text-[var(--track-accent-text)]"
-                          : "font-medium text-[#cfcfcf] hover:bg-[var(--track-row-hover)] hover:text-white"
+                          ? "bg-[#b744ab] text-white"
+                          : "text-[#cfcfcf] hover:bg-[var(--track-row-hover)] hover:text-white"
                       }`}
                       key={shortcut.id}
                       onClick={() => {
-                        if (
-                          (shortcut.id === "today" || shortcut.id === "yesterday") &&
-                          onDayShortcutSelect
-                        ) {
-                          onDayShortcutSelect(shortcutDate);
+                        if (shortcut.id === "today" || shortcut.id === "yesterday") {
+                          if (onDayShortcutSelect) {
+                            onDayShortcutSelect(shortcutDate);
+                          } else {
+                            onSelectDate(shortcutDate);
+                          }
                         } else {
                           onSelectDate(shortcutDate);
                         }
@@ -239,7 +240,7 @@ export function WeekRangePicker({
               <div className="mb-3 flex items-center justify-between gap-2">
                 <button
                   aria-label="Previous month"
-                  className="flex size-7 items-center justify-center rounded-lg border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                  className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() =>
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1),
@@ -249,15 +250,14 @@ export function WeekRangePicker({
                 >
                   <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
                 </button>
-                <h2 className="flex items-center gap-2 text-[20px] font-semibold tracking-[0.01em] text-white">
-                  <span>
-                    {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
-                  </span>
-                  <span>{visibleMonth.getFullYear()}</span>
+                <h2 className="text-[16px] font-semibold text-white">
+                  {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
+                  {" "}
+                  {visibleMonth.getFullYear()}
                 </h2>
                 <button
                   aria-label="Next month"
-                  className="flex size-7 items-center justify-center rounded-lg border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                  className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() =>
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1),
