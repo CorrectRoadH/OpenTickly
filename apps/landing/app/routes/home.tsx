@@ -57,7 +57,7 @@ export default function Home() {
     <HomeLayout {...baseOptions()}>
       <Seo
         pathname="/"
-        title="Free Private-First Toggl Alternative"
+        title="OpenToggl | Free Private-First Toggl Alternative"
         description={defaultDescription}
         schema={[buildOrganizationSchema(siteUrl), buildFaqSchema(faqItems)]}
       />

@@ -253,5 +253,6 @@ type TrackedTimeEntryView struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	TagIDs      []int64
+	TagNames    []string
 	ExpenseIDs  []int64
 }

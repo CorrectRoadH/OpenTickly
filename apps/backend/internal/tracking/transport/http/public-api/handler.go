@@ -728,7 +728,7 @@ func writePublicTrackTrackingError(err error) error {
 func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry {
 	tagIDs := intsFromInt64s(view.TagIDs)
 	expenseIDs := intsFromInt64s(view.ExpenseIDs)
-	tagNames := []string{}
+	tagNames := view.TagNames
 	return publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry{
 		At:            timePointer(view.UpdatedAt),
 		Billable:      lo.ToPtr(view.Billable),

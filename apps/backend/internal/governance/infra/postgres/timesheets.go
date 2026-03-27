@@ -182,7 +182,8 @@ func (store *Store) ListPeriodTimeEntries(
 			created_at,
 			updated_at,
 			tag_ids,
-			expense_ids
+			expense_ids,
+			(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(tracking_time_entries.tag_ids)::bigint)))
 		from tracking_time_entries
 		left join catalog_clients client on client.id = tracking_time_entries.client_id
 		left join catalog_projects project on project.id = tracking_time_entries.project_id
@@ -212,6 +213,7 @@ func (store *Store) ListPeriodTimeEntries(
 			stopTime    *time.Time
 			tagIDsRaw   []byte
 			expenseRaw  []byte
+			tagNamesRaw []byte
 		)
 		if err := rows.Scan(
 			&entry.ID,
@@ -232,6 +234,7 @@ func (store *Store) ListPeriodTimeEntries(
 			&entry.UpdatedAt,
 			&tagIDsRaw,
 			&expenseRaw,
+			&tagNamesRaw,
 		); err != nil {
 			return nil, writeGovernanceError("scan period time entry", err)
 		}
@@ -243,6 +246,7 @@ func (store *Store) ListPeriodTimeEntries(
 		entry.TaskName = taskName
 		entry.Stop = stopTime
 		entry.TagIDs = decodeInt64s(tagIDsRaw)
+		entry.TagNames = decodeStrings(tagNamesRaw)
 		entry.ExpenseIDs = decodeInt64s(expenseRaw)
 		entries = append(entries, entry)
 	}

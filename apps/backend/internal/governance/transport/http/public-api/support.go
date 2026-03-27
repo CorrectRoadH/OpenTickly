@@ -273,7 +273,7 @@ func apiTrackedTimeEntry(view governanceapplication.TrackedTimeEntryView) public
 	for _, id := range view.ExpenseIDs {
 		expenseIDs = append(expenseIDs, int(id))
 	}
-	tagNames := []string{}
+	tagNames := view.TagNames
 	var clientID *int
 	if view.ClientID != nil {
 		clientID = lo.ToPtr(int(*view.ClientID))
