@@ -9,6 +9,8 @@ import (
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 )
 
+const tagNamesSubquery = `(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(te.tag_ids)::bigint)))`
+
 func (store *Store) CreateTimeEntry(
 	ctx context.Context,
 	record trackingapplication.CreateTimeEntryRecord,
@@ -25,7 +27,8 @@ func (store *Store) CreateTimeEntry(
 		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
 			expense_ids, deleted_at, created_at, updated_at,
-			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active`,
+			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active,
+			`+tagNamesSubquery+``,
 		record.WorkspaceID,
 		record.UserID,
 		record.ClientID,
@@ -72,7 +75,8 @@ func (store *Store) GetTimeEntry(
 			c.name,
 			p.name,
 			t.name,
-			p.active
+			p.active,
+			`+tagNamesSubquery+`
 		from tracking_time_entries te
 		left join catalog_clients c on c.id = te.client_id
 		left join catalog_projects p on p.id = te.project_id
@@ -491,6 +495,7 @@ func scanTimeEntry(scanner interface {
 		projectName   *string
 		taskName      *string
 		projectActive *bool
+		tagNames      []byte
 	)
 	if err := scanner.Scan(scanTimeEntryFields(
 		&id,
@@ -514,6 +519,7 @@ func scanTimeEntry(scanner interface {
 		&projectName,
 		&taskName,
 		&projectActive,
+		&tagNames,
 	)...); err != nil {
 		return trackingapplication.TimeEntryView{}, writeTrackingError("scan tracking time entry", err)
 	}
@@ -539,6 +545,7 @@ func scanTimeEntry(scanner interface {
 		projectName,
 		taskName,
 		projectActive,
+		tagNames,
 	), nil
 }
 

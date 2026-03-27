@@ -67,6 +67,7 @@ func scanTimeEntryFields(
 	projectName **string,
 	taskName **string,
 	projectActive **bool,
+	tagNames *[]byte,
 ) []any {
 	return []any{
 		id,
@@ -90,7 +91,19 @@ func scanTimeEntryFields(
 		projectName,
 		taskName,
 		projectActive,
+		tagNames,
 	}
+}
+
+func unmarshalStringJSON(raw []byte) []string {
+	if len(raw) == 0 {
+		return []string{}
+	}
+	var values []string
+	if err := json.Unmarshal(raw, &values); err != nil {
+		return []string{}
+	}
+	return values
 }
 
 func buildTimeEntryView(
@@ -115,6 +128,7 @@ func buildTimeEntryView(
 	projectName *string,
 	taskName *string,
 	projectActive *bool,
+	tagNames []byte,
 ) trackingapplication.TimeEntryView {
 	return trackingapplication.TimeEntryView{
 		ID:            id,
@@ -130,6 +144,7 @@ func buildTimeEntryView(
 		Duration:      duration,
 		CreatedWith:   createdWith,
 		TagIDs:        unmarshalInt64JSON(tagIDs),
+		TagNames:      unmarshalStringJSON(tagNames),
 		ExpenseIDs:    unmarshalInt64JSON(expenseIDs),
 		DeletedAt:     xptr.CloneUTC(deletedAt),
 		CreatedAt:     createdAt.UTC(),

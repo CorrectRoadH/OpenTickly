@@ -35,6 +35,7 @@ type TimeEntryView struct {
 	Duration      int
 	CreatedWith   string
 	TagIDs        []int64
+	TagNames      []string
 	ExpenseIDs    []int64
 	DeletedAt     *time.Time
 	CreatedAt     time.Time

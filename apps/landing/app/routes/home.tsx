@@ -35,8 +35,6 @@ const heroHighlights = [
   ["Automation-ready", "Support agent and internal-tool workloads without tiny hourly limits."],
 ];
 
-const trustPills = ["Open source", "Self-hostable", "Docker Compose", "Health checks included"];
-
 const featureCards = [
   {
     title: "Toggl-shaped surface",
@@ -106,16 +104,6 @@ export default function Home() {
                 Toggl CLI
                 <ArrowUpRight className="h-4 w-4 opacity-70" aria-hidden="true" />
               </a>
-            </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-2">
-              {trustPills.map((item) => (
-                <span
-                  key={item}
-                  className="rounded-full border border-fd-border bg-white/5 px-3 py-1 text-xs font-medium text-fd-muted-foreground"
-                >
-                  {item}
-                </span>
-              ))}
             </div>
             <HomeHeroScreenshots />
             <div className="mt-10 grid gap-3 text-left sm:grid-cols-3">
