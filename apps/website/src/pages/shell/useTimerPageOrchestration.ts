@@ -210,8 +210,8 @@ export interface TimerPageOrchestration {
   setTimerInputMode: (next: TimerInputMode) => void;
   calendarZoom: number;
   setCalendarZoom: (zoom: number) => void;
-  listAllDates: boolean;
-  setListAllDates: (allDates: boolean) => void;
+  listDateRange: { startDate: string; endDate: string } | null;
+  setListDateRange: (range: { startDate: string; endDate: string } | null) => void;
 
   // Time state
   nowMs: number;
@@ -364,7 +364,7 @@ export function useTimerPageOrchestration(options?: {
     persistTimerView(next);
     setViewState(next);
     if (next === "list") {
-      setListAllDates(true);
+      setListDateRange(null);
     }
   }, []);
 
@@ -395,8 +395,11 @@ export function useTimerPageOrchestration(options?: {
     setCalendarZoomState(Math.max(-1, Math.min(1, zoom)));
   }, []);
 
-  // Whether list view shows all entries or a filtered date range
-  const [listAllDates, setListAllDates] = useState(true);
+  // Date range filter for list view: null = all dates, otherwise a specific range
+  const [listDateRange, setListDateRange] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
   // Time state
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -420,10 +423,10 @@ export function useTimerPageOrchestration(options?: {
   const preferencesQuery = usePreferencesQuery();
   const collapseTimeEntries = preferencesQuery.data?.collapseTimeEntries ?? true;
 
-  // Queries — list view in "all dates" mode fetches without date range;
-  // otherwise all views (including list) use the selected week range.
+  // Queries — list view uses listDateRange (null = all dates);
+  // other views always use the selected week range.
   const timeEntriesQuery = useTimeEntriesQuery(
-    view === "list" && listAllDates ? {} : { ...weekRange },
+    view === "list" ? (listDateRange ?? {}) : { ...weekRange },
   );
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
 
@@ -1486,8 +1489,8 @@ export function useTimerPageOrchestration(options?: {
     setTimerInputMode,
     calendarZoom,
     setCalendarZoom,
-    listAllDates,
-    setListAllDates,
+    listDateRange,
+    setListDateRange,
 
     // Time state
     beginningOfWeek,

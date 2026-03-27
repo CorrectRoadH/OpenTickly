@@ -32,6 +32,7 @@ import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.t
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
+import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
@@ -354,33 +355,57 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           <div className="flex items-center gap-4">
             <WeekRangePicker
               mode={
-                orch.view === "list" && orch.listAllDates
+                orch.view === "list" && orch.listDateRange == null
                   ? "all-dates"
                   : orch.calendarSubview === "day"
                     ? "day"
                     : "week"
               }
               onAllDatesSelect={() => {
-                orch.setListAllDates(true);
+                orch.setListDateRange(null);
                 if (orch.view !== "list") orch.setView("list");
               }}
               onDayShortcutSelect={(date) => {
-                orch.setListAllDates(false);
-                if (orch.view !== "list") orch.setCalendarSubview("day");
+                if (orch.view === "list") {
+                  const dayStr = formatTrackQueryDate(date);
+                  orch.setListDateRange({ startDate: dayStr, endDate: dayStr });
+                } else {
+                  orch.setCalendarSubview("day");
+                }
                 orch.setSelectedWeekDate(date);
               }}
               onLast30DaysSelect={(date) => {
-                orch.setListAllDates(false);
-                if (orch.view !== "list") orch.setCalendarSubview("week");
+                if (orch.view === "list") {
+                  const todayStr = formatTrackQueryDate(new Date());
+                  orch.setListDateRange({
+                    startDate: formatTrackQueryDate(date),
+                    endDate: todayStr,
+                  });
+                } else {
+                  orch.setCalendarSubview("week");
+                }
                 orch.setSelectedWeekDate(date);
               }}
               onWeekShortcutSelect={(date) => {
-                orch.setListAllDates(false);
-                if (orch.view !== "list") orch.setCalendarSubview("week");
+                if (orch.view === "list") {
+                  const days = getWeekDaysForDate(date, orch.beginningOfWeek);
+                  orch.setListDateRange({
+                    startDate: formatTrackQueryDate(days[0]),
+                    endDate: formatTrackQueryDate(days[6]),
+                  });
+                } else {
+                  orch.setCalendarSubview("week");
+                }
                 orch.setSelectedWeekDate(date);
               }}
               onSelectDate={(date) => {
-                orch.setListAllDates(false);
+                if (orch.view === "list") {
+                  const days = getWeekDaysForDate(date, orch.beginningOfWeek);
+                  orch.setListDateRange({
+                    startDate: formatTrackQueryDate(days[0]),
+                    endDate: formatTrackQueryDate(days[6]),
+                  });
+                }
                 orch.setSelectedWeekDate(date);
               }}
               selectedDate={orch.selectedWeekDate}

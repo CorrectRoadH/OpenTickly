@@ -2055,3 +2055,101 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(timesheetViewContainer.locator("text=Workspace B Clean Project")).toBeVisible();
   });
 });
+
+test.describe("Date range picker in list view", () => {
+  /**
+   * VAL-TIMER-DATE-001: Date shortcuts filter list view without switching view
+   *
+   * Selecting "Today", "This week", or "All dates" from the date picker while
+   * in list view should filter the visible entries without switching to calendar.
+   */
+  test("VAL-TIMER-DATE-001: date shortcuts filter list view entries", async ({ page }) => {
+    const email = `list-date-filter-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "List Date Filter User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+
+    // Create a time entry for today
+    const now = new Date();
+    const todayStart = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 0, 0),
+    );
+    const todayStop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 11, 0, 0),
+    );
+    await createTimeEntryForWorkspace(page, {
+      description: "Today entry",
+      start: todayStart.toISOString(),
+      stop: todayStop.toISOString(),
+      workspaceId,
+    });
+
+    // Create a time entry from 14 days ago (outside "today" and "this week" range)
+    const oldDate = new Date(todayStart);
+    oldDate.setDate(oldDate.getDate() - 14);
+    const oldStop = new Date(oldDate);
+    oldStop.setHours(oldDate.getHours() + 1);
+    await createTimeEntryForWorkspace(page, {
+      description: "Old entry two weeks ago",
+      start: oldDate.toISOString(),
+      stop: oldStop.toISOString(),
+      workspaceId,
+    });
+
+    // Navigate to timer page
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Switch to list view
+    await page.getByRole("radio", { name: "List view" }).click();
+    const listView = page.getByTestId("timer-list-view");
+    await expect(listView).toBeVisible();
+
+    // List view defaults to "All dates" — both entries should be visible
+    await expect(listView.locator("text=Today entry")).toBeVisible();
+    await expect(listView.locator("text=Old entry two weeks ago")).toBeVisible();
+
+    // Open the date picker and select "Today"
+    const datePickerTrigger = page
+      .getByTestId("tracking-timer-page")
+      .locator("button", { hasText: "All dates" });
+    await datePickerTrigger.click();
+
+    const datePickerDialog = page.getByTestId("week-range-dialog");
+    await expect(datePickerDialog).toBeVisible();
+    await datePickerDialog.getByRole("button", { name: "Today" }).click();
+
+    // Should still be in list view (NOT calendar)
+    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(listView).toBeVisible();
+
+    // Today entry should be visible, old entry should be filtered out
+    await expect(listView.locator("text=Today entry")).toBeVisible();
+    await expect(listView.locator("text=Old entry two weeks ago")).not.toBeVisible();
+
+    // Now select "All dates" to go back to unfiltered
+    // The trigger should now show the day label, not "All dates"
+    const updatedTrigger = page
+      .getByTestId("tracking-timer-page")
+      .locator('[aria-haspopup="dialog"]');
+    await updatedTrigger.click();
+    await expect(datePickerDialog).toBeVisible();
+    await datePickerDialog.getByRole("button", { name: "All dates" }).click();
+
+    // Both entries should be visible again
+    await expect(listView).toBeVisible();
+    await expect(listView.locator("text=Today entry")).toBeVisible();
+    await expect(listView.locator("text=Old entry two weeks ago")).toBeVisible();
+  });
+});
