@@ -9,6 +9,21 @@ on:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -18,11 +33,6 @@ jobs:
         with:
           node-version: 22
           cache: "pnpm"
-
-      - name: Start postgres
-        run: |
-          docker compose -f docker-compose.yml up -d postgres
-          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null; do sleep 1; done'
 
       - name: Install dependencies
         run: pnpm install
