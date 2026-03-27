@@ -8,7 +8,7 @@
 
 OpenToggl 是一个免费、private-first、AI-friendly 的 Toggl 替代方案。
 
-> 项目状态：OpenToggl 目前仍处于非常早期阶段。
+> 项目状态：OpenToggl 目前仍处于非常早期阶段。不建议使用，建议先继续用 toggl + toggl-cli，在成熟之后迁移数据过来
 
 它存在的原因很简单：对很多个人和团队来说，Toggl 太贵；对重视数据掌控的人来说，它不够 private-first；对 AI 和自动化场景来说，它的 rate limit 又低得几乎无法真正使用。
 
