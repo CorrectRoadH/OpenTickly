@@ -31,7 +31,7 @@ describe("Story: edge cases and boundary conditions", () => {
   describe("empty state", () => {
     it("entry list on fresh user returns empty", async () => {
       const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+        ["entry", "list"],
         { user },
       );
       expect(entries).toHaveLength(0);

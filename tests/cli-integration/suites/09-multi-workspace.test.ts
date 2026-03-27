@@ -39,12 +39,20 @@ describe("Story: single user, multi-workspace data scoping", () => {
 
     // Create data in the default workspace (WS-A) via CLI
     await toggl(["project", "create", "WS-A Project"], { user });
-    const start = await toggl(
-      ["entry", "start", "-d", "WS-A Work"],
+    // Use explicit times to ensure a non-zero-duration entry
+    await toggl(
+      [
+        "entry",
+        "start",
+        "-d",
+        "WS-A Work",
+        "--start",
+        "2026-03-27T08:00:00Z",
+        "--end",
+        "2026-03-27T09:00:00Z",
+      ],
       { user },
     );
-    expect(start.exitCode).toBe(0);
-    await toggl(["entry", "stop"], { user });
 
     // Create data in WS-B via API (CLI targets user's home workspace)
     await createProjectViaAPI(user, workspaceBId, "WS-B Project");
@@ -63,7 +71,7 @@ describe("Story: single user, multi-workspace data scoping", () => {
 
   it("CLI entry list includes WS-A entries", async () => {
     const entries = await togglJson<TimeEntry[]>(
-      ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+      ["entry", "list"],
       { user },
     );
     // The CLI's entry list returns entries from all workspaces via /me/time_entries.

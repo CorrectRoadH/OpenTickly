@@ -62,7 +62,7 @@ describe("Story: cross-user data isolation", () => {
 
     it("User B's entry list does not contain User A's entry", async () => {
       const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+        ["entry", "list"],
         { user: userB },
       );
       expect(
@@ -81,7 +81,7 @@ describe("Story: cross-user data isolation", () => {
 
     it("User A sees their entry", async () => {
       const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+        ["entry", "list"],
         { user: userA },
       );
       expect(
@@ -109,7 +109,7 @@ describe("Story: cross-user data isolation", () => {
 
     it("User A cannot see User B's entry", async () => {
       const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+        ["entry", "list"],
         { user: userA },
       );
       expect(
@@ -124,7 +124,7 @@ describe("Story: cross-user data isolation", () => {
       expect(projects.some((p) => p.name === "Open Beta")).toBe(true);
 
       const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list", "--since", "2026-03-01", "-n", "100"],
+        ["entry", "list"],
         { user: userB },
       );
       expect(
