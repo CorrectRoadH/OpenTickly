@@ -1234,6 +1234,23 @@ function PickerButton({
     >
       {variant === "project" && label ? (
         <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+      ) : icon === "dollar" ? (
+        <svg
+          aria-hidden="true"
+          fill="none"
+          fillRule="evenodd"
+          height="18"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          viewBox="0 0 12 18"
+          width="12"
+        >
+          <path
+            d="M2.5 12C3 13.5 4 14.5 6 14.5s3.5-1.2 3.5-2.7c0-4-7-1.6-7-5.6C2.5 4.7 4 3.5 6 3.5c1.5 0 3 1 3.5 2.5M6 2v14"
+            stroke="currentColor"
+          />
+        </svg>
       ) : (
         <TrackingIcon className={selected ? "size-5 shrink-0" : "size-5"} name={icon} />
       )}
