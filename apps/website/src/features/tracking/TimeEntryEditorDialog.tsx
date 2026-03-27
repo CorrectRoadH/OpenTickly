@@ -409,17 +409,13 @@ export function TimeEntryEditorDialog({
               >
                 <svg
                   aria-hidden="true"
-                  fill="none"
+                  fill="currentColor"
+                  fillRule="evenodd"
                   height="16"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.7"
                   viewBox="0 0 16 16"
                   width="16"
                 >
-                  <rect height="8" rx="1.3" width="7" x="5" y="3" />
-                  <path d="M4 11H3.5A1.5 1.5 0 0 1 2 9.5V5a1.5 1.5 0 0 1 1.5-1.5H8" />
+                  <path d="M10.998 4C11.55 4 12 4.456 12 5.002v9.996C12 15.55 11.544 16 10.998 16H1.002A1.007 1.007 0 010 14.998V5.002C0 4.45.456 4 1.002 4h9.996zM10 6H2v8h8V6zm5-6l.117.007A.998.998 0 0116 1l-.007-.114.007.116v9.996c0 .546-.448 1.002-1 1.002l-.117-.007a.999.999 0 01-.883-.995V2H5.002c-.507 0-.936-.386-.995-.883L4 1c0-.556.449-1 1.002-1H15z" />
                 </svg>
               </button>
             ) : null}
