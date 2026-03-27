@@ -26,7 +26,7 @@ jobs:
           timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build backend
         env:
