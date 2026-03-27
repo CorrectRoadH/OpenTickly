@@ -880,7 +880,11 @@ export function CalendarView({
     // returned it (e.g. immediately after starting a new timer).
     const entryIds = new Set(entries.map((e) => e.id));
     const runningEntries: GithubComTogglTogglApiInternalModelsTimeEntry[] = [];
-    if (runningEntry != null && typeof runningEntry.id === "number" && !entryIds.has(runningEntry.id)) {
+    if (
+      runningEntry != null &&
+      typeof runningEntry.id === "number" &&
+      !entryIds.has(runningEntry.id)
+    ) {
       runningEntries.push(runningEntry);
     }
     // Also pick up any running entries already in the entries list
@@ -1231,37 +1235,16 @@ function CalendarEventCard({
   const color = event.resource.color;
   const isRunning = event.resource.isRunning;
   const [affordancesOpen, setAffordancesOpen] = useState(false);
-  const [showStartTime, setShowStartTime] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const entryId = event.id;
   const isDraft = event.resource.isDraft;
   const allowDirectEdit = !event.resource.isLocked && !isRunning && !isDraft;
-
-  useEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const check = () => setShowStartTime(el.offsetHeight >= 45);
-    check();
-    const observer = new ResizeObserver(check);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   // Draft entries auto-open the editor anchored to their real DOM position
   useEffect(() => {
     if (!isDraft || !cardRef.current) return;
     onEditEntry?.(entry, cardRef.current.getBoundingClientRect());
   }, [isDraft]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const startTimeLabel = useMemo(() => {
-    if (!entry.start) return null;
-    const d = new Date(entry.start);
-    const h = d.getHours();
-    const m = String(d.getMinutes()).padStart(2, "0");
-    const ampm = h >= 12 ? "PM" : "AM";
-    const h12 = h % 12 || 12;
-    return `${h12}:${m} ${ampm}`;
-  }, [entry.start]);
 
   return (
     <div
@@ -1279,29 +1262,29 @@ function CalendarEventCard({
     >
       <button
         aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="relative z-10 flex h-full w-full flex-col items-start gap-0.5 text-left text-[11px] text-white"
+        className="relative z-10 flex h-full w-full flex-col justify-between text-left text-[11px] text-white"
         data-testid={`calendar-entry-move-${entryId}`}
         onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
         type="button"
       >
-        {showStartTime && startTimeLabel ? (
-          <span className="shrink-0 text-[10px] font-semibold leading-tight text-white/80">
-            {startTimeLabel}
-          </span>
-        ) : null}
-        <div className="flex w-full items-start gap-1">
+        <div className="flex min-w-0 flex-col gap-0.5">
           <span
-            className={`truncate font-medium leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
+            className={`truncate font-semibold leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
           >
             {entry.description?.trim() || "Add description"}
           </span>
           {entry.project_name ? (
-            <span className="shrink-0 leading-tight text-white/70">
+            <span
+              className="truncate leading-tight"
+              style={{ color: color ?? "var(--track-accent)" }}
+            >
               {entry.project_name}
               {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
             </span>
           ) : null}
-          <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/70">
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/80">
             {formatClockDuration(durationSeconds)}
           </span>
           {entry.billable ? (
