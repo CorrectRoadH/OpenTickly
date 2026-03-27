@@ -58,10 +58,6 @@ function SectionHeader({
   );
 }
 
-function comingSoonAlert(feature: string) {
-  window.alert(`${feature} setup is coming soon.`);
-}
-
 function CalendarIcon(): ReactElement {
   return <TrackingIcon className="size-5 text-[var(--track-text-muted)]" name="calendar" />;
 }
@@ -146,8 +142,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="iCalendar"
           >
             <button
-              className="flex h-9 items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-4 text-[12px] font-semibold text-white transition-colors hover:bg-[var(--track-surface-muted)]"
-              onClick={() => comingSoonAlert("iCalendar URL copy")}
+              className="flex h-9 items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-4 text-[12px] font-semibold text-[var(--track-text-muted)] opacity-50 cursor-not-allowed"
+              disabled
+              title="Enable the iCal feed from workspace settings first"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="copy" />
@@ -161,8 +158,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="Google Calendar"
           >
             <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-              onClick={() => comingSoonAlert("Google Calendar")}
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+              disabled
+              title="Requires OAuth configuration"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -176,8 +174,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="Outlook Calendar"
           >
             <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-              onClick={() => comingSoonAlert("Outlook Calendar")}
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+              disabled
+              title="Requires OAuth configuration"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -201,8 +200,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="Slack"
           >
             <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-              onClick={() => comingSoonAlert("Slack")}
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+              disabled
+              title="Requires OAuth configuration"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -216,8 +216,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="Jira"
           >
             <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-              onClick={() => comingSoonAlert("Jira")}
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+              disabled
+              title="Requires OAuth configuration"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -231,8 +232,9 @@ function NativeIntegrationsTab(): ReactElement {
             title="Salesforce"
           >
             <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-              onClick={() => comingSoonAlert("Salesforce")}
+              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+              disabled
+              title="Requires OAuth configuration"
               type="button"
             >
               <TrackingIcon className="size-3.5" name="plus" />
@@ -261,14 +263,14 @@ function BrowserExtensionsTab(): ReactElement {
           icon={<IntegrationPlugIcon />}
           title="Chrome Extension"
         >
-          <button
+          <a
             className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-            onClick={() => comingSoonAlert("Chrome Extension")}
-            type="button"
+            href="https://chromewebstore.google.com/detail/toggl-track-productivity/oejgccbfbmkkhai-dlcdpfmgbdkdjgbef"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
-            Get started
-          </button>
+            Install from Chrome Web Store
+          </a>
         </IntegrationCard>
 
         <IntegrationCard
@@ -276,14 +278,14 @@ function BrowserExtensionsTab(): ReactElement {
           icon={<IntegrationPlugIcon />}
           title="Firefox Extension"
         >
-          <button
+          <a
             className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-            onClick={() => comingSoonAlert("Firefox Extension")}
-            type="button"
+            href="https://addons.mozilla.org/en-US/firefox/addon/toggl-button-time-tracker/"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
-            Get started
-          </button>
+            Install from Firefox Add-ons
+          </a>
         </IntegrationCard>
       </div>
     </div>
@@ -308,8 +310,9 @@ function WebhooksTab(): ReactElement {
           workspace events in real time.
         </p>
         <button
-          className="mt-2 flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition-colors hover:brightness-110"
-          onClick={() => comingSoonAlert("Webhooks")}
+          className="mt-2 flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white opacity-50 cursor-not-allowed"
+          disabled
+          title="Webhook management is not available"
           type="button"
         >
           <TrackingIcon className="size-3.5" name="plus" />

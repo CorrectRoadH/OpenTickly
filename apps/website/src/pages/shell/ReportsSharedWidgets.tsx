@@ -50,11 +50,20 @@ export function TopTab({
   );
 }
 
-export function ToolbarButton({ children, onClick }: { children: string; onClick?: () => void }) {
+export function ToolbarButton({
+  children,
+  disabled,
+  onClick,
+}: {
+  children: string;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
   return (
     <button
-      className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-      onClick={onClick}
+      className={`h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+      disabled={disabled}
+      onClick={disabled ? undefined : onClick}
       type="button"
     >
       {children}
@@ -103,7 +112,6 @@ export function ReportsTabPlaceholder({ tab }: { tab: string }) {
         <p className="max-w-[480px] text-[14px] leading-5 text-[var(--track-text-muted)]">
           {REPORT_TAB_DESCRIPTIONS[tab] ?? ""}
         </p>
-        <p className="text-[13px] font-medium text-[var(--track-text-soft)]">Coming soon</p>
       </div>
     </section>
   );

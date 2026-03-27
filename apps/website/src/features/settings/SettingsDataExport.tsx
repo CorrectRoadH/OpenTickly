@@ -166,7 +166,7 @@ export function SettingsDataExport(): ReactElement {
 
         {format === "pdf" ? (
           <p className="text-[12px] text-[var(--track-text-muted)]">
-            PDF export is not yet available. The export will download as CSV.
+            PDF export is unavailable. The export will download as CSV.
           </p>
         ) : null}
       </div>

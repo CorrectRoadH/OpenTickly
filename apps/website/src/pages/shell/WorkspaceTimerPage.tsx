@@ -558,10 +558,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                   });
                 }
               }}
-              onSplitEntry={() => {
-                // Split is a complex feature — placeholder for now
-                window.alert("Split is not yet available.");
-              }}
+              onSplitEntry={undefined}
               onProjectChange={(entry, projectId) => {
                 const wid = entry.workspace_id ?? entry.wid;
                 if (typeof entry.id === "number" && typeof wid === "number") {

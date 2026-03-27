@@ -10,7 +10,6 @@ import type {
 import {
   getWorkspaceTimesheetsHandler,
   getMeTimesheets,
-  client,
 } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -76,7 +75,6 @@ export function ApprovalsPage(): ReactElement {
     queryFn: () =>
       unwrapWebApiResult(
         getWorkspaceTimesheetsHandler({
-          client,
           path: { workspace_id: workspaceId },
           query: {
             after: formatDateParam(weekStart) as unknown as number,
@@ -92,12 +90,7 @@ export function ApprovalsPage(): ReactElement {
 
   const myTimesheetsQuery = useQuery({
     queryKey: ["approvals", "mine"],
-    queryFn: () =>
-      unwrapWebApiResult(
-        getMeTimesheets({
-          client,
-        }),
-      ),
+    queryFn: () => unwrapWebApiResult(getMeTimesheets()),
     enabled: activeTab === "yours",
   });
 

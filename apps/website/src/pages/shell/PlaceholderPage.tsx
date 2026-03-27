@@ -23,9 +23,6 @@ export function PlaceholderPage({
             {description}
           </p>
         ) : null}
-        <p className="text-[13px] font-medium text-[var(--track-text-soft)]">
-          This feature is coming soon
-        </p>
       </div>
     </div>
   );

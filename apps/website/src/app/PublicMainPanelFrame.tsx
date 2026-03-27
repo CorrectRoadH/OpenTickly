@@ -21,9 +21,7 @@ export function PublicMainPanelFrame({
             <div className="flex size-10 items-center justify-center rounded-full border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[12px] font-semibold text-[var(--track-accent-text)]">
               OT
             </div>
-            <span className="text-[18px] font-semibold text-[var(--track-text)]">
-              OpenToggl
-            </span>
+            <span className="text-[18px] font-semibold text-[var(--track-text)]">OpenToggl</span>
           </div>
 
           <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.16)]">

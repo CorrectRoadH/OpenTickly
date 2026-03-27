@@ -78,7 +78,6 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         },
         {
           label: "Integrations",
-          badge: "NEW",
           to: `/workspaces/${session.currentWorkspace.id}/integrations`,
         },
       ],

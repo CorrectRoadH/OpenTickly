@@ -54,10 +54,6 @@ export function InvoicesPage(): ReactElement {
   const workspaceId = session.currentWorkspace.id;
   const invoicesQuery = useInvoicesQuery(workspaceId);
 
-  function handleCreateInvoice() {
-    globalThis.alert("Create invoice from reports is coming soon.");
-  }
-
   if (invoicesQuery.isPending) {
     return <DirectorySurfaceMessage message="Loading invoices..." />;
   }
@@ -88,15 +84,6 @@ export function InvoicesPage(): ReactElement {
               type="button"
             >
               Connect QuickBooks
-            </button>
-            <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-              data-testid="invoices-create-button"
-              onClick={handleCreateInvoice}
-              type="button"
-            >
-              <TrackingIcon className="size-3.5" name="plus" />
-              Create invoice from reports
             </button>
           </div>
         </div>
@@ -142,7 +129,7 @@ export function InvoicesPage(): ReactElement {
                 <button
                   aria-label={`Actions for invoice ${invoice.document_id ?? ""}`}
                   className="flex size-6 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  onClick={() => globalThis.alert("Invoice actions are not yet available.")}
+                  onClick={() => {}}
                   type="button"
                 >
                   <TrackingIcon className="size-3.5" name="more" />
@@ -153,9 +140,7 @@ export function InvoicesPage(): ReactElement {
         </div>
       ) : (
         <div className="px-5 py-10" data-testid="invoices-empty-state">
-          <p className="text-sm text-[var(--track-text-muted)]">
-            No invoices yet. Create your first invoice from reports.
-          </p>
+          <p className="text-sm text-[var(--track-text-muted)]">No invoices yet.</p>
         </div>
       )}
 

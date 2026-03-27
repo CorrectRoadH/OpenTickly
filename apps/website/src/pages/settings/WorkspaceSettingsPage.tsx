@@ -137,8 +137,8 @@ function SettingsSectionContent(props: {
     default:
       return (
         <SettingsState
-          description="This feature is coming soon."
-          title={`${settingsTabs.find((tab) => tab.id === props.section)?.label ?? "Section"} is not available yet`}
+          description="This section has no configurable settings."
+          title={settingsTabs.find((tab) => tab.id === props.section)?.label ?? "Section"}
           tone="empty"
         />
       );

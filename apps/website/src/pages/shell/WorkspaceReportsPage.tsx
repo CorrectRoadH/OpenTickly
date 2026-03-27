@@ -108,7 +108,6 @@ export function WorkspaceReportsPage(): ReactElement {
   const [activeTab, setActiveTab] = useState<ReportsTab>("Summary");
   const [roundingEnabled, setRoundingEnabled] = useState(false);
   const [shareToast, setShareToast] = useState(false);
-  const [stubToast, setStubToast] = useState<string | null>(null);
   const session = useSession();
   const timezone = session.user.timezone ?? "UTC";
   const weekStartsOn = session.user.beginningOfWeek ?? 1;
@@ -158,11 +157,6 @@ export function WorkspaceReportsPage(): ReactElement {
     () => (roundingEnabled ? applyRoundingToModel(liveModel) : liveModel),
     [liveModel, roundingEnabled],
   );
-
-  const showStubToast = useCallback((message: string) => {
-    setStubToast(message);
-    setTimeout(() => setStubToast(null), 3000);
-  }, []);
 
   const handleShareReport = useCallback(() => {
     const url = window.location.href;
@@ -236,9 +230,7 @@ export function WorkspaceReportsPage(): ReactElement {
               >
                 {roundingEnabled ? "Rounding on" : "Rounding off"}
               </button>
-              <ToolbarButton onClick={() => showStubToast("Invoice creation coming soon")}>
-                Create invoice
-              </ToolbarButton>
+              <ToolbarButton disabled>Create invoice</ToolbarButton>
               <button
                 className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
                 data-testid="reports-export"
@@ -247,9 +239,7 @@ export function WorkspaceReportsPage(): ReactElement {
               >
                 Export
               </button>
-              <ToolbarButton onClick={() => showStubToast("Report settings coming soon")}>
-                Settings
-              </ToolbarButton>
+              <ToolbarButton disabled>Settings</ToolbarButton>
               <button
                 className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
                   shareToast
@@ -321,11 +311,6 @@ export function WorkspaceReportsPage(): ReactElement {
       {shareToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
           <span className="text-[14px] text-white">Report link copied to clipboard</span>
-        </div>
-      ) : null}
-      {stubToast != null ? (
-        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
-          <span className="text-[14px] text-white">{stubToast}</span>
         </div>
       ) : null}
     </div>
