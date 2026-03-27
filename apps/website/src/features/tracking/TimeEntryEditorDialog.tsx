@@ -397,6 +397,32 @@ export function TimeEntryEditorDialog({
                 <TrackingIcon className="size-4" name={primaryActionIcon} />
               )}
             </button>
+            {canDuplicate ? (
+              <button
+                aria-label="Duplicate entry"
+                className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+                disabled={isDirty}
+                onClick={() => {
+                  void onDuplicate?.();
+                }}
+                type="button"
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="none"
+                  height="16"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.7"
+                  viewBox="0 0 16 16"
+                  width="16"
+                >
+                  <rect height="8" rx="1.3" width="7" x="5" y="3" />
+                  <path d="M4 11H3.5A1.5 1.5 0 0 1 2 9.5V5a1.5 1.5 0 0 1 1.5-1.5H8" />
+                </svg>
+              </button>
+            ) : null}
             <button
               aria-label="Entry actions"
               className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
@@ -407,16 +433,6 @@ export function TimeEntryEditorDialog({
             </button>
             {actionsMenuOpen ? (
               <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
-                {canDuplicate ? (
-                  <ActionMenuButton
-                    disabled={isDirty}
-                    label="Duplicate"
-                    onClick={() => {
-                      setActionsMenuOpen(false);
-                      void onDuplicate?.();
-                    }}
-                  />
-                ) : null}
                 <ActionMenuButton
                   disabled={!onSplit}
                   label="Split"
@@ -872,7 +888,6 @@ export function TimeEntryEditorDialog({
                   datePickerTriggerRef={startDatePickerTriggerRef}
                   editing={timeEditor === "start"}
                   hasError={timeInputError === "start"}
-                  hideDateButton
                   onDateClick={() => {
                     setTimeEditor(null);
                     setTimePicker("start");
