@@ -1,4 +1,5 @@
-import { type ChangeEvent, type ReactElement, useId, useState } from "react";
+import { ShellToast } from "@opentoggl/web-ui";
+import { type ChangeEvent, type ReactElement, useEffect, useId, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -11,6 +12,12 @@ import { useSession } from "../../shared/session/session-context.tsx";
 
 type ImportFlow = "archive" | "time_entries";
 
+type ImportToast = {
+  description: string;
+  title: string;
+  tone: "error" | "success";
+};
+
 export function WorkspaceImportPage(): ReactElement {
   const archiveInputId = useId();
   const csvInputId = useId();
@@ -21,51 +28,73 @@ export function WorkspaceImportPage(): ReactElement {
   const [selectedArchive, setSelectedArchive] = useState<File | null>(null);
   const [selectedCSV, setSelectedCSV] = useState<File | null>(null);
   const [submittedJob, setSubmittedJob] = useState<{ id: string; source: ImportFlow } | null>(null);
+  const [toast, setToast] = useState<ImportToast | null>(null);
   const importJobQuery = useImportJobQuery(submittedJob?.id ?? null);
 
-  async function handleArchiveSelection(event: ChangeEvent<HTMLInputElement>) {
-    const nextFile = event.target.files?.[0] ?? null;
-    setSelectedArchive(nextFile);
-    if (!nextFile) {
-      return;
-    }
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timeout);
+  }, [toast]);
 
+  function handleArchiveFileChange(event: ChangeEvent<HTMLInputElement>) {
+    setSelectedArchive(event.target.files?.[0] ?? null);
+  }
+
+  async function handleArchiveUpload() {
+    if (!selectedArchive || organizationName.trim().length === 0) return;
     try {
       const job = await createArchiveImportJobMutation.mutateAsync({
-        archive: nextFile,
+        archive: selectedArchive,
         organizationName,
       });
       setSubmittedJob({ id: job.job_id, source: "archive" });
-    } catch {
+      setSelectedArchive(null);
+      setToast({
+        description: `Organization "${organizationName}" created and archive imported.`,
+        title: "Import completed",
+        tone: "success",
+      });
+    } catch (error) {
       setSubmittedJob(null);
+      setToast({
+        description: resolveArchiveImportErrorMessage(error) ?? "An unexpected error occurred.",
+        title: "Import failed",
+        tone: "error",
+      });
     }
   }
 
-  async function handleCSVSelection(event: ChangeEvent<HTMLInputElement>) {
-    const nextFile = event.target.files?.[0] ?? null;
-    setSelectedCSV(nextFile);
-    if (!nextFile) {
-      return;
-    }
+  function handleCSVFileChange(event: ChangeEvent<HTMLInputElement>) {
+    setSelectedCSV(event.target.files?.[0] ?? null);
+  }
 
+  async function handleCSVUpload() {
+    if (!selectedCSV) return;
     try {
       const job = await createTimeEntriesImportJobMutation.mutateAsync({
-        archive: nextFile,
+        archive: selectedCSV,
         workspaceId: session.currentWorkspace.id,
       });
       setSubmittedJob({ id: job.job_id, source: "time_entries" });
-    } catch {
+      setSelectedCSV(null);
+      setToast({
+        description: `Time entries imported into "${session.currentWorkspace.name}".`,
+        title: "Import completed",
+        tone: "success",
+      });
+    } catch (error) {
       setSubmittedJob(null);
+      setToast({
+        description:
+          resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
+        title: "Import failed",
+        tone: "error",
+      });
     }
   }
 
   const latestStatus = submittedJob ? (importJobQuery.data?.status ?? "queued") : null;
-  const archiveErrorMessage = resolveArchiveImportErrorMessage(
-    createArchiveImportJobMutation.error,
-  );
-  const timeEntriesErrorMessage = resolveTimeEntriesImportErrorMessage(
-    createTimeEntriesImportJobMutation.error,
-  );
 
   return (
     <div className="w-full min-w-0 bg-[var(--track-surface)] px-5 py-5 text-white">
@@ -96,6 +125,7 @@ export function WorkspaceImportPage(): ReactElement {
 
         <div className="grid gap-5 px-5 py-5 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
+            {/* Step 1: Archive import */}
             <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
               <div className="flex items-start gap-4">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]">
@@ -122,9 +152,7 @@ export function WorkspaceImportPage(): ReactElement {
                 </span>
                 <input
                   className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
-                  onChange={(event) => {
-                    setOrganizationName(event.target.value);
-                  }}
+                  onChange={(event) => setOrganizationName(event.target.value)}
                   placeholder="Imported Org"
                   type="text"
                   value={organizationName}
@@ -141,7 +169,7 @@ export function WorkspaceImportPage(): ReactElement {
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <label
-                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
                   htmlFor={archiveInputId}
                 >
                   <TrackingIcon className="size-3.5" name="plus" />
@@ -151,9 +179,7 @@ export function WorkspaceImportPage(): ReactElement {
                   accept=".zip,application/zip"
                   className="sr-only"
                   id={archiveInputId}
-                  onChange={(event) => {
-                    void handleArchiveSelection(event);
-                  }}
+                  onChange={handleArchiveFileChange}
                   type="file"
                 />
                 <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
@@ -161,16 +187,29 @@ export function WorkspaceImportPage(): ReactElement {
                 </span>
               </div>
 
-              {createArchiveImportJobMutation.isPending ? (
-                <p className="mt-4 text-[13px] text-[var(--track-accent-text)]">
-                  Uploading archive…
-                </p>
-              ) : null}
-              {archiveErrorMessage ? (
-                <p className="mt-4 text-[13px] text-[#ff8f8f]">{archiveErrorMessage}</p>
+              {selectedArchive ? (
+                <div className="mt-4">
+                  <button
+                    className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
+                    disabled={
+                      organizationName.trim().length === 0 ||
+                      createArchiveImportJobMutation.isPending
+                    }
+                    onClick={() => void handleArchiveUpload()}
+                    type="button"
+                  >
+                    {createArchiveImportJobMutation.isPending ? "Importing…" : "Upload & import"}
+                  </button>
+                  {organizationName.trim().length === 0 ? (
+                    <p className="mt-2 text-[13px] text-[var(--track-text-muted)]">
+                      Enter an organization name above to start import.
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
             </section>
 
+            {/* Step 2: CSV import */}
             <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
               <div className="flex items-start gap-4">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#1f3d2b] text-[#8fe0ac]">
@@ -210,9 +249,7 @@ export function WorkspaceImportPage(): ReactElement {
                   accept=".csv,text/csv"
                   className="sr-only"
                   id={csvInputId}
-                  onChange={(event) => {
-                    void handleCSVSelection(event);
-                  }}
+                  onChange={handleCSVFileChange}
                   type="file"
                 />
                 <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
@@ -220,11 +257,19 @@ export function WorkspaceImportPage(): ReactElement {
                 </span>
               </div>
 
-              {createTimeEntriesImportJobMutation.isPending ? (
-                <p className="mt-4 text-[13px] text-[var(--track-accent-text)]">Uploading CSV…</p>
-              ) : null}
-              {timeEntriesErrorMessage ? (
-                <p className="mt-4 text-[13px] text-[#ff8f8f]">{timeEntriesErrorMessage}</p>
+              {selectedCSV ? (
+                <div className="mt-4">
+                  <button
+                    className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
+                    disabled={createTimeEntriesImportJobMutation.isPending}
+                    onClick={() => void handleCSVUpload()}
+                    type="button"
+                  >
+                    {createTimeEntriesImportJobMutation.isPending
+                      ? "Importing…"
+                      : "Upload & import"}
+                  </button>
+                </div>
               ) : null}
             </section>
           </div>
@@ -252,6 +297,7 @@ export function WorkspaceImportPage(): ReactElement {
           </aside>
         </div>
       </section>
+      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }

@@ -69,8 +69,16 @@ func (service *Service) StartWorkspaceTimeEntriesImport(
 	})
 }
 
+// stripUTF8BOM removes the UTF-8 byte order mark (EF BB BF) that Toggl CSV exports include.
+func stripUTF8BOM(content []byte) []byte {
+	if len(content) >= 3 && content[0] == 0xEF && content[1] == 0xBB && content[2] == 0xBF {
+		return content[3:]
+	}
+	return content
+}
+
 func parseImportedTimeEntriesCSV(content []byte) (ImportedTimeEntries, error) {
-	reader := csv.NewReader(bytes.NewReader(content))
+	reader := csv.NewReader(bytes.NewReader(stripUTF8BOM(content)))
 	reader.FieldsPerRecord = -1
 
 	rows, err := reader.ReadAll()
