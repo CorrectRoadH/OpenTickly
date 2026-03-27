@@ -60,14 +60,18 @@ export function QuickDateShortcuts({
 
 export function WeekRangePicker({
   mode = "week",
+  onAllDatesSelect,
   onDayShortcutSelect,
+  onLast30DaysSelect,
   onSelectDate,
   onWeekShortcutSelect,
   selectedDate,
   weekStartsOn = 1,
 }: {
-  mode?: "day" | "week";
+  mode?: "all-dates" | "day" | "week";
+  onAllDatesSelect?: () => void;
   onDayShortcutSelect?: (date: Date) => void;
+  onLast30DaysSelect?: (date: Date) => void;
   onSelectDate: (date: Date) => void;
   /** Called when Today/Yesterday/This week/Last week shortcuts switch to week mode. */
   onWeekShortcutSelect?: (date: Date) => void;
@@ -134,7 +138,8 @@ export function WeekRangePicker({
       <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] text-white">
         <button
           aria-label={mode === "day" ? "Previous day" : "Previous week"}
-          className="flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white"
+          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${mode === "all-dates" ? "opacity-40" : ""}`}
+          disabled={mode === "all-dates"}
           onClick={() =>
             onSelectDate(mode === "day" ? shiftDay(selectedDate, -1) : shiftWeek(selectedDate, -1))
           }
@@ -146,9 +151,11 @@ export function WeekRangePicker({
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label={
-            mode === "day"
-              ? `Day: ${formatDayLabel(selectedDate)}. Press Enter to open day picker.`
-              : `Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`
+            mode === "all-dates"
+              ? "All dates. Press Enter to open date picker."
+              : mode === "day"
+                ? `Day: ${formatDayLabel(selectedDate)}. Press Enter to open day picker.`
+                : `Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`
           }
           className="flex min-w-0 flex-1 items-center justify-center gap-2 px-1 text-left"
           onClick={() => setIsOpen((current) => !current)}
@@ -166,20 +173,17 @@ export function WeekRangePicker({
             name="calendar"
           />
           <span className="truncate text-[13px] font-medium">
-            {mode === "day"
-              ? formatDayLabel(selectedDate)
-              : formatWeekRangeLabel(selectedDate, weekStartsOn)}
+            {mode === "all-dates"
+              ? "All dates"
+              : mode === "day"
+                ? formatDayLabel(selectedDate)
+                : formatWeekRangeLabel(selectedDate, weekStartsOn)}
           </span>
-          {mode === "day" ? (
-            <TrackingIcon
-              className="ml-1 size-3 shrink-0 text-[var(--track-text-muted)]"
-              name="chevron-down"
-            />
-          ) : null}
         </button>
         <button
           aria-label={mode === "day" ? "Next day" : "Next week"}
-          className="flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white"
+          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${mode === "all-dates" ? "opacity-40" : ""}`}
+          disabled={mode === "all-dates"}
           onClick={() =>
             onSelectDate(mode === "day" ? shiftDay(selectedDate, 1) : shiftWeek(selectedDate, 1))
           }
@@ -202,12 +206,15 @@ export function WeekRangePicker({
               <div className="flex flex-col gap-0.5">
                 {WEEK_SHORTCUTS.map((shortcut) => {
                   const shortcutDate = shortcut.resolveDate(new Date());
-                  // Today/Yesterday are active only when in day mode and the
-                  // selected date matches that day. This week/Last week are
-                  // active when in week mode and the selected week matches.
                   let isActive = false;
-                  if (shortcut.id === "today" || shortcut.id === "yesterday") {
+                  if (shortcut.id === "all-dates") {
+                    isActive = mode === "all-dates";
+                  } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
                     isActive = mode === "day" && isSameDay(shortcutDate, selectedDate);
+                  } else if (shortcut.id === "last-30-days") {
+                    // last-30-days is never "active" via week/day match; it
+                    // triggers a date-range selection rather than a mode.
+                    isActive = false;
                   } else {
                     isActive =
                       mode === "week" && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
@@ -223,14 +230,21 @@ export function WeekRangePicker({
                       }`}
                       key={shortcut.id}
                       onClick={() => {
-                        if (shortcut.id === "today" || shortcut.id === "yesterday") {
+                        if (shortcut.id === "all-dates") {
+                          onAllDatesSelect?.();
+                        } else if (shortcut.id === "last-30-days") {
+                          if (onLast30DaysSelect) {
+                            onLast30DaysSelect(shortcutDate);
+                          } else {
+                            onSelectDate(shortcutDate);
+                          }
+                        } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
                           if (onDayShortcutSelect) {
                             onDayShortcutSelect(shortcutDate);
                           } else {
                             onSelectDate(shortcutDate);
                           }
                         } else {
-                          // This week / Last week always navigate to week mode
                           if (onWeekShortcutSelect) {
                             onWeekShortcutSelect(shortcutDate);
                           } else {

@@ -352,26 +352,35 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
 
         <div className="px-5 pb-4 pt-4">
           <div className="flex items-center gap-4">
-            {orch.view === "list" ? (
-              <AllDatesLabel />
-            ) : (
-              <WeekRangePicker
-                mode={orch.calendarSubview === "day" ? "day" : "week"}
-                onDayShortcutSelect={(date) => {
-                  orch.setCalendarSubview("day");
-                  orch.setSelectedWeekDate(date);
-                }}
-                onWeekShortcutSelect={(date) => {
-                  orch.setCalendarSubview("week");
-                  orch.setSelectedWeekDate(date);
-                }}
-                onSelectDate={(date) => {
-                  orch.setSelectedWeekDate(date);
-                }}
-                selectedDate={orch.selectedWeekDate}
-                weekStartsOn={orch.beginningOfWeek}
-              />
-            )}
+            <WeekRangePicker
+              mode={
+                orch.view === "list" ? "all-dates" : orch.calendarSubview === "day" ? "day" : "week"
+              }
+              onAllDatesSelect={() => {
+                orch.setView("list");
+              }}
+              onDayShortcutSelect={(date) => {
+                if (orch.view === "list") orch.setView("calendar");
+                orch.setCalendarSubview("day");
+                orch.setSelectedWeekDate(date);
+              }}
+              onLast30DaysSelect={(date) => {
+                if (orch.view === "list") orch.setView("calendar");
+                orch.setCalendarSubview("week");
+                orch.setSelectedWeekDate(date);
+              }}
+              onWeekShortcutSelect={(date) => {
+                if (orch.view === "list") orch.setView("calendar");
+                orch.setCalendarSubview("week");
+                orch.setSelectedWeekDate(date);
+              }}
+              onSelectDate={(date) => {
+                if (orch.view === "list") orch.setView("calendar");
+                orch.setSelectedWeekDate(date);
+              }}
+              selectedDate={orch.selectedWeekDate}
+              weekStartsOn={orch.beginningOfWeek}
+            />
             {orch.view === "list" ? (
               <SummaryStat
                 label="Today total"
@@ -1055,37 +1064,6 @@ function TimerBarTagPicker({
           ) : null}
         </div>
       ) : null}
-    </div>
-  );
-}
-
-/**
- * Static "All dates" label shown in list view mode, matching Toggl's behavior
- * where list view is unbounded by week range.
- */
-function AllDatesLabel(): ReactElement {
-  return (
-    <div className="flex items-center gap-3">
-      <button
-        aria-label="Previous week"
-        className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] opacity-40"
-        disabled
-        type="button"
-      >
-        <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
-      </button>
-      <div className="flex h-9 items-center gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-left text-white">
-        <TrackingIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" name="calendar" />
-        <span className="truncate text-[13px] font-medium">All dates</span>
-      </div>
-      <button
-        aria-label="Next week"
-        className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] opacity-40"
-        disabled
-        type="button"
-      >
-        <TrackingIcon className="size-3" name="chevron-right" />
-      </button>
     </div>
   );
 }

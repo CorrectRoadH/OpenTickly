@@ -1,4 +1,10 @@
-export type WeekShortcutId = "last-week" | "this-week" | "today" | "yesterday";
+export type WeekShortcutId =
+  | "all-dates"
+  | "last-30-days"
+  | "last-week"
+  | "this-week"
+  | "today"
+  | "yesterday";
 
 export type WeekShortcut = {
   id: WeekShortcutId;
@@ -36,6 +42,20 @@ export const WEEK_SHORTCUTS: WeekShortcut[] = [
       date.setDate(date.getDate() - DAYS_IN_WEEK);
       return date;
     },
+  },
+  {
+    id: "last-30-days",
+    label: "Last 30 days",
+    resolveDate: (now) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - 30);
+      return date;
+    },
+  },
+  {
+    id: "all-dates",
+    label: "All dates",
+    resolveDate: (now) => new Date(now),
   },
 ];
 
