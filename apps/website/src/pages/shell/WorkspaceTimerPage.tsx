@@ -354,28 +354,33 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           <div className="flex items-center gap-4">
             <WeekRangePicker
               mode={
-                orch.view === "list" ? "all-dates" : orch.calendarSubview === "day" ? "day" : "week"
+                orch.view === "list" && orch.listAllDates
+                  ? "all-dates"
+                  : orch.calendarSubview === "day"
+                    ? "day"
+                    : "week"
               }
               onAllDatesSelect={() => {
-                orch.setView("list");
+                orch.setListAllDates(true);
+                if (orch.view !== "list") orch.setView("list");
               }}
               onDayShortcutSelect={(date) => {
-                if (orch.view === "list") orch.setView("calendar");
-                orch.setCalendarSubview("day");
+                orch.setListAllDates(false);
+                if (orch.view !== "list") orch.setCalendarSubview("day");
                 orch.setSelectedWeekDate(date);
               }}
               onLast30DaysSelect={(date) => {
-                if (orch.view === "list") orch.setView("calendar");
-                orch.setCalendarSubview("week");
+                orch.setListAllDates(false);
+                if (orch.view !== "list") orch.setCalendarSubview("week");
                 orch.setSelectedWeekDate(date);
               }}
               onWeekShortcutSelect={(date) => {
-                if (orch.view === "list") orch.setView("calendar");
-                orch.setCalendarSubview("week");
+                orch.setListAllDates(false);
+                if (orch.view !== "list") orch.setCalendarSubview("week");
                 orch.setSelectedWeekDate(date);
               }}
               onSelectDate={(date) => {
-                if (orch.view === "list") orch.setView("calendar");
+                orch.setListAllDates(false);
                 orch.setSelectedWeekDate(date);
               }}
               selectedDate={orch.selectedWeekDate}

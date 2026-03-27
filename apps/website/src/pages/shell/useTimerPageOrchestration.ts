@@ -210,6 +210,8 @@ export interface TimerPageOrchestration {
   setTimerInputMode: (next: TimerInputMode) => void;
   calendarZoom: number;
   setCalendarZoom: (zoom: number) => void;
+  listAllDates: boolean;
+  setListAllDates: (allDates: boolean) => void;
 
   // Time state
   nowMs: number;
@@ -361,6 +363,9 @@ export function useTimerPageOrchestration(options?: {
   const setView = useCallback((next: TimerViewMode) => {
     persistTimerView(next);
     setViewState(next);
+    if (next === "list") {
+      setListAllDates(true);
+    }
   }, []);
 
   // Calendar subview state with persistence
@@ -390,6 +395,9 @@ export function useTimerPageOrchestration(options?: {
     setCalendarZoomState(Math.max(-1, Math.min(1, zoom)));
   }, []);
 
+  // Whether list view shows all entries or a filtered date range
+  const [listAllDates, setListAllDates] = useState(true);
+
   // Time state
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [selectedWeekDate, setSelectedWeekDate] = useState(() => initialDate ?? new Date());
@@ -412,8 +420,11 @@ export function useTimerPageOrchestration(options?: {
   const preferencesQuery = usePreferencesQuery();
   const collapseTimeEntries = preferencesQuery.data?.collapseTimeEntries ?? true;
 
-  // Queries — list view fetches all entries (no date range), other views use the selected week
-  const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? {} : { ...weekRange });
+  // Queries — list view in "all dates" mode fetches without date range;
+  // otherwise all views (including list) use the selected week range.
+  const timeEntriesQuery = useTimeEntriesQuery(
+    view === "list" && listAllDates ? {} : { ...weekRange },
+  );
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
 
   // Running entry state
@@ -1475,6 +1486,8 @@ export function useTimerPageOrchestration(options?: {
     setTimerInputMode,
     calendarZoom,
     setCalendarZoom,
+    listAllDates,
+    setListAllDates,
 
     // Time state
     beginningOfWeek,
