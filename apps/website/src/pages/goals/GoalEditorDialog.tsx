@@ -155,6 +155,7 @@ export function GoalEditorDialog({
                 data-testid="goal-end-date-input"
                 disabled={noEndDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                style={{ colorScheme: "dark" }}
                 type="date"
                 value={endDate}
               />
