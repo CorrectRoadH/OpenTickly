@@ -31,19 +31,11 @@ OpenToggl 就是为这个缺口而存在的。
 
 ## 为 AI 而生
 
-大多数时间追踪工具，默认都是为“人在浏览器里点按钮”设计的。
-
-OpenToggl 也为 agent 而设计。
+大多数时间追踪工具，默认都是为“人在浏览器里点按钮”设计的。但是 OpenToggl 为 agent 而诞生。可以通过[Toggl cli](https://github.com/CorrectRoadH/toggl-cli)让 AI 使用 OpenToggl。
 
 AI 工作流需要高频读取项目、任务、标签、用户、报表和运行中的 timer，也需要持续创建和更新 time entry。它需要足够高的 HTTP 吞吐，才能成为真正可用的软件基础设施，而不是被微小 hourly limit 困住的 demo。
 
-OpenToggl 更适合作为这些场景的后端：
-
-- AI agents
-- 自动化流水线
-- CLI-heavy workflows
-- 个人脚本
-- 内部工具
+OpenToggl 是一个更适合 AI 的 toggl。
 
 ## Private-First
 

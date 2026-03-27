@@ -10,46 +10,38 @@ OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
 > Project status: OpenToggl is currently in a very early stage.
 
-It exists for a simple reason: Toggl is too expensive for many individuals and teams, too closed for private-first workflows, and too rate-limited for serious AI and automation use.
+It exists for a simple reason: for many individuals and teams, Toggl is too expensive; for people who care about data control, it is not private-first enough; and for AI and automation use cases, its rate limit is so low that it becomes almost unusable in practice.
 
-OpenToggl aims to match Toggl's product surface, so you can keep the workflow you already know while taking back control of hosting, data, and API throughput.
+OpenToggl aims to stay aligned with Toggl's product surface, so you can keep the workflow you already know while taking back control of deployment, data, and API throughput.
 
 ## Why OpenToggl
 
-Toggl works until cost, control, or automation stop being negotiable.
+Toggl works, but once cost, control, or automation stop being negotiable, it stops being a fit.
 
 OpenToggl is built for that gap.
 
-- Free instead of expensive recurring pricing
-- Private-first instead of keeping your time data on someone else's infrastructure
-- Self-hostable instead of locked to one vendor
-- AI-friendly instead of rate-limited into uselessness
-- Built to preserve the Toggl-shaped workflow instead of inventing a different product you have to relearn
-- Better suited for heavy API usage, where `30/hour` is nowhere close to enough for real agents and automation
+- Free, not an ever-growing subscription cost
+- Private-first, not keeping your time data on someone else's infrastructure
+- Self-hostable, not locked into a single vendor
+- AI-friendly, not blocked by low rate limits
+- Designed to preserve a Toggl-shaped workflow, not force you to learn a different product
+- Better suited for high-frequency API usage, where `30/hour` is nowhere near enough for real agents and automation
 
-If you want a Toggl-compatible workflow without Toggl's pricing pressure, vendor dependence, and API ceiling, that is exactly what OpenToggl is for.
+If you want to keep a Toggl-compatible workflow without accepting the pressure of pricing, vendor lock-in, and API ceilings, that is what OpenToggl is for.
 
 ## Built for AI
 
-Most time-tracking tools were built for humans clicking buttons in a browser.
+Most time-tracking tools are designed around humans clicking buttons in a browser. But OpenToggl was built for agents. You can use OpenToggl with AI through [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli).
 
-OpenToggl is also built for agents.
+AI workflows need to read projects, tasks, tags, users, reports, and running timers at high frequency, and they also need to continuously create and update time entries. They need enough HTTP throughput to become real software infrastructure rather than a demo trapped behind tiny hourly limits.
 
-AI workflows need to read projects, tasks, tags, users, reports, and running timers. They need to create and update entries continuously. They need enough HTTP headroom to operate as real software, not as a demo trapped behind tiny hourly limits.
-
-OpenToggl is a better backend for:
-
-- AI agents
-- Automation pipelines
-- CLI-heavy workflows
-- Personal scripts
-- Internal tools
+OpenToggl is a better Toggl for AI.
 
 ## Private-First
 
 Your time data is operational data.
 
-It reflects what you worked on, when you worked on it, which clients you billed, and how your team spends time. That should be deployable on infrastructure you control.
+It reflects what you worked on, when you worked on it, who you did it for, and how your team spends time. That data should be deployable on infrastructure you control.
 
 OpenToggl treats self-hosting as a first-class product direction, not an afterthought.
 
@@ -64,7 +56,7 @@ You lose the pricing pressure, vendor dependence, and API ceiling.
 
 ## Works with `toggl-cli`
 
-OpenToggl works with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so you can use the same CLI workflow against your own instance.
+OpenToggl works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so you can point the same CLI workflow at your own instance.
 
 ```shell
 toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
