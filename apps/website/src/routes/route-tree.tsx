@@ -37,6 +37,7 @@ import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
 import { TasksPage } from "../pages/tasks/TasksPage.tsx";
 import { TagsPage } from "../pages/tags/TagsPage.tsx";
 import { TagDetailPage } from "../pages/tags/TagDetailPage.tsx";
+import { GoalsPage } from "../pages/goals/GoalsPage.tsx";
 import { PlaceholderPage } from "../pages/shell/PlaceholderPage.tsx";
 import { rootRoute } from "./root-route.tsx";
 
@@ -496,13 +497,7 @@ function WorkspaceGoalsRouteComponent() {
   const params = workspaceGoalsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(
-    <PlaceholderPage
-      description="Set and track time-based goals for yourself and your team."
-      title="Goals"
-    />,
-    workspaceId,
-  );
+  return renderProtectedRoute(<GoalsPage />, workspaceId);
 }
 
 function WorkspaceIntegrationsRouteComponent() {
@@ -615,7 +610,6 @@ function SessionUnavailablePanel() {
     <PublicMainPanelFrame
       badge="Session Error"
       description="The shell could not restore your current session from the canonical web session endpoint."
-      sidebarBody="Resolve the session issue first, then continue into login or the requested shell route."
       title="Session unavailable"
     >
       <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">

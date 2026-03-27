@@ -11,6 +11,9 @@ import type {
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
+  HandlergoalsApiResponse,
+  HandlergoalsCreatePayload,
+  HandlergoalsUpdatePayload,
   ModelsAllPreferences,
   ModelsSimpleWorkspaceUser,
   MePayload,
@@ -64,6 +67,10 @@ import {
   putWorkspaceTag,
   deleteWorkspaceTag,
   putWorkspaceTimeEntryHandler,
+  getWorkspacesByWorkspaceIdGoals,
+  postWorkspacesByWorkspaceIdGoals,
+  putWorkspacesByWorkspaceIdGoalsByGoalId,
+  deleteWorkspacesByWorkspaceIdGoalsByGoalId,
 } from "../api/public/track/index.ts";
 import {
   disableWorkspaceMember,
@@ -93,6 +100,8 @@ const projectsQueryKey = (workspaceId: number, status: ProjectListStatusFilter) 
 const timeEntriesQueryKey = (startDate?: string, endDate?: string, includeSharing?: boolean) =>
   ["time-entries", startDate ?? null, endDate ?? null, includeSharing ?? false] as const;
 const currentTimeEntryQueryKey = ["current-time-entry"] as const;
+const goalsQueryKey = (workspaceId: number, active?: boolean) =>
+  ["goals", workspaceId, active ?? null] as const;
 const workspaceDashboardAllActivitiesQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-all-activities", workspaceId] as const;
 const workspaceDashboardMostActiveQueryKey = (workspaceId: number) =>
@@ -1470,6 +1479,87 @@ export function useUpdateOrganizationSettingsMutation(organizationId: number) {
       });
       void queryClient.invalidateQueries({
         queryKey: sessionQueryKey,
+      });
+    },
+  });
+}
+
+export function useGoalsQuery(workspaceId: number, active?: boolean) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspacesByWorkspaceIdGoals({
+          path: {
+            workspace_id: workspaceId,
+          },
+          query: {
+            active,
+          },
+        }),
+      ) as Promise<HandlergoalsApiResponse[]>,
+    queryKey: goalsQueryKey(workspaceId, active),
+  });
+}
+
+export function useCreateGoalMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: HandlergoalsCreatePayload) =>
+      unwrapWebApiResult(
+        postWorkspacesByWorkspaceIdGoals({
+          body: request,
+          path: {
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["goals", workspaceId],
+      });
+    },
+  });
+}
+
+export function useUpdateGoalMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ goalId, request }: { goalId: number; request: HandlergoalsUpdatePayload }) =>
+      unwrapWebApiResult(
+        putWorkspacesByWorkspaceIdGoalsByGoalId({
+          body: request,
+          path: {
+            goal_id: goalId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["goals", workspaceId],
+      });
+    },
+  });
+}
+
+export function useDeleteGoalMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (goalId: number) =>
+      unwrapWebApiResult(
+        deleteWorkspacesByWorkspaceIdGoalsByGoalId({
+          path: {
+            goal_id: goalId,
+            workspace_id: workspaceId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["goals", workspaceId],
       });
     },
   });
