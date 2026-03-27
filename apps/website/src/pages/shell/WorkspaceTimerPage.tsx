@@ -203,7 +203,20 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           </div>
           <TimerBarProjectPicker
             draftProjectId={orch.draftProjectId}
-            onProjectSelect={orch.setDraftProjectId}
+            onProjectSelect={(projectId) => {
+              if (orch.runningEntry?.id != null) {
+                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
+                if (typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { projectId },
+                    timeEntryId: orch.runningEntry.id,
+                    workspaceId: wid,
+                  });
+                }
+              } else {
+                orch.setDraftProjectId(projectId);
+              }
+            }}
             projectOptions={orch.projectOptions}
             runningEntry={orch.runningEntry}
             workspaceName={
@@ -217,11 +230,26 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               await orch.createTagMutation.mutateAsync(name);
             }}
             onTagToggle={(tagId) => {
-              orch.setDraftTagIds(
-                orch.draftTagIds.includes(tagId)
-                  ? orch.draftTagIds.filter((id) => id !== tagId)
-                  : [...orch.draftTagIds, tagId],
-              );
+              if (orch.runningEntry?.id != null) {
+                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
+                const currentTags = orch.runningEntry.tag_ids ?? [];
+                const nextTags = currentTags.includes(tagId)
+                  ? currentTags.filter((id) => id !== tagId)
+                  : [...currentTags, tagId];
+                if (typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { tagIds: nextTags },
+                    timeEntryId: orch.runningEntry.id,
+                    workspaceId: wid,
+                  });
+                }
+              } else {
+                orch.setDraftTagIds(
+                  orch.draftTagIds.includes(tagId)
+                    ? orch.draftTagIds.filter((id) => id !== tagId)
+                    : [...orch.draftTagIds, tagId],
+                );
+              }
             }}
             runningEntry={orch.runningEntry}
             tagOptions={orch.tagOptions}
@@ -234,7 +262,16 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                 : "text-[var(--track-text-muted)] hover:text-white"
             }`}
             onClick={() => {
-              if (orch.runningEntry?.id == null) {
+              if (orch.runningEntry?.id != null) {
+                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
+                if (typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { billable: !orch.runningEntry.billable },
+                    timeEntryId: orch.runningEntry.id,
+                    workspaceId: wid,
+                  });
+                }
+              } else {
                 orch.setDraftBillable(!orch.draftBillable);
               }
             }}
@@ -831,10 +868,8 @@ function TimerBarProjectPicker({
               : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
-          if (runningEntry?.id == null) {
-            setOpen((prev) => !prev);
-            setSearch("");
-          }
+          setOpen((prev) => !prev);
+          setSearch("");
         }}
         onBlur={(e) => {
           if (!containerRef.current?.contains(e.relatedTarget as Node)) {
@@ -932,10 +967,8 @@ function TimerBarTagPicker({
             : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
-          if (runningEntry?.id == null) {
-            setOpen((prev) => !prev);
-            setSearch("");
-          }
+          setOpen((prev) => !prev);
+          setSearch("");
         }}
         onBlur={(e) => {
           if (!containerRef.current?.contains(e.relatedTarget as Node)) {
