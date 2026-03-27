@@ -1,13 +1,8 @@
-import {
-  type ChangeEvent,
-  type FormEvent,
-  type ReactElement,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type FormEvent, type ReactElement, useEffect, useState } from "react";
 
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
+import { ProjectEditorAdvanced } from "./ProjectEditorAdvanced.tsx";
+import { ProjectEditorMembers } from "./ProjectEditorMembers.tsx";
 
 export type ProjectEditorMember = {
   email?: string;
@@ -16,82 +11,95 @@ export type ProjectEditorMember = {
 };
 
 type ProjectEditorDialogProps = {
+  billable: boolean;
+  clientId: number | null;
+  clients: Array<{ id: number; name: string }>;
   color: string;
+  endDate: string;
   error?: string | null;
+  estimatedHours: number;
+  fixedFee: number;
   isPending?: boolean;
   isPrivate: boolean;
   memberRole: "manager" | "regular";
   members: ProjectEditorMember[];
   name: string;
+  onBillableChange: (value: boolean) => void;
+  onClientChange: (clientId: number | null) => void;
   onClose: () => void;
   onColorChange: (value: string) => void;
+  onCreateClient: (name: string) => void;
+  onEndDateChange: (value: string) => void;
+  onEstimatedHoursChange: (value: number) => void;
+  onFixedFeeChange: (value: number) => void;
   onMemberRoleChange: (value: "manager" | "regular") => void;
   onNameChange: (value: string) => void;
   onPrivacyChange: (value: boolean) => void;
+  onRecurringChange: (value: boolean) => void;
+  onStartDateChange: (value: string) => void;
   onSubmit: () => void;
   onTemplateChange: (value: boolean) => void;
   onToggleMember: (memberId: number) => void;
+  recurring: boolean;
   selectedMemberIds: number[];
+  startDate: string;
   submitLabel: string;
   template: boolean;
   title: string;
 };
 
 export function ProjectEditorDialog({
+  billable,
+  clientId,
+  clients,
   color,
+  endDate,
   error,
+  estimatedHours,
+  fixedFee,
   isPending = false,
   isPrivate,
   memberRole,
   members,
   name,
+  onBillableChange,
+  onClientChange,
   onClose,
   onColorChange,
+  onCreateClient,
+  onEndDateChange,
+  onEstimatedHoursChange,
+  onFixedFeeChange,
   onMemberRoleChange,
   onNameChange,
   onPrivacyChange,
+  onRecurringChange,
+  onStartDateChange,
   onSubmit,
   onTemplateChange,
   onToggleMember,
+  recurring,
   selectedMemberIds,
+  startDate,
   submitLabel,
   template,
   title,
 }: ProjectEditorDialogProps): ReactElement {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
-  const [memberQuery, setMemberQuery] = useState("");
   const trimmedName = name.trim();
-  const filteredMembers = useMemo(() => {
-    const query = memberQuery.trim().toLowerCase();
-    if (!query) {
-      return members;
-    }
-
-    return members.filter((member) => {
-      const haystack = `${member.name} ${member.email ?? ""}`.toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [memberQuery, members]);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key === "Escape") onClose();
     }
-
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!trimmedName || isPending) {
-      return;
-    }
+    if (!trimmedName || isPending) return;
     onSubmit();
   }
 
@@ -104,7 +112,7 @@ export function ProjectEditorDialog({
       <form
         aria-labelledby="project-editor-title"
         aria-modal="true"
-        className="w-full max-w-[620px] rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-5 pt-4 shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
+        className="max-h-[calc(100vh-80px)] w-full max-w-[620px] overflow-y-auto rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-5 pt-4 shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
         data-testid="project-editor-dialog"
         onClick={(event) => event.stopPropagation()}
         onSubmit={handleSubmit}
@@ -125,6 +133,7 @@ export function ProjectEditorDialog({
         </div>
 
         <div className="mt-5 space-y-5">
+          {/* Project name + color picker */}
           <div>
             <span className="mb-2 block text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
               Project name
@@ -134,7 +143,7 @@ export function ProjectEditorDialog({
                 <button
                   aria-label="Select project color"
                   className="flex size-11 items-center justify-center rounded-md border border-[var(--track-border)] bg-[#262628]"
-                  onClick={() => setColorPickerOpen((current) => !current)}
+                  onClick={() => setColorPickerOpen((c) => !c)}
                   type="button"
                 >
                   <span
@@ -187,6 +196,7 @@ export function ProjectEditorDialog({
             ) : null}
           </div>
 
+          {/* Privacy toggle */}
           <section className="rounded-[12px] border border-[var(--track-border)] bg-[#181818] p-4">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -215,126 +225,52 @@ export function ProjectEditorDialog({
             </div>
           </section>
 
-          <section className="rounded-[12px] border border-[var(--track-border)] bg-[#181818] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                  Manage project members
-                </p>
-                <p className="mt-2 text-[14px] text-white">Invite members</p>
-              </div>
-              <label className="flex items-center gap-2 text-[13px] text-[#d4d4d9]">
-                <span>Access</span>
-                <select
-                  aria-label="Member access"
-                  className="h-9 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white"
-                  onChange={(event) =>
-                    onMemberRoleChange(event.target.value === "manager" ? "manager" : "regular")
-                  }
-                  value={memberRole}
-                >
-                  <option value="regular">Regular member</option>
-                  <option value="manager">Project manager</option>
-                </select>
-              </label>
-            </div>
+          {/* Members */}
+          <ProjectEditorMembers
+            memberRole={memberRole}
+            members={members}
+            onMemberRoleChange={onMemberRoleChange}
+            onToggleMember={onToggleMember}
+            selectedMemberIds={selectedMemberIds}
+          />
 
-            <label className="mt-4 block">
-              <span className="sr-only">Invite members</span>
-              <input
-                aria-label="Invite members"
-                className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-                onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                  setMemberQuery(event.target.value)
-                }
-                placeholder="Type a name or email to invite"
-                value={memberQuery}
-              />
-            </label>
-
-            <div className="mt-4 max-h-[180px] space-y-2 overflow-y-auto pr-1">
-              {filteredMembers.map((member) => {
-                const selected = selectedMemberIds.includes(member.id);
-
-                return (
-                  <button
-                    aria-pressed={selected}
-                    className={`flex w-full items-center justify-between rounded-[10px] border px-3 py-2 text-left transition ${
-                      selected
-                        ? "border-[var(--track-accent-soft)] bg-[var(--track-accent-soft)]/10 text-white"
-                        : "border-transparent bg-[#232325] text-[#d0d0d4] hover:border-white/10"
-                    }`}
-                    key={member.id}
-                    onClick={() => onToggleMember(member.id)}
-                    type="button"
-                  >
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-medium">{member.name}</div>
-                      <div className="truncate text-[12px] text-[var(--track-text-muted)]">
-                        {member.email ?? "Workspace member"}
-                      </div>
-                    </div>
-                    <span className="text-[12px]">{selected ? "Added" : "Add"}</span>
-                  </button>
-                );
-              })}
-              {filteredMembers.length === 0 ? (
-                <p className="rounded-[10px] bg-[#232325] px-3 py-3 text-[13px] text-[var(--track-text-muted)]">
-                  No matching workspace members.
-                </p>
-              ) : null}
-            </div>
-          </section>
-
+          {/* Advanced options */}
           <section className="rounded-[12px] border border-[var(--track-border)] bg-[#181818]">
             <button
               aria-expanded={advancedOpen}
               className="flex w-full items-center justify-between px-4 py-3 text-left"
-              onClick={() => setAdvancedOpen((current) => !current)}
+              onClick={() => setAdvancedOpen((c) => !c)}
               type="button"
             >
               <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Advanced options
               </span>
-              <span className="text-[18px] text-white">{advancedOpen ? "−" : "+"}</span>
+              <span className="text-[18px] text-white">{advancedOpen ? "\u2212" : "+"}</span>
             </button>
             {advancedOpen ? (
               <div className="border-t border-[var(--track-border)] px-4 pb-4 pt-4">
-                <div>
-                  <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                    Color
-                  </p>
-                  <div className="grid grid-cols-5 gap-2">
-                    {TRACK_COLOR_SWATCHES.map((option) => (
-                      <button
-                        aria-label={`Select color ${option}`}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                          color === option
-                            ? "border-white/80 bg-white/8"
-                            : "border-transparent hover:border-white/25"
-                        }`}
-                        key={option}
-                        onClick={() => onColorChange(option)}
-                        type="button"
-                      >
-                        <span
-                          className="h-5 w-5 rounded-full border border-black/20"
-                          style={{ backgroundColor: option }}
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <label className="mt-4 flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
-                  <span className="text-[14px] text-white">Use as template</span>
-                  <input
-                    aria-label="Use as template"
-                    checked={template}
-                    className="size-4"
-                    onChange={(event) => onTemplateChange(event.target.checked)}
-                    type="checkbox"
-                  />
-                </label>
+                <ProjectEditorAdvanced
+                  billable={billable}
+                  clientId={clientId}
+                  clients={clients}
+                  color={color}
+                  endDate={endDate}
+                  estimatedHours={estimatedHours}
+                  fixedFee={fixedFee}
+                  onBillableChange={onBillableChange}
+                  onClientChange={onClientChange}
+                  onColorChange={onColorChange}
+                  onCreateClient={onCreateClient}
+                  onEndDateChange={onEndDateChange}
+                  onEstimatedHoursChange={onEstimatedHoursChange}
+                  onFixedFeeChange={onFixedFeeChange}
+                  onRecurringChange={onRecurringChange}
+                  onStartDateChange={onStartDateChange}
+                  onTemplateChange={onTemplateChange}
+                  recurring={recurring}
+                  startDate={startDate}
+                  template={template}
+                />
               </div>
             ) : null}
           </section>

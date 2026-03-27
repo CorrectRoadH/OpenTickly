@@ -857,28 +857,43 @@ export function useDeleteTimeEntryMutation() {
   });
 }
 
+export type CreateProjectRequest = {
+  billable?: boolean;
+  clientId?: number;
+  color?: string;
+  currency?: string;
+  endDate?: string;
+  estimatedHours?: number;
+  fixedFee?: number;
+  isPrivate?: boolean;
+  name: string;
+  rate?: number;
+  recurring?: boolean;
+  startDate?: string;
+  template?: boolean;
+};
+
 export function useCreateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      color,
-      isPrivate,
-      name,
-      template,
-    }: {
-      color?: string;
-      isPrivate?: boolean;
-      name: string;
-      template?: boolean;
-    }) =>
+    mutationFn: (request: CreateProjectRequest) =>
       unwrapWebApiResult(
         postWorkspaceProjectCreate({
           body: {
-            color,
-            is_private: isPrivate,
-            name,
-            template,
+            billable: request.billable,
+            client_id: request.clientId,
+            color: request.color,
+            currency: request.currency,
+            end_date: request.endDate,
+            estimated_hours: request.estimatedHours,
+            fixed_fee: request.fixedFee,
+            is_private: request.isPrivate,
+            name: request.name,
+            rate: request.rate,
+            recurring: request.recurring,
+            start_date: request.startDate,
+            template: request.template,
           },
           path: {
             workspace_id: workspaceId,
@@ -893,33 +908,36 @@ export function useCreateProjectMutation(workspaceId: number) {
   });
 }
 
+export type UpdateProjectRequest = CreateProjectRequest & {
+  active?: boolean;
+  projectId: number;
+};
+
 export function useUpdateProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      color,
-      isPrivate,
-      name,
-      projectId,
-      template,
-    }: {
-      color?: string;
-      isPrivate?: boolean;
-      name: string;
-      projectId: number;
-      template?: boolean;
-    }) =>
+    mutationFn: (request: UpdateProjectRequest) =>
       unwrapWebApiResult(
         putWorkspaceProject({
           body: {
-            color,
-            is_private: isPrivate,
-            name,
-            template,
+            active: request.active,
+            billable: request.billable,
+            client_id: request.clientId,
+            color: request.color,
+            currency: request.currency,
+            end_date: request.endDate,
+            estimated_hours: request.estimatedHours,
+            fixed_fee: request.fixedFee,
+            is_private: request.isPrivate,
+            name: request.name,
+            rate: request.rate,
+            recurring: request.recurring,
+            start_date: request.startDate,
+            template: request.template,
           },
           path: {
-            project_id: projectId,
+            project_id: request.projectId,
             workspace_id: workspaceId,
           },
         }),

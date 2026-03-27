@@ -16,6 +16,8 @@ import {
 import {
   useAddProjectMemberMutation,
   useArchiveProjectMutation,
+  useClientsQuery,
+  useCreateClientMutation,
   useCreateProjectMutation,
   useDeleteProjectMutation,
   usePinProjectMutation,
@@ -54,6 +56,13 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const [projectColor, setProjectColor] = useState<string>(DEFAULT_PROJECT_COLOR);
   const [projectPrivate, setProjectPrivate] = useState(false);
   const [projectTemplate, setProjectTemplate] = useState(false);
+  const [projectClientId, setProjectClientId] = useState<number | null>(null);
+  const [projectBillable, setProjectBillable] = useState(false);
+  const [projectStartDate, setProjectStartDate] = useState("");
+  const [projectEndDate, setProjectEndDate] = useState("");
+  const [projectRecurring, setProjectRecurring] = useState(false);
+  const [projectEstimatedHours, setProjectEstimatedHours] = useState(0);
+  const [projectFixedFee, setProjectFixedFee] = useState(0);
   const [memberRole, setMemberRole] = useState<"manager" | "regular">("regular");
   const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -68,7 +77,16 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
   const addProjectMemberMutation = useAddProjectMemberMutation(workspaceId);
   const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
+  const clientsQuery = useClientsQuery(workspaceId);
+  const createClientMutation = useCreateClientMutation(workspaceId);
   const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
+  const clientsList = useMemo(
+    () =>
+      (clientsQuery.data ?? [])
+        .filter((c): c is { id: number; name: string } => c.id != null && c.name != null)
+        .map((c) => ({ id: c.id, name: c.name })),
+    [clientsQuery.data],
+  );
   const projects = useMemo(() => {
     const all = normalizeProjects(projectsQuery.data);
     // "Show All, except Archived" (statusFilter="all") passes active:undefined to the API which
@@ -108,7 +126,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     pinProjectMutation.isPending ||
     unpinProjectMutation.isPending ||
     addProjectMemberMutation.isPending ||
-    deleteProjectMutation.isPending;
+    deleteProjectMutation.isPending ||
+    createClientMutation.isPending;
 
   useEffect(() => {
     if (editorMode !== "edit" || !editorProject?.id) {
@@ -132,6 +151,13 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setProjectColor(DEFAULT_PROJECT_COLOR);
     setProjectPrivate(false);
     setProjectTemplate(false);
+    setProjectClientId(null);
+    setProjectBillable(false);
+    setProjectStartDate("");
+    setProjectEndDate("");
+    setProjectRecurring(false);
+    setProjectEstimatedHours(0);
+    setProjectFixedFee(0);
     setMemberRole("regular");
     setSelectedMemberIds([]);
     setProjectEditorError(null);
@@ -144,6 +170,13 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setProjectColor(resolveProjectColor(project));
     setProjectPrivate(project.is_private === true);
     setProjectTemplate(project.template === true);
+    setProjectClientId(project.client_id ?? null);
+    setProjectBillable(project.billable === true);
+    setProjectStartDate(project.start_date ?? "");
+    setProjectEndDate(project.end_date ?? "");
+    setProjectRecurring(project.recurring === true);
+    setProjectEstimatedHours(project.estimated_hours ?? 0);
+    setProjectFixedFee(project.fixed_fee ?? 0);
     setMemberRole("regular");
   }
 
@@ -159,21 +192,26 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     }
 
     try {
+      const sharedFields = {
+        billable: projectBillable,
+        clientId: projectClientId ?? undefined,
+        color: projectColor,
+        endDate: projectEndDate || undefined,
+        estimatedHours: projectEstimatedHours || undefined,
+        fixedFee: projectFixedFee || undefined,
+        isPrivate: projectPrivate,
+        name: trimmedName,
+        recurring: projectRecurring,
+        startDate: projectStartDate || undefined,
+        template: projectTemplate,
+      };
       const project =
         editorMode === "edit" && editorProject?.id != null
           ? await updateProjectMutation.mutateAsync({
-              color: projectColor,
-              isPrivate: projectPrivate,
-              name: trimmedName,
+              ...sharedFields,
               projectId: editorProject.id,
-              template: projectTemplate,
             })
-          : await createProjectMutation.mutateAsync({
-              color: projectColor,
-              isPrivate: projectPrivate,
-              name: trimmedName,
-              template: projectTemplate,
-            });
+          : await createProjectMutation.mutateAsync(sharedFields);
 
       const projectId = project.id ?? editorProject?.id;
       if (projectId != null) {
@@ -418,24 +456,41 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
       {editorMode ? (
         <ProjectEditorDialog
+          billable={projectBillable}
+          clientId={projectClientId}
+          clients={clientsList}
           color={projectColor}
+          endDate={projectEndDate}
           error={projectEditorError}
+          estimatedHours={projectEstimatedHours}
+          fixedFee={projectFixedFee}
           isPending={mutationPending}
           isPrivate={projectPrivate}
           memberRole={memberRole}
           members={workspaceMembers}
           name={projectName}
+          onBillableChange={setProjectBillable}
+          onClientChange={setProjectClientId}
           onClose={() => {
             closeEditor();
             setProjectEditorError(null);
           }}
           onColorChange={setProjectColor}
+          onCreateClient={async (clientName) => {
+            const client = await createClientMutation.mutateAsync(clientName);
+            if (client?.id) setProjectClientId(client.id);
+          }}
+          onEndDateChange={setProjectEndDate}
+          onEstimatedHoursChange={setProjectEstimatedHours}
+          onFixedFeeChange={setProjectFixedFee}
           onMemberRoleChange={setMemberRole}
           onNameChange={(value) => {
             setProjectName(value);
             setProjectEditorError(null);
           }}
           onPrivacyChange={setProjectPrivate}
+          onRecurringChange={setProjectRecurring}
+          onStartDateChange={setProjectStartDate}
           onSubmit={() => {
             void handleSubmitProject();
           }}
@@ -447,7 +502,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 : [...current, memberId],
             )
           }
+          recurring={projectRecurring}
           selectedMemberIds={selectedMemberIds}
+          startDate={projectStartDate}
           submitLabel={editorMode === "edit" ? "Save" : "Create project"}
           template={projectTemplate}
           title={editorMode === "edit" ? "Edit Project" : "Create new project"}
