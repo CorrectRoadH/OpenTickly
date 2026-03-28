@@ -1,4 +1,4 @@
-import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, { type ComponentType, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -36,14 +36,12 @@ import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import {
   ChevronDownIcon,
   DollarIcon,
-  DynamicIcon,
   MinusIcon,
   MoreIcon,
   PlayIcon,
   PlusIcon,
   ProjectsIcon,
   TagsIcon,
-  type IconName,
 } from "../../shared/ui/icons.tsx";
 const withDragAndDrop =
   typeof withDragAndDropModule === "function"
@@ -166,11 +164,11 @@ const CalendarDayColumnWrapper = React.forwardRef<
 });
 
 export function ToolbarButton({
-  icon,
+  icon: Icon,
   label,
   suffix,
 }: {
-  icon: Extract<IconName, "calendar" | "list">;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   suffix: string;
 }) {
@@ -179,7 +177,7 @@ export function ToolbarButton({
       className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[#1b1b1b] px-4 text-[12px] font-medium text-white"
       type="button"
     >
-      <DynamicIcon className="size-3.5 text-[var(--track-text-muted)]" name={icon} />
+      <Icon className="size-3.5 text-[var(--track-text-muted)]" />
       <span>{label}</span>
       <span className="text-[var(--track-text-muted)]">· {suffix}</span>
       <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
@@ -199,12 +197,12 @@ export function SummaryStat({ label, value }: { label: string; value: string }) 
 export function ChromeIconButton({
   "aria-label": ariaLabel,
   active,
-  icon,
+  icon: Icon,
   onClick,
 }: {
   "aria-label"?: string;
   active?: boolean;
-  icon: Extract<IconName, "grid" | "more" | "settings" | "subscription" | "tags">;
+  icon: ComponentType<{ className?: string }>;
   onClick?: () => void;
 }) {
   return (
@@ -216,7 +214,7 @@ export function ChromeIconButton({
       onClick={onClick}
       type="button"
     >
-      <DynamicIcon className="size-4" name={icon} />
+      <Icon className="size-4" />
     </button>
   );
 }

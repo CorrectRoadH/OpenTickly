@@ -1,21 +1,26 @@
-import type { ReactElement } from "react";
+import { type ComponentType, type ReactElement } from "react";
 
 import {
   ChevronRightIcon,
-  DynamicIcon,
+  GoalsIcon,
+  type IconProps,
+  IntegrationsIcon,
+  MembersIcon,
+  ProjectsIcon,
+  ReportsIcon,
   SubscriptionIcon,
+  TimerIcon,
   TrackIcon,
-  type IconName,
 } from "../../shared/ui/icons.tsx";
 import { useSession } from "../../shared/session/session-context.tsx";
 
-const includedFeatures: { icon: IconName; label: string }[] = [
-  { icon: "timer", label: "Unlimited time tracking" },
-  { icon: "projects", label: "Unlimited projects" },
-  { icon: "members", label: "Unlimited team members" },
-  { icon: "reports", label: "Reports and analytics" },
-  { icon: "goals", label: "Goals and favorites" },
-  { icon: "integrations", label: "API access" },
+const includedFeatures: { icon: ComponentType<IconProps>; label: string }[] = [
+  { icon: TimerIcon, label: "Unlimited time tracking" },
+  { icon: ProjectsIcon, label: "Unlimited projects" },
+  { icon: MembersIcon, label: "Unlimited team members" },
+  { icon: ReportsIcon, label: "Reports and analytics" },
+  { icon: GoalsIcon, label: "Goals and favorites" },
+  { icon: IntegrationsIcon, label: "API access" },
 ];
 
 export function SubscriptionPage(): ReactElement {
@@ -87,7 +92,7 @@ export function SubscriptionPage(): ReactElement {
             {includedFeatures.map((feature) => (
               <li className="flex items-center gap-3" key={feature.label}>
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-                  <DynamicIcon className="size-4 text-[var(--track-accent)]" name={feature.icon} />
+                  <feature.icon className="size-4 text-[var(--track-accent)]" />
                 </div>
                 <span className="text-[14px] text-white">{feature.label}</span>
               </li>

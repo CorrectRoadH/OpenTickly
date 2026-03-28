@@ -1,6 +1,6 @@
-import type { ComponentPropsWithoutRef, ComponentType, ReactElement } from "react";
+import type { ComponentPropsWithoutRef, ReactElement } from "react";
 
-type IconProps = ComponentPropsWithoutRef<"svg">;
+export type IconProps = ComponentPropsWithoutRef<"svg">;
 
 function Icon(props: IconProps & { children: ReactElement }): ReactElement {
   const { children, ...rest } = props;
@@ -457,96 +457,3 @@ export function TrashIcon(props: IconProps): ReactElement {
   );
 }
 
-// --- Dynamic icon lookup ---
-
-export type IconName =
-  | "archive"
-  | "approvals"
-  | "bell"
-  | "calendar"
-  | "check"
-  | "chevron-down"
-  | "chevron-right"
-  | "clients"
-  | "close"
-  | "copy"
-  | "dollar"
-  | "edit"
-  | "focus"
-  | "goals"
-  | "grid"
-  | "help"
-  | "import"
-  | "integrations"
-  | "invoices"
-  | "list"
-  | "manual-mode"
-  | "members"
-  | "menu"
-  | "minus"
-  | "more"
-  | "overview"
-  | "plan"
-  | "play"
-  | "plus"
-  | "profile"
-  | "projects"
-  | "reports"
-  | "search"
-  | "settings"
-  | "stop"
-  | "subscription"
-  | "tags"
-  | "timer"
-  | "timesheet"
-  | "track"
-  | "trash";
-
-export const iconMap: Record<IconName, ComponentType<IconProps>> = {
-  archive: ArchiveIcon,
-  approvals: ApprovalsIcon,
-  bell: BellIcon,
-  calendar: CalendarIcon,
-  check: CheckIcon,
-  "chevron-down": ChevronDownIcon,
-  "chevron-right": ChevronRightIcon,
-  clients: ClientsIcon,
-  close: CloseIcon,
-  copy: CopyIcon,
-  dollar: DollarIcon,
-  edit: EditIcon,
-  focus: FocusIcon,
-  goals: GoalsIcon,
-  grid: GridIcon,
-  help: HelpIcon,
-  import: ImportIcon,
-  integrations: IntegrationsIcon,
-  invoices: InvoicesIcon,
-  list: ListIcon,
-  "manual-mode": ManualModeIcon,
-  members: MembersIcon,
-  menu: MenuIcon,
-  minus: MinusIcon,
-  more: MoreIcon,
-  overview: OverviewIcon,
-  plan: PlanIcon,
-  play: PlayIcon,
-  plus: PlusIcon,
-  profile: ProfileIcon,
-  projects: ProjectsIcon,
-  reports: ReportsIcon,
-  search: SearchIcon,
-  settings: SettingsIcon,
-  stop: StopIcon,
-  subscription: SubscriptionIcon,
-  tags: TagsIcon,
-  timer: TimerIcon,
-  timesheet: TimesheetIcon,
-  track: TrackIcon,
-  trash: TrashIcon,
-};
-
-export function DynamicIcon({ name, ...props }: IconProps & { name: IconName }): ReactElement {
-  const Comp = iconMap[name];
-  return <Comp {...props} />;
-}

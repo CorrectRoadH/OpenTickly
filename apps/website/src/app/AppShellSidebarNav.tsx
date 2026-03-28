@@ -1,12 +1,29 @@
 import { Link } from "@tanstack/react-router";
-import { type ReactElement } from "react";
+import { type ComponentType, type ReactElement } from "react";
 
 import {
   isOverviewNavActive,
   isSectionNavActive,
   isTimerNavActive,
 } from "./shell-navigation-state.ts";
-import { DynamicIcon, type IconName } from "../shared/ui/icons.tsx";
+import {
+  ApprovalsIcon,
+  ClientsIcon,
+  DollarIcon,
+  GoalsIcon,
+  type IconProps,
+  ImportIcon,
+  IntegrationsIcon,
+  InvoicesIcon,
+  MembersIcon,
+  OverviewIcon,
+  ProjectsIcon,
+  ReportsIcon,
+  SettingsIcon,
+  SubscriptionIcon,
+  TagsIcon,
+  TimerIcon,
+} from "../shared/ui/icons.tsx";
 
 export type NavSection = {
   items: NavItem[];
@@ -109,7 +126,7 @@ function ShellNavItem({
           : "text-[var(--track-text-muted)]"
       } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
     >
-      <DynamicIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
+      <NavIcon className="h-4 w-[14px] shrink-0" label={label} />
       <span className="truncate">{label}</span>
       {badge ? (
         <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
@@ -130,39 +147,25 @@ function ShellNavItem({
   );
 }
 
-function navIconName(label: string): IconName {
-  switch (label) {
-    case "Overview":
-      return "overview";
-    case "Timer":
-      return "timer";
-    case "Reports":
-      return "reports";
-    case "Approvals":
-      return "approvals";
-    case "Projects":
-      return "projects";
-    case "Clients":
-      return "clients";
-    case "Members":
-      return "members";
-    case "Billable rates":
-      return "dollar";
-    case "Import":
-      return "import";
-    case "Invoices":
-      return "invoices";
-    case "Tags":
-      return "tags";
-    case "Goals":
-      return "goals";
-    case "Integrations":
-      return "integrations";
-    case "Subscription":
-      return "subscription";
-    case "Settings":
-      return "settings";
-    default:
-      return "overview";
-  }
+const navIcons: Record<string, ComponentType<IconProps>> = {
+  Overview: OverviewIcon,
+  Timer: TimerIcon,
+  Reports: ReportsIcon,
+  Approvals: ApprovalsIcon,
+  Projects: ProjectsIcon,
+  Clients: ClientsIcon,
+  Members: MembersIcon,
+  "Billable rates": DollarIcon,
+  Import: ImportIcon,
+  Invoices: InvoicesIcon,
+  Tags: TagsIcon,
+  Goals: GoalsIcon,
+  Integrations: IntegrationsIcon,
+  Subscription: SubscriptionIcon,
+  Settings: SettingsIcon,
+};
+
+function NavIcon({ className, label }: { className?: string; label: string }): ReactElement {
+  const Icon = navIcons[label] ?? OverviewIcon;
+  return <Icon className={className} />;
 }

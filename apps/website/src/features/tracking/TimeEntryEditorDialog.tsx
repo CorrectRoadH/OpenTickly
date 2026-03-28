@@ -1,5 +1,6 @@
 import {
   type ChangeEvent,
+  type ComponentType,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -20,14 +21,12 @@ import {
 import {
   CalendarIcon,
   DollarIcon,
-  DynamicIcon,
   MoreIcon,
   PlayIcon,
   ProjectsIcon,
   SearchIcon,
   StopIcon,
   TagsIcon,
-  type IconName,
 } from "../../shared/ui/icons.tsx";
 
 export type TimeEntryEditorAnchor = {
@@ -577,7 +576,7 @@ export function TimeEntryEditorDialog({
             <PickerButton
               active={picker === "project"}
               ariaLabel="Select project"
-              icon="projects"
+              icon={ProjectsIcon}
               label={selectedProject?.name}
               onClick={() => {
                 setSearch("");
@@ -589,7 +588,7 @@ export function TimeEntryEditorDialog({
             <PickerButton
               active={picker === "tag"}
               ariaLabel="Select tags"
-              icon="tags"
+              icon={TagsIcon}
               label={resolveTagTriggerLabel(selectedTags)}
               onClick={() => {
                 setSearch("");
@@ -602,7 +601,7 @@ export function TimeEntryEditorDialog({
               active={entry.billable === true}
               ariaLabel="Billable"
               ariaPressed={entry.billable === true}
-              icon="dollar"
+              icon={DollarIcon}
               onClick={onBillableToggle}
               toneColor="#e57bd9"
             />
@@ -619,7 +618,7 @@ export function TimeEntryEditorDialog({
                   Change &rsaquo;
                 </button>
               }
-              icon="projects"
+              icon={ProjectsIcon}
               title={currentWorkspaceName}
             >
               {workspaceMenuOpen ? (
@@ -803,7 +802,7 @@ export function TimeEntryEditorDialog({
           ) : null}
 
           {picker === "tag" ? (
-            <PickerSurface icon="tags" title="Tags">
+            <PickerSurface icon={TagsIcon} title="Tags">
               <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
               <div className="max-h-[340px] overflow-y-auto px-1 py-2">
                 {filteredTags.map((tag) => {
@@ -1172,7 +1171,7 @@ function PickerButton({
   active = false,
   ariaLabel,
   ariaPressed,
-  icon,
+  icon: Icon,
   label,
   onClick,
   toneColor,
@@ -1181,7 +1180,7 @@ function PickerButton({
   active?: boolean;
   ariaLabel: string;
   ariaPressed?: boolean;
-  icon: Extract<IconName, "dollar" | "projects" | "subscription" | "tags">;
+  icon: ComponentType<{ className?: string }>;
   label?: string;
   onClick?: () => void;
   toneColor?: string;
@@ -1213,25 +1212,8 @@ function PickerButton({
     >
       {variant === "project" && label ? (
         <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
-      ) : icon === "dollar" ? (
-        <svg
-          aria-hidden="true"
-          fill="none"
-          fillRule="evenodd"
-          height="18"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 12 18"
-          width="12"
-        >
-          <path
-            d="M2.5 12C3 13.5 4 14.5 6 14.5s3.5-1.2 3.5-2.7c0-4-7-1.6-7-5.6C2.5 4.7 4 3.5 6 3.5c1.5 0 3 1 3.5 2.5M6 2v14"
-            stroke="currentColor"
-          />
-        </svg>
       ) : (
-        <DynamicIcon className={selected ? "size-5 shrink-0" : "size-5"} name={icon} />
+        <Icon className={selected ? "size-5 shrink-0" : "size-5"} />
       )}
       {label ? <span className="min-w-0 truncate">{label}</span> : null}
     </button>
@@ -1241,19 +1223,19 @@ function PickerButton({
 function PickerSurface({
   action,
   children,
-  icon,
+  icon: Icon,
   title,
 }: {
   action?: ReactNode;
   children: ReactNode;
-  icon: Extract<IconName, "projects" | "tags">;
+  icon: ComponentType<{ className?: string }>;
   title: string;
 }): ReactElement {
   return (
     <div className="absolute -left-2 top-8 z-10 w-[360px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] py-3 shadow-[0_14px_32px_rgba(0,0,0,0.34)]">
       <div className="flex items-center justify-between px-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
-          <DynamicIcon className="size-4 shrink-0 text-[#bdbdc2]" name={icon} />
+          <Icon className="size-4 shrink-0 text-[#bdbdc2]" />
           <span className="truncate text-[15px] font-semibold text-white">{title}</span>
         </div>
         {action ?? <span />}

@@ -36,9 +36,11 @@ import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerCom
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import {
+  GridIcon,
   ManualModeIcon,
   PlayIcon,
   ProjectsIcon,
+  SettingsIcon,
   StopIcon,
   TagsIcon,
   TimerIcon,
@@ -554,7 +556,7 @@ export function WorkspaceTimerPage({
                 <ChromeIconButton
                   active={settingsOpen}
                   aria-label="Display settings"
-                  icon="settings"
+                  icon={SettingsIcon}
                   onClick={() => setSettingsOpen((prev) => !prev)}
                 />
                 {settingsOpen ? (
@@ -569,7 +571,7 @@ export function WorkspaceTimerPage({
               <ChromeIconButton
                 active={sidebarOpen}
                 aria-label="Toggle goals and favorites"
-                icon="grid"
+                icon={GridIcon}
                 onClick={() => setSidebarOpen((prev) => !prev)}
               />
             </div>
