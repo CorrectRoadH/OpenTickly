@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -257,12 +258,11 @@ export function GoalEditorDialog({
                   <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
                 </button>
               ) : (
-                <input
-                  className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
-                  data-testid="goal-end-date-input"
-                  onChange={(e) => setEndDate(e.target.value)}
-                  style={{ colorScheme: "dark" }}
-                  type="date"
+                <DatePickerButton
+                  className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[14px] text-white"
+                  onChange={setEndDate}
+                  placeholder="Select end date"
+                  testId="goal-end-date-input"
                   value={endDate}
                 />
               )}

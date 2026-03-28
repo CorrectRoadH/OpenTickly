@@ -1,5 +1,6 @@
 import { type ChangeEvent, type ReactElement, useCallback, useState } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
 import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
 import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
@@ -164,22 +165,19 @@ export function ProjectEditorAdvanced({
           Timeframe
         </p>
         <div className="flex items-center gap-2">
-          <input
-            aria-label="Start date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-            onChange={(event) => onStartDateChange(event.target.value)}
-            style={{ colorScheme: "dark" }}
-            type="date"
+          <DatePickerButton
+            ariaLabel="Start date"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[13px] text-white"
+            onChange={onStartDateChange}
+            placeholder="Start date"
             value={startDate}
           />
           <span className="text-[13px] text-[var(--track-text-muted)]">-</span>
-          <input
-            aria-label="End date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-            onChange={(event) => onEndDateChange(event.target.value)}
+          <DatePickerButton
+            ariaLabel="End date"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[13px] text-white"
+            onChange={onEndDateChange}
             placeholder="No end date"
-            style={{ colorScheme: "dark" }}
-            type="date"
             value={endDate}
           />
         </div>

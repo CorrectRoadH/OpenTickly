@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { PlusIcon } from "../../shared/ui/icons.tsx";
 
 interface ManualModeComposerProps {
@@ -53,9 +54,6 @@ export function ManualModeComposer({
     return formatDuration(totalSeconds);
   }, [startDate, startTime, stopDate, stopTime, timezone]);
 
-  const startDateLabel = useMemo(() => formatDateLabel(startDate, timezone), [startDate, timezone]);
-  const stopDateLabel = useMemo(() => formatDateLabel(stopDate, timezone), [stopDate, timezone]);
-
   const handleAdd = useCallback(() => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
     const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
@@ -76,34 +74,13 @@ export function ManualModeComposer({
           type="time"
           value={startTime}
         />
-        <label className="relative">
-          <span className="sr-only">Start date</span>
-          <button
-            aria-label="Pick start date"
-            className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
-            data-testid="manual-start-date-button"
-            onClick={(event) => {
-              const input = event.currentTarget.parentElement?.querySelector(
-                'input[type="date"]',
-              ) as HTMLInputElement | null;
-              input?.showPicker?.();
-            }}
-            type="button"
-          >
-            {startDateLabel}
-          </button>
-          <input
-            className="pointer-events-none absolute inset-0 opacity-0"
-            onChange={(event) => {
-              if (event.target.value) {
-                setStartDate(event.target.value);
-              }
-            }}
-            tabIndex={-1}
-            type="date"
-            value={startDate}
-          />
-        </label>
+        <DatePickerButton
+          ariaLabel="Pick start date"
+          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
+          onChange={(v) => { if (v) setStartDate(v); }}
+          testId="manual-start-date-button"
+          value={startDate}
+        />
       </div>
 
       <span
@@ -122,34 +99,13 @@ export function ManualModeComposer({
           type="time"
           value={stopTime}
         />
-        <label className="relative">
-          <span className="sr-only">Stop date</span>
-          <button
-            aria-label="Pick stop date"
-            className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
-            data-testid="manual-stop-date-button"
-            onClick={(event) => {
-              const input = event.currentTarget.parentElement?.querySelector(
-                'input[type="date"]',
-              ) as HTMLInputElement | null;
-              input?.showPicker?.();
-            }}
-            type="button"
-          >
-            {stopDateLabel}
-          </button>
-          <input
-            className="pointer-events-none absolute inset-0 opacity-0"
-            onChange={(event) => {
-              if (event.target.value) {
-                setStopDate(event.target.value);
-              }
-            }}
-            tabIndex={-1}
-            type="date"
-            value={stopDate}
-          />
-        </label>
+        <DatePickerButton
+          ariaLabel="Pick stop date"
+          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
+          onChange={(v) => { if (v) setStopDate(v); }}
+          testId="manual-stop-date-button"
+          value={stopDate}
+        />
       </div>
 
       <span
@@ -190,39 +146,6 @@ function formatDateISO(date: Date, timezone: string): string {
     year: "numeric",
   });
   return formatter.format(date);
-}
-
-function formatDateLabel(dateStr: string, timezone: string): string {
-  const todayStr = formatDateISO(new Date(), timezone);
-  if (dateStr === todayStr) {
-    return "Today";
-  }
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  if (dateStr === formatDateISO(yesterday, timezone)) {
-    return "Yesterday";
-  }
-  const parts = dateStr.split("-");
-  if (parts.length !== 3) {
-    return dateStr;
-  }
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const monthIndex = Number.parseInt(parts[1], 10) - 1;
-  const day = Number.parseInt(parts[2], 10);
-  return `${monthNames[monthIndex]} ${day}`;
 }
 
 function parseLocalDateTime(dateStr: string, timeStr: string, _timezone: string): number | null {

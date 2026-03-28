@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
@@ -186,11 +187,11 @@ export function BulkEditDialog({
           Remove existing tags
         </label>
 
-        <input
-          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px] text-white focus:border-[var(--track-accent)] focus:outline-none"
-          data-testid="bulk-edit-date"
-          onChange={(event) => setSelectedDate(event.target.value)}
-          type="date"
+        <DatePickerButton
+          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-left text-[13px] text-white"
+          onChange={setSelectedDate}
+          placeholder="Move to date..."
+          testId="bulk-edit-date"
           value={selectedDate}
         />
 

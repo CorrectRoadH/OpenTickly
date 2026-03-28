@@ -1,5 +1,7 @@
 import { type ReactElement } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
+
 type InvoiceHeaderFieldsProps = {
   currency: string;
   date: string;
@@ -47,20 +49,16 @@ export function InvoiceHeaderFields({
         />
       </InlineField>
       <InlineField label="Invoice Date" testId="invoice-date">
-        <input
+        <DatePickerButton
           className={INLINE_INPUT_CLASS}
-          onChange={(e) => onDateChange(e.target.value)}
-          style={{ colorScheme: "dark" }}
-          type="date"
+          onChange={onDateChange}
           value={date}
         />
       </InlineField>
       <InlineField label="Due date" testId="invoice-due-date">
-        <input
+        <DatePickerButton
           className={INLINE_INPUT_CLASS}
-          onChange={(e) => onDueDateChange(e.target.value)}
-          style={{ colorScheme: "dark" }}
-          type="date"
+          onChange={onDueDateChange}
           value={dueDate}
         />
       </InlineField>

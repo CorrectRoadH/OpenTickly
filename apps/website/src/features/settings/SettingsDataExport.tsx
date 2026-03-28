@@ -3,6 +3,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
+import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
+
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 
@@ -144,31 +146,29 @@ export function SettingsDataExport(): ReactElement {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
+          <div className="block">
             <span className="mb-1 block text-[13px] font-medium text-[var(--track-text-soft)]">
               Start date
             </span>
-            <input
-              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
-              data-testid="export-start-date"
-              onChange={(e) => setStartDate(e.target.value)}
-              type="date"
+            <DatePickerButton
+              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[13px] text-white"
+              onChange={setStartDate}
+              testId="export-start-date"
               value={startDate}
             />
-          </label>
+          </div>
 
-          <label className="block">
+          <div className="block">
             <span className="mb-1 block text-[13px] font-medium text-[var(--track-text-soft)]">
               End date
             </span>
-            <input
-              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
-              data-testid="export-end-date"
-              onChange={(e) => setEndDate(e.target.value)}
-              type="date"
+            <DatePickerButton
+              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[13px] text-white"
+              onChange={setEndDate}
+              testId="export-end-date"
               value={endDate}
             />
-          </label>
+          </div>
         </div>
 
         <label className="block">
