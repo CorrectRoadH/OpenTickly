@@ -519,19 +519,24 @@ export function ListView({
               const groupCount = displayEntry._groupCount ?? 0;
               const groupKey = `${group.key}-${entry.id}-${entry.description}`;
               const isExpanded = expandedGroupKeys.has(groupKey);
+              // Toggl: expanded shows parent row (badge + totals) + all child rows.
+              // Collapsed shows just the representative row with badge.
               const entriesToRender =
-                groupCount > 1 && isExpanded ? (displayEntry._groupEntries ?? [entry]) : [entry];
+                groupCount > 1 && isExpanded
+                  ? [entry, ...(displayEntry._groupEntries ?? [])]
+                  : [entry];
 
               return entriesToRender.map((renderEntry, subIdx) => {
                 const entryId = renderEntry.id;
                 const isSelected = typeof entryId === "number" && selectedIds.has(entryId);
                 const isCollapsedRow = groupCount > 1 && !isExpanded && subIdx === 0;
+                const isExpandedGroup = groupCount > 1 && isExpanded;
                 return (
                   <li
                     key={`${renderEntry.id ?? "no-id"}-${subIdx}`}
                     className={`group flex h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
-                    }`}
+                    } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
                   >
                     {/* Checkbox: w=30px, flex: 0 0 auto */}
                     <div className="flex w-[30px] shrink-0 items-center justify-center">
@@ -616,7 +621,7 @@ export function ListView({
                       onClick={() => onBillableToggle?.(renderEntry)}
                       type="button"
                     >
-                      <DollarIcon className="h-[18px] w-[12px]" />
+                      <DollarIcon className="size-4" />
                     </button>
 
                     {/* Duration + Time range: flex: 0 0 auto, minWidth=250px */}
