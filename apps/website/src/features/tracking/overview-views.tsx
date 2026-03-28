@@ -583,23 +583,23 @@ export function ListView({
                       </button>
                     ) : null}
 
-                    {/* Description — inline editable */}
-                    <InlineDescription
-                      entry={renderEntry}
-                      isRunning={isRunningTimeEntry(renderEntry)}
-                      onChange={onDescriptionChange}
-                    />
-
-                    {/* Project — click to open picker, or show picker icon on hover */}
-                    <ListRowProjectPicker
-                      entry={renderEntry}
-                      onProjectChange={onProjectChange}
-                      projects={projects ?? []}
-                      workspaceName={workspaceName ?? "Workspace"}
-                    />
+                    {/* Left: Description + Project (inline, flex row) */}
+                    <div className="ml-3 flex min-w-0 flex-1 items-center gap-3">
+                      <InlineDescription
+                        entry={renderEntry}
+                        isRunning={isRunningTimeEntry(renderEntry)}
+                        onChange={onDescriptionChange}
+                      />
+                      <ListRowProjectPicker
+                        entry={renderEntry}
+                        onProjectChange={onProjectChange}
+                        projects={projects ?? []}
+                        workspaceName={workspaceName ?? "Workspace"}
+                      />
+                    </div>
 
                     {/* Right side: tags, billable, time range, duration, actions */}
-                    <div className="flex shrink-0 items-center gap-2 pl-4">
+                    <div className="flex shrink-0 items-center gap-1 pl-4">
                       <ListRowTagPicker
                         entry={renderEntry}
                         onTagsChange={onTagsChange}
@@ -725,7 +725,7 @@ function InlineDescription({
   if (editing) {
     return (
       <input
-        className="ml-3 min-w-0 flex-1 bg-transparent text-[14px] font-medium text-white outline-none"
+        className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-white outline-none"
         onBlur={commit}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
@@ -741,7 +741,7 @@ function InlineDescription({
 
   return (
     <button
-      className="ml-3 flex min-w-0 flex-1 cursor-text items-center gap-2 text-left"
+      className="flex min-w-0 flex-1 cursor-text items-center gap-2 text-left"
       onClick={startEditing}
       type="button"
     >
@@ -999,21 +999,31 @@ function ListRowProjectPicker({
       {hasProject ? (
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
-          className="ml-2 flex shrink-0 cursor-pointer items-center gap-0 text-[14px] font-medium"
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 text-[14px] font-medium"
           onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
           }}
-          style={{ color: resolveEntryColor(entry) }}
           type="button"
         >
-          <span className="mr-1">•</span>
-          <span className="max-w-[180px] truncate">{entry.project_name}</span>
+          <span
+            className="size-[9px] shrink-0 rounded-full"
+            style={{ backgroundColor: resolveEntryColor(entry) }}
+          />
+          <span className="max-w-[180px] truncate" style={{ color: resolveEntryColor(entry) }}>
+            {entry.project_name}
+          </span>
+          {entry.client_name ? (
+            <span className="text-[var(--track-text-muted)]">
+              <span className="mx-0.5">·</span>
+              <span>{entry.client_name}</span>
+            </span>
+          ) : null}
         </button>
       ) : (
         <button
           aria-label="Add a project"
-          className="ml-2 flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
+          className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
           onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
