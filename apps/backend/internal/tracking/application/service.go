@@ -111,13 +111,28 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 	}
 
 	if stop == nil {
-		if _, ok, err := service.store.GetCurrentTimeEntry(ctx, command.UserID); err != nil {
+		if existing, ok, err := service.store.GetCurrentTimeEntry(ctx, command.UserID); err != nil {
 			return TimeEntryView{}, err
 		} else if ok {
-			service.logger.WarnContext(ctx, "running time entry already exists",
+			service.logger.InfoContext(ctx, "auto-stopping existing running time entry",
 				"user_id", command.UserID,
+				"existing_entry_id", existing.ID,
 			)
-			return TimeEntryView{}, ErrRunningTimeEntryExists
+			stopTime := start
+			if _, err := service.UpdateTimeEntry(ctx, UpdateTimeEntryCommand{
+				WorkspaceID: existing.WorkspaceID,
+				TimeEntryID: existing.ID,
+				UserID:      command.UserID,
+				Stop:        &stopTime,
+				Duration:    lo.ToPtr(int(stopTime.Sub(existing.Start).Seconds())),
+			}); err != nil {
+				service.logger.ErrorContext(ctx, "failed to auto-stop existing running time entry",
+					"user_id", command.UserID,
+					"existing_entry_id", existing.ID,
+					"error", err.Error(),
+				)
+				return TimeEntryView{}, err
+			}
 		}
 	}
 
