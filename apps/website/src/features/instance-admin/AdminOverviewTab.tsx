@@ -36,7 +36,7 @@ function OnboardingBanner(): ReactElement {
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <a
               className="inline-flex items-center gap-2 rounded-[8px] bg-[#24292e] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[#2f363d]"
-              href="https://github.com/opentoggl-ci/opentoggl"
+              href="https://github.com/CorrectRoadH/opentoggl"
               rel="noopener noreferrer"
               target="_blank"
             >
@@ -47,7 +47,7 @@ function OnboardingBanner(): ReactElement {
             </a>
             <a
               className="inline-flex items-center gap-1 text-[14px] text-[var(--track-accent)] hover:underline"
-              href="https://github.com/opentoggl-ci/opentoggl/issues"
+              href="https://github.com/CorrectRoadH/opentoggl/issues"
               rel="noopener noreferrer"
               target="_blank"
             >
@@ -55,7 +55,7 @@ function OnboardingBanner(): ReactElement {
             </a>
             <a
               className="inline-flex items-center gap-1 text-[14px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
-              href="https://github.com/opentoggl-ci/opentoggl/blob/main/CHANGELOG.md"
+              href="https://github.com/CorrectRoadH/opentoggl/blob/main/CHANGELOG.md"
               rel="noopener noreferrer"
               target="_blank"
             >

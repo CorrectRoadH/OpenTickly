@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	githubRepo     = "opentoggl-ci/opentoggl"
+	githubRepo     = "CorrectRoadH/opentoggl"
 	changelogURL   = "https://github.com/" + githubRepo + "/blob/main/CHANGELOG.md"
 	releasesAPIURL = "https://api.github.com/repos/" + githubRepo + "/releases/latest"
 )
