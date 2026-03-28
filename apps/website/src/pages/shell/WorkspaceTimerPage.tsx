@@ -43,6 +43,7 @@ import {
   TimerIcon,
 } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
 type DeletedEntrySnapshot = {
@@ -172,6 +173,38 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
       document.removeEventListener("keydown", handleGlobalKeyDown);
     };
   }, [handleGlobalKeyDown]);
+
+  // On mount, scroll the window so the current time indicator is centered
+  // in the visible area below the sticky headers. Matches Toggl's behavior:
+  // scrollY = indicatorPageY - stickyHeadersHeight - availableHeight / 2
+  const hasScrolledToNow = useRef(false);
+  useEffect(() => {
+    if (hasScrolledToNow.current || orch.view !== "calendar") return;
+    if (orch.timeEntriesQuery.isPending) return;
+
+    // Wait one frame for the calendar to render
+    requestAnimationFrame(() => {
+      const indicator = document.querySelector('[data-testid="current-time-indicator"]');
+      if (!indicator) return;
+
+      const indicatorRect = indicator.getBoundingClientRect();
+      const indicatorPageY = indicatorRect.top + window.scrollY;
+
+      // Sum all sticky header heights
+      let stickyHeight = 0;
+      document.querySelectorAll<HTMLElement>('[class*="sticky"]').forEach((el) => {
+        if (getComputedStyle(el).position === "sticky" && el.offsetWidth > 200) {
+          stickyHeight += el.offsetHeight;
+        }
+      });
+
+      const availableHeight = window.innerHeight - stickyHeight;
+      const targetScrollY = indicatorPageY - stickyHeight - availableHeight / 2;
+
+      window.scrollTo({ top: Math.max(0, targetScrollY), behavior: "instant" });
+      hasScrolledToNow.current = true;
+    });
+  }, [orch.view, orch.timeEntriesQuery.isPending]);
 
   return (
     <div
@@ -856,7 +889,7 @@ function snapshotEntryForUndo(entry: {
 }
 
 function handleCalendarContextMenuAction(
-  entry: Parameters<Exclude<import("../../features/tracking/overview-views.tsx").CalendarViewProps["onContextMenuAction"], undefined>>[0],
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   action: CalendarContextMenuAction,
   orch: ReturnType<typeof useTimerPageOrchestration>,
   showDeleteToast: (snapshot: DeletedEntrySnapshot) => void,
