@@ -86,6 +86,7 @@ func scanClient(scanner scanner) (catalogapplication.ClientView, error) {
 		&client.ID,
 		&client.WorkspaceID,
 		&client.Name,
+		&client.Notes,
 		&client.Archived,
 		&client.CreatedBy,
 		&client.CreatedAt,

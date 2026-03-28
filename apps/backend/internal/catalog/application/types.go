@@ -38,6 +38,7 @@ type ClientView struct {
 	ID          int64
 	WorkspaceID int64
 	Name        string
+	Notes       string
 	Archived    bool
 	CreatedBy   *int64
 	CreatedAt   time.Time
@@ -184,6 +185,7 @@ type CreateClientCommand struct {
 	WorkspaceID int64
 	CreatedBy   int64
 	Name        string
+	Notes       string
 }
 
 type CreateGroupCommand struct {
@@ -223,6 +225,7 @@ type UpdateClientCommand struct {
 	WorkspaceID int64
 	ClientID    int64
 	Name        *string
+	Notes       *string
 }
 
 type RestoreClientCommand struct {

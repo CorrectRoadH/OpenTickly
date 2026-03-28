@@ -107,6 +107,7 @@ func clientViewToAPI(view catalogapplication.ClientView) publictrackapi.ModelsCl
 		CreatorId: intPointerFromInt64Pointer(view.CreatedBy),
 		Id:        lo.ToPtr(int(view.ID)),
 		Name:      lo.ToPtr(view.Name),
+		Notes:     lo.ToPtr(view.Notes),
 		Wid:       lo.ToPtr(int(view.WorkspaceID)),
 	}
 }

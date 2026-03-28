@@ -29,7 +29,7 @@ func (store *Store) ListClients(
 	rows, err := store.pool.Query(
 		ctx,
 		fmt.Sprintf(
-			"select id, workspace_id, name, archived, created_by, created_at from catalog_clients where %s order by lower(name), id",
+			"select id, workspace_id, name, notes, archived, created_by, created_at from catalog_clients where %s order by lower(name), id",
 			strings.Join(where, " and "),
 		),
 		args...,
@@ -57,7 +57,7 @@ func (store *Store) GetClient(
 ) (catalogapplication.ClientView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select id, workspace_id, name, archived, created_by, created_at
+		`select id, workspace_id, name, notes, archived, created_by, created_at
 		from catalog_clients
 		where workspace_id = $1 and id = $2`,
 		workspaceID,
@@ -80,7 +80,7 @@ func (store *Store) ListClientsByIDs(
 ) ([]catalogapplication.ClientView, error) {
 	rows, err := store.pool.Query(
 		ctx,
-		`select id, workspace_id, name, archived, created_by, created_at
+		`select id, workspace_id, name, notes, archived, created_by, created_at
 		from catalog_clients
 		where workspace_id = $1 and id = any($2)
 		order by id`,

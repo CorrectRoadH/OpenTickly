@@ -92,6 +92,9 @@ func (service *Service) UpdateClient(ctx context.Context, command UpdateClientCo
 		}
 		current.Name = name
 	}
+	if command.Notes != nil {
+		current.Notes = *command.Notes
+	}
 
 	if err := service.store.UpdateClient(ctx, current); err != nil {
 		return ClientView{}, err

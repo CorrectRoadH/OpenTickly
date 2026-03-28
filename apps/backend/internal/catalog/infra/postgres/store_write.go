@@ -14,11 +14,12 @@ func (store *Store) CreateClient(
 ) (catalogapplication.ClientView, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`insert into catalog_clients (workspace_id, name, created_by)
-		values ($1, $2, $3)
-		returning id, workspace_id, name, archived, created_by, created_at`,
+		`insert into catalog_clients (workspace_id, name, notes, created_by)
+		values ($1, $2, $3, $4)
+		returning id, workspace_id, name, notes, archived, created_by, created_at`,
 		command.WorkspaceID,
 		command.Name,
+		command.Notes,
 		command.CreatedBy,
 	)
 	client, scanErr := scanClient(row)
@@ -32,11 +33,12 @@ func (store *Store) UpdateClient(ctx context.Context, client catalogapplication.
 	_, err := store.pool.Exec(
 		ctx,
 		`update catalog_clients
-		set name = $3, archived = $4
+		set name = $3, notes = $4, archived = $5
 		where workspace_id = $1 and id = $2`,
 		client.WorkspaceID,
 		client.ID,
 		client.Name,
+		client.Notes,
 		client.Archived,
 	)
 	if err != nil {

@@ -11142,15 +11142,13 @@
             "type": "boolean",
             "description": "Place pinned projects at top of response",
             "name": "sort_pinned",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "string",
             "description": "search",
             "name": "search",
-            "in": "query",
-            "required": true
+            "in": "query"
           }
         ],
         "responses": {
@@ -21402,11 +21400,13 @@
         },
         "cid": {
           "description": "Client ID, legacy",
-          "type": "integer"
+          "type": "integer",
+          "x-nullable": true
         },
         "client_id": {
           "description": "Client ID, optional",
-          "type": "integer"
+          "type": "integer",
+          "x-nullable": true
         },
         "client_name": {
           "description": "Client name, optional",
@@ -22425,7 +22425,8 @@
         },
         "description": {
           "description": "Time entry description, optional",
-          "type": "string"
+          "type": "string",
+          "x-nullable": true
         },
         "duration": {
           "description": "Time entry duration. For running entries should be negative, preferable -1",
@@ -22447,11 +22448,13 @@
         },
         "pid": {
           "description": "Project ID, legacy field",
-          "type": "integer"
+          "type": "integer",
+          "x-nullable": true
         },
         "project_id": {
           "description": "Project ID, optional",
-          "type": "integer"
+          "type": "integer",
+          "x-nullable": true
         },
         "shared_with_user_ids": {
           "description": "List of user IDs to share this time entry with",

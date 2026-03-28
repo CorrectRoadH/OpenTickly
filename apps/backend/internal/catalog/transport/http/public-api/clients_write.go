@@ -32,6 +32,7 @@ func (handler *Handler) PostPublicTrackClients(ctx echo.Context) error {
 		WorkspaceID: workspaceID,
 		CreatedBy:   user.ID,
 		Name:        lo.FromPtr(request.Name),
+		Notes:       lo.FromPtr(request.Notes),
 	})
 	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
@@ -65,6 +66,7 @@ func (handler *Handler) PutPublicTrackClient(ctx echo.Context) error {
 		WorkspaceID: workspaceID,
 		ClientID:    clientID,
 		Name:        request.Name,
+		Notes:       request.Notes,
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {

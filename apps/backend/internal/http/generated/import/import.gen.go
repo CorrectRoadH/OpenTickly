@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,6 +19,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for ImportJobStatus.
@@ -30,6 +32,7 @@ const (
 
 // Defines values for ImportJobCreateRequestSource.
 const (
+	TimeEntriesCsv     ImportJobCreateRequestSource = "time_entries_csv"
 	TogglExportArchive ImportJobCreateRequestSource = "toggl_export_archive"
 )
 
@@ -48,15 +51,162 @@ type ImportJobStatus string
 
 // ImportJobCreateRequest defines model for ImportJobCreateRequest.
 type ImportJobCreateRequest struct {
-	Source      ImportJobCreateRequestSource `json:"source"`
-	WorkspaceId int                          `json:"workspace_id"`
+	Archive          openapi_types.File           `json:"archive"`
+	OrganizationName *string                      `json:"organization_name,omitempty"`
+	Source           ImportJobCreateRequestSource `json:"source"`
+	WorkspaceId      *int                         `json:"workspace_id,omitempty"`
+	union            json.RawMessage
 }
 
 // ImportJobCreateRequestSource defines model for ImportJobCreateRequest.Source.
 type ImportJobCreateRequestSource string
 
-// CreateImportJobJSONRequestBody defines body for CreateImportJob for application/json ContentType.
-type CreateImportJobJSONRequestBody = ImportJobCreateRequest
+// ImportJobCreateRequest0 defines model for .
+type ImportJobCreateRequest0 struct {
+	Source *interface{} `json:"source,omitempty"`
+}
+
+// ImportJobCreateRequest1 defines model for .
+type ImportJobCreateRequest1 struct {
+	Source *interface{} `json:"source,omitempty"`
+}
+
+// CreateImportJobMultipartRequestBody defines body for CreateImportJob for multipart/form-data ContentType.
+type CreateImportJobMultipartRequestBody = ImportJobCreateRequest
+
+// AsImportJobCreateRequest0 returns the union data inside the ImportJobCreateRequest as a ImportJobCreateRequest0
+func (t ImportJobCreateRequest) AsImportJobCreateRequest0() (ImportJobCreateRequest0, error) {
+	var body ImportJobCreateRequest0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromImportJobCreateRequest0 overwrites any union data inside the ImportJobCreateRequest as the provided ImportJobCreateRequest0
+func (t *ImportJobCreateRequest) FromImportJobCreateRequest0(v ImportJobCreateRequest0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeImportJobCreateRequest0 performs a merge with any union data inside the ImportJobCreateRequest, using the provided ImportJobCreateRequest0
+func (t *ImportJobCreateRequest) MergeImportJobCreateRequest0(v ImportJobCreateRequest0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsImportJobCreateRequest1 returns the union data inside the ImportJobCreateRequest as a ImportJobCreateRequest1
+func (t ImportJobCreateRequest) AsImportJobCreateRequest1() (ImportJobCreateRequest1, error) {
+	var body ImportJobCreateRequest1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromImportJobCreateRequest1 overwrites any union data inside the ImportJobCreateRequest as the provided ImportJobCreateRequest1
+func (t *ImportJobCreateRequest) FromImportJobCreateRequest1(v ImportJobCreateRequest1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeImportJobCreateRequest1 performs a merge with any union data inside the ImportJobCreateRequest, using the provided ImportJobCreateRequest1
+func (t *ImportJobCreateRequest) MergeImportJobCreateRequest1(v ImportJobCreateRequest1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ImportJobCreateRequest) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["archive"], err = json.Marshal(t.Archive)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'archive': %w", err)
+	}
+
+	if t.OrganizationName != nil {
+		object["organization_name"], err = json.Marshal(t.OrganizationName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'organization_name': %w", err)
+		}
+	}
+
+	object["source"], err = json.Marshal(t.Source)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'source': %w", err)
+	}
+
+	if t.WorkspaceId != nil {
+		object["workspace_id"], err = json.Marshal(t.WorkspaceId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'workspace_id': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *ImportJobCreateRequest) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["archive"]; found {
+		err = json.Unmarshal(raw, &t.Archive)
+		if err != nil {
+			return fmt.Errorf("error reading 'archive': %w", err)
+		}
+	}
+
+	if raw, found := object["organization_name"]; found {
+		err = json.Unmarshal(raw, &t.OrganizationName)
+		if err != nil {
+			return fmt.Errorf("error reading 'organization_name': %w", err)
+		}
+	}
+
+	if raw, found := object["source"]; found {
+		err = json.Unmarshal(raw, &t.Source)
+		if err != nil {
+			return fmt.Errorf("error reading 'source': %w", err)
+		}
+	}
+
+	if raw, found := object["workspace_id"]; found {
+		err = json.Unmarshal(raw, &t.WorkspaceId)
+		if err != nil {
+			return fmt.Errorf("error reading 'workspace_id': %w", err)
+		}
+	}
+
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -134,19 +284,21 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"CwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
