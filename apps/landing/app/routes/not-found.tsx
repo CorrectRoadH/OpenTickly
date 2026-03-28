@@ -4,7 +4,11 @@ import { Link } from "react-router";
 import { baseOptions } from "@/lib/layout.shared";
 
 export function meta(_: Route.MetaArgs) {
-  return [{ title: "Not Found" }];
+  return [
+    { title: "Page Not Found | OpenToggl" },
+    { name: "description", content: "The page you are looking for does not exist. Return to the OpenToggl documentation or homepage." },
+    { name: "robots", content: "noindex,nofollow" },
+  ];
 }
 
 export default function NotFound() {

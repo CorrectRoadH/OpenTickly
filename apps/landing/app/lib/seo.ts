@@ -3,7 +3,7 @@ export const siteUrl = "https://opentoggl.com";
 export const defaultTitle = "Free Private-First Toggl Alternative";
 export const defaultDescription =
   "OpenToggl is a free, private-first, AI-friendly alternative to Toggl for teams that want control over hosting, data, and API throughput.";
-export const defaultOgImagePath = "/og-image.svg";
+export const defaultOgImagePath = "/og-image.png";
 export const defaultKeywords = [
   "OpenToggl",
   "open source time tracking",
@@ -89,6 +89,11 @@ export function buildOrganizationSchema(siteUrl: string) {
     description: defaultDescription,
     url: siteUrl,
     sameAs: ["https://github.com/CorrectRoadH/opentoggl"],
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
   };
 }
 
