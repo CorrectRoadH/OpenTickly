@@ -1,6 +1,4 @@
 import { SurfaceCard } from "@opentoggl/web-ui";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -62,11 +60,16 @@ function downloadBlob(content: string, filename: string): void {
   URL.revokeObjectURL(url);
 }
 
-function buildAndDownloadPdf(
+async function buildAndDownloadPdf(
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
   startDate: string,
   endDate: string,
-): void {
+): Promise<void> {
+  const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ]);
+
   const filtered = entries.filter((e) => (e.duration ?? 0) >= 0);
   const doc = new jsPDF({ orientation: "landscape" });
 
@@ -119,7 +122,7 @@ export function SettingsDataExport(): ReactElement {
     return entriesQuery.data.filter((e) => (e.duration ?? 0) >= 0).length;
   }, [entriesQuery.data]);
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (!entriesQuery.data || entriesQuery.data.length === 0) return;
 
     setExporting(true);
@@ -128,7 +131,7 @@ export function SettingsDataExport(): ReactElement {
         const csv = buildCsv(entriesQuery.data);
         downloadBlob(csv, `time-entries-${startDate}-to-${endDate}.csv`);
       } else {
-        buildAndDownloadPdf(entriesQuery.data, startDate, endDate);
+        await buildAndDownloadPdf(entriesQuery.data, startDate, endDate);
       }
     } finally {
       setExporting(false);
