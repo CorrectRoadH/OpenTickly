@@ -50,7 +50,7 @@ func (store *Store) CreateFavorite(ctx context.Context, record trackingapplicati
 		record.Billable,
 		record.Public,
 		record.Rank,
-		record.TagIDs,
+		coalesceInt64Slice(record.TagIDs),
 	)
 	return scanFavorite(row)
 }
@@ -79,7 +79,7 @@ func (store *Store) UpdateFavorite(ctx context.Context, record trackingapplicati
 		record.Billable,
 		record.Public,
 		record.Rank,
-		record.TagIDs,
+		coalesceInt64Slice(record.TagIDs),
 	)
 	return scanFavorite(row)
 }
@@ -175,9 +175,9 @@ func (store *Store) CreateGoal(ctx context.Context, record trackingapplication.C
 		record.TargetSeconds,
 		record.StartDate,
 		record.EndDate,
-		record.ProjectIDs,
-		record.TaskIDs,
-		record.TagIDs,
+		coalesceInt64Slice(record.ProjectIDs),
+		coalesceInt64Slice(record.TaskIDs),
+		coalesceInt64Slice(record.TagIDs),
 	)
 	return scanGoal(row)
 }
@@ -215,9 +215,9 @@ func (store *Store) UpdateGoal(ctx context.Context, record trackingapplication.U
 		record.TargetSeconds,
 		record.StartDate,
 		record.EndDate,
-		record.ProjectIDs,
-		record.TaskIDs,
-		record.TagIDs,
+		coalesceInt64Slice(record.ProjectIDs),
+		coalesceInt64Slice(record.TaskIDs),
+		coalesceInt64Slice(record.TagIDs),
 	)
 	return scanGoal(row)
 }
@@ -301,8 +301,8 @@ func (store *Store) CreateReminder(ctx context.Context, record trackingapplicati
 		record.ThresholdHours,
 		record.EmailReminderEnabled,
 		record.SlackReminderEnabled,
-		record.UserIDs,
-		record.GroupIDs,
+		coalesceInt64Slice(record.UserIDs),
+		coalesceInt64Slice(record.GroupIDs),
 	)
 	return scanReminder(row)
 }
@@ -328,8 +328,8 @@ func (store *Store) UpdateReminder(ctx context.Context, record trackingapplicati
 		record.ThresholdHours,
 		record.EmailReminderEnabled,
 		record.SlackReminderEnabled,
-		record.UserIDs,
-		record.GroupIDs,
+		coalesceInt64Slice(record.UserIDs),
+		coalesceInt64Slice(record.GroupIDs),
 	)
 	return scanReminder(row)
 }

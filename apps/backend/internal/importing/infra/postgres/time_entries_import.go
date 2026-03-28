@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -262,11 +261,11 @@ func (importer *timeEntryImporter) resolveTags(ctx context.Context, tagNames []s
 }
 
 func (importer *timeEntryImporter) insertTimeEntry(ctx context.Context, record importedTimeEntryRecord) error {
-	tagIDs, err := json.Marshal(record.TagIDs)
-	if err != nil {
-		return fmt.Errorf("marshal time entry tags: %w", err)
+	tagIDs := record.TagIDs
+	if tagIDs == nil {
+		tagIDs = []int64{}
 	}
-	_, err = importer.tx.Exec(ctx, `
+	_, err := importer.tx.Exec(ctx, `
 		insert into tracking_time_entries (
 			workspace_id,
 			user_id,
@@ -283,9 +282,9 @@ func (importer *timeEntryImporter) insertTimeEntry(ctx context.Context, record i
 			expense_ids
 		) values (
 			$1, $2, $3, $4, $5, $6, $7,
-			$8, $9, $10, $11, $12::jsonb, '[]'::jsonb
+			$8, $9, $10, $11, $12, '{}'
 		)
-	`, record.WorkspaceID, record.UserID, record.ClientID, record.ProjectID, record.TaskID, record.Description, record.Billable, record.Start.UTC(), record.Stop, record.Duration, importingapplication.ImportSourceTimeEntriesCSV, string(tagIDs))
+	`, record.WorkspaceID, record.UserID, record.ClientID, record.ProjectID, record.TaskID, record.Description, record.Billable, record.Start.UTC(), record.Stop, record.Duration, importingapplication.ImportSourceTimeEntriesCSV, tagIDs)
 	if err != nil {
 		return fmt.Errorf("insert time entry %q: %w", record.Description, err)
 	}

@@ -43,8 +43,8 @@ func (store *Store) CreateTimeEntry(
 		record.Stop,
 		record.Duration,
 		record.CreatedWith,
-		record.TagIDs,
-		record.ExpenseIDs,
+		coalesceInt64Slice(record.TagIDs),
+		coalesceInt64Slice(record.ExpenseIDs),
 	)
 	return scanTimeEntry(row)
 }
@@ -491,8 +491,8 @@ func (store *Store) UpdateTimeEntry(
 		record.Stop,
 		record.Duration,
 		record.CreatedWith,
-		record.TagIDs,
-		record.ExpenseIDs,
+		coalesceInt64Slice(record.TagIDs),
+		coalesceInt64Slice(record.ExpenseIDs),
 	)
 	return scanTimeEntry(row)
 }
