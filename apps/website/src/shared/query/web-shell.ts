@@ -43,6 +43,8 @@ import {
   getWorkspacesByWorkspaceIdProjectsByProjectId,
   getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
   createWorkspaceFavorite,
+  getWorkspaceFavorites,
+  workspaceDeleteFavorite,
   archiveClient,
   restoreClient,
   deleteWorkspaceClient,
@@ -1140,7 +1142,23 @@ export function useDeleteProjectMutation(workspaceId: number) {
   });
 }
 
+const favoritesQueryKey = (workspaceId: number) => ["favorites", workspaceId] as const;
+
+export function useFavoritesQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: async () =>
+      unwrapWebApiResult(
+        getWorkspaceFavorites({
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    queryKey: favoritesQueryKey(workspaceId),
+  });
+}
+
 export function useCreateWorkspaceFavoriteMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: ({
       billable,
@@ -1169,6 +1187,32 @@ export function useCreateWorkspaceFavoriteMutation(workspaceId: number) {
           },
         }),
       ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: favoritesQueryKey(workspaceId),
+      });
+    },
+  });
+}
+
+export function useDeleteFavoriteMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (favoriteId: number) =>
+      unwrapWebApiResult(
+        workspaceDeleteFavorite({
+          path: {
+            workspace_id: workspaceId,
+            favorite_id: favoriteId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: favoritesQueryKey(workspaceId),
+      });
+    },
   });
 }
 

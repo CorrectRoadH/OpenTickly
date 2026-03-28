@@ -45,6 +45,7 @@ import {
 } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useDeleteFavoriteMutation, useFavoritesQuery } from "../../shared/query/web-shell.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
 type DeletedEntrySnapshot = {
@@ -86,6 +87,9 @@ export function WorkspaceTimerPage({
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
+  const favoritesQuery = useFavoritesQuery(orch.workspaceId);
+  const deleteFavoriteMutation = useDeleteFavoriteMutation(orch.workspaceId);
+  const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
 
   // Auto-start timer from URL params (e.g. /timer?description=foo&billable=true
   // or /timer/start?desc=foo). Fires once when start params are present and the
@@ -857,7 +861,23 @@ export function WorkspaceTimerPage({
             }))}
           />
         ) : null}
-        {sidebarOpen ? <GoalsFavoritesSidebar /> : null}
+        {sidebarOpen ? (
+          <GoalsFavoritesSidebar
+            favorites={favorites}
+            onDeleteFavorite={(favoriteId) => {
+              void deleteFavoriteMutation.mutateAsync(favoriteId);
+            }}
+            onStartFavorite={(fav) => {
+              void orch.handleContinueEntry({
+                billable: fav.billable,
+                description: fav.description,
+                project_id: fav.project_id,
+                tag_ids: fav.tag_ids,
+                task_id: fav.task_id,
+              } as Parameters<typeof orch.handleContinueEntry>[0]);
+            }}
+          />
+        ) : null}
       </div>
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
       {orch.composerSuggestionsAnchor ? (
