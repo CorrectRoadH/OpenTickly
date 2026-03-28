@@ -1251,7 +1251,6 @@ function CalendarEventCard({
   const durationSeconds = resolveEntryDurationSeconds(entry);
   const color = event.resource.color;
   const isRunning = event.resource.isRunning;
-  const [affordancesOpen, setAffordancesOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const entryId = event.id;
   const isDraft = event.resource.isDraft;
@@ -1263,26 +1262,24 @@ function CalendarEventCard({
     onEditEntry?.(entry, cardRef.current.getBoundingClientRect());
   }, [isDraft]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Toggl structure: rbc-event (no border-radius, overflow visible) wraps an
+  // inner EventBox (border-radius 4px, padding 4px 6px, own background color).
+  // Continue button is opacity:0 by default, shown on hover via CSS group-hover.
   return (
     <div
       ref={cardRef}
-      className={`group h-full overflow-hidden rounded-none border-none px-1.5 py-1 text-left text-[14px] font-medium leading-[1.15] text-white transition hover:brightness-110 ${
-        allowDirectEdit ? "cursor-grab" : "cursor-default"
-      }`}
+      className={`group h-full ${allowDirectEdit ? "cursor-grab" : "cursor-default"}`}
       data-testid={`calendar-entry-${entryId ?? "unknown"}`}
-      style={{
-        backgroundColor: colorToOverlay(color),
-        backgroundImage: isRunning
-          ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
-          : undefined,
-      }}
+      onClick={(e) => onEditEntry?.(entry, e.currentTarget.getBoundingClientRect())}
     >
-      <button
-        aria-label={`Edit ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="relative z-10 flex h-full w-full flex-col justify-between text-left text-[11px] text-white"
-        data-testid={`calendar-entry-move-${entryId}`}
-        onClick={(event) => onEditEntry?.(entry, event.currentTarget.getBoundingClientRect())}
-        type="button"
+      <div
+        className="relative flex h-full flex-col justify-between rounded-[4px] px-1.5 py-1 text-left text-[12px] text-[#fafafa]"
+        style={{
+          backgroundColor: colorToOverlay(color),
+          backgroundImage: isRunning
+            ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
+            : undefined,
+        }}
       >
         <div className="flex min-w-0 flex-col gap-0.5">
           <span
@@ -1292,49 +1289,32 @@ function CalendarEventCard({
           </span>
           {entry.project_name ? (
             <span
-              className="truncate leading-tight"
+              className="truncate text-[12px] font-medium leading-tight"
               style={{ color: color ?? "var(--track-accent)" }}
             >
               {entry.project_name}
-              {entry.client_name ? ` \u2022 ${entry.client_name}` : ""}
             </span>
           ) : null}
         </div>
         <div className="flex items-center gap-1">
-          <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight text-white/80">
+          <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight">
             {formatClockDuration(durationSeconds)}
           </span>
-          {entry.billable ? (
-            <span className="shrink-0 font-semibold leading-tight text-white/70">$</span>
-          ) : null}
-          {entry.tags && entry.tags.length > 0 ? (
-            <span className="shrink-0 leading-tight text-white/70">{entry.tags[0]}</span>
-          ) : null}
         </div>
-      </button>
-      <button
-        aria-label={`Entry actions for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-        className="absolute right-1 top-1 z-20 flex size-4 items-center justify-center rounded text-white/70 transition hover:bg-white/10 hover:text-white"
-        onClick={() => setAffordancesOpen((current) => !current)}
-        type="button"
-      >
-        <MoreIcon className="size-3" />
-      </button>
-      {allowDirectEdit ? (
+        {/* Continue button — hidden by default, shown on hover via CSS.
+            Toggl: opacity:0, position:absolute, border-radius:50%, bg:#cd7fc2 */}
         <button
-          aria-label={`Resize end for ${entry.description?.trim() || entry.project_name || "time entry"}`}
-          className="absolute inset-x-2 bottom-0 z-20 h-2 cursor-row-resize rounded-b bg-white/20 opacity-0 transition hover:opacity-100"
-          data-testid={`calendar-entry-resize-end-${entryId}`}
+          aria-label="Continue time entry"
+          className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[#cd7fc2] text-[#1b1b1b] opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={(e) => {
+            e.stopPropagation();
+            // Continue is handled via the editor's primary action
+          }}
           type="button"
-        />
-      ) : null}
-      {affordancesOpen ? (
-        <div className="absolute inset-x-1 bottom-1 flex flex-wrap gap-1 rounded-[6px] bg-[#141415]/95 p-1">
-          <span className="px-1.5 py-0.5 text-[9px] text-white/70">
-            {allowDirectEdit ? "Drag or resize to adjust" : "Running entries are view-only here"}
-          </span>
-        </div>
-      ) : null}
+        >
+          <PlayIcon className="size-2.5" />
+        </button>
+      </div>
     </div>
   );
 }
