@@ -8,7 +8,7 @@
 
 OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
-> Project status: OpenToggl is currently in a very early stage.
+> Project status: OpenToggl is still in a very early stage. It is not recommended for use yet; keep using Toggl + toggl-cli for now and migrate your data once it matures.
 
 It exists for a simple reason: for many individuals and teams, Toggl is too expensive; for people who care about data control, it is not private-first enough; and for AI and automation use cases, its rate limit is so low that it becomes almost unusable in practice.
 
@@ -61,6 +61,14 @@ OpenToggl works directly with [`toggl-cli`](https://github.com/CorrectRoadH/togg
 ```shell
 toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
 ```
+
+## Roadmap
+
+- [x] Full API compatibility with Track v9 and Reports v3
+- [ ] Full parity with Toggl Track web
+- [ ] Mobile and desktop implementations
+- [ ] opentoggl focus
+- [ ] opentoggl plan
 
 ## Get Started
 

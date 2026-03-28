@@ -62,6 +62,14 @@ OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cl
 toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
+## Roadmap
+
+- [x] API 完全兼容 track v9 和 report v3
+- [ ] track web 完全一致实现
+- [ ] 手机与桌面端的实现
+- [ ] opentoggl focus
+- [ ] opentoggl plan
+
 ## 开始使用
 
 - 仓库：`https://github.com/CorrectRoadH/opentoggl`
