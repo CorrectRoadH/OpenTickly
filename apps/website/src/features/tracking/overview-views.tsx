@@ -94,73 +94,76 @@ function buildCalendarLocalizer(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1) {
  * RBC passes `components.dayColumnWrapper` the day column's children
  * plus metadata. We wrap them and append the indicator on today's column.
  */
+/**
+ * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
+ * On the "today" column, appends a play button next to the RBC-rendered
+ * .rbc-current-time-indicator. We do NOT calculate our own position —
+ * we let RBC handle the indicator line position (it uses the same
+ * formula as event positioning, so they always align perfectly).
+ * The play button is positioned relative to the RBC indicator via CSS.
+ */
 function CalendarDayColumnWrapper({
   children,
   className,
   style,
   isNow,
-  minHour,
-  maxHour,
   onStartEntry,
-  nowMs,
 }: {
   children?: React.ReactNode;
   className?: string;
   style?: React.CSSProperties;
   isNow?: boolean;
-  minHour?: number;
-  maxHour?: number;
   onStartEntry?: () => void;
-  nowMs?: number;
 }) {
-  // Calculate current time as percentage of the visible time range.
-  // When using business hours (e.g. 9-17), the percentage base is
-  // maxHour - minHour, not 24. Matches how RBC positions events.
-  const timePercent = useMemo(() => {
-    if (!isNow) return 0;
-    const now = new Date(nowMs ?? Date.now());
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-    const rangeStartMinutes = (minHour ?? 0) * 60;
-    const rangeEndMinutes = (maxHour ?? 24) * 60;
-    const rangeMinutes = rangeEndMinutes - rangeStartMinutes;
-    if (rangeMinutes <= 0) return 0;
-    return ((currentMinutes - rangeStartMinutes) / rangeMinutes) * 100;
-  }, [isNow, nowMs, minHour, maxHour]);
+  const columnRef = useRef<HTMLDivElement>(null);
+  const playRef = useRef<SVGSVGElement>(null);
+
+  // Sync the play button's top position with RBC's indicator.
+  // RBC sets .rbc-current-time-indicator { top: XX% } inline.
+  // We read that value and apply it to the play button so both
+  // use the exact same positioning formula — no drift.
+  useEffect(() => {
+    if (!isNow || !columnRef.current || !playRef.current) return;
+
+    function syncPosition() {
+      const indicator = columnRef.current?.querySelector<HTMLElement>(
+        ".rbc-current-time-indicator",
+      );
+      if (indicator && playRef.current) {
+        playRef.current.style.top = indicator.style.top;
+      }
+    }
+
+    syncPosition();
+    const interval = setInterval(syncPosition, 10_000);
+    return () => clearInterval(interval);
+  }, [isNow]);
 
   return (
-    <div className={className} style={style}>
+    <div className={className} ref={columnRef} style={style}>
       {children}
       {isNow ? (
-        <div
-          className="pointer-events-none absolute left-0 right-0"
-          data-testid="current-time-indicator"
-          style={{ top: `${timePercent}%` }}
+        <svg
+          className="calendar-indicator-play-btn absolute cursor-pointer"
+          data-testid="current-time-indicator-play"
+          fill="none"
+          height="16"
+          onClick={(e) => {
+            e.stopPropagation();
+            onStartEntry?.();
+          }}
+          ref={playRef}
+          style={{ pointerEvents: "all", left: "-8.5px", marginTop: "-6.5px" }}
+          viewBox="0 0 36 36"
+          width="16"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Time line — Toggl: 3px, #b744ab, border-radius 2px */}
-          <div className="absolute inset-x-0 top-0 h-[3px] rounded-[2px] bg-[#b744ab]" />
-          {/* Play button — Toggl: viewBox 0 0 36 36 but renders at 16x16px,
-              positioned at left:-8.5px to bleed into gutter, top centered on line.
-              pointer-events:all so it's clickable. Clicking starts a new timer. */}
-          <svg
-            className="absolute cursor-pointer"
-            fill="none"
-            height="16"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartEntry?.();
-            }}
-            style={{ left: "-8.5px", top: "-6.5px", pointerEvents: "all" }}
-            viewBox="0 0 36 36"
-            width="16"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect fill="var(--track-accent)" height="36" rx="18" width="36" />
-            <path
-              d="M13 11.994c0-1.101.773-1.553 1.745-.997l10.51 6.005c.964.55.972 1.439 0 1.994l-10.51 6.007c-.964.55-1.745.102-1.745-.997V11.994z"
-              fill="var(--track-canvas)"
-            />
-          </svg>
-        </div>
+          <rect fill="var(--track-accent)" height="36" rx="18" width="36" />
+          <path
+            d="M13 11.994c0-1.101.773-1.553 1.745-.997l10.51 6.005c.964.55.972 1.439 0 1.994l-10.51 6.007c-.964.55-1.745.102-1.745-.997V11.994z"
+            fill="var(--track-canvas)"
+          />
+        </svg>
       ) : null}
     </div>
   );
@@ -1144,9 +1147,6 @@ export function CalendarView({
               isNow={Boolean(
                 typeof props.className === "string" && props.className.includes("rbc-now"),
               )}
-              maxHour={calendarHours === "business" ? 17 : 24}
-              minHour={calendarHours === "business" ? 9 : 0}
-              nowMs={nowMs}
               onStartEntry={onStartEntry}
               style={props.style as React.CSSProperties | undefined}
             >

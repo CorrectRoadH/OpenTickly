@@ -188,11 +188,26 @@
 }
 
 /* ── Current time indicator ── */
-/* RBC's built-in indicator is hidden. We render our own via
-   CalendarCurrentTimeIndicator component to match Toggl's structure:
-   a wrapper with the time line + a play button to start new entries. */
+/* We use RBC's built-in .rbc-current-time-indicator for the time line
+   (so its position exactly matches event positions). The play button
+   is rendered by CalendarDayColumnWrapper and positioned via CSS
+   relative to this indicator. */
 .rbc-current-time-indicator {
-  display: none;
+  background-color: #b744ab;
+  height: 3px;
+  border-radius: 2px;
+  z-index: 3;
+}
+
+/* Play button rendered by CalendarDayColumnWrapper — positioned at the
+   same Y as the RBC indicator. Since both are absolute children of the
+   day column, we use the same top% via a small JS trick: the play button
+   observes the indicator's position via CSS. But simpler: we just let it
+   sit at the bottom of the day column's content and use the indicator
+   as the visual line. The button position is set by JS in the component. */
+.calendar-indicator-play-btn {
+  z-index: 4;
+  left: -8.5px;
 }
 
 /* ── Drag and drop ── */
