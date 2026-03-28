@@ -245,12 +245,13 @@ Web 端的正式页面与入口包括：
 - `docs/core/domain-model.md`
   - 定义实例级能力、平台管理能力和代码归属边界
 
-## Initial Structure Decision
+## Structure Decision
 
-当前阶段，这类能力先归入 `governance`，而不是立即新增独立顶层模块。
+`instance-admin` 是独立顶层后端模块（`apps/backend/internal/instance-admin/`）。
 
-原因：
+理由：
 
-- 它们本质上属于实例级治理、运营、诊断与控制能力。
-- 当前复杂度还不足以证明必须拆出独立 `instance-admin` 模块。
-- 若后续实例级运营面显著膨胀，再单独拆分模块。
+- 作用域是实例级，不从属于任何 workspace / organization，与 governance（workspace 级业务治理）完全不同。
+- API 合同来源是 `opentoggl-admin.openapi.json`，与 governance 消费的 `toggl-*` 公开合同分离。
+- PRD 定义的 7 个 capability 矩阵已有足够复杂度支撑独立模块。
+- bootstrap guard 的表定义仍归 `platform/schema/`（pgschema 单一路径），业务语义归本模块 domain。

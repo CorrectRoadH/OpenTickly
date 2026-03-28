@@ -13,6 +13,7 @@ var (
 	ErrSessionNotFound          = errors.New("session not found")
 	ErrUnknownPreferencesClient = errors.New("unknown client")
 	ErrUnknownAlphaFeature      = errors.New("invalid feature code(s)")
+	ErrRegistrationClosed       = errors.New("registration is currently closed")
 )
 
 const StopRunningTimerJobName = "identity.deactivated.stop_running_timer"
@@ -25,6 +26,7 @@ type Config struct {
 	RunningTimerLookup RunningTimerLookup
 	IDs                Sequence
 	KnownAlphaFeatures []string
+	RegistrationGuard  RegistrationGuard
 }
 
 type UserRepository interface {
@@ -63,6 +65,12 @@ type Sequence interface {
 	NextAPIToken() (string, error)
 }
 
+// RegistrationGuard checks whether new user registration is allowed.
+// When nil, registration is always allowed (backward compatible).
+type RegistrationGuard interface {
+	CanRegister(ctx context.Context) error
+}
+
 type RegisterInput struct {
 	Email    string
 	FullName string
@@ -95,6 +103,7 @@ type UserSnapshot struct {
 	ToSAcceptNeeded          bool
 	ProductEmailsDisableCode string
 	WeeklyReportDisableCode  string
+	IsInstanceAdmin          bool
 }
 
 type AuthenticatedSession struct {
@@ -110,6 +119,7 @@ type Service struct {
 	runningTimerLookup RunningTimerLookup
 	ids                Sequence
 	knownAlphaFeatures map[string]struct{}
+	registrationGuard  RegistrationGuard
 }
 
 func NewService(cfg Config) *Service {
@@ -126,6 +136,7 @@ func NewService(cfg Config) *Service {
 		runningTimerLookup: cfg.RunningTimerLookup,
 		ids:                cfg.IDs,
 		knownAlphaFeatures: knownAlphaFeatures,
+		registrationGuard:  cfg.RegistrationGuard,
 	}
 }
 
@@ -168,6 +179,12 @@ func (service *Service) DeletePushService(ctx context.Context, userID int64, tok
 }
 
 func (service *Service) Register(ctx context.Context, input RegisterInput) (AuthenticatedSession, error) {
+	if service.registrationGuard != nil {
+		if err := service.registrationGuard.CanRegister(ctx); err != nil {
+			return AuthenticatedSession{}, err
+		}
+	}
+
 	userID, err := service.ids.NextUserID()
 	if err != nil {
 		return AuthenticatedSession{}, err
@@ -506,5 +523,6 @@ func snapshotFromUser(user *domain.User) UserSnapshot {
 		ToSAcceptNeeded:          user.ToSAcceptNeeded(),
 		ProductEmailsDisableCode: user.ProductEmailsDisableCode(),
 		WeeklyReportDisableCode:  user.WeeklyReportDisableCode(),
+		IsInstanceAdmin:          user.IsInstanceAdmin(),
 	}
 }

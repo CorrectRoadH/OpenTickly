@@ -577,7 +577,7 @@ function OrganizationSettingsRouteComponent() {
 
 function InstanceAdminRouteComponent() {
   const params = instanceAdminRoute.useParams();
-  const validSections: InstanceAdminSection[] = ["overview", "users", "registration"];
+  const validSections: InstanceAdminSection[] = ["overview", "users", "organizations", "config"];
   const section = validSections.includes(params.section as InstanceAdminSection)
     ? (params.section as InstanceAdminSection)
     : "overview";

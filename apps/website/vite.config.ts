@@ -85,6 +85,9 @@ export default defineConfig(() => {
         "/import/v1": {
           target: webProxyTarget,
         },
+        "/admin/v1": {
+          target: webProxyTarget,
+        },
       },
     },
     test: {

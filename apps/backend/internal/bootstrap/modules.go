@@ -14,6 +14,7 @@ func defaultModules() []ModuleDescriptor {
 		{Name: "catalog"},
 		{Name: "tracking"},
 		{Name: "governance"},
+		{Name: "instance-admin"},
 		{Name: "reports"},
 		{Name: "webhooks"},
 		{Name: "billing"},

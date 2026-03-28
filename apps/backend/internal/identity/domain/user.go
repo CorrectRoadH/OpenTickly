@@ -109,6 +109,7 @@ type User struct {
 	productEmailsDisableCode string
 	weeklyReportDisableCode  string
 	preferences              Preferences
+	isInstanceAdmin          bool
 }
 
 func RegisterUser(params RegisterParams) (*User, error) {
@@ -248,6 +249,14 @@ func (user *User) CountryID() int64 {
 
 func (user *User) DefaultWorkspaceID() int64 {
 	return user.defaultWorkspaceID
+}
+
+func (user *User) IsInstanceAdmin() bool {
+	return user.isInstanceAdmin
+}
+
+func (user *User) PromoteToInstanceAdmin() {
+	user.isInstanceAdmin = true
 }
 
 func (user *User) HasPassword() bool {

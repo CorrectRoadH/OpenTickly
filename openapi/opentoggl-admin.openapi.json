@@ -2,10 +2,26 @@
   "openapi": "3.1.0",
   "info": {
     "title": "OpenToggl Instance Admin API",
-    "version": "0.0.0"
+    "version": "0.1.0"
   },
   "paths": {
     "/admin/v1/bootstrap": {
+      "get": {
+        "summary": "Get current bootstrap state",
+        "operationId": "get-bootstrap-state",
+        "responses": {
+          "200": {
+            "description": "Bootstrap state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BootstrapState"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Create the first instance administrator",
         "operationId": "bootstrap-instance-admin",
@@ -26,6 +42,292 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BootstrapState"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Bootstrap already completed"
+          }
+        }
+      }
+    },
+    "/admin/v1/registration-policy": {
+      "get": {
+        "summary": "Get current registration policy",
+        "operationId": "get-registration-policy",
+        "responses": {
+          "200": {
+            "description": "Current registration policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationPolicy"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update registration policy",
+        "operationId": "update-registration-policy",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRegistrationPolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated registration policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationPolicy"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/users": {
+      "get": {
+        "summary": "List instance users",
+        "operationId": "list-instance-users",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "disabled", "all"],
+              "default": "all"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of instance users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceUserList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/users/{user_id}/disable": {
+      "post": {
+        "summary": "Disable an instance user",
+        "operationId": "disable-instance-user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceUser"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/admin/v1/users/{user_id}/restore": {
+      "post": {
+        "summary": "Restore a disabled instance user",
+        "operationId": "restore-instance-user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User restored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceUser"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found"
+          }
+        }
+      }
+    },
+    "/admin/v1/config": {
+      "get": {
+        "summary": "Get instance configuration",
+        "operationId": "get-instance-config",
+        "responses": {
+          "200": {
+            "description": "Instance configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceConfig"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update instance configuration",
+        "operationId": "update-instance-config",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstanceConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated instance configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceConfig"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/config/test-email": {
+      "post": {
+        "summary": "Send a test email to verify SMTP configuration",
+        "operationId": "send-test-email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "to": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": ["to"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Test email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" }
+                  },
+                  "required": ["success", "message"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "SMTP not configured"
+          }
+        }
+      }
+    },
+    "/admin/v1/organizations": {
+      "get": {
+        "summary": "List all organizations on this instance",
+        "operationId": "list-organizations",
+        "responses": {
+          "200": {
+            "description": "List of organizations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/v1/health": {
+      "get": {
+        "summary": "Get instance health summary",
+        "operationId": "get-instance-health",
+        "responses": {
+          "200": {
+            "description": "Instance health summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceHealth"
                 }
               }
             }
@@ -76,10 +378,12 @@
         "type": "object",
         "properties": {
           "email": {
-            "type": "string"
+            "type": "string",
+            "format": "email"
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "minLength": 8
           }
         },
         "required": ["email", "password"]
@@ -92,9 +396,232 @@
           },
           "admin_email": {
             "type": "string"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
-        "required": ["completed", "admin_email"]
+        "required": ["completed"]
+      },
+      "RegistrationPolicy": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["open", "closed", "invite_only"]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["mode", "updated_at"]
+      },
+      "UpdateRegistrationPolicyRequest": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["open", "closed", "invite_only"]
+          }
+        },
+        "required": ["mode"]
+      },
+      "InstanceUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "disabled"]
+          },
+          "is_instance_admin": {
+            "type": "boolean"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "last_active_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "required": ["id", "email", "status", "is_instance_admin", "created_at"]
+      },
+      "InstanceUserList": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceUser"
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          }
+        },
+        "required": ["users", "total_count", "page", "per_page"]
+      },
+      "InstanceHealth": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["healthy", "degraded", "unhealthy"]
+          },
+          "database": {
+            "$ref": "#/components/schemas/DependencyHealth"
+          },
+          "redis": {
+            "$ref": "#/components/schemas/DependencyHealth"
+          },
+          "job_backlog": {
+            "type": "integer"
+          },
+          "user_count": {
+            "type": "integer"
+          },
+          "checked_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["status", "database", "redis", "job_backlog", "user_count", "checked_at"]
+      },
+      "DependencyHealth": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["up", "down"]
+          },
+          "latency_ms": {
+            "type": "integer"
+          }
+        },
+        "required": ["status"]
+      },
+      "InstanceConfig": {
+        "type": "object",
+        "properties": {
+          "site_url": {
+            "type": "string"
+          },
+          "sender_email": {
+            "type": "string"
+          },
+          "sender_name": {
+            "type": "string"
+          },
+          "smtp_host": {
+            "type": "string"
+          },
+          "smtp_port": {
+            "type": "integer"
+          },
+          "smtp_configured": {
+            "type": "boolean"
+          },
+          "email_verification_required": {
+            "type": "boolean"
+          },
+          "registration_mode": {
+            "type": "string",
+            "enum": ["open", "closed", "invite_only"]
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["site_url", "sender_email", "sender_name", "smtp_configured", "email_verification_required", "registration_mode", "updated_at"]
+      },
+      "UpdateInstanceConfigRequest": {
+        "type": "object",
+        "properties": {
+          "site_url": {
+            "type": "string"
+          },
+          "sender_email": {
+            "type": "string"
+          },
+          "sender_name": {
+            "type": "string"
+          },
+          "smtp_host": {
+            "type": "string"
+          },
+          "smtp_port": {
+            "type": "integer"
+          },
+          "smtp_username": {
+            "type": "string"
+          },
+          "smtp_password": {
+            "type": "string"
+          },
+          "email_verification_required": {
+            "type": "boolean"
+          },
+          "registration_mode": {
+            "type": "string",
+            "enum": ["open", "closed", "invite_only"]
+          }
+        }
+      },
+      "AdminOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "workspace_count": {
+            "type": "integer"
+          },
+          "member_count": {
+            "type": "integer"
+          }
+        },
+        "required": ["id", "name", "workspace_count", "member_count"]
+      },
+      "OrganizationList": {
+        "type": "object",
+        "properties": {
+          "organizations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminOrganization"
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          }
+        },
+        "required": ["organizations", "total_count"]
       }
     }
   }

@@ -23,18 +23,36 @@ var (
 	ErrInvitationWorkspacesRequired  = errors.New("organization invitation workspaces are required")
 	ErrInvitationEmailInvalid        = errors.New("organization invitation email is invalid")
 	ErrInvitationStateConflict       = errors.New("organization invitation state conflict")
+	ErrSMTPNotConfigured             = errors.New("email sending is not configured; configure SMTP in Instance Admin before sending invitations")
 )
 
-type Service struct {
-	store Store
+// SMTPChecker checks if SMTP is configured. Optional — when nil, SMTP check is skipped.
+type SMTPChecker interface {
+	IsSMTPConfigured() bool
 }
 
-func NewService(store Store) (*Service, error) {
+type Service struct {
+	store        Store
+	smtpChecker  SMTPChecker
+}
+
+func NewService(store Store, opts ...ServiceOption) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
 	}
+	svc := &Service{store: store}
+	for _, opt := range opts {
+		opt(svc)
+	}
+	return svc, nil
+}
 
-	return &Service{store: store}, nil
+// ServiceOption configures optional dependencies on the membership Service.
+type ServiceOption func(*Service)
+
+// WithSMTPChecker sets the SMTP checker for invitation gating.
+func WithSMTPChecker(checker SMTPChecker) ServiceOption {
+	return func(s *Service) { s.smtpChecker = checker }
 }
 
 func (service *Service) EnsureWorkspaceOwner(
@@ -228,6 +246,9 @@ func (service *Service) CreateOrganizationInvitations(
 	ctx context.Context,
 	command CreateOrganizationInvitationsCommand,
 ) ([]OrganizationInvitationView, error) {
+	if err := service.requireSMTP(); err != nil {
+		return nil, err
+	}
 	if command.OrganizationID <= 0 || command.SenderUserID <= 0 {
 		return nil, ErrInvitationEmailInvalid
 	}
@@ -332,6 +353,13 @@ func (service *Service) transitionWorkspaceMember(
 		return WorkspaceMemberView{}, err
 	}
 	return view, nil
+}
+
+func (service *Service) requireSMTP() error {
+	if service.smtpChecker != nil && !service.smtpChecker.IsSMTPConfigured() {
+		return ErrSMTPNotConfigured
+	}
+	return nil
 }
 
 func (service *Service) requireManager(ctx context.Context, workspaceID int64, requestedBy int64) error {

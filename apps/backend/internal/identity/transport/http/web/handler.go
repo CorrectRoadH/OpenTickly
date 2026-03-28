@@ -361,6 +361,8 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 		return Response{StatusCode: 400, Body: err.Error()}
 	case errors.Is(err, application.ErrSessionNotFound):
 		return Response{StatusCode: 401, Body: "Unauthorized"}
+	case errors.Is(err, application.ErrRegistrationClosed):
+		return Response{StatusCode: 403, Body: "Registration is currently closed."}
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, domain.ErrUserDeactivated),
 		errors.Is(err, domain.ErrUserDeleted):

@@ -1,6 +1,8 @@
 # Instance Admin and Platform Operations
 
-**Status:** Not started
+**Status:** In progress
+
+**Backend module:** `apps/backend/internal/instance-admin/` (independent top-level module)
 
 **Goal:** Provide the formal host-product surface required to run and govern an OpenToggl instance.
 

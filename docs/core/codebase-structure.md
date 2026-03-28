@@ -188,6 +188,7 @@ apps/
       catalog/
       tracking/
       governance/
+      instance-admin/
       reports/
       webhooks/
       billing/
@@ -228,7 +229,8 @@ packages/
 - `membership`：成员关系、角色、组、项目成员可见性
 - `catalog`：client、project、task、tag 等目录对象
 - `tracking`：time entry、running timer、expense
-- `governance`：approval、timesheet、audit、实例治理、API quota
+- `governance`：approval、timesheet、audit、API quota
+- `instance-admin`：bootstrap、注册策略、实例级用户治理、实例配置、维护模式、平台健康与诊断
 - `reports`：报表读模型、导出、saved/shared reports
 - `webhooks`：订阅、投递、重试、投递健康
 - `billing`：plan、subscription、invoice、customer、商业配额

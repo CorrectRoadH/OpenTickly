@@ -207,8 +207,8 @@ Instance Administration
 说明：
 
 - 这一组能力不属于 Toggl 公开合同。
-- 当前代码归属优先落在 `governance`，技术实现由 `platform` 支撑。
-- 这里是领域概念上的实例级子域，不表示当前代码必须单独拆出顶层模块。
+- 代码归属为独立顶层模块 `instance-admin`，技术实现由 `platform` 支撑。
+- 拆出独立模块的理由：作用域（实例级 vs workspace 级）、API 合同来源（`opentoggl-admin` vs `toggl-*`）和职责（平台运营 vs 业务治理）均与 `governance` 不同。
 
 ## 3. 核心聚合根
 

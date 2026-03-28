@@ -29,8 +29,8 @@ func TestNewAppExposesWave0HealthSnapshot(t *testing.T) {
 		t.Fatal("expected HTTP server to be wired")
 	}
 
-	if len(app.Modules) != 10 {
-		t.Fatalf("expected 10 business modules, got %d", len(app.Modules))
+	if len(app.Modules) != 11 {
+		t.Fatalf("expected 11 business modules, got %d", len(app.Modules))
 	}
 
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
@@ -59,7 +59,7 @@ func TestNewAppExposesWave0HealthSnapshot(t *testing.T) {
 		t.Fatalf("expected /healthz status ok, got %q", response.Status)
 	}
 
-	if len(response.Modules) != 10 {
+	if len(response.Modules) != 11 {
 		t.Fatalf("expected /healthz response to expose all modules, got %d", len(response.Modules))
 	}
 }
@@ -138,6 +138,7 @@ func TestDefaultModulesStayAlignedWithWave0Inventory(t *testing.T) {
 		"catalog",
 		"tracking",
 		"governance",
+		"instance-admin",
 		"reports",
 		"webhooks",
 		"billing",

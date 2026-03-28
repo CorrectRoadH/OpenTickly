@@ -98,6 +98,10 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
           label: "Settings",
           to: buildWorkspaceSettingsPathWithSection(session.currentWorkspace.id),
         },
+        {
+          label: "Instance Admin",
+          to: "/instance-admin/overview",
+        },
       ],
     },
   ];

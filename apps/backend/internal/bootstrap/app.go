@@ -92,7 +92,7 @@ func validateRequiredStartupConfig(cfg Config) error {
 
 func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, error) {
 	appLogger := log.NewZapLogger(slog.Default())
-	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), appLogger)
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -112,11 +112,16 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 	if err != nil {
 		return nil, err
 	}
+	adminRoutes, err := newAdminRoutes(assembledHandlers)
+	if err != nil {
+		return nil, err
+	}
 
 	return httpapp.ComposeRouteRegistrars(
 		webRoutes,
 		publicTrackRoutes,
 		publicReportsRoutes,
 		importRoutes,
+		adminRoutes,
 	), nil
 }

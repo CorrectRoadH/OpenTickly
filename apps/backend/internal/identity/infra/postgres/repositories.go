@@ -76,8 +76,9 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+			preferences_alpha_features,
+			is_instance_admin
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
 		on conflict (id) do update
 		set email = excluded.email,
 			full_name = excluded.full_name,
@@ -112,7 +113,8 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			preferences_show_time_in_title = excluded.preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled = excluded.preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format = excluded.preferences_time_of_day_format,
-			preferences_alpha_features = excluded.preferences_alpha_features
+			preferences_alpha_features = excluded.preferences_alpha_features,
+			is_instance_admin = excluded.is_instance_admin
 	`,
 		user.ID(),
 		user.Email(),
@@ -149,6 +151,7 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 		lo.FromPtrOr(user.Preferences().TagsShortcutEnabled, false),
 		user.Preferences().TimeOfDayFormat,
 		alphaFeatures,
+		user.IsInstanceAdmin(),
 	)
 	if err != nil {
 		return fmt.Errorf("save identity user %d: %w", user.ID(), err)
@@ -194,7 +197,8 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
+			preferences_alpha_features,
+			is_instance_admin
 		from identity_users
 		where id = $1
 	`, id)
@@ -246,7 +250,8 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
+			preferences_alpha_features,
+			is_instance_admin
 		from identity_users
 		where email = lower(trim($1))
 	`, email)
@@ -298,7 +303,8 @@ func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*doma
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
+			preferences_alpha_features,
+			is_instance_admin
 		from identity_users
 		where api_token = $1
 	`, token)
@@ -350,7 +356,8 @@ func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
+			preferences_alpha_features,
+			is_instance_admin
 		from identity_users
 		where product_emails_disable_code = $1
 	`, code)
@@ -402,7 +409,8 @@ func (repo *UserRepository) ByWeeklyReportDisableCode(ctx context.Context, code 
 			preferences_show_time_in_title,
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
-			preferences_alpha_features
+			preferences_alpha_features,
+			is_instance_admin
 		from identity_users
 		where weekly_report_disable_code = $1
 	`, code)
@@ -494,6 +502,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		preferencesTagsShortcutEnabled            bool
 		preferencesTimeOfDay                      string
 		preferencesAlphaFeatures                  []byte
+		isInstanceAdmin                           bool
 	)
 
 	if err := row.Scan(
@@ -532,6 +541,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		&preferencesTagsShortcutEnabled,
 		&preferencesTimeOfDay,
 		&preferencesAlphaFeatures,
+		&isInstanceAdmin,
 	); err != nil {
 		return nil, err
 	}
@@ -595,6 +605,10 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		AlphaFeatures:                  alphaFeatures,
 	}); err != nil {
 		return nil, fmt.Errorf("hydrate preferences for identity user %d: %w", id, err)
+	}
+
+	if isInstanceAdmin {
+		user.PromoteToInstanceAdmin()
 	}
 
 	switch domain.UserState(state) {

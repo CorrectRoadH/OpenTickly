@@ -26,6 +26,7 @@ import (
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/log"
+	"opentoggl/backend/apps/backend/internal/platform"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
@@ -51,8 +52,9 @@ func newWebRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 }
 
 type routeHandlers struct {
-	pool          *pgxpool.Pool
-	catalogApp    *catalogapplication.Service
+	pool            *pgxpool.Pool
+	platformHandles *platform.Handles
+	catalogApp      *catalogapplication.Service
 	identity      *identityweb.Handler
 	identityApp   *identityapplication.Service
 	identityAPI   *identitypublicapi.Handler
@@ -69,7 +71,7 @@ type routeHandlers struct {
 	referenceApp  *platformapplication.ReferenceService
 }
 
-func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger) (*routeHandlers, error) {
 	referenceService, err := platformapplication.NewReferenceService()
 	if err != nil {
 		return nil, err
@@ -111,7 +113,11 @@ func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers,
 		return nil, err
 	}
 
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(pool))
+	smtpChecker := newEmailSenderFromDB(pool)
+	membershipService, err := membershipapplication.NewService(
+		membershippostgres.NewStore(pool),
+		membershipapplication.WithSMTPChecker(smtpChecker),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -133,6 +139,7 @@ func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers,
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(pool),
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
+		RegistrationGuard:  &registrationPolicyGuard{pool: pool},
 	})
 	shellProvider := newBillingBackedSessionShell(
 		tenantService,
@@ -144,8 +151,9 @@ func newRouteHandlers(pool *pgxpool.Pool, appLogger log.Logger) (*routeHandlers,
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
 	return &routeHandlers{
-		pool:          pool,
-		catalogApp:    catalogService,
+		pool:            pool,
+		platformHandles: platformHandles,
+		catalogApp:      catalogService,
 		identity:      identityHandler,
 		identityApp:   identityService,
 		identityAPI:   identitypublicapi.NewHandler(identityService),
@@ -946,6 +954,8 @@ func float32PointerFromFloat64(value *float64) *float32 {
 
 func writeMembershipError(err error) error {
 	switch {
+	case errors.Is(err, membershipapplication.ErrSMTPNotConfigured):
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
