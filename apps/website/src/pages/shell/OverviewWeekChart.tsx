@@ -6,6 +6,7 @@ import {
   Cell,
   LabelList,
   ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
@@ -69,6 +70,7 @@ export function OverviewWeekChart({
           ticks={yTicks}
           width={44}
         />
+        <Tooltip content={<OverviewTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
         <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
           <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
           {data.map((entry) => (
@@ -124,6 +126,27 @@ function HourAxisTick(props: Record<string, unknown>): ReactElement {
     >
       {label}
     </text>
+  );
+}
+
+function OverviewTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: { weekday: string; date: string; seconds: number } }>;
+}): ReactElement | null {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0].payload;
+  return (
+    <div className="rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+      <span>
+        {entry.weekday} {entry.date}
+      </span>
+      <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
+        {formatClockDuration(entry.seconds)}
+      </span>
+    </div>
   );
 }
 
