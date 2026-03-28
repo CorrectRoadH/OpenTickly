@@ -537,6 +537,9 @@ export function ListView({
                     className={`group flex h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
+                    data-entry-description={renderEntry.description?.trim() || ""}
+                    data-entry-id={typeof renderEntry.id === "number" ? String(renderEntry.id) : undefined}
+                    data-testid="time-entry-list-row"
                   >
                     {/* Checkbox: w=30px, flex: 0 0 auto */}
                     <div className="flex w-[30px] shrink-0 items-center justify-center">
@@ -626,7 +629,9 @@ export function ListView({
 
                     {/* Duration + Time range: flex: 0 0 auto, minWidth=250px */}
                     <button
+                      aria-label={`Edit ${renderEntry.description?.trim() || "time entry"}`}
                       className="flex min-w-[250px] shrink-0 items-center justify-end gap-2 text-[14px] font-medium tabular-nums"
+                      data-testid="time-entry-list-edit-button"
                       onClick={(event) =>
                         onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
                       }
@@ -756,7 +761,7 @@ function InlineDescription({
         />
       ) : null}
       <p className={`truncate font-medium ${desc ? "" : "text-[var(--track-text-muted)]"}`}>
-        {desc || "Add description"}
+        <span data-testid="time-entry-description">{desc || "Add description"}</span>
       </p>
     </button>
   );
@@ -1105,6 +1110,7 @@ export function CalendarView({
   nowMs,
   isEntryFavorited,
   onContextMenuAction,
+  onContinueEntry,
   onMoveEntry,
   onEditEntry,
   onResizeEntry,
@@ -1129,6 +1135,7 @@ export function CalendarView({
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
     action: CalendarContextMenuAction,
   ) => void;
+  onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
@@ -1338,6 +1345,7 @@ export function CalendarView({
         <CalendarEventCard
           event={props.event}
           onContextMenu={(entry, x, y) => setContextMenuState({ entry, x, y })}
+          onContinueEntry={onContinueEntry}
           onEditEntry={onEditEntry}
         />
       ),
@@ -1430,6 +1438,7 @@ export function CalendarView({
     }),
     [
       onContextMenuAction,
+      onContinueEntry,
       onEditEntry,
       timezone,
       dailyTotals,
@@ -1749,6 +1758,7 @@ function formatTimesheetTotal(seconds: number): string {
 function CalendarEventCard({
   event,
   onContextMenu,
+  onContinueEntry,
   onEditEntry,
 }: {
   event: CalendarEvent;
@@ -1757,6 +1767,7 @@ function CalendarEventCard({
     x: number,
     y: number,
   ) => void;
+  onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
   const entry = event.entry;
@@ -1826,7 +1837,7 @@ function CalendarEventCard({
           className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--track-accent-secondary)] text-[var(--track-surface)] opacity-0 transition-opacity group-hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
-            // Continue is handled via the editor's primary action
+            onContinueEntry?.(entry);
           }}
           type="button"
         >

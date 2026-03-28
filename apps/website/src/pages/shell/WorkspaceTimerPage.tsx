@@ -711,6 +711,9 @@ export function WorkspaceTimerPage({
             entries={orch.visibleEntries}
             isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
             nowMs={orch.nowMs}
+            onContinueEntry={(entry) => {
+              void orch.handleContinueEntry(entry);
+            }}
             onContextMenuAction={(entry, action) => {
               if (action === "split" && entry.start && entry.stop) {
                 orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
@@ -728,6 +731,9 @@ export function WorkspaceTimerPage({
             }}
             onSelectSlot={(slot) => {
               orch.handleCalendarSlotCreate(slot);
+            }}
+            onStartEntry={() => {
+              void orch.handleTimerAction();
             }}
             onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
             onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
