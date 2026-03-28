@@ -785,14 +785,22 @@ function ListRowTagPicker({
     [tags, search],
   );
 
+  const tagNames = useMemo(() => {
+    if (!hasTags) return "";
+    const tagMap = new Map(tags.map((t) => [t.id, t.name]));
+    return entryTagIds
+      .map((id) => tagMap.get(id) ?? `tag-${id}`)
+      .join(", ");
+  }, [hasTags, entryTagIds, tags]);
+
   return (
-    <div className="relative min-w-[50px] shrink-[2]" ref={containerRef}>
+    <div className="relative flex min-w-[50px] shrink-[2] items-center" ref={containerRef}>
       <button
         aria-label="Select tags"
-        className={`flex h-[30px] w-full items-center justify-center rounded transition ${
+        className={`flex h-[30px] w-full items-center gap-1 overflow-hidden rounded transition ${
           hasTags
             ? "text-[var(--track-text-muted)]"
-            : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+            : "justify-center text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
         }`}
         onClick={() => {
           setOpen((prev) => !prev);
@@ -805,7 +813,11 @@ function ListRowTagPicker({
         }}
         type="button"
       >
-        <TagsIcon className="size-3.5" />
+        {hasTags ? (
+          <span className="truncate text-[13px]">{tagNames}</span>
+        ) : (
+          <TagsIcon className="size-3.5" />
+        )}
       </button>
       {open ? (
         <div
