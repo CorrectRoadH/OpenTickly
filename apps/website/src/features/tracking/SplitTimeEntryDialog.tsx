@@ -1,4 +1,11 @@
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import {
+  type PointerEvent as ReactPointerEvent,
+  type ReactElement,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 const STEP_SECONDS = 300; // 5-minute increments
 
@@ -12,8 +19,8 @@ type SplitTimeEntryDialogProps = {
 /**
  * Dialog to split a stopped time entry at a user-chosen point.
  * Two vertically stacked blocks show the resulting halves with proportional
- * heights. A transparent vertical range slider overlays the blocks so the
- * user can drag the split point up/down. Matches the Toggl split dialog.
+ * heights. The divider line between them is draggable (pointer events) to
+ * pick the split time. Matches the Toggl split dialog.
  */
 export function SplitTimeEntryDialog({
   start,
@@ -34,6 +41,36 @@ export function SplitTimeEntryDialog({
   const firstDuration = splitSeconds;
   const secondDuration = totalSeconds - splitSeconds;
   const firstPercent = (splitSeconds / totalSeconds) * 100;
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handlePointerDown = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      const container = containerRef.current;
+      if (!container) return;
+
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+
+      const onPointerMove = (me: globalThis.PointerEvent) => {
+        const rect = container.getBoundingClientRect();
+        const y = Math.max(0, Math.min(rect.height, me.clientY - rect.top));
+        const ratio = y / rect.height;
+        const rawSeconds = ratio * totalSeconds;
+        const snapped = Math.round(rawSeconds / STEP_SECONDS) * STEP_SECONDS;
+        setSplitSeconds(Math.max(STEP_SECONDS, Math.min(totalSeconds - STEP_SECONDS, snapped)));
+      };
+
+      const onPointerUp = () => {
+        document.removeEventListener("pointermove", onPointerMove);
+        document.removeEventListener("pointerup", onPointerUp);
+      };
+
+      document.addEventListener("pointermove", onPointerMove);
+      document.addEventListener("pointerup", onPointerUp);
+    },
+    [totalSeconds],
+  );
 
   const handleConfirm = useCallback(() => {
     onConfirm(splitMs);
@@ -75,10 +112,13 @@ export function SplitTimeEntryDialog({
         </div>
 
         {/* Split visualization */}
-        <div className="relative mx-6 mt-4 flex h-[260px] flex-col overflow-hidden rounded-[8px]">
+        <div
+          ref={containerRef}
+          className="relative mx-6 mt-4 flex h-[260px] flex-col overflow-hidden rounded-[8px]"
+        >
           {/* Top block */}
           <div
-            className="flex flex-col justify-end bg-[#3a3a3e] p-3 transition-[flex-basis] duration-75"
+            className="flex flex-col justify-end bg-[#3a3a3e] p-3"
             style={{ flexBasis: `${firstPercent}%`, minHeight: 36 }}
           >
             <span className="text-[12px] leading-tight text-[#c9c9ce]">
@@ -87,7 +127,7 @@ export function SplitTimeEntryDialog({
           </div>
           {/* Bottom block */}
           <div
-            className="flex flex-col justify-end bg-[#2a2a2e] p-3 transition-[flex-basis] duration-75"
+            className="flex flex-col justify-end bg-[#2a2a2e] p-3"
             style={{ flexBasis: `${100 - firstPercent}%`, minHeight: 36 }}
           >
             <span className="text-[12px] leading-tight text-[#c9c9ce]">
@@ -95,32 +135,16 @@ export function SplitTimeEntryDialog({
             </span>
           </div>
 
-          {/* Divider line with drag handles */}
+          {/* Draggable divider with handles */}
           <div
-            className="pointer-events-none absolute left-0 right-0 flex items-center transition-[top] duration-75"
+            className="absolute left-0 right-0 flex cursor-ns-resize items-center"
+            onPointerDown={handlePointerDown}
             style={{ top: `calc(${firstPercent}% - 10px)` }}
           >
             <DragHandle />
             <div className="h-[2px] flex-1 bg-[#666] shadow-[0_0_0_2px_#1b1b1b]" />
             <DragHandle />
           </div>
-
-          {/* Invisible vertical range slider overlay */}
-          <input
-            aria-label="Split position"
-            className="absolute inset-0 m-0 h-full w-full cursor-ns-resize opacity-0"
-            max={totalSeconds - STEP_SECONDS}
-            min={STEP_SECONDS}
-            onChange={(e) => setSplitSeconds(Number(e.target.value))}
-            step={STEP_SECONDS}
-            style={{
-              WebkitAppearance: "slider-vertical",
-              writingMode: "vertical-lr",
-              direction: "rtl",
-            }}
-            type="range"
-            value={splitSeconds}
-          />
         </div>
 
         {/* Action buttons */}
