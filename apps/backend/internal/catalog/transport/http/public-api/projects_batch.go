@@ -53,7 +53,7 @@ func (handler *Handler) PatchWorkspaceProjects(ctx echo.Context) error {
 	for _, id := range successIDs {
 		result = append(result, int(id))
 	}
-	return ctx.JSON(http.StatusOK, map[string][]int{"success": result})
+	return ctx.JSON(http.StatusOK, batchSuccessResponse{Success: result})
 }
 
 func (handler *Handler) PostWorkspacesWorkspaceIdProjectsBillableAmounts(ctx echo.Context) error {
@@ -81,17 +81,3 @@ type projectPatchInput struct {
 	Recurring *bool   `json:"recurring,omitempty"`
 }
 
-// ConvertPatchInputToCommand converts a projectPatchInput to a PatchProjectCommand.
-// Note: Op can be "delete", "replace", etc. The command's fields are only applied
-// when Op indicates a replace operation.
-func ConvertPatchInputToCommand(projectID int64, workspaceID int64, input projectPatchInput) catalogapplication.PatchProjectCommand {
-	return catalogapplication.PatchProjectCommand{
-		WorkspaceID: workspaceID,
-		ProjectID:   projectID,
-		Name:        input.Name,
-		ClientID:    input.ClientID,
-		Active:      input.Active,
-		Template:    input.Template,
-		Recurring:   input.Recurring,
-	}
-}

@@ -40,9 +40,8 @@ func (handler *Handler) PatchWorkspaceProjectUsersIds(ctx echo.Context) error {
 		if err != nil {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		projectID := id / 1000000
-		userID := id % 1000000
-		if projectID <= 0 || userID <= 0 {
+		projectID, userID, valid := catalogapplication.DecodeProjectUserID(id)
+		if !valid {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
 		projectUserIDs = append(projectUserIDs, [2]int64{projectID, userID})
@@ -75,9 +74,9 @@ func (handler *Handler) PatchWorkspaceProjectUsersIds(ctx echo.Context) error {
 
 	result := make([]int, 0, len(successIDs))
 	for _, pair := range successIDs {
-		result = append(result, int(pair[0]*1000000+pair[1]))
+		result = append(result, int(catalogapplication.EncodeProjectUserID(pair[0], pair[1])))
 	}
-	return ctx.JSON(http.StatusOK, map[string][]int{"success": result})
+	return ctx.JSON(http.StatusOK, batchSuccessResponse{Success: result})
 }
 
 type projectUserPatchInput struct {

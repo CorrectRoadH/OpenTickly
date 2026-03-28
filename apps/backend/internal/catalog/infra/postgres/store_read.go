@@ -523,3 +523,45 @@ func (store *Store) GetTask(
 	}
 	return task, true, nil
 }
+
+func (store *Store) GetTaskByWorkspace(
+	ctx context.Context,
+	workspaceID int64,
+	taskID int64,
+) (catalogapplication.TaskView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+		from catalog_tasks t
+		left join catalog_projects p on p.id = t.project_id
+		where t.workspace_id = $1 and t.id = $2`,
+		workspaceID,
+		taskID,
+	)
+
+	task, err := scanTask(row)
+	if err != nil {
+		if notFound(err) {
+			return catalogapplication.TaskView{}, false, nil
+		}
+		return catalogapplication.TaskView{}, false, writeCatalogError("get catalog task by workspace", err)
+	}
+	return task, true, nil
+}
+
+func (store *Store) GetWorkspaceMemberByID(ctx context.Context, workspaceID int64, workspaceUserID int64) (bool, error) {
+	var exists bool
+	if err := store.pool.QueryRow(
+		ctx,
+		`select exists(
+			select 1
+			from membership_workspace_members
+			where workspace_id = $1 and id = $2
+		)`,
+		workspaceID,
+		workspaceUserID,
+	).Scan(&exists); err != nil {
+		return false, writeCatalogError("get workspace member for rate", err)
+	}
+	return exists, nil
+}

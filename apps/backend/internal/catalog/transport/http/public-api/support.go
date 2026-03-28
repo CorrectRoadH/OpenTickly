@@ -146,18 +146,8 @@ func datePointer(value time.Time) *string {
 	return &formatted
 }
 
-func min(left int, right int) int {
-	if left < right {
-		return left
-	}
-	return right
-}
-
-func max(left int, right int) int {
-	if left > right {
-		return left
-	}
-	return right
+type batchSuccessResponse struct {
+	Success []int `json:"success"`
 }
 
 func parsePathID(ctx echo.Context, key string) (int64, bool) {
@@ -188,6 +178,13 @@ func float32PointerFromFloat64(value *float64) *float32 {
 		return nil
 	}
 	return lo.ToPtr(float32(*value))
+}
+
+func int64Value(value *int) int64 {
+	if value == nil {
+		return 0
+	}
+	return int64(*value)
 }
 
 func int64PointerFromTrackIntPointer(value *int) *int64 {

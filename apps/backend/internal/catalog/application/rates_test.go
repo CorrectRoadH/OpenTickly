@@ -53,7 +53,7 @@ func TestServicePersistsRatesAcrossSupportedLevels(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create project user: %v", err)
 	}
-	projectUserID := projectUser.ProjectID*1000000 + projectUser.UserID
+	projectUserID := catalogapplication.EncodeProjectUserID(projectUser.ProjectID, projectUser.UserID)
 
 	task, err := service.CreateTask(ctx, catalogapplication.CreateTaskCommand{
 		WorkspaceID: workspaceID,

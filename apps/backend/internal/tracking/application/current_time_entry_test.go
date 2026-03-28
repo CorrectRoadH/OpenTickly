@@ -49,7 +49,7 @@ func TestGetCurrentTimeEntry_FallbackForNegativeDuration(t *testing.T) {
 		) values (
 			$1, $2, 'imported running', false,
 			$3, null, -1,
-			'test', '[]'::jsonb, '[]'::jsonb
+			'test', '{}', '{}'
 		) returning id`,
 		workspaceID, userID, now,
 	).Scan(&entryID)

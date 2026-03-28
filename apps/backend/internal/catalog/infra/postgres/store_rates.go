@@ -9,48 +9,6 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (store *Store) GetTaskByWorkspace(
-	ctx context.Context,
-	workspaceID int64,
-	taskID int64,
-) (catalogapplication.TaskView, bool, error) {
-	row := store.pool.QueryRow(
-		ctx,
-		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
-		from catalog_tasks t
-		left join catalog_projects p on p.id = t.project_id
-		where t.workspace_id = $1 and t.id = $2`,
-		workspaceID,
-		taskID,
-	)
-
-	task, err := scanTask(row)
-	if err != nil {
-		if notFound(err) {
-			return catalogapplication.TaskView{}, false, nil
-		}
-		return catalogapplication.TaskView{}, false, writeCatalogError("get catalog task by workspace", err)
-	}
-	return task, true, nil
-}
-
-func (store *Store) GetWorkspaceMemberByID(ctx context.Context, workspaceID int64, workspaceUserID int64) (bool, error) {
-	var exists bool
-	if err := store.pool.QueryRow(
-		ctx,
-		`select exists(
-			select 1
-			from membership_workspace_members
-			where workspace_id = $1 and id = $2
-		)`,
-		workspaceID,
-		workspaceUserID,
-	).Scan(&exists); err != nil {
-		return false, writeCatalogError("get workspace member for rate", err)
-	}
-	return exists, nil
-}
-
 func (store *Store) CreateRate(
 	ctx context.Context,
 	command catalogapplication.CreateRateCommand,
@@ -219,6 +177,11 @@ func closeOverlappingRates(
 	return nil
 }
 
+// syncCurrentRateValue writes the current rate amount back to the target entity
+// (workspace default_hourly_rate or member hourly_rate/labor_cost).
+// TODO: This crosses domain boundaries by writing to tenant_workspaces and
+// membership_workspace_members from the catalog store. Move to an application-layer
+// event/hook when the app has event infrastructure.
 func syncCurrentRateValue(ctx context.Context, tx pgx.Tx, rate catalogapplication.RateView) error {
 	if rate.Start.After(time.Now().UTC()) {
 		return nil

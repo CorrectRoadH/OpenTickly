@@ -179,13 +179,5 @@ func isValidRateMode(mode RateChangeMode) bool {
 }
 
 func parseProjectUserRateLevelID(value int64) (projectID int64, userID int64, ok bool) {
-	if value <= 0 {
-		return 0, 0, false
-	}
-	projectID = value / 1000000
-	userID = value % 1000000
-	if projectID <= 0 || userID <= 0 {
-		return 0, 0, false
-	}
-	return projectID, userID, true
+	return DecodeProjectUserID(value)
 }

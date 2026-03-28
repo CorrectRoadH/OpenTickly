@@ -46,6 +46,33 @@ type RateView struct {
 	WorkspaceUserID *int64
 }
 
+func IsValidRateLevel(level RateLevel) bool {
+	switch level {
+	case RateLevelWorkspace, RateLevelWorkspaceUser, RateLevelProject, RateLevelProjectUser, RateLevelTask:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidRateType(rateType RateType) bool {
+	switch rateType {
+	case RateTypeBillable, RateTypeLaborCost:
+		return true
+	default:
+		return false
+	}
+}
+
+func IsValidRateChangeMode(mode RateChangeMode) bool {
+	switch mode {
+	case RateChangeModeOverrideAll, RateChangeModeOverrideCurrent, RateChangeModeStartToday:
+		return true
+	default:
+		return false
+	}
+}
+
 type CreateRateCommand struct {
 	WorkspaceID int64
 	CreatorID   int64

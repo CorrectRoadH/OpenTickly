@@ -134,44 +134,31 @@ func rateViewToAPI(view catalogapplication.RateView) publictrackapi.ModelsRate {
 }
 
 func publicTrackRateLevel(value string) (catalogapplication.RateLevel, error) {
-	switch strings.TrimSpace(value) {
-	case string(publictrackapi.RatesCreationRequestLevelWorkspace):
-		return catalogapplication.RateLevelWorkspace, nil
-	case string(publictrackapi.RatesCreationRequestLevelWorkspaceUser):
-		return catalogapplication.RateLevelWorkspaceUser, nil
-	case string(publictrackapi.RatesCreationRequestLevelProject):
-		return catalogapplication.RateLevelProject, nil
-	case string(publictrackapi.RatesCreationRequestLevelProjectUser):
-		return catalogapplication.RateLevelProjectUser, nil
-	case string(publictrackapi.RatesCreationRequestLevelTask):
-		return catalogapplication.RateLevelTask, nil
-	default:
+	level := catalogapplication.RateLevel(strings.TrimSpace(value))
+	if !catalogapplication.IsValidRateLevel(level) {
 		return "", errors.New("invalid rate level")
 	}
+	return level, nil
 }
 
 func publicTrackRateType(value string) (catalogapplication.RateType, error) {
-	switch strings.TrimSpace(value) {
-	case "", string(publictrackapi.RateTypeBillable):
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
 		return catalogapplication.RateTypeBillable, nil
-	case "labor_rates", string(publictrackapi.RateTypeLaborCost):
-		return catalogapplication.RateTypeLaborCost, nil
-	default:
+	}
+	rateType := catalogapplication.RateType(trimmed)
+	if !catalogapplication.IsValidRateType(rateType) {
 		return "", errors.New("invalid rate type")
 	}
+	return rateType, nil
 }
 
 func publicTrackRateMode(value string) (catalogapplication.RateChangeMode, error) {
-	switch strings.TrimSpace(value) {
-	case string(publictrackapi.RatesCreationRequestModeOverrideAll):
-		return catalogapplication.RateChangeModeOverrideAll, nil
-	case string(publictrackapi.RatesCreationRequestModeOverrideCurrent):
-		return catalogapplication.RateChangeModeOverrideCurrent, nil
-	case string(publictrackapi.RatesCreationRequestModeStartToday):
-		return catalogapplication.RateChangeModeStartToday, nil
-	default:
+	mode := catalogapplication.RateChangeMode(strings.TrimSpace(value))
+	if !catalogapplication.IsValidRateChangeMode(mode) {
 		return "", errors.New("invalid rate mode")
 	}
+	return mode, nil
 }
 
 func writePublicTrackRateError(err error) error {

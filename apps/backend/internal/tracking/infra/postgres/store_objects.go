@@ -25,26 +25,10 @@ func (store *Store) ListFavorites(ctx context.Context, workspaceID int64, userID
 
 	favorites := make([]trackingapplication.FavoriteView, 0)
 	for rows.Next() {
-		var favorite trackingapplication.FavoriteView
-		var tagIDs []byte
-		if err := rows.Scan(
-			&favorite.ID,
-			&favorite.WorkspaceID,
-			&favorite.UserID,
-			&favorite.ProjectID,
-			&favorite.TaskID,
-			&favorite.Description,
-			&favorite.Billable,
-			&favorite.Public,
-			&favorite.Rank,
-			&tagIDs,
-			&favorite.DeletedAt,
-			&favorite.CreatedAt,
-			&favorite.UpdatedAt,
-		); err != nil {
-			return nil, writeTrackingError("scan tracking favorite", err)
+		favorite, err := scanFavorite(rows)
+		if err != nil {
+			return nil, err
 		}
-		favorite.TagIDs = unmarshalInt64JSON(tagIDs)
 		favorites = append(favorites, favorite)
 	}
 	return favorites, rows.Err()
@@ -55,7 +39,7 @@ func (store *Store) CreateFavorite(ctx context.Context, record trackingapplicati
 		ctx,
 		`insert into tracking_favorites (
 			workspace_id, user_id, project_id, task_id, description, billable, public, rank, tag_ids
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		returning id, workspace_id, user_id, project_id, task_id, description, billable, public, rank,
 			tag_ids, deleted_at, created_at, updated_at`,
 		record.WorkspaceID,
@@ -66,7 +50,7 @@ func (store *Store) CreateFavorite(ctx context.Context, record trackingapplicati
 		record.Billable,
 		record.Public,
 		record.Rank,
-		string(marshalInt64JSON(record.TagIDs)),
+		record.TagIDs,
 	)
 	return scanFavorite(row)
 }
@@ -81,7 +65,7 @@ func (store *Store) UpdateFavorite(ctx context.Context, record trackingapplicati
 			billable = $7,
 			public = $8,
 			rank = $9,
-			tag_ids = $10::jsonb,
+			tag_ids = $10,
 			updated_at = now()
 		where workspace_id = $1 and user_id = $2 and id = $3
 		returning id, workspace_id, user_id, project_id, task_id, description, billable, public, rank,
@@ -95,7 +79,7 @@ func (store *Store) UpdateFavorite(ctx context.Context, record trackingapplicati
 		record.Billable,
 		record.Public,
 		record.Rank,
-		string(marshalInt64JSON(record.TagIDs)),
+		record.TagIDs,
 	)
 	return scanFavorite(row)
 }
@@ -175,7 +159,7 @@ func (store *Store) CreateGoal(ctx context.Context, record trackingapplication.C
 		`insert into tracking_goals (
 			workspace_id, user_id, creator_user_id, name, active, billable, comparison, recurrence, icon,
 			target_seconds, start_date, end_date, project_ids, task_ids, tag_ids
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb, $15::jsonb)
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 		returning id, workspace_id, user_id, creator_user_id, name, active, billable, comparison,
 			recurrence, icon, target_seconds, start_date, end_date, project_ids,
 			task_ids, tag_ids, deleted_at, created_at, updated_at`,
@@ -191,9 +175,9 @@ func (store *Store) CreateGoal(ctx context.Context, record trackingapplication.C
 		record.TargetSeconds,
 		record.StartDate,
 		record.EndDate,
-		string(marshalInt64JSON(record.ProjectIDs)),
-		string(marshalInt64JSON(record.TaskIDs)),
-		string(marshalInt64JSON(record.TagIDs)),
+		record.ProjectIDs,
+		record.TaskIDs,
+		record.TagIDs,
 	)
 	return scanGoal(row)
 }
@@ -211,9 +195,9 @@ func (store *Store) UpdateGoal(ctx context.Context, record trackingapplication.U
 			target_seconds = $10,
 			start_date = $11,
 			end_date = $12,
-			project_ids = $13::jsonb,
-			task_ids = $14::jsonb,
-			tag_ids = $15::jsonb,
+			project_ids = $13,
+			task_ids = $14,
+			tag_ids = $15,
 			updated_at = now()
 		where workspace_id = $1 and user_id = $2 and id = $3
 		returning id, workspace_id, user_id, creator_user_id, name, active, billable, comparison,
@@ -231,9 +215,9 @@ func (store *Store) UpdateGoal(ctx context.Context, record trackingapplication.U
 		record.TargetSeconds,
 		record.StartDate,
 		record.EndDate,
-		string(marshalInt64JSON(record.ProjectIDs)),
-		string(marshalInt64JSON(record.TaskIDs)),
-		string(marshalInt64JSON(record.TagIDs)),
+		record.ProjectIDs,
+		record.TaskIDs,
+		record.TagIDs,
 	)
 	return scanGoal(row)
 }
@@ -308,7 +292,7 @@ func (store *Store) CreateReminder(ctx context.Context, record trackingapplicati
 		`insert into tracking_reminders (
 			workspace_id, frequency, threshold_hours, email_reminder_enabled,
 			slack_reminder_enabled, user_ids, group_ids
-		) values ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
+		) values ($1, $2, $3, $4, $5, $6, $7)
 		returning id, workspace_id, frequency, threshold_hours, email_reminder_enabled,
 			slack_reminder_enabled, user_ids, group_ids,
 			deleted_at, created_at, updated_at`,
@@ -317,8 +301,8 @@ func (store *Store) CreateReminder(ctx context.Context, record trackingapplicati
 		record.ThresholdHours,
 		record.EmailReminderEnabled,
 		record.SlackReminderEnabled,
-		string(marshalInt64JSON(record.UserIDs)),
-		string(marshalInt64JSON(record.GroupIDs)),
+		record.UserIDs,
+		record.GroupIDs,
 	)
 	return scanReminder(row)
 }
@@ -331,8 +315,8 @@ func (store *Store) UpdateReminder(ctx context.Context, record trackingapplicati
 			threshold_hours = $4,
 			email_reminder_enabled = $5,
 			slack_reminder_enabled = $6,
-			user_ids = $7::jsonb,
-			group_ids = $8::jsonb,
+			user_ids = $7,
+			group_ids = $8,
 			updated_at = now()
 		where workspace_id = $1 and id = $2
 		returning id, workspace_id, frequency, threshold_hours, email_reminder_enabled,
@@ -344,8 +328,8 @@ func (store *Store) UpdateReminder(ctx context.Context, record trackingapplicati
 		record.ThresholdHours,
 		record.EmailReminderEnabled,
 		record.SlackReminderEnabled,
-		string(marshalInt64JSON(record.UserIDs)),
-		string(marshalInt64JSON(record.GroupIDs)),
+		record.UserIDs,
+		record.GroupIDs,
 	)
 	return scanReminder(row)
 }
@@ -451,10 +435,7 @@ func (store *Store) CreateExpense(ctx context.Context, record trackingapplicatio
 func scanFavorite(scanner interface {
 	Scan(dest ...any) error
 }) (trackingapplication.FavoriteView, error) {
-	var (
-		favorite trackingapplication.FavoriteView
-		tagIDs   []byte
-	)
+	var favorite trackingapplication.FavoriteView
 	if err := scanner.Scan(
 		&favorite.ID,
 		&favorite.WorkspaceID,
@@ -465,26 +446,21 @@ func scanFavorite(scanner interface {
 		&favorite.Billable,
 		&favorite.Public,
 		&favorite.Rank,
-		&tagIDs,
+		&favorite.TagIDs,
 		&favorite.DeletedAt,
 		&favorite.CreatedAt,
 		&favorite.UpdatedAt,
 	); err != nil {
 		return trackingapplication.FavoriteView{}, writeTrackingError("scan tracking favorite", err)
 	}
-	favorite.TagIDs = unmarshalInt64JSON(tagIDs)
+	favorite.TagIDs = coalesceInt64Slice(favorite.TagIDs)
 	return favorite, nil
 }
 
 func scanGoal(scanner interface {
 	Scan(dest ...any) error
 }) (trackingapplication.GoalView, error) {
-	var (
-		goal       trackingapplication.GoalView
-		projectIDs []byte
-		taskIDs    []byte
-		tagIDs     []byte
-	)
+	var goal trackingapplication.GoalView
 	if err := scanner.Scan(
 		&goal.ID,
 		&goal.WorkspaceID,
@@ -499,29 +475,25 @@ func scanGoal(scanner interface {
 		&goal.TargetSeconds,
 		&goal.StartDate,
 		&goal.EndDate,
-		&projectIDs,
-		&taskIDs,
-		&tagIDs,
+		&goal.ProjectIDs,
+		&goal.TaskIDs,
+		&goal.TagIDs,
 		&goal.DeletedAt,
 		&goal.CreatedAt,
 		&goal.UpdatedAt,
 	); err != nil {
 		return trackingapplication.GoalView{}, writeTrackingError("scan tracking goal", err)
 	}
-	goal.ProjectIDs = unmarshalInt64JSON(projectIDs)
-	goal.TaskIDs = unmarshalInt64JSON(taskIDs)
-	goal.TagIDs = unmarshalInt64JSON(tagIDs)
+	goal.ProjectIDs = coalesceInt64Slice(goal.ProjectIDs)
+	goal.TaskIDs = coalesceInt64Slice(goal.TaskIDs)
+	goal.TagIDs = coalesceInt64Slice(goal.TagIDs)
 	return goal, nil
 }
 
 func scanReminder(scanner interface {
 	Scan(dest ...any) error
 }) (trackingapplication.ReminderView, error) {
-	var (
-		reminder trackingapplication.ReminderView
-		userIDs  []byte
-		groupIDs []byte
-	)
+	var reminder trackingapplication.ReminderView
 	if err := scanner.Scan(
 		&reminder.ID,
 		&reminder.WorkspaceID,
@@ -529,15 +501,15 @@ func scanReminder(scanner interface {
 		&reminder.ThresholdHours,
 		&reminder.EmailReminderEnabled,
 		&reminder.SlackReminderEnabled,
-		&userIDs,
-		&groupIDs,
+		&reminder.UserIDs,
+		&reminder.GroupIDs,
 		&reminder.DeletedAt,
 		&reminder.CreatedAt,
 		&reminder.UpdatedAt,
 	); err != nil {
 		return trackingapplication.ReminderView{}, writeTrackingError("scan tracking reminder", err)
 	}
-	reminder.UserIDs = unmarshalInt64JSON(userIDs)
-	reminder.GroupIDs = unmarshalInt64JSON(groupIDs)
+	reminder.UserIDs = coalesceInt64Slice(reminder.UserIDs)
+	reminder.GroupIDs = coalesceInt64Slice(reminder.GroupIDs)
 	return reminder, nil
 }

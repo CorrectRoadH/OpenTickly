@@ -323,9 +323,8 @@ type CreateTimeEntryRecord struct {
 	ExpenseIDs  []int64
 }
 
-type UpdateTimeEntryRecord struct {
-	TimeEntryView
-}
+// UpdateTimeEntryRecord is an alias for TimeEntryView — the store writes all view fields back.
+type UpdateTimeEntryRecord = TimeEntryView
 
 type CreateFavoriteRecord struct {
 	WorkspaceID int64
@@ -339,9 +338,8 @@ type CreateFavoriteRecord struct {
 	TagIDs      []int64
 }
 
-type UpdateFavoriteRecord struct {
-	FavoriteView
-}
+// UpdateFavoriteRecord is an alias for FavoriteView — the store writes all view fields back.
+type UpdateFavoriteRecord = FavoriteView
 
 type CreateGoalRecord struct {
 	WorkspaceID   int64
@@ -361,9 +359,8 @@ type CreateGoalRecord struct {
 	TagIDs        []int64
 }
 
-type UpdateGoalRecord struct {
-	GoalView
-}
+// UpdateGoalRecord is an alias for GoalView — the store writes all view fields back.
+type UpdateGoalRecord = GoalView
 
 type CreateReminderRecord struct {
 	WorkspaceID          int64
@@ -375,9 +372,8 @@ type CreateReminderRecord struct {
 	GroupIDs             []int64
 }
 
-type UpdateReminderRecord struct {
-	ReminderView
-}
+// UpdateReminderRecord is an alias for ReminderView — the store writes all view fields back.
+type UpdateReminderRecord = ReminderView
 
 type CreateExpenseRecord struct {
 	WorkspaceID   int64

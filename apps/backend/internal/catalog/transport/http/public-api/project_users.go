@@ -121,21 +121,6 @@ func (handler *Handler) DeletePublicTrackProjectUser(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, int(projectUserID))
 }
 
-func int64Value(value *int) int64 {
-	if value == nil {
-		return 0
-	}
-	return int64(*value)
-}
-
 func parseProjectUserID(value int64) (projectID int64, userID int64, ok bool) {
-	if value <= 0 {
-		return 0, 0, false
-	}
-	projectID = value / 1000000
-	userID = value % 1000000
-	if projectID <= 0 || userID <= 0 {
-		return 0, 0, false
-	}
-	return projectID, userID, true
+	return catalogapplication.DecodeProjectUserID(value)
 }

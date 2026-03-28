@@ -58,7 +58,7 @@ func (handler *Handler) PatchWorkspaceProjectTasks(ctx echo.Context) error {
 	for _, id := range success {
 		successInts = append(successInts, int(id))
 	}
-	return ctx.JSON(http.StatusOK, map[string][]int{"success": successInts})
+	return ctx.JSON(http.StatusOK, batchSuccessResponse{Success: successInts})
 }
 
 type taskPatchInput struct {

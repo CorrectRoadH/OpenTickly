@@ -244,7 +244,7 @@ func (handler *Handler) publicTrackProjectCount(
 func projectUserViewToAPI(view catalogapplication.ProjectUserView) publictrackapi.ModelsProjectUser {
 	return publictrackapi.ModelsProjectUser{
 		At:          timePointer(view.CreatedAt),
-		Id:          lo.ToPtr(int(view.ProjectID*1000000 + view.UserID)),
+		Id:          lo.ToPtr(int(catalogapplication.EncodeProjectUserID(view.ProjectID, view.UserID))),
 		Manager:     lo.ToPtr(view.Role == "admin"),
 		ProjectId:   lo.ToPtr(int(view.ProjectID)),
 		UserId:      lo.ToPtr(int(view.UserID)),

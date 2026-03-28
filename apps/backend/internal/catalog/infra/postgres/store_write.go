@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"strconv"
+	"strings"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 
@@ -382,12 +384,19 @@ func (store *Store) CreateProject(
 	ctx context.Context,
 	command catalogapplication.CreateProjectCommand,
 ) (catalogapplication.ProjectView, error) {
-	var projectID int64
-	err := store.pool.QueryRow(
+	row := store.pool.QueryRow(
 		ctx,
-		`insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by, color, is_private, billable)
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		returning id`,
+		`with inserted as (
+			insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by, color, is_private, billable)
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+			returning *
+		)
+		select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
+			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
+			p.color, p.is_private, p.billable,
+			p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
+		from inserted p
+		left join catalog_clients c on c.id = p.client_id`,
 		command.WorkspaceID,
 		command.ClientID,
 		command.Name,
@@ -398,12 +407,12 @@ func (store *Store) CreateProject(
 		lo.FromPtrOr(command.Color, "#0b83d9"),
 		lo.FromPtrOr(command.IsPrivate, true),
 		lo.FromPtrOr(command.Billable, false),
-	).Scan(&projectID)
+	)
+	project, err := scanProject(row)
 	if err != nil {
 		return catalogapplication.ProjectView{}, writeCatalogError("create catalog project", err)
 	}
-	project, _, err := store.GetProject(ctx, command.WorkspaceID, projectID)
-	return project, err
+	return project, nil
 }
 
 func (store *Store) UpdateProject(ctx context.Context, project catalogapplication.ProjectView) error {
@@ -518,17 +527,58 @@ func (store *Store) PatchProjects(
 	if len(projectIDs) == 0 {
 		return nil
 	}
-	// Batch update all projects to active=false (placeholder)
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_projects
-		set active = false
-		where workspace_id = $1 and id = any($2)`,
-		workspaceID,
-		int64SliceOrNil(projectIDs),
-	)
-	if err != nil {
-		return writeCatalogError("patch catalog projects", err)
+	for _, cmd := range commands {
+		setClauses := make([]string, 0, 4)
+		args := []any{workspaceID, cmd.ProjectID}
+		argIndex := 3
+		if cmd.Active != nil {
+			setClauses = append(setClauses, "active = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Active)
+			argIndex++
+		}
+		if cmd.Name != nil {
+			setClauses = append(setClauses, "name = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Name)
+			argIndex++
+		}
+		if cmd.ClientID != nil {
+			setClauses = append(setClauses, "client_id = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.ClientID)
+			argIndex++
+		}
+		if cmd.Color != nil {
+			setClauses = append(setClauses, "color = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Color)
+			argIndex++
+		}
+		if cmd.IsPrivate != nil {
+			setClauses = append(setClauses, "is_private = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.IsPrivate)
+			argIndex++
+		}
+		if cmd.Billable != nil {
+			setClauses = append(setClauses, "billable = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Billable)
+			argIndex++
+		}
+		if cmd.Template != nil {
+			setClauses = append(setClauses, "template = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Template)
+			argIndex++
+		}
+		if cmd.Recurring != nil {
+			setClauses = append(setClauses, "recurring = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Recurring)
+			argIndex++
+		}
+		if len(setClauses) == 0 {
+			continue
+		}
+		query := "update catalog_projects set " + strings.Join(setClauses, ", ") +
+			" where workspace_id = $1 and id = $2"
+		if _, err := store.pool.Exec(ctx, query, args...); err != nil {
+			return writeCatalogError("patch catalog project", err)
+		}
 	}
 	return nil
 }
@@ -543,18 +593,28 @@ func (store *Store) PatchTasks(
 	if len(taskIDs) == 0 {
 		return nil
 	}
-	// Batch update all tasks to active=false (placeholder)
-	_, err := store.pool.Exec(
-		ctx,
-		`update catalog_tasks
-		set active = false
-		where workspace_id = $1 and project_id = $2 and id = any($3)`,
-		workspaceID,
-		projectID,
-		int64SliceOrNil(taskIDs),
-	)
-	if err != nil {
-		return writeCatalogError("patch catalog tasks", err)
+	for _, cmd := range commands {
+		setClauses := make([]string, 0, 2)
+		args := []any{workspaceID, cmd.TaskID}
+		argIndex := 3
+		if cmd.Active != nil {
+			setClauses = append(setClauses, "active = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Active)
+			argIndex++
+		}
+		if cmd.Name != nil {
+			setClauses = append(setClauses, "name = $"+strconv.Itoa(argIndex))
+			args = append(args, *cmd.Name)
+			argIndex++
+		}
+		if len(setClauses) == 0 {
+			continue
+		}
+		query := "update catalog_tasks set " + strings.Join(setClauses, ", ") +
+			" where workspace_id = $1 and id = $2"
+		if _, err := store.pool.Exec(ctx, query, args...); err != nil {
+			return writeCatalogError("patch catalog task", err)
+		}
 	}
 	return nil
 }
@@ -568,8 +628,17 @@ func (store *Store) PatchProjectUsers(
 	if len(projectUserIDs) == 0 {
 		return nil
 	}
-	// No-op for now
-	_ = projectUserIDs
-	_ = commands
+	for _, cmd := range commands {
+		if cmd.Role == "" {
+			continue
+		}
+		_, err := store.pool.Exec(ctx,
+			`update catalog_project_users set role = $3
+			where project_id = $1 and user_id = $2`,
+			cmd.ProjectID, cmd.UserID, cmd.Role)
+		if err != nil {
+			return writeCatalogError("patch catalog project user", err)
+		}
+	}
 	return nil
 }

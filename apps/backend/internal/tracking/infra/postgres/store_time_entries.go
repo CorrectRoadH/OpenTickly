@@ -9,10 +9,10 @@ import (
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 )
 
-const tagNamesSubquery = `(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(te.tag_ids)::bigint)))`
+const tagNamesSubquery = `(select coalesce(array_agg(ct.name order by ct.name), '{}') from catalog_tags ct where ct.id = any(te.tag_ids))`
 
 // tagNamesReturning is the same subquery but without the te. alias, for use in RETURNING clauses.
-const tagNamesReturning = `(select coalesce(jsonb_agg(ct.name order by ct.name), '[]'::jsonb) from catalog_tags ct where ct.id = any(array(select jsonb_array_elements_text(tag_ids)::bigint)))`
+const tagNamesReturning = `(select coalesce(array_agg(ct.name order by ct.name), '{}') from catalog_tags ct where ct.id = any(tag_ids))`
 
 func (store *Store) CreateTimeEntry(
 	ctx context.Context,
@@ -25,7 +25,7 @@ func (store *Store) CreateTimeEntry(
 			start_time, stop_time, duration_seconds, created_with, tag_ids, expense_ids
 		) values (
 			$1, $2, $3, $4, $5, $6, $7,
-			$8, $9, $10, $11, $12::jsonb, $13::jsonb
+			$8, $9, $10, $11, $12, $13
 		)
 		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
@@ -43,8 +43,8 @@ func (store *Store) CreateTimeEntry(
 		record.Stop,
 		record.Duration,
 		record.CreatedWith,
-		string(marshalInt64JSON(record.TagIDs)),
-		string(marshalInt64JSON(record.ExpenseIDs)),
+		record.TagIDs,
+		record.ExpenseIDs,
 	)
 	return scanTimeEntry(row)
 }
@@ -470,8 +470,8 @@ func (store *Store) UpdateTimeEntry(
 			stop_time = $10,
 			duration_seconds = $11,
 			created_with = $12,
-			tag_ids = $13::jsonb,
-			expense_ids = $14::jsonb,
+			tag_ids = $13,
+			expense_ids = $14,
 			updated_at = now()
 		where workspace_id = $1 and user_id = $2 and id = $3
 		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
@@ -491,8 +491,8 @@ func (store *Store) UpdateTimeEntry(
 		record.Stop,
 		record.Duration,
 		record.CreatedWith,
-		string(marshalInt64JSON(record.TagIDs)),
-		string(marshalInt64JSON(record.ExpenseIDs)),
+		record.TagIDs,
+		record.ExpenseIDs,
 	)
 	return scanTimeEntry(row)
 }
@@ -542,20 +542,9 @@ func scanTimeEntry(scanner interface {
 	Scan(dest ...any) error
 }) (trackingapplication.TimeEntryView, error) {
 	var (
-		id            int64
-		workspaceID   int64
-		userID        int64
-		clientID      *int64
-		projectID     *int64
-		taskID        *int64
-		description   string
-		billable      bool
+		entry         trackingapplication.TimeEntryView
 		start         time.Time
 		stop          *time.Time
-		duration      int
-		createdWith   string
-		tagIDs        []byte
-		expenseIDs    []byte
 		deletedAt     *time.Time
 		createdAt     time.Time
 		updatedAt     time.Time
@@ -563,23 +552,22 @@ func scanTimeEntry(scanner interface {
 		projectName   *string
 		taskName      *string
 		projectActive *bool
-		tagNames      []byte
 	)
-	if err := scanner.Scan(scanTimeEntryFields(
-		&id,
-		&workspaceID,
-		&userID,
-		&clientID,
-		&projectID,
-		&taskID,
-		&description,
-		&billable,
+	if err := scanner.Scan(
+		&entry.ID,
+		&entry.WorkspaceID,
+		&entry.UserID,
+		&entry.ClientID,
+		&entry.ProjectID,
+		&entry.TaskID,
+		&entry.Description,
+		&entry.Billable,
 		&start,
 		&stop,
-		&duration,
-		&createdWith,
-		&tagIDs,
-		&expenseIDs,
+		&entry.Duration,
+		&entry.CreatedWith,
+		&entry.TagIDs,
+		&entry.ExpenseIDs,
 		&deletedAt,
 		&createdAt,
 		&updatedAt,
@@ -587,34 +575,12 @@ func scanTimeEntry(scanner interface {
 		&projectName,
 		&taskName,
 		&projectActive,
-		&tagNames,
-	)...); err != nil {
+		&entry.TagNames,
+	); err != nil {
 		return trackingapplication.TimeEntryView{}, writeTrackingError("scan tracking time entry", err)
 	}
-	return buildTimeEntryView(
-		id,
-		workspaceID,
-		userID,
-		clientID,
-		projectID,
-		taskID,
-		description,
-		billable,
-		start,
-		stop,
-		duration,
-		createdWith,
-		tagIDs,
-		expenseIDs,
-		deletedAt,
-		createdAt,
-		updatedAt,
-		clientName,
-		projectName,
-		taskName,
-		projectActive,
-		tagNames,
-	), nil
+	buildTimeEntryView(&entry, start, stop, deletedAt, createdAt, updatedAt, clientName, projectName, taskName, projectActive)
+	return entry, nil
 }
 
 func intParam(value int) string {

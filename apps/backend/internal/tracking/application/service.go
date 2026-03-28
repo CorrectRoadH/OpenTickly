@@ -503,7 +503,7 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		}
 	}
 
-	updated, err := service.store.UpdateTimeEntry(ctx, UpdateTimeEntryRecord{TimeEntryView: current})
+	updated, err := service.store.UpdateTimeEntry(ctx, current)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to update time entry",
 			"workspace_id", command.WorkspaceID,
@@ -750,7 +750,7 @@ func (service *Service) UpsertFavorite(ctx context.Context, command UpsertFavori
 	}
 	current.UpdatedAt = service.now()
 
-	updated, err := service.store.UpdateFavorite(ctx, UpdateFavoriteRecord{FavoriteView: *current})
+	updated, err := service.store.UpdateFavorite(ctx, *current)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to update favorite",
 			"workspace_id", command.WorkspaceID,
@@ -893,7 +893,7 @@ func (service *Service) UpdateGoal(ctx context.Context, command UpdateGoalComman
 	}
 	current.UpdatedAt = service.now()
 
-	updated, err := service.store.UpdateGoal(ctx, UpdateGoalRecord{GoalView: current})
+	updated, err := service.store.UpdateGoal(ctx, current)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to update goal",
 			"workspace_id", command.WorkspaceID,
@@ -1004,7 +1004,7 @@ func (service *Service) UpsertReminder(ctx context.Context, command UpsertRemind
 	current.UserIDs = append([]int64(nil), command.UserIDs...)
 	current.GroupIDs = append([]int64(nil), command.GroupIDs...)
 	current.UpdatedAt = service.now()
-	updated, err := service.store.UpdateReminder(ctx, UpdateReminderRecord{ReminderView: current})
+	updated, err := service.store.UpdateReminder(ctx, current)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to update reminder",
 			"workspace_id", command.WorkspaceID,
