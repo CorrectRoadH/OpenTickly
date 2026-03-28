@@ -16,6 +16,7 @@ type CalendarEntryContextMenuProps = {
   onDelete: () => void;
   onDuplicate: () => void;
   onFavorite?: () => void;
+  onSplit?: () => void;
   position: ContextMenuPosition;
   projectPath?: string;
 };
@@ -33,6 +34,7 @@ export function CalendarEntryContextMenu({
   onDelete,
   onDuplicate,
   onFavorite,
+  onSplit,
   position,
   projectPath,
 }: CalendarEntryContextMenuProps): ReactElement {
@@ -68,11 +70,8 @@ export function CalendarEntryContextMenu({
       style={{ left: position.x, top: position.y }}
     >
       <ContextMenuItem label="Duplicate" onClick={onDuplicate} />
-      <ContextMenuItem
-        disabled={!onFavorite}
-        label="Pin as favorite"
-        onClick={onFavorite}
-      />
+      <ContextMenuItem disabled={!onSplit} label="Split" onClick={onSplit} />
+      <ContextMenuItem disabled={!onFavorite} label="Pin as favorite" onClick={onFavorite} />
       {hasProject && projectPath ? (
         <a
           className="flex h-[30px] cursor-pointer items-center px-2.5 text-[14px] font-medium text-[#fafafa] transition hover:bg-white/6"

@@ -844,7 +844,8 @@ export type CalendarContextMenuAction =
   | "delete"
   | "duplicate"
   | "favorite"
-  | "go-to-project";
+  | "go-to-project"
+  | "split";
 
 export function CalendarView({
   calendarHours = "all",
@@ -871,7 +872,10 @@ export function CalendarView({
   calendarHours?: "all" | "business";
   draftEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
-  onContextMenuAction?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => void;
+  onContextMenuAction?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    action: CalendarContextMenuAction,
+  ) => void;
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
@@ -1075,100 +1079,114 @@ export function CalendarView({
   // Without this, every nowMs tick (1s) creates a new components object →
   // RBC re-mounts all event cards → local state (context menu) is lost.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const calendarComponents = useMemo(() => ({
-    event: (props: EventProps<CalendarEvent>) => (
-      <CalendarEventCard
-        event={props.event}
-        onContextMenu={(entry, x, y) => setContextMenuState({ entry, x, y })}
-        onEditEntry={onEditEntry}
-      />
-    ),
-    header: ({ date }: { date: Date }) => {
-      const dayNum = date.getDate();
-      const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
-        .format(date)
-        .toUpperCase();
-      const dateKey = new Intl.DateTimeFormat("en-CA", {
-        day: "2-digit",
-        month: "2-digit",
-        timeZone: timezone,
-        year: "numeric",
-      }).format(date);
-      const totalSeconds = dailyTotals.get(dateKey) ?? 0;
-      const isToday =
-        date.getFullYear() === today.getFullYear() &&
-        date.getMonth() === today.getMonth() &&
-        date.getDate() === today.getDate();
-      return (
-        <div
-          className="flex w-full items-center gap-2 px-2 py-2"
-          data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
-        >
-          <span
-            className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
-              isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
-            }`}
+  const calendarComponents = useMemo(
+    () => ({
+      event: (props: EventProps<CalendarEvent>) => (
+        <CalendarEventCard
+          event={props.event}
+          onContextMenu={(entry, x, y) => setContextMenuState({ entry, x, y })}
+          onEditEntry={onEditEntry}
+        />
+      ),
+      header: ({ date }: { date: Date }) => {
+        const dayNum = date.getDate();
+        const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
+          .format(date)
+          .toUpperCase();
+        const dateKey = new Intl.DateTimeFormat("en-CA", {
+          day: "2-digit",
+          month: "2-digit",
+          timeZone: timezone,
+          year: "numeric",
+        }).format(date);
+        const totalSeconds = dailyTotals.get(dateKey) ?? 0;
+        const isToday =
+          date.getFullYear() === today.getFullYear() &&
+          date.getMonth() === today.getMonth() &&
+          date.getDate() === today.getDate();
+        return (
+          <div
+            className="flex w-full items-center gap-2 px-2 py-2"
+            data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
           >
-            {dayNum}
-          </span>
-          <span className="flex flex-col items-start leading-tight">
             <span
-              className={`text-[10px] font-medium tracking-wide ${
-                isToday ? "text-[#e57bd9]" : "text-[#999]"
+              className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
+                isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
               }`}
             >
-              {dayName}
+              {dayNum}
             </span>
-            <span className="text-[10px] tabular-nums text-[#999]">
-              {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
+            <span className="flex flex-col items-start leading-tight">
+              <span
+                className={`text-[10px] font-medium tracking-wide ${
+                  isToday ? "text-[#e57bd9]" : "text-[#999]"
+                }`}
+              >
+                {dayName}
+              </span>
+              <span className="text-[10px] tabular-nums text-[#999]">
+                {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
+              </span>
             </span>
-          </span>
-        </div>
-      );
-    },
-    timeGutterHeader: () => (
-      <div
-        className="flex items-center justify-center gap-1 py-2"
-        data-testid="calendar-zoom-controls"
-      >
-        <button
-          aria-label="Decrease zoom"
-          className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-          disabled={zoom <= -1}
-          onClick={onZoomOut}
-          type="button"
-        >
-          <MinusIcon className="size-3" />
-        </button>
-        <button
-          aria-label="Increase zoom"
-          className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-          disabled={zoom >= 1}
-          onClick={onZoomIn}
-          type="button"
-        >
-          <PlusIcon className="size-3" />
-        </button>
-      </div>
-    ),
-    dayColumnWrapper: React.forwardRef<HTMLDivElement, Record<string, unknown>>(
-      function DayColumnWrapperBridge(props, ref) {
-        return (
-          <CalendarDayColumnWrapper
-            ref={ref}
-            className={props.className as string | undefined}
-            isNow={Boolean(
-              typeof props.className === "string" && (props.className as string).includes("rbc-now"),
-            )}
-            onStartEntry={onStartEntry}
-            style={props.style as React.CSSProperties | undefined}
-          >
-            {props.children as React.ReactNode}
-          </CalendarDayColumnWrapper>
+          </div>
         );
       },
-    ),
-  }), [onContextMenuAction, onEditEntry, timezone, dailyTotals, today, zoom, onZoomIn, onZoomOut, onStartEntry]);
+      timeGutterHeader: () => (
+        <div
+          className="flex items-center justify-center gap-1 py-2"
+          data-testid="calendar-zoom-controls"
+        >
+          <button
+            aria-label="Decrease zoom"
+            className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            disabled={zoom <= -1}
+            onClick={onZoomOut}
+            type="button"
+          >
+            <MinusIcon className="size-3" />
+          </button>
+          <button
+            aria-label="Increase zoom"
+            className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            disabled={zoom >= 1}
+            onClick={onZoomIn}
+            type="button"
+          >
+            <PlusIcon className="size-3" />
+          </button>
+        </div>
+      ),
+      dayColumnWrapper: React.forwardRef<HTMLDivElement, Record<string, unknown>>(
+        function DayColumnWrapperBridge(props, ref) {
+          return (
+            <CalendarDayColumnWrapper
+              ref={ref}
+              className={props.className as string | undefined}
+              isNow={Boolean(
+                typeof props.className === "string" &&
+                (props.className as string).includes("rbc-now"),
+              )}
+              onStartEntry={onStartEntry}
+              style={props.style as React.CSSProperties | undefined}
+            >
+              {props.children as React.ReactNode}
+            </CalendarDayColumnWrapper>
+          );
+        },
+      ),
+    }),
+    [
+      onContextMenuAction,
+      onEditEntry,
+      timezone,
+      dailyTotals,
+      today,
+      zoom,
+      onZoomIn,
+      onZoomOut,
+      onStartEntry,
+    ],
+  );
 
   return (
     <div
@@ -1292,6 +1310,14 @@ export function CalendarView({
             onContextMenuAction?.(contextMenuState.entry, "favorite");
             setContextMenuState(null);
           }}
+          onSplit={
+            contextMenuState.entry.stop
+              ? () => {
+                  onContextMenuAction?.(contextMenuState.entry, "split");
+                  setContextMenuState(null);
+                }
+              : undefined
+          }
           position={{ x: contextMenuState.x, y: contextMenuState.y }}
           projectPath={
             contextMenuState.entry.project_id || contextMenuState.entry.pid
@@ -1404,7 +1430,11 @@ function CalendarEventCard({
   onEditEntry,
 }: {
   event: CalendarEvent;
-  onContextMenu?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, x: number, y: number) => void;
+  onContextMenu?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    x: number,
+    y: number,
+  ) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
   const entry = event.entry;

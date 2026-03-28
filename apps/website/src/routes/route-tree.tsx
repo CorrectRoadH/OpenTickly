@@ -12,7 +12,11 @@ import {
   parseProjectsSearch,
 } from "../shared/url-state/projects-location.ts";
 import { parseTasksSearch } from "../shared/url-state/tasks-location.ts";
-import { parseTimerSearch, resolveTimerSearchDate } from "../shared/url-state/timer-location.ts";
+import {
+  type ParsedTimerSearch,
+  parseTimerSearch,
+  resolveTimerSearchDate,
+} from "../shared/url-state/timer-location.ts";
 import {
   buildWorkspaceSettingsPath,
   normalizeWorkspaceSettingsSection,
@@ -22,6 +26,10 @@ import { AuthPage } from "../pages/auth/AuthPage.tsx";
 import { InviteStatusJoinedPage } from "../pages/members/InviteStatusJoinedPage.tsx";
 import { WorkspaceImportPage } from "../pages/import/WorkspaceImportPage.tsx";
 import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
+import {
+  InstanceAdminPage,
+  type InstanceAdminSection,
+} from "../pages/instance-admin/InstanceAdminPage.tsx";
 import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettingsPage.tsx";
 import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
 import { WorkspaceOverviewPage } from "../pages/shell/WorkspaceOverviewPage.tsx";
@@ -86,6 +94,13 @@ const workspaceOverviewRoute = createRoute({
 const workspaceTimerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/timer",
+  validateSearch: parseTimerSearch,
+  component: WorkspaceTimerRouteComponent,
+});
+
+const workspaceTimerStartRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/timer/start",
   validateSearch: parseTimerSearch,
   component: WorkspaceTimerRouteComponent,
 });
@@ -238,6 +253,12 @@ const organizationSettingsRoute = createRoute({
   component: OrganizationSettingsRouteComponent,
 });
 
+const instanceAdminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/instance-admin/$section",
+  component: InstanceAdminRouteComponent,
+});
+
 export const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
@@ -245,6 +266,7 @@ export const routeTree = rootRoute.addChildren([
   inviteStatusJoinedRoute,
   profileRoute,
   workspaceOverviewRoute,
+  workspaceTimerStartRoute,
   workspaceTimerRoute,
   workspaceReportsRoute,
   workspaceProjectsRoute,
@@ -270,6 +292,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceSettingsRoute,
   legacyWorkspaceSettingsRoute,
   organizationSettingsRoute,
+  instanceAdminRoute,
 ]);
 
 function HomeRouteComponent() {
@@ -337,10 +360,14 @@ function WorkspaceOverviewRouteComponent() {
 }
 
 function WorkspaceTimerRouteComponent() {
-  const search = workspaceTimerRoute.useSearch();
+  const search = useRouterState({
+    select: (state) => state.location.search as ParsedTimerSearch,
+  });
   const initialDate = resolveTimerSearchDate(search.date);
 
-  return renderProtectedRoute(<WorkspaceTimerPage initialDate={initialDate} />);
+  return renderProtectedRoute(
+    <WorkspaceTimerPage initialDate={initialDate} startParams={search.start} />,
+  );
 }
 
 function WorkspaceReportsRouteComponent() {
@@ -546,6 +573,16 @@ function OrganizationSettingsRouteComponent() {
   const organizationId = Number(params.organizationId);
 
   return renderProtectedRoute(<OrganizationSettingsPage organizationId={organizationId} />);
+}
+
+function InstanceAdminRouteComponent() {
+  const params = instanceAdminRoute.useParams();
+  const validSections: InstanceAdminSection[] = ["overview", "users", "registration"];
+  const section = validSections.includes(params.section as InstanceAdminSection)
+    ? (params.section as InstanceAdminSection)
+    : "overview";
+
+  return renderProtectedRoute(<InstanceAdminPage section={section} />);
 }
 
 function renderProtectedRoute(children: ReactNode, requestedWorkspaceId?: number) {

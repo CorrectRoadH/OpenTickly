@@ -30,6 +30,7 @@ import { GoalsFavoritesSidebar } from "../../features/tracking/GoalsFavoritesSid
 import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
+import { SplitTimeEntryDialog } from "../../features/tracking/SplitTimeEntryDialog.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
@@ -57,11 +58,22 @@ type DeletedEntrySnapshot = {
   taskId: number | null;
 };
 
-type WorkspaceTimerPageProps = {
-  initialDate?: Date;
+type StartParams = {
+  description?: string;
+  projectId?: number;
+  tagIds?: number[];
+  billable?: boolean;
 };
 
-export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): ReactElement {
+type WorkspaceTimerPageProps = {
+  initialDate?: Date;
+  startParams?: StartParams;
+};
+
+export function WorkspaceTimerPage({
+  initialDate,
+  startParams,
+}: WorkspaceTimerPageProps): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
@@ -72,7 +84,30 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
+  const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
+
+  // Auto-start timer from URL params (e.g. /timer?description=foo&billable=true
+  // or /timer/start?desc=foo). Fires once when start params are present and the
+  // current-timer query has resolved (so we know whether a timer is already running).
+  const startParamsConsumedRef = useRef(false);
+  const currentEntryLoaded = !orch.currentTimeEntryQuery.isPending;
+  useEffect(() => {
+    if (!startParams || startParamsConsumedRef.current || !currentEntryLoaded) return;
+    startParamsConsumedRef.current = true;
+
+    void orch.handleStartFromUrl(startParams).then(() => {
+      // Strip start params from URL without triggering navigation
+      const url = new URL(window.location.href);
+      url.searchParams.delete("description");
+      url.searchParams.delete("desc");
+      url.searchParams.delete("project_id");
+      url.searchParams.delete("tag_ids");
+      url.searchParams.delete("billable");
+      url.searchParams.delete("wid");
+      window.history.replaceState(window.history.state, "", url.toString());
+    });
+  }, [startParams, currentEntryLoaded, orch]);
 
   const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
     if (deleteToastTimerRef.current) {
@@ -184,7 +219,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
 
     // Wait one frame for the calendar to render
     requestAnimationFrame(() => {
-      const indicator = document.querySelector('.rbc-current-time-indicator');
+      const indicator = document.querySelector(".rbc-current-time-indicator");
       if (!indicator) return;
 
       const indicatorRect = indicator.getBoundingClientRect();
@@ -606,7 +641,12 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                 });
               }
             }}
-            onSplitEntry={undefined}
+            onSplitEntry={(entry) => {
+              if (entry.start && entry.stop) {
+                orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+                setSplitDialogOpen(true);
+              }
+            }}
             onProjectChange={(entry, projectId) => {
               const wid = entry.workspace_id ?? entry.wid;
               if (typeof entry.id === "number" && typeof wid === "number") {
@@ -642,6 +682,11 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
             entries={orch.visibleEntries}
             nowMs={orch.nowMs}
             onContextMenuAction={(entry, action) => {
+              if (action === "split" && entry.start && entry.stop) {
+                orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+                setSplitDialogOpen(true);
+                return;
+              }
               handleCalendarContextMenuAction(entry, action, orch, showDeleteToast);
             }}
             onEditEntry={orch.handleEntryEdit}
@@ -764,7 +809,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               orch.isNewEntry
                 ? undefined
                 : () => {
-                    void orch.handleSelectedEntrySplit();
+                    setSplitDialogOpen(true);
                   }
             }
             onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
@@ -842,6 +887,17 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
             isCurrent: workspace.isCurrent,
             name: workspace.name,
           }))}
+        />
+      ) : null}
+      {splitDialogOpen && orch.selectedEntry?.start && orch.selectedEntry?.stop ? (
+        <SplitTimeEntryDialog
+          start={orch.selectedEntry.start}
+          stop={orch.selectedEntry.stop}
+          onCancel={() => setSplitDialogOpen(false)}
+          onConfirm={(splitAtMs) => {
+            setSplitDialogOpen(false);
+            void orch.handleSelectedEntrySplit(splitAtMs);
+          }}
         />
       ) : null}
       {deleteToast ? (

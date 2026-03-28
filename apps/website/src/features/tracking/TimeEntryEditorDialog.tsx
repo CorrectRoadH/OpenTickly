@@ -256,7 +256,10 @@ export function TimeEntryEditorDialog({
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (!target.closest('[data-testid="time-entry-editor-dialog"]')) {
+      if (
+        !target.closest('[data-testid="time-entry-editor-dialog"]') &&
+        !target.closest('[data-testid="split-time-entry-dialog"]')
+      ) {
         if (isDirty) {
           setShowDiscardConfirmation(true);
           return;

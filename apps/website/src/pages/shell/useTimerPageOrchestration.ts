@@ -307,11 +307,17 @@ export interface TimerPageOrchestration {
   handleSelectedEntrySuggestionSelect: (
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   ) => void;
-  handleSelectedEntrySplit: () => Promise<void>;
+  handleSelectedEntrySplit: (splitAtMs?: number) => Promise<void>;
   handleSelectedEntryTagCreate: (name: string) => Promise<void>;
   handleSelectedEntryStartTimeChange: (time: Date) => void;
   handleSelectedEntryStopTimeChange: (time: Date) => void;
   handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
+  handleStartFromUrl: (params: {
+    description?: string;
+    projectId?: number;
+    tagIds?: number[];
+    billable?: boolean;
+  }) => Promise<void>;
   handleCalendarSlotCreate: (slot: { end: Date; start: Date }) => void;
   handleCalendarEntryMove: (entryId: number, minutesDelta: number) => Promise<void>;
   handleCalendarEntryResize: (
@@ -799,6 +805,29 @@ export function useTimerPageOrchestration(options?: {
     [startTimeEntryMutation],
   );
 
+  const handleStartFromUrl = useCallback(
+    async (params: {
+      description?: string;
+      projectId?: number;
+      tagIds?: number[];
+      billable?: boolean;
+    }) => {
+      // Don't start if already running
+      if (runningEntry?.id != null) return;
+
+      const desc = (params.description ?? "").trim();
+      await startTimeEntryMutation.mutateAsync({
+        billable: params.billable,
+        description: desc,
+        projectId: params.projectId ?? null,
+        start: new Date().toISOString(),
+        tagIds: params.tagIds ?? [],
+      });
+      setRunningDescription(desc);
+    },
+    [runningEntry, startTimeEntryMutation],
+  );
+
   const handleSelectedEntrySave = useCallback(async () => {
     if (!selectedEntry) {
       return;
@@ -1023,64 +1052,71 @@ export function useTimerPageOrchestration(options?: {
     });
   }, []);
 
-  const handleSelectedEntrySplit = useCallback(async () => {
-    if (!selectedEntry?.id || !selectedEntry.start || !selectedEntry.stop) {
-      setSelectedEntryError("Only stopped time entries can be split.");
-      return;
-    }
+  const handleSelectedEntrySplit = useCallback(
+    async (splitAtMs?: number) => {
+      if (!selectedEntry?.id || !selectedEntry.start || !selectedEntry.stop) {
+        setSelectedEntryError("Only stopped time entries can be split.");
+        return;
+      }
 
-    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-    if (typeof selectedWorkspaceId !== "number") {
-      setSelectedEntryError("This time entry is missing a workspace.");
-      return;
-    }
+      const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
+      if (typeof selectedWorkspaceId !== "number") {
+        setSelectedEntryError("This time entry is missing a workspace.");
+        return;
+      }
 
-    const startMs = new Date(selectedEntry.start).getTime();
-    const stopMs = new Date(selectedEntry.stop).getTime();
-    const midpointMs = startMs + Math.floor((stopMs - startMs) / 2);
-    if (!Number.isFinite(midpointMs) || midpointMs <= startMs || midpointMs >= stopMs) {
-      setSelectedEntryError("This time entry is too short to split.");
-      return;
-    }
+      const startMs = new Date(selectedEntry.start).getTime();
+      const stopMs = new Date(selectedEntry.stop).getTime();
+      const resolvedSplitMs = splitAtMs ?? startMs + Math.floor((stopMs - startMs) / 2);
+      if (
+        !Number.isFinite(resolvedSplitMs) ||
+        resolvedSplitMs <= startMs ||
+        resolvedSplitMs >= stopMs
+      ) {
+        setSelectedEntryError("This time entry is too short to split.");
+        return;
+      }
 
-    try {
-      await updateTimeEntryMutation.mutateAsync({
-        request: {
+      try {
+        await updateTimeEntryMutation.mutateAsync({
+          request: {
+            billable: selectedEntry.billable,
+            description: selectedDescription.trim(),
+            projectId: selectedProjectId,
+            start: selectedEntry.start,
+            stop: new Date(resolvedSplitMs).toISOString(),
+            tagIds: selectedTagIds,
+            taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
+          },
+          timeEntryId: selectedEntry.id,
+          workspaceId: selectedWorkspaceId,
+        });
+        await createTimeEntryMutation.mutateAsync({
           billable: selectedEntry.billable,
           description: selectedDescription.trim(),
+          duration: Math.round((stopMs - resolvedSplitMs) / 1000),
           projectId: selectedProjectId,
-          start: selectedEntry.start,
-          stop: new Date(midpointMs).toISOString(),
+          start: new Date(resolvedSplitMs).toISOString(),
+          stop: selectedEntry.stop,
           tagIds: selectedTagIds,
           taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-        },
-        timeEntryId: selectedEntry.id,
-        workspaceId: selectedWorkspaceId,
-      });
-      await createTimeEntryMutation.mutateAsync({
-        billable: selectedEntry.billable,
-        description: selectedDescription.trim(),
-        duration: Math.round((stopMs - midpointMs) / 1000),
-        projectId: selectedProjectId,
-        start: new Date(midpointMs).toISOString(),
-        stop: selectedEntry.stop,
-        tagIds: selectedTagIds,
-        taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-      });
-      setSelectedEntryError(null);
-      closeSelectedEntryEditor();
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-    }
-  }, [
-    closeSelectedEntryEditor,
-    createTimeEntryMutation,
-    selectedDescription,
-    selectedEntry,
-    selectedProjectId,
-    selectedTagIds,
-    updateTimeEntryMutation,
-  ]);
+        });
+        setSelectedEntryError(null);
+        closeSelectedEntryEditor();
+      } catch (error) {
+        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
+      }
+    },
+    [
+      closeSelectedEntryEditor,
+      createTimeEntryMutation,
+      selectedDescription,
+      selectedEntry,
+      selectedProjectId,
+      selectedTagIds,
+      updateTimeEntryMutation,
+    ],
+  );
 
   const handleSelectedEntryFavorite = useCallback(async () => {
     try {
@@ -1592,6 +1628,7 @@ export function useTimerPageOrchestration(options?: {
     handleSelectedEntryStartTimeChange,
     handleSelectedEntryStopTimeChange,
     handleContinueEntry,
+    handleStartFromUrl,
     handleCalendarSlotCreate,
     handleCalendarEntryMove,
     handleCalendarEntryResize,
