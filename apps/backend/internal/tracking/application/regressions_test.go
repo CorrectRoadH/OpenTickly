@@ -784,7 +784,7 @@ func TestCurrentTimerAndHistoryStayConsistentAfterStartStopEdit(t *testing.T) {
 	}
 
 	// Phase 2: Stop the timer and verify consistency
-	stop := time.Now().UTC().Truncate(time.Microsecond)
+	stop := time.Now().UTC().Truncate(time.Second)
 	stoppedEntry, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
 		WorkspaceID: workspaceID,
 		TimeEntryID: runningEntry.ID,

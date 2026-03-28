@@ -1155,11 +1155,11 @@ func requireWorkspaceID(workspaceID int64) error {
 }
 
 func normalizeTimeEntryRange(start time.Time, stop *time.Time, duration *int) (time.Time, *time.Time, int, error) {
-	start = start.UTC()
+	start = start.UTC().Truncate(time.Second)
 
 	switch {
 	case stop != nil && duration != nil:
-		normalizedStop := stop.UTC()
+		normalizedStop := stop.UTC().Truncate(time.Second)
 		expected := int(normalizedStop.Sub(start).Seconds())
 		if expected != *duration {
 			return time.Time{}, nil, 0, ErrInvalidTimeRange
@@ -1169,7 +1169,7 @@ func normalizeTimeEntryRange(start time.Time, stop *time.Time, duration *int) (t
 		}
 		return start, &normalizedStop, *duration, nil
 	case stop != nil:
-		normalizedStop := stop.UTC()
+		normalizedStop := stop.UTC().Truncate(time.Second)
 		if normalizedStop.Before(start) {
 			return time.Time{}, nil, 0, ErrInvalidTimeRange
 		}
