@@ -31,21 +31,26 @@ type ImportedClients struct {
 }
 
 type ImportedProject struct {
-	Active        bool    `json:"active"`
-	ActualSeconds int64   `json:"actual_seconds"`
-	Billable      bool    `json:"billable"`
-	ClientID      *int64  `json:"client_id"`
-	CID           *int64  `json:"cid"`
-	Color         *string `json:"color"`
-	ID            int64   `json:"id"`
-	IsPrivate     bool    `json:"is_private"`
-	Name          string  `json:"name"`
-	Pinned        bool    `json:"pinned"`
-	Recurring     bool    `json:"recurring"`
-	Status        string  `json:"status"`
-	Template      bool    `json:"template"`
-	WorkspaceID   int64   `json:"workspace_id"`
-	WID           int64   `json:"wid"`
+	Active           bool     `json:"active"`
+	ActualSeconds    int64    `json:"actual_seconds"`
+	Billable         bool     `json:"billable"`
+	ClientID         *int64   `json:"client_id"`
+	CID              *int64   `json:"cid"`
+	Color            *string  `json:"color"`
+	Currency         *string  `json:"currency"`
+	EstimatedSeconds *int64   `json:"estimated_seconds"`
+	FixedFee         *float64 `json:"fixed_fee"`
+	ID               int64    `json:"id"`
+	IsPrivate        bool     `json:"is_private"`
+	Name             string   `json:"name"`
+	Pinned           bool     `json:"pinned"`
+	Rate             *float64 `json:"rate"`
+	Recurring        bool     `json:"recurring"`
+	StartDate        *string  `json:"start_date"`
+	Status           string   `json:"status"`
+	Template         bool     `json:"template"`
+	WorkspaceID      int64    `json:"workspace_id"`
+	WID              int64    `json:"wid"`
 }
 
 type ImportedProjects struct {
