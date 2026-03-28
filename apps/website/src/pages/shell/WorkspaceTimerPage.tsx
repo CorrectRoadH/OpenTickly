@@ -105,8 +105,13 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
 
   // When the calendar view's internal scroll container (.rbc-time-content)
   // scrolls while the editor is open, we track the scroll delta and apply it
-  // as a CSS transform on the editor layer. This keeps the editor pinned next
-  // to its time entry without causing React state update loops.
+  // to anchor.top. This keeps the editor pinned next to its time entry.
+  //
+  // KNOWN LIMITATION: this uses React state (setState on every scroll event)
+  // which introduces a ~1 frame delay vs Toggl's perfectly smooth scrolling.
+  // A better approach would be to render the editor inside .rbc-time-content
+  // via a React portal, so it scrolls natively with zero JS overhead.
+  // That requires careful integration with react-big-calendar's DOM lifecycle.
   const [calendarScrollDelta, setCalendarScrollDelta] = useState(0);
   const calendarScrollTopAtOpenRef = useRef<number | null>(null);
 
