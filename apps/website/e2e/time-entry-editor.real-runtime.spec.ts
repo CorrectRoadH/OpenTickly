@@ -200,6 +200,46 @@ test.describe("Story: edit a stopped time entry", () => {
     await expect(page).toHaveURL(/\/timer$/);
   });
 
+  test("when the calendar is scrolled while the editor is open, the editor scrolls with the entry", async ({
+    page,
+  }) => {
+    const entryButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    await expect(entryButton).toBeVisible();
+    await entryButton.click();
+
+    const dialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(dialog).toBeVisible();
+
+    // Record the initial vertical offset between the entry and the dialog
+    const entryBox = await entryButton.boundingBox();
+    const dialogBox = await dialog.boundingBox();
+    expect(entryBox).not.toBeNull();
+    expect(dialogBox).not.toBeNull();
+    // Scroll the react-big-calendar time content area (the actual scroll
+    // container inside the calendar grid, rendered by react-big-calendar)
+    const rbcTimeContent = page.locator(".rbc-time-content");
+    await rbcTimeContent.evaluate((el) => {
+      el.scrollTop += 200;
+    });
+
+    // Wait a tick for any reflow
+    await page.waitForTimeout(100);
+
+    // After scrolling, the entry must have moved up in the viewport
+    const entryBoxAfter = await entryButton.boundingBox();
+    const dialogBoxAfter = await dialog.boundingBox();
+    expect(entryBoxAfter).not.toBeNull();
+    expect(dialogBoxAfter).not.toBeNull();
+
+    // Sanity: the entry must have actually scrolled (moved up in viewport)
+    const entryDeltaY = entryBoxAfter!.y - entryBox!.y;
+    expect(Math.abs(entryDeltaY)).toBeGreaterThan(50);
+
+    // The editor must have moved by the same amount as the entry
+    const dialogDeltaY = dialogBoxAfter!.y - dialogBox!.y;
+    expect(Math.abs(dialogDeltaY - entryDeltaY)).toBeLessThan(5);
+  });
+
   test("when the user clicks a calendar entry, the editor dialog shows its start and stop times", async ({
     page,
   }) => {

@@ -103,6 +103,36 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
     };
   }, []);
 
+  // When the calendar view's internal scroll container (.rbc-time-content)
+  // scrolls while the editor is open, we track the scroll delta and apply it
+  // as a CSS transform on the editor layer. This keeps the editor pinned next
+  // to its time entry without causing React state update loops.
+  const [calendarScrollDelta, setCalendarScrollDelta] = useState(0);
+  const calendarScrollTopAtOpenRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (orch.view !== "calendar" || !orch.selectedEntryAnchor) {
+      calendarScrollTopAtOpenRef.current = null;
+      setCalendarScrollDelta(0);
+      return;
+    }
+
+    const scrollContainer = document.querySelector<HTMLElement>(".rbc-time-content");
+    if (!scrollContainer) return;
+
+    if (calendarScrollTopAtOpenRef.current === null) {
+      calendarScrollTopAtOpenRef.current = scrollContainer.scrollTop;
+    }
+
+    function handleScroll() {
+      if (calendarScrollTopAtOpenRef.current === null) return;
+      setCalendarScrollDelta(scrollContainer!.scrollTop - calendarScrollTopAtOpenRef.current);
+    }
+
+    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    return () => scrollContainer.removeEventListener("scroll", handleScroll);
+  }, [orch.view, !!orch.selectedEntryAnchor]); // only re-run when view changes or editor opens/closes
+
   const handleTimesheetAddRow = useCallback(
     (projectId: number | null) => {
       setTimesheetAddRowOpen(false);
@@ -642,11 +672,16 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               ) : null}
             </div>
           ) : null}
-          {/* Editor dialog renders inside the scroll area so it scrolls with
-              the list content and stays pinned next to the time entry row. */}
+          {/* Editor dialog renders inside the scroll area. In calendar view,
+              the actual scrolling happens inside .rbc-time-content (react-big-calendar's
+              own container) which is deeper than this scroll area. We apply a
+              translateY to keep the editor pinned to the entry as the calendar scrolls. */}
           {orch.selectedEntry && orch.selectedEntryAnchor ? (
             <TimeEntryEditorDialog
-              anchor={orch.selectedEntryAnchor}
+              anchor={{
+                ...orch.selectedEntryAnchor,
+                top: orch.selectedEntryAnchor.top - calendarScrollDelta,
+              }}
               currentWorkspaceId={orch.selectedEntryWorkspaceId}
               description={orch.selectedDescription}
               entry={orch.selectedEntry}
