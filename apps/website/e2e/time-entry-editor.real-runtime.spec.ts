@@ -26,8 +26,11 @@ test.describe("Story: edit a stopped time entry", () => {
     });
 
     await page.reload();
+    // In calendar view, RBC renders events as buttons with the entry description
+    // as accessible name (from the event title). In list view, the edit button
+    // has "Edit <description>" as aria-label.
     await expect(
-      page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first(),
+      page.getByRole("button", { name: ENTRY_DESCRIPTION }).first(),
     ).toBeVisible();
   });
 
@@ -35,7 +38,7 @@ test.describe("Story: edit a stopped time entry", () => {
     page,
   }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -68,7 +71,7 @@ test.describe("Story: edit a stopped time entry", () => {
     page,
   }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -99,7 +102,7 @@ test.describe("Story: edit a stopped time entry", () => {
     page,
   }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -118,7 +121,7 @@ test.describe("Story: edit a stopped time entry", () => {
 
   test("when the user clicks outside the dialog, the editor dialog closes", async ({ page }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -141,7 +144,7 @@ test.describe("Story: edit a stopped time entry", () => {
     page,
   }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -169,11 +172,11 @@ test.describe("Story: edit a stopped time entry", () => {
 
     await expect(dialog).not.toBeVisible();
     await expect(
-      page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first(),
+      page.getByRole("button", { name: ENTRY_DESCRIPTION }).first(),
     ).toBeVisible();
 
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
@@ -186,7 +189,7 @@ test.describe("Story: edit a stopped time entry", () => {
     page,
   }) => {
     await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .getByRole("button", { name: ENTRY_DESCRIPTION })
       .first()
       .click();
 
@@ -203,7 +206,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the calendar is scrolled while the editor is open, the editor scrolls with the entry", async ({
     page,
   }) => {
-    const entryButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    const entryButton = page.getByRole("button", { name: ENTRY_DESCRIPTION }).first();
     await expect(entryButton).toBeVisible();
     await entryButton.click();
 
@@ -242,7 +245,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the user clicks a calendar entry, the editor dialog shows its start and stop times", async ({
     page,
   }) => {
-    const entryButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    const entryButton = page.getByRole("button", { name: ENTRY_DESCRIPTION }).first();
     await expect(entryButton).toBeVisible();
 
     await entryButton.click();
