@@ -1412,8 +1412,12 @@ function CalendarEventCard({
           }
         />
       ) : null}
+      {/* Inner EventBox — Toggl uses padding 4px 6px for entries ≥15min,
+          0px for shorter ones. border-radius 4px always. */}
       <div
-        className="relative flex h-full flex-col justify-between rounded-[4px] px-1.5 py-1 text-left text-[12px] text-[#fafafa]"
+        className={`relative flex h-full flex-col justify-between rounded-[4px] text-left text-[12px] text-[#fafafa] ${
+          durationSeconds >= 900 ? "px-1.5 py-1" : "px-0 py-0"
+        }`}
         style={{
           backgroundColor: colorToOverlay(color),
           backgroundImage: isRunning
