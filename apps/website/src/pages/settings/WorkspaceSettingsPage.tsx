@@ -29,9 +29,9 @@ const settingsTabs: Array<{
 }> = [
   { id: "general", label: "General" },
   { id: "billable-rates", label: "Billable rates" },
-  { id: "csv-import", label: "CSV import" },
-  { id: "data-export", label: "Data export" },
-  { id: "single-sign-on", label: "Single Sign On" },
+  { id: "import", label: "CSV import" },
+  { id: "export", label: "Data export" },
+  { id: "sso", label: "Single Sign On" },
   { id: "activity", label: "Activity" },
   { id: "audit-log", label: "Audit Log" },
 ];
@@ -106,9 +106,9 @@ function SettingsSectionContent(props: {
       );
     case "billable-rates":
       return <BillableRatesContent workspaceId={props.workspaceId} />;
-    case "csv-import":
+    case "import":
       return <SettingsCsvImport workspaceId={props.workspaceId} />;
-    case "data-export":
+    case "export":
       return <SettingsDataExport />;
     case "audit-log":
       return <SettingsAuditLog workspaceId={props.workspaceId} />;

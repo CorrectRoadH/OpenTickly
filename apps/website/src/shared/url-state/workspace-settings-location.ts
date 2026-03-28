@@ -3,9 +3,9 @@ import { z } from "zod";
 const workspaceSettingsSectionSchema = z.enum([
   "general",
   "billable-rates",
-  "csv-import",
-  "data-export",
-  "single-sign-on",
+  "import",
+  "export",
+  "sso",
   "activity",
   "audit-log",
 ]);
@@ -16,11 +16,18 @@ export type LegacyWorkspaceSettingsSearch = {
   section?: string;
 };
 
+const LEGACY_SETTINGS_SLUGS: Record<string, WorkspaceSettingsSection> = {
+  branding: "general",
+  "csv-import": "import",
+  "data-export": "export",
+  "single-sign-on": "sso",
+};
+
 export function normalizeWorkspaceSettingsSection(
   section: string | undefined,
 ): WorkspaceSettingsSection {
-  if (section === "branding") {
-    return "general";
+  if (section && section in LEGACY_SETTINGS_SLUGS) {
+    return LEGACY_SETTINGS_SLUGS[section];
   }
 
   return workspaceSettingsSectionSchema.catch("general").parse(section);

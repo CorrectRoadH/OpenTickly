@@ -70,7 +70,7 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     await expect(page.getByRole("heading", { name: "Team member rights" })).toBeVisible();
 
     await page.getByRole("link", { name: "CSV import" }).click();
-    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/csv-import$`));
+    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/settings/import$`));
     await expect(page.getByRole("heading", { name: "CSV Import" })).toBeVisible();
 
     await page.goto(
