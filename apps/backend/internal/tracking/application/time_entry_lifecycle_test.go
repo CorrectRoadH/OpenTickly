@@ -480,6 +480,119 @@ func TestStartPlusDurationCreatesStoppedEntry(t *testing.T) {
 	}
 }
 
+// TestNegativeDurationCreatesRunningEntry verifies VAL-ENTRY-006:
+// Toggl convention: creating a time entry with start + negative duration
+// (duration = -(start unix epoch)) creates a running entry. The stored
+// duration must equal -(start unix epoch).
+func TestNegativeDurationCreatesRunningEntry(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "neg-duration")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	start := time.Date(2026, 3, 28, 6, 0, 0, 0, time.UTC)
+	negDuration := int(-start.Unix())
+
+	entry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "running via negative duration",
+		Start:       start,
+		Duration:    &negDuration,
+		CreatedWith: "neg-duration-test",
+	})
+	if err != nil {
+		t.Fatalf("create running entry with negative duration: %v", err)
+	}
+
+	// Must be running (no stop)
+	if entry.Stop != nil {
+		t.Fatalf("expected running entry (nil stop), got stop %s", *entry.Stop)
+	}
+
+	// Duration must be -(start unix epoch)
+	expectedDuration := int(-start.Unix())
+	if entry.Duration != expectedDuration {
+		t.Fatalf("expected duration %d, got %d", expectedDuration, entry.Duration)
+	}
+
+	// Must appear as current running timer
+	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current: %v", err)
+	}
+	if current.ID != entry.ID {
+		t.Fatalf("expected current entry ID %d, got %d", entry.ID, current.ID)
+	}
+}
+
+// TestStopRunningEntryWithNegativeDuration verifies VAL-ENTRY-007:
+// When stopping a running entry, sending stop + the original negative duration
+// must not be rejected. The server computes the correct positive duration
+// from stop - start.
+func TestStopRunningEntryWithNegativeDuration(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	workspaceID, userID := seedTrackingWorkspaceWithUniqueEmail(t, ctx, database, "stop-neg-dur")
+	catalogService := mustNewTrackingCatalogService(t, database)
+	trackingService := mustNewTrackingService(t, database, catalogService, testLogger)
+
+	start := time.Date(2026, 3, 28, 6, 0, 0, 0, time.UTC)
+	negDuration := int(-start.Unix())
+
+	entry, err := trackingService.CreateTimeEntry(ctx, trackingapplication.CreateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		UserID:      userID,
+		Description: "will be stopped",
+		Start:       start,
+		Duration:    &negDuration,
+		CreatedWith: "stop-neg-dur-test",
+	})
+	if err != nil {
+		t.Fatalf("create running entry: %v", err)
+	}
+
+	// Stop the entry by sending stop + the original negative duration
+	// (this is what the toggl CLI does)
+	stopTime := time.Date(2026, 3, 28, 7, 0, 0, 0, time.UTC)
+	updated, err := trackingService.UpdateTimeEntry(ctx, trackingapplication.UpdateTimeEntryCommand{
+		WorkspaceID: workspaceID,
+		TimeEntryID: entry.ID,
+		UserID:      userID,
+		Stop:        &stopTime,
+		Duration:    &negDuration,
+	})
+	if err != nil {
+		t.Fatalf("stop running entry with negative duration: %v", err)
+	}
+
+	// Must now be stopped
+	if updated.Stop == nil {
+		t.Fatalf("expected stopped entry, got nil stop")
+	}
+	if !updated.Stop.Equal(stopTime) {
+		t.Fatalf("expected stop %s, got %s", stopTime, *updated.Stop)
+	}
+
+	// Duration must be positive: stop - start = 3600
+	expectedDuration := 3600
+	if updated.Duration != expectedDuration {
+		t.Fatalf("expected duration %d, got %d", expectedDuration, updated.Duration)
+	}
+
+	// Must no longer appear as current
+	current, err := trackingService.GetCurrentTimeEntry(ctx, userID)
+	if err != nil {
+		t.Fatalf("get current: %v", err)
+	}
+	if current.ID != 0 {
+		t.Fatalf("expected no current entry after stop, got ID %d", current.ID)
+	}
+}
+
 // seedTrackingWorkspaceWithUniqueEmail creates a workspace and user with a unique email
 // to avoid conflicts in parallel test execution.
 func seedTrackingWorkspaceWithUniqueEmail(t *testing.T, ctx context.Context, database *pgtest.Database, prefix string) (int64, int64) {

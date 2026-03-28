@@ -1175,11 +1175,18 @@ func normalizeTimeEntryRange(start time.Time, stop *time.Time, duration *int) (t
 	switch {
 	case stop != nil && duration != nil:
 		normalizedStop := stop.UTC().Truncate(time.Second)
-		expected := int(normalizedStop.Sub(start).Seconds())
-		if expected != *duration {
+		if normalizedStop.Before(start) {
 			return time.Time{}, nil, 0, ErrInvalidTimeRange
 		}
-		if normalizedStop.Before(start) {
+		// Toggl convention: running entries carry duration = -(start unix epoch).
+		// When the client sends stop + negative duration to stop a running entry,
+		// ignore the negative duration and compute from stop - start.
+		if *duration < 0 {
+			computed := int(normalizedStop.Sub(start).Seconds())
+			return start, &normalizedStop, computed, nil
+		}
+		expected := int(normalizedStop.Sub(start).Seconds())
+		if expected != *duration {
 			return time.Time{}, nil, 0, ErrInvalidTimeRange
 		}
 		return start, &normalizedStop, *duration, nil
@@ -1193,10 +1200,10 @@ func normalizeTimeEntryRange(start time.Time, stop *time.Time, duration *int) (t
 		normalizedStop := start.Add(time.Duration(*duration) * time.Second)
 		return start, &normalizedStop, *duration, nil
 	default:
-		runningDuration := -1
-		if duration != nil {
-			runningDuration = *duration
-		}
+		// Toggl convention: running entry duration = -(start unix epoch).
+		// Always compute this from start so clients get the expected value
+		// regardless of what the caller provided.
+		runningDuration := int(-start.Unix())
 		return start, nil, runningDuration, nil
 	}
 }
