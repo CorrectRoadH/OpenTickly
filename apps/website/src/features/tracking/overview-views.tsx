@@ -35,6 +35,7 @@ import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.ts
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import {
   ChevronDownIcon,
+  DollarIcon,
   DynamicIcon,
   MinusIcon,
   MoreIcon,
@@ -606,7 +607,7 @@ export function ListView({
                       />
                       <button
                         aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
-                        className={`flex size-5 shrink-0 items-center justify-center rounded text-[11px] font-bold transition ${
+                        className={`flex size-[30px] shrink-0 items-center justify-center rounded transition ${
                           renderEntry.billable
                             ? "text-[#c8a961]"
                             : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
@@ -614,7 +615,7 @@ export function ListView({
                         onClick={() => onBillableToggle?.(renderEntry)}
                         type="button"
                       >
-                        $
+                        <DollarIcon className="h-[18px] w-[12px]" />
                       </button>
                       <button
                         className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)] hover:text-white"
@@ -998,7 +999,7 @@ function ListRowProjectPicker({
       {hasProject ? (
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 text-[14px]"
+          className="ml-2 flex shrink-0 cursor-pointer items-center gap-0 text-[14px] font-medium"
           onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
@@ -1006,16 +1007,13 @@ function ListRowProjectPicker({
           style={{ color: resolveEntryColor(entry) }}
           type="button"
         >
-          <span
-            className="size-[5px] shrink-0 rounded-full"
-            style={{ backgroundColor: resolveEntryColor(entry) }}
-          />
-          <span className="max-w-[160px] truncate">{entry.project_name}</span>
+          <span className="mr-1">•</span>
+          <span className="max-w-[180px] truncate">{entry.project_name}</span>
         </button>
       ) : (
         <button
           aria-label="Add a project"
-          className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
+          className="ml-2 flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
           onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
