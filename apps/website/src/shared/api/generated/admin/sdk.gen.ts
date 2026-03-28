@@ -3,7 +3,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { BootstrapInstanceAdminData, BootstrapInstanceAdminErrors, BootstrapInstanceAdminResponses, DisableInstanceUserData, DisableInstanceUserErrors, DisableInstanceUserResponses, GetBootstrapStateData, GetBootstrapStateResponses, GetInstanceConfigData, GetInstanceConfigResponses, GetInstanceFeatureGateData, GetInstanceFeatureGateResponses, GetInstanceHealthData, GetInstanceHealthResponses, GetRegistrationPolicyData, GetRegistrationPolicyResponses, ListInstanceUsersData, ListInstanceUsersResponses, ListOrganizationsData, ListOrganizationsResponses, RestoreInstanceUserData, RestoreInstanceUserErrors, RestoreInstanceUserResponses, SendTestEmailData, SendTestEmailErrors, SendTestEmailResponses, UpdateInstanceConfigData, UpdateInstanceConfigResponses, UpdateRegistrationPolicyData, UpdateRegistrationPolicyResponses } from './types.gen.js';
+import type { BootstrapInstanceAdminData, BootstrapInstanceAdminErrors, BootstrapInstanceAdminResponses, DisableInstanceUserData, DisableInstanceUserErrors, DisableInstanceUserResponses, GetBootstrapStateData, GetBootstrapStateResponses, GetInstanceConfigData, GetInstanceConfigResponses, GetInstanceFeatureGateData, GetInstanceFeatureGateResponses, GetInstanceHealthData, GetInstanceHealthResponses, GetInstanceVersionData, GetInstanceVersionResponses, GetRegistrationPolicyData, GetRegistrationPolicyResponses, ListInstanceUsersData, ListInstanceUsersResponses, ListOrganizationsData, ListOrganizationsResponses, RestoreInstanceUserData, RestoreInstanceUserErrors, RestoreInstanceUserResponses, SendTestEmailData, SendTestEmailErrors, SendTestEmailResponses, UpdateInstanceConfigData, UpdateInstanceConfigResponses, UpdateRegistrationPolicyData, UpdateRegistrationPolicyResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -106,6 +106,11 @@ export const listOrganizations = <ThrowOnError extends boolean = false>(options?
  * Get instance health summary
  */
 export const getInstanceHealth = <ThrowOnError extends boolean = false>(options?: Options<GetInstanceHealthData, ThrowOnError>) => (options?.client ?? client).get<GetInstanceHealthResponses, unknown, ThrowOnError>({ url: '/admin/v1/health', ...options });
+
+/**
+ * Get instance version and update info
+ */
+export const getInstanceVersion = <ThrowOnError extends boolean = false>(options?: Options<GetInstanceVersionData, ThrowOnError>) => (options?.client ?? client).get<GetInstanceVersionResponses, unknown, ThrowOnError>({ url: '/admin/v1/version', ...options });
 
 /**
  * Resolve a capability gate for the instance

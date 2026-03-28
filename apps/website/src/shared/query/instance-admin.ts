@@ -5,8 +5,10 @@ import {
   fetchInstanceConfig,
   fetchInstanceHealth,
   fetchInstanceUsers,
+  fetchInstanceVersion,
   fetchOrganizations,
   fetchRegistrationPolicy,
+  type InstanceVersionInfo,
   restoreInstanceUserApi,
   sendTestEmailApi,
   updateInstanceConfigApi,
@@ -107,6 +109,15 @@ export function useUpdateInstanceConfigMutation() {
 export function useSendTestEmailMutation() {
   return useMutation({
     mutationFn: (to: string) => sendTestEmailApi(to),
+  });
+}
+
+export function useInstanceVersionQuery() {
+  return useQuery<InstanceVersionInfo>({
+    queryKey: ["instance-admin", "version"],
+    queryFn: fetchInstanceVersion,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

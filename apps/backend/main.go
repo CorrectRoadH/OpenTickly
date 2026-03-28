@@ -14,9 +14,19 @@ import (
 	"os"
 
 	"opentoggl/backend/apps/backend/internal/bootstrap"
+	instanceadmintransport "opentoggl/backend/apps/backend/internal/instance-admin/transport/http/admin"
 )
 
+// version is injected at build time via:
+//
+//	go build -ldflags "-X main.version=$(git describe --tags --always)"
+//
+// Falls back to "dev" for local development.
+var version = "dev"
+
 func main() {
+	instanceadmintransport.CurrentVersion = version
+
 	if err := run(os.Args[1:]); err != nil {
 		slog.Error("command failed", "error", err)
 		os.Exit(1)

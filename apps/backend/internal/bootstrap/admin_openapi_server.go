@@ -2,6 +2,9 @@ package bootstrap
 
 import (
 	"context"
+	"fmt"
+	"net"
+	"strings"
 	"time"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
@@ -75,6 +78,9 @@ func (s *adminOpenAPIServer) SendTestEmail(ctx echo.Context) error {
 func (s *adminOpenAPIServer) ListOrganizations(ctx echo.Context) error {
 	return s.handler.ListOrganizations(ctx)
 }
+func (s *adminOpenAPIServer) GetInstanceVersion(ctx echo.Context) error {
+	return s.handler.GetInstanceVersion(ctx)
+}
 func (s *adminOpenAPIServer) GetInstanceHealth(ctx echo.Context) error {
 	return s.handler.GetInstanceHealth(ctx)
 }
@@ -107,11 +113,37 @@ type platformHealthChecker struct {
 func (h *platformHealthChecker) PingDatabase() (time.Duration, error) {
 	start := time.Now()
 	err := h.platform.Database.Pool().Ping(context.Background())
-	return time.Since(start), err
+	elapsed := time.Since(start)
+	if elapsed == 0 {
+		elapsed = time.Microsecond
+	}
+	return elapsed, err
 }
 
 func (h *platformHealthChecker) PingRedis() (time.Duration, error) {
-	return 0, nil
+	addr := h.platform.Redis.Address()
+	if addr == "" {
+		return 0, fmt.Errorf("redis not configured")
+	}
+	// Parse redis:// URL to get host:port for TCP ping
+	host := addr
+	if strings.HasPrefix(host, "redis://") {
+		host = strings.TrimPrefix(host, "redis://")
+		if idx := strings.Index(host, "/"); idx >= 0 {
+			host = host[:idx]
+		}
+	}
+	start := time.Now()
+	conn, err := net.DialTimeout("tcp", host, 2*time.Second)
+	elapsed := time.Since(start)
+	if err != nil {
+		return elapsed, err
+	}
+	conn.Close()
+	if elapsed == 0 {
+		elapsed = time.Microsecond
+	}
+	return elapsed, nil
 }
 
 type adminSessionResolverAdapter struct {

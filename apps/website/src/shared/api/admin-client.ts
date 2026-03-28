@@ -84,6 +84,18 @@ export function fetchOrganizations(): Promise<OrganizationList> {
   return adminFetch("/admin/v1/organizations");
 }
 
+export type InstanceVersionInfo = {
+  current_version: string;
+  latest_version?: string;
+  update_available: boolean;
+  release_url?: string;
+  changelog_url: string;
+};
+
+export function fetchInstanceVersion(): Promise<InstanceVersionInfo> {
+  return adminFetch("/admin/v1/version");
+}
+
 export function sendTestEmailApi(to: string): Promise<{ success: boolean; message: string }> {
   return adminFetch("/admin/v1/config/test-email", {
     method: "POST",

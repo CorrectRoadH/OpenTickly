@@ -53,6 +53,14 @@ export type InstanceHealth = {
     checked_at: string;
 };
 
+export type InstanceVersion = {
+    current_version: string;
+    latest_version?: string;
+    update_available: boolean;
+    release_url?: string;
+    changelog_url: string;
+};
+
 export type DependencyHealth = {
     status: 'up' | 'down';
     latency_ms?: number;
@@ -341,6 +349,22 @@ export type GetInstanceHealthResponses = {
 };
 
 export type GetInstanceHealthResponse = GetInstanceHealthResponses[keyof GetInstanceHealthResponses];
+
+export type GetInstanceVersionData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/admin/v1/version';
+};
+
+export type GetInstanceVersionResponses = {
+    /**
+     * Version info
+     */
+    200: InstanceVersion;
+};
+
+export type GetInstanceVersionResponse = GetInstanceVersionResponses[keyof GetInstanceVersionResponses];
 
 export type GetInstanceFeatureGateData = {
     body?: never;

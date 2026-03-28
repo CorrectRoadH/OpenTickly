@@ -335,6 +335,24 @@
         }
       }
     },
+    "/admin/v1/version": {
+      "get": {
+        "summary": "Get instance version and update info",
+        "operationId": "get-instance-version",
+        "responses": {
+          "200": {
+            "description": "Version info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstanceVersion"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/v1/features/{capability_key}": {
       "get": {
         "summary": "Resolve a capability gate for the instance",
@@ -507,6 +525,29 @@
           }
         },
         "required": ["status", "database", "redis", "job_backlog", "user_count", "checked_at"]
+      },
+      "InstanceVersion": {
+        "type": "object",
+        "properties": {
+          "current_version": {
+            "type": "string"
+          },
+          "latest_version": {
+            "type": "string",
+            "nullable": true
+          },
+          "update_available": {
+            "type": "boolean"
+          },
+          "release_url": {
+            "type": "string",
+            "nullable": true
+          },
+          "changelog_url": {
+            "type": "string"
+          }
+        },
+        "required": ["current_version", "update_available", "changelog_url"]
       },
       "DependencyHealth": {
         "type": "object",
