@@ -65,11 +65,11 @@ test.describe("Story: calendar event card shows project without client", () => {
     const listView = page.getByTestId("timer-list-view");
     await expect(listView).toBeVisible();
 
-    const editButton = listView.getByRole("button", { name: new RegExp(`Edit ${description}`) });
-    await expect(editButton).toBeVisible();
+    const row = listView.getByTestId("time-entry-list-row").filter({ hasText: description });
+    await expect(row).toBeVisible();
 
-    const entryContent = await editButton.textContent();
-    expect(entryContent).toContain(description);
-    expect(entryContent).toContain(projectName);
+    const rowContent = await row.textContent();
+    expect(rowContent).toContain(description);
+    expect(rowContent).toContain(projectName);
   });
 });
