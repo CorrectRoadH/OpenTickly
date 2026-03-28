@@ -1167,7 +1167,7 @@ export function CalendarView({
         eventPropGetter={(event) => ({
           className: event.resource.isRunning ? "rbc-event-running" : undefined,
           style: {
-            backgroundColor: colorToOverlay(event.resource.color),
+            backgroundColor: "transparent",
             border: event.resource.isDraft ? "1px dashed rgba(229,123,217,0.6)" : "none",
             color: "#fafafa",
             opacity: event.resource.isDraft ? 0.7 : undefined,
