@@ -84,9 +84,11 @@
 }
 
 /* ── Time content area ── */
-/* Toggl dark: border-top #2a2a2a, no border-right on gutter */
+/* Toggl overrides RBC's default overflow-y:auto to visible so the calendar
+   grid has no internal scrollbar — all scrolling is via window.scroll. */
 .rbc-time-content {
   border-top: 1px solid #2a2a2a;
+  overflow: visible;
 }
 
 .rbc-time-content > .rbc-time-gutter {
