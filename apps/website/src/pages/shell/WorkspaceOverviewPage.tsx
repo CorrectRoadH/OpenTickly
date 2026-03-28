@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
 import { ShellPageHeader, ShellSecondaryButton } from "@opentoggl/web-ui";
+import { toast } from "sonner";
 
 import {
   formatClockDuration,
@@ -16,6 +17,7 @@ import type {
   ModelsMostActiveUser,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
+  useInviteWorkspaceMemberMutation,
   useProjectsQuery,
   useWorkspaceAllActivitiesQuery,
   useWorkspaceMembersQuery,
@@ -23,6 +25,7 @@ import {
   useWorkspaceTopActivityQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { InviteMemberDialog } from "../members/InviteMemberDialog.tsx";
 import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
 
 const FAQ_ITEMS = [
@@ -86,6 +89,31 @@ export function WorkspaceOverviewPage(): ReactElement {
     () => buildProjectCoverage(topActivityQuery.data ?? []),
     [topActivityQuery.data],
   );
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("member");
+  const inviteMutation = useInviteWorkspaceMemberMutation(workspaceId);
+  const handleInviteSubmit = useCallback(() => {
+    inviteMutation.mutate(
+      { email: inviteEmail.trim(), role: inviteRole },
+      {
+        onSuccess: () => {
+          toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+          setInviteDialogOpen(false);
+          setInviteEmail("");
+          setInviteRole("member");
+        },
+        onError: (error) => {
+          const message = error instanceof Error ? error.message : "Failed to send invitation";
+          if (message.includes("SMTP") || message.includes("email sending")) {
+            toast.error("Email sending is not configured. Configure SMTP in Instance Admin before sending invitations.");
+          } else {
+            toast.error(message);
+          }
+        },
+      },
+    );
+  }, [inviteEmail, inviteMutation, inviteRole]);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const handleRefreshCharts = useCallback(() => {
@@ -278,6 +306,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                     </p>
                     <button
                       className="inline-flex h-6 items-center bg-transparent px-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]"
+                      onClick={() => setInviteDialogOpen(true)}
                       type="button"
                     >
                       Invite teammates
@@ -313,6 +342,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                 <div className="mt-auto space-y-2">
                   <button
                     className="inline-flex h-9 items-center rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
+                    onClick={() => setInviteDialogOpen(true)}
                     type="button"
                   >
                     Add teammates
@@ -447,6 +477,18 @@ export function WorkspaceOverviewPage(): ReactElement {
           </span>
         </div>
       </div>
+
+      {inviteDialogOpen ? (
+        <InviteMemberDialog
+          email={inviteEmail}
+          isPending={inviteMutation.isPending}
+          onClose={() => setInviteDialogOpen(false)}
+          onEmailChange={setInviteEmail}
+          onRoleChange={setInviteRole}
+          onSubmit={handleInviteSubmit}
+          role={inviteRole}
+        />
+      ) : null}
     </div>
   );
 }
