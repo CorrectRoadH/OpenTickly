@@ -1066,6 +1066,16 @@ export function CalendarView({
   const step = zoom > 0 ? 15 : 30;
   const timeslots = zoom > 0 ? 4 : 2;
 
+  // Context menu state lives at CalendarView level (not inside EventCard).
+  // Toggl does the same — the menu is a sibling of the calendar grid in the
+  // DOM, not inside the event card. This way RBC can re-render event cards
+  // without destroying the menu state.
+  const [contextMenuState, setContextMenuState] = useState<{
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+    x: number;
+    y: number;
+  } | null>(null);
+
   // Memoize the RBC components object so it doesn't change on every render.
   // Without this, every nowMs tick (1s) creates a new components object →
   // RBC re-mounts all event cards → local state (context menu) is lost.
@@ -1074,7 +1084,7 @@ export function CalendarView({
     event: (props: EventProps<CalendarEvent>) => (
       <CalendarEventCard
         event={props.event}
-        onContextMenuAction={onContextMenuAction}
+        onContextMenu={(entry, x, y) => setContextMenuState({ entry, x, y })}
         onEditEntry={onEditEntry}
       />
     ),
@@ -1256,6 +1266,40 @@ export function CalendarView({
         view={currentView}
         views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
       />
+      {/* Context menu rendered at CalendarView level (sibling of DnDCalendar),
+          matching Toggl's architecture. Menu state survives event card re-renders. */}
+      {contextMenuState ? (
+        <CalendarEntryContextMenu
+          entry={contextMenuState.entry}
+          onClose={() => setContextMenuState(null)}
+          onCopyDescription={() => {
+            onContextMenuAction?.(contextMenuState.entry, "copy-description");
+            setContextMenuState(null);
+          }}
+          onCopyStartLink={() => {
+            onContextMenuAction?.(contextMenuState.entry, "copy-start-link");
+            setContextMenuState(null);
+          }}
+          onDelete={() => {
+            onContextMenuAction?.(contextMenuState.entry, "delete");
+            setContextMenuState(null);
+          }}
+          onDuplicate={() => {
+            onContextMenuAction?.(contextMenuState.entry, "duplicate");
+            setContextMenuState(null);
+          }}
+          onFavorite={() => {
+            onContextMenuAction?.(contextMenuState.entry, "favorite");
+            setContextMenuState(null);
+          }}
+          position={{ x: contextMenuState.x, y: contextMenuState.y }}
+          projectPath={
+            contextMenuState.entry.project_id || contextMenuState.entry.pid
+              ? `/projects/${contextMenuState.entry.workspace_id ?? contextMenuState.entry.wid}/list`
+              : undefined
+          }
+        />
+      ) : null}
     </div>
   );
 }
@@ -1356,11 +1400,11 @@ export function TimesheetView({
 
 function CalendarEventCard({
   event,
-  onContextMenuAction,
+  onContextMenu,
   onEditEntry,
 }: {
   event: CalendarEvent;
-  onContextMenuAction?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => void;
+  onContextMenu?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, x: number, y: number) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
   const entry = event.entry;
@@ -1371,7 +1415,6 @@ function CalendarEventCard({
   const entryId = event.id;
   const isDraft = event.resource.isDraft;
   const allowDirectEdit = !event.resource.isLocked && !isRunning && !isDraft;
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Draft entries auto-open the editor anchored to their real DOM position
   useEffect(() => {
@@ -1388,41 +1431,9 @@ function CalendarEventCard({
       onContextMenu={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        setContextMenu({ x: e.clientX, y: e.clientY });
+        onContextMenu?.(entry, e.clientX, e.clientY);
       }}
     >
-      {contextMenu ? (
-        <CalendarEntryContextMenu
-          entry={entry}
-          onClose={() => setContextMenu(null)}
-          onCopyDescription={() => {
-            onContextMenuAction?.(entry, "copy-description");
-            setContextMenu(null);
-          }}
-          onCopyStartLink={() => {
-            onContextMenuAction?.(entry, "copy-start-link");
-            setContextMenu(null);
-          }}
-          onDelete={() => {
-            onContextMenuAction?.(entry, "delete");
-            setContextMenu(null);
-          }}
-          onDuplicate={() => {
-            onContextMenuAction?.(entry, "duplicate");
-            setContextMenu(null);
-          }}
-          onFavorite={() => {
-            onContextMenuAction?.(entry, "favorite");
-            setContextMenu(null);
-          }}
-          position={contextMenu}
-          projectPath={
-            entry.project_id || entry.pid
-              ? `/projects/${entry.workspace_id ?? entry.wid}/list`
-              : undefined
-          }
-        />
-      ) : null}
       {/* Inner EventBox — Toggl uses padding 4px 6px for entries ≥15min,
           0px for shorter ones. border-radius 4px always. */}
       <div

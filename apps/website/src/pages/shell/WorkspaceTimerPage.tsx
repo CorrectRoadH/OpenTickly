@@ -184,7 +184,7 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
 
     // Wait one frame for the calendar to render
     requestAnimationFrame(() => {
-      const indicator = document.querySelector('[data-testid="current-time-indicator"]');
+      const indicator = document.querySelector('.rbc-current-time-indicator');
       if (!indicator) return;
 
       const indicatorRect = indicator.getBoundingClientRect();
