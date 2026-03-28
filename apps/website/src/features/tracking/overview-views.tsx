@@ -968,8 +968,16 @@ export function CalendarView({
     return calendarEvents;
   }, [draftEntry, entries]);
 
-  // Build the running entry event separately — it depends on nowMs which
-  // ticks every second, but this only rebuilds one event instead of all.
+  // Toggl updates running entries in the calendar every ~60 seconds, not every
+  // second. This prevents RBC from re-rendering all event components on every
+  // tick, which would destroy local state (e.g. context menu) in EventCards.
+  // We round nowMs down to the nearest minute so the events array only changes
+  // when the minute rolls over.
+  const nowMinuteMs = useMemo(() => {
+    if (nowMs == null) return undefined;
+    return Math.floor(nowMs / 60_000) * 60_000;
+  }, [nowMs]);
+
   const events = useMemo<CalendarEvent[]>(() => {
     // Include the running entry even if the time-entries query hasn't yet
     // returned it (e.g. immediately after starting a new timer).
@@ -1000,11 +1008,10 @@ export function CalendarView({
       )
       .map((entry) => {
         const start = new Date(entry.start ?? entry.at ?? Date.now());
-        // Running entry end is always "now" — never extended by MIN_SLOT_MS.
-        // If the entry just started, it may be very short but its bottom edge
-        // must align with the current time indicator, not extend past it.
-        // CSS min-height on the event card handles visual minimum size.
-        const end = new Date(nowMs ?? Date.now());
+        // Running entry end is "now" rounded to the current minute.
+        // This matches Toggl's behavior: calendar events update every ~60s,
+        // not every second, so RBC doesn't re-render and destroy event cards.
+        const end = new Date(nowMinuteMs ?? Date.now());
         return {
           allDay: false,
           end,
@@ -1022,7 +1029,7 @@ export function CalendarView({
       });
 
     return [...stoppedEvents, ...runningEvents];
-  }, [stoppedEvents, entries, nowMs, runningEntry]);
+  }, [stoppedEvents, entries, nowMinuteMs, runningEntry]);
   const dailyTotals = useMemo(() => {
     const totals = new Map<string, number>();
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {

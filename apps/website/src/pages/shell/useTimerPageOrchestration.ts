@@ -337,6 +337,7 @@ export interface TimerPageOrchestration {
   // Query mutations for dialog
   createProjectMutation: ReturnType<typeof useCreateProjectMutation>;
   createTagMutation: ReturnType<typeof useCreateTagMutation>;
+  createWorkspaceFavoriteMutation: ReturnType<typeof useCreateWorkspaceFavoriteMutation>;
   deleteTimeEntryMutation: ReturnType<typeof useDeleteTimeEntryMutation>;
   createTimeEntryMutation: ReturnType<typeof useCreateTimeEntryMutation>;
   updateTimeEntryMutation: ReturnType<typeof useUpdateTimeEntryMutation>;
@@ -1605,6 +1606,7 @@ export function useTimerPageOrchestration(options?: {
     // Query mutations
     createProjectMutation,
     createTagMutation,
+    createWorkspaceFavoriteMutation,
     deleteTimeEntryMutation,
     createTimeEntryMutation,
     updateTimeEntryMutation,
