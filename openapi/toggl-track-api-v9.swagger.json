@@ -21414,7 +21414,8 @@
         },
         "color": {
           "description": "Project color",
-          "type": "string"
+          "type": "string",
+          "x-nullable": true
         },
         "currency": {
           "description": "Project currency, optional, premium feature",
@@ -22473,7 +22474,8 @@
         },
         "stop": {
           "description": "Stop time in UTC, can be omitted if it's still running or created with \"duration\".\nIf \"stop\" and \"duration\" are provided, values must be consistent (start + duration == stop)",
-          "type": "string"
+          "type": "string",
+          "x-nullable": true
         },
         "tag_action": {
           "description": "Can be \"add\" or \"delete\". Used when updating an existing time entry",
@@ -22491,7 +22493,8 @@
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "x-nullable": true
         },
         "task_id": {
           "description": "Task ID, optional",

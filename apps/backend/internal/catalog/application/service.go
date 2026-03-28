@@ -230,6 +230,13 @@ func (service *Service) CreateTag(ctx context.Context, command CreateTagCommand)
 	return service.store.CreateTag(ctx, command)
 }
 
+func (service *Service) EnsureTagsByName(ctx context.Context, workspaceID int64, createdBy int64, names []string) ([]int64, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	return service.store.EnsureTagsByName(ctx, workspaceID, createdBy, names)
+}
+
 func (service *Service) GetTag(ctx context.Context, workspaceID int64, tagID int64) (TagView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return TagView{}, err

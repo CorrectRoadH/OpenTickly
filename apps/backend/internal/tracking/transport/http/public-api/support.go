@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
@@ -20,12 +21,14 @@ type ScopeAuthorizer interface {
 
 type Handler struct {
 	tracking *trackingapplication.Service
+	catalog  *catalogapplication.Service
 	scope    ScopeAuthorizer
 }
 
-func NewHandler(tracking *trackingapplication.Service, scope ScopeAuthorizer) *Handler {
+func NewHandler(tracking *trackingapplication.Service, catalog *catalogapplication.Service, scope ScopeAuthorizer) *Handler {
 	return &Handler{
 		tracking: tracking,
+		catalog:  catalog,
 		scope:    scope,
 	}
 }

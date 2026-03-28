@@ -302,6 +302,37 @@ func (store *Store) CreateTag(
 	return tag, nil
 }
 
+func (store *Store) EnsureTagsByName(
+	ctx context.Context,
+	workspaceID int64,
+	createdBy int64,
+	names []string,
+) ([]int64, error) {
+	if len(names) == 0 {
+		return nil, nil
+	}
+	ids := make([]int64, 0, len(names))
+	for _, name := range names {
+		var tagID int64
+		err := store.pool.QueryRow(
+			ctx,
+			`insert into catalog_tags (workspace_id, name, created_by)
+			values ($1, $2, $3)
+			on conflict (workspace_id, lower(name))
+			do update set name = excluded.name
+			returning id`,
+			workspaceID,
+			name,
+			createdBy,
+		).Scan(&tagID)
+		if err != nil {
+			return nil, writeCatalogError("ensure catalog tag by name", err)
+		}
+		ids = append(ids, tagID)
+	}
+	return ids, nil
+}
+
 func (store *Store) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {
 	_, err := store.pool.Exec(
 		ctx,

@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -153,6 +154,11 @@ func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
 	// Set authenticated user ID in context for service-level authorization validation.
 	ctxWithAuth := trackingapplication.WithAuthenticatedUserID(ctx.Request().Context(), user.ID)
 
+	tagIDs, err := handler.resolveTagIDs(ctxWithAuth, workspaceID, user.ID, payload.TagIds, payload.Tags)
+	if err != nil {
+		return writePublicTrackTrackingError(err)
+	}
+
 	entry, err := handler.tracking.CreateTimeEntry(ctxWithAuth, trackingapplication.CreateTimeEntryCommand{
 		WorkspaceID: workspaceID,
 		UserID:      user.ID,
@@ -164,7 +170,7 @@ func (handler *Handler) PostPublicTrackTimeEntry(ctx echo.Context) error {
 		CreatedWith: lo.FromPtr(payload.CreatedWith),
 		ProjectID:   firstTrackIntPointerAsInt64(payload.ProjectId, payload.Pid),
 		TaskID:      firstTrackIntPointerAsInt64(payload.TaskId, payload.Tid),
-		TagIDs:      int64sFromTrackInts(payload.TagIds),
+		TagIDs:      tagIDs,
 	})
 	if err != nil {
 		return writePublicTrackTrackingError(err)
@@ -195,6 +201,11 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
+	tagIDs, err := handler.resolveTagIDs(ctx.Request().Context(), workspaceID, user.ID, payload.TagIds, payload.Tags)
+	if err != nil {
+		return writePublicTrackTrackingError(err)
+	}
+
 	entry, err := handler.tracking.UpdateTimeEntry(ctx.Request().Context(), trackingapplication.UpdateTimeEntryCommand{
 		WorkspaceID: workspaceID,
 		TimeEntryID: timeEntryID,
@@ -206,8 +217,8 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 		Duration:    int64PointerToIntPointer(payload.Duration),
 		ProjectID:   firstTrackIntPointerAsInt64(payload.ProjectId, payload.Pid),
 		TaskID:      firstTrackIntPointerAsInt64(payload.TaskId, payload.Tid),
-		TagIDs:      int64sFromTrackInts(payload.TagIds),
-		ReplaceTags: payload.TagIds != nil,
+		TagIDs:      tagIDs,
+		ReplaceTags: payload.TagIds != nil || payload.Tags != nil,
 	})
 	if err != nil {
 		return writePublicTrackTrackingError(err)
@@ -725,14 +736,24 @@ func writePublicTrackTrackingError(err error) error {
 	}
 }
 
+func (handler *Handler) resolveTagIDs(ctx context.Context, workspaceID int64, userID int64, tagIDs *[]int, tagNames *[]string) ([]int64, error) {
+	if tagIDs != nil {
+		return int64sFromTrackInts(tagIDs), nil
+	}
+	if tagNames != nil && len(*tagNames) > 0 {
+		return handler.catalog.EnsureTagsByName(ctx, workspaceID, userID, *tagNames)
+	}
+	return nil, nil
+}
+
 func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry {
-	var tagIDsPtr *[]int
-	var tagNamesPtr *[]string
-	if len(view.TagIDs) > 0 {
-		tagIDs := intsFromInt64s(view.TagIDs)
-		tagIDsPtr = &tagIDs
-		tagNames := view.TagNames
-		tagNamesPtr = &tagNames
+	tagIDs := intsFromInt64s(view.TagIDs)
+	if tagIDs == nil {
+		tagIDs = []int{}
+	}
+	tagNames := view.TagNames
+	if tagNames == nil {
+		tagNames = []string{}
 	}
 	return publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry{
 		At:              timePointer(view.UpdatedAt),
@@ -749,8 +770,8 @@ func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.G
 		ProjectName:     view.ProjectName,
 		Start:           timePointer(view.Start),
 		Stop:            timePointerValue(view.Stop),
-		TagIds:          tagIDsPtr,
-		Tags:            tagNamesPtr,
+		TagIds:          &tagIDs,
+		Tags:            &tagNames,
 		TaskId:          intPointerFromInt64Pointer(view.TaskID),
 		TaskName:        view.TaskName,
 		Tid:             intPointerFromInt64Pointer(view.TaskID),

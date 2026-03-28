@@ -313,6 +313,7 @@ type Store interface {
 	ListTags(context.Context, int64, ListTagsFilter) ([]TagView, error)
 	GetTag(context.Context, int64, int64) (TagView, bool, error)
 	CreateTag(context.Context, CreateTagCommand) (TagView, error)
+	EnsureTagsByName(context.Context, int64, int64, []string) ([]int64, error)
 	UpdateTag(context.Context, TagView) error
 	DeleteTag(context.Context, int64, int64) error
 	DeleteTags(context.Context, int64, []int64) error
