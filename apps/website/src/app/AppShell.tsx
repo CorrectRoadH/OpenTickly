@@ -1,5 +1,6 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+  type ComponentType,
   type ReactElement,
   type ReactNode,
   useCallback,
@@ -14,7 +15,7 @@ import { createPortal } from "react-dom";
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
-import { DynamicIcon, MenuIcon, type IconName } from "../shared/ui/icons.tsx";
+import { FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
 import {
   formatClockDuration,
   resolveEntryDurationSeconds,
@@ -172,25 +173,16 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
         <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
           <div className="space-y-0.5">
-            <RailButton active icon="track" />
-            <RailButton icon="plan" />
-            <RailButton icon="focus" />
+            <RailButton active icon={TrackIcon} label="track" />
+            <RailButton icon={PlanIcon} label="plan" tooltip="opentoggl plan is coming" />
+            <RailButton icon={FocusIcon} label="focus" tooltip="opentoggl focus is coming" />
           </div>
-          <button
-            aria-label="Navigation rail"
-            className="flex h-[34px] w-full items-center justify-center text-[var(--track-text-muted)]"
-            type="button"
-          >
-            <MenuIcon className="h-4 w-[21px]" />
-          </button>
           <div className="space-y-1">
             <ProfileMenuButton
               email={session.user.email}
               imageUrl={session.user.imageUrl}
               name={profileName}
             />
-            <RailButton icon="bell" />
-            <RailButton icon="help" />
           </div>
         </div>
 
@@ -378,23 +370,20 @@ function ProfileMenuButton({
 
 function RailButton({
   active = false,
-  icon,
+  icon: Icon,
+  label,
+  tooltip,
 }: {
   active?: boolean;
-  icon: Extract<IconName, "bell" | "focus" | "help" | "plan" | "track">;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  tooltip?: string;
 }): ReactElement {
-  const tooltipText =
-    icon === "plan"
-      ? "opentoggl plan is coming"
-      : icon === "focus"
-        ? "opentoggl focus is coming"
-        : undefined;
-
   return (
     <button
-      aria-label={icon}
+      aria-label={label}
       className="group relative flex h-10 w-full items-center justify-center py-[7px]"
-      title={tooltipText}
+      title={tooltip}
       type="button"
     >
       <span
@@ -404,11 +393,11 @@ function RailButton({
             : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
         }`}
       >
-        <DynamicIcon className="size-4" name={icon} />
+        <Icon className="size-4" />
       </span>
-      {tooltipText ? (
+      {tooltip ? (
         <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded bg-[var(--track-border)] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
-          {tooltipText}
+          {tooltip}
         </span>
       ) : null}
     </button>
