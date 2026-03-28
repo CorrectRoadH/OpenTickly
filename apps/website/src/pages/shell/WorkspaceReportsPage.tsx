@@ -23,6 +23,7 @@ import {
   TopTab,
 } from "./ReportsSharedWidgets.tsx";
 import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
+import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
 import { ReportsStringFilterDropdown } from "./ReportsStringFilterDropdown.tsx";
 import { exportReportCsv } from "./reports-export.ts";
 import {
@@ -255,22 +256,24 @@ export function WorkspaceReportsPage({
               >
                 {roundingEnabled ? "Rounding on" : "Rounding off"}
               </button>
-              <ToolbarButton
-                onClick={() => {
-                  const projectsParam = displayModel.breakdownRows
-                    .filter((r) => r.seconds > 0)
-                    .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
-                    .join(",");
-                  const search = projectsParam
-                    ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
-                    : "";
-                  void navigate({
-                    to: `/workspaces/${workspaceId}/invoices/new${search}`,
-                  });
-                }}
-              >
-                Create invoice
-              </ToolbarButton>
+              {tab !== "workload" ? (
+                <ToolbarButton
+                  onClick={() => {
+                    const projectsParam = displayModel.breakdownRows
+                      .filter((r) => r.seconds > 0)
+                      .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
+                      .join(",");
+                    const search = projectsParam
+                      ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
+                      : "";
+                    void navigate({
+                      to: `/workspaces/${workspaceId}/invoices/new${search}`,
+                    });
+                  }}
+                >
+                  Create invoice
+                </ToolbarButton>
+              ) : null}
               <button
                 className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
                 data-testid="reports-export"
@@ -348,6 +351,13 @@ export function WorkspaceReportsPage({
           dateRange={state.dateRange}
           filters={state.filters}
           memberFilter={state.memberFilter}
+        />
+      ) : tab === "workload" ? (
+        <ReportsWorkloadView
+          isError={weeklyReportQuery.isError}
+          isPending={weeklyReportQuery.isPending}
+          report={weeklyReportQuery.data}
+          roundingEnabled={roundingEnabled}
         />
       ) : (
         <ReportsTabPlaceholder tab={REPORTS_TABS.find((t) => t.slug === tab)?.label ?? tab} />

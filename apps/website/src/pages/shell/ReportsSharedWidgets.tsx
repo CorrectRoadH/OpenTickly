@@ -6,7 +6,9 @@ import type { ReportsPageMetric } from "./reports-page-data.ts";
 export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): ReactElement {
   return (
     <section
-      className="mt-5 grid overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] lg:grid-cols-4"
+      className={`mt-5 grid overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] ${
+        metrics.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"
+      }`}
       data-testid="reports-summary-metrics"
     >
       {metrics.map((metric, index) => (
