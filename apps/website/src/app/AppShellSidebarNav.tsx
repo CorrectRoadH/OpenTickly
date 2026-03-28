@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { type ComponentType, type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
 import {
   isOverviewNavActive,
@@ -11,7 +11,6 @@ import {
   ClientsIcon,
   DollarIcon,
   GoalsIcon,
-  type IconProps,
   ImportIcon,
   IntegrationsIcon,
   InvoicesIcon,
@@ -126,7 +125,7 @@ function ShellNavItem({
           : "text-[var(--track-text-muted)]"
       } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
     >
-      <NavIcon className="h-4 w-[14px] shrink-0" label={label} />
+      {navIcon(label)}
       <span className="truncate">{label}</span>
       {badge ? (
         <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
@@ -147,25 +146,26 @@ function ShellNavItem({
   );
 }
 
-const navIcons: Record<string, ComponentType<IconProps>> = {
-  Overview: OverviewIcon,
-  Timer: TimerIcon,
-  Reports: ReportsIcon,
-  Approvals: ApprovalsIcon,
-  Projects: ProjectsIcon,
-  Clients: ClientsIcon,
-  Members: MembersIcon,
-  "Billable rates": DollarIcon,
-  Import: ImportIcon,
-  Invoices: InvoicesIcon,
-  Tags: TagsIcon,
-  Goals: GoalsIcon,
-  Integrations: IntegrationsIcon,
-  Subscription: SubscriptionIcon,
-  Settings: SettingsIcon,
+const iconClass = "h-4 w-[14px] shrink-0";
+
+const navIconMap: Record<string, ReactNode> = {
+  Overview: <OverviewIcon className={iconClass} />,
+  Timer: <TimerIcon className={iconClass} />,
+  Reports: <ReportsIcon className={iconClass} />,
+  Approvals: <ApprovalsIcon className={iconClass} />,
+  Projects: <ProjectsIcon className={iconClass} />,
+  Clients: <ClientsIcon className={iconClass} />,
+  Members: <MembersIcon className={iconClass} />,
+  "Billable rates": <DollarIcon className={iconClass} />,
+  Import: <ImportIcon className={iconClass} />,
+  Invoices: <InvoicesIcon className={iconClass} />,
+  Tags: <TagsIcon className={iconClass} />,
+  Goals: <GoalsIcon className={iconClass} />,
+  Integrations: <IntegrationsIcon className={iconClass} />,
+  Subscription: <SubscriptionIcon className={iconClass} />,
+  Settings: <SettingsIcon className={iconClass} />,
 };
 
-function NavIcon({ className, label }: { className?: string; label: string }): ReactElement {
-  const Icon = navIcons[label] ?? OverviewIcon;
-  return <Icon className={className} />;
+function navIcon(label: string): ReactNode {
+  return navIconMap[label] ?? <OverviewIcon className={iconClass} />;
 }

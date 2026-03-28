@@ -1,6 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import {
-  type ComponentType,
   type ReactElement,
   type ReactNode,
   useCallback,
@@ -173,9 +172,9 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
         <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
           <div className="space-y-0.5">
-            <RailButton active icon={TrackIcon} label="track" />
-            <RailButton icon={PlanIcon} label="plan" tooltip="opentoggl plan is coming" />
-            <RailButton icon={FocusIcon} label="focus" tooltip="opentoggl focus is coming" />
+            <RailButton active icon={<TrackIcon className="size-4" />} label="track" />
+            <RailButton icon={<PlanIcon className="size-4" />} label="plan" tooltip="opentoggl plan is coming" />
+            <RailButton icon={<FocusIcon className="size-4" />} label="focus" tooltip="opentoggl focus is coming" />
           </div>
           <div className="space-y-1">
             <ProfileMenuButton
@@ -288,7 +287,7 @@ function ProfileMenuButton({
       {open && panelPosition
         ? createPortal(
             <div
-              className="fixed z-50 w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_rgba(0,0,0,0.48)]"
+              className="fixed z-50 w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
               ref={panelRef}
               role="menu"
               style={{
@@ -370,12 +369,12 @@ function ProfileMenuButton({
 
 function RailButton({
   active = false,
-  icon: Icon,
+  icon,
   label,
   tooltip,
 }: {
   active?: boolean;
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactElement;
   label: string;
   tooltip?: string;
 }): ReactElement {
@@ -393,7 +392,7 @@ function RailButton({
             : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
         }`}
       >
-        <Icon className="size-4" />
+        {icon}
       </span>
       {tooltip ? (
         <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded bg-[var(--track-border)] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">

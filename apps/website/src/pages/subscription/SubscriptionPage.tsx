@@ -1,9 +1,8 @@
-import { type ComponentType, type ReactElement } from "react";
+import { type ReactElement, type ReactNode } from "react";
 
 import {
   ChevronRightIcon,
   GoalsIcon,
-  type IconProps,
   IntegrationsIcon,
   MembersIcon,
   ProjectsIcon,
@@ -14,13 +13,15 @@ import {
 } from "../../shared/ui/icons.tsx";
 import { useSession } from "../../shared/session/session-context.tsx";
 
-const includedFeatures: { icon: ComponentType<IconProps>; label: string }[] = [
-  { icon: TimerIcon, label: "Unlimited time tracking" },
-  { icon: ProjectsIcon, label: "Unlimited projects" },
-  { icon: MembersIcon, label: "Unlimited team members" },
-  { icon: ReportsIcon, label: "Reports and analytics" },
-  { icon: GoalsIcon, label: "Goals and favorites" },
-  { icon: IntegrationsIcon, label: "API access" },
+const iconClass = "size-4 text-[var(--track-accent)]";
+
+const includedFeatures: { icon: ReactNode; label: string }[] = [
+  { icon: <TimerIcon className={iconClass} />, label: "Unlimited time tracking" },
+  { icon: <ProjectsIcon className={iconClass} />, label: "Unlimited projects" },
+  { icon: <MembersIcon className={iconClass} />, label: "Unlimited team members" },
+  { icon: <ReportsIcon className={iconClass} />, label: "Reports and analytics" },
+  { icon: <GoalsIcon className={iconClass} />, label: "Goals and favorites" },
+  { icon: <IntegrationsIcon className={iconClass} />, label: "API access" },
 ];
 
 export function SubscriptionPage(): ReactElement {
@@ -92,7 +93,7 @@ export function SubscriptionPage(): ReactElement {
             {includedFeatures.map((feature) => (
               <li className="flex items-center gap-3" key={feature.label}>
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-                  <feature.icon className="size-4 text-[var(--track-accent)]" />
+                  {feature.icon}
                 </div>
                 <span className="text-[14px] text-white">{feature.label}</span>
               </li>

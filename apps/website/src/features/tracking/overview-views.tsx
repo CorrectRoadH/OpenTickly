@@ -1,4 +1,4 @@
-import React, { type ComponentType, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -164,20 +164,20 @@ const CalendarDayColumnWrapper = React.forwardRef<
 });
 
 export function ToolbarButton({
-  icon: Icon,
+  icon,
   label,
   suffix,
 }: {
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactElement;
   label: string;
   suffix: string;
 }) {
   return (
     <button
-      className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[#1b1b1b] px-4 text-[12px] font-medium text-white"
+      className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[var(--track-surface)] px-4 text-[12px] font-medium text-white"
       type="button"
     >
-      <Icon className="size-3.5 text-[var(--track-text-muted)]" />
+      {icon}
       <span>{label}</span>
       <span className="text-[var(--track-text-muted)]">· {suffix}</span>
       <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
@@ -197,12 +197,12 @@ export function SummaryStat({ label, value }: { label: string; value: string }) 
 export function ChromeIconButton({
   "aria-label": ariaLabel,
   active,
-  icon: Icon,
+  icon,
   onClick,
 }: {
   "aria-label"?: string;
   active?: boolean;
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactElement;
   onClick?: () => void;
 }) {
   return (
@@ -214,7 +214,7 @@ export function ChromeIconButton({
       onClick={onClick}
       type="button"
     >
-      <Icon className="size-4" />
+      {icon}
     </button>
   );
 }
@@ -243,7 +243,7 @@ export function CalendarSubviewSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Calendar sub-view"
-        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 text-[13px] font-medium text-white transition hover:border-[#555]"
+        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[13px] font-medium text-white transition hover:border-[var(--track-control-border)]"
         data-testid="calendar-subview-select"
         onClick={() => setOpen((prev) => !prev)}
         onBlur={(e) => {
@@ -258,14 +258,14 @@ export function CalendarSubviewSelect({
       </button>
       {open ? (
         <div
-          className="absolute left-0 top-full z-50 mt-1 w-[160px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
+          className="absolute left-0 top-full z-50 mt-1 w-[160px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
           role="listbox"
         >
           {CALENDAR_SUBVIEW_OPTIONS.map((option) => (
             <button
               aria-selected={option === value}
               className={`flex w-full items-center px-3 py-2 text-[13px] transition hover:bg-[var(--track-row-hover)] ${
-                option === value ? "font-semibold text-[#e57bd9]" : "text-white"
+                option === value ? "font-semibold text-[var(--track-accent)]" : "text-white"
               }`}
               key={option}
               onClick={() => {
@@ -346,7 +346,7 @@ export function ViewTab({
     <button
       aria-checked={isSelected}
       className={`px-5 py-1 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${dividerClass} ${
-        isSelected ? "bg-[#381e35] text-[#cd7fc2]" : "bg-[#1b1b1b] text-[#fafafa]"
+        isSelected ? "bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-secondary)]" : "bg-[var(--track-surface)] text-[var(--track-text)]"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
@@ -494,7 +494,7 @@ export function ListView({
                 checked={groupChecked}
                 className={`size-[13px] shrink-0 cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
                   groupChecked || groupIndeterminate
-                    ? "border-[#e57bd9] bg-[#e57bd9]"
+                    ? "border-[var(--track-accent)] bg-[var(--track-accent)]"
                     : "border-[var(--track-border)]"
                 }`}
                 onChange={() => toggleGroup(group)}
@@ -543,7 +543,7 @@ export function ListView({
                         checked={isSelected}
                         className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
                           isSelected
-                            ? "!opacity-100 border-[#e57bd9] bg-[#e57bd9]"
+                            ? "!opacity-100 border-[var(--track-accent)] bg-[var(--track-accent)]"
                             : "border-[var(--track-border)]"
                         }`}
                         onChange={() => {
@@ -557,7 +557,7 @@ export function ListView({
                     {isCollapsedRow ? (
                       <button
                         aria-label={`Expand ${groupCount} similar entries`}
-                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[#666] hover:text-white"
+                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[var(--track-text-disabled)] hover:text-white"
                         onClick={() => {
                           setExpandedGroupKeys((prev) => {
                             const next = new Set(prev);
@@ -572,7 +572,7 @@ export function ListView({
                     ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
                       <button
                         aria-label="Collapse similar entries"
-                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[#e57bd9] text-[11px] font-semibold tabular-nums text-[#e57bd9] hover:bg-[#e57bd9]/10"
+                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-accent)] text-[11px] font-semibold tabular-nums text-[var(--track-accent)] hover:bg-[var(--track-accent)]/10"
                         onClick={() => {
                           setExpandedGroupKeys((prev) => {
                             const next = new Set(prev);
@@ -613,7 +613,7 @@ export function ListView({
                       aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
                       className={`flex size-[30px] shrink-0 items-center justify-center rounded transition ${
                         renderEntry.billable
-                          ? "text-[#c8a961]"
+                          ? "text-[var(--track-warning-text)]"
                           : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
                       }`}
                       onClick={() => onBillableToggle?.(renderEntry)}
@@ -749,7 +749,7 @@ function InlineDescription({
     >
       {isRunning ? (
         <span
-          className="size-2 shrink-0 rounded-full bg-[#e57bd9]"
+          className="size-2 shrink-0 rounded-full bg-[var(--track-accent)]"
           style={{ animation: "pulse-dot 1.4s ease-in-out infinite" }}
         />
       ) : null}
@@ -885,7 +885,7 @@ function ListRowMoreActions({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
           role="menu"
         >
           <button
@@ -1343,7 +1343,7 @@ export function CalendarView({
           >
             <span
               className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
-                isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
+                isToday ? "rounded-full bg-[var(--track-accent)] text-white" : "text-white"
               }`}
             >
               {dayNum}
@@ -1351,12 +1351,12 @@ export function CalendarView({
             <span className="flex flex-col items-start leading-tight">
               <span
                 className={`text-[10px] font-medium tracking-wide ${
-                  isToday ? "text-[#e57bd9]" : "text-[#999]"
+                  isToday ? "text-[var(--track-accent)]" : "text-[var(--track-text-soft)]"
                 }`}
               >
                 {dayName}
               </span>
-              <span className="text-[10px] tabular-nums text-[#999]">
+              <span className="text-[10px] tabular-nums text-[var(--track-text-soft)]">
                 {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
               </span>
             </span>
@@ -1370,7 +1370,7 @@ export function CalendarView({
         >
           <button
             aria-label="Decrease zoom"
-            className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex size-6 items-center justify-center rounded text-[var(--track-text-soft)] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
             disabled={zoom <= -1}
             onClick={onZoomOut}
             type="button"
@@ -1379,7 +1379,7 @@ export function CalendarView({
           </button>
           <button
             aria-label="Increase zoom"
-            className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex size-6 items-center justify-center rounded text-[var(--track-text-soft)] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
             disabled={zoom >= 1}
             onClick={onZoomIn}
             type="button"
@@ -1422,7 +1422,7 @@ export function CalendarView({
 
   return (
     <div
-      className="border-t border-[var(--track-border)] bg-[#1b1b1b]"
+      className="border-t border-[var(--track-border)] bg-[var(--track-surface)]"
       data-testid="timer-calendar-view"
     >
       <DnDCalendar
@@ -1439,8 +1439,8 @@ export function CalendarView({
           className: event.resource.isRunning ? "rbc-event-running" : undefined,
           style: {
             backgroundColor: "transparent",
-            border: event.resource.isDraft ? "1px dashed rgba(229,123,217,0.6)" : "none",
-            color: "#fafafa",
+            border: event.resource.isDraft ? "1px dashed var(--track-accent-outline)" : "none",
+            color: "var(--track-text)",
             opacity: event.resource.isDraft ? 0.7 : undefined,
           },
         })}
@@ -1632,7 +1632,7 @@ export function TimesheetView({
                   aria-label={row.billable ? "Set as non-billable" : "Set as billable"}
                   className={`ml-auto flex size-[30px] shrink-0 items-center justify-center rounded-lg transition ${
                     row.billable
-                      ? "bg-[#e57bd9]/10 text-[#e57bd9]"
+                      ? "bg-[var(--track-accent)]/10 text-[var(--track-accent)]"
                       : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
                   }`}
                   onClick={() => onBillableToggle?.(row.label)}
@@ -1764,13 +1764,13 @@ function CalendarEventCard({
       {/* Inner EventBox — Toggl uses padding 4px 6px for entries ≥15min,
           0px for shorter ones. border-radius 4px always. */}
       <div
-        className={`relative flex h-full flex-col justify-between rounded-[4px] text-left text-[12px] text-[#fafafa] ${
+        className={`relative flex h-full flex-col justify-between rounded-[4px] text-left text-[12px] text-[var(--track-text)] ${
           durationSeconds >= 900 ? "px-1.5 py-1" : "px-0 py-0"
         }`}
         style={{
           backgroundColor: colorToOverlay(color),
           backgroundImage: isRunning
-            ? "repeating-linear-gradient(135deg, transparent 0 10px, rgba(255,255,255,0.08) 10px 20px)"
+            ? "repeating-linear-gradient(135deg, transparent 0 10px, var(--track-border-soft) 10px 20px)"
             : undefined,
         }}
       >
@@ -1795,10 +1795,10 @@ function CalendarEventCard({
           </span>
         </div>
         {/* Continue button — hidden by default, shown on hover via CSS.
-            Toggl: opacity:0, position:absolute, border-radius:50%, bg:#cd7fc2 */}
+            Toggl: opacity:0, position:absolute, border-radius:50%, bg:var(--track-accent-secondary) */}
         <button
           aria-label="Continue time entry"
-          className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[#cd7fc2] text-[#1b1b1b] opacity-0 transition-opacity group-hover:opacity-100"
+          className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--track-accent-secondary)] text-[var(--track-surface)] opacity-0 transition-opacity group-hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation();
             // Continue is handled via the editor's primary action
@@ -1856,7 +1856,7 @@ function TimesheetCell({
     return (
       <input
         autoFocus
-        className="w-full rounded-md border border-[#e57bd9] bg-[var(--track-surface)] px-2 py-1 text-center text-[14px] font-medium tabular-nums text-white outline-none"
+        className="w-full rounded-md border border-[var(--track-accent)] bg-[var(--track-surface)] px-2 py-1 text-center text-[14px] font-medium tabular-nums text-white outline-none"
         onBlur={commitEdit}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {

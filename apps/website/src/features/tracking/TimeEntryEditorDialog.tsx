@@ -1,6 +1,5 @@
 import {
   type ChangeEvent,
-  type ComponentType,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -373,7 +372,7 @@ export function TimeEntryEditorDialog({
   // page-relative so the editor scrolls with window scroll natively.
   return (
     <div
-      className="absolute z-40 w-[440px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+      className="absolute z-40 w-[440px] overflow-visible rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-4 pt-4 shadow-[0_12px_28px_var(--track-shadow-overlay)]"
       data-testid="time-entry-editor-dialog"
       role="dialog"
       aria-modal="false"
@@ -389,8 +388,8 @@ export function TimeEntryEditorDialog({
             data-testid="time-entry-editor-primary-action"
             className={`flex size-9 items-center justify-center rounded-full transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${
               primaryActionIcon === "stop"
-                ? "bg-[#e07000] text-white"
-                : "bg-[#c67abc] text-[#241d24]"
+                ? "bg-[var(--track-warning-fill)] text-white"
+                : "bg-[var(--track-accent-fill-hover)] text-[var(--track-button-text)]"
             }`}
             disabled={!onPrimaryAction || isPrimaryActionPending}
             onClick={onPrimaryAction}
@@ -405,7 +404,7 @@ export function TimeEntryEditorDialog({
           {canDuplicate ? (
             <button
               aria-label="Duplicate entry"
-              className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+              className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
               disabled={isDirty}
               onClick={() => {
                 void onDuplicate?.();
@@ -426,14 +425,14 @@ export function TimeEntryEditorDialog({
           ) : null}
           <button
             aria-label="Entry actions"
-            className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+            className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
             onClick={() => setActionsMenuOpen((current) => !current)}
             type="button"
           >
             <MoreIcon className="size-4" />
           </button>
           {actionsMenuOpen ? (
-            <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
+            <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]">
               <ActionMenuButton
                 disabled={!onSplit}
                 label="Split"
@@ -452,7 +451,7 @@ export function TimeEntryEditorDialog({
               />
               {selectedProjectId ? (
                 <a
-                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4"
+                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4"
                   href={`/projects/${currentWorkspaceId}/list`}
                   onClick={() => setActionsMenuOpen(false)}
                 >
@@ -481,7 +480,7 @@ export function TimeEntryEditorDialog({
               ) : null}
               <button
                 aria-label="Delete entry"
-                className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#ffb4aa] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-danger-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={!onDelete || isDeleting}
                 onClick={() => {
                   setActionsMenuOpen(false);
@@ -496,7 +495,7 @@ export function TimeEntryEditorDialog({
         </div>
         <button
           aria-label="Close editor"
-          className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[#b9b9be] transition hover:bg-white/6 hover:text-white"
+          className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[var(--track-overlay-icon-subtle)] transition hover:bg-white/6 hover:text-white"
           onClick={() => {
             if (isDirty) {
               setShowDiscardConfirmation(true);
@@ -519,7 +518,7 @@ export function TimeEntryEditorDialog({
           <span className="sr-only">Time entry description</span>
           <input
             aria-label="Time entry description"
-            className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[#8f8f95]"
+            className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[var(--track-control-placeholder-muted)]"
             id="time-entry-editor-title"
             onBlur={() => {
               window.setTimeout(() => setDescriptionSuggestionsOpen(false), 120);
@@ -572,11 +571,11 @@ export function TimeEntryEditorDialog({
         ) : null}
 
         <div className="relative mt-5">
-          <div className="flex items-center gap-4 text-[#a9a9ae]">
+          <div className="flex items-center gap-4 text-[var(--track-overlay-text-soft)]">
             <PickerButton
               active={picker === "project"}
               ariaLabel="Select project"
-              icon={ProjectsIcon}
+              icon={<ProjectsIcon className="size-5 shrink-0" />}
               label={selectedProject?.name}
               onClick={() => {
                 setSearch("");
@@ -588,22 +587,22 @@ export function TimeEntryEditorDialog({
             <PickerButton
               active={picker === "tag"}
               ariaLabel="Select tags"
-              icon={TagsIcon}
+              icon={<TagsIcon className="size-5 shrink-0" />}
               label={resolveTagTriggerLabel(selectedTags)}
               onClick={() => {
                 setSearch("");
                 setPicker((current) => (current === "tag" ? null : "tag"));
               }}
-              toneColor="#d58ad4"
+              toneColor="var(--track-accent-secondary)"
               variant={selectedTags.length > 0 ? "tag" : "icon"}
             />
             <PickerButton
               active={entry.billable === true}
               ariaLabel="Billable"
               ariaPressed={entry.billable === true}
-              icon={DollarIcon}
+              icon={<DollarIcon className="size-5 shrink-0" />}
               onClick={onBillableToggle}
-              toneColor="#e57bd9"
+              toneColor="var(--track-accent)"
             />
           </div>
 
@@ -618,16 +617,16 @@ export function TimeEntryEditorDialog({
                   Change &rsaquo;
                 </button>
               }
-              icon={ProjectsIcon}
+              icon={<ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />}
               title={currentWorkspaceName}
             >
               {workspaceMenuOpen ? (
                 <div className="px-4 pb-2">
-                  <div className="rounded-[10px] border border-[#3d3d42] bg-[#242426] py-2 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
+                  <div className="rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-2 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
                     {workspaces.map((workspace) => (
                       <button
                         className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-                          workspace.id === currentWorkspaceId ? "text-white" : "text-[#c9c9ce]"
+                          workspace.id === currentWorkspaceId ? "text-white" : "text-[var(--track-overlay-text-muted)]"
                         }`}
                         key={workspace.id}
                         onClick={() => {
@@ -639,7 +638,7 @@ export function TimeEntryEditorDialog({
                       >
                         <span className="truncate">{workspace.name}</span>
                         {workspace.id === currentWorkspaceId ? (
-                          <span className="text-[12px] text-[#efc2ea]">Current</span>
+                          <span className="text-[12px] text-[var(--track-accent-text)]">Current</span>
                         ) : null}
                       </button>
                     ))}
@@ -652,17 +651,17 @@ export function TimeEntryEditorDialog({
                 onChange={setSearch}
               />
               <button
-                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[#d8d8dc] transition hover:bg-white/4"
+                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
                 onClick={() => {
                   onProjectSelect(null);
                   setPicker(null);
                 }}
                 type="button"
               >
-                <ProjectsIcon className="size-5 text-[#b8b8bc]" />
+                <ProjectsIcon className="size-5 text-[var(--track-overlay-icon-muted)]" />
                 <span>No Project</span>
               </button>
-              <div className="px-4 pt-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+              <div className="px-4 pt-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
                 Projects
               </div>
               <div className="max-h-[340px] overflow-y-auto px-1 py-2">
@@ -684,7 +683,7 @@ export function TimeEntryEditorDialog({
                       <div className="truncate text-[16px] font-medium text-white">
                         {project.name}
                       </div>
-                      <div className="truncate text-[12px] text-[#8f8f95]">
+                      <div className="truncate text-[12px] text-[var(--track-control-placeholder-muted)]">
                         {project.clientName || "No client"}
                       </div>
                     </div>
@@ -725,7 +724,7 @@ export function TimeEntryEditorDialog({
                     <div className="relative">
                       <button
                         aria-label="Select project color"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#5d5d62] bg-[#262628]"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)]"
                         onClick={() => setProjectColorPickerOpen((current) => !current)}
                         type="button"
                       >
@@ -735,7 +734,7 @@ export function TimeEntryEditorDialog({
                         />
                       </button>
                       {projectColorPickerOpen ? (
-                        <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+                        <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] p-3 shadow-[0_12px_28px_var(--track-shadow-overlay)]">
                           {TRACK_COLOR_SWATCHES.map((option) => (
                             <button
                               aria-label={`Select color ${option}`}
@@ -761,8 +760,8 @@ export function TimeEntryEditorDialog({
                       ) : null}
                     </div>
                     <input
-                      className={`h-10 flex-1 rounded-[10px] border bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096] ${
-                        projectCreateError ? "border-rose-400" : "border-[#5d5d62]"
+                      className={`h-10 flex-1 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)] ${
+                        projectCreateError ? "border-rose-400" : "border-[var(--track-control-border)]"
                       }`}
                       onChange={(event) => {
                         setProjectDraftName(event.target.value);
@@ -772,7 +771,7 @@ export function TimeEntryEditorDialog({
                       value={projectDraftName}
                     />
                     <button
-                      className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
+                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[13px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
                       disabled={isCreatingProject || projectDraftName.trim().length === 0}
                       type="submit"
                     >
@@ -786,7 +785,7 @@ export function TimeEntryEditorDialog({
               ) : (
                 <div className="border-t border-white/6 px-4 pb-1 pt-3">
                   <button
-                    className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
+                    className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
                       setProjectDraftName(search.trim());
                       setProjectComposerOpen(true);
@@ -802,7 +801,7 @@ export function TimeEntryEditorDialog({
           ) : null}
 
           {picker === "tag" ? (
-            <PickerSurface icon={TagsIcon} title="Tags">
+            <PickerSurface icon={<TagsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />} title="Tags">
               <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
               <div className="max-h-[340px] overflow-y-auto px-1 py-2">
                 {filteredTags.map((tag) => {
@@ -811,18 +810,18 @@ export function TimeEntryEditorDialog({
                   return (
                     <button
                       className={`flex w-full items-center justify-between rounded-[10px] px-4 py-3 text-left transition ${
-                        selected ? "bg-[#3f3040] text-white" : "hover:bg-white/4 text-[#d8d8dc]"
+                        selected ? "bg-[var(--track-accent-soft)] text-white" : "hover:bg-white/4 text-[var(--track-overlay-text)]"
                       }`}
                       key={tag.id}
                       onClick={() => onTagToggle(tag.id)}
                       type="button"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <TagsIcon className="size-4 shrink-0 text-[#cf8dcc]" />
+                        <TagsIcon className="size-4 shrink-0 text-[var(--track-accent-secondary)]" />
                         <span className="truncate text-[15px]">{tag.name}</span>
                       </div>
                       {selected ? (
-                        <span className="text-[12px] text-[#efc2ea]">Selected</span>
+                        <span className="text-[12px] text-[var(--track-accent-text)]">Selected</span>
                       ) : null}
                     </button>
                   );
@@ -847,13 +846,13 @@ export function TimeEntryEditorDialog({
                 >
                   <div className="flex items-center gap-2">
                     <input
-                      className="h-10 flex-1 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096]"
+                      className="h-10 flex-1 rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)]"
                       onChange={(event) => setTagDraftName(event.target.value)}
                       placeholder="Tag name"
                       value={tagDraftName}
                     />
                     <button
-                      className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
+                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[13px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
                       disabled={isCreatingTag || tagDraftName.trim().length === 0}
                       type="submit"
                     >
@@ -864,7 +863,7 @@ export function TimeEntryEditorDialog({
               ) : (
                 <div className="border-t border-white/6 px-4 pb-1 pt-3">
                   <button
-                    className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
+                    className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
                       setTagDraftName(search.trim());
                       setTagComposerOpen(true);
@@ -908,7 +907,7 @@ export function TimeEntryEditorDialog({
               />
               <svg
                 aria-hidden="true"
-                className="shrink-0 text-[#606066]"
+                className="shrink-0 text-[var(--track-control-border-contrast)]"
                 fill="none"
                 height="8"
                 viewBox="0 0 12 8"
@@ -945,7 +944,7 @@ export function TimeEntryEditorDialog({
                   timezone={timezone}
                 />
               ) : (
-                <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[#606066] px-3 text-[14px] font-semibold tabular-nums text-[#606066]">
+                <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[var(--track-control-border-contrast)] px-3 text-[14px] font-semibold tabular-nums text-[var(--track-control-border-contrast)]">
                   Running
                 </span>
               )}
@@ -953,7 +952,7 @@ export function TimeEntryEditorDialog({
                 {duration}
               </span>
               <button
-                className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[#c67abc] px-5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[var(--track-accent-fill-hover)] px-5 text-[14px] font-semibold text-[var(--track-button-text)] transition hover:bg-[var(--track-accent-fill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isSaving}
                 onClick={() => {
                   if (!isSaving) {
@@ -996,24 +995,24 @@ export function TimeEntryEditorDialog({
 
       {showDiscardConfirmation ? (
         <div
-          className="absolute inset-0 z-30 flex items-center justify-center rounded-[14px] bg-[rgba(15,15,16,0.82)] px-6"
+          className="absolute inset-0 z-30 flex items-center justify-center rounded-[14px] bg-[var(--track-overlay-backdrop)] px-6"
           data-testid="time-entry-editor-discard-confirmation"
         >
-          <div className="w-full max-w-[280px] rounded-[14px] border border-[#4a4a50] bg-[#242426] p-4 shadow-[0_16px_32px_rgba(0,0,0,0.38)]">
+          <div className="w-full max-w-[280px] rounded-[14px] border border-[var(--track-control-border)] bg-[var(--track-overlay-surface-raised)] p-4 shadow-[0_16px_32px_var(--track-shadow-overlay-strong)]">
             <h3 className="text-[16px] font-semibold text-white">Discard changes?</h3>
-            <p className="mt-2 text-[13px] text-[#c0c0c5]">
+            <p className="mt-2 text-[13px] text-[var(--track-overlay-text-subtle)]">
               You have unsaved changes in this time entry. Discard them before closing?
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
-                className="rounded-[10px] border border-[#5d5d62] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
+                className="rounded-[10px] border border-[var(--track-control-border)] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
                 onClick={() => setShowDiscardConfirmation(false)}
                 type="button"
               >
                 Keep editing
               </button>
               <button
-                className="rounded-[10px] bg-[#ff7a66] px-3 py-2 text-[13px] font-semibold text-[#241d24] transition hover:brightness-110"
+                className="rounded-[10px] bg-[var(--track-danger-fill)] px-3 py-2 text-[13px] font-semibold text-[var(--track-button-text)] transition hover:brightness-110"
                 onClick={() => {
                   setShowDiscardConfirmation(false);
                   onDiscard?.();
@@ -1055,11 +1054,11 @@ function DescriptionSuggestionsSurface({
   tags: TimeEntryEditorTag[];
 }) {
   return (
-    <div className="absolute left-0 top-[calc(100%+12px)] z-20 w-[360px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] py-3 shadow-[0_14px_32px_rgba(0,0,0,0.34)]">
+    <div className="absolute left-0 top-[calc(100%+12px)] z-20 w-[360px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
       <div className="flex items-center justify-between gap-3 border-b border-white/6 px-4 pb-3">
         <div className="min-w-0">
           <p className="truncate text-[14px] font-semibold text-white">{currentWorkspaceName}</p>
-          <p className="text-[12px] text-[#8f8f95]">Change</p>
+          <p className="text-[12px] text-[var(--track-control-placeholder-muted)]">Change</p>
         </div>
       </div>
       {entryMode === "billable" ? (
@@ -1070,14 +1069,14 @@ function DescriptionSuggestionsSurface({
             type="button"
           >
             <span>Billable hours</span>
-            <DollarIcon className="size-4 text-[#d58ad4]" />
+            <DollarIcon className="size-4 text-[var(--track-accent-secondary)]" />
           </button>
         </div>
       ) : null}
       {(entryMode === "default" || entryDescription.trim().length === 0) &&
       suggestionEntries.length > 0 ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
             Previously tracked time entries
           </p>
           <div className="mt-2 space-y-1">
@@ -1091,7 +1090,7 @@ function DescriptionSuggestionsSurface({
                 <span className="truncate text-[14px] font-medium text-white">
                   {suggestion.description?.trim() || suggestion.project_name || "No description"}
                 </span>
-                <span className="truncate text-[12px] text-[#8f8f95]">
+                <span className="truncate text-[12px] text-[var(--track-control-placeholder-muted)]">
                   {suggestion.project_name || "No project"}
                 </span>
               </button>
@@ -1101,7 +1100,7 @@ function DescriptionSuggestionsSurface({
       ) : null}
       {(entryMode === "default" || entryMode === "project") && projects.length > 0 ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
             Projects
           </p>
           <div className="mt-2 space-y-1">
@@ -1124,7 +1123,7 @@ function DescriptionSuggestionsSurface({
       ) : null}
       {entryMode === "tag" ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
             Tags
           </p>
           <div className="mt-2 space-y-1">
@@ -1135,7 +1134,7 @@ function DescriptionSuggestionsSurface({
                 onClick={() => onTagSelect(tag.id)}
                 type="button"
               >
-                <TagsIcon className="size-4 shrink-0 text-[#cf8dcc]" />
+                <TagsIcon className="size-4 shrink-0 text-[var(--track-accent-secondary)]" />
                 <span className="truncate text-[14px] font-medium text-white">{tag.name}</span>
               </button>
             ))}
@@ -1157,7 +1156,7 @@ function ActionMenuButton({
 }) {
   return (
     <button
-      className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
       disabled={disabled}
       onClick={onClick}
       type="button"
@@ -1171,7 +1170,7 @@ function PickerButton({
   active = false,
   ariaLabel,
   ariaPressed,
-  icon: Icon,
+  icon,
   label,
   onClick,
   toneColor,
@@ -1180,14 +1179,14 @@ function PickerButton({
   active?: boolean;
   ariaLabel: string;
   ariaPressed?: boolean;
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactElement;
   label?: string;
   onClick?: () => void;
   toneColor?: string;
   variant?: "icon" | "project" | "tag";
 }): ReactElement {
   const selected = Boolean(label);
-  const color = toneColor ?? "#d58ad4";
+  const color = toneColor ?? "var(--track-accent-secondary)";
 
   return (
     <button
@@ -1198,7 +1197,7 @@ function PickerButton({
           ? "h-10 max-w-[168px] gap-2 rounded-[14px] px-3 text-[14px] font-semibold"
           : "size-10 rounded-[12px]"
       } ${
-        selected ? "" : active ? "bg-white/8" : "text-[#909096] hover:bg-white/5 hover:text-white"
+        selected ? "" : active ? "bg-white/8" : "text-[var(--track-control-placeholder)] hover:bg-white/5 hover:text-white"
       }`}
       onClick={onClick}
       style={
@@ -1213,7 +1212,7 @@ function PickerButton({
       {variant === "project" && label ? (
         <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       ) : (
-        <Icon className={selected ? "size-5 shrink-0" : "size-5"} />
+        icon
       )}
       {label ? <span className="min-w-0 truncate">{label}</span> : null}
     </button>
@@ -1223,19 +1222,19 @@ function PickerButton({
 function PickerSurface({
   action,
   children,
-  icon: Icon,
+  icon,
   title,
 }: {
   action?: ReactNode;
   children: ReactNode;
-  icon: ComponentType<{ className?: string }>;
+  icon: ReactElement;
   title: string;
 }): ReactElement {
   return (
-    <div className="absolute -left-2 top-8 z-10 w-[360px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] py-3 shadow-[0_14px_32px_rgba(0,0,0,0.34)]">
+    <div className="absolute -left-2 top-8 z-10 w-[360px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
       <div className="flex items-center justify-between px-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Icon className="size-4 shrink-0 text-[#bdbdc2]" />
+          {icon}
           <span className="truncate text-[15px] font-semibold text-white">{title}</span>
         </div>
         {action ?? <span />}
@@ -1255,10 +1254,10 @@ function SearchField({
   value: string;
 }): ReactElement {
   return (
-    <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-4 py-2.5">
-      <SearchIcon className="size-4 shrink-0 text-[#a1a1a6]" />
+    <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)] px-4 py-2.5">
+      <SearchIcon className="size-4 shrink-0 text-[var(--track-control-placeholder)]" />
       <input
-        className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[#909096]"
+        className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)]"
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
         placeholder={placeholder}
         value={value}
@@ -1307,7 +1306,7 @@ function TimeDisplay({
     }
   }, [editing, timeValue]);
 
-  const borderColor = hasError ? "border-rose-400" : "border-[#606066]";
+  const borderColor = hasError ? "border-rose-400" : "border-[var(--track-control-border-contrast)]";
 
   return (
     <div className="relative flex items-center gap-1.5">
@@ -1319,8 +1318,8 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[38px] min-w-0 rounded-[10px] border bg-[#262628] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
-              hasError ? "border-rose-400" : "border-[#c78acd]"
+            className={`h-[38px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
+              hasError ? "border-rose-400" : "border-[var(--track-accent-secondary)]"
             }`}
             value={draft}
             inputMode="numeric"
@@ -1350,7 +1349,7 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex h-[38px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[#8a8a90] ${borderColor}`}
+          className={`flex h-[38px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
@@ -1360,7 +1359,7 @@ function TimeDisplay({
       {!hideDateButton ? (
         <button
           aria-label={dateAriaLabel}
-          className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[#606066] text-[#b9b9be] transition hover:border-[#8a8a90] hover:text-white"
+          className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-control-border-contrast)] text-[var(--track-overlay-icon-subtle)] transition hover:border-[var(--track-overlay-text-soft)] hover:text-white"
           onClick={onDateClick}
           ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
           type="button"

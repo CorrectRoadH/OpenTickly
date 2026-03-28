@@ -353,7 +353,7 @@ export function WorkspaceTimerPage({
             aria-label={orch.draftBillable ? "Set as non-billable" : "Set as billable"}
             className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
               (orch.runningEntry?.id != null ? orch.runningEntry.billable : orch.draftBillable)
-                ? "text-[#e57bd9]"
+                ? "text-[var(--track-accent)]"
                 : "text-[var(--track-text-muted)] hover:text-white"
             }`}
             onClick={() => {
@@ -404,7 +404,7 @@ export function WorkspaceTimerPage({
                 </span>
                 <button
                   aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-                  className="flex size-[42px] items-center justify-center rounded-full bg-[#e57bd9] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[inset_0_0_0_1px_var(--track-border-soft)]"
                   data-icon={orch.runningEntry ? "stop" : "play"}
                   data-testid="timer-action-button"
                   disabled={orch.timerMutationPending}
@@ -556,7 +556,7 @@ export function WorkspaceTimerPage({
                 <ChromeIconButton
                   active={settingsOpen}
                   aria-label="Display settings"
-                  icon={SettingsIcon}
+                  icon={<SettingsIcon className="size-4" />}
                   onClick={() => setSettingsOpen((prev) => !prev)}
                 />
                 {settingsOpen ? (
@@ -571,7 +571,7 @@ export function WorkspaceTimerPage({
               <ChromeIconButton
                 active={sidebarOpen}
                 aria-label="Toggle goals and favorites"
-                icon={GridIcon}
+                icon={<GridIcon className="size-4" />}
                 onClick={() => setSidebarOpen((prev) => !prev)}
               />
             </div>
@@ -963,10 +963,10 @@ export function WorkspaceTimerPage({
         />
       ) : null}
       {deleteToast ? (
-        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
           <span className="text-[14px] text-white">Time entry deleted</span>
           <button
-            className="text-[14px] font-semibold text-[#e57bd9] transition hover:text-[#f09de6]"
+            className="text-[14px] font-semibold text-[var(--track-accent)] transition hover:text-[var(--track-accent-text)]"
             onClick={handleUndoDelete}
             type="button"
           >
@@ -1167,9 +1167,9 @@ function TimerBarProjectPicker({
         aria-label={`Add a project${selectedProject ? `: ${selectedProject.name}` : ""}`}
         className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
           selectedProject
-            ? "h-9 max-w-[180px] px-2 text-[#e57bd9]"
+            ? "h-9 max-w-[180px] px-2 text-[var(--track-accent)]"
             : hasProject
-              ? "size-9 text-[#e57bd9]"
+              ? "size-9 text-[var(--track-accent)]"
               : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
@@ -1267,8 +1267,8 @@ function TimerBarTagPicker({
         className={`flex items-center justify-center gap-1.5 rounded-md transition hover:bg-[var(--track-row-hover)] ${
           hasTags
             ? tagLabel
-              ? "h-9 max-w-[160px] px-2 text-[#e57bd9]"
-              : "size-9 text-[#e57bd9]"
+              ? "h-9 max-w-[160px] px-2 text-[var(--track-accent)]"
+              : "size-9 text-[var(--track-accent)]"
             : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
         onClick={() => {
@@ -1289,10 +1289,10 @@ function TimerBarTagPicker({
       </button>
       {open ? (
         <div
-          className="absolute left-0 top-full z-50 mt-1 w-[220px] rounded-xl border border-[#3d3d42] bg-[#1f1f20] py-2 shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
+          className="absolute left-0 top-full z-50 mt-1 w-[220px] rounded-xl border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
           onMouseDown={(e) => e.preventDefault()}
         >
-          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[#999]">
+          <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--track-text-soft)]">
             Tags
           </div>
           <div className="px-3 pb-2">
@@ -1305,7 +1305,7 @@ function TimerBarTagPicker({
             />
           </div>
           {filteredTags.length === 0 && !search.trim() ? (
-            <div className="px-3 py-2 text-[13px] text-[#999]">No tags available</div>
+            <div className="px-3 py-2 text-[13px] text-[var(--track-text-soft)]">No tags available</div>
           ) : filteredTags.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
               {filteredTags.map((tag) => {
@@ -1313,7 +1313,7 @@ function TimerBarTagPicker({
                 return (
                   <button
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-white/5 ${
-                      isSelected ? "text-[#e57bd9]" : "text-white"
+                      isSelected ? "text-[var(--track-accent)]" : "text-white"
                     }`}
                     key={tag.id}
                     onClick={() => onTagToggle(tag.id)}
@@ -1322,7 +1322,7 @@ function TimerBarTagPicker({
                     <span
                       className={`flex size-4 items-center justify-center rounded border text-[10px] ${
                         isSelected
-                          ? "border-[#e57bd9] bg-[#e57bd9] text-white"
+                          ? "border-[var(--track-accent)] bg-[var(--track-accent)] text-white"
                           : "border-[var(--track-border)]"
                       }`}
                     >
@@ -1338,7 +1338,7 @@ function TimerBarTagPicker({
           onCreateTag &&
           !tagOptions.some((t) => t.name.toLowerCase() === search.trim().toLowerCase()) ? (
             <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[#e57bd9] transition hover:bg-white/5 disabled:opacity-60"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--track-accent)] transition hover:bg-white/5 disabled:opacity-60"
               disabled={isCreating}
               onClick={() => {
                 const trimmed = search.trim();

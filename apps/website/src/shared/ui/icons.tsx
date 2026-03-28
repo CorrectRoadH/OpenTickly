@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactElement } from "react";
 
-export type IconProps = ComponentPropsWithoutRef<"svg">;
+type IconProps = ComponentPropsWithoutRef<"svg">;
 
 function Icon(props: IconProps & { children: ReactElement }): ReactElement {
   const { children, ...rest } = props;
