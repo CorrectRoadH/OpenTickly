@@ -9,15 +9,20 @@ type TopEarningCount = 5 | 10 | 20;
 type BottomEarningCount = 3 | 5 | 10;
 type EarningDimension = "projects" | "members";
 
-type ProjectProfitRow = {
+type ProfitRow = {
   amount: number;
   color: string;
   cost: number;
-  memberCount: number;
+  members: ProfitMemberRow[];
   name: string;
   profit: number;
-  profitability: number | null;
-  projectFixedFee: number | null;
+};
+
+type ProfitMemberRow = {
+  amount: number;
+  cost: number;
+  name: string;
+  profit: number;
 };
 
 type ReportsProfitabilityViewProps = {
@@ -26,27 +31,49 @@ type ReportsProfitabilityViewProps = {
   report: SavedWeeklyReportData | undefined;
 };
 
-function buildProfitRows(report: SavedWeeklyReportData | undefined): ProjectProfitRow[] {
+type DayAmounts = {
+  amount: number;
+  cost: number;
+  label: string;
+  profit: number;
+};
+
+function buildProfitRows(report: SavedWeeklyReportData | undefined): ProfitRow[] {
   if (!report?.report?.length) return [];
 
   const projectMap = new Map<
     string,
-    { amount: number; color: string; cost: number; memberIds: Set<number>; name: string }
+    {
+      amount: number;
+      color: string;
+      cost: number;
+      members: Map<string, { amount: number; cost: number; name: string }>;
+      name: string;
+    }
   >();
 
   for (const row of report.report) {
     const name = row.project_name?.trim() || "(No project)";
+    const memberName = row.user_name?.trim() || `User ${row.user_id ?? 0}`;
     const existing = projectMap.get(name) ?? {
       amount: 0,
       color: row.project_hex_color ?? row.project_color ?? "#999",
       cost: 0,
-      memberIds: new Set<number>(),
+      members: new Map(),
       name,
     };
 
     const billableCents = (row.billable_amounts_in_cents ?? []).reduce((s, v) => s + v, 0);
-    existing.amount += billableCents / 100;
-    existing.memberIds.add(row.user_id ?? 0);
+    const amountDollars = billableCents / 100;
+    existing.amount += amountDollars;
+
+    const memberAcc = existing.members.get(memberName) ?? {
+      amount: 0,
+      cost: 0,
+      name: memberName,
+    };
+    memberAcc.amount += amountDollars;
+    existing.members.set(memberName, memberAcc);
     projectMap.set(name, existing);
   }
 
@@ -54,14 +81,71 @@ function buildProfitRows(report: SavedWeeklyReportData | undefined): ProjectProf
     .map((p) => ({
       amount: p.amount,
       color: p.color,
-      cost: 0,
-      memberCount: p.memberIds.size,
+      cost: p.cost,
+      members: [...p.members.values()]
+        .map((m) => ({ amount: m.amount, cost: m.cost, name: m.name, profit: m.amount - m.cost }))
+        .sort((a, b) => b.amount - a.amount),
       name: p.name,
-      profit: p.amount,
-      profitability: null,
-      projectFixedFee: null,
+      profit: p.amount - p.cost,
     }))
     .sort((a, b) => b.amount - a.amount);
+}
+
+function buildMemberRows(report: SavedWeeklyReportData | undefined): ProfitRow[] {
+  if (!report?.report?.length) return [];
+
+  const memberMap = new Map<
+    string,
+    { amount: number; color: string; cost: number; name: string }
+  >();
+
+  for (const row of report.report) {
+    const name = row.user_name?.trim() || `User ${row.user_id ?? 0}`;
+    const existing = memberMap.get(name) ?? { amount: 0, color: "#8B5CF6", cost: 0, name };
+    const billableCents = (row.billable_amounts_in_cents ?? []).reduce((s, v) => s + v, 0);
+    existing.amount += billableCents / 100;
+    memberMap.set(name, existing);
+  }
+
+  return [...memberMap.values()]
+    .map((m) => ({
+      amount: m.amount,
+      color: m.color,
+      cost: m.cost,
+      members: [],
+      name: m.name,
+      profit: m.amount - m.cost,
+    }))
+    .sort((a, b) => b.amount - a.amount);
+}
+
+function buildDayAmounts(report: SavedWeeklyReportData | undefined): DayAmounts[] {
+  if (!report?.report?.length) return [];
+
+  const dayTotals = new Map<number, { amount: number; cost: number }>();
+  let maxDayIndex = 0;
+
+  for (const row of report.report) {
+    const amounts = row.billable_amounts_in_cents ?? [];
+    for (let i = 0; i < amounts.length; i++) {
+      const existing = dayTotals.get(i) ?? { amount: 0, cost: 0 };
+      existing.amount += amounts[i] / 100;
+      dayTotals.set(i, existing);
+      if (i > maxDayIndex) maxDayIndex = i;
+    }
+  }
+
+  const result: DayAmounts[] = [];
+  for (let i = 0; i <= maxDayIndex; i++) {
+    const day = dayTotals.get(i) ?? { amount: 0, cost: 0 };
+    result.push({
+      amount: day.amount,
+      cost: day.cost,
+      label: `Day ${i + 1}`,
+      profit: day.amount - day.cost,
+    });
+  }
+  return result;
 }
 
 function formatCurrency(value: number): string {
@@ -79,8 +163,11 @@ export function ReportsProfitabilityView({
   const [bottomCount, setBottomCount] = useState<BottomEarningCount>(5);
   const [topDimension, setTopDimension] = useState<EarningDimension>("projects");
   const [bottomDimension, setBottomDimension] = useState<EarningDimension>("projects");
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const rows = useMemo(() => buildProfitRows(report), [report]);
+  const projectRows = useMemo(() => buildProfitRows(report), [report]);
+  const memberRows = useMemo(() => buildMemberRows(report), [report]);
+  const dayAmounts = useMemo(() => buildDayAmounts(report), [report]);
 
   const totalBillableSeconds = useMemo(() => {
     if (!report?.report) return 0;
@@ -90,8 +177,8 @@ export function ReportsProfitabilityView({
     );
   }, [report]);
 
-  const totalAmount = rows.reduce((s, r) => s + r.amount, 0);
-  const totalCost = rows.reduce((s, r) => s + r.cost, 0);
+  const totalAmount = projectRows.reduce((s, r) => s + r.amount, 0);
+  const totalCost = projectRows.reduce((s, r) => s + r.cost, 0);
   const totalProfit = totalAmount - totalCost;
 
   const billablePct = report?.report
@@ -104,12 +191,22 @@ export function ReportsProfitabilityView({
       })()
     : "0.00";
 
-  const topRows = rows.slice(0, topCount);
-  const bottomRows = [...rows].reverse().slice(0, bottomCount);
+  const topDisplayRows = (topDimension === "members" ? memberRows : projectRows).slice(0, topCount);
+  const bottomDisplayRows = [...(bottomDimension === "members" ? memberRows : projectRows)]
+    .reverse()
+    .slice(0, bottomCount);
+
+  function toggleRow(name: string) {
+    setExpandedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
 
   return (
     <>
-      {/* Metrics bar */}
       <section
         className="mt-5 grid overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] lg:grid-cols-4"
         data-testid="reports-profitability-metrics"
@@ -130,7 +227,7 @@ export function ReportsProfitabilityView({
 
       {!isPending && !isError ? (
         <>
-          {/* Day trends */}
+          {/* Day trends chart */}
           <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
             <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
               <span className="text-[14px] font-medium text-white">
@@ -150,84 +247,38 @@ export function ReportsProfitabilityView({
                 </select>
               </div>
             </div>
-            {rows.length === 0 ? (
+            {dayAmounts.length === 0 || dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
               <EmptyChart />
             ) : (
-              <div className="px-5 py-8 text-center text-[13px] text-[var(--track-text-muted)]">
-                Chart visualization requires billable rate data to be configured.
-              </div>
+              <DayTrendsChart days={dayAmounts} show={showMetric} />
             )}
           </section>
 
-          {/* Top earning projects */}
-          <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-            <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
-              <span className="text-[14px] font-medium text-white">Top earning projects</span>
-              <div className="flex items-center gap-2">
-                <select
-                  className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
-                  onChange={(e) => setTopCount(Number(e.target.value) as TopEarningCount)}
-                  value={topCount}
-                >
-                  <option value={5}>Top 5</option>
-                  <option value={10}>Top 10</option>
-                  <option value={20}>Top 20</option>
-                </select>
-                <select
-                  className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
-                  onChange={(e) => setTopDimension(e.target.value as EarningDimension)}
-                  value={topDimension}
-                >
-                  <option value="projects">Projects</option>
-                  <option value="members">Members</option>
-                </select>
-              </div>
-            </div>
-            {topRows.length === 0 ? (
-              <EmptyChart />
-            ) : (
-              <div className="divide-y divide-[var(--track-border)]">
-                {topRows.map((row) => (
-                  <EarningRow key={row.name} row={row} />
-                ))}
-              </div>
-            )}
-          </section>
+          {/* Top earning */}
+          <EarningPanel
+            bottomRows={null}
+            count={topCount}
+            dimension={topDimension}
+            onCountChange={(v) => setTopCount(v as TopEarningCount)}
+            onDimensionChange={setTopDimension}
+            options={[5, 10, 20]}
+            prefix="Top"
+            rows={topDisplayRows}
+            title="Top earning projects"
+          />
 
-          {/* Lowest earning projects */}
-          <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-            <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
-              <span className="text-[14px] font-medium text-white">Lowest earning projects</span>
-              <div className="flex items-center gap-2">
-                <select
-                  className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
-                  onChange={(e) => setBottomCount(Number(e.target.value) as BottomEarningCount)}
-                  value={bottomCount}
-                >
-                  <option value={3}>Bottom 3</option>
-                  <option value={5}>Bottom 5</option>
-                  <option value={10}>Bottom 10</option>
-                </select>
-                <select
-                  className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
-                  onChange={(e) => setBottomDimension(e.target.value as EarningDimension)}
-                  value={bottomDimension}
-                >
-                  <option value="projects">Projects</option>
-                  <option value="members">Members</option>
-                </select>
-              </div>
-            </div>
-            {bottomRows.length === 0 ? (
-              <EmptyChart />
-            ) : (
-              <div className="divide-y divide-[var(--track-border)]">
-                {bottomRows.map((row) => (
-                  <EarningRow key={row.name} row={row} />
-                ))}
-              </div>
-            )}
-          </section>
+          {/* Lowest earning */}
+          <EarningPanel
+            bottomRows={null}
+            count={bottomCount}
+            dimension={bottomDimension}
+            onCountChange={(v) => setBottomCount(v as BottomEarningCount)}
+            onDimensionChange={setBottomDimension}
+            options={[3, 5, 10]}
+            prefix="Bottom"
+            rows={bottomDisplayRows}
+            title="Lowest earning projects"
+          />
 
           {/* Breakdown table */}
           <section
@@ -238,12 +289,6 @@ export function ReportsProfitabilityView({
               <span className="text-[14px] font-medium text-white">
                 Project and member breakdown
               </span>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[var(--track-text-muted)]">Breakdown by:</span>
-                <span className="text-[12px] text-white">Projects</span>
-                <span className="text-[11px] text-[var(--track-text-muted)]">and:</span>
-                <span className="text-[12px] text-white">Members</span>
-              </div>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-[13px]">
@@ -257,64 +302,28 @@ export function ReportsProfitabilityView({
                       Amount
                     </th>
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Project fixed fee
-                    </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
                       Cost
                     </th>
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
                       Profit
                     </th>
-                    <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Profitability
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr
-                      className="border-b border-[var(--track-border)] last:border-b-0"
+                  {projectRows.map((row) => (
+                    <BreakdownProjectRow
+                      expanded={expandedRows.has(row.name)}
                       key={row.name}
-                    >
-                      <td className="px-2 py-3">
-                        <button
-                          className="flex h-5 w-5 items-center justify-center text-[var(--track-text-muted)]"
-                          type="button"
-                        >
-                          ▸
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="inline-block h-2 w-2 rounded-full"
-                            style={{ backgroundColor: row.color }}
-                          />
-                          <span className="text-white">{row.name}</span>
-                          <span className="text-[var(--track-text-muted)]">
-                            ({row.memberCount})
-                          </span>
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-white">{formatCurrency(row.amount)}</td>
-                      <td className="px-4 py-3 text-white">
-                        {row.projectFixedFee != null ? formatCurrency(row.projectFixedFee) : "-"}
-                      </td>
-                      <td className="px-4 py-3 text-white">{formatCurrency(row.cost)}</td>
-                      <td className="px-4 py-3 text-white">{formatCurrency(row.profit)}</td>
-                      <td className="px-4 py-3 text-white">
-                        {row.profitability != null ? `${row.profitability.toFixed(0)}%` : "-"}
-                      </td>
-                    </tr>
+                      onToggle={() => toggleRow(row.name)}
+                      row={row}
+                    />
                   ))}
                   <tr className="border-t border-[var(--track-border)] font-semibold">
                     <td className="px-2 py-3" />
                     <td className="px-4 py-3 text-white">Total</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalAmount)}</td>
-                    <td className="px-4 py-3 text-white">-</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalCost)}</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalProfit)}</td>
-                    <td className="px-4 py-3 text-white">-</td>
                   </tr>
                 </tbody>
               </table>
@@ -323,6 +332,198 @@ export function ReportsProfitabilityView({
         </>
       ) : null}
     </>
+  );
+}
+
+function BreakdownProjectRow({
+  expanded,
+  onToggle,
+  row,
+}: {
+  expanded: boolean;
+  onToggle: () => void;
+  row: ProfitRow;
+}): ReactElement {
+  return (
+    <>
+      <tr className="border-b border-[var(--track-border)]">
+        <td className="px-2 py-3">
+          {row.members.length > 0 ? (
+            <button
+              className={`flex h-5 w-5 items-center justify-center text-[var(--track-text-muted)] transition-transform ${expanded ? "rotate-90" : ""}`}
+              onClick={onToggle}
+              type="button"
+            >
+              ▸
+            </button>
+          ) : null}
+        </td>
+        <td className="px-4 py-3">
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{ backgroundColor: row.color }}
+            />
+            <span className="text-white">{row.name}</span>
+            <span className="text-[var(--track-text-muted)]">({row.members.length})</span>
+          </span>
+        </td>
+        <td className="px-4 py-3 text-white">{formatCurrency(row.amount)}</td>
+        <td className="px-4 py-3 text-white">{formatCurrency(row.cost)}</td>
+        <td className="px-4 py-3 text-white">{formatCurrency(row.profit)}</td>
+      </tr>
+      {expanded
+        ? row.members.map((m) => (
+            <tr
+              className="border-b border-[var(--track-border)] bg-[var(--track-surface-muted)]"
+              key={m.name}
+            >
+              <td className="px-2 py-2" />
+              <td className="px-4 py-2 pl-10 text-[var(--track-text-soft)]">{m.name}</td>
+              <td className="px-4 py-2 text-[var(--track-text-soft)]">
+                {formatCurrency(m.amount)}
+              </td>
+              <td className="px-4 py-2 text-[var(--track-text-soft)]">{formatCurrency(m.cost)}</td>
+              <td className="px-4 py-2 text-[var(--track-text-soft)]">
+                {formatCurrency(m.profit)}
+              </td>
+            </tr>
+          ))
+        : null}
+    </>
+  );
+}
+
+function DayTrendsChart({
+  days,
+  show,
+}: {
+  days: DayAmounts[];
+  show: ProfitabilityShowMetric;
+}): ReactElement {
+  const maxVal = Math.max(
+    ...days.map((d) => {
+      if (show === "amount") return d.amount;
+      if (show === "cost") return d.cost;
+      if (show === "profit") return Math.abs(d.profit);
+      return Math.max(d.amount, d.cost, Math.abs(d.profit));
+    }),
+    1,
+  );
+
+  return (
+    <div className="flex items-end gap-1 px-5 py-6" style={{ height: 180 }}>
+      {days.map((day, i) => {
+        const showAmount = show === "amount" || show === "amount-cost-profit";
+        const showCost = show === "cost" || show === "amount-cost-profit";
+        const showProfit = show === "profit" || show === "amount-cost-profit";
+        return (
+          <div className="flex flex-1 flex-col items-center gap-1" key={i}>
+            <div className="flex w-full items-end justify-center gap-[2px]" style={{ height: 120 }}>
+              {showAmount ? (
+                <div
+                  className="w-2 rounded-t-[2px] bg-[var(--track-accent)]"
+                  style={{
+                    height: `${(day.amount / maxVal) * 100}%`,
+                    minHeight: day.amount > 0 ? 2 : 0,
+                  }}
+                  title={`Amount: ${formatCurrency(day.amount)}`}
+                />
+              ) : null}
+              {showCost ? (
+                <div
+                  className="w-2 rounded-t-[2px] bg-[#f59e0b]"
+                  style={{
+                    height: `${(day.cost / maxVal) * 100}%`,
+                    minHeight: day.cost > 0 ? 2 : 0,
+                  }}
+                  title={`Cost: ${formatCurrency(day.cost)}`}
+                />
+              ) : null}
+              {showProfit ? (
+                <div
+                  className="w-2 rounded-t-[2px] bg-[#22c55e]"
+                  style={{
+                    height: `${(Math.abs(day.profit) / maxVal) * 100}%`,
+                    minHeight: day.profit !== 0 ? 2 : 0,
+                  }}
+                  title={`Profit: ${formatCurrency(day.profit)}`}
+                />
+              ) : null}
+            </div>
+            <span className="text-[10px] text-[var(--track-text-muted)]">{day.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function EarningPanel({
+  count,
+  dimension,
+  onCountChange,
+  onDimensionChange,
+  options,
+  prefix,
+  rows,
+  title,
+}: {
+  bottomRows: null;
+  count: number;
+  dimension: EarningDimension;
+  onCountChange: (v: number) => void;
+  onDimensionChange: (d: EarningDimension) => void;
+  options: number[];
+  prefix: string;
+  rows: ProfitRow[];
+  title: string;
+}): ReactElement {
+  return (
+    <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+      <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
+        <span className="text-[14px] font-medium text-white">{title}</span>
+        <div className="flex items-center gap-2">
+          <select
+            className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
+            onChange={(e) => onCountChange(Number(e.target.value))}
+            value={count}
+          >
+            {options.map((n) => (
+              <option key={n} value={n}>
+                {prefix} {n}
+              </option>
+            ))}
+          </select>
+          <select
+            className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
+            onChange={(e) => onDimensionChange(e.target.value as EarningDimension)}
+            value={dimension}
+          >
+            <option value="projects">Projects</option>
+            <option value="members">Members</option>
+          </select>
+        </div>
+      </div>
+      {rows.length === 0 ? (
+        <EmptyChart />
+      ) : (
+        <div className="divide-y divide-[var(--track-border)]">
+          {rows.map((row) => (
+            <div className="flex items-center gap-4 px-5 py-3" key={row.name}>
+              <span
+                className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: row.color }}
+              />
+              <span className="min-w-0 flex-1 truncate text-[13px] text-white">{row.name}</span>
+              <span className="shrink-0 text-[13px] tabular-nums text-white">
+                {formatCurrency(row.amount)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -345,21 +546,6 @@ function MetricCell({
       <p className="mt-3 text-[16px] font-semibold leading-[23px] tabular-nums text-white">
         {value}
       </p>
-    </div>
-  );
-}
-
-function EarningRow({ row }: { row: ProjectProfitRow }): ReactElement {
-  return (
-    <div className="flex items-center gap-4 px-5 py-3">
-      <span
-        className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: row.color }}
-      />
-      <span className="min-w-0 flex-1 truncate text-[13px] text-white">{row.name}</span>
-      <span className="shrink-0 text-[13px] tabular-nums text-white">
-        {formatCurrency(row.amount)}
-      </span>
     </div>
   );
 }
