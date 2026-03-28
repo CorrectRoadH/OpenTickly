@@ -17,13 +17,14 @@ import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
 import { ReportsPeriodPicker } from "./ReportsPeriodPicker.tsx";
 import {
   ReportsSurfaceMessage,
-  ReportsTabPlaceholder,
   SummaryMetrics,
   ToolbarButton,
   TopTab,
 } from "./ReportsSharedWidgets.tsx";
 import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
+import { ReportsProfitabilityView } from "./ReportsProfitabilityView.tsx";
+import { ReportsCustomView } from "./ReportsCustomView.tsx";
 import { ReportsStringFilterDropdown } from "./ReportsStringFilterDropdown.tsx";
 import { exportReportCsv } from "./reports-export.ts";
 import {
@@ -243,72 +244,87 @@ export function WorkspaceReportsPage({
                 ))}
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
-                  roundingEnabled
-                    ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
-                    : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-                }`}
-                data-testid="reports-rounding-toggle"
-                onClick={() => setRoundingEnabled((prev) => !prev)}
-                type="button"
-              >
-                {roundingEnabled ? "Rounding on" : "Rounding off"}
-              </button>
-              {tab !== "workload" ? (
-                <ToolbarButton
-                  onClick={() => {
-                    const projectsParam = displayModel.breakdownRows
-                      .filter((r) => r.seconds > 0)
-                      .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
-                      .join(",");
-                    const search = projectsParam
-                      ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
-                      : "";
-                    void navigate({
-                      to: `/workspaces/${workspaceId}/invoices/new${search}`,
-                    });
-                  }}
-                >
-                  Create invoice
-                </ToolbarButton>
-              ) : null}
-              <button
-                className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-                data-testid="reports-export"
-                onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
-                type="button"
-              >
-                Export
-              </button>
+            {tab === "custom" ? (
               <ToolbarButton
-                onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}
+                onClick={() =>
+                  void navigate({
+                    to: buildWorkspaceReportsPath(workspaceId, "summary"),
+                  })
+                }
               >
-                Settings
+                New report
               </ToolbarButton>
-              <button
-                className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
-                  shareToast
-                    ? "bg-[var(--track-button)] text-black"
-                    : "border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-                }`}
-                data-testid="reports-save-share"
-                onClick={handleShareReport}
-                type="button"
-              >
-                Save and share
-              </button>
-            </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
+                    roundingEnabled
+                      ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
+                      : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+                  }`}
+                  data-testid="reports-rounding-toggle"
+                  disabled={tab === "profitability"}
+                  onClick={() => setRoundingEnabled((prev) => !prev)}
+                  type="button"
+                >
+                  {roundingEnabled ? "Rounding on" : "Rounding off"}
+                </button>
+                {tab === "summary" || tab === "detailed" ? (
+                  <ToolbarButton
+                    onClick={() => {
+                      const projectsParam = displayModel.breakdownRows
+                        .filter((r) => r.seconds > 0)
+                        .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
+                        .join(",");
+                      const search = projectsParam
+                        ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
+                        : "";
+                      void navigate({
+                        to: `/workspaces/${workspaceId}/invoices/new${search}`,
+                      });
+                    }}
+                  >
+                    Create invoice
+                  </ToolbarButton>
+                ) : null}
+                <button
+                  className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
+                  data-testid="reports-export"
+                  onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
+                  type="button"
+                >
+                  Export
+                </button>
+                <ToolbarButton
+                  onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}
+                >
+                  Settings
+                </ToolbarButton>
+                <button
+                  className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
+                    shareToast
+                      ? "bg-[var(--track-button)] text-black"
+                      : "border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+                  }`}
+                  data-testid="reports-save-share"
+                  onClick={handleShareReport}
+                  type="button"
+                >
+                  Save and share
+                </button>
+              </div>
+            )}
           </div>
-          <ReportsFilterBar
-            clientOptions={clientOptions}
-            liveModel={liveModel}
-            memberOptions={memberOptions}
-            projectOptions={projectOptions}
-            state={state}
-            tagOptions={tagOptions}
-          />
+          {tab !== "custom" ? (
+            <ReportsFilterBar
+              clientOptions={clientOptions}
+              liveModel={liveModel}
+              memberOptions={memberOptions}
+              projectOptions={projectOptions}
+              state={state}
+              tagOptions={tagOptions}
+            />
+          ) : null}
         </div>
       </section>
 
@@ -359,9 +375,15 @@ export function WorkspaceReportsPage({
           report={weeklyReportQuery.data}
           roundingEnabled={roundingEnabled}
         />
-      ) : (
-        <ReportsTabPlaceholder tab={REPORTS_TABS.find((t) => t.slug === tab)?.label ?? tab} />
-      )}
+      ) : tab === "profitability" ? (
+        <ReportsProfitabilityView
+          isError={weeklyReportQuery.isError}
+          isPending={weeklyReportQuery.isPending}
+          report={weeklyReportQuery.data}
+        />
+      ) : tab === "custom" ? (
+        <ReportsCustomView />
+      ) : null}
       {shareToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
           <span className="text-[14px] text-white">Report link copied to clipboard</span>
