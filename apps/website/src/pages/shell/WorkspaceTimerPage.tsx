@@ -37,13 +37,11 @@ import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import {
   PanelRightIcon,
-  ManualModeIcon,
   PlayIcon,
   ProjectsIcon,
   SettingsIcon,
   StopIcon,
   TagsIcon,
-  TimerIcon,
 } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -421,32 +419,6 @@ export function WorkspaceTimerPage({
                 </button>
               </>
             )}
-            <button
-              aria-label={
-                orch.timerInputMode === "automatic"
-                  ? "Switch to manual mode"
-                  : "Switch to automatic mode"
-              }
-              className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-              data-testid="timer-input-mode-toggle"
-              onClick={() => {
-                orch.setTimerInputMode(
-                  orch.timerInputMode === "automatic" ? "manual" : "automatic",
-                );
-              }}
-              title={
-                orch.timerInputMode === "automatic"
-                  ? "Switch to manual mode"
-                  : "Switch to automatic mode"
-              }
-              type="button"
-            >
-              {orch.timerInputMode === "automatic" ? (
-                <ManualModeIcon className="size-3.5" />
-              ) : (
-                <TimerIcon className="size-3.5" />
-              )}
-            </button>
           </div>
         </div>
 
