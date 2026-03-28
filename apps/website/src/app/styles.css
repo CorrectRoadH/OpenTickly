@@ -11,6 +11,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* html/body/app overflow is disabled so all scrolling is managed by
+   internal containers (AppShell <main> or TimerPage scroll area).
+   This prevents double scrollbars on /timer where both the browser
+   and the app's scroll area would compete for scroll control. */
 html {
   height: 100%;
   overflow: hidden;

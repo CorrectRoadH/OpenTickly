@@ -1358,23 +1358,26 @@ export function useTimerPageOrchestration(options?: {
 
   const handleEntryEdit = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
+      // Anchor coordinates are relative to the scroll area's visible viewport
+      // (not content coordinates). The editor dialog renders outside the scroll
+      // area as a sibling, so its absolute position must match the viewport-
+      // relative anchor — no scrollTop/scrollLeft offset is added.
       const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
-      const scrollLeft = scrollAreaRef.current?.scrollLeft ?? 0;
-      const scrollTop = scrollAreaRef.current?.scrollTop ?? 0;
       const containerWidth = scrollAreaRef.current?.clientWidth;
+      const containerHeight = scrollAreaRef.current?.clientHeight;
       const anchorLeft = scrollAreaRect
-        ? anchorRect.left - scrollAreaRect.left + scrollLeft
+        ? anchorRect.left - scrollAreaRect.left
         : anchorRect.left;
       const preferredPlacement =
         containerWidth != null && anchorLeft > containerWidth / 2 ? "left" : "right";
       setSelectedEntry(entry);
       setSelectedEntryAnchor({
-        containerHeight: scrollAreaRef.current?.scrollHeight,
+        containerHeight,
         containerWidth,
         height: anchorRect.height,
         left: anchorLeft,
         preferredPlacement,
-        top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top + scrollTop : anchorRect.top,
+        top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top : anchorRect.top,
         width: anchorRect.width,
       });
     },

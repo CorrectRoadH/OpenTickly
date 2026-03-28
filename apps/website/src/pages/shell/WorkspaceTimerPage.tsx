@@ -480,7 +480,10 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           {orch.trackStrip.length > 0 ? <ProjectFilterStrip items={orch.trackStrip} /> : null}
         </div>
       </header>
-      <div className="flex min-h-0 flex-1">
+      {/* relative here so TimeEntryEditorDialog (absolute inset-0) is positioned
+          relative to this non-scrolling container, not the scroll area inside.
+          Without this, the editor would scroll away with the list content. */}
+      <div className="relative flex min-h-0 flex-1">
         <div
           className={`relative min-h-0 flex-1 overflow-x-hidden ${
             !orch.timeEntriesQuery.isPending &&
@@ -642,123 +645,123 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               ) : null}
             </div>
           ) : null}
-          {orch.selectedEntry && orch.selectedEntryAnchor ? (
-            <TimeEntryEditorDialog
-              anchor={orch.selectedEntryAnchor}
-              currentWorkspaceId={orch.selectedEntryWorkspaceId}
-              description={orch.selectedDescription}
-              entry={orch.selectedEntry}
-              isCreatingProject={orch.createProjectMutation.isPending}
-              isCreatingTag={orch.createTagMutation.isPending}
-              isDeleting={orch.deleteTimeEntryMutation.isPending}
-              isDirty={orch.selectedEntryDirty}
-              isNewEntry={orch.isNewEntry}
-              isPrimaryActionPending={orch.timerMutationPending}
-              isSaving={
-                orch.isNewEntry
-                  ? orch.createTimeEntryMutation.isPending
-                  : orch.updateTimeEntryMutation.isPending
-              }
-              onClose={orch.closeSelectedEntryEditor}
-              onCreateProject={orch.handleSelectedEntryProjectCreate}
-              onCreateTag={orch.handleSelectedEntryTagCreate}
-              onBillableToggle={orch.handleSelectedEntryBillableToggle}
-              onDuplicate={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryDuplicate();
-                    }
-              }
-              onDelete={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      const snapshot = orch.selectedEntry
-                        ? snapshotEntryForUndo(orch.selectedEntry)
-                        : null;
-                      void orch
-                        .handleSelectedEntryDelete()
-                        .then(() => {
-                          if (snapshot) showDeleteToast(snapshot);
-                        })
-                        .catch(() => {
-                          // Error is already displayed in the editor via selectedEntryError
-                        });
-                    }
-              }
-              onDescriptionChange={orch.setSelectedDescription}
-              onFavorite={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryFavorite();
-                    }
-              }
-              onPrimaryAction={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryPrimaryAction();
-                    }
-              }
-              onProjectSelect={orch.setSelectedProjectId}
-              onSave={() => {
-                void orch.handleSelectedEntrySave();
-              }}
-              onSplit={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntrySplit();
-                    }
-              }
-              onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
-              onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
-              onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
-              onTagToggle={(tagId) => {
-                orch.setSelectedTagIds((current) =>
-                  current.includes(tagId)
-                    ? current.filter((id) => id !== tagId)
-                    : [...current, tagId],
-                );
-              }}
-              onWorkspaceSelect={(nextWorkspaceId) => {
-                orch.switchWorkspace(nextWorkspaceId);
-                orch.closeSelectedEntryEditor();
-              }}
-              primaryActionIcon={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "stop"
-                  : "play"
-              }
-              primaryActionLabel={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "Stop timer"
-                  : "Continue Time Entry"
-              }
-              projects={orch.projectOptions
-                .filter((project) => project.id != null)
-                .map((project) => ({
-                  clientName: project.client_name ?? undefined,
-                  color: resolveProjectColorValue(project),
-                  id: project.id as number,
-                  name: project.name ?? "Untitled project",
-                }))}
-              recentEntries={orch.recentWorkspaceEntries}
-              saveError={orch.selectedEntryError}
-              selectedProjectId={orch.selectedProjectId}
-              selectedTagIds={orch.selectedTagIds}
-              tags={orch.tagOptions}
-              timezone={orch.timezone}
-              workspaces={orch.session.availableWorkspaces.map((workspace) => ({
-                id: workspace.id,
-                isCurrent: workspace.isCurrent,
-                name: workspace.name,
-              }))}
-            />
-          ) : null}
         </div>
+        {orch.selectedEntry && orch.selectedEntryAnchor ? (
+          <TimeEntryEditorDialog
+            anchor={orch.selectedEntryAnchor}
+            currentWorkspaceId={orch.selectedEntryWorkspaceId}
+            description={orch.selectedDescription}
+            entry={orch.selectedEntry}
+            isCreatingProject={orch.createProjectMutation.isPending}
+            isCreatingTag={orch.createTagMutation.isPending}
+            isDeleting={orch.deleteTimeEntryMutation.isPending}
+            isDirty={orch.selectedEntryDirty}
+            isNewEntry={orch.isNewEntry}
+            isPrimaryActionPending={orch.timerMutationPending}
+            isSaving={
+              orch.isNewEntry
+                ? orch.createTimeEntryMutation.isPending
+                : orch.updateTimeEntryMutation.isPending
+            }
+            onClose={orch.closeSelectedEntryEditor}
+            onCreateProject={orch.handleSelectedEntryProjectCreate}
+            onCreateTag={orch.handleSelectedEntryTagCreate}
+            onBillableToggle={orch.handleSelectedEntryBillableToggle}
+            onDuplicate={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryDuplicate();
+                  }
+            }
+            onDelete={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    const snapshot = orch.selectedEntry
+                      ? snapshotEntryForUndo(orch.selectedEntry)
+                      : null;
+                    void orch
+                      .handleSelectedEntryDelete()
+                      .then(() => {
+                        if (snapshot) showDeleteToast(snapshot);
+                      })
+                      .catch(() => {
+                        // Error is already displayed in the editor via selectedEntryError
+                      });
+                  }
+            }
+            onDescriptionChange={orch.setSelectedDescription}
+            onFavorite={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryFavorite();
+                  }
+            }
+            onPrimaryAction={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryPrimaryAction();
+                  }
+            }
+            onProjectSelect={orch.setSelectedProjectId}
+            onSave={() => {
+              void orch.handleSelectedEntrySave();
+            }}
+            onSplit={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntrySplit();
+                  }
+            }
+            onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
+            onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
+            onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
+            onTagToggle={(tagId) => {
+              orch.setSelectedTagIds((current) =>
+                current.includes(tagId)
+                  ? current.filter((id) => id !== tagId)
+                  : [...current, tagId],
+              );
+            }}
+            onWorkspaceSelect={(nextWorkspaceId) => {
+              orch.switchWorkspace(nextWorkspaceId);
+              orch.closeSelectedEntryEditor();
+            }}
+            primaryActionIcon={
+              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                ? "stop"
+                : "play"
+            }
+            primaryActionLabel={
+              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                ? "Stop timer"
+                : "Continue Time Entry"
+            }
+            projects={orch.projectOptions
+              .filter((project) => project.id != null)
+              .map((project) => ({
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColorValue(project),
+                id: project.id as number,
+                name: project.name ?? "Untitled project",
+              }))}
+            recentEntries={orch.recentWorkspaceEntries}
+            saveError={orch.selectedEntryError}
+            selectedProjectId={orch.selectedProjectId}
+            selectedTagIds={orch.selectedTagIds}
+            tags={orch.tagOptions}
+            timezone={orch.timezone}
+            workspaces={orch.session.availableWorkspaces.map((workspace) => ({
+              id: workspace.id,
+              isCurrent: workspace.isCurrent,
+              name: workspace.name,
+            }))}
+          />
+        ) : null}
         {sidebarOpen ? <GoalsFavoritesSidebar /> : null}
       </div>
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
