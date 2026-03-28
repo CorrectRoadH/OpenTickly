@@ -177,9 +177,19 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
       className="relative min-h-screen bg-[var(--track-surface)] text-white"
       data-testid="tracking-timer-page"
     >
-      {/* Timer header bar — sticky below the mobile top bar on small screens,
-          sticky at viewport top on desktop. Matches Toggl's sticky timer bar. */}
-      <header className="sticky top-0 z-20 border-b border-[var(--track-border)] bg-[var(--track-surface)]">
+      {/* Timer header bar — sticky at viewport top. The calendar day headers
+          (.rbc-time-header) use a CSS variable --timer-header-height to position
+          themselves just below this header. */}
+      <header
+        className="sticky top-0 z-20 border-b border-[var(--track-border)] bg-[var(--track-surface)]"
+        ref={(el) => {
+          if (el) {
+            const height = el.offsetHeight;
+            el.style.setProperty("--timer-header-height", `${height}px`);
+            document.documentElement.style.setProperty("--timer-header-height", `${height}px`);
+          }
+        }}
+      >
         <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
           <div className="min-w-0 flex-1">
             <label className="sr-only" htmlFor="timer-description">
