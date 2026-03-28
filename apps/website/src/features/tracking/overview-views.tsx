@@ -10,6 +10,7 @@ import { startOfWeek } from "date-fns/startOfWeek";
 import { enUS } from "date-fns/locale/en-US";
 import "./calendar.css";
 
+import { CalendarEntryContextMenu } from "./CalendarEntryContextMenu.tsx";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   formatClockDuration,
@@ -767,11 +768,20 @@ function ListRowProjectPicker({
   );
 }
 
+export type CalendarContextMenuAction =
+  | "copy-description"
+  | "copy-start-link"
+  | "delete"
+  | "duplicate"
+  | "favorite"
+  | "go-to-project";
+
 export function CalendarView({
   calendarHours = "all",
   draftEntry,
   entries,
   nowMs,
+  onContextMenuAction,
   onMoveEntry,
   onEditEntry,
   onResizeEntry,
@@ -790,6 +800,7 @@ export function CalendarView({
   calendarHours?: "all" | "business";
   draftEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  onContextMenuAction?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => void;
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
   nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
@@ -981,7 +992,11 @@ export function CalendarView({
       <DnDCalendar
         components={{
           event: (props: EventProps<CalendarEvent>) => (
-            <CalendarEventCard event={props.event} onEditEntry={onEditEntry} />
+            <CalendarEventCard
+              event={props.event}
+              onContextMenuAction={onContextMenuAction}
+              onEditEntry={onEditEntry}
+            />
           ),
           header: ({ date }: { date: Date }) => {
             const dayNum = date.getDate();
@@ -1242,9 +1257,11 @@ export function TimesheetView({
 
 function CalendarEventCard({
   event,
+  onContextMenuAction,
   onEditEntry,
 }: {
   event: CalendarEvent;
+  onContextMenuAction?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
   const entry = event.entry;
@@ -1255,6 +1272,7 @@ function CalendarEventCard({
   const entryId = event.id;
   const isDraft = event.resource.isDraft;
   const allowDirectEdit = !event.resource.isLocked && !isRunning && !isDraft;
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // Draft entries auto-open the editor anchored to their real DOM position
   useEffect(() => {
@@ -1262,16 +1280,50 @@ function CalendarEventCard({
     onEditEntry?.(entry, cardRef.current.getBoundingClientRect());
   }, [isDraft]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Toggl structure: rbc-event (no border-radius, overflow visible) wraps an
-  // inner EventBox (border-radius 4px, padding 4px 6px, own background color).
-  // Continue button is opacity:0 by default, shown on hover via CSS group-hover.
   return (
     <div
       ref={cardRef}
       className={`group h-full ${allowDirectEdit ? "cursor-grab" : "cursor-default"}`}
       data-testid={`calendar-entry-${entryId ?? "unknown"}`}
       onClick={(e) => onEditEntry?.(entry, e.currentTarget.getBoundingClientRect())}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenu({ x: e.clientX, y: e.clientY });
+      }}
     >
+      {contextMenu ? (
+        <CalendarEntryContextMenu
+          entry={entry}
+          onClose={() => setContextMenu(null)}
+          onCopyDescription={() => {
+            onContextMenuAction?.(entry, "copy-description");
+            setContextMenu(null);
+          }}
+          onCopyStartLink={() => {
+            onContextMenuAction?.(entry, "copy-start-link");
+            setContextMenu(null);
+          }}
+          onDelete={() => {
+            onContextMenuAction?.(entry, "delete");
+            setContextMenu(null);
+          }}
+          onDuplicate={() => {
+            onContextMenuAction?.(entry, "duplicate");
+            setContextMenu(null);
+          }}
+          onFavorite={() => {
+            onContextMenuAction?.(entry, "favorite");
+            setContextMenu(null);
+          }}
+          position={contextMenu}
+          projectPath={
+            entry.project_id || entry.pid
+              ? `/projects/${entry.workspace_id ?? entry.wid}/list`
+              : undefined
+          }
+        />
+      ) : null}
       <div
         className="relative flex h-full flex-col justify-between rounded-[4px] px-1.5 py-1 text-left text-[12px] text-[#fafafa]"
         style={{
