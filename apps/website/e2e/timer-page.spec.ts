@@ -76,7 +76,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       "true",
     );
     // Calendar shows entries as event cards in the grid
-    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollArea = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollArea).toBeVisible();
     await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
@@ -164,7 +164,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       "true",
     );
     // Scope assertions to calendar grid to ensure view-local proof
-    const calendarScrollAreaB = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollAreaB = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollAreaB).toBeVisible();
     // Workspace A entry should NOT be visible in calendar
     await expect(
@@ -227,7 +227,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       await page.getByRole("radio", { name: "Calendar" }).click();
 
       // Verify in calendar view with scoped locator
-      const calendarScrollAreaBack = page.getByTestId("calendar-grid-scroll-area");
+      const calendarScrollAreaBack = page.getByTestId("timer-calendar-view");
       await expect(calendarScrollAreaBack).toBeVisible();
       // Workspace A entry should be visible again in calendar
       await expect(
@@ -652,7 +652,7 @@ test.describe("Timer page family mainline", () => {
     );
     // The entries created should be visible on the calendar as event cards
     // Each entry description should appear somewhere in the calendar grid
-    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollArea = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollArea).toBeVisible();
 
     // Verify list view shows the seeded entries within the list view content
@@ -921,7 +921,7 @@ test.describe("Timer page family mainline", () => {
     expect(currentTimerResponse.body).toBeNull();
   });
 
-  test("timer header stays pinned when wheel scrolling targets the timer surface without shifting shell scroll", async ({
+  test("timer header stays pinned when scrolling via window scroll", async ({
     page,
   }) => {
     const email = `timer-sticky-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -939,55 +939,25 @@ test.describe("Timer page family mainline", () => {
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    const mainScroll = page.getByTestId("app-shell-main");
-    const scrollArea = page.getByTestId("tracking-timer-scroll-area");
+    // Timer header is sticky — it should stay visible after scrolling
     const weekRangeButton = page.getByRole("button", {
       name: /Week range:/i,
     });
-
-    await expect(scrollArea).toBeVisible();
     await expect(weekRangeButton).toBeVisible();
 
-    await mainScroll.evaluate((element: HTMLElement) => {
-      element.scrollTop = 0;
-    });
-    await scrollArea.evaluate((element: HTMLElement) => {
-      element.scrollTop = 0;
-    });
+    const before = await weekRangeButton.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
-    const before = await weekRangeButton.evaluate((element: HTMLElement) => {
-      const rect = element.getBoundingClientRect();
-      return { top: rect.top, windowScrollY: window.scrollY };
-    });
+    // Scroll the window down
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await page.waitForTimeout(100);
 
-    const scrollAreaBox = await scrollArea.boundingBox();
-    if (!scrollAreaBox) {
-      throw new Error("Timer scroll area is not visible.");
-    }
+    const after = await weekRangeButton.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
-    await page.mouse.move(scrollAreaBox.x + scrollAreaBox.width / 2, scrollAreaBox.y + 80);
-    await page.mouse.wheel(0, 900);
-
-    await expect
-      .poll(async () => ({
-        main: await mainScroll.evaluate((element: HTMLElement) => element.scrollTop),
-        timer: await scrollArea.evaluate((element: HTMLElement) => element.scrollTop),
-      }))
-      .toEqual({
-        main: 0,
-        timer: expect.any(Number),
-      });
-
-    const after = await weekRangeButton.evaluate((element: HTMLElement) => {
-      const rect = element.getBoundingClientRect();
-      return { top: rect.top, windowScrollY: window.scrollY };
-    });
-
-    expect(after.windowScrollY).toBe(before.windowScrollY);
-    expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+    // Timer header should stay at the same viewport position (sticky)
+    expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
   });
 
-  test("calendar day header stays pinned when scrolling timer content", async ({ page }) => {
+  test("calendar day header stays pinned when scrolling via window scroll", async ({ page }) => {
     const email = `timer-calendar-sticky-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -1002,56 +972,26 @@ test.describe("Timer page family mainline", () => {
 
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
 
-    const mainScroll = page.getByTestId("app-shell-main");
-    const scrollArea = page.getByTestId("tracking-timer-scroll-area");
-    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    const calendarView = page.getByTestId("timer-calendar-view");
     const dayHeader = page.getByTestId("calendar-day-header-mon");
 
-    await expect(scrollArea).toBeVisible();
-    await expect(calendarScrollArea).toBeVisible();
+    await expect(calendarView).toBeVisible();
     await expect(dayHeader).toBeVisible();
 
-    await mainScroll.evaluate((element: HTMLElement) => {
-      element.scrollTop = 0;
-    });
-    await scrollArea.evaluate((element: HTMLElement) => {
-      element.scrollTop = 0;
-    });
-    await calendarScrollArea.evaluate((element: HTMLElement) => {
-      element.scrollTop = 0;
-    });
+    // Scroll to top first
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.waitForTimeout(100);
 
-    const before = await dayHeader.evaluate((element: HTMLElement) => {
-      const rect = element.getBoundingClientRect();
-      return { top: rect.top };
-    });
+    const before = await dayHeader.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
-    const scrollAreaBox = await calendarScrollArea.boundingBox();
-    if (!scrollAreaBox) {
-      throw new Error("Calendar scroll area is not visible.");
-    }
+    // Scroll down via window
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await page.waitForTimeout(100);
 
-    await page.mouse.move(scrollAreaBox.x + scrollAreaBox.width / 2, scrollAreaBox.y + 120);
-    await page.mouse.wheel(0, 900);
+    const after = await dayHeader.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
-    await expect
-      .poll(async () => ({
-        main: await mainScroll.evaluate((element: HTMLElement) => element.scrollTop),
-        timer: await scrollArea.evaluate((element: HTMLElement) => element.scrollTop),
-        calendar: await calendarScrollArea.evaluate((element: HTMLElement) => element.scrollTop),
-      }))
-      .toEqual({
-        main: 0,
-        timer: 0,
-        calendar: expect.any(Number),
-      });
-
-    const after = await dayHeader.evaluate((element: HTMLElement) => {
-      const rect = element.getBoundingClientRect();
-      return { top: rect.top };
-    });
-
-    expect(Math.abs(after.top - before.top)).toBeLessThanOrEqual(2);
+    // Day header should stay pinned (sticky) — viewport position shouldn't change much
+    expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
   });
 });
 
@@ -1617,7 +1557,7 @@ test.describe("Cross-workspace running timer header", () => {
       "aria-checked",
       "true",
     );
-    const calendarScrollAreaA = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollAreaA = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollAreaA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
     // List view
@@ -1684,7 +1624,7 @@ test.describe("Cross-workspace running timer header", () => {
 
     // Calendar view - explicitly select calendar to have known view state
     await page.getByRole("radio", { name: "Calendar" }).click();
-    const calendarScrollAreaB = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollAreaB = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollAreaB).toBeVisible();
     // Workspace A entry should NOT be visible
     await expect(
@@ -2012,7 +1952,7 @@ test.describe("Cross-workspace running timer header", () => {
 
     // Calendar view
     await page.getByRole("radio", { name: "Calendar" }).click();
-    const calendarScrollArea = page.getByTestId("calendar-grid-scroll-area");
+    const calendarScrollArea = page.getByTestId("timer-calendar-view");
     await expect(calendarScrollArea).toBeVisible();
     // The stopped running timer description should NOT appear in workspace B's calendar
     // (it was started in workspace A, so it should not leak into workspace B history)
