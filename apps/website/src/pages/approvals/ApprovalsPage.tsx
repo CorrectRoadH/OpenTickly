@@ -534,38 +534,110 @@ function ApprovalsSettingsView({
     );
   }
 
+  const WEEKDAY_NAMES = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left text-[13px]">
         <thead>
           <tr className="border-b border-[var(--track-border)]">
-            <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-              Member
+            <th
+              className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]"
+              style={{ width: "25%" }}
+            >
+              Member ({setups.length})
             </th>
-            <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-              Approver
+            <th
+              className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]"
+              style={{ width: "25%" }}
+            >
+              Approvers
             </th>
-            <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-              Periodicity
+            <th
+              className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]"
+              style={{ width: "25%" }}
+            >
+              Period
             </th>
-            <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-              Start date
+            <th
+              className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]"
+              style={{ width: "20%" }}
+            >
+              Reminder to submit
             </th>
+            <th
+              className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]"
+              style={{ width: "15%" }}
+            >
+              Reminder type
+            </th>
+            <th className="w-[50px] px-2 py-3" />
           </tr>
         </thead>
         <tbody>
           {setups.map((setup) => (
             <tr className="border-b border-[var(--track-border)] last:border-b-0" key={setup.id}>
-              <td className="px-5 py-3 text-white">
-                {setup.member_name ?? `User ${setup.member_id}`}
+              <td className="px-5 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
+                    {(setup.member_name ?? "?").charAt(0).toUpperCase()}
+                  </span>
+                  <span className="text-white">
+                    {setup.member_name ?? `User ${setup.member_id}`}
+                  </span>
+                </div>
               </td>
               <td className="px-4 py-3 text-[var(--track-text-soft)]">
                 {setup.approver_name ?? "-"}
               </td>
-              <td className="px-4 py-3 text-[var(--track-text-soft)] capitalize">
-                {setup.periodicity ?? "weekly"}
+              <td className="px-4 py-3">
+                <span className="capitalize text-white">{setup.periodicity ?? "weekly"}</span>
+                {setup.start_date ? (
+                  <span className="ml-1 text-[var(--track-text-muted)]">
+                    starting from {setup.start_date}
+                  </span>
+                ) : null}
               </td>
-              <td className="px-4 py-3 text-[var(--track-text-soft)]">{setup.start_date ?? "-"}</td>
+              <td className="px-4 py-3 text-[var(--track-text-soft)]">
+                {setup.reminder_day != null ? (
+                  <>
+                    <span>{WEEKDAY_NAMES[setup.reminder_day] ?? "-"}</span>
+                    {setup.reminder_time ? (
+                      <>
+                        <span className="text-[var(--track-text-muted)]"> at </span>
+                        <span>{setup.reminder_time}</span>
+                      </>
+                    ) : null}
+                  </>
+                ) : (
+                  "-"
+                )}
+              </td>
+              <td className="px-4 py-3 text-[var(--track-text-soft)]">
+                {[
+                  setup.email_reminder_enabled ? "Email" : null,
+                  setup.slack_reminder_enabled ? "Slack" : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "-"}
+              </td>
+              <td className="px-2 py-3">
+                <button
+                  className="flex h-7 w-7 items-center justify-center rounded-[6px] text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                  title="More actions"
+                  type="button"
+                >
+                  ⋮
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

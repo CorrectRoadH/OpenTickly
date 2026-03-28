@@ -32,7 +32,11 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
   const [approverIds, setApproverIds] = useState<number[]>([]);
   const [periodicity, setPeriodicity] = useState("weekly");
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderDay, setReminderDay] = useState(5); // Friday = 5
+  const [reminderTime, setReminderTime] = useState("17:00");
+  const [sendViaSlack, setSendViaSlack] = useState(false);
+  const [sendViaEmail, setSendViaEmail] = useState(true);
   const [memberSearch, setMemberSearch] = useState("");
   const [memberDropdownOpen, setMemberDropdownOpen] = useState(false);
   const [approverDropdownOpen, setApproverDropdownOpen] = useState(false);
@@ -53,7 +57,10 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
             approver_ids: approverIds.length > 0 ? approverIds : undefined,
             periodicity,
             start_date: startDate,
-            email_reminder_enabled: reminderEnabled,
+            reminder_day: reminderEnabled ? (reminderDay as 0 | 1 | 2 | 3 | 4 | 5 | 6) : undefined,
+            reminder_time: reminderEnabled ? reminderTime : undefined,
+            email_reminder_enabled: reminderEnabled && sendViaEmail,
+            slack_reminder_enabled: reminderEnabled && sendViaSlack,
           },
         }),
       ),
@@ -251,15 +258,74 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           </div>
 
           {/* Reminder */}
-          <label className="mb-5 flex cursor-pointer items-center gap-2.5">
-            <input
-              checked={reminderEnabled}
-              className="accent-[var(--track-accent)]"
-              onChange={(e) => setReminderEnabled(e.target.checked)}
-              type="checkbox"
-            />
-            <span className="text-[13px] text-white">Remind members to submit their timesheet</span>
-          </label>
+          <div className="border-t border-[var(--track-border)] pt-5">
+            <label className="flex cursor-pointer items-center gap-2.5">
+              <input
+                checked={reminderEnabled}
+                className="accent-[var(--track-accent)]"
+                onChange={(e) => setReminderEnabled(e.target.checked)}
+                type="checkbox"
+              />
+              <span className="text-[13px] text-white">
+                Remind members to submit their timesheet
+              </span>
+            </label>
+            {reminderEnabled ? (
+              <div className="mt-3 pl-7">
+                <div className="mb-3 flex flex-wrap items-center gap-1.5 text-[13px] text-white">
+                  <span className="text-[var(--track-text-muted)]">
+                    {periodicity === "daily" ? "daily at" : `${periodicity} on`}
+                  </span>
+                  {periodicity !== "daily" ? (
+                    <select
+                      className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[13px] text-white"
+                      onChange={(e) => setReminderDay(Number(e.target.value))}
+                      value={reminderDay}
+                    >
+                      {WEEKDAYS.map((day) => (
+                        <option key={day.value} value={day.value}>
+                          {day.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+                  <span className="text-[var(--track-text-muted)]">at</span>
+                  <select
+                    className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[13px] text-white"
+                    onChange={(e) => setReminderTime(e.target.value)}
+                    value={reminderTime}
+                  >
+                    {TIMES.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <label className="mb-2 flex cursor-pointer items-center gap-2.5">
+                  <input
+                    checked={sendViaSlack}
+                    className="accent-[var(--track-accent)]"
+                    onChange={(e) => setSendViaSlack(e.target.checked)}
+                    type="checkbox"
+                  />
+                  <span className="text-[13px] text-white">Send reminder via Slack</span>
+                </label>
+                <label className="mb-2 flex cursor-pointer items-center gap-2.5">
+                  <input
+                    checked={sendViaEmail}
+                    className="accent-[var(--track-accent)]"
+                    onChange={(e) => setSendViaEmail(e.target.checked)}
+                    type="checkbox"
+                  />
+                  <span className="text-[13px] text-white">Send reminder via email</span>
+                </label>
+                <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
+                  The first reminder will be sent on {computeFirstReminder(startDate, reminderDay)}
+                </p>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         {/* Footer */}
@@ -291,6 +357,32 @@ type MemberOption = {
 function formatMemberName(user: ModelsSimpleWorkspaceUser, currentUserId: number): string {
   const name = user.fullname?.trim() || user.email?.trim() || `User ${user.id}`;
   return user.id === currentUserId ? `${name} (You)` : name;
+}
+
+const WEEKDAYS = [
+  { label: "Monday", value: 1 },
+  { label: "Tuesday", value: 2 },
+  { label: "Wednesday", value: 3 },
+  { label: "Thursday", value: 4 },
+  { label: "Friday", value: 5 },
+  { label: "Saturday", value: 6 },
+  { label: "Sunday", value: 0 },
+];
+
+const TIMES = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
+
+function computeFirstReminder(startDateStr: string, reminderDay: number): string {
+  const start = new Date(`${startDateStr}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return "—";
+  // Find the next occurrence of reminderDay after start
+  const d = new Date(start);
+  for (let i = 0; i < 14; i++) {
+    d.setDate(start.getDate() + i);
+    if (d.getDay() === reminderDay && d >= start) {
+      return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+    }
+  }
+  return "—";
 }
 
 function FieldLabel({ children }: { children: string }): ReactElement {
