@@ -70,7 +70,12 @@ export function OverviewWeekChart({
           ticks={yTicks}
           width={44}
         />
-        <Tooltip content={<OverviewTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+        <Tooltip
+          content={<OverviewTooltip />}
+          cursor={{ fill: "rgba(255,255,255,0.04)" }}
+          offset={20}
+          position={{ y: -10 }}
+        />
         <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
           <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
           {data.map((entry) => (

@@ -1,4 +1,4 @@
-import { type ReactElement } from "react";
+import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import { ShellPrimaryButton, ShellSurfaceCard } from "@opentoggl/web-ui";
 
@@ -273,6 +273,7 @@ function ProjectDonut({
   billableSeconds: number;
   totalSeconds: number;
 }): ReactElement {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const nonBillable = Math.max(0, totalSeconds - billableSeconds);
   const hasData = totalSeconds > 0;
   const data = hasData
@@ -287,6 +288,18 @@ function ProjectDonut({
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
+      {hoveredIndex != null && data[hoveredIndex] && data[hoveredIndex].name !== "empty" ? (
+        <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+          <span
+            className="mr-1.5 inline-block size-2 rounded-full"
+            style={{ backgroundColor: data[hoveredIndex].fill }}
+          />
+          <span>{data[hoveredIndex].name}</span>
+          <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
+            {formatDuration(data[hoveredIndex].value)}
+          </span>
+        </div>
+      ) : null}
       <PieChart height={106} width={106}>
         <Pie
           cx="50%"
@@ -300,9 +313,16 @@ function ProjectDonut({
           startAngle={90}
           endAngle={-270}
           stroke="none"
+          onMouseEnter={(_, index) => hasData && setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
         >
           {data.map((entry, index) => (
-            <Cell fill={entry.fill} key={index} stroke="none" />
+            <Cell
+              fill={entry.fill}
+              key={index}
+              stroke="none"
+              style={{ cursor: hasData ? "pointer" : "default", outline: "none" }}
+            />
           ))}
         </Pie>
       </PieChart>

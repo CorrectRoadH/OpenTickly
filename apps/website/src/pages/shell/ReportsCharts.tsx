@@ -78,7 +78,12 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
               ticks={yTicks}
               width={44}
             />
-            <Tooltip content={<DurationTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+            <Tooltip
+              content={<DurationTooltip />}
+              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+              offset={20}
+              position={{ y: -10 }}
+            />
             <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
               <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
               {data.map((entry) => (

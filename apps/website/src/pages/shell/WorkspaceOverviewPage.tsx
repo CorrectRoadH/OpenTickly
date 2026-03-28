@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useCallback, useMemo } from "react";
+import { type ReactElement, type ReactNode, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
@@ -524,6 +524,7 @@ function StatRing({
   subtitle: string;
   title: string;
 }): ReactElement {
+  const [hovered, setHovered] = useState(false);
   const clamped = Math.max(0, Math.min(100, percent));
   const outerRadius = size / 2;
   const innerRadius = innerSize / 2;
@@ -534,7 +535,18 @@ function StatRing({
 
   return (
     <div className="flex flex-col items-center justify-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
+      <div
+        className="relative"
+        style={{ width: size, height: size }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
+        {hovered ? (
+          <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+            <span className="font-semibold">{title}</span>
+            <span className="ml-1.5 text-[var(--track-text-soft)]">{subtitle}</span>
+          </div>
+        ) : null}
         <PieChart height={size} width={size}>
           <Pie
             cx="50%"
