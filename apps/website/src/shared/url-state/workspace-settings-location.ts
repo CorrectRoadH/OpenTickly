@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const workspaceSettingsSectionSchema = z.enum([
   "general",
+  "billable-rates",
   "csv-import",
   "data-export",
   "single-sign-on",

@@ -1,4 +1,4 @@
-import { PageHeader, SurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -81,9 +81,8 @@ function useCreateWorkspaceRateMutation(workspaceId: number) {
   });
 }
 
-export function BillableRatesPage(): ReactElement {
+export function BillableRatesContent({ workspaceId }: { workspaceId: number }): ReactElement {
   const session = useSession();
-  const workspaceId = session.currentWorkspace.id;
   const defaultCurrency = session.currentWorkspace.defaultCurrency ?? "USD";
   const defaultHourlyRate = session.currentWorkspace.defaultHourlyRate ?? 0;
 
@@ -133,41 +132,33 @@ export function BillableRatesPage(): ReactElement {
   }, [billingMode, hourlyRate, workspaceId, rateMutation]);
 
   return (
-    <div className="min-h-full bg-[var(--track-surface)]" data-testid="billable-rates-page">
-      <div className="max-w-[1384px]">
-        <header className="bg-[var(--track-surface)]">
-          <PageHeader bordered title="Billable Rates" />
-        </header>
+    <div className="flex flex-col gap-5" data-testid="billable-rates-section">
+      <AboutBillableRatesSection />
+      <AboutLaborCostsSection />
 
-        <div className="flex flex-col gap-5 px-5 pb-10 pt-5">
-          <AboutBillableRatesSection />
-          <AboutLaborCostsSection />
+      <WorkspaceRateSection
+        billingMode={billingMode}
+        currency={currency}
+        hourlyRate={hourlyRate}
+        isSaving={rateMutation.isPending}
+        isDirty={isDirty}
+        isLoading={rateQuery.isPending}
+        onBillingModeChange={(mode) => {
+          setBillingMode(mode);
+          setIsDirty(true);
+        }}
+        onCurrencyChange={(c) => {
+          setCurrency(c);
+          setIsDirty(true);
+        }}
+        onHourlyRateChange={(val) => {
+          setHourlyRate(val);
+          setIsDirty(true);
+        }}
+        onSave={handleSave}
+      />
 
-          <WorkspaceRateSection
-            billingMode={billingMode}
-            currency={currency}
-            hourlyRate={hourlyRate}
-            isSaving={rateMutation.isPending}
-            isDirty={isDirty}
-            isLoading={rateQuery.isPending}
-            onBillingModeChange={(mode) => {
-              setBillingMode(mode);
-              setIsDirty(true);
-            }}
-            onCurrencyChange={(c) => {
-              setCurrency(c);
-              setIsDirty(true);
-            }}
-            onHourlyRateChange={(val) => {
-              setHourlyRate(val);
-              setIsDirty(true);
-            }}
-            onSave={handleSave}
-          />
-
-          <WorkspaceMemberRatesSection workspaceId={workspaceId} />
-        </div>
-      </div>
+      <WorkspaceMemberRatesSection workspaceId={workspaceId} />
     </div>
   );
 }

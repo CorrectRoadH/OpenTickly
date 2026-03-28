@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { toast } from "sonner";
 
+import { BillableRatesContent } from "../billable-rates/BillableRatesPage.tsx";
 import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
 import { SettingsAuditLog } from "../../features/settings/SettingsAuditLog.tsx";
 import { SettingsCsvImport } from "../../features/settings/SettingsCsvImport.tsx";
@@ -27,6 +28,7 @@ const settingsTabs: Array<{
   label: string;
 }> = [
   { id: "general", label: "General" },
+  { id: "billable-rates", label: "Billable rates" },
   { id: "csv-import", label: "CSV import" },
   { id: "data-export", label: "Data export" },
   { id: "single-sign-on", label: "Single Sign On" },
@@ -102,6 +104,8 @@ function SettingsSectionContent(props: {
           onSubmitSuccess={props.onSubmitSuccess}
         />
       );
+    case "billable-rates":
+      return <BillableRatesContent workspaceId={props.workspaceId} />;
     case "csv-import":
       return <SettingsCsvImport workspaceId={props.workspaceId} />;
     case "data-export":

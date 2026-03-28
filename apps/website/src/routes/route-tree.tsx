@@ -94,10 +94,6 @@ const ApprovalsPage = lazyNamed(
   () => import("../pages/approvals/ApprovalsPage.tsx"),
   "ApprovalsPage",
 );
-const BillableRatesPage = lazyNamed(
-  () => import("../pages/billable-rates/BillableRatesPage.tsx"),
-  "BillableRatesPage",
-);
 const GoalsPage = lazyNamed(() => import("../pages/goals/GoalsPage.tsx"), "GoalsPage");
 const IntegrationsPage = lazyNamed(
   () => import("../pages/integrations/IntegrationsPage.tsx"),
@@ -257,12 +253,6 @@ const workspaceApprovalsRoute = createRoute({
   component: WorkspaceApprovalsRouteComponent,
 });
 
-const workspaceBillableRatesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/billable-rates",
-  component: WorkspaceBillableRatesRouteComponent,
-});
-
 const workspaceInvoicesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/invoices",
@@ -342,7 +332,6 @@ export const routeTree = rootRoute.addChildren([
   workspaceTagsRoute,
   workspaceTagDetailRoute,
   workspaceApprovalsRoute,
-  workspaceBillableRatesRoute,
   workspaceInvoiceNewRoute,
   workspaceInvoicesRoute,
   workspaceGoalsRoute,
@@ -570,13 +559,6 @@ function WorkspaceApprovalsRouteComponent() {
   const workspaceId = Number(params.workspaceId);
 
   return renderProtectedRoute(<ApprovalsPage />, workspaceId);
-}
-
-function WorkspaceBillableRatesRouteComponent() {
-  const params = workspaceBillableRatesRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<BillableRatesPage />, workspaceId);
 }
 
 function WorkspaceInvoiceNewRouteComponent() {

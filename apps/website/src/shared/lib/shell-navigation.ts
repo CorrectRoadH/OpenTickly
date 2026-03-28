@@ -62,7 +62,7 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         },
         {
           label: "Billable rates",
-          to: `/workspaces/${session.currentWorkspace.id}/billable-rates`,
+          to: buildWorkspaceSettingsPathWithSection(session.currentWorkspace.id, "billable-rates"),
         },
         {
           label: "Invoices",
