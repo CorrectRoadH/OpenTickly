@@ -7,7 +7,7 @@ export async function toggl(
   args: string[],
   opts: { user: TestUser },
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  return execa("toggl", args, {
+  const result = await execa("toggl", args, {
     env: {
       TOGGL_API_TOKEN: opts.user.apiToken,
       TOGGL_API_URL: apiUrl(),
@@ -15,6 +15,12 @@ export async function toggl(
     },
     reject: false,
   });
+
+  return {
+    exitCode: result.exitCode ?? 0,
+    stderr: result.stderr,
+    stdout: result.stdout,
+  };
 }
 
 export async function togglJson<T = unknown>(args: string[], opts: { user: TestUser }): Promise<T> {

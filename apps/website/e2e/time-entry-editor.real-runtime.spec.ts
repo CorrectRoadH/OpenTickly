@@ -29,18 +29,13 @@ test.describe("Story: edit a stopped time entry", () => {
     // In calendar view, RBC renders events as buttons with the entry description
     // as accessible name (from the event title). In list view, the edit button
     // has "Edit <description>" as aria-label.
-    await expect(
-      page.getByRole("button", { name: ENTRY_DESCRIPTION }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
   });
 
   test("Given a stopped time entry, when the user opens the editor dialog, then the header close button is vertically centered and has consistent styling with other header buttons", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
@@ -70,10 +65,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the user presses Escape with dirty edits, the editor shows discard protection before closing", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
@@ -101,10 +93,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the user clicks the close button with dirty edits, the editor shows discard protection before closing", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
@@ -120,10 +109,7 @@ test.describe("Story: edit a stopped time entry", () => {
   });
 
   test("when the user clicks outside the dialog, the editor dialog closes", async ({ page }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
@@ -143,10 +129,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the user edits the start time from the editor popover, the updated time is saved", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();
@@ -171,14 +154,9 @@ test.describe("Story: edit a stopped time entry", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
 
     await expect(dialog).not.toBeVisible();
-    await expect(
-      page.getByRole("button", { name: ENTRY_DESCRIPTION }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
 
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
     await expect(
       page.getByTestId("time-entry-editor-dialog").getByRole("button", { name: "Edit start time" }),
@@ -188,10 +166,7 @@ test.describe("Story: edit a stopped time entry", () => {
   test("when the user opens the start date picker, the picker is anchored inside /timer without navigation", async ({
     page,
   }) => {
-    await page
-      .getByRole("button", { name: ENTRY_DESCRIPTION })
-      .first()
-      .click();
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
 
     const dialog = page.getByTestId("time-entry-editor-dialog");
     await expect(dialog).toBeVisible();

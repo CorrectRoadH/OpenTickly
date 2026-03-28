@@ -67,9 +67,9 @@ async function rightClickAndSelectMenuItem(
 
   // Use evaluate to click the menu item — avoids "outside of viewport" errors
   // for position:fixed elements that Playwright can't scroll into view
-  await contextMenu.getByRole("menuitem", { name: menuItemName }).evaluate(
-    (el) => (el as HTMLElement).click(),
-  );
+  await contextMenu
+    .getByRole("menuitem", { name: menuItemName })
+    .evaluate((el) => (el as HTMLElement).click());
 
   await expect(contextMenu).not.toBeVisible();
 }
@@ -104,10 +104,7 @@ test.describe("Calendar entry context menu actions", () => {
     await expect(entry).not.toBeVisible({ timeout: 10_000 });
   });
 
-  test("Copy description writes entry description to clipboard", async ({
-    page,
-    context,
-  }) => {
+  test("Copy description writes entry description to clipboard", async ({ page, context }) => {
     const description = `ctx-copy-${Date.now()}`;
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await setupCalendarWithEntry(page, test.info(), description);

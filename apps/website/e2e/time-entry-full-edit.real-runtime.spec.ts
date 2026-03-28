@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createProjectForWorkspace,
-  loginE2eUser,
-  registerE2eUser,
-} from "./fixtures/e2e-auth.ts";
+import { createProjectForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 /**
  * Story: A user edits a time entry from the calendar view, changing its
@@ -49,9 +45,7 @@ test.describe("Story: full time entry editing from calendar", () => {
     });
 
     await page.reload();
-    await expect(
-      page.getByRole("button", { name: INITIAL_DESCRIPTION }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: INITIAL_DESCRIPTION }).first()).toBeVisible();
   });
 
   test("when the user selects a project in the editor, the project is saved and visible after reload", async ({
@@ -168,15 +162,11 @@ test.describe("Story: full time entry editing from calendar", () => {
     await expect(dialog).not.toBeVisible();
 
     // The calendar should now show the updated description
-    await expect(
-      page.getByRole("button", { name: "Updated task name" }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Updated task name" }).first()).toBeVisible();
 
     // Verify: reload — description must persist from the API
     await page.reload();
-    await expect(
-      page.getByRole("button", { name: "Updated task name" }).first(),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Updated task name" }).first()).toBeVisible();
   });
 });
 

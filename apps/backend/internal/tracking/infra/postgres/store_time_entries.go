@@ -352,6 +352,7 @@ func (store *Store) ListWorkspaceTimeEntries(
 }
 
 func (store *Store) GetCurrentTimeEntry(ctx context.Context, userID int64) (trackingapplication.TimeEntryView, bool, error) {
+	// Primary path: look up via the running timers table.
 	row := store.pool.QueryRow(
 		ctx,
 		`select
@@ -386,12 +387,70 @@ func (store *Store) GetCurrentTimeEntry(ctx context.Context, userID int64) (trac
 		userID,
 	)
 	entry, err := scanTimeEntry(row)
+	if err == nil {
+		return entry, true, nil
+	}
+	if !strings.Contains(err.Error(), "no rows") {
+		return trackingapplication.TimeEntryView{}, false, err
+	}
+
+	// Fallback: find an entry with negative duration (Toggl convention for
+	// running timers). This covers entries created through import or other
+	// paths that do not populate tracking_running_timers.
+	fallbackRow := store.pool.QueryRow(
+		ctx,
+		`select
+			te.id,
+			te.workspace_id,
+			te.user_id,
+			te.client_id,
+			te.project_id,
+			te.task_id,
+			te.description,
+			te.billable,
+			te.start_time,
+			te.stop_time,
+			te.duration_seconds,
+			te.created_with,
+			te.tag_ids,
+			te.expense_ids,
+			te.deleted_at,
+			te.created_at,
+			te.updated_at,
+			c.name,
+			p.name,
+			t.name,
+			p.active,
+			`+tagNamesSubquery+`
+		from tracking_time_entries te
+		left join catalog_clients c on c.id = te.client_id
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id
+		where te.user_id = $1 and te.deleted_at is null and te.duration_seconds < 0
+		order by te.start_time desc
+		limit 1`,
+		userID,
+	)
+	entry, err = scanTimeEntry(fallbackRow)
 	if err != nil {
 		if strings.Contains(err.Error(), "no rows") {
 			return trackingapplication.TimeEntryView{}, false, nil
 		}
 		return trackingapplication.TimeEntryView{}, false, err
 	}
+
+	// Repair: populate tracking_running_timers so the primary path works
+	// on subsequent calls.
+	_, _ = store.pool.Exec(
+		ctx,
+		`insert into tracking_running_timers (user_id, time_entry_id)
+		values ($1, $2)
+		on conflict (user_id) do update set
+			time_entry_id = excluded.time_entry_id,
+			started_at = now()`,
+		userID, entry.ID,
+	)
+
 	return entry, true, nil
 }
 

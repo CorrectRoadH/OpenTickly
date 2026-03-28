@@ -1,10 +1,23 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Locator, test } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
   createTimeEntryForWorkspace,
   loginE2eUser,
   pollSessionBootstrap,
+
+function listEntryRow(listView: Locator, description: string): Locator {
+  const escapedDescription = description.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+  return listView
+    .locator(
+      `[data-testid="time-entry-list-row"][data-entry-description="${escapedDescription}"]`,
+    )
+    .first();
+}
+
+function listEntryEditButton(listView: Locator, description: string): Locator {
+  return listEntryRow(listView, description).getByTestId("time-entry-list-edit-button");
+}
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
@@ -921,9 +934,7 @@ test.describe("Timer page family mainline", () => {
     expect(currentTimerResponse.body).toBeNull();
   });
 
-  test("timer header stays pinned when scrolling via window scroll", async ({
-    page,
-  }) => {
+  test("timer header stays pinned when scrolling via window scroll", async ({ page }) => {
     const email = `timer-sticky-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -945,13 +956,17 @@ test.describe("Timer page family mainline", () => {
     });
     await expect(weekRangeButton).toBeVisible();
 
-    const before = await weekRangeButton.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
+    const before = await weekRangeButton.evaluate(
+      (el: HTMLElement) => el.getBoundingClientRect().top,
+    );
 
     // Scroll the window down
     await page.evaluate(() => window.scrollBy(0, 500));
     await page.waitForTimeout(100);
 
-    const after = await weekRangeButton.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
+    const after = await weekRangeButton.evaluate(
+      (el: HTMLElement) => el.getBoundingClientRect().top,
+    );
 
     // Timer header should stay at the same viewport position (sticky)
     expect(Math.abs(after - before)).toBeLessThanOrEqual(2);
