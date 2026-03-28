@@ -1,7 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
-  DirectoryFilterChip,
   DirectoryHeaderCell,
   DirectoryStatusFilter,
   DirectorySurfaceMessage,
@@ -37,6 +36,9 @@ import {
   useUpdateProjectMutation,
   useWorkspaceUsersQuery,
 } from "../../shared/query/web-shell.ts";
+import { useQuery } from "@tanstack/react-query";
+import { getWorkspaceProjectUsers } from "../../shared/api/public/track/index.ts";
+import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
   buildProjectTeamPath,
@@ -96,6 +98,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [filterClientIds, setFilterClientIds] = useState<Set<number>>(new Set());
+  const [filterMemberIds, setFilterMemberIds] = useState<Set<number>>(new Set());
   const [filterBillable, setFilterBillable] = useState<"all" | "billable" | "non-billable">("all");
   const [filterName, setFilterName] = useState("");
   const [filterTemplate, setFilterTemplate] = useState<"all" | "template" | "non-template">("all");
@@ -122,6 +125,29 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const clientsQuery = useClientsQuery(workspaceId);
   const createClientMutation = useCreateClientMutation(workspaceId);
   const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
+  // Fetch all project-user mappings for member filtering
+  const projectUsersQuery = useQuery({
+    queryKey: ["project-users-all", workspaceId],
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceProjectUsers({
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+  });
+  const projectUsersByProject = useMemo(() => {
+    const map = new Map<number, Set<number>>();
+    for (const pu of projectUsersQuery.data ?? []) {
+      const pid = pu.project_id;
+      const uid = pu.user_id;
+      if (pid == null || uid == null) continue;
+      const set = map.get(pid) ?? new Set();
+      set.add(uid);
+      map.set(pid, set);
+    }
+    return map;
+  }, [projectUsersQuery.data]);
+
   const clientsList = useMemo(
     () =>
       (clientsQuery.data ?? [])
@@ -134,6 +160,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     return all.filter((p) => {
       if (!selectedStatuses.has(categorizeProject(p))) return false;
       if (filterClientIds.size > 0 && !filterClientIds.has(p.client_id ?? 0)) return false;
+      if (filterMemberIds.size > 0 && p.id != null) {
+        const projectMembers = projectUsersByProject.get(p.id);
+        if (!projectMembers || ![...filterMemberIds].some((mid) => projectMembers.has(mid)))
+          return false;
+      }
       if (filterBillable === "billable" && !p.billable) return false;
       if (filterBillable === "non-billable" && p.billable) return false;
       if (filterTemplate === "template" && !p.template) return false;
@@ -148,6 +179,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     projectsQuery.data,
     selectedStatuses,
     filterClientIds,
+    filterMemberIds,
+    projectUsersByProject,
     filterBillable,
     filterName,
     filterTemplate,
@@ -425,8 +458,52 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 </button>
               ) : null}
             </ProjectFilterDropdown>
-            {/* Member filter (placeholder — needs project member data) */}
-            <DirectoryFilterChip label="Member" />
+            {/* Member filter */}
+            <ProjectFilterDropdown
+              active={filterMemberIds.size > 0}
+              label={filterMemberIds.size > 0 ? `Member (${filterMemberIds.size})` : "Member"}
+              onClose={() => setOpenFilter(null)}
+              onOpen={() => setOpenFilter("member")}
+              open={openFilter === "member"}
+            >
+              {workspaceMembers.map((m) => (
+                <label
+                  className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
+                  key={m.id}
+                >
+                  <input
+                    checked={filterMemberIds.has(m.id)}
+                    className="accent-[var(--track-accent)]"
+                    onChange={() => {
+                      setFilterMemberIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(m.id)) next.delete(m.id);
+                        else next.add(m.id);
+                        return next;
+                      });
+                    }}
+                    type="checkbox"
+                  />
+                  <span className="text-[13px] normal-case tracking-normal text-white">
+                    {m.name}
+                  </span>
+                </label>
+              ))}
+              {workspaceMembers.length === 0 ? (
+                <div className="px-3 py-3 text-center text-[12px] normal-case tracking-normal text-[var(--track-text-muted)]">
+                  No members
+                </div>
+              ) : null}
+              {filterMemberIds.size > 0 ? (
+                <button
+                  className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
+                  onClick={() => setFilterMemberIds(new Set())}
+                  type="button"
+                >
+                  Clear
+                </button>
+              ) : null}
+            </ProjectFilterDropdown>
             {/* Billable filter */}
             <ProjectFilterDropdown
               active={filterBillable !== "all"}
