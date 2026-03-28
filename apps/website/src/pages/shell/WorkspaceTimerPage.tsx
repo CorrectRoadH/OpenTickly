@@ -36,7 +36,7 @@ import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerCom
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import {
-  GridIcon,
+  PanelRightIcon,
   ManualModeIcon,
   PlayIcon,
   ProjectsIcon,
@@ -571,7 +571,7 @@ export function WorkspaceTimerPage({
               <ChromeIconButton
                 active={sidebarOpen}
                 aria-label="Toggle goals and favorites"
-                icon={<GridIcon className="size-4" />}
+                icon={<PanelRightIcon className="size-4" />}
                 onClick={() => setSidebarOpen((prev) => !prev)}
               />
             </div>

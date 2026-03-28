@@ -178,6 +178,17 @@ export function GridIcon(props: IconProps): ReactElement {
   );
 }
 
+export function PanelRightIcon(props: IconProps): ReactElement {
+  return (
+    <Icon {...props}>
+      <>
+        <rect x="2" y="2" width="12" height="12" rx="1.33" />
+        <path d="M10 2v12" />
+      </>
+    </Icon>
+  );
+}
+
 export function HelpIcon(props: IconProps): ReactElement {
   return (
     <Icon {...props}>
