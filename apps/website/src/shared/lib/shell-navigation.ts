@@ -41,7 +41,7 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
         },
         {
           label: "Approvals",
-          to: `/workspaces/${session.currentWorkspace.id}/approvals`,
+          to: `/workspaces/${session.currentWorkspace.id}/approvals/team`,
         },
       ],
     },

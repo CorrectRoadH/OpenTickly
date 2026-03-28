@@ -255,8 +255,14 @@ const workspaceTagDetailRoute = createRoute({
 
 const workspaceApprovalsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/approvals",
+  path: "/workspaces/$workspaceId/approvals/$view",
   component: WorkspaceApprovalsRouteComponent,
+});
+
+const legacyWorkspaceApprovalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/approvals",
+  component: LegacyWorkspaceApprovalsRouteComponent,
 });
 
 const workspaceInvoicesRoute = createRoute({
@@ -339,6 +345,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceTagsRoute,
   workspaceTagDetailRoute,
   workspaceApprovalsRoute,
+  legacyWorkspaceApprovalsRoute,
   workspaceInvoiceNewRoute,
   workspaceInvoicesRoute,
   workspaceGoalsRoute,
@@ -584,11 +591,29 @@ function WorkspaceTagDetailRouteComponent() {
   );
 }
 
+const VALID_APPROVALS_VIEWS = ["team", "me", "settings"] as const;
+type ApprovalsView = (typeof VALID_APPROVALS_VIEWS)[number];
+
 function WorkspaceApprovalsRouteComponent() {
   const params = workspaceApprovalsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
+  const view = (VALID_APPROVALS_VIEWS as readonly string[]).includes(params.view)
+    ? (params.view as ApprovalsView)
+    : "team";
 
-  return renderProtectedRoute(<ApprovalsPage />, workspaceId);
+  return renderProtectedRoute(<ApprovalsPage view={view} />, workspaceId);
+}
+
+function LegacyWorkspaceApprovalsRouteComponent() {
+  const params = legacyWorkspaceApprovalsRoute.useParams();
+
+  return (
+    <Navigate
+      replace
+      params={{ workspaceId: params.workspaceId, view: "team" }}
+      to="/workspaces/$workspaceId/approvals/$view"
+    />
+  );
 }
 
 function WorkspaceInvoiceNewRouteComponent() {
