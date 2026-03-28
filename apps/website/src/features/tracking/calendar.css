@@ -22,16 +22,21 @@
 /* Sticky below the timer bar so day names stay visible during window scroll.
    Toggl dark: background #1B1B1B, border-bottom matches stroke_primary #3A3A3A.
    The timer bar is sticky at top:0; adjust top value if the bar height changes. */
+/* Toggl dark: padding 10px 0 3px, margin 0 0 -1px, only border-bottom #3a3a3a.
+   No border-left on header-content, no borders between day cells. */
 .rbc-time-header {
   position: sticky;
   top: 70px;
   z-index: 15;
   background: #1b1b1b;
+  border-top: 1px solid rgba(44, 19, 56, 0.06);
   border-bottom: 1px solid #3a3a3a;
+  padding: 10px 0 3px;
+  margin: 0 0 -1px;
 }
 
 .rbc-time-header-content {
-  border-left: 1px solid #3a3a3a;
+  border-left: none;
 }
 
 .rbc-header {
@@ -45,8 +50,9 @@
   overflow: visible;
 }
 
+/* Toggl: no vertical separators between day header cells */
 .rbc-header + .rbc-header {
-  border-left: 1px solid #3a3a3a;
+  border-left: none;
 }
 
 .rbc-header.rbc-today {
@@ -77,17 +83,21 @@
 }
 
 /* ── Time content area ── */
+/* Toggl dark: border-top #2a2a2a, no border-right on gutter */
 .rbc-time-content {
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid #2a2a2a;
 }
 
 .rbc-time-content > .rbc-time-gutter {
-  border-right: 1px solid #3a3a3a;
+  border-right: none;
 }
 
 /* ── Day columns / slot grid ── */
+/* Toggl dark: timeslot-group has both border-bottom AND border-left #3a3a3a.
+   The border-left provides the vertical column separator (not on .rbc-day-slot). */
 .rbc-day-slot .rbc-timeslot-group {
   border-bottom: 1px solid #3a3a3a;
+  border-left: 1px solid #3a3a3a;
   min-height: 60px;
 }
 
@@ -109,8 +119,10 @@
   border-top: none;
 }
 
+/* Toggl: no border on .rbc-day-slot itself — vertical lines come from
+   timeslot-group border-left instead */
 .rbc-day-slot + .rbc-day-slot {
-  border-left: 1px solid #3a3a3a;
+  border-left: none;
 }
 
 /* Today column highlight */
