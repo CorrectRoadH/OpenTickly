@@ -27,7 +27,7 @@ vi.mock("../../shared/session/session-context.tsx", () => ({
 
 describe("WorkspaceReportsPage", () => {
   it("uses the shared workspace typography and card geometry", () => {
-    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
     expect(markup).toContain('data-testid="reports-page"');
     expect(markup).toContain("text-[21px] font-semibold leading-[30px]");
@@ -40,7 +40,7 @@ describe("WorkspaceReportsPage", () => {
   });
 
   it("renders prev/next navigation buttons with click handlers", () => {
-    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
     expect(markup).toContain('data-testid="reports-prev"');
     expect(markup).toContain('data-testid="reports-next"');
@@ -48,14 +48,14 @@ describe("WorkspaceReportsPage", () => {
   });
 
   it("renders project and tag filter dropdowns", () => {
-    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
     expect(markup).toContain('data-testid="reports-filter-project"');
     expect(markup).toContain('data-testid="reports-filter-tag"');
   });
 
   it("renders breakdown expand buttons with test ids", () => {
-    const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
+    const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
     expect(markup).toContain('data-testid="reports-breakdown-table"');
     expect(markup).toContain("No tracked time for this period yet.");

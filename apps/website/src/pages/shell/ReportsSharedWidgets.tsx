@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { Link } from "@tanstack/react-router";
 
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 
@@ -28,25 +29,24 @@ export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): R
 export function TopTab({
   active = false,
   children,
-  onClick,
+  to,
 }: {
   active?: boolean;
   children: string;
-  onClick?: () => void;
+  to: string;
 }) {
   return (
-    <button
+    <Link
       aria-current={active ? "page" : undefined}
       className={`border-b-2 pb-3 text-[14px] font-medium ${
         active
           ? "border-[var(--track-accent)] text-[var(--track-accent-text)]"
           : "border-transparent text-[var(--track-text-muted)]"
       }`}
-      onClick={onClick}
-      type="button"
+      to={to}
     >
       {children}
-    </button>
+    </Link>
   );
 }
 

@@ -162,8 +162,14 @@ const workspaceTimerStartRoute = createRoute({
 
 const workspaceReportsRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/reports",
+  path: "/workspaces/$workspaceId/reports/$tab",
   component: WorkspaceReportsRouteComponent,
+});
+
+const legacyWorkspaceReportsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/reports",
+  component: LegacyWorkspaceReportsRouteComponent,
 });
 
 const workspaceProjectsRoute = createRoute({
@@ -318,6 +324,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceTimerStartRoute,
   workspaceTimerRoute,
   workspaceReportsRoute,
+  legacyWorkspaceReportsRoute,
   workspaceProjectsRoute,
   workspaceProjectDetailRoute,
   legacyWorkspaceProjectsRoute,
@@ -431,11 +438,34 @@ function WorkspaceTimerRouteComponent() {
   );
 }
 
+const VALID_REPORT_TABS = ["summary", "detailed", "workload", "profitability", "custom"] as const;
+type ReportsTabParam = (typeof VALID_REPORT_TABS)[number];
+
+function normalizeReportsTab(tab: string | undefined): ReportsTabParam {
+  if (tab && (VALID_REPORT_TABS as readonly string[]).includes(tab)) {
+    return tab as ReportsTabParam;
+  }
+  return "summary";
+}
+
 function WorkspaceReportsRouteComponent() {
   const params = workspaceReportsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
+  const tab = normalizeReportsTab(params.tab);
 
-  return renderProtectedRoute(<WorkspaceReportsPage />, workspaceId);
+  return renderProtectedRoute(<WorkspaceReportsPage tab={tab} />, workspaceId);
+}
+
+function LegacyWorkspaceReportsRouteComponent() {
+  const params = legacyWorkspaceReportsRoute.useParams();
+
+  return (
+    <Navigate
+      replace
+      params={{ workspaceId: params.workspaceId, tab: "summary" }}
+      to="/workspaces/$workspaceId/reports/$tab"
+    />
+  );
 }
 
 function WorkspaceProjectsRouteComponent() {

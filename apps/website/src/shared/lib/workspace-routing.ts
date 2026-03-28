@@ -10,8 +10,13 @@ export function buildTimerPath(): string {
   return "/timer";
 }
 
-export function buildWorkspaceReportsPath(workspaceId: number): string {
-  return `/workspaces/${workspaceId}/reports`;
+export type ReportsTab = "summary" | "detailed" | "workload" | "profitability" | "custom";
+
+export function buildWorkspaceReportsPath(
+  workspaceId: number,
+  tab: ReportsTab = "summary",
+): string {
+  return `/workspaces/${workspaceId}/reports/${tab}`;
 }
 
 export function buildWorkspaceImportPath(workspaceId: number): string {
@@ -66,8 +71,10 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
     });
   }
 
-  if (/^\/workspaces\/\d+\/reports$/.test(pathname)) {
-    return `/workspaces/${workspaceId}/reports${section}`;
+  if (/^\/workspaces\/\d+\/reports(\/[a-z]+)?$/.test(pathname)) {
+    const tabMatch = pathname.match(/\/reports\/([a-z]+)$/);
+    const tab = tabMatch ? tabMatch[1] : "summary";
+    return `/workspaces/${workspaceId}/reports/${tab}${section}`;
   }
 
   if (/^\/workspaces\/\d+\/import$/.test(pathname)) {

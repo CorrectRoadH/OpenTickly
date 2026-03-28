@@ -2,6 +2,8 @@ import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import { useNavigate } from "@tanstack/react-router";
 
+import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";
+import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";
 import {
   useProjectsQuery,
   useTagsQuery,
@@ -103,17 +105,23 @@ function parseDurationToSeconds(value: string): number {
   return 0;
 }
 
-const SUMMARY_TABS = ["Summary", "Detailed", "Workload", "Profitability", "My reports"] as const;
-type ReportsTab = (typeof SUMMARY_TABS)[number];
+const REPORTS_TABS: Array<{ label: string; slug: ReportsTab }> = [
+  { label: "Summary", slug: "summary" },
+  { label: "Detailed", slug: "detailed" },
+  { label: "Workload", slug: "workload" },
+  { label: "Profitability", slug: "profitability" },
+  { label: "My reports", slug: "custom" },
+];
 
 type WorkspaceReportsPageProps = {
   initialProjectId?: number;
+  tab: ReportsTab;
 };
 
 export function WorkspaceReportsPage({
   initialProjectId,
+  tab,
 }: WorkspaceReportsPageProps): ReactElement {
-  const [activeTab, setActiveTab] = useState<ReportsTab>("Summary");
   const [roundingEnabled, setRoundingEnabled] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const session = useSession();
@@ -223,9 +231,13 @@ export function WorkspaceReportsPage({
             <div className="flex min-w-0 items-center gap-5">
               <h1 className="text-[21px] font-semibold leading-[30px] text-white">Reports</h1>
               <div className="flex items-center gap-4" data-testid="reports-tabs">
-                {SUMMARY_TABS.map((tab) => (
-                  <TopTab active={tab === activeTab} key={tab} onClick={() => setActiveTab(tab)}>
-                    {tab}
+                {REPORTS_TABS.map((t) => (
+                  <TopTab
+                    active={t.slug === tab}
+                    key={t.slug}
+                    to={buildWorkspaceReportsPath(workspaceId, t.slug)}
+                  >
+                    {t.label}
                   </TopTab>
                 ))}
               </div>
@@ -297,7 +309,7 @@ export function WorkspaceReportsPage({
         </div>
       </section>
 
-      {activeTab === "Summary" ? (
+      {tab === "summary" ? (
         <>
           <SummaryMetrics metrics={displayModel.metrics} />
           {weeklyReportQuery.isPending ? (
@@ -330,7 +342,7 @@ export function WorkspaceReportsPage({
             </>
           ) : null}
         </>
-      ) : activeTab === "Detailed" ? (
+      ) : tab === "detailed" ? (
         <ReportsDetailedView
           clientFilter={state.clientFilter}
           dateRange={state.dateRange}
@@ -338,7 +350,7 @@ export function WorkspaceReportsPage({
           memberFilter={state.memberFilter}
         />
       ) : (
-        <ReportsTabPlaceholder tab={activeTab} />
+        <ReportsTabPlaceholder tab={REPORTS_TABS.find((t) => t.slug === tab)?.label ?? tab} />
       )}
       {shareToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
