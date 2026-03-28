@@ -6,7 +6,11 @@ import { baseOptions } from "@/lib/layout.shared";
 export function meta(_: Route.MetaArgs) {
   return [
     { title: "Page Not Found | OpenToggl" },
-    { name: "description", content: "The page you are looking for does not exist. Return to the OpenToggl documentation or homepage." },
+    {
+      name: "description",
+      content:
+        "The page you are looking for does not exist. Return to the OpenToggl documentation or homepage.",
+    },
     { name: "robots", content: "noindex,nofollow" },
   ];
 }

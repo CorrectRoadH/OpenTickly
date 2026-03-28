@@ -1,7 +1,7 @@
 import { type ChangeEvent, type ReactElement, useId, useState } from "react";
 import { toast } from "sonner";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ImportIcon, PlusIcon, TimerIcon } from "../../shared/ui/icons.tsx";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useCreateArchiveImportJobMutation,
@@ -62,10 +62,9 @@ export function WorkspaceImportPage(): ReactElement {
       toast.success(`Time entries imported into "${session.currentWorkspace.name}".`);
     } catch (error) {
       setSubmittedJob(null);
-      toast.error(
-        resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
-        { duration: 4000 },
-      );
+      toast.error(resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.", {
+        duration: 4000,
+      });
     }
   }
 
@@ -104,7 +103,7 @@ export function WorkspaceImportPage(): ReactElement {
             <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
               <div className="flex items-start gap-4">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]">
-                  <TrackingIcon className="size-5" name="import" />
+                  <ImportIcon className="size-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
@@ -147,7 +146,7 @@ export function WorkspaceImportPage(): ReactElement {
                   className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
                   htmlFor={archiveInputId}
                 >
-                  <TrackingIcon className="size-3.5" name="plus" />
+                  <PlusIcon className="size-3.5" />
                   Choose zip
                 </label>
                 <input
@@ -188,7 +187,7 @@ export function WorkspaceImportPage(): ReactElement {
             <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
               <div className="flex items-start gap-4">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#1f3d2b] text-[#8fe0ac]">
-                  <TrackingIcon className="size-5" name="timer" />
+                  <TimerIcon className="size-5" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
@@ -217,7 +216,7 @@ export function WorkspaceImportPage(): ReactElement {
                   className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
                   htmlFor={csvInputId}
                 >
-                  <TrackingIcon className="size-3.5" name="plus" />
+                  <PlusIcon className="size-3.5" />
                   Choose CSV
                 </label>
                 <input

@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { MoreIcon } from "../../shared/ui/icons.tsx";
 
 type TagRowActionsProps = {
   tagId: number;
@@ -92,7 +92,7 @@ export function TagRowActions({
         }}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="more" />
+        <MoreIcon className="size-3.5" />
       </button>
       {menuOpen ? (
         <div

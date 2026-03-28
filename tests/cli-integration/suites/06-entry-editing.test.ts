@@ -74,10 +74,9 @@ describe("Story: time entry editing", () => {
   });
 
   it("removes the project", async () => {
-    const result = await togglJson<TimeEntry>(
-      ["entry", "update", String(entryId), "-p", ""],
-      { user },
-    );
+    const result = await togglJson<TimeEntry>(["entry", "update", String(entryId), "-p", ""], {
+      user,
+    });
     expect(result.project).toBeFalsy();
   });
 
@@ -90,10 +89,9 @@ describe("Story: time entry editing", () => {
   });
 
   it("clears tags", async () => {
-    const result = await togglJson<TimeEntry>(
-      ["entry", "update", String(entryId), "-t", ""],
-      { user },
-    );
+    const result = await togglJson<TimeEntry>(["entry", "update", String(entryId), "-t", ""], {
+      user,
+    });
     expect(result.tags).toHaveLength(0);
   });
 
@@ -122,10 +120,7 @@ describe("Story: time entry editing", () => {
   });
 
   it("re-opens entry by clearing end time", async () => {
-    const result = await toggl(
-      ["entry", "update", String(entryId), "--end", ""],
-      { user },
-    );
+    const result = await toggl(["entry", "update", String(entryId), "--end", ""], { user });
     // The CLI may or may not support clearing end time.
     // If it succeeds, the entry becomes running and we stop it.
     // If it fails, that's acceptable — document the behavior.
@@ -148,18 +143,12 @@ describe("Story: time entry editing", () => {
   });
 
   it("deletes an entry", async () => {
-    const result = await toggl(
-      ["entry", "delete", String(entryId)],
-      { user },
-    );
+    const result = await toggl(["entry", "delete", String(entryId)], { user });
     expect(result.exitCode).toBe(0);
   });
 
   it("deleted entry cannot be shown", async () => {
-    const result = await toggl(
-      ["entry", "show", String(entryId)],
-      { user },
-    );
+    const result = await toggl(["entry", "show", String(entryId)], { user });
     expect(result.exitCode).not.toBe(0);
   });
 });

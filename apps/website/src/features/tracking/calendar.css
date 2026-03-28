@@ -19,7 +19,13 @@
 }
 
 /* ── Header row (day columns) ── */
+/* Sticky below the timer bar so day names stay visible during window scroll.
+   The timer bar is sticky at top:0 and ~70px tall; adjust if the bar height changes. */
 .rbc-time-header {
+  position: sticky;
+  top: 70px;
+  z-index: 15;
+  background: #1b1b1b;
   border-bottom: 1px solid #2a2a2a;
 }
 

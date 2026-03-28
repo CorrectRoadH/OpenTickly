@@ -259,7 +259,11 @@ export function ProjectEditorAdvanced({
         <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Color
         </p>
-        <ColorSwatchPicker colors={TRACK_COLOR_SWATCHES} onSelect={onColorChange} selected={color} />
+        <ColorSwatchPicker
+          colors={TRACK_COLOR_SWATCHES}
+          onSelect={onColorChange}
+          selected={color}
+        />
       </div>
 
       {/* Template */}

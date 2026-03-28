@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { ChevronRightIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 
 export function GoalsFavoritesSidebar(): ReactElement {
   return (
@@ -18,10 +18,7 @@ function SidebarSection({ title }: { title: string }): ReactElement {
   return (
     <details className="group" open>
       <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-[13px] font-medium text-white select-none">
-        <TrackingIcon
-          className="size-3 text-[var(--track-text-muted)] transition group-open:rotate-90"
-          name="chevron-right"
-        />
+        <ChevronRightIcon className="size-3 text-[var(--track-text-muted)] transition group-open:rotate-90" />
         <span className="flex-1">{title}</span>
         <button
           aria-label={`Add ${title.toLowerCase()}`}
@@ -29,7 +26,7 @@ function SidebarSection({ title }: { title: string }): ReactElement {
           onClick={(e) => e.stopPropagation()}
           type="button"
         >
-          <TrackingIcon className="size-3" name="plus" />
+          <PlusIcon className="size-3" />
         </button>
       </summary>
       <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">

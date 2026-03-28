@@ -1,6 +1,6 @@
 import { type ReactElement } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 
 export type InvoiceItemFormData = {
   amount: number;
@@ -94,7 +94,7 @@ export function InvoiceLineItems({
             onClick={() => onRemoveItem(index)}
             type="button"
           >
-            <TrackingIcon className="size-3" name="close" />
+            <CloseIcon className="size-3" />
           </button>
         </div>
       ))}
@@ -104,7 +104,7 @@ export function InvoiceLineItems({
         onClick={onAddItem}
         type="button"
       >
-        <TrackingIcon className="size-3" name="plus" />
+        <PlusIcon className="size-3" />
         Add custom charge
       </button>
 
@@ -133,7 +133,7 @@ export function InvoiceLineItems({
               onClick={() => onRemoveTax(index)}
               type="button"
             >
-              <TrackingIcon className="size-2.5" name="close" />
+              <CloseIcon className="size-2.5" />
             </button>
           </div>
           <input
@@ -152,7 +152,7 @@ export function InvoiceLineItems({
         onClick={onAddTax}
         type="button"
       >
-        <TrackingIcon className="size-3" name="plus" />
+        <PlusIcon className="size-3" />
         Add tax
       </button>
 

@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { MoreIcon } from "../../shared/ui/icons.tsx";
 
 type ClientRowActionsProps = {
   clientId: number;
@@ -85,7 +85,7 @@ export function ClientRowActions({
         }}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="more" />
+        <MoreIcon className="size-3.5" />
       </button>
       {menuOpen ? (
         <div
@@ -130,7 +130,14 @@ export function ClientRowActions({
                 }}
                 type="button"
               >
-                Rename
+                Edit
+              </button>
+              <button
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[var(--track-text-muted)] cursor-not-allowed"
+                disabled
+                type="button"
+              >
+                Archive
               </button>
               <button
                 className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-rose-400 hover:bg-[var(--track-surface-muted)]"

@@ -1,6 +1,17 @@
 import { type FormEvent, type ReactElement, useMemo, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { DirectoryStatusFilter } from "@opentoggl/web-ui";
+
+import {
+  ArchiveIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  EditIcon,
+  PlusIcon,
+  SearchIcon,
+  TrashIcon,
+} from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useClientsQuery,
@@ -38,11 +49,16 @@ export function ClientsPage(): ReactElement {
   const [clientName, setClientName] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ClientStatusFilter>("active");
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<"active" | "inactive">>(
+    new Set(["active"]),
+  );
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const clients = useMemo(() => normalizeClients(clientsQuery.data), [clientsQuery.data]);
   const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const statusFilter: ClientStatusFilter =
+    selectedStatuses.size === 2 ? "all" : selectedStatuses.has("inactive") ? "inactive" : "active";
   const visibleClients = clients.filter((client) => {
     if (statusFilter === "active" && !isClientActive(client)) {
       return false;
@@ -99,7 +115,7 @@ export function ClientsPage(): ReactElement {
             onClick={() => setComposerOpen((value) => !value)}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             New client
           </button>
         </div>
@@ -107,24 +123,18 @@ export function ClientsPage(): ReactElement {
           className="flex min-h-[46px] flex-wrap items-center gap-3 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="clients-filter-bar"
         >
-          <label className="relative">
-            <select
-              aria-label="Client status filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              onChange={(event) => setStatusFilter(event.target.value as ClientStatusFilter)}
-              value={statusFilter}
-            >
-              <option value="active">Show active</option>
-              <option value="all">Show all</option>
-              <option value="inactive">Show inactive</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3" name="chevron-down" />
-            </span>
-          </label>
+          <DirectoryStatusFilter
+            chevronIcon={<ChevronDownIcon className="size-3" />}
+            onChange={setSelectedStatuses}
+            options={[
+              { label: "Active", value: "active" as const },
+              { label: "Inactive", value: "inactive" as const },
+            ]}
+            selected={selectedStatuses}
+          />
           <label className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3.5" name="search" />
+              <SearchIcon className="size-3.5" />
             </span>
             <input
               className="h-9 w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
@@ -174,6 +184,68 @@ export function ClientsPage(): ReactElement {
         </form>
       ) : null}
 
+      {selectedIds.size > 0 ? (
+        <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
+          <span className="text-[13px] font-medium text-white">
+            {selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <span className="h-4 w-px bg-[var(--track-border)]" />
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              const firstId = [...selectedIds][0];
+              if (firstId != null && selectedIds.size === 1) {
+                const client = groupedClients.find((g) => g.client.id === firstId);
+                if (client) {
+                  const newName = window.prompt("Rename client:", client.client.name);
+                  if (newName?.trim() && newName.trim() !== client.client.name) {
+                    renameClientMutation.mutate(
+                      { clientId: firstId, name: newName.trim() },
+                      { onSuccess: () => setStatusMessage("Client renamed") },
+                    );
+                  }
+                }
+              }
+            }}
+            type="button"
+          >
+            <EditIcon className="size-3.5" />
+            <span>Edit</span>
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-[var(--track-text-muted)] cursor-not-allowed"
+            disabled
+            type="button"
+          >
+            <ArchiveIcon className="size-3.5" />
+            <span>Archive</span>
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              if (!window.confirm(`Delete ${selectedIds.size} client(s)?`)) return;
+              for (const id of selectedIds) {
+                deleteClientMutation.mutate(id);
+              }
+              setSelectedIds(new Set());
+              setStatusMessage(`${selectedIds.size} client(s) deleted`);
+            }}
+            type="button"
+          >
+            <TrashIcon className="size-3.5" />
+            <span>Delete</span>
+          </button>
+          <button
+            aria-label="Clear selection"
+            className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            onClick={() => setSelectedIds(new Set())}
+            type="button"
+          >
+            <CloseIcon className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       {clientsQuery.isPending || projectsQuery.isPending ? (
         <SurfaceMessage message="Loading clients..." />
       ) : null}
@@ -189,7 +261,23 @@ export function ClientsPage(): ReactElement {
             collapsedIds={collapsedIds}
             deleteClientMutation={deleteClientMutation}
             groupedClients={groupedClients}
+            onToggleSelect={(clientId) =>
+              setSelectedIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(clientId)) next.delete(clientId);
+                else next.add(clientId);
+                return next;
+              })
+            }
+            onToggleSelectAll={() =>
+              setSelectedIds((prev) =>
+                prev.size === groupedClients.length
+                  ? new Set()
+                  : new Set(groupedClients.map((g) => g.client.id)),
+              )
+            }
             renameClientMutation={renameClientMutation}
+            selectedIds={selectedIds}
             setStatusMessage={setStatusMessage}
             toggleClient={toggleClient}
             workspaceId={workspaceId}
@@ -222,7 +310,10 @@ function ClientListTable({
   collapsedIds,
   deleteClientMutation,
   groupedClients,
+  onToggleSelect,
+  onToggleSelectAll,
   renameClientMutation,
+  selectedIds,
   setStatusMessage,
   toggleClient,
   workspaceId,
@@ -230,16 +321,30 @@ function ClientListTable({
   collapsedIds: number[];
   deleteClientMutation: ReturnType<typeof useDeleteClientMutation>;
   groupedClients: GroupedClient[];
+  onToggleSelect: (clientId: number) => void;
+  onToggleSelectAll: () => void;
   renameClientMutation: ReturnType<typeof useRenameClientMutation>;
+  selectedIds: Set<number>;
   setStatusMessage: (msg: string) => void;
   toggleClient: (id: number) => void;
   workspaceId: number;
 }): ReactElement {
+  const allSelected = groupedClients.length > 0 && selectedIds.size === groupedClients.length;
+  const someSelected = selectedIds.size > 0 && !allSelected;
   return (
     <div data-testid="clients-list">
       <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
         <div className="flex h-[28px] items-center">
-          <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+          <input
+            aria-label="Select all clients"
+            checked={allSelected}
+            className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
+            onChange={onToggleSelectAll}
+            ref={(el) => {
+              if (el) el.indeterminate = someSelected;
+            }}
+            type="checkbox"
+          />
         </div>
         <div className="flex h-[28px] items-center" />
         <div className="flex h-[28px] items-center">Clients | Projects</div>
@@ -250,7 +355,15 @@ function ClientListTable({
         return (
           <div key={client.id}>
             <div className="grid grid-cols-[34px_28px_minmax(0,1fr)_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]">
-              <div className="h-[26px]" />
+              <div className="flex h-[26px] items-center">
+                <input
+                  aria-label={`Select ${client.name}`}
+                  checked={selectedIds.has(client.id)}
+                  className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
+                  onChange={() => onToggleSelect(client.id)}
+                  type="checkbox"
+                />
+              </div>
               <div className="flex h-[26px] items-center">
                 <button
                   aria-label={`${collapsed ? "Expand" : "Collapse"} ${client.name}`}
@@ -258,10 +371,11 @@ function ClientListTable({
                   onClick={() => toggleClient(client.id)}
                   type="button"
                 >
-                  <TrackingIcon
-                    className="size-3"
-                    name={collapsed ? "chevron-right" : "chevron-down"}
-                  />
+                  {collapsed ? (
+                    <ChevronRightIcon className="size-3" />
+                  ) : (
+                    <ChevronDownIcon className="size-3" />
+                  )}
                 </button>
               </div>
               <div className="flex h-[26px] items-center gap-2">

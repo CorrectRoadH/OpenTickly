@@ -28,18 +28,7 @@ describe("Story: reports", () => {
       ["Report task C", "2026-03-26T09:00:00Z", "2026-03-26T10:30:00Z"],
     ] as const) {
       await toggl(
-        [
-          "entry",
-          "start",
-          "-d",
-          desc,
-          "-p",
-          "ReportProject",
-          "--start",
-          start,
-          "--end",
-          end,
-        ],
+        ["entry", "start", "-d", desc, "-p", "ReportProject", "--start", start, "--end", end],
         { user },
       );
     }
@@ -47,14 +36,7 @@ describe("Story: reports", () => {
 
   it("summary report exits 0", async () => {
     const result = await toggl(
-      [
-        "report",
-        "summary",
-        "--since",
-        "2026-03-25",
-        "--until",
-        "2026-03-26",
-      ],
+      ["report", "summary", "--since", "2026-03-25", "--until", "2026-03-26"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -63,15 +45,7 @@ describe("Story: reports", () => {
 
   it("summary report in JSON returns data", async () => {
     const result = await toggl(
-      [
-        "report",
-        "summary",
-        "--since",
-        "2026-03-25",
-        "--until",
-        "2026-03-26",
-        "--json",
-      ],
+      ["report", "summary", "--since", "2026-03-25", "--until", "2026-03-26", "--json"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -79,14 +53,7 @@ describe("Story: reports", () => {
 
   it("detailed report returns data or 501", async () => {
     const result = await toggl(
-      [
-        "report",
-        "detailed",
-        "--since",
-        "2026-03-25",
-        "--until",
-        "2026-03-26",
-      ],
+      ["report", "detailed", "--since", "2026-03-25", "--until", "2026-03-26"],
       { user },
     );
     // Detailed reports may not be implemented yet (501)
@@ -99,14 +66,7 @@ describe("Story: reports", () => {
 
   it("weekly report returns data or 501", async () => {
     const result = await toggl(
-      [
-        "report",
-        "weekly",
-        "--since",
-        "2026-03-23",
-        "--until",
-        "2026-03-29",
-      ],
+      ["report", "weekly", "--since", "2026-03-23", "--until", "2026-03-29"],
       { user },
     );
     // Weekly reports may not be implemented yet (501)

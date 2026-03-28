@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
@@ -55,7 +55,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
             onClick={() => setComposerOpen((value) => !value)}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             New task
           </button>
         </div>
@@ -150,7 +150,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
                 {task.active === false ? "Inactive" : "Active"}
               </div>
               <div className="flex h-[54px] items-center justify-end text-[var(--track-text-muted)]">
-                <TrackingIcon className="size-4" name="more" />
+                <MoreIcon className="size-4" />
               </div>
             </div>
           ))}

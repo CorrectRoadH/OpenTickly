@@ -1,6 +1,6 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 
@@ -60,7 +60,7 @@ export function ProjectRowActionsMenu({
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <TrackingIcon className="size-4" name="more" />
+        <MoreIcon className="size-4" />
       </button>
       {open ? (
         <div

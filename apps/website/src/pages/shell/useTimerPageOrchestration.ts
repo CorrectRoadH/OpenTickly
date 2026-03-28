@@ -1358,26 +1358,25 @@ export function useTimerPageOrchestration(options?: {
 
   const handleEntryEdit = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
-      // Anchor coordinates are in content-space (includes scrollTop/scrollLeft)
-      // because the editor dialog renders inside the scroll area and must stay
-      // pinned next to the time entry row as the user scrolls.
-      const scrollAreaRect = scrollAreaRef.current?.getBoundingClientRect();
-      const scrollLeft = scrollAreaRef.current?.scrollLeft ?? 0;
-      const scrollTop = scrollAreaRef.current?.scrollTop ?? 0;
-      const containerWidth = scrollAreaRef.current?.clientWidth;
-      const anchorLeft = scrollAreaRect
-        ? anchorRect.left - scrollAreaRect.left + scrollLeft
-        : anchorRect.left;
-      const preferredPlacement =
-        containerWidth != null && anchorLeft > containerWidth / 2 ? "left" : "right";
+      // Anchor coordinates are page-relative (viewport coords + window.scrollY).
+      // The editor uses absolute positioning inside a position:relative page
+      // container, so it scrolls natively with window scroll — no JS compensation.
+      const pageContainer = document.querySelector<HTMLElement>(
+        '[data-testid="tracking-timer-page"]',
+      );
+      const pageRect = pageContainer?.getBoundingClientRect();
+      const pageLeft = pageRect?.left ?? 0;
+      const pageTop = (pageRect?.top ?? 0) + window.scrollY;
+      const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
+      const anchorLeft = anchorRect.left - pageLeft;
+      const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
       setSelectedEntry(entry);
       setSelectedEntryAnchor({
-        containerHeight: scrollAreaRef.current?.scrollHeight,
         containerWidth,
         height: anchorRect.height,
         left: anchorLeft,
         preferredPlacement,
-        top: scrollAreaRect ? anchorRect.top - scrollAreaRect.top + scrollTop : anchorRect.top,
+        top: anchorRect.top + window.scrollY - pageTop,
         width: anchorRect.width,
       });
     },

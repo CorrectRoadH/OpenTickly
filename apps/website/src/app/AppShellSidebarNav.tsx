@@ -6,7 +6,7 @@ import {
   isSectionNavActive,
   isTimerNavActive,
 } from "./shell-navigation-state.ts";
-import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
+import { DynamicIcon, type IconName } from "../shared/ui/icons.tsx";
 
 export type NavSection = {
   items: NavItem[];
@@ -109,7 +109,7 @@ function ShellNavItem({
           : "text-[var(--track-text-muted)]"
       } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
     >
-      <TrackingIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
+      <DynamicIcon className="h-4 w-[14px] shrink-0" name={navIconName(label)} />
       <span className="truncate">{label}</span>
       {badge ? (
         <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
@@ -130,7 +130,7 @@ function ShellNavItem({
   );
 }
 
-function navIconName(label: string) {
+function navIconName(label: string): IconName {
   switch (label) {
     case "Overview":
       return "overview";

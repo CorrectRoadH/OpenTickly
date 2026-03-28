@@ -1,6 +1,6 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { MoreIcon } from "../../shared/ui/icons.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 
 type GoalRowActionsMenuProps = {
@@ -51,7 +51,7 @@ export function GoalRowActionsMenu({
         onClick={() => setOpen((current) => !current)}
         type="button"
       >
-        <TrackingIcon className="size-4" name="more" />
+        <MoreIcon className="size-4" />
       </button>
       {open ? (
         <div

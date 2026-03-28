@@ -1,6 +1,6 @@
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { PlusIcon } from "../../shared/ui/icons.tsx";
 
 interface ManualModeComposerProps {
   onAddTimeEntry: (start: Date, stop: Date) => void;
@@ -166,7 +166,7 @@ export function ManualModeComposer({
         onClick={handleAdd}
         type="button"
       >
-        <TrackingIcon className="size-5" name="plus" />
+        <PlusIcon className="size-5" />
       </button>
     </div>
   );

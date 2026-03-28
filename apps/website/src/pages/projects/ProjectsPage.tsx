@@ -3,11 +3,20 @@ import { type ReactElement, useEffect, useMemo, useState } from "react";
 import {
   DirectoryFilterChip,
   DirectoryHeaderCell,
+  DirectoryStatusFilter,
   DirectorySurfaceMessage,
   DirectoryTableCell,
 } from "@opentoggl/web-ui";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import {
+  ArchiveIcon,
+  ChevronDownIcon,
+  CloseIcon,
+  EditIcon,
+  PlusIcon,
+  ProjectsIcon,
+  TrashIcon,
+} from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   DEFAULT_PROJECT_COLOR,
@@ -41,6 +50,25 @@ import {
 import { ProjectEditorDialog } from "./ProjectEditorDialog.tsx";
 import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
 
+type ProjectCategory = "upcoming" | "active" | "archived" | "ended";
+
+const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
+  { label: "Upcoming", value: "upcoming" },
+  { label: "Active", value: "active" },
+  { label: "Archived", value: "archived" },
+  { label: "Ended", value: "ended" },
+];
+
+const DEFAULT_SELECTED_STATUSES: Set<ProjectCategory> = new Set(["upcoming", "active", "ended"]);
+
+function categorizeProject(project: GithubComTogglTogglApiInternalModelsProject): ProjectCategory {
+  if (project.active === false) return "archived";
+  const now = new Date().toISOString().slice(0, 10);
+  if (project.start_date && project.start_date > now) return "upcoming";
+  if (project.end_date && project.end_date < now) return "ended";
+  return "active";
+}
+
 type ProjectsPageProps = {
   statusFilter: ProjectStatusFilter;
 };
@@ -66,8 +94,17 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const [memberRole, setMemberRole] = useState<"manager" | "regular">("regular");
   const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedStatuses, setSelectedStatuses] = useState<Set<ProjectCategory>>(() => {
+    if (statusFilter === "active") return new Set<ProjectCategory>(["active"]);
+    if (statusFilter === "archived") return new Set<ProjectCategory>(["archived"]);
+    return new Set(DEFAULT_SELECTED_STATUSES);
+  });
   const [projectEditorError, setProjectEditorError] = useState<string | null>(null);
-  const projectsQuery = useProjectsQuery(workspaceId, statusFilter);
+  const projectsQuery = useProjectsQuery(
+    workspaceId,
+    selectedStatuses.has("archived") ? "all" : "active",
+  );
   const workspaceUsersQuery = useWorkspaceUsersQuery(workspaceId);
   const createProjectMutation = useCreateProjectMutation(workspaceId);
   const updateProjectMutation = useUpdateProjectMutation(workspaceId);
@@ -89,13 +126,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   );
   const projects = useMemo(() => {
     const all = normalizeProjects(projectsQuery.data);
-    // "Show All, except Archived" (statusFilter="all") passes active:undefined to the API which
-    // returns everything including archived. Filter inactive projects out client-side.
-    if (statusFilter === "all") {
-      return all.filter((p) => p.active !== false);
-    }
-    return all;
-  }, [projectsQuery.data, statusFilter]);
+    return all.filter((p) => selectedStatuses.has(categorizeProject(p)));
+  }, [projectsQuery.data, selectedStatuses]);
   const workspaceMembers = useMemo(
     () =>
       (workspaceUsersQuery.data ?? [])
@@ -307,7 +339,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             onClick={openCreateDialog}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             New project
           </button>
         </div>
@@ -315,21 +347,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="projects-filter-bar"
         >
-          <label className="relative">
-            <select
-              aria-label="Project status filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              onChange={(event) => void navigateToStatus(event.target.value as ProjectStatusFilter)}
-              value={statusFilter}
-            >
-              <option value="all">Show All, except Archived</option>
-              <option value="active">Show active</option>
-              <option value="archived">Show archived</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3" name="chevron-down" />
-            </span>
-          </label>
+          <DirectoryStatusFilter
+            chevronIcon={<ChevronDownIcon className="size-3" />}
+            onChange={setSelectedStatuses}
+            options={PROJECT_STATUS_OPTIONS}
+            selected={selectedStatuses}
+          />
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <DirectoryFilterChip label="Client" />
@@ -346,6 +369,66 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         </div>
       </header>
 
+      {selectedIds.size > 0 ? (
+        <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
+          <span className="text-[13px] font-medium text-white">
+            {selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""} selected
+          </span>
+          <span className="h-4 w-px bg-[var(--track-border)]" />
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              if (selectedIds.size === 1) {
+                const projectId = [...selectedIds][0];
+                const project = projects.find((p) => p.id === projectId);
+                if (project) openEditDialog(project);
+              }
+            }}
+            type="button"
+          >
+            <EditIcon className="size-3.5" />
+            <span>Edit</span>
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              for (const id of selectedIds) {
+                void archiveProjectMutation.mutateAsync(id);
+              }
+              setSelectedIds(new Set());
+              setStatusMessage(`${selectedIds.size} project(s) archived`);
+            }}
+            type="button"
+          >
+            <ArchiveIcon className="size-3.5" />
+            <span>Archive</span>
+          </button>
+          <button
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              if (!window.confirm(`Delete ${selectedIds.size} project(s)?`)) return;
+              for (const id of selectedIds) {
+                void deleteProjectMutation.mutateAsync(id);
+              }
+              setSelectedIds(new Set());
+              setStatusMessage(`${selectedIds.size} project(s) deleted`);
+            }}
+            type="button"
+          >
+            <TrashIcon className="size-3.5" />
+            <span>Delete</span>
+          </button>
+          <button
+            aria-label="Clear selection"
+            className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            onClick={() => setSelectedIds(new Set())}
+            type="button"
+          >
+            <CloseIcon className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
       {projectsQuery.isPending ? <DirectorySurfaceMessage message="Loading projects..." /> : null}
       {projectsQuery.isError ? (
         <DirectorySurfaceMessage
@@ -357,7 +440,25 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         projects.length > 0 ? (
           <div data-testid="projects-list">
             <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_110px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <DirectoryHeaderCell />
+              <DirectoryHeaderCell>
+                <input
+                  aria-label="Select all projects"
+                  checked={projects.length > 0 && selectedIds.size === projects.length}
+                  className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
+                  onChange={() =>
+                    setSelectedIds((prev) =>
+                      prev.size === projects.length
+                        ? new Set()
+                        : new Set(projects.map((p) => p.id!)),
+                    )
+                  }
+                  ref={(el) => {
+                    if (el)
+                      el.indeterminate = selectedIds.size > 0 && selectedIds.size < projects.length;
+                  }}
+                  type="checkbox"
+                />
+              </DirectoryHeaderCell>
               <DirectoryHeaderCell>Project</DirectoryHeaderCell>
               <DirectoryHeaderCell>Client</DirectoryHeaderCell>
               <DirectoryHeaderCell>Timeframe</DirectoryHeaderCell>
@@ -373,7 +474,20 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 key={project.id}
               >
                 <div className="flex h-[54px] items-center">
-                  <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+                  <input
+                    aria-label={`Select ${project.name}`}
+                    checked={selectedIds.has(project.id!)}
+                    className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
+                    onChange={() =>
+                      setSelectedIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(project.id!)) next.delete(project.id!);
+                        else next.add(project.id!);
+                        return next;
+                      })
+                    }
+                    type="checkbox"
+                  />
                 </div>
                 <div className="flex h-[54px] items-center gap-3 overflow-hidden">
                   <span
@@ -410,7 +524,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     onClick={() => void handlePinToggle(project)}
                     type="button"
                   >
-                    <TrackingIcon className="size-4" name="projects" />
+                    <ProjectsIcon className="size-4" />
                   </button>
                 </div>
                 <div className="flex h-[54px] items-center justify-end">

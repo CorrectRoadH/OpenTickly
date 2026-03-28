@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, type ReactNode } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { SearchIcon } from "./icons.tsx";
 
 type PickerDropdownProps = {
   children: ReactNode;
@@ -55,7 +55,7 @@ export function PickerSearchField({
 }): ReactElement {
   return (
     <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-4 py-2.5">
-      <TrackingIcon className="size-4 shrink-0 text-[#a1a1a6]" name="search" />
+      <SearchIcon className="size-4 shrink-0 text-[#a1a1a6]" />
       <input
         className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[#909096]"
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}

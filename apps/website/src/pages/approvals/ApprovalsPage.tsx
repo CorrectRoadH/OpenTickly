@@ -1,7 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import { getTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -58,14 +58,14 @@ export function ApprovalsPage(): ReactElement {
           <h2 className="flex items-center gap-2 text-[16px] font-semibold text-white">
             <span className="text-[var(--track-text-muted)]">Approvals</span>
             <span className="text-[var(--track-text-muted)]">/</span>
-            <TrackingIcon className="size-4 text-[var(--track-text-muted)]" name="settings" />
+            <SettingsIcon className="size-4 text-[var(--track-text-muted)]" />
             <span>Settings</span>
           </h2>
           <button
             className="flex h-8 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-3 text-[12px] font-semibold text-white transition hover:brightness-110"
             type="button"
           >
-            <TrackingIcon className="size-3" name="plus" />
+            <PlusIcon className="size-3" />
             Set up timesheets for member
           </button>
         </div>
@@ -118,7 +118,7 @@ function TimesheetSetupEmpty({ loading = false }: { loading?: boolean }): ReactE
           className="mt-6 flex h-9 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition hover:brightness-110"
           type="button"
         >
-          <TrackingIcon className="size-3.5" name="plus" />
+          <PlusIcon className="size-3.5" />
           Set up timesheets for members
         </button>
       </div>

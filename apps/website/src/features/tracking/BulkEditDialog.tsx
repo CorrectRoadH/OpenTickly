@@ -5,7 +5,7 @@ import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { ChevronDownIcon } from "../../shared/ui/icons.tsx";
 
 export type BulkEditDialogProps = {
   count: number;
@@ -114,9 +114,8 @@ export function BulkEditDialog({
             ) : (
               <span className="text-[var(--track-text-muted)]">Select project</span>
             )}
-            <TrackingIcon
+            <ChevronDownIcon
               className={`size-3 transition-transform ${picker === "project" ? "rotate-180" : ""}`}
-              name="chevron-down"
             />
           </button>
           {picker === "project" ? (
@@ -151,9 +150,8 @@ export function BulkEditDialog({
             ) : (
               <span className="text-[var(--track-text-muted)]">Add tags</span>
             )}
-            <TrackingIcon
+            <ChevronDownIcon
               className={`size-3 transition-transform ${picker === "tag" ? "rotate-180" : ""}`}
-              name="chevron-down"
             />
           </button>
           {picker === "tag" ? (

@@ -1,8 +1,7 @@
 import { execa } from "execa";
 import type { TestUser } from "./types.ts";
 
-const apiUrl = () =>
-  process.env.OPENTOGGL_CLI_TEST_URL ?? "http://127.0.0.1:8080/api/v9";
+const apiUrl = () => process.env.OPENTOGGL_CLI_TEST_URL ?? "http://127.0.0.1:8080/api/v9";
 
 export async function toggl(
   args: string[],
@@ -18,10 +17,7 @@ export async function toggl(
   });
 }
 
-export async function togglJson<T = unknown>(
-  args: string[],
-  opts: { user: TestUser },
-): Promise<T> {
+export async function togglJson<T = unknown>(args: string[], opts: { user: TestUser }): Promise<T> {
   const result = await toggl([...args, "--json"], opts);
   if (result.exitCode !== 0) {
     throw new Error(
@@ -37,9 +33,7 @@ export async function togglExpectFail(
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
   const result = await toggl(args, opts);
   if (result.exitCode === 0) {
-    throw new Error(
-      `expected toggl ${args.join(" ")} to fail, but it succeeded: ${result.stdout}`,
-    );
+    throw new Error(`expected toggl ${args.join(" ")} to fail, but it succeeded: ${result.stdout}`);
   }
   return result;
 }

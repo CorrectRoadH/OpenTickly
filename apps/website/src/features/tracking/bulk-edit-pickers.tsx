@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { ProjectsIcon } from "../../shared/ui/icons.tsx";
 
 export function ProjectPickerDropdown({
   filteredProjects,
@@ -21,11 +21,15 @@ export function ProjectPickerDropdown({
     <PickerDropdown
       header={
         <div className="flex items-center gap-3">
-          <TrackingIcon className="size-4 shrink-0 text-[#bdbdc2]" name="projects" />
+          <ProjectsIcon className="size-4 shrink-0 text-[#bdbdc2]" />
           <span className="truncate text-[13px] font-semibold text-white">{workspaceName}</span>
         </div>
       }
-      search={{ onChange: onSearch, placeholder: "Search by project, task or client", value: search }}
+      search={{
+        onChange: onSearch,
+        placeholder: "Search by project, task or client",
+        value: search,
+      }}
       testId="bulk-edit-project-picker"
     >
       <button
@@ -33,7 +37,7 @@ export function ProjectPickerDropdown({
         onClick={() => onSelect(null)}
         type="button"
       >
-        <TrackingIcon className="size-4 text-[#b8b8bc]" name="projects" />
+        <ProjectsIcon className="size-4 text-[#b8b8bc]" />
         <span>No Project</span>
       </button>
       {filteredProjects.map((project) => (

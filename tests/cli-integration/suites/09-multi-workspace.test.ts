@@ -70,10 +70,7 @@ describe("Story: single user, multi-workspace data scoping", () => {
   });
 
   it("CLI entry list includes WS-A entries", async () => {
-    const entries = await togglJson<TimeEntry[]>(
-      ["entry", "list"],
-      { user },
-    );
+    const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user });
     // The CLI's entry list returns entries from all workspaces via /me/time_entries.
     // WS-A entries should be present.
     expect(entries.some((e) => e.description === "WS-A Work")).toBe(true);
@@ -86,10 +83,9 @@ describe("Story: single user, multi-workspace data scoping", () => {
   });
 
   it("user has two workspaces visible", async () => {
-    const workspaces = await togglJson<{ id: number; name: string }[]>(
-      ["workspace", "list"],
-      { user },
-    );
+    const workspaces = await togglJson<{ id: number; name: string }[]>(["workspace", "list"], {
+      user,
+    });
     expect(workspaces.length).toBeGreaterThanOrEqual(2);
     expect(workspaces.some((w) => w.id === workspaceBId)).toBe(true);
   });

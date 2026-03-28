@@ -32,7 +32,17 @@ import {
 } from "./list-bulk-actions.tsx";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import {
+  ChevronDownIcon,
+  DynamicIcon,
+  MinusIcon,
+  MoreIcon,
+  PlayIcon,
+  PlusIcon,
+  ProjectsIcon,
+  TagsIcon,
+  type IconName,
+} from "../../shared/ui/icons.tsx";
 const withDragAndDrop =
   typeof withDragAndDropModule === "function"
     ? withDragAndDropModule
@@ -88,7 +98,7 @@ export function ToolbarButton({
   label,
   suffix,
 }: {
-  icon: "calendar" | "list";
+  icon: Extract<IconName, "calendar" | "list">;
   label: string;
   suffix: string;
 }) {
@@ -97,10 +107,10 @@ export function ToolbarButton({
       className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[#1b1b1b] px-4 text-[12px] font-medium text-white"
       type="button"
     >
-      <TrackingIcon className="size-3.5 text-[var(--track-text-muted)]" name={icon} />
+      <DynamicIcon className="size-3.5 text-[var(--track-text-muted)]" name={icon} />
       <span>{label}</span>
       <span className="text-[var(--track-text-muted)]">· {suffix}</span>
-      <TrackingIcon className="size-3 text-[var(--track-text-muted)]" name="chevron-down" />
+      <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
     </button>
   );
 }
@@ -122,7 +132,7 @@ export function ChromeIconButton({
 }: {
   "aria-label"?: string;
   active?: boolean;
-  icon: "grid" | "more" | "settings" | "subscription" | "tags";
+  icon: Extract<IconName, "grid" | "more" | "settings" | "subscription" | "tags">;
   onClick?: () => void;
 }) {
   return (
@@ -134,7 +144,7 @@ export function ChromeIconButton({
       onClick={onClick}
       type="button"
     >
-      <TrackingIcon className="size-4" name={icon} />
+      <DynamicIcon className="size-4" name={icon} />
     </button>
   );
 }
@@ -174,7 +184,7 @@ export function CalendarSubviewSelect({
         type="button"
       >
         <span>{CALENDAR_SUBVIEW_LABELS[value]}</span>
-        <TrackingIcon className="size-3 text-[var(--track-text-muted)]" name="chevron-down" />
+        <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
       </button>
       {open ? (
         <div
@@ -532,10 +542,7 @@ export function ListView({
                     </div>
                     <div className="flex shrink-0 items-center gap-2 pl-4">
                       {renderEntry.tags && renderEntry.tags.length > 0 ? (
-                        <TrackingIcon
-                          className="size-3.5 text-[var(--track-text-muted)]"
-                          name="tags"
-                        />
+                        <TagsIcon className="size-3.5 text-[var(--track-text-muted)]" />
                       ) : null}
                       {renderEntry.billable ? (
                         <span className="text-[12px] font-semibold text-[var(--track-text-muted)]">
@@ -554,7 +561,7 @@ export function ListView({
                         onClick={() => onContinueEntry?.(renderEntry)}
                         type="button"
                       >
-                        <TrackingIcon className="size-3" name="play" />
+                        <PlayIcon className="size-3" />
                       </button>
                       <ListRowMoreActions
                         entry={renderEntry}
@@ -608,7 +615,7 @@ function ListRowMoreActions({
         }}
         type="button"
       >
-        <TrackingIcon className="size-3" name="more" />
+        <MoreIcon className="size-3" />
       </button>
       {open ? (
         <div
@@ -737,7 +744,7 @@ function ListRowProjectPicker({
         }}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="projects" />
+        <ProjectsIcon className="size-3.5" />
       </button>
       {open ? (
         <div
@@ -968,175 +975,173 @@ export function CalendarView({
 
   return (
     <div
-      className="flex h-full min-h-0 flex-col border-t border-[var(--track-border)] bg-[#1b1b1b]"
+      className="border-t border-[var(--track-border)] bg-[#1b1b1b]"
       data-testid="timer-calendar-view"
     >
-      <div className="min-h-0 flex-1 overflow-auto" data-testid="calendar-grid-scroll-area">
-        <DnDCalendar
-          components={{
-            event: (props: EventProps<CalendarEvent>) => (
-              <CalendarEventCard event={props.event} onEditEntry={onEditEntry} />
-            ),
-            header: ({ date }: { date: Date }) => {
-              const dayNum = date.getDate();
-              const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
-                .format(date)
-                .toUpperCase();
-              const dateKey = new Intl.DateTimeFormat("en-CA", {
-                day: "2-digit",
-                month: "2-digit",
-                timeZone: timezone,
-                year: "numeric",
-              }).format(date);
-              const totalSeconds = dailyTotals.get(dateKey) ?? 0;
-              const isToday =
-                date.getFullYear() === today.getFullYear() &&
-                date.getMonth() === today.getMonth() &&
-                date.getDate() === today.getDate();
-              return (
-                <div
-                  className="flex w-full items-center gap-2 px-2 py-2"
-                  data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
+      <DnDCalendar
+        components={{
+          event: (props: EventProps<CalendarEvent>) => (
+            <CalendarEventCard event={props.event} onEditEntry={onEditEntry} />
+          ),
+          header: ({ date }: { date: Date }) => {
+            const dayNum = date.getDate();
+            const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
+              .format(date)
+              .toUpperCase();
+            const dateKey = new Intl.DateTimeFormat("en-CA", {
+              day: "2-digit",
+              month: "2-digit",
+              timeZone: timezone,
+              year: "numeric",
+            }).format(date);
+            const totalSeconds = dailyTotals.get(dateKey) ?? 0;
+            const isToday =
+              date.getFullYear() === today.getFullYear() &&
+              date.getMonth() === today.getMonth() &&
+              date.getDate() === today.getDate();
+            return (
+              <div
+                className="flex w-full items-center gap-2 px-2 py-2"
+                data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
+              >
+                <span
+                  className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
+                    isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
+                  }`}
                 >
+                  {dayNum}
+                </span>
+                <span className="flex flex-col items-start leading-tight">
                   <span
-                    className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
-                      isToday ? "rounded-full bg-[#e57bd9] text-white" : "text-white"
+                    className={`text-[10px] font-medium tracking-wide ${
+                      isToday ? "text-[#e57bd9]" : "text-[#999]"
                     }`}
                   >
-                    {dayNum}
+                    {dayName}
                   </span>
-                  <span className="flex flex-col items-start leading-tight">
-                    <span
-                      className={`text-[10px] font-medium tracking-wide ${
-                        isToday ? "text-[#e57bd9]" : "text-[#999]"
-                      }`}
-                    >
-                      {dayName}
-                    </span>
-                    <span className="text-[10px] tabular-nums text-[#999]">
-                      {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
-                    </span>
+                  <span className="text-[10px] tabular-nums text-[#999]">
+                    {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
                   </span>
-                </div>
-              );
-            },
-            timeGutterHeader: () => (
-              <div
-                className="flex items-center justify-center gap-1 py-2"
-                data-testid="calendar-zoom-controls"
-              >
-                <button
-                  aria-label="Decrease zoom"
-                  className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={zoom <= -1}
-                  onClick={onZoomOut}
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="minus" />
-                </button>
-                <button
-                  aria-label="Increase zoom"
-                  className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-                  disabled={zoom >= 1}
-                  onClick={onZoomIn}
-                  type="button"
-                >
-                  <TrackingIcon className="size-3" name="plus" />
-                </button>
+                </span>
               </div>
-            ),
-            timeSlotWrapper: CalendarTimeSlotWrapper,
-          }}
-          date={calendarDate}
-          defaultView={Views.WEEK}
-          getNow={() => new Date()}
-          draggableAccessor={(event) =>
-            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+            );
+          },
+          timeGutterHeader: () => (
+            <div
+              className="flex items-center justify-center gap-1 py-2"
+              data-testid="calendar-zoom-controls"
+            >
+              <button
+                aria-label="Decrease zoom"
+                className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                disabled={zoom <= -1}
+                onClick={onZoomOut}
+                type="button"
+              >
+                <MinusIcon className="size-3" />
+              </button>
+              <button
+                aria-label="Increase zoom"
+                className="flex size-6 items-center justify-center rounded text-[#999] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+                disabled={zoom >= 1}
+                onClick={onZoomIn}
+                type="button"
+              >
+                <PlusIcon className="size-3" />
+              </button>
+            </div>
+          ),
+          timeSlotWrapper: CalendarTimeSlotWrapper,
+        }}
+        date={calendarDate}
+        defaultView={Views.WEEK}
+        getNow={() => new Date()}
+        draggableAccessor={(event) =>
+          !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+        }
+        endAccessor={(event) => event.end}
+        dayLayoutAlgorithm="no-overlap"
+        eventPropGetter={(event) => ({
+          className: event.resource.isRunning ? "rbc-event-running" : undefined,
+          style: {
+            backgroundColor: colorToOverlay(event.resource.color),
+            border: event.resource.isDraft ? "1px dashed rgba(229,123,217,0.6)" : "none",
+            color: "#fafafa",
+            opacity: event.resource.isDraft ? 0.7 : undefined,
+          },
+        })}
+        events={events}
+        localizer={calendarLocalizer}
+        max={maxTime}
+        messages={{
+          day: "Day",
+          next: "Next",
+          previous: "Previous",
+          today: "Today",
+          week: "Week",
+        }}
+        min={minTime}
+        onDrillDown={(date) => onSelectSubviewDate?.(formatDateIso(date))}
+        onEventDrop={({ event, start, end }: EventInteractionArgs<CalendarEvent>) => {
+          const nextStart = new Date(start);
+          const nextEnd = new Date(end);
+          const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+          if (minutesDelta !== 0) {
+            void onMoveEntry?.(event.id, minutesDelta);
           }
-          endAccessor={(event) => event.end}
-          dayLayoutAlgorithm="no-overlap"
-          eventPropGetter={(event) => ({
-            className: event.resource.isRunning ? "rbc-event-running" : undefined,
-            style: {
-              backgroundColor: colorToOverlay(event.resource.color),
-              border: event.resource.isDraft ? "1px dashed rgba(229,123,217,0.6)" : "none",
-              color: "#fafafa",
-              opacity: event.resource.isDraft ? 0.7 : undefined,
-            },
-          })}
-          events={events}
-          localizer={calendarLocalizer}
-          max={maxTime}
-          messages={{
-            day: "Day",
-            next: "Next",
-            previous: "Previous",
-            today: "Today",
-            week: "Week",
-          }}
-          min={minTime}
-          onDrillDown={(date) => onSelectSubviewDate?.(formatDateIso(date))}
-          onEventDrop={({ event, start, end }: EventInteractionArgs<CalendarEvent>) => {
-            const nextStart = new Date(start);
-            const nextEnd = new Date(end);
-            const minutesDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
-            if (minutesDelta !== 0) {
-              void onMoveEntry?.(event.id, minutesDelta);
-            }
-            if (event.entry.stop && nextEnd.getTime() !== event.end.getTime()) {
-              void onResizeEntry?.(
-                event.id,
-                "end",
-                Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000),
-              );
-            }
-            (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
-              eventId: event.id,
-              minutesDelta,
-              start: nextStart.toISOString(),
-              end: nextEnd.toISOString(),
-            };
-          }}
-          onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
-            const nextStart = new Date(start);
-            const nextEnd = new Date(end);
-            const startDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
-            const endDelta = Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000);
-            if (startDelta !== 0) {
-              void onResizeEntry?.(event.id, "start", startDelta);
-            } else if (endDelta !== 0) {
-              void onResizeEntry?.(event.id, "end", endDelta);
-            }
-          }}
-          onNavigate={() => undefined}
-          onSelectEvent={(event, nativeEvent) => {
-            const target = nativeEvent.currentTarget;
-            if (target instanceof HTMLElement) {
-              onEditEntry?.(event.entry, target.getBoundingClientRect());
-            }
-          }}
-          onSelectSlot={(slotInfo: SlotInfo) => {
-            if (slotInfo.start && slotInfo.end) {
-              onSelectSlot?.({
-                end: slotInfo.end,
-                start: slotInfo.start,
-              });
-            }
-          }}
-          resizable
-          resizableAccessor={(event) =>
-            !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+          if (event.entry.stop && nextEnd.getTime() !== event.end.getTime()) {
+            void onResizeEntry?.(
+              event.id,
+              "end",
+              Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000),
+            );
           }
-          selectable
-          startAccessor={(event) => event.start}
-          step={step}
-          timeslots={timeslots}
-          toolbar={false}
-          onView={() => undefined}
-          view={currentView}
-          views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
-        />
-      </div>
+          (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult = {
+            eventId: event.id,
+            minutesDelta,
+            start: nextStart.toISOString(),
+            end: nextEnd.toISOString(),
+          };
+        }}
+        onEventResize={({ end, event, start }: EventInteractionArgs<CalendarEvent>) => {
+          const nextStart = new Date(start);
+          const nextEnd = new Date(end);
+          const startDelta = Math.round((nextStart.getTime() - event.start.getTime()) / 60_000);
+          const endDelta = Math.round((nextEnd.getTime() - event.end.getTime()) / 60_000);
+          if (startDelta !== 0) {
+            void onResizeEntry?.(event.id, "start", startDelta);
+          } else if (endDelta !== 0) {
+            void onResizeEntry?.(event.id, "end", endDelta);
+          }
+        }}
+        onNavigate={() => undefined}
+        onSelectEvent={(event, nativeEvent) => {
+          const target = nativeEvent.currentTarget;
+          if (target instanceof HTMLElement) {
+            onEditEntry?.(event.entry, target.getBoundingClientRect());
+          }
+        }}
+        onSelectSlot={(slotInfo: SlotInfo) => {
+          if (slotInfo.start && slotInfo.end) {
+            onSelectSlot?.({
+              end: slotInfo.end,
+              start: slotInfo.start,
+            });
+          }
+        }}
+        resizable
+        resizableAccessor={(event) =>
+          !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
+        }
+        selectable
+        startAccessor={(event) => event.start}
+        step={step}
+        timeslots={timeslots}
+        toolbar={false}
+        onView={() => undefined}
+        view={currentView}
+        views={[Views.WEEK, Views.WORK_WEEK, Views.DAY]}
+      />
     </div>
   );
 }
@@ -1203,7 +1208,7 @@ export function TimesheetView({
           onClick={onAddRow}
           type="button"
         >
-          <TrackingIcon className="size-3.5" name="plus" />
+          <PlusIcon className="size-3.5" />
           <span>Add row</span>
         </button>
         {weekDays.map((_, index) => (
@@ -1313,7 +1318,7 @@ function CalendarEventCard({
         onClick={() => setAffordancesOpen((current) => !current)}
         type="button"
       >
-        <TrackingIcon className="size-3" name="more" />
+        <MoreIcon className="size-3" />
       </button>
       {allowDirectEdit ? (
         <button

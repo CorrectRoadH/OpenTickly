@@ -14,7 +14,13 @@ import { createPortal } from "react-dom";
 import type { SessionOrganizationViewModel } from "../../entities/session/session-bootstrap.ts";
 import { useCreateOrganizationMutation } from "../../shared/query/web-shell.ts";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
-import { TrackingIcon } from "../tracking/tracking-icons.tsx";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  MembersIcon,
+  OverviewIcon,
+  SettingsIcon,
+} from "../../shared/ui/icons.tsx";
 
 type WorkspaceSwitcherProps = {
   currentOrganization: SessionOrganizationViewModel | null;
@@ -233,10 +239,7 @@ export function WorkspaceSwitcher({
             isOpen ? "text-white" : "text-[var(--track-text-muted)]"
           }`}
         >
-          <TrackingIcon
-            className={`size-4 transition ${isOpen ? "rotate-180" : ""}`}
-            name="chevron-down"
-          />
+          <ChevronDownIcon className={`size-4 transition ${isOpen ? "rotate-180" : ""}`} />
         </span>
       </button>
 
@@ -388,7 +391,7 @@ function OrganizationOptionsPanel({
       <div className="space-y-5">
         <div className="flex items-center gap-5">
           <div className="flex size-[74px] items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-soft)]">
-            <TrackingIcon className="size-8" name="overview" />
+            <OverviewIcon className="size-8" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="truncate text-[16px] font-semibold leading-[23px] text-white">
@@ -403,12 +406,12 @@ function OrganizationOptionsPanel({
               className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
               to={managePath}
             >
-              <TrackingIcon className="size-5" name="settings" />
+              <SettingsIcon className="size-5" />
               <span>Manage</span>
             </Link>
           ) : (
             <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
-              <TrackingIcon className="size-5" name="settings" />
+              <SettingsIcon className="size-5" />
               <span>Manage</span>
             </div>
           )}
@@ -418,12 +421,12 @@ function OrganizationOptionsPanel({
               className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
               to={inviteMembersPath}
             >
-              <TrackingIcon className="size-5" name="members" />
+              <MembersIcon className="size-5" />
               <span>Invite members</span>
             </Link>
           ) : (
             <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
-              <TrackingIcon className="size-5" name="members" />
+              <MembersIcon className="size-5" />
               <span>Invite members</span>
             </div>
           )}
@@ -470,7 +473,7 @@ function OrganizationOptionsPanel({
                       type="button"
                     >
                       <span className="flex size-7 shrink-0 items-center justify-center text-[var(--track-text-soft)]">
-                        <TrackingIcon className="size-5" name="overview" />
+                        <OverviewIcon className="size-5" />
                       </span>
                       <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-white">
                         {entry.name}
@@ -504,7 +507,7 @@ function OrganizationOptionsPanel({
                           aria-label="Current organization"
                           className="text-[var(--track-accent)]"
                         >
-                          <TrackingIcon className="size-4" name="check" />
+                          <CheckIcon className="size-4" />
                         </span>
                       ) : null}
                     </div>

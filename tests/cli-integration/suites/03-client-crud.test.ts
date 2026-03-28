@@ -39,10 +39,7 @@ describe("Story: client CRUD lifecycle", () => {
   });
 
   it("renames a client", async () => {
-    const result = await toggl(
-      ["client", "rename", "Acme Corp", "Acme Inc"],
-      { user },
-    );
+    const result = await toggl(["client", "rename", "Acme Corp", "Acme Inc"], { user });
     expect(result.exitCode).toBe(0);
 
     const clients = await togglJson<Client[]>(["client", "list"], { user });

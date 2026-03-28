@@ -1,6 +1,6 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 export type DisplaySettings = {
   calendarHours: "all" | "business";
@@ -233,7 +233,7 @@ function SettingsDropdown({
         </span>
         <span className="flex items-center gap-1 text-[13px] text-white">
           {selectedOption?.label ?? value}
-          <TrackingIcon className="size-3 text-[var(--track-text-muted)]" name="chevron-down" />
+          <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
         </span>
       </button>
       {open ? (
@@ -269,7 +269,7 @@ function SettingsLink({ href, label }: { href: string; label: string }): ReactEl
       href={href}
     >
       <span>{label}</span>
-      <TrackingIcon className="size-3" name="chevron-right" />
+      <ChevronRightIcon className="size-3" />
     </a>
   );
 }

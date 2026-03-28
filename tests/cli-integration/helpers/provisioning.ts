@@ -1,7 +1,6 @@
 import type { TestUser } from "./types.ts";
 
-const baseUrl = () =>
-  process.env.OPENTOGGL_CLI_TEST_BASE ?? "http://127.0.0.1:8080";
+const baseUrl = () => process.env.OPENTOGGL_CLI_TEST_BASE ?? "http://127.0.0.1:8080";
 
 export async function provisionUser(label: string): Promise<TestUser> {
   const email = `cli-test-${label}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}@test.local`;
@@ -14,9 +13,7 @@ export async function provisionUser(label: string): Promise<TestUser> {
     body: JSON.stringify({ email, password, fullname: fullName }),
   });
   if (!registerRes.ok) {
-    throw new Error(
-      `Register failed: ${registerRes.status} ${await registerRes.text()}`,
-    );
+    throw new Error(`Register failed: ${registerRes.status} ${await registerRes.text()}`);
   }
   const bootstrap = (await registerRes.json()) as {
     current_organization_id?: number;
@@ -50,26 +47,18 @@ export async function provisionUser(label: string): Promise<TestUser> {
  * Create a second workspace for a user via HTTP API.
  * Useful for setup in beforeAll without depending on CLI correctness.
  */
-export async function createWorkspaceViaAPI(
-  user: TestUser,
-  name: string,
-): Promise<number> {
+export async function createWorkspaceViaAPI(user: TestUser, name: string): Promise<number> {
   const auth = Buffer.from(`${user.apiToken}:api_token`).toString("base64");
-  const res = await fetch(
-    `${baseUrl()}/api/v9/organizations/${user.organizationId}/workspaces`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${auth}`,
-      },
-      body: JSON.stringify({ name }),
+  const res = await fetch(`${baseUrl()}/api/v9/organizations/${user.organizationId}/workspaces`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`,
     },
-  );
+    body: JSON.stringify({ name }),
+  });
   if (!res.ok) {
-    throw new Error(
-      `Create workspace failed: ${res.status} ${await res.text()}`,
-    );
+    throw new Error(`Create workspace failed: ${res.status} ${await res.text()}`);
   }
   const body = (await res.json()) as { id: number };
   return body.id;
@@ -90,31 +79,24 @@ export async function createTimeEntryViaAPI(
   },
 ): Promise<number> {
   const auth = Buffer.from(`${user.apiToken}:api_token`).toString("base64");
-  const res = await fetch(
-    `${baseUrl()}/api/v9/workspaces/${workspaceId}/time_entries`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${auth}`,
-      },
-      body: JSON.stringify({
-        created_with: "cli-integration-test",
-        description: opts.description,
-        duration: Math.round(
-          (Date.parse(opts.stop) - Date.parse(opts.start)) / 1000,
-        ),
-        start: opts.start,
-        stop: opts.stop,
-        workspace_id: workspaceId,
-        project_id: opts.projectId,
-      }),
+  const res = await fetch(`${baseUrl()}/api/v9/workspaces/${workspaceId}/time_entries`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`,
     },
-  );
+    body: JSON.stringify({
+      created_with: "cli-integration-test",
+      description: opts.description,
+      duration: Math.round((Date.parse(opts.stop) - Date.parse(opts.start)) / 1000),
+      start: opts.start,
+      stop: opts.stop,
+      workspace_id: workspaceId,
+      project_id: opts.projectId,
+    }),
+  });
   if (!res.ok) {
-    throw new Error(
-      `Create time entry failed: ${res.status} ${await res.text()}`,
-    );
+    throw new Error(`Create time entry failed: ${res.status} ${await res.text()}`);
   }
   const body = (await res.json()) as { id: number };
   return body.id;
@@ -129,21 +111,16 @@ export async function createProjectViaAPI(
   name: string,
 ): Promise<number> {
   const auth = Buffer.from(`${user.apiToken}:api_token`).toString("base64");
-  const res = await fetch(
-    `${baseUrl()}/api/v9/workspaces/${workspaceId}/projects`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${auth}`,
-      },
-      body: JSON.stringify({ name }),
+  const res = await fetch(`${baseUrl()}/api/v9/workspaces/${workspaceId}/projects`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Basic ${auth}`,
     },
-  );
+    body: JSON.stringify({ name }),
+  });
   if (!res.ok) {
-    throw new Error(
-      `Create project failed: ${res.status} ${await res.text()}`,
-    );
+    throw new Error(`Create project failed: ${res.status} ${await res.text()}`);
   }
   const body = (await res.json()) as { id: number };
   return body.id;

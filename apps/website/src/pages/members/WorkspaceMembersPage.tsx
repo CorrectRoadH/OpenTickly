@@ -1,7 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { DirectorySurfaceMessage } from "@opentoggl/web-ui";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ChevronDownIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
   useInviteWorkspaceMemberMutation,
@@ -104,7 +104,7 @@ export function WorkspaceMembersPage(): ReactElement {
             onClick={() => setInviteDialogOpen(true)}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             Invite member
           </button>
         </div>
@@ -125,12 +125,12 @@ export function WorkspaceMembersPage(): ReactElement {
               <option value="invited">Invited</option>
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3" name="chevron-down" />
+              <ChevronDownIcon className="size-3" />
             </span>
           </label>
           <label className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3.5" name="search" />
+              <SearchIcon className="size-3.5" />
             </span>
             <input
               className="h-9 w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"

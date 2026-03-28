@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMemberDto } from "../../shared/api/web-contract.ts";
@@ -100,238 +100,232 @@ export function GoalEditorDialog({
       title={isEdit ? "Edit goal" : "Create a goal"}
       width="max-w-[520px]"
     >
-        <div className="flex flex-col gap-5">
-          {/* GOAL */}
-          <div>
-            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              Goal
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                autoFocus
-                className="h-[42px] flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent-soft)] focus:outline-none"
-                data-testid="goal-name-input"
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Goal name"
-                type="text"
-                value={name}
-              />
-              <div className="relative">
-                <select
-                  aria-label="Goal icon"
-                  className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[13px] text-white"
-                  data-testid="goal-icon-select"
-                  onChange={(e) => setIcon(e.target.value)}
-                  value={icon}
-                >
-                  {ICON_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                  <TrackingIcon className="size-2.5" name="chevron-down" />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* MEMBER */}
-          <div>
-            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              Member
-            </label>
+      <div className="flex flex-col gap-5">
+        {/* GOAL */}
+        <div>
+          <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            Goal
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              className="h-[42px] flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent-soft)] focus:outline-none"
+              data-testid="goal-name-input"
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Goal name"
+              type="text"
+              value={name}
+            />
             <div className="relative">
-              <button
-                className="flex h-[42px] w-full items-center gap-2.5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[14px] text-white disabled:opacity-60"
-                disabled={isEdit}
-                onClick={() => !isEdit && setMemberOpen(!memberOpen)}
-                type="button"
+              <select
+                aria-label="Goal icon"
+                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[13px] text-white"
+                data-testid="goal-icon-select"
+                onChange={(e) => setIcon(e.target.value)}
+                value={icon}
               >
-                <MemberAvatar name={memberDisplayName} />
-                <span className="flex-1 truncate">{memberDisplayName}</span>
-                <TrackingIcon
-                  className="size-2.5 text-[var(--track-text-muted)]"
-                  name="chevron-down"
-                />
-              </button>
-              {memberOpen && !isEdit ? (
-                <MemberDropdown
-                  members={members}
-                  onClose={() => setMemberOpen(false)}
-                  selectedUserId={selectedUserId}
-                />
-              ) : null}
+                {ICON_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
+                <ChevronDownIcon className="size-2.5" />
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* TRACK */}
-          <div>
-            <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              Track
-              <InfoIcon />
-            </label>
+        {/* MEMBER */}
+        <div>
+          <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            Member
+          </label>
+          <div className="relative">
             <button
-              className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-[var(--track-text-muted)] disabled:opacity-60"
+              className="flex h-[42px] w-full items-center gap-2.5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[14px] text-white disabled:opacity-60"
               disabled={isEdit}
+              onClick={() => !isEdit && setMemberOpen(!memberOpen)}
               type="button"
             >
-              <TrackingIcon className="size-3.5" name="search" />
-              <span>Search for projects, tasks, billable...</span>
+              <MemberAvatar name={memberDisplayName} />
+              <span className="flex-1 truncate">{memberDisplayName}</span>
+              <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
             </button>
+            {memberOpen && !isEdit ? (
+              <MemberDropdown
+                members={members}
+                onClose={() => setMemberOpen(false)}
+                selectedUserId={selectedUserId}
+              />
+            ) : null}
           </div>
-
-          {/* FOR */}
-          <div>
-            <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              for
-              <InfoIcon />
-            </label>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <select
-                  className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60"
-                  data-testid="goal-comparison-select"
-                  disabled={isEdit}
-                  onChange={(e) => setComparison(e.target.value)}
-                  value={comparison}
-                >
-                  {COMPARISON_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                  <TrackingIcon className="size-2.5" name="chevron-down" />
-                </span>
-              </div>
-              <div className="relative">
-                <input
-                  className="h-[42px] w-20 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-12 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
-                  data-testid="goal-hours-input"
-                  min={0}
-                  onChange={(e) => setTargetHours(Number(e.target.value) || 0)}
-                  type="number"
-                  value={targetHours || ""}
-                />
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-[var(--track-text-muted)]">
-                  hours
-                </span>
-              </div>
-              <div className="relative">
-                <select
-                  className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60 disabled:text-[var(--track-text-muted)]"
-                  data-testid="goal-recurrence-select"
-                  disabled={isEdit}
-                  onChange={(e) => setRecurrence(e.target.value)}
-                  value={recurrence}
-                >
-                  {RECURRENCE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-                <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                  <TrackingIcon className="size-2.5" name="chevron-down" />
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* UNTIL */}
-          <div>
-            <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              until
-              <InfoIcon />
-            </label>
-            <div className="flex flex-col gap-2">
-              <div className="relative w-48">
-                {noEndDate ? (
-                  <button
-                    className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white"
-                    onClick={() => setNoEndDate(false)}
-                    type="button"
-                  >
-                    <TrackingIcon className="size-3.5" name="calendar" />
-                    <span className="flex-1">Indefinite</span>
-                    <TrackingIcon
-                      className="size-2.5 text-[var(--track-text-muted)]"
-                      name="chevron-down"
-                    />
-                  </button>
-                ) : (
-                  <input
-                    className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
-                    data-testid="goal-end-date-input"
-                    onChange={(e) => setEndDate(e.target.value)}
-                    style={{ colorScheme: "dark" }}
-                    type="date"
-                    value={endDate}
-                  />
-                )}
-              </div>
-              <label className="flex cursor-pointer items-center gap-2 text-[13px] text-white">
-                <span
-                  className={`flex size-[14px] items-center justify-center rounded-[4px] ${
-                    noEndDate
-                      ? "bg-[var(--track-accent)]"
-                      : "border border-[var(--track-border)] bg-transparent"
-                  }`}
-                >
-                  {noEndDate ? (
-                    <svg
-                      className="size-2.5 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      viewBox="0 0 12 12"
-                    >
-                      <path d="M2 6l3 3 5-5" />
-                    </svg>
-                  ) : null}
-                </span>
-                <input
-                  checked={noEndDate}
-                  className="sr-only"
-                  data-testid="goal-no-end-date-checkbox"
-                  onChange={(e) => setNoEndDate(e.target.checked)}
-                  type="checkbox"
-                />
-                No end date
-              </label>
-            </div>
-          </div>
-
-          {/* Note */}
-          <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-            Note: you cannot change the projects, tasks, tags, billable or recurrence period of a
-            created goal.
-          </p>
         </div>
+
+        {/* TRACK */}
+        <div>
+          <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            Track
+            <InfoIcon />
+          </label>
+          <button
+            className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-[var(--track-text-muted)] disabled:opacity-60"
+            disabled={isEdit}
+            type="button"
+          >
+            <SearchIcon className="size-3.5" />
+            <span>Search for projects, tasks, billable...</span>
+          </button>
+        </div>
+
+        {/* FOR */}
+        <div>
+          <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            for
+            <InfoIcon />
+          </label>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <select
+                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60"
+                data-testid="goal-comparison-select"
+                disabled={isEdit}
+                onChange={(e) => setComparison(e.target.value)}
+                value={comparison}
+              >
+                {COMPARISON_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
+                <ChevronDownIcon className="size-2.5" />
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                className="h-[42px] w-20 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-12 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
+                data-testid="goal-hours-input"
+                min={0}
+                onChange={(e) => setTargetHours(Number(e.target.value) || 0)}
+                type="number"
+                value={targetHours || ""}
+              />
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-[var(--track-text-muted)]">
+                hours
+              </span>
+            </div>
+            <div className="relative">
+              <select
+                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60 disabled:text-[var(--track-text-muted)]"
+                data-testid="goal-recurrence-select"
+                disabled={isEdit}
+                onChange={(e) => setRecurrence(e.target.value)}
+                value={recurrence}
+              >
+                {RECURRENCE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
+                <ChevronDownIcon className="size-2.5" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* UNTIL */}
+        <div>
+          <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            until
+            <InfoIcon />
+          </label>
+          <div className="flex flex-col gap-2">
+            <div className="relative w-48">
+              {noEndDate ? (
+                <button
+                  className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white"
+                  onClick={() => setNoEndDate(false)}
+                  type="button"
+                >
+                  <CalendarIcon className="size-3.5" />
+                  <span className="flex-1">Indefinite</span>
+                  <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
+                </button>
+              ) : (
+                <input
+                  className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
+                  data-testid="goal-end-date-input"
+                  onChange={(e) => setEndDate(e.target.value)}
+                  style={{ colorScheme: "dark" }}
+                  type="date"
+                  value={endDate}
+                />
+              )}
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-white">
+              <span
+                className={`flex size-[14px] items-center justify-center rounded-[4px] ${
+                  noEndDate
+                    ? "bg-[var(--track-accent)]"
+                    : "border border-[var(--track-border)] bg-transparent"
+                }`}
+              >
+                {noEndDate ? (
+                  <svg
+                    className="size-2.5 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    viewBox="0 0 12 12"
+                  >
+                    <path d="M2 6l3 3 5-5" />
+                  </svg>
+                ) : null}
+              </span>
+              <input
+                checked={noEndDate}
+                className="sr-only"
+                data-testid="goal-no-end-date-checkbox"
+                onChange={(e) => setNoEndDate(e.target.checked)}
+                type="checkbox"
+              />
+              No end date
+            </label>
+          </div>
+        </div>
+
+        {/* Note */}
+        <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
+          Note: you cannot change the projects, tasks, tags, billable or recurrence period of a
+          created goal.
+        </p>
+      </div>
 
       <div className="mt-5 flex items-center justify-end gap-3">
-          <button
-            className="h-9 rounded-[8px] px-4 text-[14px] font-semibold text-white hover:bg-[var(--track-row-hover)]"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[14px] font-semibold text-white disabled:opacity-50"
-            data-testid="goal-submit-button"
-            disabled={!name.trim() || isPending}
-            onClick={handleSubmit}
-            type="button"
-          >
-            {isEdit ? "Edit goal" : "Create goal"}
-          </button>
-        </div>
+        <button
+          className="h-9 rounded-[8px] px-4 text-[14px] font-semibold text-white hover:bg-[var(--track-row-hover)]"
+          onClick={onClose}
+          type="button"
+        >
+          Cancel
+        </button>
+        <button
+          className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[14px] font-semibold text-white disabled:opacity-50"
+          data-testid="goal-submit-button"
+          disabled={!name.trim() || isPending}
+          onClick={handleSubmit}
+          type="button"
+        >
+          {isEdit ? "Edit goal" : "Create goal"}
+        </button>
+      </div>
     </ModalDialog>
   );
 }
@@ -364,10 +358,7 @@ function MemberDropdown({
       <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-[8px] border border-[var(--track-border)] bg-[#2c2c2e] shadow-lg">
         <div className="border-b border-[var(--track-border)] px-3 py-2">
           <div className="relative">
-            <TrackingIcon
-              className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]"
-              name="search"
-            />
+            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
             <input
               autoFocus
               className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"

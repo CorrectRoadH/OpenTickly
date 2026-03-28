@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
 
 import type { EntryGroup } from "./overview-data.ts";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { CloseIcon, EditIcon, TrashIcon } from "../../shared/ui/icons.tsx";
 
 export { BulkEditDialog } from "./BulkEditDialog.tsx";
 export type { BulkEditUpdates } from "./BulkEditDialog.tsx";
@@ -119,7 +119,7 @@ export function BulkActionToolbar({
         onClick={onEdit}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="edit" />
+        <EditIcon className="size-3.5" />
         <span>Edit</span>
       </button>
       <button
@@ -128,7 +128,7 @@ export function BulkActionToolbar({
         onClick={onDelete}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="trash" />
+        <TrashIcon className="size-3.5" />
         <span>Delete</span>
       </button>
       <button
@@ -137,7 +137,7 @@ export function BulkActionToolbar({
         onClick={onClear}
         type="button"
       >
-        <TrackingIcon className="size-3.5" name="close" />
+        <CloseIcon className="size-3.5" />
       </button>
     </div>
   );

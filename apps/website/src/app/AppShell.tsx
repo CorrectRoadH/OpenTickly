@@ -14,7 +14,7 @@ import { createPortal } from "react-dom";
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
-import { TrackingIcon } from "../features/tracking/tracking-icons.tsx";
+import { DynamicIcon, MenuIcon, type IconName } from "../shared/ui/icons.tsx";
 import {
   formatClockDuration,
   resolveEntryDurationSeconds,
@@ -51,7 +51,6 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const sections = shellNavigationItems(session);
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
-  const isTimerRoute = location.pathname === "/timer";
   const profileName = session.user.fullName || session.user.email || "Profile";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
@@ -126,20 +125,23 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     timerBadge,
   };
 
+  // All pages scroll via window.scroll (browser native). Sidebar is fixed,
+  // main content is in normal document flow offset by the sidebar width.
+  // This matches Toggl's architecture and eliminates internal scroll containers.
   return (
     <div
-      className="flex h-dvh flex-col overflow-hidden bg-[var(--track-surface)] text-[var(--track-text)]"
+      className="min-h-screen bg-[var(--track-surface)] text-[var(--track-text)]"
       data-testid="app-shell"
     >
-      {/* Mobile top bar -- visible below lg breakpoint */}
-      <div className="flex h-[56px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 lg:hidden">
+      {/* Mobile top bar -- sticky at viewport top, visible below lg */}
+      <div className="sticky top-0 z-40 flex h-[56px] items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 lg:hidden">
         <button
           aria-label="Toggle menu"
           className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/6 hover:text-white"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           type="button"
         >
-          <TrackingIcon className="size-5" name="menu" />
+          <MenuIcon className="size-5" />
         </button>
         <span className="text-[15px] font-semibold text-white">opentoggl</span>
       </div>
@@ -166,50 +168,47 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1">
-        {/* Desktop sidebar -- hidden below lg breakpoint */}
-        <aside className="hidden h-full w-[226px] shrink-0 overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
-          <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
-            <div className="space-y-0.5">
-              <RailButton active icon="track" />
-              <RailButton icon="plan" />
-              <RailButton icon="focus" />
-            </div>
-            <button
-              aria-label="Navigation rail"
-              className="flex h-[34px] w-full items-center justify-center text-[var(--track-text-muted)]"
-              type="button"
-            >
-              <TrackingIcon className="h-4 w-[21px]" name="menu" />
-            </button>
-            <div className="space-y-1">
-              <ProfileMenuButton
-                email={session.user.email}
-                imageUrl={session.user.imageUrl}
-                name={profileName}
-              />
-              <RailButton icon="bell" />
-              <RailButton icon="help" />
-            </div>
+      {/* Desktop sidebar -- fixed, stays in place during window scroll */}
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[226px] overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)] lg:flex">
+        <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
+          <div className="space-y-0.5">
+            <RailButton active icon="track" />
+            <RailButton icon="plan" />
+            <RailButton icon="focus" />
           </div>
-
-          <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
-            <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
-              <WorkspaceSwitcher {...workspaceSwitcherProps} />
-            </div>
-            <SidebarNavSections {...navProps} />
+          <button
+            aria-label="Navigation rail"
+            className="flex h-[34px] w-full items-center justify-center text-[var(--track-text-muted)]"
+            type="button"
+          >
+            <MenuIcon className="h-4 w-[21px]" />
+          </button>
+          <div className="space-y-1">
+            <ProfileMenuButton
+              email={session.user.email}
+              imageUrl={session.user.imageUrl}
+              name={profileName}
+            />
+            <RailButton icon="bell" />
+            <RailButton icon="help" />
           </div>
-        </aside>
+        </div>
 
-        <main
-          className={`min-w-0 flex-1 overflow-x-auto bg-[var(--track-surface)] ${
-            isTimerRoute ? "overflow-y-hidden" : "overflow-y-auto"
-          }`}
-          data-testid="app-shell-main"
-        >
-          <div className={isTimerRoute ? "h-full min-h-0" : "min-h-full"}>{children}</div>
-        </main>
-      </div>
+        <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
+          <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
+            <WorkspaceSwitcher {...workspaceSwitcherProps} />
+          </div>
+          <SidebarNavSections {...navProps} />
+        </div>
+      </aside>
+
+      {/* Main content -- offset by sidebar width on desktop, scrolls with window */}
+      <main
+        className="min-h-screen bg-[var(--track-surface)] lg:ml-[226px]"
+        data-testid="app-shell-main"
+      >
+        {children}
+      </main>
     </div>
   );
 }
@@ -382,7 +381,7 @@ function RailButton({
   icon,
 }: {
   active?: boolean;
-  icon: "bell" | "focus" | "help" | "plan" | "track";
+  icon: Extract<IconName, "bell" | "focus" | "help" | "plan" | "track">;
 }): ReactElement {
   const tooltipText =
     icon === "plan"
@@ -405,7 +404,7 @@ function RailButton({
             : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
         }`}
       >
-        <TrackingIcon className="size-4" name={icon} />
+        <DynamicIcon className="size-4" name={icon} />
       </span>
       {tooltipText ? (
         <span className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded bg-[var(--track-border)] px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">

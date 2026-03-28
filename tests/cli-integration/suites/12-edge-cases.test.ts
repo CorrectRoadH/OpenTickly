@@ -30,10 +30,7 @@ describe("Story: edge cases and boundary conditions", () => {
 
   describe("empty state", () => {
     it("entry list on fresh user returns empty", async () => {
-      const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list"],
-        { user },
-      );
+      const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user });
       expect(entries).toHaveLength(0);
     });
 
@@ -80,10 +77,7 @@ describe("Story: edge cases and boundary conditions", () => {
     });
 
     it("renaming nonexistent client fails", async () => {
-      await togglExpectFail(
-        ["client", "rename", "Nobody", "Somebody"],
-        { user },
-      );
+      await togglExpectFail(["client", "rename", "Nobody", "Somebody"], { user });
     });
   });
 
@@ -96,10 +90,7 @@ describe("Story: edge cases and boundary conditions", () => {
       expect(r2.exitCode).toBe(0);
 
       // The running entry should be "Second"
-      const running = await togglJson<TimeEntry>(
-        ["entry", "running"],
-        { user },
-      );
+      const running = await togglJson<TimeEntry>(["entry", "running"], { user });
       expect(running.description).toBe("Second");
 
       // The CLI auto-stops the previous entry when starting a new one.
@@ -116,34 +107,22 @@ describe("Story: edge cases and boundary conditions", () => {
       const create = await toggl(["project", "create", name], { user });
       expect(create.exitCode).toBe(0);
 
-      const projects = await togglJson<{ name: string }[]>(
-        ["project", "list"],
-        { user },
-      );
+      const projects = await togglJson<{ name: string }[]>(["project", "list"], { user });
       expect(projects.some((p) => p.name === name)).toBe(true);
 
       await toggl(["project", "delete", name], { user });
     });
 
     it("entry with unicode description", async () => {
-      await toggl(
-        ["entry", "start", "-d", "日本語テスト 🕐"],
-        { user },
-      );
-      const running = await togglJson<TimeEntry>(
-        ["entry", "running"],
-        { user },
-      );
+      await toggl(["entry", "start", "-d", "日本語テスト 🕐"], { user });
+      const running = await togglJson<TimeEntry>(["entry", "running"], { user });
       expect(running.description).toBe("日本語テスト 🕐");
       await toggl(["entry", "stop"], { user });
     });
 
     it("entry with very long description", async () => {
       const longDesc = "A".repeat(3000);
-      const result = await toggl(
-        ["entry", "start", "-d", longDesc],
-        { user },
-      );
+      const result = await toggl(["entry", "start", "-d", longDesc], { user });
       // Either succeeds or fails gracefully — no crash
       expect(typeof result.exitCode).toBe("number");
 

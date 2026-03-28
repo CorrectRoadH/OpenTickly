@@ -39,24 +39,15 @@ describe("Story: task CRUD lifecycle", () => {
   });
 
   it("creates a task", async () => {
-    const result = await toggl(
-      ["task", "create", "--project", "TaskHost", "Design review"],
-      { user },
-    );
+    const result = await toggl(["task", "create", "--project", "TaskHost", "Design review"], {
+      user,
+    });
     expect(result.exitCode).toBe(0);
   });
 
   it("creates a task with estimated seconds", async () => {
     const result = await toggl(
-      [
-        "task",
-        "create",
-        "--project",
-        "TaskHost",
-        "Implementation",
-        "--estimated-seconds",
-        "7200",
-      ],
+      ["task", "create", "--project", "TaskHost", "Implementation", "--estimated-seconds", "7200"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -71,15 +62,7 @@ describe("Story: task CRUD lifecycle", () => {
 
   it("updates a task to inactive", async () => {
     const result = await toggl(
-      [
-        "task",
-        "update",
-        "--project",
-        "TaskHost",
-        "Design review",
-        "--active",
-        "false",
-      ],
+      ["task", "update", "--project", "TaskHost", "Design review", "--active", "false"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -87,14 +70,7 @@ describe("Story: task CRUD lifecycle", () => {
 
   it("renames a task", async () => {
     const result = await toggl(
-      [
-        "task",
-        "rename",
-        "--project",
-        "TaskHost",
-        "Implementation",
-        "Final implementation",
-      ],
+      ["task", "rename", "--project", "TaskHost", "Implementation", "Final implementation"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -106,16 +82,12 @@ describe("Story: task CRUD lifecycle", () => {
   });
 
   it("deletes tasks", async () => {
-    const d1 = await toggl(
-      ["task", "delete", "--project", "TaskHost", "Design review"],
-      { user },
-    );
+    const d1 = await toggl(["task", "delete", "--project", "TaskHost", "Design review"], { user });
     expect(d1.exitCode).toBe(0);
 
-    const d2 = await toggl(
-      ["task", "delete", "--project", "TaskHost", "Final implementation"],
-      { user },
-    );
+    const d2 = await toggl(["task", "delete", "--project", "TaskHost", "Final implementation"], {
+      user,
+    });
     expect(d2.exitCode).toBe(0);
   });
 
@@ -125,22 +97,10 @@ describe("Story: task CRUD lifecycle", () => {
   });
 
   it("starts a timer with task association", async () => {
-    await toggl(
-      ["task", "create", "--project", "TaskHost", "Taskwork"],
-      { user },
-    );
+    await toggl(["task", "create", "--project", "TaskHost", "Taskwork"], { user });
 
     const result = await toggl(
-      [
-        "entry",
-        "start",
-        "-d",
-        "With task",
-        "-p",
-        "TaskHost",
-        "--task",
-        "Taskwork",
-      ],
+      ["entry", "start", "-d", "With task", "-p", "TaskHost", "--task", "Taskwork"],
       { user },
     );
     expect(result.exitCode).toBe(0);
@@ -151,9 +111,6 @@ describe("Story: task CRUD lifecycle", () => {
     expect(running.task!.name).toBe("Taskwork");
 
     await toggl(["entry", "stop"], { user });
-    await toggl(
-      ["task", "delete", "--project", "TaskHost", "Taskwork"],
-      { user },
-    );
+    await toggl(["task", "delete", "--project", "TaskHost", "Taskwork"], { user });
   });
 });

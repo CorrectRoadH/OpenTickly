@@ -33,10 +33,7 @@ describe("Story: cross-user data isolation", () => {
     await toggl(["project", "create", "Secret Alpha"], { user: userA });
     await toggl(["client", "create", "Confidential Client"], { user: userA });
     await toggl(["tag", "create", "private-tag"], { user: userA });
-    await toggl(
-      ["entry", "start", "-d", "Classified Work"],
-      { user: userA },
-    );
+    await toggl(["entry", "start", "-d", "Classified Work"], { user: userA });
     await toggl(["entry", "stop"], { user: userA });
   });
 
@@ -61,13 +58,8 @@ describe("Story: cross-user data isolation", () => {
     });
 
     it("User B's entry list does not contain User A's entry", async () => {
-      const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list"],
-        { user: userB },
-      );
-      expect(
-        entries.every((e) => e.description !== "Classified Work"),
-      ).toBe(true);
+      const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user: userB });
+      expect(entries.every((e) => e.description !== "Classified Work")).toBe(true);
     });
   });
 
@@ -80,23 +72,15 @@ describe("Story: cross-user data isolation", () => {
     });
 
     it("User A sees their entry", async () => {
-      const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list"],
-        { user: userA },
-      );
-      expect(
-        entries.some((e) => e.description === "Classified Work"),
-      ).toBe(true);
+      const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user: userA });
+      expect(entries.some((e) => e.description === "Classified Work")).toBe(true);
     });
   });
 
   describe("Reverse isolation: User A cannot see User B's data", () => {
     beforeAll(async () => {
       await toggl(["project", "create", "Open Beta"], { user: userB });
-      await toggl(
-        ["entry", "start", "-d", "Public Work"],
-        { user: userB },
-      );
+      await toggl(["entry", "start", "-d", "Public Work"], { user: userB });
       await toggl(["entry", "stop"], { user: userB });
     });
 
@@ -108,13 +92,8 @@ describe("Story: cross-user data isolation", () => {
     });
 
     it("User A cannot see User B's entry", async () => {
-      const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list"],
-        { user: userA },
-      );
-      expect(
-        entries.every((e) => e.description !== "Public Work"),
-      ).toBe(true);
+      const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user: userA });
+      expect(entries.every((e) => e.description !== "Public Work")).toBe(true);
     });
 
     it("User B can see their own data", async () => {
@@ -123,13 +102,8 @@ describe("Story: cross-user data isolation", () => {
       });
       expect(projects.some((p) => p.name === "Open Beta")).toBe(true);
 
-      const entries = await togglJson<TimeEntry[]>(
-        ["entry", "list"],
-        { user: userB },
-      );
-      expect(
-        entries.some((e) => e.description === "Public Work"),
-      ).toBe(true);
+      const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user: userB });
+      expect(entries.some((e) => e.description === "Public Work")).toBe(true);
     });
   });
 });

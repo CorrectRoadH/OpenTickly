@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { DirectoryFilterChip, DirectorySurfaceMessage } from "@opentoggl/web-ui";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ChevronDownIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useCreateTagMutation,
@@ -75,7 +75,7 @@ export function TagsPage(): ReactElement {
             onClick={() => setCreateDialogOpen(true)}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             New tag
           </button>
         </div>
@@ -95,7 +95,7 @@ export function TagsPage(): ReactElement {
               <option value="inactive">Inactive tags</option>
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3" name="chevron-down" />
+              <ChevronDownIcon className="size-3" />
             </span>
           </label>
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">

@@ -1,7 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 
 import { buildMonthWeeks, isSameDay } from "./week-range.ts";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 export type CalendarPanelDate = Date;
 
@@ -53,11 +53,7 @@ export function CalendarPanel({
             }
             type="button"
           >
-            <TrackingIcon
-              className="size-[15px]"
-              name="chevron-right"
-              style={{ transform: "rotate(180deg)" }}
-            />
+            <ChevronRightIcon className="size-[15px]" style={{ transform: "rotate(180deg)" }} />
           </button>
         </div>
         <h3
@@ -77,7 +73,7 @@ export function CalendarPanel({
             }
             type="button"
           >
-            <TrackingIcon className="size-[15px]" name="chevron-right" />
+            <ChevronRightIcon className="size-[15px]" />
           </button>
         </div>
       </div>

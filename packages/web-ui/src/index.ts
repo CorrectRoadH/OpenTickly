@@ -4,6 +4,7 @@ export { AppPanel } from "./AppPanel.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";
 export type { AppButtonTone } from "./buttonStyles.ts";
 export type { AppSurfaceTone } from "./surfaceStyles.ts";
+export { DirectoryStatusFilter } from "./DirectoryStatusFilter.tsx";
 export {
   DirectoryFilterChip,
   DirectoryHeaderCell,

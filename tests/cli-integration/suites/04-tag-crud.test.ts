@@ -39,10 +39,7 @@ describe("Story: tag CRUD lifecycle", () => {
   });
 
   it("renames a tag", async () => {
-    const result = await toggl(
-      ["tag", "rename", "billable", "client-billable"],
-      { user },
-    );
+    const result = await toggl(["tag", "rename", "billable", "client-billable"], { user });
     expect(result.exitCode).toBe(0);
 
     const tags = await togglJson<Tag[]>(["tag", "list"], { user });

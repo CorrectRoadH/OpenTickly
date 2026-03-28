@@ -8,7 +8,7 @@ import {
   DirectoryTableCell,
 } from "@opentoggl/web-ui";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { PlusIcon } from "../../shared/ui/icons.tsx";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   deleteWorkspaceInvoice,
@@ -115,7 +115,7 @@ export function InvoicesPage(): ReactElement {
               onClick={navigateToEditor}
               type="button"
             >
-              <TrackingIcon className="size-3.5" name="plus" />
+              <PlusIcon className="size-3.5" />
               Create invoice
             </button>
             <button

@@ -1,6 +1,6 @@
 import { type ReactElement } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { IntegrationsIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 export function IntegrationsPage(): ReactElement {
@@ -28,7 +28,7 @@ export function IntegrationsPage(): ReactElement {
           </div>
 
           <div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <TrackingIcon className="size-8 text-[var(--track-text-muted)]" name="integrations" />
+            <IntegrationsIcon className="size-8 text-[var(--track-text-muted)]" />
             <h3 className="text-[16px] font-semibold text-white">No webhooks configured</h3>
             <p className="max-w-[420px] text-[13px] leading-5 text-[var(--track-text-muted)]">
               Webhooks let you build custom integrations that react to time entry, project, and
@@ -40,7 +40,7 @@ export function IntegrationsPage(): ReactElement {
               title="Webhook management is not available"
               type="button"
             >
-              <TrackingIcon className="size-3.5" name="plus" />
+              <PlusIcon className="size-3.5" />
               Create webhook
             </button>
           </div>

@@ -8,7 +8,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { DEFAULT_PROJECT_COLOR, TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
@@ -18,7 +17,17 @@ import {
   formatClockTime,
   resolveEntryDurationSeconds,
 } from "./overview-data.ts";
-import { TrackingIcon } from "./tracking-icons.tsx";
+import {
+  CalendarIcon,
+  DollarIcon,
+  DynamicIcon,
+  MoreIcon,
+  PlayIcon,
+  ProjectsIcon,
+  SearchIcon,
+  TagsIcon,
+  type IconName,
+} from "../../shared/ui/icons.tsx";
 
 export type TimeEntryEditorAnchor = {
   containerHeight?: number;
@@ -246,11 +255,7 @@ export function TimeEntryEditorDialog({
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as HTMLElement;
-      if (
-        !target.closest('[data-testid="time-entry-editor-dialog"]') &&
-        !target.closest('[data-testid="time-entry-editor-start-date-picker"]') &&
-        !target.closest('[data-testid="time-entry-editor-stop-date-picker"]')
-      ) {
+      if (!target.closest('[data-testid="time-entry-editor-dialog"]')) {
         if (isDirty) {
           setShowDiscardConfirmation(true);
           return;
@@ -360,699 +365,667 @@ export function TimeEntryEditorDialog({
 
   const canDuplicate = stop != null && onDuplicate != null;
 
-  // Layer sits at the scroll area's content origin. No inset-0 / w-full / h-full
-  // because those constrain to the visible viewport and clip the dialog when
-  // scrolled. The dialog inside uses content-space coordinates (includes scrollTop
-  // offset) so it stays pinned next to the time entry row.
+  // Editor uses absolute positioning relative to the page container
+  // (position: relative on tracking-timer-page). Anchor coordinates are
+  // page-relative so the editor scrolls with window scroll natively.
   return (
     <div
-      className="pointer-events-none absolute left-0 top-0 z-40"
-      data-testid="time-entry-editor-layer"
+      className="absolute z-40 w-[440px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+      data-testid="time-entry-editor-dialog"
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="time-entry-editor-title"
+      style={position}
     >
-      <div
-        className="pointer-events-auto absolute max-h-[calc(100vh-32px)] w-[440px] overflow-visible rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-4 pt-4 shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
-        data-testid="time-entry-editor-dialog"
-        role="dialog"
-        aria-modal="false"
-        aria-labelledby="time-entry-editor-title"
-        style={position}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div className="relative flex items-center gap-3">
+      <div className="flex items-center justify-between gap-4">
+        <div className="relative flex items-center gap-3">
+          <button
+            aria-label={
+              primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
+            }
+            data-testid="time-entry-editor-primary-action"
+            className={`flex size-9 items-center justify-center rounded-full transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${
+              primaryActionIcon === "stop"
+                ? "bg-[#e07000] text-white"
+                : "bg-[#c67abc] text-[#241d24]"
+            }`}
+            disabled={!onPrimaryAction || isPrimaryActionPending}
+            onClick={onPrimaryAction}
+            type="button"
+          >
+            {primaryActionIcon === "stop" ? (
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <rect width="14" height="14" rx="2" fill="currentColor" />
+              </svg>
+            ) : (
+              <PlayIcon className="size-4" />
+            )}
+          </button>
+          {canDuplicate ? (
             <button
-              aria-label={
-                primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
-              }
-              data-testid="time-entry-editor-primary-action"
-              className={`flex size-9 items-center justify-center rounded-full transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${
-                primaryActionIcon === "stop"
-                  ? "bg-[#e07000] text-white"
-                  : "bg-[#c67abc] text-[#241d24]"
-              }`}
-              disabled={!onPrimaryAction || isPrimaryActionPending}
-              onClick={onPrimaryAction}
+              aria-label="Duplicate entry"
+              className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+              disabled={isDirty}
+              onClick={() => {
+                void onDuplicate?.();
+              }}
               type="button"
             >
-              {primaryActionIcon === "stop" ? (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <rect width="14" height="14" rx="2" fill="currentColor" />
-                </svg>
-              ) : (
-                <TrackingIcon className="size-4" name={primaryActionIcon} />
-              )}
+              <svg
+                aria-hidden="true"
+                fill="currentColor"
+                fillRule="evenodd"
+                height="16"
+                viewBox="0 0 16 16"
+                width="16"
+              >
+                <path d="M10.998 4C11.55 4 12 4.456 12 5.002v9.996C12 15.55 11.544 16 10.998 16H1.002A1.007 1.007 0 010 14.998V5.002C0 4.45.456 4 1.002 4h9.996zM10 6H2v8h8V6zm5-6l.117.007A.998.998 0 0116 1l-.007-.114.007.116v9.996c0 .546-.448 1.002-1 1.002l-.117-.007a.999.999 0 01-.883-.995V2H5.002c-.507 0-.936-.386-.995-.883L4 1c0-.556.449-1 1.002-1H15z" />
+              </svg>
             </button>
-            {canDuplicate ? (
-              <button
-                aria-label="Duplicate entry"
-                className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
-                disabled={isDirty}
+          ) : null}
+          <button
+            aria-label="Entry actions"
+            className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
+            onClick={() => setActionsMenuOpen((current) => !current)}
+            type="button"
+          >
+            <MoreIcon className="size-4" />
+          </button>
+          {actionsMenuOpen ? (
+            <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
+              <ActionMenuButton
+                disabled={!onSplit}
+                label="Split"
                 onClick={() => {
-                  void onDuplicate?.();
+                  setActionsMenuOpen(false);
+                  void onSplit?.();
+                }}
+              />
+              <ActionMenuButton
+                disabled={!onFavorite}
+                label="Pin as favorite"
+                onClick={() => {
+                  setActionsMenuOpen(false);
+                  void onFavorite?.();
+                }}
+              />
+              {selectedProjectId ? (
+                <a
+                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4"
+                  href={`/projects/${currentWorkspaceId}/list`}
+                  onClick={() => setActionsMenuOpen(false)}
+                >
+                  Go to project
+                </a>
+              ) : null}
+              <ActionMenuButton
+                label="Copy start link"
+                onClick={() => {
+                  setActionsMenuOpen(false);
+                  void copyToClipboard(
+                    typeof window === "undefined"
+                      ? (entry.start ?? "")
+                      : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
+                  );
+                }}
+              />
+              {description.trim() ? (
+                <ActionMenuButton
+                  label="Copy description"
+                  onClick={() => {
+                    setActionsMenuOpen(false);
+                    void copyToClipboard(description.trim());
+                  }}
+                />
+              ) : null}
+              <button
+                aria-label="Delete entry"
+                className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#ffb4aa] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!onDelete || isDeleting}
+                onClick={() => {
+                  setActionsMenuOpen(false);
+                  void onDelete?.();
                 }}
                 type="button"
               >
-                <svg
-                  aria-hidden="true"
-                  fill="currentColor"
-                  fillRule="evenodd"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  width="16"
-                >
-                  <path d="M10.998 4C11.55 4 12 4.456 12 5.002v9.996C12 15.55 11.544 16 10.998 16H1.002A1.007 1.007 0 010 14.998V5.002C0 4.45.456 4 1.002 4h9.996zM10 6H2v8h8V6zm5-6l.117.007A.998.998 0 0116 1l-.007-.114.007.116v9.996c0 .546-.448 1.002-1 1.002l-.117-.007a.999.999 0 01-.883-.995V2H5.002c-.507 0-.936-.386-.995-.883L4 1c0-.556.449-1 1.002-1H15z" />
-                </svg>
+                {isDeleting ? "Deleting..." : "Delete entry"}
               </button>
-            ) : null}
-            <button
-              aria-label="Entry actions"
-              className="flex size-8 items-center justify-center rounded-full text-[#ededf0] transition hover:bg-white/6"
-              onClick={() => setActionsMenuOpen((current) => !current)}
-              type="button"
-            >
-              <TrackingIcon className="size-4" name="more" />
-            </button>
-            {actionsMenuOpen ? (
-              <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]">
-                <ActionMenuButton
-                  disabled={!onSplit}
-                  label="Split"
-                  onClick={() => {
-                    setActionsMenuOpen(false);
-                    void onSplit?.();
-                  }}
-                />
-                <ActionMenuButton
-                  disabled={!onFavorite}
-                  label="Pin as favorite"
-                  onClick={() => {
-                    setActionsMenuOpen(false);
-                    void onFavorite?.();
-                  }}
-                />
-                {selectedProjectId ? (
-                  <a
-                    className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#d8d8dc] transition hover:bg-white/4"
-                    href={`/projects/${currentWorkspaceId}/list`}
-                    onClick={() => setActionsMenuOpen(false)}
-                  >
-                    Go to project
-                  </a>
-                ) : null}
-                <ActionMenuButton
-                  label="Copy start link"
-                  onClick={() => {
-                    setActionsMenuOpen(false);
-                    void copyToClipboard(
-                      typeof window === "undefined"
-                        ? (entry.start ?? "")
-                        : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
-                    );
-                  }}
-                />
-                {description.trim() ? (
-                  <ActionMenuButton
-                    label="Copy description"
-                    onClick={() => {
-                      setActionsMenuOpen(false);
-                      void copyToClipboard(description.trim());
-                    }}
-                  />
-                ) : null}
+            </div>
+          ) : null}
+        </div>
+        <button
+          aria-label="Close editor"
+          className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[#b9b9be] transition hover:bg-white/6 hover:text-white"
+          onClick={() => {
+            if (isDirty) {
+              setShowDiscardConfirmation(true);
+              return;
+            }
+            onClose();
+          }}
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="mt-5">
+        <div
+          className="absolute right-5 top-[72px] z-0 h-0 w-[140px]"
+          data-testid={timeEditor != null ? "time-entry-editor-active-time-edit" : undefined}
+        />
+        <label className="block">
+          <span className="sr-only">Time entry description</span>
+          <input
+            aria-label="Time entry description"
+            className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[#8f8f95]"
+            id="time-entry-editor-title"
+            onBlur={() => {
+              window.setTimeout(() => setDescriptionSuggestionsOpen(false), 120);
+            }}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onDescriptionChange(event.target.value)
+            }
+            onFocus={() => setDescriptionSuggestionsOpen(true)}
+            placeholder="Add a description"
+            value={description}
+          />
+        </label>
+        {descriptionSuggestionsOpen &&
+        descriptionMode !== "default" &&
+        !timeEditor &&
+        timePicker == null ? (
+          <DescriptionSuggestionsSurface
+            currentWorkspaceName={currentWorkspaceName}
+            entryDescription={description}
+            entryMode={descriptionMode}
+            onBillableToggle={() => {
+              onBillableToggle?.();
+              if (descriptionMode === "billable") {
+                onDescriptionChange("");
+              }
+              setDescriptionSuggestionsOpen(false);
+            }}
+            onProjectSelect={(projectId) => {
+              onProjectSelect(projectId);
+              if (descriptionMode === "project") {
+                onDescriptionChange("");
+              }
+              setDescriptionSuggestionsOpen(false);
+            }}
+            onSuggestionEntrySelect={(suggestion) => {
+              onSuggestionEntrySelect?.(suggestion);
+              setDescriptionSuggestionsOpen(false);
+            }}
+            onTagSelect={(tagId) => {
+              onTagToggle(tagId);
+              if (descriptionMode === "tag") {
+                onDescriptionChange("");
+              }
+              setDescriptionSuggestionsOpen(false);
+            }}
+            projects={filteredProjects}
+            suggestionEntries={suggestionEntries}
+            tags={filteredTags}
+          />
+        ) : null}
+
+        <div className="relative mt-5">
+          <div className="flex items-center gap-4 text-[#a9a9ae]">
+            <PickerButton
+              active={picker === "project"}
+              ariaLabel="Select project"
+              icon="projects"
+              label={selectedProject?.name}
+              onClick={() => {
+                setSearch("");
+                setPicker((current) => (current === "project" ? null : "project"));
+              }}
+              toneColor={selectedProject?.color}
+              variant={selectedProject ? "project" : "icon"}
+            />
+            <PickerButton
+              active={picker === "tag"}
+              ariaLabel="Select tags"
+              icon="tags"
+              label={resolveTagTriggerLabel(selectedTags)}
+              onClick={() => {
+                setSearch("");
+                setPicker((current) => (current === "tag" ? null : "tag"));
+              }}
+              toneColor="#d58ad4"
+              variant={selectedTags.length > 0 ? "tag" : "icon"}
+            />
+            <PickerButton
+              active={entry.billable === true}
+              ariaLabel="Billable"
+              ariaPressed={entry.billable === true}
+              icon="dollar"
+              onClick={onBillableToggle}
+              toneColor="#e57bd9"
+            />
+          </div>
+
+          {picker === "project" ? (
+            <PickerSurface
+              action={
                 <button
-                  aria-label="Delete entry"
-                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[#ffb4aa] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!onDelete || isDeleting}
-                  onClick={() => {
-                    setActionsMenuOpen(false);
-                    void onDelete?.();
-                  }}
+                  className="text-[14px] font-medium text-white"
+                  onClick={() => setWorkspaceMenuOpen((current) => !current)}
                   type="button"
                 >
-                  {isDeleting ? "Deleting..." : "Delete entry"}
+                  Change &rsaquo;
                 </button>
-              </div>
-            ) : null}
-          </div>
-          <button
-            aria-label="Close editor"
-            className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[#b9b9be] transition hover:bg-white/6 hover:text-white"
-            onClick={() => {
-              if (isDirty) {
-                setShowDiscardConfirmation(true);
-                return;
               }
-              onClose();
-            }}
-            type="button"
-          >
-            ×
-          </button>
+              icon="projects"
+              title={currentWorkspaceName}
+            >
+              {workspaceMenuOpen ? (
+                <div className="px-4 pb-2">
+                  <div className="rounded-[10px] border border-[#3d3d42] bg-[#242426] py-2 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
+                    {workspaces.map((workspace) => (
+                      <button
+                        className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
+                          workspace.id === currentWorkspaceId ? "text-white" : "text-[#c9c9ce]"
+                        }`}
+                        key={workspace.id}
+                        onClick={() => {
+                          onWorkspaceSelect(workspace.id);
+                          setWorkspaceMenuOpen(false);
+                          setPicker(null);
+                        }}
+                        type="button"
+                      >
+                        <span className="truncate">{workspace.name}</span>
+                        {workspace.id === currentWorkspaceId ? (
+                          <span className="text-[12px] text-[#efc2ea]">Current</span>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              <SearchField
+                placeholder="Search by project, task or client"
+                value={search}
+                onChange={setSearch}
+              />
+              <button
+                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[#d8d8dc] transition hover:bg-white/4"
+                onClick={() => {
+                  onProjectSelect(null);
+                  setPicker(null);
+                }}
+                type="button"
+              >
+                <ProjectsIcon className="size-5 text-[#b8b8bc]" />
+                <span>No Project</span>
+              </button>
+              <div className="px-4 pt-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
+                Projects
+              </div>
+              <div className="max-h-[340px] overflow-y-auto px-1 py-2">
+                {filteredProjects.map((project) => (
+                  <button
+                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
+                    key={project.id}
+                    onClick={() => {
+                      onProjectSelect(project.id);
+                      setPicker(null);
+                    }}
+                    type="button"
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    <div className="min-w-0">
+                      <div className="truncate text-[16px] font-medium text-white">
+                        {project.name}
+                      </div>
+                      <div className="truncate text-[12px] text-[#8f8f95]">
+                        {project.clientName || "No client"}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              {projectComposerOpen ? (
+                <form
+                  className="border-t border-white/6 px-4 pb-1 pt-3"
+                  onSubmit={(event) => {
+                    void (async () => {
+                      event.preventDefault();
+                      const trimmed = projectDraftName.trim();
+                      if (!trimmed || isCreatingProject) {
+                        return;
+                      }
+                      setProjectCreateError(null);
+                      try {
+                        await onCreateProject(trimmed, projectDraftColor);
+                        setProjectDraftName("");
+                        setProjectDraftColor(DEFAULT_PROJECT_COLOR);
+                        setProjectColorPickerOpen(false);
+                        setProjectComposerOpen(false);
+                        setSearch("");
+                      } catch (err) {
+                        const message =
+                          err instanceof Error ? err.message : "Project name already exists";
+                        setProjectCreateError(
+                          message.toLowerCase().includes("name")
+                            ? message
+                            : "Project name already exists",
+                        );
+                      }
+                    })();
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <button
+                        aria-label="Select project color"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#5d5d62] bg-[#262628]"
+                        onClick={() => setProjectColorPickerOpen((current) => !current)}
+                        type="button"
+                      >
+                        <span
+                          className="size-5 rounded-full border border-black/20"
+                          style={{ backgroundColor: projectDraftColor }}
+                        />
+                      </button>
+                      {projectColorPickerOpen ? (
+                        <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+                          {TRACK_COLOR_SWATCHES.map((option) => (
+                            <button
+                              aria-label={`Select color ${option}`}
+                              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                                projectDraftColor === option
+                                  ? "border-white/80 bg-white/8"
+                                  : "border-transparent hover:border-white/25"
+                              }`}
+                              key={option}
+                              onClick={() => {
+                                setProjectDraftColor(option);
+                                setProjectColorPickerOpen(false);
+                              }}
+                              type="button"
+                            >
+                              <span
+                                className="h-5 w-5 rounded-full border border-black/20"
+                                style={{ backgroundColor: option }}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <input
+                      className={`h-10 flex-1 rounded-[10px] border bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096] ${
+                        projectCreateError ? "border-rose-400" : "border-[#5d5d62]"
+                      }`}
+                      onChange={(event) => {
+                        setProjectDraftName(event.target.value);
+                        setProjectCreateError(null);
+                      }}
+                      placeholder="Project name"
+                      value={projectDraftName}
+                    />
+                    <button
+                      className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
+                      disabled={isCreatingProject || projectDraftName.trim().length === 0}
+                      type="submit"
+                    >
+                      {isCreatingProject ? "Creating..." : "Create"}
+                    </button>
+                  </div>
+                  {projectCreateError ? (
+                    <p className="mt-1.5 text-[12px] text-rose-400">{projectCreateError}</p>
+                  ) : null}
+                </form>
+              ) : (
+                <div className="border-t border-white/6 px-4 pb-1 pt-3">
+                  <button
+                    className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
+                    onClick={() => {
+                      setProjectDraftName(search.trim());
+                      setProjectComposerOpen(true);
+                    }}
+                    type="button"
+                  >
+                    <span className="text-[22px] leading-none">+</span>
+                    <span>Create a new project</span>
+                  </button>
+                </div>
+              )}
+            </PickerSurface>
+          ) : null}
+
+          {picker === "tag" ? (
+            <PickerSurface icon="tags" title="Tags">
+              <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
+              <div className="max-h-[340px] overflow-y-auto px-1 py-2">
+                {filteredTags.map((tag) => {
+                  const selected = selectedTagIds.includes(tag.id);
+
+                  return (
+                    <button
+                      className={`flex w-full items-center justify-between rounded-[10px] px-4 py-3 text-left transition ${
+                        selected ? "bg-[#3f3040] text-white" : "hover:bg-white/4 text-[#d8d8dc]"
+                      }`}
+                      key={tag.id}
+                      onClick={() => onTagToggle(tag.id)}
+                      type="button"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <TagsIcon className="size-4 shrink-0 text-[#cf8dcc]" />
+                        <span className="truncate text-[15px]">{tag.name}</span>
+                      </div>
+                      {selected ? (
+                        <span className="text-[12px] text-[#efc2ea]">Selected</span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+              {tagComposerOpen ? (
+                <form
+                  className="border-t border-white/6 px-4 pb-1 pt-3"
+                  onSubmit={(event) => {
+                    void (async () => {
+                      event.preventDefault();
+                      const trimmed = tagDraftName.trim();
+                      if (!trimmed || isCreatingTag) {
+                        return;
+                      }
+                      await onCreateTag(trimmed);
+                      setTagDraftName("");
+                      setTagComposerOpen(false);
+                      setSearch("");
+                    })();
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      className="h-10 flex-1 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096]"
+                      onChange={(event) => setTagDraftName(event.target.value)}
+                      placeholder="Tag name"
+                      value={tagDraftName}
+                    />
+                    <button
+                      className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
+                      disabled={isCreatingTag || tagDraftName.trim().length === 0}
+                      type="submit"
+                    >
+                      {isCreatingTag ? "Creating..." : "Create"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="border-t border-white/6 px-4 pb-1 pt-3">
+                  <button
+                    className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
+                    onClick={() => {
+                      setTagDraftName(search.trim());
+                      setTagComposerOpen(true);
+                    }}
+                    type="button"
+                  >
+                    <span className="text-[22px] leading-none">+</span>
+                    <span>Create a new tag</span>
+                  </button>
+                </div>
+              )}
+            </PickerSurface>
+          ) : null}
         </div>
 
         <div className="mt-5">
-          <div
-            className="absolute right-5 top-[72px] z-0 h-0 w-[140px]"
-            data-testid={timeEditor != null ? "time-entry-editor-active-time-edit" : undefined}
-          />
-          <label className="block">
-            <span className="sr-only">Time entry description</span>
-            <input
-              aria-label="Time entry description"
-              className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[#8f8f95]"
-              id="time-entry-editor-title"
-              onBlur={() => {
-                window.setTimeout(() => setDescriptionSuggestionsOpen(false), 120);
-              }}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                onDescriptionChange(event.target.value)
-              }
-              onFocus={() => setDescriptionSuggestionsOpen(true)}
-              placeholder="Add a description"
-              value={description}
-            />
-          </label>
-          {descriptionSuggestionsOpen &&
-          descriptionMode !== "default" &&
-          !timeEditor &&
-          timePicker == null ? (
-            <DescriptionSuggestionsSurface
-              currentWorkspaceName={currentWorkspaceName}
-              entryDescription={description}
-              entryMode={descriptionMode}
-              onBillableToggle={() => {
-                onBillableToggle?.();
-                if (descriptionMode === "billable") {
-                  onDescriptionChange("");
-                }
-                setDescriptionSuggestionsOpen(false);
-              }}
-              onProjectSelect={(projectId) => {
-                onProjectSelect(projectId);
-                if (descriptionMode === "project") {
-                  onDescriptionChange("");
-                }
-                setDescriptionSuggestionsOpen(false);
-              }}
-              onSuggestionEntrySelect={(suggestion) => {
-                onSuggestionEntrySelect?.(suggestion);
-                setDescriptionSuggestionsOpen(false);
-              }}
-              onTagSelect={(tagId) => {
-                onTagToggle(tagId);
-                if (descriptionMode === "tag") {
-                  onDescriptionChange("");
-                }
-                setDescriptionSuggestionsOpen(false);
-              }}
-              projects={filteredProjects}
-              suggestionEntries={suggestionEntries}
-              tags={filteredTags}
-            />
-          ) : null}
-
-          <div className="relative mt-5">
-            <div className="flex items-center gap-4 text-[#a9a9ae]">
-              <PickerButton
-                active={picker === "project"}
-                ariaLabel="Select project"
-                icon="projects"
-                label={selectedProject?.name}
-                onClick={() => {
-                  setSearch("");
-                  setPicker((current) => (current === "project" ? null : "project"));
+          <div className="relative min-w-0 overflow-visible">
+            <div className="flex min-w-0 items-center gap-2">
+              <TimeDisplay
+                dialogRootTestId="time-entry-editor-dialog"
+                dateAriaLabel="Edit start date"
+                datePickerTriggerRef={startDatePickerTriggerRef}
+                editing={timeEditor === "start"}
+                hasError={timeInputError === "start"}
+                onDateClick={() => {
+                  setTimeEditor(null);
+                  setTimePicker("start");
                 }}
-                toneColor={selectedProject?.color}
-                variant={selectedProject ? "project" : "icon"}
-              />
-              <PickerButton
-                active={picker === "tag"}
-                ariaLabel="Select tags"
-                icon="tags"
-                label={resolveTagTriggerLabel(selectedTags)}
-                onClick={() => {
-                  setSearch("");
-                  setPicker((current) => (current === "tag" ? null : "tag"));
+                onEditEnd={() => {
+                  setTimeEditor(null);
                 }}
-                toneColor="#d58ad4"
-                variant={selectedTags.length > 0 ? "tag" : "icon"}
+                onEditStart={() => {
+                  setTimePicker(null);
+                  setTimeEditor("start");
+                }}
+                onTimeCommit={(value) => applyEditedTime("start", value)}
+                time={start}
+                timeAriaLabel="Edit start time"
+                timeValue={toTimeInputValue(start, timezone)}
+                timezone={timezone}
               />
-              <PickerButton
-                active={entry.billable === true}
-                ariaLabel="Billable"
-                ariaPressed={entry.billable === true}
-                icon="dollar"
-                onClick={onBillableToggle}
-                toneColor="#e57bd9"
-              />
-            </div>
-
-            {picker === "project" ? (
-              <PickerSurface
-                action={
-                  <button
-                    className="text-[14px] font-medium text-white"
-                    onClick={() => setWorkspaceMenuOpen((current) => !current)}
-                    type="button"
-                  >
-                    Change &rsaquo;
-                  </button>
-                }
-                icon="projects"
-                title={currentWorkspaceName}
+              <svg
+                aria-hidden="true"
+                className="shrink-0 text-[#606066]"
+                fill="none"
+                height="8"
+                viewBox="0 0 12 8"
+                width="15"
               >
-                {workspaceMenuOpen ? (
-                  <div className="px-4 pb-2">
-                    <div className="rounded-[10px] border border-[#3d3d42] bg-[#242426] py-2 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
-                      {workspaces.map((workspace) => (
-                        <button
-                          className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-                            workspace.id === currentWorkspaceId ? "text-white" : "text-[#c9c9ce]"
-                          }`}
-                          key={workspace.id}
-                          onClick={() => {
-                            onWorkspaceSelect(workspace.id);
-                            setWorkspaceMenuOpen(false);
-                            setPicker(null);
-                          }}
-                          type="button"
-                        >
-                          <span className="truncate">{workspace.name}</span>
-                          {workspace.id === currentWorkspaceId ? (
-                            <span className="text-[12px] text-[#efc2ea]">Current</span>
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-                <SearchField
-                  placeholder="Search by project, task or client"
-                  value={search}
-                  onChange={setSearch}
-                />
-                <button
-                  className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[#d8d8dc] transition hover:bg-white/4"
-                  onClick={() => {
-                    onProjectSelect(null);
-                    setPicker(null);
-                  }}
-                  type="button"
-                >
-                  <TrackingIcon className="size-5 text-[#b8b8bc]" name="projects" />
-                  <span>No Project</span>
-                </button>
-                <div className="px-4 pt-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#8a8a90]">
-                  Projects
-                </div>
-                <div className="max-h-[340px] overflow-y-auto px-1 py-2">
-                  {filteredProjects.map((project) => (
-                    <button
-                      className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
-                      key={project.id}
-                      onClick={() => {
-                        onProjectSelect(project.id);
-                        setPicker(null);
-                      }}
-                      type="button"
-                    >
-                      <span
-                        className="size-2.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      <div className="min-w-0">
-                        <div className="truncate text-[16px] font-medium text-white">
-                          {project.name}
-                        </div>
-                        <div className="truncate text-[12px] text-[#8f8f95]">
-                          {project.clientName || "No client"}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-                {projectComposerOpen ? (
-                  <form
-                    className="border-t border-white/6 px-4 pb-1 pt-3"
-                    onSubmit={(event) => {
-                      void (async () => {
-                        event.preventDefault();
-                        const trimmed = projectDraftName.trim();
-                        if (!trimmed || isCreatingProject) {
-                          return;
-                        }
-                        setProjectCreateError(null);
-                        try {
-                          await onCreateProject(trimmed, projectDraftColor);
-                          setProjectDraftName("");
-                          setProjectDraftColor(DEFAULT_PROJECT_COLOR);
-                          setProjectColorPickerOpen(false);
-                          setProjectComposerOpen(false);
-                          setSearch("");
-                        } catch (err) {
-                          const message =
-                            err instanceof Error ? err.message : "Project name already exists";
-                          setProjectCreateError(
-                            message.toLowerCase().includes("name")
-                              ? message
-                              : "Project name already exists",
-                          );
-                        }
-                      })();
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <button
-                          aria-label="Select project color"
-                          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#5d5d62] bg-[#262628]"
-                          onClick={() => setProjectColorPickerOpen((current) => !current)}
-                          type="button"
-                        >
-                          <span
-                            className="size-5 rounded-full border border-black/20"
-                            style={{ backgroundColor: projectDraftColor }}
-                          />
-                        </button>
-                        {projectColorPickerOpen ? (
-                          <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
-                            {TRACK_COLOR_SWATCHES.map((option) => (
-                              <button
-                                aria-label={`Select color ${option}`}
-                                className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                                  projectDraftColor === option
-                                    ? "border-white/80 bg-white/8"
-                                    : "border-transparent hover:border-white/25"
-                                }`}
-                                key={option}
-                                onClick={() => {
-                                  setProjectDraftColor(option);
-                                  setProjectColorPickerOpen(false);
-                                }}
-                                type="button"
-                              >
-                                <span
-                                  className="h-5 w-5 rounded-full border border-black/20"
-                                  style={{ backgroundColor: option }}
-                                />
-                              </button>
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                      <input
-                        className={`h-10 flex-1 rounded-[10px] border bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096] ${
-                          projectCreateError ? "border-rose-400" : "border-[#5d5d62]"
-                        }`}
-                        onChange={(event) => {
-                          setProjectDraftName(event.target.value);
-                          setProjectCreateError(null);
-                        }}
-                        placeholder="Project name"
-                        value={projectDraftName}
-                      />
-                      <button
-                        className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
-                        disabled={isCreatingProject || projectDraftName.trim().length === 0}
-                        type="submit"
-                      >
-                        {isCreatingProject ? "Creating..." : "Create"}
-                      </button>
-                    </div>
-                    {projectCreateError ? (
-                      <p className="mt-1.5 text-[12px] text-rose-400">{projectCreateError}</p>
-                    ) : null}
-                  </form>
-                ) : (
-                  <div className="border-t border-white/6 px-4 pb-1 pt-3">
-                    <button
-                      className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
-                      onClick={() => {
-                        setProjectDraftName(search.trim());
-                        setProjectComposerOpen(true);
-                      }}
-                      type="button"
-                    >
-                      <span className="text-[22px] leading-none">+</span>
-                      <span>Create a new project</span>
-                    </button>
-                  </div>
-                )}
-              </PickerSurface>
-            ) : null}
-
-            {picker === "tag" ? (
-              <PickerSurface icon="tags" title="Tags">
-                <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
-                <div className="max-h-[340px] overflow-y-auto px-1 py-2">
-                  {filteredTags.map((tag) => {
-                    const selected = selectedTagIds.includes(tag.id);
-
-                    return (
-                      <button
-                        className={`flex w-full items-center justify-between rounded-[10px] px-4 py-3 text-left transition ${
-                          selected ? "bg-[#3f3040] text-white" : "hover:bg-white/4 text-[#d8d8dc]"
-                        }`}
-                        key={tag.id}
-                        onClick={() => onTagToggle(tag.id)}
-                        type="button"
-                      >
-                        <div className="flex min-w-0 items-center gap-3">
-                          <TrackingIcon className="size-4 shrink-0 text-[#cf8dcc]" name="tags" />
-                          <span className="truncate text-[15px]">{tag.name}</span>
-                        </div>
-                        {selected ? (
-                          <span className="text-[12px] text-[#efc2ea]">Selected</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-                {tagComposerOpen ? (
-                  <form
-                    className="border-t border-white/6 px-4 pb-1 pt-3"
-                    onSubmit={(event) => {
-                      void (async () => {
-                        event.preventDefault();
-                        const trimmed = tagDraftName.trim();
-                        if (!trimmed || isCreatingTag) {
-                          return;
-                        }
-                        await onCreateTag(trimmed);
-                        setTagDraftName("");
-                        setTagComposerOpen(false);
-                        setSearch("");
-                      })();
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        className="h-10 flex-1 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-3 text-[14px] text-white outline-none placeholder:text-[#909096]"
-                        onChange={(event) => setTagDraftName(event.target.value)}
-                        placeholder="Tag name"
-                        value={tagDraftName}
-                      />
-                      <button
-                        className="rounded-[10px] bg-[#c67abc] px-4 py-2.5 text-[13px] font-semibold text-[#241d24] disabled:opacity-60"
-                        disabled={isCreatingTag || tagDraftName.trim().length === 0}
-                        type="submit"
-                      >
-                        {isCreatingTag ? "Creating..." : "Create"}
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="border-t border-white/6 px-4 pb-1 pt-3">
-                    <button
-                      className="flex items-center gap-3 text-[15px] font-medium text-[#e8d4e6]"
-                      onClick={() => {
-                        setTagDraftName(search.trim());
-                        setTagComposerOpen(true);
-                      }}
-                      type="button"
-                    >
-                      <span className="text-[22px] leading-none">+</span>
-                      <span>Create a new tag</span>
-                    </button>
-                  </div>
-                )}
-              </PickerSurface>
-            ) : null}
-          </div>
-
-          <div className="mt-5">
-            <div className="relative min-w-0 overflow-visible">
-              <div className="flex min-w-0 items-center gap-2">
+                <g fill="currentColor" fillRule="evenodd">
+                  <rect height="2" width="7" x="0" y="3" />
+                  <polygon points="7 8, 7 0, 12 4" />
+                </g>
+              </svg>
+              {stop ? (
                 <TimeDisplay
                   dialogRootTestId="time-entry-editor-dialog"
-                  dateAriaLabel="Edit start date"
-                  datePickerTriggerRef={startDatePickerTriggerRef}
-                  editing={timeEditor === "start"}
-                  hasError={timeInputError === "start"}
+                  dateAriaLabel="Edit stop date"
+                  datePickerTriggerRef={stopDatePickerTriggerRef}
+                  editing={timeEditor === "stop"}
+                  hasError={timeInputError === "stop"}
+                  hideDateButton
                   onDateClick={() => {
                     setTimeEditor(null);
-                    setTimePicker("start");
+                    setTimePicker("stop");
                   }}
                   onEditEnd={() => {
                     setTimeEditor(null);
                   }}
                   onEditStart={() => {
                     setTimePicker(null);
-                    setTimeEditor("start");
+                    setTimeEditor("stop");
                   }}
-                  onTimeCommit={(value) => applyEditedTime("start", value)}
-                  time={start}
-                  timeAriaLabel="Edit start time"
-                  timeValue={toTimeInputValue(start, timezone)}
+                  onTimeCommit={(value) => applyEditedTime("stop", value)}
+                  time={stop}
+                  timeAriaLabel="Edit stop time"
+                  timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
                   timezone={timezone}
                 />
-                <svg
-                  aria-hidden="true"
-                  className="shrink-0 text-[#606066]"
-                  fill="none"
-                  height="8"
-                  viewBox="0 0 12 8"
-                  width="15"
-                >
-                  <g fill="currentColor" fillRule="evenodd">
-                    <rect height="2" width="7" x="0" y="3" />
-                    <polygon points="7 8, 7 0, 12 4" />
-                  </g>
-                </svg>
-                {stop ? (
-                  <TimeDisplay
-                    dialogRootTestId="time-entry-editor-dialog"
-                    dateAriaLabel="Edit stop date"
-                    datePickerTriggerRef={stopDatePickerTriggerRef}
-                    editing={timeEditor === "stop"}
-                    hasError={timeInputError === "stop"}
-                    hideDateButton
-                    onDateClick={() => {
-                      setTimeEditor(null);
-                      setTimePicker("stop");
-                    }}
-                    onEditEnd={() => {
-                      setTimeEditor(null);
-                    }}
-                    onEditStart={() => {
-                      setTimePicker(null);
-                      setTimeEditor("stop");
-                    }}
-                    onTimeCommit={(value) => applyEditedTime("stop", value)}
-                    time={stop}
-                    timeAriaLabel="Edit stop time"
-                    timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
-                    timezone={timezone}
-                  />
-                ) : (
-                  <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[#606066] px-3 text-[14px] font-semibold tabular-nums text-[#606066]">
-                    Running
-                  </span>
-                )}
-                <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[#b7b7bc]">
-                  {duration}
+              ) : (
+                <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[#606066] px-3 text-[14px] font-semibold tabular-nums text-[#606066]">
+                  Running
                 </span>
-                <button
-                  className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[#c67abc] px-5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={isSaving}
-                  onClick={() => {
-                    if (!isSaving) {
-                      void onSave();
-                    }
-                  }}
-                  type="button"
-                >
-                  {isSaving
-                    ? isNewEntry
-                      ? "Adding..."
-                      : "Saving..."
-                    : isNewEntry
-                      ? "Add"
-                      : "Save"}
-                </button>
-              </div>
-
-              {timePicker &&
-              (timePicker === "start"
-                ? startDatePickerTriggerRef.current
-                : stopDatePickerTriggerRef.current)
-                ? createPortal(
-                    <div
-                      className="absolute z-50"
-                      style={{
-                        left:
-                          (timePicker === "start"
-                            ? startDatePickerTriggerRef.current
-                            : stopDatePickerTriggerRef.current
-                          )?.getBoundingClientRect().left ?? 0,
-                        top:
-                          ((timePicker === "start"
-                            ? startDatePickerTriggerRef.current
-                            : stopDatePickerTriggerRef.current
-                          )?.getBoundingClientRect().top ?? 0) +
-                          ((timePicker === "start"
-                            ? startDatePickerTriggerRef.current
-                            : stopDatePickerTriggerRef.current
-                          )?.getBoundingClientRect().height ?? 0) +
-                          8,
-                      }}
-                    >
-                      <CalendarPanel
-                        date={timePicker === "start" ? start : stop!}
-                        onClose={() => setTimePicker(null)}
-                        onSelect={(nextDate) => {
-                          if (timePicker === "start") {
-                            onStartTimeChange(nextDate);
-                          } else {
-                            onStopTimeChange(nextDate);
-                          }
-                          setTimePicker(null);
-                        }}
-                        testId={`time-entry-editor-${timePicker}-date-picker`}
-                      />
-                    </div>,
-                    document.body,
-                  )
-                : null}
+              )}
+              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[#b7b7bc]">
+                {duration}
+              </span>
+              <button
+                className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[#c67abc] px-5 text-[14px] font-semibold text-[#241d24] transition hover:bg-[#d38bca] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isSaving}
+                onClick={() => {
+                  if (!isSaving) {
+                    void onSave();
+                  }
+                }}
+                type="button"
+              >
+                {isSaving ? (isNewEntry ? "Adding..." : "Saving...") : isNewEntry ? "Add" : "Save"}
+              </button>
             </div>
-          </div>
 
-          {saveError ? <p className="mt-4 text-sm text-rose-300">{saveError}</p> : null}
+            {/* Date picker renders inline (not portaled) since all ancestors
+                  are overflow:visible. Absolute positioning below the trigger. */}
+            {timePicker ? (
+              <div
+                className="absolute left-0 z-50"
+                style={{ top: "calc(100% + 8px)" }}
+                data-testid={`time-entry-editor-${timePicker}-date-picker`}
+              >
+                <CalendarPanel
+                  date={timePicker === "start" ? start : stop!}
+                  onClose={() => setTimePicker(null)}
+                  onSelect={(nextDate) => {
+                    if (timePicker === "start") {
+                      onStartTimeChange(nextDate);
+                    } else {
+                      onStopTimeChange(nextDate);
+                    }
+                    setTimePicker(null);
+                  }}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {showDiscardConfirmation ? (
-          <div
-            className="absolute inset-0 z-30 flex items-center justify-center rounded-[14px] bg-[rgba(15,15,16,0.82)] px-6"
-            data-testid="time-entry-editor-discard-confirmation"
-          >
-            <div className="w-full max-w-[280px] rounded-[14px] border border-[#4a4a50] bg-[#242426] p-4 shadow-[0_16px_32px_rgba(0,0,0,0.38)]">
-              <h3 className="text-[16px] font-semibold text-white">Discard changes?</h3>
-              <p className="mt-2 text-[13px] text-[#c0c0c5]">
-                You have unsaved changes in this time entry. Discard them before closing?
-              </p>
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  className="rounded-[10px] border border-[#5d5d62] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
-                  onClick={() => setShowDiscardConfirmation(false)}
-                  type="button"
-                >
-                  Keep editing
-                </button>
-                <button
-                  className="rounded-[10px] bg-[#ff7a66] px-3 py-2 text-[13px] font-semibold text-[#241d24] transition hover:brightness-110"
-                  onClick={() => {
-                    setShowDiscardConfirmation(false);
-                    onDiscard?.();
-                    onClose();
-                  }}
-                  type="button"
-                >
-                  Discard
-                </button>
-              </div>
+        {saveError ? <p className="mt-4 text-sm text-rose-300">{saveError}</p> : null}
+      </div>
+
+      {showDiscardConfirmation ? (
+        <div
+          className="absolute inset-0 z-30 flex items-center justify-center rounded-[14px] bg-[rgba(15,15,16,0.82)] px-6"
+          data-testid="time-entry-editor-discard-confirmation"
+        >
+          <div className="w-full max-w-[280px] rounded-[14px] border border-[#4a4a50] bg-[#242426] p-4 shadow-[0_16px_32px_rgba(0,0,0,0.38)]">
+            <h3 className="text-[16px] font-semibold text-white">Discard changes?</h3>
+            <p className="mt-2 text-[13px] text-[#c0c0c5]">
+              You have unsaved changes in this time entry. Discard them before closing?
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                className="rounded-[10px] border border-[#5d5d62] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
+                onClick={() => setShowDiscardConfirmation(false)}
+                type="button"
+              >
+                Keep editing
+              </button>
+              <button
+                className="rounded-[10px] bg-[#ff7a66] px-3 py-2 text-[13px] font-semibold text-[#241d24] transition hover:brightness-110"
+                onClick={() => {
+                  setShowDiscardConfirmation(false);
+                  onDiscard?.();
+                  onClose();
+                }}
+                type="button"
+              >
+                Discard
+              </button>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1096,7 +1069,7 @@ function DescriptionSuggestionsSurface({
             type="button"
           >
             <span>Billable hours</span>
-            <TrackingIcon className="size-4 text-[#d58ad4]" name="dollar" />
+            <DollarIcon className="size-4 text-[#d58ad4]" />
           </button>
         </div>
       ) : null}
@@ -1161,7 +1134,7 @@ function DescriptionSuggestionsSurface({
                 onClick={() => onTagSelect(tag.id)}
                 type="button"
               >
-                <TrackingIcon className="size-4 shrink-0 text-[#cf8dcc]" name="tags" />
+                <TagsIcon className="size-4 shrink-0 text-[#cf8dcc]" />
                 <span className="truncate text-[14px] font-medium text-white">{tag.name}</span>
               </button>
             ))}
@@ -1206,7 +1179,7 @@ function PickerButton({
   active?: boolean;
   ariaLabel: string;
   ariaPressed?: boolean;
-  icon: "dollar" | "projects" | "subscription" | "tags";
+  icon: Extract<IconName, "dollar" | "projects" | "subscription" | "tags">;
   label?: string;
   onClick?: () => void;
   toneColor?: string;
@@ -1256,7 +1229,7 @@ function PickerButton({
           />
         </svg>
       ) : (
-        <TrackingIcon className={selected ? "size-5 shrink-0" : "size-5"} name={icon} />
+        <DynamicIcon className={selected ? "size-5 shrink-0" : "size-5"} name={icon} />
       )}
       {label ? <span className="min-w-0 truncate">{label}</span> : null}
     </button>
@@ -1271,14 +1244,14 @@ function PickerSurface({
 }: {
   action?: ReactNode;
   children: ReactNode;
-  icon: "projects" | "tags";
+  icon: Extract<IconName, "projects" | "tags">;
   title: string;
 }): ReactElement {
   return (
     <div className="absolute -left-2 top-8 z-10 w-[360px] rounded-[12px] border border-[#3d3d42] bg-[#1f1f20] py-3 shadow-[0_14px_32px_rgba(0,0,0,0.34)]">
       <div className="flex items-center justify-between px-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
-          <TrackingIcon className="size-4 shrink-0 text-[#bdbdc2]" name={icon} />
+          <DynamicIcon className="size-4 shrink-0 text-[#bdbdc2]" name={icon} />
           <span className="truncate text-[15px] font-semibold text-white">{title}</span>
         </div>
         {action ?? <span />}
@@ -1299,7 +1272,7 @@ function SearchField({
 }): ReactElement {
   return (
     <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[#5d5d62] bg-[#262628] px-4 py-2.5">
-      <TrackingIcon className="size-4 shrink-0 text-[#a1a1a6]" name="search" />
+      <SearchIcon className="size-4 shrink-0 text-[#a1a1a6]" />
       <input
         className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[#909096]"
         onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
@@ -1408,7 +1381,7 @@ function TimeDisplay({
           ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
           type="button"
         >
-          <TrackingIcon className="size-4" name="calendar" />
+          <CalendarIcon className="size-4" />
         </button>
       ) : null}
       {hasError ? (

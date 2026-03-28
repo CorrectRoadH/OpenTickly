@@ -2,6 +2,7 @@ import { AppInlineNotice, ShellSecondaryButton } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useEffect, useState } from "react";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
+import { CheckIcon, CopyIcon } from "../../shared/ui/icons.tsx";
 import {
   dateFormatOptions,
   durationFormatOptions,
@@ -333,32 +334,9 @@ function ApiTokenCopyButton(props: { token: string }): ReactElement {
       type="button"
     >
       {copied ? (
-        <svg
-          aria-hidden="true"
-          className="size-4"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          viewBox="0 0 16 16"
-        >
-          <path d="m4.5 8.2 2.2 2.2 4.8-4.8" />
-        </svg>
+        <CheckIcon className="size-4" strokeWidth="2" />
       ) : (
-        <svg
-          aria-hidden="true"
-          className="size-4"
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="1.7"
-          viewBox="0 0 16 16"
-        >
-          <rect x="5.3" y="3.3" width="7" height="8.2" rx="1.4" />
-          <path d="M4.3 10.7H4A1.5 1.5 0 0 1 2.5 9.2V4.8A1.5 1.5 0 0 1 4 3.3h4" />
-        </svg>
+        <CopyIcon className="size-4" />
       )}
     </button>
   );

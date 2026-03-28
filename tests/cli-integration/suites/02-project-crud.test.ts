@@ -36,10 +36,7 @@ describe("Story: project CRUD lifecycle", () => {
   });
 
   it("creates a project with custom color", async () => {
-    const result = await toggl(
-      ["project", "create", "Beta", "--color", "#ff0000"],
-      { user },
-    );
+    const result = await toggl(["project", "create", "Beta", "--color", "#ff0000"], { user });
     expect(result.exitCode).toBe(0);
 
     const projects = await togglJson<Project[]>(["project", "list"], { user });
@@ -54,10 +51,7 @@ describe("Story: project CRUD lifecycle", () => {
   });
 
   it("renames a project", async () => {
-    const result = await toggl(
-      ["project", "rename", "Alpha", "Gamma"],
-      { user },
-    );
+    const result = await toggl(["project", "rename", "Alpha", "Gamma"], { user });
     expect(result.exitCode).toBe(0);
 
     const projects = await togglJson<Project[]>(["project", "list"], { user });

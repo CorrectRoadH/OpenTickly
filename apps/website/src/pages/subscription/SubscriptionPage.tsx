@@ -1,16 +1,22 @@
 import type { ReactElement } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import {
+  ChevronRightIcon,
+  DynamicIcon,
+  SubscriptionIcon,
+  TrackIcon,
+  type IconName,
+} from "../../shared/ui/icons.tsx";
 import { useSession } from "../../shared/session/session-context.tsx";
 
-const includedFeatures = [
+const includedFeatures: { icon: IconName; label: string }[] = [
   { icon: "timer", label: "Unlimited time tracking" },
   { icon: "projects", label: "Unlimited projects" },
   { icon: "members", label: "Unlimited team members" },
   { icon: "reports", label: "Reports and analytics" },
   { icon: "goals", label: "Goals and favorites" },
   { icon: "integrations", label: "API access" },
-] as const;
+];
 
 export function SubscriptionPage(): ReactElement {
   const session = useSession();
@@ -35,7 +41,7 @@ export function SubscriptionPage(): ReactElement {
         >
           <div className="flex items-start gap-4">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-[10px] bg-[var(--track-accent)]">
-              <TrackingIcon className="size-6" name="subscription" />
+              <SubscriptionIcon className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
@@ -81,7 +87,7 @@ export function SubscriptionPage(): ReactElement {
             {includedFeatures.map((feature) => (
               <li className="flex items-center gap-3" key={feature.label}>
                 <div className="flex size-8 shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-                  <TrackingIcon className="size-4 text-[var(--track-accent)]" name={feature.icon} />
+                  <DynamicIcon className="size-4 text-[var(--track-accent)]" name={feature.icon} />
                 </div>
                 <span className="text-[14px] text-white">{feature.label}</span>
               </li>
@@ -95,7 +101,7 @@ export function SubscriptionPage(): ReactElement {
         >
           <div className="flex items-start gap-4">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-              <TrackingIcon className="size-5 text-[var(--track-accent)]" name="track" />
+              <TrackIcon className="size-5 text-[var(--track-accent)]" />
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="text-[16px] font-semibold leading-6 text-white">OpenToggl</h2>
@@ -111,7 +117,7 @@ export function SubscriptionPage(): ReactElement {
                 target="_blank"
               >
                 View on GitHub
-                <TrackingIcon className="size-3.5" name="chevron-right" />
+                <ChevronRightIcon className="size-3.5" />
               </a>
             </div>
           </div>

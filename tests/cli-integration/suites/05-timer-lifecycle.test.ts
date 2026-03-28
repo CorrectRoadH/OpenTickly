@@ -41,10 +41,7 @@ describe("Story: timer lifecycle", () => {
   });
 
   it("starts a timer", async () => {
-    const result = await toggl(
-      ["entry", "start", "-d", "Deep work"],
-      { user },
-    );
+    const result = await toggl(["entry", "start", "-d", "Deep work"], { user });
     expect(result.exitCode).toBe(0);
   });
 
@@ -65,18 +62,12 @@ describe("Story: timer lifecycle", () => {
   });
 
   it("lists entries and finds the stopped one", async () => {
-    const entries = await togglJson<TimeEntry[]>(
-      ["entry", "list"],
-      { user },
-    );
+    const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user });
     expect(entries.some((e) => e.description === "Deep work")).toBe(true);
   });
 
   it("continues the last entry", async () => {
-    const continued = await togglJson<TimeEntry>(
-      ["entry", "continue"],
-      { user },
-    );
+    const continued = await togglJson<TimeEntry>(["entry", "continue"], { user });
     expect(continued.description).toBe("Deep work");
     expect(continued.running ?? true).toBe(true);
   });
@@ -92,21 +83,13 @@ describe("Story: timer lifecycle", () => {
   });
 
   it("now has 2 Deep work entries", async () => {
-    const entries = await togglJson<TimeEntry[]>(
-      ["entry", "list"],
-      { user },
-    );
-    const deepWorkEntries = entries.filter(
-      (e) => e.description === "Deep work",
-    );
+    const entries = await togglJson<TimeEntry[]>(["entry", "list"], { user });
+    const deepWorkEntries = entries.filter((e) => e.description === "Deep work");
     expect(deepWorkEntries.length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows a specific entry by ID", async () => {
-    const entry = await togglJson<TimeEntry>(
-      ["entry", "show", String(firstEntryId)],
-      { user },
-    );
+    const entry = await togglJson<TimeEntry>(["entry", "show", String(firstEntryId)], { user });
     expect(entry.id).toBe(firstEntryId);
     expect(entry.description).toBe("Deep work");
   });
@@ -136,16 +119,10 @@ describe("Story: timer lifecycle", () => {
     });
 
     it("starts entry with project", async () => {
-      const result = await toggl(
-        ["entry", "start", "-d", "Project work", "-p", "Focus"],
-        { user },
-      );
+      const result = await toggl(["entry", "start", "-d", "Project work", "-p", "Focus"], { user });
       expect(result.exitCode).toBe(0);
 
-      const running = await togglJson<TimeEntry>(
-        ["entry", "running"],
-        { user },
-      );
+      const running = await togglJson<TimeEntry>(["entry", "running"], { user });
       expect(running.description).toBe("Project work");
       expect(running.project).toBeTruthy();
       expect(running.project!.name).toBe("Focus");
@@ -154,16 +131,10 @@ describe("Story: timer lifecycle", () => {
     });
 
     it("starts entry with billable flag", async () => {
-      const result = await toggl(
-        ["entry", "start", "-d", "Billable work", "--billable"],
-        { user },
-      );
+      const result = await toggl(["entry", "start", "-d", "Billable work", "--billable"], { user });
       expect(result.exitCode).toBe(0);
 
-      const running = await togglJson<TimeEntry>(
-        ["entry", "running"],
-        { user },
-      );
+      const running = await togglJson<TimeEntry>(["entry", "running"], { user });
       expect(running.description).toBe("Billable work");
       expect(running.billable).toBe(true);
 

@@ -31,10 +31,7 @@ describe("Story: workspace and organization management", () => {
   });
 
   it("lists at least one workspace", async () => {
-    const workspaces = await togglJson<Workspace[]>(
-      ["workspace", "list"],
-      { user },
-    );
+    const workspaces = await togglJson<Workspace[]>(["workspace", "list"], { user });
     expect(workspaces.length).toBeGreaterThanOrEqual(1);
     expect(workspaces.some((w) => w.id === user.workspaceId)).toBe(true);
   });
@@ -45,44 +42,29 @@ describe("Story: workspace and organization management", () => {
   });
 
   it("shows organization details by ID", async () => {
-    const org = await togglJson<Organization>(
-      ["org", "show", String(user.organizationId)],
-      { user },
-    );
+    const org = await togglJson<Organization>(["org", "show", String(user.organizationId)], {
+      user,
+    });
     expect(org.id).toBe(user.organizationId);
   });
 
   it("creates a new workspace", async () => {
     const result = await toggl(
-      [
-        "workspace",
-        "create",
-        String(user.organizationId),
-        "Side Project",
-      ],
+      ["workspace", "create", String(user.organizationId), "Side Project"],
       { user },
     );
     expect(result.exitCode).toBe(0);
 
-    const workspaces = await togglJson<Workspace[]>(
-      ["workspace", "list"],
-      { user },
-    );
+    const workspaces = await togglJson<Workspace[]>(["workspace", "list"], { user });
     expect(workspaces.some((w) => w.name === "Side Project")).toBe(true);
     expect(workspaces.length).toBeGreaterThanOrEqual(2);
   });
 
   it("renames a workspace", async () => {
-    const result = await toggl(
-      ["workspace", "rename", "Side Project", "Main Project"],
-      { user },
-    );
+    const result = await toggl(["workspace", "rename", "Side Project", "Main Project"], { user });
     expect(result.exitCode).toBe(0);
 
-    const workspaces = await togglJson<Workspace[]>(
-      ["workspace", "list"],
-      { user },
-    );
+    const workspaces = await togglJson<Workspace[]>(["workspace", "list"], { user });
     const names = workspaces.map((w) => w.name);
     expect(names).toContain("Main Project");
     expect(names).not.toContain("Side Project");

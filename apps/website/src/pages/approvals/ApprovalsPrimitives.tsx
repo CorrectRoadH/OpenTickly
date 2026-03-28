@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { CalendarIcon, ChevronRightIcon, MembersIcon } from "../../shared/ui/icons.tsx";
 
 export function WeekPicker({
   isCurrentWeek,
@@ -21,17 +21,13 @@ export function WeekPicker({
         onClick={onPrevious}
         type="button"
       >
-        <TrackingIcon
-          className="size-3"
-          name="chevron-right"
-          style={{ transform: "rotate(180deg)" }}
-        />
+        <ChevronRightIcon className="size-3" style={{ transform: "rotate(180deg)" }} />
       </button>
       <button
         className="flex h-7 items-center gap-1.5 rounded-[6px] border border-[var(--track-border)] px-3 text-[12px] text-white"
         type="button"
       >
-        <TrackingIcon className="size-3 text-[var(--track-text-muted)]" name="calendar" />
+        <CalendarIcon className="size-3 text-[var(--track-text-muted)]" />
         {isCurrentWeek ? "This week" : `Week ${weekNumber}`}
         <span className="text-[var(--track-text-muted)]">&middot;W{weekNumber}</span>
       </button>
@@ -41,7 +37,7 @@ export function WeekPicker({
         onClick={onNext}
         type="button"
       >
-        <TrackingIcon className="size-3" name="chevron-right" />
+        <ChevronRightIcon className="size-3" />
       </button>
     </div>
   );
@@ -53,7 +49,7 @@ export function FilterButton({ label }: { label: string }): ReactElement {
       className="flex h-7 items-center gap-1 rounded-[6px] border border-[var(--track-border)] px-3 text-[11px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
       type="button"
     >
-      <TrackingIcon className="size-3" name="members" />
+      <MembersIcon className="size-3" />
       {label}
     </button>
   );

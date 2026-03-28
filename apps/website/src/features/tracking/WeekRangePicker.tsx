@@ -1,6 +1,6 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
-import { TrackingIcon } from "./tracking-icons.tsx";
+import { CalendarIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import {
   buildMonthWeeks,
   formatDayLabel,
@@ -145,7 +145,7 @@ export function WeekRangePicker({
           }
           type="button"
         >
-          <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
+          <ChevronRightIcon className="size-3 rotate-180" />
         </button>
         <button
           aria-expanded={isOpen}
@@ -168,10 +168,7 @@ export function WeekRangePicker({
           ref={triggerRef}
           type="button"
         >
-          <TrackingIcon
-            className="size-4 shrink-0 text-[var(--track-text-muted)]"
-            name="calendar"
-          />
+          <CalendarIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
           <span className="truncate text-[13px] font-medium">
             {mode === "all-dates"
               ? "All dates"
@@ -189,7 +186,7 @@ export function WeekRangePicker({
           }
           type="button"
         >
-          <TrackingIcon className="size-3" name="chevron-right" />
+          <ChevronRightIcon className="size-3" />
         </button>
       </div>
 
@@ -274,7 +271,7 @@ export function WeekRangePicker({
                   }
                   type="button"
                 >
-                  <TrackingIcon className="size-3 rotate-180" name="chevron-right" />
+                  <ChevronRightIcon className="size-3 rotate-180" />
                 </button>
                 <h2 className="text-[16px] font-semibold text-white">
                   {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}{" "}
@@ -290,7 +287,7 @@ export function WeekRangePicker({
                   }
                   type="button"
                 >
-                  <TrackingIcon className="size-3" name="chevron-right" />
+                  <ChevronRightIcon className="size-3" />
                 </button>
               </div>
 

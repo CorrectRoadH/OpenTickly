@@ -45,10 +45,9 @@ describe("Story: user profile and preferences", () => {
   });
 
   it("toggl preferences update changes a preference", async () => {
-    const update = await toggl(
-      ["preferences", "update", '{"date_format": "DD/MM/YYYY"}'],
-      { user },
-    );
+    const update = await toggl(["preferences", "update", '{"date_format": "DD/MM/YYYY"}'], {
+      user,
+    });
     expect(update.exitCode).toBe(0);
   });
 

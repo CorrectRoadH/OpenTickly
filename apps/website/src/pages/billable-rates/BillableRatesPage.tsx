@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { DollarIcon, MembersIcon } from "../../shared/ui/icons.tsx";
 import type {
   ModelsRate,
   RatesCreationRequest,
@@ -168,7 +168,6 @@ export function BillableRatesPage(): ReactElement {
           <WorkspaceMemberRatesSection workspaceId={workspaceId} />
         </div>
       </div>
-
     </div>
   );
 }
@@ -178,7 +177,7 @@ function AboutBillableRatesSection(): ReactElement {
     <ShellSurfaceCard>
       <div className="flex gap-3 p-5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)]">
-          <TrackingIcon className="h-4 w-4 text-[var(--track-accent)]" name="dollar" />
+          <DollarIcon className="h-4 w-4 text-[var(--track-accent)]" />
         </div>
         <div>
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
@@ -221,7 +220,7 @@ function AboutLaborCostsSection(): ReactElement {
     <ShellSurfaceCard>
       <div className="flex gap-3 p-5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)]">
-          <TrackingIcon className="h-4 w-4 text-[var(--track-accent)]" name="members" />
+          <MembersIcon className="h-4 w-4 text-[var(--track-accent)]" />
         </div>
         <div>
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">

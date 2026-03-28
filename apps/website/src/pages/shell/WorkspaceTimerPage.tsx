@@ -33,7 +33,14 @@ import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDi
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import {
+  ManualModeIcon,
+  PlayIcon,
+  ProjectsIcon,
+  StopIcon,
+  TagsIcon,
+  TimerIcon,
+} from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
@@ -103,41 +110,6 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
     };
   }, []);
 
-  // When the calendar view's internal scroll container (.rbc-time-content)
-  // scrolls while the editor is open, we track the scroll delta and apply it
-  // to anchor.top. This keeps the editor pinned next to its time entry.
-  //
-  // KNOWN LIMITATION: this uses React state (setState on every scroll event)
-  // which introduces a ~1 frame delay vs Toggl's perfectly smooth scrolling.
-  // A better approach would be to render the editor inside .rbc-time-content
-  // via a React portal, so it scrolls natively with zero JS overhead.
-  // That requires careful integration with react-big-calendar's DOM lifecycle.
-  const [calendarScrollDelta, setCalendarScrollDelta] = useState(0);
-  const calendarScrollTopAtOpenRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (orch.view !== "calendar" || !orch.selectedEntryAnchor) {
-      calendarScrollTopAtOpenRef.current = null;
-      setCalendarScrollDelta(0);
-      return;
-    }
-
-    const scrollContainer = document.querySelector<HTMLElement>(".rbc-time-content");
-    if (!scrollContainer) return;
-
-    if (calendarScrollTopAtOpenRef.current === null) {
-      calendarScrollTopAtOpenRef.current = scrollContainer.scrollTop;
-    }
-
-    function handleScroll() {
-      if (calendarScrollTopAtOpenRef.current === null) return;
-      setCalendarScrollDelta(scrollContainer!.scrollTop - calendarScrollTopAtOpenRef.current);
-    }
-
-    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
-  }, [orch.view, !!orch.selectedEntryAnchor]); // only re-run when view changes or editor opens/closes
-
   const handleTimesheetAddRow = useCallback(
     (projectId: number | null) => {
       setTimesheetAddRowOpen(false);
@@ -202,10 +174,12 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
 
   return (
     <div
-      className="flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-[var(--track-surface)] text-white"
+      className="relative min-h-screen bg-[var(--track-surface)] text-white"
       data-testid="tracking-timer-page"
     >
-      <header className="shrink-0 border-b border-[var(--track-border)]">
+      {/* Timer header bar — sticky below the mobile top bar on small screens,
+          sticky at viewport top on desktop. Matches Toggl's sticky timer bar. */}
+      <header className="sticky top-0 z-20 border-b border-[var(--track-border)] bg-[var(--track-surface)]">
         <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
           <div className="min-w-0 flex-1">
             <label className="sr-only" htmlFor="timer-description">
@@ -354,7 +328,11 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
                   }}
                   type="button"
                 >
-                  <TrackingIcon className="size-5" name={orch.runningEntry ? "stop" : "play"} />
+                  {orch.runningEntry ? (
+                    <StopIcon className="size-5" />
+                  ) : (
+                    <PlayIcon className="size-5" />
+                  )}
                 </button>
               </>
             )}
@@ -378,10 +356,11 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
               }
               type="button"
             >
-              <TrackingIcon
-                className="size-3.5"
-                name={orch.timerInputMode === "automatic" ? "manual-mode" : "timer"}
-              />
+              {orch.timerInputMode === "automatic" ? (
+                <ManualModeIcon className="size-3.5" />
+              ) : (
+                <TimerIcon className="size-3.5" />
+              )}
             </button>
           </div>
         </div>
@@ -515,292 +494,277 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
           {orch.trackStrip.length > 0 ? <ProjectFilterStrip items={orch.trackStrip} /> : null}
         </div>
       </header>
-      <div className="flex min-h-0 flex-1">
-        <div
-          className={`relative min-h-0 flex-1 overflow-x-hidden ${
-            !orch.timeEntriesQuery.isPending &&
-            !orch.timeEntriesQuery.isError &&
-            orch.view === "calendar"
-              ? "overflow-y-hidden"
-              : "overflow-y-auto"
-          }`}
-          data-testid="tracking-timer-scroll-area"
-          ref={orch.scrollAreaRef as unknown as React.LegacyRef<HTMLDivElement>}
-        >
-          {orch.timeEntriesQuery.isPending ? (
-            <SurfaceMessage message="Loading time entries..." />
-          ) : null}
-          {orch.timeEntriesQuery.isError ? (
-            <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
-          ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "list" ? (
-            <ListView
-              groups={orch.groupedEntries}
-              nowMs={orch.nowMs}
-              onBulkDelete={(ids) => {
-                void orch.handleBulkDelete(ids);
-              }}
-              onBulkEdit={(ids, updates) => {
-                void orch.handleBulkEdit(ids, updates);
-              }}
-              onContinueEntry={(entry) => {
-                void orch.handleContinueEntry(entry);
-              }}
-              onDeleteEntry={(entry) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  const snapshot = snapshotEntryForUndo(entry);
-                  void orch.deleteTimeEntryMutation
-                    .mutateAsync({
-                      timeEntryId: entry.id,
-                      workspaceId: wid,
-                    })
-                    .then(() => {
-                      if (snapshot) showDeleteToast(snapshot);
-                    });
-                }
-              }}
-              onDuplicateEntry={(entry) => {
-                if (entry.start && entry.stop) {
-                  const durationSec = Math.round(
-                    (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
-                  );
-                  void orch.createTimeEntryMutation.mutateAsync({
-                    billable: entry.billable,
-                    description: (entry.description ?? "").trim(),
-                    duration: durationSec,
-                    projectId: entry.project_id ?? entry.pid ?? null,
-                    start: entry.start,
-                    stop: entry.stop,
-                    tagIds: entry.tag_ids ?? [],
-                    taskId: entry.task_id ?? entry.tid ?? null,
-                  });
-                }
-              }}
-              onEditEntry={orch.handleEntryEdit}
-              onFavoriteEntry={() => {
-                // Pin as favorite is handled through the editor dialog
-              }}
-              onBillableToggle={(entry) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { billable: !entry.billable },
+      {/* Content area — normal document flow, scrolls with window */}
+      <div>
+        {orch.timeEntriesQuery.isPending ? (
+          <SurfaceMessage message="Loading time entries..." />
+        ) : null}
+        {orch.timeEntriesQuery.isError ? (
+          <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
+        ) : null}
+        {!orch.timeEntriesQuery.isPending &&
+        !orch.timeEntriesQuery.isError &&
+        orch.view === "list" ? (
+          <ListView
+            groups={orch.groupedEntries}
+            nowMs={orch.nowMs}
+            onBulkDelete={(ids) => {
+              void orch.handleBulkDelete(ids);
+            }}
+            onBulkEdit={(ids, updates) => {
+              void orch.handleBulkEdit(ids, updates);
+            }}
+            onContinueEntry={(entry) => {
+              void orch.handleContinueEntry(entry);
+            }}
+            onDeleteEntry={(entry) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                const snapshot = snapshotEntryForUndo(entry);
+                void orch.deleteTimeEntryMutation
+                  .mutateAsync({
                     timeEntryId: entry.id,
                     workspaceId: wid,
+                  })
+                  .then(() => {
+                    if (snapshot) showDeleteToast(snapshot);
                   });
-                }
-              }}
-              onSplitEntry={undefined}
-              onProjectChange={(entry, projectId) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { projectId },
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
-                }
-              }}
-              projects={orch.projectOptions
-                .filter((project) => project.id != null)
-                .map((project) => ({
-                  clientName: project.client_name ?? undefined,
-                  color: resolveProjectColorValue(project),
-                  id: project.id as number,
-                  name: project.name ?? "Untitled project",
-                }))}
-              tags={orch.tagOptions}
-              timezone={orch.timezone}
-              workspaceName={
-                orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-                "Workspace"
               }
-            />
-          ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "calendar" ? (
-            <CalendarView
-              calendarHours={displaySettings.calendarHours}
-              draftEntry={orch.calendarDraftEntry}
-              entries={orch.visibleEntries}
-              nowMs={orch.nowMs}
-              onEditEntry={orch.handleEntryEdit}
-              onMoveEntry={(entryId, minutesDelta) => {
-                void orch.handleCalendarEntryMove(entryId, minutesDelta);
+            }}
+            onDuplicateEntry={(entry) => {
+              if (entry.start && entry.stop) {
+                const durationSec = Math.round(
+                  (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+                );
+                void orch.createTimeEntryMutation.mutateAsync({
+                  billable: entry.billable,
+                  description: (entry.description ?? "").trim(),
+                  duration: durationSec,
+                  projectId: entry.project_id ?? entry.pid ?? null,
+                  start: entry.start,
+                  stop: entry.stop,
+                  tagIds: entry.tag_ids ?? [],
+                  taskId: entry.task_id ?? entry.tid ?? null,
+                });
+              }
+            }}
+            onEditEntry={orch.handleEntryEdit}
+            onFavoriteEntry={() => {
+              // Pin as favorite is handled through the editor dialog
+            }}
+            onBillableToggle={(entry) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { billable: !entry.billable },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
+            }}
+            onSplitEntry={undefined}
+            onProjectChange={(entry, projectId) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { projectId },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
+            }}
+            projects={orch.projectOptions
+              .filter((project) => project.id != null)
+              .map((project) => ({
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColorValue(project),
+                id: project.id as number,
+                name: project.name ?? "Untitled project",
+              }))}
+            tags={orch.tagOptions}
+            timezone={orch.timezone}
+            workspaceName={
+              orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+              "Workspace"
+            }
+          />
+        ) : null}
+        {!orch.timeEntriesQuery.isPending &&
+        !orch.timeEntriesQuery.isError &&
+        orch.view === "calendar" ? (
+          <CalendarView
+            calendarHours={displaySettings.calendarHours}
+            draftEntry={orch.calendarDraftEntry}
+            entries={orch.visibleEntries}
+            nowMs={orch.nowMs}
+            onEditEntry={orch.handleEntryEdit}
+            onMoveEntry={(entryId, minutesDelta) => {
+              void orch.handleCalendarEntryMove(entryId, minutesDelta);
+            }}
+            onResizeEntry={(entryId, edge, minutesDelta) => {
+              void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
+            }}
+            onSelectSlot={(slot) => {
+              orch.handleCalendarSlotCreate(slot);
+            }}
+            onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
+            onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
+            runningEntry={orch.runningEntry}
+            subview={orch.calendarSubview}
+            timezone={orch.timezone}
+            weekDays={orch.weekDays}
+            weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+            zoom={orch.calendarZoom}
+          />
+        ) : null}
+        {!orch.timeEntriesQuery.isPending &&
+        !orch.timeEntriesQuery.isError &&
+        orch.view === "timesheet" ? (
+          <div className="relative">
+            <TimesheetView
+              onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
+              onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
+                void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
               }}
-              onResizeEntry={(entryId, edge, minutesDelta) => {
-                void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
+              onCopyLastWeek={() => {
+                void orch.handleCopyLastWeek();
               }}
-              onSelectSlot={(slot) => {
-                orch.handleCalendarSlotCreate(slot);
-              }}
-              onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
-              onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
-              runningEntry={orch.runningEntry}
-              subview={orch.calendarSubview}
+              rows={orch.timesheetRows}
               timezone={orch.timezone}
               weekDays={orch.weekDays}
-              weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-              zoom={orch.calendarZoom}
             />
-          ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "timesheet" ? (
-            <div className="relative">
-              <TimesheetView
-                onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
-                onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
-                  void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
-                }}
-                onCopyLastWeek={() => {
-                  void orch.handleCopyLastWeek();
-                }}
-                rows={orch.timesheetRows}
-                timezone={orch.timezone}
-                weekDays={orch.weekDays}
+            {timesheetAddRowOpen ? (
+              <TimesheetAddRowPicker
+                onClose={() => setTimesheetAddRowOpen(false)}
+                onSelect={handleTimesheetAddRow}
+                projectOptions={orch.projectOptions}
+                workspaceName={
+                  orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+                  "Workspace"
+                }
               />
-              {timesheetAddRowOpen ? (
-                <TimesheetAddRowPicker
-                  onClose={() => setTimesheetAddRowOpen(false)}
-                  onSelect={handleTimesheetAddRow}
-                  projectOptions={orch.projectOptions}
-                  workspaceName={
-                    orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-                    "Workspace"
+            ) : null}
+          </div>
+        ) : null}
+        {/* Editor dialog — positioned absolutely inside the page container.
+              Anchor coordinates are page-relative so the editor scrolls with
+              window scroll natively, no JS compensation needed. */}
+        {orch.selectedEntry && orch.selectedEntryAnchor ? (
+          <TimeEntryEditorDialog
+            anchor={orch.selectedEntryAnchor}
+            currentWorkspaceId={orch.selectedEntryWorkspaceId}
+            description={orch.selectedDescription}
+            entry={orch.selectedEntry}
+            isCreatingProject={orch.createProjectMutation.isPending}
+            isCreatingTag={orch.createTagMutation.isPending}
+            isDeleting={orch.deleteTimeEntryMutation.isPending}
+            isDirty={orch.selectedEntryDirty}
+            isNewEntry={orch.isNewEntry}
+            isPrimaryActionPending={orch.timerMutationPending}
+            isSaving={
+              orch.isNewEntry
+                ? orch.createTimeEntryMutation.isPending
+                : orch.updateTimeEntryMutation.isPending
+            }
+            onClose={orch.closeSelectedEntryEditor}
+            onCreateProject={orch.handleSelectedEntryProjectCreate}
+            onCreateTag={orch.handleSelectedEntryTagCreate}
+            onBillableToggle={orch.handleSelectedEntryBillableToggle}
+            onDuplicate={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryDuplicate();
                   }
-                />
-              ) : null}
-            </div>
-          ) : null}
-          {/* Editor dialog renders inside the scroll area. In calendar view,
-              the actual scrolling happens inside .rbc-time-content (react-big-calendar's
-              own container) which is deeper than this scroll area. We apply a
-              translateY to keep the editor pinned to the entry as the calendar scrolls. */}
-          {orch.selectedEntry && orch.selectedEntryAnchor ? (
-            <TimeEntryEditorDialog
-              anchor={{
-                ...orch.selectedEntryAnchor,
-                top: orch.selectedEntryAnchor.top - calendarScrollDelta,
-              }}
-              currentWorkspaceId={orch.selectedEntryWorkspaceId}
-              description={orch.selectedDescription}
-              entry={orch.selectedEntry}
-              isCreatingProject={orch.createProjectMutation.isPending}
-              isCreatingTag={orch.createTagMutation.isPending}
-              isDeleting={orch.deleteTimeEntryMutation.isPending}
-              isDirty={orch.selectedEntryDirty}
-              isNewEntry={orch.isNewEntry}
-              isPrimaryActionPending={orch.timerMutationPending}
-              isSaving={
-                orch.isNewEntry
-                  ? orch.createTimeEntryMutation.isPending
-                  : orch.updateTimeEntryMutation.isPending
-              }
-              onClose={orch.closeSelectedEntryEditor}
-              onCreateProject={orch.handleSelectedEntryProjectCreate}
-              onCreateTag={orch.handleSelectedEntryTagCreate}
-              onBillableToggle={orch.handleSelectedEntryBillableToggle}
-              onDuplicate={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryDuplicate();
-                    }
-              }
-              onDelete={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      const snapshot = orch.selectedEntry
-                        ? snapshotEntryForUndo(orch.selectedEntry)
-                        : null;
-                      void orch
-                        .handleSelectedEntryDelete()
-                        .then(() => {
-                          if (snapshot) showDeleteToast(snapshot);
-                        })
-                        .catch(() => {
-                          // Error is already displayed in the editor via selectedEntryError
-                        });
-                    }
-              }
-              onDescriptionChange={orch.setSelectedDescription}
-              onFavorite={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryFavorite();
-                    }
-              }
-              onPrimaryAction={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryPrimaryAction();
-                    }
-              }
-              onProjectSelect={orch.setSelectedProjectId}
-              onSave={() => {
-                void orch.handleSelectedEntrySave();
-              }}
-              onSplit={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntrySplit();
-                    }
-              }
-              onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
-              onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
-              onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
-              onTagToggle={(tagId) => {
-                orch.setSelectedTagIds((current) =>
-                  current.includes(tagId)
-                    ? current.filter((id) => id !== tagId)
-                    : [...current, tagId],
-                );
-              }}
-              onWorkspaceSelect={(nextWorkspaceId) => {
-                orch.switchWorkspace(nextWorkspaceId);
-                orch.closeSelectedEntryEditor();
-              }}
-              primaryActionIcon={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "stop"
-                  : "play"
-              }
-              primaryActionLabel={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "Stop timer"
-                  : "Continue Time Entry"
-              }
-              projects={orch.projectOptions
-                .filter((project) => project.id != null)
-                .map((project) => ({
-                  clientName: project.client_name ?? undefined,
-                  color: resolveProjectColorValue(project),
-                  id: project.id as number,
-                  name: project.name ?? "Untitled project",
-                }))}
-              recentEntries={orch.recentWorkspaceEntries}
-              saveError={orch.selectedEntryError}
-              selectedProjectId={orch.selectedProjectId}
-              selectedTagIds={orch.selectedTagIds}
-              tags={orch.tagOptions}
-              timezone={orch.timezone}
-              workspaces={orch.session.availableWorkspaces.map((workspace) => ({
-                id: workspace.id,
-                isCurrent: workspace.isCurrent,
-                name: workspace.name,
+            }
+            onDelete={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    const snapshot = orch.selectedEntry
+                      ? snapshotEntryForUndo(orch.selectedEntry)
+                      : null;
+                    void orch
+                      .handleSelectedEntryDelete()
+                      .then(() => {
+                        if (snapshot) showDeleteToast(snapshot);
+                      })
+                      .catch(() => {
+                        // Error is already displayed in the editor via selectedEntryError
+                      });
+                  }
+            }
+            onDescriptionChange={orch.setSelectedDescription}
+            onFavorite={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryFavorite();
+                  }
+            }
+            onPrimaryAction={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntryPrimaryAction();
+                  }
+            }
+            onProjectSelect={orch.setSelectedProjectId}
+            onSave={() => {
+              void orch.handleSelectedEntrySave();
+            }}
+            onSplit={
+              orch.isNewEntry
+                ? undefined
+                : () => {
+                    void orch.handleSelectedEntrySplit();
+                  }
+            }
+            onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
+            onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
+            onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
+            onTagToggle={(tagId) => {
+              orch.setSelectedTagIds((current) =>
+                current.includes(tagId)
+                  ? current.filter((id) => id !== tagId)
+                  : [...current, tagId],
+              );
+            }}
+            onWorkspaceSelect={(nextWorkspaceId) => {
+              orch.switchWorkspace(nextWorkspaceId);
+              orch.closeSelectedEntryEditor();
+            }}
+            primaryActionIcon={
+              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                ? "stop"
+                : "play"
+            }
+            primaryActionLabel={
+              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                ? "Stop timer"
+                : "Continue Time Entry"
+            }
+            projects={orch.projectOptions
+              .filter((project) => project.id != null)
+              .map((project) => ({
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColorValue(project),
+                id: project.id as number,
+                name: project.name ?? "Untitled project",
               }))}
-            />
-          ) : null}
-        </div>
+            recentEntries={orch.recentWorkspaceEntries}
+            saveError={orch.selectedEntryError}
+            selectedProjectId={orch.selectedProjectId}
+            selectedTagIds={orch.selectedTagIds}
+            tags={orch.tagOptions}
+            timezone={orch.timezone}
+            workspaces={orch.session.availableWorkspaces.map((workspace) => ({
+              id: workspace.id,
+              isCurrent: workspace.isCurrent,
+              name: workspace.name,
+            }))}
+          />
+        ) : null}
         {sidebarOpen ? <GoalsFavoritesSidebar /> : null}
       </div>
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
@@ -964,7 +928,7 @@ function TimerBarProjectPicker({
             style={{ backgroundColor: selectedProject.color }}
           />
         ) : (
-          <TrackingIcon className="size-4 shrink-0" name="projects" />
+          <ProjectsIcon className="size-4 shrink-0" />
         )}
         {selectedProject ? (
           <span
@@ -1057,7 +1021,7 @@ function TimerBarTagPicker({
         }}
         type="button"
       >
-        <TrackingIcon className="size-4 shrink-0" name="tags" />
+        <TagsIcon className="size-4 shrink-0" />
         {tagLabel ? (
           <span className="min-w-0 truncate text-[13px] font-medium">{tagLabel}</span>
         ) : null}

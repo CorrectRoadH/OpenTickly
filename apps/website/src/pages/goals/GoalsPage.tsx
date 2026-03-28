@@ -5,7 +5,7 @@ import {
   DirectoryTableCell,
 } from "@opentoggl/web-ui";
 
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ChevronDownIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useCreateGoalMutation,
@@ -152,7 +152,7 @@ export function GoalsPage(): ReactElement {
             onClick={openCreateDialog}
             type="button"
           >
-            <TrackingIcon className="size-3.5" name="plus" />
+            <PlusIcon className="size-3.5" />
             New goal
           </button>
         </div>
@@ -169,7 +169,7 @@ export function GoalsPage(): ReactElement {
               <option value="archived">Archived goals</option>
             </select>
             <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <TrackingIcon className="size-3" name="chevron-down" />
+              <ChevronDownIcon className="size-3" />
             </span>
           </label>
           {statusMessage ? (
@@ -260,7 +260,7 @@ export function GoalsPage(): ReactElement {
               onClick={openCreateDialog}
               type="button"
             >
-              <TrackingIcon className="size-3.5" name="plus" />
+              <PlusIcon className="size-3.5" />
               New goal
             </button>
           </div>

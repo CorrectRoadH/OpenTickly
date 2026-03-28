@@ -7,7 +7,7 @@ import type {
   ModelsProjectUser,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMember } from "../../shared/api/generated/web/types.gen.ts";
-import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ChevronRightIcon, FocusIcon } from "../../shared/ui/icons.tsx";
 import {
   useProjectDetailQuery,
   useProjectMembersQuery,
@@ -49,11 +49,11 @@ export function ProjectDetailPage({
           <header className="border-b border-[var(--track-border)] pb-4">
             <div className="flex items-center gap-2 text-[12px] text-[var(--track-text-muted)]">
               <a href={buildProjectsListPath(workspaceId)}>Projects</a>
-              <TrackingIcon className="size-3" name="chevron-right" />
+              <ChevronRightIcon className="size-3" />
               <span className="font-medium text-[var(--track-accent)]">
                 {project?.name ?? `Project ${projectId}`}
               </span>
-              <TrackingIcon className="size-3" name="focus" />
+              <FocusIcon className="size-3" />
             </div>
             <div className="mt-4 flex items-center justify-between gap-4">
               <nav className="flex items-end gap-6 text-[14px]" aria-label="Project sections">
