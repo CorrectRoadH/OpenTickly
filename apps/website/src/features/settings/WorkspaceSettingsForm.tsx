@@ -318,10 +318,10 @@ export function WorkspaceSettingsForm({
         />
       </SettingsCard>
 
-      <div className="pt-1 text-center text-[12px] font-medium text-[#b1b1b1]">
-        <div className="mx-auto mb-4 h-px w-[200px] bg-[#2a2a2a]" />
+      <div className="pt-1 text-center text-[12px] font-medium text-[var(--track-text-muted)]">
+        <div className="mx-auto mb-4 h-px w-[200px] bg-[var(--track-overlay-border)]" />
         Need help making Toggl Track fit your team&apos;s needs?{" "}
-        <a className="text-[#fafafa] hover:text-white" href="#">
+        <a className="text-[var(--track-text)] hover:text-white" href="#">
           Get a free demo
         </a>
       </div>

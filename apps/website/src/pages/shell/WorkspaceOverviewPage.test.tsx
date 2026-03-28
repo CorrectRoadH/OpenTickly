@@ -59,7 +59,7 @@ describe("WorkspaceOverviewPage", () => {
     vi.useRealTimers();
   });
 
-  it("lets the overview content use the shell width instead of a fixed max width", () => {
+  it("lets the overview content use the page width instead of a fixed max width", () => {
     const markup = renderToStaticMarkup(<WorkspaceOverviewPage />);
 
     expect(markup).toContain('data-testid="workspace-overview-content"');

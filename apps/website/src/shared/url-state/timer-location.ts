@@ -85,8 +85,11 @@ function parsePositiveInt(value: unknown): number | undefined {
 
 function parseIntList(value: unknown): number[] | undefined {
   if (value == null) return undefined;
-  const raw = typeof value === "string" ? value : String(value);
-  if (!raw.trim()) return undefined;
+  const raw =
+    typeof value === "string" || typeof value === "number" || typeof value === "bigint"
+      ? String(value)
+      : undefined;
+  if (!raw?.trim()) return undefined;
   const nums = raw
     .split(",")
     .map(Number)

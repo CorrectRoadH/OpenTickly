@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { toast } from "sonner";
@@ -127,7 +127,7 @@ function SettingsHeader(props: {
 }): ReactElement {
   return (
     <header className="bg-[var(--track-surface)]">
-      <ShellPageHeader bordered title="Settings" />
+      <PageHeader bordered title="Settings" />
       <nav className="flex flex-wrap items-center gap-1 px-5 pb-3">
         {settingsTabs.map((tab) => (
           <Link
@@ -161,13 +161,13 @@ function SettingsState(props: {
   tone: "empty" | "error" | "loading";
 }): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <AppSurfaceState
         className="border-none bg-transparent text-[var(--track-text-muted)]"
         description={props.description}
         title={props.title}
         tone={props.tone}
       />
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }

@@ -459,9 +459,7 @@ export function useTimerPageOrchestration(options?: {
 
   // Queries — list view uses listQueryRange (computed from listDaysLoaded or listDateRange);
   // other views always use the selected week range.
-  const timeEntriesQuery = useTimeEntriesQuery(
-    view === "list" ? listQueryRange : { ...weekRange },
-  );
+  const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? listQueryRange : { ...weekRange });
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
 
   // Running entry state

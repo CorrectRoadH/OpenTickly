@@ -27,7 +27,7 @@ export function QuickDateShortcuts({
   weekStartsOn?: number;
 }): ReactElement {
   return (
-    <div className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[#111112] p-0.5">
+    <div className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[var(--track-panel)] p-0.5">
       {WEEK_SHORTCUTS.map((shortcut) => {
         const shortcutDate = shortcut.resolveDate(new Date());
         const isActive = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
@@ -135,7 +135,7 @@ export function WeekRangePicker({
   return (
     <div className="relative" ref={rootRef}>
       {/* Outer pill: prev arrow + label trigger + next arrow in one bordered container */}
-      <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] text-white">
+      <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] text-white">
         <button
           aria-label={mode === "day" ? "Previous day" : "Previous week"}
           className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${mode === "all-dates" ? "opacity-40" : ""}`}
@@ -194,7 +194,7 @@ export function WeekRangePicker({
         <div
           aria-label="Select week range"
           aria-modal="false"
-          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[480px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] p-4 shadow-[0_4px_16px_rgba(0,0,0,0.4)]"
+          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[480px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_4px_16px_var(--track-shadow-tooltip)]"
           data-testid="week-range-dialog"
           role="dialog"
         >
@@ -222,8 +222,8 @@ export function WeekRangePicker({
                       aria-pressed={isActive}
                       className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
                         isActive
-                          ? "bg-[#b744ab] text-white"
-                          : "text-[#cfcfcf] hover:bg-[var(--track-row-hover)] hover:text-white"
+                          ? "bg-[var(--track-accent-strong)] text-white"
+                          : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
                       }`}
                       key={shortcut.id}
                       onClick={() => {
@@ -323,7 +323,7 @@ export function WeekRangePicker({
                               aria-label={`Select ${formatTrackQueryDate(day)}`}
                               className={`flex h-[29px] items-center justify-center text-[14px] font-medium transition hover:bg-[var(--track-row-hover)] ${
                                 isDaySelected
-                                  ? "rounded-lg bg-[#b744ab] text-white"
+                                  ? "rounded-lg bg-[var(--track-accent-strong)] text-white"
                                   : isInVisibleMonth
                                     ? "text-white"
                                     : "text-[var(--track-text-muted)]"
@@ -383,8 +383,8 @@ export function WeekRangePicker({
                               isSelectedWeek
                                 ? `${
                                     isStart || isEnd
-                                      ? `bg-[#b744ab] text-white ${selectedBorderRadius}`
-                                      : "bg-[rgba(183,68,171,0.2)] text-[var(--track-accent-text)]"
+                                      ? `bg-[var(--track-accent-strong)] text-white ${selectedBorderRadius}`
+                                      : "bg-[var(--track-accent-tint)] text-[var(--track-accent-text)]"
                                   }`
                                 : isInVisibleMonth
                                   ? "text-white"

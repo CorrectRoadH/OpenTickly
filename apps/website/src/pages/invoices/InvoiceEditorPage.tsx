@@ -129,10 +129,10 @@ export function InvoiceEditorPage(): ReactElement {
 
   return (
     <div
-      className="flex min-h-full w-full flex-col bg-[#1a1a1c] text-white"
+      className="flex min-h-full w-full flex-col bg-[var(--track-overlay-surface)] text-white"
       data-testid="invoice-editor-page"
     >
-      <header className="flex items-center justify-between border-b border-[#333] px-6 py-3">
+      <header className="flex items-center justify-between border-b border-[var(--track-overlay-border)] px-6 py-3">
         <nav className="flex items-center gap-2 text-[13px]">
           <button
             className="text-[var(--track-accent-text)] hover:text-white"
@@ -141,12 +141,12 @@ export function InvoiceEditorPage(): ReactElement {
           >
             Invoices
           </button>
-          <span className="text-[#666]">&gt;</span>
+          <span className="text-[var(--track-text-disabled)]">&gt;</span>
           <span className="text-white">{documentId || "New Invoice"}</span>
         </nav>
         <div className="flex items-center gap-3">
           <button
-            className="h-9 rounded-[8px] border border-[#555] px-4 text-[13px] font-medium text-[#ccc] hover:text-white"
+            className="h-9 rounded-[8px] border border-[var(--track-control-border)] px-4 text-[13px] font-medium text-[var(--track-overlay-text)] hover:text-white"
             type="button"
           >
             Connect QuickBooks
@@ -165,7 +165,7 @@ export function InvoiceEditorPage(): ReactElement {
 
       <div className="flex flex-1 justify-center overflow-y-auto px-6 py-8">
         <div
-          className="w-full max-w-[720px] rounded-lg bg-[#2a2a2c] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+          className="w-full max-w-[720px] rounded-lg bg-[var(--track-tooltip-surface)] p-8 shadow-[0_8px_32px_var(--track-shadow-card)]"
           data-testid="invoice-document"
         >
           <h2 className="mb-6 text-[28px] font-bold text-white">Invoice</h2>
@@ -215,11 +215,11 @@ export function InvoiceEditorPage(): ReactElement {
           />
 
           <div className="mt-6">
-            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.06em] text-[#999]">
+            <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
               Message
             </label>
             <textarea
-              className="min-h-[80px] w-full resize-y rounded border border-transparent bg-[#222] px-3 py-2 text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+              className="min-h-[80px] w-full resize-y rounded border border-transparent bg-[var(--track-input-bg)] px-3 py-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
               data-testid="invoice-message"
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Thank you for your business..."

@@ -333,7 +333,7 @@ export function GoalEditorDialog({
 function MemberAvatar({ name }: { name: string }): ReactElement {
   const initials = resolveInitials(name);
   return (
-    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#e57cd8] text-[10px] font-bold text-black">
+    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent)] text-[10px] font-bold text-black">
       {initials}
     </span>
   );
@@ -355,7 +355,7 @@ function MemberDropdown({
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-[8px] border border-[var(--track-border)] bg-[#2c2c2e] shadow-lg">
+      <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg">
         <div className="border-b border-[var(--track-border)] px-3 py-2">
           <div className="relative">
             <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />

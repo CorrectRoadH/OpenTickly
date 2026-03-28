@@ -346,7 +346,9 @@ export function ViewTab({
     <button
       aria-checked={isSelected}
       className={`px-5 py-1 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${dividerClass} ${
-        isSelected ? "bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-secondary)]" : "bg-[var(--track-surface)] text-[var(--track-text)]"
+        isSelected
+          ? "bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-secondary)]"
+          : "bg-[var(--track-surface)] text-[var(--track-text)]"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
@@ -409,7 +411,10 @@ export function ListView({
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDeleteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
-  onDescriptionChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => void;
+  onDescriptionChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    description: string,
+  ) => void;
   onDuplicateEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onFavoriteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
@@ -483,10 +488,7 @@ export function ListView({
         const groupChecked = isGroupFullySelected(group);
         const groupIndeterminate = isGroupPartiallySelected(group);
         return (
-          <ul
-            key={group.key}
-            className="border-b-[4px] border-[var(--track-border)]"
-          >
+          <ul key={group.key} className="border-b-[4px] border-[var(--track-border)]">
             {/* Day header row */}
             <li className="flex h-[50px] items-center px-5">
               <input
@@ -791,9 +793,7 @@ function ListRowTagPicker({
   const tagNames = useMemo(() => {
     if (!hasTags) return "";
     const tagMap = new Map(tags.map((t) => [t.id, t.name]));
-    return entryTagIds
-      .map((id) => tagMap.get(id) ?? `tag-${id}`)
-      .join(", ");
+    return entryTagIds.map((id) => tagMap.get(id) ?? `tag-${id}`).join(", ");
   }, [hasTags, entryTagIds, tags]);
 
   return (
@@ -848,7 +848,7 @@ function ListRowTagPicker({
 function ListRowMoreActions({
   entry,
   onBillableToggle,
-  onContinue,
+  onContinue: _onContinue,
   onDelete,
   onDuplicate,
   onFavorite,
@@ -890,7 +890,10 @@ function ListRowMoreActions({
         >
           <button
             className={menuItemClass}
-            onClick={() => { setOpen(false); onBillableToggle?.(entry); }}
+            onClick={() => {
+              setOpen(false);
+              onBillableToggle?.(entry);
+            }}
             role="menuitem"
             type="button"
           >
@@ -898,7 +901,10 @@ function ListRowMoreActions({
           </button>
           <button
             className={menuItemClass}
-            onClick={() => { setOpen(false); onDuplicate?.(entry); }}
+            onClick={() => {
+              setOpen(false);
+              onDuplicate?.(entry);
+            }}
             role="menuitem"
             type="button"
           >
@@ -907,7 +913,10 @@ function ListRowMoreActions({
           {entry.start && entry.stop ? (
             <button
               className={menuItemClass}
-              onClick={() => { setOpen(false); onSplit?.(entry); }}
+              onClick={() => {
+                setOpen(false);
+                onSplit?.(entry);
+              }}
               role="menuitem"
               type="button"
             >
@@ -926,7 +935,10 @@ function ListRowMoreActions({
           ) : null}
           <button
             className={menuItemClass}
-            onClick={() => { setOpen(false); onFavorite?.(entry); }}
+            onClick={() => {
+              setOpen(false);
+              onFavorite?.(entry);
+            }}
             role="menuitem"
             type="button"
           >
@@ -960,7 +972,10 @@ function ListRowMoreActions({
           <div className="my-1 border-t border-[var(--track-border)]" />
           <button
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => { setOpen(false); onDelete?.(entry); }}
+            onClick={() => {
+              setOpen(false);
+              onDelete?.(entry);
+            }}
             role="menuitem"
             type="button"
           >
@@ -1014,7 +1029,10 @@ function ListRowProjectPicker({
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
           className="flex cursor-pointer items-center gap-1.5 overflow-hidden text-[14px] font-medium"
-          onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
+          onClick={() => {
+            setOpen((prev) => !prev);
+            setSearch("");
+          }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
           }}
@@ -1038,7 +1056,10 @@ function ListRowProjectPicker({
         <button
           aria-label="Add a project"
           className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
-          onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
+          onClick={() => {
+            setOpen((prev) => !prev);
+            setSearch("");
+          }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
           }}
@@ -1598,14 +1619,18 @@ export function TimesheetView({
     >
       <thead>
         <tr className="h-[40px] text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--track-text-muted)]">
-          <th className="text-left pl-5 pr-2" style={{ width: "26%" }}>Project</th>
+          <th className="text-left pl-5 pr-2" style={{ width: "26%" }}>
+            Project
+          </th>
           <th className="text-left px-2" style={{ width: "13%" }} />
           {weekDays.map((day) => (
             <th className="text-center px-2" key={day.toISOString()}>
               {formatWeekday(day, timezone)}
             </th>
           ))}
-          <th className="text-right px-2" style={{ width: "7%" }}>Total</th>
+          <th className="text-right px-2" style={{ width: "7%" }}>
+            Total
+          </th>
           <th style={{ width: "3.5%" }} />
         </tr>
       </thead>
@@ -1860,8 +1885,14 @@ function TimesheetCell({
         onBlur={commitEdit}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
-          if (e.key === "Escape") { e.preventDefault(); setIsEditing(false); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commitEdit();
+          }
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setIsEditing(false);
+          }
         }}
         type="text"
         value={draft}
@@ -1918,6 +1949,10 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
 }
 
 function colorToOverlay(color: string): string {
+  if (!color.startsWith("#")) {
+    return color;
+  }
+
   const normalized = color.replace("#", "");
   const full =
     normalized.length === 3

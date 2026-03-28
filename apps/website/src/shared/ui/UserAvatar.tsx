@@ -29,7 +29,7 @@ export function UserAvatar({
   return (
     <div
       aria-label={accessibleName}
-      className={`flex items-center justify-center rounded-full bg-[#d94182] text-white ${className}`.trim()}
+      className={`flex items-center justify-center rounded-full bg-[var(--track-avatar-accent)] text-white ${className}`.trim()}
       role="img"
     >
       <span className={textClassName}>{initialForName(trimmedName)}</span>

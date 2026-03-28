@@ -26,7 +26,7 @@ vi.mock("../../shared/session/session-context.tsx", () => ({
 }));
 
 describe("WorkspaceReportsPage", () => {
-  it("uses the shared shell typography and card geometry", () => {
+  it("uses the shared workspace typography and card geometry", () => {
     const markup = renderToStaticMarkup(<WorkspaceReportsPage />);
 
     expect(markup).toContain('data-testid="reports-page"');

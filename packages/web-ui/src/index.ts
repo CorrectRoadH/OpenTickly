@@ -10,9 +10,7 @@ export {
   DirectoryHeaderCell,
   DirectorySurfaceMessage,
   DirectoryTableCell,
-  ShellPageHeader,
-  ShellPrimaryButton,
-  ShellSecondaryButton,
-  ShellSurfaceCard,
+  PageHeader,
+  SurfaceCard,
 } from "./ShellPrimitives.tsx";
 export { appTheme } from "./theme.ts";

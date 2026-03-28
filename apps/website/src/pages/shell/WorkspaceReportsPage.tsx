@@ -234,7 +234,7 @@ export function WorkspaceReportsPage({
               <button
                 className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
                   roundingEnabled
-                    ? "border-[#e57bd9] bg-[#381e35] text-[#e57bd9]"
+                    ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
                     : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
                 }`}
                 data-testid="reports-rounding-toggle"
@@ -341,7 +341,7 @@ export function WorkspaceReportsPage({
         <ReportsTabPlaceholder tab={activeTab} />
       )}
       {shareToast ? (
-        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+        <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
           <span className="text-[14px] text-white">Report link copied to clipboard</span>
         </div>
       ) : null}

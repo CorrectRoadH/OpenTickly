@@ -42,10 +42,9 @@ export function useRegistrationPolicyQuery() {
 export function useUpdateRegistrationPolicyMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (mode: "open" | "closed" | "invite_only") =>
-      updateRegistrationPolicyApi(mode),
+    mutationFn: (mode: "open" | "closed" | "invite_only") => updateRegistrationPolicyApi(mode),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-admin", "registration-policy"] });
+      void queryClient.invalidateQueries({ queryKey: ["instance-admin", "registration-policy"] });
     },
   });
 }
@@ -72,7 +71,7 @@ export function useDisableInstanceUserMutation() {
   return useMutation({
     mutationFn: (userId: number) => disableInstanceUserApi(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-admin", "users"] });
+      void queryClient.invalidateQueries({ queryKey: ["instance-admin", "users"] });
     },
   });
 }
@@ -82,7 +81,7 @@ export function useRestoreInstanceUserMutation() {
   return useMutation({
     mutationFn: (userId: number) => restoreInstanceUserApi(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-admin", "users"] });
+      void queryClient.invalidateQueries({ queryKey: ["instance-admin", "users"] });
     },
   });
 }
@@ -100,8 +99,8 @@ export function useUpdateInstanceConfigMutation() {
   return useMutation({
     mutationFn: (body: Record<string, unknown>) => updateInstanceConfigApi(body),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["instance-admin", "config"] });
-      queryClient.invalidateQueries({ queryKey: ["instance-admin", "registration-policy"] });
+      void queryClient.invalidateQueries({ queryKey: ["instance-admin", "config"] });
+      void queryClient.invalidateQueries({ queryKey: ["instance-admin", "registration-policy"] });
     },
   });
 }

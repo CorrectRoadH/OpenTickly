@@ -1,4 +1,4 @@
-import { ShellSurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useMemo } from "react";
 
 import {
@@ -82,7 +82,7 @@ export function SettingsAuditLog({ workspaceId }: SettingsAuditLogProps): ReactE
   );
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-6">
         <div className="mb-4">
           <h2 className="text-[16px] font-semibold text-white">Audit Log</h2>
@@ -128,6 +128,6 @@ export function SettingsAuditLog({ workspaceId }: SettingsAuditLogProps): ReactE
           </div>
         )}
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }

@@ -28,7 +28,7 @@ export function ProjectEditorMembers({
   }, [memberQuery, members]);
 
   return (
-    <section className="rounded-[12px] border border-[var(--track-border)] bg-[#181818] p-4">
+    <section className="rounded-[12px] border border-[var(--track-border)] bg-[var(--track-input-bg)] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
@@ -36,11 +36,11 @@ export function ProjectEditorMembers({
           </p>
           <p className="mt-2 text-[14px] text-white">Invite members</p>
         </div>
-        <label className="flex items-center gap-2 text-[13px] text-[#d4d4d9]">
+        <label className="flex items-center gap-2 text-[13px] text-[var(--track-overlay-text)]">
           <span>Access</span>
           <select
             aria-label="Member access"
-            className="h-9 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white"
+            className="h-9 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white"
             onChange={(event) =>
               onMemberRoleChange(event.target.value === "manager" ? "manager" : "regular")
             }
@@ -55,7 +55,7 @@ export function ProjectEditorMembers({
         <span className="sr-only">Invite members</span>
         <input
           aria-label="Invite members"
-          className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+          className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
           onChange={(event: ChangeEvent<HTMLInputElement>) => setMemberQuery(event.target.value)}
           placeholder="Type a name or email to invite"
           value={memberQuery}
@@ -70,7 +70,7 @@ export function ProjectEditorMembers({
               className={`flex w-full items-center justify-between rounded-[10px] border px-3 py-2 text-left transition ${
                 selected
                   ? "border-[var(--track-accent-soft)] bg-[var(--track-accent-soft)]/10 text-white"
-                  : "border-transparent bg-[#232325] text-[#d0d0d4] hover:border-white/10"
+                  : "border-transparent bg-[var(--track-control-surface-muted)] text-[var(--track-overlay-text-muted)] hover:border-white/10"
               }`}
               key={member.id}
               onClick={() => onToggleMember(member.id)}
@@ -87,7 +87,7 @@ export function ProjectEditorMembers({
           );
         })}
         {filteredMembers.length === 0 ? (
-          <p className="rounded-[10px] bg-[#232325] px-3 py-3 text-[13px] text-[var(--track-text-muted)]">
+          <p className="rounded-[10px] bg-[var(--track-control-surface-muted)] px-3 py-3 text-[13px] text-[var(--track-text-muted)]">
             No matching workspace members.
           </p>
         ) : null}

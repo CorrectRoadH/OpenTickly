@@ -82,7 +82,7 @@ export function ReportsSurfaceMessage({
     <div
       className={`mt-5 rounded-[8px] border px-4 py-3 text-[14px] ${
         tone === "error"
-          ? "border-[#6b3f4d] bg-[#2d1d24] text-[#ffced9]"
+          ? "border-[var(--track-danger-border-muted)] bg-[var(--track-danger-surface-muted)] text-[var(--track-danger-text-muted)]"
           : "border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)]"
       }`}
     >

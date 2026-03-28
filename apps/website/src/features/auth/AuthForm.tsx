@@ -94,7 +94,7 @@ export function AuthForm({
 
       {errorMessage ? (
         <p
-          className="rounded-[6px] border border-[#7a435f] bg-[rgba(71,36,67,0.5)] px-3 py-2 text-[14px] leading-5 text-[var(--track-accent-text)]"
+          className="rounded-[6px] border border-[var(--track-state-error-border)] bg-[var(--track-danger-tint)] px-3 py-2 text-[14px] leading-5 text-[var(--track-accent-text)]"
           role="alert"
         >
           {errorMessage}

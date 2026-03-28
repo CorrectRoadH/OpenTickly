@@ -83,13 +83,13 @@ export function DisplaySettingsPopover({
 
   return (
     <div
-      className="absolute right-0 top-full z-50 mt-2 w-[340px] rounded-xl border border-[var(--track-border)] bg-[#1f1f20] shadow-[0_14px_32px_rgba(0,0,0,0.34)]"
+      className="absolute right-0 top-full z-50 mt-2 w-[340px] rounded-xl border border-[var(--track-border)] bg-[var(--track-overlay-surface)] shadow-[0_14px_32px_var(--track-shadow-overlay)]"
       data-testid="display-settings-popover"
       ref={panelRef}
     >
       <div className="flex border-b border-[var(--track-border)]">
         <button
-          className="flex-1 border-b-2 border-[#e57bd9] px-4 py-3 text-[13px] font-medium text-white"
+          className="flex-1 border-b-2 border-[var(--track-accent)] px-4 py-3 text-[13px] font-medium text-white"
           type="button"
         >
           Display settings
@@ -111,7 +111,7 @@ export function DisplaySettingsPopover({
           <button
             aria-checked={showAllEntries}
             className={`relative h-5 w-9 rounded-full transition ${
-              showAllEntries ? "bg-[#e57bd9]" : "bg-[#4a4a4a]"
+              showAllEntries ? "bg-[var(--track-accent)]" : "bg-[var(--track-control-disabled)]"
             }`}
             onClick={onToggleShowAllEntries}
             role="switch"
@@ -184,7 +184,7 @@ export function DisplaySettingsPopover({
           Cancel
         </button>
         <button
-          className="flex-1 rounded-lg bg-[#e57bd9] px-4 py-2.5 text-[13px] font-medium text-white transition hover:bg-[#d06bc8]"
+          className="flex-1 rounded-lg bg-[var(--track-accent)] px-4 py-2.5 text-[13px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
           onClick={handleSave}
           type="button"
         >
@@ -237,11 +237,13 @@ function SettingsDropdown({
         </span>
       </button>
       {open ? (
-        <div className="absolute right-0 top-full z-10 min-w-[200px] rounded-[10px] border border-[#3d3d42] bg-[#242426] py-1 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+        <div className="absolute right-0 top-full z-10 min-w-[200px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-1 shadow-[0_12px_28px_var(--track-shadow-overlay)]">
           {options.map((option) => (
             <button
               className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[13px] transition hover:bg-white/4 ${
-                option.value === value ? "text-[#e57bd9]" : "text-[#d8d8dc]"
+                option.value === value
+                  ? "text-[var(--track-accent)]"
+                  : "text-[var(--track-overlay-text)]"
               }`}
               key={option.value}
               onClick={() => {
@@ -252,7 +254,7 @@ function SettingsDropdown({
             >
               <span>{option.label}</span>
               {option.value === value ? (
-                <span className="text-[11px] text-[#e57bd9]">&#10003;</span>
+                <span className="text-[11px] text-[var(--track-accent)]">✓</span>
               ) : null}
             </button>
           ))}

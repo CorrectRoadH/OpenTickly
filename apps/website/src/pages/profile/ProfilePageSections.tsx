@@ -1,4 +1,4 @@
-import { AppInlineNotice, ShellSecondaryButton } from "@opentoggl/web-ui";
+import { AppButton, AppInlineNotice } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useEffect, useState } from "react";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
@@ -117,16 +117,16 @@ export function ExternalCalendarsSection(): ReactElement {
   return (
     <PreferenceCard
       action={
-        <ShellSecondaryButton disabled type="button">
+        <AppButton disabled tone="secondary" type="button">
           Go to calendar
-        </ShellSecondaryButton>
+        </AppButton>
       }
       description="Connect a calendar to see your events and easily create Time Entries. Connected calendar events are private - only you can see them. Find out more"
       title="External calendars"
     >
       <div className="flex gap-5 px-5 py-[15px]">
-        <IntegrationTile accent="#ffde91" title="Google Calendar" />
-        <IntegrationTile accent="#4ca4ff" title="Outlook Calendar" />
+        <IntegrationTile accent="var(--track-brand-google-calendar)" title="Google Calendar" />
+        <IntegrationTile accent="var(--track-brand-outlook-calendar)" title="Outlook Calendar" />
       </div>
     </PreferenceCard>
   );
@@ -139,9 +139,9 @@ export function SingleSignOnSection(): ReactElement {
       title="Single sign-on (SSO)"
     >
       <div className="px-5 py-[15px]">
-        <ShellSecondaryButton disabled type="button">
+        <AppButton disabled tone="secondary" type="button">
           Create SSO profile
-        </ShellSecondaryButton>
+        </AppButton>
       </div>
     </PreferenceCard>
   );
@@ -275,9 +275,14 @@ export function ApiTokenSection(props: {
   return (
     <PreferenceCard
       action={
-        <ShellSecondaryButton disabled={props.isResetPending} onClick={props.onReset} type="button">
+        <AppButton
+          disabled={props.isResetPending}
+          onClick={props.onReset}
+          tone="secondary"
+          type="button"
+        >
           {props.isResetPending ? "Resetting..." : "Reset"}
-        </ShellSecondaryButton>
+        </AppButton>
       }
       description="This is a unique identifier used to authenticate you to Toggl Track. Keep your Token private to avoid sharing sensitive information."
       title="API Token"

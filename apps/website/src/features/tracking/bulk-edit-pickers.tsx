@@ -21,7 +21,7 @@ export function ProjectPickerDropdown({
     <PickerDropdown
       header={
         <div className="flex items-center gap-3">
-          <ProjectsIcon className="size-4 shrink-0 text-[#bdbdc2]" />
+          <ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />
           <span className="truncate text-[13px] font-semibold text-white">{workspaceName}</span>
         </div>
       }
@@ -33,11 +33,11 @@ export function ProjectPickerDropdown({
       testId="bulk-edit-project-picker"
     >
       <button
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] text-[#d8d8dc] transition hover:bg-white/4"
+        className="flex w-full items-center gap-3 px-4 py-2.5 text-left text-[13px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
         onClick={() => onSelect(null)}
         type="button"
       >
-        <ProjectsIcon className="size-4 text-[#b8b8bc]" />
+        <ProjectsIcon className="size-4 text-[var(--track-overlay-icon-muted)]" />
         <span>No Project</span>
       </button>
       {filteredProjects.map((project) => (
@@ -54,7 +54,9 @@ export function ProjectPickerDropdown({
           <div className="min-w-0">
             <div className="truncate text-[13px] font-medium text-white">{project.name}</div>
             {project.clientName ? (
-              <div className="truncate text-[11px] text-[#8f8f95]">{project.clientName}</div>
+              <div className="truncate text-[11px] text-[var(--track-control-placeholder-muted)]">
+                {project.clientName}
+              </div>
             ) : null}
           </div>
         </button>
@@ -86,7 +88,9 @@ export function TagPickerDropdown({
         return (
           <button
             className={`flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-[13px] transition ${
-              checked ? "bg-[#3f3040] text-white" : "text-[#d8d8dc] hover:bg-white/4"
+              checked
+                ? "bg-[var(--track-accent-soft)] text-white"
+                : "text-[var(--track-overlay-text)] hover:bg-white/4"
             }`}
             key={tag.id}
             onClick={() => onToggle(tag.id)}
@@ -94,7 +98,7 @@ export function TagPickerDropdown({
           >
             <input
               checked={checked}
-              className="size-3.5 cursor-pointer accent-[#e57bd9]"
+              className="size-3.5 cursor-pointer accent-[var(--track-accent)]"
               onChange={() => onToggle(tag.id)}
               type="checkbox"
             />

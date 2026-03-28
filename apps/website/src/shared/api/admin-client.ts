@@ -16,13 +16,13 @@ class AdminApiError extends Error {
 }
 
 async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers);
+  headers.set("Content-Type", "application/json");
+
   const response = await fetch(path, {
     credentials: "same-origin",
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    headers,
   });
   if (!response.ok) {
     const text = await response.text();

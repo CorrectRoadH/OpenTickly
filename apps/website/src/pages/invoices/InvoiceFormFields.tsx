@@ -16,10 +16,10 @@ type InvoiceHeaderFieldsProps = {
 };
 
 const INLINE_INPUT_CLASS =
-  "h-8 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white hover:border-[#555] focus:border-[#888] focus:outline-none";
+  "h-8 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none";
 
 const INLINE_INPUT_PLACEHOLDER_CLASS =
-  "h-8 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none";
+  "h-8 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none";
 
 export function InvoiceHeaderFields({
   currency,
@@ -105,7 +105,9 @@ function InlineField({
 }) {
   return (
     <div className="flex items-center gap-3" data-testid={testId}>
-      <span className="w-[120px] shrink-0 text-[12px] font-semibold text-[#999]">{label}</span>
+      <span className="w-[120px] shrink-0 text-[12px] font-semibold text-[var(--track-text-soft)]">
+        {label}
+      </span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
@@ -126,11 +128,11 @@ export function InvoiceAddressField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.06em] text-[#999]">
+      <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
         {label}
       </label>
       <textarea
-        className="min-h-[72px] w-full resize-y rounded border border-transparent bg-[#222] px-3 py-2 text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+        className="min-h-[72px] w-full resize-y rounded border border-transparent bg-[var(--track-input-bg)] px-3 py-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
         data-testid={testId}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

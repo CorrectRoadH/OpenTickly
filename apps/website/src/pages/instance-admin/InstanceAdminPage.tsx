@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 
@@ -36,7 +36,7 @@ export function InstanceAdminPage({ section }: InstanceAdminPageProps): ReactEle
 function AdminHeader({ activeSection }: { activeSection: InstanceAdminSection }): ReactElement {
   return (
     <header className="bg-[var(--track-surface)]">
-      <ShellPageHeader bordered title="Instance Admin" />
+      <PageHeader bordered title="Instance Admin" />
       <nav className="flex flex-wrap items-center gap-1 px-5 pb-3">
         {adminTabs.map((tab) => (
           <Link
@@ -51,9 +51,7 @@ function AdminHeader({ activeSection }: { activeSection: InstanceAdminSection })
           >
             <span
               className={`border-b-2 pb-[2px] ${
-                activeSection === tab.id
-                  ? "border-[var(--track-accent)]"
-                  : "border-transparent"
+                activeSection === tab.id ? "border-[var(--track-accent)]" : "border-transparent"
               }`}
             >
               {tab.label}
@@ -77,14 +75,14 @@ function AdminSectionContent({ section }: { section: InstanceAdminSection }): Re
       return <AdminConfigTab />;
     default:
       return (
-        <ShellSurfaceCard>
+        <SurfaceCard>
           <AppSurfaceState
             className="border-none bg-transparent text-[var(--track-text-muted)]"
             description="This section is not available."
             title="Section"
             tone="empty"
           />
-        </ShellSurfaceCard>
+        </SurfaceCard>
       );
   }
 }

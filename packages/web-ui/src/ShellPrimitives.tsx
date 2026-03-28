@@ -1,6 +1,5 @@
-import type { ButtonHTMLAttributes, ReactElement, ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
-import { getButtonClassName } from "./buttonStyles.ts";
 import { getSurfaceClassName } from "./surfaceStyles.ts";
 
 export function DirectoryFilterChip({
@@ -21,7 +20,7 @@ export function DirectoryFilterChip({
   );
 }
 
-export function ShellPageHeader({
+export function PageHeader({
   action,
   bordered = false,
   subtitle,
@@ -47,31 +46,7 @@ export function ShellPageHeader({
   );
 }
 
-export function ShellPrimaryButton({
-  children,
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button className={getButtonClassName("primary", className)} {...props}>
-      {children}
-    </button>
-  );
-}
-
-export function ShellSecondaryButton({
-  children,
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return (
-    <button className={getButtonClassName("secondary", className)} {...props}>
-      {children}
-    </button>
-  );
-}
-
-export function ShellSurfaceCard({
+export function SurfaceCard({
   children,
   className = "",
 }: {

@@ -53,7 +53,7 @@ export function CreateNameDialog({
             <span className="sr-only">{nameLabel}</span>
             <input
               aria-label={nameLabel}
-              className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[#2b1717] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-surface-error)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               onChange={(event) => onNameChange(event.target.value)}
               placeholder={namePlaceholder}
               value={nameValue}
@@ -65,7 +65,7 @@ export function CreateNameDialog({
               <p className="mb-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Color
               </p>
-              <div className="rounded-xl border border-[var(--track-border)] bg-[#181818] p-3">
+              <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
                 <ColorSwatchPicker
                   colors={colorOptions!}
                   onSelect={(color) => onColorSelect?.(color)}

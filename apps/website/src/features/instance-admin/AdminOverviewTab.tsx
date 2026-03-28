@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
 
 import {
@@ -18,10 +18,16 @@ export function AdminOverviewTab(): ReactElement {
 
 function OnboardingBanner(): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="flex items-start gap-5 p-5">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--track-accent)]/10 text-[24px]">
-          <svg className="h-7 w-7 text-[var(--track-accent)]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg
+            className="h-7 w-7 text-[var(--track-accent)]"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
             <path d="M13 10V3L4 14h7v7l9-11h-7z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
@@ -30,12 +36,13 @@ function OnboardingBanner(): ReactElement {
             Welcome to OpenToggl
           </h3>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--track-text-muted)]">
-            OpenToggl is an open-source, self-hosted time tracking platform compatible with Toggl Track.
-            If you find it useful, consider starring us on GitHub — it helps others discover the project.
+            OpenToggl is an open-source, self-hosted time tracking platform compatible with Toggl
+            Track. If you find it useful, consider starring us on GitHub — it helps others discover
+            the project.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <a
-              className="inline-flex items-center gap-2 rounded-[8px] bg-[#24292e] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[#2f363d]"
+              className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--track-overlay-surface-raised)] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[var(--track-overlay-border-strong)]"
               href="https://github.com/CorrectRoadH/opentoggl"
               rel="noopener noreferrer"
               target="_blank"
@@ -64,7 +71,7 @@ function OnboardingBanner(): ReactElement {
           </div>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
@@ -73,18 +80,18 @@ function VersionCard(): ReactElement {
 
   if (versionQuery.isPending) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <div className="flex items-center gap-3 p-5">
           <div className="h-4 w-32 animate-pulse rounded bg-[var(--track-border)]" />
         </div>
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
   const version = versionQuery.data;
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="flex items-center justify-between p-5">
         <div>
           <div className="flex items-center gap-3">
@@ -125,7 +132,7 @@ function VersionCard(): ReactElement {
           ) : null}
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
@@ -134,27 +141,27 @@ function HealthSection(): ReactElement {
 
   if (healthQuery.isPending) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="Loading instance health..."
           title="Health"
           tone="loading"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
   if (healthQuery.isError || !healthQuery.data) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="Could not load instance health data."
           title="Health unavailable"
           tone="error"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
@@ -162,7 +169,7 @@ function HealthSection(): ReactElement {
 
   return (
     <>
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <div className="p-5">
           <h3 className="mb-4 text-[16px] font-semibold text-[var(--track-text)]">
             Instance Health
@@ -174,7 +181,7 @@ function HealthSection(): ReactElement {
             </span>
           </div>
         </div>
-      </ShellSurfaceCard>
+      </SurfaceCard>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="Users" value={health.user_count} />
@@ -204,14 +211,14 @@ function StatusBadge({ status }: { status: string }): ReactElement {
 
 function StatCard({ label, value }: { label: string; value: number }): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-4">
         <div className="text-[12px] font-medium uppercase tracking-wide text-[var(--track-text-muted)]">
           {label}
         </div>
         <div className="mt-1 text-[24px] font-semibold text-[var(--track-text)]">{value}</div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
@@ -225,7 +232,7 @@ function DependencyCard({
   const isUp = dep.status === "up";
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-4">
         <div className="text-[12px] font-medium uppercase tracking-wide text-[var(--track-text-muted)]">
           {label}
@@ -238,6 +245,6 @@ function DependencyCard({
           ) : null}
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }

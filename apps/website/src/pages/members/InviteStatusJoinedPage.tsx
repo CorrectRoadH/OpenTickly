@@ -28,7 +28,7 @@ export function InviteStatusJoinedPage({
             <p className="text-sm leading-6 text-slate-600">
               You joined{" "}
               <span className="font-semibold text-slate-950">{resolvedWorkspaceName}</span>.
-              Continue into the workspace shell or return to login from here.
+              Continue into the workspace app or return to login from here.
             </p>
           </div>
 

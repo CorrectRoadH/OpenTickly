@@ -51,7 +51,7 @@ export function InvoiceLineItems({
 
   return (
     <div className="mt-6">
-      <div className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] gap-2 border-b border-[#444] pb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#999]">
+      <div className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] gap-2 border-b border-[var(--track-overlay-border)] pb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
         <span>Description</span>
         <span className="text-right">Quantity</span>
         <span className="text-right">Amount</span>
@@ -60,18 +60,18 @@ export function InvoiceLineItems({
 
       {items.map((item, index) => (
         <div
-          className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] items-center gap-2 border-b border-[#3a3a3c] py-1.5"
+          className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] items-center gap-2 border-b border-[var(--track-overlay-border-muted)] py-1.5"
           key={index}
         >
           <input
-            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             onChange={(e) => onUpdateItem(index, "description", e.target.value)}
             placeholder="Item description"
             type="text"
             value={item.description}
           />
           <input
-            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-right text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-right text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             min={0}
             onChange={(e) => onUpdateItem(index, "quantity", Number(e.target.value) || 0)}
             placeholder="0"
@@ -80,7 +80,7 @@ export function InvoiceLineItems({
             value={item.quantity || ""}
           />
           <input
-            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-right text-[14px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+            className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-right text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             min={0}
             onChange={(e) => onUpdateItem(index, "amount", Number(e.target.value) || 0)}
             placeholder="0.00"
@@ -90,7 +90,7 @@ export function InvoiceLineItems({
           />
           <button
             aria-label="Remove item"
-            className="flex size-8 items-center justify-center rounded text-[#666] hover:text-white"
+            className="flex size-8 items-center justify-center rounded text-[var(--track-text-disabled)] hover:text-white"
             onClick={() => onRemoveItem(index)}
             type="button"
           >
@@ -108,8 +108,8 @@ export function InvoiceLineItems({
         Add custom charge
       </button>
 
-      <div className="mt-4 flex items-center justify-between border-t border-[#444] py-3">
-        <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[#999]">
+      <div className="mt-4 flex items-center justify-between border-t border-[var(--track-overlay-border)] py-3">
+        <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
           Subtotal
         </span>
         <span className="text-[14px] text-white">
@@ -121,7 +121,7 @@ export function InvoiceLineItems({
         <div className="flex items-center justify-between py-1" key={index}>
           <div className="flex items-center gap-2">
             <input
-              className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[13px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+              className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[13px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
               onChange={(e) => onUpdateTax(index, "name", e.target.value)}
               placeholder="Tax name"
               type="text"
@@ -129,7 +129,7 @@ export function InvoiceLineItems({
             />
             <button
               aria-label="Remove tax"
-              className="flex size-6 items-center justify-center rounded text-[#666] hover:text-white"
+              className="flex size-6 items-center justify-center rounded text-[var(--track-text-disabled)] hover:text-white"
               onClick={() => onRemoveTax(index)}
               type="button"
             >
@@ -137,7 +137,7 @@ export function InvoiceLineItems({
             </button>
           </div>
           <input
-            className="h-8 w-24 rounded border border-transparent bg-transparent px-2 text-right text-[13px] text-white placeholder:text-[#666] hover:border-[#555] focus:border-[#888] focus:outline-none"
+            className="h-8 w-24 rounded border border-transparent bg-transparent px-2 text-right text-[13px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             onChange={(e) => onUpdateTax(index, "amount", Number(e.target.value) || 0)}
             placeholder="0.00"
             step="0.01"
@@ -156,7 +156,7 @@ export function InvoiceLineItems({
         Add tax
       </button>
 
-      <div className="mt-2 flex items-center justify-between border-t border-[#444] py-3">
+      <div className="mt-2 flex items-center justify-between border-t border-[var(--track-overlay-border)] py-3">
         <span className="text-[14px] font-bold uppercase tracking-[0.06em] text-white">Total</span>
         <span className="text-[16px] font-bold text-white">
           {total.toFixed(2)} {currency}

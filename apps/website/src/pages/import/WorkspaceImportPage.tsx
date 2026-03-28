@@ -186,7 +186,7 @@ export function WorkspaceImportPage(): ReactElement {
             {/* Step 2: CSV import */}
             <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
               <div className="flex items-start gap-4">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#1f3d2b] text-[#8fe0ac]">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[var(--track-success-surface-strong)] text-[var(--track-success-text-strong)]">
                   <TimerIcon className="size-5" />
                 </div>
                 <div className="min-w-0">

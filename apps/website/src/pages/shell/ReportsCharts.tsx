@@ -27,8 +27,8 @@ const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
 const Y_AXIS_LABELS = ["16h 15", "13h", "9h 45", "6h 30", "3h 15", "0h"] as const;
 const MAX_CHART_SECONDS = 16 * 3600 + 15 * 60;
 
-const BAR_COLOR = "#B744AB";
-const BAR_EMPTY_COLOR = "#42243E";
+const BAR_COLOR = "var(--track-accent-strong)";
+const BAR_EMPTY_COLOR = "var(--track-chart-bar-empty)";
 const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
 const DAY_NAMES: Record<string, string> = {
@@ -80,7 +80,7 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
             />
             <Tooltip
               content={<DurationTooltip />}
-              cursor={{ fill: "rgba(255,255,255,0.04)" }}
+              cursor={{ fill: "var(--track-accent-tint-subtle)" }}
               offset={20}
               position={{ y: -10 }}
             />
@@ -160,7 +160,7 @@ function DurationTooltip({
   const entry = payload[0].payload;
   const dayName = DAY_NAMES[entry.name] ?? entry.name;
   return (
-    <div className="rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+    <div className="rounded-md bg-[var(--track-tooltip-surface)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
       <span>{dayName}</span>
       <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
         {formatClockDuration(entry.seconds)}
@@ -280,7 +280,7 @@ function DonutChart({
       </div>
       {/* Tooltip */}
       {hoveredIndex != null && segments[hoveredIndex] ? (
-        <div className="pointer-events-none absolute -top-10 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-3 py-2 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+        <div className="pointer-events-none absolute -top-10 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--track-tooltip-surface)] px-3 py-2 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
           <span>{segments[hoveredIndex].label}</span>
           <span className="ml-2 tabular-nums text-[var(--track-text-soft)]">
             {segments[hoveredIndex].duration}

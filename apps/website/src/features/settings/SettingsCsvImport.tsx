@@ -1,4 +1,4 @@
-import { ShellSurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 
@@ -23,7 +23,7 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
   const navigate = useNavigate();
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="space-y-6 p-6">
         <div>
           <h2 className="text-[16px] font-semibold text-white">CSV Import</h2>
@@ -70,6 +70,6 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
           Go to CSV Import
         </button>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }

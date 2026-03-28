@@ -13,7 +13,7 @@ type ModalDialogProps = {
 };
 
 /**
- * Shared modal dialog shell for full-screen backdrop + centered card dialogs.
+ * Shared modal dialog container for full-screen backdrop + centered card dialogs.
  *
  * Covers: CreateNameDialog, InviteMemberDialog, ProjectEditorDialog,
  * GoalEditorDialog, KeyboardShortcutsDialog, BulkEditDialog.
@@ -41,7 +41,7 @@ export function ModalDialog({
       <div
         aria-labelledby={resolvedTitleId}
         aria-modal="true"
-        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-5 pt-4 shadow-[0_18px_40px_rgba(0,0,0,0.42)]`}
+        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-5 pt-4 shadow-[0_18px_40px_var(--track-shadow-modal)]`}
         data-testid={testId}
         onClick={(event) => event.stopPropagation()}
         role="dialog"

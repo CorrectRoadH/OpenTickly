@@ -635,11 +635,11 @@ function SessionUnavailablePanel() {
   return (
     <PublicMainPanelFrame
       badge="Session Error"
-      description="The shell could not restore your current session from the canonical web session endpoint."
+      description="The app could not restore your current session from the canonical web session endpoint."
       title="Session unavailable"
     >
       <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">
-        The shell could not bootstrap the current session from
+        The app could not bootstrap the current session from
         <code className="mx-1 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)] px-2 py-1 text-[12px] text-[var(--track-text)]">
           /web/v1/session
         </code>

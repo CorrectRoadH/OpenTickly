@@ -66,7 +66,7 @@ export function regroupByClient(breakdownRows: ReportsBreakdownRow[]): ReportsBr
       const shareValue = totalSeconds > 0 ? (acc.seconds / totalSeconds) * 100 : 0;
       return {
         clientName: name,
-        color: "#9e9e9e",
+        color: "var(--track-text-soft)",
         duration: formatClockDuration(acc.seconds),
         memberCount: acc.members.length,
         members: acc.members,
@@ -115,7 +115,7 @@ export function regroupByMember(breakdownRows: ReportsBreakdownRow[]): ReportsBr
     .map(([name, seconds]) => {
       const shareValue = totalSeconds > 0 ? (seconds / totalSeconds) * 100 : 0;
       return {
-        color: "#9e9e9e",
+        color: "var(--track-text-soft)",
         duration: formatClockDuration(seconds),
         memberCount: 1,
         members: [],

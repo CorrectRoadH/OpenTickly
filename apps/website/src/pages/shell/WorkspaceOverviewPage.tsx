@@ -2,7 +2,7 @@ import { type ReactElement, type ReactNode, useCallback, useMemo, useState } fro
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
-import { ShellPageHeader, ShellSecondaryButton } from "@opentoggl/web-ui";
+import { AppButton, PageHeader } from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
 import {
@@ -106,7 +106,9 @@ export function WorkspaceOverviewPage(): ReactElement {
         onError: (error) => {
           const message = error instanceof Error ? error.message : "Failed to send invitation";
           if (message.includes("SMTP") || message.includes("email sending")) {
-            toast.error("Email sending is not configured. Configure SMTP in Instance Admin before sending invitations.");
+            toast.error(
+              "Email sending is not configured. Configure SMTP in Instance Admin before sending invitations.",
+            );
           } else {
             toast.error(message);
           }
@@ -152,15 +154,15 @@ export function WorkspaceOverviewPage(): ReactElement {
         className="relative z-10 flex w-full flex-col gap-5"
         data-testid="workspace-overview-content"
       >
-        <ShellPageHeader
+        <PageHeader
           action={
             <div className="flex flex-wrap items-center gap-2">
-              <ShellSecondaryButton onClick={handleRefreshCharts} type="button">
+              <AppButton onClick={handleRefreshCharts} tone="secondary" type="button">
                 Refresh charts
-              </ShellSecondaryButton>
-              <ShellSecondaryButton onClick={handleViewAllPlans} type="button">
+              </AppButton>
+              <AppButton onClick={handleViewAllPlans} tone="secondary" type="button">
                 View all plans
-              </ShellSecondaryButton>
+              </AppButton>
             </div>
           }
           bordered
@@ -187,7 +189,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <span className="text-[12px] font-semibold leading-none text-white">
                     {overviewProgressPercent}%
                   </span>
-                  <div className="h-1 w-[72px] rounded-full bg-[#684863]">
+                  <div className="h-1 w-[72px] rounded-full bg-[var(--track-accent-soft)]">
                     <div
                       className="h-1 rounded-full bg-[var(--track-accent)]"
                       style={{ width: `${overviewProgressPercent}%` }}
@@ -223,13 +225,13 @@ export function WorkspaceOverviewPage(): ReactElement {
                 <div className="flex items-center justify-center gap-4 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
                   <span className="inline-flex items-center gap-1.5">
                     <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
-                      <rect fill="#e57bd9" height={6} rx={3} width={16} />
+                      <rect fill="var(--track-accent)" height={6} rx={3} width={16} />
                     </svg>
                     <span>Billable</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
-                      <rect fill="#B744AB" height={6} rx={3} width={16} />
+                      <rect fill="var(--track-accent-strong)" height={6} rx={3} width={16} />
                     </svg>
                     <span>Non-billable</span>
                   </span>
@@ -255,7 +257,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
                     <StatRing
-                      accent="#d67ad0"
+                      accent="var(--track-accent-secondary)"
                       percent={teamActivity.coveragePercent}
                       size={74}
                       innerSize={50}
@@ -413,7 +415,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-3">
                   <StatRing
-                    accent="#f0c05d"
+                    accent="var(--track-warning-text-strong)"
                     percent={projectCoverage.percent}
                     size={84}
                     innerSize={58}
@@ -572,7 +574,7 @@ function StatRing({
   const innerRadius = innerSize / 2;
   const data = [
     { name: "filled", value: clamped, fill: accent },
-    { name: "empty", value: 100 - clamped, fill: "#3a3a3a" },
+    { name: "empty", value: 100 - clamped, fill: "var(--track-border)" },
   ];
 
   return (
@@ -584,7 +586,7 @@ function StatRing({
         onMouseLeave={() => setHovered(false)}
       >
         {hovered ? (
-          <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+          <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--track-tooltip-surface)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
             <span className="font-semibold">{title}</span>
             <span className="ml-1.5 text-[var(--track-text-soft)]">{subtitle}</span>
           </div>
@@ -624,22 +626,22 @@ function OverviewEmptyState({ message }: { message: string }): ReactElement {
 function OverviewBackdrop(): ReactElement {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute left-[-120px] top-[520px] size-[280px] rounded-full border-[38px] border-[#202020] opacity-90" />
+      <div className="absolute left-[-120px] top-[520px] size-[280px] rounded-full border-[38px] border-[var(--track-panel)] opacity-90" />
       <div
-        className="absolute bottom-[-110px] left-[-40px] h-[240px] w-[360px] rounded-[48px] bg-[#1b1b1b] opacity-70"
+        className="absolute bottom-[-110px] left-[-40px] h-[240px] w-[360px] rounded-[48px] bg-[var(--track-surface)] opacity-70"
         style={{ clipPath: "polygon(0 20%, 78% 0, 100% 100%, 18% 100%)" }}
       />
       <div
-        className="absolute right-[72px] top-[140px] h-[190px] w-[220px] bg-[#1b1b1b] opacity-75"
+        className="absolute right-[72px] top-[140px] h-[190px] w-[220px] bg-[var(--track-surface)] opacity-75"
         style={{ clipPath: "polygon(34% 0, 100% 22%, 78% 100%, 0 72%)" }}
       />
-      <div className="absolute right-[-70px] top-[255px] size-[130px] rounded-full border-[22px] border-[#222222] opacity-85" />
+      <div className="absolute right-[-70px] top-[255px] size-[130px] rounded-full border-[22px] border-[var(--track-input-bg)] opacity-85" />
       <div
-        className="absolute bottom-[46px] right-[185px] h-[280px] w-[220px] bg-[#1d1d1d] opacity-75"
+        className="absolute bottom-[46px] right-[185px] h-[280px] w-[220px] bg-[var(--track-illustration-surface-muted)] opacity-75"
         style={{ clipPath: "polygon(35% 0, 100% 16%, 88% 100%, 0 80%)" }}
       />
       <div
-        className="absolute right-[235px] top-[32px] h-[74px] w-[70px] bg-[#1e1e1e] opacity-80"
+        className="absolute right-[235px] top-[32px] h-[74px] w-[70px] bg-[var(--track-illustration-surface-soft)] opacity-80"
         style={{ clipPath: "polygon(52% 0, 100% 52%, 38% 100%, 0 38%)" }}
       />
     </div>
@@ -695,7 +697,7 @@ function buildTopProjects(
     projects.map((project) => [
       project.id ?? -1,
       {
-        color: project.color?.trim() || "#cf58c4",
+        color: project.color?.trim() || "var(--track-accent-secondary)",
         name: project.name?.trim() || "(No project)",
       },
     ]),
@@ -705,7 +707,7 @@ function buildTopProjects(
   for (const activity of activities) {
     const projectId = activity.project_id ?? 0;
     const project = projectById.get(projectId) ?? {
-      color: "#cf58c4",
+      color: "var(--track-accent-secondary)",
       name: projectId === 0 ? "Without project" : `Project #${projectId}`,
     };
     const current = grouped.get(projectId) ?? { ...project, totalSeconds: 0 };
@@ -795,7 +797,13 @@ function formatShortAxisDay(day: Date): { weekday: string; date: string; label: 
 }
 
 function memberTint(index: number): string {
-  return ["#f9d7f4", "#f9e7cb", "#fff0d4", "#e57bd9", "#fbe5fb"][index % 5];
+  return [
+    "var(--track-chart-palette-1)",
+    "var(--track-chart-palette-2)",
+    "var(--track-chart-palette-3)",
+    "var(--track-accent)",
+    "var(--track-chart-palette-4)",
+  ][index % 5];
 }
 
 function memberLabel(member: ModelsMostActiveUser, nameById?: Map<number, string>): string {

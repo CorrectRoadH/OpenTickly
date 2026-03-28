@@ -34,7 +34,7 @@ export function ProfileFormSection({
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold text-white">Account details</h2>
           <p className="text-sm leading-6 text-slate-400">
-            Keep the current user profile separate from workspace settings so the shell matches
+            Keep the current user profile separate from workspace settings so the app matches
             Toggl’s account boundary.
           </p>
         </div>

@@ -4,21 +4,21 @@ type ColorSeed = {
 };
 
 export const TRACK_COLOR_SWATCHES = [
-  "#1a4a7f",
-  "#7e6cff",
-  "#c04a9f",
-  "#e28c1c",
-  "#d5af1f",
-  "#65b741",
-  "#85d0ff",
-  "#85c05f",
-  "#f2a483",
-  "#6d7dde",
-  "#a85adb",
-  "#e4c63d",
-  "#7d9a31",
-  "#d75a47",
-  "#56565c",
+  "var(--track-project-color-1)",
+  "var(--track-project-color-2)",
+  "var(--track-project-color-3)",
+  "var(--track-project-color-4)",
+  "var(--track-project-color-5)",
+  "var(--track-project-color-6)",
+  "var(--track-project-color-7)",
+  "var(--track-project-color-8)",
+  "var(--track-project-color-9)",
+  "var(--track-project-color-10)",
+  "var(--track-project-color-11)",
+  "var(--track-project-color-12)",
+  "var(--track-project-color-13)",
+  "var(--track-project-color-14)",
+  "var(--track-project-color-15)",
 ] as const;
 
 export const DEFAULT_PROJECT_COLOR = TRACK_COLOR_SWATCHES[0];

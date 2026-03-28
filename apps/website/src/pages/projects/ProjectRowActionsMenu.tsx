@@ -64,13 +64,13 @@ export function ProjectRowActionsMenu({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-10 z-20 min-w-[220px] rounded-[12px] border border-[#3d3d42] bg-[#242426] p-1.5 shadow-[0_16px_32px_rgba(0,0,0,0.34)]"
+          className="absolute right-0 top-10 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
           role="menu"
         >
           <MenuAction label="Edit project" onSelect={onEdit} />
           <MenuAction label="Add member" onSelect={onAddMember} />
           <a
-            className="flex rounded-[10px] px-3 py-2.5 text-[14px] text-[#d8d8dc] transition hover:bg-white/4"
+            className="flex rounded-[10px] px-3 py-2.5 text-[14px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
             href={buildWorkspaceReportsPath(workspaceId)}
             role="menuitem"
           >
@@ -100,7 +100,7 @@ function MenuAction({
   return (
     <button
       className={`flex w-full rounded-[10px] px-3 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-        destructive ? "text-[#ffb4aa]" : "text-[#d8d8dc]"
+        destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
       onClick={onSelect}
       role="menuitem"

@@ -87,16 +87,18 @@ export function SplitTimeEntryDialog({
         if (e.key === "Escape") onCancel();
       }}
     >
-      <div className="w-[360px] rounded-[16px] bg-[#2c2c2e] shadow-[0_24px_48px_rgba(0,0,0,0.5)]">
+      <div className="w-[360px] rounded-[16px] bg-[var(--track-tooltip-surface)] shadow-[0_24px_48px_var(--track-shadow-popover)]">
         {/* Header */}
         <div className="flex items-start justify-between px-6 pt-5">
           <div>
             <h2 className="text-[16px] font-semibold text-white">Split Time Entry</h2>
-            <p className="mt-1 text-[13px] text-[#909096]">Choose the split time</p>
+            <p className="mt-1 text-[13px] text-[var(--track-control-placeholder)]">
+              Choose the split time
+            </p>
           </div>
           <button
             aria-label="Close"
-            className="mt-0.5 flex size-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/8 hover:text-white"
+            className="mt-0.5 flex size-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/8 hover:text-white"
             onClick={onCancel}
             type="button"
           >
@@ -118,19 +120,19 @@ export function SplitTimeEntryDialog({
         >
           {/* Top block */}
           <div
-            className="flex flex-col justify-end bg-[#3a3a3e] p-3"
+            className="flex flex-col justify-end bg-[var(--track-overlay-border)] p-3"
             style={{ flexBasis: `${firstPercent}%`, minHeight: 36 }}
           >
-            <span className="text-[12px] leading-tight text-[#c9c9ce]">
+            <span className="text-[12px] leading-tight text-[var(--track-overlay-text-muted)]">
               {formatDuration(firstDuration)} ({formatTime(startMs)} – {formatTime(splitMs)})
             </span>
           </div>
           {/* Bottom block */}
           <div
-            className="flex flex-col justify-end bg-[#2a2a2e] p-3"
+            className="flex flex-col justify-end bg-[var(--track-tooltip-surface)] p-3"
             style={{ flexBasis: `${100 - firstPercent}%`, minHeight: 36 }}
           >
-            <span className="text-[12px] leading-tight text-[#c9c9ce]">
+            <span className="text-[12px] leading-tight text-[var(--track-overlay-text-muted)]">
               {formatDuration(secondDuration)} ({formatTime(splitMs)} – {formatTime(stopMs)})
             </span>
           </div>
@@ -142,7 +144,7 @@ export function SplitTimeEntryDialog({
             style={{ top: `calc(${firstPercent}% - 10px)` }}
           >
             <DragHandle />
-            <div className="h-[2px] flex-1 bg-[#666] shadow-[0_0_0_2px_#1b1b1b]" />
+            <div className="h-[2px] flex-1 bg-[var(--track-text-disabled)] shadow-[0_0_0_2px_var(--track-surface)]" />
             <DragHandle />
           </div>
         </div>
@@ -150,14 +152,14 @@ export function SplitTimeEntryDialog({
         {/* Action buttons */}
         <div className="flex justify-end gap-3 px-6 py-5">
           <button
-            className="rounded-[8px] border border-[#4a4a4e] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-white/5"
+            className="rounded-[8px] border border-[var(--track-control-border)] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-white/5"
             onClick={onCancel}
             type="button"
           >
             Cancel
           </button>
           <button
-            className="rounded-[8px] bg-[#e57cd8] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[#d06cc8]"
+            className="rounded-[8px] bg-[var(--track-accent)] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
             data-testid="split-confirm-button"
             onClick={handleConfirm}
             type="button"
@@ -172,7 +174,12 @@ export function SplitTimeEntryDialog({
 
 function DragHandle(): ReactElement {
   return (
-    <svg className="shrink-0 text-[#a4a4a4]" fill="currentColor" height="18" width="14">
+    <svg
+      className="shrink-0 text-[var(--track-text-muted)]"
+      fill="currentColor"
+      height="18"
+      width="14"
+    >
       <rect rx="1" width="14" height="2" y="6" />
       <rect rx="1" width="14" height="2" y="10" />
       <path

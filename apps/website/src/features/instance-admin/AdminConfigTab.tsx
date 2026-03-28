@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 
@@ -32,10 +32,13 @@ export function AdminConfigTab(): ReactElement {
       <SiteSection
         siteUrl={config.site_url}
         onSave={(siteUrl) => {
-          updateMutation.mutate({ site_url: siteUrl }, {
-            onSuccess: () => toast.success("Site URL updated"),
-            onError: () => toast.error("Failed to update site URL"),
-          });
+          updateMutation.mutate(
+            { site_url: siteUrl },
+            {
+              onSuccess: () => toast.success("Site URL updated"),
+              onError: () => toast.error("Failed to update site URL"),
+            },
+          );
         }}
         saving={updateMutation.isPending}
       />
@@ -43,10 +46,13 @@ export function AdminConfigTab(): ReactElement {
       <RegistrationSection
         currentMode={config.registration_mode}
         onSelect={(mode) => {
-          updateMutation.mutate({ registration_mode: mode }, {
-            onSuccess: () => toast.success(`Registration set to ${mode}`),
-            onError: () => toast.error("Failed to update registration policy"),
-          });
+          updateMutation.mutate(
+            { registration_mode: mode },
+            {
+              onSuccess: () => toast.success(`Registration set to ${mode}`),
+              onError: () => toast.error("Failed to update registration policy"),
+            },
+          );
         }}
         saving={updateMutation.isPending}
       />
@@ -59,10 +65,16 @@ export function AdminConfigTab(): ReactElement {
             toast.error("Configure SMTP before enabling email verification");
             return;
           }
-          updateMutation.mutate({ email_verification_required: enabled }, {
-            onSuccess: () => toast.success(enabled ? "Email verification enabled" : "Email verification disabled"),
-            onError: () => toast.error("Failed to update"),
-          });
+          updateMutation.mutate(
+            { email_verification_required: enabled },
+            {
+              onSuccess: () =>
+                toast.success(
+                  enabled ? "Email verification enabled" : "Email verification disabled",
+                ),
+              onError: () => toast.error("Failed to update"),
+            },
+          );
         }}
         saving={updateMutation.isPending}
       />
@@ -83,7 +95,11 @@ export function AdminConfigTab(): ReactElement {
   );
 }
 
-function SiteSection({ siteUrl, onSave, saving }: {
+function SiteSection({
+  siteUrl,
+  onSave,
+  saving,
+}: {
   siteUrl: string;
   onSave: (url: string) => void;
   saving: boolean;
@@ -91,7 +107,7 @@ function SiteSection({ siteUrl, onSave, saving }: {
   const [value, setValue] = useState(siteUrl);
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-5">
         <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">Site URL</h3>
         <p className="mb-4 text-[13px] text-[var(--track-text-muted)]">
@@ -115,17 +131,21 @@ function SiteSection({ siteUrl, onSave, saving }: {
           </button>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
-function RegistrationSection({ currentMode, onSelect, saving }: {
+function RegistrationSection({
+  currentMode,
+  onSelect,
+  saving,
+}: {
   currentMode: string;
   onSelect: (mode: string) => void;
   saving: boolean;
 }): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-5">
         <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">
           Registration Policy
@@ -143,7 +163,9 @@ function RegistrationSection({ currentMode, onSelect, saving }: {
               }`}
               disabled={saving}
               key={mode.value}
-              onClick={() => { if (mode.value !== currentMode) onSelect(mode.value); }}
+              onClick={() => {
+                if (mode.value !== currentMode) onSelect(mode.value);
+              }}
               type="button"
             >
               <span
@@ -158,30 +180,35 @@ function RegistrationSection({ currentMode, onSelect, saving }: {
                 ) : null}
               </span>
               <div>
-                <span className="text-[14px] font-medium text-[var(--track-text)]">{mode.label}</span>
+                <span className="text-[14px] font-medium text-[var(--track-text)]">
+                  {mode.label}
+                </span>
                 <span className="ml-2 text-[13px] text-[var(--track-text-muted)]">{mode.desc}</span>
               </div>
             </button>
           ))}
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
-function EmailVerificationSection({ enabled, smtpConfigured, onToggle, saving }: {
+function EmailVerificationSection({
+  enabled,
+  smtpConfigured,
+  onToggle,
+  saving,
+}: {
   enabled: boolean;
   smtpConfigured: boolean;
   onToggle: (enabled: boolean) => void;
   saving: boolean;
 }): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="flex items-center justify-between p-5">
         <div>
-          <h3 className="text-[16px] font-semibold text-[var(--track-text)]">
-            Email Verification
-          </h3>
+          <h3 className="text-[16px] font-semibold text-[var(--track-text)]">Email Verification</h3>
           <p className="text-[13px] text-[var(--track-text-muted)]">
             Require new users to verify their email address after registration.
             {!smtpConfigured ? " Requires SMTP to be configured." : ""}
@@ -202,11 +229,17 @@ function EmailVerificationSection({ enabled, smtpConfigured, onToggle, saving }:
           />
         </button>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
-function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
+function SmtpSection({
+  configured,
+  senderEmail,
+  senderName,
+  onSave,
+  saving,
+}: {
   configured: boolean;
   senderEmail: string;
   senderName: string;
@@ -223,7 +256,7 @@ function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
   const testMutation = useSendTestEmailMutation();
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-5">
         <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">Email / SMTP</h3>
         <p className="mb-4 text-[13px] text-[var(--track-text-muted)]">
@@ -235,10 +268,20 @@ function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
         <div className="grid grid-cols-2 gap-3">
           <ConfigField label="Sender Name" onChange={setName} value={name} />
           <ConfigField label="Sender Email" onChange={setEmail} type="email" value={email} />
-          <ConfigField label="SMTP Host" onChange={setHost} placeholder="smtp.example.com" value={host} />
+          <ConfigField
+            label="SMTP Host"
+            onChange={setHost}
+            placeholder="smtp.example.com"
+            value={host}
+          />
           <ConfigField label="SMTP Port" onChange={setPort} type="number" value={port} />
           <ConfigField label="SMTP Username" onChange={setUsername} value={username} />
-          <ConfigField label="SMTP Password" onChange={setPassword} type="password" value={password} />
+          <ConfigField
+            label="SMTP Password"
+            onChange={setPassword}
+            type="password"
+            value={password}
+          />
         </div>
         <div className="mt-4 flex items-center gap-3">
           <button
@@ -248,7 +291,14 @@ function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
               onSave({
                 sender_name: name,
                 sender_email: email,
-                ...(host ? { smtp_host: host, smtp_port: parseInt(port, 10), smtp_username: username, smtp_password: password } : {}),
+                ...(host
+                  ? {
+                      smtp_host: host,
+                      smtp_port: parseInt(port, 10),
+                      smtp_username: username,
+                      smtp_password: password,
+                    }
+                  : {}),
               })
             }
             type="button"
@@ -259,7 +309,9 @@ function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
 
         {configured ? (
           <div className="mt-5 border-t border-[var(--track-border)] pt-4">
-            <h4 className="mb-2 text-[14px] font-medium text-[var(--track-text)]">Send Test Email</h4>
+            <h4 className="mb-2 text-[14px] font-medium text-[var(--track-text)]">
+              Send Test Email
+            </h4>
             <div className="flex items-center gap-3">
               <input
                 className="flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-[var(--track-text)] placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
@@ -291,11 +343,17 @@ function SmtpSection({ configured, senderEmail, senderName, onSave, saving }: {
           </div>
         ) : null}
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
-function ConfigField({ label, value, onChange, type = "text", placeholder }: {
+function ConfigField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  placeholder,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -318,16 +376,26 @@ function ConfigField({ label, value, onChange, type = "text", placeholder }: {
 
 function ConfigLoading(): ReactElement {
   return (
-    <ShellSurfaceCard>
-      <AppSurfaceState className="border-none bg-transparent text-[var(--track-text-muted)]" description="Loading configuration..." title="Config" tone="loading" />
-    </ShellSurfaceCard>
+    <SurfaceCard>
+      <AppSurfaceState
+        className="border-none bg-transparent text-[var(--track-text-muted)]"
+        description="Loading configuration..."
+        title="Config"
+        tone="loading"
+      />
+    </SurfaceCard>
   );
 }
 
 function ConfigError(): ReactElement {
   return (
-    <ShellSurfaceCard>
-      <AppSurfaceState className="border-none bg-transparent text-[var(--track-text-muted)]" description="Could not load configuration." title="Config unavailable" tone="error" />
-    </ShellSurfaceCard>
+    <SurfaceCard>
+      <AppSurfaceState
+        className="border-none bg-transparent text-[var(--track-text-muted)]"
+        description="Could not load configuration."
+        title="Config unavailable"
+        tone="error"
+      />
+    </SurfaceCard>
   );
 }

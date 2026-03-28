@@ -1017,9 +1017,9 @@ function isEntryAlreadyFavorited(
 ): boolean {
   const desc = (entry.description ?? "").trim().toLowerCase();
   const projectId = entry.project_id ?? entry.pid ?? null;
-  const tagIds = [...(entry.tag_ids ?? [])].sort();
+  const tagIds = [...(entry.tag_ids ?? [])].sort((a, b) => a - b);
   return favorites.some((fav) => {
-    const favTags = [...(fav.tag_ids ?? [])].sort();
+    const favTags = [...(fav.tag_ids ?? [])].sort((a, b) => a - b);
     return (
       (fav.description ?? "").trim().toLowerCase() === desc &&
       (fav.project_id ?? null) === projectId &&
@@ -1305,7 +1305,9 @@ function TimerBarTagPicker({
             />
           </div>
           {filteredTags.length === 0 && !search.trim() ? (
-            <div className="px-3 py-2 text-[13px] text-[var(--track-text-soft)]">No tags available</div>
+            <div className="px-3 py-2 text-[13px] text-[var(--track-text-soft)]">
+              No tags available
+            </div>
           ) : filteredTags.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
               {filteredTags.map((tag) => {

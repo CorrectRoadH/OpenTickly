@@ -124,7 +124,7 @@ export function GroupsPage(): ReactElement {
           <p className="font-semibold text-white">No groups in this workspace yet.</p>
           <p className="mt-2 text-slate-400">
             Create a group to keep project access and member assignments discoverable from the
-            workspace shell.
+            workspace app.
           </p>
         </section>
       )}

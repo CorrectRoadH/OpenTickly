@@ -456,4 +456,3 @@ export function TrashIcon(props: IconProps): ReactElement {
     </Icon>
   );
 }
-

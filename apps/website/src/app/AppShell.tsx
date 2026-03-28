@@ -173,8 +173,16 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         <div className="flex w-[47px] flex-col items-center justify-between border-r border-[var(--track-border)] bg-black py-2">
           <div className="space-y-0.5">
             <RailButton active icon={<TrackIcon className="size-4" />} label="track" />
-            <RailButton icon={<PlanIcon className="size-4" />} label="plan" tooltip="opentoggl plan is coming" />
-            <RailButton icon={<FocusIcon className="size-4" />} label="focus" tooltip="opentoggl focus is coming" />
+            <RailButton
+              icon={<PlanIcon className="size-4" />}
+              label="plan"
+              tooltip="opentoggl plan is coming"
+            />
+            <RailButton
+              icon={<FocusIcon className="size-4" />}
+              label="focus"
+              tooltip="opentoggl focus is coming"
+            />
           </div>
           <div className="space-y-1">
             <ProfileMenuButton

@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,7 +18,7 @@ export function AdminUsersTab(): ReactElement {
 
   return (
     <div className="flex flex-col gap-4">
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <div className="flex items-center gap-3 p-4">
           <input
             className="flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-[var(--track-text)] placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
@@ -37,32 +37,32 @@ export function AdminUsersTab(): ReactElement {
             <option value="disabled">Disabled</option>
           </select>
         </div>
-      </ShellSurfaceCard>
+      </SurfaceCard>
 
       {usersQuery.isPending ? (
-        <ShellSurfaceCard>
+        <SurfaceCard>
           <AppSurfaceState
             className="border-none bg-transparent text-[var(--track-text-muted)]"
             description="Loading users..."
             title="Users"
             tone="loading"
           />
-        </ShellSurfaceCard>
+        </SurfaceCard>
       ) : null}
 
       {usersQuery.isError ? (
-        <ShellSurfaceCard>
+        <SurfaceCard>
           <AppSurfaceState
             className="border-none bg-transparent text-[var(--track-text-muted)]"
             description="Could not load instance users."
             title="Users unavailable"
             tone="error"
           />
-        </ShellSurfaceCard>
+        </SurfaceCard>
       ) : null}
 
       {usersQuery.data ? (
-        <ShellSurfaceCard>
+        <SurfaceCard>
           <div className="p-4">
             <div className="mb-3 text-[13px] text-[var(--track-text-muted)]">
               {usersQuery.data.total_count} user{usersQuery.data.total_count !== 1 ? "s" : ""}
@@ -100,7 +100,7 @@ export function AdminUsersTab(): ReactElement {
               </tbody>
             </table>
           </div>
-        </ShellSurfaceCard>
+        </SurfaceCard>
       ) : null}
     </div>
   );

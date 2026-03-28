@@ -89,7 +89,7 @@ function FavoriteItem({
     >
       <button
         aria-label={`Start ${label}`}
-        className="flex size-5 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-[#e57bd9]"
+        className="flex size-5 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-[var(--track-accent)]"
         onClick={() => onStart?.(favorite)}
         type="button"
       >
@@ -111,7 +111,7 @@ function FavoriteItem({
       </div>
       <button
         aria-label={`Delete favorite ${label}`}
-        className="flex size-4 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:text-[#fab8ac] group-hover:opacity-100"
+        className="flex size-4 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:text-[var(--track-danger-text)] group-hover:opacity-100"
         onClick={() => {
           if (typeof favorite.favorite_id === "number") {
             onDelete?.(favorite.favorite_id);

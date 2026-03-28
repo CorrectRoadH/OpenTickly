@@ -38,11 +38,11 @@ a {
 }
 
 ::selection {
-  background: rgba(229, 123, 217, 0.35);
+  background: var(--track-accent-selection);
 }
 
 *:focus-visible {
-  outline: 2px solid #e57bd9;
+  outline: 2px solid var(--track-accent);
   outline-offset: 2px;
 }
 
@@ -59,16 +59,16 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
+  background: var(--track-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--track-control-border);
 }
 
 /* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3a3a3a transparent;
+  scrollbar-color: var(--track-border) transparent;
 }

@@ -378,7 +378,7 @@ function OrganizationOptionsPanel({
 
   return (
     <div
-      className="fixed z-50 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_18px_48px_rgba(0,0,0,0.48)]"
+      className="fixed z-50 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_18px_48px_var(--track-shadow-elevated)]"
       ref={(node) => {
         panelRef.current = node;
       }}

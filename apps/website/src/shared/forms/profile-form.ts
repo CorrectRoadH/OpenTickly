@@ -64,7 +64,7 @@ export function mapProfileFormToRequest(values: ProfileFormValues): MePayload {
   };
 
   // Toggl-style profile updates should not send blank password fields, otherwise the
-  // shell would look like it is changing credentials on every profile save.
+  // app would look like it is changing credentials on every profile save.
   if (parsed.currentPassword && parsed.newPassword) {
     request.current_password = parsed.currentPassword;
     request.password = parsed.newPassword;

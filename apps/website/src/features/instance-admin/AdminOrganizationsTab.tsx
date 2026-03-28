@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
 
 import { useOrganizationsQuery } from "../../shared/query/instance-admin.ts";
@@ -8,17 +8,27 @@ export function AdminOrganizationsTab(): ReactElement {
 
   if (orgsQuery.isPending) {
     return (
-      <ShellSurfaceCard>
-        <AppSurfaceState className="border-none bg-transparent text-[var(--track-text-muted)]" description="Loading organizations..." title="Organizations" tone="loading" />
-      </ShellSurfaceCard>
+      <SurfaceCard>
+        <AppSurfaceState
+          className="border-none bg-transparent text-[var(--track-text-muted)]"
+          description="Loading organizations..."
+          title="Organizations"
+          tone="loading"
+        />
+      </SurfaceCard>
     );
   }
 
   if (orgsQuery.isError || !orgsQuery.data) {
     return (
-      <ShellSurfaceCard>
-        <AppSurfaceState className="border-none bg-transparent text-[var(--track-text-muted)]" description="Could not load organizations." title="Organizations unavailable" tone="error" />
-      </ShellSurfaceCard>
+      <SurfaceCard>
+        <AppSurfaceState
+          className="border-none bg-transparent text-[var(--track-text-muted)]"
+          description="Could not load organizations."
+          title="Organizations unavailable"
+          tone="error"
+        />
+      </SurfaceCard>
     );
   }
 
@@ -26,7 +36,7 @@ export function AdminOrganizationsTab(): ReactElement {
 
   return (
     <div className="flex flex-col gap-4">
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <div className="p-4">
           <div className="mb-3 text-[13px] text-[var(--track-text-muted)]">
             {orgs.total_count} organization{orgs.total_count !== 1 ? "s" : ""}
@@ -59,7 +69,7 @@ export function AdminOrganizationsTab(): ReactElement {
             </tbody>
           </table>
         </div>
-      </ShellSurfaceCard>
+      </SurfaceCard>
     </div>
   );
 }

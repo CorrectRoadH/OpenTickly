@@ -24,7 +24,7 @@ export function PublicMainPanelFrame({
             <span className="text-[18px] font-semibold text-[var(--track-text)]">OpenToggl</span>
           </div>
 
-          <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[0_0_0_1px_rgba(0,0,0,0.16)]">
+          <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-shadow-outline)]">
             <div className="mb-6 space-y-2">
               <p className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
                 {badge}

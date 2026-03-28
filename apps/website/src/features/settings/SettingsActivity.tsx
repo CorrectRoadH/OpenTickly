@@ -1,4 +1,4 @@
-import { ShellSurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useMemo } from "react";
 
 import {
@@ -52,7 +52,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
   const isError = activitiesQuery.isError && membersQuery.isError && mostActiveQuery.isError;
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-6">
         <div className="mb-6">
           <h2 className="text-[16px] font-semibold text-white">Workspace Activity</h2>
@@ -123,7 +123,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
           </>
         )}
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 

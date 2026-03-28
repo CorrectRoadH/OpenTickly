@@ -9,7 +9,7 @@ export const appTheme = {
     backgroundPrimary: "var(--track-surface)",
     backgroundSecondary: "var(--track-surface-muted)",
     backgroundTertiary: "var(--track-surface-raised)",
-    backgroundInversePrimary: "#fafafa",
+    backgroundInversePrimary: "var(--track-text)",
     borderOpaque: "var(--track-border)",
     contentPrimary: "var(--track-text)",
     contentSecondary: "var(--track-text-muted)",

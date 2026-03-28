@@ -1,7 +1,7 @@
 import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 
-import { ShellPage } from "../../app/ShellPage.tsx";
+import { Page } from "../../app/Page.tsx";
 import { OrganizationSettingsForm } from "../../features/settings/OrganizationSettingsForm.tsx";
 import { createOrganizationSettingsFormValues } from "../../shared/forms/settings-form.ts";
 import {
@@ -23,7 +23,7 @@ export function OrganizationSettingsPage({
 
   if (organizationQuery.isPending) {
     return (
-      <ShellPage data-testid="organization-settings-page">
+      <Page data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
             description="Fetching organization-level configuration and policy values."
@@ -31,13 +31,13 @@ export function OrganizationSettingsPage({
             tone="loading"
           />
         </AppPanel>
-      </ShellPage>
+      </Page>
     );
   }
 
   if (organizationQuery.isError) {
     return (
-      <ShellPage data-testid="organization-settings-page">
+      <Page data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
             description="We could not load organization settings right now. Refresh or try again shortly."
@@ -45,13 +45,13 @@ export function OrganizationSettingsPage({
             tone="error"
           />
         </AppPanel>
-      </ShellPage>
+      </Page>
     );
   }
 
   if (!organizationQuery.data) {
     return (
-      <ShellPage data-testid="organization-settings-page">
+      <Page data-testid="organization-settings-page">
         <AppPanel tone="muted">
           <AppSurfaceState
             description="No organization settings data was returned for this organization."
@@ -59,12 +59,12 @@ export function OrganizationSettingsPage({
             tone="empty"
           />
         </AppPanel>
-      </ShellPage>
+      </Page>
     );
   }
 
   return (
-    <ShellPage data-testid="organization-settings-page">
+    <Page data-testid="organization-settings-page">
       <div className="space-y-4">
         <AppPanel className="border-white/8" data-testid="organization-settings-header">
           <div className="space-y-5">
@@ -104,7 +104,7 @@ export function OrganizationSettingsPage({
           }}
         />
       </div>
-    </ShellPage>
+    </Page>
   );
 }
 

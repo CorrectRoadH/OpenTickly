@@ -1,16 +1,16 @@
 import { type HTMLAttributes, type ReactElement, type ReactNode } from "react";
 
-type ShellPageProps = {
+type PageProps = {
   children: ReactNode;
   widthClassName?: string;
 } & HTMLAttributes<HTMLDivElement>;
 
-export function ShellPage({
+export function Page({
   children,
   className,
   widthClassName = "max-w-none",
   ...props
-}: ShellPageProps): ReactElement {
+}: PageProps): ReactElement {
   return (
     <div className={`min-h-full px-5 py-5 ${className ?? ""}`} {...props}>
       <div className={`w-full ${widthClassName}`}>{children}</div>

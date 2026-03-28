@@ -144,7 +144,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             >
               <input
                 aria-label={field.label}
-                className="mt-1 h-4 w-4 rounded border-white/20 bg-[#111114] text-[#c792d1] focus:ring-[#c792d1]"
+                className="mt-1 h-4 w-4 rounded border-white/20 bg-[var(--track-panel)] text-[var(--track-accent-secondary)] focus:ring-[var(--track-accent-secondary)]"
                 disabled={updateMutation.isPending}
                 type="checkbox"
                 {...register(field.name)}

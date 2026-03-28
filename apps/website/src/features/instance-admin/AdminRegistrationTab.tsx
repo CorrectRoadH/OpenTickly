@@ -1,4 +1,4 @@
-import { AppSurfaceState, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
 import { toast } from "sonner";
 
@@ -31,27 +31,27 @@ export function AdminRegistrationTab(): ReactElement {
 
   if (policyQuery.isPending) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="Loading registration policy..."
           title="Registration"
           tone="loading"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
   if (policyQuery.isError || !policyQuery.data) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="Could not load registration policy."
           title="Registration unavailable"
           tone="error"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
@@ -59,7 +59,7 @@ export function AdminRegistrationTab(): ReactElement {
 
   return (
     <div className="flex flex-col gap-4">
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <div className="p-5">
           <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">
             Registration Policy
@@ -114,7 +114,7 @@ export function AdminRegistrationTab(): ReactElement {
             Last updated: {new Date(policyQuery.data.updated_at).toLocaleString()}
           </div>
         </div>
-      </ShellSurfaceCard>
+      </SurfaceCard>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { ShellPageHeader, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { PageHeader, SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -136,7 +136,7 @@ export function BillableRatesPage(): ReactElement {
     <div className="min-h-full bg-[var(--track-surface)]" data-testid="billable-rates-page">
       <div className="max-w-[1384px]">
         <header className="bg-[var(--track-surface)]">
-          <ShellPageHeader bordered title="Billable Rates" />
+          <PageHeader bordered title="Billable Rates" />
         </header>
 
         <div className="flex flex-col gap-5 px-5 pb-10 pt-5">
@@ -174,7 +174,7 @@ export function BillableRatesPage(): ReactElement {
 
 function AboutBillableRatesSection(): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="flex gap-3 p-5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)]">
           <DollarIcon className="h-4 w-4 text-[var(--track-accent)]" />
@@ -211,13 +211,13 @@ function AboutBillableRatesSection(): ReactElement {
           </ol>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
 function AboutLaborCostsSection(): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="flex gap-3 p-5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)]">
           <MembersIcon className="h-4 w-4 text-[var(--track-accent)]" />
@@ -233,7 +233,7 @@ function AboutLaborCostsSection(): ReactElement {
           </p>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
@@ -252,7 +252,7 @@ type WorkspaceRateSectionProps = {
 
 function WorkspaceRateSection(props: WorkspaceRateSectionProps): ReactElement {
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-5">
         <h2 className="mb-5 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
           Workspace Rate
@@ -286,7 +286,7 @@ function WorkspaceRateSection(props: WorkspaceRateSectionProps): ReactElement {
           </div>
         )}
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 
@@ -393,7 +393,7 @@ function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): 
   );
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="p-5">
         <div className="flex items-center gap-2">
           <h2 className="text-[14px] font-semibold leading-5 text-[var(--track-text)]">
@@ -444,7 +444,7 @@ function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): 
           </table>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }
 

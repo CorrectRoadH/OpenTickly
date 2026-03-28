@@ -1,9 +1,4 @@
-import {
-  AppSurfaceState,
-  ShellPageHeader,
-  ShellSecondaryButton,
-  ShellSurfaceCard,
-} from "@opentoggl/web-ui";
+import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
@@ -124,40 +119,40 @@ export function ProfilePage(): ReactElement {
 
   if (profileQuery.isPending || preferencesQuery.isPending) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="Fetching current user account details and preferences."
           title="Loading profile"
           tone="loading"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
   if (profileQuery.isError || preferencesQuery.isError) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent"
           description="We could not load account details right now. Refresh or try again shortly."
           title="Profile unavailable"
           tone="error"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
   if (!profileQuery.data || !preferencesQuery.data) {
     return (
-      <ShellSurfaceCard>
+      <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
           description="No profile data was returned for this session."
           title="Profile data unavailable"
           tone="empty"
         />
-      </ShellSurfaceCard>
+      </SurfaceCard>
     );
   }
 
@@ -193,11 +188,11 @@ export function ProfilePage(): ReactElement {
   return (
     <div className="space-y-4 pb-6" data-testid="profile-page">
       <section className="sticky top-0 z-10 bg-[var(--track-surface)]">
-        <ShellPageHeader
+        <PageHeader
           action={
-            <ShellSecondaryButton disabled type="button">
+            <AppButton disabled tone="secondary" type="button">
               Export account data
-            </ShellSecondaryButton>
+            </AppButton>
           }
           bordered
           title="My Profile"

@@ -170,7 +170,7 @@ export function DeleteConfirmDialog({
     >
       <div
         aria-label={`Delete ${count} ${entryWord}`}
-        className="w-[360px] rounded-xl bg-[#2c2c2c] p-6 shadow-xl"
+        className="w-[360px] rounded-xl bg-[var(--track-grid)] p-6 shadow-xl"
         data-testid="delete-confirm-dialog"
         role="dialog"
       >

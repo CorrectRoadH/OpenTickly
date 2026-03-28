@@ -1,6 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
-import { ShellPrimaryButton, ShellSurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 
 import type {
   ModelsProjectStatistics,
@@ -77,7 +77,7 @@ export function ProjectDetailPage({
                   Team
                 </a>
               </nav>
-              <ShellPrimaryButton type="button">Edit Project</ShellPrimaryButton>
+              <AppButton type="button">Edit Project</AppButton>
             </div>
           </header>
 
@@ -93,7 +93,7 @@ export function ProjectDetailPage({
 
           {project ? (
             <section className="pt-3">
-              <ShellSurfaceCard className="overflow-hidden">
+              <SurfaceCard className="overflow-hidden">
                 <div className="flex items-center gap-2 px-4 py-4 text-[13px] text-[var(--track-text-muted)]">
                   <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
                     i
@@ -167,7 +167,7 @@ export function ProjectDetailPage({
                     ) : null}
                   </ul>
                 )}
-              </ShellSurfaceCard>
+              </SurfaceCard>
             </section>
           ) : null}
         </section>
@@ -226,7 +226,9 @@ function FeatureBadge({
   return (
     <span
       className={`rounded-full px-2 py-[3px] text-[10px] font-semibold uppercase ${
-        tone === "premium" ? "bg-[#69483d] text-[#ffb08d]" : "bg-[#5f406a] text-[#efb7ff]"
+        tone === "premium"
+          ? "bg-[var(--track-surface-danger-alt)] text-[var(--track-danger-text-strong)]"
+          : "bg-[var(--track-accent-soft)] text-[var(--track-accent-warm-text)]"
       }`}
     >
       {label}
@@ -278,10 +280,18 @@ function ProjectDonut({
   const hasData = totalSeconds > 0;
   const data = hasData
     ? [
-        { name: "Billable", value: billableSeconds, fill: "#a356c1" },
-        ...(nonBillable > 0 ? [{ name: "Non-billable", value: nonBillable, fill: "#5c3566" }] : []),
+        { name: "Billable", value: billableSeconds, fill: "var(--track-chart-series-billable)" },
+        ...(nonBillable > 0
+          ? [
+              {
+                name: "Non-billable",
+                value: nonBillable,
+                fill: "var(--track-chart-series-non-billable)",
+              },
+            ]
+          : []),
       ]
-    : [{ name: "empty", value: 100, fill: "#3a3a3a" }];
+    : [{ name: "empty", value: 100, fill: "var(--track-border)" }];
 
   const percent =
     hasData && totalSeconds > 0 ? Math.round((billableSeconds / totalSeconds) * 100) : 0;
@@ -289,7 +299,7 @@ function ProjectDonut({
   return (
     <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
       {hoveredIndex != null && data[hoveredIndex] && data[hoveredIndex].name !== "empty" ? (
-        <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+        <div className="pointer-events-none absolute -top-9 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[var(--track-tooltip-surface)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
           <span
             className="mr-1.5 inline-block size-2 rounded-full"
             style={{ backgroundColor: data[hoveredIndex].fill }}
@@ -335,7 +345,7 @@ function ProjectDonut({
 
 function Avatar({ initials }: { initials: string }): ReactElement {
   return (
-    <div className="flex size-7 items-center justify-center rounded-full bg-[#3b3b3b] text-[11px] font-semibold text-white">
+    <div className="flex size-7 items-center justify-center rounded-full bg-[var(--track-overlay-border)] text-[11px] font-semibold text-white">
       {initials}
     </div>
   );

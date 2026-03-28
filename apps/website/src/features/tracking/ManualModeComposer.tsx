@@ -161,7 +161,7 @@ export function ManualModeComposer({
 
       <button
         aria-label="Add time entry"
-        className="flex size-[42px] items-center justify-center rounded-full bg-[#e57bd9] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition hover:brightness-110"
+        className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[inset_0_0_0_1px_var(--track-border-soft)] transition hover:brightness-110"
         data-testid="manual-add-button"
         onClick={handleAdd}
         type="button"

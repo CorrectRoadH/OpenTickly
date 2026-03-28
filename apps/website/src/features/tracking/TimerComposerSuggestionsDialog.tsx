@@ -94,7 +94,7 @@ export function TimerComposerSuggestionsDialog({
     >
       <div
         aria-label="Timer suggestions"
-        className="pointer-events-auto absolute w-[580px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] shadow-[0_12px_28px_rgba(0,0,0,0.34)]"
+        className="pointer-events-auto absolute w-[580px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]"
         data-testid="timer-composer-suggestions-dialog"
         role="dialog"
         style={position}
@@ -107,7 +107,7 @@ export function TimerComposerSuggestionsDialog({
           </span>
           <div className="relative">
             <button
-              className="flex items-center gap-1 text-[14px] text-[#a4a4a4] transition hover:text-white"
+              className="flex items-center gap-1 text-[14px] text-[var(--track-text-muted)] transition hover:text-white"
               onClick={() => setWorkspaceMenuOpen((current) => !current)}
               type="button"
             >
@@ -115,11 +115,13 @@ export function TimerComposerSuggestionsDialog({
               <ChevronDownIcon />
             </button>
             {workspaceMenuOpen ? (
-              <div className="absolute right-0 top-8 z-10 min-w-[240px] rounded-[10px] border border-[#3d3d42] bg-[#242426] py-2 shadow-[0_16px_32px_rgba(0,0,0,0.32)]">
+              <div className="absolute right-0 top-8 z-10 min-w-[240px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-2 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
                 {workspaces.map((workspace) => (
                   <button
                     className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-                      workspace.id === currentWorkspaceId ? "text-white" : "text-[#c9c9ce]"
+                      workspace.id === currentWorkspaceId
+                        ? "text-white"
+                        : "text-[var(--track-overlay-text-muted)]"
                     }`}
                     key={workspace.id}
                     onClick={() => {
@@ -130,7 +132,7 @@ export function TimerComposerSuggestionsDialog({
                   >
                     <span className="truncate">{workspace.name}</span>
                     {workspace.id === currentWorkspaceId ? (
-                      <span className="text-[12px] text-[#efc2ea]">Current</span>
+                      <span className="text-[12px] text-[var(--track-accent-text)]">Current</span>
                     ) : null}
                   </button>
                 ))}
@@ -142,7 +144,7 @@ export function TimerComposerSuggestionsDialog({
         {filteredFavorites.length > 0 ? (
           <>
             <div className="px-5 pb-1 pt-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#a0a0a5]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
                 Favorites
               </div>
             </div>
@@ -159,20 +161,22 @@ export function TimerComposerSuggestionsDialog({
                     tabIndex={-1}
                     type="button"
                   >
-                    <PlayIcon className="mr-2 size-3 shrink-0 text-[#a0a0a5]" />
+                    <PlayIcon className="mr-2 size-3 shrink-0 text-[var(--track-text-muted)]" />
                     <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[14px]">
                       {fav.description?.trim() ? (
-                        <span className="truncate text-[#cfcfd4]">{label}</span>
+                        <span className="truncate text-[var(--track-overlay-text-quiet)]">
+                          {label}
+                        </span>
                       ) : null}
                       {projectLabel ? (
                         <span className="flex shrink-0 items-center gap-1.5">
                           <span
                             className="size-[6px] shrink-0 rounded-full"
-                            style={{ backgroundColor: projectColor ?? "#9ca3af" }}
+                            style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
                           />
                           <span
                             className="truncate text-[14px]"
-                            style={{ color: projectColor ?? "#9ca3af" }}
+                            style={{ color: projectColor ?? "var(--track-text-muted)" }}
                           >
                             {projectLabel}
                           </span>
@@ -189,7 +193,7 @@ export function TimerComposerSuggestionsDialog({
         {previousEntries.length > 0 ? (
           <>
             <div className="px-5 pb-1 pt-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#a0a0a5]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
                 Previously tracked time entries
               </div>
             </div>
@@ -208,17 +212,19 @@ export function TimerComposerSuggestionsDialog({
                   >
                     <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[14px]">
                       {hasDescription ? (
-                        <span className="truncate text-[#cfcfd4]">{entry.description?.trim()}</span>
+                        <span className="truncate text-[var(--track-overlay-text-quiet)]">
+                          {entry.description?.trim()}
+                        </span>
                       ) : null}
                       {projectLabel ? (
                         <span className="flex shrink-0 items-center gap-1.5">
                           <span
                             className="size-[6px] shrink-0 rounded-full"
-                            style={{ backgroundColor: projectColor ?? "#9ca3af" }}
+                            style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
                           />
                           <span
                             className="truncate text-[14px]"
-                            style={{ color: projectColor ?? "#9ca3af" }}
+                            style={{ color: projectColor ?? "var(--track-text-muted)" }}
                           >
                             {projectLabel}
                           </span>
@@ -235,7 +241,7 @@ export function TimerComposerSuggestionsDialog({
         {suggestedProjects.length > 0 ? (
           <>
             <div className="px-5 pb-1 pt-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#a0a0a5]">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
                 Projects
               </div>
             </div>
@@ -293,7 +299,7 @@ function WsBriefcaseIcon(): ReactElement {
 
 function ChevronDownIcon(): ReactElement {
   return (
-    <svg aria-hidden="true" fill="#A4A4A4" height="5" viewBox="0 0 8 5" width="10">
+    <svg aria-hidden="true" fill="var(--track-text-muted)" height="5" viewBox="0 0 8 5" width="10">
       <path d="M3.6 4.4c.2.1.6.1.8 0l3-3c.1-.2.1-.6 0-.8-.2-.1-.6-.1-.8 0l-3 3h.8l-3-3C1.2.5.8.5.6.6c-.1.2-.1.6 0 .8l3 3z" />
     </svg>
   );

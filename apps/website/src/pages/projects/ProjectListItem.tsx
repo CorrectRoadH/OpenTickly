@@ -47,7 +47,7 @@ export function ProjectListItem({
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-semibold text-white">{project.name}</p>
-            <span className="rounded-lg border border-white/10 bg-[#18181c] px-3 py-1 text-xs font-medium text-slate-300">
+            <span className="rounded-lg border border-white/10 bg-[var(--track-input-bg)] px-3 py-1 text-xs font-medium text-slate-300">
               {statusLabel}
             </span>
             <span className="rounded-lg border border-sky-500/20 bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-200">

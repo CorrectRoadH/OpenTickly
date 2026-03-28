@@ -1,4 +1,4 @@
-import { ShellSurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
@@ -134,7 +134,7 @@ export function SettingsDataExport(): ReactElement {
   }, [entriesQuery.data, format, startDate, endDate]);
 
   return (
-    <ShellSurfaceCard>
+    <SurfaceCard>
       <div className="space-y-6 p-6">
         <div>
           <h2 className="text-[16px] font-semibold text-white">Export time entries</h2>
@@ -203,6 +203,6 @@ export function SettingsDataExport(): ReactElement {
           </span>
         </div>
       </div>
-    </ShellSurfaceCard>
+    </SurfaceCard>
   );
 }

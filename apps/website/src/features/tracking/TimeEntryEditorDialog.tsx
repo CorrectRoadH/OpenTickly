@@ -617,7 +617,9 @@ export function TimeEntryEditorDialog({
                   Change &rsaquo;
                 </button>
               }
-              icon={<ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />}
+              icon={
+                <ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />
+              }
               title={currentWorkspaceName}
             >
               {workspaceMenuOpen ? (
@@ -626,7 +628,9 @@ export function TimeEntryEditorDialog({
                     {workspaces.map((workspace) => (
                       <button
                         className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-                          workspace.id === currentWorkspaceId ? "text-white" : "text-[var(--track-overlay-text-muted)]"
+                          workspace.id === currentWorkspaceId
+                            ? "text-white"
+                            : "text-[var(--track-overlay-text-muted)]"
                         }`}
                         key={workspace.id}
                         onClick={() => {
@@ -638,7 +642,9 @@ export function TimeEntryEditorDialog({
                       >
                         <span className="truncate">{workspace.name}</span>
                         {workspace.id === currentWorkspaceId ? (
-                          <span className="text-[12px] text-[var(--track-accent-text)]">Current</span>
+                          <span className="text-[12px] text-[var(--track-accent-text)]">
+                            Current
+                          </span>
                         ) : null}
                       </button>
                     ))}
@@ -761,7 +767,9 @@ export function TimeEntryEditorDialog({
                     </div>
                     <input
                       className={`h-10 flex-1 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)] ${
-                        projectCreateError ? "border-rose-400" : "border-[var(--track-control-border)]"
+                        projectCreateError
+                          ? "border-rose-400"
+                          : "border-[var(--track-control-border)]"
                       }`}
                       onChange={(event) => {
                         setProjectDraftName(event.target.value);
@@ -801,7 +809,10 @@ export function TimeEntryEditorDialog({
           ) : null}
 
           {picker === "tag" ? (
-            <PickerSurface icon={<TagsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />} title="Tags">
+            <PickerSurface
+              icon={<TagsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />}
+              title="Tags"
+            >
               <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
               <div className="max-h-[340px] overflow-y-auto px-1 py-2">
                 {filteredTags.map((tag) => {
@@ -810,7 +821,9 @@ export function TimeEntryEditorDialog({
                   return (
                     <button
                       className={`flex w-full items-center justify-between rounded-[10px] px-4 py-3 text-left transition ${
-                        selected ? "bg-[var(--track-accent-soft)] text-white" : "hover:bg-white/4 text-[var(--track-overlay-text)]"
+                        selected
+                          ? "bg-[var(--track-accent-soft)] text-white"
+                          : "hover:bg-white/4 text-[var(--track-overlay-text)]"
                       }`}
                       key={tag.id}
                       onClick={() => onTagToggle(tag.id)}
@@ -821,7 +834,9 @@ export function TimeEntryEditorDialog({
                         <span className="truncate text-[15px]">{tag.name}</span>
                       </div>
                       {selected ? (
-                        <span className="text-[12px] text-[var(--track-accent-text)]">Selected</span>
+                        <span className="text-[12px] text-[var(--track-accent-text)]">
+                          Selected
+                        </span>
                       ) : null}
                     </button>
                   );
@@ -948,7 +963,7 @@ export function TimeEntryEditorDialog({
                   Running
                 </span>
               )}
-              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[#b7b7bc]">
+              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[var(--track-overlay-text-muted)]">
                 {duration}
               </span>
               <button
@@ -1197,7 +1212,11 @@ function PickerButton({
           ? "h-10 max-w-[168px] gap-2 rounded-[14px] px-3 text-[14px] font-semibold"
           : "size-10 rounded-[12px]"
       } ${
-        selected ? "" : active ? "bg-white/8" : "text-[var(--track-control-placeholder)] hover:bg-white/5 hover:text-white"
+        selected
+          ? ""
+          : active
+            ? "bg-white/8"
+            : "text-[var(--track-control-placeholder)] hover:bg-white/5 hover:text-white"
       }`}
       onClick={onClick}
       style={
@@ -1306,7 +1325,9 @@ function TimeDisplay({
     }
   }, [editing, timeValue]);
 
-  const borderColor = hasError ? "border-rose-400" : "border-[var(--track-control-border-contrast)]";
+  const borderColor = hasError
+    ? "border-rose-400"
+    : "border-[var(--track-control-border-contrast)]";
 
   return (
     <div className="relative flex items-center gap-1.5">
@@ -1612,6 +1633,10 @@ function resolveTagTriggerLabel(tags: TimeEntryEditorTag[]): string | undefined 
 }
 
 function colorToChipBackground(color: string): string {
+  if (!color.startsWith("#")) {
+    return `color-mix(in srgb, ${color} 24%, transparent)`;
+  }
+
   const normalized = color.replace("#", "");
   const full =
     normalized.length === 3

@@ -1,6 +1,6 @@
 import { type ReactElement, type ReactNode } from "react";
 
-import { AppPanel, ShellSecondaryButton } from "@opentoggl/web-ui";
+import { AppButton, AppPanel } from "@opentoggl/web-ui";
 
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
@@ -178,7 +178,9 @@ export function IntegrationTile({
       </div>
       <div className="ml-3">
         <p className="text-[11px] font-semibold uppercase leading-3 text-white">{title}</p>
-        <p className="text-[12px] font-medium leading-4 text-[#4ca4ff]">Connect</p>
+        <p className="text-[12px] font-medium leading-4 text-[var(--track-brand-outlook-calendar)]">
+          Connect
+        </p>
       </div>
     </div>
   );
@@ -250,16 +252,16 @@ export function ProfileHeroCard({
 
 export function ProfileBetaProgramCard(): ReactElement {
   return (
-    <section className="overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-black shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.24),inset_0_-1px_0_0_rgba(255,255,255,0.02)]">
+    <section className="overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-black shadow-[inset_0_1px_1px_0_var(--track-accent-tint),inset_0_-1px_0_0_var(--track-accent-tint-subtle)]">
       <div className="flex items-center justify-center gap-10 px-10 py-4">
         <div className="flex h-[240px] w-[340px] items-center justify-center">
           <div className="relative size-[240px]">
-            <div className="absolute left-[14px] top-[59px] h-[118px] w-[122px] rounded-[60px] bg-[#c0b8c3]" />
-            <div className="absolute left-[80px] top-[14px] h-[76px] w-[92px] rounded-t-[50px] border-[16px] border-b-0 border-[#564260]" />
-            <div className="absolute left-[79px] top-[123px] h-[78px] w-[102px] rounded-[8px] bg-[#ffde91]" />
-            <div className="absolute left-[113px] top-[144px] h-[37px] w-[35px] rounded-[18px] bg-[#2c1338]" />
-            <div className="absolute left-[66px] top-[120px] h-[82px] w-[116px] rounded-[8px] border border-[#f8cd76]" />
-            <div className="absolute left-[44px] top-[131px] size-[13px] rounded-full bg-[#2c1338]" />
+            <div className="absolute left-[14px] top-[59px] h-[118px] w-[122px] rounded-[60px] bg-[var(--track-illustration-neutral)]" />
+            <div className="absolute left-[80px] top-[14px] h-[76px] w-[92px] rounded-t-[50px] border-[16px] border-b-0 border-[var(--track-illustration-border)]" />
+            <div className="absolute left-[79px] top-[123px] h-[78px] w-[102px] rounded-[8px] bg-[var(--track-brand-google-calendar)]" />
+            <div className="absolute left-[113px] top-[144px] h-[37px] w-[35px] rounded-[18px] bg-[var(--track-illustration-ink)]" />
+            <div className="absolute left-[66px] top-[120px] h-[82px] w-[116px] rounded-[8px] border border-[var(--track-illustration-fill)]" />
+            <div className="absolute left-[44px] top-[131px] size-[13px] rounded-full bg-[var(--track-illustration-ink)]" />
           </div>
         </div>
 
@@ -276,9 +278,9 @@ export function ProfileBetaProgramCard(): ReactElement {
             symbol.
           </p>
           <div className="mt-[17.5px] flex items-center gap-7 pt-[14.5px]">
-            <ShellSecondaryButton disabled type="button">
+            <AppButton disabled tone="secondary" type="button">
               Disable beta features
-            </ShellSecondaryButton>
+            </AppButton>
             <a
               className="text-[14px] font-medium leading-[14px] text-[var(--track-accent-text)]"
               href="https://support.toggl.com/en/articles/2220661-your-toggl-track-account#beta-tester-program"

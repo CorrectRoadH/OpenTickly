@@ -83,7 +83,7 @@ export function BulkEditDialog({
     >
       <div className="flex flex-col gap-3">
         <input
-          className="w-full rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 py-2.5 text-[13px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[#e57bd9] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
           data-testid="bulk-edit-description"
           onChange={(event) => setDescription(event.target.value)}
           placeholder="New description..."
@@ -93,7 +93,7 @@ export function BulkEditDialog({
 
         <div className="relative">
           <button
-            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 py-2.5 text-[13px]"
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px]"
             data-testid="bulk-edit-project-trigger"
             onClick={() => {
               setSearch("");
@@ -135,7 +135,7 @@ export function BulkEditDialog({
 
         <div className="relative">
           <button
-            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 py-2.5 text-[13px]"
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px]"
             data-testid="bulk-edit-tag-trigger"
             onClick={() => {
               setSearch("");
@@ -178,7 +178,7 @@ export function BulkEditDialog({
         <label className="flex items-center gap-2 px-1 text-[13px] text-[var(--track-text-muted)]">
           <input
             checked={removeExistingTags}
-            className="size-3.5 cursor-pointer accent-[#e57bd9]"
+            className="size-3.5 cursor-pointer accent-[var(--track-accent)]"
             data-testid="bulk-edit-remove-tags"
             onChange={() => setRemoveExistingTags((v) => !v)}
             type="checkbox"
@@ -187,19 +187,19 @@ export function BulkEditDialog({
         </label>
 
         <input
-          className="w-full rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 py-2.5 text-[13px] text-white focus:border-[#e57bd9] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px] text-white focus:border-[var(--track-accent)] focus:outline-none"
           data-testid="bulk-edit-date"
           onChange={(event) => setSelectedDate(event.target.value)}
           type="date"
           value={selectedDate}
         />
 
-        <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] px-3 py-2.5">
+        <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5">
           <span className="text-[13px] text-white">Billable</span>
           <button
             aria-label={billable ? "Disable billable" : "Enable billable"}
             className={`relative h-5 w-9 rounded-full transition ${
-              billable ? "bg-[#e57bd9]" : "bg-[#4a4a4a]"
+              billable ? "bg-[var(--track-accent)]" : "bg-[var(--track-control-disabled)]"
             }`}
             data-testid="bulk-edit-billable-toggle"
             onClick={() => {
@@ -221,7 +221,7 @@ export function BulkEditDialog({
 
       <div className="mt-5">
         <button
-          className="rounded-lg bg-[#e57bd9] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[#d06bc4]"
+          className="rounded-lg bg-[var(--track-accent)] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--track-accent-fill-hover)]"
           data-testid="bulk-edit-save"
           onClick={handleSave}
           type="button"

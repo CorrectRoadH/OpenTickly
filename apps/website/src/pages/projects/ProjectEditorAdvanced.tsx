@@ -46,7 +46,7 @@ function ToggleSwitch({
       aria-label={label}
       aria-pressed={value}
       className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
-        value ? "bg-[var(--track-accent-soft)]" : "bg-[#3a3a3d]"
+        value ? "bg-[var(--track-accent-soft)]" : "bg-[var(--track-control-disabled-strong)]"
       }`}
       onClick={() => onChange(!value)}
       type="button"
@@ -102,7 +102,7 @@ export function ProjectEditorAdvanced({
         <div className="relative">
           <input
             aria-label="Search or create client"
-            className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
             onChange={(event: ChangeEvent<HTMLInputElement>) => {
               setClientQuery(event.target.value);
               if (!event.target.value.trim()) {
@@ -115,10 +115,10 @@ export function ProjectEditorAdvanced({
             }
           />
           {clientQuery.trim() ? (
-            <div className="absolute left-0 top-[calc(100%+4px)] z-10 max-h-[160px] w-full overflow-y-auto rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+            <div className="absolute left-0 top-[calc(100%+4px)] z-10 max-h-[160px] w-full overflow-y-auto rounded-[10px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]">
               {filteredClients.map((c) => (
                 <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-white hover:bg-[#2a2a2c]"
+                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-white hover:bg-[var(--track-tooltip-surface)]"
                   key={c.id}
                   onClick={() => {
                     onClientChange(c.id);
@@ -131,7 +131,7 @@ export function ProjectEditorAdvanced({
               ))}
               {filteredClients.length === 0 ? (
                 <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-[var(--track-accent-text)] hover:bg-[#2a2a2c]"
+                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-[var(--track-accent-text)] hover:bg-[var(--track-tooltip-surface)]"
                   onClick={() => {
                     onCreateClient(clientQuery.trim());
                     setClientQuery("");
@@ -166,7 +166,7 @@ export function ProjectEditorAdvanced({
         <div className="flex items-center gap-2">
           <input
             aria-label="Start date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
             onChange={(event) => onStartDateChange(event.target.value)}
             style={{ colorScheme: "dark" }}
             type="date"
@@ -175,7 +175,7 @@ export function ProjectEditorAdvanced({
           <span className="text-[13px] text-[var(--track-text-muted)]">-</span>
           <input
             aria-label="End date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
             onChange={(event) => onEndDateChange(event.target.value)}
             placeholder="No end date"
             style={{ colorScheme: "dark" }}
@@ -186,13 +186,13 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Recurring */}
-      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
+      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
         <span className="text-[14px] text-white">Recurring</span>
         <ToggleSwitch label="Recurring" onChange={onRecurringChange} value={recurring} />
       </div>
 
       {/* Time estimate */}
-      <div className="rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
+      <div className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">Time estimate</span>
           <ToggleSwitch
@@ -208,7 +208,7 @@ export function ProjectEditorAdvanced({
           <div className="mt-3 flex items-center gap-2">
             <input
               aria-label="Estimated hours"
-              className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onEstimatedHoursChange(Number(event.target.value) || 0)}
               type="number"
@@ -220,13 +220,13 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Billable */}
-      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
+      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
         <span className="text-[14px] text-white">Billable</span>
         <ToggleSwitch label="Billable" onChange={onBillableChange} value={billable} />
       </div>
 
       {/* Fixed fee */}
-      <div className="rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
+      <div className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">Fixed fee</span>
           <ToggleSwitch
@@ -242,7 +242,7 @@ export function ProjectEditorAdvanced({
           <div className="mt-3 flex items-center gap-2">
             <input
               aria-label="Fixed fee amount"
-              className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[#262628] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onFixedFeeChange(Number(event.target.value) || 0)}
               step="0.01"
@@ -267,7 +267,7 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Template */}
-      <label className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[#232325] px-3 py-3">
+      <label className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
         <span className="text-[14px] text-white">Use as template</span>
         <input
           aria-label="Use as template"

@@ -36,7 +36,7 @@ export function CalendarPanel({
     <div
       aria-labelledby="calendar-panel-title"
       aria-modal="false"
-      className="w-[320px] rounded-lg border border-[#3a3a3f] bg-[#1f1f20] py-[12px] px-3.5 shadow-[0_6px_18px_rgba(0,0,0,0.28)]"
+      className="w-[320px] rounded-lg border border-[var(--track-overlay-border-muted)] bg-[var(--track-overlay-surface)] py-[12px] px-3.5 shadow-[var(--track-shadow-card)]"
       data-testid={testId ?? "calendar-panel"}
       role="dialog"
     >
@@ -45,7 +45,7 @@ export function CalendarPanel({
         <div className="flex size-6 items-center justify-start">
           <button
             aria-label="Previous month"
-            className="flex w-6 h-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
+            className="flex w-6 h-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(
                 (current) => new Date(current.getFullYear(), current.getMonth() - 1, 1),
@@ -65,7 +65,7 @@ export function CalendarPanel({
         <div className="flex size-6 items-center justify-end">
           <button
             aria-label="Next month"
-            className="flex w-6 h-6 items-center justify-center rounded-full text-[#909096] transition hover:bg-white/10 hover:text-white"
+            className="flex w-6 h-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(
                 (current) => new Date(current.getFullYear(), current.getMonth() + 1, 1),
@@ -79,7 +79,7 @@ export function CalendarPanel({
       </div>
 
       {/* Weekday header — tight vertical rhythm, part of the grid */}
-      <div className="mb-0 grid grid-cols-7 gap-[3px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.03em] leading-[14px] text-[#54545a]">
+      <div className="mb-0 grid grid-cols-7 gap-[3px] px-0.5 text-center text-[10px] font-medium uppercase tracking-[0.03em] leading-[14px] text-[var(--track-control-border)]">
         {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((weekday) => (
           <div className="pb-1" key={weekday}>
             {weekday}
@@ -117,12 +117,12 @@ export function CalendarPanel({
                   aria-selected={selected}
                   className={`group relative flex size-10 items-center justify-center rounded-full text-[15px] font-semibold transition ${
                     selected
-                      ? "bg-[#b77fc0] text-[#2b222b] hover:bg-[#bc84c4]"
+                      ? "bg-[var(--track-accent-secondary)] text-[var(--track-button-text)] hover:bg-[var(--track-accent-fill-hover)]"
                       : isToday && !isOutsideMonth
-                        ? "bg-[#2d2d30] text-white hover:bg-white/[.07]"
+                        ? "bg-[var(--track-overlay-surface-raised)] text-white hover:bg-white/[.07]"
                         : isOutsideMonth
-                          ? "text-[#36363a] hover:text-[#3d3d42]"
-                          : "text-[#ededf0] hover:bg-white/[.06]"
+                          ? "text-[var(--track-text-disabled)] hover:text-[var(--track-overlay-border)]"
+                          : "text-[var(--track-overlay-icon)] hover:bg-white/[.06]"
                   }`}
                   key={day.toISOString()}
                   onClick={() => {
@@ -136,7 +136,7 @@ export function CalendarPanel({
                   {isToday && !selected && !isOutsideMonth ? (
                     <span
                       aria-hidden="true"
-                      className="absolute bottom-[4px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#c78acd]"
+                      className="absolute bottom-[4px] left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[var(--track-accent-secondary)]"
                     />
                   ) : null}
                 </button>

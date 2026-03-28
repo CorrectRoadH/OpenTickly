@@ -13,8 +13,8 @@ import {
 
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 
-const BAR_COLOR = "#B744AB";
-const BAR_EMPTY_COLOR = "#42243E";
+const BAR_COLOR = "var(--track-accent-strong)";
+const BAR_EMPTY_COLOR = "var(--track-chart-bar-empty)";
 const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
 type WeekChartDay = {
@@ -72,7 +72,7 @@ export function OverviewWeekChart({
         />
         <Tooltip
           content={<OverviewTooltip />}
-          cursor={{ fill: "rgba(255,255,255,0.04)" }}
+          cursor={{ fill: "var(--track-accent-tint-subtle)" }}
           offset={20}
           position={{ y: -10 }}
         />
@@ -144,7 +144,7 @@ function OverviewTooltip({
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   return (
-    <div className="rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+    <div className="rounded-md bg-[var(--track-tooltip-surface)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
       <span>
         {entry.weekday} {entry.date}
       </span>
