@@ -1473,7 +1473,7 @@ export function useBulkEditTimeEntriesMutation(workspaceId: number) {
         patchTimeEntries({
           body: operations,
           path: {
-            time_entry_ids: timeEntryIds.join(","),
+            time_entry_ids: timeEntryIds,
             workspace_id: workspaceId,
           },
         }),
