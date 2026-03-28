@@ -108,7 +108,7 @@ test.describe("Story: enter the tracking shell", () => {
     await expect(organizationButton).toContainText(initialOrganizationName);
     await expect(page.getByRole("link", { name: "Reports" })).toHaveAttribute(
       "href",
-      `/workspaces/${initialSession.current_workspace_id}/reports`,
+      `/workspaces/${initialSession.current_workspace_id}/reports/summary`,
     );
 
     await expect

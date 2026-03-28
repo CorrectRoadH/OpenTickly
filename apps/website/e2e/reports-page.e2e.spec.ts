@@ -43,7 +43,7 @@ test.describe("Story: browse the reports surface", () => {
 
     await page.getByRole("link", { name: "Reports" }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/reports$`));
+    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/reports(/summary)?$`));
     await expect(page.getByTestId("reports-page")).toBeVisible();
     await expect(page.getByTestId("reports-tabs")).toContainText("Summary");
     await expect(page.getByTestId("reports-filter-bar")).toContainText("This week . W");
