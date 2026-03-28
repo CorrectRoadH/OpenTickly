@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
+import { TimesheetSetupDialog } from "./TimesheetSetupDialog.tsx";
 import {
   getTimesheetSetups,
   getWorkspaceTimesheetsHandler,
@@ -30,6 +31,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
   const workspaceId = session.currentWorkspace.id;
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
   const [statusFilter, setStatusFilter] = useState<TimesheetStatus | "all">("all");
+  const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
   const weekNumber = useMemo(() => getISOWeekNumber(weekAnchor), [weekAnchor]);
   const weekIsCurrentWeek = useMemo(() => isCurrentWeek(weekAnchor), [weekAnchor]);
@@ -106,7 +108,16 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
               </Link>
             </nav>
           </div>
-          {view === "settings" ? <SetupTimesheetButton workspaceId={workspaceId} /> : null}
+          {view === "settings" ? (
+            <button
+              className="flex h-8 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-3 text-[12px] font-semibold text-white transition hover:brightness-110"
+              onClick={() => setSetupDialogOpen(true)}
+              type="button"
+            >
+              <PlusIcon className="size-3" />
+              Set up timesheets for member
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -153,11 +164,21 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
         </div>
       ) : null}
 
+      {/* Setup dialog */}
+      {setupDialogOpen ? <TimesheetSetupDialog onClose={() => setSetupDialogOpen(false)} /> : null}
+
       {/* Content */}
       {view === "settings" ? (
-        <ApprovalsSettingsView workspaceId={workspaceId} />
+        <ApprovalsSettingsView
+          onSetupClick={() => setSetupDialogOpen(true)}
+          workspaceId={workspaceId}
+        />
       ) : view === "team" ? (
         <TeamTimesheetsView
+          onGoToSetup={() => {
+            /* navigate to settings view — use link params */
+          }}
+          settingsPath={`/workspaces/${workspaceId}/approvals/settings`}
           statusFilter={statusFilter}
           weekEnd={weekEnd}
           weekStart={weekStart}
@@ -176,11 +197,15 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
 }
 
 function TeamTimesheetsView({
+  onGoToSetup: _onGoToSetup,
+  settingsPath: _settingsPath,
   statusFilter,
   weekEnd,
   weekStart,
   workspaceId,
 }: {
+  onGoToSetup: () => void;
+  settingsPath: string;
   statusFilter: TimesheetStatus | "all";
   weekEnd: Date;
   weekStart: Date;
@@ -233,10 +258,28 @@ function TeamTimesheetsView({
 
   if (timesheets.length === 0) {
     return (
-      <EmptyTimesheets
-        message="No timesheets to review."
-        detail="It's been a while since your team added a time entry."
-      />
+      <div className="flex flex-col items-center justify-center gap-4 px-5 py-16 text-center">
+        <h3 className="text-[18px] font-semibold text-white">No timesheets to review.</h3>
+        <p className="max-w-[400px] text-[13px] leading-5 text-[var(--track-text-muted)]">
+          It's been a while since your team added a time entry.
+        </p>
+        <Link
+          className="flex h-9 items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] px-4 text-[13px] font-medium text-white hover:bg-[var(--track-row-hover)]"
+          params={{ workspaceId: String(workspaceId), view: "settings" }}
+          to="/workspaces/$workspaceId/approvals/$view"
+        >
+          Go to timesheet setup
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
     );
   }
 
@@ -438,7 +481,13 @@ function YourTimesheetsView({
   );
 }
 
-function ApprovalsSettingsView({ workspaceId }: { workspaceId: number }): ReactElement {
+function ApprovalsSettingsView({
+  onSetupClick,
+  workspaceId,
+}: {
+  onSetupClick: () => void;
+  workspaceId: number;
+}): ReactElement {
   const setupsQuery = useQuery({
     queryKey: ["approvals", "setups", workspaceId],
     queryFn: () =>
@@ -472,7 +521,14 @@ function ApprovalsSettingsView({ workspaceId }: { workspaceId: number }): ReactE
             This automatic setup generates timesheets for selected team members based on tracked
             time during the week. Team members can then simply submit them for your approval.
           </p>
-          <SetupTimesheetButton workspaceId={workspaceId} className="mt-6" />
+          <button
+            className="mt-6 flex h-9 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition hover:brightness-110"
+            onClick={onSetupClick}
+            type="button"
+          >
+            <PlusIcon className="size-3.5" />
+            Set up timesheets for members
+          </button>
         </div>
       </div>
     );
@@ -515,24 +571,6 @@ function ApprovalsSettingsView({ workspaceId }: { workspaceId: number }): ReactE
         </tbody>
       </table>
     </div>
-  );
-}
-
-function SetupTimesheetButton({
-  className,
-  workspaceId: _workspaceId,
-}: {
-  className?: string;
-  workspaceId: number;
-}): ReactElement {
-  return (
-    <button
-      className={`flex h-8 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-3 text-[12px] font-semibold text-white transition hover:brightness-110 ${className ?? ""}`}
-      type="button"
-    >
-      <PlusIcon className="size-3" />
-      Set up timesheets for member
-    </button>
   );
 }
 
