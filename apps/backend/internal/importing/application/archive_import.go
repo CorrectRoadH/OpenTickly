@@ -31,16 +31,21 @@ type ImportedClients struct {
 }
 
 type ImportedProject struct {
-	Active        bool   `json:"active"`
-	ActualSeconds int64  `json:"actual_seconds"`
-	ClientID      *int64 `json:"client_id"`
-	CID           *int64 `json:"cid"`
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	Pinned        bool   `json:"pinned"`
-	Status        string `json:"status"`
-	WorkspaceID   int64  `json:"workspace_id"`
-	WID           int64  `json:"wid"`
+	Active        bool    `json:"active"`
+	ActualSeconds int64   `json:"actual_seconds"`
+	Billable      bool    `json:"billable"`
+	ClientID      *int64  `json:"client_id"`
+	CID           *int64  `json:"cid"`
+	Color         *string `json:"color"`
+	ID            int64   `json:"id"`
+	IsPrivate     bool    `json:"is_private"`
+	Name          string  `json:"name"`
+	Pinned        bool    `json:"pinned"`
+	Recurring     bool    `json:"recurring"`
+	Status        string  `json:"status"`
+	Template      bool    `json:"template"`
+	WorkspaceID   int64   `json:"workspace_id"`
+	WID           int64   `json:"wid"`
 }
 
 type ImportedProjects struct {

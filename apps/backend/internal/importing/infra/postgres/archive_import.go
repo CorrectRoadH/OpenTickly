@@ -615,6 +615,7 @@ func (importer *archiveImporter) ensureProject(
 ) (int64, error) {
 	createdBy := importer.createdByPointer(0)
 	clientID := importer.resolveImportedClientID(project)
+	color := importedProjectColor(project)
 	if existingID, found, err := importer.findScopedObjectByID(ctx, "catalog_projects", project.ID); err != nil {
 		return 0, err
 	} else if found {
@@ -625,9 +626,14 @@ func (importer *archiveImporter) ensureProject(
 				active = $5,
 				pinned = $6,
 				actual_seconds = $7,
-				created_by = $8
+				created_by = $8,
+				color = $9,
+				billable = $10,
+				is_private = $11,
+				template = $12,
+				recurring = $13
 			where workspace_id = $1 and id = $2
-		`, importer.workspaceID, existingID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned, project.ActualSeconds, createdBy); err != nil {
+		`, importer.workspaceID, existingID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring); err != nil {
 			return 0, fmt.Errorf("update project %d: %w", existingID, err)
 		}
 		return existingID, nil
@@ -641,14 +647,19 @@ func (importer *archiveImporter) ensureProject(
 				active = $4,
 				pinned = $5,
 				actual_seconds = $6,
-				created_by = $7
+				created_by = $7,
+				color = $8,
+				billable = $9,
+				is_private = $10,
+				template = $11,
+				recurring = $12
 			where workspace_id = $1 and id = $2
-		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned, project.ActualSeconds, createdBy); err != nil {
+		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring); err != nil {
 			return 0, fmt.Errorf("update project %d by name: %w", existingID, err)
 		}
 		return existingID, nil
 	}
-	return importer.insertScopedProject(ctx, project, clientID, createdBy)
+	return importer.insertScopedProject(ctx, project, clientID, createdBy, color)
 }
 
 func (importer *archiveImporter) insertScopedClient(
@@ -744,8 +755,9 @@ func (importer *archiveImporter) insertScopedProject(
 	project importingapplication.ImportedProject,
 	clientID *int64,
 	createdBy *int64,
+	color string,
 ) (int64, error) {
-	insertedID, inserted, err := importer.insertProjectWithID(ctx, project.ID, project.Name, clientID, project.Active, project.Pinned, project.ActualSeconds, createdBy)
+	insertedID, inserted, err := importer.insertProjectWithID(ctx, project, clientID, createdBy, color)
 	if err != nil {
 		return 0, err
 	}
@@ -755,16 +767,12 @@ func (importer *archiveImporter) insertScopedProject(
 
 	err = importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			workspace_id,
-			client_id,
-			name,
-			active,
-			pinned,
-			actual_seconds,
-			created_by
-		) values ($1, $2, $3, $4, $5, $6, $7)
+			workspace_id, client_id, name, active, pinned,
+			actual_seconds, created_by, color, billable, is_private, template, recurring
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		returning id
-	`, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned, project.ActualSeconds, createdBy).Scan(&insertedID)
+	`, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned,
+		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring).Scan(&insertedID)
 	if err != nil {
 		return 0, fmt.Errorf("insert project %q: %w", project.Name, err)
 	}
@@ -773,28 +781,20 @@ func (importer *archiveImporter) insertScopedProject(
 
 func (importer *archiveImporter) insertProjectWithID(
 	ctx context.Context,
-	projectID int64,
-	name string,
+	project importingapplication.ImportedProject,
 	clientID *int64,
-	active bool,
-	pinned bool,
-	actualSeconds int64,
 	createdBy *int64,
+	color string,
 ) (int64, bool, error) {
 	var insertedID int64
 	err := importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			id,
-			workspace_id,
-			client_id,
-			name,
-			active,
-			pinned,
-			actual_seconds,
-			created_by
-		) values ($1, $2, $3, $4, $5, $6, $7, $8)
+			id, workspace_id, client_id, name, active, pinned,
+			actual_seconds, created_by, color, billable, is_private, template, recurring
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		returning id
-	`, projectID, importer.workspaceID, clientID, strings.TrimSpace(name), active, pinned, actualSeconds, createdBy).Scan(&insertedID)
+	`, project.ID, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned,
+		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring).Scan(&insertedID)
 	if err == nil {
 		return insertedID, true, nil
 	}
@@ -802,7 +802,14 @@ func (importer *archiveImporter) insertProjectWithID(
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return 0, false, nil
 	}
-	return 0, false, fmt.Errorf("insert project %d: %w", projectID, err)
+	return 0, false, fmt.Errorf("insert project %d: %w", project.ID, err)
+}
+
+func importedProjectColor(project importingapplication.ImportedProject) string {
+	if project.Color != nil && strings.HasPrefix(*project.Color, "#") {
+		return *project.Color
+	}
+	return "#0b83d9"
 }
 
 func (importer *archiveImporter) createdByPointer(sourceUserID int64) *int64 {
