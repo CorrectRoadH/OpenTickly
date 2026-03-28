@@ -79,7 +79,9 @@ test.describe("Story: full time entry editing from calendar", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(dialog).not.toBeVisible();
 
-    // Verify: reopen the entry and check the project is still there
+    // Verify: reload and reopen — project must persist from the API
+    await page.reload();
+    await expect(page.getByRole("button", { name: INITIAL_DESCRIPTION }).first()).toBeVisible();
     await page.getByRole("button", { name: INITIAL_DESCRIPTION }).first().click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
     await expect(
@@ -107,7 +109,9 @@ test.describe("Story: full time entry editing from calendar", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(dialog).not.toBeVisible();
 
-    // Verify: reopen and check tag is still there
+    // Verify: reload and reopen — tag must persist from the API
+    await page.reload();
+    await expect(page.getByRole("button", { name: INITIAL_DESCRIPTION }).first()).toBeVisible();
     await page.getByRole("button", { name: INITIAL_DESCRIPTION }).first().click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
     await expect(
@@ -138,7 +142,9 @@ test.describe("Story: full time entry editing from calendar", () => {
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(dialog).not.toBeVisible();
 
-    // Verify: reopen and check billable is on and stop time is 11:30
+    // Verify: reload and reopen — billable and stop time must persist from the API
+    await page.reload();
+    await expect(page.getByRole("button", { name: INITIAL_DESCRIPTION }).first()).toBeVisible();
     await page.getByRole("button", { name: INITIAL_DESCRIPTION }).first().click();
     const reopened = page.getByTestId("time-entry-editor-dialog");
     await expect(reopened).toBeVisible();
@@ -162,6 +168,12 @@ test.describe("Story: full time entry editing from calendar", () => {
     await expect(dialog).not.toBeVisible();
 
     // The calendar should now show the updated description
+    await expect(
+      page.getByRole("button", { name: "Updated task name" }).first(),
+    ).toBeVisible();
+
+    // Verify: reload — description must persist from the API
+    await page.reload();
     await expect(
       page.getByRole("button", { name: "Updated task name" }).first(),
     ).toBeVisible();
