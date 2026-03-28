@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -86,37 +86,32 @@ function buildCalendarLocalizer(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1) {
 
 /**
  * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
- * On the "today" column, injects a CurrentTimeIndicator with a line
- * and a play button to start a new entry. RBC's built-in indicator
- * is hidden via CSS; we render our own so we can add the play button
- * and control the styling exactly.
- *
- * RBC passes `components.dayColumnWrapper` the day column's children
- * plus metadata. We wrap them and append the indicator on today's column.
- */
-/**
- * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
+ * Uses forwardRef because RBC's DayColumn passes a ref to dayColumnWrapper.
  * On the "today" column, appends a play button next to the RBC-rendered
- * .rbc-current-time-indicator. We do NOT calculate our own position —
- * we let RBC handle the indicator line position (it uses the same
- * formula as event positioning, so they always align perfectly).
- * The play button is positioned relative to the RBC indicator via CSS.
+ * .rbc-current-time-indicator.
  */
-function CalendarDayColumnWrapper({
-  children,
-  className,
-  style,
-  isNow,
-  onStartEntry,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-  style?: React.CSSProperties;
-  isNow?: boolean;
-  onStartEntry?: () => void;
-}) {
+const CalendarDayColumnWrapper = React.forwardRef<
+  HTMLDivElement,
+  {
+    children?: React.ReactNode;
+    className?: string;
+    style?: React.CSSProperties;
+    isNow?: boolean;
+    onStartEntry?: () => void;
+  }
+>(function CalendarDayColumnWrapper({ children, className, style, isNow, onStartEntry }, ref) {
   const columnRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<SVGSVGElement>(null);
+
+  // Merge the forwarded ref with our internal ref
+  const setRef = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      (columnRef as { current: HTMLDivElement | null }).current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) (ref as { current: HTMLDivElement | null }).current = node;
+    },
+    [ref],
+  );
 
   // Sync the play button's top position with RBC's indicator.
   // RBC sets .rbc-current-time-indicator { top: XX% } inline.
@@ -140,7 +135,7 @@ function CalendarDayColumnWrapper({
   }, [isNow]);
 
   return (
-    <div className={className} ref={columnRef} style={style}>
+    <div className={className} ref={setRef} style={style}>
       {children}
       {isNow ? (
         <svg
@@ -167,7 +162,7 @@ function CalendarDayColumnWrapper({
       ) : null}
     </div>
   );
-}
+});
 
 export function ToolbarButton({
   icon,
@@ -1156,17 +1151,22 @@ export function CalendarView({
         </button>
       </div>
     ),
-    dayColumnWrapper: (props: Record<string, unknown>) => (
-      <CalendarDayColumnWrapper
-        className={props.className as string | undefined}
-        isNow={Boolean(
-          typeof props.className === "string" && props.className.includes("rbc-now"),
-        )}
-        onStartEntry={onStartEntry}
-        style={props.style as React.CSSProperties | undefined}
-      >
-        {props.children as React.ReactNode}
-      </CalendarDayColumnWrapper>
+    dayColumnWrapper: React.forwardRef<HTMLDivElement, Record<string, unknown>>(
+      function DayColumnWrapperBridge(props, ref) {
+        return (
+          <CalendarDayColumnWrapper
+            ref={ref}
+            className={props.className as string | undefined}
+            isNow={Boolean(
+              typeof props.className === "string" && (props.className as string).includes("rbc-now"),
+            )}
+            onStartEntry={onStartEntry}
+            style={props.style as React.CSSProperties | undefined}
+          >
+            {props.children as React.ReactNode}
+          </CalendarDayColumnWrapper>
+        );
+      },
     ),
   }), [onContextMenuAction, onEditEntry, timezone, dailyTotals, today, zoom, onZoomIn, onZoomOut, onStartEntry]);
 

@@ -61,7 +61,7 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     const workspaceForm = page.getByTestId("workspace-settings-form");
     await workspaceForm.getByLabel("Workspace name").fill(workspaceName);
 
-    await expect(page.getByText("Success!")).toBeVisible();
+    // Sonner toast shows the message directly (no separate title)
     await expect(page.getByText("Your workspace has been updated")).toBeVisible();
 
     await page.reload();
