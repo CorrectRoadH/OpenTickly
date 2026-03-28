@@ -30,7 +30,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
-  const [statusFilter, setStatusFilter] = useState<TimesheetStatus | "all">("all");
+  const [statusFilter, setStatusFilter] = useState<TimesheetStatus>("submitted");
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
   const weekNumber = useMemo(() => getISOWeekNumber(weekAnchor), [weekAnchor]);
@@ -141,25 +141,27 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
         <div className="flex items-center gap-1 border-b border-[var(--track-border)] px-5 py-2">
           {(
             [
-              { label: "All", value: "all" },
               { label: "Pending review", value: "submitted" },
+              { label: "Changes requested", value: "rejected" },
               { label: "Approved", value: "approved" },
-              { label: "Rejected", value: "rejected" },
               { label: "Not submitted", value: "open" },
             ] as const
           ).map((tab) => (
-            <button
+            <Link
               className={`rounded-[6px] px-3 py-1.5 text-[13px] font-medium ${
                 statusFilter === tab.value
                   ? "bg-[var(--track-accent-soft)] text-[var(--track-accent)]"
                   : "text-[var(--track-text-muted)] hover:text-white"
               }`}
               key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setStatusFilter(tab.value);
+              }}
+              to="."
             >
               {tab.label}
-            </button>
+            </Link>
           ))}
         </div>
       ) : null}
@@ -206,7 +208,7 @@ function TeamTimesheetsView({
 }: {
   onGoToSetup: () => void;
   settingsPath: string;
-  statusFilter: TimesheetStatus | "all";
+  statusFilter: TimesheetStatus;
   weekEnd: Date;
   weekStart: Date;
   workspaceId: number;
@@ -222,7 +224,7 @@ function TeamTimesheetsView({
           query: {
             after: formatDateOnly(weekStart) as unknown as number,
             before: formatDateOnly(weekEnd) as unknown as number,
-            statuses: statusFilter === "all" ? undefined : (statusFilter as unknown as number),
+            statuses: statusFilter as unknown as number,
             per_page: 50,
           },
         }),
@@ -357,7 +359,7 @@ function YourTimesheetsView({
   weekStart,
   workspaceId,
 }: {
-  statusFilter: TimesheetStatus | "all";
+  statusFilter: TimesheetStatus;
   weekEnd: Date;
   weekStart: Date;
   workspaceId: number;
@@ -373,7 +375,7 @@ function YourTimesheetsView({
           query: {
             after: formatDateOnly(weekStart) as unknown as number,
             before: formatDateOnly(weekEnd) as unknown as number,
-            statuses: statusFilter === "all" ? undefined : (statusFilter as unknown as number),
+            statuses: statusFilter as unknown as number,
             per_page: 50,
           },
         }),
