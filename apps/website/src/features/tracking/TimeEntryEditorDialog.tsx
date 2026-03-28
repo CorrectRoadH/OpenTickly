@@ -25,6 +25,7 @@ import {
   PlayIcon,
   ProjectsIcon,
   SearchIcon,
+  StopIcon,
   TagsIcon,
   type IconName,
 } from "../../shared/ui/icons.tsx";
@@ -394,9 +395,7 @@ export function TimeEntryEditorDialog({
             type="button"
           >
             {primaryActionIcon === "stop" ? (
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect width="14" height="14" rx="2" fill="currentColor" />
-              </svg>
+              <StopIcon className="size-4" />
             ) : (
               <PlayIcon className="size-4" />
             )}
