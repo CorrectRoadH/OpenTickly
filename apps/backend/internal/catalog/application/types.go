@@ -107,22 +107,28 @@ type RecurringPeriodView struct {
 }
 
 type ProjectView struct {
-	ID            int64
-	WorkspaceID   int64
-	ClientID      *int64
-	Name          string
-	Active        bool
-	Pinned        bool
-	Template      bool
-	ActualSeconds int64
-	Recurring     bool
-	PeriodStart   *time.Time
-	PeriodEnd     *time.Time
-	ClientName    *string
-	CreatedAt     time.Time
-	Color         string
-	IsPrivate     bool
-	Billable      bool
+	ID               int64
+	WorkspaceID      int64
+	ClientID         *int64
+	Name             string
+	Active           bool
+	Pinned           bool
+	Template         bool
+	ActualSeconds    int64
+	Recurring        bool
+	PeriodStart      *time.Time
+	PeriodEnd        *time.Time
+	ClientName       *string
+	CreatedAt        time.Time
+	Color            string
+	IsPrivate        bool
+	Billable         bool
+	StartDate        *time.Time
+	EndDate          *time.Time
+	EstimatedSeconds *int64
+	FixedFee         *float64
+	Currency         *string
+	Rate             *float64
 }
 
 type TaskView struct {

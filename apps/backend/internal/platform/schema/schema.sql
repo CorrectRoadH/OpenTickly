@@ -208,6 +208,12 @@ create table catalog_projects (
     color text not null default '#0b83d9',
     is_private boolean not null default true,
     billable boolean not null default false,
+    start_date date,
+    end_date date,
+    estimated_seconds bigint,
+    fixed_fee double precision,
+    currency text,
+    rate double precision,
     created_by bigint references identity_users (id) on delete set null,
     created_at timestamptz not null default now()
 );

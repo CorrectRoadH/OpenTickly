@@ -76,6 +76,12 @@ func scanProject(scanner scanner) (catalogapplication.ProjectView, error) {
 		&project.Color,
 		&project.IsPrivate,
 		&project.Billable,
+		&project.StartDate,
+		&project.EndDate,
+		&project.EstimatedSeconds,
+		&project.FixedFee,
+		&project.Currency,
+		&project.Rate,
 	)
 	return project, err
 }

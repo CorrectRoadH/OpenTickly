@@ -273,12 +273,19 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 		Name:            lo.ToPtr(view.Name),
 		Pinned:          lo.ToPtr(view.Pinned),
 		Recurring:       lo.ToPtr(view.Recurring),
-		ServerDeletedAt: nil,
-		StartDate:       lo.ToPtr(view.CreatedAt.Format("2006-01-02")),
-		Status:          status,
-		Template:        lo.ToPtr(view.Template),
-		Wid:             lo.ToPtr(int(view.WorkspaceID)),
-		WorkspaceId:     lo.ToPtr(int(view.WorkspaceID)),
+		ServerDeletedAt:  nil,
+		StartDate:        resolveProjectStartDate(view),
+		Status:           status,
+		Template:         lo.ToPtr(view.Template),
+		Wid:              lo.ToPtr(int(view.WorkspaceID)),
+		WorkspaceId:      lo.ToPtr(int(view.WorkspaceID)),
+		Currency:         view.Currency,
+		EstimatedSeconds: intPointerFromInt64Pointer(view.EstimatedSeconds),
+		FixedFee:         float32PointerFromFloat64(view.FixedFee),
+		Rate:             float32PointerFromFloat64(view.Rate),
+	}
+	if view.EndDate != nil {
+		project.EndDate = datePointer(*view.EndDate)
 	}
 	if view.ClientID != nil {
 		project.Cid = lo.ToPtr(int(*view.ClientID))
@@ -290,6 +297,13 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 		}
 	}
 	return project
+}
+
+func resolveProjectStartDate(view catalogapplication.ProjectView) *string {
+	if view.StartDate != nil {
+		return datePointer(*view.StartDate)
+	}
+	return datePointer(view.CreatedAt)
 }
 
 func optionalTrackDate(value string) (*time.Time, error) {

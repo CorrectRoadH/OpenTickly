@@ -307,7 +307,8 @@ func (store *Store) ListProjects(
 		fmt.Sprintf(
 			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
 				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
-				p.color, p.is_private, p.billable
+				p.color, p.is_private, p.billable,
+				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
 			from catalog_projects p
 			left join catalog_clients c on c.id = p.client_id
 			where %s
@@ -345,7 +346,8 @@ func (store *Store) GetProject(
 		ctx,
 		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
 			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
-			p.color, p.is_private, p.billable
+			p.color, p.is_private, p.billable,
+				p.start_date, p.end_date, p.estimated_seconds, p.fixed_fee, p.currency, p.rate
 		from catalog_projects p
 		left join catalog_clients c on c.id = p.client_id
 		where p.workspace_id = $1 and p.id = $2`,

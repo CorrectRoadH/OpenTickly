@@ -183,6 +183,13 @@ func (handler *Handler) publicTrackWorkspaceID(ctx echo.Context) (int64, error) 
 	return workspaceID, nil
 }
 
+func float32PointerFromFloat64(value *float64) *float32 {
+	if value == nil {
+		return nil
+	}
+	return lo.ToPtr(float32(*value))
+}
+
 func int64PointerFromTrackIntPointer(value *int) *int64 {
 	if value == nil {
 		return nil

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
@@ -616,24 +617,21 @@ func (importer *archiveImporter) ensureProject(
 	createdBy := importer.createdByPointer(0)
 	clientID := importer.resolveImportedClientID(project)
 	color := importedProjectColor(project)
+	startDate := importedDatePointer(project.StartDate)
 	if existingID, found, err := importer.findScopedObjectByID(ctx, "catalog_projects", project.ID); err != nil {
 		return 0, err
 	} else if found {
 		if _, err := importer.tx.Exec(ctx, `
 			update catalog_projects
-			set client_id = $3,
-				name = $4,
-				active = $5,
-				pinned = $6,
-				actual_seconds = $7,
-				created_by = $8,
-				color = $9,
-				billable = $10,
-				is_private = $11,
-				template = $12,
-				recurring = $13
+			set client_id = $3, name = $4, active = $5, pinned = $6, actual_seconds = $7,
+				created_by = $8, color = $9, billable = $10, is_private = $11, template = $12,
+				recurring = $13, start_date = $14, estimated_seconds = $15, fixed_fee = $16,
+				currency = $17, rate = $18
 			where workspace_id = $1 and id = $2
-		`, importer.workspaceID, existingID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring); err != nil {
+		`, importer.workspaceID, existingID, clientID, strings.TrimSpace(project.Name), project.Active,
+			project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate,
+			project.Template, project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee,
+			project.Currency, project.Rate); err != nil {
 			return 0, fmt.Errorf("update project %d: %w", existingID, err)
 		}
 		return existingID, nil
@@ -643,23 +641,18 @@ func (importer *archiveImporter) ensureProject(
 	} else if found {
 		if _, err := importer.tx.Exec(ctx, `
 			update catalog_projects
-			set client_id = $3,
-				active = $4,
-				pinned = $5,
-				actual_seconds = $6,
-				created_by = $7,
-				color = $8,
-				billable = $9,
-				is_private = $10,
-				template = $11,
-				recurring = $12
+			set client_id = $3, active = $4, pinned = $5, actual_seconds = $6, created_by = $7,
+				color = $8, billable = $9, is_private = $10, template = $11, recurring = $12,
+				start_date = $13, estimated_seconds = $14, fixed_fee = $15, currency = $16, rate = $17
 			where workspace_id = $1 and id = $2
-		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring); err != nil {
+		`, importer.workspaceID, existingID, clientID, project.Active, project.Pinned, project.ActualSeconds,
+			createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring,
+			startDate, project.EstimatedSeconds, project.FixedFee, project.Currency, project.Rate); err != nil {
 			return 0, fmt.Errorf("update project %d by name: %w", existingID, err)
 		}
 		return existingID, nil
 	}
-	return importer.insertScopedProject(ctx, project, clientID, createdBy, color)
+	return importer.insertScopedProject(ctx, project, clientID, createdBy, color, startDate)
 }
 
 func (importer *archiveImporter) insertScopedClient(
@@ -756,8 +749,9 @@ func (importer *archiveImporter) insertScopedProject(
 	clientID *int64,
 	createdBy *int64,
 	color string,
+	startDate *time.Time,
 ) (int64, error) {
-	insertedID, inserted, err := importer.insertProjectWithID(ctx, project, clientID, createdBy, color)
+	insertedID, inserted, err := importer.insertProjectWithID(ctx, project, clientID, createdBy, color, startDate)
 	if err != nil {
 		return 0, err
 	}
@@ -767,12 +761,15 @@ func (importer *archiveImporter) insertScopedProject(
 
 	err = importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			workspace_id, client_id, name, active, pinned,
-			actual_seconds, created_by, color, billable, is_private, template, recurring
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+			workspace_id, client_id, name, active, pinned, actual_seconds, created_by,
+			color, billable, is_private, template, recurring,
+			start_date, estimated_seconds, fixed_fee, currency, rate
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 		returning id
 	`, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned,
-		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring).Scan(&insertedID)
+		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template,
+		project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee, project.Currency,
+		project.Rate).Scan(&insertedID)
 	if err != nil {
 		return 0, fmt.Errorf("insert project %q: %w", project.Name, err)
 	}
@@ -785,16 +782,20 @@ func (importer *archiveImporter) insertProjectWithID(
 	clientID *int64,
 	createdBy *int64,
 	color string,
+	startDate *time.Time,
 ) (int64, bool, error) {
 	var insertedID int64
 	err := importer.tx.QueryRow(ctx, `
 		insert into catalog_projects (
-			id, workspace_id, client_id, name, active, pinned,
-			actual_seconds, created_by, color, billable, is_private, template, recurring
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+			id, workspace_id, client_id, name, active, pinned, actual_seconds, created_by,
+			color, billable, is_private, template, recurring,
+			start_date, estimated_seconds, fixed_fee, currency, rate
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
 		returning id
-	`, project.ID, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active, project.Pinned,
-		project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate, project.Template, project.Recurring).Scan(&insertedID)
+	`, project.ID, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active,
+		project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate,
+		project.Template, project.Recurring, startDate, project.EstimatedSeconds, project.FixedFee,
+		project.Currency, project.Rate).Scan(&insertedID)
 	if err == nil {
 		return insertedID, true, nil
 	}
@@ -810,6 +811,17 @@ func importedProjectColor(project importingapplication.ImportedProject) string {
 		return *project.Color
 	}
 	return "#0b83d9"
+}
+
+func importedDatePointer(value *string) *time.Time {
+	if value == nil || *value == "" {
+		return nil
+	}
+	parsed, err := time.Parse("2006-01-02", *value)
+	if err != nil {
+		return nil
+	}
+	return &parsed
 }
 
 func (importer *archiveImporter) createdByPointer(sourceUserID int64) *int64 {
