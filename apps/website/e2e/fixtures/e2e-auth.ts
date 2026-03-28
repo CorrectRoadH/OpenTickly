@@ -169,6 +169,34 @@ export async function createProjectForWorkspace(
   }, options);
 }
 
+export async function createTagForWorkspace(
+  page: Page,
+  options: {
+    name: string;
+    workspaceId: number;
+  },
+): Promise<number> {
+  return page.evaluate(async (request) => {
+    const response = await fetch(`/api/v9/workspaces/${request.workspaceId}/tags`, {
+      body: JSON.stringify({
+        name: request.name,
+      }),
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Create tag failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    return payload.id ?? 0;
+  }, options);
+}
+
 function resolveAppBaseUrl(testInfo: TestInfo): string {
   const configuredBaseUrl = testInfo.project.use.baseURL;
 

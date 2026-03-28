@@ -120,6 +120,9 @@ export function GoalsPage(): ReactElement {
         target_seconds: data.targetHours * 3600,
         start_date: todayISOString(),
         end_date: data.noEndDate ? undefined : data.endDate || undefined,
+        project_ids: data.projectIds.length > 0 ? data.projectIds : undefined,
+        tag_ids: data.tagIds.length > 0 ? data.tagIds : undefined,
+        billable: data.billable || undefined,
       });
       setStatusMessage("Goal created");
     }

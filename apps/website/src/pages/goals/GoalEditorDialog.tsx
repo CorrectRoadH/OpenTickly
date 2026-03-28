@@ -5,8 +5,13 @@ import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMemberDto } from "../../shared/api/web-contract.ts";
-import { useWorkspaceMembersQuery } from "../../shared/query/web-shell.ts";
+import {
+  useProjectsQuery,
+  useTagsQuery,
+  useWorkspaceMembersQuery,
+} from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { GoalTrackPicker } from "./GoalTrackPicker.tsx";
 
 type GoalEditorDialogProps = {
   goal?: HandlergoalsApiResponse | null;
@@ -16,11 +21,14 @@ type GoalEditorDialogProps = {
 };
 
 export type GoalFormData = {
+  billable: boolean;
   comparison: string;
   endDate: string;
   name: string;
   noEndDate: boolean;
+  projectIds: number[];
   recurrence: string;
+  tagIds: number[];
   targetHours: number;
 };
 
@@ -35,12 +43,12 @@ const RECURRENCE_OPTIONS = [
   { label: "weekdays", value: "daily_workdays" },
 ];
 
-const ICON_OPTIONS = [
-  { label: "Target", value: "target" },
-  { label: "Clock", value: "clock" },
-  { label: "Star", value: "star" },
-  { label: "Heart", value: "heart" },
-  { label: "Lightning", value: "lightning" },
+const ICON_OPTIONS: { emoji: string; label: string; value: string }[] = [
+  { emoji: "🎯", label: "Target", value: "target" },
+  { emoji: "🕐", label: "Clock", value: "clock" },
+  { emoji: "⭐", label: "Star", value: "star" },
+  { emoji: "❤️", label: "Heart", value: "heart" },
+  { emoji: "⚡", label: "Lightning", value: "lightning" },
 ];
 
 function targetSecondsToHours(seconds?: number): number {
@@ -64,6 +72,8 @@ export function GoalEditorDialog({
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
+  const projectsQuery = useProjectsQuery(workspaceId, "active");
+  const tagsQuery = useTagsQuery(workspaceId);
 
   const [name, setName] = useState(goal?.name ?? "");
   const [icon, setIcon] = useState(goal?.icon ?? "target");
@@ -76,6 +86,14 @@ export function GoalEditorDialog({
   const [noEndDate, setNoEndDate] = useState(!goal?.end_date);
   const [memberOpen, setMemberOpen] = useState(false);
   const [selectedUserId] = useState(goal?.user_id ?? session.user.id ?? 0);
+  const [projectIds, setProjectIds] = useState<number[]>(goal?.project_ids ?? []);
+  const [tagIds, setTagIds] = useState<number[]>(goal?.tag_ids ?? []);
+  const [billable, setBillable] = useState(goal?.billable ?? false);
+
+  const allProjects = projectsQuery.data ?? [];
+  const allTags = (tagsQuery.data ?? [])
+    .filter((t) => t.id != null && t.name != null && !t.deleted_at)
+    .map((t) => ({ id: t.id!, name: t.name! }));
 
   const members = membersQuery.data?.members ?? [];
   const selectedMember = members.find((m) => m.id === selectedUserId);
@@ -85,11 +103,14 @@ export function GoalEditorDialog({
   function handleSubmit() {
     if (!name.trim()) return;
     onSubmit({
+      billable,
       comparison,
       endDate: noEndDate ? "" : endDate,
       name: name.trim(),
       noEndDate,
+      projectIds,
       recurrence,
+      tagIds,
       targetHours,
     });
   }
@@ -117,24 +138,7 @@ export function GoalEditorDialog({
               type="text"
               value={name}
             />
-            <div className="relative">
-              <select
-                aria-label="Goal icon"
-                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[13px] text-white"
-                data-testid="goal-icon-select"
-                onChange={(e) => setIcon(e.target.value)}
-                value={icon}
-              >
-                {ICON_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                <ChevronDownIcon className="size-2.5" />
-              </span>
-            </div>
+            <GoalIconPicker onChange={setIcon} value={icon} />
           </div>
         </div>
 
@@ -170,14 +174,17 @@ export function GoalEditorDialog({
             Track
             <InfoIcon />
           </label>
-          <button
-            className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-[var(--track-text-muted)] disabled:opacity-60"
+          <GoalTrackPicker
+            billable={billable}
             disabled={isEdit}
-            type="button"
-          >
-            <SearchIcon className="size-3.5" />
-            <span>Search for projects, tasks, billable...</span>
-          </button>
+            onBillableChange={setBillable}
+            onProjectIdsChange={setProjectIds}
+            onTagIdsChange={setTagIds}
+            projectIds={projectIds}
+            projects={allProjects}
+            tagIds={tagIds}
+            tags={allTags}
+          />
         </div>
 
         {/* FOR */}
@@ -205,18 +212,16 @@ export function GoalEditorDialog({
                 <ChevronDownIcon className="size-2.5" />
               </span>
             </div>
-            <div className="relative">
+            <div className="flex h-[42px] items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
               <input
-                className="h-[42px] w-20 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-12 text-[14px] text-white focus:border-[var(--track-accent-soft)] focus:outline-none"
+                className="w-12 bg-transparent text-[14px] text-white focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 data-testid="goal-hours-input"
                 min={0}
                 onChange={(e) => setTargetHours(Number(e.target.value) || 0)}
                 type="number"
                 value={targetHours || ""}
               />
-              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[13px] text-[var(--track-text-muted)]">
-                hours
-              </span>
+              <span className="text-[14px] text-[var(--track-text-muted)]">hours</span>
             </div>
             <div className="relative">
               <select
@@ -399,6 +404,55 @@ function MemberDropdown({
         </div>
       </div>
     </>
+  );
+}
+
+function GoalIconPicker({
+  onChange,
+  value,
+}: {
+  onChange: (value: string) => void;
+  value: string;
+}): ReactElement {
+  const [open, setOpen] = useState(false);
+  const current = ICON_OPTIONS.find((o) => o.value === value) ?? ICON_OPTIONS[0];
+
+  return (
+    <div className="relative">
+      <button
+        aria-label="Goal icon"
+        className="flex h-[42px] items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[18px]"
+        data-testid="goal-icon-select"
+        onClick={() => setOpen(!open)}
+        type="button"
+      >
+        <span>{current.emoji}</span>
+        <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-[calc(100%+4px)] z-50 flex gap-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] p-2 shadow-lg">
+            {ICON_OPTIONS.map((opt) => (
+              <button
+                className={`flex size-9 items-center justify-center rounded-[6px] text-[18px] hover:bg-[var(--track-row-hover)] ${
+                  opt.value === value ? "bg-[var(--track-row-hover)]" : ""
+                }`}
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                title={opt.label}
+                type="button"
+              >
+                {opt.emoji}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 
