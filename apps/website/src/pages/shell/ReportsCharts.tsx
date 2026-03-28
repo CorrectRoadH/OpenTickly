@@ -1,8 +1,22 @@
 import { type ReactElement, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  LabelList,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-data.ts";
 import type { SliceDimension } from "./useReportsPageState.ts";
 import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 
 const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
   { label: "Projects", value: "projects" },
@@ -12,6 +26,10 @@ const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
 
 const Y_AXIS_LABELS = ["16h 15", "13h", "9h 45", "6h 30", "3h 15", "0h"] as const;
 const MAX_CHART_SECONDS = 16 * 3600 + 15 * 60;
+
+const BAR_COLOR = "#B744AB";
+const BAR_EMPTY_COLOR = "#42243E";
+const BAR_RADIUS: [number, number, number, number] = [4, 4, 0, 0];
 
 const DAY_NAMES: Record<string, string> = {
   Mon: "Monday",
@@ -24,7 +42,16 @@ const DAY_NAMES: Record<string, string> = {
 };
 
 export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): ReactElement {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const data = weekRows.map((row) => ({
+    name: row.label,
+    seconds: row.seconds,
+    value: row.value,
+  }));
+
+  const yTicks = Y_AXIS_LABELS.map((_, i) => {
+    const frac = i / (Y_AXIS_LABELS.length - 1);
+    return Math.round(MAX_CHART_SECONDS * (1 - frac));
+  });
 
   return (
     <section
@@ -32,61 +59,108 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
       data-testid="reports-duration-chart"
     >
       <h2 className="text-[16px] font-semibold leading-[23px] text-white">Duration by day</h2>
-      <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-9 pt-3">
-        <div className="grid h-[248px] grid-cols-[44px_minmax(0,1fr)] gap-4">
-          <div className="flex flex-col justify-between pb-6 text-[11px] font-medium text-[var(--track-text-soft)]">
-            {Y_AXIS_LABELS.map((label) => (
-              <span key={label}>{label}</span>
-            ))}
-          </div>
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-0 flex flex-col justify-between pb-6">
-              {Y_AXIS_LABELS.map((label) => (
-                <div className="border-t border-dashed border-[var(--track-border)]" key={label} />
+      <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-4 pt-3">
+        <ResponsiveContainer height={248} width="100%">
+          <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke="var(--track-border)" strokeDasharray="2 2" vertical={false} />
+            <XAxis
+              axisLine={{ stroke: "var(--track-border)", strokeWidth: 2 }}
+              dataKey="name"
+              interval={0}
+              tick={{ fill: "var(--track-text-soft)", fontSize: 11, fontWeight: 500 }}
+              tickLine={false}
+            />
+            <YAxis
+              axisLine={false}
+              domain={[0, MAX_CHART_SECONDS]}
+              tick={<HourAxisTick />}
+              tickLine={false}
+              ticks={yTicks}
+              width={44}
+            />
+            <Tooltip content={<DurationTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+            <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
+              <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
+              {data.map((entry) => (
+                <Cell fill={entry.seconds > 0 ? BAR_COLOR : BAR_EMPTY_COLOR} key={entry.name} />
               ))}
-            </div>
-            <div className="relative z-10 flex h-full items-end gap-4 pb-6">
-              {weekRows.map((row, index) => (
-                <div
-                  className="relative flex flex-1 flex-col items-center justify-end gap-3"
-                  key={row.label}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                >
-                  {hoveredIndex === index ? (
-                    <div className="pointer-events-none absolute -top-8 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
-                      <span>{DAY_NAMES[row.label] ?? row.label}</span>
-                      <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
-                        {row.value}
-                      </span>
-                    </div>
-                  ) : null}
-                  <span className="text-[11px] font-medium tabular-nums text-[var(--track-text-soft)]">
-                    {row.value}
-                  </span>
-                  <div className="flex h-full w-full items-end">
-                    <div
-                      className="w-full rounded-t-md bg-[var(--track-accent)] transition-opacity hover:opacity-80"
-                      style={{
-                        height:
-                          row.seconds === 0 ? "2px" : `${(row.seconds / MAX_CHART_SECONDS) * 100}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="text-[11px] font-medium text-[var(--track-text-soft)]">
-                    {row.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center gap-2 text-[11px] text-[var(--track-text-muted)]">
-              <span className="h-1.5 w-4 rounded-full bg-[var(--track-accent)]" />
-              <span>Duration (h)</span>
-            </div>
-          </div>
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-[var(--track-text-muted)]">
+          <span className="h-1.5 w-4 rounded-full bg-[var(--track-accent)]" />
+          <span>Duration (h)</span>
         </div>
       </div>
     </section>
+  );
+}
+
+function HourAxisTick(props: Record<string, unknown>): ReactElement {
+  const { x, y, payload } = props as {
+    x: number;
+    y: number;
+    payload: { value: number };
+  };
+  const tickIndex = Math.round(
+    (1 - payload.value / MAX_CHART_SECONDS) * (Y_AXIS_LABELS.length - 1),
+  );
+  const label = Y_AXIS_LABELS[tickIndex] ?? "";
+  return (
+    <text
+      dominantBaseline="middle"
+      fill="var(--track-text-soft)"
+      fontSize={11}
+      fontWeight={500}
+      textAnchor="start"
+      x={x - 40}
+      y={y}
+    >
+      {label}
+    </text>
+  );
+}
+
+function BarDurationLabel(props: Record<string, unknown>): ReactElement | null {
+  const { x, y, width, value } = props as {
+    x: number;
+    y: number;
+    width: number;
+    value: number;
+  };
+  if (!value || value <= 0) return null;
+  return (
+    <text
+      dominantBaseline="central"
+      fill="var(--track-text-soft)"
+      fontSize={11}
+      fontWeight={500}
+      textAnchor="middle"
+      x={x + width / 2}
+      y={y - 10}
+    >
+      {formatClockDuration(value)}
+    </text>
+  );
+}
+
+function DurationTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: Array<{ payload: { name: string; seconds: number } }>;
+}): ReactElement | null {
+  if (!active || !payload?.length) return null;
+  const entry = payload[0].payload;
+  const dayName = DAY_NAMES[entry.name] ?? entry.name;
+  return (
+    <div className="rounded-md bg-[#2c2c2e] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+      <span>{dayName}</span>
+      <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
+        {formatClockDuration(entry.seconds)}
+      </span>
+    </div>
   );
 }
 
@@ -133,14 +207,9 @@ export function DistributionPanel({
 }
 
 const DONUT_SIZE = 180;
-const DONUT_STROKE = 37;
-const DONUT_RADIUS = (DONUT_SIZE - DONUT_STROKE) / 2;
-const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
+const DONUT_INNER_RADIUS = 53;
+const DONUT_OUTER_RADIUS = 90;
 
-/**
- * SVG-based donut chart with per-segment hover tooltips.
- * Each segment is a <circle> with stroke-dasharray/stroke-dashoffset.
- */
 function DonutChart({
   label,
   segments,
@@ -152,62 +221,57 @@ function DonutChart({
 }): ReactElement {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Build cumulative offsets for each segment
-  const segmentArcs = buildSegmentArcs(segments);
+  const pieData =
+    segments.length > 0
+      ? segments.map((s) => ({
+          name: s.label,
+          value: s.value,
+          duration: s.duration,
+          fill: s.color,
+        }))
+      : [{ name: "empty", value: 100, duration: "", fill: "var(--track-border)" }];
 
   return (
     <div
       className="relative flex items-center justify-center"
       style={{ width: DONUT_SIZE, height: DONUT_SIZE }}
     >
-      <svg
-        aria-label={`${label} distribution chart`}
-        className="absolute inset-0"
-        height={DONUT_SIZE}
-        viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}
-        width={DONUT_SIZE}
-      >
-        {segments.length === 0 ? (
-          <circle
-            cx={DONUT_SIZE / 2}
-            cy={DONUT_SIZE / 2}
-            fill="none"
-            r={DONUT_RADIUS}
-            stroke="var(--track-border)"
-            strokeWidth={DONUT_STROKE}
-          />
-        ) : (
-          segmentArcs.map((arc, index) => (
-            <circle
-              cx={DONUT_SIZE / 2}
-              cy={DONUT_SIZE / 2}
-              fill="none"
+      <PieChart height={DONUT_SIZE} width={DONUT_SIZE}>
+        <Pie
+          cx="50%"
+          cy="50%"
+          data={pieData}
+          dataKey="value"
+          innerRadius={DONUT_INNER_RADIUS}
+          isAnimationActive={false}
+          nameKey="name"
+          outerRadius={DONUT_OUTER_RADIUS}
+          paddingAngle={0}
+          stroke="none"
+          onMouseEnter={(_, index) => segments.length > 0 && setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          {pieData.map((entry, index) => (
+            <Cell
+              fill={entry.fill}
               key={index}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              r={DONUT_RADIUS}
-              stroke={arc.color}
-              strokeDasharray={`${arc.dashLength} ${DONUT_CIRCUMFERENCE - arc.dashLength}`}
-              strokeDashoffset={-arc.offset}
-              strokeWidth={hoveredIndex === index ? DONUT_STROKE + 4 : DONUT_STROKE}
-              style={{
-                cursor: "pointer",
-                transform: "rotate(-90deg)",
-                transformOrigin: "center",
-                transition: "stroke-width 0.15s ease",
-              }}
+              stroke="none"
+              strokeWidth={hoveredIndex === index ? 4 : 0}
+              style={{ cursor: segments.length > 0 ? "pointer" : "default", outline: "none" }}
             />
-          ))
-        )}
-      </svg>
+          ))}
+        </Pie>
+      </PieChart>
       {/* Center label */}
-      <div className="relative z-10 flex size-[106px] flex-col items-center justify-center rounded-full bg-[var(--track-surface)] text-center">
-        <p className="text-[16px] font-semibold leading-[23px] tabular-nums text-white">
-          {totalDuration}
-        </p>
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-          {label}
-        </p>
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="flex size-[106px] flex-col items-center justify-center rounded-full bg-[var(--track-surface)] text-center">
+          <p className="text-[16px] font-semibold leading-[23px] tabular-nums text-white">
+            {totalDuration}
+          </p>
+          <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+            {label}
+          </p>
+        </div>
       </div>
       {/* Tooltip */}
       {hoveredIndex != null && segments[hoveredIndex] ? (
@@ -223,16 +287,4 @@ function DonutChart({
       ) : null}
     </div>
   );
-}
-
-function buildSegmentArcs(
-  segments: ReportsDistributionSegment[],
-): Array<{ color: string; dashLength: number; offset: number }> {
-  let cumulativeOffset = 0;
-  return segments.map((segment) => {
-    const dashLength = (segment.value / 100) * DONUT_CIRCUMFERENCE;
-    const arc = { color: segment.color, dashLength, offset: cumulativeOffset };
-    cumulativeOffset += dashLength;
-    return arc;
-  });
 }

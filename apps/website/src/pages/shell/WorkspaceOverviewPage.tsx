@@ -1,6 +1,7 @@
 import { type ReactElement, type ReactNode, useCallback, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
+import { Cell, Pie, PieChart } from "recharts";
 import { ShellPageHeader, ShellSecondaryButton } from "@opentoggl/web-ui";
 
 import {
@@ -176,7 +177,11 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
+                  <button
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
+                    onClick={handleViewReports}
+                    type="button"
+                  >
                     View reports
                   </button>
                 </div>
@@ -211,7 +216,11 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
+                  <button
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
+                    onClick={handleViewReports}
+                    type="button"
+                  >
                     View team activity
                   </button>
                 </div>
@@ -329,7 +338,11 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
+                  <button
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
+                    onClick={handleViewReports}
+                    type="button"
+                  >
                     View reports
                   </button>
                 </div>
@@ -360,7 +373,11 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[16px] font-semibold leading-[23px] text-white">
                     Time tracked to projects
                   </h2>
-                  <button className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]" onClick={handleViewReports} type="button">
+                  <button
+                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
+                    onClick={handleViewReports}
+                    type="button"
+                  >
                     View reports
                   </button>
                 </div>
@@ -507,22 +524,37 @@ function StatRing({
   subtitle: string;
   title: string;
 }): ReactElement {
-  const sweep = Math.max(0, Math.min(100, percent)) * 3.6;
+  const clamped = Math.max(0, Math.min(100, percent));
+  const outerRadius = size / 2;
+  const innerRadius = innerSize / 2;
+  const data = [
+    { name: "filled", value: clamped, fill: accent },
+    { name: "empty", value: 100 - clamped, fill: "#3a3a3a" },
+  ];
 
   return (
     <div className="flex flex-col items-center justify-center gap-2">
-      <div
-        className="grid place-items-center rounded-full"
-        style={{
-          background: `conic-gradient(${accent} 0deg ${sweep}deg, #3a3a3a ${sweep}deg 360deg)`,
-          height: size,
-          width: size,
-        }}
-      >
-        <div
-          className="grid place-items-center rounded-full bg-[var(--track-surface)] text-[16px] font-semibold text-white"
-          style={{ height: innerSize, width: innerSize }}
-        >
+      <div className="relative" style={{ width: size, height: size }}>
+        <PieChart height={size} width={size}>
+          <Pie
+            cx="50%"
+            cy="50%"
+            data={data}
+            dataKey="value"
+            innerRadius={innerRadius}
+            isAnimationActive={false}
+            outerRadius={outerRadius}
+            paddingAngle={0}
+            startAngle={90}
+            endAngle={-270}
+            stroke="none"
+          >
+            {data.map((entry, index) => (
+              <Cell fill={entry.fill} key={index} stroke="none" />
+            ))}
+          </Pie>
+        </PieChart>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-[16px] font-semibold text-white">
           {title}
         </div>
       </div>

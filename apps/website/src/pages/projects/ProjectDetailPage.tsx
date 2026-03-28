@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { Cell, Pie, PieChart } from "recharts";
 import { ShellPrimaryButton, ShellSurfaceCard } from "@opentoggl/web-ui";
 
 import type {
@@ -176,7 +177,7 @@ export function ProjectDetailPage({
             <StatBlock label="Total hours" value={formatDuration(totalSeconds)} />
             <StatBlock label="Billable hours" value={formatDuration(billableSeconds)} />
             <div className="flex justify-center pt-1">
-              <ProjectDonut />
+              <ProjectDonut billableSeconds={billableSeconds} totalSeconds={totalSeconds} />
             </div>
             <TimelineBlock statistics={statisticsQuery.data} />
           </div>
@@ -265,10 +266,49 @@ function TimelineBlock({
   );
 }
 
-function ProjectDonut(): ReactElement {
+function ProjectDonut({
+  billableSeconds,
+  totalSeconds,
+}: {
+  billableSeconds: number;
+  totalSeconds: number;
+}): ReactElement {
+  const nonBillable = Math.max(0, totalSeconds - billableSeconds);
+  const hasData = totalSeconds > 0;
+  const data = hasData
+    ? [
+        { name: "Billable", value: billableSeconds, fill: "#a356c1" },
+        ...(nonBillable > 0 ? [{ name: "Non-billable", value: nonBillable, fill: "#5c3566" }] : []),
+      ]
+    : [{ name: "empty", value: 100, fill: "#3a3a3a" }];
+
+  const percent =
+    hasData && totalSeconds > 0 ? Math.round((billableSeconds / totalSeconds) * 100) : 0;
+
   return (
-    <div className="relative size-[106px] rounded-full bg-[conic-gradient(#a356c1_360deg,#a356c1_360deg)]">
-      <div className="absolute inset-[22px] rounded-full bg-[var(--track-surface)]" />
+    <div className="relative flex items-center justify-center" style={{ width: 106, height: 106 }}>
+      <PieChart height={106} width={106}>
+        <Pie
+          cx="50%"
+          cy="50%"
+          data={data}
+          dataKey="value"
+          innerRadius={31}
+          isAnimationActive={false}
+          outerRadius={53}
+          paddingAngle={0}
+          startAngle={90}
+          endAngle={-270}
+          stroke="none"
+        >
+          {data.map((entry, index) => (
+            <Cell fill={entry.fill} key={index} stroke="none" />
+          ))}
+        </Pie>
+      </PieChart>
+      <div className="pointer-events-none absolute inset-0 grid place-items-center text-[11px] font-semibold text-white">
+        {hasData ? `${percent}%` : ""}
+      </div>
     </div>
   );
 }
