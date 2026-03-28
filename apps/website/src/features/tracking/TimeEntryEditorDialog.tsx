@@ -360,9 +360,13 @@ export function TimeEntryEditorDialog({
 
   const canDuplicate = stop != null && onDuplicate != null;
 
+  // Layer sits at the scroll area's content origin. No inset-0 / w-full / h-full
+  // because those constrain to the visible viewport and clip the dialog when
+  // scrolled. The dialog inside uses content-space coordinates (includes scrollTop
+  // offset) so it stays pinned next to the time entry row.
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-40"
+      className="pointer-events-none absolute left-0 top-0 z-40"
       data-testid="time-entry-editor-layer"
     >
       <div
