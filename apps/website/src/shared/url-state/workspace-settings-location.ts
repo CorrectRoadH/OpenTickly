@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const workspaceSettingsSectionSchema = z.enum([
   "general",
+  "alerts",
+  "reminders",
   "billable-rates",
   "import",
   "export",

@@ -28,6 +28,8 @@ const settingsTabs: Array<{
   label: string;
 }> = [
   { id: "general", label: "General" },
+  { id: "alerts", label: "Alerts" },
+  { id: "reminders", label: "Reminders" },
   { id: "billable-rates", label: "Billable rates" },
   { id: "import", label: "CSV import" },
   { id: "export", label: "Data export" },
