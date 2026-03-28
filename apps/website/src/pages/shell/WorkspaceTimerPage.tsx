@@ -45,7 +45,11 @@ import {
 } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useDeleteFavoriteMutation, useFavoritesQuery } from "../../shared/query/web-shell.ts";
+import {
+  useDeleteFavoriteMutation,
+  useFavoritesQuery,
+  useGoalsQuery,
+} from "../../shared/query/web-shell.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
 type DeletedEntrySnapshot = {
@@ -90,6 +94,8 @@ export function WorkspaceTimerPage({
   const favoritesQuery = useFavoritesQuery(orch.workspaceId);
   const deleteFavoriteMutation = useDeleteFavoriteMutation(orch.workspaceId);
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
+  const goalsQuery = useGoalsQuery(orch.workspaceId, true);
+  const goals = Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
 
   // Auto-start timer from URL params (e.g. /timer?description=foo&billable=true
   // or /timer/start?desc=foo). Fires once when start params are present and the
@@ -878,6 +884,7 @@ export function WorkspaceTimerPage({
         {sidebarOpen ? (
           <GoalsFavoritesSidebar
             favorites={favorites}
+            goals={goals}
             onDeleteFavorite={(favoriteId) => {
               void deleteFavoriteMutation.mutateAsync(favoriteId);
             }}

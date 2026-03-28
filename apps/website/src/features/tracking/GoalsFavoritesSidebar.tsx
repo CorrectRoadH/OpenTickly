@@ -1,16 +1,21 @@
 import type { ReactElement } from "react";
 
-import type { ModelsFavorite } from "../../shared/api/generated/public-track/types.gen.ts";
+import type {
+  HandlergoalsApiResponse,
+  ModelsFavorite,
+} from "../../shared/api/generated/public-track/types.gen.ts";
 import { ChevronRightIcon, PlayIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 
 type GoalsFavoritesSidebarProps = {
   favorites: ModelsFavorite[];
+  goals: HandlergoalsApiResponse[];
   onDeleteFavorite?: (favoriteId: number) => void;
   onStartFavorite?: (favorite: ModelsFavorite) => void;
 };
 
 export function GoalsFavoritesSidebar({
   favorites,
+  goals,
   onDeleteFavorite,
   onStartFavorite,
 }: GoalsFavoritesSidebarProps): ReactElement {
@@ -20,7 +25,15 @@ export function GoalsFavoritesSidebar({
       data-testid="goals-favorites-sidebar"
     >
       <SidebarSection title="Goals">
-        <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">No goals yet</div>
+        {goals.length === 0 ? (
+          <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">No goals yet</div>
+        ) : (
+          <div className="flex flex-col gap-0.5 px-2 pb-2">
+            {goals.map((goal) => (
+              <GoalItem key={goal.goal_id} goal={goal} />
+            ))}
+          </div>
+        )}
       </SidebarSection>
       <SidebarSection title="Favorites">
         {favorites.length === 0 ? (
@@ -67,6 +80,45 @@ function SidebarSection({
       </summary>
       {children}
     </details>
+  );
+}
+
+function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElement {
+  const trackedH = Math.round(((goal.current_recurrence_tracked_seconds ?? 0) / 3600) * 10) / 10;
+  const targetH = Math.round(((goal.target_seconds ?? 0) / 3600) * 10) / 10;
+  const progress = targetH > 0 ? Math.min((trackedH / targetH) * 100, 100) : 0;
+
+  return (
+    <div
+      className="flex items-center gap-2 rounded-[6px] px-2 py-1.5 transition hover:bg-[var(--track-row-hover)]"
+      data-testid={`goal-item-${goal.goal_id}`}
+    >
+      <div className="relative flex size-8 shrink-0 items-center justify-center">
+        <svg className="size-8 -rotate-90" viewBox="0 0 32 32">
+          <circle cx="16" cy="16" fill="none" r="13" stroke="var(--track-border)" strokeWidth="3" />
+          <circle
+            cx="16"
+            cy="16"
+            fill="none"
+            r="13"
+            stroke="var(--track-accent)"
+            strokeDasharray={`${(progress / 100) * 81.68} 81.68`}
+            strokeLinecap="round"
+            strokeWidth="3"
+          />
+        </svg>
+        <span className="absolute text-[10px]">{goal.icon ?? "🎯"}</span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-[12px] leading-tight text-white">
+          {goal.name ?? "Untitled"}
+        </span>
+        <span className="text-[11px] leading-tight text-[var(--track-text-muted)]">
+          {trackedH}/{targetH} hours
+          {(goal.streak ?? 0) > 0 ? ` · ${goal.streak} 🔥` : ""}
+        </span>
+      </div>
+    </div>
   );
 }
 
