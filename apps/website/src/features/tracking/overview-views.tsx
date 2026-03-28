@@ -528,33 +528,33 @@ export function ListView({
                 const isCollapsedRow = groupCount > 1 && !isExpanded && subIdx === 0;
                 return (
                   <li
-                    key={String(
-                      renderEntry.id ?? `${renderEntry.start}-${renderEntry.description}-${subIdx}`,
-                    )}
+                    key={`${renderEntry.id ?? "no-id"}-${subIdx}`}
                     className={`group flex h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     }`}
                   >
-                    {/* Checkbox — hidden by default, shown on row hover or when selected */}
-                    <input
-                      aria-label={`Select ${renderEntry.description?.trim() || "time entry"}`}
-                      checked={isSelected}
-                      className={`size-[13px] shrink-0 cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
-                        isSelected
-                          ? "!opacity-100 border-[#e57bd9] bg-[#e57bd9]"
-                          : "border-[var(--track-border)]"
-                      }`}
-                      onChange={() => {
-                        if (typeof entryId === "number") toggleEntry(entryId);
-                      }}
-                      type="checkbox"
-                    />
+                    {/* Checkbox: w=30px, flex: 0 0 auto */}
+                    <div className="flex w-[30px] shrink-0 items-center justify-center">
+                      <input
+                        aria-label={`Select ${renderEntry.description?.trim() || "time entry"}`}
+                        checked={isSelected}
+                        className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
+                          isSelected
+                            ? "!opacity-100 border-[#e57bd9] bg-[#e57bd9]"
+                            : "border-[var(--track-border)]"
+                        }`}
+                        onChange={() => {
+                          if (typeof entryId === "number") toggleEntry(entryId);
+                        }}
+                        type="checkbox"
+                      />
+                    </div>
 
-                    {/* Group collapse/expand badge */}
+                    {/* Group collapse/expand badge (inline, no wrapper) */}
                     {isCollapsedRow ? (
                       <button
                         aria-label={`Expand ${groupCount} similar entries`}
-                        className="ml-3 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[#666] hover:text-white"
+                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[#666] hover:text-white"
                         onClick={() => {
                           setExpandedGroupKeys((prev) => {
                             const next = new Set(prev);
@@ -569,7 +569,7 @@ export function ListView({
                     ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
                       <button
                         aria-label="Collapse similar entries"
-                        className="ml-3 flex size-6 shrink-0 items-center justify-center rounded-md border border-[#e57bd9] text-[11px] font-semibold tabular-nums text-[#e57bd9] hover:bg-[#e57bd9]/10"
+                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[#e57bd9] text-[11px] font-semibold tabular-nums text-[#e57bd9] hover:bg-[#e57bd9]/10"
                         onClick={() => {
                           setExpandedGroupKeys((prev) => {
                             const next = new Set(prev);
@@ -583,88 +583,87 @@ export function ListView({
                       </button>
                     ) : null}
 
-                    {/* Left: Description + Project (inline, flex row) */}
-                    <div className="ml-3 flex min-w-0 flex-1 items-center gap-3">
-                      <InlineDescription
-                        entry={renderEntry}
-                        isRunning={isRunningTimeEntry(renderEntry)}
-                        onChange={onDescriptionChange}
-                      />
-                      <ListRowProjectPicker
-                        entry={renderEntry}
-                        onProjectChange={onProjectChange}
-                        projects={projects ?? []}
-                        workspaceName={workspaceName ?? "Workspace"}
-                      />
-                    </div>
+                    {/* Description: flex: 0 1 auto, shrinks to fit */}
+                    <InlineDescription
+                      entry={renderEntry}
+                      isRunning={isRunningTimeEntry(renderEntry)}
+                      onChange={onDescriptionChange}
+                    />
 
-                    {/* Right side: tags, billable, time range, duration, actions */}
-                    <div className="flex shrink-0 items-center gap-1 pl-4">
-                      <ListRowTagPicker
-                        entry={renderEntry}
-                        onTagsChange={onTagsChange}
-                        tags={tags ?? []}
-                      />
-                      <button
-                        aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
-                        className={`flex size-[30px] shrink-0 items-center justify-center rounded transition ${
-                          renderEntry.billable
-                            ? "text-[#c8a961]"
-                            : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
-                        }`}
-                        onClick={() => onBillableToggle?.(renderEntry)}
-                        type="button"
-                      >
-                        <DollarIcon className="h-[18px] w-[12px]" />
-                      </button>
-                      <button
-                        className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)] hover:text-white"
-                        onClick={(event) =>
-                          onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
-                        }
-                        type="button"
-                      >
-                        <span>{formatEntryRange(renderEntry, timezone)}</span>
-                      </button>
-                      <button
-                        className="w-[72px] text-right text-[14px] font-medium tabular-nums hover:text-[#e57bd9]"
-                        onClick={(event) =>
-                          onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
-                        }
-                        type="button"
-                      >
+                    {/* Project: flex: 1 1 auto, fills remaining space, minWidth=50px */}
+                    <ListRowProjectPicker
+                      entry={renderEntry}
+                      onProjectChange={onProjectChange}
+                      projects={projects ?? []}
+                      workspaceName={workspaceName ?? "Workspace"}
+                    />
+
+                    {/* Tags: flex: 0 2 auto, w=50px */}
+                    <ListRowTagPicker
+                      entry={renderEntry}
+                      onTagsChange={onTagsChange}
+                      tags={tags ?? []}
+                    />
+
+                    {/* Billable: flex: 0 0 auto, w=30px */}
+                    <button
+                      aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
+                      className={`flex size-[30px] shrink-0 items-center justify-center rounded transition ${
+                        renderEntry.billable
+                          ? "text-[#c8a961]"
+                          : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+                      }`}
+                      onClick={() => onBillableToggle?.(renderEntry)}
+                      type="button"
+                    >
+                      <DollarIcon className="h-[18px] w-[12px]" />
+                    </button>
+
+                    {/* Duration + Time range: flex: 0 0 auto, minWidth=250px */}
+                    <button
+                      className="flex min-w-[250px] shrink-0 items-center justify-end gap-2 text-[14px] font-medium tabular-nums"
+                      onClick={(event) =>
+                        onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
+                      }
+                      type="button"
+                    >
+                      <span className="text-[var(--track-text-muted)]">
                         {formatClockDuration(resolveEntryDurationSeconds(renderEntry, nowMs))}
-                      </button>
+                      </span>
+                      <span className="text-[var(--track-text-muted)]">
+                        {formatEntryRange(renderEntry, timezone)}
+                      </span>
+                    </button>
 
-                      {/* Continue button — gradient fade + icon */}
-                      <div className="relative flex items-center">
-                        <div
-                          className="pointer-events-none absolute right-full h-full w-6 opacity-0 transition group-hover:opacity-100"
-                          style={{
-                            background:
-                              "linear-gradient(to right, transparent 0%, var(--track-row-hover) 90%)",
-                          }}
-                        />
-                        <button
-                          aria-label={`Continue ${renderEntry.description?.trim() || "time entry"}`}
-                          className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-                          onClick={() => onContinueEntry?.(renderEntry)}
-                          type="button"
-                        >
-                          <PlayIcon className="size-3" />
-                        </button>
-                      </div>
-
-                      <ListRowMoreActions
-                        entry={renderEntry}
-                        onBillableToggle={onBillableToggle}
-                        onContinue={onContinueEntry}
-                        onDelete={onDeleteEntry}
-                        onDuplicate={onDuplicateEntry}
-                        onFavorite={onFavoriteEntry}
-                        onSplit={onSplitEntry}
+                    {/* Continue: flex: 0 0 auto, w=40px */}
+                    <div className="relative flex w-[40px] shrink-0 items-center justify-center">
+                      <div
+                        className="pointer-events-none absolute right-full h-full w-6 opacity-0 transition group-hover:opacity-100"
+                        style={{
+                          background:
+                            "linear-gradient(to right, transparent 0%, var(--track-row-hover) 90%)",
+                        }}
                       />
+                      <button
+                        aria-label={`Continue ${renderEntry.description?.trim() || "time entry"}`}
+                        className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                        onClick={() => onContinueEntry?.(renderEntry)}
+                        type="button"
+                      >
+                        <PlayIcon className="size-3" />
+                      </button>
                     </div>
+
+                    {/* More actions: flex: 0 1 auto, w=30px */}
+                    <ListRowMoreActions
+                      entry={renderEntry}
+                      onBillableToggle={onBillableToggle}
+                      onContinue={onContinueEntry}
+                      onDelete={onDeleteEntry}
+                      onDuplicate={onDuplicateEntry}
+                      onFavorite={onFavoriteEntry}
+                      onSplit={onSplitEntry}
+                    />
                   </li>
                 );
               });
@@ -725,7 +724,7 @@ function InlineDescription({
   if (editing) {
     return (
       <input
-        className="min-w-0 flex-1 bg-transparent text-[14px] font-medium text-white outline-none"
+        className="min-w-0 shrink bg-transparent text-[14px] font-medium text-white outline-none"
         onBlur={commit}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
@@ -741,7 +740,7 @@ function InlineDescription({
 
   return (
     <button
-      className="flex min-w-0 flex-1 cursor-text items-center gap-2 text-left"
+      className="flex min-w-0 shrink cursor-text items-center gap-2 text-left"
       onClick={startEditing}
       type="button"
     >
@@ -787,10 +786,10 @@ function ListRowTagPicker({
   );
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative min-w-[50px] shrink-[2]" ref={containerRef}>
       <button
         aria-label="Select tags"
-        className={`flex size-7 shrink-0 items-center justify-center rounded transition ${
+        className={`flex h-[30px] w-full items-center justify-center rounded transition ${
           hasTags
             ? "text-[var(--track-text-muted)]"
             : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
@@ -995,11 +994,11 @@ function ListRowProjectPicker({
   const hasProject = !!entry.project_name;
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className="relative min-w-[50px] flex-1" ref={containerRef}>
       {hasProject ? (
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
-          className="flex shrink-0 cursor-pointer items-center gap-1.5 text-[14px] font-medium"
+          className="flex cursor-pointer items-center gap-1.5 overflow-hidden text-[14px] font-medium"
           onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
