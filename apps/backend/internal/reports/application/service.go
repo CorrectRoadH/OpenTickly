@@ -27,16 +27,23 @@ type MembershipQueries interface {
 	) ([]membershipapplication.WorkspaceMemberView, error)
 }
 
+// RateResolver looks up the workspace-level billable rate.
+type RateResolver interface {
+	GetWorkspaceBillableRate(ctx context.Context, workspaceID int64) (amountCents int, currency string, ok bool)
+}
+
 type Service struct {
 	membership MembershipQueries
 	now        func() time.Time
+	rates      RateResolver
 	tracking   TrackingQueries
 }
 
-func NewService(tracking TrackingQueries, membership MembershipQueries) *Service {
+func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver) *Service {
 	return &Service{
 		membership: membership,
 		now:        time.Now,
+		rates:      rates,
 		tracking:   tracking,
 	}
 }
@@ -58,6 +65,14 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 	rowsByKey := map[weeklyRowKey]*WeeklyRow{}
 	daysWithTime := map[int]struct{}{}
 	totalSeconds := 0
+
+	// Resolve workspace billable rate for amount calculation.
+	rateCents, currency, hasRate := 0, "USD", false
+	if service.rates != nil {
+		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(
+			ctx, query.WorkspaceID,
+		)
+	}
 
 	for _, entry := range entries {
 		dayIndex, ok := reportDayIndex(entry, query, location)
@@ -81,13 +96,16 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 		row, found := rowsByKey[key]
 		if !found {
 			row = &WeeklyRow{
-				BillableSeconds: make([]int, dayCount),
-				ClientName:      derefString(entry.ClientName),
-				ProjectID:       derefInt64(entry.ProjectID),
-				ProjectName:     fallbackProjectName(entry.ProjectName),
-				Seconds:         make([]int, dayCount),
-				UserID:          entry.UserID,
-				UserName:        fallbackUserName(userNames[entry.UserID], entry.UserID),
+				BillableAmountsInCents: make([]int, dayCount),
+				BillableSeconds:        make([]int, dayCount),
+				ClientName:             derefString(entry.ClientName),
+				Currency:               currency,
+				HourlyRateInCents:      rateCents,
+				ProjectID:              derefInt64(entry.ProjectID),
+				ProjectName:            fallbackProjectName(entry.ProjectName),
+				Seconds:                make([]int, dayCount),
+				UserID:                 entry.UserID,
+				UserName:               fallbackUserName(userNames[entry.UserID], entry.UserID),
 			}
 			rowsByKey[key] = row
 		}
@@ -95,13 +113,18 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 		row.Seconds[dayIndex] += duration
 		if entry.Billable {
 			row.BillableSeconds[dayIndex] += duration
+			if hasRate {
+				row.BillableAmountsInCents[dayIndex] += duration * rateCents / 3600
+			}
 		}
 		totalSeconds += duration
 		daysWithTime[dayIndex] = struct{}{}
 	}
 
 	rows := make([]WeeklyRow, 0, len(rowsByKey))
+	totalBillableAmountCents := 0
 	for _, row := range rowsByKey {
+		totalBillableAmountCents += sumSeconds(row.BillableAmountsInCents)
 		rows = append(rows, *row)
 	}
 	slices.SortFunc(rows, func(left WeeklyRow, right WeeklyRow) int {
@@ -127,10 +150,11 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 	})
 
 	return WeeklyReport{
-		Rows:            rows,
-		TotalSeconds:    totalSeconds,
-		TrackedDays:     len(daysWithTime),
-		TrackedWeekdays: buildTrackedWeekdays(query.StartDate, dayCount, location),
+		BillableAmountInCents: totalBillableAmountCents,
+		Rows:                  rows,
+		TotalSeconds:          totalSeconds,
+		TrackedDays:           len(daysWithTime),
+		TrackedWeekdays:       buildTrackedWeekdays(query.StartDate, dayCount, location),
 	}, nil
 }
 
@@ -214,9 +238,15 @@ type weeklyRowKey struct {
 func matchesQueryFilters(entry trackingapplication.TimeEntryView, query Query) bool {
 	if len(query.ProjectIDs) > 0 {
 		entryProjectID := derefInt64(entry.ProjectID)
+		if !slices.Contains(query.ProjectIDs, entryProjectID) {
+			return false
+		}
+	}
+
+	if len(query.TagIDs) > 0 {
 		matched := false
-		for _, pid := range query.ProjectIDs {
-			if pid == entryProjectID {
+		for _, entryTag := range entry.TagIDs {
+			if slices.Contains(query.TagIDs, entryTag) {
 				matched = true
 				break
 			}
@@ -226,20 +256,9 @@ func matchesQueryFilters(entry trackingapplication.TimeEntryView, query Query) b
 		}
 	}
 
-	if len(query.TagIDs) > 0 {
-		matched := false
-		for _, filterTag := range query.TagIDs {
-			for _, entryTag := range entry.TagIDs {
-				if filterTag == entryTag {
-					matched = true
-					break
-				}
-			}
-			if matched {
-				break
-			}
-		}
-		if !matched {
+	if len(query.TaskIDs) > 0 {
+		entryTaskID := derefInt64(entry.TaskID)
+		if entryTaskID == 0 || !slices.Contains(query.TaskIDs, entryTaskID) {
 			return false
 		}
 	}

@@ -122,7 +122,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	if err != nil {
 		return nil, err
 	}
-	reportsService := reportsapplication.NewService(trackingService, membershipService)
+	rateResolver := reportsapplication.NewCatalogRateResolver(catalogService)
+	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver)
 	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool))
 	if err != nil {
 		return nil, err

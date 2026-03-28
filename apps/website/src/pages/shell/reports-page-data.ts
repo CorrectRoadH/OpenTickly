@@ -94,11 +94,19 @@ export function buildReportsPageModel(args: {
   const totalsByDay = new Map<string, number>();
 
   let billableSeconds = 0;
+  let billableAmountCents = 0;
 
   (args.report?.report ?? []).forEach((row) => {
     applyWeeklyRowToModel(row, totalsByDay, totalsByProject, dateKeys);
     billableSeconds += sumValues(row.billable_seconds ?? []);
+    billableAmountCents += sumValues(row.billable_amounts_in_cents ?? []);
   });
+
+  // Prefer the pre-computed total from the API if available.
+  if (args.report?.totals?.billable_amount_in_cents != null) {
+    billableAmountCents = args.report.totals.billable_amount_in_cents;
+  }
+
   const totalSeconds =
     args.report?.totals?.seconds ??
     dateKeys.reduce((sum, key) => sum + (totalsByDay.get(key) ?? 0), 0);
@@ -152,7 +160,7 @@ export function buildReportsPageModel(args: {
     metrics: [
       { title: "Total Hours", value: formatClockDuration(totalSeconds) },
       { title: "Billable Hours", value: formatClockDuration(billableSeconds) },
-      { title: "Amount", value: "-" },
+      { title: "Amount", value: formatAmountCents(billableAmountCents) },
       { title: "Average Daily Hours", value: `${averageDailyHours.toFixed(2)} Hours` },
     ],
     rangeLabel: buildRangeLabel(
@@ -218,6 +226,12 @@ function applyWeeklyRowToModel(
 
   currentProject.members.set(userId, memberAcc);
   totalsByProject.set(projectName, currentProject);
+}
+
+function formatAmountCents(cents: number): string {
+  if (cents === 0) return "-";
+  const dollars = cents / 100;
+  return `$${dollars.toFixed(2)}`;
 }
 
 function formatWeekLabel(dateKey: string): string {

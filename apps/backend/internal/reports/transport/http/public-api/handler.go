@@ -200,25 +200,37 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 	for _, row := range report.Rows {
 		projectID := int(row.ProjectID)
 		userID := int(row.UserID)
+		billableAmounts := append([]int(nil), row.BillableAmountsInCents...)
 		billableSeconds := append([]int(nil), row.BillableSeconds...)
 		seconds := append([]int(nil), row.Seconds...)
-		rows = append(rows, publicreportsapi.WeeklyDataRow{
-			BillableSeconds: &billableSeconds,
-			ClientName:      lo.ToPtr(row.ClientName),
-			ProjectId:       lo.ToPtr(projectID),
-			ProjectName:     lo.ToPtr(row.ProjectName),
-			Seconds:         &seconds,
-			UserId:          lo.ToPtr(userID),
-			UserName:        lo.ToPtr(row.UserName),
-		})
+		dataRow := publicreportsapi.WeeklyDataRow{
+			BillableAmountsInCents: &billableAmounts,
+			BillableSeconds:        &billableSeconds,
+			ClientName:             lo.ToPtr(row.ClientName),
+			ProjectId:              lo.ToPtr(projectID),
+			ProjectName:            lo.ToPtr(row.ProjectName),
+			Seconds:                &seconds,
+			UserId:                 lo.ToPtr(userID),
+			UserName:               lo.ToPtr(row.UserName),
+		}
+		if row.HourlyRateInCents > 0 {
+			dataRow.HourlyRateInCents = lo.ToPtr(row.HourlyRateInCents)
+			dataRow.Currency = lo.ToPtr(row.Currency)
+		}
+		rows = append(rows, dataRow)
+	}
+
+	totals := publicreportsapi.TotalsReportData{
+		Seconds:     lo.ToPtr(report.TotalSeconds),
+		TrackedDays: lo.ToPtr(report.TrackedDays),
+	}
+	if report.BillableAmountInCents > 0 {
+		totals.BillableAmountInCents = lo.ToPtr(report.BillableAmountInCents)
 	}
 
 	return ctx.JSON(http.StatusOK, publicreportsapi.SavedWeeklyReportData{
 		Report: &rows,
-		Totals: &publicreportsapi.TotalsReportData{
-			Seconds:     lo.ToPtr(report.TotalSeconds),
-			TrackedDays: lo.ToPtr(report.TrackedDays),
-		},
+		Totals: &totals,
 	})
 }
 
@@ -265,6 +277,9 @@ func applyBasePostFilters(query *reportsapplication.Query, request publicreports
 	}
 	if request.TagIds != nil {
 		query.TagIDs = intsToInt64s(*request.TagIds)
+	}
+	if request.TaskIds != nil {
+		query.TaskIDs = intsToInt64s(*request.TaskIds)
 	}
 	if request.Description != nil {
 		query.Description = *request.Description

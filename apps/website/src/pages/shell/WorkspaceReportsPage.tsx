@@ -87,7 +87,7 @@ function applyRoundingToModel(model: ReportsPageModel): ReportsPageModel {
     metrics: [
       { title: "Total Hours", value: formatClockDuration(roundedTotal) },
       { title: "Billable Hours", value: formatClockDuration(roundTo15Min(billableSeconds)) },
-      { title: "Amount", value: "-" },
+      { title: "Amount", value: model.metrics.find((m) => m.title === "Amount")?.value ?? "-" },
       { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
     ],
     totalDuration: formatClockDuration(roundedTotal),
