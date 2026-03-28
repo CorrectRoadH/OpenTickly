@@ -12,6 +12,7 @@ import {
 import {
   CalendarSubviewSelect,
   CalendarView,
+  type CalendarContextMenuAction,
   ChromeIconButton,
   ListView,
   SummaryStat,
@@ -607,6 +608,9 @@ export function WorkspaceTimerPage({ initialDate }: WorkspaceTimerPageProps): Re
             draftEntry={orch.calendarDraftEntry}
             entries={orch.visibleEntries}
             nowMs={orch.nowMs}
+            onContextMenuAction={(entry, action) => {
+              handleCalendarContextMenuAction(entry, action, orch, showDeleteToast);
+            }}
             onEditEntry={orch.handleEntryEdit}
             onMoveEntry={(entryId, minutesDelta) => {
               void orch.handleCalendarEntryMove(entryId, minutesDelta);
@@ -849,6 +853,77 @@ function snapshotEntryForUndo(entry: {
     tagIds: entry.tag_ids ?? [],
     taskId: entry.task_id ?? entry.tid ?? null,
   };
+}
+
+function handleCalendarContextMenuAction(
+  entry: Parameters<Exclude<import("../../features/tracking/overview-views.tsx").CalendarViewProps["onContextMenuAction"], undefined>>[0],
+  action: CalendarContextMenuAction,
+  orch: ReturnType<typeof useTimerPageOrchestration>,
+  showDeleteToast: (snapshot: DeletedEntrySnapshot) => void,
+): void {
+  const wid = entry.workspace_id ?? entry.wid;
+  switch (action) {
+    case "duplicate": {
+      if (entry.start && entry.stop) {
+        const durationSec = Math.round(
+          (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+        );
+        void orch.createTimeEntryMutation.mutateAsync({
+          billable: entry.billable,
+          description: (entry.description ?? "").trim(),
+          duration: durationSec,
+          projectId: entry.project_id ?? entry.pid ?? null,
+          start: entry.start,
+          stop: entry.stop,
+          tagIds: entry.tag_ids ?? [],
+          taskId: entry.task_id ?? entry.tid ?? null,
+        });
+      }
+      break;
+    }
+    case "delete": {
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        const snapshot = snapshotEntryForUndo(entry);
+        void orch.deleteTimeEntryMutation
+          .mutateAsync({ timeEntryId: entry.id, workspaceId: wid })
+          .then(() => {
+            if (snapshot) showDeleteToast(snapshot);
+          });
+      }
+      break;
+    }
+    case "copy-description": {
+      const description = (entry.description ?? "").trim();
+      if (description) {
+        void navigator.clipboard.writeText(description);
+      }
+      break;
+    }
+    case "copy-start-link": {
+      const params = new URLSearchParams();
+      if (entry.description) params.set("description", entry.description.trim());
+      if (entry.project_id ?? entry.pid) {
+        params.set("project_id", String(entry.project_id ?? entry.pid));
+      }
+      if (entry.tag_ids?.length) {
+        params.set("tag_ids", entry.tag_ids.join(","));
+      }
+      if (entry.billable) params.set("billable", "true");
+      const link = `${window.location.origin}/timer?${params.toString()}`;
+      void navigator.clipboard.writeText(link);
+      break;
+    }
+    case "favorite": {
+      void orch.createWorkspaceFavoriteMutation.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        projectId: entry.project_id ?? entry.pid ?? null,
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+      break;
+    }
+  }
 }
 
 function TimerBarProjectPicker({
