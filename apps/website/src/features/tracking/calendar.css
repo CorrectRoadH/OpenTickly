@@ -220,20 +220,6 @@
   opacity: 0.5;
 }
 
-/* ── Scrollbar ── */
-.rbc-time-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.rbc-time-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.rbc-time-content::-webkit-scrollbar-thumb {
-  background: #3a3a3a;
-  border-radius: 3px;
-}
-
 /* ── Misc cleanup ── */
 .rbc-allday-cell {
   display: none;

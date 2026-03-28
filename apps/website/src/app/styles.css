@@ -45,3 +45,30 @@ a {
   outline: 2px solid #e57bd9;
   outline-offset: 2px;
 }
+
+/* Slim scrollbar matching Toggl's global ::-webkit-scrollbar { width: 5px }.
+   All scrolling is via window.scroll; this makes the browser scrollbar
+   unobtrusive while still visible for orientation. */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3a3a3a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3a3a transparent;
+}
