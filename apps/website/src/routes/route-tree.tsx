@@ -1,5 +1,5 @@
 import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
 import { PublicMainPanelFrame, PublicMainPanelLoading } from "../app/PublicMainPanelFrame.tsx";
@@ -22,37 +22,96 @@ import {
   normalizeWorkspaceSettingsSection,
   parseLegacyWorkspaceSettingsSearch,
 } from "../shared/url-state/workspace-settings-location.ts";
-import { AuthPage } from "../pages/auth/AuthPage.tsx";
-import { InviteStatusJoinedPage } from "../pages/members/InviteStatusJoinedPage.tsx";
-import { WorkspaceImportPage } from "../pages/import/WorkspaceImportPage.tsx";
-import { ProfilePage } from "../pages/profile/ProfilePage.tsx";
-import {
-  InstanceAdminPage,
-  type InstanceAdminSection,
-} from "../pages/instance-admin/InstanceAdminPage.tsx";
-import { OrganizationSettingsPage } from "../pages/settings/OrganizationSettingsPage.tsx";
-import { WorkspaceSettingsPage } from "../pages/settings/WorkspaceSettingsPage.tsx";
-import { WorkspaceOverviewPage } from "../pages/shell/WorkspaceOverviewPage.tsx";
-import { WorkspaceReportsPage } from "../pages/shell/WorkspaceReportsPage.tsx";
-import { WorkspaceTimerPage } from "../pages/shell/WorkspaceTimerPage.tsx";
-import { WorkspaceMembersPage } from "../pages/members/WorkspaceMembersPage.tsx";
-import { PermissionConfigPage } from "../pages/permission-config/PermissionConfigPage.tsx";
-import { ProjectsPage } from "../pages/projects/ProjectsPage.tsx";
-import { ProjectDetailPage } from "../pages/projects/ProjectDetailPage.tsx";
-import { ClientsPage } from "../pages/clients/ClientsPage.tsx";
-import { ClientDetailPage } from "../pages/clients/ClientDetailPage.tsx";
-import { GroupsPage } from "../pages/groups/GroupsPage.tsx";
-import { TasksPage } from "../pages/tasks/TasksPage.tsx";
-import { TagsPage } from "../pages/tags/TagsPage.tsx";
-import { TagDetailPage } from "../pages/tags/TagDetailPage.tsx";
-import { ApprovalsPage } from "../pages/approvals/ApprovalsPage.tsx";
-import { BillableRatesPage } from "../pages/billable-rates/BillableRatesPage.tsx";
-import { GoalsPage } from "../pages/goals/GoalsPage.tsx";
-import { IntegrationsPage } from "../pages/integrations/IntegrationsPage.tsx";
-import { InvoiceEditorPage } from "../pages/invoices/InvoiceEditorPage.tsx";
-import { InvoicesPage } from "../pages/invoices/InvoicesPage.tsx";
-import { SubscriptionPage } from "../pages/subscription/SubscriptionPage.tsx";
+type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
 import { rootRoute } from "./root-route.tsx";
+
+function lazyNamed<T extends Record<string, ComponentType<any>>, K extends keyof T & string>(
+  factory: () => Promise<T>,
+  name: K,
+) {
+  return lazy(() => factory().then((m) => ({ default: m[name] })));
+}
+
+/* ---------- lazy page imports ---------- */
+
+const AuthPage = lazyNamed(() => import("../pages/auth/AuthPage.tsx"), "AuthPage");
+const InviteStatusJoinedPage = lazyNamed(
+  () => import("../pages/members/InviteStatusJoinedPage.tsx"),
+  "InviteStatusJoinedPage",
+);
+const ProfilePage = lazyNamed(() => import("../pages/profile/ProfilePage.tsx"), "ProfilePage");
+const InstanceAdminPage = lazyNamed(
+  () => import("../pages/instance-admin/InstanceAdminPage.tsx"),
+  "InstanceAdminPage",
+);
+const OrganizationSettingsPage = lazyNamed(
+  () => import("../pages/settings/OrganizationSettingsPage.tsx"),
+  "OrganizationSettingsPage",
+);
+const WorkspaceSettingsPage = lazyNamed(
+  () => import("../pages/settings/WorkspaceSettingsPage.tsx"),
+  "WorkspaceSettingsPage",
+);
+const WorkspaceOverviewPage = lazyNamed(
+  () => import("../pages/shell/WorkspaceOverviewPage.tsx"),
+  "WorkspaceOverviewPage",
+);
+const WorkspaceReportsPage = lazyNamed(
+  () => import("../pages/shell/WorkspaceReportsPage.tsx"),
+  "WorkspaceReportsPage",
+);
+const WorkspaceTimerPage = lazyNamed(
+  () => import("../pages/shell/WorkspaceTimerPage.tsx"),
+  "WorkspaceTimerPage",
+);
+const WorkspaceMembersPage = lazyNamed(
+  () => import("../pages/members/WorkspaceMembersPage.tsx"),
+  "WorkspaceMembersPage",
+);
+const WorkspaceImportPage = lazyNamed(
+  () => import("../pages/import/WorkspaceImportPage.tsx"),
+  "WorkspaceImportPage",
+);
+const PermissionConfigPage = lazyNamed(
+  () => import("../pages/permission-config/PermissionConfigPage.tsx"),
+  "PermissionConfigPage",
+);
+const ProjectsPage = lazyNamed(() => import("../pages/projects/ProjectsPage.tsx"), "ProjectsPage");
+const ProjectDetailPage = lazyNamed(
+  () => import("../pages/projects/ProjectDetailPage.tsx"),
+  "ProjectDetailPage",
+);
+const ClientsPage = lazyNamed(() => import("../pages/clients/ClientsPage.tsx"), "ClientsPage");
+const ClientDetailPage = lazyNamed(
+  () => import("../pages/clients/ClientDetailPage.tsx"),
+  "ClientDetailPage",
+);
+const GroupsPage = lazyNamed(() => import("../pages/groups/GroupsPage.tsx"), "GroupsPage");
+const TasksPage = lazyNamed(() => import("../pages/tasks/TasksPage.tsx"), "TasksPage");
+const TagsPage = lazyNamed(() => import("../pages/tags/TagsPage.tsx"), "TagsPage");
+const TagDetailPage = lazyNamed(() => import("../pages/tags/TagDetailPage.tsx"), "TagDetailPage");
+const ApprovalsPage = lazyNamed(
+  () => import("../pages/approvals/ApprovalsPage.tsx"),
+  "ApprovalsPage",
+);
+const BillableRatesPage = lazyNamed(
+  () => import("../pages/billable-rates/BillableRatesPage.tsx"),
+  "BillableRatesPage",
+);
+const GoalsPage = lazyNamed(() => import("../pages/goals/GoalsPage.tsx"), "GoalsPage");
+const IntegrationsPage = lazyNamed(
+  () => import("../pages/integrations/IntegrationsPage.tsx"),
+  "IntegrationsPage",
+);
+const InvoiceEditorPage = lazyNamed(
+  () => import("../pages/invoices/InvoiceEditorPage.tsx"),
+  "InvoiceEditorPage",
+);
+const InvoicesPage = lazyNamed(() => import("../pages/invoices/InvoicesPage.tsx"), "InvoicesPage");
+const SubscriptionPage = lazyNamed(
+  () => import("../pages/subscription/SubscriptionPage.tsx"),
+  "SubscriptionPage",
+);
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -329,7 +388,12 @@ function InviteStatusJoinedRouteComponent() {
   const search = inviteStatusJoinedRoute.useSearch();
 
   return (
-    <InviteStatusJoinedPage workspaceId={search.workspaceId} workspaceName={search.workspaceName} />
+    <Suspense fallback={<PublicMainPanelLoading />}>
+      <InviteStatusJoinedPage
+        workspaceId={search.workspaceId}
+        workspaceName={search.workspaceName}
+      />
+    </Suspense>
   );
 }
 
@@ -345,11 +409,19 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
   }
 
   if (isSessionAccessDenied(sessionQuery.error)) {
-    return <AuthPage mode={mode} />;
+    return (
+      <Suspense fallback={<PublicMainPanelLoading />}>
+        <AuthPage mode={mode} />
+      </Suspense>
+    );
   }
 
   if (sessionQuery.isError || !sessionQuery.data) {
-    return <AuthPage mode={mode} />;
+    return (
+      <Suspense fallback={<PublicMainPanelLoading />}>
+        <AuthPage mode={mode} />
+      </Suspense>
+    );
   }
 
   return <Navigate replace to={resolveHomePath()} />;
@@ -588,7 +660,7 @@ function InstanceAdminRouteComponent() {
 function renderProtectedRoute(children: ReactNode, requestedWorkspaceId?: number) {
   return (
     <ProtectedRouteBoundary requestedWorkspaceId={requestedWorkspaceId}>
-      {children}
+      <Suspense fallback={<PublicMainPanelLoading />}>{children}</Suspense>
     </ProtectedRouteBoundary>
   );
 }
