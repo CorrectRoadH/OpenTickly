@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
+import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMemberDto } from "../../shared/api/web-contract.ts";
 import { useWorkspaceMembersQuery } from "../../shared/query/web-shell.ts";
@@ -93,32 +94,13 @@ export function GoalEditorDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={onClose}
+    <ModalDialog
+      onClose={onClose}
+      testId="goal-editor-dialog"
+      title={isEdit ? "Edit goal" : "Create a goal"}
+      width="max-w-[520px]"
     >
-      <div
-        className="w-[520px] rounded-[14px] bg-[#2c2c2e] shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
-        data-testid="goal-editor-dialog"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-2">
-          <h5 className="text-[16px] font-semibold text-white">
-            {isEdit ? "Edit goal" : "Create a goal"}
-          </h5>
-          <button
-            aria-label="close"
-            className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            <TrackingIcon className="size-3" name="close" />
-          </button>
-        </div>
-
-        {/* Form */}
-        <div className="flex flex-col gap-5 px-6 pt-3 pb-5">
+        <div className="flex flex-col gap-5">
           {/* GOAL */}
           <div>
             <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
@@ -332,8 +314,7 @@ export function GoalEditorDialog({
           </p>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 pb-5">
+      <div className="mt-5 flex items-center justify-end gap-3">
           <button
             className="h-9 rounded-[8px] px-4 text-[14px] font-semibold text-white hover:bg-[var(--track-row-hover)]"
             onClick={onClose}
@@ -351,8 +332,7 @@ export function GoalEditorDialog({
             {isEdit ? "Edit goal" : "Create goal"}
           </button>
         </div>
-      </div>
-    </div>
+    </ModalDialog>
   );
 }
 

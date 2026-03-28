@@ -1,4 +1,6 @@
-import { type FormEvent, type ReactElement, useEffect } from "react";
+import { type FormEvent, type ReactElement } from "react";
+
+import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 
 type InviteMemberDialogProps = {
   email: string;
@@ -19,19 +21,6 @@ export function InviteMemberDialog({
   onSubmit,
   role,
 }: InviteMemberDialogProps): ReactElement {
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
   const trimmedEmail = email.trim();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -43,33 +32,9 @@ export function InviteMemberDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-start justify-center bg-black/55 px-4 py-10"
-      onClick={onClose}
-    >
-      <form
-        aria-labelledby="invite-member-dialog-title"
-        aria-modal="true"
-        className="w-full max-w-[420px] rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-4 pb-4 pt-3 shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
-        onClick={(event) => event.stopPropagation()}
-        onSubmit={handleSubmit}
-        role="dialog"
-      >
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-[18px] font-medium text-white" id="invite-member-dialog-title">
-            Invite member
-          </h2>
-          <button
-            aria-label="Close dialog"
-            className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="mt-4 space-y-4">
+    <ModalDialog onClose={onClose} title="Invite member" titleId="invite-member-dialog-title">
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               Email address
@@ -117,6 +82,6 @@ export function InviteMemberDialog({
           </button>
         </div>
       </form>
-    </div>
+    </ModalDialog>
   );
 }

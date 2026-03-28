@@ -1,5 +1,5 @@
-import { ShellToast } from "@opentoggl/web-ui";
-import { type ChangeEvent, type ReactElement, useEffect, useId, useState } from "react";
+import { type ChangeEvent, type ReactElement, useId, useState } from "react";
+import { toast } from "sonner";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -12,12 +12,6 @@ import { useSession } from "../../shared/session/session-context.tsx";
 
 type ImportFlow = "archive" | "time_entries";
 
-type ImportToast = {
-  description: string;
-  title: string;
-  tone: "error" | "success";
-};
-
 export function WorkspaceImportPage(): ReactElement {
   const archiveInputId = useId();
   const csvInputId = useId();
@@ -28,14 +22,7 @@ export function WorkspaceImportPage(): ReactElement {
   const [selectedArchive, setSelectedArchive] = useState<File | null>(null);
   const [selectedCSV, setSelectedCSV] = useState<File | null>(null);
   const [submittedJob, setSubmittedJob] = useState<{ id: string; source: ImportFlow } | null>(null);
-  const [toast, setToast] = useState<ImportToast | null>(null);
   const importJobQuery = useImportJobQuery(submittedJob?.id ?? null);
-
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = setTimeout(() => setToast(null), 4000);
-    return () => clearTimeout(timeout);
-  }, [toast]);
 
   function handleArchiveFileChange(event: ChangeEvent<HTMLInputElement>) {
     setSelectedArchive(event.target.files?.[0] ?? null);
@@ -50,17 +37,11 @@ export function WorkspaceImportPage(): ReactElement {
       });
       setSubmittedJob({ id: job.job_id, source: "archive" });
       setSelectedArchive(null);
-      setToast({
-        description: `Organization "${organizationName}" created and archive imported.`,
-        title: "Import completed",
-        tone: "success",
-      });
+      toast.success(`Organization "${organizationName}" created and archive imported.`);
     } catch (error) {
       setSubmittedJob(null);
-      setToast({
-        description: resolveArchiveImportErrorMessage(error) ?? "An unexpected error occurred.",
-        title: "Import failed",
-        tone: "error",
+      toast.error(resolveArchiveImportErrorMessage(error) ?? "An unexpected error occurred.", {
+        duration: 4000,
       });
     }
   }
@@ -78,18 +59,13 @@ export function WorkspaceImportPage(): ReactElement {
       });
       setSubmittedJob({ id: job.job_id, source: "time_entries" });
       setSelectedCSV(null);
-      setToast({
-        description: `Time entries imported into "${session.currentWorkspace.name}".`,
-        title: "Import completed",
-        tone: "success",
-      });
+      toast.success(`Time entries imported into "${session.currentWorkspace.name}".`);
     } catch (error) {
       setSubmittedJob(null);
-      setToast({
-        description: resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
-        title: "Import failed",
-        tone: "error",
-      });
+      toast.error(
+        resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.",
+        { duration: 4000 },
+      );
     }
   }
 
@@ -296,7 +272,6 @@ export function WorkspaceImportPage(): ReactElement {
           </aside>
         </div>
       </section>
-      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }

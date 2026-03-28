@@ -1,6 +1,7 @@
-import { ShellPageHeader, ShellSurfaceCard, ShellToast } from "@opentoggl/web-ui";
+import { ShellPageHeader, ShellSurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { TrackingIcon } from "../../features/tracking/tracking-icons.tsx";
 import type {
@@ -41,12 +42,6 @@ const CURRENCIES = [
 ] as const;
 
 type BillingMode = "billable" | "non-billable";
-
-type Toast = {
-  description: string;
-  title: string;
-  tone: "error" | "success";
-};
 
 const workspaceRateQueryKey = (workspaceId: number) => ["workspace-rate", workspaceId] as const;
 
@@ -100,7 +95,6 @@ export function BillableRatesPage(): ReactElement {
   const [billingMode, setBillingMode] = useState<BillingMode>("billable");
   const [hourlyRate, setHourlyRate] = useState<string>("");
   const [currency, setCurrency] = useState<string>(defaultCurrency);
-  const [toast, setToast] = useState<Toast | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
@@ -115,12 +109,6 @@ export function BillableRatesPage(): ReactElement {
     setIsDirty(false);
   }, [currentRate, defaultHourlyRate, defaultCurrency]);
 
-  useEffect(() => {
-    if (!toast) return;
-    const timeout = setTimeout(() => setToast(null), 2600);
-    return () => clearTimeout(timeout);
-  }, [toast]);
-
   const handleSave = useCallback(() => {
     const amount = billingMode === "non-billable" ? 0 : parseFloat(hourlyRate) || 0;
 
@@ -134,19 +122,11 @@ export function BillableRatesPage(): ReactElement {
       },
       {
         onSuccess: () => {
-          setToast({
-            title: "Saved",
-            description: "Workspace billable rate has been updated.",
-            tone: "success",
-          });
+          toast.success("Workspace billable rate has been updated.");
           setIsDirty(false);
         },
         onError: () => {
-          setToast({
-            title: "Error",
-            description: "Could not save the workspace rate. Try again.",
-            tone: "error",
-          });
+          toast.error("Could not save the workspace rate. Try again.");
         },
       },
     );
@@ -189,7 +169,6 @@ export function BillableRatesPage(): ReactElement {
         </div>
       </div>
 
-      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }

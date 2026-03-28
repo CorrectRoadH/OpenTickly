@@ -13,6 +13,5 @@ export {
   ShellPrimaryButton,
   ShellSecondaryButton,
   ShellSurfaceCard,
-  ShellToast,
 } from "./ShellPrimitives.tsx";
 export { appTheme } from "./theme.ts";

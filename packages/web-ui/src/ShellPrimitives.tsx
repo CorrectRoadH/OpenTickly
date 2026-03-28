@@ -81,35 +81,6 @@ export function ShellSurfaceCard({
   return <div className={getSurfaceClassName("default", className)}>{children}</div>;
 }
 
-export function ShellToast({
-  description,
-  title,
-  tone,
-}: {
-  description: string;
-  title: string;
-  tone: "error" | "success";
-}) {
-  return (
-    <div
-      className={`fixed bottom-6 right-6 z-50 min-w-[360px] rounded-[8px] border px-6 py-5 shadow-[0px_10px_30px_rgba(0,0,0,0.35)] ${
-        tone === "success"
-          ? "border-[var(--track-border)] bg-[var(--track-surface)]"
-          : "border-[#6a2e41] bg-[#22161b]"
-      }`}
-    >
-      <p
-        className={`text-[16px] font-semibold leading-[23px] ${
-          tone === "success" ? "text-[#12b76a]" : "text-[#ff6b8f]"
-        }`}
-      >
-        {title}
-      </p>
-      <p className="mt-2 text-[14px] leading-5 text-white">{description}</p>
-    </div>
-  );
-}
-
 export function DirectoryHeaderCell({ children }: { children?: ReactNode }) {
   return <div className="flex h-[34px] items-center">{children}</div>;
 }

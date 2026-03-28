@@ -3,9 +3,9 @@ import {
   ShellPageHeader,
   ShellSecondaryButton,
   ShellSurfaceCard,
-  ShellToast,
 } from "@opentoggl/web-ui";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 
 import {
@@ -42,11 +42,6 @@ export function ProfilePage(): ReactElement {
   const resetApiTokenMutation = useResetApiTokenMutation();
   const [apiTokenStatus, setApiTokenStatus] = useState<string | null>(null);
   const [apiTokenError, setApiTokenError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{
-    description: string;
-    title: string;
-    tone: "error" | "success";
-  } | null>(null);
   const form = useForm<PreferencesFormValues>({
     defaultValues: defaultPreferencesFormValues,
   });
@@ -67,20 +62,6 @@ export function ProfilePage(): ReactElement {
     form.reset(preferenceValues);
     lastSavedValuesRef.current = JSON.stringify(preferenceValues);
   }, [form, preferenceValues]);
-
-  useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setToast(null);
-    }, 2600);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [toast]);
 
   useEffect(() => {
     if (!form.formState.isDirty) {
@@ -128,17 +109,9 @@ export function ProfilePage(): ReactElement {
       await updatePreferencesMutation.mutateAsync(mapPreferencesFormToRequest(latestValues));
       lastSavedValuesRef.current = serializedValues;
       form.reset(latestValues);
-      setToast({
-        description: "Your profile preferences have been updated",
-        title: "Success!",
-        tone: "success",
-      });
+      toast.success("Your profile preferences have been updated");
     } catch {
-      setToast({
-        description: "We could not save this change. Try again in a moment.",
-        title: "Could not save profile",
-        tone: "error",
-      });
+      toast.error("We could not save this change. Try again in a moment.");
     } finally {
       saveInFlightRef.current = false;
 
@@ -269,7 +242,6 @@ export function ProfilePage(): ReactElement {
           />
         </div>
       </section>
-      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }

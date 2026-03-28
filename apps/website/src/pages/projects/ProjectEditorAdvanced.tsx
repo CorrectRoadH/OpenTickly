@@ -1,6 +1,8 @@
-import { type ChangeEvent, type ReactElement, useMemo, useState } from "react";
+import { type ChangeEvent, type ReactElement, useCallback, useState } from "react";
 
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
+import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
+import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
 
 type ClientOption = {
   id: number;
@@ -81,11 +83,11 @@ export function ProjectEditorAdvanced({
   template,
 }: ProjectEditorAdvancedProps): ReactElement {
   const [clientQuery, setClientQuery] = useState("");
-  const filteredClients = useMemo(() => {
-    const query = clientQuery.trim().toLowerCase();
-    if (!query) return clients;
-    return clients.filter((c) => c.name.toLowerCase().includes(query));
-  }, [clientQuery, clients]);
+  const matchClient = useCallback(
+    (c: ClientOption, q: string) => c.name.toLowerCase().includes(q),
+    [],
+  );
+  const filteredClients = useFilteredList(clients, clientQuery, matchClient);
 
   const showEstimatedInput = estimatedHours > 0;
   const showFixedFeeInput = fixedFee > 0;
@@ -257,26 +259,7 @@ export function ProjectEditorAdvanced({
         <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Color
         </p>
-        <div className="grid grid-cols-5 gap-2">
-          {TRACK_COLOR_SWATCHES.map((option) => (
-            <button
-              aria-label={`Select color ${option}`}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                color === option
-                  ? "border-white/80 bg-white/8"
-                  : "border-transparent hover:border-white/25"
-              }`}
-              key={option}
-              onClick={() => onColorChange(option)}
-              type="button"
-            >
-              <span
-                className="h-5 w-5 rounded-full border border-black/20"
-                style={{ backgroundColor: option }}
-              />
-            </button>
-          ))}
-        </div>
+        <ColorSwatchPicker colors={TRACK_COLOR_SWATCHES} onSelect={onColorChange} selected={color} />
       </div>
 
       {/* Template */}

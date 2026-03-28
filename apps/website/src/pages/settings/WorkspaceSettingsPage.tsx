@@ -1,6 +1,7 @@
-import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard, ShellToast } from "@opentoggl/web-ui";
+import { AppSurfaceState, ShellPageHeader, ShellSurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement } from "react";
+import { toast } from "sonner";
 
 import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
 import { SettingsAuditLog } from "../../features/settings/SettingsAuditLog.tsx";
@@ -39,25 +40,6 @@ export function WorkspaceSettingsPage({
 }: WorkspaceSettingsPageProps): ReactElement {
   const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
-  const [toast, setToast] = useState<{
-    description: string;
-    title: string;
-    tone: "error" | "success";
-  } | null>(null);
-
-  useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setToast(null);
-    }, 2600);
-
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [toast]);
 
   return (
     <div className="min-h-full bg-[var(--track-surface)]" data-testid="workspace-settings-page">
@@ -86,18 +68,10 @@ export function WorkspaceSettingsPage({
                 await updateMutation.mutateAsync(request);
               }}
               onSubmitError={() => {
-                setToast({
-                  description: "We could not save this change. Try again in a moment.",
-                  title: "Could not save workspace",
-                  tone: "error",
-                });
+                toast.error("We could not save this change. Try again in a moment.");
               }}
               onSubmitSuccess={() => {
-                setToast({
-                  description: "Your workspace has been updated",
-                  title: "Success!",
-                  tone: "success",
-                });
+                toast.success("Your workspace has been updated");
               }}
               section={section}
               settingsData={settingsQuery.data}
@@ -106,7 +80,6 @@ export function WorkspaceSettingsPage({
           ) : null}
         </div>
       </div>
-      {toast ? <ShellToast {...toast} /> : null}
     </div>
   );
 }

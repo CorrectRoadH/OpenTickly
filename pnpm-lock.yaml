@@ -65,11 +65,11 @@ snapshots:
   '@pnpm/exe@10.32.1':
     optionalDependencies:
       '@pnpm/win-arm64': 10.32.1
-      '@pnpm/macos-arm64': 10.32.1
-      '@pnpm/linux-x64': 10.32.1
-      '@pnpm/linux-arm64': 10.32.1
       '@pnpm/macos-x64': 10.32.1
+      '@pnpm/macos-arm64': 10.32.1
       '@pnpm/win-x64': 10.32.1
+      '@pnpm/linux-arm64': 10.32.1
+      '@pnpm/linux-x64': 10.32.1
 
   '@pnpm/linux-arm64@10.32.1':
     optional: true
@@ -133,6 +133,9 @@ catalogs:
     react-hook-form:
       specifier: ^7.71.2
       version: 7.71.2
+    sonner:
+      specifier: ^2.0.7
+      version: 2.0.7
     typescript:
       specifier: ^5
       version: 5.9.3
@@ -284,6 +287,9 @@ importers:
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react-is@17.0.2)(react@18.3.1)(redux@5.0.1)
+      sonner:
+        specifier: 'catalog:'
+        version: 2.0.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       styletron-engine-atomic:
         specifier: ^1.6.2
         version: 1.6.2
@@ -338,7 +344,7 @@ importers:
         version: 0.1.12(@types/node@24.12.0)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(yaml@2.8.2)
       vitest:
         specifier: npm:@voidzero-dev/vite-plus-test@0.1.12
-        version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@24.12.0)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(yaml@2.8.2)'
+        version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(typescript@5.9.3)(vite@8.0.0(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(yaml@2.8.2))(yaml@2.8.2)'
 
   packages/shared-contracts:
     devDependencies:
@@ -4539,6 +4545,12 @@ packages:
 
   solid-js@1.9.11:
     resolution: {integrity: sha512-WEJtcc5mkh/BnHA6Yrg4whlF8g6QwpmXXRg4P2ztPmcKeHHlH4+djYecBLhSpecZY2RRECXYUwIc/C2r3yzQ4Q==}
+
+  sonner@2.0.7:
+    resolution: {integrity: sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -9556,6 +9568,11 @@ snapshots:
       csstype: 3.2.3
       seroval: 1.5.1
       seroval-plugins: 1.5.1(seroval@1.5.1)
+
+  sonner@2.0.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   source-map-js@1.2.1: {}
 

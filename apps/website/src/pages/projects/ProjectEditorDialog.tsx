@@ -1,6 +1,8 @@
-import { type FormEvent, type ReactElement, useEffect, useState } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
+import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
+import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { ProjectEditorAdvanced } from "./ProjectEditorAdvanced.tsx";
 import { ProjectEditorMembers } from "./ProjectEditorMembers.tsx";
 
@@ -89,14 +91,6 @@ export function ProjectEditorDialog({
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const trimmedName = name.trim();
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!trimmedName || isPending) return;
@@ -104,35 +98,15 @@ export function ProjectEditorDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-start justify-center bg-black/55 px-4 py-10"
-      data-testid="project-editor-dialog-overlay"
-      onClick={onClose}
+    <ModalDialog
+      onClose={onClose}
+      testId="project-editor-dialog"
+      title={title}
+      titleId="project-editor-title"
+      width="max-w-[620px]"
     >
-      <form
-        aria-labelledby="project-editor-title"
-        aria-modal="true"
-        className="max-h-[calc(100vh-80px)] w-full max-w-[620px] overflow-y-auto rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-5 pb-5 pt-4 shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
-        data-testid="project-editor-dialog"
-        onClick={(event) => event.stopPropagation()}
-        onSubmit={handleSubmit}
-        role="dialog"
-      >
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-[18px] font-medium text-white" id="project-editor-title">
-            {title}
-          </h2>
-          <button
-            aria-label="Close dialog"
-            className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-5">
+      <form onSubmit={handleSubmit}>
+        <div className="mt-1 space-y-5">
           {/* Project name + color picker */}
           <div>
             <span className="mb-2 block text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
@@ -152,28 +126,15 @@ export function ProjectEditorDialog({
                   />
                 </button>
                 {colorPickerOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
-                    {TRACK_COLOR_SWATCHES.map((option) => (
-                      <button
-                        aria-label={`Select color ${option}`}
-                        className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                          color === option
-                            ? "border-white/80 bg-white/8"
-                            : "border-transparent hover:border-white/25"
-                        }`}
-                        key={option}
-                        onClick={() => {
-                          onColorChange(option);
-                          setColorPickerOpen(false);
-                        }}
-                        type="button"
-                      >
-                        <span
-                          className="h-5 w-5 rounded-full border border-black/20"
-                          style={{ backgroundColor: option }}
-                        />
-                      </button>
-                    ))}
+                  <div className="absolute left-0 top-[calc(100%+6px)] z-10 w-[220px] rounded-[10px] border border-[#3f3f44] bg-[#1f1f20] p-3 shadow-[0_12px_28px_rgba(0,0,0,0.34)]">
+                    <ColorSwatchPicker
+                      colors={TRACK_COLOR_SWATCHES}
+                      onSelect={(option) => {
+                        onColorChange(option);
+                        setColorPickerOpen(false);
+                      }}
+                      selected={color}
+                    />
                   </div>
                 ) : null}
               </div>
@@ -293,6 +254,6 @@ export function ProjectEditorDialog({
           </button>
         </div>
       </form>
-    </div>
+    </ModalDialog>
   );
 }

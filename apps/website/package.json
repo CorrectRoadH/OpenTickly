@@ -24,10 +24,11 @@
     "jspdf": "catalog:",
     "jspdf-autotable": "catalog:",
     "react": "^18.3.1",
-    "recharts": "^3.8.1",
     "react-big-calendar": "catalog:",
     "react-dom": "^18.3.1",
     "react-hook-form": "catalog:",
+    "recharts": "^3.8.1",
+    "sonner": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1",
     "zod": "^4.1.12"

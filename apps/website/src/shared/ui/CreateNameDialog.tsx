@@ -1,4 +1,7 @@
-import { type FormEvent, type ReactElement, useEffect } from "react";
+import { type FormEvent, type ReactElement } from "react";
+
+import { ColorSwatchPicker } from "./ColorSwatchPicker.tsx";
+import { ModalDialog } from "./ModalDialog.tsx";
 
 type CreateNameDialogProps = {
   colorOptions?: readonly string[];
@@ -29,19 +32,6 @@ export function CreateNameDialog({
   submitLabel,
   title,
 }: CreateNameDialogProps): ReactElement {
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
   const trimmedValue = nameValue.trim();
   const showColorPicker =
     Boolean(colorOptions?.length) && Boolean(onColorSelect) && Boolean(selectedColor);
@@ -56,33 +46,9 @@ export function CreateNameDialog({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-40 flex items-start justify-center bg-black/55 px-4 py-10"
-      onClick={onClose}
-    >
-      <form
-        aria-labelledby="create-entity-dialog-title"
-        aria-modal="true"
-        className="w-full max-w-[420px] rounded-[14px] border border-[#3f3f44] bg-[#1f1f20] px-4 pb-4 pt-3 shadow-[0_18px_40px_rgba(0,0,0,0.42)]"
-        onClick={(event) => event.stopPropagation()}
-        onSubmit={handleSubmit}
-        role="dialog"
-      >
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-[18px] font-medium text-white" id="create-entity-dialog-title">
-            {title}
-          </h2>
-          <button
-            aria-label="Close dialog"
-            className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
-            onClick={onClose}
-            type="button"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="mt-4 space-y-4">
+    <ModalDialog onClose={onClose} title={title} titleId="create-entity-dialog-title">
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4">
           <label className="block">
             <span className="sr-only">{nameLabel}</span>
             <input
@@ -99,25 +65,12 @@ export function CreateNameDialog({
               <p className="mb-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Color
               </p>
-              <div className="grid grid-cols-5 gap-2 rounded-xl border border-[var(--track-border)] bg-[#181818] p-3">
-                {colorOptions?.map((color) => (
-                  <button
-                    aria-label={`Select color ${color}`}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                      selectedColor === color
-                        ? "border-white/80 bg-white/8"
-                        : "border-transparent hover:border-white/25"
-                    }`}
-                    key={color}
-                    onClick={() => onColorSelect?.(color)}
-                    type="button"
-                  >
-                    <span
-                      className="h-5 w-5 rounded-full border border-black/20"
-                      style={{ backgroundColor: color }}
-                    />
-                  </button>
-                ))}
+              <div className="rounded-xl border border-[var(--track-border)] bg-[#181818] p-3">
+                <ColorSwatchPicker
+                  colors={colorOptions!}
+                  onSelect={(color) => onColorSelect?.(color)}
+                  selected={selectedColor!}
+                />
               </div>
             </div>
           ) : null}
@@ -140,6 +93,6 @@ export function CreateNameDialog({
           </button>
         </div>
       </form>
-    </div>
+    </ModalDialog>
   );
 }
