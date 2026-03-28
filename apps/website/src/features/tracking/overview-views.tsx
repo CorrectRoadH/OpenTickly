@@ -99,6 +99,8 @@ function CalendarDayColumnWrapper({
   className,
   style,
   isNow,
+  minHour,
+  maxHour,
   onStartEntry,
   nowMs,
 }: {
@@ -106,16 +108,24 @@ function CalendarDayColumnWrapper({
   className?: string;
   style?: React.CSSProperties;
   isNow?: boolean;
+  minHour?: number;
+  maxHour?: number;
   onStartEntry?: () => void;
   nowMs?: number;
 }) {
-  // Calculate current time as percentage of day (0-100%)
+  // Calculate current time as percentage of the visible time range.
+  // When using business hours (e.g. 9-17), the percentage base is
+  // maxHour - minHour, not 24. Matches how RBC positions events.
   const timePercent = useMemo(() => {
     if (!isNow) return 0;
     const now = new Date(nowMs ?? Date.now());
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    return (minutes / 1440) * 100;
-  }, [isNow, nowMs]);
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const rangeStartMinutes = (minHour ?? 0) * 60;
+    const rangeEndMinutes = (maxHour ?? 24) * 60;
+    const rangeMinutes = rangeEndMinutes - rangeStartMinutes;
+    if (rangeMinutes <= 0) return 0;
+    return ((currentMinutes - rangeStartMinutes) / rangeMinutes) * 100;
+  }, [isNow, nowMs, minHour, maxHour]);
 
   return (
     <div className={className} style={style}>
@@ -126,22 +136,22 @@ function CalendarDayColumnWrapper({
           data-testid="current-time-indicator"
           style={{ top: `${timePercent}%` }}
         >
-          {/* Time line — matches Toggl: 3px, #b744ab, border-radius 2px */}
+          {/* Time line — Toggl: 3px, #b744ab, border-radius 2px */}
           <div className="absolute inset-x-0 top-0 h-[3px] rounded-[2px] bg-[#b744ab]" />
-          {/* Play button — matches Toggl: 36x36, accent color circle, position
-              absolute left: -8.5px so it bleeds into the gutter, pointer-events: all
-              so it's clickable despite the wrapper being pointer-events: none */}
+          {/* Play button — Toggl: viewBox 0 0 36 36 but renders at 16x16px,
+              positioned at left:-8.5px to bleed into gutter, top centered on line.
+              pointer-events:all so it's clickable. Clicking starts a new timer. */}
           <svg
-            className="absolute top-0 cursor-pointer"
+            className="absolute cursor-pointer"
             fill="none"
-            height="36"
+            height="16"
             onClick={(e) => {
               e.stopPropagation();
               onStartEntry?.();
             }}
-            style={{ left: "-8.5px", top: "-16px", pointerEvents: "all" }}
+            style={{ left: "-8.5px", top: "-6.5px", pointerEvents: "all" }}
             viewBox="0 0 36 36"
-            width="36"
+            width="16"
             xmlns="http://www.w3.org/2000/svg"
           >
             <rect fill="var(--track-accent)" height="36" rx="18" width="36" />
@@ -849,6 +859,7 @@ export function CalendarView({
   onResizeEntry,
   onSelectSlot,
   onSelectSubviewDate,
+  onStartEntry,
   onZoomIn,
   onZoomOut,
   runningEntry,
@@ -869,6 +880,7 @@ export function CalendarView({
   onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
   onSelectSlot?: (slot: { end: Date; start: Date }) => void;
   onSelectSubviewDate?: (dateIso: string) => void;
+  onStartEntry?: () => void;
   onZoomIn?: () => void;
   onZoomOut?: () => void;
   runningEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
@@ -1134,10 +1146,10 @@ export function CalendarView({
               isNow={Boolean(
                 typeof props.className === "string" && props.className.includes("rbc-now"),
               )}
+              maxHour={calendarHours === "business" ? 17 : 24}
+              minHour={calendarHours === "business" ? 9 : 0}
               nowMs={nowMs}
-              onStartEntry={() => {
-                onSelectSlot?.({ start: new Date(), end: new Date(Date.now() + 30 * 60_000) });
-              }}
+              onStartEntry={onStartEntry}
               style={props.style as React.CSSProperties | undefined}
             >
               {props.children as React.ReactNode}
