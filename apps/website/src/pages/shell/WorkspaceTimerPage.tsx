@@ -684,6 +684,7 @@ export function WorkspaceTimerPage({
             calendarHours={displaySettings.calendarHours}
             draftEntry={orch.calendarDraftEntry}
             entries={orch.visibleEntries}
+            isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
             nowMs={orch.nowMs}
             onContextMenuAction={(entry, action) => {
               if (action === "split" && entry.start && entry.stop) {
@@ -691,7 +692,7 @@ export function WorkspaceTimerPage({
                 setSplitDialogOpen(true);
                 return;
               }
-              handleCalendarContextMenuAction(entry, action, orch, showDeleteToast);
+              handleCalendarContextMenuAction(entry, action, orch, showDeleteToast, favorites);
             }}
             onEditEntry={orch.handleEntryEdit}
             onMoveEntry={(entryId, minutesDelta) => {
@@ -792,7 +793,14 @@ export function WorkspaceTimerPage({
             }
             onDescriptionChange={orch.setSelectedDescription}
             onFavorite={
-              orch.isNewEntry
+              orch.isNewEntry ||
+              isEntryAlreadyFavorited(
+                {
+                  description: orch.selectedDescription,
+                  project_id: orch.selectedProjectId,
+                },
+                favorites,
+              )
                 ? undefined
                 : () => {
                     void orch.handleSelectedEntryFavorite();
@@ -884,7 +892,15 @@ export function WorkspaceTimerPage({
         <TimerComposerSuggestionsDialog
           anchor={orch.composerSuggestionsAnchor}
           currentWorkspaceId={orch.workspaceId}
+          favorites={favorites}
           onClose={orch.closeComposerSuggestions}
+          onFavoriteSelect={(fav) => {
+            orch.setDraftDescription(fav.description ?? "");
+            orch.setDraftProjectId(fav.project_id ?? null);
+            orch.setDraftTagIds(fav.tag_ids ?? []);
+            orch.setDraftBillable(fav.billable ?? false);
+            orch.closeComposerSuggestions();
+          }}
           query={orch.timerDescriptionValue}
           onProjectSelect={(projectId) => {
             orch.setDraftProjectId(projectId);
@@ -964,11 +980,25 @@ function snapshotEntryForUndo(entry: {
   };
 }
 
+function isEntryAlreadyFavorited(
+  entry: { description?: string | null; project_id?: number | null; pid?: number | null },
+  favorites: Array<{ description?: string; project_id?: number }>,
+): boolean {
+  const desc = (entry.description ?? "").trim().toLowerCase();
+  const projectId = entry.project_id ?? entry.pid ?? null;
+  return favorites.some(
+    (fav) =>
+      (fav.description ?? "").trim().toLowerCase() === desc &&
+      (fav.project_id ?? null) === projectId,
+  );
+}
+
 function handleCalendarContextMenuAction(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   action: CalendarContextMenuAction,
   orch: ReturnType<typeof useTimerPageOrchestration>,
   showDeleteToast: (snapshot: DeletedEntrySnapshot) => void,
+  favorites: Array<{ description?: string; project_id?: number }> = [],
 ): void {
   const wid = entry.workspace_id ?? entry.wid;
   switch (action) {
@@ -1023,6 +1053,7 @@ function handleCalendarContextMenuAction(
       break;
     }
     case "favorite": {
+      if (isEntryAlreadyFavorited(entry, favorites)) break;
       void orch.createWorkspaceFavoriteMutation.mutateAsync({
         billable: entry.billable,
         description: (entry.description ?? "").trim(),

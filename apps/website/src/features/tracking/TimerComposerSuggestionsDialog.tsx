@@ -3,8 +3,10 @@ import { type ReactElement, useEffect, useMemo, useState } from "react";
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
+  ModelsFavorite,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import { PlayIcon } from "../../shared/ui/icons.tsx";
 
 export type TimerComposerSuggestionsAnchor = {
   height: number;
@@ -16,7 +18,9 @@ export type TimerComposerSuggestionsAnchor = {
 type TimerComposerSuggestionsDialogProps = {
   anchor: TimerComposerSuggestionsAnchor;
   currentWorkspaceId: number;
+  favorites?: ModelsFavorite[];
   onClose: () => void;
+  onFavoriteSelect?: (favorite: ModelsFavorite) => void;
   onProjectSelect: (projectId: number) => void;
   onTimeEntrySelect: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onWorkspaceSelect: (workspaceId: number) => void;
@@ -33,7 +37,9 @@ type TimerComposerSuggestionsDialogProps = {
 export function TimerComposerSuggestionsDialog({
   anchor,
   currentWorkspaceId,
+  favorites = [],
   onClose,
+  onFavoriteSelect,
   onProjectSelect,
   onTimeEntrySelect,
   onWorkspaceSelect,
@@ -46,6 +52,10 @@ export function TimerComposerSuggestionsDialog({
   const position = useMemo(() => resolveDialogPosition(anchor), [anchor]);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
+  const filteredFavorites = useMemo(
+    () => filterFavoritesByQuery(favorites, query),
+    [favorites, query],
+  );
   const previousEntries = useMemo(
     () => filterByQuery(buildPreviousEntries(timeEntries), query),
     [timeEntries, query],
@@ -128,6 +138,53 @@ export function TimerComposerSuggestionsDialog({
             ) : null}
           </div>
         </div>
+
+        {filteredFavorites.length > 0 ? (
+          <>
+            <div className="px-5 pb-1 pt-2">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[#a0a0a5]">
+                Favorites
+              </div>
+            </div>
+            <div>
+              {filteredFavorites.map((fav) => {
+                const label = fav.description?.trim() || fav.project_name || "Untitled";
+                const projectLabel = fav.project_name?.trim();
+                const projectColor = fav.project_color?.trim();
+                return (
+                  <button
+                    className="flex w-full items-center overflow-hidden px-5 py-2 text-left transition hover:bg-white/4"
+                    key={fav.favorite_id}
+                    onClick={() => onFavoriteSelect?.(fav)}
+                    tabIndex={-1}
+                    type="button"
+                  >
+                    <PlayIcon className="mr-2 size-3 shrink-0 text-[#a0a0a5]" />
+                    <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[14px]">
+                      {fav.description?.trim() ? (
+                        <span className="truncate text-[#cfcfd4]">{label}</span>
+                      ) : null}
+                      {projectLabel ? (
+                        <span className="flex shrink-0 items-center gap-1.5">
+                          <span
+                            className="size-[6px] shrink-0 rounded-full"
+                            style={{ backgroundColor: projectColor ?? "#9ca3af" }}
+                          />
+                          <span
+                            className="truncate text-[14px]"
+                            style={{ color: projectColor ?? "#9ca3af" }}
+                          >
+                            {projectLabel}
+                          </span>
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : null}
 
         {previousEntries.length > 0 ? (
           <>
@@ -293,6 +350,16 @@ function filterByQuery(
   return entries.filter((entry) => {
     const desc = (entry.description ?? "").toLowerCase();
     const project = (entry.project_name ?? "").toLowerCase();
+    return desc.includes(trimmed) || project.includes(trimmed);
+  });
+}
+
+function filterFavoritesByQuery(favorites: ModelsFavorite[], query?: string): ModelsFavorite[] {
+  const trimmed = query?.trim().toLowerCase();
+  if (!trimmed) return favorites;
+  return favorites.filter((fav) => {
+    const desc = (fav.description ?? "").toLowerCase();
+    const project = (fav.project_name ?? "").toLowerCase();
     return desc.includes(trimmed) || project.includes(trimmed);
   });
 }

@@ -852,6 +852,7 @@ export function CalendarView({
   draftEntry,
   entries,
   nowMs,
+  isEntryFavorited,
   onContextMenuAction,
   onMoveEntry,
   onEditEntry,
@@ -872,6 +873,7 @@ export function CalendarView({
   calendarHours?: "all" | "business";
   draftEntry?: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  isEntryFavorited?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => boolean;
   onContextMenuAction?: (
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
     action: CalendarContextMenuAction,
@@ -1306,10 +1308,14 @@ export function CalendarView({
             onContextMenuAction?.(contextMenuState.entry, "duplicate");
             setContextMenuState(null);
           }}
-          onFavorite={() => {
-            onContextMenuAction?.(contextMenuState.entry, "favorite");
-            setContextMenuState(null);
-          }}
+          onFavorite={
+            isEntryFavorited?.(contextMenuState.entry)
+              ? undefined
+              : () => {
+                  onContextMenuAction?.(contextMenuState.entry, "favorite");
+                  setContextMenuState(null);
+                }
+          }
           onSplit={
             contextMenuState.entry.stop
               ? () => {
