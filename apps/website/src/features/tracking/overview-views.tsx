@@ -968,8 +968,6 @@ export function CalendarView({
   // Build the running entry event separately — it depends on nowMs which
   // ticks every second, but this only rebuilds one event instead of all.
   const events = useMemo<CalendarEvent[]>(() => {
-    const MIN_SLOT_MS = 15 * 60 * 1000;
-
     // Include the running entry even if the time-entries query hasn't yet
     // returned it (e.g. immediately after starting a new timer).
     const entryIds = new Set(entries.map((e) => e.id));
@@ -999,11 +997,11 @@ export function CalendarView({
       )
       .map((entry) => {
         const start = new Date(entry.start ?? entry.at ?? Date.now());
-        const rawEnd = new Date(nowMs ?? Date.now());
-        const end =
-          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
-            ? new Date(start.getTime() + MIN_SLOT_MS)
-            : rawEnd;
+        // Running entry end is always "now" — never extended by MIN_SLOT_MS.
+        // If the entry just started, it may be very short but its bottom edge
+        // must align with the current time indicator, not extend past it.
+        // CSS min-height on the event card handles visual minimum size.
+        const end = new Date(nowMs ?? Date.now());
         return {
           allDay: false,
           end,
