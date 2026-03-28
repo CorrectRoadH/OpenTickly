@@ -634,9 +634,29 @@ export function WorkspaceTimerPage({
                 });
               }
             }}
+            onDescriptionChange={(entry, description) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { description },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
+            }}
             onEditEntry={orch.handleEntryEdit}
             onFavoriteEntry={() => {
               // Pin as favorite is handled through the editor dialog
+            }}
+            onTagsChange={(entry, tagIds) => {
+              const wid = entry.workspace_id ?? entry.wid;
+              if (typeof entry.id === "number" && typeof wid === "number") {
+                void orch.updateTimeEntryMutation.mutateAsync({
+                  request: { tagIds },
+                  timeEntryId: entry.id,
+                  workspaceId: wid,
+                });
+              }
             }}
             onBillableToggle={(entry) => {
               const wid = entry.workspace_id ?? entry.wid;

@@ -31,7 +31,7 @@ import {
   DeleteConfirmDialog,
   useListSelection,
 } from "./list-bulk-actions.tsx";
-import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
+import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import {
   ChevronDownIcon,
@@ -388,12 +388,14 @@ export function ListView({
   onBulkEdit,
   onContinueEntry,
   onDeleteEntry,
+  onDescriptionChange,
   onDuplicateEntry,
   onEditEntry,
   onFavoriteEntry,
   onLoadMore,
   onProjectChange,
   onSplitEntry,
+  onTagsChange,
   projects,
   tags,
   timezone,
@@ -408,6 +410,7 @@ export function ListView({
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDeleteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onDescriptionChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => void;
   onDuplicateEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onFavoriteEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
@@ -417,6 +420,7 @@ export function ListView({
     projectId: number | null,
   ) => void;
   onSplitEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
   projects?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
   tags?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
   timezone: string;
@@ -578,47 +582,14 @@ export function ListView({
                       </button>
                     ) : null}
 
-                    {/* Description + Project (click to edit) */}
-                    <button
-                      aria-label={`Edit ${renderEntry.description?.trim() || "time entry"}`}
-                      className="ml-3 flex min-w-0 flex-1 cursor-pointer items-center gap-4 bg-transparent text-left"
-                      onClick={(event) =>
-                        onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
-                      }
-                      type="button"
-                    >
-                      <div className="flex min-w-0 flex-1 items-center gap-2">
-                        {isRunningTimeEntry(renderEntry) ? (
-                          <span
-                            className="size-2 shrink-0 rounded-full bg-[#e57bd9]"
-                            style={{
-                              animation: "pulse-dot 1.4s ease-in-out infinite",
-                            }}
-                          />
-                        ) : null}
-                        <p
-                          className={`truncate font-medium ${renderEntry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
-                        >
-                          {renderEntry.description?.trim() || "Add description"}
-                        </p>
-                      </div>
-                      {renderEntry.project_name ? (
-                        <span
-                          className="flex shrink-0 items-center gap-1.5 text-[14px]"
-                          style={{ color: resolveEntryColor(renderEntry) }}
-                        >
-                          <span
-                            className="size-[5px] shrink-0 rounded-full"
-                            style={{ backgroundColor: resolveEntryColor(renderEntry) }}
-                          />
-                          <span className="max-w-[160px] truncate">
-                            {renderEntry.project_name}
-                          </span>
-                        </span>
-                      ) : null}
-                    </button>
+                    {/* Description — inline editable */}
+                    <InlineDescription
+                      entry={renderEntry}
+                      isRunning={isRunningTimeEntry(renderEntry)}
+                      onChange={onDescriptionChange}
+                    />
 
-                    {/* Project picker (hover-only) */}
+                    {/* Project — click to open picker, or show picker icon on hover */}
                     <ListRowProjectPicker
                       entry={renderEntry}
                       onProjectChange={onProjectChange}
@@ -628,14 +599,16 @@ export function ListView({
 
                     {/* Right side: tags, billable, time range, duration, actions */}
                     <div className="flex shrink-0 items-center gap-2 pl-4">
-                      {renderEntry.tags && renderEntry.tags.length > 0 ? (
-                        <TagsIcon className="size-3.5 text-[var(--track-text-muted)]" />
-                      ) : null}
+                      <ListRowTagPicker
+                        entry={renderEntry}
+                        onTagsChange={onTagsChange}
+                        tags={tags ?? []}
+                      />
                       <button
                         aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
-                        className={`flex size-7 shrink-0 items-center justify-center rounded text-[14px] font-semibold transition ${
+                        className={`flex size-5 shrink-0 items-center justify-center rounded text-[11px] font-bold transition ${
                           renderEntry.billable
-                            ? "text-[#e57bd9]"
+                            ? "text-[#c8a961]"
                             : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
                         }`}
                         onClick={() => onBillableToggle?.(renderEntry)}
@@ -643,12 +616,24 @@ export function ListView({
                       >
                         $
                       </button>
-                      <span className="relative whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)]">
-                        {formatEntryRange(renderEntry, timezone)}
-                      </span>
-                      <span className="w-[72px] text-right text-[14px] font-medium tabular-nums">
+                      <button
+                        className="whitespace-nowrap text-right text-[14px] font-medium tabular-nums text-[var(--track-text-muted)] hover:text-white"
+                        onClick={(event) =>
+                          onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
+                        }
+                        type="button"
+                      >
+                        <span>{formatEntryRange(renderEntry, timezone)}</span>
+                      </button>
+                      <button
+                        className="w-[72px] text-right text-[14px] font-medium tabular-nums hover:text-[#e57bd9]"
+                        onClick={(event) =>
+                          onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
+                        }
+                        type="button"
+                      >
                         {formatClockDuration(resolveEntryDurationSeconds(renderEntry, nowMs))}
-                      </span>
+                      </button>
 
                       {/* Continue button — gradient fade + icon */}
                       <div className="relative flex items-center">
@@ -672,6 +657,7 @@ export function ListView({
                       <ListRowMoreActions
                         entry={renderEntry}
                         onBillableToggle={onBillableToggle}
+                        onContinue={onContinueEntry}
                         onDelete={onDeleteEntry}
                         onDuplicate={onDuplicateEntry}
                         onFavorite={onFavoriteEntry}
@@ -700,9 +686,154 @@ export function ListView({
   );
 }
 
+/**
+ * Inline description editor — click to edit, blur/Enter to save.
+ * Matches Toggl Track's inline textbox behavior.
+ */
+function InlineDescription({
+  entry,
+  isRunning,
+  onChange,
+}: {
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  isRunning: boolean;
+  onChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const desc = entry.description?.trim() || "";
+
+  const startEditing = () => {
+    setDraft(desc);
+    setEditing(true);
+    requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    });
+  };
+
+  const commit = () => {
+    setEditing(false);
+    if (draft.trim() !== desc) {
+      onChange?.(entry, draft.trim());
+    }
+  };
+
+  if (editing) {
+    return (
+      <input
+        className="ml-3 min-w-0 flex-1 bg-transparent text-[14px] font-medium text-white outline-none"
+        onBlur={commit}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+          if (e.key === "Escape") setEditing(false);
+        }}
+        ref={inputRef}
+        type="text"
+        value={draft}
+      />
+    );
+  }
+
+  return (
+    <button
+      className="ml-3 flex min-w-0 flex-1 cursor-text items-center gap-2 text-left"
+      onClick={startEditing}
+      type="button"
+    >
+      {isRunning ? (
+        <span
+          className="size-2 shrink-0 rounded-full bg-[#e57bd9]"
+          style={{ animation: "pulse-dot 1.4s ease-in-out infinite" }}
+        />
+      ) : null}
+      <p className={`truncate font-medium ${desc ? "" : "text-[var(--track-text-muted)]"}`}>
+        {desc || "Add description"}
+      </p>
+    </button>
+  );
+}
+
+/**
+ * Inline tag picker — click tag icon to open dropdown.
+ * Always shows the icon (filled when tags exist, muted when empty).
+ */
+function ListRowTagPicker({
+  entry,
+  onTagsChange,
+  tags,
+}: {
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry;
+  onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
+  tags: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const entryTagIds = entry.tag_ids ?? [];
+  const selectedTagIds = useMemo(() => new Set(entryTagIds), [entryTagIds]);
+  const hasTags = entryTagIds.length > 0;
+
+  const filteredTags = useMemo(
+    () =>
+      search.trim()
+        ? tags.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()))
+        : tags,
+    [tags, search],
+  );
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        aria-label="Select tags"
+        className={`flex size-7 shrink-0 items-center justify-center rounded transition ${
+          hasTags
+            ? "text-[var(--track-text-muted)]"
+            : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+        }`}
+        onClick={() => {
+          setOpen((prev) => !prev);
+          setSearch("");
+        }}
+        onBlur={(e) => {
+          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+            setOpen(false);
+          }
+        }}
+        type="button"
+      >
+        <TagsIcon className="size-3.5" />
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 top-full z-50 mt-1 w-[280px]"
+          onMouseDown={(e) => e.preventDefault()}
+        >
+          <TagPickerDropdown
+            filteredTags={filteredTags}
+            onSearch={setSearch}
+            onToggle={(tagId) => {
+              const next = selectedTagIds.has(tagId)
+                ? entryTagIds.filter((id) => id !== tagId)
+                : [...entryTagIds, tagId];
+              onTagsChange?.(entry, next);
+            }}
+            search={search}
+            selectedTagIds={selectedTagIds}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ListRowMoreActions({
   entry,
   onBillableToggle,
+  onContinue,
   onDelete,
   onDuplicate,
   onFavorite,
@@ -710,6 +841,7 @@ function ListRowMoreActions({
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   onBillableToggle?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
+  onContinue?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDelete?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onDuplicate?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onFavorite?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
@@ -718,6 +850,8 @@ function ListRowMoreActions({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const label = entry.description?.trim() || "time entry";
+  const menuItemClass =
+    "flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]";
 
   return (
     <div className="relative" ref={containerRef}>
@@ -736,59 +870,72 @@ function ListRowMoreActions({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-50 mt-1 w-[180px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
+          className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg border border-[var(--track-border)] bg-[#1b1b1b] py-1 shadow-lg"
           role="menu"
         >
           <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onBillableToggle?.(entry);
-            }}
+            className={menuItemClass}
+            onClick={() => { setOpen(false); onBillableToggle?.(entry); }}
             role="menuitem"
             type="button"
           >
             {entry.billable ? "Set as non-billable" : "Set as billable"}
           </button>
           <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onDuplicate?.(entry);
-            }}
+            className={menuItemClass}
+            onClick={() => { setOpen(false); onDuplicate?.(entry); }}
             role="menuitem"
             type="button"
           >
             Duplicate
           </button>
+          {entry.start && entry.stop ? (
+            <button
+              className={menuItemClass}
+              onClick={() => { setOpen(false); onSplit?.(entry); }}
+              role="menuitem"
+              type="button"
+            >
+              Split
+            </button>
+          ) : null}
+          {entry.project_id || entry.pid ? (
+            <a
+              className={menuItemClass}
+              href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${entry.project_id ?? entry.pid}`}
+              onClick={() => setOpen(false)}
+              role="menuitem"
+            >
+              Go to project
+            </a>
+          ) : null}
           <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onSplit?.(entry);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Split
-          </button>
-          <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onFavorite?.(entry);
-            }}
+            className={menuItemClass}
+            onClick={() => { setOpen(false); onFavorite?.(entry); }}
             role="menuitem"
             type="button"
           >
             Pin as favorite
           </button>
           <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            className={menuItemClass}
             onClick={() => {
               setOpen(false);
-              const startLink = `${window.location.origin}/timer?start=${entry.start ?? ""}`;
-              void navigator.clipboard.writeText(startLink);
+              void navigator.clipboard.writeText(entry.description?.trim() ?? "");
+            }}
+            role="menuitem"
+            type="button"
+          >
+            Copy description
+          </button>
+          <button
+            className={menuItemClass}
+            onClick={() => {
+              setOpen(false);
+              if (typeof entry.id === "number") {
+                const startLink = `${window.location.origin}/timer?entry=${entry.id}`;
+                void navigator.clipboard.writeText(startLink);
+              }
             }}
             role="menuitem"
             type="button"
@@ -798,10 +945,7 @@ function ListRowMoreActions({
           <div className="my-1 border-t border-[var(--track-border)]" />
           <button
             className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onDelete?.(entry);
-            }}
+            onClick={() => { setOpen(false); onDelete?.(entry); }}
             role="menuitem"
             type="button"
           >
@@ -813,6 +957,10 @@ function ListRowMoreActions({
   );
 }
 
+/**
+ * Project picker — shows project name (clickable to open picker)
+ * and a hover-only folder icon when no project is set.
+ */
 function ListRowProjectPicker({
   entry,
   onProjectChange,
@@ -830,7 +978,6 @@ function ListRowProjectPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const label = entry.description?.trim() || "time entry";
 
   const filteredProjects = useMemo(
     () =>
@@ -844,24 +991,40 @@ function ListRowProjectPicker({
     [projects, search],
   );
 
+  const hasProject = !!entry.project_name;
+
   return (
     <div className="relative" ref={containerRef}>
-      <button
-        aria-label={`Change project for ${label}`}
-        className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
-        onClick={() => {
-          setOpen((prev) => !prev);
-          setSearch("");
-        }}
-        onBlur={(e) => {
-          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
-          }
-        }}
-        type="button"
-      >
-        <ProjectsIcon className="size-3.5" />
-      </button>
+      {hasProject ? (
+        <button
+          aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
+          className="flex shrink-0 cursor-pointer items-center gap-1.5 text-[14px]"
+          onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
+          onBlur={(e) => {
+            if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
+          }}
+          style={{ color: resolveEntryColor(entry) }}
+          type="button"
+        >
+          <span
+            className="size-[5px] shrink-0 rounded-full"
+            style={{ backgroundColor: resolveEntryColor(entry) }}
+          />
+          <span className="max-w-[160px] truncate">{entry.project_name}</span>
+        </button>
+      ) : (
+        <button
+          aria-label="Add a project"
+          className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
+          onClick={() => { setOpen((prev) => !prev); setSearch(""); }}
+          onBlur={(e) => {
+            if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
+          }}
+          type="button"
+        >
+          <ProjectsIcon className="size-3.5" />
+        </button>
+      )}
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-[280px]"
