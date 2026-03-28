@@ -333,11 +333,7 @@ function ApiTokenCopyButton(props: { token: string }): ReactElement {
       onClick={handleCopy}
       type="button"
     >
-      {copied ? (
-        <CheckIcon className="size-4" strokeWidth="2" />
-      ) : (
-        <CopyIcon className="size-4" />
-      )}
+      {copied ? <CheckIcon className="size-4" strokeWidth="2" /> : <CopyIcon className="size-4" />}
     </button>
   );
 }
