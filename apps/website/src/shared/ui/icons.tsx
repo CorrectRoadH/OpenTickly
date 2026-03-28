@@ -338,6 +338,17 @@ export function ProfileIcon(props: IconProps): ReactElement {
   );
 }
 
+export function PinIcon(props: IconProps): ReactElement {
+  return (
+    <Icon {...props}>
+      <>
+        <path d="M8 11.333v3.334" />
+        <path d="M6 7.173a1.333 1.333 0 0 1-.74 1.193l-1.187.6A1.333 1.333 0 0 0 3.333 10.16v.507a.667.667 0 0 0 .667.666h8a.667.667 0 0 0 .667-.666v-.507a1.333 1.333 0 0 0-.74-1.193l-1.187-.6A1.333 1.333 0 0 1 10 7.173V4.667a.667.667 0 0 1 .667-.667 1.333 1.333 0 0 0 0-2.667H5.333a1.333 1.333 0 0 0 0 2.667A.667.667 0 0 1 6 4.667Z" />
+      </>
+    </Icon>
+  );
+}
+
 export function ProjectsIcon(props: IconProps): ReactElement {
   return (
     <Icon {...props}>
@@ -375,8 +386,8 @@ export function SettingsIcon(props: IconProps): ReactElement {
   return (
     <Icon {...props}>
       <>
-        <circle cx="8" cy="8" r="2.1" />
-        <path d="M8 2.8v1.5M8 11.7v1.5M3.6 4.4l1 1M11.4 12.2l1 1M2.8 8h1.5M11.7 8h1.5M3.6 11.6l1-1M11.4 3.8l1-1" />
+        <path d="M6.447 2.757a1.56 1.56 0 0 1 3.106 0 1.56 1.56 0 0 0 2.213 1.277 1.56 1.56 0 0 1 1.553 2.689 1.56 1.56 0 0 0 0 2.554 1.56 1.56 0 0 1-1.553 2.689 1.56 1.56 0 0 0-2.213 1.277 1.56 1.56 0 0 1-3.106 0 1.56 1.56 0 0 0-2.214-1.277 1.56 1.56 0 0 1-1.553-2.689 1.56 1.56 0 0 0 0-2.554 1.56 1.56 0 0 1 1.553-2.689 1.56 1.56 0 0 0 2.213-1.277" />
+        <circle cx="8" cy="8" r="2" />
       </>
     </Icon>
   );

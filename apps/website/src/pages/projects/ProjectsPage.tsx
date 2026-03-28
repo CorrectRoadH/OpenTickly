@@ -12,8 +12,8 @@ import {
   ChevronDownIcon,
   CloseIcon,
   EditIcon,
+  PinIcon,
   PlusIcon,
-  ProjectsIcon,
   TrashIcon,
 } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -754,7 +754,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     onClick={() => void handlePinToggle(project)}
                     type="button"
                   >
-                    <ProjectsIcon className="size-4" />
+                    <PinIcon className="size-4" />
                   </button>
                 </div>
                 <div className="flex h-[54px] items-center justify-end">
