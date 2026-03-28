@@ -530,6 +530,70 @@
           }
         }
       }
+    },
+    "/web/v1/workspaces/{workspace_id}/onboarding": {
+      "get": {
+        "summary": "Get onboarding state for the current user in this workspace",
+        "operationId": "get-workspace-onboarding",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Onboarding state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingState"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update onboarding state for the current user in this workspace",
+        "operationId": "update-workspace-onboarding",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOnboardingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated onboarding state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingState"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1420,6 +1484,66 @@
           },
           "preferences": {
             "$ref": "#/components/schemas/WorkspacePreferences"
+          }
+        }
+      },
+      "OnboardingStep": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "href": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["step_id", "label", "completed", "href"]
+      },
+      "OnboardingState": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OnboardingStep"
+            }
+          },
+          "dismissed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["steps", "dismissed"]
+      },
+      "UpdateOnboardingStepRequest": {
+        "type": "object",
+        "properties": {
+          "step_id": {
+            "type": "string"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["step_id", "completed"]
+      },
+      "UpdateOnboardingRequest": {
+        "type": "object",
+        "properties": {
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateOnboardingStepRequest"
+            }
+          },
+          "dismissed": {
+            "type": "boolean"
           }
         }
       }

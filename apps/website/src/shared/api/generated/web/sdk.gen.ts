@@ -10,6 +10,8 @@ import type {
   GetWebSessionResponses,
   GetWorkspaceCapabilitiesData,
   GetWorkspaceCapabilitiesResponses,
+  GetWorkspaceOnboardingData,
+  GetWorkspaceOnboardingResponses,
   GetWorkspacePermissionsData,
   GetWorkspacePermissionsResponses,
   GetWorkspaceQuotaData,
@@ -34,6 +36,8 @@ import type {
   UpdateWebSessionResponses,
   UpdateWorkspaceMemberRateCostData,
   UpdateWorkspaceMemberRateCostResponses,
+  UpdateWorkspaceOnboardingData,
+  UpdateWorkspaceOnboardingResponses,
   UpdateWorkspacePermissionsData,
   UpdateWorkspacePermissionsResponses,
   UpdateWorkspaceSettingsData,
@@ -265,6 +269,32 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).post<InviteWorkspaceMemberResponses, unknown, ThrowOnError>({
     url: "/web/v1/workspaces/{workspace_id}/members/invitations",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get onboarding state for the current user in this workspace
+ */
+export const getWorkspaceOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<GetWorkspaceOnboardingData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<GetWorkspaceOnboardingResponses, unknown, ThrowOnError>({
+    url: "/web/v1/workspaces/{workspace_id}/onboarding",
+    ...options,
+  });
+
+/**
+ * Update onboarding state for the current user in this workspace
+ */
+export const updateWorkspaceOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateWorkspaceOnboardingData, ThrowOnError>,
+) =>
+  (options.client ?? client).put<UpdateWorkspaceOnboardingResponses, unknown, ThrowOnError>({
+    url: "/web/v1/workspaces/{workspace_id}/onboarding",
     ...options,
     headers: {
       "Content-Type": "application/json",

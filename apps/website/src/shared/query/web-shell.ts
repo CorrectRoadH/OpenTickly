@@ -76,9 +76,11 @@ import {
   putWorkspacesByWorkspaceIdGoalsByGoalId,
   deleteWorkspacesByWorkspaceIdGoalsByGoalId,
 } from "../api/public/track/index.ts";
+import type { UpdateOnboardingRequestDto } from "../api/web-contract.ts";
 import {
   disableWorkspaceMember,
   getWebSession,
+  getWorkspaceOnboarding,
   getWorkspacePermissions,
   getWorkspaceSettings,
   inviteWorkspaceMember,
@@ -88,6 +90,7 @@ import {
   registerWebUser,
   removeWorkspaceMember,
   restoreWorkspaceMember,
+  updateWorkspaceOnboarding,
   updateWorkspacePermissions,
   updateWebSession,
   updateWorkspaceSettings,
@@ -1661,6 +1664,37 @@ export function useDeleteGoalMutation(workspaceId: number) {
       await queryClient.invalidateQueries({
         queryKey: ["goals", workspaceId],
       });
+    },
+  });
+}
+
+const onboardingQueryKey = (workspaceId: number) => ["onboarding", workspaceId] as const;
+
+export function useOnboardingQuery(workspaceId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getWorkspaceOnboarding({
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    queryKey: onboardingQueryKey(workspaceId),
+  });
+}
+
+export function useUpdateOnboardingMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: UpdateOnboardingRequestDto) =>
+      unwrapWebApiResult(
+        updateWorkspaceOnboarding({
+          body: request,
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    onSuccess: (data) => {
+      queryClient.setQueryData(onboardingQueryKey(workspaceId), data);
     },
   });
 }

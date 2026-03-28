@@ -97,3 +97,13 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	_ = workspaceId
 	return server.handlers.updateWorkspaceSettings(ctx)
 }
+
+func (server *webOpenAPIServer) GetWorkspaceOnboarding(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.getWorkspaceOnboarding(ctx)
+}
+
+func (server *webOpenAPIServer) UpdateWorkspaceOnboarding(ctx echo.Context, workspaceId int) error {
+	_ = workspaceId
+	return server.handlers.updateWorkspaceOnboarding(ctx)
+}

@@ -28,3 +28,9 @@ export type {
 } from "./web/index.ts";
 
 export type { UpdateWebSessionRequest as UpdateWebSessionRequestDto } from "./web/index.ts";
+
+export type {
+  OnboardingState as OnboardingStateDto,
+  OnboardingStep as OnboardingStepDto,
+  UpdateOnboardingRequest as UpdateOnboardingRequestDto,
+} from "./web/index.ts";

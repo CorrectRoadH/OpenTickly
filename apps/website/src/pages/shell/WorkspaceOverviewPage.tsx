@@ -26,30 +26,8 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { InviteMemberDialog } from "../members/InviteMemberDialog.tsx";
+import { OnboardingChecklist } from "./OnboardingChecklist.tsx";
 import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
-
-const FAQ_ITEMS = [
-  {
-    label: "How should I set up my workspace?",
-    url: "https://support.toggl.com/en/articles/8556318-premium-onboarding-guide-for-toggl-track-admin#h_a65e688ec0",
-  },
-  {
-    label: "How do roles and permissions work?",
-    url: "https://support.toggl.com/en/articles/2216605-access-rights-and-privileges",
-  },
-  {
-    label: "How do I set billable rates?",
-    url: "https://support.toggl.com/en/articles/2216967-billable-rates",
-  },
-  {
-    label: "How can I ensure accurate time tracking?",
-    url: "https://toggl.com/track/setting-up-data-integrity-foundations",
-  },
-  {
-    label: "How do I create and use reports?",
-    url: "https://toggl.com/blog/new-toggl-track-reports",
-  },
-] as const;
 
 export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
@@ -126,42 +104,20 @@ export function WorkspaceOverviewPage(): ReactElement {
       },
     });
   }, [queryClient]);
-  const handleViewAllPlans = useCallback(() => {
-    void navigate({ to: `/workspaces/${workspaceId}/subscription` });
-  }, [navigate, workspaceId]);
   const handleViewReports = useCallback(() => {
     void navigate({ to: `/workspaces/${workspaceId}/reports` });
   }, [navigate, workspaceId]);
-  const overviewProgressPercent = useMemo(
-    () =>
-      [
-        memberCount > 1,
-        teamActivity.activeCount > 0,
-        topProjects.length > 0,
-        projectCoverage.percent > 0,
-      ].filter(Boolean).length * 25,
-    [memberCount, projectCoverage.percent, teamActivity.activeCount, topProjects.length],
-  );
-
   return (
     <div
-      className="relative overflow-hidden bg-[var(--track-surface)] px-5 py-5 text-[var(--track-text)]"
+      className="bg-[var(--track-surface)] px-5 py-5 text-[var(--track-text)]"
       data-testid="workspace-overview-page"
     >
-      <OverviewBackdrop />
-
-      <div
-        className="relative z-10 flex w-full flex-col gap-5"
-        data-testid="workspace-overview-content"
-      >
+      <div className="flex w-full flex-col gap-5" data-testid="workspace-overview-content">
         <PageHeader
           action={
             <div className="flex flex-wrap items-center gap-2">
               <AppButton onClick={handleRefreshCharts} tone="secondary" type="button">
                 Refresh charts
-              </AppButton>
-              <AppButton onClick={handleViewAllPlans} tone="secondary" type="button">
-                View all plans
               </AppButton>
             </div>
           }
@@ -170,37 +126,17 @@ export function WorkspaceOverviewPage(): ReactElement {
           title="Admin Overview"
         />
 
+        <OnboardingChecklist
+          onInviteClick={() => setInviteDialogOpen(true)}
+          workspaceId={workspaceId}
+        />
+
         <div
           className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
           data-testid="workspace-overview-grid"
         >
           <div className="flex flex-col gap-5">
-            <OverviewSurface className="bg-[var(--track-accent-soft)] px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[14px] font-semibold leading-5 text-white">
-                    Unlock your admin overview
-                  </p>
-                  <p className="text-[12px] leading-4 text-[var(--track-accent-text)]">
-                    Finish the steps below to see project and team activity.
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-[12px] font-semibold leading-none text-white">
-                    {overviewProgressPercent}%
-                  </span>
-                  <div className="h-1 w-[72px] rounded-full bg-[var(--track-accent-soft)]">
-                    <div
-                      className="h-1 rounded-full bg-[var(--track-accent)]"
-                      style={{ width: `${overviewProgressPercent}%` }}
-                    />
-                  </div>
-                  <span className="text-[12px] text-[var(--track-accent-text)]">⌄</span>
-                </div>
-              </div>
-            </OverviewSurface>
-
-            {/* This week summary — Recharts bar chart matching Toggl */}
+            {/* This week summary */}
             <OverviewSurface className="px-5 py-4 lg:min-h-[240px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
@@ -349,17 +285,6 @@ export function WorkspaceOverviewPage(): ReactElement {
                   >
                     Add teammates
                   </button>
-                  <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                    Bringing on a large team?{" "}
-                    <a
-                      className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2"
-                      href="https://toggl.com/track/demo-request/"
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      book a demo
-                    </a>
-                  </p>
                 </div>
               </div>
             </OverviewSurface>
@@ -433,50 +358,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                 </button>
               </div>
             </OverviewSurface>
-
-            <OverviewSurface className="px-5 py-4 lg:min-h-[150px]">
-              <div className="flex h-full flex-col gap-3">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">FAQ</h2>
-                  <a
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] no-underline hover:text-[var(--track-accent-text)]"
-                    href="https://community.toggl.com/"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    View more
-                    <svg fill="none" height={10} viewBox="0 0 10 10" width={10}>
-                      <path d="M1 9L9 1M9 1H3M9 1V7" stroke="currentColor" strokeWidth={1.5} />
-                    </svg>
-                  </a>
-                </div>
-                <p className="border-b border-[var(--track-border)] pb-2 text-[14px] leading-5 text-[var(--track-text-muted)]">
-                  The stuff most admins ask us
-                </p>
-                <div className="space-y-1 text-[14px] leading-5">
-                  {FAQ_ITEMS.map((item) => (
-                    <p key={item.label}>
-                      <a
-                        className="text-[var(--track-text)] no-underline hover:text-white"
-                        href={item.url}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        {item.label}
-                      </a>
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </OverviewSurface>
           </div>
-        </div>
-
-        <div className="pt-5 text-center text-[12px] text-[var(--track-text-soft)]">
-          <span>How could this be more useful for you? </span>
-          <span className="text-[var(--track-accent-text)] underline decoration-[var(--track-accent-text)]/40 underline-offset-2">
-            Let us know.
-          </span>
         </div>
       </div>
 
@@ -621,31 +503,6 @@ function StatRing({
 
 function OverviewEmptyState({ message }: { message: string }): ReactElement {
   return <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{message}</p>;
-}
-
-function OverviewBackdrop(): ReactElement {
-  return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute left-[-120px] top-[520px] size-[280px] rounded-full border-[38px] border-[var(--track-panel)] opacity-90" />
-      <div
-        className="absolute bottom-[-110px] left-[-40px] h-[240px] w-[360px] rounded-[48px] bg-[var(--track-surface)] opacity-70"
-        style={{ clipPath: "polygon(0 20%, 78% 0, 100% 100%, 18% 100%)" }}
-      />
-      <div
-        className="absolute right-[72px] top-[140px] h-[190px] w-[220px] bg-[var(--track-surface)] opacity-75"
-        style={{ clipPath: "polygon(34% 0, 100% 22%, 78% 100%, 0 72%)" }}
-      />
-      <div className="absolute right-[-70px] top-[255px] size-[130px] rounded-full border-[22px] border-[var(--track-input-bg)] opacity-85" />
-      <div
-        className="absolute bottom-[46px] right-[185px] h-[280px] w-[220px] bg-[var(--track-illustration-surface-muted)] opacity-75"
-        style={{ clipPath: "polygon(35% 0, 100% 16%, 88% 100%, 0 80%)" }}
-      />
-      <div
-        className="absolute right-[235px] top-[32px] h-[74px] w-[70px] bg-[var(--track-illustration-surface-soft)] opacity-80"
-        style={{ clipPath: "polygon(52% 0, 100% 52%, 38% 100%, 0 38%)" }}
-      />
-    </div>
-  );
 }
 
 function buildWeekSummary(

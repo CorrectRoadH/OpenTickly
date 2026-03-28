@@ -50,6 +50,20 @@ type LoginRequest struct {
 	Password string              `json:"password"`
 }
 
+// OnboardingState defines model for OnboardingState.
+type OnboardingState struct {
+	Dismissed bool             `json:"dismissed"`
+	Steps     []OnboardingStep `json:"steps"`
+}
+
+// OnboardingStep defines model for OnboardingStep.
+type OnboardingStep struct {
+	Completed bool    `json:"completed"`
+	Href      *string `json:"href"`
+	Label     string  `json:"label"`
+	StepId    string  `json:"step_id"`
+}
+
 // OrganizationSettings defines model for OrganizationSettings.
 type OrganizationSettings struct {
 	Admin                   bool   `json:"admin"`
@@ -177,6 +191,18 @@ type UpdateCurrentUserProfileRequest struct {
 	Fullname           string              `json:"fullname"`
 	Password           *string             `json:"password"`
 	Timezone           string              `json:"timezone"`
+}
+
+// UpdateOnboardingRequest defines model for UpdateOnboardingRequest.
+type UpdateOnboardingRequest struct {
+	Dismissed *bool                          `json:"dismissed,omitempty"`
+	Steps     *[]UpdateOnboardingStepRequest `json:"steps,omitempty"`
+}
+
+// UpdateOnboardingStepRequest defines model for UpdateOnboardingStepRequest.
+type UpdateOnboardingStepRequest struct {
+	Completed bool   `json:"completed"`
+	StepId    string `json:"step_id"`
 }
 
 // UpdateOrganizationSettingsRequest defines model for UpdateOrganizationSettingsRequest.
@@ -342,6 +368,9 @@ type InviteWorkspaceMemberJSONRequestBody = WorkspaceMemberInvitationRequest
 // UpdateWorkspaceMemberRateCostJSONRequestBody defines body for UpdateWorkspaceMemberRateCost for application/json ContentType.
 type UpdateWorkspaceMemberRateCostJSONRequestBody = UpdateWorkspaceMemberRateCostRequest
 
+// UpdateWorkspaceOnboardingJSONRequestBody defines body for UpdateWorkspaceOnboarding for application/json ContentType.
+type UpdateWorkspaceOnboardingJSONRequestBody = UpdateOnboardingRequest
+
 // UpdateWorkspacePermissionsJSONRequestBody defines body for UpdateWorkspacePermissions for application/json ContentType.
 type UpdateWorkspacePermissionsJSONRequestBody = UpdateWorkspacePermissionsRequest
 
@@ -386,6 +415,12 @@ type ServerInterface interface {
 	// Restore a workspace member
 	// (POST /web/v1/workspaces/{workspace_id}/members/{member_id}/restore)
 	RestoreWorkspaceMember(ctx echo.Context, workspaceId int, memberId int) error
+	// Get onboarding state for the current user in this workspace
+	// (GET /web/v1/workspaces/{workspace_id}/onboarding)
+	GetWorkspaceOnboarding(ctx echo.Context, workspaceId int) error
+	// Update onboarding state for the current user in this workspace
+	// (PUT /web/v1/workspaces/{workspace_id}/onboarding)
+	UpdateWorkspaceOnboarding(ctx echo.Context, workspaceId int) error
 	// Read workspace permission toggles
 	// (GET /web/v1/workspaces/{workspace_id}/permissions)
 	GetWorkspacePermissions(ctx echo.Context, workspaceId int) error
@@ -597,6 +632,38 @@ func (w *ServerInterfaceWrapper) RestoreWorkspaceMember(ctx echo.Context) error 
 	return err
 }
 
+// GetWorkspaceOnboarding converts echo context to params.
+func (w *ServerInterfaceWrapper) GetWorkspaceOnboarding(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "workspace_id" -------------
+	var workspaceId int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workspace_id", ctx.Param("workspace_id"), &workspaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetWorkspaceOnboarding(ctx, workspaceId)
+	return err
+}
+
+// UpdateWorkspaceOnboarding converts echo context to params.
+func (w *ServerInterfaceWrapper) UpdateWorkspaceOnboarding(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "workspace_id" -------------
+	var workspaceId int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workspace_id", ctx.Param("workspace_id"), &workspaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter workspace_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UpdateWorkspaceOnboarding(ctx, workspaceId)
+	return err
+}
+
 // GetWorkspacePermissions converts echo context to params.
 func (w *ServerInterfaceWrapper) GetWorkspacePermissions(ctx echo.Context) error {
 	var err error
@@ -717,6 +784,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/web/v1/workspaces/:workspace_id/members/:member_id/disable", wrapper.DisableWorkspaceMember)
 	router.PATCH(baseURL+"/web/v1/workspaces/:workspace_id/members/:member_id/rate-cost", wrapper.UpdateWorkspaceMemberRateCost)
 	router.POST(baseURL+"/web/v1/workspaces/:workspace_id/members/:member_id/restore", wrapper.RestoreWorkspaceMember)
+	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/onboarding", wrapper.GetWorkspaceOnboarding)
+	router.PUT(baseURL+"/web/v1/workspaces/:workspace_id/onboarding", wrapper.UpdateWorkspaceOnboarding)
 	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/permissions", wrapper.GetWorkspacePermissions)
 	router.PATCH(baseURL+"/web/v1/workspaces/:workspace_id/permissions", wrapper.UpdateWorkspacePermissions)
 	router.GET(baseURL+"/web/v1/workspaces/:workspace_id/quota", wrapper.GetWorkspaceQuota)
@@ -728,54 +797,57 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"AA==",
+	"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",
+	"AAD//8Ghizf0WgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

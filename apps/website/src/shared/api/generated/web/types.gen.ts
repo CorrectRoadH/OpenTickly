@@ -277,6 +277,28 @@ export type WorkspaceSettingsUpdate = {
   preferences?: WorkspacePreferences;
 };
 
+export type OnboardingStep = {
+  step_id: string;
+  label: string;
+  completed: boolean;
+  href: string;
+};
+
+export type OnboardingState = {
+  steps: Array<OnboardingStep>;
+  dismissed: boolean;
+};
+
+export type UpdateOnboardingStepRequest = {
+  step_id: string;
+  completed: boolean;
+};
+
+export type UpdateOnboardingRequest = {
+  steps?: Array<UpdateOnboardingStepRequest>;
+  dismissed?: boolean;
+};
+
 export type CapabilityContext = {
   organization_id?: number;
   workspace_id?: number;
@@ -614,3 +636,41 @@ export type InviteWorkspaceMemberResponses = {
 
 export type InviteWorkspaceMemberResponse =
   InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
+
+export type GetWorkspaceOnboardingData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/onboarding";
+};
+
+export type GetWorkspaceOnboardingResponses = {
+  /**
+   * Onboarding state
+   */
+  200: OnboardingState;
+};
+
+export type GetWorkspaceOnboardingResponse =
+  GetWorkspaceOnboardingResponses[keyof GetWorkspaceOnboardingResponses];
+
+export type UpdateWorkspaceOnboardingData = {
+  body: UpdateOnboardingRequest;
+  path: {
+    workspace_id: number;
+  };
+  query?: never;
+  url: "/web/v1/workspaces/{workspace_id}/onboarding";
+};
+
+export type UpdateWorkspaceOnboardingResponses = {
+  /**
+   * Updated onboarding state
+   */
+  200: OnboardingState;
+};
+
+export type UpdateWorkspaceOnboardingResponse =
+  UpdateWorkspaceOnboardingResponses[keyof UpdateWorkspaceOnboardingResponses];
