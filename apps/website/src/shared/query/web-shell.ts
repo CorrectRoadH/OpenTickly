@@ -43,6 +43,8 @@ import {
   getWorkspacesByWorkspaceIdProjectsByProjectId,
   getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
   createWorkspaceFavorite,
+  archiveClient,
+  restoreClient,
   deleteWorkspaceClient,
   deleteWorkspaceProject,
   deleteWorkspaceTimeEntries,
@@ -1233,6 +1235,42 @@ export function useDeleteClientMutation(workspaceId: number) {
     mutationFn: (clientId: number) =>
       unwrapWebApiResult(
         deleteWorkspaceClient({
+          path: { workspace_id: workspaceId, client_id: clientId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["clients", workspaceId],
+      });
+    },
+  });
+}
+
+export function useArchiveClientMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (clientId: number) =>
+      unwrapWebApiResult(
+        archiveClient({
+          path: { workspace_id: workspaceId, client_id: clientId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["clients", workspaceId],
+      });
+    },
+  });
+}
+
+export function useRestoreClientMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (clientId: number) =>
+      unwrapWebApiResult(
+        restoreClient({
           path: { workspace_id: workspaceId, client_id: clientId },
         }),
       ),

@@ -5,6 +5,7 @@ import { MoreIcon } from "../../shared/ui/icons.tsx";
 type ClientRowActionsProps = {
   clientId: number;
   clientName: string;
+  onArchive: (clientId: number) => void;
   onDelete: (clientId: number) => void;
   onRename: (clientId: number, name: string) => void;
 };
@@ -16,6 +17,7 @@ type ClientRowActionsProps = {
 export function ClientRowActions({
   clientId,
   clientName,
+  onArchive,
   onDelete,
   onRename,
 }: ClientRowActionsProps): ReactElement {
@@ -133,8 +135,11 @@ export function ClientRowActions({
                 Edit
               </button>
               <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-[var(--track-text-muted)] cursor-not-allowed"
-                disabled
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
+                onClick={() => {
+                  onArchive(clientId);
+                  setMenuOpen(false);
+                }}
                 type="button"
               >
                 Archive

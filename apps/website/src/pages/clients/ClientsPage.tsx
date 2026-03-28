@@ -14,6 +14,7 @@ import {
 } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
+  useArchiveClientMutation,
   useClientsQuery,
   useCreateClientMutation,
   useDeleteClientMutation,
@@ -46,6 +47,7 @@ export function ClientsPage(): ReactElement {
   const createClientMutation = useCreateClientMutation(workspaceId);
   const renameClientMutation = useRenameClientMutation(workspaceId);
   const deleteClientMutation = useDeleteClientMutation(workspaceId);
+  const archiveClientMutation = useArchiveClientMutation(workspaceId);
   const [clientName, setClientName] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -213,8 +215,14 @@ export function ClientsPage(): ReactElement {
             <span>Edit</span>
           </button>
           <button
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-[var(--track-text-muted)] cursor-not-allowed"
-            disabled
+            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+            onClick={() => {
+              for (const id of selectedIds) {
+                archiveClientMutation.mutate(id);
+              }
+              setSelectedIds(new Set());
+              setStatusMessage(`${selectedIds.size} client(s) archived`);
+            }}
             type="button"
           >
             <ArchiveIcon className="size-3.5" />
@@ -258,6 +266,7 @@ export function ClientsPage(): ReactElement {
       !projectsQuery.isError ? (
         groupedClients.length > 0 ? (
           <ClientListTable
+            archiveClientMutation={archiveClientMutation}
             collapsedIds={collapsedIds}
             deleteClientMutation={deleteClientMutation}
             groupedClients={groupedClients}
@@ -307,6 +316,7 @@ export function ClientsPage(): ReactElement {
 }
 
 function ClientListTable({
+  archiveClientMutation,
   collapsedIds,
   deleteClientMutation,
   groupedClients,
@@ -318,6 +328,7 @@ function ClientListTable({
   toggleClient,
   workspaceId,
 }: {
+  archiveClientMutation: ReturnType<typeof useArchiveClientMutation>;
   collapsedIds: number[];
   deleteClientMutation: ReturnType<typeof useDeleteClientMutation>;
   groupedClients: GroupedClient[];
@@ -388,6 +399,11 @@ function ClientListTable({
                 <ClientRowActions
                   clientId={client.id}
                   clientName={client.name}
+                  onArchive={(id) => {
+                    archiveClientMutation.mutate(id, {
+                      onSuccess: () => setStatusMessage("Client archived"),
+                    });
+                  }}
                   onDelete={(id) => {
                     deleteClientMutation.mutate(id, {
                       onSuccess: () => setStatusMessage("Client deleted"),
