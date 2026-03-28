@@ -579,328 +579,330 @@ export function WorkspaceTimerPage({
           {orch.trackStrip.length > 0 ? <ProjectFilterStrip items={orch.trackStrip} /> : null}
         </div>
       </header>
-      {/* Content area — normal document flow, scrolls with window */}
-      <div>
-        {orch.timeEntriesQuery.isPending ? (
-          <SurfaceMessage message="Loading time entries..." />
-        ) : null}
-        {orch.timeEntriesQuery.isError ? (
-          <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
-        ) : null}
-        {!orch.timeEntriesQuery.isPending &&
-        !orch.timeEntriesQuery.isError &&
-        orch.view === "list" ? (
-          <ListView
-            groups={orch.groupedEntries}
-            hasMore={orch.hasMoreEntries}
-            isLoadingMore={orch.isLoadingMoreEntries}
-            nowMs={orch.nowMs}
-            onLoadMore={orch.loadMoreEntries}
-            onBulkDelete={(ids) => {
-              void orch.handleBulkDelete(ids);
-            }}
-            onBulkEdit={(ids, updates) => {
-              void orch.handleBulkEdit(ids, updates);
-            }}
-            onContinueEntry={(entry) => {
-              void orch.handleContinueEntry(entry);
-            }}
-            onDeleteEntry={(entry) => {
-              const wid = entry.workspace_id ?? entry.wid;
-              if (typeof entry.id === "number" && typeof wid === "number") {
-                const snapshot = snapshotEntryForUndo(entry);
-                void orch.deleteTimeEntryMutation
-                  .mutateAsync({
+      {/* Content area + optional right sidebar */}
+      <div className="flex min-h-0">
+        <div className="min-w-0 flex-1">
+          {orch.timeEntriesQuery.isPending ? (
+            <SurfaceMessage message="Loading time entries..." />
+          ) : null}
+          {orch.timeEntriesQuery.isError ? (
+            <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
+          ) : null}
+          {!orch.timeEntriesQuery.isPending &&
+          !orch.timeEntriesQuery.isError &&
+          orch.view === "list" ? (
+            <ListView
+              groups={orch.groupedEntries}
+              hasMore={orch.hasMoreEntries}
+              isLoadingMore={orch.isLoadingMoreEntries}
+              nowMs={orch.nowMs}
+              onLoadMore={orch.loadMoreEntries}
+              onBulkDelete={(ids) => {
+                void orch.handleBulkDelete(ids);
+              }}
+              onBulkEdit={(ids, updates) => {
+                void orch.handleBulkEdit(ids, updates);
+              }}
+              onContinueEntry={(entry) => {
+                void orch.handleContinueEntry(entry);
+              }}
+              onDeleteEntry={(entry) => {
+                const wid = entry.workspace_id ?? entry.wid;
+                if (typeof entry.id === "number" && typeof wid === "number") {
+                  const snapshot = snapshotEntryForUndo(entry);
+                  void orch.deleteTimeEntryMutation
+                    .mutateAsync({
+                      timeEntryId: entry.id,
+                      workspaceId: wid,
+                    })
+                    .then(() => {
+                      if (snapshot) showDeleteToast(snapshot);
+                    });
+                }
+              }}
+              onDuplicateEntry={(entry) => {
+                if (entry.start && entry.stop) {
+                  const durationSec = Math.round(
+                    (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+                  );
+                  void orch.createTimeEntryMutation.mutateAsync({
+                    billable: entry.billable,
+                    description: (entry.description ?? "").trim(),
+                    duration: durationSec,
+                    projectId: entry.project_id ?? entry.pid ?? null,
+                    start: entry.start,
+                    stop: entry.stop,
+                    tagIds: entry.tag_ids ?? [],
+                    taskId: entry.task_id ?? entry.tid ?? null,
+                  });
+                }
+              }}
+              onDescriptionChange={(entry, description) => {
+                const wid = entry.workspace_id ?? entry.wid;
+                if (typeof entry.id === "number" && typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { description },
                     timeEntryId: entry.id,
                     workspaceId: wid,
-                  })
-                  .then(() => {
-                    if (snapshot) showDeleteToast(snapshot);
                   });
-              }
-            }}
-            onDuplicateEntry={(entry) => {
-              if (entry.start && entry.stop) {
-                const durationSec = Math.round(
-                  (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
-                );
-                void orch.createTimeEntryMutation.mutateAsync({
-                  billable: entry.billable,
-                  description: (entry.description ?? "").trim(),
-                  duration: durationSec,
-                  projectId: entry.project_id ?? entry.pid ?? null,
-                  start: entry.start,
-                  stop: entry.stop,
-                  tagIds: entry.tag_ids ?? [],
-                  taskId: entry.task_id ?? entry.tid ?? null,
-                });
-              }
-            }}
-            onDescriptionChange={(entry, description) => {
-              const wid = entry.workspace_id ?? entry.wid;
-              if (typeof entry.id === "number" && typeof wid === "number") {
-                void orch.updateTimeEntryMutation.mutateAsync({
-                  request: { description },
-                  timeEntryId: entry.id,
-                  workspaceId: wid,
-                });
-              }
-            }}
-            onEditEntry={orch.handleEntryEdit}
-            onFavoriteEntry={() => {
-              // Pin as favorite is handled through the editor dialog
-            }}
-            onTagsChange={(entry, tagIds) => {
-              const wid = entry.workspace_id ?? entry.wid;
-              if (typeof entry.id === "number" && typeof wid === "number") {
-                void orch.updateTimeEntryMutation.mutateAsync({
-                  request: { tagIds },
-                  timeEntryId: entry.id,
-                  workspaceId: wid,
-                });
-              }
-            }}
-            onBillableToggle={(entry) => {
-              const wid = entry.workspace_id ?? entry.wid;
-              if (typeof entry.id === "number" && typeof wid === "number") {
-                void orch.updateTimeEntryMutation.mutateAsync({
-                  request: { billable: !entry.billable },
-                  timeEntryId: entry.id,
-                  workspaceId: wid,
-                });
-              }
-            }}
-            onSplitEntry={(entry) => {
-              if (entry.start && entry.stop) {
-                orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                setSplitDialogOpen(true);
-              }
-            }}
-            onProjectChange={(entry, projectId) => {
-              const wid = entry.workspace_id ?? entry.wid;
-              if (typeof entry.id === "number" && typeof wid === "number") {
-                void orch.updateTimeEntryMutation.mutateAsync({
-                  request: { projectId },
-                  timeEntryId: entry.id,
-                  workspaceId: wid,
-                });
-              }
-            }}
-            projects={orch.projectOptions
-              .filter((project) => project.id != null)
-              .map((project) => ({
-                clientName: project.client_name ?? undefined,
-                color: resolveProjectColorValue(project),
-                id: project.id as number,
-                name: project.name ?? "Untitled project",
-              }))}
-            tags={orch.tagOptions}
-            timezone={orch.timezone}
-            workspaceName={
-              orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-              "Workspace"
-            }
-          />
-        ) : null}
-        {!orch.timeEntriesQuery.isPending &&
-        !orch.timeEntriesQuery.isError &&
-        orch.view === "calendar" ? (
-          <CalendarView
-            calendarHours={displaySettings.calendarHours}
-            draftEntry={orch.calendarDraftEntry}
-            entries={orch.visibleEntries}
-            isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
-            nowMs={orch.nowMs}
-            onContinueEntry={(entry) => {
-              void orch.handleContinueEntry(entry);
-            }}
-            onContextMenuAction={(entry, action) => {
-              if (action === "split" && entry.start && entry.stop) {
-                orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                setSplitDialogOpen(true);
-                return;
-              }
-              handleCalendarContextMenuAction(entry, action, orch, showDeleteToast, favorites);
-            }}
-            onEditEntry={orch.handleEntryEdit}
-            onMoveEntry={(entryId, minutesDelta) => {
-              void orch.handleCalendarEntryMove(entryId, minutesDelta);
-            }}
-            onResizeEntry={(entryId, edge, minutesDelta) => {
-              void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
-            }}
-            onSelectSlot={(slot) => {
-              orch.handleCalendarSlotCreate(slot);
-            }}
-            onStartEntry={() => {
-              void orch.handleTimerAction();
-            }}
-            onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
-            onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
-            runningEntry={orch.runningEntry}
-            subview={orch.calendarSubview}
-            timezone={orch.timezone}
-            weekDays={orch.weekDays}
-            weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-            zoom={orch.calendarZoom}
-          />
-        ) : null}
-        {!orch.timeEntriesQuery.isPending &&
-        !orch.timeEntriesQuery.isError &&
-        orch.view === "timesheet" ? (
-          <div className="relative">
-            <TimesheetView
-              onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
-              onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
-                void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
+                }
               }}
-              onCopyLastWeek={() => {
-                void orch.handleCopyLastWeek();
+              onEditEntry={orch.handleEntryEdit}
+              onFavoriteEntry={() => {
+                // Pin as favorite is handled through the editor dialog
               }}
-              rows={orch.timesheetRows}
+              onTagsChange={(entry, tagIds) => {
+                const wid = entry.workspace_id ?? entry.wid;
+                if (typeof entry.id === "number" && typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { tagIds },
+                    timeEntryId: entry.id,
+                    workspaceId: wid,
+                  });
+                }
+              }}
+              onBillableToggle={(entry) => {
+                const wid = entry.workspace_id ?? entry.wid;
+                if (typeof entry.id === "number" && typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { billable: !entry.billable },
+                    timeEntryId: entry.id,
+                    workspaceId: wid,
+                  });
+                }
+              }}
+              onSplitEntry={(entry) => {
+                if (entry.start && entry.stop) {
+                  orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+                  setSplitDialogOpen(true);
+                }
+              }}
+              onProjectChange={(entry, projectId) => {
+                const wid = entry.workspace_id ?? entry.wid;
+                if (typeof entry.id === "number" && typeof wid === "number") {
+                  void orch.updateTimeEntryMutation.mutateAsync({
+                    request: { projectId },
+                    timeEntryId: entry.id,
+                    workspaceId: wid,
+                  });
+                }
+              }}
+              projects={orch.projectOptions
+                .filter((project) => project.id != null)
+                .map((project) => ({
+                  clientName: project.client_name ?? undefined,
+                  color: resolveProjectColorValue(project),
+                  id: project.id as number,
+                  name: project.name ?? "Untitled project",
+                }))}
+              tags={orch.tagOptions}
+              timezone={orch.timezone}
+              workspaceName={
+                orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+                "Workspace"
+              }
+            />
+          ) : null}
+          {!orch.timeEntriesQuery.isPending &&
+          !orch.timeEntriesQuery.isError &&
+          orch.view === "calendar" ? (
+            <CalendarView
+              calendarHours={displaySettings.calendarHours}
+              draftEntry={orch.calendarDraftEntry}
+              entries={orch.visibleEntries}
+              isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
+              nowMs={orch.nowMs}
+              onContinueEntry={(entry) => {
+                void orch.handleContinueEntry(entry);
+              }}
+              onContextMenuAction={(entry, action) => {
+                if (action === "split" && entry.start && entry.stop) {
+                  orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+                  setSplitDialogOpen(true);
+                  return;
+                }
+                handleCalendarContextMenuAction(entry, action, orch, showDeleteToast, favorites);
+              }}
+              onEditEntry={orch.handleEntryEdit}
+              onMoveEntry={(entryId, minutesDelta) => {
+                void orch.handleCalendarEntryMove(entryId, minutesDelta);
+              }}
+              onResizeEntry={(entryId, edge, minutesDelta) => {
+                void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
+              }}
+              onSelectSlot={(slot) => {
+                orch.handleCalendarSlotCreate(slot);
+              }}
+              onStartEntry={() => {
+                void orch.handleTimerAction();
+              }}
+              onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
+              onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
+              runningEntry={orch.runningEntry}
+              subview={orch.calendarSubview}
               timezone={orch.timezone}
               weekDays={orch.weekDays}
+              weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+              zoom={orch.calendarZoom}
             />
-            {timesheetAddRowOpen ? (
-              <TimesheetAddRowPicker
-                onClose={() => setTimesheetAddRowOpen(false)}
-                onSelect={handleTimesheetAddRow}
-                projectOptions={orch.projectOptions}
-                workspaceName={
-                  orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-                  "Workspace"
-                }
+          ) : null}
+          {!orch.timeEntriesQuery.isPending &&
+          !orch.timeEntriesQuery.isError &&
+          orch.view === "timesheet" ? (
+            <div className="relative">
+              <TimesheetView
+                onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
+                onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
+                  void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
+                }}
+                onCopyLastWeek={() => {
+                  void orch.handleCopyLastWeek();
+                }}
+                rows={orch.timesheetRows}
+                timezone={orch.timezone}
+                weekDays={orch.weekDays}
               />
-            ) : null}
-          </div>
-        ) : null}
-        {/* Editor dialog — positioned absolutely inside the page container.
+              {timesheetAddRowOpen ? (
+                <TimesheetAddRowPicker
+                  onClose={() => setTimesheetAddRowOpen(false)}
+                  onSelect={handleTimesheetAddRow}
+                  projectOptions={orch.projectOptions}
+                  workspaceName={
+                    orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+                    "Workspace"
+                  }
+                />
+              ) : null}
+            </div>
+          ) : null}
+          {/* Editor dialog — positioned absolutely inside the page container.
               Anchor coordinates are page-relative so the editor scrolls with
               window scroll natively, no JS compensation needed. */}
-        {orch.selectedEntry && orch.selectedEntryAnchor ? (
-          <TimeEntryEditorDialog
-            anchor={orch.selectedEntryAnchor}
-            currentWorkspaceId={orch.selectedEntryWorkspaceId}
-            description={orch.selectedDescription}
-            entry={orch.selectedEntry}
-            isCreatingProject={orch.createProjectMutation.isPending}
-            isCreatingTag={orch.createTagMutation.isPending}
-            isDeleting={orch.deleteTimeEntryMutation.isPending}
-            isDirty={orch.selectedEntryDirty}
-            isNewEntry={orch.isNewEntry}
-            isPrimaryActionPending={orch.timerMutationPending}
-            isSaving={
-              orch.isNewEntry
-                ? orch.createTimeEntryMutation.isPending
-                : orch.updateTimeEntryMutation.isPending
-            }
-            onClose={orch.closeSelectedEntryEditor}
-            onCreateProject={orch.handleSelectedEntryProjectCreate}
-            onCreateTag={orch.handleSelectedEntryTagCreate}
-            onBillableToggle={orch.handleSelectedEntryBillableToggle}
-            onDuplicate={
-              orch.isNewEntry
-                ? undefined
-                : () => {
-                    void orch.handleSelectedEntryDuplicate();
-                  }
-            }
-            onDelete={
-              orch.isNewEntry
-                ? undefined
-                : () => {
-                    const snapshot = orch.selectedEntry
-                      ? snapshotEntryForUndo(orch.selectedEntry)
-                      : null;
-                    void orch
-                      .handleSelectedEntryDelete()
-                      .then(() => {
-                        if (snapshot) showDeleteToast(snapshot);
-                      })
-                      .catch(() => {
-                        // Error is already displayed in the editor via selectedEntryError
-                      });
-                  }
-            }
-            onDescriptionChange={orch.setSelectedDescription}
-            onFavorite={
-              orch.isNewEntry ||
-              isEntryAlreadyFavorited(
-                {
-                  description: orch.selectedDescription,
-                  project_id: orch.selectedProjectId,
-                  tag_ids: orch.selectedTagIds,
-                },
-                favorites,
-              )
-                ? undefined
-                : () => {
-                    void orch.handleSelectedEntryFavorite();
-                  }
-            }
-            onPrimaryAction={
-              orch.isNewEntry
-                ? undefined
-                : () => {
-                    void orch.handleSelectedEntryPrimaryAction();
-                  }
-            }
-            onProjectSelect={orch.setSelectedProjectId}
-            onSave={() => {
-              void orch.handleSelectedEntrySave();
-            }}
-            onSplit={
-              orch.isNewEntry
-                ? undefined
-                : () => {
-                    setSplitDialogOpen(true);
-                  }
-            }
-            onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
-            onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
-            onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
-            onTagToggle={(tagId) => {
-              orch.setSelectedTagIds((current) =>
-                current.includes(tagId)
-                  ? current.filter((id) => id !== tagId)
-                  : [...current, tagId],
-              );
-            }}
-            onWorkspaceSelect={(nextWorkspaceId) => {
-              orch.switchWorkspace(nextWorkspaceId);
-              orch.closeSelectedEntryEditor();
-            }}
-            primaryActionIcon={
-              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                ? "stop"
-                : "play"
-            }
-            primaryActionLabel={
-              orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                ? "Stop timer"
-                : "Continue Time Entry"
-            }
-            projects={orch.projectOptions
-              .filter((project) => project.id != null)
-              .map((project) => ({
-                clientName: project.client_name ?? undefined,
-                color: resolveProjectColorValue(project),
-                id: project.id as number,
-                name: project.name ?? "Untitled project",
+          {orch.selectedEntry && orch.selectedEntryAnchor ? (
+            <TimeEntryEditorDialog
+              anchor={orch.selectedEntryAnchor}
+              currentWorkspaceId={orch.selectedEntryWorkspaceId}
+              description={orch.selectedDescription}
+              entry={orch.selectedEntry}
+              isCreatingProject={orch.createProjectMutation.isPending}
+              isCreatingTag={orch.createTagMutation.isPending}
+              isDeleting={orch.deleteTimeEntryMutation.isPending}
+              isDirty={orch.selectedEntryDirty}
+              isNewEntry={orch.isNewEntry}
+              isPrimaryActionPending={orch.timerMutationPending}
+              isSaving={
+                orch.isNewEntry
+                  ? orch.createTimeEntryMutation.isPending
+                  : orch.updateTimeEntryMutation.isPending
+              }
+              onClose={orch.closeSelectedEntryEditor}
+              onCreateProject={orch.handleSelectedEntryProjectCreate}
+              onCreateTag={orch.handleSelectedEntryTagCreate}
+              onBillableToggle={orch.handleSelectedEntryBillableToggle}
+              onDuplicate={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryDuplicate();
+                    }
+              }
+              onDelete={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      const snapshot = orch.selectedEntry
+                        ? snapshotEntryForUndo(orch.selectedEntry)
+                        : null;
+                      void orch
+                        .handleSelectedEntryDelete()
+                        .then(() => {
+                          if (snapshot) showDeleteToast(snapshot);
+                        })
+                        .catch(() => {
+                          // Error is already displayed in the editor via selectedEntryError
+                        });
+                    }
+              }
+              onDescriptionChange={orch.setSelectedDescription}
+              onFavorite={
+                orch.isNewEntry ||
+                isEntryAlreadyFavorited(
+                  {
+                    description: orch.selectedDescription,
+                    project_id: orch.selectedProjectId,
+                    tag_ids: orch.selectedTagIds,
+                  },
+                  favorites,
+                )
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryFavorite();
+                    }
+              }
+              onPrimaryAction={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      void orch.handleSelectedEntryPrimaryAction();
+                    }
+              }
+              onProjectSelect={orch.setSelectedProjectId}
+              onSave={() => {
+                void orch.handleSelectedEntrySave();
+              }}
+              onSplit={
+                orch.isNewEntry
+                  ? undefined
+                  : () => {
+                      setSplitDialogOpen(true);
+                    }
+              }
+              onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
+              onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
+              onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
+              onTagToggle={(tagId) => {
+                orch.setSelectedTagIds((current) =>
+                  current.includes(tagId)
+                    ? current.filter((id) => id !== tagId)
+                    : [...current, tagId],
+                );
+              }}
+              onWorkspaceSelect={(nextWorkspaceId) => {
+                orch.switchWorkspace(nextWorkspaceId);
+                orch.closeSelectedEntryEditor();
+              }}
+              primaryActionIcon={
+                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                  ? "stop"
+                  : "play"
+              }
+              primaryActionLabel={
+                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
+                  ? "Stop timer"
+                  : "Continue Time Entry"
+              }
+              projects={orch.projectOptions
+                .filter((project) => project.id != null)
+                .map((project) => ({
+                  clientName: project.client_name ?? undefined,
+                  color: resolveProjectColorValue(project),
+                  id: project.id as number,
+                  name: project.name ?? "Untitled project",
+                }))}
+              recentEntries={orch.recentWorkspaceEntries}
+              saveError={orch.selectedEntryError}
+              selectedProjectId={orch.selectedProjectId}
+              selectedTagIds={orch.selectedTagIds}
+              tags={orch.tagOptions}
+              timezone={orch.timezone}
+              workspaces={orch.session.availableWorkspaces.map((workspace) => ({
+                id: workspace.id,
+                isCurrent: workspace.isCurrent,
+                name: workspace.name,
               }))}
-            recentEntries={orch.recentWorkspaceEntries}
-            saveError={orch.selectedEntryError}
-            selectedProjectId={orch.selectedProjectId}
-            selectedTagIds={orch.selectedTagIds}
-            tags={orch.tagOptions}
-            timezone={orch.timezone}
-            workspaces={orch.session.availableWorkspaces.map((workspace) => ({
-              id: workspace.id,
-              isCurrent: workspace.isCurrent,
-              name: workspace.name,
-            }))}
-          />
-        ) : null}
+            />
+          ) : null}
+        </div>
         {sidebarOpen ? (
           <GoalsFavoritesSidebar
             favorites={favorites}
