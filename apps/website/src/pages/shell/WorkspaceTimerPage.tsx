@@ -798,6 +798,7 @@ export function WorkspaceTimerPage({
                 {
                   description: orch.selectedDescription,
                   project_id: orch.selectedProjectId,
+                  tag_ids: orch.selectedTagIds,
                 },
                 favorites,
               )
@@ -981,16 +982,26 @@ function snapshotEntryForUndo(entry: {
 }
 
 function isEntryAlreadyFavorited(
-  entry: { description?: string | null; project_id?: number | null; pid?: number | null },
-  favorites: Array<{ description?: string; project_id?: number }>,
+  entry: {
+    description?: string | null;
+    project_id?: number | null;
+    pid?: number | null;
+    tag_ids?: number[] | null;
+  },
+  favorites: Array<{ description?: string; project_id?: number; tag_ids?: number[] }>,
 ): boolean {
   const desc = (entry.description ?? "").trim().toLowerCase();
   const projectId = entry.project_id ?? entry.pid ?? null;
-  return favorites.some(
-    (fav) =>
+  const tagIds = [...(entry.tag_ids ?? [])].sort();
+  return favorites.some((fav) => {
+    const favTags = [...(fav.tag_ids ?? [])].sort();
+    return (
       (fav.description ?? "").trim().toLowerCase() === desc &&
-      (fav.project_id ?? null) === projectId,
-  );
+      (fav.project_id ?? null) === projectId &&
+      tagIds.length === favTags.length &&
+      tagIds.every((id, i) => id === favTags[i])
+    );
+  });
 }
 
 function handleCalendarContextMenuAction(
