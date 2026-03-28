@@ -3,6 +3,7 @@ package publicapi
 import (
 	"context"
 	"errors"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
@@ -25,6 +26,11 @@ type currentUserResponse struct {
 	CountryID          int64   `json:"country_id"`
 	HasPassword        bool    `json:"has_password"`
 	TwoFactorEnabled   bool    `json:"2fa_enabled"`
+	// Toggl compat: created_at/updated_at require schema migration (identity_users table).
+	// at is returned as current server time to match Toggl response shape.
+	CreatedAt *string `json:"created_at,omitempty"`
+	UpdatedAt *string `json:"updated_at,omitempty"`
+	At        string  `json:"at"`
 }
 
 type preferencesResponse struct {
@@ -189,6 +195,7 @@ func currentUserBody(user application.UserSnapshot) currentUserResponse {
 		CountryID:          user.CountryID,
 		HasPassword:        user.HasPassword,
 		TwoFactorEnabled:   user.TwoFactorEnabled,
+		At:                 time.Now().UTC().Format(time.RFC3339),
 	}
 }
 

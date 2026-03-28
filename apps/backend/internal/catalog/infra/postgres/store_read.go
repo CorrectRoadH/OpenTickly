@@ -306,7 +306,8 @@ func (store *Store) ListProjects(
 		ctx,
 		fmt.Sprintf(
 			`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
-				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
+				p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
+				p.color, p.is_private, p.billable
 			from catalog_projects p
 			left join catalog_clients c on c.id = p.client_id
 			where %s
@@ -343,7 +344,8 @@ func (store *Store) GetProject(
 	row := store.pool.QueryRow(
 		ctx,
 		`select p.id, p.workspace_id, p.client_id, p.name, p.active, p.pinned, p.template, p.actual_seconds,
-			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at
+			p.recurring, p.recurring_period_start, p.recurring_period_end, c.name, p.created_at,
+			p.color, p.is_private, p.billable
 		from catalog_projects p
 		left join catalog_clients c on c.id = p.client_id
 		where p.workspace_id = $1 and p.id = $2`,

@@ -352,8 +352,8 @@ func (store *Store) CreateProject(
 	var projectID int64
 	err := store.pool.QueryRow(
 		ctx,
-		`insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by)
-		values ($1, $2, $3, $4, $5, $6, $7)
+		`insert into catalog_projects (workspace_id, client_id, name, active, template, recurring, created_by, color, is_private, billable)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		returning id`,
 		command.WorkspaceID,
 		command.ClientID,
@@ -362,6 +362,9 @@ func (store *Store) CreateProject(
 		lo.FromPtr(command.Template),
 		lo.FromPtr(command.Recurring),
 		command.CreatedBy,
+		lo.FromPtrOr(command.Color, "#0b83d9"),
+		lo.FromPtrOr(command.IsPrivate, true),
+		lo.FromPtrOr(command.Billable, false),
 	).Scan(&projectID)
 	if err != nil {
 		return catalogapplication.ProjectView{}, writeCatalogError("create catalog project", err)
@@ -374,7 +377,7 @@ func (store *Store) UpdateProject(ctx context.Context, project catalogapplicatio
 	_, err := store.pool.Exec(
 		ctx,
 		`update catalog_projects
-		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7
+		set client_id = $3, name = $4, active = $5, template = $6, recurring = $7, color = $8, is_private = $9, billable = $10
 		where workspace_id = $1 and id = $2`,
 		project.WorkspaceID,
 		project.ID,
@@ -383,6 +386,9 @@ func (store *Store) UpdateProject(ctx context.Context, project catalogapplicatio
 		project.Active,
 		project.Template,
 		project.Recurring,
+		project.Color,
+		project.IsPrivate,
+		project.Billable,
 	)
 	if err != nil {
 		return writeCatalogError("update catalog project", err)

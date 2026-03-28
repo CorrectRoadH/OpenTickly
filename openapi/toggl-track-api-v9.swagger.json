@@ -11094,36 +11094,31 @@
             "type": "string",
             "description": "name",
             "name": "name",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "integer",
             "description": "page",
             "name": "page",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "string",
             "description": "sort_field",
             "name": "sort_field",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "string",
             "description": "sort_order",
             "name": "sort_order",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "boolean",
             "description": "only_templates",
             "name": "only_templates",
-            "in": "query",
-            "required": true
+            "in": "query"
           },
           {
             "type": "boolean",
@@ -16932,6 +16927,11 @@
             "$ref": "#/definitions/models.RecurringProjectParameters"
           }
         },
+        "server_deleted_at": {
+          "description": "When was deleted, null if not deleted",
+          "type": "string",
+          "x-nullable": true
+        },
         "start_date": {
           "description": "Start date",
           "type": "string"
@@ -17037,6 +17037,11 @@
         },
         "project_name": {
           "type": "string"
+        },
+        "server_deleted_at": {
+          "description": "When was deleted, null if not deleted",
+          "type": "string",
+          "x-nullable": true
         },
         "shared_with": {
           "description": "Indicates who the time entry has been shared with",

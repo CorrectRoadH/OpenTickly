@@ -62,7 +62,7 @@ func (handler *Handler) PostPublicTrackTags(ctx echo.Context) error {
 		return writePublicTrackCatalogError(ctx, err)
 	}
 
-	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{tagViewToAPI(view)})
+	return ctx.JSON(http.StatusOK, tagViewToAPI(view))
 }
 
 func (handler *Handler) PutPublicTrackTag(ctx echo.Context) error {
@@ -97,7 +97,7 @@ func (handler *Handler) PutPublicTrackTag(ctx echo.Context) error {
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
-	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsTag{tagViewToAPI(view)})
+	return ctx.JSON(http.StatusOK, tagViewToAPI(view))
 }
 
 func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {

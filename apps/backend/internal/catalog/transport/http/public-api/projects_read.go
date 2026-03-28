@@ -253,21 +253,32 @@ func projectUserViewToAPI(view catalogapplication.ProjectUserView) publictrackap
 }
 
 func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.GithubComTogglTogglApiInternalModelsProject {
+	status := lo.ToPtr(publictrackapi.ModelsProjectStatus("active"))
+	if !view.Active {
+		status = lo.ToPtr(publictrackapi.ModelsProjectStatus("archived"))
+	}
+
 	project := publictrackapi.GithubComTogglTogglApiInternalModelsProject{
-		Active:        lo.ToPtr(view.Active),
-		ActualSeconds: lo.ToPtr(int(view.ActualSeconds)),
-		At:            timePointer(view.CreatedAt),
-		CanTrackTime:  lo.ToPtr(view.Active),
-		ClientId:      intPointerFromInt64Pointer(view.ClientID),
-		ClientName:    view.ClientName,
-		CreatedAt:     timePointer(view.CreatedAt),
-		Id:            lo.ToPtr(int(view.ID)),
-		Name:          lo.ToPtr(view.Name),
-		Pinned:        lo.ToPtr(view.Pinned),
-		Recurring:     lo.ToPtr(view.Recurring),
-		Template:      lo.ToPtr(view.Template),
-		Wid:           lo.ToPtr(int(view.WorkspaceID)),
-		WorkspaceId:   lo.ToPtr(int(view.WorkspaceID)),
+		Active:          lo.ToPtr(view.Active),
+		ActualSeconds:   lo.ToPtr(int(view.ActualSeconds)),
+		At:              timePointer(view.CreatedAt),
+		Billable:        lo.ToPtr(view.Billable),
+		CanTrackTime:    lo.ToPtr(view.Active),
+		ClientId:        intPointerFromInt64Pointer(view.ClientID),
+		ClientName:      view.ClientName,
+		Color:           lo.ToPtr(view.Color),
+		CreatedAt:       timePointer(view.CreatedAt),
+		Id:              lo.ToPtr(int(view.ID)),
+		IsPrivate:       lo.ToPtr(view.IsPrivate),
+		Name:            lo.ToPtr(view.Name),
+		Pinned:          lo.ToPtr(view.Pinned),
+		Recurring:       lo.ToPtr(view.Recurring),
+		ServerDeletedAt: nil,
+		StartDate:       lo.ToPtr(view.CreatedAt.Format("2006-01-02")),
+		Status:          status,
+		Template:        lo.ToPtr(view.Template),
+		Wid:             lo.ToPtr(int(view.WorkspaceID)),
+		WorkspaceId:     lo.ToPtr(int(view.WorkspaceID)),
 	}
 	if view.ClientID != nil {
 		project.Cid = lo.ToPtr(int(*view.ClientID))

@@ -1005,12 +1005,9 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 	if createTag.Code != http.StatusOK {
 		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
 	}
-	var tagBody []map[string]any
+	var tagBody map[string]any
 	mustDecodeJSON(t, createTag.Body.Bytes(), &tagBody)
-	if len(tagBody) != 1 {
-		t.Fatalf("expected one created tag, got %#v", tagBody)
-	}
-	tagID := int64(tagBody[0]["id"].(float64))
+	tagID := int64(tagBody["id"].(float64))
 
 	createGroup := performAuthorizedJSONRequest(
 		t,
@@ -1591,9 +1588,9 @@ func TestPublicTrackRoutesAcceptSessionCookieAuth(t *testing.T) {
 		t.Fatalf("expected session-auth tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
 	}
 
-	var tagBody []map[string]any
+	var tagBody map[string]any
 	mustDecodeJSON(t, createTag.Body.Bytes(), &tagBody)
-	if len(tagBody) != 1 || tagBody[0]["name"] != "session-created" {
+	if tagBody["name"] != "session-created" {
 		t.Fatalf("expected created tag from session auth, got %#v", tagBody)
 	}
 }

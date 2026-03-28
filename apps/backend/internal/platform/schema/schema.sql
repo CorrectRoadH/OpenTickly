@@ -36,6 +36,8 @@ create table identity_users (
     preferences_tags_shortcut_enabled boolean not null default false,
     preferences_time_of_day_format text not null default 'h:mm A',
     preferences_alpha_features jsonb not null default '[]'::jsonb,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
     constraint identity_users_state_check check (state in ('active', 'deactivated', 'deleted'))
 );
 
@@ -201,6 +203,9 @@ create table catalog_projects (
     recurring boolean not null default false,
     recurring_period_start date,
     recurring_period_end date,
+    color text not null default '#0b83d9',
+    is_private boolean not null default true,
+    billable boolean not null default false,
     created_by bigint references identity_users (id) on delete set null,
     created_at timestamptz not null default now()
 );

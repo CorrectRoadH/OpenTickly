@@ -85,9 +85,9 @@ func TestPublicTrackRoutesServeTrackingSurface(t *testing.T) {
 	if createTag.Code != http.StatusOK {
 		t.Fatalf("expected tag create status 200, got %d body=%s", createTag.Code, createTag.Body.String())
 	}
-	var tagBody []map[string]any
+	var tagBody map[string]any
 	mustDecodeJSON(t, createTag.Body.Bytes(), &tagBody)
-	tagID := int64(tagBody[0]["id"].(float64))
+	tagID := int64(tagBody["id"].(float64))
 
 	createProject := performAuthorizedJSONRequest(
 		t,

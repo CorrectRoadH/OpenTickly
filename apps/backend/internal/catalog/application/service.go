@@ -411,6 +411,15 @@ func (service *Service) UpdateProject(ctx context.Context, command UpdateProject
 	if command.Recurring != nil {
 		current.Recurring = *command.Recurring
 	}
+	if command.Color != nil {
+		current.Color = *command.Color
+	}
+	if command.IsPrivate != nil {
+		current.IsPrivate = *command.IsPrivate
+	}
+	if command.Billable != nil {
+		current.Billable = *command.Billable
+	}
 
 	if err := service.store.UpdateProject(ctx, current); err != nil {
 		return ProjectView{}, err

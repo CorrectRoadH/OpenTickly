@@ -119,6 +119,9 @@ type ProjectView struct {
 	PeriodEnd     *time.Time
 	ClientName    *string
 	CreatedAt     time.Time
+	Color         string
+	IsPrivate     bool
+	Billable      bool
 }
 
 type TaskView struct {
@@ -203,6 +206,9 @@ type CreateProjectCommand struct {
 	Active      *bool
 	Template    *bool
 	Recurring   *bool
+	Color       *string
+	IsPrivate   *bool
+	Billable    *bool
 }
 
 type CreateTaskCommand struct {
@@ -234,6 +240,9 @@ type UpdateProjectCommand struct {
 	Active      *bool
 	Template    *bool
 	Recurring   *bool
+	Color       *string
+	IsPrivate   *bool
+	Billable    *bool
 }
 
 type SetProjectPinnedCommand struct {
@@ -264,6 +273,9 @@ type PatchProjectCommand struct {
 	Active      *bool
 	Template    *bool
 	Recurring   *bool
+	Color       *string
+	IsPrivate   *bool
+	Billable    *bool
 }
 
 type PatchTaskCommand struct {

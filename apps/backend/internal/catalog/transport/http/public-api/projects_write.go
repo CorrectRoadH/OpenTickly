@@ -41,6 +41,9 @@ func (handler *Handler) PostPublicTrackProjects(ctx echo.Context) error {
 		Active:      request.Active,
 		Template:    request.Template,
 		Recurring:   request.Recurring,
+		Color:       request.Color,
+		IsPrivate:   request.IsPrivate,
+		Billable:    request.Billable,
 	})
 	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
@@ -76,6 +79,9 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 		Active:      request.Active,
 		Template:    request.Template,
 		Recurring:   request.Recurring,
+		Color:       request.Color,
+		IsPrivate:   request.IsPrivate,
+		Billable:    request.Billable,
 	}
 	if request.ClientId != nil || request.Cid != nil {
 		command.ClientID = int64PointerFromTrackIntPointer(request.ClientId)

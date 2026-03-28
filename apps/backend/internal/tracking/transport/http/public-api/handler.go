@@ -726,33 +726,38 @@ func writePublicTrackTrackingError(err error) error {
 }
 
 func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry {
-	tagIDs := intsFromInt64s(view.TagIDs)
-	expenseIDs := intsFromInt64s(view.ExpenseIDs)
-	tagNames := view.TagNames
+	var tagIDsPtr *[]int
+	var tagNamesPtr *[]string
+	if len(view.TagIDs) > 0 {
+		tagIDs := intsFromInt64s(view.TagIDs)
+		tagIDsPtr = &tagIDs
+		tagNames := view.TagNames
+		tagNamesPtr = &tagNames
+	}
 	return publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry{
-		At:            timePointer(view.UpdatedAt),
-		Billable:      lo.ToPtr(view.Billable),
-		ClientId:      intPointerFromInt64Pointer(view.ClientID),
-		ClientName:    view.ClientName,
-		Description:   lo.ToPtr(view.Description),
-		Duration:      lo.ToPtr(view.Duration),
-		ExpenseIds:    &expenseIDs,
-		Id:            lo.ToPtr(int(view.ID)),
-		Pid:           intPointerFromInt64Pointer(view.ProjectID),
-		ProjectActive: view.ProjectActive,
-		ProjectId:     intPointerFromInt64Pointer(view.ProjectID),
-		ProjectName:   view.ProjectName,
-		Start:         timePointer(view.Start),
-		Stop:          timePointerValue(view.Stop),
-		TagIds:        &tagIDs,
-		Tags:          &tagNames,
-		TaskId:        intPointerFromInt64Pointer(view.TaskID),
-		TaskName:      view.TaskName,
-		Tid:           intPointerFromInt64Pointer(view.TaskID),
-		Uid:           lo.ToPtr(int(view.UserID)),
-		UserId:        lo.ToPtr(int(view.UserID)),
-		Wid:           lo.ToPtr(int(view.WorkspaceID)),
-		WorkspaceId:   lo.ToPtr(int(view.WorkspaceID)),
+		At:              timePointer(view.UpdatedAt),
+		Billable:        lo.ToPtr(view.Billable),
+		ClientId:        intPointerFromInt64Pointer(view.ClientID),
+		ClientName:      view.ClientName,
+		Description:     lo.ToPtr(view.Description),
+		Duration:        lo.ToPtr(view.Duration),
+		Duronly:         lo.ToPtr(true),
+		Id:              lo.ToPtr(int(view.ID)),
+		Pid:             intPointerFromInt64Pointer(view.ProjectID),
+		ProjectActive:   view.ProjectActive,
+		ProjectId:       intPointerFromInt64Pointer(view.ProjectID),
+		ProjectName:     view.ProjectName,
+		Start:           timePointer(view.Start),
+		Stop:            timePointerValue(view.Stop),
+		TagIds:          tagIDsPtr,
+		Tags:            tagNamesPtr,
+		TaskId:          intPointerFromInt64Pointer(view.TaskID),
+		TaskName:        view.TaskName,
+		Tid:             intPointerFromInt64Pointer(view.TaskID),
+		Uid:             lo.ToPtr(int(view.UserID)),
+		UserId:          lo.ToPtr(int(view.UserID)),
+		Wid:             lo.ToPtr(int(view.WorkspaceID)),
+		WorkspaceId:     lo.ToPtr(int(view.WorkspaceID)),
 	}
 }
 

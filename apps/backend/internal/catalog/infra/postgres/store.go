@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -49,7 +50,7 @@ func writeCatalogError(action string, err error) error {
 
 func isConstraintViolation(err error) bool {
 	var pgErr *pgconn.PgError
-	return err != nil && pgErr != nil && (pgErr.Code == "23503" || pgErr.Code == "23505")
+	return errors.As(err, &pgErr) && (pgErr.Code == "23503" || pgErr.Code == "23505")
 }
 
 type scanner interface {
@@ -72,6 +73,9 @@ func scanProject(scanner scanner) (catalogapplication.ProjectView, error) {
 		&project.PeriodEnd,
 		&project.ClientName,
 		&project.CreatedAt,
+		&project.Color,
+		&project.IsPrivate,
+		&project.Billable,
 	)
 	return project, err
 }
