@@ -1,23 +1,10 @@
-import { expect, type Locator, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
   createTimeEntryForWorkspace,
   loginE2eUser,
   pollSessionBootstrap,
-
-function listEntryRow(listView: Locator, description: string): Locator {
-  const escapedDescription = description.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
-  return listView
-    .locator(
-      `[data-testid="time-entry-list-row"][data-entry-description="${escapedDescription}"]`,
-    )
-    .first();
-}
-
-function listEntryEditButton(listView: Locator, description: string): Locator {
-  return listEntryRow(listView, description).getByTestId("time-entry-list-edit-button");
-}
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
@@ -2036,13 +2023,14 @@ test.describe("Date range picker in list view", () => {
       workspaceId,
     });
 
-    // Create a time entry from 14 days ago (outside "today" and "this week" range)
+    // Create a time entry from 7 days ago (within the 9-day initial fetch window,
+    // but outside "today" and "this week" range for shortcut filtering)
     const oldDate = new Date(todayStart);
-    oldDate.setDate(oldDate.getDate() - 14);
+    oldDate.setDate(oldDate.getDate() - 7);
     const oldStop = new Date(oldDate);
     oldStop.setHours(oldDate.getHours() + 1);
     await createTimeEntryForWorkspace(page, {
-      description: "Old entry two weeks ago",
+      description: "Old entry one week ago",
       start: oldDate.toISOString(),
       stop: oldStop.toISOString(),
       workspaceId,
@@ -2059,7 +2047,7 @@ test.describe("Date range picker in list view", () => {
 
     // List view defaults to "All dates" — both entries should be visible
     await expect(listView.locator("text=Today entry")).toBeVisible();
-    await expect(listView.locator("text=Old entry two weeks ago")).toBeVisible();
+    await expect(listView.locator("text=Old entry one week ago")).toBeVisible();
 
     // Open the date picker and select "Today"
     const datePickerTrigger = page
@@ -2080,7 +2068,7 @@ test.describe("Date range picker in list view", () => {
 
     // Today entry should be visible, old entry should be filtered out
     await expect(listView.locator("text=Today entry")).toBeVisible();
-    await expect(listView.locator("text=Old entry two weeks ago")).not.toBeVisible();
+    await expect(listView.locator("text=Old entry one week ago")).not.toBeVisible();
 
     // Now select "All dates" to go back to unfiltered
     // The trigger should now show the day label, not "All dates"
@@ -2094,6 +2082,6 @@ test.describe("Date range picker in list view", () => {
     // Both entries should be visible again
     await expect(listView).toBeVisible();
     await expect(listView.locator("text=Today entry")).toBeVisible();
-    await expect(listView.locator("text=Old entry two weeks ago")).toBeVisible();
+    await expect(listView.locator("text=Old entry one week ago")).toBeVisible();
   });
 });

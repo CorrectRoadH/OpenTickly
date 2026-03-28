@@ -1,0 +1,26 @@
+#!/bin/sh
+# Pre-push hook: type-check the committed code, not the working directory.
+# Stashes uncommitted changes so the build runs against what will actually be pushed.
+
+set -e
+
+echo "pre-push: type-checking committed code..."
+
+# Check if there are uncommitted changes (staged or unstaged)
+if ! git diff --quiet HEAD 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+  STASHED=true
+  git stash push --include-untracked --quiet -m "pre-push-hook-stash"
+else
+  STASHED=false
+fi
+
+restore_stash() {
+  if [ "$STASHED" = true ]; then
+    git stash pop --quiet 2>/dev/null || true
+  fi
+}
+
+# Restore working directory on exit (success or failure)
+trap restore_stash EXIT
+
+vp run website#build
