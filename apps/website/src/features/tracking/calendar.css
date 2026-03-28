@@ -188,25 +188,11 @@
 }
 
 /* ── Current time indicator ── */
-/* Toggl dark: #B744AB (grape), 3px height, 2px border-radius */
+/* RBC's built-in indicator is hidden. We render our own via
+   CalendarCurrentTimeIndicator component to match Toggl's structure:
+   a wrapper with the time line + a play button to start new entries. */
 .rbc-current-time-indicator {
-  background-color: #b744ab;
-  height: 3px;
-  border-radius: 2px;
-  position: relative;
-  z-index: 3;
-}
-
-.rbc-current-time-indicator::before {
-  content: "";
-  position: absolute;
-  left: -4px;
-  top: 50%;
-  transform: translateY(-50%) rotate(45deg);
-  width: 7px;
-  height: 7px;
-  background-color: #b744ab;
-  border-radius: 1px;
+  display: none;
 }
 
 /* ── Drag and drop ── */

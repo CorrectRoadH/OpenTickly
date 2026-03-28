@@ -84,14 +84,76 @@ function buildCalendarLocalizer(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1) {
   });
 }
 
-function CalendarTimeSlotWrapper({
+/**
+ * Custom day column wrapper matching Toggl's StyledDayColumnWrapper.
+ * On the "today" column, injects a CurrentTimeIndicator with a line
+ * and a play button to start a new entry. RBC's built-in indicator
+ * is hidden via CSS; we render our own so we can add the play button
+ * and control the styling exactly.
+ *
+ * RBC passes `components.dayColumnWrapper` the day column's children
+ * plus metadata. We wrap them and append the indicator on today's column.
+ */
+function CalendarDayColumnWrapper({
   children,
+  className,
+  style,
+  isNow,
+  onStartEntry,
+  nowMs,
 }: {
   children?: React.ReactNode;
-  resource?: unknown;
-  value?: Date;
+  className?: string;
+  style?: React.CSSProperties;
+  isNow?: boolean;
+  onStartEntry?: () => void;
+  nowMs?: number;
 }) {
-  return <>{children}</>;
+  // Calculate current time as percentage of day (0-100%)
+  const timePercent = useMemo(() => {
+    if (!isNow) return 0;
+    const now = new Date(nowMs ?? Date.now());
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    return (minutes / 1440) * 100;
+  }, [isNow, nowMs]);
+
+  return (
+    <div className={className} style={style}>
+      {children}
+      {isNow ? (
+        <div
+          className="pointer-events-none absolute left-0 right-0"
+          data-testid="current-time-indicator"
+          style={{ top: `${timePercent}%` }}
+        >
+          {/* Time line — matches Toggl: 3px, #b744ab, border-radius 2px */}
+          <div className="absolute inset-x-0 top-0 h-[3px] rounded-[2px] bg-[#b744ab]" />
+          {/* Play button — matches Toggl: 36x36, accent color circle, position
+              absolute left: -8.5px so it bleeds into the gutter, pointer-events: all
+              so it's clickable despite the wrapper being pointer-events: none */}
+          <svg
+            className="absolute top-0 cursor-pointer"
+            fill="none"
+            height="36"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartEntry?.();
+            }}
+            style={{ left: "-8.5px", top: "-16px", pointerEvents: "all" }}
+            viewBox="0 0 36 36"
+            width="36"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <rect fill="var(--track-accent)" height="36" rx="18" width="36" />
+            <path
+              d="M13 11.994c0-1.101.773-1.553 1.745-.997l10.51 6.005c.964.55.972 1.439 0 1.994l-10.51 6.007c-.964.55-1.745.102-1.745-.997V11.994z"
+              fill="var(--track-canvas)"
+            />
+          </svg>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 export function ToolbarButton({
@@ -1066,7 +1128,21 @@ export function CalendarView({
               </button>
             </div>
           ),
-          timeSlotWrapper: CalendarTimeSlotWrapper,
+          dayColumnWrapper: (props: Record<string, unknown>) => (
+            <CalendarDayColumnWrapper
+              className={props.className as string | undefined}
+              isNow={Boolean(
+                typeof props.className === "string" && props.className.includes("rbc-now"),
+              )}
+              nowMs={nowMs}
+              onStartEntry={() => {
+                onSelectSlot?.({ start: new Date(), end: new Date(Date.now() + 30 * 60_000) });
+              }}
+              style={props.style as React.CSSProperties | undefined}
+            >
+              {props.children as React.ReactNode}
+            </CalendarDayColumnWrapper>
+          ),
         }}
         date={calendarDate}
         defaultView={Views.WEEK}
