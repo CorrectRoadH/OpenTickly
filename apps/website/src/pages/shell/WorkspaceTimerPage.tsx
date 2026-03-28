@@ -590,7 +590,10 @@ export function WorkspaceTimerPage({
         orch.view === "list" ? (
           <ListView
             groups={orch.groupedEntries}
+            hasMore={orch.hasMoreEntries}
+            isLoadingMore={orch.isLoadingMoreEntries}
             nowMs={orch.nowMs}
+            onLoadMore={orch.loadMoreEntries}
             onBulkDelete={(ids) => {
               void orch.handleBulkDelete(ids);
             }}

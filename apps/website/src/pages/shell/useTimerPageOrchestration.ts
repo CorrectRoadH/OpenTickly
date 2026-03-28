@@ -286,6 +286,11 @@ export interface TimerPageOrchestration {
   calendarHours: ReturnType<typeof getCalendarHours>;
   timesheetRows: ReturnType<typeof buildTimesheetRows>;
 
+  // Pagination
+  hasMoreEntries: boolean;
+  isLoadingMoreEntries: boolean;
+  loadMoreEntries: () => void;
+
   // Mutation states
   timerMutationPending: boolean;
   timerErrorMessage: string;
@@ -408,6 +413,28 @@ export function useTimerPageOrchestration(options?: {
     endDate: string;
   } | null>(null);
 
+  // List view pagination: number of days to fetch backwards from today.
+  // Toggl API returns ~9 days by default; "Load more" extends by 7 days each time.
+  const LIST_INITIAL_DAYS = 9;
+  const LIST_PAGE_INCREMENT = 7;
+  const [listDaysLoaded, setListDaysLoaded] = useState(LIST_INITIAL_DAYS);
+
+  const listQueryRange = useMemo(() => {
+    if (listDateRange) return listDateRange;
+    const end = new Date();
+    end.setDate(end.getDate() + 1);
+    const start = new Date();
+    start.setDate(start.getDate() - listDaysLoaded);
+    return {
+      endDate: formatTrackQueryDate(end),
+      startDate: formatTrackQueryDate(start),
+    };
+  }, [listDateRange, listDaysLoaded]);
+
+  const loadMoreEntries = useCallback(() => {
+    setListDaysLoaded((prev) => prev + LIST_PAGE_INCREMENT);
+  }, []);
+
   // Time state
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [selectedWeekDate, setSelectedWeekDate] = useState(() => initialDate ?? new Date());
@@ -430,10 +457,10 @@ export function useTimerPageOrchestration(options?: {
   const preferencesQuery = usePreferencesQuery();
   const collapseTimeEntries = preferencesQuery.data?.collapseTimeEntries ?? true;
 
-  // Queries — list view uses listDateRange (null = all dates);
+  // Queries — list view uses listQueryRange (computed from listDaysLoaded or listDateRange);
   // other views always use the selected week range.
   const timeEntriesQuery = useTimeEntriesQuery(
-    view === "list" ? (listDateRange ?? {}) : { ...weekRange },
+    view === "list" ? listQueryRange : { ...weekRange },
   );
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
 
@@ -557,6 +584,11 @@ export function useTimerPageOrchestration(options?: {
       ),
     [recentTimeEntriesQuery.data, workspaceId],
   );
+
+  // Pagination: always allow "Load more" in default (all dates) mode;
+  // disabled when a custom date range is explicitly set.
+  const hasMoreEntries = listDateRange === null;
+  const isLoadingMoreEntries = timeEntriesQuery.isFetching && listDaysLoaded > LIST_INITIAL_DAYS;
 
   // Computed values
   const runningDurationSeconds = useMemo(
@@ -1603,6 +1635,11 @@ export function useTimerPageOrchestration(options?: {
     trackStrip,
     calendarHours,
     timesheetRows,
+
+    // Pagination
+    hasMoreEntries,
+    isLoadingMoreEntries,
+    loadMoreEntries,
 
     // Mutation states
     timerMutationPending,
