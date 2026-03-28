@@ -1570,15 +1570,19 @@ export function CalendarView({
 
 export function TimesheetView({
   onAddRow,
+  onBillableToggle,
   onCellEdit,
   onCopyLastWeek,
+  onDeleteRow,
   rows,
   timezone,
   weekDays,
 }: {
   onAddRow?: () => void;
+  onBillableToggle?: (projectLabel: string) => void;
   onCellEdit?: (projectLabel: string, dayIndex: number, durationSeconds: number) => void;
   onCopyLastWeek?: () => void;
+  onDeleteRow?: (projectLabel: string) => void;
   rows: TimesheetRow[];
   timezone: string;
   weekDays: Date[];
@@ -1589,77 +1593,134 @@ export function TimesheetView({
   const weekTotal = rows.reduce((sum, row) => sum + row.totalSeconds, 0);
 
   return (
-    <div className="border-t border-[var(--track-border)] px-4" data-testid="timer-timesheet-view">
-      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] border-b border-[var(--track-border)] py-4 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-        <span>Project</span>
-        {weekDays.map((day) => (
-          <span className="text-center" key={day.toISOString()}>
-            {formatWeekday(day, timezone)}
-          </span>
-        ))}
-        <span className="text-right">Total</span>
-      </div>
-      {rows.map((row) => (
-        <div
-          className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3"
-          key={row.label}
-        >
-          <div className="flex min-w-0 items-center gap-2 pr-4">
-            <span
-              className="size-1.5 rounded-full shrink-0"
-              style={{ backgroundColor: row.color }}
-            />
-            <span className="truncate text-[12px] text-white">{row.label}</span>
-          </div>
-          {row.cells.map((seconds, index) => (
-            <div className="flex justify-center" key={`${row.label}-${index}`}>
-              <TimesheetCell
-                onCommit={(durationSeconds) => onCellEdit?.(row.label, index, durationSeconds)}
-                seconds={seconds}
-              />
-            </div>
+    <table
+      className="w-full border-collapse"
+      data-testid="timer-timesheet-view"
+      style={{ tableLayout: "fixed" }}
+    >
+      <thead>
+        <tr className="h-[40px] text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--track-text-muted)]">
+          <th className="text-left pl-5 pr-2" style={{ width: "26%" }}>Project</th>
+          <th className="text-left px-2" style={{ width: "13%" }} />
+          {weekDays.map((day) => (
+            <th className="text-center px-2" key={day.toISOString()}>
+              {formatWeekday(day, timezone)}
+            </th>
           ))}
-          <span className="text-right text-[12px] font-medium text-white">
-            {formatHours(row.totalSeconds)}
-          </span>
-        </div>
-      ))}
-      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center border-b border-[var(--track-border)] py-3 text-[12px] text-[var(--track-text-muted)]">
-        <button
-          className="flex items-center gap-2 text-left transition hover:text-white"
-          onClick={onAddRow}
-          type="button"
-        >
-          <PlusIcon className="size-3.5" />
-          <span>Add row</span>
-        </button>
-        {weekDays.map((_, index) => (
-          <div className="flex justify-center" key={`placeholder-${index}`}>
-            <TimesheetCell seconds={0} onCommit={undefined} />
-          </div>
+          <th className="text-right px-2" style={{ width: "7%" }}>Total</th>
+          <th style={{ width: "3.5%" }} />
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr className="group h-[50px] text-[14px] text-white" key={row.label}>
+            <td className="pl-5 pr-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: row.color }}
+                />
+                <span className="truncate font-medium">{row.label}</span>
+              </div>
+            </td>
+            <td className="px-2">
+              <div className="flex items-center gap-1">
+                {row.tagNames.length > 0 ? (
+                  <span className="truncate text-[13px] text-[var(--track-text-muted)]">
+                    {row.tagNames.join(", ")}
+                  </span>
+                ) : null}
+                <button
+                  aria-label={row.billable ? "Set as non-billable" : "Set as billable"}
+                  className={`ml-auto flex size-[30px] shrink-0 items-center justify-center rounded-lg transition ${
+                    row.billable
+                      ? "bg-[#e57bd9]/10 text-[#e57bd9]"
+                      : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+                  }`}
+                  onClick={() => onBillableToggle?.(row.label)}
+                  type="button"
+                >
+                  <DollarIcon className="size-4" />
+                </button>
+              </div>
+            </td>
+            {row.cells.map((seconds, index) => (
+              <td className="px-1 text-center" key={`${row.label}-${index}`}>
+                <TimesheetCell
+                  onCommit={(durationSeconds) => onCellEdit?.(row.label, index, durationSeconds)}
+                  seconds={seconds}
+                />
+              </td>
+            ))}
+            <td className="px-2 text-right font-medium tabular-nums">
+              {formatTimesheetTotal(row.totalSeconds)}
+            </td>
+            <td className="pr-2">
+              <button
+                aria-label={`Delete row ${row.label}`}
+                className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+                onClick={() => onDeleteRow?.(row.label)}
+                type="button"
+              >
+                <MoreIcon className="size-3.5" />
+              </button>
+            </td>
+          </tr>
         ))}
-        <span />
-      </div>
-      <div className="grid grid-cols-[minmax(280px,1fr)_repeat(7,55px)_72px] items-center py-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-        <div className="flex items-center gap-4">
-          <button
-            className="w-fit rounded-md border border-[var(--track-border)] bg-[#171717] px-3 py-2 text-[11px] normal-case tracking-normal text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={onCopyLastWeek}
-            type="button"
-          >
-            Copy last week
-          </button>
-          <span>Total</span>
-        </div>
-        {totals.map((seconds, index) => (
-          <span className="text-center text-white" key={`total-${index}`}>
-            {seconds > 0 ? formatHours(seconds) : "-"}
-          </span>
-        ))}
-        <span className="text-right text-white">{formatHours(weekTotal)}</span>
-      </div>
-    </div>
+      </tbody>
+      <tfoot>
+        <tr className="h-[50px] text-[14px] text-[var(--track-text-muted)]">
+          <td className="pl-5" colSpan={2}>
+            <button
+              className="flex items-center gap-1 font-medium transition hover:text-white"
+              onClick={onAddRow}
+              type="button"
+            >
+              <strong className="text-[16px]">+</strong>
+              <span>Add row</span>
+            </button>
+          </td>
+          {weekDays.map((_, index) => (
+            <td className="px-1 text-center" key={`add-${index}`}>
+              <TimesheetCell seconds={0} onCommit={undefined} />
+            </td>
+          ))}
+          <td />
+          <td />
+        </tr>
+        <tr className="h-[50px] text-[14px]">
+          <td className="pl-5">
+            <button
+              className="rounded-md border border-[var(--track-border)] px-3 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+              onClick={onCopyLastWeek}
+              type="button"
+            >
+              Copy last week ▾
+            </button>
+          </td>
+          <td className="px-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--track-text-muted)]">
+            Total
+          </td>
+          {totals.map((seconds, index) => (
+            <td className="px-2 text-center text-white" key={`total-${index}`}>
+              {seconds > 0 ? formatTimesheetTotal(seconds) : "-"}
+            </td>
+          ))}
+          <td className="px-2 text-right font-medium text-white">
+            {formatTimesheetTotal(weekTotal)}
+          </td>
+          <td />
+        </tr>
+      </tfoot>
+    </table>
   );
+}
+
+function formatTimesheetTotal(seconds: number): string {
+  const hours = seconds / 3600;
+  if (hours === 0) return "0 h";
+  if (hours === Math.floor(hours)) return `${hours} h`;
+  return `${hours.toFixed(1)} h`;
 }
 
 function CalendarEventCard({
@@ -1778,14 +1839,10 @@ function TimesheetCell({
   const [draft, setDraft] = useState("");
 
   function beginEditing() {
+    if (!onCommit) return;
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    setDraft(
-      secs > 0
-        ? `${hours}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-        : `${hours}:${String(minutes).padStart(2, "0")}`,
-    );
+    setDraft(`${hours}:${String(minutes).padStart(2, "0")}`);
     setIsEditing(true);
   }
 
@@ -1797,25 +1854,16 @@ function TimesheetCell({
     }
   }
 
-  function cancelEdit() {
-    setIsEditing(false);
-  }
-
   if (isEditing) {
     return (
       <input
         autoFocus
-        className="flex h-5 min-w-[36px] w-[52px] items-center justify-center rounded-[6px] border border-[#e57bd9] bg-[#202020] px-1 text-center text-[10px] font-medium text-white outline-none"
+        className="w-full rounded-md border border-[#e57bd9] bg-[var(--track-surface)] px-2 py-1 text-center text-[14px] font-medium tabular-nums text-white outline-none"
         onBlur={commitEdit}
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            commitEdit();
-          } else if (e.key === "Escape") {
-            e.preventDefault();
-            cancelEdit();
-          }
+          if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+          if (e.key === "Escape") { e.preventDefault(); setIsEditing(false); }
         }}
         type="text"
         value={draft}
@@ -1823,17 +1871,22 @@ function TimesheetCell({
     );
   }
 
+  if (seconds > 0) {
+    return (
+      <span
+        className="cursor-pointer rounded-md px-2 py-1 text-[14px] font-medium tabular-nums text-white hover:bg-[var(--track-row-hover)]"
+        onClick={beginEditing}
+      >
+        {formatHours(seconds)}
+      </span>
+    );
+  }
+
   return (
     <span
-      className={`flex h-5 min-w-[36px] cursor-pointer items-center justify-center rounded-[6px] border px-2 text-[10px] font-medium ${
-        seconds > 0
-          ? "border-[#4a4a4a] bg-[#202020] text-white hover:border-[#666]"
-          : "border-[#3b3b3b] bg-transparent text-transparent hover:border-[#555] hover:text-[var(--track-text-muted)]"
-      }`}
+      className="block h-[30px] w-full cursor-pointer rounded-lg border border-[var(--track-border)]/40 transition hover:border-[var(--track-border)]"
       onClick={beginEditing}
-    >
-      {seconds > 0 ? formatHours(seconds) : "0:00"}
-    </span>
+    />
   );
 }
 

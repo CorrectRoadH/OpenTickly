@@ -23,10 +23,12 @@ export type ProjectSummary = {
 };
 
 export type TimesheetRow = {
+  billable: boolean;
   cells: number[];
   color: string;
   label: string;
   members: number;
+  tagNames: string[];
   totalSeconds: number;
 };
 
@@ -97,12 +99,20 @@ export function buildTimesheetRows(
   entries.forEach((entry) => {
     const label = entry.project_name?.trim() || "(No project)";
     const current = rows.get(label) ?? {
+      billable: false,
       cells: weekDays.map(() => 0),
       color: resolveEntryColor(entry),
       label,
       members: 0,
+      tagNames: [],
       totalSeconds: 0,
     };
+    if (entry.billable) current.billable = true;
+    if (entry.tags && entry.tags.length > 0) {
+      for (const tag of entry.tags) {
+        if (!current.tagNames.includes(tag)) current.tagNames.push(tag);
+      }
+    }
     const entryDay = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
     const dayIndex = weekDays.findIndex((day) => formatDateKey(day, timezone) === entryDay);
     const duration = resolveEntryDurationSeconds(entry);
