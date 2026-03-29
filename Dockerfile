@@ -31,7 +31,7 @@ WORKDIR /app
 COPY --from=builder /out/opentoggl /usr/local/bin/opentoggl
 COPY --from=builder /out/pgschema /usr/local/bin/pgschema
 COPY apps/backend/internal/platform/schema/schema.sql /app/schema.sql
-COPY docker/opentoggl-entrypoint.sh /usr/local/bin/opentoggl-entrypoint
+COPY apps/backend/opentoggl-entrypoint.sh /usr/local/bin/opentoggl-entrypoint
 
 RUN apk add --no-cache ca-certificates wget tzdata
 RUN printf '# required by current bootstrap env loader for runtime startup\n' > /app/.env.local

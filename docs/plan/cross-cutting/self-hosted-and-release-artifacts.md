@@ -42,7 +42,7 @@ This plan exists because self-hosted delivery is a formal product outcome, not a
 
 Formal release output for this stage is:
 
-- image build spec: `docker/opentoggl.Dockerfile`
+- image build spec: `Dockerfile`
 - runtime baseline: `docker-compose.yml`
 - operator runbook: `docs/self-hosting/docker-compose.md`
 - verification evidence: `docs/testing/evidence/self-hosted/`

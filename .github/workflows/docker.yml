@@ -57,7 +57,14 @@ jobs:
           build-args: |
             OPENTOGGL_VERSION=${{ github.sha }}
 
+      - name: Generate changelog from commits
+        id: changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --latest --strip header
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body: ${{ steps.changelog.outputs.content }}
