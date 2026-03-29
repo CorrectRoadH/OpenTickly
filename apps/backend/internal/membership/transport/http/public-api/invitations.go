@@ -150,7 +150,7 @@ func writeInvitationError(err error) error {
 		errors.Is(err, membershipapplication.ErrInvitationWorkspacesRequired),
 		errors.Is(err, membershipapplication.ErrInvitationEmailInvalid),
 		errors.Is(err, membershipapplication.ErrInvitationStateConflict):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	default:
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}

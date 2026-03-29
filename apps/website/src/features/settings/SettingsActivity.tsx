@@ -1,6 +1,7 @@
 import { SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useMemo } from "react";
 
+import type { DashboardAllActivities } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useWorkspaceAllActivitiesQuery,
   useWorkspaceMembersQuery,
@@ -10,6 +11,36 @@ import {
 function formatDurationHours(seconds: number): string {
   const h = (seconds / 3600).toFixed(1);
   return `${h}h`;
+}
+
+function formatActivityDuration(seconds: number | undefined): string {
+  if (seconds == null || seconds < 0) return "Running";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
+function formatActivityTimestamp(isoStop: string | undefined): string {
+  if (!isoStop) return "In progress";
+  try {
+    const d = new Date(isoStop);
+    return d.toLocaleString("en-US", {
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return isoStop;
+  }
+}
+
+function describeAction(entry: DashboardAllActivities): string {
+  const desc = entry.description?.trim();
+  if (desc) return `Tracked: ${desc}`;
+  return "Tracked time (no description)";
 }
 
 type SettingsActivityProps = {
@@ -46,6 +77,26 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
       .sort((a, b) => (b.duration ?? 0) - (a.duration ?? 0))
       .slice(0, 10);
   }, [mostActiveQuery.data]);
+
+  const memberNameById = useMemo(() => {
+    const lookup = new Map<number, string>();
+    for (const m of membersQuery.data?.members ?? []) {
+      if (m.id && m.name) lookup.set(m.id, m.name);
+    }
+    return lookup;
+  }, [membersQuery.data]);
+
+  const activityRows = useMemo(() => {
+    return (activitiesQuery.data ?? []).map((a) => {
+      const userId = a.user_id ?? 0;
+      return {
+        action: describeAction(a),
+        date: formatActivityTimestamp(a.stop),
+        duration: formatActivityDuration(a.duration),
+        userName: memberNameById.get(userId) ?? `User ${userId}`,
+      };
+    });
+  }, [activitiesQuery.data, memberNameById]);
 
   const isLoading =
     activitiesQuery.isPending || membersQuery.isPending || mostActiveQuery.isPending;
@@ -120,6 +171,44 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                 No member activity data available yet.
               </p>
             )}
+
+            {activityRows.length > 0 ? (
+              <div className="mt-6">
+                <h3 className="mb-3 text-[14px] font-medium text-[var(--track-text-soft)]">
+                  Recent Activity
+                </h3>
+                <div className="overflow-x-auto">
+                  <table
+                    className="w-full text-left text-[13px]"
+                    data-testid="activity-detail-table"
+                  >
+                    <thead>
+                      <tr className="border-b border-[var(--track-border)] text-[var(--track-text-soft)]">
+                        <th className="pb-2 pr-4 font-medium">Date</th>
+                        <th className="pb-2 pr-4 font-medium">User</th>
+                        <th className="pb-2 pr-4 font-medium">Action</th>
+                        <th className="pb-2 font-medium">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activityRows.map((row, idx) => (
+                        <tr
+                          className="border-b border-[var(--track-border)] last:border-b-0"
+                          key={idx}
+                        >
+                          <td className="py-2 pr-4 text-[var(--track-text-muted)]">{row.date}</td>
+                          <td className="py-2 pr-4 text-[var(--track-text-soft)]">
+                            {row.userName}
+                          </td>
+                          <td className="py-2 pr-4 text-white">{row.action}</td>
+                          <td className="py-2 text-[var(--track-text-muted)]">{row.duration}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : null}
           </>
         )}
       </div>

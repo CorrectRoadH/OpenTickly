@@ -9,7 +9,6 @@ const workspaceSettingsSectionSchema = z.enum([
   "export",
   "sso",
   "activity",
-  "audit-log",
 ]);
 
 export type WorkspaceSettingsSection = z.infer<typeof workspaceSettingsSectionSchema>;

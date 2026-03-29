@@ -1,6 +1,8 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { DirectorySurfaceMessage } from "@opentoggl/web-ui";
+import { toast } from "sonner";
 
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { ChevronDownIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
@@ -73,11 +75,17 @@ export function WorkspaceMembersPage(): ReactElement {
     const trimmed = inviteEmail.trim();
     if (!trimmed) return;
 
-    await inviteMutation.mutateAsync({ email: trimmed, role: inviteRole });
-    setInviteEmail("");
-    setInviteRole("member");
-    setInviteDialogOpen(false);
-    setStatus("Invitation sent");
+    try {
+      await inviteMutation.mutateAsync({ email: trimmed, role: inviteRole });
+      setInviteEmail("");
+      setInviteRole("member");
+      setInviteDialogOpen(false);
+      setStatus("Invitation sent");
+    } catch (error) {
+      const message =
+        error instanceof WebApiError ? error.userMessage : "Could not send invitation";
+      toast.error(message);
+    }
   }
 
   if (membersQuery.isPending) {
@@ -200,19 +208,40 @@ export function WorkspaceMembersPage(): ReactElement {
                     memberId={member.id}
                     memberName={member.name}
                     onDisable={(id) => {
-                      void disableMutation.mutateAsync(id).then(() => {
-                        setStatus("Member disabled");
-                      });
+                      void disableMutation
+                        .mutateAsync(id)
+                        .then(() => setStatus("Member disabled"))
+                        .catch((error) =>
+                          toast.error(
+                            error instanceof WebApiError
+                              ? error.userMessage
+                              : "Could not disable member",
+                          ),
+                        );
                     }}
                     onRemove={(id) => {
-                      void removeMutation.mutateAsync(id).then(() => {
-                        setStatus("Member removed");
-                      });
+                      void removeMutation
+                        .mutateAsync(id)
+                        .then(() => setStatus("Member removed"))
+                        .catch((error) =>
+                          toast.error(
+                            error instanceof WebApiError
+                              ? error.userMessage
+                              : "Could not remove member",
+                          ),
+                        );
                     }}
                     onRestore={(id) => {
-                      void restoreMutation.mutateAsync(id).then(() => {
-                        setStatus("Member restored");
-                      });
+                      void restoreMutation
+                        .mutateAsync(id)
+                        .then(() => setStatus("Member restored"))
+                        .catch((error) =>
+                          toast.error(
+                            error instanceof WebApiError
+                              ? error.userMessage
+                              : "Could not restore member",
+                          ),
+                        );
                     }}
                   />
                 </div>

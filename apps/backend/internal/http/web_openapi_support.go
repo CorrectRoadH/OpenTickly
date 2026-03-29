@@ -16,7 +16,7 @@ type ListProjectsRequest struct {
 	Status      *string `json:"status"`
 }
 
-func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface) (RouteRegistrar, error) {
+func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface, middlewares ...echo.MiddlewareFunc) (RouteRegistrar, error) {
 	swagger, err := webapi.GetSwagger()
 	if err != nil {
 		return nil, err
@@ -28,6 +28,9 @@ func NewGeneratedWebRouteRegistrar(handler webapi.ServerInterface) (RouteRegistr
 	return func(server *echo.Echo) {
 		group := server.Group("")
 		group.Use(validator)
+		for _, mw := range middlewares {
+			group.Use(mw)
+		}
 		webapi.RegisterHandlers(group, handler)
 	}, nil
 }

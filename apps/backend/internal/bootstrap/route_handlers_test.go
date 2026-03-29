@@ -2475,3 +2475,63 @@ func mustBuildZipArchive(t *testing.T, files map[string]string) []byte {
 func intToString(value int64) string {
 	return strconv.FormatInt(value, 10)
 }
+
+func TestWebRoutesRecordAuditLogs(t *testing.T) {
+	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("web-audit")
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    uniqueEmail,
+		"fullname": "Audit Test",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("register: got %d, body=%s", register.Code, register.Body.String())
+	}
+	sessionCookie := register.Header().Get("Set-Cookie")
+
+	// Perform a mutating web request — this should be audit-logged
+	var session struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	sessionResp := performJSONRequest(t, app, http.MethodGet, "/web/v1/session", nil, sessionCookie)
+	mustDecodeJSON(t, sessionResp.Body.Bytes(), &session)
+	if session.CurrentWorkspaceID == nil {
+		t.Fatalf("no workspace ID in session")
+	}
+	wsID := *session.CurrentWorkspaceID
+
+	// Update workspace settings — a PATCH through the web API
+	performJSONRequest(t, app, http.MethodPatch, "/web/v1/workspaces/"+intToString(wsID)+"/settings", map[string]any{
+		"name": "Audit Workspace",
+	}, sessionCookie)
+
+	// The audit log insert runs in a goroutine — give it a moment
+	time.Sleep(200 * time.Millisecond)
+
+	// Verify audit log was recorded
+	var count int
+	err = app.Platform.Database.Pool().QueryRow(
+		context.Background(),
+		"select count(*) from governance_audit_logs where workspace_id = $1",
+		wsID,
+	).Scan(&count)
+	if err != nil {
+		t.Fatalf("query audit logs: %v", err)
+	}
+	// Registration + settings update should both be logged
+	if count == 0 {
+		t.Fatalf("expected audit log entries for web routes, got 0")
+	}
+}

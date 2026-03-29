@@ -5,7 +5,6 @@ import { toast } from "sonner";
 
 import { BillableRatesContent } from "../billable-rates/BillableRatesPage.tsx";
 import { SettingsActivity } from "../../features/settings/SettingsActivity.tsx";
-import { SettingsAuditLog } from "../../features/settings/SettingsAuditLog.tsx";
 import { SettingsCsvImport } from "../../features/settings/SettingsCsvImport.tsx";
 import { SettingsDataExport } from "../../features/settings/SettingsDataExport.tsx";
 import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettingsForm.tsx";
@@ -36,7 +35,6 @@ const settingsTabs: Array<{
   { id: "export", label: "Data export" },
   { id: "sso", label: "Single Sign On" },
   { id: "activity", label: "Activity" },
-  { id: "audit-log", label: "Audit Log" },
 ];
 
 export function WorkspaceSettingsPage({
@@ -114,8 +112,6 @@ function SettingsSectionContent(props: {
       return <SettingsCsvImport workspaceId={props.workspaceId} />;
     case "export":
       return <SettingsDataExport />;
-    case "audit-log":
-      return <SettingsAuditLog workspaceId={props.workspaceId} />;
     case "activity":
       return <SettingsActivity workspaceId={props.workspaceId} />;
     case "alerts":

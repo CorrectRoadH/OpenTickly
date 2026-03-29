@@ -48,8 +48,17 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 			// Execute handler
 			handlerErr := next(ctx)
 
-			// Gather audit data synchronously before goroutine
+			// Gather audit data synchronously before goroutine.
+			// Try publicTrackUserContextKey first (set by /api/v9 auth),
+			// then fall back to resolving from session cookie (for /web/v1 routes).
 			user, _ := ctx.Get(publicTrackUserContextKey).(*application.UserSnapshot)
+			if user == nil {
+				if sid := sessionID(ctx); sid != "" {
+					if resolved, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sid); err == nil {
+						user = &resolved
+					}
+				}
+			}
 			if user != nil {
 				source := resolveSource(ctx)
 				action := req.Method + " " + req.URL.Path
@@ -92,8 +101,12 @@ func resolveSource(ctx echo.Context) string {
 }
 
 func resolveEntity(path string) (entityType string, entityID *int64) {
-	// Parse paths like /api/v9/workspaces/123/time_entries/456
-	parts := strings.Split(strings.TrimPrefix(path, "/api/v9/"), "/")
+	// Parse paths like /api/v9/workspaces/123/time_entries/456 or /web/v1/workspaces/123/members/invitations
+	trimmed := path
+	for _, prefix := range []string{"/api/v9/", "/web/v1/"} {
+		trimmed = strings.TrimPrefix(trimmed, prefix)
+	}
+	parts := strings.Split(trimmed, "/")
 	if len(parts) < 2 {
 		return "", nil
 	}

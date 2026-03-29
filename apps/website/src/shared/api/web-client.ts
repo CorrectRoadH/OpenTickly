@@ -15,6 +15,18 @@ export class WebApiError extends Error {
     this.status = status;
     this.data = data;
   }
+
+  get userMessage(): string {
+    if (
+      this.data != null &&
+      typeof this.data === "object" &&
+      "message" in this.data &&
+      typeof (this.data as { message: unknown }).message === "string"
+    ) {
+      return (this.data as { message: string }).message;
+    }
+    return `Request failed (${this.status})`;
+  }
 }
 
 type WebApiResult<TResponse> = Promise<{

@@ -49,7 +49,7 @@ const sessionCookieName = "opentoggl_session"
 const currentSessionHomeContextKey = "current_session_home"
 
 func newWebRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
-	return httpapp.NewGeneratedWebRouteRegistrar(newWebOpenAPIServer(handlers))
+	return httpapp.NewGeneratedWebRouteRegistrar(newWebOpenAPIServer(handlers), newAuditLogMiddleware(handlers))
 }
 
 type routeHandlers struct {
@@ -1002,7 +1002,7 @@ func writeMembershipError(err error) error {
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotDisabled),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberRemoved),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyRemoved):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	default:
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
