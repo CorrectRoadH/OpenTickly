@@ -33,8 +33,18 @@ import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.t
 import { SplitTimeEntryDialog } from "../../features/tracking/SplitTimeEntryDialog.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
-import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
-import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
+import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
+import {
+  formatDayLabel,
+  formatTrackQueryDate,
+  formatWeekRangeLabel,
+  getWeekDaysForDate,
+  isSameDay,
+  isSameWeek,
+  shiftDay,
+  shiftWeek,
+  WEEK_SHORTCUTS,
+} from "../../features/tracking/week-range.ts";
 import {
   PanelRightIcon,
   PlayIcon,
@@ -411,7 +421,7 @@ export function WorkspaceTimerPage({
                 </span>
                 <button
                   aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow] duration-[var(--duration-fast)] hover:-translate-y-px hover:shadow-[0_3px_0_0_var(--track-accent-strong)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]"
+                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow] duration-[var(--duration-fast)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]"
                   style={{ transitionTimingFunction: "var(--ease-spring)" }}
                   data-icon={orch.runningEntry ? "stop" : "play"}
                   data-testid="timer-action-button"
@@ -434,66 +444,7 @@ export function WorkspaceTimerPage({
 
         <div className="px-5 pb-4 pt-4">
           <div className="flex items-center gap-4">
-            <WeekRangePicker
-              mode={
-                orch.view === "list"
-                  ? orch.listDateRange == null
-                    ? "all-dates"
-                    : "week"
-                  : orch.calendarSubview === "day"
-                    ? "day"
-                    : "week"
-              }
-              onAllDatesSelect={() => {
-                orch.setListDateRange(null);
-                if (orch.view !== "list") orch.setView("list");
-              }}
-              onDayShortcutSelect={(date) => {
-                if (orch.view === "list") {
-                  const dayStr = formatTrackQueryDate(date);
-                  orch.setListDateRange({ startDate: dayStr, endDate: dayStr });
-                } else {
-                  orch.setCalendarSubview("day");
-                }
-                orch.setSelectedWeekDate(date);
-              }}
-              onLast30DaysSelect={(date) => {
-                if (orch.view === "list") {
-                  const todayStr = formatTrackQueryDate(new Date());
-                  orch.setListDateRange({
-                    startDate: formatTrackQueryDate(date),
-                    endDate: todayStr,
-                  });
-                } else {
-                  orch.setCalendarSubview("week");
-                }
-                orch.setSelectedWeekDate(date);
-              }}
-              onWeekShortcutSelect={(date) => {
-                if (orch.view === "list") {
-                  const days = getWeekDaysForDate(date, orch.beginningOfWeek);
-                  orch.setListDateRange({
-                    startDate: formatTrackQueryDate(days[0]),
-                    endDate: formatTrackQueryDate(days[6]),
-                  });
-                } else {
-                  orch.setCalendarSubview("week");
-                }
-                orch.setSelectedWeekDate(date);
-              }}
-              onSelectDate={(date) => {
-                if (orch.view === "list") {
-                  const days = getWeekDaysForDate(date, orch.beginningOfWeek);
-                  orch.setListDateRange({
-                    startDate: formatTrackQueryDate(days[0]),
-                    endDate: formatTrackQueryDate(days[6]),
-                  });
-                }
-                orch.setSelectedWeekDate(date);
-              }}
-              selectedDate={orch.selectedWeekDate}
-              weekStartsOn={orch.beginningOfWeek}
-            />
+            <TimerRangePicker orch={orch} />
             {orch.view === "list" ? (
               <SummaryStat
                 label="Today total"
@@ -1397,6 +1348,163 @@ function ProjectFilterStrip({
         );
       })}
     </div>
+  );
+}
+
+function TimerRangePicker({
+  orch,
+}: {
+  orch: ReturnType<typeof useTimerPageOrchestration>;
+}): ReactElement {
+  const isAllDates = orch.view === "list" && orch.listDateRange == null;
+  const isDayMode = !isAllDates && orch.view !== "list" && orch.calendarSubview === "day";
+  const mode = isDayMode ? "day" : "week";
+
+  const label = isAllDates
+    ? "All dates"
+    : isDayMode
+      ? formatDayLabel(orch.selectedWeekDate)
+      : formatWeekRangeLabel(orch.selectedWeekDate, orch.beginningOfWeek);
+
+  const handleSelectDate = useCallback(
+    (date: Date) => {
+      if (orch.view === "list") {
+        const days = getWeekDaysForDate(date, orch.beginningOfWeek);
+        orch.setListDateRange({
+          startDate: formatTrackQueryDate(days[0]),
+          endDate: formatTrackQueryDate(days[6]),
+        });
+      }
+      orch.setSelectedWeekDate(date);
+    },
+    [orch],
+  );
+
+  const handlePrev = useCallback(() => {
+    handleSelectDate(
+      isDayMode ? shiftDay(orch.selectedWeekDate, -1) : shiftWeek(orch.selectedWeekDate, -1),
+    );
+  }, [handleSelectDate, isDayMode, orch.selectedWeekDate]);
+
+  const handleNext = useCallback(() => {
+    handleSelectDate(
+      isDayMode ? shiftDay(orch.selectedWeekDate, 1) : shiftWeek(orch.selectedWeekDate, 1),
+    );
+  }, [handleSelectDate, isDayMode, orch.selectedWeekDate]);
+
+  const handleShortcut = useCallback(
+    (shortcutId: string, date: Date) => {
+      if (shortcutId === "all-dates") {
+        orch.setListDateRange(null);
+        if (orch.view !== "list") orch.setView("list");
+      } else if (shortcutId === "last-30-days") {
+        if (orch.view === "list") {
+          orch.setListDateRange({
+            startDate: formatTrackQueryDate(date),
+            endDate: formatTrackQueryDate(new Date()),
+          });
+        } else {
+          orch.setCalendarSubview("week");
+        }
+        orch.setSelectedWeekDate(date);
+      } else if (shortcutId === "today" || shortcutId === "yesterday") {
+        if (orch.view === "list") {
+          const dayStr = formatTrackQueryDate(date);
+          orch.setListDateRange({ startDate: dayStr, endDate: dayStr });
+        } else {
+          orch.setCalendarSubview("day");
+        }
+        orch.setSelectedWeekDate(date);
+      } else {
+        if (orch.view === "list") {
+          const days = getWeekDaysForDate(date, orch.beginningOfWeek);
+          orch.setListDateRange({
+            startDate: formatTrackQueryDate(days[0]),
+            endDate: formatTrackQueryDate(days[6]),
+          });
+        } else {
+          orch.setCalendarSubview("week");
+        }
+        orch.setSelectedWeekDate(date);
+      }
+    },
+    [orch],
+  );
+
+  return (
+    <WeekRangePicker
+      disabled={isAllDates}
+      label={label}
+      mode={mode}
+      onNext={handleNext}
+      onPrev={handlePrev}
+      onSelectDate={handleSelectDate}
+      selectedDate={orch.selectedWeekDate}
+      sidebar={
+        <TimerDateShortcuts
+          isAllDates={isAllDates}
+          isDayMode={isDayMode}
+          onShortcut={handleShortcut}
+          selectedDate={orch.selectedWeekDate}
+          weekStartsOn={orch.beginningOfWeek}
+        />
+      }
+      weekStartsOn={orch.beginningOfWeek}
+    />
+  );
+}
+
+function TimerDateShortcuts({
+  isAllDates,
+  isDayMode,
+  onShortcut,
+  selectedDate,
+  weekStartsOn,
+}: {
+  isAllDates: boolean;
+  isDayMode: boolean;
+  onShortcut: (id: string, date: Date) => void;
+  selectedDate: Date;
+  weekStartsOn: number;
+}): ReactElement {
+  const close = useRangePickerClose();
+
+  return (
+    <>
+      {WEEK_SHORTCUTS.map((shortcut) => {
+        const shortcutDate = shortcut.resolveDate(new Date());
+        let isActive = false;
+        if (shortcut.id === "all-dates") {
+          isActive = isAllDates;
+        } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
+          isActive = isDayMode && isSameDay(shortcutDate, selectedDate);
+        } else if (shortcut.id === "last-30-days") {
+          isActive = false;
+        } else {
+          isActive =
+            !isDayMode && !isAllDates && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
+        }
+
+        return (
+          <button
+            aria-pressed={isActive}
+            className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
+              isActive
+                ? "bg-[var(--track-accent-strong)] text-white"
+                : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+            }`}
+            key={shortcut.id}
+            onClick={() => {
+              onShortcut(shortcut.id, shortcutDate);
+              close();
+            }}
+            type="button"
+          >
+            {shortcut.label}
+          </button>
+        );
+      })}
+    </>
   );
 }
 

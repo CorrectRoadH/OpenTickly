@@ -19,13 +19,13 @@ const base =
 
 const toneClass: Record<AppButtonTone, string> = {
   primary:
-    "bg-[var(--track-button)] text-white shadow-[0_3px_0_0_var(--track-accent-strong)] hover:-translate-y-[2px] hover:shadow-[0_5px_0_0_var(--track-accent-strong)] active:translate-y-[2px] active:shadow-[0_0px_0_0_var(--track-accent-strong)]",
+    "bg-[var(--track-button)] text-white shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]",
   secondary:
-    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[0_3px_0_0_var(--track-depth-border)] hover:-translate-y-[2px] hover:shadow-[0_5px_0_0_var(--track-depth-border)] hover:text-white active:translate-y-[2px] active:shadow-[0_0px_0_0_var(--track-depth-border)]",
+    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[var(--track-depth-shadow-rest)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-shadow-hover)] hover:text-white active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]",
   ghost:
-    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[0_3px_0_0_var(--track-depth-border)] hover:-translate-y-[2px] hover:shadow-[0_5px_0_0_var(--track-depth-border)] hover:text-white active:translate-y-[2px] active:shadow-[0_0px_0_0_var(--track-depth-border)]",
+    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[var(--track-depth-shadow-rest)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-shadow-hover)] hover:text-white active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]",
   destructive:
-    "bg-rose-600 text-white shadow-[0_3px_0_0_#881337] hover:-translate-y-[2px] hover:shadow-[0_5px_0_0_#881337] active:translate-y-[2px] active:shadow-[0_0px_0_0_#881337]",
+    "bg-rose-600 text-white shadow-[var(--track-depth-destructive-shadow)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-destructive-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]",
 };
 
 const sizeClass: Record<AppButtonSize, string> = {
