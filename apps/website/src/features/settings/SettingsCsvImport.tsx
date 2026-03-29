@@ -1,4 +1,4 @@
-import { SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 
@@ -60,15 +60,14 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
           </div>
         </div>
 
-        <button
-          className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black"
+        <AppButton
           onClick={() => {
             void navigate({ to: buildWorkspaceImportPath(workspaceId) });
           }}
           type="button"
         >
           Go to CSV Import
-        </button>
+        </AppButton>
       </div>
     </SurfaceCard>
   );

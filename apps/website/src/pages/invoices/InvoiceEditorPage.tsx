@@ -3,6 +3,7 @@ import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
+import { AppButton } from "@opentoggl/web-ui";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
 import { postWorkspaceUserInvoice } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
@@ -151,21 +152,17 @@ export function InvoiceEditorPage(): ReactElement {
           <span className="text-white">{documentId || "New Invoice"}</span>
         </nav>
         <div className="flex items-center gap-3">
-          <button
-            className="h-9 rounded-[8px] border border-[var(--track-control-border)] px-4 text-[12px] font-medium text-[var(--track-overlay-text)] hover:text-white"
-            type="button"
-          >
+          <AppButton tone="secondary" type="button">
             Connect QuickBooks
-          </button>
-          <button
-            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-white disabled:opacity-50"
+          </AppButton>
+          <AppButton
             data-testid="invoice-save-button"
             disabled={!documentId.trim() || createMutation.isPending}
             onClick={() => void handleSave()}
             type="button"
           >
             {createMutation.isPending ? "Saving..." : "Save"}
-          </button>
+          </AppButton>
         </div>
       </header>
 

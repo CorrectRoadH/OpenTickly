@@ -369,19 +369,15 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
         <div className="flex items-center justify-between border-t border-[var(--track-border)] pt-4">
           <span className="text-[14px] font-medium text-[var(--track-text)]">Toggl Account</span>
           {!confirming ? (
-            <button
-              className="inline-flex h-9 items-center justify-center rounded-[8px] border border-red-600 bg-red-600 px-4 text-[12px] font-semibold text-white transition-colors hover:bg-red-700"
-              onClick={() => setConfirming(true)}
-              type="button"
-            >
+            <AppButton onClick={() => setConfirming(true)} tone="destructive" type="button">
               Close Account
-            </button>
+            </AppButton>
           ) : (
             <div className="flex items-center gap-3">
               <span className="text-[12px] text-red-400">Are you sure? This cannot be undone.</span>
-              <button
-                className="inline-flex h-9 items-center justify-center rounded-[8px] border border-red-600 bg-red-600 px-4 text-[12px] font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              <AppButton
                 disabled={closing}
+                tone="destructive"
                 type="button"
                 onClick={() => {
                   setClosing(true);
@@ -398,7 +394,7 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
                 }}
               >
                 Confirm Close
-              </button>
+              </AppButton>
               <AppButton tone="secondary" type="button" onClick={() => setConfirming(false)}>
                 Cancel
               </AppButton>

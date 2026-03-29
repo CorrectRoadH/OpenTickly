@@ -2,6 +2,7 @@ import { type ReactElement, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { AppButton } from "@opentoggl/web-ui";
 import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import { TimesheetSetupDialog } from "./TimesheetSetupDialog.tsx";
 import {
@@ -110,14 +111,10 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
             </nav>
           </div>
           {view === "settings" ? (
-            <button
-              className="flex h-8 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-3 text-[12px] font-semibold text-white transition hover:brightness-110"
-              onClick={() => setSetupDialogOpen(true)}
-              type="button"
-            >
+            <AppButton onClick={() => setSetupDialogOpen(true)} type="button">
               <PlusIcon className="size-3" />
               Set up timesheets for member
-            </button>
+            </AppButton>
           ) : null}
         </div>
       </header>
@@ -461,8 +458,7 @@ function YourTimesheetsView({
               </td>
               <td className="px-4 py-3">
                 {ts.status === "open" ? (
-                  <button
-                    className="rounded-[6px] bg-[var(--track-accent)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+                  <AppButton
                     disabled={submitMutation.isPending}
                     onClick={() =>
                       submitMutation.mutate({
@@ -470,10 +466,11 @@ function YourTimesheetsView({
                         start_date: ts.start_date ?? "",
                       })
                     }
+                    size="sm"
                     type="button"
                   >
                     Submit
-                  </button>
+                  </AppButton>
                 ) : (
                   <span className="text-[12px] text-[var(--track-text-muted)]">
                     {ts.status === "submitted" ? "Awaiting review" : ts.status}
@@ -528,14 +525,10 @@ function ApprovalsSettingsView({
             This automatic setup generates timesheets for selected team members based on tracked
             time during the week. Team members can then simply submit them for your approval.
           </p>
-          <button
-            className="mt-6 flex h-9 items-center gap-1.5 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white transition hover:brightness-110"
-            onClick={onSetupClick}
-            type="button"
-          >
+          <AppButton className="mt-6" onClick={onSetupClick} type="button">
             <PlusIcon className="size-3.5" />
             Set up timesheets for members
-          </button>
+          </AppButton>
         </div>
       </div>
     );
@@ -690,35 +683,37 @@ function TimesheetActions({
   if (status === "submitted") {
     return (
       <div className="flex items-center gap-2">
-        <button
-          className="rounded-[6px] bg-[var(--track-status-approved)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+        <AppButton
           disabled={isPending}
           onClick={() => onAction("approved")}
+          size="sm"
           type="button"
         >
           Approve
-        </button>
-        <button
-          className="rounded-[6px] bg-[var(--track-status-rejected)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+        </AppButton>
+        <AppButton
           disabled={isPending}
           onClick={() => onAction("rejected")}
+          size="sm"
+          tone="destructive"
           type="button"
         >
           Reject
-        </button>
+        </AppButton>
       </div>
     );
   }
   if (status === "approved") {
     return (
-      <button
-        className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[12px] text-[var(--track-text-muted)] disabled:opacity-50"
+      <AppButton
         disabled={isPending}
         onClick={() => onAction("reopened")}
+        size="sm"
+        tone="secondary"
         type="button"
       >
         Reopen
-      </button>
+      </AppButton>
     );
   }
   return <span className="text-[12px] text-[var(--track-text-muted)]">-</span>;

@@ -1,4 +1,4 @@
-import { SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -190,15 +190,14 @@ export function SettingsDataExport(): ReactElement {
         </label>
 
         <div className="flex items-center gap-4">
-          <button
-            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
+          <AppButton
             data-testid="export-button"
             disabled={exporting || entriesQuery.isPending || entryCount === 0}
             onClick={handleExport}
             type="button"
           >
             {exporting ? "Exporting..." : "Export"}
-          </button>
+          </AppButton>
           <span className="text-[12px] text-[var(--track-text-muted)]">
             {entriesQuery.isPending
               ? "Loading entries..."

@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 
+import { AppButton } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -329,22 +330,17 @@ export function GoalEditorDialog({
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-3">
-        <button
-          className="h-9 rounded-[8px] px-4 text-[14px] font-semibold text-white hover:bg-[var(--track-row-hover)]"
-          onClick={onClose}
-          type="button"
-        >
+        <AppButton onClick={onClose} tone="ghost" type="button">
           Cancel
-        </button>
-        <button
-          className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[14px] font-semibold text-white disabled:opacity-50"
+        </AppButton>
+        <AppButton
           data-testid="goal-submit-button"
           disabled={!name.trim() || isPending}
           onClick={handleSubmit}
           type="button"
         >
           {isEdit ? "Edit goal" : "Create goal"}
-        </button>
+        </AppButton>
       </div>
     </ModalDialog>
   );

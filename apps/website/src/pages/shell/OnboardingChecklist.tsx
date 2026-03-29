@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { AppButton } from "@opentoggl/web-ui";
 
 import type { OnboardingStepDto } from "../../shared/api/web-contract.ts";
 import { useOnboardingQuery, useUpdateOnboardingMutation } from "../../shared/query/web-shell.ts";
@@ -157,13 +158,9 @@ function OnboardingStepRow({
         {step.label}
       </span>
       {!step.completed ? (
-        <button
-          className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
-          onClick={onAction}
-          type="button"
-        >
+        <AppButton onClick={onAction} size="sm" tone="ghost" type="button">
           {stepActionLabel(step)}
-        </button>
+        </AppButton>
       ) : null}
     </div>
   );

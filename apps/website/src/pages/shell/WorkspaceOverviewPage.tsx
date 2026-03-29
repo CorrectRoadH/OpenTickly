@@ -144,13 +144,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <button
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
-                    onClick={handleViewReports}
-                    type="button"
-                  >
+                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
                     View reports
-                  </button>
+                  </AppButton>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <OverviewWeekChart
@@ -183,13 +179,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <button
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
-                    onClick={handleViewReports}
-                    type="button"
-                  >
+                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
                     View team activity
-                  </button>
+                  </AppButton>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                   <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
@@ -243,13 +235,14 @@ export function WorkspaceOverviewPage(): ReactElement {
                     <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
                       Bring your team to see the full picture
                     </p>
-                    <button
-                      className="inline-flex h-6 items-center bg-transparent px-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]"
+                    <AppButton
                       onClick={() => setInviteDialogOpen(true)}
+                      size="sm"
+                      tone="ghost"
                       type="button"
                     >
                       Invite teammates
-                    </button>
+                    </AppButton>
                   </div>
                 </div>
               </div>
@@ -292,13 +285,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <button
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
-                    onClick={handleViewReports}
-                    type="button"
-                  >
+                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
                     View reports
-                  </button>
+                  </AppButton>
                 </div>
                 {topProjects.length > 0 ? (
                   <div className="space-y-2 border-t border-[var(--track-border)] pt-3">
@@ -327,13 +316,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Time tracked to projects
                   </h2>
-                  <button
-                    className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)] hover:text-[var(--track-accent-text)]"
-                    onClick={handleViewReports}
-                    type="button"
-                  >
+                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
                     View reports
-                  </button>
+                  </AppButton>
                 </div>
                 <div className="flex-1 border-t border-[var(--track-border)] pt-3">
                   <StatRing
@@ -347,12 +332,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                     title={`${projectCoverage.percent}%`}
                   />
                 </div>
-                <button
-                  className="inline-flex h-6 items-center px-0 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-accent)]"
-                  type="button"
-                >
+                <AppButton size="sm" tone="ghost" type="button">
                   Add member to project
-                </button>
+                </AppButton>
               </div>
             </OverviewSurface>
           </div>

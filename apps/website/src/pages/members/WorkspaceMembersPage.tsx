@@ -1,5 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
-import { DirectorySurfaceMessage } from "@opentoggl/web-ui";
+import { AppButton, DirectorySurfaceMessage } from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -106,15 +106,14 @@ export function WorkspaceMembersPage(): ReactElement {
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <h1 className="text-[20px] font-semibold leading-[30px] text-white">Members</h1>
-          <button
-            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
+          <AppButton
             data-testid="members-invite-button"
             onClick={() => setInviteDialogOpen(true)}
             type="button"
           >
             <PlusIcon className="size-3.5" />
             Invite member
-          </button>
+          </AppButton>
         </div>
         <div
           className="flex min-h-[46px] flex-wrap items-center gap-3 border-t border-[var(--track-border)] px-5 py-2"
