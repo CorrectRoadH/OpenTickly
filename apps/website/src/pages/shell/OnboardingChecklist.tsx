@@ -158,7 +158,7 @@ function OnboardingStepRow({
         {step.label}
       </span>
       {!step.completed ? (
-        <AppButton onClick={onAction} size="sm" tone="ghost" type="button">
+        <AppButton onClick={onAction} size="sm" type="button">
           {stepActionLabel(step)}
         </AppButton>
       ) : null}

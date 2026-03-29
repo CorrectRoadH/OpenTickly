@@ -103,11 +103,11 @@ export function ClientRowActions({
                   }}
                   data-testid={`client-delete-confirm-${clientId}`}
                   size="sm"
-                  tone="destructive"
+                  danger
                 >
                   Delete
                 </AppButton>
-                <AppButton onClick={() => setConfirmingDelete(false)} size="sm" tone="secondary">
+                <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
                   Cancel
                 </AppButton>
               </div>

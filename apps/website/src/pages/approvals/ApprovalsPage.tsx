@@ -695,7 +695,7 @@ function TimesheetActions({
           disabled={isPending}
           onClick={() => onAction("rejected")}
           size="sm"
-          tone="destructive"
+          danger
           type="button"
         >
           Reject
@@ -705,13 +705,7 @@ function TimesheetActions({
   }
   if (status === "approved") {
     return (
-      <AppButton
-        disabled={isPending}
-        onClick={() => onAction("reopened")}
-        size="sm"
-        tone="secondary"
-        type="button"
-      >
+      <AppButton disabled={isPending} onClick={() => onAction("reopened")} size="sm" type="button">
         Reopen
       </AppButton>
     );

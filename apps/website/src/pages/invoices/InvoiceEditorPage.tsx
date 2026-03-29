@@ -152,9 +152,7 @@ export function InvoiceEditorPage(): ReactElement {
           <span className="text-white">{documentId || "New Invoice"}</span>
         </nav>
         <div className="flex items-center gap-3">
-          <AppButton tone="secondary" type="button">
-            Connect QuickBooks
-          </AppButton>
+          <AppButton type="button">Connect QuickBooks</AppButton>
           <AppButton
             data-testid="invoice-save-button"
             disabled={!documentId.trim() || createMutation.isPending}

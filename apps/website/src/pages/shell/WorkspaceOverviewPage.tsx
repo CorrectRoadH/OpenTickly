@@ -117,7 +117,7 @@ export function WorkspaceOverviewPage(): ReactElement {
         <PageHeader
           action={
             <div className="flex flex-wrap items-center gap-2">
-              <AppButton onClick={handleRefreshCharts} tone="secondary" type="button">
+              <AppButton onClick={handleRefreshCharts} type="button">
                 Refresh charts
               </AppButton>
             </div>
@@ -144,7 +144,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
-                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
+                  <AppButton onClick={handleViewReports} size="sm" type="button">
                     View reports
                   </AppButton>
                 </div>
@@ -179,7 +179,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
-                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
+                  <AppButton onClick={handleViewReports} size="sm" type="button">
                     View team activity
                   </AppButton>
                 </div>
@@ -235,12 +235,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                     <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
                       Bring your team to see the full picture
                     </p>
-                    <AppButton
-                      onClick={() => setInviteDialogOpen(true)}
-                      size="sm"
-                      tone="ghost"
-                      type="button"
-                    >
+                    <AppButton onClick={() => setInviteDialogOpen(true)} size="sm" type="button">
                       Invite teammates
                     </AppButton>
                   </div>
@@ -285,7 +280,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
-                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
+                  <AppButton onClick={handleViewReports} size="sm" type="button">
                     View reports
                   </AppButton>
                 </div>
@@ -316,7 +311,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Time tracked to projects
                   </h2>
-                  <AppButton onClick={handleViewReports} size="sm" tone="ghost" type="button">
+                  <AppButton onClick={handleViewReports} size="sm" type="button">
                     View reports
                   </AppButton>
                 </div>
@@ -332,7 +327,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                     title={`${projectCoverage.percent}%`}
                   />
                 </div>
-                <AppButton size="sm" tone="ghost" type="button">
+                <AppButton size="sm" type="button">
                   Add member to project
                 </AppButton>
               </div>

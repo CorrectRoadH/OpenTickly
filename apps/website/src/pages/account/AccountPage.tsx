@@ -125,7 +125,6 @@ function PersonalDetailsSection({
         hasChanges ? (
           <AppButton
             disabled={saving}
-            tone="primary"
             type="button"
             onClick={() => {
               setSaving(true);
@@ -273,7 +272,7 @@ function ChangePasswordSection({
     <PreferenceCard title="Password Actions">
       <div className="px-5 py-5">
         {!open ? (
-          <AppButton tone="secondary" type="button" onClick={() => setOpen(true)}>
+          <AppButton type="button" onClick={() => setOpen(true)}>
             Change Password
           </AppButton>
         ) : (
@@ -314,7 +313,6 @@ function ChangePasswordSection({
             <div className="flex items-center gap-3 pt-2">
               <AppButton
                 disabled={!canSubmit || saving}
-                tone="primary"
                 type="button"
                 onClick={() => {
                   setSaving(true);
@@ -332,7 +330,6 @@ function ChangePasswordSection({
                 Change Password
               </AppButton>
               <AppButton
-                tone="secondary"
                 type="button"
                 onClick={() => {
                   setOpen(false);
@@ -369,7 +366,7 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
         <div className="flex items-center justify-between border-t border-[var(--track-border)] pt-4">
           <span className="text-[14px] font-medium text-[var(--track-text)]">Toggl Account</span>
           {!confirming ? (
-            <AppButton onClick={() => setConfirming(true)} tone="destructive" type="button">
+            <AppButton onClick={() => setConfirming(true)} danger type="button">
               Close Account
             </AppButton>
           ) : (
@@ -377,7 +374,7 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
               <span className="text-[12px] text-red-400">Are you sure? This cannot be undone.</span>
               <AppButton
                 disabled={closing}
-                tone="destructive"
+                danger
                 type="button"
                 onClick={() => {
                   setClosing(true);
@@ -395,7 +392,7 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
               >
                 Confirm Close
               </AppButton>
-              <AppButton tone="secondary" type="button" onClick={() => setConfirming(false)}>
+              <AppButton type="button" onClick={() => setConfirming(false)}>
                 Cancel
               </AppButton>
             </div>

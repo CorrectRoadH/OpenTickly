@@ -142,7 +142,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
               >
                 Save task
               </AppButton>
-              <AppButton tone="secondary" onClick={() => setComposerOpen(false)} type="button">
+              <AppButton onClick={() => setComposerOpen(false)} type="button">
                 Cancel
               </AppButton>
             </form>

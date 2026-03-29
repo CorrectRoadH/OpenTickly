@@ -557,7 +557,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             }
           }}
           size="sm"
-          tone="ghost"
         >
           <EditIcon className="size-3.5" />
           <span>Edit</span>
@@ -571,7 +570,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             setStatusMessage(`${selectedIds.size} project(s) archived`);
           }}
           size="sm"
-          tone="ghost"
         >
           <ArchiveIcon className="size-3.5" />
           <span>Archive</span>
@@ -586,7 +584,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             setStatusMessage(`${selectedIds.size} project(s) deleted`);
           }}
           size="sm"
-          tone="ghost"
         >
           <TrashIcon className="size-3.5" />
           <span>Delete</span>

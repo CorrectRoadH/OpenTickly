@@ -244,12 +244,7 @@ export function ApiTokenSection(props: {
   return (
     <PreferenceCard
       action={
-        <AppButton
-          disabled={props.isResetPending}
-          onClick={props.onReset}
-          tone="secondary"
-          type="button"
-        >
+        <AppButton disabled={props.isResetPending} onClick={props.onReset} type="button">
           {props.isResetPending ? "Resetting..." : "Reset"}
         </AppButton>
       }

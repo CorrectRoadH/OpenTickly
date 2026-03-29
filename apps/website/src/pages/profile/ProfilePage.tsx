@@ -181,7 +181,7 @@ export function ProfilePage(): ReactElement {
       <section className="sticky top-0 z-10 bg-[var(--track-surface)]">
         <PageHeader
           action={
-            <AppButton disabled tone="secondary" type="button">
+            <AppButton disabled type="button">
               Export account data
             </AppButton>
           }

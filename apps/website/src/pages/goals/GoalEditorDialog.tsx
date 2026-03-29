@@ -330,7 +330,7 @@ export function GoalEditorDialog({
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-3">
-        <AppButton onClick={onClose} tone="ghost" type="button">
+        <AppButton onClick={onClose} type="button">
           Cancel
         </AppButton>
         <AppButton

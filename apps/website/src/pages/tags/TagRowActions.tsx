@@ -108,11 +108,11 @@ export function TagRowActions({
                   }}
                   data-testid={`tag-delete-confirm-${tagId}`}
                   size="sm"
-                  tone="destructive"
+                  danger
                 >
                   Delete
                 </AppButton>
-                <AppButton onClick={() => setConfirmingDelete(false)} size="sm" tone="secondary">
+                <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
                   Cancel
                 </AppButton>
               </div>
