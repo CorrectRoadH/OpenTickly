@@ -54,40 +54,6 @@ test.describe("Story: account settings page", () => {
     await expect(nameInput).toHaveValue("Updated Name");
   });
 
-  test("Given a registered user, when the user changes their password, then the form works correctly", async ({
-    page,
-  }) => {
-    const email = `account-pwd-${test.info().workerIndex}-${Date.now()}@example.com`;
-    const password = "secret-pass";
-    await registerE2eUser(page, test.info(), {
-      email,
-      fullName: "Password User",
-      password,
-    });
-
-    await page.goto(new URL("/account", page.url()).toString());
-    await expect(page.getByTestId("account-page")).toBeVisible();
-
-    // Open the change password form
-    await page.getByRole("button", { name: "Change Password" }).click();
-
-    // Fill in current password and new password
-    const currentPasswordInput = page.locator('input[autocomplete="current-password"]');
-    const newPasswordInputs = page.locator('input[autocomplete="new-password"]');
-
-    await currentPasswordInput.fill(password);
-    await newPasswordInputs.nth(0).fill("new-secret-pass");
-    await newPasswordInputs.nth(1).fill("new-secret-pass");
-
-    // Submit
-    await page.getByRole("button", { name: "Change Password" }).click();
-    await expect(page.getByText("Password changed")).toBeVisible();
-
-    // Verify login works with new password
-    await page.context().clearCookies();
-    await loginE2eUser(page, test.info(), { email, password: "new-secret-pass" });
-  });
-
   test("Given a registered user, when the user navigates from user menu, then account settings page opens", async ({
     page,
   }) => {
@@ -139,30 +105,46 @@ test.describe("Story: account settings page", () => {
     await expect(page.locator('input[autocomplete="current-password"]')).not.toBeVisible();
   });
 
-  test("Given a logged-in user, when the user clicks Log out from the user menu, then the user is redirected to the login page", async ({
+  test("Given a registered user, when the user changes password then logs out, then logging back in with the new password works", async ({
     page,
   }) => {
-    const email = `account-logout-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const email = `account-pwd-logout-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
+    const newPassword = "new-secret-pass";
     await registerE2eUser(page, test.info(), {
       email,
-      fullName: "Logout User",
+      fullName: "Password Logout User",
       password,
     });
 
-    await page.context().clearCookies();
-    await loginE2eUser(page, test.info(), { email, password });
+    // Step 1: Change password
+    await page.goto(new URL("/account", page.url()).toString());
+    await expect(page.getByTestId("account-page")).toBeVisible();
 
-    // Open user menu and click Log out
+    await page.getByRole("button", { name: "Change Password" }).click();
+
+    const currentPasswordInput = page.locator('input[autocomplete="current-password"]');
+    const newPasswordInputs = page.locator('input[autocomplete="new-password"]');
+
+    await currentPasswordInput.fill(password);
+    await newPasswordInputs.nth(0).fill(newPassword);
+    await newPasswordInputs.nth(1).fill(newPassword);
+
+    await page.getByRole("button", { name: "Change Password" }).click();
+    await expect(page.getByText("Password changed")).toBeVisible();
+
+    // Step 2: Log out via user menu
     await page.getByRole("button", { name: "Profile menu" }).click();
     await page.getByRole("menuitem", { name: "Log out" }).click();
 
-    // Should redirect to login page
     await page.waitForURL(/\/(login)?$/);
     await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
 
-    // Trying to access a protected page should redirect to login
+    // Verify protected pages redirect to login
     await page.goto(new URL("/timer", page.url()).toString());
     await page.waitForURL(/\/login$/);
+
+    // Step 3: Log back in with new password
+    await loginE2eUser(page, test.info(), { email, password: newPassword });
   });
 });
