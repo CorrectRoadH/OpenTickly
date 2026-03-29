@@ -161,31 +161,6 @@ function PreferenceSelectBase({
   );
 }
 
-export function IntegrationTile({
-  accent,
-  title,
-}: {
-  accent: string;
-  title: string;
-}): ReactElement {
-  return (
-    <div className="flex h-[70px] w-[300px] items-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-4">
-      <div
-        className="flex size-6 items-center justify-center rounded-[4px]"
-        style={{ backgroundColor: accent }}
-      >
-        <span className="text-[10px] font-bold text-black">■</span>
-      </div>
-      <div className="ml-3">
-        <p className="text-[11px] font-semibold uppercase leading-3 text-white">{title}</p>
-        <p className="text-[12px] font-medium leading-4 text-[var(--track-brand-outlook-calendar)]">
-          Connect
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export function ProfileHeroCard({
   accountSettingsHref,
   avatarImageUrl,

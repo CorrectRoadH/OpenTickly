@@ -21,10 +21,8 @@ import {
   ApiTokenSection,
   ApiTokenStatusNotices,
   EmailPreferencesSection,
-  ExternalCalendarsSection,
   InAppNotificationsSection,
   KeyboardShortcutsSection,
-  SingleSignOnSection,
   TimeAndDateSection,
   TimerPageSection,
 } from "./ProfilePageSections.tsx";
@@ -211,8 +209,6 @@ export function ProfilePage(): ReactElement {
           <EmailPreferencesSection getValue={readPreference} setValue={writePreference} />
           <InAppNotificationsSection getValue={readPreference} setValue={writePreference} />
           <TimerPageSection getValue={readPreference} setValue={writePreference} />
-          <ExternalCalendarsSection />
-          <SingleSignOnSection />
           <TimeAndDateSection getValue={readPreference} setValue={writePreference} />
           <KeyboardShortcutsSection getValue={readPreference} setValue={writePreference} />
 

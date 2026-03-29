@@ -15,7 +15,6 @@ import {
 } from "./ProfilePageData.ts";
 import {
   CheckboxRow,
-  IntegrationTile,
   PreferenceCard,
   PreferenceNumberSelect,
   PreferenceSelect,
@@ -108,40 +107,6 @@ export function TimerPageSection(props: {
             />
           ))}
         </div>
-      </div>
-    </PreferenceCard>
-  );
-}
-
-export function ExternalCalendarsSection(): ReactElement {
-  return (
-    <PreferenceCard
-      action={
-        <AppButton disabled tone="secondary" type="button">
-          Go to calendar
-        </AppButton>
-      }
-      description="Connect a calendar to see your events and easily create Time Entries. Connected calendar events are private - only you can see them. Find out more"
-      title="External calendars"
-    >
-      <div className="flex gap-5 px-5 py-[15px]">
-        <IntegrationTile accent="var(--track-brand-google-calendar)" title="Google Calendar" />
-        <IntegrationTile accent="var(--track-brand-outlook-calendar)" title="Outlook Calendar" />
-      </div>
-    </PreferenceCard>
-  );
-}
-
-export function SingleSignOnSection(): ReactElement {
-  return (
-    <PreferenceCard
-      description="Set up single sign-on with identity providers that support the SAML protocol. See detailed instructions."
-      title="Single sign-on (SSO)"
-    >
-      <div className="px-5 py-[15px]">
-        <AppButton disabled tone="secondary" type="button">
-          Create SSO profile
-        </AppButton>
       </div>
     </PreferenceCard>
   );
@@ -296,13 +261,9 @@ export function ApiTokenSection(props: {
           />
           <ApiTokenCopyButton token={props.apiToken} />
         </div>
-        <div className="mt-4 space-y-1 text-[14px] font-medium leading-5 text-[var(--track-text)]">
-          <p>You&apos;ve used 0 / 30 requests in personal company (Free)</p>
-          <p>You&apos;ve used 0 / 30 requests from user specific requests quota</p>
-          <p className="pt-3 text-[12px] leading-4 text-[var(--track-text-muted)]">
-            Learn more about API limits, or upgrade your plan for increased access.
-          </p>
-        </div>
+        <p className="mt-4 text-[14px] font-medium leading-5 text-[var(--track-text)]">
+          OpenToggl has no rate limits.
+        </p>
       </div>
     </PreferenceCard>
   );
