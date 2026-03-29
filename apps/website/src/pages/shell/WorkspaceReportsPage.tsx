@@ -1,6 +1,6 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
-
-import { useNavigate } from "@tanstack/react-router";
+import { PageLayout, pageLayoutTabClass, pageLayoutTabIndicatorClass } from "@opentoggl/web-ui";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";
 import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";
@@ -16,12 +16,7 @@ import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
 import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { REPORTS_SHORTCUTS, resolveShortcutRange } from "../../features/tracking/week-range.ts";
-import {
-  ReportsSurfaceMessage,
-  SummaryMetrics,
-  ToolbarButton,
-  TopTab,
-} from "./ReportsSharedWidgets.tsx";
+import { ReportsSurfaceMessage, SummaryMetrics, ToolbarButton } from "./ReportsSharedWidgets.tsx";
 import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
 import { ReportsProfitabilityView } from "./ReportsProfitabilityView.tsx";
@@ -231,175 +226,169 @@ export function WorkspaceReportsPage({
     [tagsQuery.data],
   );
 
-  return (
-    <div
-      className="w-full min-w-0 bg-[var(--track-surface)] px-5 py-5 text-white"
-      data-testid="reports-page"
-    >
-      <section className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-        <div className="border-b border-[var(--track-border)] px-5 pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-5">
-              <h1 className="text-[20px] font-semibold leading-[30px] text-white">Reports</h1>
-              <div className="flex items-center gap-4" data-testid="reports-tabs">
-                {REPORTS_TABS.map((t) => (
-                  <TopTab
-                    active={t.slug === tab}
-                    key={t.slug}
-                    to={buildWorkspaceReportsPath(workspaceId, t.slug)}
-                  >
-                    {t.label}
-                  </TopTab>
-                ))}
-              </div>
-            </div>
-            {tab === "custom" ? (
-              <ToolbarButton
-                onClick={() =>
-                  void navigate({
-                    to: buildWorkspaceReportsPath(workspaceId, "summary"),
-                  })
-                }
-              >
-                New report
-              </ToolbarButton>
-            ) : (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
-                    roundingEnabled
-                      ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
-                      : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-                  }`}
-                  data-testid="reports-rounding-toggle"
-                  disabled={tab === "profitability"}
-                  onClick={() => setRoundingEnabled((prev) => !prev)}
-                  type="button"
-                >
-                  {roundingEnabled ? "Rounding on" : "Rounding off"}
-                </button>
-                {tab === "summary" || tab === "detailed" ? (
-                  <ToolbarButton
-                    onClick={() => {
-                      const projectsParam = displayModel.breakdownRows
-                        .filter((r) => r.seconds > 0)
-                        .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
-                        .join(",");
-                      const search = projectsParam
-                        ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
-                        : "";
-                      void navigate({
-                        to: `/workspaces/${workspaceId}/invoices/new${search}`,
-                      });
-                    }}
-                  >
-                    Create invoice
-                  </ToolbarButton>
-                ) : null}
-                <button
-                  className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
-                  data-testid="reports-export"
-                  onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
-                  type="button"
-                >
-                  Export
-                </button>
-                <ToolbarButton
-                  onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}
-                >
-                  Settings
-                </ToolbarButton>
-                <button
-                  className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
-                    shareToast
-                      ? "bg-[var(--track-button)] text-black"
-                      : "border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-                  }`}
-                  data-testid="reports-save-share"
-                  onClick={handleShareReport}
-                  type="button"
-                >
-                  Save and share
-                </button>
-              </div>
-            )}
-          </div>
-          {tab !== "custom" ? (
-            <ReportsFilterBar
-              clientOptions={clientOptions}
-              liveModel={liveModel}
-              memberOptions={memberOptions}
-              projectOptions={projectOptions}
-              state={state}
-              tagOptions={tagOptions}
-              weekStartsOn={weekStartsOn}
-            />
-          ) : null}
-        </div>
-      </section>
+  const headerActions =
+    tab === "custom" ? (
+      <ToolbarButton
+        onClick={() =>
+          void navigate({
+            to: buildWorkspaceReportsPath(workspaceId, "summary"),
+          })
+        }
+      >
+        New report
+      </ToolbarButton>
+    ) : (
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
+            roundingEnabled
+              ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
+              : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+          }`}
+          data-testid="reports-rounding-toggle"
+          disabled={tab === "profitability"}
+          onClick={() => setRoundingEnabled((prev) => !prev)}
+          type="button"
+        >
+          {roundingEnabled ? "Rounding on" : "Rounding off"}
+        </button>
+        {tab === "summary" || tab === "detailed" ? (
+          <ToolbarButton
+            onClick={() => {
+              const projectsParam = displayModel.breakdownRows
+                .filter((r) => r.seconds > 0)
+                .map((r) => `${r.name}:${(r.seconds / 3600).toFixed(2)}`)
+                .join(",");
+              const search = projectsParam
+                ? `?from=reports&projects=${encodeURIComponent(projectsParam)}`
+                : "";
+              void navigate({
+                to: `/workspaces/${workspaceId}/invoices/new${search}`,
+              });
+            }}
+          >
+            Create invoice
+          </ToolbarButton>
+        ) : null}
+        <button
+          className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
+          data-testid="reports-export"
+          onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
+          type="button"
+        >
+          Export
+        </button>
+        <ToolbarButton onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}>
+          Settings
+        </ToolbarButton>
+        <button
+          className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
+            shareToast
+              ? "bg-[var(--track-button)] text-black"
+              : "border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+          }`}
+          data-testid="reports-save-share"
+          onClick={handleShareReport}
+          type="button"
+        >
+          Save and share
+        </button>
+      </div>
+    );
 
-      {tab === "summary" ? (
-        <>
-          <SummaryMetrics metrics={displayModel.metrics} />
-          {weeklyReportQuery.isPending ? (
-            <ReportsSurfaceMessage message="Loading report data..." />
-          ) : null}
-          {weeklyReportQuery.isError ? (
-            <ReportsSurfaceMessage
-              message="Reports data is temporarily unavailable."
-              tone="error"
-            />
-          ) : null}
-          {!weeklyReportQuery.isPending && !weeklyReportQuery.isError ? (
-            <>
-              <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-                <DurationChart weekRows={displayModel.weekRows} />
-                <DistributionPanel
-                  distributionSegments={displayDistributionSegments}
-                  onSliceByChange={state.setSliceBy}
-                  sliceBy={state.sliceBy}
-                  totalDuration={displayModel.totalDuration}
-                />
-              </div>
-              <ReportsBreakdownPanel
-                breakdownBy={state.breakdownBy}
-                breakdownRows={displayBreakdownRows}
-                expandedRows={state.expandedRows}
-                onBreakdownByChange={state.setBreakdownBy}
-                toggleRow={state.toggleRow}
+  return (
+    <PageLayout
+      data-testid="reports-page"
+      title="Reports"
+      headerActions={headerActions}
+      tabs={REPORTS_TABS.map((t) => (
+        <Link
+          className={pageLayoutTabClass(t.slug === tab)}
+          key={t.slug}
+          to={buildWorkspaceReportsPath(workspaceId, t.slug)}
+        >
+          {t.label}
+          {t.slug === tab ? <span className={pageLayoutTabIndicatorClass} /> : null}
+        </Link>
+      ))}
+      toolbar={
+        tab !== "custom" ? (
+          <ReportsFilterBar
+            clientOptions={clientOptions}
+            liveModel={liveModel}
+            memberOptions={memberOptions}
+            projectOptions={projectOptions}
+            state={state}
+            tagOptions={tagOptions}
+            weekStartsOn={weekStartsOn}
+          />
+        ) : undefined
+      }
+    >
+      <div className="px-5 py-5">
+        {tab === "summary" ? (
+          <>
+            <SummaryMetrics metrics={displayModel.metrics} />
+            {weeklyReportQuery.isPending ? (
+              <ReportsSurfaceMessage message="Loading report data..." />
+            ) : null}
+            {weeklyReportQuery.isError ? (
+              <ReportsSurfaceMessage
+                message="Reports data is temporarily unavailable."
+                tone="error"
               />
-            </>
-          ) : null}
-        </>
-      ) : tab === "detailed" ? (
-        <ReportsDetailedView
-          clientFilter={state.clientFilter}
-          dateRange={state.dateRange}
-          filters={state.filters}
-          memberFilter={state.memberFilter}
-        />
-      ) : tab === "workload" ? (
-        <ReportsWorkloadView
-          isError={weeklyReportQuery.isError}
-          isPending={weeklyReportQuery.isPending}
-          report={weeklyReportQuery.data}
-          roundingEnabled={roundingEnabled}
-        />
-      ) : tab === "profitability" ? (
-        <ReportsProfitabilityView
-          isError={weeklyReportQuery.isError}
-          isPending={weeklyReportQuery.isPending}
-          report={weeklyReportQuery.data}
-        />
-      ) : tab === "custom" ? (
-        <ReportsCustomView />
-      ) : null}
+            ) : null}
+            {!weeklyReportQuery.isPending && !weeklyReportQuery.isError ? (
+              <>
+                <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                  <DurationChart weekRows={displayModel.weekRows} />
+                  <DistributionPanel
+                    distributionSegments={displayDistributionSegments}
+                    onSliceByChange={state.setSliceBy}
+                    sliceBy={state.sliceBy}
+                    totalDuration={displayModel.totalDuration}
+                  />
+                </div>
+                <ReportsBreakdownPanel
+                  breakdownBy={state.breakdownBy}
+                  breakdownRows={displayBreakdownRows}
+                  expandedRows={state.expandedRows}
+                  onBreakdownByChange={state.setBreakdownBy}
+                  toggleRow={state.toggleRow}
+                />
+              </>
+            ) : null}
+          </>
+        ) : tab === "detailed" ? (
+          <ReportsDetailedView
+            clientFilter={state.clientFilter}
+            dateRange={state.dateRange}
+            filters={state.filters}
+            memberFilter={state.memberFilter}
+          />
+        ) : tab === "workload" ? (
+          <ReportsWorkloadView
+            isError={weeklyReportQuery.isError}
+            isPending={weeklyReportQuery.isPending}
+            report={weeklyReportQuery.data}
+            roundingEnabled={roundingEnabled}
+          />
+        ) : tab === "profitability" ? (
+          <ReportsProfitabilityView
+            isError={weeklyReportQuery.isError}
+            isPending={weeklyReportQuery.isPending}
+            report={weeklyReportQuery.data}
+          />
+        ) : tab === "custom" ? (
+          <ReportsCustomView />
+        ) : null}
+      </div>
       {shareToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
           <span className="text-[14px] text-white">Report link copied to clipboard</span>
         </div>
       ) : null}
-    </div>
+    </PageLayout>
   );
 }
 

@@ -63,13 +63,13 @@ const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
 ];
 
 const PROJECT_COLUMNS: DirectoryTableColumn[] = [
-  { key: "project", label: "Project", width: "minmax(240px,1.8fr)" },
-  { key: "client", label: "Client", width: "98px" },
-  { key: "timeframe", label: "Timeframe", width: "130px" },
-  { key: "time-status", label: "Time status", width: "94px" },
-  { key: "billable-status", label: "Billable status", width: "110px" },
-  { key: "team", label: "Team", width: "94px" },
-  { key: "pinned", label: "Pinned", width: "56px" },
+  { key: "project", label: "Project", width: "minmax(160px,1fr)" },
+  { key: "client", label: "Client", width: "120px" },
+  { key: "timeframe", label: "Timeframe", width: "140px" },
+  { key: "time-status", label: "Time status", width: "100px" },
+  { key: "billable-status", label: "Billable status", width: "120px" },
+  { key: "team", label: "Team", width: "100px" },
+  { key: "pinned", label: "Pinned", width: "64px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
@@ -365,9 +365,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   const toolbarContent = (
-    <div className="flex flex-wrap items-center gap-4 py-2" data-testid="projects-filter-bar">
+    <div className="flex flex-wrap items-center gap-4" data-testid="projects-filter-bar">
       <DirectoryStatusFilter
-        chevronIcon={<ChevronDownIcon className="size-3" />}
         onChange={(statuses) => filterDispatch({ type: "SET_STATUSES", statuses })}
         options={PROJECT_STATUS_OPTIONS}
         selected={selectedStatuses}

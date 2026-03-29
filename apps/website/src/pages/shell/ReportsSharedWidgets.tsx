@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { Link } from "@tanstack/react-router";
 
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 
@@ -25,30 +24,6 @@ export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): R
         </div>
       ))}
     </section>
-  );
-}
-
-export function TopTab({
-  active = false,
-  children,
-  to,
-}: {
-  active?: boolean;
-  children: string;
-  to: string;
-}) {
-  return (
-    <Link
-      aria-current={active ? "page" : undefined}
-      className={`border-b-2 pb-3 text-[14px] font-medium ${
-        active
-          ? "border-[var(--track-accent)] text-[var(--track-accent-text)]"
-          : "border-transparent text-[var(--track-text-muted)]"
-      }`}
-      to={to}
-    >
-      {children}
-    </Link>
   );
 }
 

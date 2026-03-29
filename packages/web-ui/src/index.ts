@@ -17,5 +17,10 @@ export { AppCheckbox } from "./AppCheckbox.tsx";
 export { DirectoryTable, type DirectoryTableColumn } from "./DirectoryTable.tsx";
 export { IconButton } from "./IconButton.tsx";
 export { SelectButton, SelectField } from "./SelectField.tsx";
-export { PageLayout } from "./PageLayout.tsx";
+export {
+  PageLayout,
+  type PageLayoutTab,
+  pageLayoutTabClass,
+  pageLayoutTabIndicatorClass,
+} from "./PageLayout.tsx";
 export { appTheme } from "./theme.ts";

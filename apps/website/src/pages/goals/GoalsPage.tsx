@@ -1,8 +1,9 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, type ReactNode, useMemo, useState } from "react";
 import {
   AppButton,
-  DirectoryHeaderCell,
   DirectorySurfaceMessage,
+  DirectoryTable,
+  type DirectoryTableColumn,
   DirectoryTableCell,
   PageLayout,
   SelectField,
@@ -70,6 +71,16 @@ function todayISOString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+const goalColumns: DirectoryTableColumn[] = [
+  { key: "name", label: "Name", width: "minmax(200px,1.5fr)" },
+  { key: "member", label: "Member", width: "100px" },
+  { key: "for", label: "For", width: "minmax(200px,1.5fr)" },
+  { key: "progress", label: "Progress", width: "160px" },
+  { key: "streak", label: "Streak", width: "80px" },
+  { key: "endDate", label: "End date", width: "120px" },
+  { key: "actions", label: "", width: "42px", align: "end" },
+];
+
 export function GoalsPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
@@ -132,6 +143,50 @@ export function GoalsPage(): ReactElement {
     closeEditor();
   }
 
+  function renderGoalRow(goal: HandlergoalsApiResponse): ReactNode {
+    return (
+      <>
+        <DirectoryTableCell>{goal.name ?? ""}</DirectoryTableCell>
+        <DirectoryTableCell>{goal.user_name ?? "Me"}</DirectoryTableCell>
+        <DirectoryTableCell>
+          <span>
+            {formatComparisonLabel(goal.comparison)}{" "}
+            <strong>{formatTargetHours(goal.target_seconds)}</strong>{" "}
+            {formatRecurrenceLabel(goal.recurrence)}
+          </span>
+        </DirectoryTableCell>
+        <DirectoryTableCell>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px]">
+              {formatTrackedHours(goal.current_recurrence_tracked_seconds, goal.target_seconds)}
+            </span>
+            <ProgressBar
+              current={goal.current_recurrence_tracked_seconds ?? 0}
+              target={goal.target_seconds ?? 1}
+            />
+          </div>
+        </DirectoryTableCell>
+        <DirectoryTableCell>
+          <span className="flex items-center gap-1">
+            {goal.streak ?? 0}
+            {(goal.streak ?? 0) > 0 ? (
+              <span className="text-[var(--track-accent)]">&#x1F525;</span>
+            ) : null}
+          </span>
+        </DirectoryTableCell>
+        <DirectoryTableCell>{formatEndDate(goal)}</DirectoryTableCell>
+        <div className="flex h-[54px] items-center justify-end">
+          <GoalRowActionsMenu
+            goal={goal}
+            onArchiveToggle={() => void handleArchiveToggle(goal)}
+            onDelete={() => void handleDelete(goal)}
+            onEdit={() => openEditDialog(goal)}
+          />
+        </div>
+      </>
+    );
+  }
+
   async function handleArchiveToggle(goal: HandlergoalsApiResponse) {
     if (goal.goal_id == null) return;
     await updateGoalMutation.mutateAsync({
@@ -183,65 +238,14 @@ export function GoalsPage(): ReactElement {
 
       {!goalsQuery.isPending && !goalsQuery.isError ? (
         goals.length > 0 ? (
-          <div data-testid="goals-list">
-            <div className="grid grid-cols-[minmax(200px,1.5fr)_100px_minmax(200px,1.5fr)_160px_80px_120px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <DirectoryHeaderCell>Name</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Member</DirectoryHeaderCell>
-              <DirectoryHeaderCell>For</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Progress</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Streak</DirectoryHeaderCell>
-              <DirectoryHeaderCell>End date</DirectoryHeaderCell>
-              <DirectoryHeaderCell />
-            </div>
-            {goals.map((goal) => (
-              <div
-                className="grid grid-cols-[minmax(200px,1.5fr)_100px_minmax(200px,1.5fr)_160px_80px_120px_42px] items-center border-b border-[var(--track-border)] px-5 text-[14px]"
-                data-testid="goal-row"
-                key={goal.goal_id}
-              >
-                <DirectoryTableCell>{goal.name ?? ""}</DirectoryTableCell>
-                <DirectoryTableCell>{goal.user_name ?? "Me"}</DirectoryTableCell>
-                <DirectoryTableCell>
-                  <span>
-                    {formatComparisonLabel(goal.comparison)}{" "}
-                    <strong>{formatTargetHours(goal.target_seconds)}</strong>{" "}
-                    {formatRecurrenceLabel(goal.recurrence)}
-                  </span>
-                </DirectoryTableCell>
-                <DirectoryTableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[12px]">
-                      {formatTrackedHours(
-                        goal.current_recurrence_tracked_seconds,
-                        goal.target_seconds,
-                      )}
-                    </span>
-                    <ProgressBar
-                      current={goal.current_recurrence_tracked_seconds ?? 0}
-                      target={goal.target_seconds ?? 1}
-                    />
-                  </div>
-                </DirectoryTableCell>
-                <DirectoryTableCell>
-                  <span className="flex items-center gap-1">
-                    {goal.streak ?? 0}
-                    {(goal.streak ?? 0) > 0 ? (
-                      <span className="text-[var(--track-accent)]">&#x1F525;</span>
-                    ) : null}
-                  </span>
-                </DirectoryTableCell>
-                <DirectoryTableCell>{formatEndDate(goal)}</DirectoryTableCell>
-                <div className="flex h-[54px] items-center justify-end">
-                  <GoalRowActionsMenu
-                    goal={goal}
-                    onArchiveToggle={() => void handleArchiveToggle(goal)}
-                    onDelete={() => void handleDelete(goal)}
-                    onEdit={() => openEditDialog(goal)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          <DirectoryTable
+            columns={goalColumns}
+            data-testid="goals-list"
+            emptyState="No goals found."
+            renderRow={renderGoalRow}
+            rowKey={(goal) => goal.goal_id ?? 0}
+            rows={goals}
+          />
         ) : (
           <div
             className="flex flex-col items-center justify-center gap-4 px-5 py-20 text-center"

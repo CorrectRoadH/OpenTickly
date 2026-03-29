@@ -1,4 +1,6 @@
-import { type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
+
+import { SelectButton } from "./SelectField.tsx";
 
 type StatusOption<T extends string> = {
   label: string;
@@ -6,8 +8,6 @@ type StatusOption<T extends string> = {
 };
 
 type DirectoryStatusFilterProps<T extends string> = {
-  chevronIcon?: ReactNode;
-  checkIcon?: ReactNode;
   onChange: (selected: Set<T>) => void;
   options: StatusOption<T>[];
   selected: Set<T>;
@@ -18,8 +18,6 @@ type DirectoryStatusFilterProps<T extends string> = {
  * Shows a summary button; clicking opens a dropdown with checkbox options.
  */
 export function DirectoryStatusFilter<T extends string>({
-  checkIcon,
-  chevronIcon,
   onChange,
   options,
   selected,
@@ -66,19 +64,9 @@ export function DirectoryStatusFilter<T extends string>({
 
   return (
     <div className="relative" ref={ref}>
-      <button
-        aria-expanded={open}
-        aria-haspopup="listbox"
-        className="flex h-9 items-center gap-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-        onClick={() => setOpen((v) => !v)}
-        type="button"
-      >
-        <span className="text-[var(--track-text-muted)]">Show</span>
-        <span className="font-medium">{label}</span>
-      </button>
-      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-        {chevronIcon ?? <DefaultChevron up={open} />}
-      </span>
+      <SelectButton aria-expanded={open} aria-haspopup="listbox" onClick={() => setOpen((v) => !v)}>
+        <span className="text-[var(--track-text-muted)]">Show</span> {label}
+      </SelectButton>
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 min-w-[200px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
@@ -102,7 +90,7 @@ export function DirectoryStatusFilter<T extends string>({
                       : "border-[var(--track-border)] bg-transparent"
                   }`}
                 >
-                  {checked ? (checkIcon ?? <DefaultCheck />) : null}
+                  {checked ? <DefaultCheck /> : null}
                 </span>
                 <span>{option.label}</span>
               </button>
@@ -111,23 +99,6 @@ export function DirectoryStatusFilter<T extends string>({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function DefaultChevron({ up }: { up: boolean }) {
-  return (
-    <svg
-      aria-hidden="true"
-      className={`size-3 transition-transform ${up ? "rotate-180" : ""}`}
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 16 16"
-    >
-      <path d="M4 6l4 4 4-4" />
-    </svg>
   );
 }
 

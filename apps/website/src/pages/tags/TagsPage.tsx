@@ -27,7 +27,6 @@ type TagRow = ReturnType<typeof normalizeTags>[number];
 const TAG_COLUMNS: DirectoryTableColumn[] = [
   { key: "dot", label: "", width: "42px" },
   { key: "name", label: "Tag", width: "minmax(0,1fr)" },
-  { key: "workspace", label: "Workspace", width: "120px" },
   { key: "status", label: "Status", width: "98px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
@@ -149,9 +148,6 @@ export function TagsPage(): ReactElement {
               >
                 {tag.name}
               </a>
-            </div>
-            <div className="flex h-[44px] items-center text-[14px] text-[var(--track-text-muted)]">
-              {session.currentWorkspace.name}
             </div>
             <div className="flex h-[44px] items-center text-[14px] text-white">
               {tag.deleted_at ? "Inactive" : "Active"}

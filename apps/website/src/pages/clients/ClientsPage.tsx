@@ -12,7 +12,6 @@ import {
 
 import {
   ArchiveIcon,
-  ChevronDownIcon,
   CloseIcon,
   EditIcon,
   PlusIcon,
@@ -228,9 +227,8 @@ export function ClientsPage(): ReactElement {
         }
         title="Clients"
         toolbar={
-          <div className="flex flex-wrap items-center gap-3 py-2" data-testid="clients-filter-bar">
+          <div className="flex flex-wrap items-center gap-3" data-testid="clients-filter-bar">
             <DirectoryStatusFilter
-              chevronIcon={<ChevronDownIcon className="size-3" />}
               onChange={setSelectedStatuses}
               options={[
                 { label: "Active", value: "active" as const },

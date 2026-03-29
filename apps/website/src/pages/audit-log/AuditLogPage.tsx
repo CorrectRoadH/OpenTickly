@@ -1,9 +1,13 @@
-import { type ReactElement, useState } from "react";
-import { DirectorySurfaceMessage, SelectField } from "@opentoggl/web-ui";
+import { type ReactElement, type ReactNode, useState } from "react";
+import {
+  DirectorySurfaceMessage,
+  DirectoryTable,
+  type DirectoryTableColumn,
+  SelectField,
+} from "@opentoggl/web-ui";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAuditLogs } from "../../shared/api/public/track/index.ts";
-import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 type AuditLogEntry = {
@@ -42,6 +46,14 @@ function sourceLabel(source: string): string {
   return source || "-";
 }
 
+const auditLogColumns: DirectoryTableColumn[] = [
+  { key: "action", label: "Action", width: "minmax(0,1fr)" },
+  { key: "source", label: "Source", width: "80px" },
+  { key: "entityType", label: "Entity Type", width: "120px" },
+  { key: "entityId", label: "Entity ID", width: "80px" },
+  { key: "time", label: "Time", width: "180px" },
+];
+
 export function AuditLogPage(): ReactElement {
   const session = useSession();
   const organizationId = session.currentOrganization?.id;
@@ -49,7 +61,7 @@ export function AuditLogPage(): ReactElement {
 
   const [pageNumber, setPageNumber] = useState(1);
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number | string>>(new Set());
   const pageSize = 50;
 
   const auditLogsQuery = useQuery({
@@ -96,6 +108,36 @@ export function AuditLogPage(): ReactElement {
 
   const logs = auditLogsQuery.data;
 
+  function renderAuditLogRow(log: AuditLogEntry): ReactNode {
+    return (
+      <>
+        <div className="flex h-[46px] items-center text-[12px] text-white">{log.action}</div>
+        <div className="flex h-[46px] items-center">
+          <span
+            className={`rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium ${
+              log.source === "api"
+                ? "bg-blue-500/20 text-blue-400"
+                : log.source === "web"
+                  ? "bg-green-500/20 text-green-400"
+                  : "bg-[var(--track-border)] text-[var(--track-text-muted)]"
+            }`}
+          >
+            {sourceLabel(log.source)}
+          </span>
+        </div>
+        <div className="flex h-[46px] items-center text-[12px] text-[var(--track-text-muted)]">
+          {log.entity_type}
+        </div>
+        <div className="flex h-[46px] items-center text-[12px] text-[var(--track-text-muted)]">
+          {log.entity_id ?? "-"}
+        </div>
+        <div className="flex h-[46px] items-center text-[12px] text-[var(--track-text-muted)]">
+          {new Date(log.created_at).toLocaleString()}
+        </div>
+      </>
+    );
+  }
+
   return (
     <div
       className="w-full min-w-0 bg-[var(--track-surface)] text-white"
@@ -121,116 +163,71 @@ export function AuditLogPage(): ReactElement {
         </div>
       </header>
 
-      {logs.length > 0 ? (
-        <div data-testid="audit-log-list">
-          <div className="grid grid-cols-[24px_minmax(0,1fr)_80px_120px_80px_180px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <div className="h-[34px]" />
-            <div className="flex h-[34px] items-center">Action</div>
-            <div className="flex h-[34px] items-center">Source</div>
-            <div className="flex h-[34px] items-center">Entity Type</div>
-            <div className="flex h-[34px] items-center">Entity ID</div>
-            <div className="flex h-[34px] items-center">Time</div>
-          </div>
-          {logs.map((log) => {
-            const isExpanded = expandedId === log.id;
-            const hasBody = log.request_body || log.response_body;
-            return (
-              <div key={log.id} className="border-b border-[var(--track-border)]">
-                <button
-                  className="grid w-full grid-cols-[24px_minmax(0,1fr)_80px_120px_80px_180px] items-center px-5 text-left text-[12px]"
-                  onClick={() => hasBody && setExpandedId(isExpanded ? null : log.id)}
-                  type="button"
-                >
-                  <div className="flex h-[46px] items-center text-[var(--track-text-muted)]">
-                    {hasBody ? (
-                      isExpanded ? (
-                        <ChevronDownIcon className="size-3" />
-                      ) : (
-                        <ChevronRightIcon className="size-3" />
-                      )
-                    ) : null}
-                  </div>
-                  <div className="flex h-[46px] items-center text-white">{log.action}</div>
-                  <div className="flex h-[46px] items-center">
-                    <span
-                      className={`rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium ${
-                        log.source === "api"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : log.source === "web"
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-[var(--track-border)] text-[var(--track-text-muted)]"
-                      }`}
-                    >
-                      {sourceLabel(log.source)}
-                    </span>
-                  </div>
-                  <div className="flex h-[46px] items-center text-[var(--track-text-muted)]">
-                    {log.entity_type}
-                  </div>
-                  <div className="flex h-[46px] items-center text-[var(--track-text-muted)]">
-                    {log.entity_id ?? "-"}
-                  </div>
-                  <div className="flex h-[46px] items-center text-[var(--track-text-muted)]">
-                    {new Date(log.created_at).toLocaleString()}
-                  </div>
-                </button>
-                {isExpanded && hasBody ? (
-                  <div className="space-y-3 px-5 pb-4">
-                    {log.request_body ? (
-                      <div>
-                        <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                          Request Body
-                        </div>
-                        <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
-                          {formatBody(log.request_body)}
-                        </pre>
-                      </div>
-                    ) : null}
-                    {log.response_body ? (
-                      <div>
-                        <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                          Response Body
-                        </div>
-                        <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
-                          {formatBody(log.response_body)}
-                        </pre>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
+      <DirectoryTable
+        columns={auditLogColumns}
+        data-testid="audit-log-list"
+        emptyState="No audit log entries found for the last 30 days."
+        expandable
+        expandedIds={expandedIds}
+        onToggleExpand={(id) => {
+          const log = logs.find((l) => l.id === id);
+          if (!log?.request_body && !log?.response_body) return;
+          setExpandedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+          });
+        }}
+        renderExpandedContent={(log) => (
+          <div className="space-y-3 pb-4">
+            {log.request_body ? (
+              <div>
+                <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                  Request Body
+                </div>
+                <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
+                  {formatBody(log.request_body)}
+                </pre>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="px-5 py-10" data-testid="audit-log-empty">
-          <p className="text-sm text-[var(--track-text-muted)]">
-            No audit log entries found for the last 30 days.
-          </p>
-        </div>
-      )}
-
-      <div className="flex items-center gap-4 border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]">
-        <span>Page {pageNumber}</span>
-        <div className="ml-auto flex gap-2">
-          <button
-            className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[var(--track-text-muted)] hover:text-white disabled:opacity-40"
-            disabled={pageNumber <= 1}
-            onClick={() => setPageNumber((p) => p - 1)}
-            type="button"
-          >
-            Previous
-          </button>
-          <button
-            className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[var(--track-text-muted)] hover:text-white disabled:opacity-40"
-            disabled={logs.length < pageSize}
-            onClick={() => setPageNumber((p) => p + 1)}
-            type="button"
-          >
-            Next
-          </button>
-        </div>
-      </div>
+            ) : null}
+            {log.response_body ? (
+              <div>
+                <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                  Response Body
+                </div>
+                <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
+                  {formatBody(log.response_body)}
+                </pre>
+              </div>
+            ) : null}
+          </div>
+        )}
+        renderRow={renderAuditLogRow}
+        rowKey={(log) => log.id}
+        rows={logs}
+        footer={<span>Page {pageNumber}</span>}
+        pagination={
+          <div className="flex justify-end gap-2 border-t border-[var(--track-border)] px-5 py-3">
+            <button
+              className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[11px] text-[var(--track-text-muted)] hover:text-white disabled:opacity-40"
+              disabled={pageNumber <= 1}
+              onClick={() => setPageNumber((p) => p - 1)}
+              type="button"
+            >
+              Previous
+            </button>
+            <button
+              className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[11px] text-[var(--track-text-muted)] hover:text-white disabled:opacity-40"
+              disabled={logs.length < pageSize}
+              onClick={() => setPageNumber((p) => p + 1)}
+              type="button"
+            >
+              Next
+            </button>
+          </div>
+        }
+      />
     </div>
   );
 }

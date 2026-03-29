@@ -1,5 +1,11 @@
-import { type ReactElement, useMemo, useState } from "react";
-import { AppButton, DirectorySurfaceMessage, SelectField } from "@opentoggl/web-ui";
+import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import {
+  AppButton,
+  DirectorySurfaceMessage,
+  DirectoryTable,
+  type DirectoryTableColumn,
+  SelectField,
+} from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -34,6 +40,14 @@ function resolveMemberStatusLabel(status: string): string {
 function isActiveMember(status: string): boolean {
   return status === "joined" || status === "restored";
 }
+
+const memberColumns: DirectoryTableColumn[] = [
+  { key: "avatar", label: "", width: "42px" },
+  { key: "name", label: "Name", width: "minmax(0,2fr)" },
+  { key: "role", label: "Role", width: "100px" },
+  { key: "status", label: "Status", width: "100px" },
+  { key: "actions", label: "", width: "42px", align: "end" },
+];
 
 export function WorkspaceMembersPage(): ReactElement {
   const session = useSession();
@@ -86,6 +100,81 @@ export function WorkspaceMembersPage(): ReactElement {
         error instanceof WebApiError ? error.userMessage : "Could not send invitation";
       toast.error(message);
     }
+  }
+
+  function renderMemberRow(member: (typeof members)[number]): ReactNode {
+    const canDisable = member.status === "joined" || member.status === "restored";
+    const canRestore = member.status === "disabled";
+
+    return (
+      <>
+        <div className="flex h-[54px] items-center">
+          <span className="flex size-6 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold uppercase text-[var(--track-text-muted)]">
+            {member.name.charAt(0)}
+          </span>
+        </div>
+        <div className="flex h-[54px] flex-col justify-center overflow-hidden">
+          <span className="truncate text-[12px] text-white">{member.name}</span>
+          <span className="truncate text-[11px] text-[var(--track-text-muted)]">
+            {member.email}
+          </span>
+        </div>
+        <div className="flex h-[54px] items-center text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+          {member.role}
+        </div>
+        <div className="flex h-[54px] items-center">
+          <span
+            className={`inline-flex h-5 items-center rounded-[4px] px-1.5 text-[10px] font-medium uppercase tracking-[0.04em] ${
+              isActiveMember(member.status)
+                ? "bg-emerald-900/40 text-emerald-400"
+                : member.status === "disabled"
+                  ? "bg-rose-900/40 text-rose-400"
+                  : "bg-amber-900/40 text-amber-400"
+            }`}
+          >
+            {resolveMemberStatusLabel(member.status)}
+          </span>
+        </div>
+        <div className="flex h-[54px] items-center justify-end">
+          <MemberRowActions
+            canDisable={canDisable}
+            canRestore={canRestore}
+            memberId={member.id}
+            memberName={member.name}
+            onDisable={(id) => {
+              void disableMutation
+                .mutateAsync(id)
+                .then(() => setStatus("Member disabled"))
+                .catch((error) =>
+                  toast.error(
+                    error instanceof WebApiError ? error.userMessage : "Could not disable member",
+                  ),
+                );
+            }}
+            onRemove={(id) => {
+              void removeMutation
+                .mutateAsync(id)
+                .then(() => setStatus("Member removed"))
+                .catch((error) =>
+                  toast.error(
+                    error instanceof WebApiError ? error.userMessage : "Could not remove member",
+                  ),
+                );
+            }}
+            onRestore={(id) => {
+              void restoreMutation
+                .mutateAsync(id)
+                .then(() => setStatus("Member restored"))
+                .catch((error) =>
+                  toast.error(
+                    error instanceof WebApiError ? error.userMessage : "Could not restore member",
+                  ),
+                );
+            }}
+          />
+        </div>
+      </>
+    );
   }
 
   if (membersQuery.isPending) {
@@ -146,121 +235,28 @@ export function WorkspaceMembersPage(): ReactElement {
         </div>
       </header>
 
-      {filteredMembers.length > 0 ? (
-        <div data-testid="members-list" aria-label="Workspace members list">
-          <div className="grid grid-cols-[42px_minmax(0,2fr)_100px_100px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <div className="flex h-[34px] items-center">
-              <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
-            </div>
-            <div className="flex h-[34px] items-center">Name</div>
-            <div className="flex h-[34px] items-center">Role</div>
-            <div className="flex h-[34px] items-center">Status</div>
-            <div className="flex h-[34px] items-center justify-end" />
-          </div>
-          {filteredMembers.map((member) => {
-            const canDisable = member.status === "joined" || member.status === "restored";
-            const canRestore = member.status === "disabled";
-
-            return (
-              <div
-                className="grid grid-cols-[42px_minmax(0,2fr)_100px_100px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
-                data-member-id={member.id}
-                key={member.id}
-              >
-                <div className="flex h-[54px] items-center">
-                  <span className="flex size-6 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold uppercase text-[var(--track-text-muted)]">
-                    {member.name.charAt(0)}
-                  </span>
-                </div>
-                <div className="flex h-[54px] flex-col justify-center overflow-hidden">
-                  <span className="truncate text-white">{member.name}</span>
-                  <span className="truncate text-[11px] text-[var(--track-text-muted)]">
-                    {member.email}
-                  </span>
-                </div>
-                <div className="flex h-[54px] items-center text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                  {member.role}
-                </div>
-                <div className="flex h-[54px] items-center">
-                  <span
-                    className={`inline-flex h-5 items-center rounded-[4px] px-1.5 text-[10px] font-medium uppercase tracking-[0.04em] ${
-                      isActiveMember(member.status)
-                        ? "bg-emerald-900/40 text-emerald-400"
-                        : member.status === "disabled"
-                          ? "bg-rose-900/40 text-rose-400"
-                          : "bg-amber-900/40 text-amber-400"
-                    }`}
-                  >
-                    {resolveMemberStatusLabel(member.status)}
-                  </span>
-                </div>
-                <div className="flex h-[54px] items-center justify-end">
-                  <MemberRowActions
-                    canDisable={canDisable}
-                    canRestore={canRestore}
-                    memberId={member.id}
-                    memberName={member.name}
-                    onDisable={(id) => {
-                      void disableMutation
-                        .mutateAsync(id)
-                        .then(() => setStatus("Member disabled"))
-                        .catch((error) =>
-                          toast.error(
-                            error instanceof WebApiError
-                              ? error.userMessage
-                              : "Could not disable member",
-                          ),
-                        );
-                    }}
-                    onRemove={(id) => {
-                      void removeMutation
-                        .mutateAsync(id)
-                        .then(() => setStatus("Member removed"))
-                        .catch((error) =>
-                          toast.error(
-                            error instanceof WebApiError
-                              ? error.userMessage
-                              : "Could not remove member",
-                          ),
-                        );
-                    }}
-                    onRestore={(id) => {
-                      void restoreMutation
-                        .mutateAsync(id)
-                        .then(() => setStatus("Member restored"))
-                        .catch((error) =>
-                          toast.error(
-                            error instanceof WebApiError
-                              ? error.userMessage
-                              : "Could not restore member",
-                          ),
-                        );
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="px-5 py-10" data-testid="members-empty-state">
-          <p className="text-sm text-[var(--track-text-muted)]">
-            {search.trim()
-              ? "No members match your search."
-              : statusFilter !== "all"
-                ? `No ${statusFilter} members.`
-                : "No members in this workspace yet. Invite someone to get started."}
-          </p>
-        </div>
-      )}
-
-      <div
-        className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
-        data-testid="members-summary"
-      >
-        {members.length} member{members.length === 1 ? "" : "s"} in {session.currentWorkspace.name}.
-        Active: {activeCount} · Disabled: {disabledCount} · Invited: {invitedCount}
-      </div>
+      <DirectoryTable
+        columns={memberColumns}
+        data-testid="members-list"
+        emptyState={
+          search.trim()
+            ? "No members match your search."
+            : statusFilter !== "all"
+              ? `No ${statusFilter} members.`
+              : "No members in this workspace yet. Invite someone to get started."
+        }
+        footer={
+          <span data-testid="members-summary">
+            {members.length} member{members.length === 1 ? "" : "s"} in{" "}
+            {session.currentWorkspace.name}. Active: {activeCount} · Disabled: {disabledCount} ·
+            Invited: {invitedCount}
+          </span>
+        }
+        isLoading={false}
+        renderRow={renderMemberRow}
+        rowKey={(member) => member.id}
+        rows={filteredMembers}
+      />
 
       {inviteDialogOpen ? (
         <InviteMemberDialog

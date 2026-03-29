@@ -1,4 +1,10 @@
-import { AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
+import {
+  AppSurfaceState,
+  PageLayout,
+  pageLayoutTabClass,
+  pageLayoutTabIndicatorClass,
+  SurfaceCard,
+} from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { toast } from "sonner";
@@ -45,45 +51,55 @@ export function WorkspaceSettingsPage({
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
 
   return (
-    <div className="min-h-full bg-[var(--track-surface)]" data-testid="workspace-settings-page">
-      <div className="max-w-[1384px]">
-        <SettingsHeader activeSection={section} workspaceId={workspaceId} />
-        <div className="px-5 pb-10 pt-5">
-          {settingsQuery.isError ? (
-            <SettingsState
-              description="We could not load workspace settings right now. Refresh or try again shortly."
-              title="Settings unavailable"
-              tone="error"
-            />
-          ) : null}
+    <PageLayout
+      data-testid="workspace-settings-page"
+      title="Settings"
+      tabs={settingsTabs.map((tab) => (
+        <Link
+          className={pageLayoutTabClass(section === tab.id)}
+          key={tab.id}
+          to={buildWorkspaceSettingsPathWithSection(workspaceId, tab.id)}
+        >
+          {tab.label}
+          {section === tab.id ? <span className={pageLayoutTabIndicatorClass} /> : null}
+        </Link>
+      ))}
+    >
+      <div className="px-5 pb-10 pt-5">
+        {settingsQuery.isError ? (
+          <SettingsState
+            description="We could not load workspace settings right now. Refresh or try again shortly."
+            title="Settings unavailable"
+            tone="error"
+          />
+        ) : null}
 
-          {!settingsQuery.isPending && !settingsQuery.isError && !settingsQuery.data ? (
-            <SettingsState
-              description="No workspace settings data was returned for this workspace."
-              title="Settings unavailable"
-              tone="empty"
-            />
-          ) : null}
+        {!settingsQuery.isPending && !settingsQuery.isError && !settingsQuery.data ? (
+          <SettingsState
+            description="No workspace settings data was returned for this workspace."
+            title="Settings unavailable"
+            tone="empty"
+          />
+        ) : null}
 
-          {settingsQuery.data ? (
-            <SettingsSectionContent
-              onSubmit={async (request) => {
-                await updateMutation.mutateAsync(request);
-              }}
-              onSubmitError={() => {
-                toast.error("We could not save this change. Try again in a moment.");
-              }}
-              onSubmitSuccess={() => {
-                toast.success("Your workspace has been updated");
-              }}
-              section={section}
-              settingsData={settingsQuery.data}
-              workspaceId={workspaceId}
-            />
-          ) : null}
-        </div>
+        {settingsQuery.data ? (
+          <SettingsSectionContent
+            onSubmit={async (request) => {
+              await updateMutation.mutateAsync(request);
+            }}
+            onSubmitError={() => {
+              toast.error("We could not save this change. Try again in a moment.");
+            }}
+            onSubmitSuccess={() => {
+              toast.success("Your workspace has been updated");
+            }}
+            section={section}
+            settingsData={settingsQuery.data}
+            workspaceId={workspaceId}
+          />
+        ) : null}
       </div>
-    </div>
+    </PageLayout>
   );
 }
 
@@ -144,40 +160,6 @@ function SettingsSectionContent(props: {
         />
       );
   }
-}
-
-function SettingsHeader(props: {
-  activeSection: WorkspaceSettingsSection;
-  workspaceId: number;
-}): ReactElement {
-  return (
-    <header className="bg-[var(--track-surface)]">
-      <PageHeader bordered title="Settings" />
-      <nav className="flex flex-wrap items-center gap-1 px-5 pb-3">
-        {settingsTabs.map((tab) => (
-          <Link
-            className={`rounded-[8px] px-3 py-[6px] text-[14px] font-semibold leading-5 ${
-              props.activeSection === tab.id
-                ? "text-[var(--track-accent)]"
-                : "text-[var(--track-text-soft)] hover:text-white"
-            }`}
-            key={tab.id}
-            to={buildWorkspaceSettingsPathWithSection(props.workspaceId, tab.id)}
-          >
-            <span
-              className={`border-b-2 pb-[2px] ${
-                props.activeSection === tab.id
-                  ? "border-[var(--track-accent)]"
-                  : "border-transparent"
-              }`}
-            >
-              {tab.label}
-            </span>
-          </Link>
-        ))}
-      </nav>
-    </header>
-  );
 }
 
 function SettingsState(props: {
