@@ -50,6 +50,9 @@ export function buildOrganizationSettingsPath(organizationId: number): string {
 }
 
 export function resolveHomePath(): string {
+  if (typeof window !== "undefined" && window.innerWidth < 768) {
+    return "/m/timer";
+  }
   return buildTimerPath();
 }
 

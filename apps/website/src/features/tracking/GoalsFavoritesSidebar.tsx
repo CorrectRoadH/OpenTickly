@@ -83,7 +83,7 @@ function SidebarSection({
   );
 }
 
-function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElement {
+export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElement {
   const trackedH = Math.round(((goal.current_recurrence_tracked_seconds ?? 0) / 3600) * 10) / 10;
   const targetH = Math.round(((goal.target_seconds ?? 0) / 3600) * 10) / 10;
   const progress = targetH > 0 ? Math.min((trackedH / targetH) * 100, 100) : 0;

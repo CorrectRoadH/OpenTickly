@@ -5,6 +5,7 @@ import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
 import { PublicMainPanelFrame, PublicMainPanelLoading } from "../app/PublicMainPanelFrame.tsx";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
+import { SessionProvider } from "../shared/session/session-context.tsx";
 import { resolveHomePath } from "../shared/lib/workspace-routing.ts";
 import { parseInviteStatusJoinedSearch } from "../shared/url-state/invite-status-location.ts";
 import {
@@ -109,6 +110,20 @@ const AuditLogPage = lazyNamed(() => import("../pages/audit-log/AuditLogPage.tsx
 const SubscriptionPage = lazyNamed(
   () => import("../pages/subscription/SubscriptionPage.tsx"),
   "SubscriptionPage",
+);
+
+const MobileShell = lazyNamed(() => import("../pages/mobile/MobileShell.tsx"), "MobileShell");
+const MobileTimerPage = lazyNamed(
+  () => import("../pages/mobile/MobileTimerPage.tsx"),
+  "MobileTimerPage",
+);
+const MobileCalendarPage = lazyNamed(
+  () => import("../pages/mobile/MobileCalendarPage.tsx"),
+  "MobileCalendarPage",
+);
+const MobileReportPage = lazyNamed(
+  () => import("../pages/mobile/MobileReportPage.tsx"),
+  "MobileReportPage",
 );
 
 const homeRoute = createRoute({
@@ -334,6 +349,30 @@ const instanceAdminRoute = createRoute({
   component: InstanceAdminRouteComponent,
 });
 
+const mobileLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/m",
+  component: MobileLayoutRouteComponent,
+});
+
+const mobileTimerRoute = createRoute({
+  getParentRoute: () => mobileLayoutRoute,
+  path: "/timer",
+  component: MobileTimerRouteComponent,
+});
+
+const mobileCalendarRoute = createRoute({
+  getParentRoute: () => mobileLayoutRoute,
+  path: "/calendar",
+  component: MobileCalendarRouteComponent,
+});
+
+const mobileReportRoute = createRoute({
+  getParentRoute: () => mobileLayoutRoute,
+  path: "/report",
+  component: MobileReportRouteComponent,
+});
+
 export const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
@@ -371,6 +410,7 @@ export const routeTree = rootRoute.addChildren([
   legacyWorkspaceSettingsRoute,
   organizationSettingsRoute,
   instanceAdminRoute,
+  mobileLayoutRoute.addChildren([mobileTimerRoute, mobileCalendarRoute, mobileReportRoute]),
 ]);
 
 function HomeRouteComponent() {
@@ -782,6 +822,58 @@ function SessionUnavailablePanel() {
         while rendering {pathname}.
       </p>
     </PublicMainPanelFrame>
+  );
+}
+
+function MobileLayoutRouteComponent() {
+  return (
+    <MobileProtectedBoundary>
+      <Suspense fallback={<PublicMainPanelLoading />}>
+        <MobileShell />
+      </Suspense>
+    </MobileProtectedBoundary>
+  );
+}
+
+function MobileProtectedBoundary({ children }: { children: ReactNode }) {
+  const sessionQuery = useSessionBootstrapQuery();
+
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
+  }
+
+  if (isSessionAccessDenied(sessionQuery.error)) {
+    return <Navigate replace to="/login" />;
+  }
+
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return <SessionUnavailablePanel />;
+  }
+
+  return <SessionProvider sessionBootstrap={sessionQuery.data}>{children}</SessionProvider>;
+}
+
+function MobileTimerRouteComponent() {
+  return (
+    <Suspense fallback={null}>
+      <MobileTimerPage />
+    </Suspense>
+  );
+}
+
+function MobileCalendarRouteComponent() {
+  return (
+    <Suspense fallback={null}>
+      <MobileCalendarPage />
+    </Suspense>
+  );
+}
+
+function MobileReportRouteComponent() {
+  return (
+    <Suspense fallback={null}>
+      <MobileReportPage />
+    </Suspense>
   );
 }
 
