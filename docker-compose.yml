@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: ${OPENTOGGL_POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:-postgres}
     networks: [internal]
+    ports:
+      - "${OPENTOGGL_POSTGRES_PORT:-5432}:5432"
     volumes:
       - opentoggl-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -26,6 +28,8 @@ services:
     image: redis:7-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     networks: [internal]
+    ports:
+      - "${OPENTOGGL_REDIS_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s

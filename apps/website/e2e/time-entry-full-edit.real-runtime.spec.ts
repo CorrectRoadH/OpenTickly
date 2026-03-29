@@ -213,7 +213,8 @@ test.describe("Story: calendar view interactions", () => {
     // so only assert if it's in the DOM.
     const count = await indicator.count();
     if (count > 0) {
-      const box = await indicator.boundingBox();
+      await indicator.first().waitFor({ state: "visible", timeout: 5000 });
+      const box = await indicator.first().boundingBox();
       expect(box).not.toBeNull();
       if (box) {
         // Should be within the viewport
