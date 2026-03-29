@@ -107,7 +107,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
-	catalogService, err := catalogapplication.NewService(catalogpostgres.NewStore(pool))
+	catalogService, err := catalogapplication.NewService(newCachedCatalogStore(catalogpostgres.NewStore(pool), cache))
 	if err != nil {
 		return nil, err
 	}

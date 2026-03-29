@@ -7,6 +7,7 @@ import (
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	identityweb "opentoggl/backend/apps/backend/internal/identity/transport/http/web"
@@ -22,6 +23,8 @@ const (
 	userHomeTTL       = 10 * time.Minute
 	sessionShellTTL   = 2 * time.Minute
 	currentTimerTTL   = 15 * time.Second
+	catalogListTTL    = 2 * time.Minute
+	catalogItemTTL    = 5 * time.Minute
 )
 
 // --- session repository cache ---
@@ -264,4 +267,212 @@ func (c *cachedTrackingStore) ClearRunningTimeEntry(ctx context.Context, userID 
 
 func timerKey(userID int64) string {
 	return fmt.Sprintf("timer:%d", userID)
+}
+
+// --- catalog store cache (projects, tags, clients) ---
+
+type cachedCatalogProject struct {
+	Project catalogapplication.ProjectView `json:"project"`
+	Found   bool                          `json:"found"`
+}
+
+type cachedCatalogTag struct {
+	Tag   catalogapplication.TagView `json:"tag"`
+	Found bool                      `json:"found"`
+}
+
+type cachedCatalogClient struct {
+	Client catalogapplication.ClientView `json:"client"`
+	Found  bool                         `json:"found"`
+}
+
+type cachedCatalogStore struct {
+	catalogapplication.Store
+	rc *platform.RedisClient
+}
+
+func newCachedCatalogStore(inner catalogapplication.Store, rc *platform.RedisClient) *cachedCatalogStore {
+	return &cachedCatalogStore{Store: inner, rc: rc}
+}
+
+// --- read caches ---
+
+func (c *cachedCatalogStore) ListProjects(ctx context.Context, workspaceID int64, filter catalogapplication.ListProjectsFilter) ([]catalogapplication.ProjectView, error) {
+	key := fmt.Sprintf("catalog:projects:%d", workspaceID)
+	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.ProjectView, error) {
+		return c.Store.ListProjects(ctx, workspaceID, filter)
+	})
+}
+
+func (c *cachedCatalogStore) ListTags(ctx context.Context, workspaceID int64, filter catalogapplication.ListTagsFilter) ([]catalogapplication.TagView, error) {
+	key := fmt.Sprintf("catalog:tags:%d", workspaceID)
+	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.TagView, error) {
+		return c.Store.ListTags(ctx, workspaceID, filter)
+	})
+}
+
+func (c *cachedCatalogStore) ListClients(ctx context.Context, workspaceID int64, filter catalogapplication.ListClientsFilter) ([]catalogapplication.ClientView, error) {
+	key := fmt.Sprintf("catalog:clients:%d", workspaceID)
+	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.ClientView, error) {
+		return c.Store.ListClients(ctx, workspaceID, filter)
+	})
+}
+
+func (c *cachedCatalogStore) GetProject(ctx context.Context, workspaceID int64, projectID int64) (catalogapplication.ProjectView, bool, error) {
+	key := fmt.Sprintf("catalog:project:%d:%d", workspaceID, projectID)
+	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogProject, error) {
+		project, ok, fetchErr := c.Store.GetProject(ctx, workspaceID, projectID)
+		return cachedCatalogProject{Project: project, Found: ok}, fetchErr
+	})
+	return result.Project, result.Found, err
+}
+
+func (c *cachedCatalogStore) GetTag(ctx context.Context, workspaceID int64, tagID int64) (catalogapplication.TagView, bool, error) {
+	key := fmt.Sprintf("catalog:tag:%d:%d", workspaceID, tagID)
+	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogTag, error) {
+		tag, ok, fetchErr := c.Store.GetTag(ctx, workspaceID, tagID)
+		return cachedCatalogTag{Tag: tag, Found: ok}, fetchErr
+	})
+	return result.Tag, result.Found, err
+}
+
+func (c *cachedCatalogStore) GetClient(ctx context.Context, workspaceID int64, clientID int64) (catalogapplication.ClientView, bool, error) {
+	key := fmt.Sprintf("catalog:client:%d:%d", workspaceID, clientID)
+	result, err := platform.CacheAside(c.rc, ctx, key, catalogItemTTL, func() (cachedCatalogClient, error) {
+		client, ok, fetchErr := c.Store.GetClient(ctx, workspaceID, clientID)
+		return cachedCatalogClient{Client: client, Found: ok}, fetchErr
+	})
+	return result.Client, result.Found, err
+}
+
+// --- write invalidation ---
+
+func (c *cachedCatalogStore) catalogInvalidateWorkspace(ctx context.Context, workspaceID int64) {
+	_ = c.rc.Del(ctx,
+		fmt.Sprintf("catalog:projects:%d", workspaceID),
+		fmt.Sprintf("catalog:tags:%d", workspaceID),
+		fmt.Sprintf("catalog:clients:%d", workspaceID),
+	)
+}
+
+func (c *cachedCatalogStore) CreateProject(ctx context.Context, cmd catalogapplication.CreateProjectCommand) (catalogapplication.ProjectView, error) {
+	v, err := c.Store.CreateProject(ctx, cmd)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, cmd.WorkspaceID)
+	}
+	return v, err
+}
+
+func (c *cachedCatalogStore) UpdateProject(ctx context.Context, project catalogapplication.ProjectView) error {
+	err := c.Store.UpdateProject(ctx, project)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, project.WorkspaceID)
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:project:%d:%d", project.WorkspaceID, project.ID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) DeleteProject(ctx context.Context, workspaceID int64, projectID int64) error {
+	err := c.Store.DeleteProject(ctx, workspaceID, projectID)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, workspaceID)
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:project:%d:%d", workspaceID, projectID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) CreateTag(ctx context.Context, cmd catalogapplication.CreateTagCommand) (catalogapplication.TagView, error) {
+	v, err := c.Store.CreateTag(ctx, cmd)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", cmd.WorkspaceID))
+	}
+	return v, err
+}
+
+func (c *cachedCatalogStore) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {
+	err := c.Store.UpdateTag(ctx, tag)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", tag.WorkspaceID), fmt.Sprintf("catalog:tag:%d:%d", tag.WorkspaceID, tag.ID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) DeleteTag(ctx context.Context, workspaceID int64, tagID int64) error {
+	err := c.Store.DeleteTag(ctx, workspaceID, tagID)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", workspaceID), fmt.Sprintf("catalog:tag:%d:%d", workspaceID, tagID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) DeleteTags(ctx context.Context, workspaceID int64, tagIDs []int64) error {
+	err := c.Store.DeleteTags(ctx, workspaceID, tagIDs)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", workspaceID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) CreateClient(ctx context.Context, cmd catalogapplication.CreateClientCommand) (catalogapplication.ClientView, error) {
+	v, err := c.Store.CreateClient(ctx, cmd)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:clients:%d", cmd.WorkspaceID))
+	}
+	return v, err
+}
+
+func (c *cachedCatalogStore) UpdateClient(ctx context.Context, client catalogapplication.ClientView) error {
+	err := c.Store.UpdateClient(ctx, client)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:clients:%d", client.WorkspaceID), fmt.Sprintf("catalog:client:%d:%d", client.WorkspaceID, client.ID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) DeleteClients(ctx context.Context, workspaceID int64, clientIDs []int64) error {
+	err := c.Store.DeleteClients(ctx, workspaceID, clientIDs)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, workspaceID)
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) PatchProjects(ctx context.Context, workspaceID int64, projectIDs []int64, commands []catalogapplication.PatchProjectCommand) error {
+	err := c.Store.PatchProjects(ctx, workspaceID, projectIDs, commands)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, workspaceID)
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) SetProjectPinned(ctx context.Context, workspaceID int64, projectID int64, pinned bool) error {
+	err := c.Store.SetProjectPinned(ctx, workspaceID, projectID, pinned)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:projects:%d", workspaceID), fmt.Sprintf("catalog:project:%d:%d", workspaceID, projectID))
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) ArchiveClientAndProjects(ctx context.Context, workspaceID int64, clientID int64) ([]int64, error) {
+	ids, err := c.Store.ArchiveClientAndProjects(ctx, workspaceID, clientID)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, workspaceID)
+	}
+	return ids, err
+}
+
+func (c *cachedCatalogStore) RestoreClientAndProjects(ctx context.Context, workspaceID int64, clientID int64, projectIDs []int64, restoreAll bool) error {
+	err := c.Store.RestoreClientAndProjects(ctx, workspaceID, clientID, projectIDs, restoreAll)
+	if err == nil {
+		c.catalogInvalidateWorkspace(ctx, workspaceID)
+	}
+	return err
+}
+
+func (c *cachedCatalogStore) EnsureTagsByName(ctx context.Context, workspaceID int64, createdBy int64, names []string) ([]int64, error) {
+	ids, err := c.Store.EnsureTagsByName(ctx, workspaceID, createdBy, names)
+	if err == nil {
+		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", workspaceID))
+	}
+	return ids, err
 }
