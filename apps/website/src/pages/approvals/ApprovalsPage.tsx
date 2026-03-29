@@ -17,9 +17,14 @@ import type {
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
+import {
+  formatWeekRangeLabel,
+  getWeekStart,
+  shiftWeek,
+} from "../../features/tracking/week-range.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { getISOWeekNumber, getWeekStart, isCurrentWeek } from "./approvals-helpers.ts";
-import { FilterButton, WeekPicker } from "./ApprovalsPrimitives.tsx";
+import { FilterButton } from "./ApprovalsPrimitives.tsx";
 
 type ApprovalsView = "team" | "me" | "settings";
 type TimesheetStatus = "submitted" | "approved" | "rejected" | "open";
@@ -35,8 +40,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
   const [statusFilter, setStatusFilter] = useState<TimesheetStatus>("submitted");
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
 
-  const weekNumber = useMemo(() => getISOWeekNumber(weekAnchor), [weekAnchor]);
-  const weekIsCurrentWeek = useMemo(() => isCurrentWeek(weekAnchor), [weekAnchor]);
+  const weekLabel = useMemo(() => formatWeekRangeLabel(weekAnchor), [weekAnchor]);
 
   const weekStart = useMemo(() => getWeekStart(weekAnchor), [weekAnchor]);
   const weekEnd = useMemo(() => {
@@ -44,22 +48,6 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
     d.setDate(d.getDate() + 6);
     return d;
   }, [weekStart]);
-
-  function goToPreviousWeek() {
-    setWeekAnchor((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() - 7);
-      return d;
-    });
-  }
-
-  function goToNextWeek() {
-    setWeekAnchor((prev) => {
-      const d = new Date(prev);
-      d.setDate(d.getDate() + 7);
-      return d;
-    });
-  }
 
   const approvalsParams = { workspaceId: String(workspaceId) };
 
@@ -121,11 +109,12 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
 
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-4 border-b border-[var(--track-border)] px-5 py-2">
-        <WeekPicker
-          isCurrentWeek={weekIsCurrentWeek}
-          onNext={goToNextWeek}
-          onPrevious={goToPreviousWeek}
-          weekNumber={weekNumber}
+        <WeekRangePicker
+          label={weekLabel}
+          onNext={() => setWeekAnchor((prev) => shiftWeek(prev, 1))}
+          onPrev={() => setWeekAnchor((prev) => shiftWeek(prev, -1))}
+          onSelectDate={setWeekAnchor}
+          selectedDate={weekAnchor}
         />
         <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
           <span>Filters</span>
