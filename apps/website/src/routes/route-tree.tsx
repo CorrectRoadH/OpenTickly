@@ -125,6 +125,7 @@ const MobileReportPage = lazyNamed(
   () => import("../pages/mobile/MobileReportPage.tsx"),
   "MobileReportPage",
 );
+const MobileMePage = lazyNamed(() => import("../pages/mobile/MobileMePage.tsx"), "MobileMePage");
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -373,6 +374,12 @@ const mobileReportRoute = createRoute({
   component: MobileReportRouteComponent,
 });
 
+const mobileMeRoute = createRoute({
+  getParentRoute: () => mobileLayoutRoute,
+  path: "/me",
+  component: MobileMeRouteComponent,
+});
+
 export const routeTree = rootRoute.addChildren([
   homeRoute,
   loginRoute,
@@ -410,7 +417,12 @@ export const routeTree = rootRoute.addChildren([
   legacyWorkspaceSettingsRoute,
   organizationSettingsRoute,
   instanceAdminRoute,
-  mobileLayoutRoute.addChildren([mobileTimerRoute, mobileCalendarRoute, mobileReportRoute]),
+  mobileLayoutRoute.addChildren([
+    mobileTimerRoute,
+    mobileCalendarRoute,
+    mobileReportRoute,
+    mobileMeRoute,
+  ]),
 ]);
 
 function HomeRouteComponent() {
@@ -498,6 +510,11 @@ function WorkspaceTimerRouteComponent() {
   const search = useRouterState({
     select: (state) => state.location.search as ParsedTimerSearch,
   });
+
+  if (typeof window !== "undefined" && window.innerWidth < 768) {
+    return <Navigate replace to="/m/timer" />;
+  }
+
   const initialDate = resolveTimerSearchDate(search.date);
 
   return renderProtectedRoute(
@@ -826,6 +843,10 @@ function SessionUnavailablePanel() {
 }
 
 function MobileLayoutRouteComponent() {
+  if (typeof window !== "undefined" && window.innerWidth >= 768) {
+    return <Navigate replace to="/timer" />;
+  }
+
   return (
     <MobileProtectedBoundary>
       <Suspense fallback={<PublicMainPanelLoading />}>
@@ -873,6 +894,14 @@ function MobileReportRouteComponent() {
   return (
     <Suspense fallback={null}>
       <MobileReportPage />
+    </Suspense>
+  );
+}
+
+function MobileMeRouteComponent() {
+  return (
+    <Suspense fallback={null}>
+      <MobileMePage />
     </Suspense>
   );
 }

@@ -19,12 +19,14 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 type MobileCalendarDayTimelineProps = {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   nowMs: number;
+  onEntryTap?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   timezone: string;
 };
 
 export function MobileCalendarDayTimeline({
   entries,
   nowMs,
+  onEntryTap,
   timezone,
 }: MobileCalendarDayTimelineProps): ReactElement {
   const { durationFormat } = useUserPreferences();
@@ -95,9 +97,11 @@ export function MobileCalendarDayTimeline({
             const description = entry.description?.trim() || "No description";
 
             return (
-              <div
+              <button
                 key={key}
-                className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5"
+                className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
+                onClick={() => onEntryTap?.(entry)}
+                type="button"
                 style={{
                   top: (layout.top / 60) * HOUR_HEIGHT,
                   height: Math.max(20, (layout.height / 60) * HOUR_HEIGHT),
@@ -114,7 +118,7 @@ export function MobileCalendarDayTimeline({
                     {formatClockDuration(seconds, durationFormat)}
                   </p>
                 ) : null}
-              </div>
+              </button>
             );
           })}
         </div>

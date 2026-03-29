@@ -15,6 +15,7 @@ import { useSession } from "../../shared/session/session-context.tsx";
 import {
   CalendarIcon,
   PlayIcon,
+  ProfileIcon,
   ReportsIcon,
   StopIcon,
   TimerIcon,
@@ -24,6 +25,7 @@ const TABS = [
   { path: "/m/timer", label: "Timer", Icon: TimerIcon },
   { path: "/m/calendar", label: "Calendar", Icon: CalendarIcon },
   { path: "/m/report", label: "Report", Icon: ReportsIcon },
+  { path: "/m/me", label: "Me", Icon: ProfileIcon },
 ] as const;
 
 export function MobileShell(): ReactElement {
