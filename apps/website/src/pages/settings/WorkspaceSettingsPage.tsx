@@ -16,6 +16,7 @@ import {
   useUpdateWorkspaceSettingsMutation,
   useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
+import { FeatureWipNotice } from "../../shared/ui/FeatureWipNotice.tsx";
 import type { WorkspaceSettingsSection } from "../../shared/url-state/workspace-settings-location.ts";
 
 type WorkspaceSettingsPageProps = {
@@ -104,6 +105,7 @@ function SettingsSectionContent(props: {
           onSubmit={props.onSubmit}
           onSubmitError={props.onSubmitError}
           onSubmitSuccess={props.onSubmitSuccess}
+          workspaceId={props.workspaceId}
         />
       );
     case "billable-rates":
@@ -116,6 +118,27 @@ function SettingsSectionContent(props: {
       return <SettingsAuditLog workspaceId={props.workspaceId} />;
     case "activity":
       return <SettingsActivity workspaceId={props.workspaceId} />;
+    case "alerts":
+      return (
+        <FeatureWipNotice
+          description="Configure alerts to notify workspace members when tracked time exceeds project or task budgets."
+          title="Alerts"
+        />
+      );
+    case "reminders":
+      return (
+        <FeatureWipNotice
+          description="Set up tracking reminders to help your team remember to log their time consistently."
+          title="Reminders"
+        />
+      );
+    case "sso":
+      return (
+        <FeatureWipNotice
+          description="Enable Single Sign On to let your team authenticate through your organization's identity provider."
+          title="Single Sign On"
+        />
+      );
     default:
       return (
         <SettingsState
