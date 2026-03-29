@@ -728,7 +728,7 @@ export function WorkspaceTimerPage({
           {!orch.timeEntriesQuery.isPending &&
           !orch.timeEntriesQuery.isError &&
           orch.view === "timesheet" ? (
-            <div className="relative">
+            <div className="relative min-h-screen">
               <TimesheetView
                 onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
                 onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
