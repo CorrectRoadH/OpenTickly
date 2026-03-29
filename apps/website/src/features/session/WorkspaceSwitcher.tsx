@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { SelectButton } from "@opentoggl/web-ui";
 import {
   useEffect,
   useId,
@@ -14,13 +15,7 @@ import { createPortal } from "react-dom";
 import type { SessionOrganizationViewModel } from "../../entities/session/session-bootstrap.ts";
 import { useCreateOrganizationMutation } from "../../shared/query/web-shell.ts";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  MembersIcon,
-  OverviewIcon,
-  SettingsIcon,
-} from "../../shared/ui/icons.tsx";
+import { CheckIcon, MembersIcon, OverviewIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 
 type WorkspaceSwitcherProps = {
   currentOrganization: SessionOrganizationViewModel | null;
@@ -214,34 +209,19 @@ export function WorkspaceSwitcher({
       <span className="sr-only" id={`${listboxId}-label`}>
         Organization
       </span>
-      <button
+      <SelectButton
         aria-controls={listboxId}
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-labelledby={`${listboxId}-label`}
-        className={`flex h-9 w-full items-center gap-2 rounded-[8px] border px-3 text-left text-white outline-none transition ${
-          isOpen
-            ? "border-[var(--track-accent-soft)] bg-[var(--track-surface-muted)]"
-            : "border-[var(--track-border)] bg-[var(--track-surface-muted)] hover:bg-[var(--track-row-hover)] focus-visible:border-[var(--track-accent-soft)]"
-        }`}
         onClick={() => {
           setIsOpen((open) => !open);
         }}
         onKeyDown={handleButtonKeyDown}
         ref={buttonRef}
-        type="button"
       >
-        <span className="min-w-0 flex-1 truncate text-[14px] leading-5 font-semibold text-white">
-          {visibleOrganization?.name ?? ""}
-        </span>
-        <span
-          className={`shrink-0 transition ${
-            isOpen ? "text-white" : "text-[var(--track-text-muted)]"
-          }`}
-        >
-          <ChevronDownIcon className={`size-4 transition ${isOpen ? "rotate-180" : ""}`} />
-        </span>
-      </button>
+        {visibleOrganization?.name ?? ""}
+      </SelectButton>
 
       {isOpen && panelPosition
         ? createPortal(
