@@ -23,6 +23,7 @@ type WorkspaceSettingsFormProps = {
   onSubmit: (request: ReturnType<typeof mapWorkspaceSettingsFormToRequest>) => Promise<void> | void;
   onSubmitError?: () => void;
   onSubmitSuccess?: () => void;
+  workspaceId: number;
 };
 
 export function WorkspaceSettingsForm({
@@ -30,6 +31,7 @@ export function WorkspaceSettingsForm({
   onSubmit,
   onSubmitError,
   onSubmitSuccess,
+  workspaceId,
 }: WorkspaceSettingsFormProps): ReactElement {
   const form = useForm<WorkspaceSettingsFormValues>({
     defaultValues: initialValues,
@@ -110,7 +112,13 @@ export function WorkspaceSettingsForm({
       <HiddenField type="hidden" {...form.register("logoUrl")} />
 
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-        <LogoCard />
+        <LogoCard
+          logoUrl={form.watch("logoUrl")}
+          onLogoChange={(url) => {
+            form.setValue("logoUrl", url, { shouldDirty: false });
+          }}
+          workspaceId={workspaceId}
+        />
         <div className="w-full max-w-[270px] lg:pt-[73px]">
           <FieldLabel label="Workspace Name" />
           <input

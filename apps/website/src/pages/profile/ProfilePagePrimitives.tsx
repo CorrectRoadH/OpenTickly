@@ -1,7 +1,11 @@
-import { type ReactElement, type ReactNode } from "react";
+import { Upload, Trash2 } from "lucide-react";
+import { type ReactElement, type ReactNode, useRef, useState } from "react";
+import { toast } from "sonner";
 
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
 
+import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
+import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const sectionCardClassName =
@@ -180,19 +184,71 @@ function PreferenceSelectBase({
 export function ProfileHeroCard({
   accountSettingsHref,
   avatarImageUrl,
+  onAvatarChange,
   profileName,
   rows,
 }: {
   accountSettingsHref: string;
   avatarImageUrl?: string | null;
+  onAvatarChange?: (url: string | null) => void;
   profileName: string;
   rows: ReadonlyArray<{ label: string; value: string }>;
 }): ReactElement {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(file: File): Promise<void> {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await unwrapWebApiResult(
+        postAvatars({
+          body: formData as never,
+          bodySerializer: (body) => body as FormData,
+        }),
+      );
+      const url = result.avatar_urls?.["original"] ?? null;
+      onAvatarChange?.(url);
+      toast.success("Avatar uploaded");
+    } catch {
+      toast.error("Failed to upload avatar");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    setUploading(true);
+    try {
+      await unwrapWebApiResult(deleteAvatars());
+      onAvatarChange?.(null);
+      toast.success("Avatar removed");
+    } catch {
+      toast.error("Failed to remove avatar");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   return (
     <AppPanel className="p-0" tone="transparent">
       <div className="flex min-h-[331px] items-start">
         <div className="flex h-[331px] w-[268px] items-start p-6">
-          <div className="flex size-[220px] items-start rounded-[110px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+          <div className="group relative flex size-[220px] items-start rounded-[110px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+            <input
+              accept="image/png,image/jpeg,image/gif"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  void handleUpload(file);
+                }
+                event.target.value = "";
+              }}
+              ref={fileInputRef}
+              type="file"
+            />
             <div className="flex h-full items-center justify-center py-[2px]">
               <UserAvatar
                 className="size-[216px] rounded-[108px] bg-[var(--track-surface)]"
@@ -200,6 +256,28 @@ export function ProfileHeroCard({
                 name={profileName}
                 textClassName="text-6xl font-semibold"
               />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-[110px] bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
+                title="Upload avatar"
+                type="button"
+              >
+                <Upload className="size-5" />
+              </button>
+              {avatarImageUrl ? (
+                <button
+                  className="flex size-10 items-center justify-center rounded-full bg-white/20 text-red-300 hover:bg-white/30"
+                  disabled={uploading}
+                  onClick={() => void handleDelete()}
+                  title="Remove avatar"
+                  type="button"
+                >
+                  <Trash2 className="size-5" />
+                </button>
+              ) : null}
             </div>
           </div>
         </div>

@@ -1,4 +1,9 @@
-import { type InputHTMLAttributes, type ReactElement } from "react";
+import { Upload, Trash2 } from "lucide-react";
+import { type InputHTMLAttributes, type ReactElement, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { postWorkspaceLogo, deleteWorkspaceLogo } from "../../shared/api/public/track/index.ts";
+import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 
 export function SettingsCard(props: {
   children: ReactElement | ReactElement[];
@@ -20,21 +25,115 @@ export function SettingsCard(props: {
   );
 }
 
-export function LogoCard(): ReactElement {
+export function LogoCard({
+  logoUrl,
+  workspaceId,
+  onLogoChange,
+}: {
+  logoUrl: string;
+  workspaceId: number;
+  onLogoChange: (url: string) => void;
+}): ReactElement {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleUpload(file: File): Promise<void> {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await unwrapWebApiResult(
+        postWorkspaceLogo({
+          path: { workspace_id: workspaceId },
+          body: formData as never,
+          bodySerializer: (body) => body as FormData,
+        }),
+      );
+      onLogoChange(result.logo ?? "");
+      toast.success("Logo uploaded");
+    } catch {
+      toast.error("Failed to upload logo");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleDelete(): Promise<void> {
+    setUploading(true);
+    try {
+      await unwrapWebApiResult(
+        deleteWorkspaceLogo({
+          path: { workspace_id: workspaceId },
+        }),
+      );
+      onLogoChange("");
+      toast.success("Logo removed");
+    } catch {
+      toast.error("Failed to remove logo");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const hasLogo = logoUrl.length > 0;
+
   return (
     <div className="flex h-[216px] w-[216px] shrink-0 flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-[var(--track-border)] bg-[var(--track-surface)] px-[22px] py-[22px] shadow-[0px_1px_3px_0px_var(--track-shadow-subtle)]">
-      <div className="pb-6 text-center">
-        <div className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[var(--track-control-border-strong)]">
-          Made with
-        </div>
-        <div className="text-[34px] font-semibold leading-none text-[var(--track-text-muted)]">
-          toggl
-        </div>
-      </div>
-      <p className="text-center text-[12px] font-medium leading-4 text-[var(--track-text-muted)]">
-        <span className="text-[var(--track-accent-secondary)] underline">Upgrade</span> to use your
-        logo on invoices and PDF exports
-      </p>
+      <input
+        accept="image/png,image/jpeg,image/gif,image/svg+xml"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) {
+            void handleUpload(file);
+          }
+          event.target.value = "";
+        }}
+        ref={fileInputRef}
+        type="file"
+      />
+
+      {hasLogo ? (
+        <>
+          <img
+            alt="Workspace logo"
+            className="mb-3 max-h-[120px] max-w-[160px] rounded-[8px] object-contain"
+            src={logoUrl}
+          />
+          <div className="flex gap-2">
+            <button
+              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-[var(--track-text-muted)] hover:text-white"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              type="button"
+            >
+              <Upload className="size-3" />
+              Replace
+            </button>
+            <button
+              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-red-400 hover:text-red-300"
+              disabled={uploading}
+              onClick={() => void handleDelete()}
+              type="button"
+            >
+              <Trash2 className="size-3" />
+              Remove
+            </button>
+          </div>
+        </>
+      ) : (
+        <button
+          className="flex flex-col items-center gap-3"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          type="button"
+        >
+          <Upload className="size-8 text-[var(--track-text-muted)]" />
+          <span className="text-center text-[12px] font-medium leading-4 text-[var(--track-text-muted)]">
+            {uploading ? "Uploading…" : "Upload your workspace logo"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

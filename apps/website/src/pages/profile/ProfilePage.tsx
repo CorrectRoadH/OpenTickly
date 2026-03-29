@@ -198,6 +198,9 @@ export function ProfilePage(): ReactElement {
           <ProfileHeroCard
             accountSettingsHref="https://track.toggl.com/account"
             avatarImageUrl={profileQuery.data.image_url ?? session.user.imageUrl}
+            onAvatarChange={() => {
+              void profileQuery.refetch();
+            }}
             profileName={profileName || "Unnamed user"}
             rows={heroRows}
           />

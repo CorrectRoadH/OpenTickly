@@ -104,6 +104,7 @@ type UserSnapshot struct {
 	ProductEmailsDisableCode string
 	WeeklyReportDisableCode  string
 	IsInstanceAdmin          bool
+	AvatarStorageKey         string
 }
 
 type AuthenticatedSession struct {
@@ -286,6 +287,18 @@ func (service *Service) UpdateProfile(ctx context.Context, userID int64, update 
 		return UserSnapshot{}, err
 	}
 
+	return snapshotFromUser(user), nil
+}
+
+func (service *Service) UpdateAvatar(ctx context.Context, userID int64, storageKey string) (UserSnapshot, error) {
+	user, err := service.users.ByID(ctx, userID)
+	if err != nil {
+		return UserSnapshot{}, err
+	}
+	user.SetAvatarStorageKey(storageKey)
+	if err := service.users.Save(ctx, user); err != nil {
+		return UserSnapshot{}, err
+	}
 	return snapshotFromUser(user), nil
 }
 
@@ -524,5 +537,6 @@ func snapshotFromUser(user *domain.User) UserSnapshot {
 		ProductEmailsDisableCode: user.ProductEmailsDisableCode(),
 		WeeklyReportDisableCode:  user.WeeklyReportDisableCode(),
 		IsInstanceAdmin:          user.IsInstanceAdmin(),
+		AvatarStorageKey:         user.AvatarStorageKey(),
 	}
 }

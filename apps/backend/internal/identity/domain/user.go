@@ -42,6 +42,7 @@ type RegisterParams struct {
 	ToSAcceptNeeded          *bool
 	ProductEmailsDisableCode string
 	WeeklyReportDisableCode  string
+	AvatarStorageKey         string
 }
 
 type BasicCredentials struct {
@@ -110,6 +111,7 @@ type User struct {
 	weeklyReportDisableCode  string
 	preferences              Preferences
 	isInstanceAdmin          bool
+	avatarStorageKey         string
 }
 
 func RegisterUser(params RegisterParams) (*User, error) {
@@ -164,6 +166,7 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		tosAcceptNeeded:          tosAcceptNeeded,
 		productEmailsDisableCode: productEmailsDisableCode,
 		weeklyReportDisableCode:  weeklyReportDisableCode,
+		avatarStorageKey:         params.AvatarStorageKey,
 		preferences: Preferences{
 			AnimationOptOut:                boolPref(false),
 			BeginningOfWeek:                intPref(1),
@@ -257,6 +260,14 @@ func (user *User) IsInstanceAdmin() bool {
 
 func (user *User) PromoteToInstanceAdmin() {
 	user.isInstanceAdmin = true
+}
+
+func (user *User) AvatarStorageKey() string {
+	return user.avatarStorageKey
+}
+
+func (user *User) SetAvatarStorageKey(key string) {
+	user.avatarStorageKey = key
 }
 
 func (user *User) HasPassword() bool {

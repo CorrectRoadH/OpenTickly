@@ -324,7 +324,7 @@ func profileBody(user application.UserSnapshot, defaultWorkspaceID int64) webapi
 		Fullname:           user.FullName,
 		HasPassword:        user.HasPassword,
 		Id:                 int(user.ID),
-		ImageUrl:           nil,
+		ImageUrl:           webAvatarURL(user.AvatarStorageKey),
 		Timezone:           user.Timezone,
 	}
 }
@@ -382,4 +382,12 @@ func normalizeTimeOfDayFormat(value string) string {
 		return "h:mm A"
 	}
 	return value
+}
+
+func webAvatarURL(storageKey string) *string {
+	if storageKey == "" {
+		return nil
+	}
+	url := "https://cdn.example.com/" + storageKey
+	return &url
 }

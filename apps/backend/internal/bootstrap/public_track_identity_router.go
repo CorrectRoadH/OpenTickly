@@ -134,6 +134,10 @@ func (server *publicTrackOpenAPIServer) PostAvatars(ctx echo.Context) error {
 	return server.identity.PostPublicTrackAvatars(ctx)
 }
 
+func (server *publicTrackOpenAPIServer) DeleteAvatars(ctx echo.Context) error {
+	return server.identity.DeletePublicTrackAvatars(ctx)
+}
+
 func (server *publicTrackOpenAPIServer) PostUseGravatar(ctx echo.Context) error {
 	return server.identity.PostPublicTrackUseGravatar(ctx)
 }

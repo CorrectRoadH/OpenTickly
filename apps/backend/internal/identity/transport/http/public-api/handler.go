@@ -187,7 +187,7 @@ func currentUserBody(user application.UserSnapshot) currentUserResponse {
 		Id:                 user.ID,
 		Email:              user.Email,
 		Fullname:           user.FullName,
-		ImageURL:           nil,
+		ImageURL:           avatarURL(user.AvatarStorageKey),
 		ApiToken:           user.APIToken,
 		Timezone:           user.Timezone,
 		DefaultWorkspaceID: user.DefaultWorkspaceID,

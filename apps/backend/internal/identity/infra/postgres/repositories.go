@@ -77,8 +77,9 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36)
+			is_instance_admin,
+			avatar_storage_key
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37)
 		on conflict (id) do update
 		set email = excluded.email,
 			full_name = excluded.full_name,
@@ -114,7 +115,8 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 			preferences_tags_shortcut_enabled = excluded.preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format = excluded.preferences_time_of_day_format,
 			preferences_alpha_features = excluded.preferences_alpha_features,
-			is_instance_admin = excluded.is_instance_admin
+			is_instance_admin = excluded.is_instance_admin,
+			avatar_storage_key = excluded.avatar_storage_key
 	`,
 		user.ID(),
 		user.Email(),
@@ -152,6 +154,7 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 		user.Preferences().TimeOfDayFormat,
 		alphaFeatures,
 		user.IsInstanceAdmin(),
+		user.AvatarStorageKey(),
 	)
 	if err != nil {
 		return fmt.Errorf("save identity user %d: %w", user.ID(), err)
@@ -198,7 +201,8 @@ func (repo *UserRepository) ByID(ctx context.Context, id int64) (*domain.User, e
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
+			is_instance_admin,
+			avatar_storage_key
 		from identity_users
 		where id = $1
 	`, id)
@@ -251,7 +255,8 @@ func (repo *UserRepository) ByEmail(ctx context.Context, email string) (*domain.
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
+			is_instance_admin,
+			avatar_storage_key
 		from identity_users
 		where email = lower(trim($1))
 	`, email)
@@ -304,7 +309,8 @@ func (repo *UserRepository) ByAPIToken(ctx context.Context, token string) (*doma
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
+			is_instance_admin,
+			avatar_storage_key
 		from identity_users
 		where api_token = $1
 	`, token)
@@ -357,7 +363,8 @@ func (repo *UserRepository) ByProductEmailsDisableCode(ctx context.Context, code
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
+			is_instance_admin,
+			avatar_storage_key
 		from identity_users
 		where product_emails_disable_code = $1
 	`, code)
@@ -410,7 +417,8 @@ func (repo *UserRepository) ByWeeklyReportDisableCode(ctx context.Context, code 
 			preferences_tags_shortcut_enabled,
 			preferences_time_of_day_format,
 			preferences_alpha_features,
-			is_instance_admin
+			is_instance_admin,
+			avatar_storage_key
 		from identity_users
 		where weekly_report_disable_code = $1
 	`, code)
@@ -503,6 +511,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		preferencesTimeOfDay                      string
 		preferencesAlphaFeatures                  []byte
 		isInstanceAdmin                           bool
+		avatarStorageKey                          string
 	)
 
 	if err := row.Scan(
@@ -542,6 +551,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		&preferencesTimeOfDay,
 		&preferencesAlphaFeatures,
 		&isInstanceAdmin,
+		&avatarStorageKey,
 	); err != nil {
 		return nil, err
 	}
@@ -565,6 +575,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		ToSAcceptNeeded:          lo.ToPtr(tosAcceptNeeded),
 		ProductEmailsDisableCode: productEmailsDisableCode,
 		WeeklyReportDisableCode:  weeklyReportDisableCode,
+		AvatarStorageKey:         avatarStorageKey,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rebuild identity user %d: %w", id, err)

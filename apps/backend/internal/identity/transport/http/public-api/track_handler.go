@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
@@ -409,6 +410,25 @@ func bindTrackJSON(ctx echo.Context, target any) error {
 	return ctx.Bind(target)
 }
 
+func avatarURL(storageKey string) *string {
+	if storageKey == "" {
+		return nil
+	}
+	url := "https://cdn.example.com/" + storageKey
+	return &url
+}
+
+func avatarResponse(storageKey string) publictrackapi.ModelsAvatar {
+	urls := publictrackapi.ModelsImageURLs{}
+	if storageKey != "" {
+		url := "https://cdn.example.com/" + storageKey
+		urls["original"] = url
+	}
+	return publictrackapi.ModelsAvatar{
+		AvatarUrls: &urls,
+	}
+}
+
 func sessionIDFromTrackContext(ctx echo.Context) string {
 	cookie, err := ctx.Cookie("opentoggl_session")
 	if err == nil {
@@ -490,20 +510,50 @@ func (handler *PublicTrackHandler) PostSmailMeet(ctx echo.Context) error {
 
 // GetPublicTrackAvatars returns user avatars.
 func (handler *PublicTrackHandler) GetPublicTrackAvatars(ctx echo.Context) error {
-	_, err := handler.resolvePublicTrackUser(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return ctx.JSON(http.StatusOK, avatarResponse(user.AvatarStorageKey))
+}
+
+// DeletePublicTrackAvatars deletes user avatar.
+func (handler *PublicTrackHandler) DeletePublicTrackAvatars(ctx echo.Context) error {
+	user, err := handler.resolvePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = handler.identity.service.UpdateAvatar(ctx.Request().Context(), user.ID, "")
+	if err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+	return ctx.JSON(http.StatusOK, avatarResponse(""))
 }
 
 // PostPublicTrackAvatars uploads a user avatar.
 func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) error {
-	_, err := handler.resolvePublicTrackUser(ctx)
+	user, err := handler.resolvePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+
+	fileHeader, err := ctx.FormFile("file")
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileHeader.Filename)))
+	storageKey := fmt.Sprintf("identity/avatars/%d/avatar%s", user.ID, ext)
+
+	updated, err := handler.identity.service.UpdateAvatar(ctx.Request().Context(), user.ID, storageKey)
+	if err != nil {
+		response := mapError(err)
+		return ctx.JSON(response.StatusCode, response.Body)
+	}
+
+	return ctx.JSON(http.StatusOK, avatarResponse(updated.AvatarStorageKey))
 }
 
 // PostPublicTrackUseGravatar toggles Gravatar usage for the user.
