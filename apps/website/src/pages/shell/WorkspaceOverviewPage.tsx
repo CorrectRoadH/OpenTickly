@@ -252,10 +252,6 @@ export function WorkspaceOverviewPage(): ReactElement {
                   <p className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">
                     {memberCount}
                   </p>
-                  <MemberAvatarCluster
-                    members={teamActivity.activeMembers}
-                    nameById={memberNameById}
-                  />
                 </div>
                 <div className="space-y-1">
                   <p className="text-[14px] font-semibold leading-[23px] text-white">
@@ -364,48 +360,6 @@ function OverviewSurface({
     >
       {children}
     </section>
-  );
-}
-
-function MemberAvatarCluster({
-  members,
-  nameById,
-}: {
-  members: ModelsMostActiveUser[];
-  nameById: Map<number, string>;
-}): ReactElement {
-  const visibleMembers = members.slice(0, 5);
-
-  return (
-    <div className="relative h-[32px] w-[66px] shrink-0">
-      {visibleMembers.map((member, index) => {
-        const positions = [
-          { left: 40, top: 0, size: 12 },
-          { left: 18, top: 4, size: 12 },
-          { left: 52, top: 10, size: 12 },
-          { left: 28, top: 12, size: 22 },
-          { left: 4, top: 14, size: 12 },
-        ];
-        const position = positions[index] ?? positions[positions.length - 1];
-
-        return (
-          <span
-            className="absolute inline-flex items-center justify-center rounded-full border border-[var(--track-surface)] font-semibold text-[var(--track-surface)]"
-            key={`${member.user_id ?? index}`}
-            style={{
-              backgroundColor: memberTint(index),
-              fontSize: position.size <= 12 ? 7 : 9,
-              height: position.size,
-              left: position.left,
-              top: position.top,
-              width: position.size,
-            }}
-          >
-            {initialsForMember(member, nameById)}
-          </span>
-        );
-      })}
-    </div>
   );
 }
 
