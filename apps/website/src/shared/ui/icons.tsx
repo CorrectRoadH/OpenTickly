@@ -20,6 +20,17 @@ function Icon(props: IconProps & { children: ReactElement }): ReactElement {
   );
 }
 
+export function AuditLogIcon(props: IconProps): ReactElement {
+  return (
+    <Icon {...props}>
+      <>
+        <path d="M4.5 2.5h7a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z" />
+        <path d="M6 5.5h4M6 8h4M6 10.5h2.5" />
+      </>
+    </Icon>
+  );
+}
+
 export function ArchiveIcon(props: IconProps): ReactElement {
   return (
     <Icon {...props}>

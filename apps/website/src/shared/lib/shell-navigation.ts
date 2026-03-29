@@ -91,6 +91,10 @@ export function shellNavigationItems(session: SessionBootstrapViewModel): ShellN
       title: "Admin",
       items: [
         {
+          label: "Audit Log",
+          to: `/workspaces/${session.currentWorkspace.id}/audit-log`,
+        },
+        {
           label: "Subscription",
           to: `/workspaces/${session.currentWorkspace.id}/subscription`,
         },

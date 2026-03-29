@@ -104,6 +104,7 @@ const InvoiceEditorPage = lazyNamed(
   "InvoiceEditorPage",
 );
 const InvoicesPage = lazyNamed(() => import("../pages/invoices/InvoicesPage.tsx"), "InvoicesPage");
+const AuditLogPage = lazyNamed(() => import("../pages/audit-log/AuditLogPage.tsx"), "AuditLogPage");
 const SubscriptionPage = lazyNamed(
   () => import("../pages/subscription/SubscriptionPage.tsx"),
   "SubscriptionPage",
@@ -289,6 +290,12 @@ const workspaceIntegrationsRoute = createRoute({
   component: WorkspaceIntegrationsRouteComponent,
 });
 
+const workspaceAuditLogRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/audit-log",
+  component: WorkspaceAuditLogRouteComponent,
+});
+
 const workspaceSubscriptionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/subscription",
@@ -350,6 +357,7 @@ export const routeTree = rootRoute.addChildren([
   workspaceInvoicesRoute,
   workspaceGoalsRoute,
   workspaceIntegrationsRoute,
+  workspaceAuditLogRoute,
   workspaceSubscriptionRoute,
   workspaceSettingsRoute,
   legacyWorkspaceSettingsRoute,
@@ -642,6 +650,13 @@ function WorkspaceIntegrationsRouteComponent() {
   const workspaceId = Number(params.workspaceId);
 
   return renderProtectedRoute(<IntegrationsPage />, workspaceId);
+}
+
+function WorkspaceAuditLogRouteComponent() {
+  const params = workspaceAuditLogRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+
+  return renderProtectedRoute(<AuditLogPage />, workspaceId);
 }
 
 function WorkspaceSubscriptionRouteComponent() {

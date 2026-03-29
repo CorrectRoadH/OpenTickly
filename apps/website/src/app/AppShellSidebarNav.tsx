@@ -8,6 +8,7 @@ import {
 } from "./shell-navigation-state.ts";
 import {
   ApprovalsIcon,
+  AuditLogIcon,
   ClientsIcon,
   DollarIcon,
   GoalsIcon,
@@ -162,6 +163,7 @@ const navIconMap: Record<string, ReactNode> = {
   Tags: <TagsIcon className={iconClass} />,
   Goals: <GoalsIcon className={iconClass} />,
   Integrations: <IntegrationsIcon className={iconClass} />,
+  "Audit Log": <AuditLogIcon className={iconClass} />,
   Subscription: <SubscriptionIcon className={iconClass} />,
   Settings: <SettingsIcon className={iconClass} />,
 };
