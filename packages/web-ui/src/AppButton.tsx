@@ -14,39 +14,23 @@ type AppButtonProps = {
   type?: "button" | "submit";
 };
 
-/**
- * Dual-layer 2.5D button (PostHog pattern).
- * Outer <button>: bg = dark shadow color.
- * Inner <span>:   bg = bright face, -translate-y-[2px] reveals outer bg at bottom.
- */
+const base =
+  "inline-flex items-center justify-center gap-1 rounded-[8px] font-semibold select-none transition-[transform,box-shadow] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
 
-const outerBase =
-  "relative inline-flex rounded-[6px] border-[1.5px] text-center group disabled:opacity-50 disabled:cursor-not-allowed";
-
-const outerTone: Record<AppButtonTone, string> = {
-  primary: "bg-[var(--track-accent-strong)] border-[var(--track-accent-strong)]",
-  secondary: "bg-[var(--track-depth-border)] border-[var(--track-depth-border)]",
-  ghost: "border-transparent bg-transparent",
-  destructive: "bg-[#881337] border-[#881337]",
-};
-
-const innerBase =
-  "flex items-center justify-center gap-1 rounded-[6px] border-[1.5px] mx-[-1.5px] font-semibold select-none active:transition-all active:duration-100";
-
-const innerTone: Record<AppButtonTone, string> = {
+const toneClass: Record<AppButtonTone, string> = {
   primary:
-    "bg-[var(--track-button)] text-white border-[var(--track-button)] -translate-y-[2px] hover:-translate-y-[3px] active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
+    "bg-[var(--track-button)] text-white shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-px hover:shadow-[0_3px_0_0_var(--track-accent-strong)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]",
   secondary:
-    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border-[var(--track-border)] -translate-y-[2px] hover:-translate-y-[3px] hover:text-white active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
+    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[var(--track-depth-shadow-rest)] hover:-translate-y-px hover:shadow-[0_3px_0_0_var(--track-depth-border)] hover:text-white active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]",
   ghost:
-    "bg-transparent text-[var(--track-text-muted)] border-transparent translate-y-0 hover:bg-[var(--track-row-hover)] active:translate-y-px",
+    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border border-[var(--track-border)] shadow-[var(--track-depth-shadow-rest)] hover:-translate-y-px hover:shadow-[0_3px_0_0_var(--track-depth-border)] hover:text-white active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]",
   destructive:
-    "bg-rose-600 text-white border-rose-600 -translate-y-[2px] hover:-translate-y-[3px] active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
+    "bg-rose-600 text-white shadow-[0_2px_0_0_#881337] hover:-translate-y-px hover:shadow-[0_3px_0_0_#881337] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]",
 };
 
-const innerSize: Record<AppButtonSize, string> = {
-  default: "px-4 py-1 text-[12px]",
-  sm: "px-2.5 py-1 text-[11px]",
+const sizeClass: Record<AppButtonSize, string> = {
+  default: "h-9 px-4 text-[12px]",
+  sm: "h-7 px-2.5 text-[11px]",
 };
 
 export function AppButton({
@@ -61,13 +45,14 @@ export function AppButton({
 }: AppButtonProps) {
   return (
     <button
-      className={`${outerBase} ${outerTone[tone]} ${className}`}
+      className={`${base} ${toneClass[tone]} ${sizeClass[size]} ${className}`}
       data-testid={testId}
       disabled={disabled}
       onClick={onClick}
+      style={{ transitionTimingFunction: "var(--ease-spring)" }}
       type={type}
     >
-      <span className={`${innerBase} ${innerTone[tone]} ${innerSize[size]}`}>{children}</span>
+      {children}
     </button>
   );
 }
