@@ -80,6 +80,8 @@ export function WeekRangePicker({
   weekStartsOn?: number;
 }): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
+  const [headerPicker, setHeaderPicker] = useState<"month" | "year" | null>(null);
+  const [yearPageStart, setYearPageStart] = useState(() => new Date().getFullYear() - 5);
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1),
   );
@@ -93,6 +95,7 @@ export function WeekRangePicker({
 
   useEffect(() => {
     if (!isOpen) {
+      setHeaderPicker(null);
       return;
     }
 
@@ -237,35 +240,133 @@ export function WeekRangePicker({
             </div>
 
             <div>
-              <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="relative mb-3 flex items-center justify-between gap-2">
                 <button
                   aria-label="Previous month"
                   className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  onClick={() =>
+                  onClick={() => {
+                    setHeaderPicker(null);
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1),
-                    )
-                  }
+                    );
+                  }}
                   type="button"
                 >
                   <ChevronRightIcon className="size-3 rotate-180" />
                 </button>
-                <h2 className="text-[16px] font-semibold text-white">
-                  {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}{" "}
-                  {visibleMonth.getFullYear()}
-                </h2>
+                <div className="flex items-center gap-1">
+                  <button
+                    className="rounded px-1.5 py-0.5 text-[16px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
+                    onClick={() => setHeaderPicker(headerPicker === "month" ? null : "month")}
+                    type="button"
+                  >
+                    {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
+                  </button>
+                  <button
+                    className="rounded px-1.5 py-0.5 text-[16px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
+                    onClick={() => {
+                      if (headerPicker === "year") {
+                        setHeaderPicker(null);
+                      } else {
+                        setYearPageStart(visibleMonth.getFullYear() - 5);
+                        setHeaderPicker("year");
+                      }
+                    }}
+                    type="button"
+                  >
+                    {visibleMonth.getFullYear()}
+                  </button>
+                </div>
                 <button
                   aria-label="Next month"
                   className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-                  onClick={() =>
+                  onClick={() => {
+                    setHeaderPicker(null);
                     setVisibleMonth(
                       new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1),
-                    )
-                  }
+                    );
+                  }}
                   type="button"
                 >
                   <ChevronRightIcon className="size-3" />
                 </button>
+
+                {headerPicker === "month" ? (
+                  <div className="absolute left-0 top-[calc(100%+4px)] z-10 grid w-full grid-cols-3 gap-1 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const label = new Intl.DateTimeFormat("en-US", { month: "short" }).format(
+                        new Date(2000, i),
+                      );
+                      const isCurrent = i === visibleMonth.getMonth();
+                      return (
+                        <button
+                          className={`rounded-lg px-2 py-1.5 text-[13px] font-medium transition ${
+                            isCurrent
+                              ? "bg-[var(--track-accent-strong)] text-white"
+                              : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                          }`}
+                          key={i}
+                          onClick={() => {
+                            setVisibleMonth(new Date(visibleMonth.getFullYear(), i, 1));
+                            setHeaderPicker(null);
+                          }}
+                          type="button"
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
+
+                {headerPicker === "year" ? (
+                  <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
+                    <div className="mb-1 flex items-center justify-between">
+                      <button
+                        aria-label="Previous years"
+                        className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                        onClick={() => setYearPageStart((y) => y - 12)}
+                        type="button"
+                      >
+                        <ChevronRightIcon className="size-3 rotate-180" />
+                      </button>
+                      <span className="text-[12px] font-medium text-[var(--track-text-muted)]">
+                        {yearPageStart} – {yearPageStart + 11}
+                      </span>
+                      <button
+                        aria-label="Next years"
+                        className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+                        onClick={() => setYearPageStart((y) => y + 12)}
+                        type="button"
+                      >
+                        <ChevronRightIcon className="size-3" />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {Array.from({ length: 12 }, (_, i) => {
+                        const year = yearPageStart + i;
+                        const isCurrent = year === visibleMonth.getFullYear();
+                        return (
+                          <button
+                            className={`rounded-lg px-2 py-1.5 text-[13px] font-medium transition ${
+                              isCurrent
+                                ? "bg-[var(--track-accent-strong)] text-white"
+                                : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                            }`}
+                            key={year}
+                            onClick={() => {
+                              setVisibleMonth(new Date(year, visibleMonth.getMonth(), 1));
+                              setHeaderPicker(null);
+                            }}
+                            type="button"
+                          >
+                            {year}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-center text-[11px] font-semibold text-[var(--track-text-muted)]">
