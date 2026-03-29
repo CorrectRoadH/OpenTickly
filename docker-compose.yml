@@ -7,8 +7,7 @@ services:
       POSTGRES_DB: ${OPENTOGGL_POSTGRES_DB:-opentoggl}
       POSTGRES_USER: ${OPENTOGGL_POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${OPENTOGGL_POSTGRES_PASSWORD:-postgres}
-    ports:
-      - "${OPENTOGGL_POSTGRES_PORT:-5432}:5432"
+    networks: [internal]
     volumes:
       - opentoggl-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -16,25 +15,34 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
-    ports:
-      - "${OPENTOGGL_REDIS_PORT:-6379}:6379"
+    networks: [internal]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
 
   opentoggl:
     image: ${OPENTOGGL_IMAGE:-ghcr.io/correctroadh/opentoggl:latest}
     environment:
       OPENTOGGL_SERVICE_NAME: opentoggl
-      PORT: ${OPENTOGGL_PORT:-8080}
+      PORT: "8080"
       DATABASE_URL: ${OPENTOGGL_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/opentoggl?sslmode=disable}
       REDIS_URL: ${OPENTOGGL_REDIS_URL:-redis://redis:6379/0}
       OPENTOGGL_FILESTORE_NAMESPACE: ${OPENTOGGL_FILESTORE_NAMESPACE:-opentoggl}
@@ -44,6 +52,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    networks: [internal]
     ports:
       - "${OPENTOGGL_PORT:-8080}:8080"
     healthcheck:
@@ -51,7 +60,16 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     restart: unless-stopped
+
+networks:
+  internal:
+    driver: bridge
 
 volumes:
   opentoggl-postgres-data:
