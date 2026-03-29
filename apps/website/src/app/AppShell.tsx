@@ -78,6 +78,18 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     };
   }, [runningEntry]);
 
+  useEffect(() => {
+    if (!runningEntry) {
+      document.title = "OpenToggl";
+      return;
+    }
+    const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
+    const h = Math.floor(seconds / 3600);
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+    const s = String(seconds % 60).padStart(2, "0");
+    document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
+  }, [runningEntry, nowMs]);
+
   const timerBadge = useMemo(() => {
     if (!runningEntry) {
       return undefined;

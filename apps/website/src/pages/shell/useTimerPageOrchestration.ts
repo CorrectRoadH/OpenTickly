@@ -690,18 +690,6 @@ export function useTimerPageOrchestration(options?: {
     setRunningDescription(runningEntry?.description ?? "");
   }, [runningEntry]);
 
-  // Update document.title to show elapsed time when timer is running
-  useEffect(() => {
-    if (!runningEntry) {
-      document.title = "OpenToggl";
-      return;
-    }
-    const hours = Math.floor(runningDurationSeconds / 3600);
-    const minutes = String(Math.floor((runningDurationSeconds % 3600) / 60)).padStart(2, "0");
-    const seconds = String(runningDurationSeconds % 60).padStart(2, "0");
-    document.title = `${hours}:${minutes}:${seconds} \u00B7 OpenToggl`;
-  }, [runningEntry, runningDurationSeconds]);
-
   useEffect(() => {
     if (!runningEntry) {
       return;
