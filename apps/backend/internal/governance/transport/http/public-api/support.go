@@ -327,3 +327,11 @@ func dateTimePointer(value *time.Time) *string {
 	formatted := value.UTC().Format(time.RFC3339)
 	return lo.ToPtr(formatted)
 }
+
+func parseRFC3339(raw string) (time.Time, error) {
+	s := strings.TrimSpace(raw)
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
+	}
+	return time.Parse(time.RFC3339Nano, s)
+}

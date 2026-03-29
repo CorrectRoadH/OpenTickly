@@ -36,11 +36,11 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 		return err
 	}
 
-	from, err := time.Parse(time.RFC3339, strings.TrimSpace(ctx.Param("from")))
+	from, err := parseRFC3339(ctx.Param("from"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	to, err := time.Parse(time.RFC3339, strings.TrimSpace(ctx.Param("to")))
+	to, err := parseRFC3339(ctx.Param("to"))
 	if err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
