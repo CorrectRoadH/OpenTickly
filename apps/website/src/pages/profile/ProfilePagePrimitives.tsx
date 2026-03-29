@@ -2,7 +2,7 @@ import { Upload, Trash2 } from "lucide-react";
 import { type ReactElement, type ReactNode, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { AppPanel } from "@opentoggl/web-ui";
 
 import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
@@ -307,8 +307,6 @@ export function ProfileHeroCard({
             <a
               className="inline-flex h-9 items-center rounded-[8px] border border-[var(--track-border)] px-[25px] py-[9px] text-[14px] font-semibold leading-5 text-[var(--track-text-muted)]"
               href={accountSettingsHref}
-              rel="noreferrer"
-              target="_blank"
             >
               Account settings
             </a>
@@ -316,51 +314,5 @@ export function ProfileHeroCard({
         </div>
       </div>
     </AppPanel>
-  );
-}
-
-export function ProfileBetaProgramCard(): ReactElement {
-  return (
-    <section className="overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-black shadow-[inset_0_1px_1px_0_var(--track-accent-tint),inset_0_-1px_0_0_var(--track-accent-tint-subtle)]">
-      <div className="flex items-center justify-center gap-10 px-10 py-4">
-        <div className="flex h-[240px] w-[340px] items-center justify-center">
-          <div className="relative size-[240px]">
-            <div className="absolute left-[14px] top-[59px] h-[118px] w-[122px] rounded-[60px] bg-[var(--track-illustration-neutral)]" />
-            <div className="absolute left-[80px] top-[14px] h-[76px] w-[92px] rounded-t-[50px] border-[16px] border-b-0 border-[var(--track-illustration-border)]" />
-            <div className="absolute left-[79px] top-[123px] h-[78px] w-[102px] rounded-[8px] bg-[var(--track-brand-google-calendar)]" />
-            <div className="absolute left-[113px] top-[144px] h-[37px] w-[35px] rounded-[18px] bg-[var(--track-illustration-ink)]" />
-            <div className="absolute left-[66px] top-[120px] h-[82px] w-[116px] rounded-[8px] border border-[var(--track-illustration-fill)]" />
-            <div className="absolute left-[44px] top-[131px] size-[13px] rounded-full bg-[var(--track-illustration-ink)]" />
-          </div>
-        </div>
-
-        <div className="max-w-[443px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[31px] pb-[21px] pt-[30.5px]">
-          <h3 className="text-[14px] font-semibold leading-[22.96px] text-white">
-            You&apos;re a Beta Tester
-          </h3>
-          <p className="mt-[17.5px] max-w-[352px] text-[14px] font-medium leading-[21px] text-[var(--track-text)]">
-            You get early versions of our new releases before anyone else. New features are
-            indicated with{" "}
-            <span className="rounded-[8px] bg-[var(--track-text)] px-[6px] py-[4px] text-[12px] font-semibold uppercase leading-3 text-black">
-              Beta
-            </span>{" "}
-            symbol.
-          </p>
-          <div className="mt-[17.5px] flex items-center gap-7 pt-[14.5px]">
-            <AppButton disabled tone="secondary" type="button">
-              Disable beta features
-            </AppButton>
-            <a
-              className="text-[14px] font-medium leading-[14px] text-[var(--track-accent-text)]"
-              href="https://support.toggl.com/en/articles/2220661-your-toggl-track-account#beta-tester-program"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Learn more
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 }

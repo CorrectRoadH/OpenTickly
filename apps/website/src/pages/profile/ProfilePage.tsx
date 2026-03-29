@@ -16,7 +16,7 @@ import {
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { defaultPreferencesFormValues } from "./ProfilePageData.ts";
-import { ProfileBetaProgramCard, ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
+import { ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
 import {
   ApiTokenSection,
   ApiTokenStatusNotices,
@@ -160,9 +160,6 @@ export function ProfilePage(): ReactElement {
     { label: "Full name", value: profileName || "Unnamed user" },
     { label: "Email", value: profileQuery.data.email || "No email configured" },
     { label: "Reports timezone", value: reportsTimezone },
-    { label: "Google sign-in", value: "Enabled" },
-    { label: "Apple sign-in", value: "Enabled" },
-    { label: "Passkey sign-in", value: "Enabled" },
     { label: "2FA sign-in", value: profileQuery.data["2fa_enabled"] ? "Enabled" : "Not enabled" },
   ];
   const readPreference = <K extends keyof PreferencesFormValues>(
@@ -196,7 +193,7 @@ export function ProfilePage(): ReactElement {
       <section className="flex gap-3 px-3 pb-10 pt-3">
         <div className="w-full max-w-[1352px] space-y-4">
           <ProfileHeroCard
-            accountSettingsHref="https://track.toggl.com/account"
+            accountSettingsHref="/account"
             avatarImageUrl={profileQuery.data.image_url ?? session.user.imageUrl}
             onAvatarChange={() => {
               void profileQuery.refetch();
@@ -210,8 +207,6 @@ export function ProfilePage(): ReactElement {
           <TimerPageSection getValue={readPreference} setValue={writePreference} />
           <TimeAndDateSection getValue={readPreference} setValue={writePreference} />
           <KeyboardShortcutsSection getValue={readPreference} setValue={writePreference} />
-
-          <ProfileBetaProgramCard />
 
           <ApiTokenStatusNotices apiTokenError={apiTokenError} apiTokenStatus={apiTokenStatus} />
           <ApiTokenSection

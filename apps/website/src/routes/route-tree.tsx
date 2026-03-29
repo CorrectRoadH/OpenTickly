@@ -39,6 +39,7 @@ const InviteStatusJoinedPage = lazyNamed(
   () => import("../pages/members/InviteStatusJoinedPage.tsx"),
   "InviteStatusJoinedPage",
 );
+const AccountPage = lazyNamed(() => import("../pages/account/AccountPage.tsx"), "AccountPage");
 const ProfilePage = lazyNamed(() => import("../pages/profile/ProfilePage.tsx"), "ProfilePage");
 const InstanceAdminPage = lazyNamed(
   () => import("../pages/instance-admin/InstanceAdminPage.tsx"),
@@ -133,6 +134,12 @@ const inviteStatusJoinedRoute = createRoute({
   path: "/invite-status/joined",
   validateSearch: parseInviteStatusJoinedSearch,
   component: InviteStatusJoinedRouteComponent,
+});
+
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/account",
+  component: AccountRouteComponent,
 });
 
 const profileRoute = createRoute({
@@ -332,6 +339,7 @@ export const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   inviteStatusJoinedRoute,
+  accountRoute,
   profileRoute,
   workspaceOverviewRoute,
   workspaceTimerStartRoute,
@@ -381,6 +389,10 @@ function HomeRouteComponent() {
   }
 
   return <Navigate replace to={resolveHomePath()} />;
+}
+
+function AccountRouteComponent() {
+  return renderProtectedRoute(<AccountPage />);
 }
 
 function ProfileRouteComponent() {

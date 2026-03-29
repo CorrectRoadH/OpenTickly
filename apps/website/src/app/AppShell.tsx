@@ -347,6 +347,17 @@ function ProfileMenuButton({
                   Profile settings
                 </button>
                 <button
+                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  onClick={() => {
+                    setOpen(false);
+                    void navigate({ to: "/account" });
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  Account settings
+                </button>
+                <button
                   className="flex w-full items-center justify-between px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
                     setOpen(false);
