@@ -101,9 +101,7 @@ export function ClientRowActions({
                     setMenuOpen(false);
                     setConfirmingDelete(false);
                   }}
-                  overrides={{
-                    BaseButton: { props: { "data-testid": `client-delete-confirm-${clientId}` } },
-                  }}
+                  data-testid={`client-delete-confirm-${clientId}`}
                   size="sm"
                   tone="destructive"
                 >

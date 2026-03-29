@@ -619,10 +619,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       <PageLayout
         title="Projects"
         headerActions={
-          <AppButton
-            onClick={openCreateDialog}
-            overrides={{ BaseButton: { props: { "data-testid": "projects-create-button" } } }}
-          >
+          <AppButton onClick={openCreateDialog} data-testid="projects-create-button">
             <PlusIcon className="size-3.5" />
             New project
           </AppButton>

@@ -223,7 +223,7 @@ export function ClientsPage(): ReactElement {
         headerActions={
           <AppButton
             onClick={() => setComposerOpen((value) => !value)}
-            overrides={{ BaseButton: { props: { "data-testid": "clients-create-button" } } }}
+            data-testid="clients-create-button"
           >
             <PlusIcon className="size-3.5" />
             New client

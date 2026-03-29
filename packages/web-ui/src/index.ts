@@ -1,8 +1,7 @@
-export { AppButton } from "./AppButton.tsx";
+export { AppButton, type AppButtonSize, type AppButtonTone } from "./AppButton.tsx";
 export { AppInlineNotice } from "./AppInlineNotice.tsx";
 export { AppPanel } from "./AppPanel.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";
-export type { AppButtonSize, AppButtonTone } from "./buttonStyles.ts";
 export type { AppSurfaceTone } from "./surfaceStyles.ts";
 export { DirectoryStatusFilter } from "./DirectoryStatusFilter.tsx";
 export { DropdownMenu, MenuItem } from "./DropdownMenu.tsx";

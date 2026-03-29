@@ -106,9 +106,7 @@ export function TagRowActions({
                     setMenuOpen(false);
                     setConfirmingDelete(false);
                   }}
-                  overrides={{
-                    BaseButton: { props: { "data-testid": `tag-delete-confirm-${tagId}` } },
-                  }}
+                  data-testid={`tag-delete-confirm-${tagId}`}
                   size="sm"
                   tone="destructive"
                 >
