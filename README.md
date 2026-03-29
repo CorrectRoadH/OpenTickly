@@ -72,6 +72,14 @@ toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com
 
 ## Get Started
 
-- Repository: `https://github.com/CorrectRoadH/opentoggl`
-- Self-hosting docs: `./docs/self-hosting/docker-compose.md`
-- CLI: `https://github.com/CorrectRoadH/toggl-cli`
+```bash
+mkdir -p opentoggl && cd opentoggl
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+docker compose up -d
+```
+
+Open `http://localhost:8080` and you're good to go.
+
+- [Self-hosting guide](https://opentoggl.com/docs/self-hosting) — Docker Compose, CasaOS, Synology, fnOS, and more
+- [CLI](https://github.com/CorrectRoadH/toggl-cli) — `toggl-cli` works directly with OpenToggl
