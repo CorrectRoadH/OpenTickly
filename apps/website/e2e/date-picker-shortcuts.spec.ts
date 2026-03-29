@@ -15,9 +15,10 @@ test.describe("Date picker shortcut active state", () => {
     await page.context().clearCookies();
     await loginE2eUser(page, test.info(), { email, password });
 
-    // Navigate to timer page
+    // Navigate to timer page and switch to list view (which has "Last 30 days" shortcut)
     await page.getByRole("link", { name: "Timer" }).click();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await page.getByRole("radio", { name: "List view" }).click();
 
     // Open the date picker
     await page.getByTestId("week-range-dialog").waitFor({ state: "detached" });
@@ -52,6 +53,50 @@ test.describe("Date picker shortcut active state", () => {
         "false",
       );
     }
+  });
+
+  test("Timer list view: shortcut label reflects the correct date range", async ({ page }) => {
+    const email = `shortcut-range-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Shortcut Range User",
+      password,
+    });
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await page.getByRole("link", { name: "Timer" }).click();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Switch to list view (defaults to "All dates")
+    await page.getByRole("radio", { name: "List view" }).click();
+
+    const pickerButton = page.getByRole("button", { name: /Press Enter to open date picker/ });
+    const dialog = page.getByTestId("week-range-dialog");
+
+    // Select "This week" first
+    await pickerButton.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "This week" }).click();
+    await expect(pickerButton).toContainText(/This week/);
+
+    // Click "Last 30 days" shortcut
+    await pickerButton.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Last 30 days" }).click();
+
+    // Label should now reflect "Last 30 days", NOT a single week
+    await expect(pickerButton).toContainText(/Last 30 days/);
+
+    // Click "This week" shortcut to go back
+    await pickerButton.click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "This week" }).click();
+
+    // Label should be back to "This week"
+    await expect(pickerButton).toContainText(/This week/);
   });
 
   test("Reports: clicking 'This month' highlights only that shortcut", async ({ page }) => {

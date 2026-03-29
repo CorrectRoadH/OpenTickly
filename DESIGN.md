@@ -62,8 +62,8 @@ Rules:
 ### Font
 
 ```css
---font-ui: 'Inter', sans-serif;
---font-mono: 'JetBrains Mono', monospace;
+--font-ui: "Inter", sans-serif;
+--font-mono: "JetBrains Mono", monospace;
 ```
 
 - **Inter**: the only UI font. Variable weight, load via `@fontsource-variable/inter`.
@@ -74,12 +74,12 @@ Rules:
 
 Four sizes. That's it.
 
-| Size  | Weight     | Role                                                        |
-|-------|------------|-------------------------------------------------------------|
-| 20px  | 600        | Page title only                                             |
-| 14px  | 400 / 600  | Body text, card headers, form labels, descriptions          |
-| 12px  | 400 / 500  | Supporting text, timestamps, helper text, badges            |
-| 11px  | 600 upper  | Column headers (uppercase), caps labels                     |
+| Size | Weight    | Role                                               |
+| ---- | --------- | -------------------------------------------------- |
+| 20px | 600       | Page title only                                    |
+| 14px | 400 / 600 | Body text, card headers, form labels, descriptions |
+| 12px | 400 / 500 | Supporting text, timestamps, helper text, badges   |
+| 11px | 600 upper | Column headers (uppercase), caps labels            |
 
 Rules:
 
@@ -264,6 +264,7 @@ This workspace should be implemented from a small set of reusable component cont
 The page title is the topmost element in the content area. One component, used on every page.
 
 Structure:
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  Page Title                              [Action] [Action]   │
@@ -272,6 +273,7 @@ Structure:
 ```
 
 Spec:
+
 - Height: `66px` (fixed, aligns with shell header rhythm)
 - Title: 20px/600
 - Subtitle: 12px/400, `color: var(--track-text-muted)`
@@ -281,6 +283,7 @@ Spec:
 - Bottom border: `1px solid var(--track-border)` — separates title from content below
 
 Rules:
+
 - Every page must use this exact component. No page-local title styling.
 - Maximum two buttons in the action group. If more actions exist, use a "More" dropdown.
 - Title text must not wrap. If it's too long, truncate with ellipsis.
@@ -291,6 +294,7 @@ Rules:
 The toolbar sits directly below the page title. It contains filters, search, view toggles, and bulk actions.
 
 Structure:
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  [Search]  [Filter] [Filter] [Filter]     [View] [Sort] [+] │
@@ -298,6 +302,7 @@ Structure:
 ```
 
 Spec:
+
 - Height: `48px` (fixed)
 - Background: `var(--track-surface)` (same as page, no separate bar color)
 - Bottom border: `1px solid var(--track-border)`
@@ -306,23 +311,27 @@ Spec:
 - All controls within the toolbar are `32px` height (slightly smaller than page-level buttons to maintain density)
 
 Filter chips:
+
 - Resting: `background: var(--track-surface-muted)`, `border: 1px solid var(--track-border)`, `border-radius: 6px`
 - Active (filter applied): `background: var(--track-accent-soft)`, `border-color: var(--track-accent-border)`, `color: var(--track-accent-text)`
 - Hover: standard press-down depth behavior (same as secondary button but at 32px height)
 - Text: 12px/500
 
 Search input:
+
 - Width: `200px` default, expands to `320px` on focus with `--duration-normal` + `--ease-out`
 - Height: `32px`
 - Left icon: search icon, `var(--track-text-muted)`
 - Placeholder: `var(--track-control-placeholder)`
 
 View toggles (list/grid/calendar):
+
 - Icon-only buttons, `32px` square
 - Active: `background: var(--track-accent-soft)`, icon in `var(--track-accent-text)`
 - Inactive: transparent, icon in `var(--track-text-muted)`
 
 Rules:
+
 - The toolbar is optional — not every page needs one. But if filters/search exist, they go here.
 - Toolbar must not scroll horizontally. If too many filters, use a "More filters" dropdown.
 - Toolbar filters are always visible state — no hidden filter panel that slides down.
@@ -341,6 +350,7 @@ The primary data layout for workspace pages (time entries, projects, clients, ta
 ```
 
 Spec:
+
 - Height: `36px`
 - Text: 11px/600, uppercase, `letter-spacing: 0.04em`
 - Color: `var(--track-text-muted)`
@@ -358,6 +368,7 @@ Spec:
 ```
 
 Spec:
+
 - Height: `44px` (minimum, grows if content wraps)
 - Text: 14px/400
 - Duration: 14px/400, `--font-mono`, `tabular-nums`
@@ -368,6 +379,7 @@ Spec:
 - Horizontal padding: `20px` (aligns with page gutter)
 
 Row actions:
+
 - Appear on hover, right-aligned
 - Icon buttons, `28px` square, ghost style
 - Use `opacity: 0 → 1` on row hover with `--duration-fast`
@@ -387,6 +399,7 @@ When a row has children (grouped time entries, subtasks), it uses an expand/coll
 ```
 
 Spec:
+
 - Group header row: `48px` height, 14px/600
 - Expand icon: `▶` rotates to `▼` with `--duration-fast` + `--ease-spring`
 - Child rows: indented `20px` from parent, slightly muted background (`var(--track-surface)` vs parent `var(--track-surface-muted)`)
@@ -404,6 +417,7 @@ When a page has multiple data views (e.g., "All entries" / "Running" / "Saved"),
 ```
 
 Spec:
+
 - Height: `40px`
 - Tab text: 14px/500
 - Inactive tab: `color: var(--track-text-muted)`, no background
@@ -414,6 +428,7 @@ Spec:
 - Bottom border: `1px solid var(--track-border)` (the active indicator overlaps this)
 
 Rules:
+
 - Maximum 5 tabs visible. More tabs go into a "More" dropdown at the end.
 - Tab labels must be short (1-2 words). No wrapping.
 - Tab counts (e.g., "Projects (12)") use 12px inline, `color: var(--track-text-muted)`
@@ -439,6 +454,7 @@ The canonical page layout stacks these components vertically:
 ```
 
 Rules:
+
 - The page content area (everything below the nav shell) uses `display: flex; flex-direction: column; height: 100vh` minus nav.
 - Title, toolbar, and tab bar are **fixed height, non-scrollable**.
 - Table header is **sticky** within the scrollable area.
@@ -479,6 +495,7 @@ OpenToggl uses a restrained but tactile motion system. Every animation serves a 
 ### Interaction Patterns
 
 **Press-down (buttons, clickable chips, icon buttons)**:
+
 ```
 hover:   translateY(-1px) + shadow expand + 120ms spring
 active:  translateY(1px)  + shadow compress + 80ms spring
@@ -486,6 +503,7 @@ release: translateY(0)    + shadow restore  + 120ms spring
 ```
 
 **Lift (clickable cards, project tiles)**:
+
 ```
 hover:   translateY(-2px) + shadow expand + 160ms spring
 active:  translateY(0)    + shadow compress + 100ms spring
@@ -493,18 +511,21 @@ release: translateY(0)    + shadow restore  + 160ms spring
 ```
 
 **Reveal (dropdowns, tooltips, popovers)**:
+
 ```
 enter:   opacity 0→1 + translateY(4px→0) + 200ms ease-out
 exit:    opacity 1→0 + translateY(0→4px) + 150ms ease-in-out
 ```
 
 **Toggle (switches, checkboxes)**:
+
 ```
 on:      scale(0→1.1→1) + 120ms spring (the check/dot bounces in)
 off:     scale(1→0)     + 80ms ease-out
 ```
 
 **Nav item active indicator**:
+
 ```
 slide:   translateX + width morph + 200ms spring (active indicator slides to new item)
 ```

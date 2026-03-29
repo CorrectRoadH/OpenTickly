@@ -96,6 +96,13 @@ export const WEEK_SHORTCUTS: WeekShortcut[] = [
   SHORTCUT_ALL_DATES,
 ];
 
+export const CALENDAR_SHORTCUTS: WeekShortcut[] = [
+  SHORTCUT_TODAY,
+  SHORTCUT_YESTERDAY,
+  SHORTCUT_THIS_WEEK,
+  SHORTCUT_LAST_WEEK,
+];
+
 export const REPORTS_SHORTCUTS: WeekShortcut[] = [
   SHORTCUT_THIS_WEEK,
   SHORTCUT_LAST_WEEK,

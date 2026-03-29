@@ -940,7 +940,7 @@ test.describe("Timer page family mainline", () => {
 
     // Timer header is sticky — it should stay visible after scrolling
     const weekRangeButton = page.getByRole("button", {
-      name: /Week range:/i,
+      name: /Press Enter to open date picker/i,
     });
     await expect(weekRangeButton).toBeVisible();
 

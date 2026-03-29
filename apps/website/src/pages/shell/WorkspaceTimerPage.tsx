@@ -39,8 +39,10 @@ import {
   formatTrackQueryDate,
   formatWeekRangeLabel,
   getWeekDaysForDate,
+  CALENDAR_SHORTCUTS,
   shiftDay,
   shiftWeek,
+  type WeekShortcut,
   WEEK_SHORTCUTS,
 } from "../../features/tracking/week-range.ts";
 import {
@@ -1361,9 +1363,11 @@ function TimerRangePicker({
 
   const label = isAllDates
     ? "All dates"
-    : isDayMode
-      ? formatDayLabel(orch.selectedWeekDate)
-      : formatWeekRangeLabel(orch.selectedWeekDate, orch.beginningOfWeek);
+    : activeShortcut === "last-30-days"
+      ? "Last 30 days"
+      : isDayMode
+        ? formatDayLabel(orch.selectedWeekDate)
+        : formatWeekRangeLabel(orch.selectedWeekDate, orch.beginningOfWeek);
 
   const handleSelectDate = useCallback(
     (date: Date) => {
@@ -1441,7 +1445,13 @@ function TimerRangePicker({
       onPrev={handlePrev}
       onSelectDate={handleSelectDate}
       selectedDate={orch.selectedWeekDate}
-      sidebar={<TimerDateShortcuts activeShortcut={activeShortcut} onShortcut={handleShortcut} />}
+      sidebar={
+        <TimerDateShortcuts
+          activeShortcut={activeShortcut}
+          onShortcut={handleShortcut}
+          shortcuts={orch.view === "list" ? WEEK_SHORTCUTS : CALENDAR_SHORTCUTS}
+        />
+      }
       weekStartsOn={orch.beginningOfWeek}
     />
   );
@@ -1450,15 +1460,17 @@ function TimerRangePicker({
 function TimerDateShortcuts({
   activeShortcut,
   onShortcut,
+  shortcuts,
 }: {
   activeShortcut: string | null;
   onShortcut: (id: string, date: Date) => void;
+  shortcuts: WeekShortcut[];
 }): ReactElement {
   const close = useRangePickerClose();
 
   return (
     <>
-      {WEEK_SHORTCUTS.map((shortcut) => {
+      {shortcuts.map((shortcut) => {
         const shortcutDate = shortcut.resolveDate(new Date());
         const isActive = activeShortcut === shortcut.id;
 
