@@ -36,7 +36,10 @@ const faqItems = [
 
 const heroHighlights = [
   ["Lower cost", "Avoid premium SaaS pricing for a workflow your team already knows."],
-  ["Own the stack", "Run it on infrastructure you control with a real self-hosted path."],
+  [
+    "AI-friendly",
+    "No rate-limit ceiling. Built for agents, automations, and high-frequency API access.",
+  ],
   [
     "Mobile-ready PWA",
     "Add to your home screen and use it like a native app — no app store needed.",
