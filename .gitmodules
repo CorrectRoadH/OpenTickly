@@ -1,0 +1,3 @@
+[submodule "tests/python-sdk-integration/toggl-cli"]
+	path = tests/python-sdk-integration/toggl-cli
+	url = https://github.com/CorrectRoadH/toggl-cli-for-unit-test.git

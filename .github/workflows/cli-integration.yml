@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - uses: pnpm/action-setup@v4
 
@@ -74,3 +76,19 @@ jobs:
           OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
           OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
         run: pnpm run test:cli
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python SDK test dependencies
+        working-directory: tests/python-sdk-integration/toggl-cli
+        run: pip install -r requirements.txt -r test-requirements.txt
+
+      - name: Run Python SDK integration tests
+        working-directory: tests/python-sdk-integration
+        env:
+          OPENTOGGL_CLI_TEST_URL: http://127.0.0.1:8080/api/v9
+          OPENTOGGL_CLI_TEST_BASE: http://127.0.0.1:8080
+        run: python -m pytest -x -v
