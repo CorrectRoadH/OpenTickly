@@ -241,6 +241,7 @@ export function GoalsPage(): ReactElement {
           <DirectoryTable
             columns={goalColumns}
             data-testid="goals-list"
+            data-row-testid="goal-row"
             emptyState="No goals found."
             renderRow={renderGoalRow}
             rowKey={(goal) => goal.goal_id ?? 0}

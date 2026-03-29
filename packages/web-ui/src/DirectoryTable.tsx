@@ -27,6 +27,7 @@ type DirectoryTableProps<T> = {
   footer?: ReactNode;
   pagination?: ReactNode;
   "data-testid"?: string;
+  "data-row-testid"?: string;
 };
 
 function buildGridTemplate(
@@ -59,6 +60,7 @@ export function DirectoryTable<T>({
   footer,
   pagination,
   "data-testid": testId,
+  "data-row-testid": rowTestId,
 }: DirectoryTableProps<T>) {
   const gridTemplate = buildGridTemplate(columns, selectable, expandable);
 
@@ -103,7 +105,7 @@ export function DirectoryTable<T>({
           const expanded = expandable && expandedIds?.has(id);
 
           return (
-            <div key={id}>
+            <div data-testid={rowTestId} key={id}>
               <div
                 className={`grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
                   selected

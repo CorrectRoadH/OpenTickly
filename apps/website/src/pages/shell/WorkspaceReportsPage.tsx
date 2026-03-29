@@ -301,6 +301,7 @@ export function WorkspaceReportsPage({
       data-testid="reports-page"
       title="Reports"
       headerActions={headerActions}
+      data-tabs-testid="reports-tabs"
       tabs={REPORTS_TABS.map((t) => (
         <Link
           className={pageLayoutTabClass(t.slug === tab)}

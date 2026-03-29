@@ -41,6 +41,7 @@ type PageLayoutProps = {
   children: ReactNode;
   footer?: ReactNode;
   "data-testid"?: string;
+  "data-tabs-testid"?: string;
 };
 
 export function PageLayout({
@@ -56,6 +57,7 @@ export function PageLayout({
   children,
   footer,
   "data-testid": testId,
+  "data-tabs-testid": tabsTestId,
 }: PageLayoutProps): ReactElement {
   return (
     <div className="flex h-full flex-col" data-testid={testId}>
@@ -80,7 +82,10 @@ export function PageLayout({
       ) : null}
 
       {tabs ? (
-        <div className="flex h-[40px] items-end gap-0 border-b border-[var(--track-border)] px-5">
+        <div
+          className="flex h-[40px] items-end gap-0 border-b border-[var(--track-border)] px-5"
+          data-testid={tabsTestId}
+        >
           {isPageLayoutTabArray(tabs)
             ? tabs.map((tab) => (
                 <button
