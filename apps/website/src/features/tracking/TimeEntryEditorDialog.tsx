@@ -268,6 +268,27 @@ export function TimeEntryEditorDialog({
     return () => window.clearTimeout(timer);
   }, [timeInputError, dispatch]);
 
+  useEffect(() => {
+    if (!picker) {
+      return;
+    }
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (
+        target.closest('[data-testid="time-entry-editor-dialog"]') &&
+        !target.closest("[data-picker-area]")
+      ) {
+        dispatch({ type: "SET_PICKER", picker: null });
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [picker, dispatch]);
+
   function applyEditedTime(target: "start" | "stop", value: string) {
     const baseDate = target === "start" ? start : stop;
     if (!baseDate) {
@@ -497,7 +518,7 @@ export function TimeEntryEditorDialog({
           />
         ) : null}
 
-        <div className="relative mt-5">
+        <div className="relative mt-5" data-picker-area>
           <div className="flex items-center gap-4 text-[var(--track-overlay-text-soft)]">
             <PickerButton
               active={picker === "project"}
@@ -1279,7 +1300,7 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[38px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
+            className={`h-[38px] w-[90px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
               hasError ? "border-rose-400" : "border-[var(--track-accent-secondary)]"
             }`}
             value={draft}
@@ -1310,7 +1331,7 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex h-[38px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
+          className={`flex h-[38px] w-[90px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
@@ -1565,11 +1586,7 @@ function resolveTagTriggerLabel(tags: TimeEntryEditorTag[]): string | undefined 
     return undefined;
   }
 
-  if (tags.length === 1) {
-    return tags[0]?.name;
-  }
-
-  return `${tags[0]?.name ?? "Tag"} +${tags.length - 1}`;
+  return tags.map((t) => t.name).join(", ");
 }
 
 function colorToChipBackground(color: string): string {

@@ -217,6 +217,27 @@ test.describe("Story: edit a stopped time entry", () => {
     }
   });
 
+  test("when the tag picker is open and the user clicks elsewhere in the dialog, the picker closes", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
+
+    const dialog = page.getByTestId("time-entry-editor-dialog");
+    await expect(dialog).toBeVisible();
+
+    // Open the tag picker
+    await dialog.getByRole("button", { name: "Select tags" }).click();
+    await expect(dialog.getByPlaceholder("Search tags")).toBeVisible();
+
+    // Click the description field (inside the dialog, outside the picker)
+    await dialog.getByLabel("Time entry description").click();
+
+    // The tag picker should close
+    await expect(dialog.getByPlaceholder("Search tags")).not.toBeVisible();
+    // The dialog should still be open
+    await expect(dialog).toBeVisible();
+  });
+
   test("when the user clicks a calendar entry, the editor dialog shows its start and stop times", async ({
     page,
   }) => {
