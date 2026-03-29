@@ -126,6 +126,10 @@
           "job_id": {
             "type": "string"
           },
+          "organization_id": {
+            "type": "integer",
+            "nullable": true
+          },
           "status": {
             "type": "string",
             "enum": ["queued", "running", "completed", "failed"]

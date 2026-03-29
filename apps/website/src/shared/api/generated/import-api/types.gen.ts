@@ -23,6 +23,7 @@ export type ImportJobCreateRequest = (
 
 export type ImportJob = {
   job_id: string;
+  organization_id?: number;
   status: "queued" | "running" | "completed" | "failed";
   workspace_id: number;
 };

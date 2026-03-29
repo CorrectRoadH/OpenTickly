@@ -26,6 +26,11 @@ func (server *webOpenAPIServer) LogoutWebUser(ctx echo.Context) error {
 	return server.handlers.logout(ctx)
 }
 
+func (server *webOpenAPIServer) DeleteOrganization(ctx echo.Context, organizationId int) error {
+	_ = organizationId
+	return server.handlers.deleteOrganization(ctx)
+}
+
 func (server *webOpenAPIServer) GetWebSession(ctx echo.Context) error {
 	return server.handlers.session(ctx)
 }

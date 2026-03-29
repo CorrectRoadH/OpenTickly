@@ -403,6 +403,25 @@ export type UpdateWebSessionResponses = {
 
 export type UpdateWebSessionResponse = UpdateWebSessionResponses[keyof UpdateWebSessionResponses];
 
+export type DeleteOrganizationData = {
+  body?: never;
+  path: {
+    organization_id: number;
+  };
+  query?: never;
+  url: "/web/v1/organizations/{organization_id}";
+};
+
+export type DeleteOrganizationResponses = {
+  /**
+   * Organization deleted
+   */
+  204: void;
+};
+
+export type DeleteOrganizationResponse =
+  DeleteOrganizationResponses[keyof DeleteOrganizationResponses];
+
 export type GetWorkspaceSettingsData = {
   body?: never;
   path: {

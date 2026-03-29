@@ -229,6 +229,12 @@ func importJobBody(job importingapplication.ImportJobView) importapi.ImportJob {
 	}
 }
 
+func importJobBodyWithOrganization(job importingapplication.ImportJobView, organizationID int) importapi.ImportJob {
+	body := importJobBody(job)
+	body.OrganizationId = lo.ToPtr(organizationID)
+	return body
+}
+
 func parseRequiredStringField(value string) (string, error) {
 	normalized := strings.TrimSpace(value)
 	if normalized == "" {
@@ -305,7 +311,7 @@ func (handler *Handler) createArchiveImportJob(
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
 	}
-	return ctx.JSON(http.StatusAccepted, importJobBody(job))
+	return ctx.JSON(http.StatusAccepted, importJobBodyWithOrganization(job, int(createdTenant.OrganizationID)))
 }
 
 func (handler *Handler) createTimeEntriesImportJob(

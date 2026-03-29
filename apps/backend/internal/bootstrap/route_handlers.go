@@ -257,6 +257,27 @@ func (handlers *routeHandlers) updateSession(ctx echo.Context) error {
 	return writeIdentityResponse(ctx, response)
 }
 
+func (handlers *routeHandlers) deleteOrganization(ctx echo.Context) error {
+	if response, ok := handlers.authorizeSession(ctx); !ok {
+		return response
+	}
+	organizationID, ok := parsePathID(ctx, "organization_id")
+	if !ok {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	home, err := handlers.currentSessionHome(ctx)
+	if err != nil {
+		return err
+	}
+	if home.organizationID != organizationID {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").
+			SetInternal(errors.New("requested organization does not match the current session organization"))
+	}
+
+	response := handlers.tenant.DeleteOrganization(ctx.Request().Context(), organizationID)
+	return writeTenantResponse(ctx, response)
+}
+
 func (handlers *routeHandlers) workspaceSettings(ctx echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response

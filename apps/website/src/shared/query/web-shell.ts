@@ -78,6 +78,7 @@ import {
 } from "../api/public/track/index.ts";
 import type { UpdateOnboardingRequestDto } from "../api/web-contract.ts";
 import {
+  deleteOrganization,
   disableWorkspaceMember,
   getWebSession,
   getWorkspaceOnboarding,
@@ -1581,6 +1582,27 @@ export function useUpdateOrganizationSettingsMutation(organizationId: number) {
         queryKey: ["organization-settings", organizationId],
       });
       void queryClient.invalidateQueries({
+        queryKey: sessionQueryKey,
+      });
+    },
+  });
+}
+
+export function useDeleteOrganizationMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      await unwrapWebApiResult(
+        deleteOrganization({
+          path: {
+            organization_id: organizationId,
+          },
+        }),
+      );
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: sessionQueryKey,
       });
     },

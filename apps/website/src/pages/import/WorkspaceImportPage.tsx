@@ -1,4 +1,5 @@
-import { type ChangeEvent, type ReactElement, useId, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { type ChangeEvent, type ReactElement, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ImportIcon, PlusIcon, TimerIcon } from "../../shared/ui/icons.tsx";
@@ -8,6 +9,7 @@ import {
   useCreateTimeEntriesImportJobMutation,
   useImportJobQuery,
 } from "../../shared/query/import-jobs.ts";
+import { useUpdateWebSessionMutation } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 type ImportFlow = "archive" | "time_entries";
@@ -15,14 +17,21 @@ type ImportFlow = "archive" | "time_entries";
 export function WorkspaceImportPage(): ReactElement {
   const archiveInputId = useId();
   const csvInputId = useId();
+  const navigate = useNavigate();
   const session = useSession();
   const createArchiveImportJobMutation = useCreateArchiveImportJobMutation();
   const createTimeEntriesImportJobMutation = useCreateTimeEntriesImportJobMutation();
+  const updateWebSessionMutation = useUpdateWebSessionMutation();
   const [organizationName, setOrganizationName] = useState("");
   const [selectedArchive, setSelectedArchive] = useState<File | null>(null);
-  const [selectedCSV, setSelectedCSV] = useState<File | null>(null);
+  const [selectedCSVs, setSelectedCSVs] = useState<File[]>([]);
   const [submittedJob, setSubmittedJob] = useState<{ id: string; source: ImportFlow } | null>(null);
+  const [archiveImportTarget, setArchiveImportTarget] = useState<{
+    organizationId: number;
+    workspaceId: number;
+  } | null>(null);
   const importJobQuery = useImportJobQuery(submittedJob?.id ?? null);
+  const hasRedirected = useRef(false);
 
   function handleArchiveFileChange(event: ChangeEvent<HTMLInputElement>) {
     setSelectedArchive(event.target.files?.[0] ?? null);
@@ -36,6 +45,12 @@ export function WorkspaceImportPage(): ReactElement {
         organizationName,
       });
       setSubmittedJob({ id: job.job_id, source: "archive" });
+      if (job.organization_id) {
+        setArchiveImportTarget({
+          organizationId: job.organization_id,
+          workspaceId: job.workspace_id,
+        });
+      }
       setSelectedArchive(null);
       toast.success(`Organization "${organizationName}" created and archive imported.`);
     } catch (error) {
@@ -46,20 +61,57 @@ export function WorkspaceImportPage(): ReactElement {
     }
   }
 
+  useEffect(() => {
+    if (
+      archiveImportTarget &&
+      submittedJob?.source === "archive" &&
+      importJobQuery.data?.status === "completed" &&
+      !hasRedirected.current
+    ) {
+      hasRedirected.current = true;
+      void (async () => {
+        await updateWebSessionMutation.mutateAsync({
+          workspace_id: archiveImportTarget.workspaceId,
+        });
+        void navigate({
+          to: `/organizations/${String(archiveImportTarget.organizationId)}/settings`,
+        });
+      })();
+    }
+  }, [
+    archiveImportTarget,
+    submittedJob,
+    importJobQuery.data?.status,
+    navigate,
+    updateWebSessionMutation,
+  ]);
+
   function handleCSVFileChange(event: ChangeEvent<HTMLInputElement>) {
-    setSelectedCSV(event.target.files?.[0] ?? null);
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      setSelectedCSVs(Array.from(files));
+    }
   }
 
   async function handleCSVUpload() {
-    if (!selectedCSV) return;
+    if (selectedCSVs.length === 0) return;
     try {
-      const job = await createTimeEntriesImportJobMutation.mutateAsync({
-        archive: selectedCSV,
-        workspaceId: session.currentWorkspace.id,
-      });
-      setSubmittedJob({ id: job.job_id, source: "time_entries" });
-      setSelectedCSV(null);
-      toast.success(`Time entries imported into "${session.currentWorkspace.name}".`);
+      let lastJob = null;
+      for (const file of selectedCSVs) {
+        lastJob = await createTimeEntriesImportJobMutation.mutateAsync({
+          archive: file,
+          workspaceId: session.currentWorkspace.id,
+        });
+      }
+      if (lastJob) {
+        setSubmittedJob({ id: lastJob.job_id, source: "time_entries" });
+      }
+      setSelectedCSVs([]);
+      toast.success(
+        selectedCSVs.length === 1
+          ? `Time entries imported into "${session.currentWorkspace.name}".`
+          : `${String(selectedCSVs.length)} CSV files imported into "${session.currentWorkspace.name}".`,
+      );
     } catch (error) {
       setSubmittedJob(null);
       toast.error(resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.", {
@@ -223,15 +275,20 @@ export function WorkspaceImportPage(): ReactElement {
                   accept=".csv,text/csv"
                   className="sr-only"
                   id={csvInputId}
+                  multiple
                   onChange={handleCSVFileChange}
                   type="file"
                 />
                 <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
-                  {selectedCSV ? selectedCSV.name : "No file selected"}
+                  {selectedCSVs.length > 1
+                    ? `${String(selectedCSVs.length)} files selected`
+                    : selectedCSVs.length === 1
+                      ? selectedCSVs[0].name
+                      : "No file selected"}
                 </span>
               </div>
 
-              {selectedCSV ? (
+              {selectedCSVs.length > 0 ? (
                 <div className="mt-4">
                   <button
                     className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"

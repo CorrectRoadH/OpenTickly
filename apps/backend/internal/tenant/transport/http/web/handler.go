@@ -95,6 +95,14 @@ func (handler *Handler) UpdateOrganizationSettings(
 	return handler.GetOrganizationSettings(ctx, organizationID)
 }
 
+func (handler *Handler) DeleteOrganization(ctx context.Context, organizationID int64) Response {
+	err := handler.tenant.DeleteOrganization(ctx, tenantdomain.OrganizationID(organizationID))
+	if err != nil {
+		return mapError(err)
+	}
+	return Response{StatusCode: 204}
+}
+
 func (handler *Handler) GetWorkspaceSettings(ctx context.Context, workspaceID int64) Response {
 	workspace, err := handler.tenant.GetWorkspace(ctx, tenantdomain.WorkspaceID(workspaceID))
 	if err != nil {

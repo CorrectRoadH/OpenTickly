@@ -116,6 +116,27 @@
         }
       }
     },
+    "/web/v1/organizations/{organization_id}": {
+      "delete": {
+        "summary": "Delete an organization and all its workspaces",
+        "operationId": "delete-organization",
+        "parameters": [
+          {
+            "name": "organization_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Organization deleted"
+          }
+        }
+      }
+    },
     "/web/v1/workspaces/{workspace_id}/settings": {
       "get": {
         "summary": "Read workspace settings for the web shell",

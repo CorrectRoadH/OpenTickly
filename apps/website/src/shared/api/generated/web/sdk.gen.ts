@@ -4,6 +4,8 @@
 import { client } from "./client.gen.js";
 import type { Client, Options as Options2, TDataShape } from "./client/index.js";
 import type {
+  DeleteOrganizationData,
+  DeleteOrganizationResponses,
   DisableWorkspaceMemberData,
   DisableWorkspaceMemberResponses,
   GetWebSessionData,
@@ -126,6 +128,17 @@ export const updateWebSession = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Delete an organization and all its workspaces
+ */
+export const deleteOrganization = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteOrganizationData, ThrowOnError>,
+) =>
+  (options.client ?? client).delete<DeleteOrganizationResponses, unknown, ThrowOnError>({
+    url: "/web/v1/organizations/{organization_id}",
+    ...options,
   });
 
 /**
