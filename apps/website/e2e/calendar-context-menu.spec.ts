@@ -59,7 +59,6 @@ async function rightClickAndSelectMenuItem(
 ) {
   // Scroll to top to ensure 10am entry and its context menu fit in viewport
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await entry.scrollIntoViewIfNeeded();
   await entry.click({ button: "right", position: { x: 10, y: 10 } });
 
   const contextMenu = page.getByTestId("calendar-entry-context-menu");
