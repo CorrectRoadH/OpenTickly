@@ -85,10 +85,27 @@ export function getButtonOverrides(
       ? baseButtonOverride.style
       : undefined;
 
+  const existingProps =
+    typeof baseButtonOverride === "object" &&
+    baseButtonOverride !== null &&
+    "props" in baseButtonOverride &&
+    typeof baseButtonOverride.props === "object" &&
+    baseButtonOverride.props !== null
+      ? baseButtonOverride.props
+      : undefined;
+
   return {
     ...overrides,
     BaseButton: {
       ...(typeof baseButtonOverride === "object" ? baseButtonOverride : undefined),
+      props: {
+        ...existingProps,
+        className: getButtonClassName(
+          tone,
+          size,
+          (existingProps as Record<string, string>)?.className,
+        ),
+      },
       style: {
         borderRadius: "8px",
         fontWeight: 600,

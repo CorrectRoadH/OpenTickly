@@ -279,13 +279,9 @@ export function WorkspaceOverviewPage(): ReactElement {
                   </p>
                 </div>
                 <div className="mt-auto space-y-2">
-                  <button
-                    className="inline-flex h-9 items-center rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-                    onClick={() => setInviteDialogOpen(true)}
-                    type="button"
-                  >
+                  <AppButton onClick={() => setInviteDialogOpen(true)} type="button">
                     Add teammates
-                  </button>
+                  </AppButton>
                 </div>
               </div>
             </OverviewSurface>

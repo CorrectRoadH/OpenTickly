@@ -411,7 +411,8 @@ export function WorkspaceTimerPage({
                 </span>
                 <button
                   aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[inset_0_0_0_1px_var(--track-border-soft)]"
+                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow] duration-[var(--duration-fast)] hover:-translate-y-px hover:shadow-[0_3px_0_0_var(--track-accent-strong)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]"
+                  style={{ transitionTimingFunction: "var(--ease-spring)" }}
                   data-icon={orch.runningEntry ? "stop" : "play"}
                   data-testid="timer-action-button"
                   disabled={orch.timerMutationPending}
