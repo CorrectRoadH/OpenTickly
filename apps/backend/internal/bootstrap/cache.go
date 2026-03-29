@@ -18,6 +18,7 @@ import (
 // TTL constants for each cached entity.
 const (
 	sessionTTL        = 5 * time.Minute
+	apiTokenTTL       = 30 * time.Minute
 	billingAccountTTL = 5 * time.Minute
 	workspaceOrgTTL   = 10 * time.Minute
 	userHomeTTL       = 10 * time.Minute
@@ -76,12 +77,17 @@ func (c *cachedUserRepository) Save(ctx context.Context, user *identitydomain.Us
 	if err := c.inner.Save(ctx, user); err != nil {
 		return err
 	}
-	_ = c.rc.Del(ctx, fmt.Sprintf("user:%d", user.ID()), fmt.Sprintf("session_shell:%d", user.ID()))
+	_ = c.rc.Del(ctx,
+		fmt.Sprintf("user:%d", user.ID()),
+		fmt.Sprintf("session_shell:%d", user.ID()),
+		fmt.Sprintf("api_token_uid:%d", user.ID()),
+	)
 	return nil
 }
 
-// ByID is not cached — domain.User contains mutable state and password hashes.
-// The session shell cache covers the hot read path (UserSnapshot level).
+// ByID is not cached — domain.User has unexported fields (DDD entity invariant
+// protection) so json.Marshal produces "{}". The session shell cache covers the
+// hot read path at the UserSnapshot level instead.
 func (c *cachedUserRepository) ByID(ctx context.Context, id int64) (*identitydomain.User, error) {
 	return c.inner.ByID(ctx, id)
 }
@@ -90,8 +96,21 @@ func (c *cachedUserRepository) ByEmail(ctx context.Context, email string) (*iden
 	return c.inner.ByEmail(ctx, email)
 }
 
+// ByAPIToken caches the token→userID mapping to avoid a full index scan on
+// identity_users.api_token per API request. The *domain.User itself is not
+// cached (unexported fields), so a cheap primary-key ByID follows the hit.
 func (c *cachedUserRepository) ByAPIToken(ctx context.Context, token string) (*identitydomain.User, error) {
-	return c.inner.ByAPIToken(ctx, token)
+	userID, err := platform.CacheAside(c.rc, ctx, fmt.Sprintf("api_token:%s", token), apiTokenTTL, func() (int64, error) {
+		user, fetchErr := c.inner.ByAPIToken(ctx, token)
+		if fetchErr != nil {
+			return 0, fetchErr
+		}
+		return user.ID(), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return c.inner.ByID(ctx, userID)
 }
 
 func (c *cachedUserRepository) ByProductEmailsDisableCode(ctx context.Context, code string) (*identitydomain.User, error) {
