@@ -22,14 +22,18 @@ type AuditLogEntry = {
 
 type SourceFilter = "" | "web" | "api";
 
+function toRFC3339(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function defaultFrom(): string {
   const date = new Date();
   date.setDate(date.getDate() - 30);
-  return date.toISOString();
+  return toRFC3339(date);
 }
 
 function defaultTo(): string {
-  return new Date().toISOString();
+  return toRFC3339(new Date());
 }
 
 function sourceLabel(source: string): string {

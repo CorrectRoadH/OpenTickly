@@ -3,6 +3,7 @@ package publicapi
 import (
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -330,6 +331,9 @@ func dateTimePointer(value *time.Time) *string {
 
 func parseRFC3339(raw string) (time.Time, error) {
 	s := strings.TrimSpace(raw)
+	if decoded, err := url.PathUnescape(s); err == nil {
+		s = decoded
+	}
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		return t, nil
 	}

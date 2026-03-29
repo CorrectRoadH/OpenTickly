@@ -30,7 +30,7 @@ type auditLogResponse struct {
 func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 	organizationID, ok := parsePathID(ctx, "organization_id")
 	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid organization_id")
 	}
 	if err := handler.scope.RequirePublicTrackOrganization(ctx, organizationID); err != nil {
 		return err
@@ -38,11 +38,11 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 
 	from, err := parseRFC3339(ctx.Param("from"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid from date: "+err.Error())
 	}
 	to, err := parseRFC3339(ctx.Param("to"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid to date: "+err.Error())
 	}
 
 	filter := governanceapplication.ListAuditLogsFilter{
