@@ -11,6 +11,7 @@ import {
   formatHours,
   getCurrentWeekDays,
 } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import type {
   DashboardAllActivities,
   GithubComTogglTogglApiInternalModelsProject,
@@ -30,10 +31,10 @@ import { OnboardingChecklist } from "./OnboardingChecklist.tsx";
 import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
+  const { beginningOfWeek, durationFormat } = useUserPreferences();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const memberCount = session.currentOrganization?.userCount ?? 1;
-  const beginningOfWeek = session.user.beginningOfWeek ?? 1;
   const weekDays = useMemo(() => getCurrentWeekDays(beginningOfWeek), [beginningOfWeek]);
   const timezone = session.user.timezone ?? "UTC";
   const projectsQuery = useProjectsQuery(workspaceId, "all");
@@ -222,7 +223,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                                   {memberLabel(member, memberNameById)}
                                 </p>
                                 <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                                  {formatClockDuration(member.duration ?? 0)}
+                                  {formatClockDuration(member.duration ?? 0, durationFormat)}
                                 </p>
                               </div>
                             </div>
@@ -313,7 +314,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                         />
                         <span className="min-w-0 flex-1 truncate text-white">{project.name}</span>
                         <span className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                          {formatClockDuration(project.totalSeconds)}
+                          {formatClockDuration(project.totalSeconds, durationFormat)}
                         </span>
                       </div>
                     ))}

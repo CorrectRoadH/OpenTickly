@@ -1,19 +1,19 @@
 import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
-import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
 
 import {
-  createPreferencesFormValues,
   mapPreferencesFormToRequest,
   type PreferencesFormValues,
 } from "../../shared/forms/profile-form.ts";
 import {
-  useResetApiTokenMutation,
   usePreferencesQuery,
+  useResetApiTokenMutation,
   useProfileQuery,
   useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { defaultPreferencesFormValues } from "./ProfilePageData.ts";
 import { ProfileBetaProgramCard, ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
@@ -31,6 +31,7 @@ export function ProfilePage(): ReactElement {
   const session = useSession();
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
+  const preferenceValues = useUserPreferences();
   const updatePreferencesMutation = useUpdatePreferencesMutation();
   const resetApiTokenMutation = useResetApiTokenMutation();
   const [apiTokenStatus, setApiTokenStatus] = useState<string | null>(null);
@@ -45,11 +46,6 @@ export function ProfilePage(): ReactElement {
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveInFlightRef = useRef(false);
   const pendingRetryRef = useRef(false);
-  const preferenceData = preferencesQuery.data;
-  const preferenceValues = useMemo(
-    () => createPreferencesFormValues(preferenceData ?? {}),
-    [preferenceData],
-  );
 
   useEffect(() => {
     form.reset(preferenceValues);

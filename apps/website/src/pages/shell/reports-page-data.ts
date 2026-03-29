@@ -2,7 +2,11 @@ import type {
   SavedWeeklyReportData,
   WeeklyDataRow,
 } from "../../shared/api/generated/public-reports/types.gen.ts";
-import { formatClockDuration, formatDateKey } from "../../features/tracking/overview-data.ts";
+import {
+  type DurationFormat,
+  formatClockDuration,
+  formatDateKey,
+} from "../../features/tracking/overview-data.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   formatRangeDate,
@@ -77,6 +81,7 @@ type ProjectBreakdownAccumulator = {
 };
 
 export function buildReportsPageModel(args: {
+  durationFormat?: DurationFormat;
   report?: SavedWeeklyReportData;
   now?: Date;
   startDate?: string;
@@ -84,6 +89,7 @@ export function buildReportsPageModel(args: {
   timezone: string;
   weekStartsOn?: number;
 }): ReportsPageModel {
+  const fmt = args.durationFormat ?? "improved";
   const dateKeys =
     args.startDate && args.endDate
       ? getDateRangeKeys(args.startDate, args.endDate)
@@ -130,7 +136,7 @@ export function buildReportsPageModel(args: {
       const members = [...project.members.values()]
         .sort((a, b) => b.totalSeconds - a.totalSeconds)
         .map((m) => ({
-          duration: formatClockDuration(m.totalSeconds),
+          duration: formatClockDuration(m.totalSeconds, fmt),
           name: m.name,
           seconds: m.totalSeconds,
         }));
@@ -138,7 +144,7 @@ export function buildReportsPageModel(args: {
       return {
         clientName: project.clientName,
         color: project.color,
-        duration: formatClockDuration(project.totalSeconds),
+        duration: formatClockDuration(project.totalSeconds, fmt),
         memberCount: project.memberIds.size || 1,
         members,
         name: project.name,
@@ -158,8 +164,8 @@ export function buildReportsPageModel(args: {
     })),
     endDate,
     metrics: [
-      { title: "Total Hours", value: formatClockDuration(totalSeconds) },
-      { title: "Billable Hours", value: formatClockDuration(billableSeconds) },
+      { title: "Total Hours", value: formatClockDuration(totalSeconds, fmt) },
+      { title: "Billable Hours", value: formatClockDuration(billableSeconds, fmt) },
       { title: "Amount", value: formatAmountCents(billableAmountCents) },
       { title: "Average Daily Hours", value: `${averageDailyHours.toFixed(2)} Hours` },
     ],
@@ -171,7 +177,7 @@ export function buildReportsPageModel(args: {
       args.now,
     ),
     startDate,
-    totalDuration: formatClockDuration(totalSeconds),
+    totalDuration: formatClockDuration(totalSeconds, fmt),
     totalSeconds,
     weekRows,
   };

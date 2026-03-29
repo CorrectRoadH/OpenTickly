@@ -16,6 +16,7 @@ import type {
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { getISOWeekNumber, getWeekStart, isCurrentWeek } from "./approvals-helpers.ts";
 import { FilterButton, WeekPicker } from "./ApprovalsPrimitives.tsx";
 
@@ -213,6 +214,7 @@ function TeamTimesheetsView({
   weekStart: Date;
   workspaceId: number;
 }): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const queryClient = useQueryClient();
 
   const timesheetsQuery = useQuery({
@@ -327,6 +329,7 @@ function TeamTimesheetsView({
               <td className="px-4 py-3 tabular-nums text-white">
                 {formatClockDuration(
                   ts.working_hours_in_minutes ? ts.working_hours_in_minutes * 60 : 0,
+                  durationFormat,
                 )}
               </td>
               <td className="px-4 py-3">
@@ -364,6 +367,7 @@ function YourTimesheetsView({
   weekStart: Date;
   workspaceId: number;
 }): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const queryClient = useQueryClient();
 
   const timesheetsQuery = useQuery({
@@ -449,6 +453,7 @@ function YourTimesheetsView({
               <td className="px-4 py-3 tabular-nums text-white">
                 {formatClockDuration(
                   ts.working_hours_in_minutes ? ts.working_hours_in_minutes * 60 : 0,
+                  durationFormat,
                 )}
               </td>
               <td className="px-4 py-3">

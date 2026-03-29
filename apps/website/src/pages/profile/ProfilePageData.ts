@@ -68,8 +68,8 @@ export const figmaShortcutPreferences = [
 ] satisfies ReadonlyArray<{ helper?: string; key: keyof PreferencesFormValues; label: string }>;
 
 export const durationFormatOptions = [
-  { label: "Classic", value: "classic" },
-  { label: "Decimal", value: "decimal" },
+  { label: "Classic (47:06 min)", value: "classic" },
+  { label: "Decimal (0.79 h)", value: "decimal" },
   { label: "Improved (0:47:06)", value: "improved" },
 ] as const;
 

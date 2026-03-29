@@ -12,6 +12,7 @@ import {
 } from "recharts";
 
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 const BAR_COLOR = "var(--track-accent-strong)";
 const BAR_EMPTY_COLOR = "var(--track-chart-bar-empty)";
@@ -141,6 +142,7 @@ function OverviewTooltip({
   active?: boolean;
   payload?: Array<{ payload: { weekday: string; date: string; seconds: number } }>;
 }): ReactElement | null {
+  const { durationFormat } = useUserPreferences();
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   return (
@@ -149,13 +151,14 @@ function OverviewTooltip({
         {entry.weekday} {entry.date}
       </span>
       <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
-        {formatClockDuration(entry.seconds)}
+        {formatClockDuration(entry.seconds, durationFormat)}
       </span>
     </div>
   );
 }
 
 function BarDurationLabel(props: Record<string, unknown>): ReactElement | null {
+  const { durationFormat } = useUserPreferences();
   const { x, y, width, value } = props as {
     x: number;
     y: number;
@@ -172,7 +175,7 @@ function BarDurationLabel(props: Record<string, unknown>): ReactElement | null {
       x={x + width / 2}
       y={y - 10}
     >
-      {formatClockDuration(value)}
+      {formatClockDuration(value, durationFormat)}
     </text>
   );
 }

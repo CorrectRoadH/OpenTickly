@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { createProjectForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import { expectedDuration } from "./fixtures/e2e-format.ts";
 
 /**
  * Story: A user edits a time entry from the calendar view, changing its
@@ -129,8 +130,8 @@ test.describe("Story: full time entry editing from calendar", () => {
     await timeInput.fill("11:30");
     await timeInput.press("Enter");
 
-    // Duration should update (9:00 to 11:30 = 2:30:00)
-    await expect(dialog.locator("text=2:30:00")).toBeVisible();
+    // Duration should update (9:00 to 11:30 = 2h30m)
+    await expect(dialog.locator(`text=${expectedDuration(9000)}`)).toBeVisible();
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();

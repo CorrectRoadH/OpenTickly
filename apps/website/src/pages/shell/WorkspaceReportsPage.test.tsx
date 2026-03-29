@@ -13,6 +13,15 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   }),
 }));
 
+vi.mock("../../shared/query/useUserPreferences.ts", () => ({
+  useUserPreferences: () => ({
+    durationFormat: "improved",
+    timeofdayFormat: "HH:mm",
+    beginningOfWeek: 1,
+    collapseTimeEntries: true,
+  }),
+}));
+
 vi.mock("../../shared/session/session-context.tsx", () => ({
   useSession: () => ({
     currentWorkspace: {

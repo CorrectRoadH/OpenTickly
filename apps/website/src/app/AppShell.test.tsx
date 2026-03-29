@@ -42,6 +42,15 @@ vi.mock("../shared/query/web-shell.ts", () => ({
   useUpdateWebSessionMutation: () => mockUseUpdateWebSessionMutation(),
 }));
 
+vi.mock("../shared/query/useUserPreferences.ts", () => ({
+  useUserPreferences: () => ({
+    durationFormat: "improved",
+    timeofdayFormat: "HH:mm",
+    beginningOfWeek: 1,
+    collapseTimeEntries: true,
+  }),
+}));
+
 vi.mock("../shared/lib/shell-navigation.ts", () => ({
   shellNavigationItems: (...args: unknown[]) => mockShellNavigationItems(...args),
 }));

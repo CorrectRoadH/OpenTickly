@@ -19,6 +19,7 @@ import {
   formatClockDuration,
   resolveEntryDurationSeconds,
 } from "../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../shared/query/useUserPreferences.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { UserAvatar } from "../shared/ui/UserAvatar.tsx";
 import {
@@ -43,6 +44,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const location = useRouterState({
     select: (state) => state.location,
   });
+  const { durationFormat } = useUserPreferences();
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const profileQuery = useProfileQuery();
@@ -81,7 +83,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       return undefined;
     }
     const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
-    return formatClockDuration(seconds);
+    return formatClockDuration(seconds, durationFormat);
   }, [runningEntry, nowMs]);
 
   function handleWorkspaceChange(workspaceId: number) {

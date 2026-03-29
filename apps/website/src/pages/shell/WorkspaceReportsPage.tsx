@@ -39,7 +39,8 @@ import {
   type ReportsPageModel,
 } from "./reports-page-data.ts";
 import { useReportsPageState } from "./useReportsPageState.ts";
-import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 /** Round seconds up to the nearest 15-minute block (900 seconds). */
 function roundTo15Min(seconds: number): number {
@@ -47,15 +48,18 @@ function roundTo15Min(seconds: number): number {
   return Math.ceil(seconds / 900) * 900;
 }
 
-function applyRoundingToModel(model: ReportsPageModel): ReportsPageModel {
+function applyRoundingToModel(
+  model: ReportsPageModel,
+  durationFormat?: DurationFormat,
+): ReportsPageModel {
   const roundedBreakdownRows: ReportsBreakdownRow[] = model.breakdownRows.map((row) => {
     const rounded = roundTo15Min(row.seconds);
     return {
       ...row,
-      duration: formatClockDuration(rounded),
+      duration: formatClockDuration(rounded, durationFormat),
       members: row.members.map((m) => ({
         ...m,
-        duration: formatClockDuration(roundTo15Min(m.seconds)),
+        duration: formatClockDuration(roundTo15Min(m.seconds), durationFormat),
       })),
       seconds: rounded,
     };
@@ -68,7 +72,7 @@ function applyRoundingToModel(model: ReportsPageModel): ReportsPageModel {
   }));
   const roundedWeekRows = model.weekRows.map((r) => {
     const rs = roundTo15Min(r.seconds);
-    return { ...r, seconds: rs, value: formatClockDuration(rs) };
+    return { ...r, seconds: rs, value: formatClockDuration(rs, durationFormat) };
   });
   const billableMetric = model.metrics.find((m) => m.title === "Billable Hours");
   const billableSeconds = billableMetric ? parseDurationToSeconds(billableMetric.value) : 0;
@@ -85,12 +89,15 @@ function applyRoundingToModel(model: ReportsPageModel): ReportsPageModel {
       value: r.shareValue,
     })),
     metrics: [
-      { title: "Total Hours", value: formatClockDuration(roundedTotal) },
-      { title: "Billable Hours", value: formatClockDuration(roundTo15Min(billableSeconds)) },
+      { title: "Total Hours", value: formatClockDuration(roundedTotal, durationFormat) },
+      {
+        title: "Billable Hours",
+        value: formatClockDuration(roundTo15Min(billableSeconds), durationFormat),
+      },
       { title: "Amount", value: model.metrics.find((m) => m.title === "Amount")?.value ?? "-" },
       { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
     ],
-    totalDuration: formatClockDuration(roundedTotal),
+    totalDuration: formatClockDuration(roundedTotal, durationFormat),
     totalSeconds: roundedTotal,
     weekRows: roundedWeekRows,
   };
@@ -124,11 +131,12 @@ export function WorkspaceReportsPage({
   initialProjectId,
   tab,
 }: WorkspaceReportsPageProps): ReactElement {
+  const { beginningOfWeek, durationFormat } = useUserPreferences();
   const [roundingEnabled, setRoundingEnabled] = useState(false);
   const [shareToast, setShareToast] = useState(false);
   const session = useSession();
   const timezone = session.user.timezone ?? "UTC";
-  const weekStartsOn = session.user.beginningOfWeek ?? 1;
+  const weekStartsOn = beginningOfWeek;
   const workspaceId = session.currentWorkspace.id;
   const navigate = useNavigate();
 
@@ -177,8 +185,8 @@ export function WorkspaceReportsPage({
   );
 
   const displayModel = useMemo(
-    () => (roundingEnabled ? applyRoundingToModel(liveModel) : liveModel),
-    [liveModel, roundingEnabled],
+    () => (roundingEnabled ? applyRoundingToModel(liveModel, durationFormat) : liveModel),
+    [liveModel, roundingEnabled, durationFormat],
   );
 
   const handleShareReport = useCallback(() => {

@@ -2,6 +2,7 @@ import { type ReactElement, useMemo, useState } from "react";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
 type ProfitabilityShowMetric = "amount-cost-profit" | "amount" | "cost" | "profit";
@@ -158,6 +159,7 @@ export function ReportsProfitabilityView({
   isPending,
   report,
 }: ReportsProfitabilityViewProps): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const [showMetric, setShowMetric] = useState<ProfitabilityShowMetric>("amount-cost-profit");
   const [topCount, setTopCount] = useState<TopEarningCount>(10);
   const [bottomCount, setBottomCount] = useState<BottomEarningCount>(5);
@@ -213,7 +215,7 @@ export function ReportsProfitabilityView({
       >
         <MetricCell
           title="Billable hours"
-          value={`${formatClockDuration(totalBillableSeconds)} (${billablePct}%)`}
+          value={`${formatClockDuration(totalBillableSeconds, durationFormat)} (${billablePct}%)`}
         />
         <MetricCell title="Amount" value={formatCurrency(totalAmount)} />
         <MetricCell title="Cost" value={formatCurrency(totalCost)} />

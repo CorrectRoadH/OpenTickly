@@ -2,6 +2,7 @@ import { type ReactElement, useMemo, useState } from "react";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { SummaryMetrics, ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 
@@ -70,6 +71,7 @@ export function ReportsWorkloadView({
   report,
   roundingEnabled,
 }: ReportsWorkloadViewProps): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const [metric, setMetric] = useState<WorkloadMetric>("utilization");
   const [target] = useState(80);
 
@@ -96,8 +98,8 @@ export function ReportsWorkloadView({
   const avgDaily = trackedDays > 0 ? totalSeconds / 3600 / trackedDays : 0;
 
   const workloadMetrics: ReportsPageMetric[] = [
-    { title: "Total Hours", value: formatClockDuration(totalSeconds) },
-    { title: "Billable Hours", value: formatClockDuration(billableSeconds) },
+    { title: "Total Hours", value: formatClockDuration(totalSeconds, durationFormat) },
+    { title: "Billable Hours", value: formatClockDuration(billableSeconds, durationFormat) },
     { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
   ];
 
@@ -164,6 +166,7 @@ function MemberWorkloadRow({
   metric: WorkloadMetric;
   target: number;
 }): ReactElement {
+  const { durationFormat } = useUserPreferences();
   let barValue: number;
   let barMax: number;
   let displayValue: string;
@@ -177,12 +180,12 @@ function MemberWorkloadRow({
     case "tracked":
       barValue = member.totalHours;
       barMax = Math.max(member.totalHours, 40);
-      displayValue = formatClockDuration(member.totalSeconds);
+      displayValue = formatClockDuration(member.totalSeconds, durationFormat);
       break;
     case "billable":
       barValue = member.billableHours;
       barMax = Math.max(member.totalHours, 40);
-      displayValue = formatClockDuration(member.billableSeconds);
+      displayValue = formatClockDuration(member.billableSeconds, durationFormat);
       break;
   }
 

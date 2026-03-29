@@ -17,6 +17,7 @@ import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-d
 import type { SliceDimension } from "./useReportsPageState.ts";
 import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
   { label: "Projects", value: "projects" },
@@ -127,6 +128,7 @@ function HourAxisTick(props: Record<string, unknown>): ReactElement {
 }
 
 function BarDurationLabel(props: Record<string, unknown>): ReactElement | null {
+  const { durationFormat } = useUserPreferences();
   const { x, y, width, value } = props as {
     x: number;
     y: number;
@@ -144,7 +146,7 @@ function BarDurationLabel(props: Record<string, unknown>): ReactElement | null {
       x={x + width / 2}
       y={y - 10}
     >
-      {formatClockDuration(value)}
+      {formatClockDuration(value, durationFormat)}
     </text>
   );
 }
@@ -156,6 +158,7 @@ function DurationTooltip({
   active?: boolean;
   payload?: Array<{ payload: { name: string; seconds: number } }>;
 }): ReactElement | null {
+  const { durationFormat } = useUserPreferences();
   if (!active || !payload?.length) return null;
   const entry = payload[0].payload;
   const dayName = DAY_NAMES[entry.name] ?? entry.name;
@@ -163,7 +166,7 @@ function DurationTooltip({
     <div className="rounded-md bg-[var(--track-tooltip-surface)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_4px_12px_var(--track-shadow-tooltip)]">
       <span>{dayName}</span>
       <span className="ml-1.5 tabular-nums text-[var(--track-text-soft)]">
-        {formatClockDuration(entry.seconds)}
+        {formatClockDuration(entry.seconds, durationFormat)}
       </span>
     </div>
   );

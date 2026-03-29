@@ -25,6 +25,7 @@ import {
   type EntryGroup,
   type TimesheetRow,
 } from "./overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   BulkActionToolbar,
   BulkEditDialog,
@@ -430,6 +431,7 @@ export function ListView({
   timezone: string;
   workspaceName?: string;
 }): ReactElement {
+  const { durationFormat, timeofdayFormat } = useUserPreferences();
   const {
     clearSelection,
     isGroupFullySelected,
@@ -509,7 +511,7 @@ export function ListView({
                 {formatGroupLabel(group.key, timezone)}
               </p>
               <p className="text-right text-[14px] font-medium tabular-nums text-white">
-                {formatClockDuration(group.totalSeconds)}
+                {formatClockDuration(group.totalSeconds, durationFormat)}
               </p>
             </li>
 
@@ -640,10 +642,13 @@ export function ListView({
                       type="button"
                     >
                       <span className="text-[var(--track-text-muted)]">
-                        {formatClockDuration(resolveEntryDurationSeconds(renderEntry, nowMs))}
+                        {formatClockDuration(
+                          resolveEntryDurationSeconds(renderEntry, nowMs),
+                          durationFormat,
+                        )}
                       </span>
                       <span className="text-[var(--track-text-muted)]">
-                        {formatEntryRange(renderEntry, timezone)}
+                        {formatEntryRange(renderEntry, timezone, timeofdayFormat)}
                       </span>
                     </button>
 
@@ -1772,6 +1777,7 @@ function CalendarEventCard({
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
+  const { durationFormat } = useUserPreferences();
   const entry = event.entry;
   const durationSeconds = resolveEntryDurationSeconds(entry);
   const color = event.resource.color;
@@ -1829,7 +1835,7 @@ function CalendarEventCard({
         </div>
         <div className="flex items-center gap-1">
           <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight">
-            {formatClockDuration(durationSeconds)}
+            {formatClockDuration(durationSeconds, durationFormat)}
           </span>
         </div>
         {/* Continue button — hidden by default, shown on hover via CSS.

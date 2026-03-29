@@ -8,6 +8,7 @@ import {
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
+import { expectedDuration } from "./fixtures/e2e-format.ts";
 
 test.describe("VAL-REG-002: Workspace scoping regression", () => {
   /**
@@ -1247,7 +1248,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
     const idleElapsed = await page.getByTestId("timer-elapsed").textContent();
-    expect(idleElapsed).toBe("0:00:00");
+    expect(idleElapsed).toBe(expectedDuration(0));
 
     // Start a timer
     await page.getByLabel("Time entry description").fill("Test running timer");

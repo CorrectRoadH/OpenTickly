@@ -27,6 +27,7 @@ import {
   StopIcon,
   TagsIcon,
 } from "../../shared/ui/icons.tsx";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
 
@@ -141,6 +142,7 @@ export function TimeEntryEditorDialog({
   timezone,
   workspaces,
 }: TimeEntryEditorDialogProps): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const [ui, dispatch] = useEditorUIState();
   const {
     actionsMenuOpen,
@@ -164,7 +166,7 @@ export function TimeEntryEditorDialog({
   const stopIso = entry.stop ?? null;
   const start = new Date(startIso);
   const stop = stopIso ? new Date(stopIso) : null;
-  const duration = formatClockDuration(resolveEntryDurationSeconds(entry));
+  const duration = formatClockDuration(resolveEntryDurationSeconds(entry), durationFormat);
   const position = useMemo(() => resolveEditorPosition(anchor, picker), [anchor, picker]);
   const startDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stopDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1253,6 +1255,7 @@ function TimeDisplay({
   timeValue: string;
   timezone: string;
 }): ReactElement {
+  const { timeofdayFormat } = useUserPreferences();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState(timeValue);
 
@@ -1311,7 +1314,7 @@ function TimeDisplay({
           onClick={onEditStart}
           type="button"
         >
-          <span>{formatClockTime(time, timezone)}</span>
+          <span>{formatClockTime(time, timezone, timeofdayFormat)}</span>
         </button>
       )}
       {!hideDateButton ? (

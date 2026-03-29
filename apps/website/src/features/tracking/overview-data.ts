@@ -271,24 +271,32 @@ export function formatGroupLabel(dateKey: string, timezone: string): string {
   return formatter.format(date);
 }
 
+export type TimeFormat = "HH:mm" | "h:mm A" | "H:MM";
+
 export function formatEntryRange(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   timezone: string,
+  timeFormat: TimeFormat = "h:mm A",
 ): string {
   const start = new Date(entry.start ?? entry.at ?? Date.now());
   const stop = entry.stop ? new Date(entry.stop) : undefined;
 
   if (!stop) {
-    return `${formatClockTime(start, timezone)} \u2013 running`;
+    return `${formatClockTime(start, timezone, timeFormat)} \u2013 running`;
   }
 
-  return `${formatClockTime(start, timezone)} \u2013 ${formatClockTime(stop, timezone)}`;
+  return `${formatClockTime(start, timezone, timeFormat)} \u2013 ${formatClockTime(stop, timezone, timeFormat)}`;
 }
 
-export function formatClockTime(date: Date, timezone: string): string {
+export function formatClockTime(
+  date: Date,
+  timezone: string,
+  timeFormat: TimeFormat = "h:mm A",
+): string {
+  const hour12 = timeFormat === "h:mm A";
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
-    hour12: true,
+    hour12,
     minute: "2-digit",
     timeZone: timezone,
   }).format(date);
@@ -304,11 +312,26 @@ export function getHourInTimezone(date: Date, timezone: string): number {
   );
 }
 
-export function formatClockDuration(seconds: number): string {
+export type DurationFormat = "improved" | "classic" | "decimal";
+
+export function formatClockDuration(seconds: number, format: DurationFormat = "improved"): string {
   const safeSeconds = Math.max(0, seconds);
+
+  if (format === "decimal") {
+    const hours = safeSeconds / 3600;
+    return `${hours.toFixed(2)} h`;
+  }
+
   const hours = Math.floor(safeSeconds / 3600);
   const minutes = Math.floor((safeSeconds % 3600) / 60);
   const remainder = safeSeconds % 60;
+
+  if (format === "classic") {
+    if (hours === 0) {
+      return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")} min`;
+    }
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")} h`;
+  }
 
   return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
 }

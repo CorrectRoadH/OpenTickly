@@ -130,17 +130,19 @@ export function TimeAndDateSection(props: {
           <PreferenceSelect
             label="Duration Display Format"
             onChange={(value) => {
-              props.setValue("durationFormat", value);
+              props.setValue("durationFormat", value as PreferencesFormValues["durationFormat"]);
             }}
             options={durationFormatOptions}
+            testId="pref-duration-format"
             value={String(props.getValue("durationFormat"))}
           />
           <PreferenceSelect
             label="Time Format"
             onChange={(value) => {
-              props.setValue("timeofdayFormat", value);
+              props.setValue("timeofdayFormat", value as PreferencesFormValues["timeofdayFormat"]);
             }}
             options={timeFormatOptions}
+            testId="pref-time-format"
             value={String(props.getValue("timeofdayFormat"))}
           />
         </div>
@@ -151,6 +153,7 @@ export function TimeAndDateSection(props: {
               props.setValue("dateFormat", value);
             }}
             options={dateFormatOptions}
+            testId="pref-date-format"
             value={String(props.getValue("dateFormat"))}
           />
           <PreferenceNumberSelect
@@ -159,6 +162,7 @@ export function TimeAndDateSection(props: {
               props.setValue("beginningOfWeek", value);
             }}
             options={firstDayOfWeekOptions}
+            testId="pref-first-day-of-week"
             value={Number(props.getValue("beginningOfWeek"))}
           />
         </div>

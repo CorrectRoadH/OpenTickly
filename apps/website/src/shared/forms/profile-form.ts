@@ -18,7 +18,7 @@ export type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export const preferencesFormSchema = z.object({
   dateFormat: z.string().min(1),
-  durationFormat: z.string().min(1),
+  durationFormat: z.enum(["improved", "classic", "decimal"]),
   beginningOfWeek: z.number().int().min(0).max(6),
   collapseTimeEntries: z.boolean(),
   isGoalsViewShown: z.boolean(),
@@ -33,7 +33,7 @@ export const preferencesFormSchema = z.object({
   showAnimations: z.boolean(),
   showTimeInTitle: z.boolean(),
   tagsShortcutEnabled: z.boolean(),
-  timeofdayFormat: z.string().min(1),
+  timeofdayFormat: z.enum(["HH:mm", "h:mm A", "H:MM"]),
   manualEntryMode: z.string().min(1),
 });
 
@@ -78,7 +78,8 @@ export function createPreferencesFormValues(
 ): PreferencesFormValues {
   return {
     dateFormat: preferences.date_format ?? "YYYY-MM-DD",
-    durationFormat: preferences.duration_format ?? "improved",
+    durationFormat:
+      (preferences.duration_format as PreferencesFormValues["durationFormat"]) ?? "improved",
     beginningOfWeek: preferences.beginningOfWeek ?? 1,
     collapseTimeEntries: preferences.collapseTimeEntries ?? false,
     isGoalsViewShown: preferences.is_goals_view_shown ?? true,
@@ -94,7 +95,8 @@ export function createPreferencesFormValues(
     showTimeInTitle: preferences.showTimeInTitle ?? true,
     tagsShortcutEnabled: preferences.tags_shortcut_enabled ?? false,
     manualEntryMode: preferences.manualEntryMode ?? "timer",
-    timeofdayFormat: preferences.timeofday_format ?? "h:mm a",
+    timeofdayFormat:
+      (preferences.timeofday_format as PreferencesFormValues["timeofdayFormat"]) ?? "h:mm A",
   };
 }
 

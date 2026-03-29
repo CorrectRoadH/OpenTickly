@@ -26,7 +26,6 @@ import {
   useCreateTimeEntryMutation,
   useCurrentTimeEntryQuery,
   useDeleteTimeEntryMutation,
-  usePreferencesQuery,
   useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
@@ -35,6 +34,7 @@ import {
   useUpdateTimeEntryMutation,
   useUpdateWebSessionMutation,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import type { BulkEditUpdates } from "../../features/tracking/BulkEditDialog.tsx";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
@@ -439,7 +439,9 @@ export function useTimerPageOrchestration(options?: {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [selectedWeekDate, setSelectedWeekDate] = useState(() => initialDate ?? new Date());
 
-  const beginningOfWeek = session.user.beginningOfWeek ?? 1;
+  // Preferences
+  const { beginningOfWeek, collapseTimeEntries } = useUserPreferences();
+
   const weekDays = useMemo(
     () => getWeekDaysForDate(selectedWeekDate, beginningOfWeek),
     [selectedWeekDate, beginningOfWeek],
@@ -452,10 +454,6 @@ export function useTimerPageOrchestration(options?: {
     }),
     [weekDays],
   );
-
-  // Preferences
-  const preferencesQuery = usePreferencesQuery();
-  const collapseTimeEntries = preferencesQuery.data?.collapseTimeEntries ?? true;
 
   // Queries — list view uses listQueryRange (computed from listDaysLoaded or listDateRange);
   // other views always use the selected week range.

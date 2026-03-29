@@ -1,5 +1,5 @@
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
-import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
 
 import type { ReportsBreakdownMemberRow, ReportsBreakdownRow } from "./reports-page-data.ts";
 
@@ -50,7 +50,10 @@ export function filterReportRows(
 }
 
 /** Regroup breakdown rows by client dimension */
-export function regroupByClient(breakdownRows: ReportsBreakdownRow[]): ReportsBreakdownRow[] {
+export function regroupByClient(
+  breakdownRows: ReportsBreakdownRow[],
+  durationFormat: DurationFormat = "improved",
+): ReportsBreakdownRow[] {
   const byClient = new Map<string, { members: ReportsBreakdownMemberRow[]; seconds: number }>();
   for (const row of breakdownRows) {
     const client = row.clientName || "(No client)";
@@ -67,7 +70,7 @@ export function regroupByClient(breakdownRows: ReportsBreakdownRow[]): ReportsBr
       return {
         clientName: name,
         color: "var(--track-text-soft)",
-        duration: formatClockDuration(acc.seconds),
+        duration: formatClockDuration(acc.seconds, durationFormat),
         memberCount: acc.members.length,
         members: acc.members,
         name,
@@ -102,7 +105,10 @@ export function regroupByEntry(breakdownRows: ReportsBreakdownRow[]): ReportsBre
 }
 
 /** Regroup breakdown rows by member dimension for slice chart */
-export function regroupByMember(breakdownRows: ReportsBreakdownRow[]): ReportsBreakdownRow[] {
+export function regroupByMember(
+  breakdownRows: ReportsBreakdownRow[],
+  durationFormat: DurationFormat = "improved",
+): ReportsBreakdownRow[] {
   const byMember = new Map<string, number>();
   for (const row of breakdownRows) {
     for (const member of row.members) {
@@ -116,7 +122,7 @@ export function regroupByMember(breakdownRows: ReportsBreakdownRow[]): ReportsBr
       const shareValue = totalSeconds > 0 ? (seconds / totalSeconds) * 100 : 0;
       return {
         color: "var(--track-text-soft)",
-        duration: formatClockDuration(seconds),
+        duration: formatClockDuration(seconds, durationFormat),
         memberCount: 1,
         members: [],
         name,

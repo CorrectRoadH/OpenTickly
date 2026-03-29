@@ -6,6 +6,7 @@ import {
   loginE2eUser,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
+import { expectedDuration } from "./fixtures/e2e-format.ts";
 
 test.describe("Story: browse the reports surface", () => {
   test("Given a newly registered account, when the user opens reports, then live workspace time data is visible", async ({
@@ -48,7 +49,7 @@ test.describe("Story: browse the reports surface", () => {
     await expect(page.getByTestId("reports-tabs")).toContainText("Summary");
     await expect(page.getByTestId("reports-filter-bar")).toContainText("This week . W");
     await expect(page.getByRole("button", { name: "Save and share" })).toBeVisible();
-    await expect(page.getByTestId("reports-summary-metrics")).toContainText("2:30:00");
+    await expect(page.getByTestId("reports-summary-metrics")).toContainText(expectedDuration(9000));
     await expect(page.getByTestId("reports-summary-metrics")).toContainText("2.50 Hours");
     await expect(page.getByTestId("reports-duration-chart")).toBeVisible();
     await expect(page.getByTestId("reports-distribution-panel")).toBeVisible();

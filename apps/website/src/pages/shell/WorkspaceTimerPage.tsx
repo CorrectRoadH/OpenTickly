@@ -50,6 +50,8 @@ import {
   useFavoritesQuery,
   useGoalsQuery,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
 
 type DeletedEntrySnapshot = {
@@ -90,6 +92,7 @@ export function WorkspaceTimerPage({
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+  const { durationFormat } = useUserPreferences();
   const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
   const favoritesQuery = useFavoritesQuery(orch.workspaceId);
   const deleteFavoriteMutation = useDeleteFavoriteMutation(orch.workspaceId);
@@ -403,7 +406,7 @@ export function WorkspaceTimerPage({
                   data-testid="timer-elapsed"
                 >
                   {orch.runningDurationSeconds > 0
-                    ? formatClockDuration(orch.runningDurationSeconds)
+                    ? formatClockDuration(orch.runningDurationSeconds, durationFormat)
                     : "0:00:00"}
                 </span>
                 <button
@@ -495,16 +498,14 @@ export function WorkspaceTimerPage({
                 label="Today total"
                 value={
                   orch.todayTotalSeconds > 0
-                    ? formatClockDuration(orch.todayTotalSeconds)
+                    ? formatClockDuration(orch.todayTotalSeconds, durationFormat)
                     : "0:00:00"
                 }
               />
             ) : null}
             <SummaryStat
               label="Week total"
-              value={
-                orch.weekTotalSeconds > 0 ? formatClockDuration(orch.weekTotalSeconds) : "00:00:00"
-              }
+              value={formatClockDuration(orch.weekTotalSeconds, durationFormat)}
             />
             <div className="ml-auto flex items-center gap-3">
               {orch.view === "calendar" ? (
@@ -1387,13 +1388,6 @@ function ProjectFilterStrip({
       })}
     </div>
   );
-}
-
-function formatClockDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 function resolveTimeEntryProjectId(entry: {

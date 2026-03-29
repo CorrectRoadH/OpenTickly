@@ -2,6 +2,7 @@ import { type ReactElement, useMemo } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useTimeEntriesQuery } from "../../shared/query/web-shell.ts";
 import { ReportsSurfaceMessage } from "./ReportsSharedWidgets.tsx";
 
@@ -63,6 +64,7 @@ export function ReportsDetailedView({
   filters,
   memberFilter,
 }: ReportsDetailedViewProps): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const entriesQuery = useTimeEntriesQuery({
     endDate: dateRange.endDate,
     startDate: dateRange.startDate,
@@ -129,7 +131,7 @@ export function ReportsDetailedView({
                 Total ({filteredEntries.length} entries)
               </td>
               <td className="px-4 py-3 text-right text-[12px] font-semibold tabular-nums text-white">
-                {formatClockDuration(totalSeconds)}
+                {formatClockDuration(totalSeconds, durationFormat)}
               </td>
               <td colSpan={4} />
             </tr>
@@ -145,6 +147,7 @@ function DetailedRow({
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
 }): ReactElement {
+  const { durationFormat } = useUserPreferences();
   const tags = entry.tags ?? [];
 
   return (
@@ -161,7 +164,7 @@ function DetailedRow({
         {entry.client_name?.trim() || "-"}
       </td>
       <td className="px-4 py-3 text-right tabular-nums">
-        {formatClockDuration(entry.duration ?? 0)}
+        {formatClockDuration(entry.duration ?? 0, durationFormat)}
       </td>
       <td className="px-4 py-3 tabular-nums text-[var(--track-text-muted)]">
         {formatTimeHHMM(entry.start)}

@@ -86,25 +86,37 @@ export function PreferenceSelect({
   label,
   onChange,
   options,
+  testId,
   value,
 }: {
   label: string;
   onChange: (value: string) => void;
   options: ReadonlyArray<{ label: string; value: string }>;
+  testId?: string;
   value: string;
 }): ReactElement {
-  return <PreferenceSelectBase label={label} onChange={onChange} options={options} value={value} />;
+  return (
+    <PreferenceSelectBase
+      label={label}
+      onChange={onChange}
+      options={options}
+      testId={testId}
+      value={value}
+    />
+  );
 }
 
 export function PreferenceNumberSelect({
   label,
   onChange,
   options,
+  testId,
   value,
 }: {
   label: string;
   onChange: (value: number) => void;
   options: ReadonlyArray<{ label: string; value: number }>;
+  testId?: string;
   value: number;
 }): ReactElement {
   return (
@@ -114,6 +126,7 @@ export function PreferenceNumberSelect({
         onChange(Number(nextValue));
       }}
       options={options.map((option) => ({ label: option.label, value: String(option.value) }))}
+      testId={testId}
       value={String(value)}
     />
   );
@@ -123,11 +136,13 @@ function PreferenceSelectBase({
   label,
   onChange,
   options,
+  testId,
   value,
 }: {
   label: string;
   onChange: (value: string) => void;
   options: ReadonlyArray<{ label: string; value: string }>;
+  testId?: string;
   value: string;
 }): ReactElement {
   return (
@@ -138,6 +153,7 @@ function PreferenceSelectBase({
       <div className="relative mt-[10px] h-[39px] w-[200px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
         <select
           className="h-full w-full appearance-none rounded-[8px] bg-transparent px-[10px] text-[14px] font-medium leading-none text-[var(--track-text-muted)] outline-none"
+          data-testid={testId}
           onChange={(event) => {
             onChange(event.target.value);
           }}
