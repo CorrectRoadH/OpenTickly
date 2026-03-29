@@ -1,5 +1,6 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { AppButton } from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import type { ModelsSimpleWorkspaceUser } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -330,14 +331,13 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
 
         {/* Footer */}
         <div className="border-t border-[var(--track-border)] px-6 py-4">
-          <button
-            className="h-9 w-full rounded-[8px] bg-[var(--track-accent)] text-[12px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+          <AppButton
             disabled={selectedMemberIds.size === 0 || createMutation.isPending}
             onClick={() => createMutation.mutate()}
             type="button"
           >
             {createMutation.isPending ? "Setting up..." : "Set up timesheet(s)"}
-          </button>
+          </AppButton>
           {createMutation.isError ? (
             <p className="mt-2 text-center text-[12px] text-[var(--track-status-rejected)]">
               Failed to create timesheet setup. Try again.

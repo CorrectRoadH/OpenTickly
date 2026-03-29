@@ -1,4 +1,4 @@
-import { SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -265,14 +265,13 @@ function WorkspaceRateSection(props: WorkspaceRateSectionProps): ReactElement {
             ) : null}
 
             <div>
-              <button
-                className="rounded-[8px] bg-[var(--track-accent)] px-4 py-[6px] text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              <AppButton
                 disabled={!props.isDirty || props.isSaving}
                 onClick={props.onSave}
                 type="button"
               >
                 {props.isSaving ? "Saving..." : "Save"}
-              </button>
+              </AppButton>
             </div>
           </div>
         )}
@@ -573,14 +572,14 @@ function MemberRateRow({
             value={rateQuery.isPending ? "..." : rateValue}
           />
           {dirty ? (
-            <button
-              className="rounded-[6px] bg-[var(--track-accent)] px-2 py-1 text-[11px] font-semibold text-white disabled:opacity-50"
+            <AppButton
               disabled={saveMutation.isPending}
               onClick={handleSave}
+              size="sm"
               type="button"
             >
               Save
-            </button>
+            </AppButton>
           ) : null}
         </div>
       </td>
