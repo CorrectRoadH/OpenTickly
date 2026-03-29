@@ -18,6 +18,7 @@ type Services interface {
 type Handles struct {
 	Database  DatabaseHandle
 	Redis     RedisHandle
+	Cache     *RedisClient
 	FileStore FileStoreHandle
 	Jobs      *JobRunner
 }
@@ -28,11 +29,17 @@ func NewHandles(cfg platformconfig.StartupConfig) *Handles {
 		panic(err)
 	}
 
+	cache, err := NewRedisClient(cfg.Redis.Address)
+	if err != nil {
+		panic(err)
+	}
+
 	return &Handles{
 		Database: database,
 		Redis: RedisHandle{
 			address: cfg.Redis.Address,
 		},
+		Cache: cache,
 		FileStore: FileStoreHandle{
 			namespace: cfg.FileStore.Namespace,
 		},

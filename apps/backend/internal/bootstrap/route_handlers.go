@@ -73,14 +73,16 @@ type routeHandlers struct {
 }
 
 func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger) (*routeHandlers, error) {
+	cache := platformHandles.Cache
+
 	referenceService, err := platformapplication.NewReferenceService()
 	if err != nil {
 		return nil, err
 	}
 
 	billingService, err := billingapplication.NewService(
-		billingpostgres.NewAccountRepository(pool),
-		billingpostgres.NewWorkspaceOwnershipLookup(pool),
+		newCachedAccountRepository(billingpostgres.NewAccountRepository(pool), cache),
+		newCachedWorkspaceOwnershipLookup(billingpostgres.NewWorkspaceOwnershipLookup(pool), cache),
 		[]billingdomain.CapabilityRule{
 			{Key: "reports.profitability", MinimumPlan: billingdomain.PlanEnterprise},
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
@@ -109,7 +111,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	if err != nil {
 		return nil, err
 	}
-	trackingService, err := trackingapplication.NewService(trackingpostgres.NewStore(pool), catalogService, appLogger)
+	trackingStore := newCachedTrackingStore(trackingpostgres.NewStore(pool), cache)
+	trackingService, err := trackingapplication.NewService(trackingStore, catalogService, appLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -134,8 +137,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 
 	identityService := identityapplication.NewService(identityapplication.Config{
-		Users:              identitypostgres.NewUserRepository(pool),
-		Sessions:           identitypostgres.NewSessionRepository(pool),
+		Users:              newCachedUserRepository(identitypostgres.NewUserRepository(pool), cache),
+		Sessions:           newCachedSessionRepository(identitypostgres.NewSessionRepository(pool), cache),
 		PushServices:       identitypostgres.NewPushServiceRepository(pool),
 		JobRecorder:        identitypostgres.NewJobRecorder(pool),
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(pool),
@@ -143,12 +146,16 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 		RegistrationGuard:  &registrationPolicyGuard{pool: pool},
 	})
-	shellProvider := newBillingBackedSessionShell(
-		tenantService,
-		billingService,
-		identityService,
-		membershipService,
-		tenantpostgres.NewUserHomeRepository(pool),
+	userHomes := newCachedUserHomeRepository(tenantpostgres.NewUserHomeRepository(pool), cache)
+	shellProvider := newCachedSessionShellProvider(
+		newBillingBackedSessionShell(
+			tenantService,
+			billingService,
+			identityService,
+			membershipService,
+			userHomes,
+		),
+		cache,
 	)
 	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
 
@@ -164,7 +171,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		trackingApp:   trackingService,
 		reportsApp:    reportsService,
 		governanceApp: governanceService,
-		userHomes:     tenantpostgres.NewUserHomeRepository(pool),
+		userHomes:     userHomes,
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,
 		billingApp:    billingService,
