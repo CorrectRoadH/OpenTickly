@@ -1,15 +1,14 @@
 import { type ReactElement, useState } from "react";
 import {
   AppButton,
-  DirectoryFilterChip,
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
   PageLayout,
-  SelectField,
+  RadioFilterDropdown,
 } from "@opentoggl/web-ui";
 
-import { PlusIcon } from "../../shared/ui/icons.tsx";
+import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useCreateTagMutation,
@@ -42,6 +41,7 @@ export function TagsPage(): ReactElement {
   const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TagStatusFilter>("all");
+  const [nameFilter, setNameFilter] = useState("");
 
   if (tagsQuery.isPending) {
     return <DirectorySurfaceMessage message="Loading tags..." />;
@@ -55,14 +55,10 @@ export function TagsPage(): ReactElement {
 
   const tags = normalizeTags(tagsQuery.data);
   const filteredTags = tags.filter((tag) => {
-    if (statusFilter === "active") {
-      return !tag.deleted_at;
-    }
-
-    if (statusFilter === "inactive") {
-      return Boolean(tag.deleted_at);
-    }
-
+    if (statusFilter === "active" && tag.deleted_at) return false;
+    if (statusFilter === "inactive" && !tag.deleted_at) return false;
+    if (nameFilter.trim() && !tag.name.toLowerCase().includes(nameFilter.trim().toLowerCase()))
+      return false;
     return true;
   });
   const activeCount = tags.filter((tag) => !tag.deleted_at).length;
@@ -97,19 +93,38 @@ export function TagsPage(): ReactElement {
       }
       toolbar={
         <>
-          <SelectField
-            aria-label="Tag status filter"
-            onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
-            value={statusFilter}
-          >
-            <option value="all">All tags</option>
-            <option value="active">Active tags</option>
-            <option value="inactive">Inactive tags</option>
-          </SelectField>
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
-            <DirectoryFilterChip label="Tag name" />
-            <DirectoryFilterChip label="Status" />
+            <div className="relative flex items-center">
+              <input
+                className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
+                data-testid="tags-filter-name"
+                onChange={(e) => setNameFilter(e.target.value)}
+                placeholder="Tag name"
+                type="text"
+                value={nameFilter}
+              />
+              {nameFilter.trim() ? (
+                <button
+                  className="absolute right-2 text-[var(--track-text-muted)] hover:text-white"
+                  onClick={() => setNameFilter("")}
+                  type="button"
+                >
+                  <CloseIcon className="size-3" />
+                </button>
+              ) : null}
+            </div>
+            <RadioFilterDropdown
+              label="Status"
+              onChange={(value) => setStatusFilter(value)}
+              options={[
+                { key: "all" as const, label: "All" },
+                { key: "active" as const, label: "Active" },
+                { key: "inactive" as const, label: "Inactive" },
+              ]}
+              selected={statusFilter}
+              testId="tags-filter-status"
+            />
           </div>
           {status ? (
             <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
