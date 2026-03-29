@@ -186,10 +186,10 @@ function TimezoneSection({
     staleTime: Infinity,
   });
 
-  const options = (timezonesQuery.data ?? [timezone]).map((tz) => ({
-    label: tz,
-    value: tz,
-  }));
+  const options = (timezonesQuery.data ?? [timezone]).map((tz) => {
+    const name = typeof tz === "string" ? tz : (tz as { name: string }).name;
+    return { label: name, value: name };
+  });
 
   return (
     <PreferenceCard title="Time Preferences">
