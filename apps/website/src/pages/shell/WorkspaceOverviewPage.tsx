@@ -141,7 +141,7 @@ export function WorkspaceOverviewPage(): ReactElement {
             <OverviewSurface className="px-5 py-4 lg:min-h-[240px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     This week summary
                   </h2>
                   <button
@@ -180,7 +180,7 @@ export function WorkspaceOverviewPage(): ReactElement {
             <OverviewSurface className="px-5 py-4 lg:min-h-[196px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Team activity
                   </h2>
                   <button
@@ -270,7 +270,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[16px] font-semibold leading-[23px] text-white">
+                  <p className="text-[14px] font-semibold leading-[23px] text-white">
                     Members in your organization
                   </p>
                   <p className="max-w-[240px] text-[14px] leading-5 text-[var(--track-text-muted)]">
@@ -293,7 +293,7 @@ export function WorkspaceOverviewPage(): ReactElement {
             <OverviewSurface className="px-5 py-4 lg:min-h-[156px]">
               <div className="flex h-full flex-col gap-3">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Top projects this week
                   </h2>
                   <button
@@ -328,7 +328,7 @@ export function WorkspaceOverviewPage(): ReactElement {
             <OverviewSurface className="px-5 py-4 lg:min-h-[170px]">
               <div className="flex h-full flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
                     Time tracked to projects
                   </h2>
                   <button
@@ -493,7 +493,7 @@ function StatRing({
             ))}
           </Pie>
         </PieChart>
-        <div className="pointer-events-none absolute inset-0 grid place-items-center text-[16px] font-semibold text-white">
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-[14px] font-semibold text-white">
           {title}
         </div>
       </div>

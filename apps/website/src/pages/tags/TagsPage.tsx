@@ -1,7 +1,15 @@
 import { type ReactElement, useState } from "react";
-import { DirectoryFilterChip, DirectorySurfaceMessage } from "@opentoggl/web-ui";
+import {
+  AppButton,
+  DirectoryFilterChip,
+  DirectorySurfaceMessage,
+  DirectoryTable,
+  type DirectoryTableColumn,
+  PageLayout,
+  SelectField,
+} from "@opentoggl/web-ui";
 
-import { ChevronDownIcon, PlusIcon } from "../../shared/ui/icons.tsx";
+import { PlusIcon } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useCreateTagMutation,
@@ -13,6 +21,16 @@ import { useSession } from "../../shared/session/session-context.tsx";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
 import { TagRowActions } from "./TagRowActions.tsx";
 import { emptyTagsStateTitle, normalizeTags, type TagStatusFilter } from "./tags-page-helpers.ts";
+
+type TagRow = ReturnType<typeof normalizeTags>[number];
+
+const TAG_COLUMNS: DirectoryTableColumn[] = [
+  { key: "dot", label: "", width: "42px" },
+  { key: "name", label: "Tag", width: "minmax(0,1fr)" },
+  { key: "workspace", label: "Workspace", width: "120px" },
+  { key: "status", label: "Status", width: "98px" },
+  { key: "actions", label: "", width: "42px", align: "end" },
+];
 
 export function TagsPage(): ReactElement {
   const session = useSession();
@@ -65,39 +83,30 @@ export function TagsPage(): ReactElement {
   }
 
   return (
-    <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="tags-page">
-      <header className="border-b border-[var(--track-border)]">
-        <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Tags</h1>
-          <button
-            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-            data-testid="tags-create-button"
-            onClick={() => setCreateDialogOpen(true)}
-            type="button"
-          >
-            <PlusIcon className="size-3.5" />
-            New tag
-          </button>
-        </div>
-        <div
-          className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2"
-          data-testid="tags-filter-bar"
+    <PageLayout
+      data-testid="tags-page"
+      title="Tags"
+      headerActions={
+        <AppButton
+          data-testid="tags-create-button"
+          onClick={() => setCreateDialogOpen(true)}
+          type="button"
         >
-          <label className="relative shrink-0">
-            <select
-              aria-label="Tag status filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
-              value={statusFilter}
-            >
-              <option value="all">All tags</option>
-              <option value="active">Active tags</option>
-              <option value="inactive">Inactive tags</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <ChevronDownIcon className="size-3" />
-            </span>
-          </label>
+          <PlusIcon className="size-3.5" />
+          New tag
+        </AppButton>
+      }
+      toolbar={
+        <>
+          <SelectField
+            aria-label="Tag status filter"
+            onChange={(event) => setStatusFilter(event.target.value as TagStatusFilter)}
+            value={statusFilter}
+          >
+            <option value="all">All tags</option>
+            <option value="active">Active tags</option>
+            <option value="inactive">Inactive tags</option>
+          </SelectField>
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <DirectoryFilterChip label="Tag name" />
@@ -106,80 +115,66 @@ export function TagsPage(): ReactElement {
           {status ? (
             <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
           ) : null}
+        </>
+      }
+      footer={
+        <div
+          className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
+          data-testid="tags-summary"
+        >
+          Showing {tags.length} tags in {session.currentWorkspace.name}. Active: {activeCount} ·
+          Inactive: {inactiveCount}
         </div>
-      </header>
-
-      {filteredTags.length > 0 ? (
-        <div data-testid="tags-list">
-          <div className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <div className="flex h-[34px] items-center">
-              <span className="size-[10px] rounded-[3px] border border-[var(--track-border)]" />
+      }
+    >
+      <DirectoryTable<TagRow>
+        columns={TAG_COLUMNS}
+        rows={filteredTags}
+        rowKey={(tag) => tag.id}
+        data-testid="tags-list"
+        emptyState={<span data-testid="tags-empty-state">{emptyTagsStateTitle(statusFilter)}</span>}
+        renderRow={(tag) => (
+          <>
+            <div className="flex h-[44px] items-center">
+              <span
+                className="size-2 rounded-full"
+                style={{ backgroundColor: resolveProjectColorValue({ name: tag.name }) }}
+              />
             </div>
-            <div className="flex h-[34px] items-center">Tag</div>
-            <div className="flex h-[34px] items-center">Workspace</div>
-            <div className="flex h-[34px] items-center">Status</div>
-            <div className="flex h-[34px] items-center justify-end" />
-          </div>
-          {filteredTags.map((tag) => (
-            <div
-              className="grid grid-cols-[42px_minmax(0,1fr)_120px_98px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
-              key={tag.id}
-            >
-              <div className="flex h-[54px] items-center">
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: resolveProjectColorValue({ name: tag.name }) }}
-                />
-              </div>
-              <div className="flex h-[54px] items-center overflow-hidden">
-                <a
-                  aria-label={`Tag details for ${tag.name}`}
-                  className="truncate text-white"
-                  href={`/workspaces/${workspaceId}/tags/${tag.id}`}
-                >
-                  {tag.name}
-                </a>
-              </div>
-              <div className="flex h-[54px] items-center text-[var(--track-text-muted)]">
-                {session.currentWorkspace.name}
-              </div>
-              <div className="flex h-[54px] items-center text-white">
-                {tag.deleted_at ? "Inactive" : "Active"}
-              </div>
-              <div className="flex h-[54px] items-center justify-end">
-                <TagRowActions
-                  tagId={tag.id}
-                  tagName={tag.name}
-                  onDelete={(tagId) => {
-                    void deleteTagMutation.mutateAsync(tagId).then(() => {
-                      setStatus("Tag deleted");
-                    });
-                  }}
-                  onRename={(tagId, name) => {
-                    void updateTagMutation.mutateAsync({ tagId, name }).then(() => {
-                      setStatus("Tag renamed");
-                    });
-                  }}
-                />
-              </div>
+            <div className="flex h-[44px] items-center overflow-hidden">
+              <a
+                aria-label={`Tag details for ${tag.name}`}
+                className="truncate text-[14px] text-white"
+                href={`/workspaces/${workspaceId}/tags/${tag.id}`}
+              >
+                {tag.name}
+              </a>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="px-5 py-10" data-testid="tags-empty-state">
-          <p className="text-sm text-[var(--track-text-muted)]">
-            {emptyTagsStateTitle(statusFilter)}
-          </p>
-        </div>
-      )}
-
-      <div
-        className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
-        data-testid="tags-summary"
-      >
-        Showing {tags.length} tags in {session.currentWorkspace.name}. Active: {activeCount} ·
-        Inactive: {inactiveCount}
-      </div>
+            <div className="flex h-[44px] items-center text-[14px] text-[var(--track-text-muted)]">
+              {session.currentWorkspace.name}
+            </div>
+            <div className="flex h-[44px] items-center text-[14px] text-white">
+              {tag.deleted_at ? "Inactive" : "Active"}
+            </div>
+            <div className="flex h-[44px] items-center justify-end">
+              <TagRowActions
+                tagId={tag.id}
+                tagName={tag.name}
+                onDelete={(tagId) => {
+                  void deleteTagMutation.mutateAsync(tagId).then(() => {
+                    setStatus("Tag deleted");
+                  });
+                }}
+                onRename={(tagId, name) => {
+                  void updateTagMutation.mutateAsync({ tagId, name }).then(() => {
+                    setStatus("Tag renamed");
+                  });
+                }}
+              />
+            </div>
+          </>
+        )}
+      />
 
       {createDialogOpen ? (
         <CreateNameDialog
@@ -196,6 +191,6 @@ export function TagsPage(): ReactElement {
           title="Create new tag"
         />
       ) : null}
-    </div>
+    </PageLayout>
   );
 }

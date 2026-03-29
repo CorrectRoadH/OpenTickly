@@ -47,7 +47,7 @@ export function ModalDialog({
         role="dialog"
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-[18px] font-medium text-white" id={resolvedTitleId}>
+          <h2 className="text-[14px] font-semibold text-white" id={resolvedTitleId}>
             {title}
           </h2>
           <button

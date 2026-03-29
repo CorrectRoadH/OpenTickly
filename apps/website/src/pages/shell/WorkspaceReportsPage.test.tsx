@@ -39,7 +39,7 @@ describe("WorkspaceReportsPage", () => {
     const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
     expect(markup).toContain('data-testid="reports-page"');
-    expect(markup).toContain("text-[21px] font-semibold leading-[30px]");
+    expect(markup).toContain("text-[20px] font-semibold leading-[30px]");
     expect(markup).toContain(
       "rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]",
     );

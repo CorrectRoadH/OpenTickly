@@ -29,7 +29,7 @@ export function PublicMainPanelFrame({
               <p className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
                 {badge}
               </p>
-              <h1 className="text-balance text-[21px] font-semibold leading-[30px] text-[var(--track-text)]">
+              <h1 className="text-balance text-[20px] font-semibold leading-[30px] text-[var(--track-text)]">
                 {title}
               </h1>
               <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">

@@ -102,7 +102,7 @@ export function InvoiceLineItems({
       ))}
 
       <button
-        className="mt-2 flex items-center gap-1.5 py-2 text-[13px] font-medium text-[var(--track-accent-text)] hover:text-white"
+        className="mt-2 flex items-center gap-1.5 py-2 text-[12px] font-medium text-[var(--track-accent-text)] hover:text-white"
         onClick={onAddItem}
         type="button"
       >
@@ -123,7 +123,7 @@ export function InvoiceLineItems({
         <div className="flex items-center justify-between py-1" key={tax.id}>
           <div className="flex items-center gap-2">
             <input
-              className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[13px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
+              className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[12px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
               onChange={(e) => onUpdateTax(index, "name", e.target.value)}
               placeholder="Tax name"
               type="text"
@@ -139,7 +139,7 @@ export function InvoiceLineItems({
             </button>
           </div>
           <input
-            className="h-8 w-24 rounded border border-transparent bg-transparent px-2 text-right text-[13px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
+            className="h-8 w-24 rounded border border-transparent bg-transparent px-2 text-right text-[12px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             onChange={(e) => onUpdateTax(index, "amount", Number(e.target.value) || 0)}
             placeholder="0.00"
             step="0.01"
@@ -150,7 +150,7 @@ export function InvoiceLineItems({
       ))}
 
       <button
-        className="mt-1 flex items-center gap-1.5 py-2 text-[13px] font-medium text-[var(--track-accent-text)] hover:text-white"
+        className="mt-1 flex items-center gap-1.5 py-2 text-[12px] font-medium text-[var(--track-accent-text)] hover:text-white"
         onClick={onAddTax}
         type="button"
       >
@@ -160,7 +160,7 @@ export function InvoiceLineItems({
 
       <div className="mt-2 flex items-center justify-between border-t border-[var(--track-overlay-border)] py-3">
         <span className="text-[14px] font-bold uppercase tracking-[0.06em] text-white">Total</span>
-        <span className="text-[16px] font-bold text-white">
+        <span className="text-[14px] font-bold text-white">
           {total.toFixed(2)} {currency}
         </span>
       </div>

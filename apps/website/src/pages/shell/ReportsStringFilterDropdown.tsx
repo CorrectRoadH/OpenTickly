@@ -53,7 +53,7 @@ export function ReportsStringFilterDropdown({
           data-testid={`reports-filter-${label.toLowerCase()}-dropdown`}
         >
           {options.length === 0 ? (
-            <p className="px-2 py-3 text-[13px] text-[var(--track-text-muted)]">
+            <p className="px-2 py-3 text-[12px] text-[var(--track-text-muted)]">
               No {label.toLowerCase()}s found
             </p>
           ) : (
@@ -69,7 +69,7 @@ export function ReportsStringFilterDropdown({
               ) : null}
               {options.map((name) => (
                 <label
-                  className="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 text-[13px] text-white hover:bg-[var(--track-surface-muted)]"
+                  className="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
                   key={name}
                 >
                   <input

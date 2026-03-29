@@ -102,7 +102,12 @@ function buildMemberRows(report: SavedWeeklyReportData | undefined): ProfitRow[]
 
   for (const row of report.report) {
     const name = row.user_name?.trim() || `User ${row.user_id ?? 0}`;
-    const existing = memberMap.get(name) ?? { amount: 0, color: "#8B5CF6", cost: 0, name };
+    const existing = memberMap.get(name) ?? {
+      amount: 0,
+      color: "var(--track-chart-series-cost)",
+      cost: 0,
+      name,
+    };
     const billableCents = (row.billable_amounts_in_cents ?? []).reduce((s, v) => s + v, 0);
     existing.amount += billableCents / 100;
     memberMap.set(name, existing);
@@ -293,7 +298,7 @@ export function ReportsProfitabilityView({
               </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-[13px]">
+              <table className="w-full text-left text-[12px]">
                 <thead>
                   <tr className="border-b border-[var(--track-border)]">
                     <th className="w-8 px-2 py-3" />
@@ -434,7 +439,7 @@ function DayTrendsChart({
               ) : null}
               {showCost ? (
                 <div
-                  className="w-2 rounded-t-[2px] bg-[#f59e0b]"
+                  className="w-2 rounded-t-[2px] bg-[var(--track-chart-series-amount)]"
                   style={{
                     height: `${(day.cost / maxVal) * 100}%`,
                     minHeight: day.cost > 0 ? 2 : 0,
@@ -444,7 +449,7 @@ function DayTrendsChart({
               ) : null}
               {showProfit ? (
                 <div
-                  className="w-2 rounded-t-[2px] bg-[#22c55e]"
+                  className="w-2 rounded-t-[2px] bg-[var(--track-chart-series-profit)]"
                   style={{
                     height: `${(Math.abs(day.profit) / maxVal) * 100}%`,
                     minHeight: day.profit !== 0 ? 2 : 0,
@@ -453,7 +458,7 @@ function DayTrendsChart({
                 />
               ) : null}
             </div>
-            <span className="text-[10px] text-[var(--track-text-muted)]">{day.label}</span>
+            <span className="text-[11px] text-[var(--track-text-muted)]">{day.label}</span>
           </div>
         );
       })}
@@ -517,8 +522,8 @@ function EarningPanel({
                 className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: row.color }}
               />
-              <span className="min-w-0 flex-1 truncate text-[13px] text-white">{row.name}</span>
-              <span className="shrink-0 text-[13px] tabular-nums text-white">
+              <span className="min-w-0 flex-1 truncate text-[12px] text-white">{row.name}</span>
+              <span className="shrink-0 text-[12px] tabular-nums text-white">
                 {formatCurrency(row.amount)}
               </span>
             </div>
@@ -545,7 +550,7 @@ function MetricCell({
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
         {title}
       </p>
-      <p className="mt-3 text-[16px] font-semibold leading-[23px] tabular-nums text-white">
+      <p className="mt-3 text-[14px] font-semibold leading-[23px] tabular-nums text-white">
         {value}
       </p>
     </div>
@@ -555,7 +560,7 @@ function MetricCell({
 function EmptyChart(): ReactElement {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <h3 className="text-[18px] font-semibold text-white">Nothing to see here...</h3>
+      <h3 className="text-[14px] font-semibold text-white">Nothing to see here...</h3>
       <p className="max-w-[360px] text-[14px] leading-5 text-[var(--track-text-muted)]">
         We couldn't find any time entries. Try adjusting the date range or applying new filters.
       </p>

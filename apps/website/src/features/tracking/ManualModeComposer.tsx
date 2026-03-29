@@ -73,7 +73,7 @@ export function ManualModeComposer({
         />
         <DatePickerButton
           ariaLabel="Pick start date"
-          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
+          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[12px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
           onChange={(v) => {
             if (v) setStartDate(v);
           }}
@@ -83,7 +83,7 @@ export function ManualModeComposer({
       </div>
 
       <span
-        className="text-[16px] text-[var(--track-text-muted)]"
+        className="text-[14px] text-[var(--track-text-muted)]"
         data-testid="manual-arrow-separator"
       >
         &rarr;
@@ -100,7 +100,7 @@ export function ManualModeComposer({
         />
         <DatePickerButton
           ariaLabel="Pick stop date"
-          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
+          className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[12px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
           onChange={(v) => {
             if (v) setStopDate(v);
           }}
@@ -110,7 +110,7 @@ export function ManualModeComposer({
       </div>
 
       <span
-        className="min-w-[56px] text-center text-[13px] tabular-nums text-[var(--track-text-muted)]"
+        className="min-w-[56px] text-center text-[12px] tabular-nums text-[var(--track-text-muted)]"
         data-testid="manual-duration"
       >
         {durationDisplay}

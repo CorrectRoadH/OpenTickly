@@ -105,7 +105,7 @@ export function WorkspaceMembersPage(): ReactElement {
     <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="members-page">
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Members</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">Members</h1>
           <button
             className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
             data-testid="members-invite-button"

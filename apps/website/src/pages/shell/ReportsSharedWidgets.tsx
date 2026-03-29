@@ -19,7 +19,7 @@ export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): R
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             {metric.title}
           </p>
-          <p className="mt-3 text-[16px] font-semibold leading-[23px] tabular-nums text-white">
+          <p className="mt-3 text-[14px] font-semibold leading-[23px] tabular-nums text-white">
             {metric.value}
           </p>
         </div>
@@ -110,7 +110,7 @@ export function ReportsTabPlaceholder({ tab }: { tab: string }) {
       data-testid={`reports-${tab.toLowerCase().replace(/\s+/g, "-")}-placeholder`}
     >
       <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-        <h2 className="text-[21px] font-semibold text-white">{tab}</h2>
+        <h2 className="text-[20px] font-semibold text-white">{tab}</h2>
         <p className="max-w-[480px] text-[14px] leading-5 text-[var(--track-text-muted)]">
           {REPORT_TAB_DESCRIPTIONS[tab] ?? ""}
         </p>

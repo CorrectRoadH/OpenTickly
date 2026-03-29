@@ -26,8 +26,8 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
     <SurfaceCard>
       <div className="space-y-6 p-6">
         <div>
-          <h2 className="text-[16px] font-semibold text-white">CSV Import</h2>
-          <p className="mt-1 text-[13px] text-[var(--track-text-muted)]">
+          <h2 className="text-[14px] font-semibold text-white">CSV Import</h2>
+          <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
             Import time entries into your workspace from a CSV file. The import tool validates your
             file, maps columns, and lets you review entries before committing.
           </p>
@@ -38,7 +38,7 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
             Expected CSV format
           </h3>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-[13px]">
+            <table className="w-full text-left text-[12px]">
               <thead>
                 <tr className="border-b border-[var(--track-border)] text-[var(--track-text-soft)]">
                   <th className="pb-2 pr-4 font-medium">Column</th>
@@ -61,7 +61,7 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
         </div>
 
         <button
-          className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[13px] font-semibold text-black"
+          className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black"
           onClick={() => {
             void navigate({ to: buildWorkspaceImportPath(workspaceId) });
           }}

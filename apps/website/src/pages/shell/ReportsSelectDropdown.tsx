@@ -51,7 +51,7 @@ export function ReportsSelectDropdown<T extends string>({
         >
           {options.map((option) => (
             <button
-              className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-[13px] hover:bg-[var(--track-surface-muted)] ${
+              className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-[12px] hover:bg-[var(--track-surface-muted)] ${
                 option.value === value
                   ? "font-semibold text-[var(--track-accent-text)]"
                   : "text-white"

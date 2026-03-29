@@ -442,7 +442,7 @@ export function TimeEntryEditorDialog({
           <span className="sr-only">Time entry description</span>
           <input
             aria-label="Time entry description"
-            className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[var(--track-control-placeholder-muted)]"
+            className="w-full bg-transparent text-[14px] font-semibold tracking-tight text-white outline-none placeholder:text-[var(--track-control-placeholder-muted)]"
             id="time-entry-editor-title"
             onBlur={() => {
               window.setTimeout(
@@ -584,7 +584,7 @@ export function TimeEntryEditorDialog({
                 onChange={(query: string) => dispatch({ type: "SET_SEARCH", query })}
               />
               <button
-                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
+                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[14px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
                 onClick={() => {
                   onProjectSelect(null);
                   dispatch({ type: "SET_PICKER", picker: null });
@@ -613,7 +613,7 @@ export function TimeEntryEditorDialog({
                       style={{ backgroundColor: project.color }}
                     />
                     <div className="min-w-0">
-                      <div className="truncate text-[16px] font-medium text-white">
+                      <div className="truncate text-[14px] font-medium text-white">
                         {project.name}
                       </div>
                       <div className="truncate text-[12px] text-[var(--track-control-placeholder-muted)]">
@@ -712,7 +712,7 @@ export function TimeEntryEditorDialog({
                       value={projectDraftName}
                     />
                     <button
-                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[13px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
+                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[12px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
                       disabled={isCreatingProject || projectDraftName.trim().length === 0}
                       type="submit"
                     >
@@ -726,7 +726,7 @@ export function TimeEntryEditorDialog({
               ) : (
                 <div className="border-t border-white/6 px-4 pb-1 pt-3">
                   <button
-                    className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
+                    className="flex items-center gap-3 text-[14px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
                       dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: search.trim() });
                       dispatch({ type: "SET_PROJECT_COMPOSER", open: true });
@@ -768,7 +768,7 @@ export function TimeEntryEditorDialog({
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <TagsIcon className="size-4 shrink-0 text-[var(--track-accent-secondary)]" />
-                        <span className="truncate text-[15px]">{tag.name}</span>
+                        <span className="truncate text-[14px]">{tag.name}</span>
                       </div>
                       {selected ? (
                         <span className="text-[12px] text-[var(--track-accent-text)]">
@@ -806,7 +806,7 @@ export function TimeEntryEditorDialog({
                       value={tagDraftName}
                     />
                     <button
-                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[13px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
+                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[12px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
                       disabled={isCreatingTag || tagDraftName.trim().length === 0}
                       type="submit"
                     >
@@ -817,7 +817,7 @@ export function TimeEntryEditorDialog({
               ) : (
                 <div className="border-t border-white/6 px-4 pb-1 pt-3">
                   <button
-                    className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
+                    className="flex items-center gap-3 text-[14px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
                       dispatch({ type: "SET_TAG_DRAFT_NAME", name: search.trim() });
                       dispatch({ type: "SET_TAG_COMPOSER", open: true });
@@ -902,7 +902,7 @@ export function TimeEntryEditorDialog({
                   Running
                 </span>
               )}
-              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[13px] tabular-nums text-[var(--track-overlay-text-muted)]">
+              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[12px] tabular-nums text-[var(--track-overlay-text-muted)]">
                 {duration}
               </span>
               <button
@@ -953,20 +953,20 @@ export function TimeEntryEditorDialog({
           data-testid="time-entry-editor-discard-confirmation"
         >
           <div className="w-full max-w-[280px] rounded-[14px] border border-[var(--track-control-border)] bg-[var(--track-overlay-surface-raised)] p-4 shadow-[0_16px_32px_var(--track-shadow-overlay-strong)]">
-            <h3 className="text-[16px] font-semibold text-white">Discard changes?</h3>
-            <p className="mt-2 text-[13px] text-[var(--track-overlay-text-subtle)]">
+            <h3 className="text-[14px] font-semibold text-white">Discard changes?</h3>
+            <p className="mt-2 text-[12px] text-[var(--track-overlay-text-subtle)]">
               You have unsaved changes in this time entry. Discard them before closing?
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
-                className="rounded-[10px] border border-[var(--track-control-border)] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
+                className="rounded-[10px] border border-[var(--track-control-border)] px-3 py-2 text-[12px] font-medium text-white transition hover:bg-white/4"
                 onClick={() => dispatch({ type: "SET_DISCARD_CONFIRMATION", show: false })}
                 type="button"
               >
                 Keep editing
               </button>
               <button
-                className="rounded-[10px] bg-[var(--track-danger-fill)] px-3 py-2 text-[13px] font-semibold text-[var(--track-button-text)] transition hover:brightness-110"
+                className="rounded-[10px] bg-[var(--track-danger-fill)] px-3 py-2 text-[12px] font-semibold text-[var(--track-button-text)] transition hover:brightness-110"
                 onClick={() => {
                   dispatch({ type: "SET_DISCARD_CONFIRMATION", show: false });
                   onDiscard?.();
@@ -1193,7 +1193,7 @@ function PickerSurface({
       <div className="flex items-center justify-between px-4 pb-3">
         <div className="flex min-w-0 items-center gap-3">
           {icon}
-          <span className="truncate text-[15px] font-semibold text-white">{title}</span>
+          <span className="truncate text-[14px] font-semibold text-white">{title}</span>
         </div>
         {action ?? <span />}
       </div>

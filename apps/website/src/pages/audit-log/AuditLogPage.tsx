@@ -103,7 +103,7 @@ export function AuditLogPage(): ReactElement {
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] items-center px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Audit Log</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">Audit Log</h1>
         </div>
         <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2">
           <label className="relative shrink-0">

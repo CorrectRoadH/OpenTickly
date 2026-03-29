@@ -97,7 +97,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
       <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col bg-[var(--track-surface)] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--track-border)] px-6 py-5">
-          <h1 className="text-[18px] font-semibold text-white">Set up timesheets for members</h1>
+          <h1 className="text-[14px] font-semibold text-white">Set up timesheets for members</h1>
           <button
             className="flex h-8 w-8 items-center justify-center rounded-[6px] text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
             onClick={onClose}
@@ -109,7 +109,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
-          <p className="mb-6 text-[13px] leading-5 text-[var(--track-text-muted)]">
+          <p className="mb-6 text-[12px] leading-5 text-[var(--track-text-muted)]">
             Timesheet setup allows automatic timesheet creation from tracked time. Each period,
             members can review and submit their timesheets, which assigned approvers can then review
             and approve.
@@ -119,7 +119,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           <FieldLabel>Members</FieldLabel>
           <div className="relative mb-5">
             <button
-              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
+              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
               onClick={() => setMemberDropdownOpen(!memberDropdownOpen)}
               type="button"
             >
@@ -178,7 +178,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
                         {m.name.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-[13px] text-white">{m.name}</span>
+                      <span className="text-[12px] text-white">{m.name}</span>
                     </label>
                   ))}
                   {filteredMembers.length === 0 ? (
@@ -195,7 +195,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           <FieldLabel>Approver(s) Level 1</FieldLabel>
           <div className="relative mb-5">
             <button
-              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
+              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
               onClick={() => setApproverDropdownOpen(!approverDropdownOpen)}
               type="button"
             >
@@ -226,7 +226,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
                         {m.name.charAt(0).toUpperCase()}
                       </span>
-                      <span className="text-[13px] text-white">{m.name}</span>
+                      <span className="text-[12px] text-white">{m.name}</span>
                     </button>
                   ))}
                 </div>
@@ -238,7 +238,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           <FieldLabel>Period</FieldLabel>
           <div className="mb-5 flex items-center gap-3">
             <select
-              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
+              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
               onChange={(e) => setPeriodicity(e.target.value)}
               value={periodicity}
             >
@@ -249,7 +249,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-[var(--track-text-muted)]">Starting from</span>
               <input
-                className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white"
+                className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
                 onChange={(e) => setStartDate(e.target.value)}
                 type="date"
                 value={startDate}
@@ -266,19 +266,19 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                 onChange={(e) => setReminderEnabled(e.target.checked)}
                 type="checkbox"
               />
-              <span className="text-[13px] text-white">
+              <span className="text-[12px] text-white">
                 Remind members to submit their timesheet
               </span>
             </label>
             {reminderEnabled ? (
               <div className="mt-3 pl-7">
-                <div className="mb-3 flex flex-wrap items-center gap-1.5 text-[13px] text-white">
+                <div className="mb-3 flex flex-wrap items-center gap-1.5 text-[12px] text-white">
                   <span className="text-[var(--track-text-muted)]">
                     {periodicity === "daily" ? "daily at" : `${periodicity} on`}
                   </span>
                   {periodicity !== "daily" ? (
                     <select
-                      className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[13px] text-white"
+                      className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[12px] text-white"
                       onChange={(e) => setReminderDay(Number(e.target.value))}
                       value={reminderDay}
                     >
@@ -291,7 +291,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                   ) : null}
                   <span className="text-[var(--track-text-muted)]">at</span>
                   <select
-                    className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[13px] text-white"
+                    className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[12px] text-white"
                     onChange={(e) => setReminderTime(e.target.value)}
                     value={reminderTime}
                   >
@@ -309,7 +309,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     onChange={(e) => setSendViaSlack(e.target.checked)}
                     type="checkbox"
                   />
-                  <span className="text-[13px] text-white">Send reminder via Slack</span>
+                  <span className="text-[12px] text-white">Send reminder via Slack</span>
                 </label>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
                   <input
@@ -318,7 +318,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     onChange={(e) => setSendViaEmail(e.target.checked)}
                     type="checkbox"
                   />
-                  <span className="text-[13px] text-white">Send reminder via email</span>
+                  <span className="text-[12px] text-white">Send reminder via email</span>
                 </label>
                 <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
                   The first reminder will be sent on {computeFirstReminder(startDate, reminderDay)}
@@ -331,7 +331,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
         {/* Footer */}
         <div className="border-t border-[var(--track-border)] px-6 py-4">
           <button
-            className="h-9 w-full rounded-[8px] bg-[var(--track-accent)] text-[13px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
+            className="h-9 w-full rounded-[8px] bg-[var(--track-accent)] text-[12px] font-semibold text-white transition hover:brightness-110 disabled:opacity-50"
             disabled={selectedMemberIds.size === 0 || createMutation.isPending}
             onClick={() => createMutation.mutate()}
             type="button"
@@ -339,7 +339,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
             {createMutation.isPending ? "Setting up..." : "Set up timesheet(s)"}
           </button>
           {createMutation.isError ? (
-            <p className="mt-2 text-center text-[12px] text-[#ef4444]">
+            <p className="mt-2 text-center text-[12px] text-[var(--track-status-rejected)]">
               Failed to create timesheet setup. Try again.
             </p>
           ) : null}

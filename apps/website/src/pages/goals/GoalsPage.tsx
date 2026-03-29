@@ -1,11 +1,14 @@
 import { type ReactElement, useMemo, useState } from "react";
 import {
+  AppButton,
   DirectoryHeaderCell,
   DirectorySurfaceMessage,
   DirectoryTableCell,
+  PageLayout,
+  SelectField,
 } from "@opentoggl/web-ui";
 
-import { ChevronDownIcon, PlusIcon } from "../../shared/ui/icons.tsx";
+import { PlusIcon } from "../../shared/ui/icons.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useCreateGoalMutation,
@@ -145,44 +148,34 @@ export function GoalsPage(): ReactElement {
   }
 
   return (
-    <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="goals-page">
-      <header className="border-b border-[var(--track-border)]">
-        <div className="flex min-h-[66px] items-center justify-between px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Goals</h1>
-          <button
-            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white"
-            data-testid="goals-create-button"
-            onClick={openCreateDialog}
-            type="button"
+    <PageLayout
+      data-testid="goals-page"
+      title="Goals"
+      headerActions={
+        <AppButton data-testid="goals-create-button" onClick={openCreateDialog} type="button">
+          <PlusIcon className="size-3.5" />
+          New goal
+        </AppButton>
+      }
+      toolbar={
+        <>
+          <SelectField
+            aria-label="Goal status filter"
+            data-testid="goals-status-filter"
+            onChange={(e) => setStatusFilter(e.target.value as GoalStatusFilter)}
+            value={statusFilter}
           >
-            <PlusIcon className="size-3.5" />
-            New goal
-          </button>
-        </div>
-        <div className="flex min-h-[46px] items-center gap-4 border-t border-[var(--track-border)] px-5 py-2">
-          <label className="relative">
-            <select
-              aria-label="Goal status filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              data-testid="goals-status-filter"
-              onChange={(e) => setStatusFilter(e.target.value as GoalStatusFilter)}
-              value={statusFilter}
-            >
-              <option value="active">Active goals</option>
-              <option value="archived">Archived goals</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <ChevronDownIcon className="size-3" />
-            </span>
-          </label>
+            <option value="active">Active goals</option>
+            <option value="archived">Archived goals</option>
+          </SelectField>
           {statusMessage ? (
             <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
               {statusMessage}
             </span>
           ) : null}
-        </div>
-      </header>
-
+        </>
+      }
+    >
       {goalsQuery.isPending ? <DirectorySurfaceMessage message="Loading goals..." /> : null}
       {goalsQuery.isError ? (
         <DirectorySurfaceMessage message="Goals are temporarily unavailable." tone="error" />
@@ -202,7 +195,7 @@ export function GoalsPage(): ReactElement {
             </div>
             {goals.map((goal) => (
               <div
-                className="grid grid-cols-[minmax(200px,1.5fr)_100px_minmax(200px,1.5fr)_160px_80px_120px_42px] items-center border-b border-[var(--track-border)] px-5 text-[13px]"
+                className="grid grid-cols-[minmax(200px,1.5fr)_100px_minmax(200px,1.5fr)_160px_80px_120px_42px] items-center border-b border-[var(--track-border)] px-5 text-[14px]"
                 data-testid="goal-row"
                 key={goal.goal_id}
               >
@@ -254,18 +247,14 @@ export function GoalsPage(): ReactElement {
             className="flex flex-col items-center justify-center gap-4 px-5 py-20 text-center"
             data-testid="goals-empty-state"
           >
-            <h2 className="text-[21px] font-semibold text-white">No goals yet?</h2>
+            <h2 className="text-[20px] font-semibold text-white">No goals yet?</h2>
             <p className="max-w-[420px] text-[14px] leading-5 text-[var(--track-text-muted)]">
               Turn your ambitions into achievements. Set your goals — it&apos;s simple and quick!
             </p>
-            <button
-              className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-accent)] px-4 text-[12px] font-semibold text-white"
-              onClick={openCreateDialog}
-              type="button"
-            >
+            <AppButton onClick={openCreateDialog} type="button">
               <PlusIcon className="size-3.5" />
               New goal
-            </button>
+            </AppButton>
           </div>
         )
       ) : null}
@@ -278,7 +267,7 @@ export function GoalsPage(): ReactElement {
           onSubmit={(data) => void handleSubmit(data)}
         />
       ) : null}
-    </div>
+    </PageLayout>
   );
 }
 

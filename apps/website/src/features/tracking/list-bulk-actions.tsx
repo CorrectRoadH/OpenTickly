@@ -110,12 +110,12 @@ export function BulkActionToolbar({
       className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5"
       data-testid="bulk-action-toolbar"
     >
-      <span className="text-[13px] font-medium text-white">
+      <span className="text-[12px] font-medium text-white">
         {count} item{count !== 1 ? "s" : ""} selected
       </span>
       <button
         aria-label="Bulk edit selected entries"
-        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]"
         onClick={onEdit}
         type="button"
       >
@@ -124,7 +124,7 @@ export function BulkActionToolbar({
       </button>
       <button
         aria-label="Delete selected entries"
-        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+        className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]"
         onClick={onDelete}
         type="button"
       >
@@ -174,15 +174,15 @@ export function DeleteConfirmDialog({
         data-testid="delete-confirm-dialog"
         role="dialog"
       >
-        <h2 className="mb-3 text-[15px] font-semibold text-white">
+        <h2 className="mb-3 text-[14px] font-semibold text-white">
           Delete {count} {entryWord}?
         </h2>
-        <p className="mb-5 text-[13px] text-[var(--track-text-muted)]">
+        <p className="mb-5 text-[12px] text-[var(--track-text-muted)]">
           This action cannot be undone.
         </p>
         <div className="flex gap-3">
           <button
-            className="rounded-lg bg-rose-600 px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-rose-500"
+            className="rounded-lg bg-rose-600 px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-rose-500"
             data-testid="delete-confirm-button"
             onClick={onConfirm}
             type="button"
@@ -190,7 +190,7 @@ export function DeleteConfirmDialog({
             Delete
           </button>
           <button
-            className="rounded-lg border border-[var(--track-border)] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
+            className="rounded-lg border border-[var(--track-border)] px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
             onClick={onCancel}
             type="button"
           >

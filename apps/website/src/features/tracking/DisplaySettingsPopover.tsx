@@ -71,13 +71,13 @@ export function DisplaySettingsPopover({
     >
       <div className="flex border-b border-[var(--track-border)]">
         <button
-          className="flex-1 border-b-2 border-[var(--track-accent)] px-4 py-3 text-[13px] font-medium text-white"
+          className="flex-1 border-b-2 border-[var(--track-accent)] px-4 py-3 text-[12px] font-medium text-white"
           type="button"
         >
           Display settings
         </button>
         <button
-          className="flex-1 px-4 py-3 text-[13px] font-medium text-[var(--track-text-muted)] hover:text-white"
+          className="flex-1 px-4 py-3 text-[12px] font-medium text-[var(--track-text-muted)] hover:text-white"
           disabled
           type="button"
         >
@@ -159,14 +159,14 @@ export function DisplaySettingsPopover({
 
       <div className="flex gap-3 border-t border-[var(--track-border)] px-5 py-4">
         <button
-          className="flex-1 rounded-lg border border-[var(--track-border)] bg-transparent px-4 py-2.5 text-[13px] font-medium text-white transition hover:bg-[var(--track-row-hover)]"
+          className="flex-1 rounded-lg border border-[var(--track-border)] bg-transparent px-4 py-2.5 text-[12px] font-medium text-white transition hover:bg-[var(--track-row-hover)]"
           onClick={onClose}
           type="button"
         >
           Cancel
         </button>
         <button
-          className="flex-1 rounded-lg bg-[var(--track-accent)] px-4 py-2.5 text-[13px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
+          className="flex-1 rounded-lg bg-[var(--track-accent)] px-4 py-2.5 text-[12px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
           onClick={handleSave}
           type="button"
         >
@@ -213,7 +213,7 @@ function SettingsDropdown({
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           {label}
         </span>
-        <span className="flex items-center gap-1 text-[13px] text-white">
+        <span className="flex items-center gap-1 text-[12px] text-white">
           {selectedOption?.label ?? value}
           <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
         </span>
@@ -222,7 +222,7 @@ function SettingsDropdown({
         <div className="absolute right-0 top-full z-10 min-w-[200px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-1 shadow-[0_12px_28px_var(--track-shadow-overlay)]">
           {options.map((option) => (
             <button
-              className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[13px] transition hover:bg-white/4 ${
+              className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[12px] transition hover:bg-white/4 ${
                 option.value === value
                   ? "text-[var(--track-accent)]"
                   : "text-[var(--track-overlay-text)]"

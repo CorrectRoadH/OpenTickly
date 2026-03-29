@@ -36,11 +36,11 @@ export function ProjectEditorMembers({
           </p>
           <p className="mt-2 text-[14px] text-white">Invite members</p>
         </div>
-        <label className="flex items-center gap-2 text-[13px] text-[var(--track-overlay-text)]">
+        <label className="flex items-center gap-2 text-[12px] text-[var(--track-overlay-text)]">
           <span>Access</span>
           <select
             aria-label="Member access"
-            className="h-9 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white"
+            className="h-9 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white"
             onChange={(event) =>
               onMemberRoleChange(event.target.value === "manager" ? "manager" : "regular")
             }
@@ -87,7 +87,7 @@ export function ProjectEditorMembers({
           );
         })}
         {filteredMembers.length === 0 ? (
-          <p className="rounded-[10px] bg-[var(--track-control-surface-muted)] px-3 py-3 text-[13px] text-[var(--track-text-muted)]">
+          <p className="rounded-[10px] bg-[var(--track-control-surface-muted)] px-3 py-3 text-[12px] text-[var(--track-text-muted)]">
             No matching workspace members.
           </p>
         ) : null}

@@ -62,7 +62,7 @@ export function CreateNameDialog({
 
           {showColorPicker ? (
             <div>
-              <p className="mb-3 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+              <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Color
               </p>
               <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">

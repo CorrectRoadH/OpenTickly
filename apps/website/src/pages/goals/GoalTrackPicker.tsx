@@ -181,7 +181,7 @@ function TrackMenu({
         these
       </p>
       <button
-        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
+        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[12px] text-white hover:bg-[var(--track-row-hover)]"
         onClick={onSelectProjects}
         type="button"
       >
@@ -191,7 +191,7 @@ function TrackMenu({
         </span>
       </button>
       <button
-        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
+        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[12px] text-white hover:bg-[var(--track-row-hover)]"
         onClick={onSelectTags}
         type="button"
       >
@@ -201,7 +201,7 @@ function TrackMenu({
         </span>
       </button>
       <button
-        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[13px] text-white hover:bg-[var(--track-row-hover)]"
+        className="flex w-full items-center justify-between rounded-[6px] px-2 py-2 text-[12px] text-white hover:bg-[var(--track-row-hover)]"
         onClick={onSelectBillable}
         type="button"
       >
@@ -287,14 +287,14 @@ function ProjectList({
         ) : (
           Array.from(grouped.entries()).map(([client, list]) => (
             <div key={client}>
-              <div className="px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+              <div className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 {client}
               </div>
               {list.map((p) => {
                 const selected = p.id != null && selectedIds.includes(p.id);
                 return (
                   <button
-                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-[var(--track-row-hover)] ${
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-[var(--track-row-hover)] ${
                       selected ? "text-white" : "text-[var(--track-text-muted)]"
                     }`}
                     key={p.id}
@@ -375,7 +375,7 @@ function TagList({
             const selected = selectedIds.includes(t.id);
             return (
               <button
-                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-[var(--track-row-hover)] ${
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-[var(--track-row-hover)] ${
                   selected ? "text-white" : "text-[var(--track-text-muted)]"
                 }`}
                 key={t.id}

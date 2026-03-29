@@ -119,7 +119,7 @@ export function ProjectEditorAdvanced({
             <div className="absolute left-0 top-[calc(100%+4px)] z-10 max-h-[160px] w-full overflow-y-auto rounded-[10px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]">
               {filteredClients.map((c) => (
                 <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-white hover:bg-[var(--track-tooltip-surface)]"
+                  className="flex w-full items-center px-3 py-2 text-left text-[12px] text-white hover:bg-[var(--track-tooltip-surface)]"
                   key={c.id}
                   onClick={() => {
                     onClientChange(c.id);
@@ -132,7 +132,7 @@ export function ProjectEditorAdvanced({
               ))}
               {filteredClients.length === 0 ? (
                 <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[13px] text-[var(--track-accent-text)] hover:bg-[var(--track-tooltip-surface)]"
+                  className="flex w-full items-center px-3 py-2 text-left text-[12px] text-[var(--track-accent-text)] hover:bg-[var(--track-tooltip-surface)]"
                   onClick={() => {
                     onCreateClient(clientQuery.trim());
                     setClientQuery("");
@@ -167,15 +167,15 @@ export function ProjectEditorAdvanced({
         <div className="flex items-center gap-2">
           <DatePickerButton
             ariaLabel="Start date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[13px] text-white"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
             onChange={onStartDateChange}
             placeholder="Start date"
             value={startDate}
           />
-          <span className="text-[13px] text-[var(--track-text-muted)]">-</span>
+          <span className="text-[12px] text-[var(--track-text-muted)]">-</span>
           <DatePickerButton
             ariaLabel="End date"
-            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[13px] text-white"
+            className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
             onChange={onEndDateChange}
             placeholder="No end date"
             value={endDate}
@@ -206,13 +206,13 @@ export function ProjectEditorAdvanced({
           <div className="mt-3 flex items-center gap-2">
             <input
               aria-label="Estimated hours"
-              className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onEstimatedHoursChange(Number(event.target.value) || 0)}
               type="number"
               value={estimatedHours || ""}
             />
-            <span className="text-[13px] text-[var(--track-text-muted)]">hours</span>
+            <span className="text-[12px] text-[var(--track-text-muted)]">hours</span>
           </div>
         ) : null}
       </div>
@@ -240,14 +240,14 @@ export function ProjectEditorAdvanced({
           <div className="mt-3 flex items-center gap-2">
             <input
               aria-label="Fixed fee amount"
-              className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[13px] text-white outline-none focus:border-[var(--track-accent-soft)]"
+              className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onFixedFeeChange(Number(event.target.value) || 0)}
               step="0.01"
               type="number"
               value={fixedFee || ""}
             />
-            <span className="text-[13px] text-[var(--track-text-muted)]">USD</span>
+            <span className="text-[12px] text-[var(--track-text-muted)]">USD</span>
           </div>
         ) : null}
       </div>

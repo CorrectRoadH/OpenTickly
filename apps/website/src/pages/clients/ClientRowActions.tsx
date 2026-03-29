@@ -1,5 +1,7 @@
 import { type FormEvent, type ReactElement, useCallback, useEffect, useRef, useState } from "react";
 
+import { AppButton, IconButton } from "@opentoggl/web-ui";
+
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
@@ -72,18 +74,16 @@ export function ClientRowActions({
 
   return (
     <div className="relative" ref={menuRef}>
-      <button
+      <IconButton
         aria-label={`Actions for ${clientName}`}
-        className="flex size-6 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-        data-testid={`client-actions-${clientId}`}
         onClick={() => {
           setMenuOpen(!menuOpen);
           setConfirmingDelete(false);
         }}
-        type="button"
+        size="sm"
       >
         <MoreIcon className="size-3.5" />
-      </button>
+      </IconButton>
       {menuOpen ? (
         <div
           className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
@@ -95,31 +95,29 @@ export function ClientRowActions({
                 Delete &ldquo;{clientName}&rdquo;?
               </p>
               <div className="flex gap-2">
-                <button
-                  className="h-6 rounded-[4px] bg-rose-600 px-2.5 text-[11px] font-semibold text-white"
-                  data-testid={`client-delete-confirm-${clientId}`}
+                <AppButton
                   onClick={() => {
                     onDelete(clientId);
                     setMenuOpen(false);
                     setConfirmingDelete(false);
                   }}
-                  type="button"
+                  overrides={{
+                    BaseButton: { props: { "data-testid": `client-delete-confirm-${clientId}` } },
+                  }}
+                  size="sm"
+                  tone="destructive"
                 >
                   Delete
-                </button>
-                <button
-                  className="h-6 rounded-[4px] border border-[var(--track-border)] px-2.5 text-[11px] text-[var(--track-text-muted)]"
-                  onClick={() => setConfirmingDelete(false)}
-                  type="button"
-                >
+                </AppButton>
+                <AppButton onClick={() => setConfirmingDelete(false)} size="sm" tone="secondary">
                   Cancel
-                </button>
+                </AppButton>
               </div>
             </div>
           ) : (
             <>
               <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
                 data-testid={`client-rename-${clientId}`}
                 onClick={() => {
                   setMenuOpen(false);
@@ -130,7 +128,7 @@ export function ClientRowActions({
                 Edit
               </button>
               <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
                 onClick={() => {
                   onArchive(clientId);
                   setMenuOpen(false);
@@ -140,7 +138,7 @@ export function ClientRowActions({
                 Archive
               </button>
               <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
                 data-testid={`client-delete-${clientId}`}
                 onClick={() => setConfirmingDelete(true)}
                 type="button"

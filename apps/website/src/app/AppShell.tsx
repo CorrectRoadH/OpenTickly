@@ -157,7 +157,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         >
           <MenuIcon className="size-5" />
         </button>
-        <span className="text-[15px] font-semibold text-white">opentoggl</span>
+        <span className="text-[14px] font-semibold text-white">opentoggl</span>
       </div>
 
       {/* Mobile sidebar overlay */}
@@ -320,14 +320,14 @@ function ProfileMenuButton({
               {/* User info */}
               <div className="flex items-center gap-3 px-5 py-4">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[16px] font-semibold text-white">{name}</p>
-                  <p className="truncate text-[13px] text-[var(--track-text-muted)]">{email}</p>
+                  <p className="truncate text-[14px] font-semibold text-white">{name}</p>
+                  <p className="truncate text-[12px] text-[var(--track-text-muted)]">{email}</p>
                 </div>
                 <UserAvatar
                   className="size-[40px] shrink-0 overflow-hidden"
                   imageUrl={imageUrl}
                   name={name}
-                  textClassName="text-[15px] font-semibold"
+                  textClassName="text-[14px] font-semibold"
                 />
               </div>
 
@@ -336,7 +336,7 @@ function ProfileMenuButton({
               {/* Menu items */}
               <div className="py-1">
                 <button
-                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
                     setOpen(false);
                     void navigate({ to: "/profile" });
@@ -347,7 +347,7 @@ function ProfileMenuButton({
                   Profile settings
                 </button>
                 <button
-                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
                     setOpen(false);
                     void navigate({ to: "/account" });
@@ -358,7 +358,7 @@ function ProfileMenuButton({
                   Account settings
                 </button>
                 <button
-                  className="flex w-full items-center justify-between px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  className="flex w-full items-center justify-between px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
                     setOpen(false);
                     setShortcutsOpen(true);
@@ -377,7 +377,7 @@ function ProfileMenuButton({
 
               <div className="py-1">
                 <button
-                  className="flex w-full items-center px-5 py-2.5 text-[15px] text-white transition hover:bg-[var(--track-row-hover)]"
+                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
                     setOpen(false);
                     void logoutMutation.mutateAsync().then(() => {

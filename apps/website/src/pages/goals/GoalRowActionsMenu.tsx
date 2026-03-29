@@ -1,5 +1,7 @@
 import { type ReactElement, useCallback, useRef, useState } from "react";
 
+import { IconButton } from "@opentoggl/web-ui";
+
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -24,15 +26,13 @@ export function GoalRowActionsMenu({
 
   return (
     <div className="relative" ref={rootRef}>
-      <button
-        aria-expanded={open}
+      <IconButton
         aria-label={`${goal.name} actions`}
-        className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
         onClick={() => setOpen((current) => !current)}
-        type="button"
+        size="lg"
       >
         <MoreIcon className="size-4" />
-      </button>
+      </IconButton>
       {open ? (
         <div
           className="absolute right-0 top-10 z-20 min-w-[180px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"

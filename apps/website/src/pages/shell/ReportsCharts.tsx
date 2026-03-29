@@ -59,7 +59,7 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
       className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
       data-testid="reports-duration-chart"
     >
-      <h2 className="text-[16px] font-semibold leading-[23px] text-white">Duration by day</h2>
+      <h2 className="text-[14px] font-semibold leading-[23px] text-white">Duration by day</h2>
       <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-4 pt-3">
         <ResponsiveContainer height={248} width="100%">
           <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
@@ -192,7 +192,7 @@ export function DistributionPanel({
       data-testid="reports-distribution-panel"
     >
       <div className="flex items-start justify-between gap-2">
-        <h2 className="max-w-[140px] text-[16px] font-semibold leading-[23px] text-white">
+        <h2 className="max-w-[140px] text-[14px] font-semibold leading-[23px] text-white">
           {sliceLabel} distribution
         </h2>
         <ReportsSelectDropdown
@@ -273,7 +273,7 @@ function DonutChart({
       {/* Center label */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <div className="flex size-[106px] flex-col items-center justify-center rounded-full bg-[var(--track-surface)] text-center">
-          <p className="text-[16px] font-semibold leading-[23px] tabular-nums text-white">
+          <p className="text-[14px] font-semibold leading-[23px] tabular-nums text-white">
             {totalDuration}
           </p>
           <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">

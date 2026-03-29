@@ -20,7 +20,7 @@ type DatePickerButtonProps = {
  */
 export function DatePickerButton({
   ariaLabel,
-  className = "h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[13px] text-white",
+  className = "h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white",
   onChange,
   placeholder = "Select date",
   testId,

@@ -142,19 +142,19 @@ export function SettingsDataExport(): ReactElement {
     <SurfaceCard>
       <div className="space-y-6 p-6">
         <div>
-          <h2 className="text-[16px] font-semibold text-white">Export time entries</h2>
-          <p className="mt-1 text-[13px] text-[var(--track-text-muted)]">
+          <h2 className="text-[14px] font-semibold text-white">Export time entries</h2>
+          <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
             Download your workspace time entries for a selected date range.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="block">
-            <span className="mb-1 block text-[13px] font-medium text-[var(--track-text-soft)]">
+            <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
               Start date
             </span>
             <DatePickerButton
-              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[13px] text-white"
+              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white"
               onChange={setStartDate}
               testId="export-start-date"
               value={startDate}
@@ -162,11 +162,11 @@ export function SettingsDataExport(): ReactElement {
           </div>
 
           <div className="block">
-            <span className="mb-1 block text-[13px] font-medium text-[var(--track-text-soft)]">
+            <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
               End date
             </span>
             <DatePickerButton
-              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[13px] text-white"
+              className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white"
               onChange={setEndDate}
               testId="export-end-date"
               value={endDate}
@@ -175,11 +175,11 @@ export function SettingsDataExport(): ReactElement {
         </div>
 
         <label className="block">
-          <span className="mb-1 block text-[13px] font-medium text-[var(--track-text-soft)]">
+          <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
             Export format
           </span>
           <select
-            className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[13px] text-white sm:w-48"
+            className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white sm:w-48"
             data-testid="export-format"
             onChange={(e) => setFormat(e.target.value as ExportFormat)}
             value={format}
@@ -191,7 +191,7 @@ export function SettingsDataExport(): ReactElement {
 
         <div className="flex items-center gap-4">
           <button
-            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[13px] font-semibold text-black disabled:opacity-50"
+            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
             data-testid="export-button"
             disabled={exporting || entriesQuery.isPending || entryCount === 0}
             onClick={handleExport}
@@ -199,7 +199,7 @@ export function SettingsDataExport(): ReactElement {
           >
             {exporting ? "Exporting..." : "Export"}
           </button>
-          <span className="text-[13px] text-[var(--track-text-muted)]">
+          <span className="text-[12px] text-[var(--track-text-muted)]">
             {entriesQuery.isPending
               ? "Loading entries..."
               : `${entryCount} entries in selected range`}

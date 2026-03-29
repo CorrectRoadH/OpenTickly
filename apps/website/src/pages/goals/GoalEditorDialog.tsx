@@ -287,7 +287,7 @@ export function GoalEditorDialog({
                 />
               )}
             </div>
-            <label className="flex cursor-pointer items-center gap-2 text-[13px] text-white">
+            <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white">
               <span
                 className={`flex size-[14px] items-center justify-center rounded-[4px] ${
                   noEndDate
@@ -391,12 +391,12 @@ function MemberDropdown({
         <div className="max-h-[200px] overflow-y-auto py-1">
           {filtered.length > 0 ? (
             <>
-              <div className="px-3 py-1 text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+              <div className="px-3 py-1 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Active members
               </div>
               {filtered.map((m) => (
                 <button
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[13px] hover:bg-[var(--track-row-hover)] ${
+                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-[var(--track-row-hover)] ${
                     m.id === selectedUserId ? "text-white" : "text-[var(--track-text-muted)]"
                   }`}
                   key={m.id}

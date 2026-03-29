@@ -23,8 +23,8 @@ export function FeatureWipNotice({
           />
         )}
       </div>
-      <h3 className="text-[16px] font-semibold text-white">{title}</h3>
-      <p className="max-w-[420px] text-[13px] leading-5 text-[var(--track-text-muted)]">
+      <h3 className="text-[14px] font-semibold text-white">{title}</h3>
+      <p className="max-w-[420px] text-[12px] leading-5 text-[var(--track-text-muted)]">
         {description}
       </p>
       <span className="mt-1 inline-flex rounded-full border border-[var(--track-border)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--track-text-muted)]">

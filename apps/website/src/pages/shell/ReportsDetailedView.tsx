@@ -107,7 +107,7 @@ export function ReportsDetailedView({
       data-testid="reports-detailed-table"
     >
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-[13px]">
+        <table className="w-full text-left text-[12px]">
           <thead>
             <tr className="border-b border-[var(--track-border)] text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               <th className="px-4 py-3">Description</th>
@@ -151,7 +151,7 @@ function DetailedRow({
   const tags = entry.tags ?? [];
 
   return (
-    <tr className="text-[13px] text-white hover:bg-[var(--track-surface-muted)]">
+    <tr className="text-[12px] text-white hover:bg-[var(--track-surface-muted)]">
       <td className="max-w-[240px] truncate px-4 py-3">
         {entry.description?.trim() || (
           <span className="text-[var(--track-text-soft)]">(no description)</span>

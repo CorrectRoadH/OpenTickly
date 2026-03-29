@@ -198,13 +198,13 @@ function MemberWorkloadRow({
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[11px] font-semibold text-[var(--track-accent)]">
           {member.name.charAt(0).toUpperCase()}
         </div>
-        <span className="truncate text-[13px] text-white">{member.name}</span>
+        <span className="truncate text-[12px] text-white">{member.name}</span>
       </div>
       <div className="relative flex-1">
         <div className="h-6 w-full rounded-[4px] bg-[var(--track-surface-muted)]">
           <div
             className={`h-full rounded-[4px] transition-all ${
-              meetsTarget ? "bg-[var(--track-accent)]" : "bg-[var(--track-warning,#f59e0b)]"
+              meetsTarget ? "bg-[var(--track-accent)]" : "bg-[var(--track-chart-series-amount)]"
             }`}
             style={{ width: `${barWidth}%` }}
           />
@@ -217,7 +217,7 @@ function MemberWorkloadRow({
           />
         ) : null}
       </div>
-      <div className="w-[80px] shrink-0 text-right text-[13px] tabular-nums text-white">
+      <div className="w-[80px] shrink-0 text-right text-[12px] tabular-nums text-white">
         {displayValue}
       </div>
     </div>
@@ -227,7 +227,7 @@ function MemberWorkloadRow({
 function WorkloadEmptyState(): ReactElement {
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <h3 className="text-[18px] font-semibold text-white">Nothing to see here...</h3>
+      <h3 className="text-[14px] font-semibold text-white">Nothing to see here...</h3>
       <p className="max-w-[360px] text-[14px] leading-5 text-[var(--track-text-muted)]">
         We couldn't find any time entries. Try adjusting the date range or applying new filters.
       </p>

@@ -71,7 +71,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[56px] items-center justify-between gap-4 px-5 py-3">
           <div className="flex items-center gap-4">
-            <h2 className="text-[16px] font-semibold text-white">Approvals</h2>
+            <h2 className="text-[14px] font-semibold text-white">Approvals</h2>
             <nav className="flex items-center gap-1">
               <Link
                 className={`rounded-[8px] px-3 py-[6px] text-[14px] font-medium ${
@@ -149,7 +149,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
             ] as const
           ).map((tab) => (
             <Link
-              className={`rounded-[6px] px-3 py-1.5 text-[13px] font-medium ${
+              className={`rounded-[6px] px-3 py-1.5 text-[12px] font-medium ${
                 statusFilter === tab.value
                   ? "bg-[var(--track-accent-soft)] text-[var(--track-accent)]"
                   : "text-[var(--track-text-muted)] hover:text-white"
@@ -254,7 +254,7 @@ function TeamTimesheetsView({
 
   if (timesheetsQuery.isPending) {
     return (
-      <div className="flex items-center justify-center py-24 text-[13px] text-[var(--track-text-muted)]">
+      <div className="flex items-center justify-center py-24 text-[12px] text-[var(--track-text-muted)]">
         Loading timesheets...
       </div>
     );
@@ -263,12 +263,12 @@ function TeamTimesheetsView({
   if (timesheets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 px-5 py-16 text-center">
-        <h3 className="text-[18px] font-semibold text-white">No timesheets to review.</h3>
-        <p className="max-w-[400px] text-[13px] leading-5 text-[var(--track-text-muted)]">
+        <h3 className="text-[14px] font-semibold text-white">No timesheets to review.</h3>
+        <p className="max-w-[400px] text-[12px] leading-5 text-[var(--track-text-muted)]">
           It's been a while since your team added a time entry.
         </p>
         <Link
-          className="flex h-9 items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] px-4 text-[13px] font-medium text-white hover:bg-[var(--track-row-hover)]"
+          className="flex h-9 items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] px-4 text-[12px] font-medium text-white hover:bg-[var(--track-row-hover)]"
           params={{ workspaceId: String(workspaceId), view: "settings" }}
           to="/workspaces/$workspaceId/approvals/$view"
         >
@@ -289,7 +289,7 @@ function TeamTimesheetsView({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[13px]">
+      <table className="w-full text-left text-[12px]">
         <thead>
           <tr className="border-b border-[var(--track-border)]">
             <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
@@ -407,7 +407,7 @@ function YourTimesheetsView({
 
   if (timesheetsQuery.isPending) {
     return (
-      <div className="flex items-center justify-center py-24 text-[13px] text-[var(--track-text-muted)]">
+      <div className="flex items-center justify-center py-24 text-[12px] text-[var(--track-text-muted)]">
         Loading your timesheets...
       </div>
     );
@@ -424,7 +424,7 @@ function YourTimesheetsView({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[13px]">
+      <table className="w-full text-left text-[12px]">
         <thead>
           <tr className="border-b border-[var(--track-border)]">
             <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
@@ -511,7 +511,7 @@ function ApprovalsSettingsView({
 
   if (setupsQuery.isPending) {
     return (
-      <div className="flex items-center justify-center py-24 text-[13px] text-[var(--track-text-muted)]">
+      <div className="flex items-center justify-center py-24 text-[12px] text-[var(--track-text-muted)]">
         Loading...
       </div>
     );
@@ -521,10 +521,10 @@ function ApprovalsSettingsView({
     return (
       <div className="flex items-center justify-center px-5 py-16" data-testid="approvals-empty">
         <div className="flex max-w-[500px] flex-col items-center rounded-[12px] border border-[var(--track-border)] px-8 py-12 text-center">
-          <h2 className="text-[18px] font-semibold leading-7 text-white">
+          <h2 className="text-[14px] font-semibold leading-7 text-white">
             Set up automatic timesheets for your team to collate all tracked time for easy approval
           </h2>
-          <p className="mt-3 text-[13px] leading-5 text-[var(--track-text-muted)]">
+          <p className="mt-3 text-[12px] leading-5 text-[var(--track-text-muted)]">
             This automatic setup generates timesheets for selected team members based on tracked
             time during the week. Team members can then simply submit them for your approval.
           </p>
@@ -553,7 +553,7 @@ function ApprovalsSettingsView({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-[13px]">
+      <table className="w-full text-left text-[12px]">
         <thead>
           <tr className="border-b border-[var(--track-border)]">
             <th
@@ -656,10 +656,10 @@ function ApprovalsSettingsView({
 function TimesheetStatusBadge({ status }: { status: string }): ReactElement {
   const styles: Record<string, string> = {
     open: "bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]",
-    submitted: "bg-[#f59e0b]/10 text-[#f59e0b]",
-    approved: "bg-[#22c55e]/10 text-[#22c55e]",
-    rejected: "bg-[#ef4444]/10 text-[#ef4444]",
-    reopened: "bg-[#f59e0b]/10 text-[#f59e0b]",
+    submitted: "bg-[var(--track-status-submitted)]/10 text-[var(--track-status-submitted)]",
+    approved: "bg-[var(--track-status-approved)]/10 text-[var(--track-status-approved)]",
+    rejected: "bg-[var(--track-status-rejected)]/10 text-[var(--track-status-rejected)]",
+    reopened: "bg-[var(--track-status-submitted)]/10 text-[var(--track-status-submitted)]",
   };
   const labels: Record<string, string> = {
     open: "Not submitted",
@@ -691,7 +691,7 @@ function TimesheetActions({
     return (
       <div className="flex items-center gap-2">
         <button
-          className="rounded-[6px] bg-[#22c55e] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+          className="rounded-[6px] bg-[var(--track-status-approved)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
           disabled={isPending}
           onClick={() => onAction("approved")}
           type="button"
@@ -699,7 +699,7 @@ function TimesheetActions({
           Approve
         </button>
         <button
-          className="rounded-[6px] bg-[#ef4444] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+          className="rounded-[6px] bg-[var(--track-status-rejected)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
           disabled={isPending}
           onClick={() => onAction("rejected")}
           type="button"
@@ -727,8 +727,8 @@ function TimesheetActions({
 function EmptyTimesheets({ detail, message }: { detail: string; message: string }): ReactElement {
   return (
     <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
-      <h3 className="text-[18px] font-semibold text-white">{message}</h3>
-      <p className="max-w-[400px] text-[13px] leading-5 text-[var(--track-text-muted)]">{detail}</p>
+      <h3 className="text-[14px] font-semibold text-white">{message}</h3>
+      <p className="max-w-[400px] text-[12px] leading-5 text-[var(--track-text-muted)]">{detail}</p>
     </div>
   );
 }

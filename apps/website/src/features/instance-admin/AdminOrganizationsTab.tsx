@@ -38,7 +38,7 @@ export function AdminOrganizationsTab(): ReactElement {
     <div className="flex flex-col gap-4">
       <SurfaceCard>
         <div className="p-4">
-          <div className="mb-3 text-[13px] text-[var(--track-text-muted)]">
+          <div className="mb-3 text-[12px] text-[var(--track-text-muted)]">
             {orgs.total_count} organization{orgs.total_count !== 1 ? "s" : ""}
           </div>
           <table className="w-full text-left text-[14px]">

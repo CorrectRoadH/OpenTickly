@@ -43,7 +43,7 @@ export function ReportsBreakdownPanel({
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="text-[16px] font-semibold leading-[23px] text-white">
+          <h2 className="text-[14px] font-semibold leading-[23px] text-white">
             Project and member breakdown
           </h2>
         </div>
@@ -106,7 +106,7 @@ function BreakdownRow({
       <div className="grid grid-cols-[28px_minmax(0,1fr)_98px_98px_24px] items-center gap-3 px-4 py-4">
         {hasMembers ? (
           <button
-            className={`text-left text-[13px] transition-transform ${expanded ? "rotate-90" : ""} text-[var(--track-text-soft)]`}
+            className={`text-left text-[12px] transition-transform ${expanded ? "rotate-90" : ""} text-[var(--track-text-soft)]`}
             data-testid={`reports-expand-${row.name}`}
             onClick={onToggle}
             type="button"
@@ -121,7 +121,7 @@ function BreakdownRow({
             <span className="size-2 rounded-full" style={{ backgroundColor: row.color }} />
             <p className="truncate text-[14px] font-medium text-white">{row.name}</p>
             {hasMembers ? (
-              <span className="text-[13px] text-[var(--track-text-soft)]">({row.memberCount})</span>
+              <span className="text-[12px] text-[var(--track-text-soft)]">({row.memberCount})</span>
             ) : null}
           </div>
         </div>
@@ -137,10 +137,10 @@ function BreakdownRow({
               key={member.name}
             >
               <span />
-              <p className="truncate pl-5 text-[13px] text-[var(--track-text-muted)]">
+              <p className="truncate pl-5 text-[12px] text-[var(--track-text-muted)]">
                 {member.name}
               </p>
-              <span className="text-[13px] tabular-nums text-[var(--track-text-muted)]">
+              <span className="text-[12px] tabular-nums text-[var(--track-text-muted)]">
                 {member.duration}
               </span>
               <span />

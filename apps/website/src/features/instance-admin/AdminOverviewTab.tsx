@@ -32,7 +32,7 @@ function OnboardingBanner(): ReactElement {
           </svg>
         </div>
         <div className="flex-1">
-          <h3 className="text-[16px] font-semibold text-[var(--track-text)]">
+          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
             Welcome to OpenToggl
           </h3>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--track-text-muted)]">
@@ -112,7 +112,7 @@ function VersionCard(): ReactElement {
         <div className="flex items-center gap-3">
           {version?.update_available && version.release_url ? (
             <a
-              className="rounded-[8px] bg-[var(--track-accent)] px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+              className="rounded-[8px] bg-[var(--track-accent)] px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90"
               href={version.release_url}
               rel="noopener noreferrer"
               target="_blank"
@@ -122,7 +122,7 @@ function VersionCard(): ReactElement {
           ) : null}
           {version?.changelog_url ? (
             <a
-              className="text-[13px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
+              className="text-[12px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
               href={version.changelog_url}
               rel="noopener noreferrer"
               target="_blank"
@@ -171,7 +171,7 @@ function HealthSection(): ReactElement {
     <>
       <SurfaceCard>
         <div className="p-5">
-          <h3 className="mb-4 text-[16px] font-semibold text-[var(--track-text)]">
+          <h3 className="mb-4 text-[14px] font-semibold text-[var(--track-text)]">
             Instance Health
           </h3>
           <div className="flex items-center gap-3">
@@ -202,7 +202,7 @@ function StatusBadge({ status }: { status: string }): ReactElement {
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-[13px] font-medium ${colors[status] ?? "bg-gray-500/20 text-gray-400"}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-medium ${colors[status] ?? "bg-gray-500/20 text-gray-400"}`}
     >
       {status}
     </span>

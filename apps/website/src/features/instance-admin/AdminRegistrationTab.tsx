@@ -61,7 +61,7 @@ export function AdminRegistrationTab(): ReactElement {
     <div className="flex flex-col gap-4">
       <SurfaceCard>
         <div className="p-5">
-          <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">
+          <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
             Registration Policy
           </h3>
           <p className="mb-5 text-[14px] text-[var(--track-text-muted)]">
@@ -102,7 +102,7 @@ export function AdminRegistrationTab(): ReactElement {
                   <div className="text-[14px] font-medium text-[var(--track-text)]">
                     {mode.label}
                   </div>
-                  <div className="text-[13px] text-[var(--track-text-muted)]">
+                  <div className="text-[12px] text-[var(--track-text-muted)]">
                     {mode.description}
                   </div>
                 </div>

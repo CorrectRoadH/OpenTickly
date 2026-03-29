@@ -149,7 +149,7 @@ export function WeekRangePicker({
           type="button"
         >
           <CalendarIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
-          <span className="truncate text-[13px] font-medium">
+          <span className="truncate text-[12px] font-medium">
             {mode === "all-dates"
               ? "All dates"
               : mode === "day"
@@ -256,14 +256,14 @@ export function WeekRangePicker({
                 </button>
                 <div className="flex items-center gap-1">
                   <button
-                    className="rounded px-1.5 py-0.5 text-[16px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
+                    className="rounded px-1.5 py-0.5 text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
                     onClick={() => setHeaderPicker(headerPicker === "month" ? null : "month")}
                     type="button"
                   >
                     {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
                   </button>
                   <button
-                    className="rounded px-1.5 py-0.5 text-[16px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
+                    className="rounded px-1.5 py-0.5 text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
                     onClick={() => {
                       if (headerPicker === "year") {
                         setHeaderPicker(null);
@@ -300,7 +300,7 @@ export function WeekRangePicker({
                       const isCurrent = i === visibleMonth.getMonth();
                       return (
                         <button
-                          className={`rounded-lg px-2 py-1.5 text-[13px] font-medium transition ${
+                          className={`rounded-lg px-2 py-1.5 text-[12px] font-medium transition ${
                             isCurrent
                               ? "bg-[var(--track-accent-strong)] text-white"
                               : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
@@ -348,7 +348,7 @@ export function WeekRangePicker({
                         const isCurrent = year === visibleMonth.getFullYear();
                         return (
                           <button
-                            className={`rounded-lg px-2 py-1.5 text-[13px] font-medium transition ${
+                            className={`rounded-lg px-2 py-1.5 text-[12px] font-medium transition ${
                               isCurrent
                                 ? "bg-[var(--track-accent-strong)] text-white"
                                 : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"

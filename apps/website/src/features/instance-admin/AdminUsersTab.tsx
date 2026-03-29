@@ -64,7 +64,7 @@ export function AdminUsersTab(): ReactElement {
       {usersQuery.data ? (
         <SurfaceCard>
           <div className="p-4">
-            <div className="mb-3 text-[13px] text-[var(--track-text-muted)]">
+            <div className="mb-3 text-[12px] text-[var(--track-text-muted)]">
               {usersQuery.data.total_count} user{usersQuery.data.total_count !== 1 ? "s" : ""}
             </div>
             <table className="w-full text-left text-[14px]">
@@ -133,13 +133,13 @@ function UserRow({
       <td className="py-3 pr-4 text-[var(--track-text-soft)]">
         {user.is_instance_admin ? "Yes" : "-"}
       </td>
-      <td className="py-3 pr-4 text-[13px] text-[var(--track-text-muted)]">
+      <td className="py-3 pr-4 text-[12px] text-[var(--track-text-muted)]">
         {new Date(user.created_at).toLocaleDateString()}
       </td>
       <td className="py-3 text-right">
         {user.status === "active" && !user.is_instance_admin ? (
           <button
-            className="rounded-[6px] px-3 py-1 text-[13px] text-red-400 hover:bg-red-500/10"
+            className="rounded-[6px] px-3 py-1 text-[12px] text-red-400 hover:bg-red-500/10"
             onClick={onDisable}
             type="button"
           >
@@ -148,7 +148,7 @@ function UserRow({
         ) : null}
         {user.status === "disabled" ? (
           <button
-            className="rounded-[6px] px-3 py-1 text-[13px] text-green-400 hover:bg-green-500/10"
+            className="rounded-[6px] px-3 py-1 text-[12px] text-green-400 hover:bg-green-500/10"
             onClick={onRestore}
             type="button"
           >

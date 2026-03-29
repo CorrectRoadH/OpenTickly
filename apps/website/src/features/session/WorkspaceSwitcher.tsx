@@ -394,7 +394,7 @@ function OrganizationOptionsPanel({
             <OverviewIcon className="size-8" />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[16px] font-semibold leading-[23px] text-white">
+            <h2 className="truncate text-[14px] font-semibold leading-[23px] text-white">
               {organization?.name ?? ""}
             </h2>
           </div>
@@ -520,7 +520,7 @@ function OrganizationOptionsPanel({
 
         <div className="border-t border-[var(--track-border)] pt-5">
           <button
-            className="text-[16px] font-semibold leading-[23px] text-white transition hover:text-[var(--track-accent-text)]"
+            className="text-[14px] font-semibold leading-[23px] text-white transition hover:text-[var(--track-accent-text)]"
             onClick={onCreateOrganization}
             type="button"
           >

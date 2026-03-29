@@ -244,7 +244,7 @@ export function CalendarSubviewSelect({
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Calendar sub-view"
-        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[13px] font-medium text-white transition hover:border-[var(--track-control-border)]"
+        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]"
         data-testid="calendar-subview-select"
         onClick={() => setOpen((prev) => !prev)}
         onBlur={(e) => {
@@ -265,7 +265,7 @@ export function CalendarSubviewSelect({
           {CALENDAR_SUBVIEW_OPTIONS.map((option) => (
             <button
               aria-selected={option === value}
-              className={`flex w-full items-center px-3 py-2 text-[13px] transition hover:bg-[var(--track-row-hover)] ${
+              className={`flex w-full items-center px-3 py-2 text-[12px] transition hover:bg-[var(--track-row-hover)] ${
                 option === value ? "font-semibold text-[var(--track-accent)]" : "text-white"
               }`}
               key={option}
@@ -829,7 +829,7 @@ function ListRowTagPicker({
         type="button"
       >
         {hasTags ? (
-          <span className="truncate text-[13px]">{tagNames}</span>
+          <span className="truncate text-[12px]">{tagNames}</span>
         ) : (
           <TagsIcon className="size-3.5" />
         )}
@@ -878,7 +878,7 @@ function ListRowMoreActions({
   const containerRef = useRef<HTMLDivElement>(null);
   const label = entry.description?.trim() || "time entry";
   const menuItemClass =
-    "flex w-full items-center gap-2 px-3 py-2 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]";
+    "flex w-full items-center gap-2 px-3 py-2 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]";
 
   return (
     <div className="relative" ref={containerRef}>
@@ -983,7 +983,7 @@ function ListRowMoreActions({
           </button>
           <div className="my-1 border-t border-[var(--track-border)]" />
           <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[13px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
+            className="flex w-full items-center gap-2 px-3 py-2 text-[12px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
             onClick={() => {
               setOpen(false);
               onDelete?.(entry);
@@ -1386,13 +1386,13 @@ export function CalendarView({
             </span>
             <span className="flex flex-col items-start leading-tight">
               <span
-                className={`text-[10px] font-medium tracking-wide ${
+                className={`text-[11px] font-medium tracking-wide ${
                   isToday ? "text-[var(--track-accent)]" : "text-[var(--track-text-soft)]"
                 }`}
               >
                 {dayName}
               </span>
-              <span className="text-[10px] tabular-nums text-[var(--track-text-soft)]">
+              <span className="text-[11px] tabular-nums text-[var(--track-text-soft)]">
                 {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
               </span>
             </span>
@@ -1665,7 +1665,7 @@ export function TimesheetView({
             <td className="px-2">
               <div className="flex items-center gap-1">
                 {row.tagNames.length > 0 ? (
-                  <span className="truncate text-[13px] text-[var(--track-text-muted)]">
+                  <span className="truncate text-[12px] text-[var(--track-text-muted)]">
                     {row.tagNames.join(", ")}
                   </span>
                 ) : null}
@@ -1715,7 +1715,7 @@ export function TimesheetView({
               onClick={onAddRow}
               type="button"
             >
-              <strong className="text-[16px]">+</strong>
+              <strong className="text-[14px]">+</strong>
               <span>Add row</span>
             </button>
           </td>
@@ -1730,7 +1730,7 @@ export function TimesheetView({
         <tr className="h-[50px] text-[14px]">
           <td className="pl-5">
             <button
-              className="rounded-md border border-[var(--track-border)] px-3 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
+              className="rounded-md border border-[var(--track-border)] px-3 py-1.5 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]"
               onClick={onCopyLastWeek}
               type="button"
             >

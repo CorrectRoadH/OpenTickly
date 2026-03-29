@@ -12,7 +12,7 @@ export function DirectoryFilterChip({
   return (
     <span
       className={`flex h-[34px] items-center gap-1 rounded-lg px-2 text-[14px] normal-case tracking-normal ${
-        disabled ? "text-[#5d5d5d]" : "text-white"
+        disabled ? "text-[var(--track-text-disabled)]" : "text-white"
       }`}
     >
       {label}
@@ -35,7 +35,7 @@ export function PageHeader({
     <header className={`${bordered ? "border-b border-[var(--track-border)]" : ""}`.trim()}>
       <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
         <div className="space-y-1">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">{title}</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">{title}</h1>
           {subtitle ? (
             <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{subtitle}</p>
           ) : null}
@@ -49,19 +49,34 @@ export function PageHeader({
 export function SurfaceCard({
   children,
   className = "",
+  clickable = false,
 }: {
   children: ReactNode;
   className?: string;
+  clickable?: boolean;
 }) {
-  return <div className={getSurfaceClassName("default", className)}>{children}</div>;
+  const clickableClasses = clickable
+    ? "transition-[transform,box-shadow] duration-[160ms] cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(0,0,0,0.25)] active:translate-y-0 active:shadow-[0_2px_0_0_rgba(0,0,0,0.15)]"
+    : "";
+
+  return (
+    <div
+      className={getSurfaceClassName("default", `${clickableClasses} ${className}`.trim())}
+      style={
+        clickable ? { transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" } : undefined
+      }
+    >
+      {children}
+    </div>
+  );
 }
 
 export function DirectoryHeaderCell({ children }: { children?: ReactNode }) {
-  return <div className="flex h-[34px] items-center">{children}</div>;
+  return <div className="flex h-[36px] items-center">{children}</div>;
 }
 
 export function DirectoryTableCell({ children }: { children: ReactNode }) {
-  return <div className="flex h-[54px] items-center text-[12px] text-white">{children}</div>;
+  return <div className="flex h-[44px] items-center text-[14px] text-white">{children}</div>;
 }
 
 export function DirectorySurfaceMessage({

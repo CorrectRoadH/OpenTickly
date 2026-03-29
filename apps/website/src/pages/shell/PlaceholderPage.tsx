@@ -17,7 +17,7 @@ export function PlaceholderPage({
       data-testid="placeholder-page"
     >
       <div className="flex flex-col items-center gap-4 text-center">
-        <h1 className="text-[21px] font-semibold">{title}</h1>
+        <h1 className="text-[20px] font-semibold">{title}</h1>
         {description ? (
           <p className="max-w-[480px] text-[14px] leading-5 text-[var(--track-text-muted)]">
             {description}

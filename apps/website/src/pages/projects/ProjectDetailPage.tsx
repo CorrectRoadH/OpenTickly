@@ -44,7 +44,7 @@ export function ProjectDetailPage({
 
   return (
     <main className="min-h-dvh bg-[var(--track-surface)] px-5 py-4 text-white">
-      <div className="mx-auto grid max-w-[1180px] gap-6 lg:grid-cols-[minmax(0,1fr)_210px]">
+      <div className="mx-auto grid max-w-[1384px] gap-6 lg:grid-cols-[minmax(0,1fr)_210px]">
         <section className="min-w-0">
           <header className="border-b border-[var(--track-border)] pb-4">
             <div className="flex items-center gap-2 text-[12px] text-[var(--track-text-muted)]">
@@ -94,7 +94,7 @@ export function ProjectDetailPage({
           {project ? (
             <section className="pt-3">
               <SurfaceCard className="overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-4 text-[13px] text-[var(--track-text-muted)]">
+                <div className="flex items-center gap-2 px-4 py-4 text-[12px] text-[var(--track-text-muted)]">
                   <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
                     i
                   </span>
@@ -246,7 +246,7 @@ function StatBlock({ label, value }: { label: string; value: string }): ReactEle
       <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
         {label}
       </p>
-      <p className="mt-1 text-[18px] font-semibold tabular-nums text-white">{value}</p>
+      <p className="mt-1 text-[20px] font-semibold tabular-nums text-white">{value}</p>
     </div>
   );
 }

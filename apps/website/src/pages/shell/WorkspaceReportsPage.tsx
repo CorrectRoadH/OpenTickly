@@ -239,7 +239,7 @@ export function WorkspaceReportsPage({
         <div className="border-b border-[var(--track-border)] px-5 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-5">
-              <h1 className="text-[21px] font-semibold leading-[30px] text-white">Reports</h1>
+              <h1 className="text-[20px] font-semibold leading-[30px] text-white">Reports</h1>
               <div className="flex items-center gap-4" data-testid="reports-tabs">
                 {REPORTS_TABS.map((t) => (
                   <TopTab

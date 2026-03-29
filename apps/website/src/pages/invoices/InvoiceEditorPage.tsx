@@ -139,7 +139,7 @@ export function InvoiceEditorPage(): ReactElement {
       data-testid="invoice-editor-page"
     >
       <header className="flex items-center justify-between border-b border-[var(--track-overlay-border)] px-6 py-3">
-        <nav className="flex items-center gap-2 text-[13px]">
+        <nav className="flex items-center gap-2 text-[12px]">
           <button
             className="text-[var(--track-accent-text)] hover:text-white"
             onClick={() => void navigate({ to: invoicesPath })}
@@ -152,13 +152,13 @@ export function InvoiceEditorPage(): ReactElement {
         </nav>
         <div className="flex items-center gap-3">
           <button
-            className="h-9 rounded-[8px] border border-[var(--track-control-border)] px-4 text-[13px] font-medium text-[var(--track-overlay-text)] hover:text-white"
+            className="h-9 rounded-[8px] border border-[var(--track-control-border)] px-4 text-[12px] font-medium text-[var(--track-overlay-text)] hover:text-white"
             type="button"
           >
             Connect QuickBooks
           </button>
           <button
-            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[13px] font-semibold text-white disabled:opacity-50"
+            className="h-9 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-white disabled:opacity-50"
             data-testid="invoice-save-button"
             disabled={!documentId.trim() || createMutation.isPending}
             onClick={() => void handleSave()}

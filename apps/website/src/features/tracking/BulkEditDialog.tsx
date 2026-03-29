@@ -84,7 +84,7 @@ export function BulkEditDialog({
     >
       <div className="flex flex-col gap-3">
         <input
-          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
+          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
           data-testid="bulk-edit-description"
           onChange={(event) => setDescription(event.target.value)}
           placeholder="New description..."
@@ -94,7 +94,7 @@ export function BulkEditDialog({
 
         <div className="relative">
           <button
-            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px]"
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[12px]"
             data-testid="bulk-edit-project-trigger"
             onClick={() => {
               setSearch("");
@@ -136,7 +136,7 @@ export function BulkEditDialog({
 
         <div className="relative">
           <button
-            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[13px]"
+            className="flex w-full items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[12px]"
             data-testid="bulk-edit-tag-trigger"
             onClick={() => {
               setSearch("");
@@ -176,7 +176,7 @@ export function BulkEditDialog({
           ) : null}
         </div>
 
-        <label className="flex items-center gap-2 px-1 text-[13px] text-[var(--track-text-muted)]">
+        <label className="flex items-center gap-2 px-1 text-[12px] text-[var(--track-text-muted)]">
           <input
             checked={removeExistingTags}
             className="size-3.5 cursor-pointer accent-[var(--track-accent)]"
@@ -188,7 +188,7 @@ export function BulkEditDialog({
         </label>
 
         <DatePickerButton
-          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-left text-[13px] text-white"
+          className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-left text-[12px] text-white"
           onChange={setSelectedDate}
           placeholder="Move to date..."
           testId="bulk-edit-date"
@@ -196,7 +196,7 @@ export function BulkEditDialog({
         />
 
         <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5">
-          <span className="text-[13px] text-white">Billable</span>
+          <span className="text-[12px] text-white">Billable</span>
           <button
             aria-label={billable ? "Disable billable" : "Enable billable"}
             className={`relative h-5 w-9 rounded-full transition ${
@@ -222,7 +222,7 @@ export function BulkEditDialog({
 
       <div className="mt-5">
         <button
-          className="rounded-lg bg-[var(--track-accent)] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[var(--track-accent-fill-hover)]"
+          className="rounded-lg bg-[var(--track-accent)] px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--track-accent-fill-hover)]"
           data-testid="bulk-edit-save"
           onClick={handleSave}
           type="button"

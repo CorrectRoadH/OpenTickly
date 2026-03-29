@@ -379,7 +379,7 @@ export function WorkspaceTimerPage({
             }}
             type="button"
           >
-            <span className="text-[16px] font-semibold">$</span>
+            <span className="text-[14px] font-semibold">$</span>
           </button>
           <div className="ml-auto flex shrink-0 items-center gap-3">
             {orch.timerInputMode === "manual" && orch.runningEntry == null ? (
@@ -1182,7 +1182,7 @@ function TimerBarProjectPicker({
         )}
         {selectedProject ? (
           <span
-            className="min-w-0 truncate text-[13px] font-medium"
+            className="min-w-0 truncate text-[12px] font-medium"
             style={{ color: selectedProject.color }}
           >
             {selectedProject.name}
@@ -1277,7 +1277,7 @@ function TimerBarTagPicker({
       >
         <TagsIcon className="size-4 shrink-0" />
         {tagLabel ? (
-          <span className="min-w-0 truncate text-[13px] font-medium">{tagLabel}</span>
+          <span className="min-w-0 truncate text-[12px] font-medium">{tagLabel}</span>
         ) : null}
       </button>
       {open ? (
@@ -1294,7 +1294,7 @@ function TimerBarTagPicker({
           </div>
           <div className="px-3 pb-2">
             <input
-              className="h-8 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2.5 text-[13px] text-white outline-none placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)]"
+              className="h-8 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2.5 text-[12px] text-white outline-none placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)]"
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tags"
               type="text"
@@ -1302,7 +1302,7 @@ function TimerBarTagPicker({
             />
           </div>
           {filteredTags.length === 0 && !search.trim() ? (
-            <div className="px-3 py-2 text-[13px] text-[var(--track-text-soft)]">
+            <div className="px-3 py-2 text-[12px] text-[var(--track-text-soft)]">
               No tags available
             </div>
           ) : filteredTags.length > 0 ? (
@@ -1311,7 +1311,7 @@ function TimerBarTagPicker({
                 const isSelected = draftTagIds.includes(tag.id);
                 return (
                   <button
-                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] transition hover:bg-white/5 ${
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] transition hover:bg-white/5 ${
                       isSelected ? "text-[var(--track-accent)]" : "text-white"
                     }`}
                     key={tag.id}
@@ -1319,7 +1319,7 @@ function TimerBarTagPicker({
                     type="button"
                   >
                     <span
-                      className={`flex size-4 items-center justify-center rounded border text-[10px] ${
+                      className={`flex size-4 items-center justify-center rounded border text-[11px] ${
                         isSelected
                           ? "border-[var(--track-accent)] bg-[var(--track-accent)] text-white"
                           : "border-[var(--track-border)]"
@@ -1337,7 +1337,7 @@ function TimerBarTagPicker({
           onCreateTag &&
           !tagOptions.some((t) => t.name.toLowerCase() === search.trim().toLowerCase()) ? (
             <button
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-[var(--track-accent)] transition hover:bg-white/5 disabled:opacity-60"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] text-[var(--track-accent)] transition hover:bg-white/5 disabled:opacity-60"
               disabled={isCreating}
               onClick={() => {
                 const trimmed = search.trim();
@@ -1386,7 +1386,7 @@ function ProjectFilterStrip({
             style={{ width: `${pct}%` }}
           >
             <div
-              className="truncate px-1.5 text-[10px] font-medium uppercase tracking-wide"
+              className="truncate px-1.5 text-[11px] font-medium uppercase tracking-wide"
               style={{ color: item.color }}
             >
               {item.label}

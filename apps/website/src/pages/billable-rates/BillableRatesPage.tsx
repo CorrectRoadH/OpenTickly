@@ -174,11 +174,11 @@ function AboutBillableRatesSection(): ReactElement {
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
             About Billable Rates
           </h2>
-          <p className="mb-3 text-[13px] leading-5 text-[var(--track-text-soft)]">
+          <p className="mb-3 text-[12px] leading-5 text-[var(--track-text-soft)]">
             Billable rates determine how much to charge for tracked time. There are 5 levels of
             billable rates, each overriding the previous one:
           </p>
-          <ol className="list-inside list-decimal space-y-1 text-[13px] leading-5 text-[var(--track-text-soft)]">
+          <ol className="list-inside list-decimal space-y-1 text-[12px] leading-5 text-[var(--track-text-soft)]">
             <li>
               <strong className="text-[var(--track-text)]">Workspace rate</strong> &mdash; the
               default rate for all time entries in the workspace
@@ -217,7 +217,7 @@ function AboutLaborCostsSection(): ReactElement {
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
             About Labor Costs
           </h2>
-          <p className="text-[13px] leading-5 text-[var(--track-text-soft)]">
+          <p className="text-[12px] leading-5 text-[var(--track-text-soft)]">
             Labor costs represent the internal cost of a team member's time. Use them alongside
             billable rates to calculate profit margins. Labor costs follow the same 5-level
             hierarchy as billable rates but are only visible to workspace admins.
@@ -250,7 +250,7 @@ function WorkspaceRateSection(props: WorkspaceRateSectionProps): ReactElement {
         </h2>
 
         {props.isLoading ? (
-          <div className="py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+          <div className="py-8 text-center text-[12px] text-[var(--track-text-muted)]">
             Loading workspace rate...
           </div>
         ) : (
@@ -266,7 +266,7 @@ function WorkspaceRateSection(props: WorkspaceRateSectionProps): ReactElement {
 
             <div>
               <button
-                className="rounded-[8px] bg-[var(--track-accent)] px-4 py-[6px] text-[13px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="rounded-[8px] bg-[var(--track-accent)] px-4 py-[6px] text-[12px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                 disabled={!props.isDirty || props.isSaving}
                 onClick={props.onSave}
                 type="button"
@@ -291,7 +291,7 @@ function BillingModeField(props: {
         Billing
       </legend>
       <div className="flex gap-4">
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[var(--track-text)]">
+        <label className="flex cursor-pointer items-center gap-2 text-[12px] text-[var(--track-text)]">
           <input
             checked={props.value === "billable"}
             className="accent-[var(--track-accent)]"
@@ -301,7 +301,7 @@ function BillingModeField(props: {
           />
           Billable
         </label>
-        <label className="flex cursor-pointer items-center gap-2 text-[13px] text-[var(--track-text)]">
+        <label className="flex cursor-pointer items-center gap-2 text-[12px] text-[var(--track-text)]">
           <input
             checked={props.value === "non-billable"}
             className="accent-[var(--track-accent)]"
@@ -329,7 +329,7 @@ function HourlyRateField(props: {
         Hourly Rate
       </label>
       <input
-        className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-3 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+        className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-3 text-[12px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
         id="hourly-rate-input"
         inputMode="decimal"
         onChange={(e) => props.onChange(e.target.value)}
@@ -354,7 +354,7 @@ function CurrencyField(props: {
         Currency
       </label>
       <select
-        className="h-9 w-[120px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-3 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+        className="h-9 w-[120px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-3 text-[12px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
         id="currency-select"
         onChange={(e) => props.onChange(e.target.value)}
         value={props.value}
@@ -394,12 +394,12 @@ function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): 
             Premium
           </span>
         </div>
-        <p className="mt-2 text-[13px] leading-5 text-[var(--track-text-soft)]">
+        <p className="mt-2 text-[12px] leading-5 text-[var(--track-text-soft)]">
           Set individual billable rates and labor costs for each workspace member. Member rates
           override the workspace-level rate.
         </p>
         <div className="mt-4 rounded-[8px] border border-[var(--track-border)]">
-          <table className="w-full text-left text-[13px]">
+          <table className="w-full text-left text-[12px]">
             <thead>
               <tr className="border-b border-[var(--track-border)]">
                 <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
@@ -550,7 +550,7 @@ function MemberRateRow({
             {member.name.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-[13px] text-[var(--track-text)]">{member.name}</div>
+            <div className="truncate text-[12px] text-[var(--track-text)]">{member.name}</div>
             {member.email ? (
               <div className="truncate text-[11px] text-[var(--track-text-muted)]">
                 {member.email}
@@ -562,7 +562,7 @@ function MemberRateRow({
       <td className="px-4 py-3">
         <div className="flex items-center gap-1">
           <input
-            className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+            className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[12px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
             inputMode="decimal"
             onChange={(e) => {
               setRateValue(e.target.value);
@@ -586,7 +586,7 @@ function MemberRateRow({
       </td>
       <td className="px-4 py-3">
         <input
-          className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[13px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+          className="h-8 w-[100px] rounded-[6px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-2 text-[12px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
           inputMode="decimal"
           onChange={(e) => {
             setLaborValue(e.target.value);

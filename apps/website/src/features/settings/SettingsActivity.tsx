@@ -106,18 +106,18 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
     <SurfaceCard>
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-[16px] font-semibold text-white">Workspace Activity</h2>
-          <p className="mt-1 text-[13px] text-[var(--track-text-muted)]">
+          <h2 className="text-[14px] font-semibold text-white">Workspace Activity</h2>
+          <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
             Overview of recent workspace usage and member activity.
           </p>
         </div>
 
         {isLoading ? (
-          <p className="py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+          <p className="py-8 text-center text-[12px] text-[var(--track-text-muted)]">
             Loading activity data...
           </p>
         ) : isError ? (
-          <p className="py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+          <p className="py-8 text-center text-[12px] text-[var(--track-text-muted)]">
             Could not load activity data. Try again later.
           </p>
         ) : (
@@ -139,7 +139,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                 </h3>
                 <div className="overflow-x-auto">
                   <table
-                    className="w-full text-left text-[13px]"
+                    className="w-full text-left text-[12px]"
                     data-testid="activity-top-members"
                   >
                     <thead>
@@ -167,7 +167,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                 </div>
               </div>
             ) : (
-              <p className="py-4 text-center text-[13px] text-[var(--track-text-muted)]">
+              <p className="py-4 text-center text-[12px] text-[var(--track-text-muted)]">
                 No member activity data available yet.
               </p>
             )}
@@ -179,7 +179,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                 </h3>
                 <div className="overflow-x-auto">
                   <table
-                    className="w-full text-left text-[13px]"
+                    className="w-full text-left text-[12px]"
                     data-testid="activity-detail-table"
                   >
                     <thead>

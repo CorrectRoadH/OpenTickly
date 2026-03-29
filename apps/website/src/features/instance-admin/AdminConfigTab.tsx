@@ -109,8 +109,8 @@ function SiteSection({
   return (
     <SurfaceCard>
       <div className="p-5">
-        <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">Site URL</h3>
-        <p className="mb-4 text-[13px] text-[var(--track-text-muted)]">
+        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">Site URL</h3>
+        <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
           The public URL of this OpenToggl instance. Used in emails and links.
         </p>
         <div className="flex items-center gap-3">
@@ -147,10 +147,10 @@ function RegistrationSection({
   return (
     <SurfaceCard>
       <div className="p-5">
-        <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">
+        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
           Registration Policy
         </h3>
-        <p className="mb-4 text-[13px] text-[var(--track-text-muted)]">
+        <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
           Controls whether new users can create accounts on this instance.
         </p>
         <div className="flex flex-col gap-2">
@@ -183,7 +183,7 @@ function RegistrationSection({
                 <span className="text-[14px] font-medium text-[var(--track-text)]">
                   {mode.label}
                 </span>
-                <span className="ml-2 text-[13px] text-[var(--track-text-muted)]">{mode.desc}</span>
+                <span className="ml-2 text-[12px] text-[var(--track-text-muted)]">{mode.desc}</span>
               </div>
             </button>
           ))}
@@ -208,8 +208,8 @@ function EmailVerificationSection({
     <SurfaceCard>
       <div className="flex items-center justify-between p-5">
         <div>
-          <h3 className="text-[16px] font-semibold text-[var(--track-text)]">Email Verification</h3>
-          <p className="text-[13px] text-[var(--track-text-muted)]">
+          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">Email Verification</h3>
+          <p className="text-[12px] text-[var(--track-text-muted)]">
             Require new users to verify their email address after registration.
             {!smtpConfigured ? " Requires SMTP to be configured." : ""}
           </p>
@@ -258,8 +258,8 @@ function SmtpSection({
   return (
     <SurfaceCard>
       <div className="p-5">
-        <h3 className="mb-1 text-[16px] font-semibold text-[var(--track-text)]">Email / SMTP</h3>
-        <p className="mb-4 text-[13px] text-[var(--track-text-muted)]">
+        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">Email / SMTP</h3>
+        <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
           Configure outgoing email for notifications and invitations.
           {configured
             ? " SMTP is configured."

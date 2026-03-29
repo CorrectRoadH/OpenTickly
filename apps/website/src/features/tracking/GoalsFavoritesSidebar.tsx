@@ -66,7 +66,7 @@ function SidebarSection({
 }): ReactElement {
   return (
     <details className="group" open>
-      <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-[13px] font-medium text-white select-none">
+      <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-[12px] font-medium text-white select-none">
         <ChevronRightIcon className="size-3 text-[var(--track-text-muted)] transition group-open:rotate-90" />
         <span className="flex-1">{title}</span>
         <button

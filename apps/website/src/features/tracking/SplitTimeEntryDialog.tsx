@@ -91,8 +91,8 @@ export function SplitTimeEntryDialog({
         {/* Header */}
         <div className="flex items-start justify-between px-6 pt-5">
           <div>
-            <h2 className="text-[16px] font-semibold text-white">Split Time Entry</h2>
-            <p className="mt-1 text-[13px] text-[var(--track-control-placeholder)]">
+            <h2 className="text-[14px] font-semibold text-white">Split Time Entry</h2>
+            <p className="mt-1 text-[12px] text-[var(--track-control-placeholder)]">
               Choose the split time
             </p>
           </div>

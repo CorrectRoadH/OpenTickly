@@ -90,7 +90,7 @@ export function ReportsCustomView(): ReactElement {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-[13px]">
+        <table className="w-full text-left text-[12px]">
           <thead>
             <tr className="border-b border-[var(--track-border)]">
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">

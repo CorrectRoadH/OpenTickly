@@ -1,10 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode, useEffect, useMemo, useState } from "react";
 import {
-  DirectoryHeaderCell,
+  AppButton,
   DirectoryStatusFilter,
   DirectorySurfaceMessage,
+  DirectoryTable,
+  type DirectoryTableColumn,
   DirectoryTableCell,
+  IconButton,
+  PageLayout,
 } from "@opentoggl/web-ui";
 
 import {
@@ -56,6 +60,17 @@ const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
   { label: "Active", value: "active" },
   { label: "Archived", value: "archived" },
   { label: "Ended", value: "ended" },
+];
+
+const PROJECT_COLUMNS: DirectoryTableColumn[] = [
+  { key: "project", label: "Project", width: "minmax(240px,1.8fr)" },
+  { key: "client", label: "Client", width: "98px" },
+  { key: "timeframe", label: "Timeframe", width: "130px" },
+  { key: "time-status", label: "Time status", width: "94px" },
+  { key: "billable-status", label: "Billable status", width: "110px" },
+  { key: "team", label: "Team", width: "94px" },
+  { key: "pinned", label: "Pinned", width: "56px" },
+  { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
 function categorizeProject(project: GithubComTogglTogglApiInternalModelsProject): ProjectCategory {
@@ -349,332 +364,306 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     setStatusMessage(`Deleted ${project.name}`);
   }
 
+  const toolbarContent = (
+    <div className="flex flex-wrap items-center gap-4 py-2" data-testid="projects-filter-bar">
+      <DirectoryStatusFilter
+        chevronIcon={<ChevronDownIcon className="size-3" />}
+        onChange={(statuses) => filterDispatch({ type: "SET_STATUSES", statuses })}
+        options={PROJECT_STATUS_OPTIONS}
+        selected={selectedStatuses}
+      />
+      <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+        <span>Filters:</span>
+        {/* Client filter */}
+        <ProjectFilterDropdown
+          active={filterClientIds.size > 0}
+          label={filterClientIds.size > 0 ? `Client (${filterClientIds.size})` : "Client"}
+          onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+          onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "client" })}
+          open={openFilter === "client"}
+        >
+          {clientsList.map((c) => (
+            <label
+              className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
+              key={c.id}
+            >
+              <input
+                checked={filterClientIds.has(c.id)}
+                className="accent-[var(--track-accent)]"
+                onChange={() => filterDispatch({ type: "TOGGLE_CLIENT_ID", id: c.id })}
+                type="checkbox"
+              />
+              <span className="text-[14px] normal-case tracking-normal text-white">{c.name}</span>
+            </label>
+          ))}
+          {clientsList.length === 0 ? (
+            <div className="px-3 py-3 text-center text-[12px] normal-case tracking-normal text-[var(--track-text-muted)]">
+              No clients
+            </div>
+          ) : null}
+          {filterClientIds.size > 0 ? (
+            <button
+              className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
+              onClick={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
+              type="button"
+            >
+              Clear
+            </button>
+          ) : null}
+        </ProjectFilterDropdown>
+        {/* Member filter */}
+        <ProjectFilterDropdown
+          active={filterMemberIds.size > 0}
+          label={filterMemberIds.size > 0 ? `Member (${filterMemberIds.size})` : "Member"}
+          onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+          onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "member" })}
+          open={openFilter === "member"}
+        >
+          {workspaceMembers.map((m) => (
+            <label
+              className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
+              key={m.id}
+            >
+              <input
+                checked={filterMemberIds.has(m.id)}
+                className="accent-[var(--track-accent)]"
+                onChange={() => filterDispatch({ type: "TOGGLE_MEMBER_ID", id: m.id })}
+                type="checkbox"
+              />
+              <span className="text-[14px] normal-case tracking-normal text-white">{m.name}</span>
+            </label>
+          ))}
+          {workspaceMembers.length === 0 ? (
+            <div className="px-3 py-3 text-center text-[12px] normal-case tracking-normal text-[var(--track-text-muted)]">
+              No members
+            </div>
+          ) : null}
+          {filterMemberIds.size > 0 ? (
+            <button
+              className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
+              onClick={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
+              type="button"
+            >
+              Clear
+            </button>
+          ) : null}
+        </ProjectFilterDropdown>
+        {/* Billable filter */}
+        <ProjectFilterDropdown
+          active={filterBillable !== "all"}
+          label={
+            filterBillable === "all"
+              ? "Billable"
+              : filterBillable === "billable"
+                ? "Billable ✓"
+                : "Non-billable ✓"
+          }
+          onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+          onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "billable" })}
+          open={openFilter === "billable"}
+        >
+          {(["all", "billable", "non-billable"] as const).map((opt) => (
+            <button
+              className={`w-full px-3 py-1.5 text-left text-[14px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterBillable === opt ? "text-[var(--track-accent)]" : "text-white"}`}
+              key={opt}
+              onClick={() => {
+                filterDispatch({ type: "SET_BILLABLE", value: opt });
+                filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
+              }}
+              type="button"
+            >
+              {opt === "all" ? "All" : opt === "billable" ? "Billable" : "Non-billable"}
+            </button>
+          ))}
+        </ProjectFilterDropdown>
+        {/* Project name filter */}
+        <ProjectFilterDropdown
+          active={filterName.trim().length > 0}
+          label={filterName.trim() ? `Name: "${filterName.trim()}"` : "Project name"}
+          onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+          onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "name" })}
+          open={openFilter === "name"}
+        >
+          <div className="px-3 py-2">
+            <input
+              className="h-8 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[14px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
+              onChange={(e) => filterDispatch({ type: "SET_NAME", name: e.target.value })}
+              placeholder="Search by name..."
+              type="text"
+              value={filterName}
+            />
+          </div>
+          {filterName.trim() ? (
+            <button
+              className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
+              onClick={() => {
+                filterDispatch({ type: "SET_NAME", name: "" });
+                filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
+              }}
+              type="button"
+            >
+              Clear
+            </button>
+          ) : null}
+        </ProjectFilterDropdown>
+        {/* Template filter */}
+        <ProjectFilterDropdown
+          active={filterTemplate !== "all"}
+          label={
+            filterTemplate === "all"
+              ? "Template"
+              : filterTemplate === "template"
+                ? "Template ✓"
+                : "Non-template ✓"
+          }
+          onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+          onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "template" })}
+          open={openFilter === "template"}
+        >
+          {(["all", "template", "non-template"] as const).map((opt) => (
+            <button
+              className={`w-full px-3 py-1.5 text-left text-[14px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterTemplate === opt ? "text-[var(--track-accent)]" : "text-white"}`}
+              key={opt}
+              onClick={() => {
+                filterDispatch({ type: "SET_TEMPLATE", value: opt });
+                filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
+              }}
+              type="button"
+            >
+              {opt === "all" ? "All" : opt === "template" ? "Template" : "Non-template"}
+            </button>
+          ))}
+        </ProjectFilterDropdown>
+      </div>
+      {statusMessage ? (
+        <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{statusMessage}</span>
+      ) : null}
+    </div>
+  );
+
+  const bulkBar =
+    selectedIds.size > 0 ? (
+      <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
+        <span className="text-[14px] font-medium text-white">
+          {selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""} selected
+        </span>
+        <span className="h-4 w-px bg-[var(--track-border)]" />
+        <AppButton
+          onClick={() => {
+            if (selectedIds.size === 1) {
+              const projectId = [...selectedIds][0];
+              const project = projects.find((p) => p.id === projectId);
+              if (project) openEditDialog(project);
+            }
+          }}
+          size="sm"
+          tone="ghost"
+        >
+          <EditIcon className="size-3.5" />
+          <span>Edit</span>
+        </AppButton>
+        <AppButton
+          onClick={() => {
+            for (const id of selectedIds) {
+              void archiveProjectMutation.mutateAsync(id);
+            }
+            setSelectedIds(new Set());
+            setStatusMessage(`${selectedIds.size} project(s) archived`);
+          }}
+          size="sm"
+          tone="ghost"
+        >
+          <ArchiveIcon className="size-3.5" />
+          <span>Archive</span>
+        </AppButton>
+        <AppButton
+          onClick={() => {
+            if (!window.confirm(`Delete ${selectedIds.size} project(s)?`)) return;
+            for (const id of selectedIds) {
+              void deleteProjectMutation.mutateAsync(id);
+            }
+            setSelectedIds(new Set());
+            setStatusMessage(`${selectedIds.size} project(s) deleted`);
+          }}
+          size="sm"
+          tone="ghost"
+        >
+          <TrashIcon className="size-3.5" />
+          <span>Delete</span>
+        </AppButton>
+        <IconButton
+          aria-label="Clear selection"
+          onClick={() => setSelectedIds(new Set())}
+          size="sm"
+        >
+          <CloseIcon className="size-3.5" />
+        </IconButton>
+      </div>
+    ) : null;
+
+  const summaryFooter =
+    !projectsQuery.isPending && !projectsQuery.isError ? (
+      <div
+        className="flex items-center justify-between border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
+        data-testid="projects-summary"
+      >
+        <span>
+          Showing {projects.length} projects in workspace {workspaceId}.
+        </span>
+        <span>Pinned: {projects.filter((project) => project.pinned).length}</span>
+      </div>
+    ) : null;
+
   return (
-    <div
-      className="w-full min-w-0 bg-[var(--track-surface)] text-white"
-      data-testid="projects-page"
-    >
-      <header className="border-b border-[var(--track-border)]">
-        <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Projects</h1>
-          <button
-            className="flex h-9 items-center gap-1 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-            data-testid="projects-create-button"
+    <>
+      <PageLayout
+        title="Projects"
+        headerActions={
+          <AppButton
             onClick={openCreateDialog}
-            type="button"
+            overrides={{ BaseButton: { props: { "data-testid": "projects-create-button" } } }}
           >
             <PlusIcon className="size-3.5" />
             New project
-          </button>
-        </div>
-        <div
-          className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2"
-          data-testid="projects-filter-bar"
-        >
-          <DirectoryStatusFilter
-            chevronIcon={<ChevronDownIcon className="size-3" />}
-            onChange={(statuses) => filterDispatch({ type: "SET_STATUSES", statuses })}
-            options={PROJECT_STATUS_OPTIONS}
-            selected={selectedStatuses}
+          </AppButton>
+        }
+        toolbar={toolbarContent}
+        bulkActionsBar={bulkBar}
+        footer={summaryFooter}
+        data-testid="projects-page"
+      >
+        {projectsQuery.isPending ? <DirectorySurfaceMessage message="Loading projects..." /> : null}
+        {projectsQuery.isError ? (
+          <DirectorySurfaceMessage
+            message="Project directory is temporarily unavailable."
+            tone="error"
           />
-          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <span>Filters:</span>
-            {/* Client filter */}
-            <ProjectFilterDropdown
-              active={filterClientIds.size > 0}
-              label={filterClientIds.size > 0 ? `Client (${filterClientIds.size})` : "Client"}
-              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
-              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "client" })}
-              open={openFilter === "client"}
-            >
-              {clientsList.map((c) => (
-                <label
-                  className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
-                  key={c.id}
-                >
-                  <input
-                    checked={filterClientIds.has(c.id)}
-                    className="accent-[var(--track-accent)]"
-                    onChange={() => filterDispatch({ type: "TOGGLE_CLIENT_ID", id: c.id })}
-                    type="checkbox"
-                  />
-                  <span className="text-[13px] normal-case tracking-normal text-white">
-                    {c.name}
-                  </span>
-                </label>
-              ))}
-              {clientsList.length === 0 ? (
-                <div className="px-3 py-3 text-center text-[12px] normal-case tracking-normal text-[var(--track-text-muted)]">
-                  No clients
-                </div>
-              ) : null}
-              {filterClientIds.size > 0 ? (
-                <button
-                  className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
-                  onClick={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
-                  type="button"
-                >
-                  Clear
-                </button>
-              ) : null}
-            </ProjectFilterDropdown>
-            {/* Member filter */}
-            <ProjectFilterDropdown
-              active={filterMemberIds.size > 0}
-              label={filterMemberIds.size > 0 ? `Member (${filterMemberIds.size})` : "Member"}
-              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
-              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "member" })}
-              open={openFilter === "member"}
-            >
-              {workspaceMembers.map((m) => (
-                <label
-                  className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
-                  key={m.id}
-                >
-                  <input
-                    checked={filterMemberIds.has(m.id)}
-                    className="accent-[var(--track-accent)]"
-                    onChange={() => filterDispatch({ type: "TOGGLE_MEMBER_ID", id: m.id })}
-                    type="checkbox"
-                  />
-                  <span className="text-[13px] normal-case tracking-normal text-white">
-                    {m.name}
-                  </span>
-                </label>
-              ))}
-              {workspaceMembers.length === 0 ? (
-                <div className="px-3 py-3 text-center text-[12px] normal-case tracking-normal text-[var(--track-text-muted)]">
-                  No members
-                </div>
-              ) : null}
-              {filterMemberIds.size > 0 ? (
-                <button
-                  className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
-                  onClick={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
-                  type="button"
-                >
-                  Clear
-                </button>
-              ) : null}
-            </ProjectFilterDropdown>
-            {/* Billable filter */}
-            <ProjectFilterDropdown
-              active={filterBillable !== "all"}
-              label={
-                filterBillable === "all"
-                  ? "Billable"
-                  : filterBillable === "billable"
-                    ? "Billable ✓"
-                    : "Non-billable ✓"
-              }
-              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
-              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "billable" })}
-              open={openFilter === "billable"}
-            >
-              {(["all", "billable", "non-billable"] as const).map((opt) => (
-                <button
-                  className={`w-full px-3 py-1.5 text-left text-[13px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterBillable === opt ? "text-[var(--track-accent)]" : "text-white"}`}
-                  key={opt}
-                  onClick={() => {
-                    filterDispatch({ type: "SET_BILLABLE", value: opt });
-                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
-                  }}
-                  type="button"
-                >
-                  {opt === "all" ? "All" : opt === "billable" ? "Billable" : "Non-billable"}
-                </button>
-              ))}
-            </ProjectFilterDropdown>
-            {/* Project name filter */}
-            <ProjectFilterDropdown
-              active={filterName.trim().length > 0}
-              label={filterName.trim() ? `Name: "${filterName.trim()}"` : "Project name"}
-              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
-              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "name" })}
-              open={openFilter === "name"}
-            >
-              <div className="px-3 py-2">
-                <input
-                  className="h-8 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[13px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
-                  onChange={(e) => filterDispatch({ type: "SET_NAME", name: e.target.value })}
-                  placeholder="Search by name..."
-                  type="text"
-                  value={filterName}
-                />
-              </div>
-              {filterName.trim() ? (
-                <button
-                  className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
-                  onClick={() => {
-                    filterDispatch({ type: "SET_NAME", name: "" });
-                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
-                  }}
-                  type="button"
-                >
-                  Clear
-                </button>
-              ) : null}
-            </ProjectFilterDropdown>
-            {/* Template filter */}
-            <ProjectFilterDropdown
-              active={filterTemplate !== "all"}
-              label={
-                filterTemplate === "all"
-                  ? "Template"
-                  : filterTemplate === "template"
-                    ? "Template ✓"
-                    : "Non-template ✓"
-              }
-              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
-              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "template" })}
-              open={openFilter === "template"}
-            >
-              {(["all", "template", "non-template"] as const).map((opt) => (
-                <button
-                  className={`w-full px-3 py-1.5 text-left text-[13px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterTemplate === opt ? "text-[var(--track-accent)]" : "text-white"}`}
-                  key={opt}
-                  onClick={() => {
-                    filterDispatch({ type: "SET_TEMPLATE", value: opt });
-                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
-                  }}
-                  type="button"
-                >
-                  {opt === "all" ? "All" : opt === "template" ? "Template" : "Non-template"}
-                </button>
-              ))}
-            </ProjectFilterDropdown>
-          </div>
-          {statusMessage ? (
-            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
-              {statusMessage}
-            </span>
-          ) : null}
-        </div>
-      </header>
-
-      {selectedIds.size > 0 ? (
-        <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
-          <span className="text-[13px] font-medium text-white">
-            {selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""} selected
-          </span>
-          <span className="h-4 w-px bg-[var(--track-border)]" />
-          <button
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              if (selectedIds.size === 1) {
-                const projectId = [...selectedIds][0];
-                const project = projects.find((p) => p.id === projectId);
-                if (project) openEditDialog(project);
-              }
-            }}
-            type="button"
-          >
-            <EditIcon className="size-3.5" />
-            <span>Edit</span>
-          </button>
-          <button
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              for (const id of selectedIds) {
-                void archiveProjectMutation.mutateAsync(id);
-              }
-              setSelectedIds(new Set());
-              setStatusMessage(`${selectedIds.size} project(s) archived`);
-            }}
-            type="button"
-          >
-            <ArchiveIcon className="size-3.5" />
-            <span>Archive</span>
-          </button>
-          <button
-            className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] text-white transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              if (!window.confirm(`Delete ${selectedIds.size} project(s)?`)) return;
-              for (const id of selectedIds) {
-                void deleteProjectMutation.mutateAsync(id);
-              }
-              setSelectedIds(new Set());
-              setStatusMessage(`${selectedIds.size} project(s) deleted`);
-            }}
-            type="button"
-          >
-            <TrashIcon className="size-3.5" />
-            <span>Delete</span>
-          </button>
-          <button
-            aria-label="Clear selection"
-            className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-            onClick={() => setSelectedIds(new Set())}
-            type="button"
-          >
-            <CloseIcon className="size-3.5" />
-          </button>
-        </div>
-      ) : null}
-
-      {projectsQuery.isPending ? <DirectorySurfaceMessage message="Loading projects..." /> : null}
-      {projectsQuery.isError ? (
-        <DirectorySurfaceMessage
-          message="Project directory is temporarily unavailable."
-          tone="error"
-        />
-      ) : null}
-      {!projectsQuery.isPending && !projectsQuery.isError ? (
-        projects.length > 0 ? (
-          <div data-testid="projects-list">
-            <div className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_110px_94px_56px_42px] border-b border-[var(--track-border)] px-5 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <DirectoryHeaderCell>
-                <input
-                  aria-label="Select all projects"
-                  checked={projects.length > 0 && selectedIds.size === projects.length}
-                  className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
-                  onChange={() =>
-                    setSelectedIds((prev) =>
-                      prev.size === projects.length
-                        ? new Set()
-                        : new Set(projects.map((p) => p.id!)),
-                    )
-                  }
-                  ref={(el) => {
-                    if (el)
-                      el.indeterminate = selectedIds.size > 0 && selectedIds.size < projects.length;
-                  }}
-                  type="checkbox"
-                />
-              </DirectoryHeaderCell>
-              <DirectoryHeaderCell>Project</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Client</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Timeframe</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Time status</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Billable status</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Team</DirectoryHeaderCell>
-              <DirectoryHeaderCell>Pinned</DirectoryHeaderCell>
-              <DirectoryHeaderCell />
-            </div>
-            {projects.map((project) => (
-              <div
-                className="grid grid-cols-[42px_minmax(240px,1.8fr)_98px_130px_94px_110px_94px_56px_42px] items-center border-b border-[var(--track-border)] px-5 text-[12px]"
-                key={project.id}
-              >
-                <div className="flex h-[54px] items-center">
-                  <input
-                    aria-label={`Select ${project.name}`}
-                    checked={selectedIds.has(project.id!)}
-                    className="size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)]"
-                    onChange={() =>
-                      setSelectedIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(project.id!)) next.delete(project.id!);
-                        else next.add(project.id!);
-                        return next;
-                      })
-                    }
-                    type="checkbox"
-                  />
-                </div>
-                <div className="flex h-[54px] items-center gap-3 overflow-hidden">
+        ) : null}
+        {!projectsQuery.isPending && !projectsQuery.isError ? (
+          <DirectoryTable
+            columns={PROJECT_COLUMNS}
+            rows={projects}
+            rowKey={(p) => p.id!}
+            selectable
+            selectedIds={selectedIds}
+            onToggleSelect={(id) =>
+              setSelectedIds((prev) => {
+                const next = new Set(prev);
+                if (next.has(id)) next.delete(id);
+                else next.add(id);
+                return next;
+              })
+            }
+            onToggleSelectAll={() =>
+              setSelectedIds((prev) =>
+                prev.size === projects.length ? new Set() : new Set(projects.map((p) => p.id!)),
+              )
+            }
+            renderRow={(project) => (
+              <>
+                <div className="flex items-center gap-3 overflow-hidden">
                   <span
-                    className="size-2 rounded-full shrink-0"
+                    className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: resolveProjectColor(project) }}
                   />
                   <a
@@ -696,21 +685,17 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <DirectoryTableCell>
                   {project.is_private ? "Private" : "Everyone"}
                 </DirectoryTableCell>
-                <div className="flex h-[54px] items-center">
-                  <button
+                <div className="flex items-center">
+                  <IconButton
                     aria-label={`${project.pinned ? "Unpin" : "Pin"} ${project.name}`}
-                    className={`flex size-8 items-center justify-center rounded-md transition ${
-                      project.pinned
-                        ? "text-[var(--track-accent)]"
-                        : "text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
-                    }`}
+                    className={project.pinned ? "text-[var(--track-accent)]" : ""}
                     onClick={() => void handlePinToggle(project)}
-                    type="button"
+                    size="md"
                   >
                     <PinIcon className="size-4" />
-                  </button>
+                  </IconButton>
                 </div>
-                <div className="flex h-[54px] items-center justify-end">
+                <div className="flex items-center justify-end">
                   <ProjectRowActionsMenu
                     onAddMember={() => openEditDialog(project)}
                     onArchiveToggle={() => {
@@ -727,29 +712,20 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     workspaceId={workspaceId}
                   />
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="px-5 py-10" data-testid="projects-empty-state">
-            <p className="text-sm text-[var(--track-text-muted)]">
-              {emptyProjectsStateTitle(statusFilter)}
-            </p>
-          </div>
-        )
-      ) : null}
-
-      {!projectsQuery.isPending && !projectsQuery.isError ? (
-        <div
-          className="flex items-center justify-between border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
-          data-testid="projects-summary"
-        >
-          <span>
-            Showing {projects.length} projects in workspace {workspaceId}.
-          </span>
-          <span>Pinned: {projects.filter((project) => project.pinned).length}</span>
-        </div>
-      ) : null}
+              </>
+            )}
+            emptyState={
+              <p
+                className="text-sm text-[var(--track-text-muted)]"
+                data-testid="projects-empty-state"
+              >
+                {emptyProjectsStateTitle(statusFilter)}
+              </p>
+            }
+            data-testid="projects-list"
+          />
+        ) : null}
+      </PageLayout>
 
       {editorMode ? (
         <ProjectEditorDialog
@@ -808,7 +784,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           title={editorMode === "edit" ? "Edit Project" : "Create new project"}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 

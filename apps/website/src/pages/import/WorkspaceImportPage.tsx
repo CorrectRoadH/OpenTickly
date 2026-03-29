@@ -131,7 +131,7 @@ export function WorkspaceImportPage(): ReactElement {
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                 Manage
               </p>
-              <h1 className="mt-2 text-[21px] font-semibold leading-[30px] text-white">Import</h1>
+              <h1 className="mt-2 text-[20px] font-semibold leading-[30px] text-white">Import</h1>
               <p className="mt-2 max-w-2xl text-[14px] leading-6 text-[var(--track-text-muted)]">
                 Import is a two-step migration flow. Step 1 creates a new organization from a Toggl
                 export zip. Step 2 imports time entries CSV into the workspace you are currently
@@ -161,7 +161,7 @@ export function WorkspaceImportPage(): ReactElement {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
                     Step 1
                   </p>
-                  <h2 className="mt-2 text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="mt-2 text-[14px] font-semibold leading-[23px] text-white">
                     Create a new organization from Toggl export zip
                   </h2>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
@@ -185,7 +185,7 @@ export function WorkspaceImportPage(): ReactElement {
                 />
               </label>
 
-              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[13px] leading-6 text-[var(--track-text-muted)]">
+              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
                 The archive should contain a root folder like
                 <span className="mx-1 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px] text-white">
                   toggl_workspace_3550374_export_...
@@ -208,7 +208,7 @@ export function WorkspaceImportPage(): ReactElement {
                   onChange={handleArchiveFileChange}
                   type="file"
                 />
-                <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
+                <span className="min-w-0 truncate text-[12px] text-[var(--track-text-muted)]">
                   {selectedArchive ? selectedArchive.name : "No file selected"}
                 </span>
               </div>
@@ -227,7 +227,7 @@ export function WorkspaceImportPage(): ReactElement {
                     {createArchiveImportJobMutation.isPending ? "Importing…" : "Upload & import"}
                   </button>
                   {organizationName.trim().length === 0 ? (
-                    <p className="mt-2 text-[13px] text-[var(--track-text-muted)]">
+                    <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
                       Enter an organization name above to start import.
                     </p>
                   ) : null}
@@ -245,7 +245,7 @@ export function WorkspaceImportPage(): ReactElement {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
                     Step 2
                   </p>
-                  <h2 className="mt-2 text-[16px] font-semibold leading-[23px] text-white">
+                  <h2 className="mt-2 text-[14px] font-semibold leading-[23px] text-white">
                     Import time entries CSV into current workspace
                   </h2>
                   <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
@@ -258,7 +258,7 @@ export function WorkspaceImportPage(): ReactElement {
                 </div>
               </div>
 
-              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[13px] leading-6 text-[var(--track-text-muted)]">
+              <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
                 Expected columns include `User`, `Email`, `Project`, `Description`, `Start date`,
                 `Start time`, `Duration`, and `Tags`.
               </div>
@@ -279,7 +279,7 @@ export function WorkspaceImportPage(): ReactElement {
                   onChange={handleCSVFileChange}
                   type="file"
                 />
-                <span className="min-w-0 truncate text-[13px] text-[var(--track-text-muted)]">
+                <span className="min-w-0 truncate text-[12px] text-[var(--track-text-muted)]">
                   {selectedCSVs.length > 1
                     ? `${String(selectedCSVs.length)} files selected`
                     : selectedCSVs.length === 1
@@ -306,7 +306,7 @@ export function WorkspaceImportPage(): ReactElement {
           </div>
 
           <aside className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
-            <h2 className="text-[16px] font-semibold leading-[23px] text-white">Latest job</h2>
+            <h2 className="text-[14px] font-semibold leading-[23px] text-white">Latest job</h2>
             <div className="mt-4 space-y-4">
               <SummaryRow label="Job ID" value={submittedJob?.id ?? "Not started"} />
               <SummaryRow label="Status" value={latestStatus ?? "Waiting for upload"} />
@@ -321,7 +321,7 @@ export function WorkspaceImportPage(): ReactElement {
                 }
               />
             </div>
-            <p className="mt-5 text-[13px] leading-6 text-[var(--track-text-muted)]">
+            <p className="mt-5 text-[12px] leading-6 text-[var(--track-text-muted)]">
               Each upload creates a job record. Archive import creates a new organization workspace;
               CSV import targets the workspace shown at the top of this page.
             </p>
@@ -338,7 +338,7 @@ function SummaryRow({ label, value }: { label: string; value: string }): ReactEl
       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
         {label}
       </p>
-      <p className="mt-2 break-all text-[13px] font-medium text-white">{value}</p>
+      <p className="mt-2 break-all text-[12px] font-medium text-white">{value}</p>
     </div>
   );
 }

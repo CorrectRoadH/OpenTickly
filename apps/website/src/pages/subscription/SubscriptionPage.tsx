@@ -36,7 +36,7 @@ export function SubscriptionPage(): ReactElement {
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] items-center px-5 py-3">
-          <h1 className="text-[21px] font-semibold leading-[30px] text-white">Subscription</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">Subscription</h1>
         </div>
       </header>
 
@@ -51,7 +51,7 @@ export function SubscriptionPage(): ReactElement {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-3">
-                <h2 className="text-[18px] font-semibold leading-6 text-white">Self-Hosted</h2>
+                <h2 className="text-[14px] font-semibold leading-6 text-white">Self-Hosted</h2>
                 <span className="rounded-full bg-[var(--track-accent)] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
                   Free
                 </span>
@@ -64,7 +64,7 @@ export function SubscriptionPage(): ReactElement {
             </div>
           </div>
 
-          <div className="mt-5 flex items-center gap-6 border-t border-[var(--track-border)] pt-5 text-[13px] text-[var(--track-text-muted)]">
+          <div className="mt-5 flex items-center gap-6 border-t border-[var(--track-border)] pt-5 text-[12px] text-[var(--track-text-muted)]">
             <div>
               <span className="text-[var(--track-text-soft)]">Workspace</span>{" "}
               <span className="text-white">{workspaceName}</span>
@@ -84,8 +84,8 @@ export function SubscriptionPage(): ReactElement {
           className="rounded-[12px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-6"
           data-testid="subscription-features-card"
         >
-          <h2 className="text-[16px] font-semibold leading-6 text-white">What&apos;s included</h2>
-          <p className="mt-1 text-[13px] leading-5 text-[var(--track-text-muted)]">
+          <h2 className="text-[14px] font-semibold leading-6 text-white">What&apos;s included</h2>
+          <p className="mt-1 text-[12px] leading-5 text-[var(--track-text-muted)]">
             Every feature is available on your self-hosted instance with no usage limits.
           </p>
 
@@ -110,14 +110,14 @@ export function SubscriptionPage(): ReactElement {
               <TrackIcon className="size-5 text-[var(--track-accent)]" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-[16px] font-semibold leading-6 text-white">OpenToggl</h2>
+              <h2 className="text-[14px] font-semibold leading-6 text-white">OpenToggl</h2>
               <p className="mt-1.5 text-[14px] leading-5 text-[var(--track-text-muted)]">
                 OpenToggl is the open-source, self-hosted alternative to Toggl Track. Your time
                 tracking data stays on your own infrastructure with full control over privacy,
                 backups, and customization. No subscriptions, no per-seat fees, no usage caps.
               </p>
               <a
-                className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--track-accent)] hover:underline"
+                className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--track-accent)] hover:underline"
                 href="https://github.com/CorrectRoadH/opentoggl"
                 rel="noopener noreferrer"
                 target="_blank"

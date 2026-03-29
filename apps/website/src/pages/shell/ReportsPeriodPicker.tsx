@@ -41,7 +41,7 @@ export function ReportsPeriodPicker({
     >
       {PERIOD_OPTIONS.map((option) => (
         <button
-          className="flex w-full items-center rounded px-3 py-2 text-left text-[13px] font-medium text-white hover:bg-[var(--track-surface-muted)]"
+          className="flex w-full items-center rounded px-3 py-2 text-left text-[12px] font-medium text-white hover:bg-[var(--track-surface-muted)]"
           data-testid={`reports-period-${option.value}`}
           key={option.value}
           onClick={() => onSelect(option.value)}
