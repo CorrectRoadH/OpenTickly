@@ -1100,6 +1100,7 @@ function TimerBarProjectPicker({
   draftProjectId: number | null;
   onProjectSelect: (id: number | null) => void;
   projectOptions: {
+    active?: boolean;
     client_name?: string | null;
     color?: string | null;
     id?: number | null;
@@ -1119,7 +1120,7 @@ function TimerBarProjectPicker({
   const projects = useMemo(
     () =>
       projectOptions
-        .filter((p) => p.id != null)
+        .filter((p) => p.id != null && p.active !== false)
         .map((p) => ({
           clientName: p.client_name ?? undefined,
           color: resolveProjectColorValue(p),
@@ -1191,7 +1192,11 @@ function TimerBarProjectPicker({
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-[280px]"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault();
+            }
+          }}
         >
           <ProjectPickerDropdown
             filteredProjects={filteredProjects}
@@ -1278,7 +1283,11 @@ function TimerBarTagPicker({
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-[220px] rounded-xl border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-2 shadow-[0_14px_32px_var(--track-shadow-overlay)]"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault();
+            }
+          }}
         >
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--track-text-soft)]">
             Tags
@@ -1414,6 +1423,7 @@ function TimesheetAddRowPicker({
   onClose: () => void;
   onSelect: (projectId: number | null) => void;
   projectOptions: {
+    active?: boolean;
     client_name?: string | null;
     color?: string | null;
     id?: number | null;
@@ -1427,7 +1437,7 @@ function TimesheetAddRowPicker({
   const projects = useMemo(
     () =>
       projectOptions
-        .filter((p) => p.id != null)
+        .filter((p) => p.id != null && p.active !== false)
         .map((p) => ({
           clientName: p.client_name ?? undefined,
           color: resolveProjectColorValue(p),
@@ -1462,7 +1472,11 @@ function TimesheetAddRowPicker({
   return (
     <div
       className="absolute bottom-12 left-4 z-50 w-[280px]"
-      onMouseDown={(e) => e.preventDefault()}
+      onMouseDown={(e) => {
+        if ((e.target as HTMLElement).tagName !== "INPUT") {
+          e.preventDefault();
+        }
+      }}
       ref={containerRef}
     >
       <ProjectPickerDropdown
