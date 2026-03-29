@@ -43,8 +43,6 @@ async function rightClickAndSelectMenuItem(
   entry: import("@playwright/test").Locator,
   menuItemName: string,
 ) {
-  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-  await entry.scrollIntoViewIfNeeded();
   await entry.click({ button: "right", position: { x: 10, y: 10 } });
 
   const contextMenu = page.getByTestId("calendar-entry-context-menu");

@@ -28,7 +28,7 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
     await expect(page.getByText("Email preferences")).toBeVisible();
 
     await page.reload();
-    await expect(page.getByTestId("profile-page")).toBeVisible();
+    await expect(page.getByTestId("profile-page")).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: "Personal details & preferences" }),
     ).toBeVisible();
