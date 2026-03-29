@@ -23,6 +23,11 @@ const faqItems = [
       "Yes. OpenToggl is built for self-hosting, so you can run time tracking on infrastructure you control instead of depending on a single hosted vendor.",
   },
   {
+    question: "Does OpenToggl work on mobile?",
+    answer:
+      "Yes. OpenToggl is a Progressive Web App. On iOS and Android, you can add it to your home screen and use it like a native app with full-screen mode and fast startup — no app store needed.",
+  },
+  {
     question: "Why is OpenToggl better for AI and automation?",
     answer:
       "AI agents and automation need high-rate read and write access. OpenToggl is meant to be a better backend for that workload than a service constrained by tiny hourly limits.",
@@ -32,7 +37,10 @@ const faqItems = [
 const heroHighlights = [
   ["Lower cost", "Avoid premium SaaS pricing for a workflow your team already knows."],
   ["Own the stack", "Run it on infrastructure you control with a real self-hosted path."],
-  ["Automation-ready", "Support agent and internal-tool workloads without tiny hourly limits."],
+  [
+    "Mobile-ready PWA",
+    "Add to your home screen and use it like a native app — no app store needed.",
+  ],
 ];
 
 const featureCards = [

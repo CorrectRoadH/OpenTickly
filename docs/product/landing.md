@@ -75,6 +75,7 @@ Hero 必须至少提供两个 CTA：
 - private-first 用户希望时间数据留在自己控制的基础设施上
 - AI agent 与自动化需要更高的 HTTP 读写吞吐
 - 低 hourly rate limit 不适合作为 agent backend
+- 内置 PWA 支持，手机上可直接添加到主屏幕，像原生 App 一样使用，无需应用商店
 
 ### 6. Open Source Proof
 
@@ -90,7 +91,7 @@ Hero 必须至少提供两个 CTA：
 - 不允许把 `OpenToggl` 描述成“完美兼容一切 Toggl 行为”的模糊承诺。
 - 不允许暗示尚未实现但仓库未证明的商业能力。
 - 不要把首页写成功能枚举页或 API 版本公告页。
-- 文案应优先围绕 `free`、`private-first`、`AI-friendly`、`self-hosting`、`import`、`Toggl alternative` 展开。
+- 文案应优先围绕 `free`、`private-first`、`AI-friendly`、`self-hosting`、`import`、`Toggl alternative`、`mobile PWA` 展开。
 
 ## 实现约束
 
