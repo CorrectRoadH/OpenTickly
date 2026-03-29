@@ -1,5 +1,5 @@
 import { type ReactElement, useState } from "react";
-import { DirectorySurfaceMessage } from "@opentoggl/web-ui";
+import { DirectorySurfaceMessage, SelectField } from "@opentoggl/web-ui";
 import { useQuery } from "@tanstack/react-query";
 
 import { getAuditLogs } from "../../shared/api/public/track/index.ts";
@@ -106,24 +106,18 @@ export function AuditLogPage(): ReactElement {
           <h1 className="text-[20px] font-semibold leading-[30px] text-white">Audit Log</h1>
         </div>
         <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2">
-          <label className="relative shrink-0">
-            <select
-              aria-label="Source filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              onChange={(event) => {
-                setSourceFilter(event.target.value as SourceFilter);
-                setPageNumber(1);
-              }}
-              value={sourceFilter}
-            >
-              <option value="">All sources</option>
-              <option value="web">Web (Cookie)</option>
-              <option value="api">API (Token/CLI)</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <ChevronDownIcon className="size-3" />
-            </span>
-          </label>
+          <SelectField
+            aria-label="Source filter"
+            onChange={(event) => {
+              setSourceFilter(event.target.value as SourceFilter);
+              setPageNumber(1);
+            }}
+            value={sourceFilter}
+          >
+            <option value="">All sources</option>
+            <option value="web">Web (Cookie)</option>
+            <option value="api">API (Token/CLI)</option>
+          </SelectField>
         </div>
       </header>
 

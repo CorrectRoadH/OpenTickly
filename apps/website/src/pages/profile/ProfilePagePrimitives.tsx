@@ -2,7 +2,7 @@ import { Upload, Trash2 } from "lucide-react";
 import { type ReactElement, type ReactNode, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppPanel, SelectField } from "@opentoggl/web-ui";
 
 import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
@@ -154,9 +154,8 @@ function PreferenceSelectBase({
       <label className="block text-[11px] font-semibold uppercase leading-[11px] text-[var(--track-text-soft)]">
         {label}
       </label>
-      <div className="relative mt-[10px] h-[39px] w-[200px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-        <select
-          className="h-full w-full appearance-none rounded-[8px] bg-transparent px-[10px] text-[14px] font-medium leading-none text-[var(--track-text-muted)] outline-none"
+      <div className="mt-[10px] w-[200px]">
+        <SelectField
           data-testid={testId}
           onChange={(event) => {
             onChange(event.target.value);
@@ -164,18 +163,11 @@ function PreferenceSelectBase({
           value={value}
         >
           {options.map((option) => (
-            <option
-              className="bg-[var(--track-surface)] text-[var(--track-text-muted)]"
-              key={option.value}
-              value={option.value}
-            >
+            <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
-        </select>
-        <span className="absolute right-3 top-[14px] text-[10px] text-[var(--track-text-muted)]">
-          ▾
-        </span>
+        </SelectField>
       </div>
     </div>
   );

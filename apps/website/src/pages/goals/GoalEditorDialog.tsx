@@ -1,7 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton, SelectField } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -210,24 +210,18 @@ export function GoalEditorDialog({
             <InfoIcon />
           </label>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <select
-                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60"
-                data-testid="goal-comparison-select"
-                disabled={isEdit}
-                onChange={(e) => setValue("comparison", e.target.value)}
-                value={comparison}
-              >
-                {COMPARISON_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                <ChevronDownIcon className="size-2.5" />
-              </span>
-            </div>
+            <SelectField
+              data-testid="goal-comparison-select"
+              disabled={isEdit}
+              onChange={(e) => setValue("comparison", e.target.value)}
+              value={comparison}
+            >
+              {COMPARISON_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </SelectField>
             <div className="flex h-[42px] items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
               <input
                 className="w-12 bg-transparent text-[14px] text-white focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -239,24 +233,18 @@ export function GoalEditorDialog({
               />
               <span className="text-[14px] text-[var(--track-text-muted)]">hours</span>
             </div>
-            <div className="relative">
-              <select
-                className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60 disabled:text-[var(--track-text-muted)]"
-                data-testid="goal-recurrence-select"
-                disabled={isEdit}
-                onChange={(e) => setValue("recurrence", e.target.value)}
-                value={recurrence}
-              >
-                {RECURRENCE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-[var(--track-text-muted)]">
-                <ChevronDownIcon className="size-2.5" />
-              </span>
-            </div>
+            <SelectField
+              data-testid="goal-recurrence-select"
+              disabled={isEdit}
+              onChange={(e) => setValue("recurrence", e.target.value)}
+              value={recurrence}
+            >
+              {RECURRENCE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </SelectField>
           </div>
         </div>
 

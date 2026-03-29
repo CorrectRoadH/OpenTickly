@@ -1,6 +1,6 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton, SelectField } from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import type { ModelsSimpleWorkspaceUser } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -238,15 +238,11 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           {/* Period */}
           <FieldLabel>Period</FieldLabel>
           <div className="mb-5 flex items-center gap-3">
-            <select
-              className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
-              onChange={(e) => setPeriodicity(e.target.value)}
-              value={periodicity}
-            >
+            <SelectField onChange={(e) => setPeriodicity(e.target.value)} value={periodicity}>
               <option value="weekly">Weekly</option>
               <option value="daily">Daily</option>
               <option value="monthly">Monthly</option>
-            </select>
+            </SelectField>
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-[var(--track-text-muted)]">Starting from</span>
               <input
@@ -278,8 +274,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     {periodicity === "daily" ? "daily at" : `${periodicity} on`}
                   </span>
                   {periodicity !== "daily" ? (
-                    <select
-                      className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[12px] text-white"
+                    <SelectField
                       onChange={(e) => setReminderDay(Number(e.target.value))}
                       value={reminderDay}
                     >
@@ -288,11 +283,10 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                           {day.label}
                         </option>
                       ))}
-                    </select>
+                    </SelectField>
                   ) : null}
                   <span className="text-[var(--track-text-muted)]">at</span>
-                  <select
-                    className="rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 py-1 text-[12px] text-white"
+                  <SelectField
                     onChange={(e) => setReminderTime(e.target.value)}
                     value={reminderTime}
                   >
@@ -301,7 +295,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                         {t}
                       </option>
                     ))}
-                  </select>
+                  </SelectField>
                 </div>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
                   <input

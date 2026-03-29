@@ -8,6 +8,7 @@ import { getDay } from "date-fns/getDay";
 import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
 import { enUS } from "date-fns/locale/en-US";
+import { SelectButton } from "@opentoggl/web-ui";
 import "./calendar.css";
 
 import { CalendarEntryContextMenu } from "./CalendarEntryContextMenu.tsx";
@@ -239,24 +240,25 @@ export function CalendarSubviewSelect({
   const containerRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
+    <div
+      className="relative"
+      onBlur={(e) => {
+        if (!containerRef.current?.contains(e.relatedTarget as Node)) {
+          setOpen(false);
+        }
+      }}
+      ref={containerRef}
+    >
+      <SelectButton
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label="Calendar sub-view"
-        className="flex h-9 min-w-[118px] items-center justify-between gap-2 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]"
+        className="min-w-[118px]"
         data-testid="calendar-subview-select"
         onClick={() => setOpen((prev) => !prev)}
-        onBlur={(e) => {
-          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
-          }
-        }}
-        type="button"
       >
-        <span>{CALENDAR_SUBVIEW_LABELS[value]}</span>
-        <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
-      </button>
+        {CALENDAR_SUBVIEW_LABELS[value]}
+      </SelectButton>
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-[160px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"

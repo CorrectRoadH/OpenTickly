@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { SelectField } from "@opentoggl/web-ui";
 
 import { useSession } from "../../shared/session/session-context.tsx";
 
@@ -55,8 +56,7 @@ export function ReportsCustomView(): ReactElement {
       <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[var(--track-text-muted)]">Show</span>
-          <select
-            className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
+          <SelectField
             data-testid="custom-reports-show-filter"
             onChange={(e) => setShowFilter(e.target.value as ShowFilter)}
             value={showFilter}
@@ -64,7 +64,7 @@ export function ReportsCustomView(): ReactElement {
             <option value="all">All</option>
             <option value="mine">Mine</option>
             <option value="shared">Shared with me</option>
-          </select>
+          </SelectField>
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
           <svg

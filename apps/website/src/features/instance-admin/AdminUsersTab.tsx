@@ -1,4 +1,4 @@
-import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SelectField, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 
@@ -27,15 +27,14 @@ export function AdminUsersTab(): ReactElement {
             type="text"
             value={search}
           />
-          <select
-            className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-[var(--track-text)]"
+          <SelectField
             onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "disabled")}
             value={statusFilter}
           >
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
-          </select>
+          </SelectField>
         </div>
       </SurfaceCard>
 

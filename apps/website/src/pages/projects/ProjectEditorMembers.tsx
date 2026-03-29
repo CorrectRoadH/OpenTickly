@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactElement, useMemo, useState } from "react";
+import { SelectField } from "@opentoggl/web-ui";
 
 import type { ProjectEditorMember } from "./ProjectEditorDialog.tsx";
 
@@ -38,9 +39,8 @@ export function ProjectEditorMembers({
         </div>
         <label className="flex items-center gap-2 text-[12px] text-[var(--track-overlay-text)]">
           <span>Access</span>
-          <select
+          <SelectField
             aria-label="Member access"
-            className="h-9 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white"
             onChange={(event) =>
               onMemberRoleChange(event.target.value === "manager" ? "manager" : "regular")
             }
@@ -48,7 +48,7 @@ export function ProjectEditorMembers({
           >
             <option value="regular">Regular member</option>
             <option value="manager">Project manager</option>
-          </select>
+          </SelectField>
         </label>
       </div>
       <label className="mt-4 block">

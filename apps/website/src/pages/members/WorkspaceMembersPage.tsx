@@ -1,9 +1,9 @@
 import { type ReactElement, useMemo, useState } from "react";
-import { AppButton, DirectorySurfaceMessage } from "@opentoggl/web-ui";
+import { AppButton, DirectorySurfaceMessage, SelectField } from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
-import { ChevronDownIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
+import { PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
   useInviteWorkspaceMemberMutation,
@@ -119,22 +119,16 @@ export function WorkspaceMembersPage(): ReactElement {
           className="flex min-h-[46px] flex-wrap items-center gap-3 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="members-filter-bar"
         >
-          <label className="relative shrink-0">
-            <select
-              aria-label="Member status filter"
-              className="h-9 appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 pr-8 text-[12px] text-white"
-              onChange={(event) => setStatusFilter(event.target.value as MemberStatusFilter)}
-              value={statusFilter}
-            >
-              <option value="all">All members</option>
-              <option value="active">Active</option>
-              <option value="disabled">Disabled</option>
-              <option value="invited">Invited</option>
-            </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-[var(--track-text-muted)]">
-              <ChevronDownIcon className="size-3" />
-            </span>
-          </label>
+          <SelectField
+            aria-label="Member status filter"
+            onChange={(event) => setStatusFilter(event.target.value as MemberStatusFilter)}
+            value={statusFilter}
+          >
+            <option value="all">All members</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+            <option value="invited">Invited</option>
+          </SelectField>
           <label className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
               <SearchIcon className="size-3.5" />

@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { SelectField } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -242,8 +243,7 @@ export function ReportsProfitabilityView({
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[var(--track-text-muted)]">Show:</span>
-                <select
-                  className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
+                <SelectField
                   onChange={(e) => setShowMetric(e.target.value as ProfitabilityShowMetric)}
                   value={showMetric}
                 >
@@ -251,7 +251,7 @@ export function ReportsProfitabilityView({
                   <option value="amount">Amount</option>
                   <option value="cost">Cost</option>
                   <option value="profit">Profit</option>
-                </select>
+                </SelectField>
               </div>
             </div>
             {dayAmounts.length === 0 || dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
@@ -491,25 +491,20 @@ function EarningPanel({
       <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
         <span className="text-[14px] font-medium text-white">{title}</span>
         <div className="flex items-center gap-2">
-          <select
-            className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
-            onChange={(e) => onCountChange(Number(e.target.value))}
-            value={count}
-          >
+          <SelectField onChange={(e) => onCountChange(Number(e.target.value))} value={count}>
             {options.map((n) => (
               <option key={n} value={n}>
                 {prefix} {n}
               </option>
             ))}
-          </select>
-          <select
-            className="h-8 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white"
+          </SelectField>
+          <SelectField
             onChange={(e) => onDimensionChange(e.target.value as EarningDimension)}
             value={dimension}
           >
             <option value="projects">Projects</option>
             <option value="members">Members</option>
-          </select>
+          </SelectField>
         </div>
       </div>
       {rows.length === 0 ? (

@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement } from "react";
+import { SelectField } from "@opentoggl/web-ui";
 
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 
@@ -53,15 +54,14 @@ export function InviteMemberDialog({
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
               Role
             </span>
-            <select
+            <SelectField
               aria-label="Member role"
-              className="h-11 w-full appearance-none rounded-md border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               onChange={(event) => onRoleChange(event.target.value)}
               value={role}
             >
               <option value="member">Member</option>
               <option value="admin">Admin</option>
-            </select>
+            </SelectField>
           </label>
         </div>
 

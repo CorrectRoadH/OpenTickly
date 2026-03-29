@@ -1,4 +1,4 @@
-import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SelectField, SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -352,8 +352,8 @@ function CurrencyField(props: {
       >
         Currency
       </label>
-      <select
-        className="h-9 w-[120px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-input-bg)] px-3 text-[12px] text-[var(--track-text)] outline-none focus:border-[var(--track-accent)]"
+      <SelectField
+        className="w-[120px]"
         id="currency-select"
         onChange={(e) => props.onChange(e.target.value)}
         value={props.value}
@@ -363,7 +363,7 @@ function CurrencyField(props: {
             {c}
           </option>
         ))}
-      </select>
+      </SelectField>
     </div>
   );
 }
