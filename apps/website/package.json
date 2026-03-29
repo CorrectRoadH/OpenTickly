@@ -23,6 +23,7 @@
     "date-fns": "catalog:",
     "jspdf": "catalog:",
     "jspdf-autotable": "catalog:",
+    "lucide-react": "catalog:",
     "react": "^18.3.1",
     "react-big-calendar": "catalog:",
     "react-dom": "^18.3.1",
