@@ -62,11 +62,15 @@ OpenToggl works directly with [`toggl-cli`](https://github.com/CorrectRoadH/togg
 toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
+## Mobile-Friendly PWA
+
+The web UI is a fully installable Progressive Web App (PWA). On mobile devices (iOS and Android), you can add it to your home screen and use it like a native app — with offline support, full-screen standalone mode, and fast startup. No app store needed.
+
 ## Roadmap
 
 - [x] Full API compatibility with Track v9 and Reports v3
 - [ ] Full parity with Toggl Track web
-- [ ] Mobile and desktop implementations
+- [x] Mobile PWA with offline support
 - [ ] opentoggl focus
 - [ ] opentoggl plan
 

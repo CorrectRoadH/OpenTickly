@@ -62,11 +62,15 @@ OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cl
 toggl auth <YOUR_API_TOKEN> --type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
+## 手机端 PWA 支持
+
+Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 Android）可以添加到主屏幕，像原生 App 一样使用——支持离线、全屏独立模式、快速启动，无需应用商店。
+
 ## Roadmap
 
 - [x] API 完全兼容 track v9 和 report v3
 - [ ] track web 完全一致实现
-- [ ] 手机与桌面端的实现
+- [x] 手机端 PWA，支持离线使用
 - [ ] opentoggl focus
 - [ ] opentoggl plan
 

@@ -1,9 +1,0 @@
-{
-  "name": "OpenToggl",
-  "short_name": "OpenToggl",
-  "start_url": "/m/timer",
-  "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#1a1a2e",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
-}

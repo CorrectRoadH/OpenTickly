@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig } from "vite-plus";
 
 const workspaceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
@@ -48,7 +49,61 @@ export default defineConfig(() => {
     "http://127.0.0.1:8080";
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      VitePWA({
+        registerType: "autoUpdate",
+        includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+        manifest: {
+          id: "/",
+          name: "OpenToggl",
+          short_name: "OpenToggl",
+          description: "Open-source time tracking",
+          start_url: "/m/timer",
+          scope: "/",
+          display: "standalone",
+          orientation: "portrait",
+          theme_color: "#1a1a2e",
+          background_color: "#1a1a2e",
+          categories: ["productivity", "business"],
+          icons: [
+            {
+              src: "pwa-192x192.png",
+              sizes: "192x192",
+              type: "image/png",
+            },
+            {
+              src: "pwa-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+            },
+            {
+              src: "pwa-maskable-512x512.png",
+              sizes: "512x512",
+              type: "image/png",
+              purpose: "maskable",
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          skipWaiting: true,
+          navigateFallback: "index.html",
+          navigateFallbackDenylist: [
+            /^\/api\//,
+            /^\/healthz/,
+            /^\/web\//,
+            /^\/reports\//,
+            /^\/insights\//,
+            /^\/import\//,
+            /^\/admin\//,
+          ],
+        },
+      }),
+    ],
     build: {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
