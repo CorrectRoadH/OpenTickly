@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from "react";
 
 import {
   type ReportsDateRange,
-  type ReportsTimePeriod,
   getDateRangeForPeriod,
   shiftWeekRange,
 } from "./reports-date-utils.ts";
@@ -17,6 +16,8 @@ export type BreakdownDimension = "projects" | "clients" | "entries";
 export type SliceDimension = "projects" | "clients" | "members";
 
 type ReportsPageState = {
+  /** Which shortcut is currently active (null when navigated via arrows/calendar) */
+  activeShortcut: string | null;
   /** How the breakdown table groups rows */
   breakdownBy: BreakdownDimension;
   /** Selected client names for filtering */
@@ -33,18 +34,16 @@ type ReportsPageState = {
   goPrev: () => void;
   /** Selected member names for filtering */
   memberFilter: string[];
-  /** Whether the period picker dropdown is open */
-  periodPickerOpen: boolean;
-  /** Select a named time period */
-  selectPeriod: (period: ReportsTimePeriod) => void;
+  /** Set an arbitrary date range (clears active shortcut) */
+  selectDateRange: (range: ReportsDateRange) => void;
+  /** Set date range from a shortcut (tracks which shortcut is active) */
+  selectShortcutRange: (shortcutId: string, range: ReportsDateRange) => void;
   /** Update the breakdown dimension */
   setBreakdownBy: (dim: BreakdownDimension) => void;
   /** Update the client filter */
   setClientFilter: (names: string[]) => void;
   /** Update the member filter */
   setMemberFilter: (names: string[]) => void;
-  /** Toggle the period picker dropdown */
-  setPeriodPickerOpen: (open: boolean) => void;
   /** Update the slice dimension */
   setSliceBy: (dim: SliceDimension) => void;
   /** How the donut chart groups slices */
@@ -69,6 +68,7 @@ export function useReportsPageState(
     [timezone, weekStartsOn],
   );
 
+  const [activeShortcut, setActiveShortcut] = useState<string | null>("this-week");
   const [dateRange, setDateRange] = useState<ReportsDateRange>(initialRange);
   const [filters, setFilters] = useState<ReportsFilters>({
     description: "",
@@ -76,7 +76,6 @@ export function useReportsPageState(
     tagIds: [],
   });
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [periodPickerOpen, setPeriodPickerOpen] = useState(false);
   const [breakdownBy, setBreakdownBy] = useState<BreakdownDimension>("projects");
   const [sliceBy, setSliceBy] = useState<SliceDimension>("projects");
   const [memberFilter, setMemberFilter] = useState<string[]>([]);
@@ -84,19 +83,23 @@ export function useReportsPageState(
 
   const goPrev = useCallback(() => {
     setDateRange((prev) => shiftWeekRange(prev, "prev"));
+    setActiveShortcut(null);
   }, []);
 
   const goNext = useCallback(() => {
     setDateRange((prev) => shiftWeekRange(prev, "next"));
+    setActiveShortcut(null);
   }, []);
 
-  const selectPeriod = useCallback(
-    (period: ReportsTimePeriod) => {
-      setDateRange(getDateRangeForPeriod(period, timezone, weekStartsOn));
-      setPeriodPickerOpen(false);
-    },
-    [timezone, weekStartsOn],
-  );
+  const selectDateRange = useCallback((range: ReportsDateRange) => {
+    setDateRange(range);
+    setActiveShortcut(null);
+  }, []);
+
+  const selectShortcutRange = useCallback((shortcutId: string, range: ReportsDateRange) => {
+    setDateRange(range);
+    setActiveShortcut(shortcutId);
+  }, []);
 
   const toggleRow = useCallback((name: string) => {
     setExpandedRows((prev) => {
@@ -115,6 +118,7 @@ export function useReportsPageState(
   }, []);
 
   return {
+    activeShortcut,
     breakdownBy,
     clientFilter,
     dateRange,
@@ -123,12 +127,11 @@ export function useReportsPageState(
     goNext,
     goPrev,
     memberFilter,
-    periodPickerOpen,
-    selectPeriod,
+    selectDateRange,
+    selectShortcutRange,
     setBreakdownBy,
     setClientFilter,
     setMemberFilter,
-    setPeriodPickerOpen,
     setSliceBy,
     sliceBy,
     toggleRow,

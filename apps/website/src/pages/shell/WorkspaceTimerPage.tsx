@@ -39,8 +39,6 @@ import {
   formatTrackQueryDate,
   formatWeekRangeLabel,
   getWeekDaysForDate,
-  isSameDay,
-  isSameWeek,
   shiftDay,
   shiftWeek,
   WEEK_SHORTCUTS,
@@ -1359,6 +1357,7 @@ function TimerRangePicker({
   const isAllDates = orch.view === "list" && orch.listDateRange == null;
   const isDayMode = !isAllDates && orch.view !== "list" && orch.calendarSubview === "day";
   const mode = isDayMode ? "day" : "week";
+  const [activeShortcut, setActiveShortcut] = useState<string | null>("this-week");
 
   const label = isAllDates
     ? "All dates"
@@ -1376,6 +1375,7 @@ function TimerRangePicker({
         });
       }
       orch.setSelectedWeekDate(date);
+      setActiveShortcut(null);
     },
     [orch],
   );
@@ -1394,6 +1394,7 @@ function TimerRangePicker({
 
   const handleShortcut = useCallback(
     (shortcutId: string, date: Date) => {
+      setActiveShortcut(shortcutId);
       if (shortcutId === "all-dates") {
         orch.setListDateRange(null);
         if (orch.view !== "list") orch.setView("list");
@@ -1440,32 +1441,18 @@ function TimerRangePicker({
       onPrev={handlePrev}
       onSelectDate={handleSelectDate}
       selectedDate={orch.selectedWeekDate}
-      sidebar={
-        <TimerDateShortcuts
-          isAllDates={isAllDates}
-          isDayMode={isDayMode}
-          onShortcut={handleShortcut}
-          selectedDate={orch.selectedWeekDate}
-          weekStartsOn={orch.beginningOfWeek}
-        />
-      }
+      sidebar={<TimerDateShortcuts activeShortcut={activeShortcut} onShortcut={handleShortcut} />}
       weekStartsOn={orch.beginningOfWeek}
     />
   );
 }
 
 function TimerDateShortcuts({
-  isAllDates,
-  isDayMode,
+  activeShortcut,
   onShortcut,
-  selectedDate,
-  weekStartsOn,
 }: {
-  isAllDates: boolean;
-  isDayMode: boolean;
+  activeShortcut: string | null;
   onShortcut: (id: string, date: Date) => void;
-  selectedDate: Date;
-  weekStartsOn: number;
 }): ReactElement {
   const close = useRangePickerClose();
 
@@ -1473,17 +1460,7 @@ function TimerDateShortcuts({
     <>
       {WEEK_SHORTCUTS.map((shortcut) => {
         const shortcutDate = shortcut.resolveDate(new Date());
-        let isActive = false;
-        if (shortcut.id === "all-dates") {
-          isActive = isAllDates;
-        } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
-          isActive = isDayMode && isSameDay(shortcutDate, selectedDate);
-        } else if (shortcut.id === "last-30-days") {
-          isActive = false;
-        } else {
-          isActive =
-            !isDayMode && !isAllDates && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
-        }
+        const isActive = activeShortcut === shortcut.id;
 
         return (
           <button

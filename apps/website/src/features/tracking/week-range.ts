@@ -1,8 +1,11 @@
 export type WeekShortcutId =
   | "all-dates"
   | "last-30-days"
+  | "last-month"
   | "last-week"
+  | "this-month"
   | "this-week"
+  | "this-year"
   | "today"
   | "yesterday";
 
@@ -14,50 +17,146 @@ export type WeekShortcut = {
 
 const DAYS_IN_WEEK = 7;
 
+const SHORTCUT_TODAY: WeekShortcut = {
+  id: "today",
+  label: "Today",
+  resolveDate: (now) => new Date(now),
+};
+
+const SHORTCUT_YESTERDAY: WeekShortcut = {
+  id: "yesterday",
+  label: "Yesterday",
+  resolveDate: (now) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - 1);
+    return date;
+  },
+};
+
+const SHORTCUT_THIS_WEEK: WeekShortcut = {
+  id: "this-week",
+  label: "This week",
+  resolveDate: (now) => new Date(now),
+};
+
+const SHORTCUT_LAST_WEEK: WeekShortcut = {
+  id: "last-week",
+  label: "Last week",
+  resolveDate: (now) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - DAYS_IN_WEEK);
+    return date;
+  },
+};
+
+const SHORTCUT_THIS_MONTH: WeekShortcut = {
+  id: "this-month",
+  label: "This month",
+  resolveDate: (now) => new Date(now),
+};
+
+const SHORTCUT_LAST_MONTH: WeekShortcut = {
+  id: "last-month",
+  label: "Last month",
+  resolveDate: (now) => {
+    const date = new Date(now);
+    date.setMonth(date.getMonth() - 1);
+    return date;
+  },
+};
+
+const SHORTCUT_THIS_YEAR: WeekShortcut = {
+  id: "this-year",
+  label: "This year",
+  resolveDate: (now) => new Date(now),
+};
+
+const SHORTCUT_LAST_30_DAYS: WeekShortcut = {
+  id: "last-30-days",
+  label: "Last 30 days",
+  resolveDate: (now) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - 30);
+    return date;
+  },
+};
+
+const SHORTCUT_ALL_DATES: WeekShortcut = {
+  id: "all-dates",
+  label: "All dates",
+  resolveDate: (now) => new Date(now),
+};
+
 export const WEEK_SHORTCUTS: WeekShortcut[] = [
-  {
-    id: "today",
-    label: "Today",
-    resolveDate: (now) => new Date(now),
-  },
-  {
-    id: "yesterday",
-    label: "Yesterday",
-    resolveDate: (now) => {
-      const date = new Date(now);
-      date.setDate(date.getDate() - 1);
-      return date;
-    },
-  },
-  {
-    id: "this-week",
-    label: "This week",
-    resolveDate: (now) => new Date(now),
-  },
-  {
-    id: "last-week",
-    label: "Last week",
-    resolveDate: (now) => {
-      const date = new Date(now);
-      date.setDate(date.getDate() - DAYS_IN_WEEK);
-      return date;
-    },
-  },
-  {
-    id: "last-30-days",
-    label: "Last 30 days",
-    resolveDate: (now) => {
-      const date = new Date(now);
-      date.setDate(date.getDate() - 30);
-      return date;
-    },
-  },
-  {
-    id: "all-dates",
-    label: "All dates",
-    resolveDate: (now) => new Date(now),
-  },
+  SHORTCUT_TODAY,
+  SHORTCUT_YESTERDAY,
+  SHORTCUT_THIS_WEEK,
+  SHORTCUT_LAST_WEEK,
+  SHORTCUT_LAST_30_DAYS,
+  SHORTCUT_ALL_DATES,
 ];
+
+export const REPORTS_SHORTCUTS: WeekShortcut[] = [
+  SHORTCUT_THIS_WEEK,
+  SHORTCUT_LAST_WEEK,
+  SHORTCUT_THIS_MONTH,
+  SHORTCUT_LAST_MONTH,
+  SHORTCUT_THIS_YEAR,
+];
+
+/**
+ * Resolves a shortcut ID into a date range { startDate, endDate } as YYYY-MM-DD strings.
+ * Used by Reports and other consumers that need a start/end range rather than a single date.
+ */
+export function resolveShortcutRange(
+  shortcutId: WeekShortcutId,
+  weekStartsOn = 1,
+  now = new Date(),
+): { endDate: string; startDate: string } {
+  switch (shortcutId) {
+    case "today": {
+      const key = formatTrackQueryDate(now);
+      return { endDate: key, startDate: key };
+    }
+    case "yesterday": {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      const key = formatTrackQueryDate(d);
+      return { endDate: key, startDate: key };
+    }
+    case "this-week": {
+      const days = getWeekDaysForDate(now, weekStartsOn);
+      return { endDate: formatTrackQueryDate(days[6]), startDate: formatTrackQueryDate(days[0]) };
+    }
+    case "last-week": {
+      const lastWeek = new Date(now);
+      lastWeek.setDate(lastWeek.getDate() - DAYS_IN_WEEK);
+      const days = getWeekDaysForDate(lastWeek, weekStartsOn);
+      return { endDate: formatTrackQueryDate(days[6]), startDate: formatTrackQueryDate(days[0]) };
+    }
+    case "this-month": {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return { endDate: formatTrackQueryDate(last), startDate: formatTrackQueryDate(first) };
+    }
+    case "last-month": {
+      const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const last = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { endDate: formatTrackQueryDate(last), startDate: formatTrackQueryDate(first) };
+    }
+    case "this-year": {
+      const first = new Date(now.getFullYear(), 0, 1);
+      return { endDate: formatTrackQueryDate(now), startDate: formatTrackQueryDate(first) };
+    }
+    case "last-30-days": {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 30);
+      return { endDate: formatTrackQueryDate(now), startDate: formatTrackQueryDate(start) };
+    }
+    case "all-dates":
+      return { endDate: formatTrackQueryDate(now), startDate: "2006-01-01" };
+  }
+}
 
 export function getWeekDaysForDate(date: Date, weekStartsOn = 1): Date[] {
   const start = getWeekStart(date, weekStartsOn);

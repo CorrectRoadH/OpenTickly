@@ -14,7 +14,8 @@ import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
 import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
 import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
-import { ReportsPeriodPicker } from "./ReportsPeriodPicker.tsx";
+import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
+import { REPORTS_SHORTCUTS, resolveShortcutRange } from "../../features/tracking/week-range.ts";
 import {
   ReportsSurfaceMessage,
   SummaryMetrics,
@@ -331,6 +332,7 @@ export function WorkspaceReportsPage({
               projectOptions={projectOptions}
               state={state}
               tagOptions={tagOptions}
+              weekStartsOn={weekStartsOn}
             />
           ) : null}
         </div>
@@ -408,6 +410,7 @@ function ReportsFilterBar({
   projectOptions,
   state,
   tagOptions,
+  weekStartsOn,
 }: {
   clientOptions: string[];
   liveModel: ReturnType<typeof buildReportsPageModel>;
@@ -415,40 +418,29 @@ function ReportsFilterBar({
   projectOptions: { id: number; label: string }[];
   state: ReturnType<typeof useReportsPageState>;
   tagOptions: { id: number; label: string }[];
+  weekStartsOn: number;
 }) {
+  const selectedDate = useMemo(
+    () => new Date(`${state.dateRange.startDate}T00:00:00`),
+    [state.dateRange.startDate],
+  );
+
+  const handleSelectDate = useCallback(
+    (date: Date) => {
+      state.selectDateRange(resolveShortcutRange("this-week", weekStartsOn, date));
+    },
+    [state, weekStartsOn],
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-2 py-3" data-testid="reports-filter-bar">
-      <div className="relative flex overflow-visible rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[12px]">
-        <button
-          className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
-          data-testid="reports-prev"
-          onClick={state.goPrev}
-          type="button"
-        >
-          Prev
-        </button>
-        <button
-          className="h-8 border-x border-[var(--track-border)] px-4 font-semibold text-white"
-          data-testid="reports-range-label"
-          onClick={() => state.setPeriodPickerOpen(!state.periodPickerOpen)}
-          type="button"
-        >
-          {liveModel.rangeLabel}
-        </button>
-        <button
-          className="h-8 px-4 text-[var(--track-text-muted)] hover:text-white"
-          data-testid="reports-next"
-          onClick={state.goNext}
-          type="button"
-        >
-          Next
-        </button>
-        <ReportsPeriodPicker
-          onClose={() => state.setPeriodPickerOpen(false)}
-          onSelect={state.selectPeriod}
-          open={state.periodPickerOpen}
-        />
-      </div>
+      <ReportsRangePicker
+        label={liveModel.rangeLabel}
+        onSelectDate={handleSelectDate}
+        selectedDate={selectedDate}
+        state={state}
+        weekStartsOn={weekStartsOn}
+      />
       <ReportsStringFilterDropdown
         label="Member"
         onChange={state.setMemberFilter}
@@ -478,5 +470,72 @@ function ReportsFilterBar({
         value={state.filters.description}
       />
     </div>
+  );
+}
+
+function ReportsRangePicker({
+  label,
+  onSelectDate,
+  selectedDate,
+  state,
+  weekStartsOn,
+}: {
+  label: string;
+  onSelectDate: (date: Date) => void;
+  selectedDate: Date;
+  state: ReturnType<typeof useReportsPageState>;
+  weekStartsOn: number;
+}): ReactElement {
+  return (
+    <WeekRangePicker
+      label={label}
+      mode="week"
+      onNext={state.goNext}
+      onPrev={state.goPrev}
+      onSelectDate={onSelectDate}
+      selectedDate={selectedDate}
+      sidebar={<ReportsDateShortcuts state={state} weekStartsOn={weekStartsOn} />}
+      weekStartsOn={weekStartsOn}
+    />
+  );
+}
+
+function ReportsDateShortcuts({
+  state,
+  weekStartsOn,
+}: {
+  state: ReturnType<typeof useReportsPageState>;
+  weekStartsOn: number;
+}): ReactElement {
+  const close = useRangePickerClose();
+
+  return (
+    <>
+      {REPORTS_SHORTCUTS.map((shortcut) => {
+        const isActive = state.activeShortcut === shortcut.id;
+
+        return (
+          <button
+            aria-pressed={isActive}
+            className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
+              isActive
+                ? "bg-[var(--track-accent-strong)] text-white"
+                : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
+            }`}
+            key={shortcut.id}
+            onClick={() => {
+              state.selectShortcutRange(
+                shortcut.id,
+                resolveShortcutRange(shortcut.id, weekStartsOn),
+              );
+              close();
+            }}
+            type="button"
+          >
+            {shortcut.label}
+          </button>
+        );
+      })}
+    </>
   );
 }

@@ -1,82 +1,43 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { CalendarIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import {
   buildMonthWeeks,
-  formatDayLabel,
   formatTrackQueryDate,
-  formatWeekRangeLabel,
   getWeekStart,
   isSameDay,
   isSameWeek,
   resolveIsoWeekNumber,
-  shiftDay,
-  shiftWeek,
-  WEEK_SHORTCUTS,
 } from "./week-range.ts";
 
-export function QuickDateShortcuts({
-  onDayShortcutSelect,
-  onSelectDate,
-  selectedDate,
-  weekStartsOn = 1,
-}: {
-  onDayShortcutSelect?: (date: Date) => void;
-  onSelectDate: (date: Date) => void;
-  selectedDate: Date;
-  weekStartsOn?: number;
-}): ReactElement {
-  return (
-    <div className="flex items-center gap-1 rounded-full border border-[var(--track-border)] bg-[var(--track-panel)] p-0.5">
-      {WEEK_SHORTCUTS.map((shortcut) => {
-        const shortcutDate = shortcut.resolveDate(new Date());
-        const isActive = isSameWeek(shortcutDate, selectedDate, weekStartsOn);
-
-        return (
-          <button
-            aria-pressed={isActive}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium transition ${
-              isActive
-                ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-                : "text-white"
-            }`}
-            key={shortcut.id}
-            onClick={() => {
-              if ((shortcut.id === "today" || shortcut.id === "yesterday") && onDayShortcutSelect) {
-                onDayShortcutSelect(shortcutDate);
-              } else {
-                onSelectDate(shortcutDate);
-              }
-            }}
-            type="button"
-          >
-            {shortcut.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 export function WeekRangePicker({
+  disabled = false,
+  label,
   mode = "week",
-  onAllDatesSelect,
-  onDayShortcutSelect,
-  onLast30DaysSelect,
+  onNext,
+  onPrev,
   onSelectDate,
-  onWeekShortcutSelect,
   selectedDate,
+  sidebar,
   weekStartsOn = 1,
 }: {
-  mode?: "all-dates" | "day" | "week";
-  onAllDatesSelect?: () => void;
-  onDayShortcutSelect?: (date: Date) => void;
-  onLast30DaysSelect?: (date: Date) => void;
+  disabled?: boolean;
+  label: string;
+  mode?: "day" | "week";
+  onNext: () => void;
+  onPrev: () => void;
   onSelectDate: (date: Date) => void;
-  /** Called when Today/Yesterday/This week/Last week shortcuts switch to week mode. */
-  onWeekShortcutSelect?: (date: Date) => void;
   selectedDate: Date;
+  sidebar?: ReactNode;
   weekStartsOn?: number;
 }): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
@@ -112,17 +73,19 @@ export function WeekRangePicker({
     triggerRef.current?.focus();
   }, [isOpen]);
 
+  const close = useCallback(() => setIsOpen(false), []);
+
+  const hasSidebar = sidebar != null;
+
   return (
     <div className="relative" ref={rootRef}>
-      {/* Outer pill: prev arrow + label trigger + next arrow in one bordered container */}
+      {/* Outer pill: prev arrow + label trigger + next arrow */}
       <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] text-white">
         <button
           aria-label={mode === "day" ? "Previous day" : "Previous week"}
-          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${mode === "all-dates" ? "opacity-40" : ""}`}
-          disabled={mode === "all-dates"}
-          onClick={() =>
-            onSelectDate(mode === "day" ? shiftDay(selectedDate, -1) : shiftWeek(selectedDate, -1))
-          }
+          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
+          disabled={disabled}
+          onClick={onPrev}
           type="button"
         >
           <ChevronRightIcon className="size-3 rotate-180" />
@@ -130,13 +93,7 @@ export function WeekRangePicker({
         <button
           aria-expanded={isOpen}
           aria-haspopup="dialog"
-          aria-label={
-            mode === "all-dates"
-              ? "All dates. Press Enter to open date picker."
-              : mode === "day"
-                ? `Day: ${formatDayLabel(selectedDate)}. Press Enter to open day picker.`
-                : `Week range: ${formatWeekRangeLabel(selectedDate, weekStartsOn)}. Press Enter to open week picker.`
-          }
+          aria-label={`${label}. Press Enter to open date picker.`}
           className="flex min-w-0 flex-1 items-center justify-center gap-2 px-1 text-left"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
@@ -149,21 +106,13 @@ export function WeekRangePicker({
           type="button"
         >
           <CalendarIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
-          <span className="truncate text-[12px] font-medium">
-            {mode === "all-dates"
-              ? "All dates"
-              : mode === "day"
-                ? formatDayLabel(selectedDate)
-                : formatWeekRangeLabel(selectedDate, weekStartsOn)}
-          </span>
+          <span className="truncate text-[12px] font-medium">{label}</span>
         </button>
         <button
           aria-label={mode === "day" ? "Next day" : "Next week"}
-          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${mode === "all-dates" ? "opacity-40" : ""}`}
-          disabled={mode === "all-dates"}
-          onClick={() =>
-            onSelectDate(mode === "day" ? shiftDay(selectedDate, 1) : shiftWeek(selectedDate, 1))
-          }
+          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
+          disabled={disabled}
+          onClick={onNext}
           type="button"
         >
           <ChevronRightIcon className="size-3" />
@@ -172,72 +121,16 @@ export function WeekRangePicker({
 
       {isOpen ? (
         <div
-          aria-label="Select week range"
+          aria-label="Select date range"
           aria-modal="false"
-          className="absolute left-0 top-[calc(100%+8px)] z-30 w-[480px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_4px_16px_var(--track-shadow-tooltip)]"
+          className={`absolute left-0 top-[calc(100%+8px)] z-30 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_4px_16px_var(--track-shadow-tooltip)] ${hasSidebar ? "w-[480px]" : "w-[320px]"}`}
           data-testid="week-range-dialog"
           role="dialog"
         >
-          <div className="grid grid-cols-[148px_minmax(0,1fr)] gap-0">
-            <div className="pr-3">
-              <div className="flex flex-col gap-0.5">
-                {WEEK_SHORTCUTS.map((shortcut) => {
-                  const shortcutDate = shortcut.resolveDate(new Date());
-                  let isActive = false;
-                  if (shortcut.id === "all-dates") {
-                    isActive = mode === "all-dates";
-                  } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
-                    isActive = mode === "day" && isSameDay(shortcutDate, selectedDate);
-                  } else if (shortcut.id === "last-30-days") {
-                    // last-30-days is never "active" via week/day match; it
-                    // triggers a date-range selection rather than a mode.
-                    isActive = false;
-                  } else {
-                    isActive =
-                      mode === "week" && isSameWeek(shortcutDate, selectedDate, weekStartsOn);
-                  }
-
-                  return (
-                    <button
-                      aria-pressed={isActive}
-                      className={`w-full rounded-lg px-3 py-2 text-left text-[14px] font-medium transition ${
-                        isActive
-                          ? "bg-[var(--track-accent-strong)] text-white"
-                          : "text-[var(--track-overlay-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
-                      }`}
-                      key={shortcut.id}
-                      onClick={() => {
-                        if (shortcut.id === "all-dates") {
-                          onAllDatesSelect?.();
-                        } else if (shortcut.id === "last-30-days") {
-                          if (onLast30DaysSelect) {
-                            onLast30DaysSelect(shortcutDate);
-                          } else {
-                            onSelectDate(shortcutDate);
-                          }
-                        } else if (shortcut.id === "today" || shortcut.id === "yesterday") {
-                          if (onDayShortcutSelect) {
-                            onDayShortcutSelect(shortcutDate);
-                          } else {
-                            onSelectDate(shortcutDate);
-                          }
-                        } else {
-                          if (onWeekShortcutSelect) {
-                            onWeekShortcutSelect(shortcutDate);
-                          } else {
-                            onSelectDate(shortcutDate);
-                          }
-                        }
-                        setIsOpen(false);
-                      }}
-                      type="button"
-                    >
-                      {shortcut.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+          <div className={hasSidebar ? "grid grid-cols-[148px_minmax(0,1fr)] gap-0" : ""}>
+            {hasSidebar ? (
+              <RangePickerSidebarSlot close={close}>{sidebar}</RangePickerSidebarSlot>
+            ) : null}
 
             <div>
               <div className="relative mb-3 flex items-center justify-between gap-2">
@@ -294,9 +187,9 @@ export function WeekRangePicker({
                 {headerPicker === "month" ? (
                   <div className="absolute left-0 top-[calc(100%+4px)] z-10 grid w-full grid-cols-3 gap-1 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
                     {Array.from({ length: 12 }, (_, i) => {
-                      const label = new Intl.DateTimeFormat("en-US", { month: "short" }).format(
-                        new Date(2000, i),
-                      );
+                      const monthLabel = new Intl.DateTimeFormat("en-US", {
+                        month: "short",
+                      }).format(new Date(2000, i));
                       const isCurrent = i === visibleMonth.getMonth();
                       return (
                         <button
@@ -312,7 +205,7 @@ export function WeekRangePicker({
                           }}
                           type="button"
                         >
-                          {label}
+                          {monthLabel}
                         </button>
                       );
                     })}
@@ -371,8 +264,8 @@ export function WeekRangePicker({
 
               <div className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-center text-[11px] font-semibold text-[var(--track-text-muted)]">
                 <span />
-                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((label) => (
-                  <span key={label}>{label}</span>
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((dayLabel) => (
+                  <span key={dayLabel}>{dayLabel}</span>
                 ))}
               </div>
 
@@ -492,4 +385,37 @@ export function WeekRangePicker({
       ) : null}
     </div>
   );
+}
+
+/**
+ * Wraps the sidebar ReactNode, cloning onClick handlers to auto-close the picker.
+ * Sidebar children that are <button> elements get an automatic close-on-click wrapper.
+ */
+function RangePickerSidebarSlot({
+  children,
+  close,
+}: {
+  children: ReactNode;
+  close: () => void;
+}): ReactElement {
+  return (
+    <RangePickerCloseContext.Provider value={close}>
+      <div className="pr-3">
+        <div className="flex flex-col gap-0.5">{children}</div>
+      </div>
+    </RangePickerCloseContext.Provider>
+  );
+}
+
+import { createContext, useContext } from "react";
+
+const RangePickerCloseContext = createContext<(() => void) | null>(null);
+
+/** Hook for sidebar items to close the picker after selection. */
+export function useRangePickerClose(): () => void {
+  const close = useContext(RangePickerCloseContext);
+  if (!close) {
+    throw new Error("useRangePickerClose must be used inside WeekRangePicker sidebar");
+  }
+  return close;
 }
