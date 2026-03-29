@@ -24,8 +24,8 @@ jobs:
       - name: Start postgres and redis
         run: |
           docker logout || true
-          docker compose -f docker-compose.yml up -d postgres redis
-          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres redis
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
 
       - name: Install dependencies
         run: pnpm install
@@ -37,7 +37,7 @@ jobs:
 
       - name: Create database
         run: |
-          docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
+          docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T postgres psql -U postgres -c "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || docker compose -f docker-compose.yml -f docker-compose.ci.yml exec -T postgres psql -U postgres -c "CREATE DATABASE opentoggl"
 
       - name: Install pgschema
         run: GOBIN=/usr/local/bin go install github.com/pgplex/pgschema@v1.7.3
