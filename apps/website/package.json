@@ -50,6 +50,12 @@
     "vite": "catalog:",
     "vite-plugin-pwa": "catalog:",
     "vite-plus": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "workbox-background-sync": "catalog:",
+    "workbox-core": "catalog:",
+    "workbox-expiration": "catalog:",
+    "workbox-precaching": "catalog:",
+    "workbox-routing": "catalog:",
+    "workbox-strategies": "catalog:"
   }
 }

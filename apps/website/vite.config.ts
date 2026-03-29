@@ -54,6 +54,9 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",
+        strategies: "injectManifest",
+        srcDir: "src",
+        filename: "sw.ts",
         includeAssets: ["favicon.svg", "apple-touch-icon.png"],
         manifest: {
           id: "/",
@@ -86,21 +89,8 @@ export default defineConfig(() => {
             },
           ],
         },
-        workbox: {
+        injectManifest: {
           globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-          cleanupOutdatedCaches: true,
-          clientsClaim: true,
-          skipWaiting: true,
-          navigateFallback: "index.html",
-          navigateFallbackDenylist: [
-            /^\/api\//,
-            /^\/healthz/,
-            /^\/web\//,
-            /^\/reports\//,
-            /^\/insights\//,
-            /^\/import\//,
-            /^\/admin\//,
-          ],
         },
       }),
     ],

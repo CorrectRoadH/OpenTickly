@@ -20,6 +20,7 @@ import {
   StopIcon,
   TimerIcon,
 } from "../../shared/ui/icons.tsx";
+import { OfflineBanner } from "./OfflineBanner.tsx";
 import { PwaInstallBanner } from "./PwaInstallBanner.tsx";
 
 const TABS = [
@@ -83,6 +84,7 @@ export function MobileShell(): ReactElement {
 
   return (
     <div className="flex h-[100dvh] flex-col bg-[var(--track-surface)] text-[var(--track-text)]">
+      <OfflineBanner />
       <PwaInstallBanner />
       {/* Page content */}
       <div className="min-h-0 flex-1 overflow-y-auto">
