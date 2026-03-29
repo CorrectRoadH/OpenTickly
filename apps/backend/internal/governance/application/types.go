@@ -25,6 +25,9 @@ type AuditLogView struct {
 	EntityID       *int64
 	Action         string
 	UserID         *int64
+	Source         string
+	RequestBody    string
+	ResponseBody   string
 	CreatedAt      time.Time
 }
 
@@ -37,8 +40,21 @@ type ListAuditLogsFilter struct {
 	EntityID    *int64
 	Action      string
 	UserID      *int64
+	Source      string
 	PageSize    int
 	PageNumber  int
+}
+
+type InsertAuditLogCommand struct {
+	OrganizationID int64
+	WorkspaceID    *int64
+	EntityType     string
+	EntityID       *int64
+	Action         string
+	UserID         *int64
+	Source         string
+	RequestBody    string
+	ResponseBody   string
 }
 
 type TimeEntryConstraintsView struct {
@@ -216,6 +232,7 @@ type TimelineEventView struct {
 }
 
 type Store interface {
+	InsertAuditLog(context.Context, InsertAuditLogCommand) error
 	ListAuditLogs(context.Context, int64, ListAuditLogsFilter) ([]AuditLogView, error)
 	GetTimeEntryConstraints(context.Context, int64) (TimeEntryConstraintsView, error)
 	SaveTimeEntryConstraints(context.Context, TimeEntryConstraintsView) error

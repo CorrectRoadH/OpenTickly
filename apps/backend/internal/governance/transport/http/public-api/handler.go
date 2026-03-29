@@ -21,6 +21,9 @@ type auditLogResponse struct {
 	EntityID       *int64 `json:"entity_id,omitempty"`
 	Action         string `json:"action"`
 	UserID         *int64 `json:"user_id,omitempty"`
+	Source         string `json:"source"`
+	RequestBody    string `json:"request_body"`
+	ResponseBody   string `json:"response_body"`
 	CreatedAt      string `json:"created_at"`
 }
 
@@ -48,6 +51,7 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 		Export:     lo.FromPtr(queryBoolPointer(ctx, "export")),
 		EntityType: ctx.QueryParam("entity_type"),
 		Action:     ctx.QueryParam("action"),
+		Source:     ctx.QueryParam("source"),
 		PageSize:   queryInt(ctx, "page_size", 50),
 		PageNumber: queryInt(ctx, "page_number", 1),
 	}
@@ -76,6 +80,9 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 			EntityID:       log.EntityID,
 			Action:         log.Action,
 			UserID:         log.UserID,
+			Source:         log.Source,
+			RequestBody:    log.RequestBody,
+			ResponseBody:   log.ResponseBody,
 			CreatedAt:      log.CreatedAt.UTC().Format(time.RFC3339),
 		})
 	}

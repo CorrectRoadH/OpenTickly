@@ -101,6 +101,12 @@
             "description": "Page Number",
             "name": "page_number",
             "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Source filter (web, api)",
+            "name": "source",
+            "in": "query"
           }
         ],
         "responses": {
@@ -108,7 +114,22 @@
             "description": "Successful operation",
             "schema": {
               "type": "array",
-              "items": {}
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "integer" },
+                  "organization_id": { "type": "integer" },
+                  "workspace_id": { "type": "integer" },
+                  "entity_type": { "type": "string" },
+                  "entity_id": { "type": "integer" },
+                  "action": { "type": "string" },
+                  "user_id": { "type": "integer" },
+                  "source": { "type": "string" },
+                  "request_body": { "type": "string" },
+                  "response_body": { "type": "string" },
+                  "created_at": { "type": "string" }
+                }
+              }
             }
           },
           "403": {

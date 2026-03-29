@@ -39,6 +39,7 @@ create table identity_users (
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     is_instance_admin boolean not null default false,
+    avatar_storage_key text not null default '',
     constraint identity_users_state_check check (state in ('active', 'deactivated', 'deleted'))
 );
 
@@ -465,6 +466,9 @@ create table governance_audit_logs (
     entity_id bigint,
     action text not null default '',
     user_id bigint references identity_users (id) on delete set null,
+    source text not null default '',
+    request_body text not null default '',
+    response_body text not null default '',
     created_at timestamptz not null default now()
 );
 

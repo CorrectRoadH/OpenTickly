@@ -43,6 +43,7 @@ func newPublicTrackRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, erro
 	return func(server *echo.Echo) {
 		group := server.Group("/api/v9")
 		group.Use(validator)
+		group.Use(newAuditLogMiddleware(handlers))
 		publictrackapi.RegisterHandlers(group, newPublicTrackOpenAPIServer(handlers))
 	}, nil
 }

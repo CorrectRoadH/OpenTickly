@@ -2876,7 +2876,7 @@ export type ProjectPayload = {
   /**
    * Project color
    */
-  color?: string;
+  color?: string | null;
   /**
    * Project currency, optional, premium feature
    */
@@ -3447,7 +3447,7 @@ export type TimeentryPayload = {
    * Stop time in UTC, can be omitted if it's still running or created with "duration".
    * If "stop" and "duration" are provided, values must be consistent (start + duration == stop)
    */
-  stop?: string;
+  stop?: string | null;
   /**
    * Can be "add" or "delete". Used when updating an existing time entry
    */
@@ -3459,7 +3459,7 @@ export type TimeentryPayload = {
   /**
    * Names of tags to add/remove. If name does not exist as tag, one will be created automatically
    */
-  tags?: Array<string>;
+  tags?: Array<string> | null;
   /**
    * Task ID, optional
    */
@@ -4075,6 +4075,10 @@ export type GetAuditLogsData = {
      * Page Number
      */
     page_number?: number;
+    /**
+     * Source filter (web, api)
+     */
+    source?: string;
   };
   url: "/audit_logs/{organization_id}/{from}/{to}";
 };
@@ -4096,7 +4100,19 @@ export type GetAuditLogsResponses = {
   /**
    * Successful operation
    */
-  200: Array<unknown>;
+  200: Array<{
+    id?: number;
+    organization_id?: number;
+    workspace_id?: number;
+    entity_type?: string;
+    entity_id?: number;
+    action?: string;
+    user_id?: number;
+    source?: string;
+    request_body?: string;
+    response_body?: string;
+    created_at?: string;
+  }>;
 };
 
 export type GetAuditLogsResponse = GetAuditLogsResponses[keyof GetAuditLogsResponses];

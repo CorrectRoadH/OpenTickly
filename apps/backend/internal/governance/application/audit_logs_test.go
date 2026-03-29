@@ -98,14 +98,20 @@ func insertAuditLog(
 			entity_id,
 			action,
 			user_id,
+			source,
+			request_body,
+			response_body,
 			created_at
-		) values ($1, $2, $3, $4, $5, $6, $7)`,
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		organizationID,
 		workspaceValue,
 		entityType,
 		entityID,
 		action,
 		userValue,
+		"web",
+		"",
+		"",
 		createdAt,
 	); err != nil {
 		t.Fatalf("insert audit log: %v", err)

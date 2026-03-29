@@ -8,6 +8,31 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 )
 
+func (store *Store) InsertAuditLog(
+	ctx context.Context,
+	command governanceapplication.InsertAuditLogCommand,
+) error {
+	_, err := store.pool.Exec(ctx,
+		`insert into governance_audit_logs (
+			organization_id, workspace_id, entity_type, entity_id,
+			action, user_id, source, request_body, response_body
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		command.OrganizationID,
+		command.WorkspaceID,
+		command.EntityType,
+		command.EntityID,
+		command.Action,
+		command.UserID,
+		command.Source,
+		command.RequestBody,
+		command.ResponseBody,
+	)
+	if err != nil {
+		return writeGovernanceError("insert audit log", err)
+	}
+	return nil
+}
+
 func (store *Store) ListAuditLogs(
 	ctx context.Context,
 	organizationID int64,
@@ -22,6 +47,9 @@ func (store *Store) ListAuditLogs(
 			entity_id,
 			action,
 			user_id,
+			source,
+			request_body,
+			response_body,
 			created_at
 		from governance_audit_logs
 		where organization_id = $1
@@ -56,6 +84,11 @@ func (store *Store) ListAuditLogs(
 		args = append(args, *filter.UserID)
 		next++
 	}
+	if filter.Source != "" {
+		query += " and source = $" + itoa(next)
+		args = append(args, filter.Source)
+		next++
+	}
 
 	query += " order by created_at desc, id desc"
 	if !filter.Export {
@@ -80,12 +113,16 @@ func (store *Store) ListAuditLogs(
 			&view.EntityID,
 			&view.Action,
 			&view.UserID,
+			&view.Source,
+			&view.RequestBody,
+			&view.ResponseBody,
 			&view.CreatedAt,
 		); err != nil {
 			return nil, writeGovernanceError("scan audit log", err)
 		}
 		view.EntityType = strings.TrimSpace(view.EntityType)
 		view.Action = strings.TrimSpace(view.Action)
+		view.Source = strings.TrimSpace(view.Source)
 		logs = append(logs, view)
 	}
 	return logs, rows.Err()

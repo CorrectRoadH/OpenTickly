@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+func (service *Service) InsertAuditLog(ctx context.Context, command InsertAuditLogCommand) error {
+	if command.OrganizationID <= 0 {
+		return ErrInvalidOrganization
+	}
+	return service.store.InsertAuditLog(ctx, command)
+}
+
 func (service *Service) ListAuditLogs(
 	ctx context.Context,
 	organizationID int64,
