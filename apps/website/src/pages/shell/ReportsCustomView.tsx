@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { Link, Pin, Search } from "lucide-react";
 import { SelectField } from "@opentoggl/web-ui";
 
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -67,16 +68,12 @@ export function ReportsCustomView(): ReactElement {
           </SelectField>
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
-          <svg
+          <Search
+            aria-hidden="true"
             className="h-3.5 w-3.5 shrink-0 text-[var(--track-text-muted)]"
-            fill="none"
-            stroke="currentColor"
+            size={14}
             strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" x2="16.65" y1="21" y2="16.65" />
-          </svg>
+          />
           <input
             className="h-8 flex-1 bg-transparent text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
             data-testid="custom-reports-search"
@@ -154,16 +151,7 @@ export function ReportsCustomView(): ReactElement {
                       title="Copy link"
                       type="button"
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                      </svg>
+                      <Link aria-hidden="true" className="h-4 w-4" size={16} strokeWidth={2} />
                     </button>
                   </td>
                   <td className="px-4 py-3">
@@ -172,15 +160,7 @@ export function ReportsCustomView(): ReactElement {
                       title="Pin report"
                       type="button"
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 17v5M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
-                      </svg>
+                      <Pin aria-hidden="true" className="h-4 w-4" size={16} strokeWidth={2} />
                     </button>
                   </td>
                   <td className="px-2 py-3">

@@ -10,6 +10,7 @@ import {
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { Check } from "lucide-react";
 import { TrashIcon } from "../../shared/ui/icons.tsx";
 
 type MobileTimeEntryEditorProps = {
@@ -186,19 +187,7 @@ export function MobileTimeEntryEditor({
             type="button"
           >
             {billable ? (
-              <svg
-                className="size-5 text-black"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  d="M5 10l3 3 7-7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                />
-              </svg>
+              <Check aria-hidden="true" className="size-5 text-black" size={20} strokeWidth={2} />
             ) : null}
           </button>
         </FieldRow>

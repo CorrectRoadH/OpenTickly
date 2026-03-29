@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { AppButton, CheckboxFilterDropdown } from "@opentoggl/web-ui";
+import { ChevronRight } from "lucide-react";
 import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import { TimesheetSetupDialog } from "./TimesheetSetupDialog.tsx";
 import {
@@ -316,15 +317,7 @@ function TeamTimesheetsView({
           to="/workspaces/$workspaceId/approvals/$view"
         >
           Go to timesheet setup
-          <svg
-            className="h-3.5 w-3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path d="M9 5l7 7-7 7" />
-          </svg>
+          <ChevronRight aria-hidden="true" className="h-3.5 w-3.5" size={14} strokeWidth={2} />
         </Link>
       </div>
     );

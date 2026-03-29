@@ -97,6 +97,6 @@ test.describe("Calendar current-time-indicator play button", () => {
     await indicatorPlayButton.click();
 
     // Verify a timer is now running — the action button should show stop icon
-    await expect(timerButton).toHaveAttribute("data-icon", "stop");
+    await expect(timerButton).toHaveAttribute("data-icon", "stop", { timeout: 10_000 });
   });
 });

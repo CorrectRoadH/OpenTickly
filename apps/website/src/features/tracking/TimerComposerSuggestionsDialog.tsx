@@ -6,6 +6,7 @@ import type {
   ModelsFavorite,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import { ChevronDown } from "lucide-react";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
@@ -282,9 +283,12 @@ function WsBriefcaseIcon(): ReactElement {
 
 function ChevronDownIcon(): ReactElement {
   return (
-    <svg aria-hidden="true" fill="var(--track-text-muted)" height="5" viewBox="0 0 8 5" width="10">
-      <path d="M3.6 4.4c.2.1.6.1.8 0l3-3c.1-.2.1-.6 0-.8-.2-.1-.6-.1-.8 0l-3 3h.8l-3-3C1.2.5.8.5.6.6c-.1.2-.1.6 0 .8l3 3z" />
-    </svg>
+    <ChevronDown
+      aria-hidden="true"
+      className="text-[var(--track-text-muted)]"
+      size={10}
+      strokeWidth={2}
+    />
   );
 }
 

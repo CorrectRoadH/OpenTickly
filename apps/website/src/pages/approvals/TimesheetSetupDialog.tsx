@@ -1,5 +1,6 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown as ChevronDownLucide, Search as SearchLucide } from "lucide-react";
 import { AppButton, SelectField } from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
@@ -387,29 +388,22 @@ function FieldLabel({ children }: { children: string }): ReactElement {
 
 function ChevronDown(): ReactElement {
   return (
-    <svg
+    <ChevronDownLucide
+      aria-hidden="true"
       className="h-3 w-3 text-[var(--track-text-muted)]"
-      fill="none"
-      stroke="currentColor"
+      size={12}
       strokeWidth={2}
-      viewBox="0 0 24 24"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
+    />
   );
 }
 
 function SearchIcon(): ReactElement {
   return (
-    <svg
+    <SearchLucide
+      aria-hidden="true"
       className="h-3.5 w-3.5 shrink-0 text-[var(--track-text-muted)]"
-      fill="none"
-      stroke="currentColor"
+      size={14}
       strokeWidth={2}
-      viewBox="0 0 24 24"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" x2="16.65" y1="21" y2="16.65" />
-    </svg>
+    />
   );
 }

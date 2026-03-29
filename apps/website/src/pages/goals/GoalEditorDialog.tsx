@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Check, Info } from "lucide-react";
 
 import { AppButton, SelectField } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -285,17 +286,12 @@ export function GoalEditorDialog({
                 }`}
               >
                 {noEndDate ? (
-                  <svg
+                  <Check
+                    aria-hidden="true"
                     className="size-2.5 text-white"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    viewBox="0 0 12 12"
-                  >
-                    <path d="M2 6l3 3 5-5" />
-                  </svg>
+                    size={10}
+                    strokeWidth={2.5}
+                  />
                 ) : null}
               </span>
               <input
@@ -457,12 +453,11 @@ function GoalIconPicker({
 
 function InfoIcon(): ReactElement {
   return (
-    <svg className="size-3.5 text-[var(--track-text-soft)]" fill="currentColor" viewBox="0 0 16 16">
-      <path
-        clipRule="evenodd"
-        d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1Zm0 6H6.483a.2.2 0 0 0-.141.341l.6.6A.2.2 0 0 1 7 8.083V11c0 .556.448 1 1 1l.117-.007c.5-.058.883-.48.883-.993V8c0-.556-.448-1-1-1Zm0-3c-1 0-1 .448-1 1s0 1 1 1 1-.448 1-1 0-1-1-1Z"
-        fillRule="evenodd"
-      />
-    </svg>
+    <Info
+      aria-hidden="true"
+      className="size-3.5 text-[var(--track-text-soft)]"
+      size={14}
+      strokeWidth={1.7}
+    />
   );
 }

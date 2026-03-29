@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { Check, ChevronLeft, X } from "lucide-react";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -258,15 +259,7 @@ function ProjectList({
           onClick={onBack}
           type="button"
         >
-          <svg
-            className="size-3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 12 12"
-          >
-            <path d="M8 1L3 6l5 5" />
-          </svg>
+          <ChevronLeft aria-hidden="true" className="size-3.5" size={14} strokeWidth={2} />
         </button>
         <div className="relative flex-1">
           <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
@@ -346,15 +339,7 @@ function TagList({
           onClick={onBack}
           type="button"
         >
-          <svg
-            className="size-3.5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 12 12"
-          >
-            <path d="M8 1L3 6l5 5" />
-          </svg>
+          <ChevronLeft aria-hidden="true" className="size-3.5" size={14} strokeWidth={2} />
         </button>
         <div className="relative flex-1">
           <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
@@ -416,15 +401,7 @@ function TrackChip({
           onClick={onRemove}
           type="button"
         >
-          <svg
-            className="size-3"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 12 12"
-          >
-            <path d="M3 3l6 6M9 3l-6 6" />
-          </svg>
+          <X aria-hidden="true" className="size-3" size={12} strokeWidth={2} />
         </button>
       ) : null}
     </span>
@@ -433,14 +410,11 @@ function TrackChip({
 
 function CheckIcon(): ReactElement {
   return (
-    <svg
+    <Check
+      aria-hidden="true"
       className="size-3.5 shrink-0 text-[var(--track-accent)]"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      viewBox="0 0 12 12"
-    >
-      <path d="M2 6l3 3 5-5" />
-    </svg>
+      size={14}
+      strokeWidth={2.5}
+    />
   );
 }

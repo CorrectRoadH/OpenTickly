@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Check } from "lucide-react";
 import { AppButton } from "@opentoggl/web-ui";
 
 import type { OnboardingStepDto } from "../../shared/api/web-contract.ts";
@@ -147,9 +148,7 @@ function OnboardingStepRow({
         type="button"
       >
         {step.completed ? (
-          <svg fill="none" height={10} viewBox="0 0 10 10" width={10}>
-            <path d="M2 5L4.5 7.5L8 3" stroke="var(--track-surface)" strokeWidth={1.5} />
-          </svg>
+          <Check aria-hidden="true" color="var(--track-surface)" size={10} strokeWidth={1.5} />
         ) : null}
       </button>
       <span

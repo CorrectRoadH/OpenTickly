@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { X } from "lucide-react";
 
 import type {
   HandlergoalsApiResponse,
@@ -171,14 +172,7 @@ function FavoriteItem({
         }}
         type="button"
       >
-        <svg className="size-[10px]" fill="none" viewBox="0 0 7 7">
-          <path
-            d="M.5.5l6 6m0-6l-6 6"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.2"
-          />
-        </svg>
+        <X aria-hidden="true" className="size-[10px]" size={10} strokeWidth={1.5} />
       </button>
     </div>
   );
