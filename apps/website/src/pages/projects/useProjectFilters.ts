@@ -9,7 +9,6 @@ export type ProjectFilterState = {
   filterBillable: "all" | "billable" | "non-billable";
   filterName: string;
   filterTemplate: "all" | "template" | "non-template";
-  openFilter: string | null;
   selectedStatuses: Set<ProjectCategory>;
 };
 
@@ -21,7 +20,6 @@ export type ProjectFilterAction =
   | { type: "SET_BILLABLE"; value: "all" | "billable" | "non-billable" }
   | { type: "SET_NAME"; name: string }
   | { type: "SET_TEMPLATE"; value: "all" | "template" | "non-template" }
-  | { type: "SET_OPEN_FILTER"; filter: string | null }
   | { type: "TOGGLE_STATUS"; status: ProjectCategory }
   | { type: "SET_STATUSES"; statuses: Set<ProjectCategory> }
   | { type: "RESET" };
@@ -48,7 +46,6 @@ function createInitialState(statusFilter: ProjectStatusFilter): ProjectFilterSta
     filterBillable: "all",
     filterName: "",
     filterTemplate: "all",
-    openFilter: null,
     selectedStatuses: computeInitialStatuses(statusFilter),
   };
 }
@@ -69,8 +66,6 @@ function reducer(state: ProjectFilterState, action: ProjectFilterAction): Projec
       return { ...state, filterName: action.name };
     case "SET_TEMPLATE":
       return { ...state, filterTemplate: action.value };
-    case "SET_OPEN_FILTER":
-      return { ...state, openFilter: action.filter };
     case "TOGGLE_STATUS":
       return { ...state, selectedStatuses: toggleInSet(state.selectedStatuses, action.status) };
     case "SET_STATUSES":
@@ -82,7 +77,6 @@ function reducer(state: ProjectFilterState, action: ProjectFilterAction): Projec
         filterBillable: "all",
         filterName: "",
         filterTemplate: "all",
-        openFilter: null,
         selectedStatuses: new Set(DEFAULT_SELECTED_STATUSES),
       };
   }

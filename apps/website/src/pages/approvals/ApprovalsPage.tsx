@@ -1,8 +1,8 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { AppButton } from "@opentoggl/web-ui";
+import { AppButton, CheckboxFilterDropdown } from "@opentoggl/web-ui";
 import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import { TimesheetSetupDialog } from "./TimesheetSetupDialog.tsx";
 import {
@@ -24,7 +24,7 @@ import {
   shiftWeek,
 } from "../../features/tracking/week-range.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { FilterButton } from "./ApprovalsPrimitives.tsx";
+import { useWorkspaceUsersQuery } from "../../shared/query/web-shell.ts";
 
 type ApprovalsView = "team" | "me" | "settings";
 type TimesheetStatus = "submitted" | "approved" | "rejected" | "open";
@@ -39,6 +39,26 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date());
   const [statusFilter, setStatusFilter] = useState<TimesheetStatus>("submitted");
   const [setupDialogOpen, setSetupDialogOpen] = useState(false);
+  const [approverFilter, setApproverFilter] = useState<Set<number>>(new Set());
+  const [memberFilter, setMemberFilter] = useState<Set<number>>(new Set());
+
+  const workspaceUsersQuery = useWorkspaceUsersQuery(workspaceId);
+  const workspaceMembers = useMemo(
+    () =>
+      (workspaceUsersQuery.data ?? [])
+        .filter((u) => u.id != null && u.inactive !== true)
+        .map((u) => ({ key: u.id!, label: u.fullname ?? `User ${u.id}` })),
+    [workspaceUsersQuery.data],
+  );
+  const approverOptions = workspaceMembers;
+  const memberOptions = workspaceMembers;
+
+  const toggleInSet = useCallback((prev: Set<number>, id: number) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  }, []);
 
   const weekLabel = useMemo(() => formatWeekRangeLabel(weekAnchor), [weekAnchor]);
 
@@ -118,8 +138,24 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
         />
         <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
           <span>Filters</span>
-          <FilterButton label="Approver" />
-          {view === "team" ? <FilterButton label="Member" /> : null}
+          <CheckboxFilterDropdown
+            label="Approver"
+            onClear={() => setApproverFilter(new Set())}
+            onToggle={(id: number) => setApproverFilter((prev) => toggleInSet(prev, id))}
+            options={approverOptions}
+            selected={approverFilter}
+            testId="approvals-filter-approver"
+          />
+          {view === "team" ? (
+            <CheckboxFilterDropdown
+              label="Member"
+              onClear={() => setMemberFilter(new Set())}
+              onToggle={(id: number) => setMemberFilter((prev) => toggleInSet(prev, id))}
+              options={memberOptions}
+              selected={memberFilter}
+              testId="approvals-filter-member"
+            />
+          ) : null}
         </div>
       </div>
 
@@ -164,6 +200,8 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
         />
       ) : view === "team" ? (
         <TeamTimesheetsView
+          approverFilter={approverFilter}
+          memberFilter={memberFilter}
           onGoToSetup={() => {
             /* navigate to settings view — use link params */
           }}
@@ -175,6 +213,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
         />
       ) : (
         <YourTimesheetsView
+          approverFilter={approverFilter}
           statusFilter={statusFilter}
           weekEnd={weekEnd}
           weekStart={weekStart}
@@ -186,6 +225,8 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
 }
 
 function TeamTimesheetsView({
+  approverFilter,
+  memberFilter,
   onGoToSetup: _onGoToSetup,
   settingsPath: _settingsPath,
   statusFilter,
@@ -193,6 +234,8 @@ function TeamTimesheetsView({
   weekStart,
   workspaceId,
 }: {
+  approverFilter: Set<number>;
+  memberFilter: Set<number>;
   onGoToSetup: () => void;
   settingsPath: string;
   statusFilter: TimesheetStatus;
@@ -236,7 +279,21 @@ function TeamTimesheetsView({
     },
   });
 
-  const timesheets = extractTimesheets(timesheetsQuery.data);
+  const allTimesheets = extractTimesheets(timesheetsQuery.data);
+  const timesheets = useMemo(
+    () =>
+      allTimesheets.filter((ts) => {
+        if (memberFilter.size > 0 && (ts.member_id == null || !memberFilter.has(ts.member_id)))
+          return false;
+        if (
+          approverFilter.size > 0 &&
+          (ts.approver_id == null || !approverFilter.has(ts.approver_id))
+        )
+          return false;
+        return true;
+      }),
+    [allTimesheets, memberFilter, approverFilter],
+  );
 
   if (timesheetsQuery.isPending) {
     return (
@@ -343,11 +400,13 @@ function TeamTimesheetsView({
 }
 
 function YourTimesheetsView({
+  approverFilter,
   statusFilter,
   weekEnd,
   weekStart,
   workspaceId,
 }: {
+  approverFilter: Set<number>;
   statusFilter: TimesheetStatus;
   weekEnd: Date;
   weekStart: Date;
@@ -389,7 +448,14 @@ function YourTimesheetsView({
     },
   });
 
-  const timesheets = extractTimesheets(timesheetsQuery.data);
+  const allTimesheets = extractTimesheets(timesheetsQuery.data);
+  const timesheets = useMemo(
+    () =>
+      approverFilter.size > 0
+        ? allTimesheets.filter((ts) => ts.approver_id != null && approverFilter.has(ts.approver_id))
+        : allTimesheets,
+    [allTimesheets, approverFilter],
+  );
 
   if (timesheetsQuery.isPending) {
     return (

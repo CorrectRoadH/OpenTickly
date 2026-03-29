@@ -1,5 +1,10 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
-import { PageLayout, pageLayoutTabClass, pageLayoutTabIndicatorClass } from "@opentoggl/web-ui";
+import {
+  CheckboxFilterDropdown,
+  PageLayout,
+  pageLayoutTabClass,
+  pageLayoutTabIndicatorClass,
+} from "@opentoggl/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 
 import type { ReportsTab } from "../../shared/lib/workspace-routing.ts";
@@ -13,7 +18,6 @@ import { useSession } from "../../shared/session/session-context.tsx";
 import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
 import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
-import { ReportsFilterDropdown } from "./ReportsFilterDropdown.tsx";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { REPORTS_SHORTCUTS, resolveShortcutRange } from "../../features/tracking/week-range.ts";
 import { ReportsSurfaceMessage, SummaryMetrics, ToolbarButton } from "./ReportsSharedWidgets.tsx";
@@ -21,7 +25,6 @@ import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
 import { ReportsProfitabilityView } from "./ReportsProfitabilityView.tsx";
 import { ReportsCustomView } from "./ReportsCustomView.tsx";
-import { ReportsStringFilterDropdown } from "./ReportsStringFilterDropdown.tsx";
 import { exportReportCsv } from "./reports-export.ts";
 import {
   buildReportsPageModel,
@@ -431,29 +434,61 @@ function ReportsFilterBar({
         state={state}
         weekStartsOn={weekStartsOn}
       />
-      <ReportsStringFilterDropdown
+      <CheckboxFilterDropdown
         label="Member"
-        onChange={state.setMemberFilter}
-        options={memberOptions}
-        selected={state.memberFilter}
+        onClear={() => state.setMemberFilter([])}
+        onToggle={(key: string) =>
+          state.setMemberFilter(
+            state.memberFilter.includes(key)
+              ? state.memberFilter.filter((m) => m !== key)
+              : [...state.memberFilter, key],
+          )
+        }
+        options={memberOptions.map((m) => ({ key: m, label: m }))}
+        selected={new Set(state.memberFilter)}
+        testId="reports-filter-member"
       />
-      <ReportsStringFilterDropdown
+      <CheckboxFilterDropdown
         label="Client"
-        onChange={state.setClientFilter}
-        options={clientOptions}
-        selected={state.clientFilter}
+        onClear={() => state.setClientFilter([])}
+        onToggle={(key: string) =>
+          state.setClientFilter(
+            state.clientFilter.includes(key)
+              ? state.clientFilter.filter((c) => c !== key)
+              : [...state.clientFilter, key],
+          )
+        }
+        options={clientOptions.map((c) => ({ key: c, label: c }))}
+        selected={new Set(state.clientFilter)}
+        testId="reports-filter-client"
       />
-      <ReportsFilterDropdown
+      <CheckboxFilterDropdown
         label="Project"
-        onChange={(ids) => state.updateFilters({ projectIds: ids })}
-        options={projectOptions}
-        selected={state.filters.projectIds}
+        onClear={() => state.updateFilters({ projectIds: [] })}
+        onToggle={(key: number) =>
+          state.updateFilters({
+            projectIds: state.filters.projectIds.includes(key)
+              ? state.filters.projectIds.filter((id) => id !== key)
+              : [...state.filters.projectIds, key],
+          })
+        }
+        options={projectOptions.map((p) => ({ key: p.id, label: p.label }))}
+        selected={new Set(state.filters.projectIds)}
+        testId="reports-filter-project"
       />
-      <ReportsFilterDropdown
+      <CheckboxFilterDropdown
         label="Tag"
-        onChange={(ids) => state.updateFilters({ tagIds: ids })}
-        options={tagOptions}
-        selected={state.filters.tagIds}
+        onClear={() => state.updateFilters({ tagIds: [] })}
+        onToggle={(key: number) =>
+          state.updateFilters({
+            tagIds: state.filters.tagIds.includes(key)
+              ? state.filters.tagIds.filter((id) => id !== key)
+              : [...state.filters.tagIds, key],
+          })
+        }
+        options={tagOptions.map((t) => ({ key: t.id, label: t.label }))}
+        selected={new Set(state.filters.tagIds)}
+        testId="reports-filter-tag"
       />
       <ReportsDescriptionFilter
         onChange={(value) => state.updateFilters({ description: value })}
