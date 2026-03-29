@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useMemo, useRef, useState } from "react";
 
 import type {
   GithubComTogglTogglApiInternalModelsProject,
@@ -7,6 +7,7 @@ import type {
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 export type TimerComposerSuggestionsAnchor = {
   height: number;
@@ -48,6 +49,7 @@ export function TimerComposerSuggestionsDialog({
   timeEntries,
   workspaces,
 }: TimerComposerSuggestionsDialogProps): ReactElement {
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const position = useMemo(() => resolveDialogPosition(anchor), [anchor]);
   const currentWorkspaceName =
@@ -65,27 +67,7 @@ export function TimerComposerSuggestionsDialog({
     [projects, query],
   );
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('[data-testid="timer-composer-suggestions-dialog"]')) {
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [onClose]);
+  useDismiss(dialogRef, true, onClose);
 
   return (
     <div
@@ -96,6 +78,7 @@ export function TimerComposerSuggestionsDialog({
         aria-label="Timer suggestions"
         className="pointer-events-auto absolute w-[580px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]"
         data-testid="timer-composer-suggestions-dialog"
+        ref={dialogRef}
         role="dialog"
         style={position}
       >

@@ -1,4 +1,6 @@
-import { type ReactElement, useEffect, useRef } from "react";
+import { type ReactElement, useRef } from "react";
+
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 import type { ReportsTimePeriod } from "./reports-date-utils.ts";
 
@@ -27,18 +29,7 @@ export function ReportsPeriodPicker({
 }: ReportsPeriodPickerProps): ReactElement | null {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, onClose]);
+  useDismiss(ref, open, onClose);
 
   if (!open) return null;
 

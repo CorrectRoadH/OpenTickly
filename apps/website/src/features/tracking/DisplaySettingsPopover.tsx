@@ -1,6 +1,7 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
 import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 export type DisplaySettings = {
   calendarHours: "all" | "business";
@@ -54,26 +55,7 @@ export function DisplaySettingsPopover({
   const panelRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<DisplaySettings>(() => readDisplaySettings());
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [onClose]);
+  useDismiss(panelRef, true, onClose);
 
   function handleSave() {
     writeDisplaySettings(draft);

@@ -27,6 +27,8 @@ import {
   StopIcon,
   TagsIcon,
 } from "../../shared/ui/icons.tsx";
+import { useEditorKeyboard } from "./useEditorKeyboard.ts";
+import { useEditorUIState } from "./useEditorUIState.ts";
 
 export type TimeEntryEditorAnchor = {
   containerHeight?: number;
@@ -139,21 +141,25 @@ export function TimeEntryEditorDialog({
   timezone,
   workspaces,
 }: TimeEntryEditorDialogProps): ReactElement {
-  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
-  const [picker, setPicker] = useState<"project" | "tag" | null>(null);
-  const [timePicker, setTimePicker] = useState<"start" | "stop" | null>(null);
-  const [timeEditor, setTimeEditor] = useState<"start" | "stop" | null>(null);
-  const [projectComposerOpen, setProjectComposerOpen] = useState(false);
-  const [projectDraftName, setProjectDraftName] = useState("");
-  const [projectDraftColor, setProjectDraftColor] = useState<string>(DEFAULT_PROJECT_COLOR);
-  const [projectColorPickerOpen, setProjectColorPickerOpen] = useState(false);
-  const [projectCreateError, setProjectCreateError] = useState<string | null>(null);
-  const [tagComposerOpen, setTagComposerOpen] = useState(false);
-  const [tagDraftName, setTagDraftName] = useState("");
-  const [search, setSearch] = useState("");
-  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
-  const [showDiscardConfirmation, setShowDiscardConfirmation] = useState(false);
-  const [descriptionSuggestionsOpen, setDescriptionSuggestionsOpen] = useState(false);
+  const [ui, dispatch] = useEditorUIState();
+  const {
+    actionsMenuOpen,
+    descriptionSuggestionsOpen,
+    picker,
+    projectColorPickerOpen,
+    projectComposerOpen,
+    projectCreateError,
+    projectDraftColor,
+    projectDraftName,
+    search,
+    showDiscardConfirmation,
+    tagComposerOpen,
+    tagDraftName,
+    timeEditor,
+    timeInputError,
+    timePicker,
+    workspaceMenuOpen,
+  } = ui;
   const startIso = entry.start ?? entry.at ?? new Date().toISOString();
   const stopIso = entry.stop ?? null;
   const start = new Date(startIso);
@@ -205,51 +211,7 @@ export function TimeEntryEditorDialog({
   }, [descriptionMode, descriptionQuery, picker, search, tags]);
   const suggestionEntries = useMemo(() => buildSuggestionEntries(recentEntries), [recentEntries]);
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        // If a nested picker/menu is open, close it instead of triggering discard
-        if (picker != null) {
-          setPicker(null);
-          return;
-        }
-        if (timePicker != null) {
-          setTimePicker(null);
-          return;
-        }
-        if (actionsMenuOpen) {
-          setActionsMenuOpen(false);
-          return;
-        }
-        if (descriptionSuggestionsOpen) {
-          setDescriptionSuggestionsOpen(false);
-          return;
-        }
-        if (showDiscardConfirmation) {
-          setShowDiscardConfirmation(false);
-          return;
-        }
-        if (isDirty) {
-          setShowDiscardConfirmation(true);
-          return;
-        }
-        onClose();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    onClose,
-    isDirty,
-    showDiscardConfirmation,
-    picker,
-    timePicker,
-    actionsMenuOpen,
-    descriptionSuggestionsOpen,
-  ]);
+  useEditorKeyboard(ui, dispatch, onClose, isDirty);
 
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
@@ -259,7 +221,7 @@ export function TimeEntryEditorDialog({
         !target.closest('[data-testid="split-time-entry-dialog"]')
       ) {
         if (isDirty) {
-          setShowDiscardConfirmation(true);
+          dispatch({ type: "SET_DISCARD_CONFIRMATION", show: true });
           return;
         }
         onClose();
@@ -270,79 +232,39 @@ export function TimeEntryEditorDialog({
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
     };
-  }, [onClose, isDirty]);
+  }, [onClose, isDirty, dispatch]);
+
+  // Picker cascade resets are handled by the reducer's SET_PICKER action.
 
   useEffect(() => {
-    if (picker !== "project") {
-      setProjectComposerOpen(false);
-      setProjectDraftName("");
-      setWorkspaceMenuOpen(false);
-    }
-
-    if (picker !== "tag") {
-      setTagComposerOpen(false);
-      setTagDraftName("");
-    }
-
-    if (picker == null) {
-      setSearch("");
-    }
-
-    if (picker !== null) {
-      setTimePicker(null);
-      setTimeEditor(null);
-      setActionsMenuOpen(false);
-    }
-  }, [picker]);
-
-  useEffect(() => {
-    if (descriptionMode === "project") {
-      setPicker(null);
-      setDescriptionSuggestionsOpen(true);
-      return;
-    }
-
-    if (descriptionMode === "tag") {
-      setPicker(null);
-      setDescriptionSuggestionsOpen(true);
-      return;
-    }
-
-    if (descriptionMode === "billable") {
-      setDescriptionSuggestionsOpen(true);
-      setPicker(null);
+    if (
+      descriptionMode === "project" ||
+      descriptionMode === "tag" ||
+      descriptionMode === "billable"
+    ) {
+      dispatch({ type: "SET_PICKER", picker: null });
+      dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: true });
       return;
     }
 
     if (!description.trim()) {
-      setDescriptionSuggestionsOpen(true);
+      dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: true });
       return;
     }
 
-    setDescriptionSuggestionsOpen(false);
-  }, [description, descriptionMode]);
-
-  useEffect(() => {
-    if (timeEditor != null || timePicker != null) {
-      setDescriptionSuggestionsOpen(false);
-    }
-  }, [timeEditor, timePicker]);
-
-  useEffect(() => {
-    if (timeEditor != null) {
-      setTimePicker(null);
-    }
-  }, [timeEditor]);
-
-  const [timeInputError, setTimeInputError] = useState<"start" | "stop" | null>(null);
+    dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false });
+  }, [description, descriptionMode, dispatch]);
 
   useEffect(() => {
     if (timeInputError == null) {
       return;
     }
-    const timer = window.setTimeout(() => setTimeInputError(null), 2000);
+    const timer = window.setTimeout(
+      () => dispatch({ type: "SET_TIME_INPUT_ERROR", error: null }),
+      2000,
+    );
     return () => window.clearTimeout(timer);
-  }, [timeInputError]);
+  }, [timeInputError, dispatch]);
 
   function applyEditedTime(target: "start" | "stop", value: string) {
     const baseDate = target === "start" ? start : stop;
@@ -352,11 +274,11 @@ export function TimeEntryEditorDialog({
 
     const nextDate = applyTimeInputValue(baseDate, value, timezone);
     if (!nextDate) {
-      setTimeInputError(target);
+      dispatch({ type: "SET_TIME_INPUT_ERROR", error: target });
       return;
     }
 
-    setTimeInputError(null);
+    dispatch({ type: "SET_TIME_INPUT_ERROR", error: null });
     if (target === "start") {
       onStartTimeChange(nextDate);
       return;
@@ -426,7 +348,7 @@ export function TimeEntryEditorDialog({
           <button
             aria-label="Entry actions"
             className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
-            onClick={() => setActionsMenuOpen((current) => !current)}
+            onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: !actionsMenuOpen })}
             type="button"
           >
             <MoreIcon className="size-4" />
@@ -437,7 +359,7 @@ export function TimeEntryEditorDialog({
                 disabled={!onSplit}
                 label="Split"
                 onClick={() => {
-                  setActionsMenuOpen(false);
+                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
                   void onSplit?.();
                 }}
               />
@@ -445,7 +367,7 @@ export function TimeEntryEditorDialog({
                 disabled={!onFavorite}
                 label="Pin as favorite"
                 onClick={() => {
-                  setActionsMenuOpen(false);
+                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
                   void onFavorite?.();
                 }}
               />
@@ -453,7 +375,7 @@ export function TimeEntryEditorDialog({
                 <a
                   className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4"
                   href={`/projects/${currentWorkspaceId}/list`}
-                  onClick={() => setActionsMenuOpen(false)}
+                  onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: false })}
                 >
                   Go to project
                 </a>
@@ -461,7 +383,7 @@ export function TimeEntryEditorDialog({
               <ActionMenuButton
                 label="Copy start link"
                 onClick={() => {
-                  setActionsMenuOpen(false);
+                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
                   void copyToClipboard(
                     typeof window === "undefined"
                       ? (entry.start ?? "")
@@ -473,7 +395,7 @@ export function TimeEntryEditorDialog({
                 <ActionMenuButton
                   label="Copy description"
                   onClick={() => {
-                    setActionsMenuOpen(false);
+                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
                     void copyToClipboard(description.trim());
                   }}
                 />
@@ -483,7 +405,7 @@ export function TimeEntryEditorDialog({
                 className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-danger-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={!onDelete || isDeleting}
                 onClick={() => {
-                  setActionsMenuOpen(false);
+                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
                   void onDelete?.();
                 }}
                 type="button"
@@ -498,7 +420,7 @@ export function TimeEntryEditorDialog({
           className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[var(--track-overlay-icon-subtle)] transition hover:bg-white/6 hover:text-white"
           onClick={() => {
             if (isDirty) {
-              setShowDiscardConfirmation(true);
+              dispatch({ type: "SET_DISCARD_CONFIRMATION", show: true });
               return;
             }
             onClose();
@@ -521,12 +443,15 @@ export function TimeEntryEditorDialog({
             className="w-full bg-transparent text-[18px] font-semibold tracking-tight text-white outline-none placeholder:text-[var(--track-control-placeholder-muted)]"
             id="time-entry-editor-title"
             onBlur={() => {
-              window.setTimeout(() => setDescriptionSuggestionsOpen(false), 120);
+              window.setTimeout(
+                () => dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false }),
+                120,
+              );
             }}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onDescriptionChange(event.target.value)
             }
-            onFocus={() => setDescriptionSuggestionsOpen(true)}
+            onFocus={() => dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: true })}
             placeholder="Add a description"
             value={description}
           />
@@ -544,25 +469,25 @@ export function TimeEntryEditorDialog({
               if (descriptionMode === "billable") {
                 onDescriptionChange("");
               }
-              setDescriptionSuggestionsOpen(false);
+              dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false });
             }}
             onProjectSelect={(projectId) => {
               onProjectSelect(projectId);
               if (descriptionMode === "project") {
                 onDescriptionChange("");
               }
-              setDescriptionSuggestionsOpen(false);
+              dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false });
             }}
             onSuggestionEntrySelect={(suggestion) => {
               onSuggestionEntrySelect?.(suggestion);
-              setDescriptionSuggestionsOpen(false);
+              dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false });
             }}
             onTagSelect={(tagId) => {
               onTagToggle(tagId);
               if (descriptionMode === "tag") {
                 onDescriptionChange("");
               }
-              setDescriptionSuggestionsOpen(false);
+              dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: false });
             }}
             projects={filteredProjects}
             suggestionEntries={suggestionEntries}
@@ -578,8 +503,8 @@ export function TimeEntryEditorDialog({
               icon={<ProjectsIcon className="size-5 shrink-0" />}
               label={selectedProject?.name}
               onClick={() => {
-                setSearch("");
-                setPicker((current) => (current === "project" ? null : "project"));
+                dispatch({ type: "SET_SEARCH", query: "" });
+                dispatch({ type: "SET_PICKER", picker: picker === "project" ? null : "project" });
               }}
               toneColor={selectedProject?.color}
               variant={selectedProject ? "project" : "icon"}
@@ -590,8 +515,8 @@ export function TimeEntryEditorDialog({
               icon={<TagsIcon className="size-5 shrink-0" />}
               label={resolveTagTriggerLabel(selectedTags)}
               onClick={() => {
-                setSearch("");
-                setPicker((current) => (current === "tag" ? null : "tag"));
+                dispatch({ type: "SET_SEARCH", query: "" });
+                dispatch({ type: "SET_PICKER", picker: picker === "tag" ? null : "tag" });
               }}
               toneColor="var(--track-accent-secondary)"
               variant={selectedTags.length > 0 ? "tag" : "icon"}
@@ -611,7 +536,7 @@ export function TimeEntryEditorDialog({
               action={
                 <button
                   className="text-[14px] font-medium text-white"
-                  onClick={() => setWorkspaceMenuOpen((current) => !current)}
+                  onClick={() => dispatch({ type: "SET_WORKSPACE_MENU", open: !workspaceMenuOpen })}
                   type="button"
                 >
                   Change &rsaquo;
@@ -635,8 +560,8 @@ export function TimeEntryEditorDialog({
                         key={workspace.id}
                         onClick={() => {
                           onWorkspaceSelect(workspace.id);
-                          setWorkspaceMenuOpen(false);
-                          setPicker(null);
+                          dispatch({ type: "SET_WORKSPACE_MENU", open: false });
+                          dispatch({ type: "SET_PICKER", picker: null });
                         }}
                         type="button"
                       >
@@ -654,13 +579,13 @@ export function TimeEntryEditorDialog({
               <SearchField
                 placeholder="Search by project, task or client"
                 value={search}
-                onChange={setSearch}
+                onChange={(query: string) => dispatch({ type: "SET_SEARCH", query })}
               />
               <button
                 className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[16px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
                 onClick={() => {
                   onProjectSelect(null);
-                  setPicker(null);
+                  dispatch({ type: "SET_PICKER", picker: null });
                 }}
                 type="button"
               >
@@ -677,7 +602,7 @@ export function TimeEntryEditorDialog({
                     key={project.id}
                     onClick={() => {
                       onProjectSelect(project.id);
-                      setPicker(null);
+                      dispatch({ type: "SET_PICKER", picker: null });
                     }}
                     type="button"
                   >
@@ -706,22 +631,23 @@ export function TimeEntryEditorDialog({
                       if (!trimmed || isCreatingProject) {
                         return;
                       }
-                      setProjectCreateError(null);
+                      dispatch({ type: "SET_PROJECT_CREATE_ERROR", error: null });
                       try {
                         await onCreateProject(trimmed, projectDraftColor);
-                        setProjectDraftName("");
-                        setProjectDraftColor(DEFAULT_PROJECT_COLOR);
-                        setProjectColorPickerOpen(false);
-                        setProjectComposerOpen(false);
-                        setSearch("");
+                        dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: "" });
+                        dispatch({ type: "SET_PROJECT_DRAFT_COLOR", color: DEFAULT_PROJECT_COLOR });
+                        dispatch({ type: "SET_PROJECT_COLOR_PICKER", open: false });
+                        dispatch({ type: "SET_PROJECT_COMPOSER", open: false });
+                        dispatch({ type: "SET_SEARCH", query: "" });
                       } catch (err) {
                         const message =
                           err instanceof Error ? err.message : "Project name already exists";
-                        setProjectCreateError(
-                          message.toLowerCase().includes("name")
+                        dispatch({
+                          type: "SET_PROJECT_CREATE_ERROR",
+                          error: message.toLowerCase().includes("name")
                             ? message
                             : "Project name already exists",
-                        );
+                        });
                       }
                     })();
                   }}
@@ -731,7 +657,12 @@ export function TimeEntryEditorDialog({
                       <button
                         aria-label="Select project color"
                         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)]"
-                        onClick={() => setProjectColorPickerOpen((current) => !current)}
+                        onClick={() =>
+                          dispatch({
+                            type: "SET_PROJECT_COLOR_PICKER",
+                            open: !projectColorPickerOpen,
+                          })
+                        }
                         type="button"
                       >
                         <span
@@ -751,8 +682,8 @@ export function TimeEntryEditorDialog({
                               }`}
                               key={option}
                               onClick={() => {
-                                setProjectDraftColor(option);
-                                setProjectColorPickerOpen(false);
+                                dispatch({ type: "SET_PROJECT_DRAFT_COLOR", color: option });
+                                dispatch({ type: "SET_PROJECT_COLOR_PICKER", open: false });
                               }}
                               type="button"
                             >
@@ -772,8 +703,8 @@ export function TimeEntryEditorDialog({
                           : "border-[var(--track-control-border)]"
                       }`}
                       onChange={(event) => {
-                        setProjectDraftName(event.target.value);
-                        setProjectCreateError(null);
+                        dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: event.target.value });
+                        dispatch({ type: "SET_PROJECT_CREATE_ERROR", error: null });
                       }}
                       placeholder="Project name"
                       value={projectDraftName}
@@ -795,8 +726,8 @@ export function TimeEntryEditorDialog({
                   <button
                     className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
-                      setProjectDraftName(search.trim());
-                      setProjectComposerOpen(true);
+                      dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: search.trim() });
+                      dispatch({ type: "SET_PROJECT_COMPOSER", open: true });
                     }}
                     type="button"
                   >
@@ -813,7 +744,11 @@ export function TimeEntryEditorDialog({
               icon={<TagsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />}
               title="Tags"
             >
-              <SearchField placeholder="Search tags" value={search} onChange={setSearch} />
+              <SearchField
+                placeholder="Search tags"
+                value={search}
+                onChange={(query: string) => dispatch({ type: "SET_SEARCH", query })}
+              />
               <div className="max-h-[340px] overflow-y-auto px-1 py-2">
                 {filteredTags.map((tag) => {
                   const selected = selectedTagIds.includes(tag.id);
@@ -853,16 +788,18 @@ export function TimeEntryEditorDialog({
                         return;
                       }
                       await onCreateTag(trimmed);
-                      setTagDraftName("");
-                      setTagComposerOpen(false);
-                      setSearch("");
+                      dispatch({ type: "SET_TAG_DRAFT_NAME", name: "" });
+                      dispatch({ type: "SET_TAG_COMPOSER", open: false });
+                      dispatch({ type: "SET_SEARCH", query: "" });
                     })();
                   }}
                 >
                   <div className="flex items-center gap-2">
                     <input
                       className="h-10 flex-1 rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)]"
-                      onChange={(event) => setTagDraftName(event.target.value)}
+                      onChange={(event) =>
+                        dispatch({ type: "SET_TAG_DRAFT_NAME", name: event.target.value })
+                      }
                       placeholder="Tag name"
                       value={tagDraftName}
                     />
@@ -880,8 +817,8 @@ export function TimeEntryEditorDialog({
                   <button
                     className="flex items-center gap-3 text-[15px] font-medium text-[var(--track-overlay-text-accent)]"
                     onClick={() => {
-                      setTagDraftName(search.trim());
-                      setTagComposerOpen(true);
+                      dispatch({ type: "SET_TAG_DRAFT_NAME", name: search.trim() });
+                      dispatch({ type: "SET_TAG_COMPOSER", open: true });
                     }}
                     type="button"
                   >
@@ -904,15 +841,15 @@ export function TimeEntryEditorDialog({
                 editing={timeEditor === "start"}
                 hasError={timeInputError === "start"}
                 onDateClick={() => {
-                  setTimeEditor(null);
-                  setTimePicker("start");
+                  dispatch({ type: "SET_TIME_EDITOR", timeEditor: null });
+                  dispatch({ type: "SET_TIME_PICKER", timePicker: "start" });
                 }}
                 onEditEnd={() => {
-                  setTimeEditor(null);
+                  dispatch({ type: "SET_TIME_EDITOR", timeEditor: null });
                 }}
                 onEditStart={() => {
-                  setTimePicker(null);
-                  setTimeEditor("start");
+                  dispatch({ type: "SET_TIME_PICKER", timePicker: null });
+                  dispatch({ type: "SET_TIME_EDITOR", timeEditor: "start" });
                 }}
                 onTimeCommit={(value) => applyEditedTime("start", value)}
                 time={start}
@@ -942,15 +879,15 @@ export function TimeEntryEditorDialog({
                   hasError={timeInputError === "stop"}
                   hideDateButton
                   onDateClick={() => {
-                    setTimeEditor(null);
-                    setTimePicker("stop");
+                    dispatch({ type: "SET_TIME_EDITOR", timeEditor: null });
+                    dispatch({ type: "SET_TIME_PICKER", timePicker: "stop" });
                   }}
                   onEditEnd={() => {
-                    setTimeEditor(null);
+                    dispatch({ type: "SET_TIME_EDITOR", timeEditor: null });
                   }}
                   onEditStart={() => {
-                    setTimePicker(null);
-                    setTimeEditor("stop");
+                    dispatch({ type: "SET_TIME_PICKER", timePicker: null });
+                    dispatch({ type: "SET_TIME_EDITOR", timeEditor: "stop" });
                   }}
                   onTimeCommit={(value) => applyEditedTime("stop", value)}
                   time={stop}
@@ -990,14 +927,14 @@ export function TimeEntryEditorDialog({
               >
                 <CalendarPanel
                   date={timePicker === "start" ? start : stop!}
-                  onClose={() => setTimePicker(null)}
+                  onClose={() => dispatch({ type: "SET_TIME_PICKER", timePicker: null })}
                   onSelect={(nextDate) => {
                     if (timePicker === "start") {
                       onStartTimeChange(nextDate);
                     } else {
                       onStopTimeChange(nextDate);
                     }
-                    setTimePicker(null);
+                    dispatch({ type: "SET_TIME_PICKER", timePicker: null });
                   }}
                 />
               </div>
@@ -1021,7 +958,7 @@ export function TimeEntryEditorDialog({
             <div className="mt-4 flex justify-end gap-2">
               <button
                 className="rounded-[10px] border border-[var(--track-control-border)] px-3 py-2 text-[13px] font-medium text-white transition hover:bg-white/4"
-                onClick={() => setShowDiscardConfirmation(false)}
+                onClick={() => dispatch({ type: "SET_DISCARD_CONFIRMATION", show: false })}
                 type="button"
               >
                 Keep editing
@@ -1029,7 +966,7 @@ export function TimeEntryEditorDialog({
               <button
                 className="rounded-[10px] bg-[var(--track-danger-fill)] px-3 py-2 text-[13px] font-semibold text-[var(--track-button-text)] transition hover:brightness-110"
                 onClick={() => {
-                  setShowDiscardConfirmation(false);
+                  dispatch({ type: "SET_DISCARD_CONFIRMATION", show: false });
                   onDiscard?.();
                   onClose();
                 }}

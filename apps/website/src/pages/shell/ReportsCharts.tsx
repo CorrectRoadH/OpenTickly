@@ -259,7 +259,7 @@ function DonutChart({
           {pieData.map((entry, index) => (
             <Cell
               fill={entry.fill}
-              key={index}
+              key={entry.name ?? index}
               stroke="none"
               strokeWidth={hoveredIndex === index ? 4 : 0}
               style={{ cursor: segments.length > 0 ? "pointer" : "default", outline: "none" }}

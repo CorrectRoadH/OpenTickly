@@ -17,10 +17,7 @@ import {
   TrashIcon,
 } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
-import {
-  DEFAULT_PROJECT_COLOR,
-  resolveProjectColorValue,
-} from "../../shared/lib/project-colors.ts";
+import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useAddProjectMemberMutation,
   useArchiveProjectMutation,
@@ -51,8 +48,8 @@ import {
 } from "./projects-page-helpers.ts";
 import { ProjectEditorDialog } from "./ProjectEditorDialog.tsx";
 import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
-
-type ProjectCategory = "upcoming" | "active" | "archived" | "ended";
+import { useProjectForm } from "./useProjectForm.ts";
+import { useProjectFilters, type ProjectCategory } from "./useProjectFilters.ts";
 
 const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
   { label: "Upcoming", value: "upcoming" },
@@ -60,8 +57,6 @@ const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
   { label: "Archived", value: "archived" },
   { label: "Ended", value: "ended" },
 ];
-
-const DEFAULT_SELECTED_STATUSES: Set<ProjectCategory> = new Set(["upcoming", "active", "ended"]);
 
 function categorizeProject(project: GithubComTogglTogglApiInternalModelsProject): ProjectCategory {
   if (project.active === false) return "archived";
@@ -79,36 +74,37 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const navigate = useNavigate();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
-  const [editorMode, setEditorMode] = useState<"create" | "edit" | null>(null);
-  const [editorProject, setEditorProject] =
-    useState<GithubComTogglTogglApiInternalModelsProject | null>(null);
-  const [projectName, setProjectName] = useState("");
-  const [projectColor, setProjectColor] = useState<string>(DEFAULT_PROJECT_COLOR);
-  const [projectPrivate, setProjectPrivate] = useState(false);
-  const [projectTemplate, setProjectTemplate] = useState(false);
-  const [projectClientId, setProjectClientId] = useState<number | null>(null);
-  const [projectBillable, setProjectBillable] = useState(false);
-  const [projectStartDate, setProjectStartDate] = useState("");
-  const [projectEndDate, setProjectEndDate] = useState("");
-  const [projectRecurring, setProjectRecurring] = useState(false);
-  const [projectEstimatedHours, setProjectEstimatedHours] = useState(0);
-  const [projectFixedFee, setProjectFixedFee] = useState(0);
-  const [memberRole, setMemberRole] = useState<"manager" | "regular">("regular");
-  const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
+  const [form, formDispatch] = useProjectForm();
+  const [filters, filterDispatch] = useProjectFilters(statusFilter);
+  const {
+    editorMode,
+    editorProject,
+    name: projectName,
+    color: projectColor,
+    isPrivate: projectPrivate,
+    template: projectTemplate,
+    clientId: projectClientId,
+    billable: projectBillable,
+    startDate: projectStartDate,
+    endDate: projectEndDate,
+    recurring: projectRecurring,
+    estimatedHours: projectEstimatedHours,
+    fixedFee: projectFixedFee,
+    memberRole,
+    selectedMemberIds,
+    error: projectEditorError,
+  } = form;
+  const {
+    filterClientIds,
+    filterMemberIds,
+    filterBillable,
+    filterName,
+    filterTemplate,
+    openFilter,
+    selectedStatuses,
+  } = filters;
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [filterClientIds, setFilterClientIds] = useState<Set<number>>(new Set());
-  const [filterMemberIds, setFilterMemberIds] = useState<Set<number>>(new Set());
-  const [filterBillable, setFilterBillable] = useState<"all" | "billable" | "non-billable">("all");
-  const [filterName, setFilterName] = useState("");
-  const [filterTemplate, setFilterTemplate] = useState<"all" | "template" | "non-template">("all");
-  const [openFilter, setOpenFilter] = useState<string | null>(null);
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<ProjectCategory>>(() => {
-    if (statusFilter === "active") return new Set<ProjectCategory>(["active"]);
-    if (statusFilter === "archived") return new Set<ProjectCategory>(["archived"]);
-    return new Set(DEFAULT_SELECTED_STATUSES);
-  });
-  const [projectEditorError, setProjectEditorError] = useState<string | null>(null);
   const projectsQuery = useProjectsQuery(
     workspaceId,
     selectedStatuses.has("archived") ? "all" : "active",
@@ -222,8 +218,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     if (editorMode !== "edit" || !editorProject?.id) {
       return;
     }
-    setSelectedMemberIds(existingProjectMemberIds);
-  }, [editorMode, editorProject?.id, existingProjectMemberIds]);
+    formDispatch({ type: "SET_MEMBER_IDS", ids: existingProjectMemberIds });
+  }, [editorMode, editorProject?.id, existingProjectMemberIds, formDispatch]);
 
   async function navigateToStatus(nextStatus: ProjectStatusFilter) {
     await navigate({
@@ -234,44 +230,15 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   function openCreateDialog() {
-    setEditorMode("create");
-    setEditorProject(null);
-    setProjectName("");
-    setProjectColor(DEFAULT_PROJECT_COLOR);
-    setProjectPrivate(false);
-    setProjectTemplate(false);
-    setProjectClientId(null);
-    setProjectBillable(false);
-    setProjectStartDate("");
-    setProjectEndDate("");
-    setProjectRecurring(false);
-    setProjectEstimatedHours(0);
-    setProjectFixedFee(0);
-    setMemberRole("regular");
-    setSelectedMemberIds([]);
-    setProjectEditorError(null);
+    formDispatch({ type: "OPEN_CREATE" });
   }
 
   function openEditDialog(project: GithubComTogglTogglApiInternalModelsProject) {
-    setEditorMode("edit");
-    setEditorProject(project);
-    setProjectName(project.name ?? "");
-    setProjectColor(resolveProjectColor(project));
-    setProjectPrivate(project.is_private === true);
-    setProjectTemplate(project.template === true);
-    setProjectClientId(project.client_id ?? null);
-    setProjectBillable(project.billable === true);
-    setProjectStartDate(project.start_date ?? "");
-    setProjectEndDate(project.end_date ?? "");
-    setProjectRecurring(project.recurring === true);
-    setProjectEstimatedHours(project.estimated_hours ?? 0);
-    setProjectFixedFee(project.fixed_fee ?? 0);
-    setMemberRole("regular");
+    formDispatch({ type: "OPEN_EDIT", project });
   }
 
   function closeEditor() {
-    setEditorMode(null);
-    setEditorProject(null);
+    formDispatch({ type: "CLOSE" });
   }
 
   async function handleSubmitProject() {
@@ -322,7 +289,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         await navigateToStatus("all");
       }
     } catch {
-      setProjectEditorError("Project name already exists");
+      formDispatch({ type: "SET_ERROR", error: "Project name already exists" });
     }
   }
 
@@ -406,7 +373,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         >
           <DirectoryStatusFilter
             chevronIcon={<ChevronDownIcon className="size-3" />}
-            onChange={setSelectedStatuses}
+            onChange={(statuses) => filterDispatch({ type: "SET_STATUSES", statuses })}
             options={PROJECT_STATUS_OPTIONS}
             selected={selectedStatuses}
           />
@@ -416,8 +383,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             <ProjectFilterDropdown
               active={filterClientIds.size > 0}
               label={filterClientIds.size > 0 ? `Client (${filterClientIds.size})` : "Client"}
-              onClose={() => setOpenFilter(null)}
-              onOpen={() => setOpenFilter("client")}
+              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "client" })}
               open={openFilter === "client"}
             >
               {clientsList.map((c) => (
@@ -428,14 +395,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   <input
                     checked={filterClientIds.has(c.id)}
                     className="accent-[var(--track-accent)]"
-                    onChange={() => {
-                      setFilterClientIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(c.id)) next.delete(c.id);
-                        else next.add(c.id);
-                        return next;
-                      });
-                    }}
+                    onChange={() => filterDispatch({ type: "TOGGLE_CLIENT_ID", id: c.id })}
                     type="checkbox"
                   />
                   <span className="text-[13px] normal-case tracking-normal text-white">
@@ -451,7 +411,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               {filterClientIds.size > 0 ? (
                 <button
                   className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
-                  onClick={() => setFilterClientIds(new Set())}
+                  onClick={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
                   type="button"
                 >
                   Clear
@@ -462,8 +422,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             <ProjectFilterDropdown
               active={filterMemberIds.size > 0}
               label={filterMemberIds.size > 0 ? `Member (${filterMemberIds.size})` : "Member"}
-              onClose={() => setOpenFilter(null)}
-              onOpen={() => setOpenFilter("member")}
+              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "member" })}
               open={openFilter === "member"}
             >
               {workspaceMembers.map((m) => (
@@ -474,14 +434,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   <input
                     checked={filterMemberIds.has(m.id)}
                     className="accent-[var(--track-accent)]"
-                    onChange={() => {
-                      setFilterMemberIds((prev) => {
-                        const next = new Set(prev);
-                        if (next.has(m.id)) next.delete(m.id);
-                        else next.add(m.id);
-                        return next;
-                      });
-                    }}
+                    onChange={() => filterDispatch({ type: "TOGGLE_MEMBER_ID", id: m.id })}
                     type="checkbox"
                   />
                   <span className="text-[13px] normal-case tracking-normal text-white">
@@ -497,7 +450,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               {filterMemberIds.size > 0 ? (
                 <button
                   className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
-                  onClick={() => setFilterMemberIds(new Set())}
+                  onClick={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
                   type="button"
                 >
                   Clear
@@ -514,8 +467,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     ? "Billable ✓"
                     : "Non-billable ✓"
               }
-              onClose={() => setOpenFilter(null)}
-              onOpen={() => setOpenFilter("billable")}
+              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "billable" })}
               open={openFilter === "billable"}
             >
               {(["all", "billable", "non-billable"] as const).map((opt) => (
@@ -523,8 +476,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   className={`w-full px-3 py-1.5 text-left text-[13px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterBillable === opt ? "text-[var(--track-accent)]" : "text-white"}`}
                   key={opt}
                   onClick={() => {
-                    setFilterBillable(opt);
-                    setOpenFilter(null);
+                    filterDispatch({ type: "SET_BILLABLE", value: opt });
+                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
                   }}
                   type="button"
                 >
@@ -536,14 +489,14 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             <ProjectFilterDropdown
               active={filterName.trim().length > 0}
               label={filterName.trim() ? `Name: "${filterName.trim()}"` : "Project name"}
-              onClose={() => setOpenFilter(null)}
-              onOpen={() => setOpenFilter("name")}
+              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "name" })}
               open={openFilter === "name"}
             >
               <div className="px-3 py-2">
                 <input
                   className="h-8 w-full rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[13px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
-                  onChange={(e) => setFilterName(e.target.value)}
+                  onChange={(e) => filterDispatch({ type: "SET_NAME", name: e.target.value })}
                   placeholder="Search by name..."
                   type="text"
                   value={filterName}
@@ -553,8 +506,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <button
                   className="w-full border-t border-[var(--track-border)] px-3 py-2 text-left text-[12px] normal-case tracking-normal text-[var(--track-accent)] hover:bg-[var(--track-row-hover)]"
                   onClick={() => {
-                    setFilterName("");
-                    setOpenFilter(null);
+                    filterDispatch({ type: "SET_NAME", name: "" });
+                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
                   }}
                   type="button"
                 >
@@ -572,8 +525,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     ? "Template ✓"
                     : "Non-template ✓"
               }
-              onClose={() => setOpenFilter(null)}
-              onOpen={() => setOpenFilter("template")}
+              onClose={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: null })}
+              onOpen={() => filterDispatch({ type: "SET_OPEN_FILTER", filter: "template" })}
               open={openFilter === "template"}
             >
               {(["all", "template", "non-template"] as const).map((opt) => (
@@ -581,8 +534,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   className={`w-full px-3 py-1.5 text-left text-[13px] normal-case tracking-normal hover:bg-[var(--track-row-hover)] ${filterTemplate === opt ? "text-[var(--track-accent)]" : "text-white"}`}
                   key={opt}
                   onClick={() => {
-                    setFilterTemplate(opt);
-                    setOpenFilter(null);
+                    filterDispatch({ type: "SET_TEMPLATE", value: opt });
+                    filterDispatch({ type: "SET_OPEN_FILTER", filter: null });
                   }}
                   type="button"
                 >
@@ -813,38 +766,39 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           memberRole={memberRole}
           members={workspaceMembers}
           name={projectName}
-          onBillableChange={setProjectBillable}
-          onClientChange={setProjectClientId}
+          onBillableChange={(v) => formDispatch({ type: "SET_BILLABLE", value: v })}
+          onClientChange={(v) => formDispatch({ type: "SET_CLIENT_ID", value: v })}
           onClose={() => {
             closeEditor();
-            setProjectEditorError(null);
+            formDispatch({ type: "SET_ERROR", error: null });
           }}
-          onColorChange={setProjectColor}
+          onColorChange={(v) => formDispatch({ type: "SET_COLOR", value: v })}
           onCreateClient={async (clientName) => {
             const client = await createClientMutation.mutateAsync(clientName);
-            if (client?.id) setProjectClientId(client.id);
+            if (client?.id) formDispatch({ type: "SET_CLIENT_ID", value: client.id });
           }}
-          onEndDateChange={setProjectEndDate}
-          onEstimatedHoursChange={setProjectEstimatedHours}
-          onFixedFeeChange={setProjectFixedFee}
-          onMemberRoleChange={setMemberRole}
+          onEndDateChange={(v) => formDispatch({ type: "SET_END_DATE", value: v })}
+          onEstimatedHoursChange={(v) => formDispatch({ type: "SET_ESTIMATED_HOURS", value: v })}
+          onFixedFeeChange={(v) => formDispatch({ type: "SET_FIXED_FEE", value: v })}
+          onMemberRoleChange={(v) => formDispatch({ type: "SET_MEMBER_ROLE", value: v })}
           onNameChange={(value) => {
-            setProjectName(value);
-            setProjectEditorError(null);
+            formDispatch({ type: "SET_NAME", value });
+            formDispatch({ type: "SET_ERROR", error: null });
           }}
-          onPrivacyChange={setProjectPrivate}
-          onRecurringChange={setProjectRecurring}
-          onStartDateChange={setProjectStartDate}
+          onPrivacyChange={(v) => formDispatch({ type: "SET_PRIVATE", value: v })}
+          onRecurringChange={(v) => formDispatch({ type: "SET_RECURRING", value: v })}
+          onStartDateChange={(v) => formDispatch({ type: "SET_START_DATE", value: v })}
           onSubmit={() => {
             void handleSubmitProject();
           }}
-          onTemplateChange={setProjectTemplate}
+          onTemplateChange={(v) => formDispatch({ type: "SET_TEMPLATE", value: v })}
           onToggleMember={(memberId) =>
-            setSelectedMemberIds((current) =>
-              current.includes(memberId)
-                ? current.filter((id) => id !== memberId)
-                : [...current, memberId],
-            )
+            formDispatch({
+              type: "SET_MEMBER_IDS",
+              ids: selectedMemberIds.includes(memberId)
+                ? selectedMemberIds.filter((id) => id !== memberId)
+                : [...selectedMemberIds, memberId],
+            })
           }
           recurring={projectRecurring}
           selectedMemberIds={selectedMemberIds}
@@ -893,7 +847,7 @@ function ProjectFilterDropdown({
       </button>
       {open ? (
         <>
-          <div className="fixed inset-0 z-30" onClick={onClose} />
+          <div className="fixed inset-0 z-30" onClick={onClose} role="presentation" />
           <div className="absolute left-0 top-[calc(100%+4px)] z-40 min-w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg">
             {children}
           </div>

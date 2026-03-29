@@ -5,11 +5,13 @@ import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 export type InvoiceItemFormData = {
   amount: number;
   description: string;
+  id: string;
   quantity: number;
 };
 
 export type InvoiceTaxFormData = {
   amount: number;
+  id: string;
   name: string;
 };
 
@@ -61,7 +63,7 @@ export function InvoiceLineItems({
       {items.map((item, index) => (
         <div
           className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] items-center gap-2 border-b border-[var(--track-overlay-border-muted)] py-1.5"
-          key={index}
+          key={item.id}
         >
           <input
             className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
@@ -118,7 +120,7 @@ export function InvoiceLineItems({
       </div>
 
       {taxes.map((tax, index) => (
-        <div className="flex items-center justify-between py-1" key={index}>
+        <div className="flex items-center justify-between py-1" key={tax.id}>
           <div className="flex items-center gap-2">
             <input
               className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[13px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"

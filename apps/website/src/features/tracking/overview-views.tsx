@@ -538,7 +538,9 @@ export function ListView({
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
                     data-entry-description={renderEntry.description?.trim() || ""}
-                    data-entry-id={typeof renderEntry.id === "number" ? String(renderEntry.id) : undefined}
+                    data-entry-id={
+                      typeof renderEntry.id === "number" ? String(renderEntry.id) : undefined
+                    }
                     data-testid="time-entry-list-row"
                   >
                     {/* Checkbox: w=30px, flex: 0 0 auto */}

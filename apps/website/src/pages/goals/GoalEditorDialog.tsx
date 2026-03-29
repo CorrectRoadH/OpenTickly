@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useForm } from "react-hook-form";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
@@ -75,20 +76,33 @@ export function GoalEditorDialog({
   const projectsQuery = useProjectsQuery(workspaceId, "active");
   const tagsQuery = useTagsQuery(workspaceId);
 
-  const [name, setName] = useState(goal?.name ?? "");
-  const [icon, setIcon] = useState(goal?.icon ?? "target");
-  const [comparison, setComparison] = useState(goal?.comparison ?? "more_than");
-  const [targetHours, setTargetHours] = useState(
-    isEdit ? targetSecondsToHours(goal.target_seconds) : 2,
-  );
-  const [recurrence, setRecurrence] = useState(goal?.recurrence ?? "daily");
-  const [endDate, setEndDate] = useState(goal?.end_date ?? "");
-  const [noEndDate, setNoEndDate] = useState(!goal?.end_date);
+  const { getValues, setValue, watch } = useForm({
+    defaultValues: {
+      billable: goal?.billable ?? false,
+      comparison: goal?.comparison ?? "more_than",
+      endDate: goal?.end_date ?? "",
+      icon: goal?.icon ?? "target",
+      name: goal?.name ?? "",
+      noEndDate: !goal?.end_date,
+      projectIds: goal?.project_ids ?? ([] as number[]),
+      recurrence: goal?.recurrence ?? "daily",
+      selectedUserId: goal?.user_id ?? session.user.id ?? 0,
+      tagIds: goal?.tag_ids ?? ([] as number[]),
+      targetHours: isEdit ? targetSecondsToHours(goal.target_seconds) : 2,
+    },
+  });
   const [memberOpen, setMemberOpen] = useState(false);
-  const [selectedUserId] = useState(goal?.user_id ?? session.user.id ?? 0);
-  const [projectIds, setProjectIds] = useState<number[]>(goal?.project_ids ?? []);
-  const [tagIds, setTagIds] = useState<number[]>(goal?.tag_ids ?? []);
-  const [billable, setBillable] = useState(goal?.billable ?? false);
+  const name = watch("name");
+  const icon = watch("icon");
+  const comparison = watch("comparison");
+  const targetHours = watch("targetHours");
+  const recurrence = watch("recurrence");
+  const endDate = watch("endDate");
+  const noEndDate = watch("noEndDate");
+  const selectedUserId = watch("selectedUserId");
+  const projectIds = watch("projectIds");
+  const tagIds = watch("tagIds");
+  const billable = watch("billable");
 
   const allProjects = projectsQuery.data ?? [];
   const allTags = (tagsQuery.data ?? [])
@@ -101,17 +115,18 @@ export function GoalEditorDialog({
     selectedMember?.name ?? goal?.user_name ?? session.user.fullName ?? "Me";
 
   function handleSubmit() {
-    if (!name.trim()) return;
+    const values = getValues();
+    if (!values.name.trim()) return;
     onSubmit({
-      billable,
-      comparison,
-      endDate: noEndDate ? "" : endDate,
-      name: name.trim(),
-      noEndDate,
-      projectIds,
-      recurrence,
-      tagIds,
-      targetHours,
+      billable: values.billable,
+      comparison: values.comparison,
+      endDate: values.noEndDate ? "" : values.endDate,
+      name: values.name.trim(),
+      noEndDate: values.noEndDate,
+      projectIds: values.projectIds,
+      recurrence: values.recurrence,
+      tagIds: values.tagIds,
+      targetHours: values.targetHours,
     });
   }
 
@@ -133,12 +148,12 @@ export function GoalEditorDialog({
               autoFocus
               className="h-[42px] flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent-soft)] focus:outline-none"
               data-testid="goal-name-input"
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setValue("name", e.target.value)}
               placeholder="Goal name"
               type="text"
               value={name}
             />
-            <GoalIconPicker onChange={setIcon} value={icon} />
+            <GoalIconPicker onChange={(v: string) => setValue("icon", v)} value={icon} />
           </div>
         </div>
 
@@ -177,9 +192,9 @@ export function GoalEditorDialog({
           <GoalTrackPicker
             billable={billable}
             disabled={isEdit}
-            onBillableChange={setBillable}
-            onProjectIdsChange={setProjectIds}
-            onTagIdsChange={setTagIds}
+            onBillableChange={(v: boolean) => setValue("billable", v)}
+            onProjectIdsChange={(ids: number[]) => setValue("projectIds", ids)}
+            onTagIdsChange={(ids: number[]) => setValue("tagIds", ids)}
             projectIds={projectIds}
             projects={allProjects}
             tagIds={tagIds}
@@ -199,7 +214,7 @@ export function GoalEditorDialog({
                 className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60"
                 data-testid="goal-comparison-select"
                 disabled={isEdit}
-                onChange={(e) => setComparison(e.target.value)}
+                onChange={(e) => setValue("comparison", e.target.value)}
                 value={comparison}
               >
                 {COMPARISON_OPTIONS.map((opt) => (
@@ -217,7 +232,7 @@ export function GoalEditorDialog({
                 className="w-12 bg-transparent text-[14px] text-white focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 data-testid="goal-hours-input"
                 min={0}
-                onChange={(e) => setTargetHours(Number(e.target.value) || 0)}
+                onChange={(e) => setValue("targetHours", Number(e.target.value) || 0)}
                 type="number"
                 value={targetHours || ""}
               />
@@ -228,7 +243,7 @@ export function GoalEditorDialog({
                 className="h-[42px] appearance-none rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-3 pr-8 text-[14px] text-white disabled:opacity-60 disabled:text-[var(--track-text-muted)]"
                 data-testid="goal-recurrence-select"
                 disabled={isEdit}
-                onChange={(e) => setRecurrence(e.target.value)}
+                onChange={(e) => setValue("recurrence", e.target.value)}
                 value={recurrence}
               >
                 {RECURRENCE_OPTIONS.map((opt) => (
@@ -255,7 +270,7 @@ export function GoalEditorDialog({
               {noEndDate ? (
                 <button
                   className="flex h-[42px] w-full items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white"
-                  onClick={() => setNoEndDate(false)}
+                  onClick={() => setValue("noEndDate", false)}
                   type="button"
                 >
                   <CalendarIcon className="size-3.5" />
@@ -265,7 +280,7 @@ export function GoalEditorDialog({
               ) : (
                 <DatePickerButton
                   className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[14px] text-white"
-                  onChange={setEndDate}
+                  onChange={(v: string) => setValue("endDate", v)}
                   placeholder="Select end date"
                   testId="goal-end-date-input"
                   value={endDate}
@@ -298,7 +313,7 @@ export function GoalEditorDialog({
                 checked={noEndDate}
                 className="sr-only"
                 data-testid="goal-no-end-date-checkbox"
-                onChange={(e) => setNoEndDate(e.target.checked)}
+                onChange={(e) => setValue("noEndDate", e.target.checked)}
                 type="checkbox"
               />
               No end date

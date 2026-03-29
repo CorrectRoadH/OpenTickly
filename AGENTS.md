@@ -6,16 +6,17 @@ Always apply these standards to all code you write.
 
 Run all source processes from the repository root. `docker compose` is reserved for self-hosted packaging only.
 
-| What | Command |
-|------|---------|
-| Frontend | `vp run website#dev` |
-| Landing | `vp run landing#dev` |
-| Backend | `air` |
-| All E2E tests | `vp run test:e2e:website` |
-| Real-runtime E2E | `vp run test:e2e:website:real-runtime` |
-| Single E2E file | `vp run test:e2e:website -- e2e/<file>.spec.ts` |
+| What             | Command                                         |
+| ---------------- | ----------------------------------------------- |
+| Frontend         | `vp run website#dev`                            |
+| Landing          | `vp run landing#dev`                            |
+| Backend          | `air`                                           |
+| All E2E tests    | `vp run test:e2e:website`                       |
+| Real-runtime E2E | `vp run test:e2e:website:real-runtime`          |
+| Single E2E file  | `vp run test:e2e:website -- e2e/<file>.spec.ts` |
 
 Rules:
+
 - All JS/TS toolchain commands go through `vp`. Never invoke `node`, `vitest`, `vite`, `playwright`, `pnpm`, `npm`, or `yarn` directly.
 - Env vars live at repo root: `.env.local` (runtime) and `.env.example` (committed template).
 - Backend must require explicit datasource config from env; fail immediately if missing. No silent fallback to in-memory stores.
@@ -78,6 +79,7 @@ Keep files under 300 lines. Split by responsibility, extract sub-components, sep
 **TDD not required for**: docs-only, config/infra cleanup, mechanical renames, generated-code refreshes, structural refactors without behavior change.
 
 Non-TDD work still requires proportional verification:
+
 - Run unit tests, E2E tests, type checks, lint checks.
 - Smoke test with Playwright; take screenshots to verify UI.
 - Infra/config changes: verify with startup checks and runtime evidence.

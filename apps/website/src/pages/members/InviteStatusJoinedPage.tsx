@@ -53,5 +53,3 @@ export function InviteStatusJoinedPage({
     </main>
   );
 }
-
-export default InviteStatusJoinedPage;

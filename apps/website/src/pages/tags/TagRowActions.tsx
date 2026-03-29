@@ -1,6 +1,7 @@
-import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactElement, useCallback, useEffect, useRef, useState } from "react";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type TagRowActionsProps = {
   tagId: number;
@@ -27,17 +28,11 @@ export function TagRowActions({
   const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-        setConfirmingDelete(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    setConfirmingDelete(false);
+  }, []);
+  useDismiss(menuRef, menuOpen, closeMenu);
 
   useEffect(() => {
     if (editing) {

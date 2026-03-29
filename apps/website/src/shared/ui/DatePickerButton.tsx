@@ -1,6 +1,7 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
 
 import { CalendarPanel } from "../../features/tracking/CalendarPanel.tsx";
+import { useDismiss } from "./useDismiss.ts";
 
 type DatePickerButtonProps = {
   readonly ariaLabel?: string;
@@ -27,17 +28,8 @@ export function DatePickerButton({
 }: DatePickerButtonProps): ReactElement {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
+  const handleDismiss = useCallback(() => setOpen(false), []);
+  useDismiss(containerRef, open, handleDismiss);
 
   const dateObj = value ? parseDateString(value) : new Date();
   const displayLabel = value ? formatDisplayDate(value) : placeholder;
@@ -78,8 +70,18 @@ function parseDateString(iso: string): Date {
 function formatDisplayDate(iso: string): string {
   const [y, m, d] = iso.split("-").map(Number);
   const monthNames = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
   ];
   return `${monthNames[m - 1]} ${d}, ${y}`;
 }

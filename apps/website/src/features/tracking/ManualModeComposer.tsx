@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { PlusIcon } from "../../shared/ui/icons.tsx";
@@ -28,40 +28,37 @@ export function ManualModeComposer({
    * Auto-bump stop date to the next day when stop time is earlier than start
    * time on the same date (cross-midnight scenario, e.g. 23:00 -> 01:00).
    */
-  useEffect(() => {
-    if (startDate !== stopDate) {
-      return;
-    }
+  const effectiveStopDate = useMemo(() => {
+    if (startDate !== stopDate) return stopDate;
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
     const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
-    if (startMs == null || stopMs == null) {
-      return;
-    }
+    if (startMs == null || stopMs == null) return stopDate;
     if (stopMs <= startMs) {
       const nextDay = new Date(startMs);
       nextDay.setDate(nextDay.getDate() + 1);
-      setStopDate(formatDateISO(nextDay, timezone));
+      return formatDateISO(nextDay, timezone);
     }
+    return stopDate;
   }, [startDate, startTime, stopDate, stopTime, timezone]);
 
   const durationDisplay = useMemo(() => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
-    const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
+    const stopMs = parseLocalDateTime(effectiveStopDate, stopTime, timezone);
     if (startMs == null || stopMs == null || stopMs <= startMs) {
       return "0:00:00";
     }
     const totalSeconds = Math.floor((stopMs - startMs) / 1000);
     return formatDuration(totalSeconds);
-  }, [startDate, startTime, stopDate, stopTime, timezone]);
+  }, [startDate, startTime, effectiveStopDate, stopTime, timezone]);
 
   const handleAdd = useCallback(() => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
-    const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
+    const stopMs = parseLocalDateTime(effectiveStopDate, stopTime, timezone);
     if (startMs == null || stopMs == null || stopMs <= startMs) {
       return;
     }
     onAddTimeEntry(new Date(startMs), new Date(stopMs));
-  }, [startDate, startTime, stopDate, stopTime, timezone, onAddTimeEntry]);
+  }, [startDate, startTime, effectiveStopDate, stopTime, timezone, onAddTimeEntry]);
 
   return (
     <div className="flex items-center gap-2" data-testid="manual-mode-composer">
@@ -77,7 +74,9 @@ export function ManualModeComposer({
         <DatePickerButton
           ariaLabel="Pick start date"
           className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
-          onChange={(v) => { if (v) setStartDate(v); }}
+          onChange={(v) => {
+            if (v) setStartDate(v);
+          }}
           testId="manual-start-date-button"
           value={startDate}
         />
@@ -102,9 +101,11 @@ export function ManualModeComposer({
         <DatePickerButton
           ariaLabel="Pick stop date"
           className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[13px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
-          onChange={(v) => { if (v) setStopDate(v); }}
+          onChange={(v) => {
+            if (v) setStopDate(v);
+          }}
           testId="manual-stop-date-button"
-          value={stopDate}
+          value={effectiveStopDate}
         />
       </div>
 

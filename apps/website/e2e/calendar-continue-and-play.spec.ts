@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createTimeEntryForWorkspace,
-  loginE2eUser,
-  registerE2eUser,
-} from "./fixtures/e2e-auth.ts";
+import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Calendar event card continue button", () => {
   test("clicking the continue button on a stopped calendar entry starts a new timer with the same details", async ({
@@ -49,7 +45,10 @@ test.describe("Calendar event card continue button", () => {
     await expect(timerButton).toHaveAttribute("data-icon", "play");
 
     // Find the calendar entry and hover to reveal the continue button
-    const entryCard = page.getByTestId("timer-calendar-view").locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
+    const entryCard = page
+      .getByTestId("timer-calendar-view")
+      .locator(`[data-testid^="calendar-entry-"]`)
+      .filter({ hasText: description });
     await expect(entryCard).toBeVisible();
     await entryCard.hover();
 

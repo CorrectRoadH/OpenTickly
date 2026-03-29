@@ -1,6 +1,7 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type MemberRowActionsProps = {
   memberId: number;
@@ -25,27 +26,11 @@ export function MemberRowActions({
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setMenuOpen(false);
-        setConfirmingRemove(false);
-      }
-    }
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-        setConfirmingRemove(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [menuOpen]);
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    setConfirmingRemove(false);
+  }, []);
+  useDismiss(menuRef, menuOpen, closeMenu);
 
   return (
     <div className="relative" ref={menuRef}>

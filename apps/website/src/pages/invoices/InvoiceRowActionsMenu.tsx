@@ -1,6 +1,7 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
 
 type InvoiceRowActionsMenuProps = {
@@ -16,29 +17,8 @@ export function InvoiceRowActionsMenu({
 }: InvoiceRowActionsMenuProps): ReactElement {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [open]);
+  const close = useCallback(() => setOpen(false), []);
+  useDismiss(rootRef, open, close);
 
   return (
     <div className="relative" ref={rootRef}>

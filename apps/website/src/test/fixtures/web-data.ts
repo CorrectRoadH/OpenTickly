@@ -5,7 +5,6 @@ import type {
   WebCurrentUserProfileDto,
   WebOrganizationSettingsDto,
   WebSessionBootstrapDto,
-  WebUserPreferencesDto,
   WorkspaceMemberDto,
   WorkspaceMembersEnvelopeDto,
   WorkspaceSettingsEnvelopeDto,
@@ -130,25 +129,6 @@ export function createProfileFixture(
     country_id: 70,
     has_password: true,
     "2fa_enabled": true,
-    ...overrides,
-  };
-}
-
-export function createPreferencesFixture(
-  overrides?: Partial<WebUserPreferencesDto>,
-): WebUserPreferencesDto {
-  return {
-    date_format: "YYYY-MM-DD",
-    duration_format: "improved",
-    pg_time_zone_name: "Europe/Tallinn",
-    beginningOfWeek: 1,
-    collapseTimeEntries: true,
-    language_code: "en-US",
-    hide_sidebar_right: false,
-    reports_collapse: true,
-    manualMode: false,
-    manualEntryMode: "timer",
-    timeofday_format: "h:mm a",
     ...overrides,
   };
 }

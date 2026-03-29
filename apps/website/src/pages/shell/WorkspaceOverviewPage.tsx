@@ -488,7 +488,7 @@ function StatRing({
             stroke="none"
           >
             {data.map((entry, index) => (
-              <Cell fill={entry.fill} key={index} stroke="none" />
+              <Cell fill={entry.fill} key={entry.name ?? index} stroke="none" />
             ))}
           </Pie>
         </PieChart>

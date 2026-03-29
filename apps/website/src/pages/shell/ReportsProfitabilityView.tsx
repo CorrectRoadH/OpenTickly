@@ -413,12 +413,12 @@ function DayTrendsChart({
 
   return (
     <div className="flex items-end gap-1 px-5 py-6" style={{ height: 180 }}>
-      {days.map((day, i) => {
+      {days.map((day) => {
         const showAmount = show === "amount" || show === "amount-cost-profit";
         const showCost = show === "cost" || show === "amount-cost-profit";
         const showProfit = show === "profit" || show === "amount-cost-profit";
         return (
-          <div className="flex flex-1 flex-col items-center gap-1" key={i}>
+          <div className="flex flex-1 flex-col items-center gap-1" key={day.label}>
             <div className="flex w-full items-end justify-center gap-[2px]" style={{ height: 120 }}>
               {showAmount ? (
                 <div

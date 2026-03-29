@@ -49,11 +49,7 @@ export function InvoiceHeaderFields({
         />
       </InlineField>
       <InlineField label="Invoice Date" testId="invoice-date">
-        <DatePickerButton
-          className={INLINE_INPUT_CLASS}
-          onChange={onDateChange}
-          value={date}
-        />
+        <DatePickerButton className={INLINE_INPUT_CLASS} onChange={onDateChange} value={date} />
       </InlineField>
       <InlineField label="Due date" testId="invoice-due-date">
         <DatePickerButton

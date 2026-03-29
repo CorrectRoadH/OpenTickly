@@ -329,7 +329,7 @@ function ProjectDonut({
           {data.map((entry, index) => (
             <Cell
               fill={entry.fill}
-              key={index}
+              key={entry.name ?? index}
               stroke="none"
               style={{ cursor: hasData ? "pointer" : "default", outline: "none" }}
             />

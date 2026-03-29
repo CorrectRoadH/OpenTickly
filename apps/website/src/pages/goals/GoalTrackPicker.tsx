@@ -120,7 +120,7 @@ export function GoalTrackPicker({
 
       {view != null ? (
         <>
-          <div className="fixed inset-0 z-40" onClick={handleClose} />
+          <div className="fixed inset-0 z-40" onClick={handleClose} role="presentation" />
           <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg">
             {view === "menu" ? (
               <TrackMenu

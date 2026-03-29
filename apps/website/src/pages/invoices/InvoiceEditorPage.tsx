@@ -37,10 +37,11 @@ function parseProjectsParam(raw: string | undefined): InvoiceItemFormData[] {
   if (!raw) return [];
   return raw.split(",").map((segment) => {
     const lastColon = segment.lastIndexOf(":");
-    if (lastColon === -1) return { amount: 0, description: segment.trim(), quantity: 1 };
+    if (lastColon === -1)
+      return { amount: 0, description: segment.trim(), id: crypto.randomUUID(), quantity: 1 };
     const name = segment.slice(0, lastColon).trim();
     const hours = Number(segment.slice(lastColon + 1)) || 0;
-    return { amount: 0, description: name, quantity: hours };
+    return { amount: 0, description: name, id: crypto.randomUUID(), quantity: hours };
   });
 }
 
@@ -53,12 +54,14 @@ export function InvoiceEditorPage(): ReactElement {
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
   const initialItems = useMemo(() => {
     const fromProjects = parseProjectsParam(search.projects);
-    return fromProjects.length > 0 ? fromProjects : [{ amount: 0, description: "", quantity: 1 }];
+    return fromProjects.length > 0
+      ? fromProjects
+      : [{ amount: 0, description: "", id: crypto.randomUUID(), quantity: 1 }];
   }, [search.projects]);
 
-  const [documentId, setDocumentId] = useState(generateInvoiceId());
-  const [date, setDate] = useState(todayISO());
-  const [dueDate, setDueDate] = useState(thirtyDaysFromNow());
+  const [documentId, setDocumentId] = useState(() => generateInvoiceId());
+  const [date, setDate] = useState(() => todayISO());
+  const [dueDate, setDueDate] = useState(() => thirtyDaysFromNow());
   const [purchaseOrder, setPurchaseOrder] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
   const [billingAddress, setBillingAddress] = useState("");
@@ -79,7 +82,10 @@ export function InvoiceEditorPage(): ReactElement {
   });
 
   function addItem() {
-    setItems((prev) => [...prev, { amount: 0, description: "", quantity: 1 }]);
+    setItems((prev) => [
+      ...prev,
+      { amount: 0, description: "", id: crypto.randomUUID(), quantity: 1 },
+    ]);
   }
 
   function removeItem(index: number) {
@@ -91,7 +97,7 @@ export function InvoiceEditorPage(): ReactElement {
   }
 
   function addTax() {
-    setTaxes((prev) => [...prev, { amount: 0, name: "" }]);
+    setTaxes((prev) => [...prev, { amount: 0, id: crypto.randomUUID(), name: "" }]);
   }
 
   function removeTax(index: number) {

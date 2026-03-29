@@ -1,10 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import {
-  createTimeEntryForWorkspace,
-  loginE2eUser,
-  registerE2eUser,
-} from "./fixtures/e2e-auth.ts";
+import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: bulk edit time entries with CalendarPanel date picker", () => {
   const ENTRY_A = "Bulk date entry A";
@@ -46,9 +42,7 @@ test.describe("Story: bulk edit time entries with CalendarPanel date picker", ()
     await expect(listView).toBeVisible();
 
     // Select both entries via group checkbox (selects all in the day group)
-    const groupCheckbox = listView
-      .locator('input[type="checkbox"]')
-      .first();
+    const groupCheckbox = listView.locator('input[type="checkbox"]').first();
     await groupCheckbox.check();
 
     // Verify bulk action toolbar appears

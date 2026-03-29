@@ -1,4 +1,6 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
+
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type FilterOption = {
   id: number;
@@ -25,18 +27,8 @@ export function ReportsFilterDropdown({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useDismiss(containerRef, open, closeDropdown);
 
   const activeCount = selected.length;
   const buttonLabel = activeCount > 0 ? `${label} (${activeCount})` : label;

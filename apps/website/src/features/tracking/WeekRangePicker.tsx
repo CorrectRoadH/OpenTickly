@@ -1,6 +1,7 @@
-import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CalendarIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import {
   buildMonthWeeks,
   formatDayLabel,
@@ -98,32 +99,8 @@ export function WeekRangePicker({
     setVisibleMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   }, [isOpen, selectedDate]);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.stopPropagation();
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleEscape);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleEscape);
-    };
-  }, [isOpen]);
+  const handleDismiss = useCallback(() => setIsOpen(false), []);
+  useDismiss(rootRef, isOpen, handleDismiss);
 
   useEffect(() => {
     if (isOpen) {

@@ -1,4 +1,6 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useRef, useState } from "react";
+
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type ReportsDescriptionFilterProps = {
   onChange: (value: string) => void;
@@ -22,16 +24,11 @@ export function ReportsDescriptionFilter({
     setDraft(value);
   }, [value]);
 
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useDismiss(containerRef, open, closeDropdown);
+
   useEffect(() => {
-    if (!open) return;
-    inputRef.current?.focus();
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    if (open) inputRef.current?.focus();
   }, [open]);
 
   const hasValue = value.trim().length > 0;

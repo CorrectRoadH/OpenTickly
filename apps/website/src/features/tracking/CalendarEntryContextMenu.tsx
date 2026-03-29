@@ -1,7 +1,8 @@
-import { type ReactElement, useEffect } from "react";
+import { type ReactElement, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 export type ContextMenuPosition = {
   x: number;
@@ -38,27 +39,8 @@ export function CalendarEntryContextMenu({
   position,
   projectPath,
 }: CalendarEntryContextMenuProps): ReactElement {
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-testid="calendar-entry-context-menu"]')) {
-        onClose();
-      }
-    }
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        onClose();
-      }
-    }
-
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
+  const menuRef = useRef<HTMLDivElement>(null);
+  useDismiss(menuRef, true, onClose);
 
   const hasDescription = Boolean(entry.description?.trim());
   const hasProject = Boolean(entry.project_id ?? entry.pid);
@@ -67,6 +49,7 @@ export function CalendarEntryContextMenu({
     <div
       className="fixed z-[201] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-[0_4px_16px_var(--track-shadow-popover)]"
       data-testid="calendar-entry-context-menu"
+      ref={menuRef}
       style={{ left: position.x, top: position.y }}
     >
       <ContextMenuItem label="Duplicate" onClick={onDuplicate} />
