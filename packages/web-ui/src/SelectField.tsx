@@ -2,7 +2,7 @@ import { type ButtonHTMLAttributes, type SelectHTMLAttributes, forwardRef } from
 
 /* Shared visual — matches CalendarSubviewSelect trigger style */
 const selectBase =
-  "h-9 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 pr-8 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]";
+  "h-9 rounded-lg border border-[var(--track-border)] bg-transparent px-3 pr-8 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]";
 
 function Chevron() {
   return (
