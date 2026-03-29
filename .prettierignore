@@ -3,3 +3,4 @@
 .agents
 .claude
 .codex
+tests/python-sdk-integration/toggl-cli
