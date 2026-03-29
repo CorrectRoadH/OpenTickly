@@ -15,15 +15,11 @@ type AppButtonProps = {
 };
 
 /**
- * Dual-layer 2.5D button (PostHog pattern, verified against computed styles).
- *
- * Outer <button>: inline-flex, bg = dark shadow color, border same color.
- * Inner <span>:   flex, bg = bright face color, translateY(-2px) to reveal
- *                 outer bg at the bottom. mx-[-1.5px] to align borders horizontally.
- *                 hover: translateY(-3px), active: translateY(-1.5px).
+ * Dual-layer 2.5D button (PostHog pattern).
+ * Outer <button>: bg = dark shadow color.
+ * Inner <span>:   bg = bright face, -translate-y-[2px] reveals outer bg at bottom.
  */
 
-/* Outer: shadow shell */
 const outerBase =
   "relative inline-flex rounded-[6px] border-[1.5px] text-center group disabled:opacity-50 disabled:cursor-not-allowed";
 
@@ -34,19 +30,18 @@ const outerTone: Record<AppButtonTone, string> = {
   destructive: "bg-[#881337] border-[#881337]",
 };
 
-/* Inner: face */
 const innerBase =
   "flex items-center justify-center gap-1 rounded-[6px] border-[1.5px] mx-[-1.5px] font-semibold select-none active:transition-all active:duration-100";
 
 const innerTone: Record<AppButtonTone, string> = {
   primary:
-    "bg-[var(--track-button)] text-white border-[var(--track-button)] translate-y-[-2px] hover:translate-y-[-3px] active:translate-y-[-1.5px] group-disabled:hover:!translate-y-[-2px]",
+    "bg-[var(--track-button)] text-white border-[var(--track-button)] -translate-y-[2px] hover:-translate-y-[3px] active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
   secondary:
-    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border-[var(--track-border)] translate-y-[-2px] hover:translate-y-[-3px] hover:text-white active:translate-y-[-1.5px] group-disabled:hover:!translate-y-[-2px]",
+    "bg-[var(--track-surface)] text-[var(--track-text-muted)] border-[var(--track-border)] -translate-y-[2px] hover:-translate-y-[3px] hover:text-white active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
   ghost:
     "bg-transparent text-[var(--track-text-muted)] border-transparent translate-y-0 hover:bg-[var(--track-row-hover)] active:translate-y-px",
   destructive:
-    "bg-rose-600 text-white border-rose-600 translate-y-[-2px] hover:translate-y-[-3px] active:translate-y-[-1.5px] group-disabled:hover:!translate-y-[-2px]",
+    "bg-rose-600 text-white border-rose-600 -translate-y-[2px] hover:-translate-y-[3px] active:-translate-y-[1px] group-disabled:hover:!-translate-y-[2px]",
 };
 
 const innerSize: Record<AppButtonSize, string> = {
