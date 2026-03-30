@@ -1834,6 +1834,12 @@ function CalendarEventCard({
               {entry.project_name}
             </span>
           ) : null}
+          {entry.tags && entry.tags.length > 0 ? (
+            <span className="flex items-center gap-1 truncate text-[11px] leading-tight text-[var(--track-text-muted)]">
+              <TagsIcon className="size-2.5 shrink-0" />
+              <span className="truncate">{entry.tags.join(", ")}</span>
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-1">
           <span className="shrink-0 text-[12px] font-semibold tabular-nums leading-tight">
