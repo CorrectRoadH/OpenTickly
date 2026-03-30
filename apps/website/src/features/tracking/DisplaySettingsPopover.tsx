@@ -69,20 +69,8 @@ export function DisplaySettingsPopover({
       data-testid="display-settings-popover"
       ref={panelRef}
     >
-      <div className="flex border-b border-[var(--track-border)]">
-        <button
-          className="flex-1 border-b-2 border-[var(--track-accent)] px-4 py-3 text-[12px] font-medium text-white"
-          type="button"
-        >
-          Display settings
-        </button>
-        <button
-          className="flex-1 px-4 py-3 text-[12px] font-medium text-[var(--track-text-muted)] hover:text-white"
-          disabled
-          type="button"
-        >
-          Calendar settings
-        </button>
+      <div className="border-b border-[var(--track-border)] px-4 py-3">
+        <span className="text-[12px] font-medium text-white">Display settings</span>
       </div>
 
       <div className="px-5 py-4">
