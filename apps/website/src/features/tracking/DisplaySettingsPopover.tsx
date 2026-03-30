@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useRef, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
 
 import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
@@ -191,17 +191,8 @@ function SettingsDropdown({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedOption = options.find((opt) => opt.value === value);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useDismiss(containerRef, open, closeDropdown);
 
   return (
     <div className="relative" ref={containerRef}>

@@ -27,6 +27,7 @@ import {
   readDisplaySettings,
 } from "../../features/tracking/DisplaySettingsPopover.tsx";
 import { GoalsFavoritesSidebar } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
@@ -1540,15 +1541,7 @@ function TimesheetAddRowPicker({
     [projects, search],
   );
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
+  useDismiss(containerRef, true, onClose);
 
   return (
     <div

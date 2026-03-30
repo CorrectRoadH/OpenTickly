@@ -3,6 +3,7 @@ import {
   type ReactElement,
   type ReactNode,
   type Ref,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -27,6 +28,7 @@ import {
 } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
 
@@ -169,6 +171,12 @@ export function TimeEntryEditorDialog({
   const position = useMemo(() => resolveEditorPosition(anchor, picker), [anchor, picker]);
   const startDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stopDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
+  const closeActionsMenu = useCallback(
+    () => dispatch({ type: "SET_ACTIONS_MENU", open: false }),
+    [dispatch],
+  );
+  useDismiss(actionsMenuRef, actionsMenuOpen, closeActionsMenu);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
   const selectedProject = useMemo(
@@ -356,75 +364,83 @@ export function TimeEntryEditorDialog({
               </svg>
             </button>
           ) : null}
-          <button
-            aria-label="Entry actions"
-            className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
-            onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: !actionsMenuOpen })}
-            type="button"
-          >
-            <MoreIcon className="size-4" />
-          </button>
-          {actionsMenuOpen ? (
-            <div className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]">
-              <ActionMenuButton
-                disabled={!onSplit}
-                label="Split"
-                onClick={() => {
-                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                  void onSplit?.();
-                }}
-              />
-              <ActionMenuButton
-                disabled={!onFavorite}
-                label="Pin as favorite"
-                onClick={() => {
-                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                  void onFavorite?.();
-                }}
-              />
-              {selectedProjectId ? (
-                <a
-                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4"
-                  href={`/projects/${currentWorkspaceId}/list`}
-                  onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: false })}
-                >
-                  Go to project
-                </a>
-              ) : null}
-              <ActionMenuButton
-                label="Copy start link"
-                onClick={() => {
-                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                  void copyToClipboard(
-                    typeof window === "undefined"
-                      ? (entry.start ?? "")
-                      : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
-                  );
-                }}
-              />
-              {description.trim() ? (
+          <div className="relative" ref={actionsMenuRef}>
+            <button
+              aria-label="Entry actions"
+              aria-expanded={actionsMenuOpen}
+              className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
+              onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: !actionsMenuOpen })}
+              type="button"
+            >
+              <MoreIcon className="size-4" />
+            </button>
+            {actionsMenuOpen ? (
+              <div
+                className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
+                role="menu"
+              >
                 <ActionMenuButton
-                  label="Copy description"
+                  disabled={!onSplit}
+                  label="Split"
                   onClick={() => {
                     dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                    void copyToClipboard(description.trim());
+                    void onSplit?.();
                   }}
                 />
-              ) : null}
-              <button
-                aria-label="Delete entry"
-                className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-danger-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
-                disabled={!onDelete || isDeleting}
-                onClick={() => {
-                  dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                  void onDelete?.();
-                }}
-                type="button"
-              >
-                {isDeleting ? "Deleting..." : "Delete entry"}
-              </button>
-            </div>
-          ) : null}
+                <ActionMenuButton
+                  disabled={!onFavorite}
+                  label="Pin as favorite"
+                  onClick={() => {
+                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
+                    void onFavorite?.();
+                  }}
+                />
+                {selectedProjectId ? (
+                  <a
+                    className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4"
+                    href={`/projects/${currentWorkspaceId}/list`}
+                    onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: false })}
+                    role="menuitem"
+                  >
+                    Go to project
+                  </a>
+                ) : null}
+                <ActionMenuButton
+                  label="Copy start link"
+                  onClick={() => {
+                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
+                    void copyToClipboard(
+                      typeof window === "undefined"
+                        ? (entry.start ?? "")
+                        : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
+                    );
+                  }}
+                />
+                {description.trim() ? (
+                  <ActionMenuButton
+                    label="Copy description"
+                    onClick={() => {
+                      dispatch({ type: "SET_ACTIONS_MENU", open: false });
+                      void copyToClipboard(description.trim());
+                    }}
+                  />
+                ) : null}
+                <button
+                  aria-label="Delete entry"
+                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-danger-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={!onDelete || isDeleting}
+                  onClick={() => {
+                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
+                    void onDelete?.();
+                  }}
+                  role="menuitem"
+                  type="button"
+                >
+                  {isDeleting ? "Deleting..." : "Delete entry"}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
         <button
           aria-label="Close editor"

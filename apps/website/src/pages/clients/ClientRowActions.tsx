@@ -1,9 +1,8 @@
-import { type FormEvent, type ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 
-import { AppButton, IconButton } from "@opentoggl/web-ui";
+import { AppButton, DropdownMenu, IconButton, useDropdownClose } from "@opentoggl/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
-import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
 type ClientRowActionsProps = {
   clientId: number;
@@ -24,18 +23,9 @@ export function ClientRowActions({
   onDelete,
   onRename,
 }: ClientRowActionsProps): ReactElement {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editValue, setEditValue] = useState(clientName);
-  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const closeMenu = useCallback(() => {
-    setMenuOpen(false);
-    setConfirmingDelete(false);
-  }, []);
-  useDismiss(menuRef, menuOpen, closeMenu);
 
   useEffect(() => {
     if (editing) {
@@ -73,80 +63,99 @@ export function ClientRowActions({
   }
 
   return (
-    <div className="relative" ref={menuRef}>
-      <IconButton
-        aria-label={`Actions for ${clientName}`}
-        onClick={() => {
-          setMenuOpen(!menuOpen);
-          setConfirmingDelete(false);
-        }}
-        size="sm"
-      >
-        <MoreIcon className="size-3.5" />
-      </IconButton>
-      {menuOpen ? (
-        <div
-          className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
-          data-testid={`client-actions-menu-${clientId}`}
-        >
-          {confirmingDelete ? (
-            <div className="px-3 py-2">
-              <p className="mb-2 text-[12px] text-[var(--track-text-muted)]">
-                Delete &ldquo;{clientName}&rdquo;?
-              </p>
-              <div className="flex gap-2">
-                <AppButton
-                  onClick={() => {
-                    onDelete(clientId);
-                    setMenuOpen(false);
-                    setConfirmingDelete(false);
-                  }}
-                  data-testid={`client-delete-confirm-${clientId}`}
-                  size="sm"
-                  danger
-                >
-                  Delete
-                </AppButton>
-                <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
-                  Cancel
-                </AppButton>
-              </div>
-            </div>
-          ) : (
-            <>
-              <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
-                data-testid={`client-rename-${clientId}`}
-                onClick={() => {
-                  setMenuOpen(false);
-                  setEditing(true);
-                }}
-                type="button"
-              >
-                Edit
-              </button>
-              <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
-                onClick={() => {
-                  onArchive(clientId);
-                  setMenuOpen(false);
-                }}
-                type="button"
-              >
-                Archive
-              </button>
-              <button
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
-                data-testid={`client-delete-${clientId}`}
-                onClick={() => setConfirmingDelete(true)}
-                type="button"
-              >
-                Delete
-              </button>
-            </>
-          )}
+    <DropdownMenu
+      trigger={
+        <IconButton aria-label={`Actions for ${clientName}`} size="sm">
+          <MoreIcon className="size-3.5" />
+        </IconButton>
+      }
+      testId={`client-actions-menu-${clientId}`}
+      minWidth="140px"
+    >
+      <ClientMenuContent
+        clientId={clientId}
+        clientName={clientName}
+        onArchive={onArchive}
+        onDelete={onDelete}
+        onStartEditing={() => setEditing(true)}
+      />
+    </DropdownMenu>
+  );
+}
+
+function ClientMenuContent({
+  clientId,
+  clientName,
+  onArchive,
+  onDelete,
+  onStartEditing,
+}: {
+  clientId: number;
+  clientName: string;
+  onArchive: (clientId: number) => void;
+  onDelete: (clientId: number) => void;
+  onStartEditing: () => void;
+}): ReactElement {
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const close = useDropdownClose();
+
+  if (confirmingDelete) {
+    return (
+      <div className="px-3 py-2">
+        <p className="mb-2 text-[12px] text-[var(--track-text-muted)]">
+          Delete &ldquo;{clientName}&rdquo;?
+        </p>
+        <div className="flex gap-2">
+          <AppButton
+            onClick={() => {
+              onDelete(clientId);
+              close();
+            }}
+            data-testid={`client-delete-confirm-${clientId}`}
+            size="sm"
+            danger
+          >
+            Delete
+          </AppButton>
+          <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
+            Cancel
+          </AppButton>
         </div>
-      ) : null}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <button
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
+        data-testid={`client-rename-${clientId}`}
+        onClick={() => {
+          close();
+          onStartEditing();
+        }}
+        type="button"
+      >
+        Edit
+      </button>
+      <button
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
+        onClick={() => {
+          onArchive(clientId);
+          close();
+        }}
+        type="button"
+      >
+        Archive
+      </button>
+      <button
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
+        data-testid={`client-delete-${clientId}`}
+        onClick={() => setConfirmingDelete(true)}
+        type="button"
+      >
+        Delete
+      </button>
+    </>
   );
 }

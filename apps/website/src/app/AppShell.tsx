@@ -5,11 +5,10 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 
-import { createPortal } from "react-dom";
+import { Dropdown, useDropdownClose } from "@opentoggl/web-ui";
 
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
@@ -239,164 +238,139 @@ function ProfileMenuButton({
   imageUrl?: string | null;
   name: string;
 }): ReactElement {
-  const [open, setOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [panelPosition, setPanelPosition] = useState<{ left: number; bottom: number } | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
 
-  useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-      if (!buttonRef.current?.contains(target) && !panelRef.current?.contains(target)) {
-        setOpen(false);
-      }
-    }
-    function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        buttonRef.current?.focus();
-      }
-    }
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !buttonRef.current) return;
-    function updatePosition() {
-      const rect = buttonRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      setPanelPosition({
-        left: rect.right + 12,
-        bottom: window.innerHeight - rect.bottom,
-      });
-    }
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    window.addEventListener("scroll", updatePosition, true);
-    return () => {
-      window.removeEventListener("resize", updatePosition);
-      window.removeEventListener("scroll", updatePosition, true);
-    };
-  }, [open]);
-
   return (
     <>
-      <button
-        aria-label="Profile menu"
-        className="flex flex-col items-center gap-1 py-1 text-[var(--track-text-muted)] transition hover:text-white"
-        onClick={() => setOpen((prev) => !prev)}
-        ref={buttonRef}
-        type="button"
+      <Dropdown
+        placement="right-bottom"
+        panelClassName="w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
+        trigger={
+          <button
+            aria-label="Profile menu"
+            className="flex flex-col items-center gap-1 py-1 text-[var(--track-text-muted)] transition hover:text-white"
+            type="button"
+          >
+            <UserAvatar
+              className="size-[26px] overflow-hidden border border-[var(--track-surface)]"
+              imageUrl={imageUrl}
+              name={name}
+              textClassName="text-[11px] font-semibold"
+            />
+            <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
+          </button>
+        }
       >
-        <UserAvatar
-          className="size-[26px] overflow-hidden border border-[var(--track-surface)]"
+        <ProfileMenuContent
+          email={email}
           imageUrl={imageUrl}
           name={name}
-          textClassName="text-[11px] font-semibold"
+          navigate={navigate}
+          logoutMutation={logoutMutation}
+          onShortcuts={() => setShortcutsOpen(true)}
         />
-        <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
-      </button>
-
-      {open && panelPosition
-        ? createPortal(
-            <div
-              className="fixed z-50 w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
-              ref={panelRef}
-              role="menu"
-              style={{
-                left: panelPosition.left,
-                bottom: panelPosition.bottom,
-              }}
-            >
-              {/* User info */}
-              <div className="flex items-center gap-3 px-5 py-4">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-semibold text-white">{name}</p>
-                  <p className="truncate text-[12px] text-[var(--track-text-muted)]">{email}</p>
-                </div>
-                <UserAvatar
-                  className="size-[40px] shrink-0 overflow-hidden"
-                  imageUrl={imageUrl}
-                  name={name}
-                  textClassName="text-[14px] font-semibold"
-                />
-              </div>
-
-              <div className="mx-4 border-t border-[var(--track-border)]" />
-
-              {/* Menu items */}
-              <div className="py-1">
-                <button
-                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
-                  onClick={() => {
-                    setOpen(false);
-                    void navigate({ to: "/profile" });
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  Profile settings
-                </button>
-                <button
-                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
-                  onClick={() => {
-                    setOpen(false);
-                    void navigate({ to: "/account" });
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  Account settings
-                </button>
-                <button
-                  className="flex w-full items-center justify-between px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
-                  onClick={() => {
-                    setOpen(false);
-                    setShortcutsOpen(true);
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  <span>Keyboard shortcuts</span>
-                  <kbd className="flex size-[22px] items-center justify-center rounded-[5px] border border-[var(--track-border)] text-[12px] font-medium text-[var(--track-text-muted)]">
-                    ?
-                  </kbd>
-                </button>
-              </div>
-
-              <div className="mx-4 border-t border-[var(--track-border)]" />
-
-              <div className="py-1">
-                <button
-                  className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
-                  onClick={() => {
-                    setOpen(false);
-                    void logoutMutation.mutateAsync().then(() => {
-                      window.location.href = "/";
-                    });
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  Log out
-                </button>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      </Dropdown>
 
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
     </>
+  );
+}
+
+function ProfileMenuContent({
+  email,
+  imageUrl,
+  name,
+  navigate,
+  logoutMutation,
+  onShortcuts,
+}: {
+  email: string;
+  imageUrl?: string | null;
+  name: string;
+  navigate: ReturnType<typeof useNavigate>;
+  logoutMutation: ReturnType<typeof useLogoutMutation>;
+  onShortcuts: () => void;
+}): ReactElement {
+  const close = useDropdownClose();
+
+  return (
+    <div role="menu">
+      {/* User info */}
+      <div className="flex items-center gap-3 px-5 py-4">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-semibold text-white">{name}</p>
+          <p className="truncate text-[12px] text-[var(--track-text-muted)]">{email}</p>
+        </div>
+        <UserAvatar
+          className="size-[40px] shrink-0 overflow-hidden"
+          imageUrl={imageUrl}
+          name={name}
+          textClassName="text-[14px] font-semibold"
+        />
+      </div>
+
+      <div className="mx-4 border-t border-[var(--track-border)]" />
+
+      {/* Menu items */}
+      <div className="py-1">
+        <button
+          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+          onClick={() => {
+            close();
+            void navigate({ to: "/profile" });
+          }}
+          role="menuitem"
+          type="button"
+        >
+          Profile settings
+        </button>
+        <button
+          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+          onClick={() => {
+            close();
+            void navigate({ to: "/account" });
+          }}
+          role="menuitem"
+          type="button"
+        >
+          Account settings
+        </button>
+        <button
+          className="flex w-full items-center justify-between px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+          onClick={() => {
+            close();
+            onShortcuts();
+          }}
+          role="menuitem"
+          type="button"
+        >
+          <span>Keyboard shortcuts</span>
+          <kbd className="flex size-[22px] items-center justify-center rounded-[5px] border border-[var(--track-border)] text-[12px] font-medium text-[var(--track-text-muted)]">
+            ?
+          </kbd>
+        </button>
+      </div>
+
+      <div className="mx-4 border-t border-[var(--track-border)]" />
+
+      <div className="py-1">
+        <button
+          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+          onClick={() => {
+            close();
+            void logoutMutation.mutateAsync().then(() => {
+              window.location.href = "/";
+            });
+          }}
+          role="menuitem"
+          type="button"
+        >
+          Log out
+        </button>
+      </div>
+    </div>
   );
 }
 

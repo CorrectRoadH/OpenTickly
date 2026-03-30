@@ -1,7 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown as ChevronDownLucide, Search as SearchLucide } from "lucide-react";
-import { AppButton, SelectField } from "@opentoggl/web-ui";
+import { AppButton, Dropdown, SelectDropdown, useDropdownClose } from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import type { ModelsSimpleWorkspaceUser } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -40,8 +40,6 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
   const [sendViaSlack, setSendViaSlack] = useState(false);
   const [sendViaEmail, setSendViaEmail] = useState(true);
   const [memberSearch, setMemberSearch] = useState("");
-  const [memberDropdownOpen, setMemberDropdownOpen] = useState(false);
-  const [approverDropdownOpen, setApproverDropdownOpen] = useState(false);
 
   const filteredMembers = useMemo(() => {
     if (!memberSearch.trim()) return members;
@@ -119,131 +117,116 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
 
           {/* Members */}
           <FieldLabel>Members</FieldLabel>
-          <div className="relative mb-5">
-            <button
-              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
-              onClick={() => setMemberDropdownOpen(!memberDropdownOpen)}
-              type="button"
-            >
-              <span
-                className={
-                  selectedMemberIds.size > 0 ? "text-white" : "text-[var(--track-text-muted)]"
-                }
+          <Dropdown
+            className="mb-5"
+            trigger={
+              <button
+                className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
+                type="button"
               >
-                {selectedMemberIds.size > 0
-                  ? `${selectedMemberIds.size} member${selectedMemberIds.size > 1 ? "s" : ""} selected`
-                  : "Select member(s)"}
-              </span>
-              <ChevronDown />
-            </button>
-            {memberDropdownOpen ? (
-              <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface,var(--track-surface))] shadow-lg">
-                <div className="flex items-center gap-2 border-b border-[var(--track-border)] px-3 py-2">
-                  <SearchIcon />
+                <span
+                  className={
+                    selectedMemberIds.size > 0 ? "text-white" : "text-[var(--track-text-muted)]"
+                  }
+                >
+                  {selectedMemberIds.size > 0
+                    ? `${selectedMemberIds.size} member${selectedMemberIds.size > 1 ? "s" : ""} selected`
+                    : "Select member(s)"}
+                </span>
+                <ChevronDown />
+              </button>
+            }
+          >
+            <div className="flex items-center gap-2 border-b border-[var(--track-border)] px-3 py-2">
+              <SearchIcon />
+              <input
+                className="flex-1 bg-transparent text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Find members"
+                type="text"
+                value={memberSearch}
+              />
+            </div>
+            <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-3 py-1.5 text-[11px]">
+              <span className="text-[var(--track-text-muted)]">Active Users</span>
+              <button
+                className="text-[var(--track-accent)] hover:underline"
+                onClick={selectAllMembers}
+                type="button"
+              >
+                All
+              </button>
+              <button
+                className="text-[var(--track-accent)] hover:underline"
+                onClick={selectNoneMembers}
+                type="button"
+              >
+                None
+              </button>
+            </div>
+            <div className="max-h-[200px] overflow-y-auto py-1">
+              {filteredMembers.map((m) => (
+                <label
+                  className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
+                  key={m.id}
+                >
                   <input
-                    className="flex-1 bg-transparent text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
-                    onChange={(e) => setMemberSearch(e.target.value)}
-                    placeholder="Find members"
-                    type="text"
-                    value={memberSearch}
+                    checked={selectedMemberIds.has(m.id)}
+                    className="accent-[var(--track-accent)]"
+                    onChange={() => toggleMember(m.id)}
+                    type="checkbox"
                   />
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
+                    {m.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="text-[12px] text-white">{m.name}</span>
+                </label>
+              ))}
+              {filteredMembers.length === 0 ? (
+                <div className="px-3 py-3 text-center text-[12px] text-[var(--track-text-muted)]">
+                  No members found
                 </div>
-                <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-3 py-1.5 text-[11px]">
-                  <span className="text-[var(--track-text-muted)]">Active Users</span>
-                  <button
-                    className="text-[var(--track-accent)] hover:underline"
-                    onClick={selectAllMembers}
-                    type="button"
-                  >
-                    All
-                  </button>
-                  <button
-                    className="text-[var(--track-accent)] hover:underline"
-                    onClick={selectNoneMembers}
-                    type="button"
-                  >
-                    None
-                  </button>
-                </div>
-                <div className="max-h-[200px] overflow-y-auto py-1">
-                  {filteredMembers.map((m) => (
-                    <label
-                      className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
-                      key={m.id}
-                    >
-                      <input
-                        checked={selectedMemberIds.has(m.id)}
-                        className="accent-[var(--track-accent)]"
-                        onChange={() => toggleMember(m.id)}
-                        type="checkbox"
-                      />
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
-                        {m.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-[12px] text-white">{m.name}</span>
-                    </label>
-                  ))}
-                  {filteredMembers.length === 0 ? (
-                    <div className="px-3 py-3 text-center text-[12px] text-[var(--track-text-muted)]">
-                      No members found
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          </Dropdown>
 
           {/* Approver */}
           <FieldLabel>Approver(s) Level 1</FieldLabel>
-          <div className="relative mb-5">
-            <button
-              className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
-              onClick={() => setApproverDropdownOpen(!approverDropdownOpen)}
-              type="button"
-            >
-              <span
-                className={approverIds.length > 0 ? "text-white" : "text-[var(--track-text-muted)]"}
+          <Dropdown
+            className="mb-5"
+            trigger={
+              <button
+                className="flex h-9 w-full items-center justify-between rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
+                type="button"
               >
-                {approverIds.length > 0
-                  ? (members.find((m) => m.id === approverIds[0])?.name ?? "Selected")
-                  : "Select timesheet approver"}
-              </span>
-              <ChevronDown />
-            </button>
-            {approverDropdownOpen ? (
-              <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface,var(--track-surface))] shadow-lg">
-                <div className="max-h-[200px] overflow-y-auto py-1">
-                  {members.map((m) => (
-                    <button
-                      className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-[var(--track-row-hover)] ${
-                        approverIds.includes(m.id) ? "bg-[var(--track-row-hover)]" : ""
-                      }`}
-                      key={m.id}
-                      onClick={() => {
-                        setApproverIds([m.id]);
-                        setApproverDropdownOpen(false);
-                      }}
-                      type="button"
-                    >
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
-                        {m.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span className="text-[12px] text-white">{m.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
+                <span
+                  className={
+                    approverIds.length > 0 ? "text-white" : "text-[var(--track-text-muted)]"
+                  }
+                >
+                  {approverIds.length > 0
+                    ? (members.find((m) => m.id === approverIds[0])?.name ?? "Selected")
+                    : "Select timesheet approver"}
+                </span>
+                <ChevronDown />
+              </button>
+            }
+          >
+            <ApproverList approverIds={approverIds} members={members} onSelect={setApproverIds} />
+          </Dropdown>
 
           {/* Period */}
           <FieldLabel>Period</FieldLabel>
           <div className="mb-5 flex items-center gap-3">
-            <SelectField onChange={(e) => setPeriodicity(e.target.value)} value={periodicity}>
-              <option value="weekly">Weekly</option>
-              <option value="daily">Daily</option>
-              <option value="monthly">Monthly</option>
-            </SelectField>
+            <SelectDropdown
+              onChange={(v) => setPeriodicity(v)}
+              options={[
+                { value: "weekly", label: "Weekly" },
+                { value: "daily", label: "Daily" },
+                { value: "monthly", label: "Monthly" },
+              ]}
+              value={periodicity}
+            />
             <div className="flex items-center gap-2">
               <span className="text-[12px] text-[var(--track-text-muted)]">Starting from</span>
               <input
@@ -275,28 +258,21 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     {periodicity === "daily" ? "daily at" : `${periodicity} on`}
                   </span>
                   {periodicity !== "daily" ? (
-                    <SelectField
-                      onChange={(e) => setReminderDay(Number(e.target.value))}
-                      value={reminderDay}
-                    >
-                      {WEEKDAYS.map((day) => (
-                        <option key={day.value} value={day.value}>
-                          {day.label}
-                        </option>
-                      ))}
-                    </SelectField>
+                    <SelectDropdown
+                      onChange={(v) => setReminderDay(Number(v))}
+                      options={WEEKDAYS.map((day) => ({
+                        value: String(day.value),
+                        label: day.label,
+                      }))}
+                      value={String(reminderDay)}
+                    />
                   ) : null}
                   <span className="text-[var(--track-text-muted)]">at</span>
-                  <SelectField
-                    onChange={(e) => setReminderTime(e.target.value)}
+                  <SelectDropdown
+                    onChange={(v) => setReminderTime(v)}
+                    options={TIMES.map((t) => ({ value: t, label: t }))}
                     value={reminderTime}
-                  >
-                    {TIMES.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </SelectField>
+                  />
                 </div>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
                   <input
@@ -378,6 +354,41 @@ function computeFirstReminder(startDateStr: string, reminderDay: number): string
     }
   }
   return "—";
+}
+
+function ApproverList({
+  approverIds,
+  members,
+  onSelect,
+}: {
+  approverIds: number[];
+  members: MemberOption[];
+  onSelect: (ids: number[]) => void;
+}): ReactElement {
+  const close = useDropdownClose();
+
+  return (
+    <div className="max-h-[200px] overflow-y-auto py-1">
+      {members.map((m) => (
+        <button
+          className={`flex w-full items-center gap-2.5 px-3 py-1.5 text-left hover:bg-[var(--track-row-hover)] ${
+            approverIds.includes(m.id) ? "bg-[var(--track-row-hover)]" : ""
+          }`}
+          key={m.id}
+          onClick={() => {
+            onSelect([m.id]);
+            close();
+          }}
+          type="button"
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
+            {m.name.charAt(0).toUpperCase()}
+          </span>
+          <span className="text-[12px] text-white">{m.name}</span>
+        </button>
+      ))}
+    </div>
+  );
 }
 
 function FieldLabel({ children }: { children: string }): ReactElement {

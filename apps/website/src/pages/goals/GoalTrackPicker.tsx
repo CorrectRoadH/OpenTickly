@@ -1,7 +1,8 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, X } from "lucide-react";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 
 type TagItem = { id: number; name: string };
@@ -33,6 +34,12 @@ export function GoalTrackPicker({
 }: GoalTrackPickerProps): ReactElement {
   const [view, setView] = useState<PickerView>(null);
   const [search, setSearch] = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const handleDismiss = useCallback(() => {
+    setView(null);
+    setSearch("");
+  }, []);
+  useDismiss(pickerRef, view != null, handleDismiss);
 
   const selectedProjects = useMemo(
     () => projects.filter((p) => p.id != null && projectIds.includes(p.id)),
@@ -120,47 +127,47 @@ export function GoalTrackPicker({
       ) : null}
 
       {view != null ? (
-        <>
-          <div className="fixed inset-0 z-40" onClick={handleClose} role="presentation" />
-          <div className="absolute left-0 top-[calc(100%+4px)] z-50 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg">
-            {view === "menu" ? (
-              <TrackMenu
-                onSelectBillable={() => {
-                  onBillableChange(!billable);
-                  handleClose();
-                }}
-                onSelectProjects={() => {
-                  setView("projects");
-                  setSearch("");
-                }}
-                onSelectTags={() => {
-                  setView("tags");
-                  setSearch("");
-                }}
-              />
-            ) : null}
-            {view === "projects" ? (
-              <ProjectList
-                onBack={() => setView("menu")}
-                onSearch={setSearch}
-                onToggle={toggleProject}
-                projects={projects}
-                search={search}
-                selectedIds={projectIds}
-              />
-            ) : null}
-            {view === "tags" ? (
-              <TagList
-                onBack={() => setView("menu")}
-                onSearch={setSearch}
-                onToggle={toggleTag}
-                search={search}
-                selectedIds={tagIds}
-                tags={tags}
-              />
-            ) : null}
-          </div>
-        </>
+        <div
+          className="absolute left-0 top-[calc(100%+4px)] z-50 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg"
+          ref={pickerRef}
+        >
+          {view === "menu" ? (
+            <TrackMenu
+              onSelectBillable={() => {
+                onBillableChange(!billable);
+                handleClose();
+              }}
+              onSelectProjects={() => {
+                setView("projects");
+                setSearch("");
+              }}
+              onSelectTags={() => {
+                setView("tags");
+                setSearch("");
+              }}
+            />
+          ) : null}
+          {view === "projects" ? (
+            <ProjectList
+              onBack={() => setView("menu")}
+              onSearch={setSearch}
+              onToggle={toggleProject}
+              projects={projects}
+              search={search}
+              selectedIds={projectIds}
+            />
+          ) : null}
+          {view === "tags" ? (
+            <TagList
+              onBack={() => setView("menu")}
+              onSearch={setSearch}
+              onToggle={toggleTag}
+              search={search}
+              selectedIds={tagIds}
+              tags={tags}
+            />
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -1,42 +1,362 @@
-import type { ReactNode } from "react";
+import {
+  type ReactElement,
+  type ReactNode,
+  cloneElement,
+  createContext,
+  isValidElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
-export function DropdownMenu({
-  children,
-  className = "",
-  minWidth = "140px",
-}: {
+// ---------------------------------------------------------------------------
+// Context — close callback shared with children
+// ---------------------------------------------------------------------------
+
+const DropdownCloseContext = createContext<(() => void) | null>(null);
+
+/**
+ * Returns the close callback from the nearest DropdownMenu or Dropdown ancestor.
+ * Use inside custom dropdown content that needs to close the menu on action.
+ */
+export function useDropdownClose(): () => void {
+  const close = useContext(DropdownCloseContext);
+  if (!close) {
+    throw new Error("useDropdownClose must be used inside DropdownMenu or Dropdown");
+  }
+  return close;
+}
+
+// ---------------------------------------------------------------------------
+// useDismiss2Ref — 2-ref dismiss for portaled panels
+// ---------------------------------------------------------------------------
+
+function useDismiss2Ref(
+  ref1: React.RefObject<HTMLElement | null>,
+  ref2: React.RefObject<HTMLElement | null>,
+  isOpen: boolean,
+  onClose: () => void,
+): void {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as Node;
+      if (!ref1.current?.contains(target) && !ref2.current?.contains(target)) {
+        onClose();
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [ref1, ref2, isOpen, onClose]);
+}
+
+// ---------------------------------------------------------------------------
+// Placement types & positioning
+// ---------------------------------------------------------------------------
+
+/**
+ * - "bottom-left" / "bottom-right": panel below trigger, aligned left or right edge
+ * - "right-bottom": panel to the right of trigger, bottom-aligned (e.g. sidebar profile)
+ */
+export type DropdownPlacement = "bottom-left" | "bottom-right" | "right-bottom";
+
+type FloatingStyle = {
+  bottom?: number;
+  left?: number;
+  right?: number;
+  top?: number;
+};
+
+function useFloatingPosition(
+  triggerRef: React.RefObject<HTMLElement | null>,
+  isOpen: boolean,
+  placement: DropdownPlacement,
+  gap: number,
+): FloatingStyle | null {
+  const [style, setStyle] = useState<FloatingStyle | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !triggerRef.current) {
+      setStyle(null);
+      return;
+    }
+
+    function update() {
+      const rect = triggerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      switch (placement) {
+        case "bottom-left":
+          setStyle({ left: rect.left, top: rect.bottom + gap });
+          break;
+        case "bottom-right":
+          setStyle({ right: window.innerWidth - rect.right, top: rect.bottom + gap });
+          break;
+        case "right-bottom":
+          setStyle({ left: rect.right + gap, bottom: window.innerHeight - rect.bottom });
+          break;
+      }
+    }
+
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [isOpen, triggerRef, placement, gap]);
+
+  return style;
+}
+
+// ---------------------------------------------------------------------------
+// DropdownMenu — action menu (role="menu") with trigger, dismiss, and styles
+// ---------------------------------------------------------------------------
+
+type DropdownMenuProps = {
+  /** @deprecated Use `placement` instead. */
+  align?: "left" | "right";
   children: ReactNode;
   className?: string;
+  /** Minimum width of the floating panel. */
   minWidth?: string;
-}) {
+  /** Panel placement relative to trigger. Defaults to "bottom-right". */
+  placement?: DropdownPlacement;
+  testId?: string;
+  /** The trigger element — receives onClick and aria-expanded via cloneElement. */
+  trigger: ReactElement;
+};
+
+/**
+ * Action dropdown menu with built-in open/close state, click-outside + Escape
+ * dismiss, and styled floating panel (role="menu").
+ *
+ * The panel is portaled to document.body to avoid overflow clipping.
+ *
+ * ```tsx
+ * <DropdownMenu trigger={<IconButton aria-label="Actions"><MoreIcon /></IconButton>}>
+ *   <MenuItem onClick={onEdit}>Edit</MenuItem>
+ *   <MenuItem destructive onClick={onDelete}>Delete</MenuItem>
+ * </DropdownMenu>
+ * ```
+ */
+export function DropdownMenu({
+  align,
+  children,
+  className,
+  minWidth = "180px",
+  placement,
+  testId,
+  trigger,
+}: DropdownMenuProps): ReactElement {
+  const resolved = placement ?? (align === "left" ? "bottom-left" : "bottom-right");
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useDismiss2Ref(triggerRef, panelRef, open, close);
+
+  const style = useFloatingPosition(triggerRef, open, resolved, 4);
+
   return (
-    <div
-      className={`rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-1 shadow-[0_16px_32px_var(--track-shadow-overlay)] ${className}`.trim()}
-      style={{ minWidth }}
-    >
-      {children}
+    <div className={className} ref={triggerRef}>
+      <TriggerSlot onClick={() => setOpen((prev) => !prev)} open={open}>
+        {trigger}
+      </TriggerSlot>
+      {open && style
+        ? createPortal(
+            <div
+              className="fixed z-50 rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
+              data-testid={testId}
+              ref={panelRef}
+              role="menu"
+              style={{ ...style, minWidth }}
+            >
+              <DropdownCloseContext.Provider value={close}>
+                {children}
+              </DropdownCloseContext.Provider>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Dropdown — generic styled floating panel (no menu semantics)
+// ---------------------------------------------------------------------------
+
+type DropdownProps = {
+  /** @deprecated Use `placement` instead. */
+  align?: "left" | "right";
+  children: ReactNode;
+  className?: string;
+  /** Override the floating panel classes. Falls back to standard surface style. */
+  panelClassName?: string;
+  /** Panel placement relative to trigger. Defaults to "bottom-left". */
+  placement?: DropdownPlacement;
+  testId?: string;
+  trigger: ReactElement;
+};
+
+/**
+ * Generic dropdown: trigger + styled floating panel + dismiss.
+ * No menu semantics — for select pickers, filter panels, etc.
+ *
+ * Uses portal to avoid overflow clipping.
+ */
+export function Dropdown({
+  align,
+  children,
+  className,
+  panelClassName = "rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface,var(--track-surface))] shadow-lg",
+  placement,
+  testId,
+  trigger,
+}: DropdownProps): ReactElement {
+  const resolved = placement ?? (align === "right" ? "bottom-right" : "bottom-left");
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  useDismiss2Ref(triggerRef, panelRef, open, close);
+
+  const style = useFloatingPosition(triggerRef, open, resolved, 4);
+  const triggerWidth = triggerRef.current?.getBoundingClientRect().width;
+
+  return (
+    <div className={className} ref={triggerRef}>
+      <TriggerSlot onClick={() => setOpen((prev) => !prev)} open={open}>
+        {trigger}
+      </TriggerSlot>
+      {open && style
+        ? createPortal(
+            <div
+              className={`fixed z-50 ${panelClassName}`}
+              data-testid={testId}
+              ref={panelRef}
+              style={{ ...style, minWidth: triggerWidth }}
+            >
+              <DropdownCloseContext.Provider value={close}>
+                {children}
+              </DropdownCloseContext.Provider>
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MenuItem — styled button for use inside DropdownMenu
+// ---------------------------------------------------------------------------
+
+type MenuItemProps = {
+  children: ReactNode;
+  destructive?: boolean;
+  disabled?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  testId?: string;
+};
+
+/**
+ * A single menu action item. Automatically closes the parent DropdownMenu
+ * when clicked (unless the event handler calls `event.preventDefault()`).
+ */
 export function MenuItem({
   children,
   destructive = false,
+  disabled = false,
   onClick,
-}: {
-  children: ReactNode;
-  destructive?: boolean;
-  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-}) {
+  testId,
+}: MenuItemProps): ReactElement {
+  const close = useContext(DropdownCloseContext);
+
   return (
     <button
-      className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] ${
-        destructive ? "text-rose-400" : "text-[var(--track-overlay-text)]"
+      className={`flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium transition-colors duration-[80ms] hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60 ${
+        destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
-      onClick={onClick}
+      data-testid={testId}
+      disabled={disabled}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) {
+          close?.();
+        }
+      }}
+      role="menuitem"
       type="button"
     >
       {children}
     </button>
   );
+}
+
+// ---------------------------------------------------------------------------
+// MenuLink — styled anchor for use inside DropdownMenu
+// ---------------------------------------------------------------------------
+
+type MenuLinkProps = {
+  children: ReactNode;
+  href: string;
+  testId?: string;
+};
+
+export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElement {
+  const close = useContext(DropdownCloseContext);
+
+  return (
+    <a
+      className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-white/4"
+      data-testid={testId}
+      href={href}
+      onClick={() => close?.()}
+      role="menuitem"
+    >
+      {children}
+    </a>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Shared internals
+// ---------------------------------------------------------------------------
+
+function TriggerSlot({
+  children,
+  onClick,
+  open,
+}: {
+  children: ReactElement;
+  onClick: () => void;
+  open: boolean;
+}) {
+  if (isValidElement(children)) {
+    return cloneElement(children as ReactElement<Record<string, unknown>>, {
+      onClick,
+      "aria-expanded": open,
+    });
+  }
+  return children;
 }

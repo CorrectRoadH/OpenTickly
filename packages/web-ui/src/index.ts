@@ -4,7 +4,14 @@ export { AppPanel } from "./AppPanel.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";
 export type { AppSurfaceTone } from "./surfaceStyles.ts";
 export { DirectoryStatusFilter } from "./DirectoryStatusFilter.tsx";
-export { DropdownMenu, MenuItem } from "./DropdownMenu.tsx";
+export {
+  Dropdown,
+  DropdownMenu,
+  type DropdownPlacement,
+  MenuItem,
+  MenuLink,
+  useDropdownClose,
+} from "./DropdownMenu.tsx";
 export {
   DirectoryFilterChip,
   DirectoryHeaderCell,
@@ -18,11 +25,13 @@ export { CheckboxFilterDropdown } from "./CheckboxFilterDropdown.tsx";
 export { RadioFilterDropdown } from "./RadioFilterDropdown.tsx";
 export { DirectoryTable, type DirectoryTableColumn } from "./DirectoryTable.tsx";
 export { IconButton } from "./IconButton.tsx";
-export { SelectButton, SelectField } from "./SelectField.tsx";
+export { SelectButton, SelectDropdown, type SelectOption } from "./SelectButton.tsx";
 export {
   PageLayout,
   type PageLayoutTab,
   pageLayoutTabClass,
   pageLayoutTabIndicatorClass,
 } from "./PageLayout.tsx";
+export { Dialog, DialogBody, DialogFooter, DialogHeader } from "./Dialog.tsx";
 export { appTheme } from "./theme.ts";
+export { useDismiss } from "./useDismiss.ts";

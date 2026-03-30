@@ -1,9 +1,8 @@
-import { type ReactElement, useCallback, useRef, useState } from "react";
+import { type ReactElement } from "react";
 
-import { IconButton } from "@opentoggl/web-ui";
+import { DropdownMenu, IconButton, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
-import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { buildWorkspaceReportsPath } from "../../shared/lib/workspace-routing.ts";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 
@@ -26,65 +25,25 @@ export function ProjectRowActionsMenu({
   project,
   workspaceId,
 }: ProjectRowActionsMenuProps): ReactElement {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement | null>(null);
-  const close = useCallback(() => setOpen(false), []);
-  useDismiss(rootRef, open, close);
-
   return (
-    <div className="relative" ref={rootRef}>
-      <IconButton
-        aria-label={`${project.name} actions`}
-        onClick={() => setOpen((current) => !current)}
-        size="lg"
-      >
-        <MoreIcon className="size-4" />
-      </IconButton>
-      {open ? (
-        <div
-          className="absolute right-0 top-10 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
-          role="menu"
-        >
-          <MenuAction label="Edit project" onSelect={onEdit} />
-          <MenuAction label="Add member" onSelect={onAddMember} />
-          <a
-            className="flex rounded-[10px] px-3 py-2.5 text-[14px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
-            href={buildWorkspaceReportsPath(workspaceId)}
-            role="menuitem"
-          >
-            View in reports
-          </a>
-          <MenuAction label={project.active ? "Archive" : "Restore"} onSelect={onArchiveToggle} />
-          <MenuAction
-            label={project.template ? "Remove template" : "Use as a template"}
-            onSelect={onTemplateToggle}
-          />
-          <MenuAction destructive label="Delete" onSelect={onDelete} />
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function MenuAction({
-  destructive = false,
-  label,
-  onSelect,
-}: {
-  destructive?: boolean;
-  label: string;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      className={`flex w-full rounded-[10px] px-3 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-        destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
-      }`}
-      onClick={onSelect}
-      role="menuitem"
-      type="button"
+    <DropdownMenu
+      trigger={
+        <IconButton aria-label={`${project.name} actions`} size="lg">
+          <MoreIcon className="size-4" />
+        </IconButton>
+      }
+      minWidth="220px"
     >
-      {label}
-    </button>
+      <MenuItem onClick={onEdit}>Edit project</MenuItem>
+      <MenuItem onClick={onAddMember}>Add member</MenuItem>
+      <MenuLink href={buildWorkspaceReportsPath(workspaceId)}>View in reports</MenuLink>
+      <MenuItem onClick={onArchiveToggle}>{project.active ? "Archive" : "Restore"}</MenuItem>
+      <MenuItem onClick={onTemplateToggle}>
+        {project.template ? "Remove template" : "Use as a template"}
+      </MenuItem>
+      <MenuItem destructive onClick={onDelete}>
+        Delete
+      </MenuItem>
+    </DropdownMenu>
   );
 }

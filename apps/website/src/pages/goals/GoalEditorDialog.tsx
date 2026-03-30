@@ -1,11 +1,12 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Check, Info } from "lucide-react";
 
-import { AppButton, SelectField } from "@opentoggl/web-ui";
+import { AppButton, SelectDropdown } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
+import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMemberDto } from "../../shared/api/web-contract.ts";
 import {
@@ -211,18 +212,13 @@ export function GoalEditorDialog({
             <InfoIcon />
           </label>
           <div className="flex items-center gap-2">
-            <SelectField
+            <SelectDropdown
               data-testid="goal-comparison-select"
               disabled={isEdit}
-              onChange={(e) => setValue("comparison", e.target.value)}
+              onChange={(v) => setValue("comparison", v)}
+              options={COMPARISON_OPTIONS}
               value={comparison}
-            >
-              {COMPARISON_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </SelectField>
+            />
             <div className="flex h-[42px] items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
               <input
                 className="w-12 bg-transparent text-[14px] text-white focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -234,18 +230,13 @@ export function GoalEditorDialog({
               />
               <span className="text-[14px] text-[var(--track-text-muted)]">hours</span>
             </div>
-            <SelectField
+            <SelectDropdown
               data-testid="goal-recurrence-select"
               disabled={isEdit}
-              onChange={(e) => setValue("recurrence", e.target.value)}
+              onChange={(v) => setValue("recurrence", v)}
+              options={RECURRENCE_OPTIONS}
               value={recurrence}
-            >
-              {RECURRENCE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </SelectField>
+            />
           </div>
         </div>
 
@@ -349,56 +340,58 @@ function MemberDropdown({
   selectedUserId: number;
 }): ReactElement {
   const [search, setSearch] = useState("");
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDismiss(panelRef, true, onClose);
   const activeMembers = members.filter((m) => m.status === "joined" || m.status === "restored");
   const filtered = activeMembers.filter((m) => m.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <>
-      <div className="fixed inset-0 z-40" onClick={onClose} />
-      <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg">
-        <div className="border-b border-[var(--track-border)] px-3 py-2">
-          <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
-            <input
-              autoFocus
-              className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search for members"
-              value={search}
-            />
-          </div>
-        </div>
-        <div className="max-h-[200px] overflow-y-auto py-1">
-          {filtered.length > 0 ? (
-            <>
-              <div className="px-3 py-1 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                Active members
-              </div>
-              {filtered.map((m) => (
-                <button
-                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-[var(--track-row-hover)] ${
-                    m.id === selectedUserId ? "text-white" : "text-[var(--track-text-muted)]"
-                  }`}
-                  key={m.id}
-                  onClick={onClose}
-                  type="button"
-                >
-                  <MemberAvatar name={m.name} />
-                  <span className="truncate">
-                    {m.name}
-                    {m.id === selectedUserId ? " (You)" : ""}
-                  </span>
-                </button>
-              ))}
-            </>
-          ) : (
-            <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">
-              No members found
-            </div>
-          )}
+    <div
+      className="absolute left-0 top-full z-50 mt-1 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg"
+      ref={panelRef}
+    >
+      <div className="border-b border-[var(--track-border)] px-3 py-2">
+        <div className="relative">
+          <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
+          <input
+            autoFocus
+            className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search for members"
+            value={search}
+          />
         </div>
       </div>
-    </>
+      <div className="max-h-[200px] overflow-y-auto py-1">
+        {filtered.length > 0 ? (
+          <>
+            <div className="px-3 py-1 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+              Active members
+            </div>
+            {filtered.map((m) => (
+              <button
+                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[12px] hover:bg-[var(--track-row-hover)] ${
+                  m.id === selectedUserId ? "text-white" : "text-[var(--track-text-muted)]"
+                }`}
+                key={m.id}
+                onClick={onClose}
+                type="button"
+              >
+                <MemberAvatar name={m.name} />
+                <span className="truncate">
+                  {m.name}
+                  {m.id === selectedUserId ? " (You)" : ""}
+                </span>
+              </button>
+            ))}
+          </>
+        ) : (
+          <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">
+            No members found
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -410,10 +403,13 @@ function GoalIconPicker({
   value: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const closeDropdown = useCallback(() => setOpen(false), []);
+  useDismiss(rootRef, open, closeDropdown);
   const current = ICON_OPTIONS.find((o) => o.value === value) ?? ICON_OPTIONS[0];
 
   return (
-    <div className="relative">
+    <div className="relative" ref={rootRef}>
       <button
         aria-label="Goal icon"
         className="flex h-[42px] items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[18px]"
@@ -425,27 +421,24 @@ function GoalIconPicker({
         <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
       </button>
       {open ? (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-[calc(100%+4px)] z-50 flex gap-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] p-2 shadow-lg">
-            {ICON_OPTIONS.map((opt) => (
-              <button
-                className={`flex size-9 items-center justify-center rounded-[6px] text-[18px] hover:bg-[var(--track-row-hover)] ${
-                  opt.value === value ? "bg-[var(--track-row-hover)]" : ""
-                }`}
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-                title={opt.label}
-                type="button"
-              >
-                {opt.emoji}
-              </button>
-            ))}
-          </div>
-        </>
+        <div className="absolute right-0 top-[calc(100%+4px)] z-50 flex gap-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] p-2 shadow-lg">
+          {ICON_OPTIONS.map((opt) => (
+            <button
+              className={`flex size-9 items-center justify-center rounded-[6px] text-[18px] hover:bg-[var(--track-row-hover)] ${
+                opt.value === value ? "bg-[var(--track-row-hover)]" : ""
+              }`}
+              key={opt.value}
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              title={opt.label}
+              type="button"
+            >
+              {opt.emoji}
+            </button>
+          ))}
+        </div>
       ) : null}
     </div>
   );
