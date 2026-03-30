@@ -1734,7 +1734,7 @@ function formatTimesheetTotal(seconds: number): string {
 function CalendarEventCard({
   event,
   onContextMenu,
-  onContinueEntry: _onContinueEntry,
+  onContinueEntry,
   onEditEntry,
 }: {
   event: CalendarEvent;
@@ -1813,6 +1813,17 @@ function CalendarEventCard({
             {formatClockDuration(durationSeconds, durationFormat)}
           </span>
         </div>
+        <button
+          aria-label="Continue time entry"
+          className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--track-accent-secondary)] text-[var(--track-surface)] opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={(e) => {
+            e.stopPropagation();
+            onContinueEntry?.(entry);
+          }}
+          type="button"
+        >
+          <PlayIcon className="size-2.5" />
+        </button>
       </div>
     </div>
   );
