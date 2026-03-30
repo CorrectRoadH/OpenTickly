@@ -3,7 +3,7 @@ import { type ReactElement, type ReactNode } from "react";
 type PublicMainPanelFrameProps = {
   badge: string;
   children: ReactNode;
-  description: string;
+  description?: string;
   title: string;
 };
 
@@ -48,9 +48,11 @@ export function PublicMainPanelFrame({
               <h1 className="text-balance text-[20px] font-semibold leading-[30px] text-[var(--track-text)]">
                 {title}
               </h1>
-              <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">
-                {description}
-              </p>
+              {description && (
+                <p className="text-pretty text-[14px] leading-5 text-[var(--track-text-muted)]">
+                  {description}
+                </p>
+              )}
             </div>
             {children}
           </section>
