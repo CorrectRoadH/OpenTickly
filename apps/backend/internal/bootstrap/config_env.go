@@ -32,23 +32,10 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	if err := applyRequiredStringOverride(&cfg.Redis.Address, "REDIS_URL", getEnv("REDIS_URL")); err != nil {
 		return Config{}, err
 	}
-	applyBoolOverride(&cfg.Server.CookieSecure, getEnv("OPENTOGGL_COOKIE_SECURE"))
 	applyStringOverride(&cfg.FileStore.Namespace, getEnv("OPENTOGGL_FILESTORE_NAMESPACE"))
 	applyStringOverride(&cfg.Jobs.QueueName, getEnv("OPENTOGGL_JOBS_QUEUE_NAME"))
 
 	return withDefaults(cfg), nil
-}
-
-/**
- * applyBoolOverride applies a boolean environment override ("true"/"false").
- */
-func applyBoolOverride(target *bool, value string) {
-	switch strings.TrimSpace(strings.ToLower(value)) {
-	case "true", "1":
-		*target = true
-	case "false", "0":
-		*target = false
-	}
 }
 
 /**

@@ -1,5 +1,6 @@
 import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
-import { Suspense, lazy, type ComponentType, type ReactNode } from "react";
+import { Suspense, lazy, useEffect, type ComponentType, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
 import { PublicMainPanelFrame, PublicMainPanelLoading } from "../app/PublicMainPanelFrame.tsx";
@@ -433,7 +434,7 @@ function HomeRouteComponent() {
   }
 
   if (isSessionAccessDenied(sessionQuery.error)) {
-    return <Navigate replace to="/login" />;
+    return <SessionExpiredRedirect />;
   }
 
   if (sessionQuery.isError || !sessionQuery.data) {
@@ -799,7 +800,7 @@ function ProtectedRouteBoundary({ children, requestedWorkspaceId }: ProtectedRou
   }
 
   if (isSessionAccessDenied(sessionQuery.error)) {
-    return <Navigate replace to="/login" />;
+    return <SessionExpiredRedirect />;
   }
 
   if (sessionQuery.isError || !sessionQuery.data) {
@@ -824,6 +825,12 @@ function SessionUnavailablePanel() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
+
+  useEffect(() => {
+    toast.error("Session unavailable", {
+      description: "Could not restore your session. Please try logging in again.",
+    });
+  }, []);
 
   return (
     <PublicMainPanelFrame
@@ -864,7 +871,7 @@ function MobileProtectedBoundary({ children }: { children: ReactNode }) {
   }
 
   if (isSessionAccessDenied(sessionQuery.error)) {
-    return <Navigate replace to="/login" />;
+    return <SessionExpiredRedirect />;
   }
 
   if (sessionQuery.isError || !sessionQuery.data) {
@@ -908,4 +915,14 @@ function MobileMeRouteComponent() {
 
 function isSessionAccessDenied(error: unknown) {
   return error instanceof WebApiError && (error.status === 401 || error.status === 403);
+}
+
+function SessionExpiredRedirect() {
+  useEffect(() => {
+    toast.error("Session expired", {
+      description: "Please log in again to continue.",
+    });
+  }, []);
+
+  return <Navigate replace to="/login" />;
 }

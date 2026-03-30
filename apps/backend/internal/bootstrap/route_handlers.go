@@ -55,7 +55,6 @@ func newWebRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 type routeHandlers struct {
 	pool            *pgxpool.Pool
 	platformHandles *platform.Handles
-	cookieSecure    bool
 	catalogApp      *catalogapplication.Service
 	identity      *identityweb.Handler
 	identityApp   *identityapplication.Service
@@ -73,7 +72,7 @@ type routeHandlers struct {
 	referenceApp  *platformapplication.ReferenceService
 }
 
-func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, cookieSecure bool, appLogger log.Logger) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger) (*routeHandlers, error) {
 	cache := platformHandles.Cache
 
 	referenceService, err := platformapplication.NewReferenceService()
@@ -163,7 +162,6 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, coo
 	return &routeHandlers{
 		pool:            pool,
 		platformHandles: platformHandles,
-		cookieSecure:    cookieSecure,
 		catalogApp:      catalogService,
 		identity:      identityHandler,
 		identityApp:   identityService,
@@ -694,11 +692,11 @@ func parsePathID(ctx echo.Context, key string) (int64, bool) {
 
 func (handlers *routeHandlers) writeIdentityResponse(ctx echo.Context, response identityweb.Response) error {
 	if response.SessionID != "" && response.StatusCode < http.StatusBadRequest {
-		setSessionCookie(ctx, response.SessionID, handlers.cookieSecure)
+		setSessionCookie(ctx, response.SessionID)
 	}
 	if response.StatusCode == http.StatusNoContent {
 		if response.SessionID == "" {
-			clearSessionCookie(ctx, handlers.cookieSecure)
+			clearSessionCookie(ctx)
 		}
 		return ctx.NoContent(http.StatusNoContent)
 	}
@@ -720,12 +718,12 @@ func writeTenantResponse(ctx echo.Context, response tenantweb.Response) error {
 	return ctx.JSON(response.StatusCode, response.Body)
 }
 
-func setSessionCookie(ctx echo.Context, sessionID string, secure bool) {
+func setSessionCookie(ctx echo.Context, sessionID string) {
 	ctx.SetCookie(&http.Cookie{
 		Name:     sessionCookieName,
 		Value:    sessionID,
 		HttpOnly: true,
-		Secure:   secure,
+		Secure:   resolveCookieSecure(ctx),
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   30 * 24 * 60 * 60, // 30 days
@@ -782,16 +780,20 @@ func (handlers *routeHandlers) currentSessionHome(ctx echo.Context) (sessionHome
 	}
 }
 
-func clearSessionCookie(ctx echo.Context, secure bool) {
+func clearSessionCookie(ctx echo.Context) {
 	ctx.SetCookie(&http.Cookie{
 		Name:     sessionCookieName,
 		Value:    "",
 		HttpOnly: true,
-		Secure:   secure,
+		Secure:   ctx.Scheme() == "https",
 		Path:     "/",
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 	})
+}
+
+func resolveCookieSecure(ctx echo.Context) bool {
+	return ctx.Scheme() == "https"
 }
 
 type billingBackedSessionShell struct {
