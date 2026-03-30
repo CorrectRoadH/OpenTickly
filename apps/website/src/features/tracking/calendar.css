@@ -142,10 +142,18 @@
   border-radius: 0;
   font-size: 12px;
   line-height: 1.25;
+  min-height: 4px;
   padding: 1px 1px 0;
   color: var(--track-text);
   overflow: visible;
-  transition: opacity 0.15s;
+  transition:
+    opacity 0.15s,
+    min-height 0.15s ease;
+}
+
+.rbc-event:hover {
+  min-height: 44px;
+  z-index: 5;
 }
 
 .rbc-event:focus {

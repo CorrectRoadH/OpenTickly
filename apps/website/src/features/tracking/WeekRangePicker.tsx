@@ -26,16 +26,22 @@ export function WeekRangePicker({
   onNext,
   onPrev,
   onSelectDate,
+  onSelectRange,
+  rangeEnd: rangeEndProp,
+  rangeStart: rangeStartProp,
   selectedDate,
   sidebar,
   weekStartsOn = 1,
 }: {
   disabled?: boolean;
   label: string;
-  mode?: "day" | "week";
+  mode?: "day" | "range" | "week";
   onNext: () => void;
   onPrev: () => void;
   onSelectDate: (date: Date) => void;
+  onSelectRange?: (start: Date, end: Date) => void;
+  rangeEnd?: Date;
+  rangeStart?: Date;
   selectedDate: Date;
   sidebar?: ReactNode;
   weekStartsOn?: number;
@@ -54,9 +60,15 @@ export function WeekRangePicker({
     [visibleMonth, weekStartsOn],
   );
 
+  // Range mode state: first click sets pendingStart, second click completes the range
+  const [pendingStart, setPendingStart] = useState<Date | null>(null);
+  const [hoverDate, setHoverDate] = useState<Date | null>(null);
+
   useEffect(() => {
     if (!isOpen) {
       setHeaderPicker(null);
+      setPendingStart(null);
+      setHoverDate(null);
       return;
     }
 
@@ -82,7 +94,9 @@ export function WeekRangePicker({
       {/* Outer pill: prev arrow + label trigger + next arrow */}
       <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] text-white">
         <button
-          aria-label={mode === "day" ? "Previous day" : "Previous week"}
+          aria-label={
+            mode === "day" ? "Previous day" : mode === "range" ? "Previous period" : "Previous week"
+          }
           className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
           onClick={onPrev}
@@ -109,7 +123,7 @@ export function WeekRangePicker({
           <span className="truncate text-[12px] font-medium">{label}</span>
         </button>
         <button
-          aria-label={mode === "day" ? "Next day" : "Next week"}
+          aria-label={mode === "day" ? "Next day" : mode === "range" ? "Next period" : "Next week"}
           className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
           onClick={onNext}
@@ -274,6 +288,113 @@ export function WeekRangePicker({
                   const weekStart = week[0];
                   const isSelectedWeek =
                     mode === "week" && isSameWeek(weekStart, selectedWeekStart, weekStartsOn);
+
+                  if (mode === "range") {
+                    // Determine the effective range for highlighting
+                    const effectiveStart = pendingStart ?? rangeStartProp;
+                    const effectiveEnd = pendingStart
+                      ? hoverDate // While selecting, show preview to hover
+                      : rangeEndProp;
+
+                    return (
+                      <div
+                        className="grid grid-cols-[20px_repeat(7,minmax(0,1fr))] items-center text-left"
+                        key={weekStart.toISOString()}
+                      >
+                        <span className="text-[12px] font-medium text-[var(--track-text-muted)]">
+                          {resolveIsoWeekNumber(weekStart)}
+                        </span>
+                        {week.map((day) => {
+                          const isInVisibleMonth = day.getMonth() === visibleMonth.getMonth();
+                          const isToday = isSameDay(day, new Date());
+
+                          // Range highlight logic
+                          let rangeClass = "";
+                          if (effectiveStart && effectiveEnd) {
+                            const lo =
+                              effectiveStart <= effectiveEnd ? effectiveStart : effectiveEnd;
+                            const hi =
+                              effectiveStart <= effectiveEnd ? effectiveEnd : effectiveStart;
+                            const dayTime = new Date(
+                              day.getFullYear(),
+                              day.getMonth(),
+                              day.getDate(),
+                            ).getTime();
+                            const loTime = new Date(
+                              lo.getFullYear(),
+                              lo.getMonth(),
+                              lo.getDate(),
+                            ).getTime();
+                            const hiTime = new Date(
+                              hi.getFullYear(),
+                              hi.getMonth(),
+                              hi.getDate(),
+                            ).getTime();
+
+                            if (dayTime === loTime) {
+                              rangeClass =
+                                "range-start rounded-l-lg bg-[var(--track-accent-strong)] text-white";
+                            } else if (dayTime === hiTime) {
+                              rangeClass =
+                                "range-end rounded-r-lg bg-[var(--track-accent-strong)] text-white";
+                            } else if (dayTime > loTime && dayTime < hiTime) {
+                              rangeClass =
+                                "range-mid bg-[var(--track-accent-tint)] text-[var(--track-accent-text)]";
+                            }
+                          } else if (effectiveStart && isSameDay(day, effectiveStart)) {
+                            rangeClass =
+                              "range-start rounded-lg bg-[var(--track-accent-strong)] text-white";
+                          }
+
+                          return (
+                            <button
+                              aria-label={`Select ${formatTrackQueryDate(day)}`}
+                              className={`flex h-[29px] items-center justify-center text-[14px] font-medium transition hover:bg-[var(--track-row-hover)] ${
+                                rangeClass
+                                  ? rangeClass
+                                  : isInVisibleMonth
+                                    ? "text-white"
+                                    : "text-[var(--track-text-muted)]"
+                              }`}
+                              key={day.toISOString()}
+                              onClick={() => {
+                                if (pendingStart == null) {
+                                  // First click — set start
+                                  setPendingStart(day);
+                                } else {
+                                  // Second click — complete range
+                                  const a = pendingStart;
+                                  const b = day;
+                                  const start = a <= b ? a : b;
+                                  const end = a <= b ? b : a;
+                                  setPendingStart(null);
+                                  setHoverDate(null);
+                                  onSelectRange?.(start, end);
+                                  setIsOpen(false);
+                                }
+                              }}
+                              onMouseEnter={() => {
+                                if (pendingStart != null) {
+                                  setHoverDate(day);
+                                }
+                              }}
+                              type="button"
+                            >
+                              <span
+                                className={
+                                  isToday && !rangeClass
+                                    ? "flex size-[26px] items-center justify-center rounded-full border border-[var(--track-border)]"
+                                    : ""
+                                }
+                              >
+                                {day.getDate()}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
 
                   if (mode === "day") {
                     return (

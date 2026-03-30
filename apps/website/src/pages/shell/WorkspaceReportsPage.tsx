@@ -19,7 +19,11 @@ import { ReportsBreakdownPanel } from "./ReportsBreakdownPanel.tsx";
 import { ReportsDescriptionFilter } from "./ReportsDescriptionFilter.tsx";
 import { DurationChart, DistributionPanel } from "./ReportsCharts.tsx";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
-import { REPORTS_SHORTCUTS, resolveShortcutRange } from "../../features/tracking/week-range.ts";
+import {
+  formatTrackQueryDate,
+  REPORTS_SHORTCUTS,
+  resolveShortcutRange,
+} from "../../features/tracking/week-range.ts";
 import { ReportsSurfaceMessage, SummaryMetrics, ToolbarButton } from "./ReportsSharedWidgets.tsx";
 import { ReportsDetailedView } from "./ReportsDetailedView.tsx";
 import { ReportsWorkloadView } from "./ReportsWorkloadView.tsx";
@@ -511,13 +515,35 @@ function ReportsRangePicker({
   state: ReturnType<typeof useReportsPageState>;
   weekStartsOn: number;
 }): ReactElement {
+  const rangeStart = useMemo(
+    () => new Date(`${state.dateRange.startDate}T00:00:00`),
+    [state.dateRange.startDate],
+  );
+  const rangeEnd = useMemo(
+    () => new Date(`${state.dateRange.endDate}T00:00:00`),
+    [state.dateRange.endDate],
+  );
+
+  const handleSelectRange = useCallback(
+    (start: Date, end: Date) => {
+      state.selectDateRange({
+        startDate: formatTrackQueryDate(start),
+        endDate: formatTrackQueryDate(end),
+      });
+    },
+    [state],
+  );
+
   return (
     <WeekRangePicker
       label={label}
-      mode="week"
+      mode="range"
       onNext={state.goNext}
       onPrev={state.goPrev}
       onSelectDate={onSelectDate}
+      onSelectRange={handleSelectRange}
+      rangeStart={rangeStart}
+      rangeEnd={rangeEnd}
       selectedDate={selectedDate}
       sidebar={<ReportsDateShortcuts state={state} weekStartsOn={weekStartsOn} />}
       weekStartsOn={weekStartsOn}
