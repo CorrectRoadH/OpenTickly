@@ -4,10 +4,10 @@ import { type ButtonHTMLAttributes, type SelectHTMLAttributes, forwardRef } from
 const selectBase =
   "h-9 rounded-lg border border-[var(--track-border)] bg-transparent px-3 pr-8 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]";
 
-function Chevron() {
+function Chevron({ className = "" }: { className?: string }) {
   return (
     <svg
-      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--track-text-muted)]"
+      className={`shrink-0 text-[var(--track-text-muted)] ${className}`}
       fill="none"
       height="12"
       viewBox="0 0 12 12"
@@ -38,7 +38,7 @@ export function SelectField({
       >
         {children}
       </select>
-      <Chevron />
+      <Chevron className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2" />
     </div>
   );
 }
@@ -56,13 +56,13 @@ export const SelectButton = forwardRef<HTMLButtonElement, SelectButtonProps>(fun
     <div className="relative">
       <button
         {...props}
-        className={`${selectBase} flex w-full items-center ${className}`}
+        className={`${selectBase} flex w-full items-center gap-2 !pr-3 ${className}`}
         ref={ref}
         type="button"
       >
         <span className="flex-1 truncate text-left">{children}</span>
+        <Chevron />
       </button>
-      <Chevron />
     </div>
   );
 });
