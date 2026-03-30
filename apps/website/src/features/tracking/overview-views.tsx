@@ -11,6 +11,7 @@ import { enUS } from "date-fns/locale/en-US";
 import { SelectButton } from "@opentoggl/web-ui";
 import "./calendar.css";
 
+import { calendarDayLayout } from "./calendar-day-layout.ts";
 import { CalendarEntryContextMenu } from "./CalendarEntryContextMenu.tsx";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -1020,20 +1021,7 @@ function ListRowProjectPicker({
   workspaceName: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const filteredProjects = useMemo(
-    () =>
-      search.trim()
-        ? projects.filter(
-            (p) =>
-              p.name.toLowerCase().includes(search.toLowerCase()) ||
-              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
-          )
-        : projects,
-    [projects, search],
-  );
 
   const hasProject = !!entry.project_name;
 
@@ -1043,10 +1031,7 @@ function ListRowProjectPicker({
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
           className="flex cursor-pointer items-center gap-1.5 overflow-hidden text-[14px] font-medium"
-          onClick={() => {
-            setOpen((prev) => !prev);
-            setSearch("");
-          }}
+          onClick={() => setOpen((prev) => !prev)}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
           }}
@@ -1070,10 +1055,7 @@ function ListRowProjectPicker({
         <button
           aria-label="Add a project"
           className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
-          onClick={() => {
-            setOpen((prev) => !prev);
-            setSearch("");
-          }}
+          onClick={() => setOpen((prev) => !prev)}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
           }}
@@ -1088,13 +1070,11 @@ function ListRowProjectPicker({
           onMouseDown={(e) => e.preventDefault()}
         >
           <ProjectPickerDropdown
-            filteredProjects={filteredProjects}
-            onSearch={setSearch}
             onSelect={(projectId) => {
               setOpen(false);
               onProjectChange?.(entry, projectId);
             }}
-            search={search}
+            projects={projects}
             workspaceName={workspaceName}
           />
         </div>
@@ -1174,7 +1154,6 @@ export function CalendarView({
   // stable while a timer is running (nowMs ticks every second).
   const stoppedEvents = useMemo<CalendarEvent[]>(() => {
     const DRAFT_ENTRY_ID = -1;
-    const MIN_SLOT_MS = 15 * 60 * 1000;
 
     const calendarEvents: CalendarEvent[] = entries
       .filter(
@@ -1185,11 +1164,7 @@ export function CalendarView({
       )
       .map((entry) => {
         const start = new Date(entry.start ?? entry.at ?? Date.now());
-        const rawEnd = new Date(entry.stop!);
-        const end =
-          rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
-            ? new Date(start.getTime() + MIN_SLOT_MS)
-            : rawEnd;
+        const end = new Date(entry.stop!);
         return {
           allDay: false,
           end,
@@ -1212,11 +1187,7 @@ export function CalendarView({
         id: DRAFT_ENTRY_ID,
       } as GithubComTogglTogglApiInternalModelsTimeEntry & { id: number };
       const start = new Date(draftWithId.start ?? Date.now());
-      const rawEnd = draftWithId.stop ? new Date(draftWithId.stop) : start;
-      const end =
-        rawEnd.getTime() - start.getTime() < MIN_SLOT_MS
-          ? new Date(start.getTime() + MIN_SLOT_MS)
-          : rawEnd;
+      const end = draftWithId.stop ? new Date(draftWithId.stop) : start;
       calendarEvents.push({
         allDay: false,
         end,
@@ -1473,7 +1444,8 @@ export function CalendarView({
           !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
         }
         endAccessor={(event) => event.end}
-        dayLayoutAlgorithm="no-overlap"
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        dayLayoutAlgorithm={calendarDayLayout as any}
         eventPropGetter={(event) => ({
           className: event.resource.isRunning ? "rbc-event-running" : undefined,
           style: {

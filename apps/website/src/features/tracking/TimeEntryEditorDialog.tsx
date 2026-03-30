@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { DEFAULT_PROJECT_COLOR, TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
+import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import { CalendarPanel } from "./CalendarPanel.tsx";
 import {
   formatClockDuration,
@@ -47,6 +47,7 @@ export type TimeEntryEditorProject = {
   color: string;
   id: number;
   name: string;
+  pinned?: boolean;
 };
 
 export type TimeEntryEditorTag = {
@@ -149,11 +150,6 @@ export function TimeEntryEditorDialog({
     actionsMenuOpen,
     descriptionSuggestionsOpen,
     picker,
-    projectColorPickerOpen,
-    projectComposerOpen,
-    projectCreateError,
-    projectDraftColor,
-    projectDraftName,
     search,
     showDiscardConfirmation,
     tagComposerOpen,
@@ -161,7 +157,6 @@ export function TimeEntryEditorDialog({
     timeEditor,
     timeInputError,
     timePicker,
-    workspaceMenuOpen,
   } = ui;
   const startIso = entry.start ?? entry.at ?? new Date().toISOString();
   const stopIso = entry.stop ?? null;
@@ -559,211 +554,24 @@ export function TimeEntryEditorDialog({
           </div>
 
           {picker === "project" ? (
-            <PickerSurface
-              action={
-                <button
-                  className="text-[14px] font-medium text-white"
-                  onClick={() => dispatch({ type: "SET_WORKSPACE_MENU", open: !workspaceMenuOpen })}
-                  type="button"
-                >
-                  Change &rsaquo;
-                </button>
-              }
-              icon={
-                <ProjectsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />
-              }
-              title={currentWorkspaceName}
-            >
-              {workspaceMenuOpen ? (
-                <div className="px-4 pb-2">
-                  <div className="rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-2 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
-                    {workspaces.map((workspace) => (
-                      <button
-                        className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
-                          workspace.id === currentWorkspaceId
-                            ? "text-white"
-                            : "text-[var(--track-overlay-text-muted)]"
-                        }`}
-                        key={workspace.id}
-                        onClick={() => {
-                          onWorkspaceSelect(workspace.id);
-                          dispatch({ type: "SET_WORKSPACE_MENU", open: false });
-                          dispatch({ type: "SET_PICKER", picker: null });
-                        }}
-                        type="button"
-                      >
-                        <span className="truncate">{workspace.name}</span>
-                        {workspace.id === currentWorkspaceId ? (
-                          <span className="text-[12px] text-[var(--track-accent-text)]">
-                            Current
-                          </span>
-                        ) : null}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-              <SearchField
-                placeholder="Search by project, task or client"
-                value={search}
-                onChange={(query: string) => dispatch({ type: "SET_SEARCH", query })}
-              />
-              <button
-                className="flex w-full items-center gap-3 rounded-[10px] px-4 py-3 text-left text-[14px] text-[var(--track-overlay-text)] transition hover:bg-white/4"
-                onClick={() => {
-                  onProjectSelect(null);
+            <div className="absolute -left-2 top-8 z-10 w-[360px]">
+              <ProjectPickerDropdown
+                currentWorkspaceId={currentWorkspaceId}
+                isCreatingProject={isCreatingProject}
+                onCreateProject={onCreateProject}
+                onSelect={(projectId) => {
+                  onProjectSelect(projectId);
                   dispatch({ type: "SET_PICKER", picker: null });
                 }}
-                type="button"
-              >
-                <ProjectsIcon className="size-5 text-[var(--track-overlay-icon-muted)]" />
-                <span>No Project</span>
-              </button>
-              <div className="px-4 pt-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
-                Projects
-              </div>
-              <div className="max-h-[340px] overflow-y-auto px-1 py-2">
-                {filteredProjects.map((project) => (
-                  <button
-                    className="flex w-full items-center gap-3 rounded-[10px] px-3 py-3 text-left transition hover:bg-white/4"
-                    key={project.id}
-                    onClick={() => {
-                      onProjectSelect(project.id);
-                      dispatch({ type: "SET_PICKER", picker: null });
-                    }}
-                    type="button"
-                  >
-                    <span
-                      className="size-2.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: project.color }}
-                    />
-                    <div className="min-w-0">
-                      <div className="truncate text-[14px] font-medium text-white">
-                        {project.name}
-                      </div>
-                      <div className="truncate text-[12px] text-[var(--track-control-placeholder-muted)]">
-                        {project.clientName || "No client"}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-              {projectComposerOpen ? (
-                <form
-                  className="border-t border-white/6 px-4 pb-1 pt-3"
-                  onSubmit={(event) => {
-                    void (async () => {
-                      event.preventDefault();
-                      const trimmed = projectDraftName.trim();
-                      if (!trimmed || isCreatingProject) {
-                        return;
-                      }
-                      dispatch({ type: "SET_PROJECT_CREATE_ERROR", error: null });
-                      try {
-                        await onCreateProject(trimmed, projectDraftColor);
-                        dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: "" });
-                        dispatch({ type: "SET_PROJECT_DRAFT_COLOR", color: DEFAULT_PROJECT_COLOR });
-                        dispatch({ type: "SET_PROJECT_COLOR_PICKER", open: false });
-                        dispatch({ type: "SET_PROJECT_COMPOSER", open: false });
-                        dispatch({ type: "SET_SEARCH", query: "" });
-                      } catch (err) {
-                        const message =
-                          err instanceof Error ? err.message : "Project name already exists";
-                        dispatch({
-                          type: "SET_PROJECT_CREATE_ERROR",
-                          error: message.toLowerCase().includes("name")
-                            ? message
-                            : "Project name already exists",
-                        });
-                      }
-                    })();
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="relative">
-                      <button
-                        aria-label="Select project color"
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)]"
-                        onClick={() =>
-                          dispatch({
-                            type: "SET_PROJECT_COLOR_PICKER",
-                            open: !projectColorPickerOpen,
-                          })
-                        }
-                        type="button"
-                      >
-                        <span
-                          className="size-5 rounded-full border border-black/20"
-                          style={{ backgroundColor: projectDraftColor }}
-                        />
-                      </button>
-                      {projectColorPickerOpen ? (
-                        <div className="absolute bottom-[calc(100%+6px)] left-0 z-10 grid w-[220px] grid-cols-5 gap-2 rounded-[10px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] p-3 shadow-[0_12px_28px_var(--track-shadow-overlay)]">
-                          {TRACK_COLOR_SWATCHES.map((option) => (
-                            <button
-                              aria-label={`Select color ${option}`}
-                              className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
-                                projectDraftColor === option
-                                  ? "border-white/80 bg-white/8"
-                                  : "border-transparent hover:border-white/25"
-                              }`}
-                              key={option}
-                              onClick={() => {
-                                dispatch({ type: "SET_PROJECT_DRAFT_COLOR", color: option });
-                                dispatch({ type: "SET_PROJECT_COLOR_PICKER", open: false });
-                              }}
-                              type="button"
-                            >
-                              <span
-                                className="h-5 w-5 rounded-full border border-black/20"
-                                style={{ backgroundColor: option }}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                    <input
-                      className={`h-10 flex-1 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)] ${
-                        projectCreateError
-                          ? "border-rose-400"
-                          : "border-[var(--track-control-border)]"
-                      }`}
-                      onChange={(event) => {
-                        dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: event.target.value });
-                        dispatch({ type: "SET_PROJECT_CREATE_ERROR", error: null });
-                      }}
-                      placeholder="Project name"
-                      value={projectDraftName}
-                    />
-                    <button
-                      className="rounded-[10px] bg-[var(--track-accent-fill-hover)] px-4 py-2.5 text-[12px] font-semibold text-[var(--track-button-text)] disabled:opacity-60"
-                      disabled={isCreatingProject || projectDraftName.trim().length === 0}
-                      type="submit"
-                    >
-                      {isCreatingProject ? "Creating..." : "Create"}
-                    </button>
-                  </div>
-                  {projectCreateError ? (
-                    <p className="mt-1.5 text-[12px] text-rose-400">{projectCreateError}</p>
-                  ) : null}
-                </form>
-              ) : (
-                <div className="border-t border-white/6 px-4 pb-1 pt-3">
-                  <button
-                    className="flex items-center gap-3 text-[14px] font-medium text-[var(--track-overlay-text-accent)]"
-                    onClick={() => {
-                      dispatch({ type: "SET_PROJECT_DRAFT_NAME", name: search.trim() });
-                      dispatch({ type: "SET_PROJECT_COMPOSER", open: true });
-                    }}
-                    type="button"
-                  >
-                    <span className="text-[22px] leading-none">+</span>
-                    <span>Create a new project</span>
-                  </button>
-                </div>
-              )}
-            </PickerSurface>
+                onWorkspaceSelect={(workspaceId) => {
+                  onWorkspaceSelect(workspaceId);
+                  dispatch({ type: "SET_PICKER", picker: null });
+                }}
+                projects={projects}
+                workspaceName={currentWorkspaceName}
+                workspaces={workspaces}
+              />
+            </div>
           ) : null}
 
           {picker === "tag" ? (

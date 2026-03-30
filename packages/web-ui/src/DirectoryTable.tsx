@@ -107,7 +107,7 @@ export function DirectoryTable<T>({
           return (
             <div data-testid={rowTestId} key={id}>
               <div
-                className={`grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
+                className={`group/row grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
                   selected
                     ? "border-l-2 border-l-[var(--track-accent)] bg-[var(--track-accent-soft)]"
                     : ""

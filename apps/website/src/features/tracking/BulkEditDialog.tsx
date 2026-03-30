@@ -52,16 +52,10 @@ export function BulkEditDialog({
     [projects, selectedProjectId],
   );
 
-  const matchProject = useCallback(
-    (p: TimeEntryEditorProject, q: string) =>
-      `${p.name} ${p.clientName ?? ""}`.toLowerCase().includes(q),
-    [],
-  );
   const matchTag = useCallback(
     (t: TimeEntryEditorTag, q: string) => t.name.toLowerCase().includes(q),
     [],
   );
-  const filteredProjects = useFilteredList(projects, search, matchProject);
   const filteredTags = useFilteredList(tags, search, matchTag);
 
   function handleSave() {
@@ -121,14 +115,12 @@ export function BulkEditDialog({
           </button>
           {picker === "project" ? (
             <ProjectPickerDropdown
-              filteredProjects={filteredProjects}
-              onSearch={setSearch}
               onSelect={(id) => {
                 setSelectedProjectId(id);
                 setProjectTouched(true);
                 setPicker(null);
               }}
-              search={search}
+              projects={projects}
               workspaceName={workspaceName}
             />
           ) : null}

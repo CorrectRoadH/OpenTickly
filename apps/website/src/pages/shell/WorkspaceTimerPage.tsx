@@ -610,6 +610,7 @@ export function WorkspaceTimerPage({
                   color: resolveProjectColorValue(project),
                   id: project.id as number,
                   name: project.name ?? "Untitled project",
+                  pinned: project.pinned === true,
                 }))}
               tags={orch.tagOptions}
               timezone={orch.timezone}
@@ -804,6 +805,7 @@ export function WorkspaceTimerPage({
                   color: resolveProjectColorValue(project),
                   id: project.id as number,
                   name: project.name ?? "Untitled project",
+                  pinned: project.pinned === true,
                 }))}
               recentEntries={orch.recentWorkspaceEntries}
               saveError={orch.selectedEntryError}
@@ -1042,6 +1044,7 @@ function TimerBarProjectPicker({
     color?: string | null;
     id?: number | null;
     name?: string | null;
+    pinned?: boolean;
   }[];
   runningEntry: {
     id?: number | null;
@@ -1051,7 +1054,6 @@ function TimerBarProjectPicker({
   workspaceName: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const projects = useMemo(
@@ -1063,20 +1065,9 @@ function TimerBarProjectPicker({
           color: resolveProjectColorValue(p),
           id: p.id as number,
           name: p.name ?? "Untitled project",
+          pinned: p.pinned === true,
         })),
     [projectOptions],
-  );
-
-  const filteredProjects = useMemo(
-    () =>
-      search.trim()
-        ? projects.filter(
-            (p) =>
-              p.name.toLowerCase().includes(search.toLowerCase()) ||
-              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
-          )
-        : projects,
-    [projects, search],
   );
 
   // When a running entry exists, display its project; otherwise use draft project
@@ -1098,10 +1089,7 @@ function TimerBarProjectPicker({
               ? "size-9 text-[var(--track-accent)]"
               : "size-9 text-[var(--track-text-muted)] hover:text-white"
         }`}
-        onClick={() => {
-          setOpen((prev) => !prev);
-          setSearch("");
-        }}
+        onClick={() => setOpen((prev) => !prev)}
         onBlur={(e) => {
           if (!containerRef.current?.contains(e.relatedTarget as Node)) {
             setOpen(false);
@@ -1136,13 +1124,11 @@ function TimerBarProjectPicker({
           }}
         >
           <ProjectPickerDropdown
-            filteredProjects={filteredProjects}
-            onSearch={setSearch}
             onSelect={(projectId) => {
               setOpen(false);
               onProjectSelect(projectId);
             }}
-            search={search}
+            projects={projects}
             workspaceName={workspaceName}
           />
         </div>
@@ -1511,10 +1497,10 @@ function TimesheetAddRowPicker({
     color?: string | null;
     id?: number | null;
     name?: string | null;
+    pinned?: boolean;
   }[];
   workspaceName: string;
 }): ReactElement {
-  const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const projects = useMemo(
@@ -1526,20 +1512,9 @@ function TimesheetAddRowPicker({
           color: resolveProjectColorValue(p),
           id: p.id as number,
           name: p.name ?? "Untitled project",
+          pinned: p.pinned === true,
         })),
     [projectOptions],
-  );
-
-  const filteredProjects = useMemo(
-    () =>
-      search.trim()
-        ? projects.filter(
-            (p) =>
-              p.name.toLowerCase().includes(search.toLowerCase()) ||
-              (p.clientName ?? "").toLowerCase().includes(search.toLowerCase()),
-          )
-        : projects,
-    [projects, search],
   );
 
   useDismiss(containerRef, true, onClose);
@@ -1555,10 +1530,8 @@ function TimesheetAddRowPicker({
       ref={containerRef}
     >
       <ProjectPickerDropdown
-        filteredProjects={filteredProjects}
-        onSearch={setSearch}
         onSelect={onSelect}
-        search={search}
+        projects={projects}
         workspaceName={workspaceName}
       />
     </div>

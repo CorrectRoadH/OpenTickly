@@ -578,7 +578,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <div className="flex items-center">
                   <IconButton
                     aria-label={`${project.pinned ? "Unpin" : "Pin"} ${project.name}`}
-                    className={project.pinned ? "text-[var(--track-accent)]" : ""}
+                    className={
+                      project.pinned
+                        ? "text-[var(--track-accent)]"
+                        : "opacity-0 transition-opacity group-hover/row:opacity-100"
+                    }
                     onClick={() => void handlePinToggle(project)}
                     size="md"
                   >
