@@ -3,6 +3,12 @@ import { expect, test } from "@playwright/test";
 import { createProjectForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 import { expectedDuration } from "./fixtures/e2e-format.ts";
 
+/** Return today's date as YYYY-MM-DD so entries always land in the current week. */
+function todayISO(): string {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
 /**
  * Story: A user edits a time entry from the calendar view, changing its
  * description, project, tags, billable status, start/stop times, and saves.
@@ -38,10 +44,11 @@ test.describe("Story: full time entry editing from calendar", () => {
 
     await createTagForWorkspace(page, { name: "urgent", workspaceId });
 
+    const today = todayISO();
     await createStoppedTimeEntry(page, {
       description: INITIAL_DESCRIPTION,
-      start: "2026-03-23T09:00:00Z",
-      stop: "2026-03-23T10:00:00Z",
+      start: `${today}T09:00:00Z`,
+      stop: `${today}T10:00:00Z`,
       workspaceId,
     });
 
@@ -190,10 +197,11 @@ test.describe("Story: calendar view interactions", () => {
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
 
+    const today = todayISO();
     await createStoppedTimeEntry(page, {
       description: "Context menu test entry",
-      start: "2026-03-23T14:00:00Z",
-      stop: "2026-03-23T15:00:00Z",
+      start: `${today}T14:00:00Z`,
+      stop: `${today}T15:00:00Z`,
       workspaceId: session.currentWorkspaceId,
     });
 

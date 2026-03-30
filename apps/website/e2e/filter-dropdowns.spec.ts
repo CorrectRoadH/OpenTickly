@@ -153,7 +153,6 @@ test.describe("Story: filter dropdown components work across pages", () => {
     });
 
     const start = new Date();
-    start.setUTCDate(start.getUTCDate() - 1);
     start.setUTCHours(9, 0, 0, 0);
     const midStop = new Date(start);
     midStop.setUTCHours(10, 0, 0, 0);

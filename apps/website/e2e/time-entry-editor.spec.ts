@@ -4,6 +4,12 @@ import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 const ENTRY_DESCRIPTION = "Time entry to edit";
 
+/** Return today's date as YYYY-MM-DD so entries always land in the current week. */
+function todayISO(): string {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
 test.describe("Story: edit a stopped time entry", () => {
   test.beforeEach(async ({ page }) => {
     const email = `edit-entry-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -18,10 +24,11 @@ test.describe("Story: edit a stopped time entry", () => {
     await page.context().clearCookies();
     const loginSession = await loginE2eUser(page, test.info(), { email, password });
 
+    const today = todayISO();
     await createStoppedTimeEntry(page, {
       description: ENTRY_DESCRIPTION,
-      start: "2026-03-23T10:00:00Z",
-      stop: "2026-03-23T10:30:00Z",
+      start: `${today}T10:00:00Z`,
+      stop: `${today}T10:30:00Z`,
       workspaceId: loginSession.currentWorkspaceId,
     });
 
@@ -148,7 +155,12 @@ test.describe("Story: edit a stopped time entry", () => {
     const datePicker = page.getByTestId("time-entry-editor-start-date-picker");
     await expect(datePicker).toBeVisible();
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
-    await datePicker.getByRole("button", { name: "March 23, 2026" }).click();
+    const todayLabel = new Date().toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    await datePicker.getByRole("button", { name: todayLabel }).click();
     await expect(datePicker).not.toBeVisible();
 
     await dialog.getByRole("button", { name: "Save" }).click();

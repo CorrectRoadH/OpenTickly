@@ -29,7 +29,6 @@ test.describe("Story: browse the reports surface", () => {
       workspaceId,
     });
     const start = new Date();
-    start.setUTCDate(start.getUTCDate() - 1);
     start.setUTCHours(9, 0, 0, 0);
     const stop = new Date(start);
     stop.setUTCHours(11, 30, 0, 0);
