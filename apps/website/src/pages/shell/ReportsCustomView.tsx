@@ -1,6 +1,6 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { Link, Pin, Search } from "lucide-react";
-import { SelectField } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentoggl/web-ui";
 
 import { useSession } from "../../shared/session/session-context.tsx";
 
@@ -57,15 +57,16 @@ export function ReportsCustomView(): ReactElement {
       <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-[var(--track-text-muted)]">Show</span>
-          <SelectField
+          <SelectDropdown
             data-testid="custom-reports-show-filter"
-            onChange={(e) => setShowFilter(e.target.value as ShowFilter)}
+            onChange={(value) => setShowFilter(value as ShowFilter)}
+            options={[
+              { label: "All", value: "all" },
+              { label: "Mine", value: "mine" },
+              { label: "Shared with me", value: "shared" },
+            ]}
             value={showFilter}
-          >
-            <option value="all">All</option>
-            <option value="mine">Mine</option>
-            <option value="shared">Shared with me</option>
-          </SelectField>
+          />
         </div>
         <div className="flex flex-1 items-center gap-2 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
           <Search

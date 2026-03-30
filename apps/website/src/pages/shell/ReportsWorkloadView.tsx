@@ -1,5 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
-import { SelectField } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -125,15 +125,16 @@ export function ReportsWorkloadView({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] text-[var(--track-text-muted)]">Show:</span>
-              <SelectField
+              <SelectDropdown
                 data-testid="workload-metric-select"
-                onChange={(e) => setMetric(e.target.value as WorkloadMetric)}
+                onChange={(value) => setMetric(value as WorkloadMetric)}
+                options={[
+                  { label: "Utilization", value: "utilization" },
+                  { label: "Tracked hours", value: "tracked" },
+                  { label: "Billable hours", value: "billable" },
+                ]}
                 value={metric}
-              >
-                <option value="utilization">Utilization</option>
-                <option value="tracked">Tracked hours</option>
-                <option value="billable">Billable hours</option>
-              </SelectField>
+              />
             </div>
           </div>
 

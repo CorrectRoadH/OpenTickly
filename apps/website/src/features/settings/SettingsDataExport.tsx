@@ -1,4 +1,4 @@
-import { AppButton, SelectField, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -178,15 +178,16 @@ export function SettingsDataExport(): ReactElement {
           <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
             Export format
           </span>
-          <SelectField
+          <SelectDropdown
             className="sm:w-48"
             data-testid="export-format"
-            onChange={(e) => setFormat(e.target.value as ExportFormat)}
+            onChange={(v) => setFormat(v as ExportFormat)}
+            options={[
+              { value: "csv", label: "CSV" },
+              { value: "pdf", label: "PDF" },
+            ]}
             value={format}
-          >
-            <option value="csv">CSV</option>
-            <option value="pdf">PDF</option>
-          </SelectField>
+          />
         </label>
 
         <div className="flex items-center gap-4">

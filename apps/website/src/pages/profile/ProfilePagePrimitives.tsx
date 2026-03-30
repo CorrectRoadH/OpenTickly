@@ -2,7 +2,7 @@ import { Upload, Trash2 } from "lucide-react";
 import { type ReactElement, type ReactNode, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import { AppPanel, SelectField } from "@opentoggl/web-ui";
+import { AppPanel, SelectDropdown } from "@opentoggl/web-ui";
 
 import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
@@ -155,19 +155,7 @@ function PreferenceSelectBase({
         {label}
       </label>
       <div className="mt-[10px] w-[200px]">
-        <SelectField
-          data-testid={testId}
-          onChange={(event) => {
-            onChange(event.target.value);
-          }}
-          value={value}
-        >
-          {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </SelectField>
+        <SelectDropdown data-testid={testId} onChange={onChange} options={options} value={value} />
       </div>
     </div>
   );

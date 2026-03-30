@@ -1,4 +1,4 @@
-import { AppSurfaceState, SelectField, SurfaceCard } from "@opentoggl/web-ui";
+import { AppSurfaceState, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 
@@ -27,14 +27,15 @@ export function AdminUsersTab(): ReactElement {
             type="text"
             value={search}
           />
-          <SelectField
-            onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "disabled")}
+          <SelectDropdown
+            onChange={(value) => setStatusFilter(value as "all" | "active" | "disabled")}
+            options={[
+              { label: "All", value: "all" },
+              { label: "Active", value: "active" },
+              { label: "Disabled", value: "disabled" },
+            ]}
             value={statusFilter}
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
-          </SelectField>
+          />
         </div>
       </SurfaceCard>
 

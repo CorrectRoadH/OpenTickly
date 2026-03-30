@@ -31,11 +31,11 @@ curl -fsS http://localhost:8080/readyz
 
 compose 文件在隔离的内部网络上启动三个服务：
 
-| 服务        | 角色       | 暴露给主机      |
-| ----------- | ---------- | --------------- |
-| `opentoggl` | Web + API  | 是（`8080`）    |
-| `postgres`  | 数据库     | 否              |
-| `redis`     | 缓存/队列  | 否              |
+| 服务        | 角色      | 暴露给主机   |
+| ----------- | --------- | ------------ |
+| `opentoggl` | Web + API | 是（`8080`） |
+| `postgres`  | 数据库    | 否           |
+| `redis`     | 缓存/队列 | 否           |
 
 Postgres 和 Redis 不暴露给主机网络。只有 `opentoggl` 服务发布端口。
 
@@ -43,15 +43,15 @@ Postgres 和 Redis 不暴露给主机网络。只有 `opentoggl` 服务发布端
 
 所有默认值开箱即用。通过环境变量或与 `docker-compose.yml` 同目录的 `.env` 文件覆盖：
 
-| 变量                          | 默认值                                  | 说明                                                 |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 和 API 的主机端口                              |
-| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 容器镜像（建议固定版本标签以保证稳定性）               |
-| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 数据库名                                              |
-| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 数据库用户                                            |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 数据库密码                                            |
-| `OPENTOGGL_DATABASE_URL`      | 自动                                    | 完整连接字符串（覆盖单独的 PG 变量）                   |
-| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 连接字符串                                      |
+| 变量                          | 默认值                                  | 说明                                     |
+| ----------------------------- | --------------------------------------- | ---------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 和 API 的主机端口                 |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 容器镜像（建议固定版本标签以保证稳定性） |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 数据库名                                 |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 数据库用户                               |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 数据库密码                               |
+| `OPENTOGGL_DATABASE_URL`      | 自动                                    | 完整连接字符串（覆盖单独的 PG 变量）     |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 连接字符串                         |
 
 ### 升级
 

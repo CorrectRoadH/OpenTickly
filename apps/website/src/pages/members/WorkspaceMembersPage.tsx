@@ -4,7 +4,7 @@ import {
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
-  SelectField,
+  SelectDropdown,
 } from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
@@ -208,16 +208,17 @@ export function WorkspaceMembersPage(): ReactElement {
           className="flex min-h-[46px] flex-wrap items-center gap-3 border-t border-[var(--track-border)] px-5 py-2"
           data-testid="members-filter-bar"
         >
-          <SelectField
+          <SelectDropdown
             aria-label="Member status filter"
-            onChange={(event) => setStatusFilter(event.target.value as MemberStatusFilter)}
+            onChange={(v) => setStatusFilter(v as MemberStatusFilter)}
+            options={[
+              { value: "all", label: "All members" },
+              { value: "active", label: "Active" },
+              { value: "disabled", label: "Disabled" },
+              { value: "invited", label: "Invited" },
+            ]}
             value={statusFilter}
-          >
-            <option value="all">All members</option>
-            <option value="active">Active</option>
-            <option value="disabled">Disabled</option>
-            <option value="invited">Invited</option>
-          </SelectField>
+          />
           <label className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
               <SearchIcon className="size-3.5" />

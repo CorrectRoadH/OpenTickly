@@ -1,5 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
-import { SelectField } from "@opentoggl/web-ui";
+import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -243,15 +243,16 @@ export function ReportsProfitabilityView({
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[var(--track-text-muted)]">Show:</span>
-                <SelectField
-                  onChange={(e) => setShowMetric(e.target.value as ProfitabilityShowMetric)}
+                <SelectDropdown
+                  onChange={(value) => setShowMetric(value as ProfitabilityShowMetric)}
+                  options={[
+                    { label: "Amount, Cost and Profit", value: "amount-cost-profit" },
+                    { label: "Amount", value: "amount" },
+                    { label: "Cost", value: "cost" },
+                    { label: "Profit", value: "profit" },
+                  ]}
                   value={showMetric}
-                >
-                  <option value="amount-cost-profit">Amount, Cost and Profit</option>
-                  <option value="amount">Amount</option>
-                  <option value="cost">Cost</option>
-                  <option value="profit">Profit</option>
-                </SelectField>
+                />
               </div>
             </div>
             {dayAmounts.length === 0 || dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
@@ -491,20 +492,19 @@ function EarningPanel({
       <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
         <span className="text-[14px] font-medium text-white">{title}</span>
         <div className="flex items-center gap-2">
-          <SelectField onChange={(e) => onCountChange(Number(e.target.value))} value={count}>
-            {options.map((n) => (
-              <option key={n} value={n}>
-                {prefix} {n}
-              </option>
-            ))}
-          </SelectField>
-          <SelectField
-            onChange={(e) => onDimensionChange(e.target.value as EarningDimension)}
+          <SelectDropdown
+            onChange={(value) => onCountChange(Number(value))}
+            options={options.map((n) => ({ label: `${prefix} ${n}`, value: String(n) }))}
+            value={String(count)}
+          />
+          <SelectDropdown
+            onChange={(value) => onDimensionChange(value as EarningDimension)}
+            options={[
+              { label: "Projects", value: "projects" },
+              { label: "Members", value: "members" },
+            ]}
             value={dimension}
-          >
-            <option value="projects">Projects</option>
-            <option value="members">Members</option>
-          </SelectField>
+          />
         </div>
       </div>
       {rows.length === 0 ? (

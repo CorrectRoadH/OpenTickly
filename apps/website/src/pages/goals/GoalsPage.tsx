@@ -6,7 +6,7 @@ import {
   type DirectoryTableColumn,
   DirectoryTableCell,
   PageLayout,
-  SelectField,
+  SelectDropdown,
 } from "@opentoggl/web-ui";
 
 import { PlusIcon } from "../../shared/ui/icons.tsx";
@@ -214,15 +214,16 @@ export function GoalsPage(): ReactElement {
       }
       toolbar={
         <>
-          <SelectField
+          <SelectDropdown
             aria-label="Goal status filter"
             data-testid="goals-status-filter"
-            onChange={(e) => setStatusFilter(e.target.value as GoalStatusFilter)}
+            onChange={(v) => setStatusFilter(v as GoalStatusFilter)}
+            options={[
+              { value: "active", label: "Active goals" },
+              { value: "archived", label: "Archived goals" },
+            ]}
             value={statusFilter}
-          >
-            <option value="active">Active goals</option>
-            <option value="archived">Archived goals</option>
-          </SelectField>
+          />
           {statusMessage ? (
             <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
               {statusMessage}

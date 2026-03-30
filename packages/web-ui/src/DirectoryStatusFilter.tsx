@@ -1,6 +1,6 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
 
-import { SelectButton } from "./SelectField.tsx";
+import { SelectButton } from "./SelectButton.tsx";
 
 type StatusOption<T extends string> = {
   label: string;

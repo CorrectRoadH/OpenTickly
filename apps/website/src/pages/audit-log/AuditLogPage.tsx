@@ -3,7 +3,7 @@ import {
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
-  SelectField,
+  SelectDropdown,
 } from "@opentoggl/web-ui";
 import { useQuery } from "@tanstack/react-query";
 
@@ -173,18 +173,19 @@ export function AuditLogPage(): ReactElement {
           <h1 className="text-[20px] font-semibold leading-[30px] text-white">Audit Log</h1>
         </div>
         <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2">
-          <SelectField
+          <SelectDropdown
             aria-label="Source filter"
-            onChange={(event) => {
-              setSourceFilter(event.target.value as SourceFilter);
+            onChange={(v) => {
+              setSourceFilter(v as SourceFilter);
               setPageNumber(1);
             }}
+            options={[
+              { value: "", label: "All sources" },
+              { value: "web", label: "Web (Cookie)" },
+              { value: "api", label: "API (Token/CLI)" },
+            ]}
             value={sourceFilter}
-          >
-            <option value="">All sources</option>
-            <option value="web">Web (Cookie)</option>
-            <option value="api">API (Token/CLI)</option>
-          </SelectField>
+          />
         </div>
       </header>
 

@@ -12,6 +12,9 @@ catalogs:
     '@hey-api/openapi-ts':
       specifier: 0.94.4
       version: 0.94.4
+    '@orama/tokenizers':
+      specifier: ^3.1.18
+      version: 3.1.18
     '@types/node':
       specifier: ^24
       version: 24.12.0
@@ -136,6 +139,9 @@ importers:
         specifier: ^3.5.0
         version: 3.5.0
     devDependencies:
+      '@orama/tokenizers':
+        specifier: 'catalog:'
+        version: 3.1.18
       '@react-router/dev':
         specifier: ^7.13.1
         version: 7.13.2(@types/node@24.12.0)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.27.4)(jiti@2.6.1)(react-router@7.13.2(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2)
@@ -280,7 +286,7 @@ importers:
         version: 0.1.12(@types/node@24.12.0)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2)
       vitest:
         specifier: npm:@voidzero-dev/vite-plus-test@0.1.12
-        version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.46.1)(typescript@5.9.3)(vite@8.0.0(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.2))(yaml@2.8.2)'
+        version: '@voidzero-dev/vite-plus-test@0.1.12(@types/node@24.12.0)(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2))(esbuild@0.27.4)(jiti@2.6.1)(jsdom@27.4.0)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2)'
       workbox-background-sync:
         specifier: 'catalog:'
         version: 7.4.0
@@ -1277,6 +1283,10 @@ packages:
 
   '@orama/orama@3.1.18':
     resolution: {integrity: sha512-a61ljmRVVyG5MC/698C8/FfFDw5a8LOIvyOLW5fztgUXqUpc1jOfQzOitSCbge657OgXXThmY3Tk8fpiDb4UcA==}
+    engines: {node: '>= 20.0.0'}
+
+  '@orama/tokenizers@3.1.18':
+    resolution: {integrity: sha512-Ra4dFddWZ7hCGPAehnd/6QZjlzQvczYSt1y1Fq4HteJqRu2yvfR6fXvxiUnKi+HIgJYPxKhebJEjvJdF8LYQWg==}
     engines: {node: '>= 20.0.0'}
 
   '@oxc-project/runtime@0.115.0':
@@ -7140,6 +7150,10 @@ snapshots:
     optional: true
 
   '@orama/orama@3.1.18': {}
+
+  '@orama/tokenizers@3.1.18':
+    dependencies:
+      '@orama/orama': 3.1.18
 
   '@oxc-project/runtime@0.115.0': {}
 
