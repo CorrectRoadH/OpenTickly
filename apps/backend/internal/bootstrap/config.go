@@ -14,6 +14,9 @@ type JobsConfig = platformconfig.JobsConfig
 func DefaultConfig() Config {
 	return Config{
 		ServiceName: "opentoggl-api",
+		Server: ServerConfig{
+			CookieSecure: true,
+		},
 		FileStore: FileStoreConfig{
 			Namespace: "opentoggl",
 		},

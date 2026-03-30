@@ -40,7 +40,7 @@ func NewApp(cfg Config) (*App, error) {
 	}
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	routeRegistrar, err := newHTTPRouteRegistrar(platform)
+	routeRegistrar, err := newHTTPRouteRegistrar(platform, cfg.Server.CookieSecure)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -90,9 +90,9 @@ func validateRequiredStartupConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, error) {
+func newHTTPRouteRegistrar(platform *platform.Handles, cookieSecure bool) (httpapp.RouteRegistrar, error) {
 	appLogger := log.NewZapLogger(slog.Default())
-	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger)
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, cookieSecure, appLogger)
 	if err != nil {
 		return nil, err
 	}

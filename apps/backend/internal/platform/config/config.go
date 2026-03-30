@@ -13,6 +13,7 @@ type StartupConfig struct {
 
 type ServerConfig struct {
 	ListenAddress string
+	CookieSecure  bool
 }
 
 type DatabaseConfig struct {
