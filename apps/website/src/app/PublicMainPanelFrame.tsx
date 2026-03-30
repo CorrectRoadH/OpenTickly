@@ -18,13 +18,29 @@ export function PublicMainPanelFrame({
       <div className="mx-auto flex min-h-[calc(100dvh-40px)] w-full max-w-[1440px] items-center justify-center overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
         <main className="flex min-w-0 flex-1 flex-col items-center justify-center p-5 sm:p-8">
           <div className="mb-8 flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[12px] font-semibold text-[var(--track-accent-text)]">
-              OT
-            </div>
-            <span className="text-[18px] font-semibold text-[var(--track-text)]">OpenToggl</span>
+            <svg
+              aria-hidden="true"
+              className="size-9"
+              viewBox="0 0 32 32"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <rect fill="#e05d26" height="32" rx="8" width="32" />
+              <text
+                fill="white"
+                fontFamily="Arial, sans-serif"
+                fontSize="20"
+                fontWeight="bold"
+                textAnchor="middle"
+                x="16"
+                y="23"
+              >
+                t
+              </text>
+            </svg>
+            <span className="text-[20px] font-semibold text-[var(--track-text)]">OpenToggl</span>
           </div>
 
-          <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-shadow-outline)]">
+          <section className="w-full max-w-[440px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5 shadow-[var(--track-depth-shadow-rest)]">
             <div className="mb-6 space-y-2">
               <p className="text-[11px] font-semibold uppercase text-[var(--track-text-muted)]">
                 {badge}
