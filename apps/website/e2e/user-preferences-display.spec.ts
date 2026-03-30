@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import { selectDropdownOption } from "./fixtures/e2e-select.ts";
 
 const ENTRY_DURATION_SECONDS = 2847; // 47m 27s
 const ENTRY_DESCRIPTION = "Preference test entry";
@@ -12,7 +13,7 @@ async function changePreferenceSelect(page: Page, testId: string, optionLabel: s
       response.url().includes("/me/preferences") && response.request().method() === "POST",
     { timeout: 15_000 },
   );
-  await page.getByTestId(testId).selectOption({ label: optionLabel });
+  await selectDropdownOption(page, testId, optionLabel);
   // Autosave debounces at 900ms, then POSTs — wait for the network round-trip
   await responsePromise;
 }
@@ -118,8 +119,8 @@ test.describe("Story: user preferences control how times and durations display",
     await page.goto(new URL("/profile", page.url()).toString());
     await expect(page.getByTestId("profile-page")).toBeVisible();
     // Change both preferences — set both before waiting, so debounce merges them into one POST
-    await page.getByTestId("pref-duration-format").selectOption({ label: "Decimal (0.79 h)" });
-    await page.getByTestId("pref-time-format").selectOption({ label: "24-hour" });
+    await selectDropdownOption(page, "pref-duration-format", "Decimal (0.79 h)");
+    await selectDropdownOption(page, "pref-time-format", "24-hour");
     await page.waitForResponse(
       (response) =>
         response.url().includes("/me/preferences") && response.request().method() === "POST",
@@ -129,8 +130,8 @@ test.describe("Story: user preferences control how times and durations display",
     // Reload and verify dropdowns retained
     await page.reload();
     await expect(page.getByTestId("profile-page")).toBeVisible();
-    await expect(page.getByTestId("pref-duration-format")).toHaveValue("decimal");
-    await expect(page.getByTestId("pref-time-format")).toHaveValue("HH:mm");
+    await expect(page.getByTestId("pref-duration-format")).toContainText("Decimal");
+    await expect(page.getByTestId("pref-time-format")).toContainText("24-hour");
 
     // Navigate to Timer and verify formats
     await page.getByRole("link", { name: "Timer" }).click();

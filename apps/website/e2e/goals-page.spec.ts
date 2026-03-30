@@ -6,6 +6,7 @@ import {
   loginE2eUser,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
+import { selectDropdownOption } from "./fixtures/e2e-select.ts";
 
 test.describe("Story: manage goals end-to-end", () => {
   test("Given a new user, when they create a goal with name and hours, then it appears in the goals list", async ({
@@ -75,7 +76,7 @@ test.describe("Story: manage goals end-to-end", () => {
 
     await dialog.getByTestId("goal-name-input").fill("Focus work");
     await dialog.getByTestId("goal-hours-input").fill("4");
-    await dialog.getByTestId("goal-recurrence-select").selectOption("daily_workdays");
+    await selectDropdownOption(page, "goal-recurrence-select", "Weekdays");
 
     await dialog.getByTestId("goal-submit-button").click();
     await expect(dialog).not.toBeVisible();
@@ -133,8 +134,8 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByRole("button", { name: /Select project/ }).click();
     await dialog.getByRole("button", { name: "Backend API" }).click();
 
-    // Close the dropdown by clicking the backdrop overlay
-    await page.locator(".fixed.inset-0.z-40").click({ force: true });
+    // Close the track picker by clicking the goal name input (outside the picker)
+    await dialog.getByTestId("goal-name-input").click();
 
     // Submit
     await dialog.getByTestId("goal-submit-button").click();
@@ -184,10 +185,10 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByTestId("goal-hours-input").fill("5");
 
     // Set comparison to "less than"
-    await dialog.getByTestId("goal-comparison-select").selectOption("less_than");
+    await selectDropdownOption(page, "goal-comparison-select", "less than");
 
     // Set recurrence to "every week"
-    await dialog.getByTestId("goal-recurrence-select").selectOption("weekly");
+    await selectDropdownOption(page, "goal-recurrence-select", "every week");
 
     // Uncheck "No end date" and pick a date
     await dialog.getByText("No end date").click();
@@ -292,7 +293,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await expect(row).not.toBeVisible();
 
     // Switch to archived filter
-    await page.getByTestId("goals-status-filter").selectOption("archived");
+    await selectDropdownOption(page, "goals-status-filter", "Archived goals");
 
     // Goal should appear in archived list
     const archivedRow = page.getByTestId("goal-row").filter({ hasText: "Morning run" });
@@ -304,7 +305,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await expect(archivedRow).not.toBeVisible();
 
     // Switch back to active and verify it's back
-    await page.getByTestId("goals-status-filter").selectOption("active");
+    await selectDropdownOption(page, "goals-status-filter", "Active goals");
     await expect(page.getByTestId("goal-row").filter({ hasText: "Morning run" })).toBeVisible();
   });
 

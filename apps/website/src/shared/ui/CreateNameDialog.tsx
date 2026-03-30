@@ -15,6 +15,7 @@ type CreateNameDialogProps = {
   onSubmit: () => void;
   selectedColor?: string;
   submitLabel: string;
+  testId?: string;
   title: string;
 };
 
@@ -30,6 +31,7 @@ export function CreateNameDialog({
   onSubmit,
   selectedColor,
   submitLabel,
+  testId,
   title,
 }: CreateNameDialogProps): ReactElement {
   const trimmedValue = nameValue.trim();
@@ -46,7 +48,12 @@ export function CreateNameDialog({
   }
 
   return (
-    <ModalDialog onClose={onClose} title={title} titleId="create-entity-dialog-title">
+    <ModalDialog
+      onClose={onClose}
+      testId={testId}
+      title={title}
+      titleId="create-entity-dialog-title"
+    >
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <label className="block">

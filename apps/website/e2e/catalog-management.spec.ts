@@ -59,7 +59,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await expect(page.getByTestId("tags-page")).toBeVisible();
 
     await page.getByTestId("tags-create-button").click();
-    const form = page.getByRole("dialog", { name: "Create new tag" });
+    const form = page.getByTestId("create-tag-dialog");
     await form.getByLabel("Tag name").fill(tagName);
     await form.getByRole("button", { name: "Create tag" }).click();
 
@@ -90,7 +90,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await page.getByRole("link", { name: "Projects" }).click();
     await expect(page).toHaveURL(new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`));
     await page.getByTestId("projects-create-button").click();
-    const projectForm = page.getByRole("dialog", { name: "Create new project" });
+    const projectForm = page.getByTestId("project-editor-dialog");
     await projectForm.getByLabel("Project name").fill(projectName);
     await projectForm.getByRole("button", { name: "Create project" }).click();
     await expect(page.getByTestId("projects-list")).toContainText(projectName);

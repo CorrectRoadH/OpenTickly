@@ -249,6 +249,7 @@ export function WorkspaceSwitcher({
         <CreateNameDialog
           isPending={createOrganizationMutation.isPending}
           nameLabel="Organization name"
+          testId="create-organization-dialog"
           namePlaceholder="Organization name"
           nameValue={organizationName}
           onClose={() => {
@@ -359,6 +360,7 @@ function OrganizationOptionsPanel({
   return (
     <div
       className="fixed z-50 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_18px_48px_var(--track-shadow-elevated)]"
+      data-testid="workspace-switcher-panel"
       ref={(node) => {
         panelRef.current = node;
       }}

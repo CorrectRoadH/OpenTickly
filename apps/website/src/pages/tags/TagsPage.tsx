@@ -191,6 +191,7 @@ export function TagsPage(): ReactElement {
         <CreateNameDialog
           isPending={createTagMutation.isPending}
           nameLabel="Tag name"
+          testId="create-tag-dialog"
           namePlaceholder="Tag name"
           nameValue={tagName}
           onClose={() => setCreateDialogOpen(false)}

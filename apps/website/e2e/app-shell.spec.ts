@@ -53,12 +53,12 @@ test.describe("Story: enter the tracking shell", () => {
     const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
     await organizationButton.click();
 
-    const workspaceListbox = page.getByRole("listbox");
+    const workspaceListbox = page.getByTestId("workspace-switcher-panel");
     await expect(workspaceListbox).toBeVisible();
 
     await page.getByRole("button", { name: "Create organization" }).click();
 
-    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    const createOrganizationDialog = page.getByTestId("create-organization-dialog");
     await expect(createOrganizationDialog).toBeVisible();
     await createOrganizationDialog.getByLabel("Organization name").fill(organizationName);
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
@@ -95,7 +95,7 @@ test.describe("Story: enter the tracking shell", () => {
     await organizationButton.click();
     await page.getByRole("button", { name: "Create organization" }).click();
 
-    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    const createOrganizationDialog = page.getByTestId("create-organization-dialog");
     await expect(createOrganizationDialog).toBeVisible();
     await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
@@ -148,7 +148,7 @@ test.describe("Story: enter the tracking shell", () => {
 
     const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
     await organizationButton.click();
-    const workspaceListbox = page.getByRole("listbox");
+    const workspaceListbox = page.getByTestId("workspace-switcher-panel");
     await expect(defaultBadges(workspaceListbox)).toHaveCount(1);
     await expect(
       workspaceListbox.locator("li", {
@@ -163,7 +163,7 @@ test.describe("Story: enter the tracking shell", () => {
 
     await page.getByRole("button", { name: "Create organization" }).click();
 
-    const createOrganizationDialog = page.getByRole("dialog", { name: "New organization" });
+    const createOrganizationDialog = page.getByTestId("create-organization-dialog");
     await expect(createOrganizationDialog).toBeVisible();
     await createOrganizationDialog.getByLabel("Organization name").fill(secondOrganizationName);
     await createOrganizationDialog.getByRole("button", { name: "Create organization" }).click();
