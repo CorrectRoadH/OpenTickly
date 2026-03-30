@@ -1829,7 +1829,7 @@ function CalendarEventCard({
           {entry.project_name ? (
             <span
               className="truncate text-[12px] font-medium leading-tight"
-              style={{ color: color ?? "var(--track-accent)" }}
+              style={{ color: darkenColor(color, 0.4) }}
             >
               {entry.project_name}
             </span>
@@ -1973,6 +1973,22 @@ function parseTimesheetDuration(value: string): number | null {
 
 function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
+}
+
+function darkenColor(color: string, amount = 0.4): string {
+  if (!color?.startsWith("#")) return color ?? "var(--track-accent)";
+  const normalized = color.replace("#", "");
+  const full =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((p) => `${p}${p}`)
+          .join("")
+      : normalized;
+  const r = Math.round(Number.parseInt(full.slice(0, 2), 16) * (1 - amount));
+  const g = Math.round(Number.parseInt(full.slice(2, 4), 16) * (1 - amount));
+  const b = Math.round(Number.parseInt(full.slice(4, 6), 16) * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 function colorToOverlay(color: string): string {
