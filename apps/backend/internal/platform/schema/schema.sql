@@ -469,6 +469,7 @@ create table governance_audit_logs (
     source text not null default '',
     request_body text not null default '',
     response_body text not null default '',
+    metadata text not null default '',
     created_at timestamptz not null default now()
 );
 

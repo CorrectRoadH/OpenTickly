@@ -28,6 +28,7 @@ type AuditLogView struct {
 	Source         string
 	RequestBody    string
 	ResponseBody   string
+	Metadata       string
 	CreatedAt      time.Time
 }
 
@@ -55,6 +56,7 @@ type InsertAuditLogCommand struct {
 	Source         string
 	RequestBody    string
 	ResponseBody   string
+	Metadata       string
 }
 
 type TimeEntryConstraintsView struct {

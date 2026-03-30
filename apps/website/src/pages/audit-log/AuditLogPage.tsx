@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAuditLogs } from "../../shared/api/public/track/index.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { formatAuditTitle } from "./format-audit-log.ts";
 
 type AuditLogEntry = {
   id: number;
@@ -21,6 +22,7 @@ type AuditLogEntry = {
   source: string;
   request_body: string;
   response_body: string;
+  metadata?: string;
   created_at: string;
 };
 
@@ -109,9 +111,32 @@ export function AuditLogPage(): ReactElement {
   const logs = auditLogsQuery.data;
 
   function renderAuditLogRow(log: AuditLogEntry): ReactNode {
+    const { title, details } = formatAuditTitle(log.action, log.request_body, log.metadata);
     return (
       <>
-        <div className="flex h-[46px] items-center text-[12px] text-white">{log.action}</div>
+        <div className="flex min-h-[46px] flex-col justify-center py-1.5">
+          <span className="text-[12px] text-white">{title}</span>
+          {details.length > 0 ? (
+            <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+              {details.map((d) => (
+                <span className="text-[10px]" key={d.field}>
+                  <span className="text-[var(--track-text-muted)]">{d.field}: </span>
+                  {d.oldValue !== undefined && d.oldValue !== d.newValue ? (
+                    <>
+                      <span className="text-red-400/70 line-through">{d.oldValue}</span>
+                      <span className="mx-0.5 text-[var(--track-text-muted)]">&rarr;</span>
+                      <span className="text-green-400">{d.newValue}</span>
+                    </>
+                  ) : (
+                    <span className="text-white">{d.newValue}</span>
+                  )}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-[10px] text-[var(--track-text-muted)]">{log.action}</span>
+          )}
+        </div>
         <div className="flex h-[46px] items-center">
           <span
             className={`rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium ${
@@ -182,24 +207,24 @@ export function AuditLogPage(): ReactElement {
         renderExpandedContent={(log) => (
           <div className="space-y-3 pb-4">
             {log.request_body ? (
-              <div>
-                <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                  Request Body
-                </div>
-                <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
+              <details className="group" open>
+                <summary className="cursor-pointer text-[11px] text-[var(--track-text-muted)] hover:text-white">
+                  Request
+                </summary>
+                <pre className="mt-1 max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
                   {formatBody(log.request_body)}
                 </pre>
-              </div>
+              </details>
             ) : null}
             {log.response_body ? (
-              <div>
-                <div className="mb-1 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                  Response Body
-                </div>
-                <pre className="max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
+              <details className="group">
+                <summary className="cursor-pointer text-[11px] text-[var(--track-text-muted)] hover:text-white">
+                  Response
+                </summary>
+                <pre className="mt-1 max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
                   {formatBody(log.response_body)}
                 </pre>
-              </div>
+              </details>
             ) : null}
           </div>
         )}

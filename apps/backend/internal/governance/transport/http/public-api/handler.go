@@ -24,6 +24,7 @@ type auditLogResponse struct {
 	Source         string `json:"source"`
 	RequestBody    string `json:"request_body"`
 	ResponseBody   string `json:"response_body"`
+	Metadata       string `json:"metadata,omitempty"`
 	CreatedAt      string `json:"created_at"`
 }
 
@@ -83,6 +84,7 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 			Source:         log.Source,
 			RequestBody:    log.RequestBody,
 			ResponseBody:   log.ResponseBody,
+			Metadata:       log.Metadata,
 			CreatedAt:      log.CreatedAt.UTC().Format(time.RFC3339),
 		})
 	}

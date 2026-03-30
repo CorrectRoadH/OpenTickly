@@ -15,8 +15,8 @@ func (store *Store) InsertAuditLog(
 	_, err := store.pool.Exec(ctx,
 		`insert into governance_audit_logs (
 			organization_id, workspace_id, entity_type, entity_id,
-			action, user_id, source, request_body, response_body
-		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+			action, user_id, source, request_body, response_body, metadata
+		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
 		command.OrganizationID,
 		command.WorkspaceID,
 		command.EntityType,
@@ -26,6 +26,7 @@ func (store *Store) InsertAuditLog(
 		command.Source,
 		command.RequestBody,
 		command.ResponseBody,
+		command.Metadata,
 	)
 	if err != nil {
 		return writeGovernanceError("insert audit log", err)
@@ -50,6 +51,7 @@ func (store *Store) ListAuditLogs(
 			source,
 			request_body,
 			response_body,
+			metadata,
 			created_at
 		from governance_audit_logs
 		where organization_id = $1
@@ -116,6 +118,7 @@ func (store *Store) ListAuditLogs(
 			&view.Source,
 			&view.RequestBody,
 			&view.ResponseBody,
+			&view.Metadata,
 			&view.CreatedAt,
 		); err != nil {
 			return nil, writeGovernanceError("scan audit log", err)

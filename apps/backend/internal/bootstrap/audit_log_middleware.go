@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 )
@@ -35,6 +37,12 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 					requestBody = string(bodyBytes)
 					req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 				}
+			}
+
+			// Snapshot previous state for PUT/PATCH before the handler modifies it.
+			var metadata string
+			if req.Method == http.MethodPut || req.Method == http.MethodPatch {
+				metadata = snapshotPreviousEntity(ctx.Request().Context(), handlers.pool, req.URL.Path)
 			}
 
 			// Wrap response writer to capture response body
@@ -77,6 +85,7 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 						Source:         source,
 						RequestBody:    requestBody,
 						ResponseBody:   responseBody,
+						Metadata:       metadata,
 					}
 					go func() {
 						_ = handlers.governanceApp.InsertAuditLog(context.Background(), command)
@@ -150,6 +159,40 @@ func resolveOrgWorkspace(ctx echo.Context, handlers *routeHandlers, user *applic
 		wsID = lo.ToPtr(homeWsID)
 	}
 	return homeOrgID, wsID
+}
+
+// entityTableMap maps entity type path segments to their database table names.
+var entityTableMap = map[string]string{
+	"time_entries": "tracking_time_entries",
+	"projects":     "catalog_projects",
+	"clients":      "catalog_clients",
+	"tags":         "catalog_tags",
+	"tasks":        "catalog_tasks",
+}
+
+// snapshotPreviousEntity fetches the current DB row as JSON before a PUT/PATCH modifies it.
+func snapshotPreviousEntity(ctx context.Context, pool *pgxpool.Pool, path string) string {
+	entityType, entityID := resolveEntity(path)
+	if entityID == nil {
+		return ""
+	}
+	table, ok := entityTableMap[entityType]
+	if !ok {
+		return ""
+	}
+
+	var rowJSON []byte
+	// Safe: table name is from a hardcoded allowlist, not user input.
+	err := pool.QueryRow(ctx,
+		"select row_to_json(t) from "+table+" t where id = $1",
+		*entityID,
+	).Scan(&rowJSON)
+	if err != nil || len(rowJSON) == 0 {
+		return ""
+	}
+
+	result, _ := json.Marshal(map[string]json.RawMessage{"previous": rowJSON})
+	return string(result)
 }
 
 type responseRecorder struct {
