@@ -21,12 +21,11 @@ import {
   CalendarIcon,
   DollarIcon,
   MoreIcon,
-  PlayIcon,
   ProjectsIcon,
   SearchIcon,
-  StopIcon,
   TagsIcon,
 } from "../../shared/ui/icons.tsx";
+import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
@@ -326,26 +325,15 @@ export function TimeEntryEditorDialog({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex items-center gap-3">
-          <button
-            aria-label={
+          <TimerActionButton
+            ariaLabel={
               primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
             }
-            data-testid="time-entry-editor-primary-action"
-            className={`flex size-9 items-center justify-center rounded-full transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 ${
-              primaryActionIcon === "stop"
-                ? "bg-[var(--track-warning-fill)] text-white"
-                : "bg-[var(--track-accent-fill-hover)] text-[var(--track-button-text)]"
-            }`}
             disabled={!onPrimaryAction || isPrimaryActionPending}
-            onClick={onPrimaryAction}
-            type="button"
-          >
-            {primaryActionIcon === "stop" ? (
-              <StopIcon className="size-4" />
-            ) : (
-              <PlayIcon className="size-4" />
-            )}
-          </button>
+            isRunning={primaryActionIcon === "stop"}
+            onClick={onPrimaryAction ?? (() => {})}
+            size="xs"
+          />
           {canDuplicate ? (
             <button
               aria-label="Duplicate entry"
