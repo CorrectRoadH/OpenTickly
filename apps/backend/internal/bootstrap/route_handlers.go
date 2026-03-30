@@ -723,8 +723,10 @@ func setSessionCookie(ctx echo.Context, sessionID string) {
 		Name:     sessionCookieName,
 		Value:    sessionID,
 		HttpOnly: true,
+		Secure:   true,
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
+		MaxAge:   30 * 24 * 60 * 60, // 30 days
 	})
 }
 
