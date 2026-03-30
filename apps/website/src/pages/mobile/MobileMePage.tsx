@@ -47,30 +47,39 @@ export function MobileMePage(): ReactElement {
         </div>
       </div>
 
-      {/* Current workspace */}
-      <SectionHeader title="Workspace" />
+      {/* Organization switcher */}
+      <SectionHeader title="Organization" />
       <div className="border-b border-[var(--track-border)]">
-        {session.availableWorkspaces.map((ws) => {
-          const isCurrent = ws.id === session.currentWorkspace.id;
+        {session.availableOrganizations.map((org) => {
+          const isCurrent = org.isCurrent;
           return (
             <button
-              key={ws.id}
+              key={org.id}
               className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
                 isCurrent ? "bg-[var(--track-accent)]/8" : "hover:bg-[var(--track-row-hover)]"
               }`}
-              onClick={() => handleWorkspaceChange(ws.id)}
+              onClick={() => {
+                if (org.defaultWorkspaceId) {
+                  handleWorkspaceChange(org.defaultWorkspaceId);
+                }
+              }}
               type="button"
             >
               <div className="min-w-0 flex-1">
                 <p
                   className={`truncate text-[14px] ${isCurrent ? "font-semibold text-[var(--track-accent)]" : "text-white"}`}
                 >
-                  {ws.name}
+                  {org.name}
                 </p>
               </div>
-              {isCurrent ? (
-                <span className="shrink-0 text-[12px] text-[var(--track-accent)]">Current</span>
-              ) : null}
+              <div className="flex shrink-0 items-center gap-2">
+                {org.isDefault ? (
+                  <span className="text-[11px] text-[var(--track-text-muted)]">Default</span>
+                ) : null}
+                {isCurrent ? (
+                  <span className="text-[12px] text-[var(--track-accent)]">Current</span>
+                ) : null}
+              </div>
             </button>
           );
         })}
