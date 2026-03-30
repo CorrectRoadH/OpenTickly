@@ -1829,7 +1829,7 @@ function CalendarEventCard({
           {entry.project_name ? (
             <span
               className="truncate text-[12px] font-medium leading-tight"
-              style={{ color: darkenColor(color, 0.4) }}
+              style={{ color: vividColor(color) }}
             >
               {entry.project_name}
             </span>
@@ -1975,7 +1975,8 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 }
 
-function darkenColor(color: string, amount = 0.4): string {
+/** Keep the same hue as the project color but boost saturation and lightness for a vivid, readable label. */
+function vividColor(color: string): string {
   if (!color?.startsWith("#")) return color ?? "var(--track-accent)";
   const normalized = color.replace("#", "");
   const full =
@@ -1985,10 +1986,24 @@ function darkenColor(color: string, amount = 0.4): string {
           .map((p) => `${p}${p}`)
           .join("")
       : normalized;
-  const r = Math.round(Number.parseInt(full.slice(0, 2), 16) * (1 - amount));
-  const g = Math.round(Number.parseInt(full.slice(2, 4), 16) * (1 - amount));
-  const b = Math.round(Number.parseInt(full.slice(4, 6), 16) * (1 - amount));
-  return `rgb(${r}, ${g}, ${b})`;
+  const r = Number.parseInt(full.slice(0, 2), 16) / 255;
+  const g = Number.parseInt(full.slice(2, 4), 16) / 255;
+  const b = Number.parseInt(full.slice(4, 6), 16) / 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta !== 0) {
+    if (max === r) h = ((g - b) / delta) % 6;
+    else if (max === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+  }
+
+  return `hsl(${h}, 40%, 38%)`;
 }
 
 function colorToOverlay(color: string): string {
