@@ -13,6 +13,8 @@ RUN pnpm --filter @opentoggl/website run build
 
 FROM golang:1.25-alpine AS builder
 
+ARG OPENTOGGL_VERSION=dev
+
 WORKDIR /workspace
 
 COPY go.mod go.sum ./
@@ -22,7 +24,7 @@ RUN GOBIN=/out CGO_ENABLED=0 GOOS=linux go install github.com/pgplex/pgschema@v1
 COPY apps ./apps
 COPY --from=website-builder /workspace/apps/website/dist ./apps/backend/internal/web/dist
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/opentoggl ./apps/backend
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${OPENTOGGL_VERSION}" -o /out/opentoggl ./apps/backend
 
 FROM alpine:3.22
 

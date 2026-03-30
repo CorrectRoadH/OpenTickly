@@ -58,7 +58,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            OPENTOGGL_VERSION=${{ github.sha }}
+            OPENTOGGL_VERSION=${{ github.ref_name }}
 
       - name: Generate changelog from commits
         id: changelog
