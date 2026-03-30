@@ -105,7 +105,6 @@ const CalendarDayColumnWrapper = React.forwardRef<
   const columnRef = useRef<HTMLDivElement>(null);
   const playRef = useRef<SVGSVGElement>(null);
 
-  // Merge the forwarded ref with our internal ref
   const setRef = React.useCallback(
     (node: HTMLDivElement | null) => {
       (columnRef as { current: HTMLDivElement | null }).current = node;
@@ -115,10 +114,6 @@ const CalendarDayColumnWrapper = React.forwardRef<
     [ref],
   );
 
-  // Sync the play button's top position with RBC's indicator.
-  // RBC sets .rbc-current-time-indicator { top: XX% } inline.
-  // We read that value and apply it to the play button so both
-  // use the exact same positioning formula — no drift.
   useEffect(() => {
     if (!isNow || !columnRef.current || !playRef.current) return;
 
@@ -150,7 +145,7 @@ const CalendarDayColumnWrapper = React.forwardRef<
             onStartEntry?.();
           }}
           ref={playRef}
-          style={{ pointerEvents: "all", left: "-8.5px", marginTop: "-6.5px" }}
+          style={{ pointerEvents: "all", left: "-7px", marginTop: "-6.5px" }}
           viewBox="0 0 36 36"
           width="16"
           xmlns="http://www.w3.org/2000/svg"
@@ -1739,7 +1734,7 @@ function formatTimesheetTotal(seconds: number): string {
 function CalendarEventCard({
   event,
   onContextMenu,
-  onContinueEntry,
+  onContinueEntry: _onContinueEntry,
   onEditEntry,
 }: {
   event: CalendarEvent;
@@ -1782,7 +1777,7 @@ function CalendarEventCard({
       {/* Inner EventBox — Toggl uses padding 4px 6px for entries ≥15min,
           0px for shorter ones. border-radius 4px always. */}
       <div
-        className={`relative flex h-full flex-col justify-between rounded-[4px] text-left text-[12px] text-[var(--track-text)] ${
+        className={`relative flex h-full flex-col justify-between overflow-hidden rounded-[4px] text-left text-[12px] text-[var(--track-text)] ${
           durationSeconds >= 900 ? "px-1.5 py-1" : "px-0 py-0"
         }`}
         style={{
@@ -1818,19 +1813,6 @@ function CalendarEventCard({
             {formatClockDuration(durationSeconds, durationFormat)}
           </span>
         </div>
-        {/* Continue button — hidden by default, shown on hover via CSS.
-            Toggl: opacity:0, position:absolute, border-radius:50%, bg:var(--track-accent-secondary) */}
-        <button
-          aria-label="Continue time entry"
-          className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--track-accent-secondary)] text-[var(--track-surface)] opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={(e) => {
-            e.stopPropagation();
-            onContinueEntry?.(entry);
-          }}
-          type="button"
-        >
-          <PlayIcon className="size-2.5" />
-        </button>
       </div>
     </div>
   );

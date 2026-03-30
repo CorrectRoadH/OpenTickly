@@ -130,7 +130,12 @@ export function calendarDayLayout(args: any): StyledEvent[] {
 
     const gap = item.idx === 0 ? 0 : 3;
     item.style.width = `calc(${item.size}% - ${gap}px)`;
-    item.style.height = `calc(${item.style.height}%)`;
+    // Use max() to guarantee a minimum visual height (~4px at 1440px container).
+    // Plain min-height on .rbc-event doesn't prevent content from stretching the
+    // absolutely-positioned box, but an inline height with max() does.
+    const heightPct = Number(item.style.height);
+    const MIN_HEIGHT_PCT = 0.28; // ~4px in a 1440px day column
+    item.style.height = `calc(max(${heightPct}%, ${MIN_HEIGHT_PCT}%))`;
     item.style.xOffset = `calc(${item.style.left}% + ${gap}px)`;
   }
 

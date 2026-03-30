@@ -137,23 +137,18 @@
 /* Toggl dark: no border-radius on the rbc-event wrapper itself (the inner
    EventBox has border-radius: 4px). overflow: visible so content can bleed
    out of short events. transition: opacity 0.15s for smooth hover. */
-.rbc-event {
+.rbc-event,
+.rbc-day-slot .rbc-event {
   border: none !important;
   border-radius: 0;
+  cursor: pointer;
   font-size: 12px;
   line-height: 1.25;
   min-height: 4px;
-  padding: 1px 1px 0;
+  padding: 1px 0 0;
   color: var(--track-text);
   overflow: visible;
-  transition:
-    opacity 0.15s,
-    min-height 0.15s ease;
-}
-
-.rbc-event:hover {
-  min-height: 44px;
-  z-index: 5;
+  transition: opacity 0.15s;
 }
 
 .rbc-event:focus {
@@ -202,6 +197,7 @@
    relative to this indicator. */
 .rbc-current-time-indicator {
   background-color: var(--track-accent-strong);
+  border: none;
   height: 3px;
   border-radius: 2px;
   z-index: 3;
@@ -215,7 +211,6 @@
    as the visual line. The button position is set by JS in the component. */
 .calendar-indicator-play-btn {
   z-index: 4;
-  left: -8.5px;
 }
 
 /* ── Drag and drop ── */
