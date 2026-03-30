@@ -64,6 +64,7 @@ type SelectDropdownProps = {
   id?: string;
   onChange: (value: string) => void;
   options: readonly SelectOption[];
+  prefix?: string;
   value: string | number;
 };
 
@@ -75,10 +76,12 @@ export function SelectDropdown({
   id,
   onChange,
   options,
+  prefix,
   value,
 }: SelectDropdownProps) {
   const selectedLabel =
     options.find((o) => String(o.value) === String(value))?.label ?? String(value);
+  const displayLabel = prefix ? `${prefix}: ${selectedLabel}` : selectedLabel;
 
   return (
     <Dropdown
@@ -91,7 +94,7 @@ export function SelectDropdown({
           disabled={disabled}
           id={id}
         >
-          {selectedLabel}
+          {displayLabel}
         </SelectButton>
       }
     >

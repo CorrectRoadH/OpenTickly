@@ -15,7 +15,7 @@ import {
 
 import type { ReportsDayRow, ReportsDistributionSegment } from "./reports-page-data.ts";
 import type { SliceDimension } from "./useReportsPageState.ts";
-import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
+import { SelectDropdown } from "@opentoggl/web-ui";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
@@ -195,11 +195,11 @@ export function DistributionPanel({
         <h2 className="max-w-[140px] text-[14px] font-semibold leading-[23px] text-white">
           {sliceLabel} distribution
         </h2>
-        <ReportsSelectDropdown
-          label="Slice by"
-          onChange={onSliceByChange}
+        <SelectDropdown
+          data-testid="reports-slice-by"
+          onChange={onSliceByChange as (value: string) => void}
           options={SLICE_OPTIONS}
-          testId="reports-slice-by"
+          prefix="Slice by"
           value={sliceBy}
         />
       </div>

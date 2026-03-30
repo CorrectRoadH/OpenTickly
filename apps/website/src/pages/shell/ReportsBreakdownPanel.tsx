@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 
 import type { ReportsBreakdownRow } from "./reports-page-data.ts";
 import type { BreakdownDimension } from "./useReportsPageState.ts";
-import { ReportsSelectDropdown } from "./ReportsSelectDropdown.tsx";
+import { SelectDropdown } from "@opentoggl/web-ui";
 
 const BREAKDOWN_OPTIONS: { label: string; value: BreakdownDimension }[] = [
   { label: "Projects", value: "projects" },
@@ -48,11 +48,11 @@ export function ReportsBreakdownPanel({
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ReportsSelectDropdown
-            label="Breakdown by"
-            onChange={onBreakdownByChange}
+          <SelectDropdown
+            data-testid="reports-breakdown-by"
+            onChange={onBreakdownByChange as (value: string) => void}
             options={BREAKDOWN_OPTIONS}
-            testId="reports-breakdown-by"
+            prefix="Breakdown by"
             value={breakdownBy}
           />
         </div>
