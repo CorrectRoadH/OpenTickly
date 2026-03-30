@@ -112,12 +112,16 @@ test.describe("Split time entry", () => {
     const description = `split-cancel-${Date.now()}`;
     await setupUserWithEntry(page, test.info(), description);
 
-    const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
-    await expect(entry).toBeVisible({ timeout: 10_000 });
+    const entryLocator = page
+      .locator(`[data-testid^="calendar-entry-"]`)
+      .filter({ hasText: description });
+    await expect(entryLocator).toBeVisible({ timeout: 10_000 });
 
+    // Wait for calendar to stabilize before interacting — re-renders can detach the node
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await entry.scrollIntoViewIfNeeded();
-    await entry.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(500);
+    await entryLocator.scrollIntoViewIfNeeded();
+    await entryLocator.click({ position: { x: 10, y: 10 } });
 
     const moreActionsButton = page.getByRole("button", { name: "Entry actions" });
     await expect(moreActionsButton).toBeVisible();

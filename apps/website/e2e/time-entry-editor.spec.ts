@@ -163,7 +163,11 @@ test.describe("Story: edit a stopped time entry", () => {
     await datePicker.getByRole("button", { name: todayLabel }).click();
     await expect(datePicker).not.toBeVisible();
 
+    const saveResponsePromise = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries/") && resp.request().method() === "PUT",
+    );
     await dialog.getByRole("button", { name: "Save" }).click();
+    await saveResponsePromise;
 
     await expect(dialog).not.toBeVisible();
     await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();

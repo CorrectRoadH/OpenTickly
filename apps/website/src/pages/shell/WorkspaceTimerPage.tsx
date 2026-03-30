@@ -109,7 +109,8 @@ export function WorkspaceTimerPage({
   // or /timer/start?desc=foo). Fires once when start params are present and the
   // current-timer query has resolved (so we know whether a timer is already running).
   const startParamsConsumedRef = useRef(false);
-  const currentEntryLoaded = !orch.currentTimeEntryQuery.isPending;
+  const currentEntryLoaded =
+    !orch.currentTimeEntryQuery.isPending && !orch.currentTimeEntryQuery.isFetching;
   useEffect(() => {
     if (!startParams || startParamsConsumedRef.current || !currentEntryLoaded) return;
     startParamsConsumedRef.current = true;

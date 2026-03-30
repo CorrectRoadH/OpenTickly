@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 import { loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import { pollCurrentRunningEntry } from "./fixtures/e2e-api.ts";
 
 /**
  * Registers a fresh user and logs them in, returning the workspace session.
@@ -22,19 +23,6 @@ async function setupUser(
   return loginE2eUser(page, testInfo, { email, password });
 }
 
-/**
- * Fetches the current running time entry from the API. Returns null if idle.
- */
-async function fetchCurrentEntry(page: import("@playwright/test").Page) {
-  return page.evaluate(async () => {
-    const response = await fetch("/api/v9/me/time_entries/current", {
-      credentials: "include",
-    });
-    if (!response.ok) return null;
-    return response.json();
-  });
-}
-
 test.describe("Timer start link", () => {
   test("Navigating to /timer?description=... auto-starts a timer with that description", async ({
     page,
@@ -48,7 +36,7 @@ test.describe("Timer start link", () => {
     // Timer should be running with the given description
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
 
-    const entry = await fetchCurrentEntry(page);
+    const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
     expect(entry.description).toBe(desc);
     expect(entry.stop).toBeFalsy();
@@ -65,7 +53,7 @@ test.describe("Timer start link", () => {
 
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
 
-    const entry = await fetchCurrentEntry(page);
+    const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
     expect(entry.description).toBe(desc);
     expect(entry.billable).toBe(true);
@@ -80,7 +68,7 @@ test.describe("Timer start link", () => {
 
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
 
-    const entry = await fetchCurrentEntry(page);
+    const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
     expect(entry.description).toBe(desc);
   });
@@ -120,7 +108,7 @@ test.describe("Timer start link", () => {
     // Wait a moment to make sure no new timer is started
     await page.waitForTimeout(2000);
 
-    const entry = await fetchCurrentEntry(page);
+    const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
     expect(entry.description).toBe("already-running");
   });

@@ -8,6 +8,7 @@ import {
   readSessionBootstrap,
   registerE2eUser,
 } from "./fixtures/e2e-auth.ts";
+import { fetchCurrentEntry, pollCurrentRunningEntry } from "./fixtures/e2e-api.ts";
 import { expectedDuration } from "./fixtures/e2e-format.ts";
 
 test.describe("VAL-REG-002: Workspace scoping regression", () => {
@@ -301,18 +302,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
 
     // Verify current-timer API returns the running entry (not null)
-    const runningResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      const body = await response.json();
-      return {
-        status: response.status,
-        body,
-        hasStop: "stop" in body,
-        stopValue: body.stop,
-      };
-    });
+    const runningResponse = await pollCurrentRunningEntry(page);
     expect(runningResponse.status).toBe(200);
     expect(runningResponse.body).not.toBeNull();
     expect(runningResponse.body.description).toBe(initialDescription);
@@ -366,12 +356,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
 
     // Verify current-timer API STILL returns null (editing stopped entry doesn't start a timer)
-    const afterEditResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const afterEditResponse = await fetchCurrentEntry(page);
     expect(afterEditResponse.status).toBe(200);
     expect(afterEditResponse.body).toBeNull();
 
@@ -386,13 +371,8 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // Verify UI shows running state for the new entry
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
-    // Verify current-timer API returns the new running entry
-    const newRunningResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    // Poll current-timer API until the running entry is visible (POST may still be in-flight)
+    const newRunningResponse = await pollCurrentRunningEntry(page);
     expect(newRunningResponse.status).toBe(200);
     expect(newRunningResponse.body).not.toBeNull();
     expect(newRunningResponse.body.description).toBe("New running entry");
@@ -430,12 +410,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
 
     // Verify current-timer API returns the restarted entry (not null)
-    const restartedResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const restartedResponse = await pollCurrentRunningEntry(page);
     expect(restartedResponse.status).toBe(200);
     expect(restartedResponse.body).not.toBeNull();
     expect(restartedResponse.body.description).toBe(restartedDescription);
@@ -461,12 +436,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // Final contradiction check: current-timer and history are consistent
     // Current timer: restartedDescription (running)
     // History: shows initial, edited, "New running entry" (all stopped), but NOT restartedDescription
-    const finalCurrentResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const finalCurrentResponse = await pollCurrentRunningEntry(page);
     expect(finalCurrentResponse.status).toBe(200);
     expect(finalCurrentResponse.body).not.toBeNull();
     expect(finalCurrentResponse.body.description).toBe(restartedDescription);
@@ -897,12 +867,7 @@ test.describe("Timer page family mainline", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Verify the current timer API returns null (idle state)
-    const currentTimerResponse = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const currentTimerResponse = await fetchCurrentEntry(page);
     expect(currentTimerResponse.status).toBe(200);
     expect(currentTimerResponse.body).toBeNull();
   });
@@ -1098,12 +1063,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
 
     // Get the running entry ID before switch
-    const runningEntryBefore = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const runningEntryBefore = await pollCurrentRunningEntry(page);
     expect(runningEntryBefore.status).toBe(200);
     expect(runningEntryBefore.body).not.toBeNull();
     const runningEntryIdBefore = runningEntryBefore.body.id;
@@ -1157,12 +1117,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
 
     // Same running entry ID is still current
-    const runningEntryAfter = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const runningEntryAfter = await pollCurrentRunningEntry(page);
     expect(runningEntryAfter.status).toBe(200);
     expect(runningEntryAfter.body).not.toBeNull();
     expect(runningEntryAfter.body.id).toBe(runningEntryIdBefore);
@@ -1301,12 +1256,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
 
     // Get the current timer entry ID before switch
-    const currentTimerBefore = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const currentTimerBefore = await pollCurrentRunningEntry(page);
     expect(currentTimerBefore.status).toBe(200);
     expect(currentTimerBefore.body).not.toBeNull();
     const runningEntryIdBefore = currentTimerBefore.body.id;
@@ -1351,12 +1301,7 @@ test.describe("Cross-workspace running timer header", () => {
     expect(elapsedText).toMatch(/\d{1,2}:\d{2}:\d{2}/);
 
     // Verify the current-timer API returns the SAME running entry ID after switch
-    const currentTimerAfter = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const currentTimerAfter = await pollCurrentRunningEntry(page);
     expect(currentTimerAfter.status).toBe(200);
     expect(currentTimerAfter.body).not.toBeNull();
     expect(currentTimerAfter.body.id).toBe(runningEntryIdBefore);
@@ -1451,12 +1396,7 @@ test.describe("Cross-workspace running timer header", () => {
     await page.waitForTimeout(500);
 
     // Verify the edit was persisted by checking the current-timer API
-    const afterEdit = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const afterEdit = await pollCurrentRunningEntry(page);
     expect(afterEdit.status).toBe(200);
     expect(afterEdit.body).not.toBeNull();
     expect(afterEdit.body.description).toBe("Edited from workspace B");
@@ -1469,12 +1409,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Verify current-timer API returns null after stop
-    const afterStop = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const afterStop = await fetchCurrentEntry(page);
     expect(afterStop.status).toBe(200);
     expect(afterStop.body).toBeNull();
   });
@@ -1692,12 +1627,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     // Get the running entry ID
-    const runningEntryBefore = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const runningEntryBefore = await pollCurrentRunningEntry(page);
     expect(runningEntryBefore.status).toBe(200);
     expect(runningEntryBefore.body).not.toBeNull();
     const runningEntryId = runningEntryBefore.body.id;
@@ -1758,12 +1688,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
 
     // Verify the same running entry ID is still current
-    const runningEntryAfter = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const runningEntryAfter = await pollCurrentRunningEntry(page);
     expect(runningEntryAfter.status).toBe(200);
     expect(runningEntryAfter.body).not.toBeNull();
     expect(runningEntryAfter.body.id).toBe(runningEntryId);
@@ -1849,12 +1774,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     // Get the running entry ID and workspace
-    const runningEntryBefore = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const runningEntryBefore = await pollCurrentRunningEntry(page);
     expect(runningEntryBefore.status).toBe(200);
     expect(runningEntryBefore.body).not.toBeNull();
 
@@ -1914,12 +1834,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Verify current-timer API returns null after stop
-    const afterStop = await page.evaluate(async () => {
-      const response = await fetch("/api/v9/me/time_entries/current", {
-        credentials: "include",
-      });
-      return { status: response.status, body: await response.json() };
-    });
+    const afterStop = await fetchCurrentEntry(page);
     expect(afterStop.status).toBe(200);
     expect(afterStop.body).toBeNull();
 
