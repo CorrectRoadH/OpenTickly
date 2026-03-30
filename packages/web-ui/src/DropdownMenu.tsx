@@ -227,7 +227,7 @@ export function Dropdown({
   align,
   children,
   className,
-  panelClassName = "rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface,var(--track-surface))] shadow-lg",
+  panelClassName = "rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg",
   placement,
   testId,
   trigger,
