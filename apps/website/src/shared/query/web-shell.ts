@@ -699,6 +699,29 @@ export function useStartTimeEntryMutation(workspaceId: number) {
           },
         }),
       ),
+    onMutate: async (request) => {
+      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+      const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
+      const optimistic: GithubComTogglTogglApiInternalModelsTimeEntry = {
+        id: -Date.now(),
+        workspace_id: workspaceId,
+        wid: workspaceId,
+        description: request.description,
+        start: request.start,
+        duration: -1,
+        billable: request.billable ?? false,
+        project_id: request.projectId ?? null,
+        tag_ids: request.tagIds ?? [],
+        task_id: request.taskId ?? null,
+      };
+      queryClient.setQueryData(currentTimeEntryQueryKey, optimistic);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (navigator.onLine && context?.previous !== undefined) {
+        queryClient.setQueryData(currentTimeEntryQueryKey, context.previous);
+      }
+    },
     onSuccess: async (data) => {
       queryClient.setQueryData(currentTimeEntryQueryKey, data);
       await queryClient.invalidateQueries({
@@ -747,6 +770,42 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
           },
         }),
       ),
+    onMutate: async (request) => {
+      await queryClient.cancelQueries({ queryKey: ["time-entries"] });
+
+      const previousLists = queryClient.getQueriesData<
+        GithubComTogglTogglApiInternalModelsTimeEntry[]
+      >({ queryKey: ["time-entries"] });
+
+      const optimistic: GithubComTogglTogglApiInternalModelsTimeEntry = {
+        id: -Date.now(),
+        workspace_id: workspaceId,
+        wid: workspaceId,
+        description: request.description ?? "",
+        start: request.start,
+        stop: request.stop,
+        duration: request.duration,
+        billable: request.billable ?? false,
+        project_id: request.projectId ?? null,
+        tag_ids: request.tagIds ?? [],
+        task_id: request.taskId ?? null,
+      };
+
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => (old ? [optimistic, ...old] : [optimistic]),
+      );
+
+      return { previousLists };
+    },
+    onError: (_err, _vars, context) => {
+      if (!navigator.onLine) return;
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
@@ -771,8 +830,19 @@ export function useStopTimeEntryMutation() {
           },
         }),
       ),
-    onSuccess: async () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+      const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
       queryClient.setQueryData(currentTimeEntryQueryKey, null);
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      // Only rollback when online — offline errors mean the SW queued the request
+      if (navigator.onLine && context?.previous !== undefined) {
+        queryClient.setQueryData(currentTimeEntryQueryKey, context.previous);
+      }
+    },
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],
       });
@@ -825,6 +895,32 @@ export function useUpdateTimeEntryMutation() {
           },
         }),
       ),
+    onMutate: async ({ request, timeEntryId }) => {
+      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+      const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);
+      queryClient.setQueryData(
+        currentTimeEntryQueryKey,
+        (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) => {
+          if (current?.id !== timeEntryId) return current;
+          return {
+            ...current,
+            ...(request.description !== undefined && { description: request.description }),
+            ...(request.billable !== undefined && { billable: request.billable }),
+            ...(request.projectId !== undefined && { project_id: request.projectId }),
+            ...(request.start !== undefined && { start: request.start }),
+            ...(request.stop !== undefined && { stop: request.stop }),
+            ...(request.tagIds !== undefined && { tag_ids: request.tagIds }),
+            ...(request.taskId !== undefined && { task_id: request.taskId }),
+          };
+        },
+      );
+      return { previousCurrent };
+    },
+    onError: (_err, _vars, context) => {
+      if (navigator.onLine && context?.previousCurrent !== undefined) {
+        queryClient.setQueryData(currentTimeEntryQueryKey, context.previousCurrent);
+      }
+    },
     onSuccess: async (data) => {
       queryClient.setQueryData(
         currentTimeEntryQueryKey,
@@ -854,6 +950,39 @@ export function useDeleteTimeEntryMutation() {
           },
         }),
       ),
+    onMutate: async ({ timeEntryId }) => {
+      await queryClient.cancelQueries({ queryKey: ["time-entries"] });
+      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+
+      const previousLists = queryClient.getQueriesData<
+        GithubComTogglTogglApiInternalModelsTimeEntry[]
+      >({ queryKey: ["time-entries"] });
+      const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);
+
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => old?.filter((e) => e.id !== timeEntryId),
+      );
+
+      queryClient.setQueryData(
+        currentTimeEntryQueryKey,
+        (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) =>
+          current?.id === timeEntryId ? null : current,
+      );
+
+      return { previousLists, previousCurrent };
+    },
+    onError: (_err, _vars, context) => {
+      if (!navigator.onLine) return;
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
+      }
+      if (context?.previousCurrent !== undefined) {
+        queryClient.setQueryData(currentTimeEntryQueryKey, context.previousCurrent);
+      }
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["time-entries"],

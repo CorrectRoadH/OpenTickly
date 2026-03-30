@@ -880,28 +880,23 @@ export function useTimerPageOrchestration(options?: {
       setSelectedEntryError("This time entry is missing a workspace and cannot be updated.");
       return;
     }
-    try {
-      const updatedEntry = await updateTimeEntryMutation.mutateAsync({
-        request: {
-          billable: selectedEntry.billable,
-          description: selectedDescription.trim(),
-          projectId: selectedProjectId,
-          start: selectedEntry.start,
-          stop: selectedEntry.stop,
-          tagIds: selectedTagIds,
-          taskId: selectedEntry.task_id ?? selectedEntry.tid,
-        },
-        timeEntryId: selectedEntry.id,
-        workspaceId: selectedWorkspaceId,
-      });
-      if (selectedEntry.id === runningEntry?.id) {
-        setSelectedEntry(updatedEntry);
-      }
-      setSelectedEntryError(null);
-      closeSelectedEntryEditor();
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-    }
+    // Close editor immediately — optimistic update applies changes to cache
+    // before the API call. If offline, BackgroundSync replays later.
+    setSelectedEntryError(null);
+    closeSelectedEntryEditor();
+    updateTimeEntryMutation.mutate({
+      request: {
+        billable: selectedEntry.billable,
+        description: selectedDescription.trim(),
+        projectId: selectedProjectId,
+        start: selectedEntry.start,
+        stop: selectedEntry.stop,
+        tagIds: selectedTagIds,
+        taskId: selectedEntry.task_id ?? selectedEntry.tid,
+      },
+      timeEntryId: selectedEntry.id,
+      workspaceId: selectedWorkspaceId,
+    });
   }, [
     selectedEntry,
     selectedDescription,

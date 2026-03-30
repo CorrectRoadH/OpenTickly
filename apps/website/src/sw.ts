@@ -139,54 +139,22 @@ const bgSyncPlugin = new BackgroundSyncPlugin("offline-mutations", {
 });
 
 // Queue POST/PUT/PATCH/DELETE to track API
-registerRoute(
-  ({ url, request }) => {
-    if (request.method === "GET") return false;
-    const p = url.pathname;
-    return p.startsWith("/api/v9/") || p.startsWith("/web/v1/");
-  },
-  new NetworkFirst({
-    cacheName: "api-mutations",
-    plugins: [bgSyncPlugin],
-  }),
-  "POST",
-);
+// networkTimeoutSeconds ensures fast failure when offline so the UI
+// gets an error quickly (triggering rollback) while BackgroundSyncPlugin
+// queues the request for replay when connectivity returns.
+const mutationMatcher = ({ url, request }: { url: URL; request: Request }) => {
+  if (request.method === "GET") return false;
+  const p = url.pathname;
+  return p.startsWith("/api/v9/") || p.startsWith("/web/v1/");
+};
 
-registerRoute(
-  ({ url, request }) => {
-    if (request.method === "GET") return false;
-    const p = url.pathname;
-    return p.startsWith("/api/v9/") || p.startsWith("/web/v1/");
-  },
+const mutationStrategy = () =>
   new NetworkFirst({
     cacheName: "api-mutations",
+    networkTimeoutSeconds: 3,
     plugins: [bgSyncPlugin],
-  }),
-  "PUT",
-);
+  });
 
-registerRoute(
-  ({ url, request }) => {
-    if (request.method === "GET") return false;
-    const p = url.pathname;
-    return p.startsWith("/api/v9/") || p.startsWith("/web/v1/");
-  },
-  new NetworkFirst({
-    cacheName: "api-mutations",
-    plugins: [bgSyncPlugin],
-  }),
-  "PATCH",
-);
-
-registerRoute(
-  ({ url, request }) => {
-    if (request.method === "GET") return false;
-    const p = url.pathname;
-    return p.startsWith("/api/v9/") || p.startsWith("/web/v1/");
-  },
-  new NetworkFirst({
-    cacheName: "api-mutations",
-    plugins: [bgSyncPlugin],
-  }),
-  "DELETE",
-);
+for (const method of ["POST", "PUT", "PATCH", "DELETE"] as const) {
+  registerRoute(mutationMatcher, mutationStrategy(), method);
+}
