@@ -5,12 +5,28 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
+  useNavigate,
 } from "react-router";
 import { RootProvider } from "fumadocs-ui/provider/react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
 import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
+import { i18n } from "@/lib/i18n";
+import { useCallback, useMemo } from "react";
+
+const localeItems = [
+  { name: "English", locale: "en" },
+  { name: "中文", locale: "zh" },
+];
+
+function useLocaleFromPath() {
+  const { pathname } = useLocation();
+  const firstSegment = pathname.split("/")[1];
+  if ((i18n.languages as readonly string[]).includes(firstSegment)) return firstSegment;
+  return i18n.defaultLanguage;
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -31,7 +47,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <RootProvider search={{ SearchDialog }}>{children}</RootProvider>
+        {children}
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -40,7 +56,45 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const locale = useLocaleFromPath();
+  const navigate = useNavigate();
+
+  const onLocaleChange = useCallback(
+    (newLocale: string) => {
+      const { pathname } = window.location;
+      const isDefault = locale === i18n.defaultLanguage;
+      const newIsDefault = newLocale === i18n.defaultLanguage;
+
+      let newPath: string;
+      if (isDefault && !newIsDefault) {
+        newPath = `/${newLocale}${pathname}`;
+      } else if (!isDefault && newIsDefault) {
+        newPath = pathname.replace(`/${locale}`, "") || "/";
+      } else if (!isDefault && !newIsDefault) {
+        newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
+      } else {
+        return;
+      }
+
+      navigate(newPath);
+    },
+    [locale, navigate],
+  );
+
+  const i18nConfig = useMemo(
+    () => ({
+      locale,
+      locales: localeItems,
+      onLocaleChange,
+    }),
+    [locale, onLocaleChange],
+  );
+
+  return (
+    <RootProvider search={{ SearchDialog }} i18n={i18nConfig}>
+      <Outlet />
+    </RootProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

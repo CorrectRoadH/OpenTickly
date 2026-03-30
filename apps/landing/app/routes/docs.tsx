@@ -90,7 +90,7 @@ export default function Page({ loaderData }: Route.ComponentProps) {
   const markdownUrl = `${prefix}/llms.mdx/docs/${[...slugs, "index.mdx"].join("/")}`;
 
   return (
-    <DocsLayout {...baseOptions()} tree={pageTree}>
+    <DocsLayout {...baseOptions(locale)} tree={pageTree}>
       {clientLoader.useContent(loaderData.path, {
         markdownUrl,
         path,

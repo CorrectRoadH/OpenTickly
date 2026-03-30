@@ -1,4 +1,5 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
+import { i18n } from "./i18n";
 
 export const gitConfig = {
   user: "CorrectRoadH",
@@ -6,15 +7,17 @@ export const gitConfig = {
   branch: "main",
 };
 
-export function baseOptions(): BaseLayoutProps {
+export function baseOptions(locale?: string): BaseLayoutProps {
+  const prefix = locale && locale !== i18n.defaultLanguage ? `/${locale}` : "";
   return {
     nav: {
       title: "OpenToggl",
+      url: `${prefix}/`,
     },
     links: [
       {
         text: "Docs",
-        url: "/docs",
+        url: `${prefix}/docs`,
         on: "nav",
         active: "nested-url",
       },

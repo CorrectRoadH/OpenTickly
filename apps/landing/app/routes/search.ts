@@ -3,8 +3,8 @@ import { createTokenizer } from "@orama/tokenizers/mandarin";
 import { source } from "@/lib/source";
 
 const server = createFromSource(source, {
-  language: "english",
   localeMap: {
+    en: "english",
     zh: { tokenizer: createTokenizer() },
   },
 });
