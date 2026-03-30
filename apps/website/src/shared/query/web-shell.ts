@@ -576,6 +576,7 @@ export function useTimeEntriesQuery(options: {
         }),
       ),
     queryKey: timeEntriesQueryKey(options?.startDate, options?.endDate, options?.includeSharing),
+    refetchInterval: 30_000,
   });
 }
 
@@ -584,6 +585,7 @@ export function useCurrentTimeEntryQuery() {
     queryFn: () => unwrapWebApiResult(getCurrentTimeEntry()),
     queryKey: currentTimeEntryQueryKey,
     retry: false,
+    refetchInterval: 30_000,
   });
 }
 

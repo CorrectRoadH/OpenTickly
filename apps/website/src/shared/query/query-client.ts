@@ -7,6 +7,7 @@ export function createAppQueryClient(): QueryClient {
     defaultOptions: {
       queries: {
         retry: false,
+        refetchOnWindowFocus: true,
       },
     },
   });
