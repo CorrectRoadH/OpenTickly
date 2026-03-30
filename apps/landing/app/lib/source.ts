@@ -1,9 +1,11 @@
 import { loader, type InferPageType } from "fumadocs-core/source";
 import { docs } from "collections/server";
+import { i18n } from "./i18n";
 
 export const source = loader({
   source: docs.toFumadocsSource(),
   baseUrl: "/docs",
+  i18n,
 });
 
 export async function getLLMText(page: InferPageType<typeof source>) {

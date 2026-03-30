@@ -1,0 +1,151 @@
+---
+title: 自托管
+description: 使用 Docker Compose 在自己的基础设施上部署 OpenToggl，支持 CasaOS、群晖、飞牛等平台。
+---
+
+## Docker Compose
+
+自托管 OpenToggl 最快的方式。
+
+### 快速开始
+
+```bash
+mkdir -p opentoggl && cd opentoggl
+
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+
+docker compose up -d
+```
+
+等待所有服务变为健康状态后，验证：
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+```
+
+完成。在浏览器中打开 `http://localhost:8080`。
+
+### 架构
+
+compose 文件在隔离的内部网络上启动三个服务：
+
+| 服务        | 角色       | 暴露给主机      |
+| ----------- | ---------- | --------------- |
+| `opentoggl` | Web + API  | 是（`8080`）    |
+| `postgres`  | 数据库     | 否              |
+| `redis`     | 缓存/队列  | 否              |
+
+Postgres 和 Redis 不暴露给主机网络。只有 `opentoggl` 服务发布端口。
+
+### 配置
+
+所有默认值开箱即用。通过环境变量或与 `docker-compose.yml` 同目录的 `.env` 文件覆盖：
+
+| 变量                          | 默认值                                  | 说明                                                 |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 和 API 的主机端口                              |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 容器镜像（建议固定版本标签以保证稳定性）               |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 数据库名                                              |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 数据库用户                                            |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 数据库密码                                            |
+| `OPENTOGGL_DATABASE_URL`      | 自动                                    | 完整连接字符串（覆盖单独的 PG 变量）                   |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 连接字符串                                      |
+
+### 升级
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Schema 迁移在启动时自动运行。
+
+### 备份与恢复
+
+数据库数据存储在 `opentoggl-postgres-data` 命名卷中。
+
+```bash
+# 备份
+docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
+
+# 恢复
+docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
+```
+
+### 卸载
+
+```bash
+docker compose down      # 停止服务，保留数据
+docker compose down -v   # 停止服务并删除所有数据
+```
+
+---
+
+## CasaOS
+
+[CasaOS](https://casaos.io) 支持通过 Docker Compose 文件安装应用。
+
+1. 打开 CasaOS 控制面板
+2. 前往 **应用商店** > **自定义安装** > **导入 docker-compose**
+3. 粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 的内容
+4. 将 **Web UI** 端口调整为 `8080` 并保存
+5. 从控制面板启动应用
+
+安装后，通过 `http://<你的CasaOS IP>:8080` 访问 OpenToggl。
+
+---
+
+## 群晖 (Synology)
+
+群晖 DSM 7.2+ 通过 **Container Manager** 支持 Docker Compose。
+
+1. 打开 **Container Manager** > **项目** > **新建**
+2. 设置项目名称（例如 `opentoggl`）
+3. 选择 **使用 docker-compose.yml** 并粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 的内容
+4. 点击 **下一步** 完成向导
+
+通过 `http://<你的群晖 IP>:8080` 访问 OpenToggl。
+
+<Callout type="info">
+  如果端口 8080 与 DSM 冲突，在创建项目前在环境设置中添加 `OPENTOGGL_PORT=9090`（或任何空闲端口）。
+</Callout>
+
+---
+
+## 飞牛 (fnOS)
+
+[fnOS](https://www.fnnas.com) 支持 Docker 应用部署。
+
+1. 在 fnOS 中打开 **Docker** 管理
+2. 创建新的 Compose 项目
+3. 粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 的内容
+4. 部署并启动项目
+
+通过 `http://<你的飞牛 IP>:8080` 访问 OpenToggl。
+
+---
+
+## 其他 NAS / Homelab 平台
+
+OpenToggl 可以在任何支持 Docker Compose 的平台上运行，包括：
+
+- **Unraid** — 通过 Community Applications 或 Compose Manager 插件
+- **TrueNAS SCALE** — 通过自定义应用配合 Docker Compose
+- **Proxmox LXC** — 在 LXC 容器内安装 Docker，然后按照 Docker Compose 指南操作
+
+步骤相同：获取 `docker-compose.yml`，运行 `docker compose up -d`，访问端口 `8080`。
+
+---
+
+## 验证实例
+
+无论使用哪个平台，运行以下检查以确认部署正常：
+
+```bash
+curl -fsS http://<你的 IP>:8080/healthz
+curl -fsS http://<你的 IP>:8080/readyz
+```
+
+两者都应成功返回。如果是，你的实例就绑定了。

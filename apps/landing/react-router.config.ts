@@ -1,8 +1,7 @@
 import type { Config } from "@react-router/dev/config";
 import { glob } from "node:fs/promises";
 import { createGetUrl, getSlugs } from "fumadocs-core/source";
-
-const getUrl = createGetUrl("/docs");
+import { i18n } from "./app/lib/i18n";
 
 export default {
   ssr: false,
@@ -17,9 +16,15 @@ export default {
       if (!excluded.includes(path)) paths.push(path);
     }
 
-    for await (const entry of glob("**/*.mdx", { cwd: "content/docs" })) {
-      const slugs = getSlugs(entry);
-      paths.push(getUrl(slugs), `/llms.mdx/docs/${[...slugs, "index.mdx"].join("/")}`);
+    for (const lang of i18n.languages) {
+      const isDefault = lang === i18n.defaultLanguage;
+      const prefix = isDefault ? "" : `/${lang}`;
+      const getUrl = createGetUrl(`${prefix}/docs`);
+
+      for await (const entry of glob("**/*.mdx", { cwd: `content/docs/${lang}` })) {
+        const slugs = getSlugs(entry);
+        paths.push(getUrl(slugs), `${prefix}/llms.mdx/docs/${[...slugs, "index.mdx"].join("/")}`);
+      }
     }
 
     return paths;
