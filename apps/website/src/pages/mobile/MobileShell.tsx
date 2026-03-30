@@ -12,14 +12,8 @@ import {
   useStopTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import {
-  CalendarIcon,
-  PlayIcon,
-  ProfileIcon,
-  ReportsIcon,
-  StopIcon,
-  TimerIcon,
-} from "../../shared/ui/icons.tsx";
+import { CalendarIcon, ProfileIcon, ReportsIcon, TimerIcon } from "../../shared/ui/icons.tsx";
+import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { OfflineBanner } from "./OfflineBanner.tsx";
 import { PwaInstallBanner } from "./PwaInstallBanner.tsx";
 
@@ -101,14 +95,7 @@ export function MobileShell(): ReactElement {
               </p>
               <p className="text-[12px] tabular-nums text-[var(--track-accent)]">{timerLabel}</p>
             </div>
-            <button
-              aria-label="Stop timer"
-              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--track-danger-text)] text-white"
-              onClick={handleStop}
-              type="button"
-            >
-              <StopIcon className="size-4" />
-            </button>
+            <TimerActionButton isRunning onClick={handleStop} size="sm" />
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -121,14 +108,7 @@ export function MobileShell(): ReactElement {
               placeholder="What are you working on?"
               value={draftDescription}
             />
-            <button
-              aria-label="Start timer"
-              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent)] text-black"
-              onClick={handleStart}
-              type="button"
-            >
-              <PlayIcon className="size-5" />
-            </button>
+            <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
           </div>
         )}
       </div>

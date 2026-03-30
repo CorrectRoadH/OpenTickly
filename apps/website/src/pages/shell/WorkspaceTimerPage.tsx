@@ -45,14 +45,8 @@ import {
   type WeekShortcut,
   WEEK_SHORTCUTS,
 } from "../../features/tracking/week-range.ts";
-import {
-  PanelRightIcon,
-  PlayIcon,
-  ProjectsIcon,
-  SettingsIcon,
-  StopIcon,
-  TagsIcon,
-} from "../../shared/ui/icons.tsx";
+import { PanelRightIcon, ProjectsIcon, SettingsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
+import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -419,24 +413,13 @@ export function WorkspaceTimerPage({
                     ? formatClockDuration(orch.runningDurationSeconds, durationFormat)
                     : "0:00:00"}
                 </span>
-                <button
-                  aria-label={orch.runningEntry ? "Stop timer" : "Start timer"}
-                  className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[var(--track-depth-accent-shadow)] transition-[transform,box-shadow] duration-[var(--duration-fast)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]"
-                  style={{ transitionTimingFunction: "var(--ease-spring)" }}
-                  data-icon={orch.runningEntry ? "stop" : "play"}
-                  data-testid="timer-action-button"
+                <TimerActionButton
+                  isRunning={!!orch.runningEntry}
                   disabled={orch.timerMutationPending}
                   onClick={() => {
                     void orch.handleTimerAction();
                   }}
-                  type="button"
-                >
-                  {orch.runningEntry ? (
-                    <StopIcon className="size-5" />
-                  ) : (
-                    <PlayIcon className="size-5" />
-                  )}
-                </button>
+                />
               </>
             )}
           </div>
