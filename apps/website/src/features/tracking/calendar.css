@@ -145,10 +145,14 @@
   font-size: 12px;
   line-height: 1.25;
   min-height: 4px;
-  padding: 1px 0 0;
+  /* Toggl uses 1px padding on top+sides so the inner EventBox is inset,
+     exposing the grid background as a thin separator between adjacent entries. */
+  padding: 1px 1px 0;
   color: var(--track-text);
   overflow: visible;
   transition: opacity 0.15s;
+  /* Force transparent so the grid lines show through the padding gap */
+  background: transparent !important;
 }
 
 .rbc-event:focus {
