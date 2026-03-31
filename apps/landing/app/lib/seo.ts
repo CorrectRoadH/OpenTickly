@@ -1,16 +1,16 @@
 export const siteName = "OpenToggl";
 export const siteUrl = "https://opentoggl.com";
-export const defaultTitle = "Free Private-First Toggl Alternative";
+export const defaultTitle = "Open-Source Time Tracking and Toggl Alternative";
 export const defaultDescription =
-  "OpenToggl is a free, private-first, AI-friendly alternative to Toggl for teams that want control over hosting, data, and API throughput.";
+  "OpenToggl is a free, open-source time tracking and time management app for individuals and teams, and a practical alternative to Toggl.";
 export const defaultOgImagePath = "/og-image.png";
 export const defaultKeywords = [
   "OpenToggl",
   "open source time tracking",
+  "time management app",
   "self-hosted time tracking",
   "Toggl alternative",
-  "private-first time tracking",
-  "AI-friendly time tracking",
+  "project and task tracking",
   "time tracking software",
 ].join(", ");
 

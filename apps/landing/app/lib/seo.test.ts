@@ -21,7 +21,7 @@ describe("seo helpers", () => {
   });
 
   it("builds page titles", () => {
-    expect(buildPageTitle()).toBe("OpenToggl | Free Private-First Toggl Alternative");
+    expect(buildPageTitle()).toBe("OpenToggl | Open-Source Time Tracking and Toggl Alternative");
     expect(buildPageTitle("Self-Hosting")).toBe("Self-Hosting | OpenToggl");
   });
 

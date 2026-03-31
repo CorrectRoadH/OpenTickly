@@ -14,14 +14,15 @@ import { i18n } from "@/lib/i18n";
 
 const t = {
   en: {
-    subtitle: "OpenToggl is a free, private-first, AI-friendly alternative to Toggl",
+    subtitle:
+      "OpenToggl is a free, open-source time tracking and time management app — and a practical alternative to Toggl.",
     liveDemo: "Live Demo",
     selfHosting: "Self-Hosting",
     faq: [
       {
         question: "What is OpenToggl?",
         answer:
-          "OpenToggl is a free, private-first, AI-friendly alternative to Toggl that aims to preserve the same product surface without the same pricing, hosting, and rate-limit constraints.",
+          "OpenToggl is a free, open-source app for time tracking, time management, projects, and tasks. It is built as a practical alternative to Toggl with a familiar product surface and self-hosting support.",
       },
       {
         question: "Can I self-host OpenToggl?",
@@ -40,40 +41,40 @@ const t = {
       },
     ],
     highlights: [
-      ["Lower cost", "Avoid premium SaaS pricing for a workflow your team already knows."],
+      ["Free & open source", "Use time tracking and time management without subscription pricing."],
       [
-        "AI-friendly",
-        "No rate-limit ceiling. Built for agents, automations, and high-frequency API access.",
+        "Projects, tasks, and timers",
+        "Track work hours and keep project work organized in one simple workspace.",
       ],
       [
-        "Mobile-ready PWA",
-        "Add to your home screen and use it like a native app — no app store needed.",
+        "Works across devices",
+        "Use it in the browser or add the PWA to your home screen on mobile.",
       ],
     ],
     features: [
       {
-        title: "Toggl-shaped surface",
+        title: "Time tracking and task management",
+        body: "Track hours, organize projects and tasks, and keep your workflow in one place.",
+      },
+      {
+        title: "Toggl-compatible surface",
         body: "Track, reports, and webhooks stay aligned with the public product surface teams already understand.",
       },
       {
-        title: "Operator-friendly deploy",
-        body: "The docs include a straightforward Docker Compose baseline plus health and readiness verification.",
-      },
-      {
-        title: "Better for AI workflows",
-        body: "Private infrastructure and higher-throughput APIs make automation less fragile and less constrained.",
+        title: "Self-hosted or hosted",
+        body: "Run OpenToggl on infrastructure you control or use the hosted experience when it fits better.",
       },
     ],
   },
   zh: {
-    subtitle: "OpenToggl 是一个免费、隐私优先、AI 友好的 Toggl 替代方案",
+    subtitle: "OpenToggl 是一个免费开源的时间追踪与时间管理应用，也是一个实用的 Toggl 替代方案。",
     liveDemo: "在线演示",
     selfHosting: "自托管",
     faq: [
       {
         question: "OpenToggl 是什么？",
         answer:
-          "OpenToggl 是一个免费、隐私优先、AI 友好的 Toggl 替代方案，旨在保留相同的产品功能，同时避免定价、托管和速率限制方面的约束。",
+          "OpenToggl 是一个免费开源的应用，用于时间追踪、时间管理、项目和任务管理。它以熟悉的产品界面和自托管能力，成为一个实用的 Toggl 替代方案。",
       },
       {
         question: "可以自托管 OpenToggl 吗？",
@@ -92,22 +93,22 @@ const t = {
       },
     ],
     highlights: [
-      ["更低成本", "团队已经熟悉的工作流，不再需要支付高额 SaaS 费用。"],
-      ["AI 友好", "没有速率限制上限。专为代理、自动化和高频 API 访问而构建。"],
-      ["移动端 PWA", "添加到主屏幕，像原生应用一样使用——无需应用商店。"],
+      ["免费开源", "无需订阅费用，也能完成时间追踪和时间管理。"],
+      ["项目、任务与计时", "在一个简洁的工作区里追踪工时并管理项目任务。"],
+      ["多端可用", "可直接在浏览器中使用，也可在手机上以 PWA 方式添加到主屏幕。"],
     ],
     features: [
+      {
+        title: "时间追踪与任务管理",
+        body: "记录工时、整理项目和任务，把工作流放在一个地方完成。",
+      },
       {
         title: "Toggl 兼容接口",
         body: "Track、Reports 和 Webhooks 与团队已经熟悉的公开产品接口保持一致。",
       },
       {
-        title: "运维友好的部署",
-        body: "文档提供了简单直接的 Docker Compose 基线以及健康和就绪性验证。",
-      },
-      {
-        title: "更适合 AI 工作流",
-        body: "私有基础设施和更高吞吐量的 API 使自动化更稳定、约束更少。",
+        title: "支持自托管或托管",
+        body: "你可以部署在自己掌控的基础设施上，也可以选择更轻量的使用方式。",
       },
     ],
   },
