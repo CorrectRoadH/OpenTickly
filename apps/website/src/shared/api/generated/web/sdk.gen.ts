@@ -34,6 +34,8 @@ import type {
   RegisterWebUserResponses,
   RemoveWorkspaceMemberData,
   RemoveWorkspaceMemberResponses,
+  ResetOnboardingData,
+  ResetOnboardingResponses,
   RestoreWorkspaceMemberData,
   RestoreWorkspaceMemberResponses,
   UpdateWebSessionData,
@@ -287,6 +289,17 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Reset onboarding for the current user
+ */
+export const resetOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<ResetOnboardingData, ThrowOnError>,
+) =>
+  (options?.client ?? client).delete<ResetOnboardingResponses, unknown, ThrowOnError>({
+    url: "/web/v1/onboarding",
+    ...options,
   });
 
 /**

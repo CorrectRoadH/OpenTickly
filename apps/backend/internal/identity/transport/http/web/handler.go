@@ -337,7 +337,7 @@ func preferencesBody(user application.UserSnapshot, preferences domain.Preferenc
 		DateFormat:          preferences.DateFormat,
 		DurationFormat:      "improved",
 		HideSidebarRight:    false,
-		LanguageCode:        "en-US",
+		LanguageCode:        preferences.LanguageCode,
 		ManualEntryMode:     "timer",
 		ManualMode:          false,
 		PgTimeZoneName:      user.Timezone,

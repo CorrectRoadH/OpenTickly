@@ -643,6 +643,22 @@ export type InviteWorkspaceMemberResponses = {
 export type InviteWorkspaceMemberResponse =
   InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
 
+export type ResetOnboardingData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/web/v1/onboarding";
+};
+
+export type ResetOnboardingResponses = {
+  /**
+   * Onboarding reset status
+   */
+  200: OnboardingStatus;
+};
+
+export type ResetOnboardingResponse = ResetOnboardingResponses[keyof ResetOnboardingResponses];
+
 export type GetOnboardingData = {
   body?: never;
   path?: never;

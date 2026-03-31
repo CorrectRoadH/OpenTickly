@@ -103,6 +103,10 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	return server.handlers.updateWorkspaceSettings(ctx)
 }
 
+func (server *webOpenAPIServer) ResetOnboarding(ctx echo.Context) error {
+	return server.handlers.resetOnboarding(ctx)
+}
+
 func (server *webOpenAPIServer) GetOnboarding(ctx echo.Context) error {
 	return server.handlers.getOnboarding(ctx)
 }

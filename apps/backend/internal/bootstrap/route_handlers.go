@@ -1080,6 +1080,29 @@ func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
 	})
 }
 
+func (handlers *routeHandlers) resetOnboarding(ctx echo.Context) error {
+	if response, ok := handlers.authorizeSession(ctx); !ok {
+		return response
+	}
+
+	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+	}
+
+	_, err = handlers.pool.Exec(ctx.Request().Context(),
+		`DELETE FROM user_onboarding WHERE user_id = $1`,
+		user.ID,
+	)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{
+		Completed: false,
+	})
+}
+
 func (handlers *routeHandlers) getOnboardingCompleted(ctx context.Context, userID int64) (bool, error) {
 	row := handlers.pool.QueryRow(ctx,
 		`SELECT 1 FROM user_onboarding WHERE user_id = $1`,

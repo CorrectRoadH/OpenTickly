@@ -15,6 +15,7 @@ import {
   useUpdatePreferencesMutation,
   useProfileQuery,
   useUpdateProfileMutation,
+  useResetOnboardingMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
@@ -121,6 +122,8 @@ export function AccountPage(): ReactElement {
               })
             }
           />
+
+          <ResetOnboardingSection />
 
           <AccountActionsSection organizationName={session.currentOrganization?.name ?? ""} />
         </div>
@@ -374,6 +377,35 @@ function ChangePasswordSection({
             </div>
           </div>
         )}
+      </div>
+    </PreferenceCard>
+  );
+}
+
+function ResetOnboardingSection(): ReactElement {
+  const { t } = useTranslation("account");
+  const resetOnboardingMutation = useResetOnboardingMutation();
+
+  return (
+    <PreferenceCard description={t("resetOnboardingDescription")} title={t("resetOnboarding")}>
+      <div className="px-5 py-5">
+        <AppButton
+          disabled={resetOnboardingMutation.isPending}
+          type="button"
+          onClick={() => {
+            resetOnboardingMutation.mutate(undefined, {
+              onSuccess: () => {
+                toast.success(t("onboardingReset"));
+                globalThis.location.reload();
+              },
+              onError: () => {
+                toast.error(t("failedToResetOnboarding"));
+              },
+            });
+          }}
+        >
+          {t("resetOnboarding")}
+        </AppButton>
       </div>
     </PreferenceCard>
   );

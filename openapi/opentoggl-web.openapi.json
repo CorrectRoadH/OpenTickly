@@ -594,6 +594,22 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Reset onboarding for the current user",
+        "operationId": "reset-onboarding",
+        "responses": {
+          "200": {
+            "description": "Onboarding reset status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingStatus"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },

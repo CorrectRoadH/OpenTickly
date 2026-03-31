@@ -81,6 +81,7 @@ import {
   disableWorkspaceMember,
   completeOnboarding,
   getOnboarding,
+  resetOnboarding,
   getWebSession,
   getWorkspacePermissions,
   getWorkspaceSettings,
@@ -1835,6 +1836,17 @@ export function useCompleteOnboardingMutation() {
   return useMutation({
     mutationFn: (request: { version: number; language_code?: string }) =>
       unwrapWebApiResult(completeOnboarding({ body: request })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: onboardingQueryKey() });
+    },
+  });
+}
+
+export function useResetOnboardingMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => unwrapWebApiResult(resetOnboarding()),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: onboardingQueryKey() });
     },

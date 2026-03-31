@@ -39,5 +39,9 @@
   "passwordChanged": "Password changed",
   "failedToSavePersonalDetails": "Failed to save personal details",
   "failedToUpdateTimezone": "Failed to update timezone",
-  "failedToUpdateCountry": "Failed to update country"
+  "failedToUpdateCountry": "Failed to update country",
+  "resetOnboarding": "Reset Onboarding",
+  "resetOnboardingDescription": "Reset your onboarding status to test the onboarding flow again",
+  "onboardingReset": "Onboarding reset successfully",
+  "failedToResetOnboarding": "Failed to reset onboarding"
 }
