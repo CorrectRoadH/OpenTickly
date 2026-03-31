@@ -44,7 +44,7 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-[var(--track-overlay-backdrop)] px-4 py-10"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--track-overlay-backdrop)] px-4"
       onClick={onClose}
     >
       <div
@@ -65,23 +65,27 @@ export function Dialog({
 // ---------------------------------------------------------------------------
 
 type DialogHeaderProps = {
+  navigation?: ReactNode;
   onClose: () => void;
   title: string;
 };
 
-export function DialogHeader({ onClose, title }: DialogHeaderProps): ReactElement {
+export function DialogHeader({ navigation, onClose, title }: DialogHeaderProps): ReactElement {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <h2 className="text-[14px] font-semibold text-white">{title}</h2>
-      <button
-        aria-label="Close dialog"
-        className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
-        onClick={onClose}
-        type="button"
-      >
-        ×
-      </button>
-    </div>
+    <>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-[14px] font-semibold text-white">{title}</h2>
+        <button
+          aria-label="Close dialog"
+          className="text-[20px] leading-none text-[var(--track-text-muted)] transition hover:text-white"
+          onClick={onClose}
+          type="button"
+        >
+          ×
+        </button>
+      </div>
+      {navigation && <div className="mt-3">{navigation}</div>}
+    </>
   );
 }
 

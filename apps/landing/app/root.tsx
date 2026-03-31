@@ -76,7 +76,7 @@ export default function App() {
         return;
       }
 
-      navigate(newPath);
+      void navigate(newPath);
     },
     [locale, navigate],
   );

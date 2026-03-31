@@ -2,7 +2,7 @@
   "languageTitle": "Choose your language",
   "languageDescription": "Select your preferred language. You can change this later in Account settings.",
   "aiWorkflowTitle": "AI-powered workflow",
-  "aiWorkflowDescription": "Connect Toggl CLI to track time directly from your terminal. Install with: npm install -g toggl-cli. Then run: toggl login to connect your account.",
+  "aiWorkflowDescription": "Connect Toggl CLI to track time directly from your terminal. Install with: `npm install -g toggl-cli`. Then run: `toggl login`. [Learn more](https://github.com/CorrectRoadH/toggl-cli)",
   "configureWorkspaceTitle": "Configure your workspace",
   "configureWorkspaceDescription": "Set up your workspace name, currency, and time tracking preferences in Settings. This helps organize your team's work.",
   "starUsTitle": "Support OpenToggl",
@@ -10,5 +10,7 @@
   "continue": "Continue",
   "starOnGitHub": "Star on GitHub",
   "startTracking": "Start tracking",
-  "failedToComplete": "Failed to complete onboarding"
+  "failedToComplete": "Failed to complete onboarding",
+  "previous": "Previous",
+  "next": "Next"
 }

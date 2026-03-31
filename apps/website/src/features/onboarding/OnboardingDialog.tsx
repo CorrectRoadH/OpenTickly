@@ -17,9 +17,10 @@ import {
   usePreferencesQuery,
   useUpdatePreferencesMutation,
 } from "../../shared/query/web-shell.ts";
-import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
+import { ModalDialogWithNav } from "../../shared/ui/ModalDialog.tsx";
 
 export const ONBOARDING_VERSION = 1;
+const ONBOARDING_STEP_STORAGE_KEY = "opentoggl_onboarding_step";
 
 export type OnboardingStepConfig = {
   id: string;
@@ -63,12 +64,35 @@ export function getOnboardingSteps(): OnboardingStepConfig[] {
         {
           labelKey: "onboarding:starOnGitHub",
           variant: "primary",
-          href: "https://github.com/opentoggl/opentoggl",
+          href: "https://github.com/CorrectRoadH/opentoggl",
         },
         { labelKey: "onboarding:startTracking", variant: "secondary", onComplete: true },
       ],
     },
   ];
+}
+
+function loadSavedStep(): number {
+  try {
+    const saved = localStorage.getItem(ONBOARDING_STEP_STORAGE_KEY);
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (typeof parsed === "number" && parsed >= 0) {
+        return parsed;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return 0;
+}
+
+function saveStep(stepIndex: number): void {
+  try {
+    localStorage.setItem(ONBOARDING_STEP_STORAGE_KEY, JSON.stringify(stepIndex));
+  } catch {
+    // ignore storage errors
+  }
 }
 
 export function OnboardingDialog(): ReactElement | null {
@@ -81,10 +105,14 @@ export function OnboardingDialog(): ReactElement | null {
   const completeOnboardingMutation = useCompleteOnboardingMutation();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(loadSavedStep);
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>(
     normalizeSupportedLanguage(i18n.language),
   );
+
+  const handleLanguageSelect = useCallback((lang: SupportedLanguage) => {
+    setSelectedLanguage(lang);
+  }, []);
 
   const steps = getOnboardingSteps();
   const currentStep = steps[currentStepIndex];
@@ -94,11 +122,11 @@ export function OnboardingDialog(): ReactElement | null {
       return;
     }
 
-    if (onboardingQuery.data?.completed === false) {
+    if (onboardingQuery.data?.completed === false && !isOpen) {
       setSelectedLanguage(
         normalizeSupportedLanguage(preferencesQuery.data?.language_code ?? i18n.language),
       );
-      setCurrentStepIndex(0);
+      setCurrentStepIndex(loadSavedStep());
       setIsOpen(true);
     }
   }, [
@@ -106,7 +134,23 @@ export function OnboardingDialog(): ReactElement | null {
     onboardingQuery.isPending,
     onboardingQuery.isFetching,
     preferencesQuery.data?.language_code,
+    isOpen,
   ]);
+
+  const handleNext = useCallback(() => {
+    const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
+    setCurrentStepIndex(nextIndex);
+    saveStep(nextIndex);
+  }, [currentStepIndex, steps.length]);
+
+  const handlePrev = useCallback(() => {
+    const prevIndex = Math.max(currentStepIndex - 1, 0);
+    setCurrentStepIndex(prevIndex);
+    saveStep(prevIndex);
+  }, [currentStepIndex]);
+
+  const isFirstStep = currentStepIndex === 0;
+  const isLastStep = currentStepIndex === steps.length - 1;
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -118,23 +162,18 @@ export function OnboardingDialog(): ReactElement | null {
 
       if (nextIndex >= steps.length) {
         // Last step - complete onboarding
-        const currentLanguage = normalizeSupportedLanguage(preferencesQuery.data?.language_code);
-
         try {
-          if (selectedLanguage !== currentLanguage) {
-            await updatePreferencesMutation.mutateAsync({
-              language_code: selectedLanguage,
-            });
-          }
-          if (selectedLanguage !== normalizeSupportedLanguage(i18n.language)) {
-            await i18n.changeLanguage(selectedLanguage);
-          }
+          await updatePreferencesMutation.mutateAsync({
+            language_code: selectedLanguage,
+          });
+          await i18n.changeLanguage(selectedLanguage);
 
           await completeOnboardingMutation.mutateAsync({
             version: ONBOARDING_VERSION,
             language_code: selectedLanguage,
           });
 
+          localStorage.removeItem(ONBOARDING_STEP_STORAGE_KEY);
           setIsOpen(false);
           void navigate({ to: resolveHomePath() });
         } catch {
@@ -142,17 +181,10 @@ export function OnboardingDialog(): ReactElement | null {
         }
       } else {
         setCurrentStepIndex(nextIndex);
+        saveStep(nextIndex);
       }
     },
-    [
-      steps,
-      selectedLanguage,
-      preferencesQuery.data?.language_code,
-      updatePreferencesMutation,
-      completeOnboardingMutation,
-      navigate,
-      t,
-    ],
+    [steps, selectedLanguage, updatePreferencesMutation, completeOnboardingMutation, navigate, t],
   );
 
   if (!isOpen || !currentStep) {
@@ -160,7 +192,7 @@ export function OnboardingDialog(): ReactElement | null {
   }
 
   return (
-    <ModalDialog
+    <ModalDialogWithNav
       footer={
         <div className="flex flex-wrap items-center justify-end gap-2">
           {currentStep.actions.map((action, index) => (
@@ -183,6 +215,21 @@ export function OnboardingDialog(): ReactElement | null {
           ))}
         </div>
       }
+      navigation={
+        <div className="flex items-center justify-between">
+          {!isFirstStep && (
+            <AppButton onClick={handlePrev} type="button" variant="secondary">
+              {t("onboarding:previous")}
+            </AppButton>
+          )}
+          <div className="flex-1" />
+          {!isLastStep && (
+            <AppButton onClick={handleNext} type="button" variant="secondary">
+              {t("onboarding:next")}
+            </AppButton>
+          )}
+        </div>
+      }
       onClose={handleClose}
       testId="onboarding-dialog"
       title={t(currentStep.titleKey)}
@@ -190,12 +237,12 @@ export function OnboardingDialog(): ReactElement | null {
     >
       <div className="space-y-4">
         {currentStep.id === "language" ? (
-          <LanguageStep selectedLanguage={selectedLanguage} onSelect={setSelectedLanguage} t={t} />
+          <LanguageStep selectedLanguage={selectedLanguage} onSelect={handleLanguageSelect} t={t} />
         ) : (
           <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
         )}
       </div>
-    </ModalDialog>
+    </ModalDialogWithNav>
   );
 }
 
@@ -246,9 +293,42 @@ function StepContent({
   descriptionKey: string;
   t: (key: string) => string;
 }): ReactElement {
+  const text = t(descriptionKey);
+  const parts = text.split(/(`[^`]+`|\[([^\]]+)\]\(([^)]+)\))/g);
+
   return (
     <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] px-5 py-4">
-      <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{t(descriptionKey)}</p>
+      <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
+        {parts.map((part, i) => {
+          if (part == null) return null;
+          const codeMatch = part.match(/^`([^`]+)`$/);
+          if (codeMatch) {
+            return (
+              <code
+                className="rounded bg-[var(--track-surface)] px-1.5 py-0.5 text-[13px] text-[var(--track-text)]"
+                key={i}
+              >
+                {codeMatch[1]}
+              </code>
+            );
+          }
+          const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+          if (linkMatch) {
+            return (
+              <a
+                className="text-[var(--track-accent)] underline hover:text-[var(--track-accent-text)]"
+                href={linkMatch[2]}
+                key={i}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {linkMatch[1]}
+              </a>
+            );
+          }
+          return part;
+        })}
+      </p>
     </div>
   );
 }

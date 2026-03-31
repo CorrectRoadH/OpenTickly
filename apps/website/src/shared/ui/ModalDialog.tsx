@@ -32,3 +32,21 @@ export function ModalDialog({
     </Dialog>
   );
 }
+
+export function ModalDialogWithNav({
+  children,
+  footer,
+  navigation,
+  onClose,
+  testId,
+  title,
+  width = "max-w-[420px]",
+}: ModalDialogProps & { navigation?: ReactNode }): ReactElement {
+  return (
+    <Dialog onClose={onClose} testId={testId} width={width}>
+      <DialogHeader navigation={navigation} onClose={onClose} title={title} />
+      <DialogBody>{children}</DialogBody>
+      {footer ? <DialogFooter>{footer}</DialogFooter> : null}
+    </Dialog>
+  );
+}

@@ -1,4 +1,5 @@
 import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { mix, transparentize } from "polished";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import { useTranslation } from "react-i18next";
@@ -1793,9 +1794,9 @@ function CalendarEventCard({
           durationSeconds >= 900 ? "px-1.5 py-1" : "px-0 py-0"
         }`}
         style={{
-          backgroundColor: colorToOverlay(color),
+          backgroundColor: isRunning ? colorToOverlay(color, 0.08) : colorToOverlay(color, 0.5),
           backgroundImage: isRunning
-            ? "repeating-linear-gradient(135deg, transparent 0 10px, var(--track-border-soft) 10px 20px)"
+            ? `repeating-linear-gradient(-45deg, transparent 0 0.5em, ${transparentize(0.92, color)} 0.5em 0.6em)`
             : undefined,
         }}
       >
@@ -1952,53 +1953,24 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 }
 
-/** Keep the same hue as the project color but boost saturation and lightness for a vivid, readable label. */
+/** Lighten the project color for use as a readable label on dark backgrounds.
+ *  Mix 60% project color with white to get a pastel-ish tint. */
 function vividColor(color: string): string {
   if (!color?.startsWith("#")) return color ?? "var(--track-accent)";
-  const normalized = color.replace("#", "");
-  const full =
-    normalized.length === 3
-      ? normalized
-          .split("")
-          .map((p) => `${p}${p}`)
-          .join("")
-      : normalized;
-  const r = Number.parseInt(full.slice(0, 2), 16) / 255;
-  const g = Number.parseInt(full.slice(2, 4), 16) / 255;
-  const b = Number.parseInt(full.slice(4, 6), 16) / 255;
-
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const delta = max - min;
-
-  let h = 0;
-  if (delta !== 0) {
-    if (max === r) h = ((g - b) / delta) % 6;
-    else if (max === g) h = (b - r) / delta + 2;
-    else h = (r - g) / delta + 4;
-    h = Math.round(h * 60);
-    if (h < 0) h += 360;
-  }
-
-  return `hsl(${h}, 40%, 38%)`;
+  return mix(0.6, color, "#ffffff");
 }
 
-function colorToOverlay(color: string): string {
-  if (!color.startsWith("#")) {
-    return color;
-  }
+/** Surface color for the current theme (dark). Toggl mixes projectColor with the
+ *  theme background; we use the design-token value so it stays in sync. */
+const SURFACE_BG = "#1b1b1b";
 
-  const normalized = color.replace("#", "");
-  const full =
-    normalized.length === 3
-      ? normalized
-          .split("")
-          .map((part) => `${part}${part}`)
-          .join("")
-      : normalized;
-  const red = Number.parseInt(full.slice(0, 2), 16);
-  const green = Number.parseInt(full.slice(2, 4), 16);
-  const blue = Number.parseInt(full.slice(4, 6), 16);
-
-  return `rgb(${red}, ${green}, ${blue})`;
+/**
+ * Mix the project color with the surface background, matching Toggl's polished.mix
+ * algorithm.  weight 0 → pure background, 1 → pure project color.
+ *
+ * Toggl constants: normal=0.5, hover=0.8, running-stripe=0.08.
+ */
+function colorToOverlay(color: string, weight = 0.5): string {
+  if (!color?.startsWith("#")) return color ?? SURFACE_BG;
+  return mix(weight, color, SURFACE_BG);
 }
