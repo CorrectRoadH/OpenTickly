@@ -40,7 +40,7 @@ type AppShellProps = {
 };
 
 export function AppShell({ children }: AppShellProps): ReactElement {
-  const { t } = useTranslation("appShell");
+  const { t } = useTranslation(["appShell", "navigation"]);
   const navigate = useNavigate();
   const location = useRouterState({
     select: (state) => state.location,

@@ -34,6 +34,7 @@ export type NavSection = {
 type NavItem = {
   badge?: string;
   disabled?: boolean;
+  id: string;
   label: string;
   to?: string;
 };
@@ -65,15 +66,16 @@ export function SidebarNavSections({
               {section.items.map((item) => (
                 <ShellNavItem
                   active={
-                    item.label === "Overview"
+                    item.id === "overview"
                       ? isOverviewNavActive(pathname, item.to)
-                      : item.label === "Timer"
+                      : item.id === "timer"
                         ? isTimerNavActive(pathname, item.to)
                         : isSectionNavActive(pathname, item.to)
                   }
-                  badge={item.label === "Timer" ? timerBadge : item.badge}
+                  badge={item.id === "timer" ? timerBadge : item.badge}
                   disabled={item.disabled}
-                  key={`${section.title}-${item.label}`}
+                  id={item.id}
+                  key={`${section.title}-${item.id}`}
                   label={item.label}
                   sectionId={section.title}
                   to={item.to}
@@ -95,7 +97,8 @@ export function SidebarNavSections({
                 active={isSectionNavActive(pathname, item.to)}
                 badge={item.badge}
                 disabled={item.disabled}
-                key={`${adminSection.title}-${item.label}`}
+                id={item.id}
+                key={`${adminSection.title}-${item.id}`}
                 label={item.label}
                 sectionId={adminSection.title}
                 to={item.to}
@@ -112,6 +115,7 @@ function ShellNavItem({
   active,
   badge,
   disabled = false,
+  id,
   label,
   sectionId,
   to,
@@ -119,6 +123,7 @@ function ShellNavItem({
   active: boolean;
   badge?: string;
   disabled?: boolean;
+  id: string;
   label: string;
   sectionId: string;
   to?: string;
@@ -135,7 +140,7 @@ function ShellNavItem({
           layoutId={`shell-nav-${sectionId}`}
         />
       ) : null}
-      <span className="relative z-[1]">{navIcon(label)}</span>
+      <span className="relative z-[1]">{navIcon(id)}</span>
       <span className="relative z-[1] truncate">{label}</span>
       {badge ? (
         <span className="relative z-[1] ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
@@ -159,22 +164,22 @@ function ShellNavItem({
 const iconClass = "h-4 w-[14px] shrink-0";
 
 const navIconMap: Record<string, ReactNode> = {
-  Overview: <OverviewIcon className={iconClass} />,
-  Timer: <TimerIcon className={iconClass} />,
-  Reports: <ReportsIcon className={iconClass} />,
-  Approvals: <ApprovalsIcon className={iconClass} />,
-  Projects: <ProjectsIcon className={iconClass} />,
-  Clients: <ClientsIcon className={iconClass} />,
-  Members: <MembersIcon className={iconClass} />,
-  "Billable rates": <DollarIcon className={iconClass} />,
-  Import: <ImportIcon className={iconClass} />,
-  Invoices: <InvoicesIcon className={iconClass} />,
-  Tags: <TagsIcon className={iconClass} />,
-  Goals: <GoalsIcon className={iconClass} />,
-  Integrations: <IntegrationsIcon className={iconClass} />,
-  "Audit Log": <AuditLogIcon className={iconClass} />,
-  Subscription: <SubscriptionIcon className={iconClass} />,
-  Settings: <SettingsIcon className={iconClass} />,
+  overview: <OverviewIcon className={iconClass} />,
+  timer: <TimerIcon className={iconClass} />,
+  reports: <ReportsIcon className={iconClass} />,
+  approvals: <ApprovalsIcon className={iconClass} />,
+  projects: <ProjectsIcon className={iconClass} />,
+  clients: <ClientsIcon className={iconClass} />,
+  members: <MembersIcon className={iconClass} />,
+  billableRates: <DollarIcon className={iconClass} />,
+  import: <ImportIcon className={iconClass} />,
+  invoices: <InvoicesIcon className={iconClass} />,
+  tags: <TagsIcon className={iconClass} />,
+  goals: <GoalsIcon className={iconClass} />,
+  integrations: <IntegrationsIcon className={iconClass} />,
+  auditLog: <AuditLogIcon className={iconClass} />,
+  subscription: <SubscriptionIcon className={iconClass} />,
+  settings: <SettingsIcon className={iconClass} />,
 };
 
 function navIcon(label: string): ReactNode {
