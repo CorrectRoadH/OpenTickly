@@ -102,7 +102,7 @@ test.describe("Favorites", () => {
     await expect(moreActionsButton).toBeVisible();
     await moreActionsButton.click();
 
-    await page.getByRole("button", { name: "Pin as favorite" }).click();
+    await page.getByRole("menuitem", { name: "Pin as favorite" }).click();
 
     // Verify via API
     await expect

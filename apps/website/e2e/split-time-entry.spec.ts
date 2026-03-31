@@ -75,7 +75,7 @@ test.describe("Split time entry", () => {
     await expect(moreActionsButton).toBeVisible();
     await moreActionsButton.click();
 
-    await page.getByRole("button", { name: "Split", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Split", exact: true }).click();
 
     // Verify split dialog is visible
     const splitDialog = page.getByTestId("split-time-entry-dialog");
@@ -127,7 +127,7 @@ test.describe("Split time entry", () => {
     await expect(moreActionsButton).toBeVisible();
     await moreActionsButton.click();
 
-    await page.getByRole("button", { name: "Split", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Split", exact: true }).click();
 
     const splitDialog = page.getByTestId("split-time-entry-dialog");
     await expect(splitDialog).toBeVisible();

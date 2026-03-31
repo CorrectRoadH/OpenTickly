@@ -1,3 +1,4 @@
+import type React from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import { getSurfaceClassName } from "./surfaceStyles.ts";
@@ -50,9 +51,8 @@ export function SurfaceCard({
   children,
   className = "",
   clickable = false,
-}: {
-  children: ReactNode;
-  className?: string;
+  ...rest
+}: React.ComponentPropsWithoutRef<"div"> & {
   clickable?: boolean;
 }) {
   const clickableClasses = clickable
@@ -61,6 +61,7 @@ export function SurfaceCard({
 
   return (
     <div
+      {...rest}
       className={getSurfaceClassName("default", `${clickableClasses} ${className}`.trim())}
       style={
         clickable ? { transitionTimingFunction: "cubic-bezier(0.34, 1.56, 0.64, 1)" } : undefined

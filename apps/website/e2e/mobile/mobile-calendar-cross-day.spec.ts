@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { devices, expect, test } from "@playwright/test";
 
 import {
   createTimeEntryForWorkspace,
@@ -7,7 +7,7 @@ import {
 } from "../fixtures/e2e-auth.ts";
 
 // Force UTC timezone so local dates match the user's default timezone (UTC).
-test.use({ timezoneId: "UTC" });
+test.use({ ...devices["iPhone 13"], timezoneId: "UTC" });
 
 /**
  * Mobile calendar: cross-day (overnight) time entries.

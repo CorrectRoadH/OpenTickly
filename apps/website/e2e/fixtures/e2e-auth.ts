@@ -101,6 +101,16 @@ export async function completeOnboardingDialogIfVisible(page: Page): Promise<voi
   }
 
   await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+  // Ensure onboarding is durably completed via API so page reloads don't re-trigger.
+  await page.evaluate(async () => {
+    await fetch("/web/v1/onboarding", {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ version: 1 }),
+    });
+  });
 }
 
 export async function readSessionBootstrap(page: Page): Promise<WebSessionBootstrapDto> {

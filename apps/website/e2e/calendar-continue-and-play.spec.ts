@@ -40,8 +40,11 @@ test.describe("Calendar event card continue button", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
 
-    // Verify the timer is not running
-    const timerButton = page.getByTestId("timer-action-button");
+    // Verify the timer is not running (scope to main composer, not editor dialog)
+    const timerButton = page
+      .getByTestId("tracking-timer-page")
+      .getByTestId("timer-action-button")
+      .first();
     await expect(timerButton).toHaveAttribute("data-icon", "play");
 
     // Find the calendar entry and hover to reveal the continue button
@@ -87,8 +90,11 @@ test.describe("Calendar current-time-indicator play button", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
 
-    // Verify the timer is not running
-    const timerButton = page.getByTestId("timer-action-button");
+    // Verify the timer is not running (scope to main composer, not editor dialog)
+    const timerButton = page
+      .getByTestId("tracking-timer-page")
+      .getByTestId("timer-action-button")
+      .first();
     await expect(timerButton).toHaveAttribute("data-icon", "play");
 
     // Find and click the current time indicator play button

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { devices, expect, test } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -8,6 +8,8 @@ import {
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
 import { pollCurrentRunningEntry } from "../fixtures/e2e-api.ts";
+
+test.use({ ...devices["iPhone 13"] });
 
 /**
  * Mobile User Story E2E Tests
@@ -167,10 +169,13 @@ test.describe("Edit Time Entry Duration", () => {
 
     // Entry appears in Recent section
     await expect(page.getByText("Recent")).toBeVisible();
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // User taps the entry to open the editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     // Editor is visible
     const editor = page.getByTestId("mobile-time-entry-editor");
@@ -188,17 +193,20 @@ test.describe("Edit Time Entry Duration", () => {
     await expect(editor).not.toBeVisible();
 
     // Entry is still visible
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
   });
 
   test("User edits an entry on Calendar tab, changes both start and end time", async ({ page }) => {
     await page.goto(new URL("/m/calendar", page.url()).toString());
 
     // Find the entry on calendar
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // Tap to open editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
     await expect(editor.getByText("Edit Entry")).toBeVisible();
@@ -212,14 +220,17 @@ test.describe("Edit Time Entry Duration", () => {
     await expect(editor).not.toBeVisible();
 
     // Entry still visible on calendar
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
   });
 
   test("User cancels editing and the entry remains unchanged", async ({ page }) => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // Open entry editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
     await expect(editor).toBeVisible();
@@ -232,7 +243,7 @@ test.describe("Edit Time Entry Duration", () => {
     await expect(editor).not.toBeVisible();
 
     // Original description is still there, modified is not
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
     await expect(page.getByText("Modified description")).not.toBeVisible();
   });
 });
@@ -288,10 +299,13 @@ test.describe("Assign Project to Time Entry", () => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // Entry visible but without project indicator
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // Open editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
 
@@ -315,7 +329,7 @@ test.describe("Assign Project to Time Entry", () => {
     const composerInput = page.getByPlaceholder("What are you working on?");
     await composerInput.fill("Running with project");
     await composerInput.press("Enter");
-    await expect(page.getByText("Running with project")).toBeVisible();
+    await expect(page.getByText("Running with project").first()).toBeVisible();
 
     // Open running entry for editing
     await page.getByText("Running with project").first().click();
@@ -325,7 +339,7 @@ test.describe("Assign Project to Time Entry", () => {
 
     // Save - timer should still be running
     await editor.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByText("Running with project")).toBeVisible();
+    await expect(page.getByText("Running with project").first()).toBeVisible();
 
     // Stop timer
     await page.getByTestId("timer-action-button").click();
@@ -386,12 +400,15 @@ test.describe("Assign Tags to Time Entry", () => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // Open entry editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
 
     // Click on Tags field to open tag options
-    await editor.getByText("Tags").click();
+    await editor.getByText("Tags", { exact: true }).click();
 
     // Select the tag
     await editor.getByRole("button", { name: TAG_NAME }).click();
@@ -450,15 +467,17 @@ test.describe("Continue a Stopped Time Entry", () => {
 
     // Entry appears in Recent
     await expect(page.getByText("Recent")).toBeVisible();
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // Find and tap the continue (play) button
-    const continueButton = page.getByRole("button", { name: `Continue ${ENTRY_DESCRIPTION}` });
+    const continueButton = page
+      .getByRole("button", { name: `Continue ${ENTRY_DESCRIPTION}` })
+      .first();
     await continueButton.click();
 
     // Timer is now running
     await expect(page.getByTestId("timer-action-button")).toBeVisible();
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // Verify via API that timer is running with correct description
     const { body: currentEntry } = await pollCurrentRunningEntry(page, { timeoutMs: 5000 });
@@ -511,10 +530,13 @@ test.describe("Delete a Time Entry", () => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // Entry is visible
-    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
 
     // Open editor
-    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+    await page
+      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
+      .first()
+      .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
 
@@ -550,22 +572,22 @@ test.describe("Mobile Navigation", () => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
     // All tabs present
-    await expect(page.getByRole("navigation").getByText("Timer")).toBeVisible();
-    await expect(page.getByRole("navigation").getByText("Calendar")).toBeVisible();
-    await expect(page.getByRole("navigation").getByText("Report")).toBeVisible();
-    await expect(page.getByRole("navigation").getByText("Me")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Timer", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Calendar" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Report" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Me", exact: true })).toBeVisible();
 
     // Navigate to each tab and verify URL
-    await page.getByRole("navigation").getByText("Calendar").click();
+    await page.getByRole("link", { name: "Calendar" }).click();
     await expect(page).toHaveURL(/\/m\/calendar/);
 
-    await page.getByRole("navigation").getByText("Report").click();
+    await page.getByRole("link", { name: "Report" }).click();
     await expect(page).toHaveURL(/\/m\/report/);
 
-    await page.getByRole("navigation").getByText("Me").click();
+    await page.getByRole("link", { name: "Me", exact: true }).click();
     await expect(page).toHaveURL(/\/m\/me/);
 
-    await page.getByRole("navigation").getByText("Timer").click();
+    await page.getByRole("link", { name: "Timer", exact: true }).click();
     await expect(page).toHaveURL(/\/m\/timer/);
   });
 

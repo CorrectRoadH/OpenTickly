@@ -1111,7 +1111,7 @@ func (handlers *routeHandlers) getOnboardingCompleted(ctx context.Context, userI
 
 	var exists int
 	err := row.Scan(&exists)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
 	if err != nil {

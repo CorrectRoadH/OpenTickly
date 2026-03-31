@@ -358,6 +358,12 @@ const mobileLayoutRoute = createRoute({
   component: MobileLayoutRouteComponent,
 });
 
+const mobileIndexRoute = createRoute({
+  getParentRoute: () => mobileLayoutRoute,
+  path: "/",
+  component: () => <Navigate replace to="/m/timer" />,
+});
+
 const mobileTimerRoute = createRoute({
   getParentRoute: () => mobileLayoutRoute,
   path: "/timer",
@@ -420,6 +426,7 @@ export const routeTree = rootRoute.addChildren([
   organizationSettingsRoute,
   instanceAdminRoute,
   mobileLayoutRoute.addChildren([
+    mobileIndexRoute,
     mobileTimerRoute,
     mobileCalendarRoute,
     mobileReportRoute,

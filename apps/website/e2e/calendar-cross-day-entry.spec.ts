@@ -120,14 +120,17 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
 
     // Verify the two blocks are in different day columns.
     // Each .rbc-day-slot is a column; the two blocks should not share one.
+    // Wait briefly for the calendar to stabilize to avoid detached DOM nodes.
+    await page.waitForTimeout(500);
+
     const firstParentColumn = await timeGridEntries.first().evaluate((el) => {
       const slot = el.closest(".rbc-day-slot");
-      return slot ? Array.from(slot.parentElement!.children).indexOf(slot) : -1;
+      return slot?.parentElement ? Array.from(slot.parentElement.children).indexOf(slot) : -1;
     });
 
     const secondParentColumn = await timeGridEntries.last().evaluate((el) => {
       const slot = el.closest(".rbc-day-slot");
-      return slot ? Array.from(slot.parentElement!.children).indexOf(slot) : -1;
+      return slot?.parentElement ? Array.from(slot.parentElement.children).indexOf(slot) : -1;
     });
 
     expect(firstParentColumn).not.toBe(-1);
