@@ -76,6 +76,34 @@ type CalendarEvent = {
   title: string;
 };
 
+/**
+ * Split a time range into segments at each midnight boundary.
+ * E.g. 22:00 Day1 → 02:00 Day2 becomes [{22:00→00:00}, {00:00→02:00}].
+ * Returns a single-element array when start and end fall on the same calendar date.
+ */
+function splitAtMidnight(start: Date, end: Date): Array<{ end: Date; start: Date }> {
+  const segments: Array<{ end: Date; start: Date }> = [];
+  let cursor = start;
+
+  while (true) {
+    const nextMidnight = new Date(cursor);
+    nextMidnight.setHours(24, 0, 0, 0);
+
+    if (nextMidnight >= end) {
+      segments.push({ end, start: cursor });
+      break;
+    }
+
+    // End the segment 1ms before midnight so react-big-calendar keeps it
+    // in the time grid instead of promoting it to an all-day header event.
+    const segmentEnd = new Date(nextMidnight.getTime() - 1);
+    segments.push({ end: segmentEnd, start: cursor });
+    cursor = nextMidnight;
+  }
+
+  return segments;
+}
+
 function buildCalendarLocalizer(weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1) {
   return dateFnsLocalizer({
     format,
@@ -1157,23 +1185,28 @@ export function CalendarView({
           Boolean(entry.start ?? entry.at) &&
           !isRunningTimeEntry(entry),
       )
-      .map((entry) => {
+      .flatMap((entry) => {
         const start = new Date(entry.start ?? entry.at ?? Date.now());
         const end = new Date(entry.stop!);
-        return {
+        const resource = {
+          color: resolveEntryColor(entry),
+          isDraft: false,
+          isLocked: false,
+          isRunning: false,
+        };
+        const title = entry.description?.trim() || entry.project_name || "Entry";
+
+        // Split cross-day entries at each midnight boundary so they render as
+        // time-grid blocks instead of all-day header events.
+        return splitAtMidnight(start, end).map((segment) => ({
           allDay: false,
-          end,
+          end: segment.end,
           entry,
           id: entry.id,
-          resource: {
-            color: resolveEntryColor(entry),
-            isDraft: false,
-            isLocked: false,
-            isRunning: false,
-          },
-          start,
-          title: entry.description?.trim() || entry.project_name || "Entry",
-        };
+          resource,
+          start: segment.start,
+          title,
+        }));
       });
 
     if (draftEntry != null && draftEntry.start) {
@@ -1240,26 +1273,29 @@ export function CalendarView({
         (entry): entry is GithubComTogglTogglApiInternalModelsTimeEntry & { id: number } =>
           typeof entry.id === "number" && Boolean(entry.start ?? entry.at),
       )
-      .map((entry) => {
+      .flatMap((entry) => {
         const start = new Date(entry.start ?? entry.at ?? Date.now());
         // Running entry end is "now" rounded to the current minute.
         // This matches Toggl's behavior: calendar events update every ~60s,
         // not every second, so RBC doesn't re-render and destroy event cards.
         const end = new Date(nowMinuteMs ?? Date.now());
-        return {
+        const resource = {
+          color: resolveEntryColor(entry),
+          isDraft: false,
+          isLocked: false,
+          isRunning: true,
+        };
+        const title = entry.description?.trim() || entry.project_name || "Entry";
+
+        return splitAtMidnight(start, end).map((segment) => ({
           allDay: false,
-          end,
+          end: segment.end,
           entry,
           id: entry.id,
-          resource: {
-            color: resolveEntryColor(entry),
-            isDraft: false,
-            isLocked: false,
-            isRunning: true,
-          },
-          start,
-          title: entry.description?.trim() || entry.project_name || "Entry",
-        };
+          resource,
+          start: segment.start,
+          title,
+        }));
       });
 
     return [...stoppedEvents, ...runningEvents];
