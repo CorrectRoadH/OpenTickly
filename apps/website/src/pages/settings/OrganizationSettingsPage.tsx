@@ -1,10 +1,15 @@
-import { AppInlineNotice, AppPanel, AppSurfaceState } from "@opentoggl/web-ui";
+import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { Page } from "../../app/Page.tsx";
-import { OrganizationSettingsForm } from "../../features/settings/OrganizationSettingsForm.tsx";
-import { createOrganizationSettingsFormValues } from "../../shared/forms/settings-form.ts";
+import { PreferenceCard } from "../profile/ProfilePagePrimitives.tsx";
+import {
+  createOrganizationSettingsFormValues,
+  mapOrganizationSettingsFormToRequest,
+  type OrganizationSettingsFormValues,
+} from "../../shared/forms/settings-form.ts";
 import {
   useDeleteOrganizationMutation,
   useOrganizationSettingsQuery,
@@ -15,6 +20,9 @@ type OrganizationSettingsPageProps = {
   organizationId: number;
 };
 
+const fieldClassName =
+  "h-11 w-full rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 text-sm text-white outline-none transition focus:border-[var(--track-accent)]";
+
 export function OrganizationSettingsPage({
   organizationId,
 }: OrganizationSettingsPageProps): ReactElement {
@@ -22,143 +30,184 @@ export function OrganizationSettingsPage({
   const organizationQuery = useOrganizationSettingsQuery(organizationId);
   const updateMutation = useUpdateOrganizationSettingsMutation(organizationId);
   const deleteMutation = useDeleteOrganizationMutation(organizationId);
-  const [status, setStatus] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   if (organizationQuery.isPending) {
     return (
-      <Page data-testid="organization-settings-page">
-        <AppPanel tone="muted">
-          <AppSurfaceState
-            description="Fetching organization-level configuration and policy values."
-            title="Loading organization settings"
-            tone="loading"
-          />
-        </AppPanel>
-      </Page>
+      <SurfaceCard>
+        <AppSurfaceState
+          className="border-none bg-transparent text-[var(--track-text-muted)]"
+          description="Fetching organization-level configuration and policy values."
+          title="Loading organization settings"
+          tone="loading"
+        />
+      </SurfaceCard>
     );
   }
 
   if (organizationQuery.isError) {
     return (
-      <Page data-testid="organization-settings-page">
-        <AppPanel tone="muted">
-          <AppSurfaceState
-            description="We could not load organization settings right now. Refresh or try again shortly."
-            title="Organization settings unavailable"
-            tone="error"
-          />
-        </AppPanel>
-      </Page>
+      <SurfaceCard>
+        <AppSurfaceState
+          className="border-none bg-transparent"
+          description="We could not load organization settings right now. Refresh or try again shortly."
+          title="Organization settings unavailable"
+          tone="error"
+        />
+      </SurfaceCard>
     );
   }
 
   if (!organizationQuery.data) {
     return (
-      <Page data-testid="organization-settings-page">
-        <AppPanel tone="muted">
-          <AppSurfaceState
-            description="No organization settings data was returned for this organization."
-            title="Organization settings unavailable"
-            tone="empty"
-          />
-        </AppPanel>
-      </Page>
+      <SurfaceCard>
+        <AppSurfaceState
+          className="border-none bg-transparent text-[var(--track-text-muted)]"
+          description="No organization settings data was returned for this organization."
+          title="Organization settings unavailable"
+          tone="empty"
+        />
+      </SurfaceCard>
     );
   }
 
   return (
-    <Page data-testid="organization-settings-page">
-      <div className="space-y-4">
-        <AppPanel className="border-white/8" data-testid="organization-settings-header">
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-semibold text-white">Organization settings</h1>
-              <p className="text-sm leading-6 text-slate-400">
-                Manage organization-wide governance and settings that apply across workspaces.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <SummaryCard
-                label="Organization"
-                value={organizationQuery.data.name ?? "Unnamed org"}
-              />
-              <SummaryCard label="Members" value={String(organizationQuery.data.user_count ?? 0)} />
-            </div>
-          </div>
-        </AppPanel>
+    <div className="space-y-4 pb-6" data-testid="organization-settings-page">
+      <section className="sticky top-0 z-10 bg-[var(--track-surface)]">
+        <PageHeader bordered title="Organization settings" />
+      </section>
 
-        {status ? <AppInlineNotice tone="success">{status}</AppInlineNotice> : null}
-        {error ? <AppInlineNotice tone="error">{error}</AppInlineNotice> : null}
-        <OrganizationSettingsForm
-          initialValues={createOrganizationSettingsFormValues(organizationQuery.data)}
-          onSubmit={async (request) => {
-            try {
-              await updateMutation.mutateAsync(request);
-              setStatus("Organization saved");
-              setError(null);
-            } catch {
-              setError("Could not save organization settings");
-              setStatus(null);
-            }
-          }}
-        />
-
-        <AppPanel className="border-red-500/30" data-testid="delete-organization-section">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-red-400">Delete organization</h2>
-              <p className="text-sm leading-6 text-slate-400">
-                Permanently delete this organization and all its workspaces, projects, time entries,
-                and data. This action cannot be undone.
-              </p>
-            </div>
-            <label className="block">
-              <span className="text-sm text-slate-400">
-                Type{" "}
-                <span className="font-mono font-semibold text-white">
-                  {organizationQuery.data.name}
-                </span>{" "}
-                to confirm
-              </span>
-              <input
-                className="mt-2 h-11 w-full rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-3 text-sm text-white outline-none transition focus:border-red-500"
-                onChange={(event) => setDeleteConfirmation(event.target.value)}
-                placeholder={organizationQuery.data.name ?? ""}
-                type="text"
-                value={deleteConfirmation}
-              />
-            </label>
-            <button
-              className="inline-flex h-10 items-center rounded-lg bg-red-600 px-5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-40"
-              disabled={
-                deleteConfirmation !== organizationQuery.data.name || deleteMutation.isPending
+      <section className="px-3 pb-10 pt-3 md:flex md:gap-3">
+        <div className="w-full space-y-4 md:max-w-[1352px]">
+          <OrganizationNameSection
+            initialValues={createOrganizationSettingsFormValues(organizationQuery.data)}
+            onSubmit={async (request) => {
+              try {
+                await updateMutation.mutateAsync(request);
+                toast.success("Organization saved");
+              } catch {
+                toast.error("Could not save organization settings");
               }
-              onClick={async () => {
-                try {
-                  await deleteMutation.mutateAsync();
-                  void navigate({ to: "/" });
-                } catch {
-                  setError("Could not delete organization");
+            }}
+          />
+
+          <PreferenceCard title="Overview">
+            <div className="px-5 py-4">
+              <dl className="space-y-0">
+                <div className="flex items-center py-1">
+                  <dt className="min-w-[160px] text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text-muted)]">
+                    Members
+                  </dt>
+                  <dd className="text-[14px] font-medium leading-5 text-white">
+                    {organizationQuery.data.user_count ?? 0}
+                  </dd>
+                </div>
+                <div className="flex items-center py-1">
+                  <dt className="min-w-[160px] text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text-muted)]">
+                    Multi-workspace
+                  </dt>
+                  <dd className="text-[14px] font-medium leading-5 text-white">
+                    {organizationQuery.data.is_multi_workspace_enabled ? "Enabled" : "Disabled"}
+                  </dd>
+                </div>
+                <div className="flex items-center py-1">
+                  <dt className="min-w-[160px] text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text-muted)]">
+                    Max workspaces
+                  </dt>
+                  <dd className="text-[14px] font-medium leading-5 text-white">
+                    {organizationQuery.data.max_workspaces ?? 0}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </PreferenceCard>
+
+          <PreferenceCard title="Danger zone">
+            <div className="px-5 py-4 space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-red-400">Delete organization</h3>
+                <p className="text-sm leading-6 text-[var(--track-text-muted)]">
+                  Permanently delete this organization and all its workspaces, projects, time
+                  entries, and data. This action cannot be undone.
+                </p>
+              </div>
+              <label className="block">
+                <span className="text-sm text-[var(--track-text-muted)]">
+                  Type{" "}
+                  <span className="font-mono font-semibold text-white">
+                    {organizationQuery.data.name}
+                  </span>{" "}
+                  to confirm
+                </span>
+                <input
+                  className={`mt-2 ${fieldClassName} focus:border-red-500`}
+                  onChange={(event) => setDeleteConfirmation(event.target.value)}
+                  placeholder={organizationQuery.data.name ?? ""}
+                  type="text"
+                  value={deleteConfirmation}
+                />
+              </label>
+              <button
+                className="inline-flex h-10 items-center rounded-lg bg-red-600 px-5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-40"
+                disabled={
+                  deleteConfirmation !== organizationQuery.data.name || deleteMutation.isPending
                 }
-              }}
-              type="button"
-            >
-              {deleteMutation.isPending ? "Deleting..." : "Delete this organization"}
-            </button>
-          </div>
-        </AppPanel>
-      </div>
-    </Page>
+                onClick={async () => {
+                  try {
+                    await deleteMutation.mutateAsync();
+                    void navigate({ to: "/" });
+                  } catch {
+                    toast.error("Could not delete organization");
+                  }
+                }}
+                type="button"
+              >
+                {deleteMutation.isPending ? "Deleting..." : "Delete this organization"}
+              </button>
+            </div>
+          </PreferenceCard>
+        </div>
+      </section>
+    </div>
   );
 }
 
-function SummaryCard({ label, value }: { label: string; value: string }): ReactElement {
+function OrganizationNameSection({
+  initialValues,
+  onSubmit,
+}: {
+  initialValues: OrganizationSettingsFormValues;
+  onSubmit: (request: ReturnType<typeof mapOrganizationSettingsFormToRequest>) => Promise<void>;
+}): ReactElement {
+  const form = useForm<OrganizationSettingsFormValues>({
+    defaultValues: initialValues,
+  });
+
   return (
-    <div className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-4">
-      <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-2 text-base font-semibold text-white">{value}</p>
-    </div>
+    <PreferenceCard
+      action={
+        <AppButton
+          disabled={!form.formState.isDirty}
+          onClick={form.handleSubmit(async (values) => {
+            await onSubmit(mapOrganizationSettingsFormToRequest(values));
+            form.reset(values);
+          })}
+          type="button"
+        >
+          Save
+        </AppButton>
+      }
+      description="Change your organization name"
+      title="General"
+    >
+      <div className="px-5 py-4">
+        <label className="block">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text-muted)]">
+            Organization name
+          </span>
+          <input className={`mt-2 ${fieldClassName}`} {...form.register("name")} />
+        </label>
+      </div>
+    </PreferenceCard>
   );
 }
