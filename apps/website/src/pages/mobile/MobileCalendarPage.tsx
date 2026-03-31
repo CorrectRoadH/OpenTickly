@@ -16,8 +16,14 @@ export function MobileCalendarPage(): ReactElement {
   const dayEntries = useMemo(() => {
     const selectedKey = formatDateKey(selectedDate, orch.timezone);
     return orch.visibleEntries.filter((entry) => {
-      const entryDate = new Date(entry.start ?? entry.at ?? Date.now());
-      return formatDateKey(entryDate, orch.timezone) === selectedKey;
+      const startDate = new Date(entry.start ?? entry.at ?? Date.now());
+      if (formatDateKey(startDate, orch.timezone) === selectedKey) return true;
+      // Include cross-day entries whose stop falls on the selected day
+      if (entry.stop) {
+        const stopDate = new Date(entry.stop);
+        if (formatDateKey(stopDate, orch.timezone) === selectedKey) return true;
+      }
+      return false;
     });
   }, [selectedDate, orch.visibleEntries, orch.timezone]);
 
@@ -33,6 +39,7 @@ export function MobileCalendarPage(): ReactElement {
         nowMs={orch.nowMs}
         onEntryTap={setEditingEntry}
         timezone={orch.timezone}
+        viewDate={selectedDate}
       />
       {editingEntry ? (
         <MobileTimeEntryEditor entry={editingEntry} onClose={() => setEditingEntry(null)} />

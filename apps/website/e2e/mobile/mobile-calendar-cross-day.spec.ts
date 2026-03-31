@@ -6,21 +6,22 @@ import {
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
 
+// Force UTC timezone so local dates match the user's default timezone (UTC).
+test.use({ timezoneId: "UTC" });
+
 /**
  * Mobile calendar: cross-day (overnight) time entries.
  *
- * A time entry spanning midnight (e.g. 22:00 → 02:00) should appear on both
- * days in the mobile day timeline:
- *   - Start day: block from 22:00 to the bottom (midnight)
- *   - Next day: block from the top (midnight) to 02:00
+ * New users default to UTC timezone. With timezoneId set to "UTC" in the
+ * browser, local dates and user-tz dates are the same, avoiding timezone skew.
  */
 test.describe("Mobile calendar: cross-day entries", () => {
-  let workspaceId: number;
-  const description = `mobile-overnight-${Date.now()}`;
-
-  test.beforeEach(async ({ page }) => {
+  test("Cross-midnight entry appears on both days and starts at 00:00 on the second day", async ({
+    page,
+  }) => {
     const email = `m-cross-day-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
+    const description = `mobile-overnight-${Date.now()}`;
 
     await registerE2eUser(page, test.info(), {
       email,
@@ -30,52 +31,52 @@ test.describe("Mobile calendar: cross-day entries", () => {
 
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
-    workspaceId = session.currentWorkspaceId;
 
-    // Create an entry that spans midnight: today 22:00 → tomorrow 02:00
-    const today = new Date();
-    const start = new Date(today);
-    start.setHours(22, 0, 0, 0);
-    const stop = new Date(today);
-    stop.setDate(stop.getDate() + 1);
-    stop.setHours(2, 0, 0, 0);
+    // Today 22:00 UTC → Tomorrow 02:00 UTC (genuinely crosses midnight in UTC).
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const tomorrow = new Date(now);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    const startStr = `${todayStr}T22:00:00.000Z`;
+    const stopStr = `${tomorrowStr}T02:00:00.000Z`;
 
     await createTimeEntryForWorkspace(page, {
       description,
-      start: start.toISOString(),
-      stop: stop.toISOString(),
-      workspaceId,
+      start: startStr,
+      stop: stopStr,
+      workspaceId: session.currentWorkspaceId,
     });
-  });
 
-  test("Cross-midnight entry is visible on the start day's calendar", async ({ page }) => {
+    // Navigate to mobile calendar
     await page.goto(new URL("/m/calendar", page.url()).toString());
+    await expect(page.getByText("22:00")).toBeVisible({ timeout: 10_000 });
 
-    // The entry should be visible on today (the start day)
-    await expect(page.getByText(description)).toBeVisible({ timeout: 10_000 });
-  });
+    // Day strip defaults to today. Today's column should show the entry.
+    const entryLocator = page.getByRole("button", { name: description });
+    await expect(entryLocator).toBeVisible({ timeout: 10_000 });
 
-  test("Cross-midnight entry is also visible on the next day's calendar", async ({ page }) => {
-    await page.goto(new URL("/m/calendar", page.url()).toString());
+    // Navigate to tomorrow via the day strip
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const tomorrowDow = dayNames[tomorrow.getUTCDay()];
+    const tomorrowDayNum = String(tomorrow.getUTCDate());
 
-    // Verify it's visible today first
-    await expect(page.getByText(description)).toBeVisible({ timeout: 10_000 });
-
-    // Navigate to the next day via the day strip.
-    // Day strip buttons contain the day-of-week abbreviation and date number.
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const tomorrowLabel = tomorrowDayNames[tomorrow.getDay()];
-
-    // Click the button that contains both the day name and date number
     await page
       .locator("button")
-      .filter({ hasText: tomorrowLabel })
-      .filter({ hasText: String(tomorrow.getDate()) })
+      .filter({ hasText: tomorrowDow })
+      .filter({ hasText: tomorrowDayNum })
       .click();
 
-    // The entry should also be visible on the next day
-    await expect(page.getByText(description)).toBeVisible({ timeout: 10_000 });
+    // Entry should also be visible on tomorrow
+    const nextDayEntry = page.getByRole("button", { name: description });
+    await expect(nextDayEntry).toBeVisible({ timeout: 10_000 });
+
+    // On the next day, the entry should start at 00:00 (CSS top ≈ 0px),
+    // not at 22:00 (top ≈ 1320px).
+    const top = await nextDayEntry.evaluate((el) => {
+      return parseFloat((el as HTMLElement).style.top);
+    });
+    expect(top).toBeLessThan(60);
   });
 });

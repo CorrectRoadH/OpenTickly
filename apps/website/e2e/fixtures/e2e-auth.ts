@@ -23,11 +23,14 @@ export async function registerE2eUser(
   await page.getByRole("button", { name: "Register" }).click();
 
   await page.waitForURL(/\/timer(?:\?.*)?$/);
-  const session = await readSessionBootstrap(page);
-  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
   await expect(page.getByTestId("app-shell")).toBeVisible();
-  await expect(organizationButton).toBeVisible();
-  await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
+
+  // Desktop shell has the Organization sidebar button; mobile shell does not.
+  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
+  if (await organizationButton.isVisible().catch(() => false)) {
+    const session = await readSessionBootstrap(page);
+    await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
+  }
 }
 
 export async function loginE2eUser(
@@ -47,11 +50,13 @@ export async function loginE2eUser(
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
-  const session = await readSessionBootstrap(page);
-  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
 
-  await expect(organizationButton).toBeVisible();
-  await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
+  // Desktop shell has the Organization sidebar button; mobile shell does not.
+  const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
+  if (await organizationButton.isVisible().catch(() => false)) {
+    const session = await readSessionBootstrap(page);
+    await expect(organizationButton).toContainText(resolveCurrentOrganizationName(session));
+  }
 
   return {
     currentWorkspaceId,

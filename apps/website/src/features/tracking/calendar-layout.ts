@@ -1,5 +1,5 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { resolveEntryDurationSeconds } from "./overview-data.ts";
+import { formatDateKey, resolveEntryDurationSeconds } from "./overview-data.ts";
 
 export type CalendarEventLayout = {
   column: number;
@@ -26,9 +26,10 @@ export function buildCalendarEventLayouts(
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[],
   timezone: string,
   nowMs: number,
+  viewDate?: Date,
 ): Map<string, CalendarEventLayout> {
   const indexedEntries = entries
-    .map((entry, index) => buildIndexedEntry(entry, index, timezone, nowMs))
+    .map((entry, index) => buildIndexedEntry(entry, index, timezone, nowMs, viewDate))
     .sort((left, right) => {
       if (left.startMinute !== right.startMinute) {
         return left.startMinute - right.startMinute;
@@ -120,11 +121,27 @@ function buildIndexedEntry(
   index: number,
   timezone: string,
   nowMs: number,
+  viewDate?: Date,
 ): IndexedEntry {
   const startDate = new Date(entry.start ?? entry.at ?? nowMs);
-  const startMinute = resolveMinutesSinceMidnight(startDate, timezone);
-  const durationMinutes = Math.max(1, Math.round(resolveEntryDurationSeconds(entry, nowMs) / 60));
-  const endMinute = Math.min(24 * 60, startMinute + durationMinutes);
+  const startDateKey = viewDate ? formatDateKey(startDate, timezone) : null;
+  const viewDateKey = viewDate ? formatDateKey(viewDate, timezone) : null;
+  const startsOnViewDate = startDateKey === viewDateKey || !viewDate;
+
+  let startMinute: number;
+  let endMinute: number;
+
+  if (startsOnViewDate) {
+    // Entry starts on the viewed day — clamp end at midnight
+    startMinute = resolveMinutesSinceMidnight(startDate, timezone);
+    const durationMinutes = Math.max(1, Math.round(resolveEntryDurationSeconds(entry, nowMs) / 60));
+    endMinute = Math.min(24 * 60, startMinute + durationMinutes);
+  } else {
+    // Entry started on a previous day — show from midnight to its stop time
+    startMinute = 0;
+    const stopDate = entry.stop ? new Date(entry.stop) : new Date(nowMs);
+    endMinute = Math.max(1, resolveMinutesSinceMidnight(stopDate, timezone));
+  }
 
   return {
     endMinute,

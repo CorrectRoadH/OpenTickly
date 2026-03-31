@@ -21,6 +21,7 @@ type MobileCalendarDayTimelineProps = {
   nowMs: number;
   onEntryTap?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   timezone: string;
+  viewDate?: Date;
 };
 
 export function MobileCalendarDayTimeline({
@@ -28,13 +29,14 @@ export function MobileCalendarDayTimeline({
   nowMs,
   onEntryTap,
   timezone,
+  viewDate,
 }: MobileCalendarDayTimelineProps): ReactElement {
   const { durationFormat } = useUserPreferences();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const layouts = useMemo(
-    () => buildCalendarEventLayouts(entries, timezone, nowMs),
-    [entries, timezone, nowMs],
+    () => buildCalendarEventLayouts(entries, timezone, nowMs, viewDate),
+    [entries, timezone, nowMs, viewDate],
   );
 
   // Current time position

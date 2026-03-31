@@ -81,7 +81,10 @@ export function MobileShell(): ReactElement {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[var(--track-surface)] text-[var(--track-text)]">
+    <div
+      className="flex h-[100dvh] flex-col bg-[var(--track-surface)] text-[var(--track-text)]"
+      data-testid="app-shell"
+    >
       <OfflineBanner />
       <PwaInstallBanner />
       {editingEntry ? (
