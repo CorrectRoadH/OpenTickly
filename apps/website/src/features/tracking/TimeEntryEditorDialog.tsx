@@ -170,8 +170,12 @@ export function TimeEntryEditorDialog({
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
   const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedProjectId) ?? null,
-    [projects, selectedProjectId],
+    () =>
+      projects.find((project) => project.id === selectedProjectId) ??
+      (selectedProjectId != null && entry.project_name
+        ? { color: entry.project_color ?? "", id: selectedProjectId, name: entry.project_name }
+        : null),
+    [projects, selectedProjectId, entry.project_name, entry.project_color],
   );
   const selectedTags = useMemo(
     () => tags.filter((tag) => selectedTagIds.includes(tag.id)),

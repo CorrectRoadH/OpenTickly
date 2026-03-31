@@ -93,12 +93,14 @@ test.describe("Timer Composer Suggestions", () => {
     await expect(suggestionsDialog).toBeVisible({ timeout: 5000 });
 
     // Verify that the suggestions dialog shows the "Previously tracked time entries" section
-    const suggestionsContent = await suggestionsDialog.textContent();
-    expect(suggestionsContent).toContain("Previously tracked time entries");
+    // Use auto-retrying assertions since entries load asynchronously
+    await expect(suggestionsDialog).toContainText("Previously tracked time entries", {
+      timeout: 5000,
+    });
 
     // Verify that older entries (from 3 weeks ago) appear in suggestions
     // This is the key assertion for the bug - "给肖建飞" should be findable
-    expect(suggestionsContent).toContain("给肖建飞");
+    await expect(suggestionsDialog).toContainText("给肖建飞");
   });
 
   /**
@@ -168,8 +170,7 @@ test.describe("Timer Composer Suggestions", () => {
     await page.waitForTimeout(500);
 
     // The suggestions should be filtered to show only matching entries
-    const suggestionsContent = await suggestionsDialog.textContent();
-    expect(suggestionsContent).toContain("给肖建飞");
-    expect(suggestionsContent).not.toContain("Another completely different task");
+    await expect(suggestionsDialog).toContainText("给肖建飞", { timeout: 5000 });
+    await expect(suggestionsDialog).not.toContainText("Another completely different task");
   });
 });
