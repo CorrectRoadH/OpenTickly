@@ -219,10 +219,12 @@ export function ToolbarButton({
 
 export function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
-    <p className="flex items-baseline gap-2 text-[11px] uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
-      <span>{label}</span>
-      <span className="text-[14px] font-semibold tabular-nums text-white">{value}</span>
-    </p>
+    <div className="flex items-center gap-2 rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 shadow-[var(--track-depth-shadow-rest)]">
+      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        {label}
+      </p>
+      <p className="text-[14px] font-semibold tabular-nums text-white">{value}</p>
+    </div>
   );
 }
 
@@ -588,7 +590,7 @@ export function ListView({
                 return (
                   <li
                     key={`${renderEntry.id ?? "no-id"}-${subIdx}`}
-                    className={`group col-span-full grid h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
+                    className={`group col-span-full grid min-h-[58px] items-center py-1 pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
                     data-entry-description={renderEntry.description?.trim() || ""}
@@ -650,21 +652,20 @@ export function ListView({
                         </button>
                       ) : null}
 
-                      <div className="min-w-0 shrink">
-                        <InlineDescription
-                          entry={renderEntry}
-                          isRunning={isRunningTimeEntry(renderEntry)}
-                          onChange={onDescriptionChange}
-                        />
-                      </div>
-
-                      <div className="ml-3 min-w-0 shrink-0">
-                        <ListRowProjectPicker
-                          entry={renderEntry}
-                          onProjectChange={onProjectChange}
-                          projects={projects ?? []}
-                          workspaceName={workspaceName ?? "Workspace"}
-                        />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <InlineDescription
+                            entry={renderEntry}
+                            isRunning={isRunningTimeEntry(renderEntry)}
+                            onChange={onDescriptionChange}
+                          />
+                          <ListRowProjectPicker
+                            entry={renderEntry}
+                            onProjectChange={onProjectChange}
+                            projects={projects ?? []}
+                            workspaceName={workspaceName ?? "Workspace"}
+                          />
+                        </div>
                       </div>
                     </div>
 
@@ -820,7 +821,7 @@ function InlineDescription({
 
   return (
     <button
-      className="flex min-w-0 shrink cursor-text items-center gap-2 text-left"
+      className="flex min-w-0 max-w-full cursor-text items-center gap-2 text-left"
       onClick={startEditing}
       type="button"
     >
@@ -830,7 +831,9 @@ function InlineDescription({
           style={{ animation: "pulse-dot 1.4s ease-in-out infinite" }}
         />
       ) : null}
-      <p className={`truncate font-medium ${desc ? "" : "text-[var(--track-text-muted)]"}`}>
+      <p
+        className={`truncate text-[14px] font-medium ${desc ? "text-white" : "text-[var(--track-text-muted)]"}`}
+      >
         <span data-testid="time-entry-description">{desc || "Add description"}</span>
       </p>
     </button>
@@ -1016,7 +1019,7 @@ function ListRowProjectPicker({
       {hasProject ? (
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}
-          className="flex cursor-pointer items-center gap-1.5 overflow-hidden text-[14px] font-medium"
+          className="flex max-w-[260px] cursor-pointer items-center gap-1.5 overflow-hidden rounded-[8px] bg-[var(--track-surface-muted)] px-2.5 py-1 text-[12px] font-medium transition hover:bg-[var(--track-row-hover)]"
           onClick={() => setOpen((prev) => !prev)}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
@@ -1027,11 +1030,11 @@ function ListRowProjectPicker({
             className="size-[9px] shrink-0 rounded-full"
             style={{ backgroundColor: resolveEntryColor(entry) }}
           />
-          <span className="max-w-[180px] truncate" style={{ color: resolveEntryColor(entry) }}>
+          <span className="truncate" style={{ color: resolveEntryColor(entry) }}>
             {entry.project_name}
           </span>
           {entry.client_name ? (
-            <span className="text-[var(--track-text-muted)]">
+            <span className="truncate text-[var(--track-text-muted)]">
               <span className="mx-0.5">·</span>
               <span>{entry.client_name}</span>
             </span>
@@ -1040,7 +1043,7 @@ function ListRowProjectPicker({
       ) : (
         <button
           aria-label="Add a project"
-          className="flex size-6 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:bg-[var(--track-row-hover)] hover:text-white group-hover:opacity-100"
+          className="flex items-center gap-1.5 rounded-[8px] border border-dashed border-[var(--track-border)] px-2.5 py-1 text-[12px] font-medium text-[var(--track-text-muted)] transition hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
           onClick={() => setOpen((prev) => !prev)}
           onBlur={(e) => {
             if (!containerRef.current?.contains(e.relatedTarget as Node)) setOpen(false);
@@ -1048,6 +1051,7 @@ function ListRowProjectPicker({
           type="button"
         >
           <ProjectsIcon className="size-3.5" />
+          <span>Add project</span>
         </button>
       )}
       {open ? (
