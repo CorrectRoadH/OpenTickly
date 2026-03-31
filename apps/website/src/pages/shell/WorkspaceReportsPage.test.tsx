@@ -3,6 +3,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { WorkspaceReportsPage } from "./WorkspaceReportsPage.tsx";
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({ children, ...props }: any) => <a {...props}>{children}</a>,
+  useNavigate: () => vi.fn(),
+}));
+
 vi.mock("../../shared/query/web-shell.ts", () => ({
   useProjectsQuery: () => ({ data: [] }),
   useTagsQuery: () => ({ data: [] }),
@@ -51,9 +56,9 @@ describe("WorkspaceReportsPage", () => {
   it("renders prev/next navigation buttons with click handlers", () => {
     const markup = renderToStaticMarkup(<WorkspaceReportsPage tab="summary" />);
 
-    expect(markup).toContain('data-testid="reports-prev"');
-    expect(markup).toContain('data-testid="reports-next"');
-    expect(markup).toContain('data-testid="reports-range-label"');
+    expect(markup).toContain('aria-label="Previous period"');
+    expect(markup).toContain('aria-label="Next period"');
+    expect(markup).toContain("This week . W");
   });
 
   it("renders project and tag filter dropdowns", () => {

@@ -11,7 +11,7 @@ export function DirectoryFilterChip({
 }) {
   return (
     <span
-      className={`flex h-[34px] items-center gap-1 rounded-lg px-2 text-[14px] normal-case tracking-normal ${
+      className={`flex h-8 items-center gap-1 rounded-[6px] px-2.5 text-[12px] font-medium normal-case tracking-normal ${
         disabled ? "text-[var(--track-text-disabled)]" : "text-white"
       }`}
     >
@@ -37,7 +37,7 @@ export function PageHeader({
         <div className="space-y-1">
           <h1 className="text-[20px] font-semibold leading-[30px] text-white">{title}</h1>
           {subtitle ? (
-            <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{subtitle}</p>
+            <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">{subtitle}</p>
           ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}

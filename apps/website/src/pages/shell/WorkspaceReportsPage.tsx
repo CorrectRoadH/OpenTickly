@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
 import {
+  AppButton,
   CheckboxFilterDropdown,
   PageLayout,
   pageLayoutTabClass,
@@ -246,19 +247,21 @@ export function WorkspaceReportsPage({
       </ToolbarButton>
     ) : (
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          className={`h-9 rounded-[8px] border px-3 text-[12px] font-medium ${
+        <AppButton
+          className={
             roundingEnabled
-              ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent)]"
-              : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-          }`}
+              ? "border-[var(--track-accent)] bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-text)] shadow-[var(--track-depth-shadow-rest)] hover:border-[var(--track-accent)] hover:bg-[var(--track-accent-soft)] hover:shadow-[var(--track-depth-shadow-hover)]"
+              : ""
+          }
           data-testid="reports-rounding-toggle"
           disabled={tab === "profitability"}
           onClick={() => setRoundingEnabled((prev) => !prev)}
+          size="sm"
           type="button"
+          variant="secondary"
         >
           {roundingEnabled ? "Rounding on" : "Rounding off"}
-        </button>
+        </AppButton>
         {tab === "summary" || tab === "detailed" ? (
           <ToolbarButton
             onClick={() => {
@@ -277,29 +280,28 @@ export function WorkspaceReportsPage({
             Create invoice
           </ToolbarButton>
         ) : null}
-        <button
-          className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)]"
+        <AppButton
           data-testid="reports-export"
           onClick={() => exportReportCsv(displayBreakdownRows, displayModel.totalDuration)}
+          size="sm"
           type="button"
+          variant="secondary"
         >
           Export
-        </button>
+        </AppButton>
         <ToolbarButton onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}>
           Settings
         </ToolbarButton>
-        <button
-          className={`h-9 rounded-[8px] px-4 text-[12px] font-semibold ${
-            shareToast
-              ? "bg-[var(--track-button)] text-black"
-              : "border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
-          }`}
+        <AppButton
+          className={shareToast ? "" : "text-[var(--track-text)]"}
           data-testid="reports-save-share"
           onClick={handleShareReport}
+          size="sm"
           type="button"
+          variant={shareToast ? "primary" : "secondary"}
         >
           Save and share
-        </button>
+        </AppButton>
       </div>
     );
 

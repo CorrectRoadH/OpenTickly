@@ -3,11 +3,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WorkspaceOverviewPage } from "./WorkspaceOverviewPage.tsx";
 
+const mockInviteWorkspaceMemberMutation = vi.fn();
 const mockUseSession = vi.fn();
 const mockUseProjectsQuery = vi.fn();
 const mockUseWorkspaceAllActivitiesQuery = vi.fn();
+const mockUseWorkspaceMembersQuery = vi.fn();
 const mockUseWorkspaceMostActiveQuery = vi.fn();
 const mockUseWorkspaceTopActivityQuery = vi.fn();
+
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+  }),
+}));
 
 vi.mock("../../shared/session/session-context.tsx", () => ({
   useSession: () => mockUseSession(),
@@ -23,11 +35,24 @@ vi.mock("../../shared/query/useUserPreferences.ts", () => ({
 }));
 
 vi.mock("../../shared/query/web-shell.ts", () => ({
+  useInviteWorkspaceMemberMutation: (...args: unknown[]) =>
+    mockInviteWorkspaceMemberMutation(...args),
   useProjectsQuery: (...args: unknown[]) => mockUseProjectsQuery(...args),
   useWorkspaceAllActivitiesQuery: (...args: unknown[]) =>
     mockUseWorkspaceAllActivitiesQuery(...args),
+  useWorkspaceMembersQuery: (...args: unknown[]) => mockUseWorkspaceMembersQuery(...args),
   useWorkspaceMostActiveQuery: (...args: unknown[]) => mockUseWorkspaceMostActiveQuery(...args),
   useWorkspaceTopActivityQuery: (...args: unknown[]) => mockUseWorkspaceTopActivityQuery(...args),
+}));
+
+vi.mock("./OnboardingChecklist.tsx", () => ({
+  OnboardingChecklist: () => <div data-testid="onboarding-checklist" />,
+}));
+
+vi.mock("./OverviewWeekChart.tsx", () => ({
+  OverviewWeekChart: ({ axisLabels }: { axisLabels: string[] }) => (
+    <div data-testid="overview-week-chart">{axisLabels.join("|")}</div>
+  ),
 }));
 
 describe("WorkspaceOverviewPage", () => {
@@ -62,6 +87,13 @@ describe("WorkspaceOverviewPage", () => {
     mockUseWorkspaceTopActivityQuery.mockReturnValue({
       data: [],
     });
+    mockUseWorkspaceMembersQuery.mockReturnValue({
+      data: { members: [] },
+    });
+    mockInviteWorkspaceMemberMutation.mockReturnValue({
+      isPending: false,
+      mutate: vi.fn(),
+    });
   });
 
   afterEach(() => {
@@ -72,7 +104,6 @@ describe("WorkspaceOverviewPage", () => {
     const markup = renderToStaticMarkup(<WorkspaceOverviewPage />);
 
     expect(markup).toContain('data-testid="workspace-overview-content"');
-    expect(markup).toContain('class="relative z-10 flex w-full flex-col gap-5"');
     expect(markup).not.toContain("max-w-[654px]");
   });
 
@@ -97,15 +128,9 @@ describe("WorkspaceOverviewPage", () => {
 
     const markup = renderToStaticMarkup(<WorkspaceOverviewPage />);
 
-    expect(markup).toContain(">15h<");
-    expect(markup).toContain(">12h<");
-    expect(markup).toContain(">9h<");
-    expect(markup).toContain(">6h<");
-    expect(markup).toContain(">3h<");
-    expect(markup).toContain(">0h<");
-    expect(markup).not.toContain(">10h 30<");
-    expect(markup).toContain(
-      'class="h-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-4 lg:min-h-[240px]"',
-    );
+    expect(markup).toContain("15h|12h|9h|6h|3h|0h");
+    expect(markup).not.toContain("10h 30");
+    expect(markup).toContain("h-full px-5 py-5");
+    expect(markup).toContain("lg:min-h-[240px]");
   });
 });

@@ -44,12 +44,12 @@ export function Dialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 py-10"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-[var(--track-overlay-backdrop)] px-4 py-10"
       onClick={onClose}
     >
       <div
         aria-modal="true"
-        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-5 pt-4 shadow-[0_18px_40px_var(--track-shadow-modal)]`}
+        className={`w-full ${width} max-h-[calc(100vh-80px)] overflow-y-auto rounded-[8px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] px-5 pb-5 pt-4 shadow-[0_18px_40px_var(--track-shadow-modal)]`}
         data-testid={testId}
         onClick={(event) => event.stopPropagation()}
         role="dialog"

@@ -183,7 +183,7 @@ export function DropdownMenu({
       {open && style
         ? createPortal(
             <div
-              className="fixed z-50 rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
+              className="fixed z-50 rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
               data-testid={testId}
               ref={panelRef}
               role="menu"
@@ -227,7 +227,7 @@ export function Dropdown({
   align,
   children,
   className,
-  panelClassName = "rounded-[8px] border border-[var(--track-border)] bg-[var(--track-tooltip-surface)] shadow-lg",
+  panelClassName = "rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] shadow-[0_14px_32px_var(--track-shadow-overlay)]",
   placement,
   testId,
   trigger,
@@ -294,7 +294,7 @@ export function MenuItem({
 
   return (
     <button
-      className={`flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium transition-colors duration-[80ms] hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-left text-[14px] font-medium transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-60 ${
         destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
       data-testid={testId}
@@ -328,7 +328,7 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
 
   return (
     <a
-      className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-white/4"
+      className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
       data-testid={testId}
       href={href}
       onClick={() => close?.()}

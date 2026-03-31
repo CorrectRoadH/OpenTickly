@@ -4,7 +4,7 @@ import { Dropdown, useDropdownClose } from "./DropdownMenu.tsx";
 
 /* Shared visual — matches CalendarSubviewSelect trigger style */
 const selectBase =
-  "h-9 rounded-lg border border-[var(--track-border)] bg-transparent px-3 pr-8 text-[12px] font-medium text-white transition hover:border-[var(--track-control-border)]";
+  "h-9 rounded-[8px] border border-[var(--track-border)] bg-transparent px-3 pr-8 text-[12px] font-medium text-white shadow-[var(--track-depth-shadow-rest)] transition-[transform,box-shadow,border-color,background-color] duration-[var(--duration-fast)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
 
 function Chevron({ className = "" }: { className?: string }) {
   return (
@@ -133,7 +133,7 @@ function SelectDropdownItem({
   return (
     <button
       aria-selected={selected}
-      className={`flex w-full items-center px-3 py-2 text-left text-[13px] transition-colors hover:bg-white/6 ${
+      className={`flex w-full items-center rounded-[6px] px-3 py-2 text-left text-[12px] transition-colors hover:bg-[var(--track-row-hover)] ${
         selected ? "font-medium text-white" : "text-[var(--track-text-soft)]"
       }`}
       onClick={handleClick}

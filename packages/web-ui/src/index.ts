@@ -1,4 +1,5 @@
 export { AppButton, type AppButtonSize } from "./AppButton.tsx";
+export { AppInput, type AppInputSize } from "./AppInput.tsx";
 export { AppInlineNotice } from "./AppInlineNotice.tsx";
 export { AppPanel } from "./AppPanel.tsx";
 export { AppSurfaceState } from "./AppSurfaceState.tsx";

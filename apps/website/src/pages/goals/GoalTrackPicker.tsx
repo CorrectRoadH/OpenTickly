@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, X } from "lucide-react";
+import { AppInput } from "@opentoggl/web-ui";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
@@ -268,16 +269,15 @@ function ProjectList({
         >
           <ChevronLeft aria-hidden="true" className="size-3.5" size={14} strokeWidth={2} />
         </button>
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
-          <input
-            autoFocus
-            className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search by project or client"
-            value={search}
-          />
-        </div>
+        <AppInput
+          autoFocus
+          className="flex-1"
+          leadingIcon={<SearchIcon className="size-3.5" />}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search by project or client"
+          size="sm"
+          value={search}
+        />
       </div>
       <div className="max-h-[240px] overflow-y-auto py-1">
         {filtered.length === 0 ? (
@@ -348,16 +348,15 @@ function TagList({
         >
           <ChevronLeft aria-hidden="true" className="size-3.5" size={14} strokeWidth={2} />
         </button>
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[var(--track-text-muted)]" />
-          <input
-            autoFocus
-            className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
-            onChange={(e) => onSearch(e.target.value)}
-            placeholder="Search tags"
-            value={search}
-          />
-        </div>
+        <AppInput
+          autoFocus
+          className="flex-1"
+          leadingIcon={<SearchIcon className="size-3.5" />}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder="Search tags"
+          size="sm"
+          value={search}
+        />
       </div>
       <div className="max-h-[240px] overflow-y-auto py-1">
         {filtered.length === 0 ? (

@@ -8,7 +8,7 @@ import { getDay } from "date-fns/getDay";
 import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
 import { enUS } from "date-fns/locale/en-US";
-import { SelectButton } from "@opentoggl/web-ui";
+import { AppButton, IconButton as AppIconButton, SelectButton } from "@opentoggl/web-ui";
 import "./calendar.css";
 
 import { calendarDayLayout } from "./calendar-day-layout.ts";
@@ -199,15 +199,12 @@ export function ToolbarButton({
   suffix: string;
 }) {
   return (
-    <button
-      className="flex h-9 items-center gap-2 rounded-md border border-[var(--track-border)] bg-[var(--track-surface)] px-4 text-[12px] font-medium text-white"
-      type="button"
-    >
+    <AppButton className="gap-2" size="sm" type="button" variant="secondary">
       {icon}
       <span>{label}</span>
       <span className="text-[var(--track-text-muted)]">· {suffix}</span>
       <ChevronDownIcon className="size-3 text-[var(--track-text-muted)]" />
-    </button>
+    </AppButton>
   );
 }
 
@@ -232,16 +229,15 @@ export function ChromeIconButton({
   onClick?: () => void;
 }) {
   return (
-    <button
-      aria-label={ariaLabel}
-      className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] hover:text-white ${
-        active ? "text-white" : "text-[var(--track-text-muted)]"
-      }`}
+    <AppIconButton
+      aria-label={ariaLabel ?? "Icon button"}
+      className={active ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]" : ""}
       onClick={onClick}
+      size="lg"
       type="button"
     >
       {icon}
-    </button>
+    </AppIconButton>
   );
 }
 

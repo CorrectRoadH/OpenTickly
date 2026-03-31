@@ -1,11 +1,12 @@
 import type { ReactElement } from "react";
+import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 
 export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): ReactElement {
   return (
-    <section
-      className={`mt-5 grid overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] ${
+    <SurfaceCard
+      className={`mt-5 grid overflow-hidden ${
         metrics.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"
       }`}
       data-testid="reports-summary-metrics"
@@ -23,7 +24,7 @@ export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): R
           </p>
         </div>
       ))}
-    </section>
+    </SurfaceCard>
   );
 }
 
@@ -37,14 +38,15 @@ export function ToolbarButton({
   onClick?: () => void;
 }) {
   return (
-    <button
-      className={`h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] font-medium text-[var(--track-text-muted)] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+    <AppButton
       disabled={disabled}
       onClick={disabled ? undefined : onClick}
+      size="sm"
       type="button"
+      variant="secondary"
     >
       {children}
-    </button>
+    </AppButton>
   );
 }
 
@@ -85,7 +87,7 @@ export function ReportsTabPlaceholder({ tab }: { tab: string }) {
       data-testid={`reports-${tab.toLowerCase().replace(/\s+/g, "-")}-placeholder`}
     >
       <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-        <h2 className="text-[20px] font-semibold text-white">{tab}</h2>
+        <h2 className="text-[14px] font-semibold text-white">{tab}</h2>
         <p className="max-w-[480px] text-[14px] leading-5 text-[var(--track-text-muted)]">
           {REPORT_TAB_DESCRIPTIONS[tab] ?? ""}
         </p>

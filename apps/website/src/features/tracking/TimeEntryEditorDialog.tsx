@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { AppInput } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -1045,15 +1046,14 @@ function SearchField({
   value: string;
 }): ReactElement {
   return (
-    <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)] px-4 py-2.5">
-      <SearchIcon className="size-4 shrink-0 text-[var(--track-control-placeholder)]" />
-      <input
-        className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)]"
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
-        placeholder={placeholder}
-        value={value}
-      />
-    </label>
+    <AppInput
+      className="mx-4 mb-3"
+      inputClassName="text-[14px]"
+      leadingIcon={<SearchIcon className="size-4" />}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+      placeholder={placeholder}
+      value={value}
+    />
   );
 }
 

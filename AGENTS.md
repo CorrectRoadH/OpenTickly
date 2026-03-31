@@ -23,6 +23,7 @@ Rules:
 - PostgreSQL schema via `pgschema` only. No second migration toolchain.
 - Backend hot reload config lives in root `.air.toml`.
 - New entrypoints go in root `package.json`, `vp`, or a Go CLI — not in `scripts/*.sh`, `apps/**/scripts/*.mjs`, or wrapper CLIs.
+- `apps/landing` is built independently outside the workspace (no `pnpm-workspace.yaml` context). Never use `"catalog:"` references in `apps/landing/package.json` — always pin explicit versions.
 
 ## Worktree Development
 

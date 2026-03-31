@@ -2,7 +2,7 @@ import { type ReactElement, type ReactNode, useCallback, useMemo, useState } fro
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
-import { AppButton, PageHeader } from "@opentoggl/web-ui";
+import { AppButton, PageLayout, SurfaceCard } from "@opentoggl/web-ui";
 import { toast } from "sonner";
 
 import {
@@ -109,228 +109,196 @@ export function WorkspaceOverviewPage(): ReactElement {
     void navigate({ to: `/workspaces/${workspaceId}/reports` });
   }, [navigate, workspaceId]);
   return (
-    <div
-      className="bg-[var(--track-surface)] px-5 py-5 text-[var(--track-text)]"
-      data-testid="workspace-overview-page"
-    >
-      <div className="flex w-full flex-col gap-5" data-testid="workspace-overview-content">
-        <PageHeader
-          action={
-            <div className="flex flex-wrap items-center gap-2">
-              <AppButton onClick={handleRefreshCharts} type="button">
-                Refresh charts
-              </AppButton>
-            </div>
-          }
-          bordered
-          subtitle="Set up your organization and keep your team on track"
-          title="Admin Overview"
-        />
+    <>
+      <PageLayout
+        data-testid="workspace-overview-page"
+        headerActions={
+          <AppButton onClick={handleRefreshCharts} type="button" variant="secondary">
+            Refresh data
+          </AppButton>
+        }
+        subtitle="Set up your organization and keep your team on track"
+        title="Admin Overview"
+      >
+        <div className="px-5 py-5" data-testid="workspace-overview-content">
+          <div
+            className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
+            data-testid="workspace-overview-grid"
+          >
+            <div className="flex flex-col gap-5">
+              <OnboardingChecklist
+                onInviteClick={() => setInviteDialogOpen(true)}
+                workspaceId={workspaceId}
+              />
 
-        <OnboardingChecklist
-          onInviteClick={() => setInviteDialogOpen(true)}
-          workspaceId={workspaceId}
-        />
-
-        <div
-          className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.8fr)_minmax(280px,1fr)] xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]"
-          data-testid="workspace-overview-grid"
-        >
-          <div className="flex flex-col gap-5">
-            {/* This week summary */}
-            <OverviewSurface className="px-5 py-4 lg:min-h-[240px]">
-              <div className="flex h-full flex-col gap-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
-                    This week summary
-                  </h2>
-                  <AppButton onClick={handleViewReports} size="sm" type="button">
-                    View reports
-                  </AppButton>
-                </div>
-                <div className="flex-1 border-t border-[var(--track-border)] pt-4">
-                  <OverviewWeekChart
-                    axisLabels={weekSummary.axisLabels}
-                    axisMaxSeconds={weekSummary.axisMaxSeconds}
-                    days={weekSummary.days}
+              <OverviewSurface className="lg:min-h-[240px]">
+                <div className="flex h-full flex-col gap-4">
+                  <OverviewCardHeader
+                    actionLabel="Open reports"
+                    onAction={handleViewReports}
+                    title="This week summary"
                   />
-                </div>
-                <div className="flex items-center justify-center gap-4 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
-                  <span className="inline-flex items-center gap-1.5">
-                    <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
-                      <rect fill="var(--track-accent)" height={6} rx={3} width={16} />
-                    </svg>
-                    <span>Billable</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
-                      <rect fill="var(--track-accent-strong)" height={6} rx={3} width={16} />
-                    </svg>
-                    <span>Non-billable</span>
-                  </span>
-                </div>
-              </div>
-            </OverviewSurface>
-
-            {/* Team activity */}
-            <OverviewSurface className="px-5 py-4 lg:min-h-[196px]">
-              <div className="flex h-full flex-col gap-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
-                    Team activity
-                  </h2>
-                  <AppButton onClick={handleViewReports} size="sm" type="button">
-                    View team activity
-                  </AppButton>
-                </div>
-                <div className="flex-1 border-t border-[var(--track-border)] pt-4">
-                  <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
-                    <StatRing
-                      accent="var(--track-accent-secondary)"
-                      percent={teamActivity.coveragePercent}
-                      size={74}
-                      innerSize={50}
-                      subtitle={`${teamActivity.activeCount} out of ${memberCount} member${memberCount === 1 ? "" : "s"} tracking`}
-                      title={`${teamActivity.coveragePercent}%`}
+                  <div className="flex-1 border-t border-[var(--track-border)] pt-4">
+                    <OverviewWeekChart
+                      axisLabels={weekSummary.axisLabels}
+                      axisMaxSeconds={weekSummary.axisMaxSeconds}
+                      days={weekSummary.days}
                     />
-                    <div className="space-y-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                        Tracking
-                      </p>
-                      {teamActivity.activeMembers.length > 0 ? (
-                        <div className="space-y-2">
-                          {teamActivity.activeMembers.slice(0, 2).map((member, index) => (
-                            <div
-                              className="flex items-center gap-2"
-                              key={`${member.user_id ?? index}`}
-                            >
-                              <span
-                                className="inline-flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-[var(--track-surface)]"
-                                style={{ backgroundColor: memberTint(index + 2) }}
-                              >
-                                {initialsForMember(member, memberNameById)}
-                              </span>
-                              <div className="min-w-0 text-[14px] leading-5">
-                                <p className="truncate text-white">
-                                  {memberLabel(member, memberNameById)}
-                                </p>
-                                <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                                  {formatClockDuration(member.duration ?? 0, durationFormat)}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <OverviewEmptyState message="No active members yet." />
-                      )}
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                        Not tracking
-                      </p>
-                    </div>
                   </div>
-                  <div className="space-y-1 pt-4">
-                    <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
-                      Bring your team to see the full picture
-                    </p>
-                    <AppButton onClick={() => setInviteDialogOpen(true)} size="sm" type="button">
-                      Invite teammates
-                    </AppButton>
+                  <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
+                    <LegendSwatch color="var(--track-accent)" label="Billable" />
+                    <LegendSwatch color="var(--track-accent-strong)" label="Non-billable" />
                   </div>
                 </div>
-              </div>
-            </OverviewSurface>
-          </div>
+              </OverviewSurface>
 
-          {/* Right column */}
-          <div className="flex flex-col gap-5">
-            <OverviewSurface className="px-5 py-4 lg:min-h-[168px]">
-              <div className="flex h-full flex-col gap-3">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-[40px] font-semibold leading-none tracking-[-0.03em] text-white">
-                    {memberCount}
-                  </p>
+              <OverviewSurface className="lg:min-h-[196px]">
+                <div className="flex h-full flex-col gap-4">
+                  <OverviewCardHeader
+                    actionLabel="Team reports"
+                    onAction={handleViewReports}
+                    title="Team activity"
+                  />
+                  <div className="flex-1 border-t border-[var(--track-border)] pt-4">
+                    <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
+                      <StatRing
+                        accent="var(--track-accent-secondary)"
+                        percent={teamActivity.coveragePercent}
+                        size={74}
+                        innerSize={50}
+                        subtitle={`${teamActivity.activeCount} of ${memberCount} members tracking`}
+                        title={`${teamActivity.coveragePercent}%`}
+                      />
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                          Tracking
+                        </p>
+                        {teamActivity.activeMembers.length > 0 ? (
+                          <div className="space-y-2">
+                            {teamActivity.activeMembers.slice(0, 2).map((member, index) => (
+                              <div
+                                className="flex items-center gap-2"
+                                key={`${member.user_id ?? index}`}
+                              >
+                                <span
+                                  className="inline-flex size-6 items-center justify-center rounded-full text-[11px] font-semibold text-[var(--track-surface)]"
+                                  style={{ backgroundColor: memberTint(index + 2) }}
+                                >
+                                  {initialsForMember(member, memberNameById)}
+                                </span>
+                                <div className="min-w-0">
+                                  <p className="truncate text-[14px] text-white">
+                                    {memberLabel(member, memberNameById)}
+                                  </p>
+                                  <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
+                                    {formatClockDuration(member.duration ?? 0, durationFormat)}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <OverviewEmptyState message="No active members yet." />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                          Not tracking
+                        </p>
+                        <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
+                          {Math.max(memberCount - teamActivity.activeCount, 0)} members idle
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 pt-4">
+                      <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
+                        Bring your team in to unlock better weekly coverage.
+                      </p>
+                      <AppButton onClick={() => setInviteDialogOpen(true)} size="sm" type="button">
+                        Invite teammates
+                      </AppButton>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-[14px] font-semibold leading-[23px] text-white">
-                    Members in your organization
-                  </p>
-                  <p className="max-w-[240px] text-[14px] leading-5 text-[var(--track-text-muted)]">
-                    Your insights are incomplete if you&apos;re tracking alone. Invite your team to
-                    see the full picture
-                  </p>
-                </div>
-                <div className="mt-auto space-y-2">
+              </OverviewSurface>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              <OverviewSurface className="lg:min-h-[168px]">
+                <div className="flex h-full flex-col gap-4">
+                  <div className="space-y-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                      Team size
+                    </p>
+                    <p className="text-[14px] font-semibold text-white">
+                      {memberCount} members in your organization
+                    </p>
+                    <p className="max-w-[260px] text-[12px] leading-4 text-[var(--track-text-muted)]">
+                      Insights improve when the whole team tracks in one workspace.
+                    </p>
+                  </div>
                   <AppButton onClick={() => setInviteDialogOpen(true)} type="button">
                     Add teammates
                   </AppButton>
                 </div>
-              </div>
-            </OverviewSurface>
+              </OverviewSurface>
 
-            <OverviewSurface className="px-5 py-4 lg:min-h-[156px]">
-              <div className="flex h-full flex-col gap-3">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
-                    Top projects this week
-                  </h2>
-                  <AppButton onClick={handleViewReports} size="sm" type="button">
-                    View reports
-                  </AppButton>
-                </div>
-                {topProjects.length > 0 ? (
-                  <div className="space-y-2 border-t border-[var(--track-border)] pt-3">
-                    {topProjects.map((project) => (
-                      <div className="flex items-center gap-2 text-[14px]" key={project.name}>
-                        <span
-                          className="size-[5px] shrink-0 rounded-full"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        <span className="min-w-0 flex-1 truncate text-white">{project.name}</span>
-                        <span className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                          {formatClockDuration(project.totalSeconds, durationFormat)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <OverviewEmptyState message="No tracked projects in this workspace yet." />
-                )}
-              </div>
-            </OverviewSurface>
-
-            <OverviewSurface className="px-5 py-4 lg:min-h-[170px]">
-              <div className="flex h-full flex-col gap-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-[14px] font-semibold leading-[23px] text-white">
-                    Time tracked to projects
-                  </h2>
-                  <AppButton onClick={handleViewReports} size="sm" type="button">
-                    View reports
-                  </AppButton>
-                </div>
-                <div className="flex-1 border-t border-[var(--track-border)] pt-3">
-                  <StatRing
-                    accent="var(--track-warning-text-strong)"
-                    percent={projectCoverage.percent}
-                    size={84}
-                    innerSize={58}
-                    subtitle={
-                      projectCoverage.percent > 0 ? "Keep it this way" : projectCoverage.subtitle
-                    }
-                    title={`${projectCoverage.percent}%`}
+              <OverviewSurface className="lg:min-h-[156px]">
+                <div className="flex h-full flex-col gap-4">
+                  <OverviewCardHeader
+                    actionLabel="Open reports"
+                    onAction={handleViewReports}
+                    title="Top projects this week"
                   />
+                  {topProjects.length > 0 ? (
+                    <div className="space-y-2 border-t border-[var(--track-border)] pt-4">
+                      {topProjects.map((project) => (
+                        <div className="flex items-center gap-2 text-[14px]" key={project.name}>
+                          <span
+                            className="size-[5px] shrink-0 rounded-full"
+                            style={{ backgroundColor: project.color }}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-white">{project.name}</span>
+                          <span className="text-[12px] leading-4 text-[var(--track-text-muted)]">
+                            {formatClockDuration(project.totalSeconds, durationFormat)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="border-t border-[var(--track-border)] pt-4">
+                      <OverviewEmptyState message="No tracked projects in this workspace yet." />
+                    </div>
+                  )}
                 </div>
-                <AppButton size="sm" type="button">
-                  Add member to project
-                </AppButton>
-              </div>
-            </OverviewSurface>
+              </OverviewSurface>
+
+              <OverviewSurface className="lg:min-h-[170px]">
+                <div className="flex h-full flex-col gap-4">
+                  <OverviewCardHeader
+                    actionLabel="Open reports"
+                    onAction={handleViewReports}
+                    title="Time tracked to projects"
+                  />
+                  <div className="flex-1 border-t border-[var(--track-border)] pt-4">
+                    <StatRing
+                      accent="var(--track-warning-text-strong)"
+                      percent={projectCoverage.percent}
+                      size={84}
+                      innerSize={58}
+                      subtitle={projectCoverage.subtitle}
+                      title={`${projectCoverage.percent}%`}
+                    />
+                  </div>
+                  <AppButton size="sm" type="button" variant="secondary">
+                    Add member to project
+                  </AppButton>
+                </div>
+              </OverviewSurface>
+            </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
 
       {inviteDialogOpen ? (
         <InviteMemberDialog
@@ -343,7 +311,7 @@ export function WorkspaceOverviewPage(): ReactElement {
           role={inviteRole}
         />
       ) : null}
-    </div>
+    </>
   );
 }
 
@@ -354,12 +322,38 @@ function OverviewSurface({
   children: ReactNode;
   className?: string;
 }): ReactElement {
+  return <SurfaceCard className={`h-full px-5 py-5 ${className}`}>{children}</SurfaceCard>;
+}
+
+function OverviewCardHeader({
+  actionLabel,
+  onAction,
+  title,
+}: {
+  actionLabel?: string;
+  onAction?: () => void;
+  title: string;
+}): ReactElement {
   return (
-    <section
-      className={`h-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] ${className}`}
-    >
-      {children}
-    </section>
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="text-[14px] font-semibold text-white">{title}</h2>
+      {actionLabel && onAction ? (
+        <AppButton onClick={onAction} size="sm" type="button" variant="secondary">
+          {actionLabel}
+        </AppButton>
+      ) : null}
+    </div>
+  );
+}
+
+function LegendSwatch({ color, label }: { color: string; label: string }): ReactElement {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <svg fill="none" height={6} viewBox="0 0 16 6" width={16}>
+        <rect fill={color} height={6} rx={3} width={16} />
+      </svg>
+      <span>{label}</span>
+    </span>
   );
 }
 
@@ -430,7 +424,7 @@ function StatRing({
 }
 
 function OverviewEmptyState({ message }: { message: string }): ReactElement {
-  return <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">{message}</p>;
+  return <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">{message}</p>;
 }
 
 function buildWeekSummary(

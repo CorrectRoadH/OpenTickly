@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactElement, type ReactNode } from "react";
+import { AppInput } from "@opentoggl/web-ui";
 
 import { SearchIcon } from "./icons.tsx";
 
@@ -33,7 +34,7 @@ export function PickerDropdown({
 }: PickerDropdownProps): ReactElement {
   return (
     <div
-      className={`absolute left-0 top-[calc(100%+4px)] z-20 ${width} rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]`}
+      className={`absolute left-0 top-[calc(100%+4px)] z-20 ${width} rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]`}
       data-testid={testId}
     >
       {header ? <div className="px-4 pb-3">{header}</div> : null}
@@ -54,14 +55,13 @@ export function PickerSearchField({
   value: string;
 }): ReactElement {
   return (
-    <label className="mx-4 mb-3 flex items-center gap-3 rounded-[10px] border border-[var(--track-control-border)] bg-[var(--track-control-surface)] px-4 py-2.5">
-      <SearchIcon className="size-4 shrink-0 text-[var(--track-control-placeholder)]" />
-      <input
-        className="w-full bg-transparent text-[14px] text-white outline-none placeholder:text-[var(--track-control-placeholder)]"
-        onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
-        placeholder={placeholder}
-        value={value}
-      />
-    </label>
+    <AppInput
+      className="mx-4 mb-3"
+      inputClassName="text-[14px]"
+      leadingIcon={<SearchIcon className="size-4" />}
+      onChange={(event: ChangeEvent<HTMLInputElement>) => onChange(event.target.value)}
+      placeholder={placeholder}
+      value={value}
+    />
   );
 }

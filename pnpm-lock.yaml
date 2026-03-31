@@ -12,9 +12,6 @@ catalogs:
     '@hey-api/openapi-ts':
       specifier: 0.94.4
       version: 0.94.4
-    '@orama/tokenizers':
-      specifier: ^3.1.18
-      version: 3.1.18
     '@types/node':
       specifier: ^24
       version: 24.12.0
@@ -140,7 +137,7 @@ importers:
         version: 3.5.0
     devDependencies:
       '@orama/tokenizers':
-        specifier: 'catalog:'
+        specifier: ^3.1.18
         version: 3.1.18
       '@react-router/dev':
         specifier: ^7.13.1

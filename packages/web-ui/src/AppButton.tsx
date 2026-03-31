@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 export type AppButtonSize = "default" | "sm";
+export type AppButtonVariant = "ghost" | "primary" | "secondary";
 
 type AppButtonProps = {
   children?: ReactNode;
@@ -11,20 +12,27 @@ type AppButtonProps = {
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   size?: AppButtonSize;
   type?: "button" | "submit";
+  variant?: AppButtonVariant;
 };
 
 const base =
-  "inline-flex items-center justify-center gap-1 rounded-[8px] font-semibold select-none transition-[transform,box-shadow] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
+  "inline-flex items-center justify-center gap-1.5 rounded-[8px] border font-semibold select-none transition-[transform,box-shadow,border-color,background-color,color] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
 
 const normal =
-  "bg-[var(--track-button)] text-white shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]";
+  "border-[var(--track-accent)] bg-[var(--track-button)] text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-px hover:bg-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
+
+const secondary =
+  "border-[var(--track-border)] bg-transparent text-[var(--track-text)] shadow-[var(--track-depth-shadow-rest)] hover:-translate-y-px hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:shadow-[var(--track-depth-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
+
+const ghost =
+  "border-transparent bg-transparent text-[var(--track-text-muted)] shadow-none hover:bg-[var(--track-row-hover)] hover:text-[var(--track-text)] active:translate-y-px";
 
 const dangerous =
-  "bg-rose-600 text-white shadow-[var(--track-depth-destructive-shadow)] hover:-translate-y-[2px] hover:shadow-[var(--track-depth-destructive-shadow-hover)] active:translate-y-[2px] active:shadow-[var(--track-depth-shadow-active)]";
+  "border-rose-600 bg-rose-600 text-white shadow-[var(--track-depth-destructive-shadow)] hover:-translate-y-px hover:brightness-110 hover:shadow-[var(--track-depth-destructive-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
 
 const sizeClass: Record<AppButtonSize, string> = {
-  default: "h-10 px-4 text-[12px]",
-  sm: "h-8 px-3 text-[11px]",
+  default: "h-9 px-4 text-[12px]",
+  sm: "h-8 px-3 text-[12px]",
 };
 
 export function AppButton({
@@ -36,10 +44,19 @@ export function AppButton({
   onClick,
   size = "default",
   type = "button",
+  variant = "primary",
 }: AppButtonProps) {
+  const variantClassName = danger
+    ? dangerous
+    : variant === "secondary"
+      ? secondary
+      : variant === "ghost"
+        ? ghost
+        : normal;
+
   return (
     <button
-      className={`${base} ${danger ? dangerous : normal} ${sizeClass[size]} ${className}`}
+      className={`${base} ${variantClassName} ${sizeClass[size]} ${className}`}
       data-testid={testId}
       disabled={disabled}
       onClick={onClick}

@@ -2,6 +2,7 @@ import { type ReactElement, useMemo, useState } from "react";
 
 import {
   AppButton,
+  AppInput,
   DirectorySurfaceMessage,
   DirectoryStatusFilter,
   DirectoryTable,
@@ -236,17 +237,14 @@ export function ClientsPage(): ReactElement {
               ]}
               selected={selectedStatuses}
             />
-            <label className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[var(--track-text-muted)]">
-                <SearchIcon className="size-3.5" />
-              </span>
-              <input
-                className="h-9 w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search clients..."
-                value={search}
-              />
-            </label>
+            <AppInput
+              className="w-[180px]"
+              leadingIcon={<SearchIcon className="size-3.5" />}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search clients..."
+              size="sm"
+              value={search}
+            />
             {statusMessage ? (
               <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">
                 {statusMessage}
