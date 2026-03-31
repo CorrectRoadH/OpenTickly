@@ -1,5 +1,6 @@
 import { type ReactElement, useEffect, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import {
   mapWorkspaceSettingsFormToRequest,
@@ -33,6 +34,7 @@ export function WorkspaceSettingsForm({
   onSubmitSuccess,
   workspaceId,
 }: WorkspaceSettingsFormProps): ReactElement {
+  const { t } = useTranslation("settings");
   const form = useForm<WorkspaceSettingsFormValues>({
     defaultValues: initialValues,
   });
@@ -120,63 +122,60 @@ export function WorkspaceSettingsForm({
           workspaceId={workspaceId}
         />
         <div className="w-full max-w-[270px] lg:pt-[73px]">
-          <FieldLabel label="Workspace Name" />
+          <FieldLabel label={t("workspaceName")} />
           <input
             className={textInputClassName}
             {...form.register("name")}
-            aria-label="Workspace name"
+            aria-label={t("workspaceName")}
           />
         </div>
       </div>
 
-      <SettingsCard
-        description="Access and visibility rights for team members"
-        title="Team member rights"
-      >
+      <SettingsCard description={t("teamMemberRightsDescription")} title={t("teamMemberRights")}>
         <div className="grid gap-6 xl:grid-cols-3">
-          <RadioGroup label="Who can see Team Activity">
+          <RadioGroup label={t("whoCanSeeTeamActivity")}>
             <RadioOption
               checked={form.watch("onlyAdminsSeeTeamDashboard")}
-              label="Admins"
+              label={t("admins")}
               onChange={() => {
                 form.setValue("onlyAdminsSeeTeamDashboard", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsSeeTeamDashboard")}
-              label="Everyone"
+              label={t("everyone")}
               onChange={() => {
                 form.setValue("onlyAdminsSeeTeamDashboard", false, { shouldDirty: true });
               }}
             />
           </RadioGroup>
-          <RadioGroup label="Who can create projects and clients">
+          <RadioGroup label={t("whoCanCreateProjectsAndClients")}>
             <RadioOption
               checked={form.watch("onlyAdminsMayCreateProjects")}
-              label="Admins"
+              label={t("admins")}
               onChange={() => {
                 form.setValue("onlyAdminsMayCreateProjects", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsMayCreateProjects")}
-              label="Everyone"
+              label={t("everyone")}
               onChange={() => {
                 form.setValue("onlyAdminsMayCreateProjects", false, { shouldDirty: true });
               }}
             />
           </RadioGroup>
-          <RadioGroup label="Who can create tags">
+          <RadioGroup label={t("whoCanCreateTags")}>
             <RadioOption
               checked={form.watch("onlyAdminsMayCreateTags")}
-              label="Admins"
+              label={t("admins")}
               onChange={() => {
                 form.setValue("onlyAdminsMayCreateTags", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("onlyAdminsMayCreateTags")}
-              label="Everyone"
+              label={t("everyone")}
               onChange={() => {
                 form.setValue("onlyAdminsMayCreateTags", false, { shouldDirty: true });
               }}
@@ -186,36 +185,36 @@ export function WorkspaceSettingsForm({
       </SettingsCard>
 
       <SettingsCard
-        description="How new projects and billing will be set up by default if not defined otherwise"
-        title="Project & Billing defaults"
+        description={t("projectAndBillingDefaultsDescription")}
+        title={t("projectAndBillingDefaults")}
       >
         <div className="space-y-4 py-5">
-          <SectionCaption>Project settings</SectionCaption>
+          <SectionCaption>{t("projectSettings")}</SectionCaption>
           <div className="space-y-2">
             <CheckboxOption
               checked={form.watch("projectsBillableByDefault")}
-              label={'Set new projects as "billable" by default'}
+              label={t("setNewProjectsAsBillableByDefault")}
               onChange={(checked) => {
                 form.setValue("projectsBillableByDefault", checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={!form.watch("projectsPrivateByDefault")}
-              label={'Set new projects as "public" by default'}
+              label={t("setNewProjectsAsPublicByDefault")}
               onChange={(checked) => {
                 form.setValue("projectsPrivateByDefault", !checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={form.watch("limitPublicProjectData")}
-              label="Limit public projects data in reports to admins"
+              label={t("limitPublicProjectsDataInReportsToAdmins")}
               onChange={(checked) => {
                 form.setValue("limitPublicProjectData", checked, { shouldDirty: true });
               }}
             />
             <CheckboxOption
               checked={form.watch("projectsEnforceBillable")}
-              label="Enforce billable time entries on billable projects"
+              label={t("enforceBillableTimeEntriesOnBillableProjects")}
               onChange={(checked) => {
                 form.setValue("projectsEnforceBillable", checked, { shouldDirty: true });
               }}
@@ -225,13 +224,13 @@ export function WorkspaceSettingsForm({
       </SettingsCard>
 
       <SettingsCard
-        description="Set rules to make sure your reports or timesheets are always orderly"
-        title="Time entry and timesheet restrictions"
+        description={t("timeEntryAndTimesheetRestrictionsDescription")}
+        title={t("timeEntryAndTimesheetRestrictions")}
       >
         <ToggleSection
           checked={requiredTimeEntryFields.length > 0}
-          description="Setting required fields helps to ensure your team fills in all the information you need for accurate reporting"
-          title="Set required fields for new Time entries"
+          description={t("setRequiredFieldsDescription")}
+          title={t("setRequiredFieldsForNewTimeEntries")}
           onChange={(checked) => {
             form.setValue("requiredTimeEntryFields", checked ? ["project", "task"] : [], {
               shouldDirty: true,
@@ -240,8 +239,8 @@ export function WorkspaceSettingsForm({
         />
         <ToggleSection
           checked={lockTimeEntriesEnabled}
-          description="This allows to lock existing Time entries and prevent creating new ones before selected date"
-          title="Lock Time entries"
+          description={t("lockTimeEntriesDescription")}
+          title={t("lockTimeEntries")}
           onChange={(checked) => {
             form.setValue(
               "reportLockedAt",
@@ -252,7 +251,7 @@ export function WorkspaceSettingsForm({
         >
           {lockTimeEntriesEnabled ? (
             <div className="pt-3">
-              <FieldLabel label="Lock date" />
+              <FieldLabel label={t("lockDate")} />
               <input
                 className={textInputClassName}
                 placeholder="2026-03-20T00:00:00Z"
@@ -263,23 +262,20 @@ export function WorkspaceSettingsForm({
         </ToggleSection>
       </SettingsCard>
 
-      <SettingsCard
-        description="Define the default approach your team should use to log time. You can opt for simplicity with 'Hide start and end times' mode or choose 'Show start and end times' for detailed time logs with start and end times."
-        title="Time entry settings"
-      >
+      <SettingsCard description={t("timeEntrySettingsDescription")} title={t("timeEntrySettings")}>
         <div className="space-y-4 py-5">
-          <SectionCaption>Default mode</SectionCaption>
+          <SectionCaption>{t("defaultMode")}</SectionCaption>
           <div className="space-y-2">
             <RadioOption
               checked={form.watch("hideStartEndTimes")}
-              label="Hide start and end times"
+              label={t("hideStartAndEndTimes")}
               onChange={() => {
                 form.setValue("hideStartEndTimes", true, { shouldDirty: true });
               }}
             />
             <RadioOption
               checked={!form.watch("hideStartEndTimes")}
-              label="Show start and end times"
+              label={t("showStartAndEndTimes")}
               onChange={() => {
                 form.setValue("hideStartEndTimes", false, { shouldDirty: true });
               }}
@@ -289,20 +285,20 @@ export function WorkspaceSettingsForm({
       </SettingsCard>
 
       <SettingsCard
-        description="Choose how you and your team manage time entries. Opt for the effortless way of handling and viewing them with the Timesheet View."
-        title="Timesheet view settings"
+        description={t("timesheetViewSettingsDescription")}
+        title={t("timesheetViewSettings")}
       >
         <div className="space-y-2 py-5">
           <RadioOption
             checked={!form.watch("showTimesheetView")}
-            label="Hide timesheet view"
+            label={t("hideTimesheetView")}
             onChange={() => {
               form.setValue("showTimesheetView", false, { shouldDirty: true });
             }}
           />
           <RadioOption
             checked={form.watch("showTimesheetView")}
-            label="Show timesheet view"
+            label={t("showTimesheetView")}
             onChange={() => {
               form.setValue("showTimesheetView", true, { shouldDirty: true });
             }}
@@ -310,16 +306,11 @@ export function WorkspaceSettingsForm({
         </div>
       </SettingsCard>
 
-      <SettingsCard
-        description="Choose how data is presented to simplify the analysis of tracked time"
-        title="Reporting"
-      >
+      <SettingsCard description={t("reportingDescription")} title={t("reporting")}>
         <ToggleSection
           checked={form.watch("reportsCollapse")}
-          description={
-            'Entries that take less than 2% of the donut chart will be included in the "Other" category'
-          }
-          title="Collapse small entries in PDF exports"
+          description={t("collapseSmallEntriesDescription")}
+          title={t("collapseSmallEntriesInPdfExports")}
           onChange={(checked) => {
             form.setValue("reportsCollapse", checked, { shouldDirty: true });
           }}
@@ -328,9 +319,9 @@ export function WorkspaceSettingsForm({
 
       <div className="pt-1 text-center text-[12px] font-medium text-[var(--track-text-muted)]">
         <div className="mx-auto mb-4 h-px w-[200px] bg-[var(--track-overlay-border)]" />
-        Need help making Toggl Track fit your team&apos;s needs?{" "}
+        {t("needHelpMakingTogglFitYourTeam")}{" "}
         <a className="text-[var(--track-text)] hover:text-white" href="#">
-          Get a free demo
+          {t("getAFreeDemo")}
         </a>
       </div>
     </form>

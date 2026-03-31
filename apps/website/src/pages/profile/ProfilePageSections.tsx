@@ -1,5 +1,6 @@
 import { AppButton, AppInlineNotice } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
 import { CheckIcon, CopyIcon } from "../../shared/ui/icons.tsx";
@@ -27,11 +28,9 @@ export function EmailPreferencesSection(props: {
     value: PreferencesFormValues[K],
   ) => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
-    <PreferenceCard
-      description="Specify which types of emails you'd like to receive"
-      title="Email preferences"
-    >
+    <PreferenceCard description={t("emailPreferencesDescription")} title={t("emailPreferences")}>
       <div className="px-5 py-[15px]">
         {figmaEmailPreferences.map((item) => (
           <CheckboxRow
@@ -55,10 +54,11 @@ export function InAppNotificationsSection(props: {
     value: PreferencesFormValues[K],
   ) => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
     <PreferenceCard
-      description="Select which types of notifications you'd like to be notified"
-      title="In-app notifications preferences"
+      description={t("inAppNotificationsDescription")}
+      title={t("inAppNotificationsPreferences")}
     >
       <div className="grid gap-0 px-5 py-[15px] md:grid-cols-2">
         {figmaInAppPreferences.map((item) => (
@@ -88,12 +88,9 @@ export function TimerPageSection(props: {
     value: PreferencesFormValues[K],
   ) => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
-    <PreferenceCard
-      description="Define your preferences for a better workflow"
-      id="timer-page"
-      title="Timer page"
-    >
+    <PreferenceCard description={t("timerPageDescription")} id="timer-page" title={t("timerPage")}>
       <div className="px-5 py-[15px]">
         <div className="w-full max-w-[500px]">
           {figmaTimerPreferences.map((item) => (
@@ -119,16 +116,17 @@ export function TimeAndDateSection(props: {
     value: PreferencesFormValues[K],
   ) => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
     <PreferenceCard
-      description="Choose how your times are shown across Toggl Track"
+      description={t("timeAndDateDescription")}
       id="time-and-date"
-      title="Time and date"
+      title={t("timeAndDate")}
     >
       <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:gap-0">
         <div className="w-full md:w-[240px]">
           <PreferenceSelect
-            label="Duration Display Format"
+            label={t("durationDisplayFormat")}
             onChange={(value) => {
               props.setValue("durationFormat", value as PreferencesFormValues["durationFormat"]);
             }}
@@ -137,7 +135,7 @@ export function TimeAndDateSection(props: {
             value={String(props.getValue("durationFormat"))}
           />
           <PreferenceSelect
-            label="Time Format"
+            label={t("timeFormat")}
             onChange={(value) => {
               props.setValue("timeofdayFormat", value as PreferencesFormValues["timeofdayFormat"]);
             }}
@@ -148,7 +146,7 @@ export function TimeAndDateSection(props: {
         </div>
         <div className="w-full md:w-[240px]">
           <PreferenceSelect
-            label="Date Format"
+            label={t("dateFormat")}
             onChange={(value) => {
               props.setValue("dateFormat", value);
             }}
@@ -157,7 +155,7 @@ export function TimeAndDateSection(props: {
             value={String(props.getValue("dateFormat"))}
           />
           <PreferenceNumberSelect
-            label="First day of the week"
+            label={t("firstDayOfWeek")}
             onChange={(value) => {
               props.setValue("beginningOfWeek", value);
             }}
@@ -178,8 +176,9 @@ export function KeyboardShortcutsSection(props: {
     value: PreferencesFormValues[K],
   ) => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
-    <PreferenceCard id="shortcuts" title="Keyboard shortcuts">
+    <PreferenceCard id="shortcuts" title={t("keyboardShortcuts")}>
       <div className="grid gap-0 px-0 py-[15px] md:grid-cols-[500px_minmax(0,1fr)]">
         <div className="px-5">
           <CheckboxRow
@@ -241,15 +240,16 @@ export function ApiTokenSection(props: {
   isResetPending: boolean;
   onReset: () => void;
 }): ReactElement {
+  const { t } = useTranslation("profile");
   return (
     <PreferenceCard
       action={
         <AppButton disabled={props.isResetPending} onClick={props.onReset} type="button">
-          {props.isResetPending ? "Resetting..." : "Reset"}
+          {props.isResetPending ? t("resetting") : t("reset")}
         </AppButton>
       }
-      description="This is a unique identifier used to authenticate you to Toggl Track. Keep your Token private to avoid sharing sensitive information."
-      title="API Token"
+      description={t("apiTokenDescription")}
+      title={t("apiToken")}
     >
       <div className="px-[18px] py-[15px]">
         <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export function ApiTokenSection(props: {
           <ApiTokenCopyButton token={props.apiToken} />
         </div>
         <p className="mt-4 text-[14px] font-medium leading-5 text-[var(--track-text)]">
-          OpenToggl has no rate limits.
+          {t("openTogglNoRateLimits")}
         </p>
       </div>
     </PreferenceCard>
@@ -269,6 +269,7 @@ export function ApiTokenSection(props: {
 }
 
 function ApiTokenCopyButton(props: { token: string }): ReactElement {
+  const { t } = useTranslation("profile");
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -293,7 +294,7 @@ function ApiTokenCopyButton(props: { token: string }): ReactElement {
 
   return (
     <button
-      aria-label={copied ? "Copied" : "Copy API token"}
+      aria-label={copied ? t("copied") : t("copyApiToken")}
       className="flex h-[37px] w-[37px] shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] text-[var(--track-text-muted)] transition hover:text-white"
       onClick={handleCopy}
       type="button"

@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
 const STEP_SECONDS = 300; // 5-minute increments
@@ -29,6 +30,7 @@ export function SplitTimeEntryDialog({
   onCancel,
   onConfirm,
 }: SplitTimeEntryDialogProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const startMs = useMemo(() => new Date(start).getTime(), [start]);
   const stopMs = useMemo(() => new Date(stop).getTime(), [stop]);
   const totalSeconds = Math.round((stopMs - startMs) / 1000);
@@ -92,13 +94,13 @@ export function SplitTimeEntryDialog({
         {/* Header */}
         <div className="flex items-start justify-between px-6 pt-5">
           <div>
-            <h2 className="text-[14px] font-semibold text-white">Split Time Entry</h2>
+            <h2 className="text-[14px] font-semibold text-white">{t("splitTimeEntry")}</h2>
             <p className="mt-1 text-[12px] text-[var(--track-control-placeholder)]">
-              Choose the split time
+              {t("chooseSplitTime")}
             </p>
           </div>
           <button
-            aria-label="Close"
+            aria-label={t("close")}
             className="mt-0.5 flex size-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/8 hover:text-white"
             onClick={onCancel}
             type="button"
@@ -150,7 +152,7 @@ export function SplitTimeEntryDialog({
             onClick={onCancel}
             type="button"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className="rounded-[8px] bg-[var(--track-accent)] px-5 py-2.5 text-[14px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
@@ -158,7 +160,7 @@ export function SplitTimeEntryDialog({
             onClick={handleConfirm}
             type="button"
           >
-            Split
+            {t("split")}
           </button>
         </div>
       </div>

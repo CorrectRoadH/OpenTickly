@@ -7,7 +7,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
+import i18n from "../../app/i18n.ts";
 import { CalendarIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import {
@@ -46,6 +48,7 @@ export function WeekRangePicker({
   sidebar?: ReactNode;
   weekStartsOn?: number;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const [isOpen, setIsOpen] = useState(false);
   const [headerPicker, setHeaderPicker] = useState<"month" | "year" | null>(null);
   const [yearPageStart, setYearPageStart] = useState(() => new Date().getFullYear() - 5);
@@ -94,7 +97,11 @@ export function WeekRangePicker({
       <div className="flex h-10 min-w-[228px] items-center gap-1 rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] px-1 text-white shadow-[var(--track-depth-shadow-rest)]">
         <button
           aria-label={
-            mode === "day" ? "Previous day" : mode === "range" ? "Previous period" : "Previous week"
+            mode === "day"
+              ? t("previousDay")
+              : mode === "range"
+                ? t("previousPeriod")
+                : t("previousWeek")
           }
           className={`flex size-8 shrink-0 items-center justify-center rounded-[8px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
@@ -122,7 +129,9 @@ export function WeekRangePicker({
           <span className="truncate text-[12px] font-semibold">{label}</span>
         </button>
         <button
-          aria-label={mode === "day" ? "Next day" : mode === "range" ? "Next period" : "Next week"}
+          aria-label={
+            mode === "day" ? t("nextDay") : mode === "range" ? t("nextPeriod") : t("nextWeek")
+          }
           className={`flex size-8 shrink-0 items-center justify-center rounded-[8px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
           onClick={onNext}
@@ -134,7 +143,7 @@ export function WeekRangePicker({
 
       {isOpen ? (
         <div
-          aria-label="Select date range"
+          aria-label={t("selectDateRange")}
           aria-modal="false"
           className={`absolute left-0 top-[calc(100%+8px)] z-30 rounded-[12px] border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_18px_48px_var(--track-shadow-elevated)] ${hasSidebar ? "w-[480px]" : "w-[320px]"}`}
           data-testid="week-range-dialog"
@@ -148,7 +157,7 @@ export function WeekRangePicker({
             <div>
               <div className="relative mb-3 flex items-center justify-between gap-2">
                 <button
-                  aria-label="Previous month"
+                  aria-label={t("previousMonth")}
                   className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() => {
                     setHeaderPicker(null);
@@ -166,7 +175,7 @@ export function WeekRangePicker({
                     onClick={() => setHeaderPicker(headerPicker === "month" ? null : "month")}
                     type="button"
                   >
-                    {new Intl.DateTimeFormat("en-US", { month: "long" }).format(visibleMonth)}
+                    {new Intl.DateTimeFormat(i18n.language, { month: "long" }).format(visibleMonth)}
                   </button>
                   <button
                     className="rounded px-1.5 py-0.5 text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
@@ -184,7 +193,7 @@ export function WeekRangePicker({
                   </button>
                 </div>
                 <button
-                  aria-label="Next month"
+                  aria-label={t("nextMonth")}
                   className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                   onClick={() => {
                     setHeaderPicker(null);
@@ -200,7 +209,7 @@ export function WeekRangePicker({
                 {headerPicker === "month" ? (
                   <div className="absolute left-0 top-[calc(100%+4px)] z-10 grid w-full grid-cols-3 gap-1 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
                     {Array.from({ length: 12 }, (_, i) => {
-                      const monthLabel = new Intl.DateTimeFormat("en-US", {
+                      const monthLabel = new Intl.DateTimeFormat(i18n.language, {
                         month: "short",
                       }).format(new Date(2000, i));
                       const isCurrent = i === visibleMonth.getMonth();
@@ -229,7 +238,7 @@ export function WeekRangePicker({
                   <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
                     <div className="mb-1 flex items-center justify-between">
                       <button
-                        aria-label="Previous years"
+                        aria-label={t("previousYears")}
                         className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                         onClick={() => setYearPageStart((y) => y - 12)}
                         type="button"
@@ -240,7 +249,7 @@ export function WeekRangePicker({
                         {yearPageStart} – {yearPageStart + 11}
                       </span>
                       <button
-                        aria-label="Next years"
+                        aria-label={t("nextYears")}
                         className="flex size-7 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
                         onClick={() => setYearPageStart((y) => y + 12)}
                         type="button"

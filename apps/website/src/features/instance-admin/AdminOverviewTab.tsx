@@ -1,7 +1,9 @@
 import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { Github, Zap } from "lucide-react";
 
+import i18n from "../../app/i18n.ts";
 import {
   useInstanceHealthQuery,
   useInstanceVersionQuery,
@@ -18,6 +20,8 @@ export function AdminOverviewTab(): ReactElement {
 }
 
 function OnboardingBanner(): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <SurfaceCard>
       <div className="flex items-start gap-5 p-5">
@@ -31,12 +35,10 @@ function OnboardingBanner(): ReactElement {
         </div>
         <div className="flex-1">
           <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
-            Welcome to OpenToggl
+            {t("instanceAdmin:welcomeToOpenToggl")}
           </h3>
           <p className="mt-1 text-[14px] leading-relaxed text-[var(--track-text-muted)]">
-            OpenToggl is an open-source, self-hosted time tracking platform compatible with Toggl
-            Track. If you find it useful, consider starring us on GitHub — it helps others discover
-            the project.
+            {t("instanceAdmin:welcomeDescription")}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <a
@@ -46,7 +48,7 @@ function OnboardingBanner(): ReactElement {
               target="_blank"
             >
               <Github aria-hidden="true" className="h-5 w-5" size={20} />
-              Star on GitHub
+              {t("instanceAdmin:starOnGithub")}
             </a>
             <a
               className="inline-flex items-center gap-1 text-[14px] text-[var(--track-accent)] hover:underline"
@@ -54,7 +56,7 @@ function OnboardingBanner(): ReactElement {
               rel="noopener noreferrer"
               target="_blank"
             >
-              Report an issue
+              {t("instanceAdmin:reportAnIssue")}
             </a>
             <a
               className="inline-flex items-center gap-1 text-[14px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
@@ -62,7 +64,7 @@ function OnboardingBanner(): ReactElement {
               rel="noopener noreferrer"
               target="_blank"
             >
-              Changelog
+              {t("instanceAdmin:changelog")}
             </a>
           </div>
         </div>
@@ -72,6 +74,7 @@ function OnboardingBanner(): ReactElement {
 }
 
 function VersionCard(): ReactElement {
+  const { t } = useTranslation();
   const versionQuery = useInstanceVersionQuery();
 
   if (versionQuery.isPending) {
@@ -96,11 +99,11 @@ function VersionCard(): ReactElement {
             </span>
             {version?.update_available ? (
               <span className="rounded-full bg-[var(--track-accent)]/15 px-2.5 py-0.5 text-[12px] font-medium text-[var(--track-accent)]">
-                Update available: v{version.latest_version}
+                {t("instanceAdmin:updateAvailable", { version: version.latest_version })}
               </span>
             ) : (
               <span className="rounded-full bg-green-500/15 px-2.5 py-0.5 text-[12px] font-medium text-green-400">
-                Up to date
+                {t("instanceAdmin:upToDate")}
               </span>
             )}
           </div>
@@ -113,7 +116,7 @@ function VersionCard(): ReactElement {
               rel="noopener noreferrer"
               target="_blank"
             >
-              View Release
+              {t("instanceAdmin:viewRelease")}
             </a>
           ) : null}
           {version?.changelog_url ? (
@@ -123,7 +126,7 @@ function VersionCard(): ReactElement {
               rel="noopener noreferrer"
               target="_blank"
             >
-              Changelog
+              {t("instanceAdmin:changelog")}
             </a>
           ) : null}
         </div>
@@ -133,6 +136,7 @@ function VersionCard(): ReactElement {
 }
 
 function HealthSection(): ReactElement {
+  const { t } = useTranslation();
   const healthQuery = useInstanceHealthQuery();
 
   if (healthQuery.isPending) {
@@ -140,8 +144,8 @@ function HealthSection(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Loading instance health..."
-          title="Health"
+          description={t("instanceAdmin:loadingHealth")}
+          title={t("instanceAdmin:health")}
           tone="loading"
         />
       </SurfaceCard>
@@ -153,8 +157,8 @@ function HealthSection(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Could not load instance health data."
-          title="Health unavailable"
+          description={t("instanceAdmin:couldNotLoadHealth")}
+          title={t("instanceAdmin:healthUnavailable")}
           tone="error"
         />
       </SurfaceCard>
@@ -168,28 +172,31 @@ function HealthSection(): ReactElement {
       <SurfaceCard>
         <div className="p-5">
           <h3 className="mb-4 text-[14px] font-semibold text-[var(--track-text)]">
-            Instance Health
+            {t("instanceAdmin:instanceHealth")}
           </h3>
           <div className="flex items-center gap-3">
             <StatusBadge status={health.status} />
             <span className="text-[14px] text-[var(--track-text-soft)]">
-              Checked {new Date(health.checked_at).toLocaleTimeString()}
+              {t("instanceAdmin:checkedAt", {
+                time: new Date(health.checked_at).toLocaleTimeString(i18n.language),
+              })}
             </span>
           </div>
         </div>
       </SurfaceCard>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Users" value={health.user_count} />
-        <StatCard label="Job Backlog" value={health.job_backlog} />
-        <DependencyCard label="Database" dep={health.database} />
-        <DependencyCard label="Redis" dep={health.redis} />
+        <StatCard label={t("instanceAdmin:usersLabel")} value={health.user_count} />
+        <StatCard label={t("instanceAdmin:jobBacklog")} value={health.job_backlog} />
+        <DependencyCard label={t("instanceAdmin:database")} dep={health.database} />
+        <DependencyCard label={t("instanceAdmin:redis")} dep={health.redis} />
       </div>
     </>
   );
 }
 
 function StatusBadge({ status }: { status: string }): ReactElement {
+  const { t } = useTranslation();
   const colors: Record<string, string> = {
     healthy: "bg-green-500/20 text-green-400",
     degraded: "bg-yellow-500/20 text-yellow-400",
@@ -200,7 +207,7 @@ function StatusBadge({ status }: { status: string }): ReactElement {
     <span
       className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-medium ${colors[status] ?? "bg-gray-500/20 text-gray-400"}`}
     >
-      {status}
+      {t(`instanceAdmin:${status}`)}
     </span>
   );
 }
@@ -225,6 +232,7 @@ function DependencyCard({
   label: string;
   dep: { status: string; latency_ms?: number };
 }): ReactElement {
+  const { t } = useTranslation();
   const isUp = dep.status === "up";
 
   return (
@@ -235,7 +243,9 @@ function DependencyCard({
         </div>
         <div className="mt-1 flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${isUp ? "bg-green-400" : "bg-red-400"}`} />
-          <span className="text-[14px] text-[var(--track-text)]">{dep.status}</span>
+          <span className="text-[14px] text-[var(--track-text)]">
+            {t(isUp ? "instanceAdmin:up" : "instanceAdmin:down")}
+          </span>
           {dep.latency_ms != null && dep.latency_ms > 0 ? (
             <span className="text-[12px] text-[var(--track-text-muted)]">{dep.latency_ms}ms</span>
           ) : null}

@@ -1,6 +1,7 @@
 import { AppButton, PageLayout } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
 import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { ImportIcon, PlusIcon, TimerIcon } from "../../shared/ui/icons.tsx";
@@ -16,6 +17,7 @@ import { useSession } from "../../shared/session/session-context.tsx";
 type ImportFlow = "archive" | "time_entries";
 
 export function WorkspaceImportPage(): ReactElement {
+  const { t } = useTranslation();
   const archiveInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -53,10 +55,10 @@ export function WorkspaceImportPage(): ReactElement {
         });
       }
       setSelectedArchive(null);
-      toast.success(`Organization "${organizationName}" created and archive imported.`);
+      toast.success(t("toast:organizationCreated", { name: organizationName }));
     } catch (error) {
       setSubmittedJob(null);
-      toast.error(resolveArchiveImportErrorMessage(error) ?? "An unexpected error occurred.", {
+      toast.error(resolveArchiveImportErrorMessage(error) ?? t("toast:unexpectedError"), {
         duration: 4000,
       });
     }
@@ -108,14 +110,10 @@ export function WorkspaceImportPage(): ReactElement {
         setSubmittedJob({ id: lastJob.job_id, source: "time_entries" });
       }
       setSelectedCSVs([]);
-      toast.success(
-        selectedCSVs.length === 1
-          ? `Time entries imported into "${session.currentWorkspace.name}".`
-          : `${String(selectedCSVs.length)} CSV files imported into "${session.currentWorkspace.name}".`,
-      );
+      toast.success(t("toast:timeEntriesImported"));
     } catch (error) {
       setSubmittedJob(null);
-      toast.error(resolveTimeEntriesImportErrorMessage(error) ?? "An unexpected error occurred.", {
+      toast.error(resolveTimeEntriesImportErrorMessage(error) ?? t("toast:unexpectedError"), {
         duration: 4000,
       });
     }

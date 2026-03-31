@@ -79,3 +79,9 @@ Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 
 - 仓库：`https://github.com/CorrectRoadH/opentoggl`
 - Self-hosting 文档：`./docs/self-hosting/docker-compose.md`
 - CLI：`https://github.com/CorrectRoadH/toggl-cli`
+
+## 致谢
+
+OpenToggl 的设计灵感来源于 [Toggl](https://toggl.com)，我们致力于与其产品面保持兼容，让您可以保留原有的工作流程。
+
+同时感谢 [Linux Do](https://linux.do) 在项目早期开发阶段提供的支持与反馈。

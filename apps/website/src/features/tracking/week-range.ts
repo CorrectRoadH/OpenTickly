@@ -1,3 +1,5 @@
+import i18n from "../../app/i18n.ts";
+
 export type WeekShortcutId =
   | "all-dates"
   | "last-30-days"
@@ -19,13 +21,13 @@ const DAYS_IN_WEEK = 7;
 
 const SHORTCUT_TODAY: WeekShortcut = {
   id: "today",
-  label: "Today",
+  label: "today",
   resolveDate: (now) => new Date(now),
 };
 
 const SHORTCUT_YESTERDAY: WeekShortcut = {
   id: "yesterday",
-  label: "Yesterday",
+  label: "yesterday",
   resolveDate: (now) => {
     const date = new Date(now);
     date.setDate(date.getDate() - 1);
@@ -35,13 +37,13 @@ const SHORTCUT_YESTERDAY: WeekShortcut = {
 
 const SHORTCUT_THIS_WEEK: WeekShortcut = {
   id: "this-week",
-  label: "This week",
+  label: "thisWeek",
   resolveDate: (now) => new Date(now),
 };
 
 const SHORTCUT_LAST_WEEK: WeekShortcut = {
   id: "last-week",
-  label: "Last week",
+  label: "lastWeek",
   resolveDate: (now) => {
     const date = new Date(now);
     date.setDate(date.getDate() - DAYS_IN_WEEK);
@@ -51,13 +53,13 @@ const SHORTCUT_LAST_WEEK: WeekShortcut = {
 
 const SHORTCUT_THIS_MONTH: WeekShortcut = {
   id: "this-month",
-  label: "This month",
+  label: "thisMonth",
   resolveDate: (now) => new Date(now),
 };
 
 const SHORTCUT_LAST_MONTH: WeekShortcut = {
   id: "last-month",
-  label: "Last month",
+  label: "lastMonth",
   resolveDate: (now) => {
     const date = new Date(now);
     date.setMonth(date.getMonth() - 1);
@@ -67,13 +69,13 @@ const SHORTCUT_LAST_MONTH: WeekShortcut = {
 
 const SHORTCUT_THIS_YEAR: WeekShortcut = {
   id: "this-year",
-  label: "This year",
+  label: "thisYear",
   resolveDate: (now) => new Date(now),
 };
 
 const SHORTCUT_LAST_30_DAYS: WeekShortcut = {
   id: "last-30-days",
-  label: "Last 30 days",
+  label: "last30Days",
   resolveDate: (now) => {
     const date = new Date(now);
     date.setDate(date.getDate() - 30);
@@ -83,7 +85,7 @@ const SHORTCUT_LAST_30_DAYS: WeekShortcut = {
 
 const SHORTCUT_ALL_DATES: WeekShortcut = {
   id: "all-dates",
-  label: "All dates",
+  label: "allDates",
   resolveDate: (now) => new Date(now),
 };
 
@@ -206,7 +208,7 @@ export function shiftDay(date: Date, deltaDays: number): Date {
  */
 export function formatDayLabel(date: Date): string {
   const today = new Date();
-  const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(date);
+  const dayName = new Intl.DateTimeFormat(i18n.language, { weekday: "short" }).format(date);
 
   if (isSameDay(date, today)) {
     return `Today \u00B7 ${dayName}`;
@@ -218,7 +220,7 @@ export function formatDayLabel(date: Date): string {
     return `Yesterday \u00B7 ${dayName}`;
   }
 
-  const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(date);
+  const month = new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(date);
   return `${month} ${date.getDate()}, ${date.getFullYear()}`;
 }
 
@@ -247,8 +249,8 @@ export function formatWeekRangeLabel(date: Date, weekStartsOn = 1): string {
 
   const start = weekDays[0];
   const end = weekDays[DAYS_IN_WEEK - 1];
-  const startMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(start);
-  const endMonth = new Intl.DateTimeFormat("en-US", { month: "short" }).format(end);
+  const startMonth = new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(start);
+  const endMonth = new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(end);
 
   if (start.getMonth() === end.getMonth()) {
     return `W${weekNumber} (${startMonth} ${start.getDate()} - ${end.getDate()})`;

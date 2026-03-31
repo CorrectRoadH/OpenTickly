@@ -1,7 +1,9 @@
 import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import i18n from "../../app/i18n.ts";
 import {
   useRegistrationPolicyQuery,
   useUpdateRegistrationPolicyMutation,
@@ -10,22 +12,23 @@ import {
 const modes = [
   {
     value: "open" as const,
-    label: "Open",
-    description: "Anyone can register a new account.",
+    labelKey: "instanceAdmin:open",
+    descriptionKey: "instanceAdmin:openDescription",
   },
   {
     value: "closed" as const,
-    label: "Closed",
-    description: "No new registrations allowed. Only existing users can log in.",
+    labelKey: "instanceAdmin:closed",
+    descriptionKey: "instanceAdmin:closedDescription",
   },
   {
     value: "invite_only" as const,
-    label: "Invite Only",
-    description: "Only users with a valid invitation can register.",
+    labelKey: "instanceAdmin:inviteOnly",
+    descriptionKey: "instanceAdmin:inviteOnlyDescription",
   },
 ];
 
 export function AdminRegistrationTab(): ReactElement {
+  const { t } = useTranslation();
   const policyQuery = useRegistrationPolicyQuery();
   const updateMutation = useUpdateRegistrationPolicyMutation();
 
@@ -34,8 +37,8 @@ export function AdminRegistrationTab(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Loading registration policy..."
-          title="Registration"
+          description={t("instanceAdmin:loadingRegistrationPolicy")}
+          title={t("instanceAdmin:registration")}
           tone="loading"
         />
       </SurfaceCard>
@@ -47,8 +50,8 @@ export function AdminRegistrationTab(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Could not load registration policy."
-          title="Registration unavailable"
+          description={t("instanceAdmin:couldNotLoadRegistrationPolicy")}
+          title={t("instanceAdmin:registrationUnavailable")}
           tone="error"
         />
       </SurfaceCard>
@@ -62,10 +65,10 @@ export function AdminRegistrationTab(): ReactElement {
       <SurfaceCard>
         <div className="p-5">
           <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
-            Registration Policy
+            {t("instanceAdmin:registrationPolicy")}
           </h3>
           <p className="mb-5 text-[14px] text-[var(--track-text-muted)]">
-            Controls whether new users can create accounts on this instance.
+            {t("instanceAdmin:registrationPolicyDescription")}
           </p>
 
           <div className="flex flex-col gap-3">
@@ -81,8 +84,11 @@ export function AdminRegistrationTab(): ReactElement {
                 onClick={() => {
                   if (mode.value === currentMode) return;
                   updateMutation.mutate(mode.value, {
-                    onSuccess: () => toast.success(`Registration policy set to ${mode.label}`),
-                    onError: () => toast.error("Failed to update registration policy"),
+                    onSuccess: () =>
+                      toast.success(
+                        t("instanceAdmin:registrationPolicySet", { mode: t(mode.labelKey) }),
+                      ),
+                    onError: () => toast.error(t("toast:failedToUpdateRegistrationPolicy")),
                   });
                 }}
                 type="button"
@@ -100,10 +106,10 @@ export function AdminRegistrationTab(): ReactElement {
                 </span>
                 <div>
                   <div className="text-[14px] font-medium text-[var(--track-text)]">
-                    {mode.label}
+                    {t(mode.labelKey)}
                   </div>
                   <div className="text-[12px] text-[var(--track-text-muted)]">
-                    {mode.description}
+                    {t(mode.descriptionKey)}
                   </div>
                 </div>
               </button>
@@ -111,7 +117,9 @@ export function AdminRegistrationTab(): ReactElement {
           </div>
 
           <div className="mt-4 text-[12px] text-[var(--track-text-muted)]">
-            Last updated: {new Date(policyQuery.data.updated_at).toLocaleString()}
+            {t("instanceAdmin:lastUpdated", {
+              date: new Date(policyQuery.data.updated_at).toLocaleString(i18n.language),
+            })}
           </div>
         </div>
       </SurfaceCard>

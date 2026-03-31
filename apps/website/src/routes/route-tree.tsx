@@ -1,5 +1,6 @@
 import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
 import { Suspense, lazy, useEffect, type ComponentType, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
@@ -822,15 +823,16 @@ function SessionPendingPanel() {
 }
 
 function SessionUnavailablePanel() {
+  const { t } = useTranslation();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
 
   useEffect(() => {
-    toast.error("Session unavailable", {
-      description: "Could not restore your session. Please try logging in again.",
+    toast.error(t("toast:sessionUnavailable"), {
+      description: t("account:couldNotLoadAccount"),
     });
-  }, []);
+  }, [t]);
 
   return (
     <PublicMainPanelFrame
@@ -918,11 +920,13 @@ function isSessionAccessDenied(error: unknown) {
 }
 
 function SessionExpiredRedirect() {
+  const { t } = useTranslation();
+
   useEffect(() => {
-    toast.error("Session expired", {
-      description: "Please log in again to continue.",
+    toast.error(t("toast:sessionExpired"), {
+      description: t("auth:pleaseLogInAgain"),
     });
-  }, []);
+  }, [t]);
 
   return <Navigate replace to="/login" />;
 }

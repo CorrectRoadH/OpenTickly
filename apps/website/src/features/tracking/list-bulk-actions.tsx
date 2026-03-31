@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { EntryGroup } from "./overview-data.ts";
 import { CloseIcon, EditIcon, TrashIcon } from "../../shared/ui/icons.tsx";
@@ -105,34 +106,35 @@ export function BulkActionToolbar({
   onDelete: () => void;
   onEdit: () => void;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   return (
     <div
       className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5"
       data-testid="bulk-action-toolbar"
     >
       <span className="text-[12px] font-medium text-white">
-        {count} item{count !== 1 ? "s" : ""} selected
+        {count} {count !== 1 ? t("itemsSelected") : t("itemSelected")}
       </span>
       <button
-        aria-label="Bulk edit selected entries"
+        aria-label={t("bulkEditSelectedEntries")}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]"
         onClick={onEdit}
         type="button"
       >
         <EditIcon className="size-3.5" />
-        <span>Edit</span>
+        <span>{t("edit")}</span>
       </button>
       <button
-        aria-label="Delete selected entries"
+        aria-label={t("deleteSelectedEntries")}
         className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]"
         onClick={onDelete}
         type="button"
       >
         <TrashIcon className="size-3.5" />
-        <span>Delete</span>
+        <span>{t("delete")}</span>
       </button>
       <button
-        aria-label="Clear selection"
+        aria-label={t("clearSelection")}
         className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
         onClick={onClear}
         type="button"
@@ -155,7 +157,8 @@ export function DeleteConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }): ReactElement {
-  const entryWord = count === 1 ? "time entry" : "time entries";
+  const { t } = useTranslation("tracking");
+  const entryWord = count === 1 ? t("timeEntry") : t("timeEntries");
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -169,16 +172,16 @@ export function DeleteConfirmDialog({
       role="presentation"
     >
       <div
-        aria-label={`Delete ${count} ${entryWord}`}
+        aria-label={`${t("delete")} ${count} ${entryWord}`}
         className="w-[360px] rounded-xl bg-[var(--track-grid)] p-6 shadow-xl"
         data-testid="delete-confirm-dialog"
         role="dialog"
       >
         <h2 className="mb-3 text-[14px] font-semibold text-white">
-          Delete {count} {entryWord}?
+          {t("deleteConfirmationTitle", { count, entryWord })}
         </h2>
         <p className="mb-5 text-[12px] text-[var(--track-text-muted)]">
-          This action cannot be undone.
+          {t("actionCannotBeUndone")}
         </p>
         <div className="flex gap-3">
           <button
@@ -187,14 +190,14 @@ export function DeleteConfirmDialog({
             onClick={onConfirm}
             type="button"
           >
-            Delete
+            {t("delete")}
           </button>
           <button
             className="rounded-lg border border-[var(--track-border)] px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
             onClick={onCancel}
             type="button"
           >
-            Cancel
+            {t("cancel")}
           </button>
         </div>
       </div>

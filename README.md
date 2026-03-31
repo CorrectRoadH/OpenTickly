@@ -87,3 +87,9 @@ Open `http://localhost:8080` and you're good to go.
 
 - [Self-hosting guide](https://opentoggl.com/docs/self-hosting) — Docker Compose, CasaOS, Synology, fnOS, and more
 - [CLI](https://github.com/CorrectRoadH/toggl-cli) — `toggl-cli` works directly with OpenToggl
+
+## Acknowledgments
+
+OpenToggl is inspired by [Toggl](https://toggl.com) — we aim to be compatible with their product surface so you can keep your workflow.
+
+We also thank [Linux Do](https://linux.do) for their support and feedback during the project's early development.

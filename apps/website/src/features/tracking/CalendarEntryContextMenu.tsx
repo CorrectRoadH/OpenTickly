@@ -1,5 +1,6 @@
 import { type ReactElement, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -39,6 +40,7 @@ export function CalendarEntryContextMenu({
   position,
   projectPath,
 }: CalendarEntryContextMenuProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const menuRef = useRef<HTMLDivElement>(null);
   useDismiss(menuRef, true, onClose);
 
@@ -53,20 +55,22 @@ export function CalendarEntryContextMenu({
       role="menu"
       style={{ left: position.x, top: position.y }}
     >
-      <MenuItem onClick={onDuplicate}>Duplicate</MenuItem>
+      <MenuItem onClick={onDuplicate}>{t("duplicate")}</MenuItem>
       <MenuItem disabled={!onSplit} onClick={onSplit}>
-        Split
+        {t("split")}
       </MenuItem>
       <MenuItem disabled={!onFavorite} onClick={onFavorite}>
-        Pin as favorite
+        {t("pinAsFavorite")}
       </MenuItem>
-      {hasProject && projectPath ? <MenuLink href={projectPath}>Go to project</MenuLink> : null}
+      {hasProject && projectPath ? (
+        <MenuLink href={projectPath}>{t("goToProject")}</MenuLink>
+      ) : null}
       <MenuItem disabled={!hasDescription} onClick={onCopyDescription}>
-        Copy description
+        {t("copyDescription")}
       </MenuItem>
-      <MenuItem onClick={onCopyStartLink}>Copy start link</MenuItem>
+      <MenuItem onClick={onCopyStartLink}>{t("copyStartLink")}</MenuItem>
       <MenuItem destructive onClick={onDelete}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </div>,
     document.body,

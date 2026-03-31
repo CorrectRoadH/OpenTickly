@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 import { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -34,6 +35,7 @@ export function BulkEditDialog({
   tags,
   workspaceName,
 }: BulkEditDialogProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const [description, setDescription] = useState("");
   const [billable, setBillable] = useState(false);
   const [billableTouched, setBillableTouched] = useState(false);
@@ -45,7 +47,7 @@ export function BulkEditDialog({
   const [picker, setPicker] = useState<"project" | "tag" | null>(null);
   const [search, setSearch] = useState("");
 
-  const entryWord = count === 1 ? "time entry" : "time entries";
+  const entryWord = count === 1 ? t("timeEntry") : t("timeEntries");
 
   const selectedProject = useMemo(
     () => projects.find((p) => p.id === selectedProjectId) ?? null,
@@ -73,7 +75,7 @@ export function BulkEditDialog({
     <ModalDialog
       onClose={onClose}
       testId="bulk-edit-dialog"
-      title={`Bulk edit ${count} ${entryWord}`}
+      title={t("bulkEditTitle", { count, entryWord })}
       width="max-w-[420px]"
     >
       <div className="flex flex-col gap-3">
@@ -81,7 +83,7 @@ export function BulkEditDialog({
           className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
           data-testid="bulk-edit-description"
           onChange={(event) => setDescription(event.target.value)}
-          placeholder="New description..."
+          placeholder={t("newDescription")}
           type="text"
           value={description}
         />
@@ -105,9 +107,9 @@ export function BulkEditDialog({
                 <span className="truncate">{selectedProject.name}</span>
               </span>
             ) : projectTouched ? (
-              <span className="text-[var(--track-text-muted)]">No Project</span>
+              <span className="text-[var(--track-text-muted)]">{t("noProject")}</span>
             ) : (
-              <span className="text-[var(--track-text-muted)]">Select project</span>
+              <span className="text-[var(--track-text-muted)]">{t("selectProject")}</span>
             )}
             <ChevronDownIcon
               className={`size-3 transition-transform ${picker === "project" ? "rotate-180" : ""}`}
@@ -138,10 +140,11 @@ export function BulkEditDialog({
           >
             {selectedTagIds.size > 0 ? (
               <span className="text-white">
-                {selectedTagIds.size} tag{selectedTagIds.size !== 1 ? "s" : ""} selected
+                {selectedTagIds.size}{" "}
+                {selectedTagIds.size !== 1 ? t("tagsSelected") : t("tagSelected")}
               </span>
             ) : (
-              <span className="text-[var(--track-text-muted)]">Add tags</span>
+              <span className="text-[var(--track-text-muted)]">{t("addTags")}</span>
             )}
             <ChevronDownIcon
               className={`size-3 transition-transform ${picker === "tag" ? "rotate-180" : ""}`}
@@ -176,21 +179,21 @@ export function BulkEditDialog({
             onChange={() => setRemoveExistingTags((v) => !v)}
             type="checkbox"
           />
-          Remove existing tags
+          {t("removeExistingTags")}
         </label>
 
         <DatePickerButton
           className="w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5 text-left text-[12px] text-white"
           onChange={setSelectedDate}
-          placeholder="Move to date..."
+          placeholder={t("moveToDate")}
           testId="bulk-edit-date"
           value={selectedDate}
         />
 
         <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2.5">
-          <span className="text-[12px] text-white">Billable</span>
+          <span className="text-[12px] text-white">{t("billable")}</span>
           <button
-            aria-label={billable ? "Disable billable" : "Enable billable"}
+            aria-label={billable ? t("disableBillable") : t("enableBillable")}
             className={`relative h-5 w-9 rounded-full transition ${
               billable ? "bg-[var(--track-accent)]" : "bg-[var(--track-control-disabled)]"
             }`}
@@ -219,7 +222,7 @@ export function BulkEditDialog({
           onClick={handleSave}
           type="button"
         >
-          Save
+          {t("save")}
         </button>
       </div>
     </ModalDialog>

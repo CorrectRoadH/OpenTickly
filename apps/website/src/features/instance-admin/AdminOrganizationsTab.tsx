@@ -1,9 +1,11 @@
 import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useOrganizationsQuery } from "../../shared/query/instance-admin.ts";
 
 export function AdminOrganizationsTab(): ReactElement {
+  const { t } = useTranslation();
   const orgsQuery = useOrganizationsQuery();
 
   if (orgsQuery.isPending) {
@@ -11,8 +13,8 @@ export function AdminOrganizationsTab(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Loading organizations..."
-          title="Organizations"
+          description={t("instanceAdmin:loadingOrganizations")}
+          title={t("instanceAdmin:organizations")}
           tone="loading"
         />
       </SurfaceCard>
@@ -24,8 +26,8 @@ export function AdminOrganizationsTab(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Could not load organizations."
-          title="Organizations unavailable"
+          description={t("instanceAdmin:couldNotLoadOrganizations")}
+          title={t("instanceAdmin:organizationsUnavailable")}
           tone="error"
         />
       </SurfaceCard>
@@ -39,15 +41,15 @@ export function AdminOrganizationsTab(): ReactElement {
       <SurfaceCard>
         <div className="p-4">
           <div className="mb-3 text-[12px] text-[var(--track-text-muted)]">
-            {orgs.total_count} organization{orgs.total_count !== 1 ? "s" : ""}
+            {orgs.total_count} {t("instanceAdmin:organizationsCount", { count: orgs.total_count })}
           </div>
           <table className="w-full text-left text-[14px]">
             <thead>
               <tr className="border-b border-[var(--track-border)] text-[12px] font-medium uppercase tracking-wide text-[var(--track-text-muted)]">
-                <th className="pb-2 pr-4">ID</th>
-                <th className="pb-2 pr-4">Name</th>
-                <th className="pb-2 pr-4">Workspaces</th>
-                <th className="pb-2">Members</th>
+                <th className="pb-2 pr-4">{t("instanceAdmin:id")}</th>
+                <th className="pb-2 pr-4">{t("instanceAdmin:name")}</th>
+                <th className="pb-2 pr-4">{t("instanceAdmin:workspaces")}</th>
+                <th className="pb-2">{t("instanceAdmin:members")}</th>
               </tr>
             </thead>
             <tbody>
@@ -62,7 +64,7 @@ export function AdminOrganizationsTab(): ReactElement {
               {orgs.organizations.length === 0 ? (
                 <tr>
                   <td className="py-6 text-center text-[var(--track-text-muted)]" colSpan={4}>
-                    No organizations yet.
+                    {t("instanceAdmin:noOrganizationsYet")}
                   </td>
                 </tr>
               ) : null}

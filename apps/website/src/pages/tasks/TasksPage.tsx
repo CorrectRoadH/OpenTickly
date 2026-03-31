@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   DirectoryFilterChip,
@@ -34,6 +35,7 @@ const TASK_COLUMNS: DirectoryTableColumn[] = [
 ];
 
 export function TasksPage({ projectId }: TasksPageProps): ReactElement {
+  const { t } = useTranslation("tasks");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const tasksQuery = useTasksQuery(workspaceId, projectId);
@@ -56,23 +58,21 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
     await createTaskMutation.mutateAsync(trimmedTaskName);
     setTaskName("");
     setComposerOpen(false);
-    setStatus("Task created");
+    setStatus(t("taskCreated"));
   }
 
   if (tasksQuery.isPending) {
-    return <DirectorySurfaceMessage message="Loading tasks..." />;
+    return <DirectorySurfaceMessage message={t("loadingTasks")} />;
   }
 
   if (tasksQuery.isError) {
-    return (
-      <DirectorySurfaceMessage message="Unable to load tasks. Refresh to try again." tone="error" />
-    );
+    return <DirectorySurfaceMessage message={t("unableToLoadTasks")} tone="error" />;
   }
 
   return (
     <PageLayout
       data-testid="tasks-page"
-      title="Tasks"
+      title={t("tasks")}
       headerActions={
         <AppButton
           data-testid="tasks-create-button"
@@ -81,7 +81,7 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
           type="button"
         >
           <PlusIcon className="size-3.5" />
-          New task
+          {t("newTask")}
         </AppButton>
       }
       toolbar={
@@ -89,9 +89,9 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
             <span>Filters:</span>
             <DirectoryFilterChip
-              label={hasProjectScope ? `Project ${projectId}` : "Project required"}
+              label={hasProjectScope ? t("project") + ` ${projectId}` : t("projectRequired")}
             />
-            <DirectoryFilterChip label="Task name" />
+            <DirectoryFilterChip label={t("taskName")} />
           </div>
           {status ? (
             <span className="ml-auto text-[12px] normal-case tracking-normal text-[var(--track-accent-text)]">
@@ -127,23 +127,23 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
               onSubmit={handleCreateTask}
             >
               <label className="sr-only" htmlFor="task-name">
-                Task name
+                {t("taskName")}
               </label>
               <input
                 className="h-9 w-[320px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
                 id="task-name"
                 onChange={(event) => setTaskName(event.target.value)}
-                placeholder="Task name"
+                placeholder={t("taskName")}
                 value={taskName}
               />
               <AppButton
                 disabled={trimmedTaskName.length === 0 || createTaskMutation.isPending}
                 type="submit"
               >
-                Save task
+                {t("saveTask")}
               </AppButton>
               <AppButton onClick={() => setComposerOpen(false)} type="button">
-                Cancel
+                {t("cancel")}
               </AppButton>
             </form>
           ) : null}

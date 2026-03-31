@@ -1,5 +1,6 @@
 import { Upload, Trash2 } from "lucide-react";
 import { type ReactElement, type ReactNode, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { AppPanel, SelectDropdown } from "@opentoggl/web-ui";
@@ -174,6 +175,7 @@ export function ProfileHeroCard({
   profileName: string;
   rows: ReadonlyArray<{ label: string; value: string }>;
 }): ReactElement {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -190,9 +192,9 @@ export function ProfileHeroCard({
       );
       const url = result.avatar_urls?.["original"] ?? null;
       onAvatarChange?.(url);
-      toast.success("Avatar uploaded");
+      toast.success(t("toast:avatarUploaded"));
     } catch {
-      toast.error("Failed to upload avatar");
+      toast.error(t("toast:failedToUploadAvatar"));
     } finally {
       setUploading(false);
     }
@@ -203,9 +205,9 @@ export function ProfileHeroCard({
     try {
       await unwrapWebApiResult(deleteAvatars());
       onAvatarChange?.(null);
-      toast.success("Avatar removed");
+      toast.success(t("toast:avatarRemoved"));
     } catch {
-      toast.error("Failed to remove avatar");
+      toast.error(t("toast:failedToRemoveAvatar"));
     } finally {
       setUploading(false);
     }

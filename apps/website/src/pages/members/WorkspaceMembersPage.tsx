@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   AppInput,
@@ -51,6 +52,7 @@ const memberColumns: DirectoryTableColumn[] = [
 ];
 
 export function WorkspaceMembersPage(): ReactElement {
+  const { t } = useTranslation("members");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
@@ -95,10 +97,10 @@ export function WorkspaceMembersPage(): ReactElement {
       setInviteEmail("");
       setInviteRole("member");
       setInviteDialogOpen(false);
-      setStatus("Invitation sent");
+      setStatus(t("invitationSent"));
     } catch (error) {
       const message =
-        error instanceof WebApiError ? error.userMessage : "Could not send invitation";
+        error instanceof WebApiError ? error.userMessage : t("couldNotSendInvitation");
       toast.error(message);
     }
   }
@@ -145,30 +147,30 @@ export function WorkspaceMembersPage(): ReactElement {
             onDisable={(id) => {
               void disableMutation
                 .mutateAsync(id)
-                .then(() => setStatus("Member disabled"))
+                .then(() => setStatus(t("memberDisabled")))
                 .catch((error) =>
                   toast.error(
-                    error instanceof WebApiError ? error.userMessage : "Could not disable member",
+                    error instanceof WebApiError ? error.userMessage : t("couldNotDisableMember"),
                   ),
                 );
             }}
             onRemove={(id) => {
               void removeMutation
                 .mutateAsync(id)
-                .then(() => setStatus("Member removed"))
+                .then(() => setStatus(t("memberRemoved")))
                 .catch((error) =>
                   toast.error(
-                    error instanceof WebApiError ? error.userMessage : "Could not remove member",
+                    error instanceof WebApiError ? error.userMessage : t("couldNotRemoveMember"),
                   ),
                 );
             }}
             onRestore={(id) => {
               void restoreMutation
                 .mutateAsync(id)
-                .then(() => setStatus("Member restored"))
+                .then(() => setStatus(t("memberRestored")))
                 .catch((error) =>
                   toast.error(
-                    error instanceof WebApiError ? error.userMessage : "Could not restore member",
+                    error instanceof WebApiError ? error.userMessage : t("couldNotRestoreMember"),
                   ),
                 );
             }}
@@ -179,16 +181,11 @@ export function WorkspaceMembersPage(): ReactElement {
   }
 
   if (membersQuery.isPending) {
-    return <DirectorySurfaceMessage message="Loading members..." />;
+    return <DirectorySurfaceMessage message={t("loadingMembers")} />;
   }
 
   if (membersQuery.isError) {
-    return (
-      <DirectorySurfaceMessage
-        message="Unable to load members. Refresh to try again."
-        tone="error"
-      />
-    );
+    return <DirectorySurfaceMessage message={t("unableToLoadMembers")} tone="error" />;
   }
 
   return (
@@ -202,7 +199,7 @@ export function WorkspaceMembersPage(): ReactElement {
             type="button"
           >
             <PlusIcon className="size-3.5" />
-            Invite member
+            {t("inviteMember")}
           </AppButton>
         </div>
         <div
@@ -213,10 +210,10 @@ export function WorkspaceMembersPage(): ReactElement {
             aria-label="Member status filter"
             onChange={(v) => setStatusFilter(v as MemberStatusFilter)}
             options={[
-              { value: "all", label: "All members" },
-              { value: "active", label: "Active" },
-              { value: "disabled", label: "Disabled" },
-              { value: "invited", label: "Invited" },
+              { value: "all", label: t("allMembers") },
+              { value: "active", label: t("active") },
+              { value: "disabled", label: t("disabled") },
+              { value: "invited", label: t("invited") },
             ]}
             value={statusFilter}
           />
@@ -224,7 +221,7 @@ export function WorkspaceMembersPage(): ReactElement {
             className="w-[180px]"
             leadingIcon={<SearchIcon className="size-3.5" />}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search members..."
+            placeholder={t("searchMembers")}
             size="sm"
             value={search}
           />

@@ -1,4 +1,5 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { PlusIcon } from "../../shared/ui/icons.tsx";
@@ -17,6 +18,7 @@ export function ManualModeComposer({
   onAddTimeEntry,
   timezone,
 }: ManualModeComposerProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const now = useMemo(() => new Date(), []);
 
   const [startTime, setStartTime] = useState(() => formatTimeHHMM(now, timezone));
@@ -64,7 +66,7 @@ export function ManualModeComposer({
     <div className="flex items-center gap-2" data-testid="manual-mode-composer">
       <div className="flex items-center gap-1">
         <input
-          aria-label="Start time"
+          aria-label={t("startTime")}
           className="h-8 w-[80px] rounded border border-[var(--track-border)] bg-transparent px-2 text-center text-[14px] tabular-nums text-white outline-none transition focus:border-white"
           data-testid="manual-start-time"
           onChange={(event) => setStartTime(event.target.value)}
@@ -72,7 +74,7 @@ export function ManualModeComposer({
           value={startTime}
         />
         <DatePickerButton
-          ariaLabel="Pick start date"
+          ariaLabel={t("pickStartDate")}
           className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[12px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
           onChange={(v) => {
             if (v) setStartDate(v);
@@ -91,7 +93,7 @@ export function ManualModeComposer({
 
       <div className="flex items-center gap-1">
         <input
-          aria-label="Stop time"
+          aria-label={t("stopTime")}
           className="h-8 w-[80px] rounded border border-[var(--track-border)] bg-transparent px-2 text-center text-[14px] tabular-nums text-white outline-none transition focus:border-white"
           data-testid="manual-stop-time"
           onChange={(event) => setStopTime(event.target.value)}
@@ -99,7 +101,7 @@ export function ManualModeComposer({
           value={stopTime}
         />
         <DatePickerButton
-          ariaLabel="Pick stop date"
+          ariaLabel={t("pickStopDate")}
           className="flex h-8 items-center gap-1 rounded border border-[var(--track-border)] bg-transparent px-2 text-[12px] text-[var(--track-text-muted)] transition hover:border-white hover:text-white"
           onChange={(v) => {
             if (v) setStopDate(v);
@@ -117,7 +119,7 @@ export function ManualModeComposer({
       </span>
 
       <button
-        aria-label="Add time entry"
+        aria-label={t("addTimeEntry")}
         className="flex size-[42px] items-center justify-center rounded-full bg-[var(--track-accent)] text-white shadow-[inset_0_0_0_1px_var(--track-border-soft)] transition hover:brightness-110"
         data-testid="manual-add-button"
         onClick={handleAdd}

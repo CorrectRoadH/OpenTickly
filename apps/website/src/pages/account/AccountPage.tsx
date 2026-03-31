@@ -19,7 +19,11 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { PreferenceCard, PreferenceSelect } from "../profile/ProfilePagePrimitives.tsx";
-import i18n, { languageLabels, supportedLanguages } from "../../app/i18n.ts";
+import i18n, {
+  languageLabels,
+  normalizeSupportedLanguage,
+  supportedLanguages,
+} from "../../app/i18n.ts";
 
 export function AccountPage(): ReactElement {
   const session = useSession();
@@ -95,7 +99,9 @@ export function AccountPage(): ReactElement {
           />
 
           <LanguageSection
-            languageCode={preferencesQuery.data?.language_code ?? i18n.language}
+            languageCode={normalizeSupportedLanguage(
+              preferencesQuery.data?.language_code ?? i18n.language,
+            )}
             onSave={(languageCode) =>
               updatePreferencesMutation
                 .mutateAsync({ language_code: languageCode })

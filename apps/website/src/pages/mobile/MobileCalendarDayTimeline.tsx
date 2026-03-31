@@ -1,5 +1,6 @@
 import { type ReactElement, useEffect, useMemo, useRef } from "react";
 
+import i18n from "../../app/i18n.ts";
 import {
   buildCalendarEventLayouts,
   resolveLayoutKey,
@@ -43,14 +44,16 @@ export function MobileCalendarDayTimeline({
   const nowDate = useMemo(() => new Date(nowMs), [nowMs]);
   const nowMinutes = useMemo(() => {
     const h = Number(
-      new Intl.DateTimeFormat("en-US", {
+      new Intl.DateTimeFormat(i18n.language, {
         hour: "2-digit",
         hour12: false,
         timeZone: timezone,
       }).format(nowDate),
     );
     const m = Number(
-      new Intl.DateTimeFormat("en-US", { minute: "2-digit", timeZone: timezone }).format(nowDate),
+      new Intl.DateTimeFormat(i18n.language, { minute: "2-digit", timeZone: timezone }).format(
+        nowDate,
+      ),
     );
     return h * 60 + m;
   }, [nowDate, timezone]);

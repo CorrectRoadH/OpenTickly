@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   CheckboxFilterDropdown,
@@ -87,6 +88,7 @@ type ProjectsPageProps = {
 };
 
 export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement {
+  const { t } = useTranslation("projects");
   const navigate = useNavigate();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
@@ -299,7 +301,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       }
 
       closeEditor();
-      setStatusMessage(editorMode === "edit" ? "Project updated" : "Project created");
+      setStatusMessage(editorMode === "edit" ? t("projectUpdated") : t("projectCreated"));
       if (statusFilter !== "all") {
         await navigateToStatus("all");
       }
@@ -510,11 +512,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   return (
     <>
       <PageLayout
-        title="Projects"
+        title={t("projects")}
         headerActions={
           <AppButton onClick={openCreateDialog} data-testid="projects-create-button">
             <PlusIcon className="size-3.5" />
-            New project
+            {t("newProject")}
           </AppButton>
         }
         toolbar={toolbarContent}
@@ -522,12 +524,11 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         footer={summaryFooter}
         data-testid="projects-page"
       >
-        {projectsQuery.isPending ? <DirectorySurfaceMessage message="Loading projects..." /> : null}
+        {projectsQuery.isPending ? (
+          <DirectorySurfaceMessage message={t("loadingProjects")} />
+        ) : null}
         {projectsQuery.isError ? (
-          <DirectorySurfaceMessage
-            message="Project directory is temporarily unavailable."
-            tone="error"
-          />
+          <DirectorySurfaceMessage message={t("unableToLoadProjects")} tone="error" />
         ) : null}
         {!projectsQuery.isPending && !projectsQuery.isError ? (
           <DirectoryTable

@@ -1,6 +1,7 @@
 import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { DollarIcon, MembersIcon } from "../../shared/ui/icons.tsx";
@@ -82,6 +83,7 @@ function useCreateWorkspaceRateMutation(workspaceId: number) {
 }
 
 export function BillableRatesContent({ workspaceId }: { workspaceId: number }): ReactElement {
+  const { t } = useTranslation();
   const session = useSession();
   const defaultCurrency = session.currentWorkspace.defaultCurrency ?? "USD";
   const defaultHourlyRate = session.currentWorkspace.defaultHourlyRate ?? 0;
@@ -121,11 +123,11 @@ export function BillableRatesContent({ workspaceId }: { workspaceId: number }): 
       },
       {
         onSuccess: () => {
-          toast.success("Workspace billable rate has been updated.");
+          toast.success(t("toast:workspaceBillableRateUpdated"));
           setIsDirty(false);
         },
         onError: () => {
-          toast.error("Could not save the workspace rate. Try again.");
+          toast.error(t("toast:failedToSaveWorkspaceRate"));
         },
       },
     );

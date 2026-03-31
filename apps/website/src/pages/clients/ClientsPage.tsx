@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   AppButton,
@@ -46,6 +47,7 @@ const columns: DirectoryTableColumn[] = [
 ];
 
 export function ClientsPage(): ReactElement {
+  const { t } = useTranslation("clients");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const clientsQuery = useClientsQuery(workspaceId);
@@ -106,7 +108,7 @@ export function ClientsPage(): ReactElement {
     await createClientMutation.mutateAsync(trimmedName);
     setClientName("");
     setComposerOpen(false);
-    setStatusMessage("Client created");
+    setStatusMessage(t("clientCreated"));
   }
 
   function toggleClient(clientId: number) {
@@ -154,11 +156,11 @@ export function ClientsPage(): ReactElement {
                   if (firstId != null && selectedIds.size === 1) {
                     const client = groupedClients.find((g) => g.client.id === firstId);
                     if (client) {
-                      const newName = window.prompt("Rename client:", client.client.name);
+                      const newName = window.prompt(t("renameClient"), client.client.name);
                       if (newName?.trim() && newName.trim() !== client.client.name) {
                         renameClientMutation.mutate(
                           { clientId: firstId, name: newName.trim() },
-                          { onSuccess: () => setStatusMessage("Client renamed") },
+                          { onSuccess: () => setStatusMessage(t("clientRenamed")) },
                         );
                       }
                     }
@@ -167,7 +169,7 @@ export function ClientsPage(): ReactElement {
                 size="sm"
               >
                 <EditIcon className="size-3.5" />
-                <span>Edit</span>
+                <span>{t("edit")}</span>
               </AppButton>
               <AppButton
                 onClick={() => {
@@ -175,29 +177,30 @@ export function ClientsPage(): ReactElement {
                     archiveClientMutation.mutate(id);
                   }
                   setSelectedIds(new Set());
-                  setStatusMessage(`${selectedIds.size} client(s) archived`);
+                  setStatusMessage(t("clientArchived"));
                 }}
                 size="sm"
               >
                 <ArchiveIcon className="size-3.5" />
-                <span>Archive</span>
+                <span>{t("archive")}</span>
               </AppButton>
               <AppButton
                 onClick={() => {
-                  if (!window.confirm(`Delete ${selectedIds.size} client(s)?`)) return;
+                  if (!window.confirm(t("deleteClientsConfirm", { count: selectedIds.size })))
+                    return;
                   for (const id of selectedIds) {
                     deleteClientMutation.mutate(id);
                   }
                   setSelectedIds(new Set());
-                  setStatusMessage(`${selectedIds.size} client(s) deleted`);
+                  setStatusMessage(t("clientDeleted"));
                 }}
                 size="sm"
               >
                 <TrashIcon className="size-3.5" />
-                <span>Delete</span>
+                <span>{t("delete")}</span>
               </AppButton>
               <IconButton
-                aria-label="Clear selection"
+                aria-label={t("clearSelection")}
                 onClick={() => setSelectedIds(new Set())}
                 size="sm"
               >
@@ -223,17 +226,17 @@ export function ClientsPage(): ReactElement {
             data-testid="clients-create-button"
           >
             <PlusIcon className="size-3.5" />
-            New client
+            {t("newClient")}
           </AppButton>
         }
-        title="Clients"
+        title={t("clients")}
         toolbar={
           <div className="flex flex-wrap items-center gap-3" data-testid="clients-filter-bar">
             <DirectoryStatusFilter
               onChange={setSelectedStatuses}
               options={[
-                { label: "Active", value: "active" as const },
-                { label: "Inactive", value: "inactive" as const },
+                { label: t("active"), value: "active" as const },
+                { label: t("inactive"), value: "inactive" as const },
               ]}
               selected={selectedStatuses}
             />
@@ -241,7 +244,7 @@ export function ClientsPage(): ReactElement {
               className="w-[180px]"
               leadingIcon={<SearchIcon className="size-3.5" />}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search clients..."
+              placeholder={t("searchClients")}
               size="sm"
               value={search}
             />
@@ -253,12 +256,9 @@ export function ClientsPage(): ReactElement {
           </div>
         }
       >
-        {isLoading ? <DirectorySurfaceMessage message="Loading clients..." /> : null}
+        {isLoading ? <DirectorySurfaceMessage message={t("loadingClients")} /> : null}
         {isError ? (
-          <DirectorySurfaceMessage
-            message="Unable to load clients. Refresh to try again."
-            tone="error"
-          />
+          <DirectorySurfaceMessage message={t("unableToLoadClients")} tone="error" />
         ) : null}
         {isReady ? (
           <DirectoryTable

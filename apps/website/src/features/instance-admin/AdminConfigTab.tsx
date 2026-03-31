@@ -1,5 +1,6 @@
 import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import {
@@ -9,12 +10,25 @@ import {
 } from "../../shared/query/instance-admin.ts";
 
 const registrationModes = [
-  { value: "open" as const, label: "Open", desc: "Anyone can register." },
-  { value: "closed" as const, label: "Closed", desc: "No new registrations." },
-  { value: "invite_only" as const, label: "Invite Only", desc: "Only invited users." },
+  {
+    value: "open" as const,
+    labelKey: "instanceAdmin:open",
+    descKey: "instanceAdmin:openDescription",
+  },
+  {
+    value: "closed" as const,
+    labelKey: "instanceAdmin:closed",
+    descKey: "instanceAdmin:closedDescription",
+  },
+  {
+    value: "invite_only" as const,
+    labelKey: "instanceAdmin:inviteOnly",
+    descKey: "instanceAdmin:inviteOnlyDescription",
+  },
 ];
 
 export function AdminConfigTab(): ReactElement {
+  const { t } = useTranslation();
   const configQuery = useInstanceConfigQuery();
   const updateMutation = useUpdateInstanceConfigMutation();
 
@@ -35,8 +49,8 @@ export function AdminConfigTab(): ReactElement {
           updateMutation.mutate(
             { site_url: siteUrl },
             {
-              onSuccess: () => toast.success("Site URL updated"),
-              onError: () => toast.error("Failed to update site URL"),
+              onSuccess: () => toast.success(t("toast:siteUrlUpdated")),
+              onError: () => toast.error(t("toast:failedToUpdateSiteUrl")),
             },
           );
         }}
@@ -49,8 +63,8 @@ export function AdminConfigTab(): ReactElement {
           updateMutation.mutate(
             { registration_mode: mode },
             {
-              onSuccess: () => toast.success(`Registration set to ${mode}`),
-              onError: () => toast.error("Failed to update registration policy"),
+              onSuccess: () => toast.success(t("toast:registrationSet", { mode })),
+              onError: () => toast.error(t("toast:failedToUpdateRegistrationPolicy")),
             },
           );
         }}
@@ -62,7 +76,7 @@ export function AdminConfigTab(): ReactElement {
         smtpConfigured={config.smtp_configured}
         onToggle={(enabled) => {
           if (enabled && !config.smtp_configured) {
-            toast.error("Configure SMTP before enabling email verification");
+            toast.error(t("toast:configureSmtpFirst"));
             return;
           }
           updateMutation.mutate(
@@ -70,9 +84,9 @@ export function AdminConfigTab(): ReactElement {
             {
               onSuccess: () =>
                 toast.success(
-                  enabled ? "Email verification enabled" : "Email verification disabled",
+                  t(enabled ? "toast:emailVerificationEnabled" : "toast:emailVerificationDisabled"),
                 ),
-              onError: () => toast.error("Failed to update"),
+              onError: () => toast.error(t("toast:failedToUpdate")),
             },
           );
         }}
@@ -85,8 +99,8 @@ export function AdminConfigTab(): ReactElement {
         senderName={config.sender_name}
         onSave={(values) => {
           updateMutation.mutate(values, {
-            onSuccess: () => toast.success("Email settings updated"),
-            onError: () => toast.error("Failed to update email settings"),
+            onSuccess: () => toast.success(t("toast:emailSettingsUpdated")),
+            onError: () => toast.error(t("toast:failedToUpdateEmailSettings")),
           });
         }}
         saving={updateMutation.isPending}
@@ -104,14 +118,17 @@ function SiteSection({
   onSave: (url: string) => void;
   saving: boolean;
 }): ReactElement {
+  const { t } = useTranslation();
   const [value, setValue] = useState(siteUrl);
 
   return (
     <SurfaceCard>
       <div className="p-5">
-        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">Site URL</h3>
+        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
+          {t("instanceAdmin:siteUrl")}
+        </h3>
         <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
-          The public URL of this OpenToggl instance. Used in emails and links.
+          {t("instanceAdmin:siteUrlDescription")}
         </p>
         <div className="flex items-center gap-3">
           <input
@@ -127,7 +144,7 @@ function SiteSection({
             onClick={() => onSave(value)}
             type="button"
           >
-            Save
+            {t("instanceAdmin:save")}
           </button>
         </div>
       </div>
@@ -144,14 +161,16 @@ function RegistrationSection({
   onSelect: (mode: string) => void;
   saving: boolean;
 }): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <SurfaceCard>
       <div className="p-5">
         <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
-          Registration Policy
+          {t("instanceAdmin:registrationPolicy")}
         </h3>
         <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
-          Controls whether new users can create accounts on this instance.
+          {t("instanceAdmin:registrationPolicyDescription")}
         </p>
         <div className="flex flex-col gap-2">
           {registrationModes.map((mode) => (
@@ -181,9 +200,11 @@ function RegistrationSection({
               </span>
               <div>
                 <span className="text-[14px] font-medium text-[var(--track-text)]">
-                  {mode.label}
+                  {t(mode.labelKey)}
                 </span>
-                <span className="ml-2 text-[12px] text-[var(--track-text-muted)]">{mode.desc}</span>
+                <span className="ml-2 text-[12px] text-[var(--track-text-muted)]">
+                  {t(mode.descKey)}
+                </span>
               </div>
             </button>
           ))}
@@ -204,14 +225,18 @@ function EmailVerificationSection({
   onToggle: (enabled: boolean) => void;
   saving: boolean;
 }): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <SurfaceCard>
       <div className="flex items-center justify-between p-5">
         <div>
-          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">Email Verification</h3>
+          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
+            {t("instanceAdmin:emailVerification")}
+          </h3>
           <p className="text-[12px] text-[var(--track-text-muted)]">
-            Require new users to verify their email address after registration.
-            {!smtpConfigured ? " Requires SMTP to be configured." : ""}
+            {t("instanceAdmin:emailVerificationDescription")}
+            {!smtpConfigured ? t("instanceAdmin:requiresSmtp") : ""}
           </p>
         </div>
         <button
@@ -246,6 +271,7 @@ function SmtpSection({
   onSave: (values: Record<string, unknown>) => void;
   saving: boolean;
 }): ReactElement {
+  const { t } = useTranslation();
   const [email, setEmail] = useState(senderEmail);
   const [name, setName] = useState(senderName);
   const [host, setHost] = useState("");
@@ -258,26 +284,40 @@ function SmtpSection({
   return (
     <SurfaceCard>
       <div className="p-5">
-        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">Email / SMTP</h3>
+        <h3 className="mb-1 text-[14px] font-semibold text-[var(--track-text)]">
+          {t("instanceAdmin:emailSmtp")}
+        </h3>
         <p className="mb-4 text-[12px] text-[var(--track-text-muted)]">
-          Configure outgoing email for notifications and invitations.
-          {configured
-            ? " SMTP is configured."
-            : " SMTP is not configured — emails will not be sent."}
+          {t("instanceAdmin:emailSmtpDescription")}
+          {configured ? t("instanceAdmin:smtpConfigured") : t("instanceAdmin:smtpNotConfigured")}
         </p>
         <div className="grid grid-cols-2 gap-3">
-          <ConfigField label="Sender Name" onChange={setName} value={name} />
-          <ConfigField label="Sender Email" onChange={setEmail} type="email" value={email} />
+          <ConfigField label={t("instanceAdmin:senderName")} onChange={setName} value={name} />
           <ConfigField
-            label="SMTP Host"
+            label={t("instanceAdmin:senderEmail")}
+            onChange={setEmail}
+            type="email"
+            value={email}
+          />
+          <ConfigField
+            label={t("instanceAdmin:smtpHost")}
             onChange={setHost}
             placeholder="smtp.example.com"
             value={host}
           />
-          <ConfigField label="SMTP Port" onChange={setPort} type="number" value={port} />
-          <ConfigField label="SMTP Username" onChange={setUsername} value={username} />
           <ConfigField
-            label="SMTP Password"
+            label={t("instanceAdmin:smtpPort")}
+            onChange={setPort}
+            type="number"
+            value={port}
+          />
+          <ConfigField
+            label={t("instanceAdmin:smtpUsername")}
+            onChange={setUsername}
+            value={username}
+          />
+          <ConfigField
+            label={t("instanceAdmin:smtpPassword")}
             onChange={setPassword}
             type="password"
             value={password}
@@ -303,20 +343,20 @@ function SmtpSection({
             }
             type="button"
           >
-            Save Email Settings
+            {t("instanceAdmin:saveEmailSettings")}
           </button>
         </div>
 
         {configured ? (
           <div className="mt-5 border-t border-[var(--track-border)] pt-4">
             <h4 className="mb-2 text-[14px] font-medium text-[var(--track-text)]">
-              Send Test Email
+              {t("instanceAdmin:sendTestEmail")}
             </h4>
             <div className="flex items-center gap-3">
               <input
                 className="flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-[var(--track-text)] placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
                 onChange={(e) => setTestTo(e.target.value)}
-                placeholder="recipient@example.com"
+                placeholder={t("instanceAdmin:recipientEmail")}
                 type="email"
                 value={testTo}
               />
@@ -332,12 +372,12 @@ function SmtpSection({
                         toast.error(result.message);
                       }
                     },
-                    onError: () => toast.error("Failed to send test email"),
+                    onError: () => toast.error(t("toast:failedToSendTestEmail")),
                   });
                 }}
                 type="button"
               >
-                {testMutation.isPending ? "Sending..." : "Send Test"}
+                {testMutation.isPending ? t("instanceAdmin:sending") : t("instanceAdmin:sendTest")}
               </button>
             </div>
           </div>
@@ -375,12 +415,14 @@ function ConfigField({
 }
 
 function ConfigLoading(): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <SurfaceCard>
       <AppSurfaceState
         className="border-none bg-transparent text-[var(--track-text-muted)]"
-        description="Loading configuration..."
-        title="Config"
+        description={t("instanceAdmin:loadingConfig")}
+        title={t("instanceAdmin:config")}
         tone="loading"
       />
     </SurfaceCard>
@@ -388,12 +430,14 @@ function ConfigLoading(): ReactElement {
 }
 
 function ConfigError(): ReactElement {
+  const { t } = useTranslation();
+
   return (
     <SurfaceCard>
       <AppSurfaceState
         className="border-none bg-transparent text-[var(--track-text-muted)]"
-        description="Could not load configuration."
-        title="Config unavailable"
+        description={t("instanceAdmin:couldNotLoadConfig")}
+        title={t("instanceAdmin:configUnavailable")}
         tone="error"
       />
     </SurfaceCard>

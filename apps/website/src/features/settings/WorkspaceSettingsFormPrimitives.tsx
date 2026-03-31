@@ -1,5 +1,6 @@
 import { Upload, Trash2 } from "lucide-react";
 import { type InputHTMLAttributes, type ReactElement, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { postWorkspaceLogo, deleteWorkspaceLogo } from "../../shared/api/public/track/index.ts";
@@ -34,6 +35,7 @@ export function LogoCard({
   workspaceId: number;
   onLogoChange: (url: string) => void;
 }): ReactElement {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -50,9 +52,9 @@ export function LogoCard({
         }),
       );
       onLogoChange(result.logo ?? "");
-      toast.success("Logo uploaded");
+      toast.success(t("toast:logoUploaded"));
     } catch {
-      toast.error("Failed to upload logo");
+      toast.error(t("toast:failedToUploadLogo"));
     } finally {
       setUploading(false);
     }
@@ -67,9 +69,9 @@ export function LogoCard({
         }),
       );
       onLogoChange("");
-      toast.success("Logo removed");
+      toast.success(t("toast:logoRemoved"));
     } catch {
-      toast.error("Failed to remove logo");
+      toast.error(t("toast:failedToRemoveLogo"));
     } finally {
       setUploading(false);
     }

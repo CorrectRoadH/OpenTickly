@@ -1,3 +1,4 @@
+import i18n from "../../app/i18n.ts";
 import type {
   SavedWeeklyReportData,
   WeeklyDataRow,
@@ -242,11 +243,11 @@ function formatAmountCents(cents: number): string {
 
 function formatWeekLabel(dateKey: string): string {
   const date = new Date(`${dateKey}T00:00:00Z`);
-  const weekday = new Intl.DateTimeFormat("en-US", {
+  const weekday = new Intl.DateTimeFormat(i18n.language, {
     timeZone: "UTC",
     weekday: "short",
   }).format(date);
-  const monthDay = new Intl.DateTimeFormat("en-US", {
+  const monthDay = new Intl.DateTimeFormat(i18n.language, {
     day: "2-digit",
     month: "2-digit",
     timeZone: "UTC",

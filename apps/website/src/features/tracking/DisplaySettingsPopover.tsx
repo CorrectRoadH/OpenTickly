@@ -1,4 +1,5 @@
 import { type ReactElement, useCallback, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
@@ -52,6 +53,7 @@ export function DisplaySettingsPopover({
   onToggleShowAllEntries: () => void;
   showAllEntries: boolean;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const panelRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState<DisplaySettings>(() => readDisplaySettings());
 
@@ -70,13 +72,13 @@ export function DisplaySettingsPopover({
       ref={panelRef}
     >
       <div className="border-b border-[var(--track-border)] px-4 py-3">
-        <span className="text-[12px] font-medium text-white">Display settings</span>
+        <span className="text-[12px] font-medium text-white">{t("displaySettings")}</span>
       </div>
 
       <div className="px-5 py-4">
         <div className="flex items-center justify-between py-2">
           <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            Show all time entries
+            {t("showAllTimeEntries")}
           </span>
           <button
             aria-checked={showAllEntries}
@@ -96,11 +98,11 @@ export function DisplaySettingsPopover({
         </div>
 
         <SettingsDropdown
-          label="Extra visualizations"
+          label={t("extraVisualizations")}
           value={draft.extraVisualizations}
           options={[
-            { label: "Off", value: "off" },
-            { label: "Weekly projects", value: "weekly-projects" },
+            { label: t("off"), value: "off" },
+            { label: t("weeklyProjects"), value: "weekly-projects" },
           ]}
           onChange={(value) =>
             setDraft((prev) => ({
@@ -110,11 +112,11 @@ export function DisplaySettingsPopover({
           }
         />
         <SettingsDropdown
-          label="Calendar hours"
+          label={t("calendarHours")}
           value={draft.calendarHours}
           options={[
-            { label: "Show all hours", value: "all" },
-            { label: "Business hours only (9-17)", value: "business" },
+            { label: t("showAllHours"), value: "all" },
+            { label: t("businessHoursOnly"), value: "business" },
           ]}
           onChange={(value) =>
             setDraft((prev) => ({
@@ -124,11 +126,11 @@ export function DisplaySettingsPopover({
           }
         />
         <SettingsDropdown
-          label="Today/Week total"
+          label={t("todayWeekTotal")}
           value={draft.todayWeekTotal}
           options={[
-            { label: "Total hours", value: "hours" },
-            { label: "Total earnings", value: "earnings" },
+            { label: t("totalHours"), value: "hours" },
+            { label: t("totalEarnings"), value: "earnings" },
           ]}
           onChange={(value) =>
             setDraft((prev) => ({
@@ -140,9 +142,9 @@ export function DisplaySettingsPopover({
       </div>
 
       <div className="border-t border-[var(--track-border)] px-5 py-3">
-        <SettingsLink href="/profile#time-and-date" label="Time and date settings" />
-        <SettingsLink href="/profile#shortcuts" label="Keyboard shortcuts" />
-        <SettingsLink href="/profile#timer-page" label="Time Entry Grouping" />
+        <SettingsLink href="/profile#time-and-date" label={t("timeAndDateSettings")} />
+        <SettingsLink href="/profile#shortcuts" label={t("keyboardShortcuts")} />
+        <SettingsLink href="/profile#timer-page" label={t("timeEntryGrouping")} />
       </div>
 
       <div className="flex gap-3 border-t border-[var(--track-border)] px-5 py-4">
@@ -151,14 +153,14 @@ export function DisplaySettingsPopover({
           onClick={onClose}
           type="button"
         >
-          Cancel
+          {t("cancel")}
         </button>
         <button
           className="flex-1 rounded-lg bg-[var(--track-accent)] px-4 py-2.5 text-[12px] font-medium text-white transition hover:bg-[var(--track-accent-fill-hover)]"
           onClick={handleSave}
           type="button"
         >
-          Save
+          {t("save")}
         </button>
       </div>
     </div>

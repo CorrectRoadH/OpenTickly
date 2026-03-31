@@ -1,5 +1,6 @@
 import { type ReactElement, useMemo, useState } from "react";
 
+import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
@@ -263,14 +264,15 @@ function FieldRow({ children, label }: { children: ReactElement; label: string }
 function toTimeInputValue(iso: string, timezone: string): string {
   if (!iso) return "";
   const date = new Date(iso);
-  const h = new Intl.DateTimeFormat("en-US", {
+  const h = new Intl.DateTimeFormat(i18n.language, {
     hour: "2-digit",
     hour12: false,
     timeZone: timezone,
   }).format(date);
-  const m = new Intl.DateTimeFormat("en-US", { minute: "2-digit", timeZone: timezone }).format(
-    date,
-  );
+  const m = new Intl.DateTimeFormat(i18n.language, {
+    minute: "2-digit",
+    timeZone: timezone,
+  }).format(date);
   return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
 }
 

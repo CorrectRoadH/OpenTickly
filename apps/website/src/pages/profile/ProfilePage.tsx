@@ -2,6 +2,7 @@ import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import {
   mapPreferencesFormToRequest,
@@ -28,6 +29,7 @@ import {
 } from "./ProfilePageSections.tsx";
 
 export function ProfilePage(): ReactElement {
+  const { t } = useTranslation("profile");
   const session = useSession();
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
@@ -98,9 +100,9 @@ export function ProfilePage(): ReactElement {
       await updatePreferencesMutation.mutateAsync(mapPreferencesFormToRequest(latestValues));
       lastSavedValuesRef.current = serializedValues;
       form.reset(latestValues);
-      toast.success("Your profile preferences have been updated");
+      toast.success(t("profilePreferencesUpdated"));
     } catch {
-      toast.error("We could not save this change. Try again in a moment.");
+      toast.error(t("couldNotSaveChange"));
     } finally {
       saveInFlightRef.current = false;
 
@@ -116,8 +118,8 @@ export function ProfilePage(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Fetching current user account details and preferences."
-          title="Loading profile"
+          description={t("fetchingCurrentUser")}
+          title={t("loadingProfile")}
           tone="loading"
         />
       </SurfaceCard>
@@ -129,8 +131,8 @@ export function ProfilePage(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent"
-          description="We could not load account details right now. Refresh or try again shortly."
-          title="Profile unavailable"
+          description={t("couldNotLoadAccount")}
+          title={t("profileUnavailable")}
           tone="error"
         />
       </SurfaceCard>
@@ -142,8 +144,8 @@ export function ProfilePage(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="No profile data was returned for this session."
-          title="Profile data unavailable"
+          description={t("noProfileDataReturned")}
+          title={t("profileDataUnavailable")}
           tone="empty"
         />
       </SurfaceCard>
@@ -157,10 +159,13 @@ export function ProfilePage(): ReactElement {
   );
 
   const heroRows = [
-    { label: "Full name", value: profileName || "Unnamed user" },
-    { label: "Email", value: profileQuery.data.email || "No email configured" },
-    { label: "Reports timezone", value: reportsTimezone },
-    { label: "2FA sign-in", value: profileQuery.data["2fa_enabled"] ? "Enabled" : "Not enabled" },
+    { label: t("fullName"), value: profileName || t("unnamedUser") },
+    { label: t("emailLabel"), value: profileQuery.data.email || t("noEmailConfigured") },
+    { label: t("reportsTimezone"), value: reportsTimezone },
+    {
+      label: t("twoFASignIn"),
+      value: profileQuery.data["2fa_enabled"] ? t("enabled") : t("notEnabled"),
+    },
   ];
   const readPreference = <K extends keyof PreferencesFormValues>(
     key: K,
@@ -182,11 +187,11 @@ export function ProfilePage(): ReactElement {
         <PageHeader
           action={
             <AppButton disabled type="button">
-              Export account data
+              {t("exportAccountData")}
             </AppButton>
           }
           bordered
-          title="My Profile"
+          title={t("myProfile")}
         />
       </section>
 
@@ -198,7 +203,7 @@ export function ProfilePage(): ReactElement {
             onAvatarChange={() => {
               void profileQuery.refetch();
             }}
-            profileName={profileName || "Unnamed user"}
+            profileName={profileName || t("unnamedUser")}
             rows={heroRows}
           />
 
@@ -216,11 +221,11 @@ export function ProfilePage(): ReactElement {
               void resetApiTokenMutation
                 .mutateAsync()
                 .then(() => {
-                  setApiTokenStatus("API token rotated");
+                  setApiTokenStatus(t("apiTokenRotated"));
                   setApiTokenError(null);
                 })
                 .catch(() => {
-                  setApiTokenError("Could not rotate API token");
+                  setApiTokenError(t("couldNotRotateApiToken"));
                   setApiTokenStatus(null);
                 });
             }}

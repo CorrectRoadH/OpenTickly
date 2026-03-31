@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   DirectorySurfaceMessage,
@@ -31,6 +32,7 @@ const TAG_COLUMNS: DirectoryTableColumn[] = [
 ];
 
 export function TagsPage(): ReactElement {
+  const { t } = useTranslation("tags");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const tagsQuery = useTagsQuery(workspaceId);
@@ -44,13 +46,11 @@ export function TagsPage(): ReactElement {
   const [nameFilter, setNameFilter] = useState("");
 
   if (tagsQuery.isPending) {
-    return <DirectorySurfaceMessage message="Loading tags..." />;
+    return <DirectorySurfaceMessage message={t("loadingTags")} />;
   }
 
   if (tagsQuery.isError) {
-    return (
-      <DirectorySurfaceMessage message="Unable to load tags. Refresh to try again." tone="error" />
-    );
+    return <DirectorySurfaceMessage message={t("unableToLoadTags")} tone="error" />;
   }
 
   const tags = normalizeTags(tagsQuery.data);
@@ -74,13 +74,13 @@ export function TagsPage(): ReactElement {
     setTagName("");
     setCreateDialogOpen(false);
     setStatusFilter("all");
-    setStatus("Tag created");
+    setStatus(t("tagCreated"));
   }
 
   return (
     <PageLayout
       data-testid="tags-page"
-      title="Tags"
+      title={t("tags")}
       headerActions={
         <AppButton
           data-testid="tags-create-button"
@@ -88,7 +88,7 @@ export function TagsPage(): ReactElement {
           type="button"
         >
           <PlusIcon className="size-3.5" />
-          New tag
+          {t("newTag")}
         </AppButton>
       }
       toolbar={
@@ -100,7 +100,7 @@ export function TagsPage(): ReactElement {
                 className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
                 data-testid="tags-filter-name"
                 onChange={(e) => setNameFilter(e.target.value)}
-                placeholder="Tag name"
+                placeholder={t("tagName")}
                 type="text"
                 value={nameFilter}
               />
@@ -173,12 +173,12 @@ export function TagsPage(): ReactElement {
                 tagName={tag.name}
                 onDelete={(tagId) => {
                   void deleteTagMutation.mutateAsync(tagId).then(() => {
-                    setStatus("Tag deleted");
+                    setStatus(t("tagDeleted"));
                   });
                 }}
                 onRename={(tagId, name) => {
                   void updateTagMutation.mutateAsync({ tagId, name }).then(() => {
-                    setStatus("Tag renamed");
+                    setStatus(t("tagRenamed"));
                   });
                 }}
               />
@@ -190,9 +190,9 @@ export function TagsPage(): ReactElement {
       {createDialogOpen ? (
         <CreateNameDialog
           isPending={createTagMutation.isPending}
-          nameLabel="Tag name"
+          nameLabel={t("tagName")}
           testId="create-tag-dialog"
-          namePlaceholder="Tag name"
+          namePlaceholder={t("tagName")}
           nameValue={tagName}
           onClose={() => setCreateDialogOpen(false)}
           onNameChange={setTagName}

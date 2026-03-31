@@ -1,6 +1,7 @@
 import { AppSurfaceState, PageLayout, pageLayoutTabClass, SurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { BillableRatesContent } from "../billable-rates/BillableRatesPage.tsx";
@@ -42,6 +43,7 @@ export function WorkspaceSettingsPage({
   section,
   workspaceId,
 }: WorkspaceSettingsPageProps): ReactElement {
+  const { t } = useTranslation();
   const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
 
@@ -88,10 +90,10 @@ export function WorkspaceSettingsPage({
               await updateMutation.mutateAsync(request);
             }}
             onSubmitError={() => {
-              toast.error("We could not save this change. Try again in a moment.");
+              toast.error(t("toast:failedToSaveWorkspaceSettings"));
             }}
             onSubmitSuccess={() => {
-              toast.success("Your workspace has been updated");
+              toast.success(t("toast:workspaceSettingsSaved"));
             }}
             section={section}
             settingsData={settingsQuery.data}

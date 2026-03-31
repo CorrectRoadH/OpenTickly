@@ -1,6 +1,9 @@
 import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
+import { useTranslation } from "react-i18next";
+
+import i18n from "../../app/i18n.ts";
 import type { EventProps, SlotInfo } from "react-big-calendar";
 import type { EventInteractionArgs } from "react-big-calendar/lib/addons/dragAndDrop";
 import { format } from "date-fns/format";
@@ -479,6 +482,7 @@ export function ListView({
   timezone: string;
   workspaceName?: string;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const { durationFormat, timeofdayFormat } = useUserPreferences();
   const {
     clearSelection,
@@ -493,7 +497,7 @@ export function ListView({
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set());
 
   if (groups.length === 0) {
-    return <SurfaceMessage message="No time entries in this workspace yet." />;
+    return <SurfaceMessage message={t("noTimeEntriesInThisWorkspaceYet")} />;
   }
 
   return (
@@ -760,7 +764,7 @@ export function ListView({
           onClick={onLoadMore}
           type="button"
         >
-          {isLoadingMore ? "Loading..." : "Load more"}
+          {isLoadingMore ? t("loading") : t("loadMore")}
         </button>
       ) : null}
     </div>
@@ -780,6 +784,7 @@ function InlineDescription({
   isRunning: boolean;
   onChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => void;
 }) {
+  const { t } = useTranslation("tracking");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -834,7 +839,7 @@ function InlineDescription({
       <p
         className={`truncate text-[14px] font-medium ${desc ? "text-white" : "text-[var(--track-text-muted)]"}`}
       >
-        <span data-testid="time-entry-description">{desc || "Add description"}</span>
+        <span data-testid="time-entry-description">{desc || t("addDescription")}</span>
       </p>
     </button>
   );
@@ -940,6 +945,7 @@ function ListRowMoreActions({
   onFavorite?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onSplit?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
 }) {
+  const { t } = useTranslation("tracking");
   const label = entry.description?.trim() || "time entry";
 
   return (
@@ -956,22 +962,22 @@ function ListRowMoreActions({
       }
     >
       <MenuItem onClick={() => onBillableToggle?.(entry)}>
-        {entry.billable ? "Set as non-billable" : "Set as billable"}
+        {entry.billable ? t("setAsNonBillable") : t("setAsBillable")}
       </MenuItem>
-      <MenuItem onClick={() => onDuplicate?.(entry)}>Duplicate</MenuItem>
+      <MenuItem onClick={() => onDuplicate?.(entry)}>{t("duplicate")}</MenuItem>
       {entry.start && entry.stop ? (
-        <MenuItem onClick={() => onSplit?.(entry)}>Split</MenuItem>
+        <MenuItem onClick={() => onSplit?.(entry)}>{t("split")}</MenuItem>
       ) : null}
       {entry.project_id || entry.pid ? (
         <MenuLink
           href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${resolveTimeEntryProjectId(entry)}`}
         >
-          Go to project
+          {t("goToProject")}
         </MenuLink>
       ) : null}
-      <MenuItem onClick={() => onFavorite?.(entry)}>Pin as favorite</MenuItem>
+      <MenuItem onClick={() => onFavorite?.(entry)}>{t("pinAsFavorite")}</MenuItem>
       <MenuItem onClick={() => void navigator.clipboard.writeText(entry.description?.trim() ?? "")}>
-        Copy description
+        {t("copyDescription")}
       </MenuItem>
       <MenuItem
         onClick={() => {
@@ -981,11 +987,11 @@ function ListRowMoreActions({
           }
         }}
       >
-        Copy start link
+        {t("copyStartLink")}
       </MenuItem>
       <MenuSeparator />
       <MenuItem destructive onClick={() => onDelete?.(entry)}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </DropdownMenu>
   );
@@ -1009,6 +1015,7 @@ function ListRowProjectPicker({
   projects: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
   workspaceName: string;
 }) {
+  const { t } = useTranslation("tracking");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1051,7 +1058,7 @@ function ListRowProjectPicker({
           type="button"
         >
           <ProjectsIcon className="size-3.5" />
-          <span>Add project</span>
+          <span>{t("addProject")}</span>
         </button>
       )}
       {open ? (
@@ -1329,7 +1336,7 @@ export function CalendarView({
       ),
       header: ({ date }: { date: Date }) => {
         const dayNum = date.getDate();
-        const dayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
+        const dayName = new Intl.DateTimeFormat(i18n.language, { weekday: "short" })
           .format(date)
           .toUpperCase();
         const dateKey = new Intl.DateTimeFormat("en-CA", {
@@ -1594,6 +1601,7 @@ export function TimesheetView({
   timezone: string;
   weekDays: Date[];
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const totals = weekDays.map((_, index) =>
     rows.reduce((sum, row) => sum + (row.cells[index] ?? 0), 0),
   );
@@ -1608,7 +1616,7 @@ export function TimesheetView({
       <thead>
         <tr className="h-[40px] text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--track-text-muted)]">
           <th className="text-left pl-5 pr-2" style={{ width: "26%" }}>
-            Project
+            {t("project")}
           </th>
           <th className="text-left px-2" style={{ width: "13%" }} />
           {weekDays.map((day) => (
@@ -1688,7 +1696,7 @@ export function TimesheetView({
               type="button"
             >
               <strong className="text-[14px]">+</strong>
-              <span>Add row</span>
+              <span>{t("addRow")}</span>
             </button>
           </td>
           {weekDays.map((_, index) => (
@@ -1706,11 +1714,11 @@ export function TimesheetView({
               onClick={onCopyLastWeek}
               type="button"
             >
-              Copy last week ▾
+              {t("copyLastWeek")} ▾
             </button>
           </td>
           <td className="px-2 text-[11px] font-semibold uppercase tracking-[0.05em] text-[var(--track-text-muted)]">
-            Total
+            {t("total")}
           </td>
           {totals.map((seconds, index) => (
             <td className="px-2 text-center text-white" key={`total-${index}`}>
@@ -1749,6 +1757,7 @@ function CalendarEventCard({
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
 }) {
+  const { t } = useTranslation("tracking");
   const { durationFormat } = useUserPreferences();
   const entry = event.entry;
   const durationSeconds = resolveEntryDurationSeconds(entry);
@@ -1794,7 +1803,7 @@ function CalendarEventCard({
           <span
             className={`truncate font-semibold leading-tight ${entry.description?.trim() ? "" : "text-[var(--track-text-muted)]"}`}
           >
-            {entry.description?.trim() || "Add description"}
+            {entry.description?.trim() || t("addDescription")}
           </span>
           {entry.project_name ? (
             <span

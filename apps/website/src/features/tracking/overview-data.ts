@@ -1,3 +1,4 @@
+import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { isTrackHexColor, pickTrackColorFromSeed } from "../../shared/lib/project-colors.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
@@ -227,7 +228,7 @@ export function formatDateKey(date: Date, timezone: string): string {
 }
 
 export function formatWeekday(date: Date, timezone: string): string {
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(i18n.language, {
     timeZone: timezone,
     weekday: "short",
   }).format(date);
@@ -262,7 +263,7 @@ export function formatGroupLabel(dateKey: string, timezone: string): string {
     return "Yesterday";
   }
 
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  const formatter = new Intl.DateTimeFormat(i18n.language, {
     day: "numeric",
     month: "short",
     timeZone: timezone,
@@ -295,7 +296,7 @@ export function formatClockTime(
   timeFormat: TimeFormat = "h:mm A",
 ): string {
   const hour12 = timeFormat === "h:mm A";
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(i18n.language, {
     hour: "numeric",
     hour12,
     minute: "2-digit",
@@ -305,7 +306,7 @@ export function formatClockTime(
 
 export function getHourInTimezone(date: Date, timezone: string): number {
   return Number(
-    new Intl.DateTimeFormat("en-US", {
+    new Intl.DateTimeFormat(i18n.language, {
       hour: "2-digit",
       hour12: false,
       timeZone: timezone,

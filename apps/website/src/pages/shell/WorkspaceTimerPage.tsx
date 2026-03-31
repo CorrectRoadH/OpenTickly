@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   CalendarSubviewSelect,
@@ -87,6 +88,7 @@ export function WorkspaceTimerPage({
   initialDate,
   startParams,
 }: WorkspaceTimerPageProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
@@ -306,7 +308,7 @@ export function WorkspaceTimerPage({
                 event.currentTarget.blur();
               }}
               onFocus={orch.handleIdleDescriptionFocus}
-              placeholder="What are you working on?"
+              placeholder={t("whatAreYouWorkingOn")}
               value={orch.timerDescriptionValue}
             />
           </div>
@@ -433,7 +435,7 @@ export function WorkspaceTimerPage({
             <TimerRangePicker orch={orch} />
             {orch.view === "list" ? (
               <SummaryStat
-                label="Today total"
+                label={t("todayTotal")}
                 value={
                   orch.todayTotalSeconds > 0
                     ? formatClockDuration(orch.todayTotalSeconds, durationFormat)
@@ -442,7 +444,7 @@ export function WorkspaceTimerPage({
               />
             ) : null}
             <SummaryStat
-              label="Week total"
+              label={t("weekTotal")}
               value={formatClockDuration(orch.weekTotalSeconds, durationFormat)}
             />
             <div className="ml-auto flex items-center gap-3">
@@ -459,8 +461,8 @@ export function WorkspaceTimerPage({
                 />
               ) : null}
               <ViewTabGroup
-                aria-label="Timer view"
-                label="Timer view"
+                aria-label={t("timerView")}
+                label={t("timerView")}
                 onSelect={orch.setView}
                 options={["calendar", "list", "timesheet"]}
                 value={orch.view}
@@ -472,7 +474,7 @@ export function WorkspaceTimerPage({
               <div className="relative">
                 <ChromeIconButton
                   active={settingsOpen}
-                  aria-label="Display settings"
+                  aria-label={t("displaySettings")}
                   icon={<SettingsIcon className="size-4" />}
                   onClick={() => setSettingsOpen((prev) => !prev)}
                 />
@@ -487,7 +489,7 @@ export function WorkspaceTimerPage({
               </div>
               <ChromeIconButton
                 active={sidebarOpen}
-                aria-label="Toggle goals and favorites"
+                aria-label={t("toggleGoalsAndFavorites")}
                 icon={<PanelRightIcon className="size-4" />}
                 onClick={() => setSidebarOpen((prev) => !prev)}
               />
@@ -500,7 +502,7 @@ export function WorkspaceTimerPage({
       <div className="flex min-h-0">
         <div className="min-w-0 flex-1">
           {orch.timeEntriesQuery.isPending ? (
-            <SurfaceMessage message="Loading time entries..." />
+            <SurfaceMessage message={t("loadingTimeEntries")} />
           ) : null}
           {orch.timeEntriesQuery.isError ? (
             <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
@@ -796,8 +798,8 @@ export function WorkspaceTimerPage({
               }
               primaryActionLabel={
                 orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "Stop timer"
-                  : "Continue Time Entry"
+                  ? t("stopTimer")
+                  : t("continueTimeEntry")
               }
               projects={orch.projectOptions
                 .filter((project) => project.id != null)
@@ -893,13 +895,13 @@ export function WorkspaceTimerPage({
       ) : null}
       {deleteToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
-          <span className="text-[14px] text-white">Time entry deleted</span>
+          <span className="text-[14px] text-white">{t("timeEntryDeleted")}</span>
           <button
             className="text-[14px] font-semibold text-[var(--track-accent)] transition hover:text-[var(--track-accent-text)]"
             onClick={handleUndoDelete}
             type="button"
           >
-            Undo
+            {t("undo")}
           </button>
         </div>
       ) : null}
@@ -1328,15 +1330,16 @@ function TimerRangePicker({
 }: {
   orch: ReturnType<typeof useTimerPageOrchestration>;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const isAllDates = orch.view === "list" && orch.listDateRange == null;
   const isDayMode = !isAllDates && orch.view !== "list" && orch.calendarSubview === "day";
   const mode = isDayMode ? "day" : "week";
   const [activeShortcut, setActiveShortcut] = useState<string | null>("this-week");
 
   const label = isAllDates
-    ? "All dates"
+    ? t("allDates")
     : activeShortcut === "last-30-days"
-      ? "Last 30 days"
+      ? t("last30Days")
       : isDayMode
         ? formatDayLabel(orch.selectedWeekDate)
         : formatWeekRangeLabel(orch.selectedWeekDate, orch.beginningOfWeek);
@@ -1438,6 +1441,7 @@ function TimerDateShortcuts({
   onShortcut: (id: string, date: Date) => void;
   shortcuts: WeekShortcut[];
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const close = useRangePickerClose();
 
   return (
@@ -1461,7 +1465,7 @@ function TimerDateShortcuts({
             }}
             type="button"
           >
-            {shortcut.label}
+            {t(shortcut.label)}
           </button>
         );
       })}

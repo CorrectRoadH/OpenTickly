@@ -1,3 +1,4 @@
+import i18n from "../../app/i18n.ts";
 import { formatDateKey } from "../../features/tracking/overview-data.ts";
 
 export type ReportsTimePeriod =
@@ -130,7 +131,7 @@ export function getIsoWeekNumber(dateKey: string): number {
 
 export function formatRangeDate(dateKey: string): string {
   const date = new Date(`${dateKey}T00:00:00Z`);
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(i18n.language, {
     day: "numeric",
     month: "short",
     timeZone: "UTC",
