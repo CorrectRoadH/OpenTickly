@@ -104,6 +104,27 @@ export function MobileShell(): ReactElement {
               <p className="truncate text-[13px] font-medium text-white">
                 {runningEntry.description || "No description"}
               </p>
+              {runningEntry.project_name || runningEntry.tags?.length ? (
+                <p className="flex items-center gap-1 truncate text-[11px] text-[var(--track-text-muted)]">
+                  {runningEntry.project_name ? (
+                    <>
+                      <span
+                        className="inline-block size-[6px] shrink-0 rounded-full"
+                        style={{
+                          backgroundColor: runningEntry.project_color ?? "var(--track-text-muted)",
+                        }}
+                      />
+                      <span className="truncate">{runningEntry.project_name}</span>
+                    </>
+                  ) : null}
+                  {runningEntry.tags?.length ? (
+                    <>
+                      {runningEntry.project_name ? <span>·</span> : null}
+                      <span className="truncate">{runningEntry.tags.join(", ")}</span>
+                    </>
+                  ) : null}
+                </p>
+              ) : null}
               <p className="text-[12px] tabular-nums text-[var(--track-accent)]">{timerLabel}</p>
             </button>
             <TimerActionButton isRunning onClick={handleStop} size="sm" />

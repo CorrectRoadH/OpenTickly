@@ -1,0 +1,576 @@
+import { expect, test } from "@playwright/test";
+
+import {
+  createProjectForWorkspace,
+  createTagForWorkspace,
+  createTimeEntryForWorkspace,
+  loginE2eUser,
+  registerE2eUser,
+} from "../fixtures/e2e-auth.ts";
+import { pollCurrentRunningEntry } from "../fixtures/e2e-api.ts";
+
+/**
+ * Mobile User Story E2E Tests
+ *
+ * These tests follow real user workflows on the mobile experience.
+ * Each test represents a complete user story that can be executed
+ * without knowledge of the implementation.
+ */
+
+/* ================================
+   USER STORY 1: Start and Stop Timer
+   As a mobile user, I want to start a timer so I can track time.
+   ================================ */
+test.describe("Start and Stop Timer", () => {
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-timer-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Timer User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+  });
+
+  test("User starts a timer with a description, sees it running, then stops it", async ({
+    page,
+  }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // User types a description in the composer input
+    const composerInput = page.getByPlaceholder("What are you working on?");
+    await expect(composerInput).toBeVisible();
+    const description = "Writing mobile tests";
+    await composerInput.fill(description);
+
+    // User presses Enter to start the timer
+    await composerInput.press("Enter");
+
+    // Timer is now running - the composer bar shows the running entry
+    await expect(page.getByText(description)).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toBeVisible();
+
+    // User taps the stop button to stop the timer
+    await page.getByTestId("timer-action-button").click();
+
+    // Timer is stopped - composer bar returns to input mode
+    await expect(composerInput).toBeVisible();
+
+    // The stopped entry appears in the Recent section
+    await expect(page.getByText("Recent")).toBeVisible();
+    await expect(page.getByText(description).first()).toBeVisible();
+  });
+
+  test("User starts a timer and verifies it is running via API", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    const composerInput = page.getByPlaceholder("What are you working on?");
+    const description = "Timer that must be running";
+    await composerInput.fill(description);
+    await composerInput.press("Enter");
+
+    // Wait for the timer to be recognized as running
+    await expect(page.getByText(description)).toBeVisible();
+
+    // Verify via API that a timer is running with correct description
+    const { body: currentEntry } = await pollCurrentRunningEntry(page, { timeoutMs: 5000 });
+    expect(currentEntry).not.toBeNull();
+    expect(currentEntry?.description).toBe(description);
+  });
+});
+
+/* ================================
+   USER STORY 2: View Running Timer on Calendar
+   As a mobile user, I want to see my running timer on the calendar.
+   ================================ */
+test.describe("View Running Timer on Calendar", () => {
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-calendar-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Calendar User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+  });
+
+  test("User starts a timer on Timer tab, navigates to Calendar, and sees the running entry", async ({
+    page,
+  }) => {
+    // Start a timer on the Timer tab
+    await page.goto(new URL("/m/timer", page.url()).toString());
+    const composerInput = page.getByPlaceholder("What are you working on?");
+    const description = "Running while viewing calendar";
+    await composerInput.fill(description);
+    await composerInput.press("Enter");
+    await expect(page.getByText(description)).toBeVisible();
+
+    // Navigate to Calendar tab
+    await page.getByRole("navigation").getByText("Calendar").click();
+    await expect(page).toHaveURL(/\/m\/calendar/);
+
+    // The running entry is visible on the calendar
+    await expect(page.getByText(description)).toBeVisible();
+  });
+});
+
+/* ================================
+   USER STORY 3: Edit Time Entry Duration
+   As a mobile user, I want to edit a time entry's start/end time
+   to correct mistakes.
+   ================================ */
+test.describe("Edit Time Entry Duration", () => {
+  let workspaceId: number;
+  const ENTRY_DESCRIPTION = "Entry with wrong duration";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-edit-time-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Edit Time User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    workspaceId = session.currentWorkspaceId;
+
+    // Pre-create a stopped time entry (1 hour duration: 10:00 - 11:00)
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 11, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId,
+    });
+  });
+
+  test("User taps an entry, changes start time to extend duration, and saves", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Entry appears in Recent section
+    await expect(page.getByText("Recent")).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // User taps the entry to open the editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    // Editor is visible
+    const editor = page.getByTestId("mobile-time-entry-editor");
+    await expect(editor).toBeVisible();
+    await expect(editor.getByText("Edit Entry")).toBeVisible();
+
+    // User changes start time from 10:00 to 09:30 (extends to 1.5 hours)
+    const startTimeInput = editor.getByLabel("Edit start time");
+    await startTimeInput.fill("09:30");
+
+    // User saves the changes
+    await editor.getByRole("button", { name: "Save changes" }).click();
+
+    // Editor closes
+    await expect(editor).not.toBeVisible();
+
+    // Entry is still visible
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+  });
+
+  test("User edits an entry on Calendar tab, changes both start and end time", async ({ page }) => {
+    await page.goto(new URL("/m/calendar", page.url()).toString());
+
+    // Find the entry on calendar
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // Tap to open editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+    await expect(editor.getByText("Edit Entry")).toBeVisible();
+
+    // Change start to 09:00 and end to 12:00 (3 hour duration)
+    await editor.getByLabel("Edit start time").fill("09:00");
+    await editor.getByLabel("Edit end time").fill("12:00");
+
+    // Save
+    await editor.getByRole("button", { name: "Save changes" }).click();
+    await expect(editor).not.toBeVisible();
+
+    // Entry still visible on calendar
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+  });
+
+  test("User cancels editing and the entry remains unchanged", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Open entry editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+    await expect(editor).toBeVisible();
+
+    // Change the description
+    await editor.getByLabel("Time entry description").fill("Modified description");
+
+    // Cancel the edit
+    await editor.getByRole("button", { name: "Cancel editing" }).click();
+    await expect(editor).not.toBeVisible();
+
+    // Original description is still there, modified is not
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+    await expect(page.getByText("Modified description")).not.toBeVisible();
+  });
+});
+
+/* ================================
+   USER STORY 4: Assign Project to Time Entry
+   As a mobile user, I want to assign a project to my time entry
+   so I can categorize my work.
+   ================================ */
+test.describe("Assign Project to Time Entry", () => {
+  let workspaceId: number;
+  const PROJECT_NAME = "Mobile Development";
+  const ENTRY_DESCRIPTION = "Working on mobile app";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-project-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Project User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    workspaceId = session.currentWorkspaceId;
+
+    // Create a project
+    await createProjectForWorkspace(page, {
+      name: PROJECT_NAME,
+      workspaceId,
+    });
+
+    // Create a time entry without project
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 14, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 15, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId,
+    });
+  });
+
+  test("User opens entry editor, selects a project, and saves", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Entry visible but without project indicator
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // Open editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+
+    // Select project from dropdown
+    const projectSelect = editor.locator("select").first();
+    await projectSelect.selectOption({ label: PROJECT_NAME });
+
+    // Save
+    await editor.getByRole("button", { name: "Save changes" }).click();
+    await expect(editor).not.toBeVisible();
+
+    // Reload and verify project shows next to entry
+    await page.reload();
+    await expect(page.getByText(PROJECT_NAME)).toBeVisible();
+  });
+
+  test("User starts a timer, assigns a project while running, then stops", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Start timer
+    const composerInput = page.getByPlaceholder("What are you working on?");
+    await composerInput.fill("Running with project");
+    await composerInput.press("Enter");
+    await expect(page.getByText("Running with project")).toBeVisible();
+
+    // Open running entry for editing
+    await page.getByText("Running with project").first().click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+    await editor.locator("select").first().selectOption({ label: PROJECT_NAME });
+
+    // Save - timer should still be running
+    await editor.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Running with project")).toBeVisible();
+
+    // Stop timer
+    await page.getByTestId("timer-action-button").click();
+
+    // Stopped entry now shows the project
+    await expect(page.getByText(PROJECT_NAME)).toBeVisible();
+  });
+});
+
+/* ================================
+   USER STORY 5: Assign Tags to Time Entry
+   As a mobile user, I want to add tags to my time entry
+   for better organization.
+   ================================ */
+test.describe("Assign Tags to Time Entry", () => {
+  let workspaceId: number;
+  const TAG_NAME = "mobile-testing";
+  const ENTRY_DESCRIPTION = "Entry to tag";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-tags-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Tags User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    workspaceId = session.currentWorkspaceId;
+
+    // Create a tag
+    await createTagForWorkspace(page, {
+      name: TAG_NAME,
+      workspaceId,
+    });
+
+    // Create a time entry
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 16, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 17, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId,
+    });
+  });
+
+  test("User opens entry, adds a tag, and saves", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Open entry editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+
+    // Click on Tags field to open tag options
+    await editor.getByText("Tags").click();
+
+    // Select the tag
+    await editor.getByRole("button", { name: TAG_NAME }).click();
+
+    // Save
+    await editor.getByRole("button", { name: "Save changes" }).click();
+
+    // Verify tag shows after reload
+    await page.reload();
+    await expect(page.getByText(TAG_NAME)).toBeVisible();
+  });
+});
+
+/* ================================
+   USER STORY 6: Continue (Restart) a Stopped Entry
+   As a mobile user, I want to continue a stopped time entry
+   so I can finish work on the same task.
+   ================================ */
+test.describe("Continue a Stopped Time Entry", () => {
+  let workspaceId: number;
+  const ENTRY_DESCRIPTION = "Entry to continue";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-continue-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Continue User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    workspaceId = session.currentWorkspaceId;
+
+    // Create a stopped time entry
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId,
+    });
+  });
+
+  test("User taps the play button on a stopped entry to continue it", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Entry appears in Recent
+    await expect(page.getByText("Recent")).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // Find and tap the continue (play) button
+    const continueButton = page.getByRole("button", { name: `Continue ${ENTRY_DESCRIPTION}` });
+    await continueButton.click();
+
+    // Timer is now running
+    await expect(page.getByTestId("timer-action-button")).toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // Verify via API that timer is running with correct description
+    const { body: currentEntry } = await pollCurrentRunningEntry(page, { timeoutMs: 5000 });
+    expect(currentEntry).not.toBeNull();
+    expect(currentEntry?.description).toBe(ENTRY_DESCRIPTION);
+  });
+});
+
+/* ================================
+   USER STORY 7: Delete a Time Entry
+   As a mobile user, I want to delete a time entry
+   to remove incorrect entries.
+   ================================ */
+test.describe("Delete a Time Entry", () => {
+  let workspaceId: number;
+  const ENTRY_DESCRIPTION = "Entry to delete";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-delete-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Delete User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    workspaceId = session.currentWorkspaceId;
+
+    // Create a stopped time entry
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 11, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId,
+    });
+  });
+
+  test("User opens entry editor and deletes the entry", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Entry is visible
+    await expect(page.getByText(ENTRY_DESCRIPTION)).toBeVisible();
+
+    // Open editor
+    await page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).click();
+
+    const editor = page.getByTestId("mobile-time-entry-editor");
+
+    // Click delete
+    await editor.getByRole("button", { name: "Delete this time entry" }).click();
+
+    // Editor closes and entry is gone
+    await expect(editor).not.toBeVisible();
+    await expect(page.getByText(ENTRY_DESCRIPTION)).not.toBeVisible();
+  });
+});
+
+/* ================================
+   SMOKE TESTS: Navigation
+   Basic navigation sanity checks.
+   ================================ */
+test.describe("Mobile Navigation", () => {
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-nav-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Nav User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+  });
+
+  test("Bottom tab bar shows all four tabs and navigates correctly", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // All tabs present
+    await expect(page.getByRole("navigation").getByText("Timer")).toBeVisible();
+    await expect(page.getByRole("navigation").getByText("Calendar")).toBeVisible();
+    await expect(page.getByRole("navigation").getByText("Report")).toBeVisible();
+    await expect(page.getByRole("navigation").getByText("Me")).toBeVisible();
+
+    // Navigate to each tab and verify URL
+    await page.getByRole("navigation").getByText("Calendar").click();
+    await expect(page).toHaveURL(/\/m\/calendar/);
+
+    await page.getByRole("navigation").getByText("Report").click();
+    await expect(page).toHaveURL(/\/m\/report/);
+
+    await page.getByRole("navigation").getByText("Me").click();
+    await expect(page).toHaveURL(/\/m\/me/);
+
+    await page.getByRole("navigation").getByText("Timer").click();
+    await expect(page).toHaveURL(/\/m\/timer/);
+  });
+
+  test("Navigating to /m redirects to /m/timer", async ({ page }) => {
+    await page.goto(new URL("/m", page.url()).toString());
+    await expect(page).toHaveURL(/\/m\/timer/);
+  });
+});
