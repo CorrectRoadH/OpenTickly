@@ -1,0 +1,21 @@
+{
+  "auditLog": "审计日志",
+  "action": "操作",
+  "source": "来源",
+  "entityType": "实体类型",
+  "entityId": "实体 ID",
+  "time": "时间",
+  "noOrganizationAvailable": "没有可用的组织。",
+  "loadingAuditLogs": "正在加载审计日志...",
+  "unableToLoadAuditLogs": "无法加载审计日志。刷新重试。",
+  "noAuditLogEntries": "过去30天内未找到审计日志条目。",
+  "sourceFilter": "来源筛选",
+  "allSources": "所有来源",
+  "webCookie": "网页 (Cookie)",
+  "apiTokenCli": "API (令牌/CLI)",
+  "request": "请求",
+  "response": "响应",
+  "previous": "上一页",
+  "next": "下一页",
+  "page": "第"
+}

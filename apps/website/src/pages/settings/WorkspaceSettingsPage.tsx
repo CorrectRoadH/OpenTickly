@@ -25,39 +25,39 @@ type WorkspaceSettingsPageProps = {
   workspaceId: number;
 };
 
-const settingsTabs: Array<{
-  id: WorkspaceSettingsSection;
-  label: string;
-}> = [
-  { id: "general", label: "General" },
-  { id: "alerts", label: "Alerts" },
-  { id: "reminders", label: "Reminders" },
-  { id: "billable-rates", label: "Billable rates" },
-  { id: "import", label: "CSV import" },
-  { id: "export", label: "Data export" },
-  { id: "sso", label: "Single Sign On" },
-  { id: "activity", label: "Activity" },
-];
-
 export function WorkspaceSettingsPage({
   section,
   workspaceId,
 }: WorkspaceSettingsPageProps): ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation("settings");
   const settingsQuery = useWorkspaceSettingsQuery(workspaceId);
   const updateMutation = useUpdateWorkspaceSettingsMutation(workspaceId);
+
+  const settingsTabs: Array<{
+    id: WorkspaceSettingsSection;
+    labelKey: string;
+  }> = [
+    { id: "general", labelKey: "general" },
+    { id: "alerts", labelKey: "alerts" },
+    { id: "reminders", labelKey: "reminders" },
+    { id: "billable-rates", labelKey: "billableRatesTab" },
+    { id: "import", labelKey: "csvImport" },
+    { id: "export", labelKey: "dataExport" },
+    { id: "sso", labelKey: "singleSignOn" },
+    { id: "activity", labelKey: "activity" },
+  ];
 
   return (
     <PageLayout
       data-testid="workspace-settings-page"
-      title="Settings"
+      title={t("settings")}
       tabs={settingsTabs.map((tab) => (
         <Link
           className={pageLayoutTabClass(section === tab.id)}
           key={tab.id}
           to={buildWorkspaceSettingsPathWithSection(workspaceId, tab.id)}
         >
-          {tab.label}
+          {t(tab.labelKey)}
           {section === tab.id ? (
             <AnimatedActiveIndicator
               className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--track-accent)]"
@@ -70,16 +70,16 @@ export function WorkspaceSettingsPage({
       <div className="px-5 pb-10 pt-5">
         {settingsQuery.isError ? (
           <SettingsState
-            description="We could not load workspace settings right now. Refresh or try again shortly."
-            title="Settings unavailable"
+            description={t("settingsUnavailableDescription")}
+            title={t("settingsUnavailable")}
             tone="error"
           />
         ) : null}
 
         {!settingsQuery.isPending && !settingsQuery.isError && !settingsQuery.data ? (
           <SettingsState
-            description="No workspace settings data was returned for this workspace."
-            title="Settings unavailable"
+            description={t("settingsNoDataDescription")}
+            title={t("settingsUnavailable")}
             tone="empty"
           />
         ) : null}
@@ -98,6 +98,7 @@ export function WorkspaceSettingsPage({
             section={section}
             settingsData={settingsQuery.data}
             workspaceId={workspaceId}
+            t={t}
           />
         ) : null}
       </div>
@@ -112,6 +113,7 @@ function SettingsSectionContent(props: {
   section: WorkspaceSettingsSection;
   settingsData: Parameters<typeof createWorkspaceSettingsFormValues>[0];
   workspaceId: number;
+  t: (key: string) => string;
 }): ReactElement {
   switch (props.section) {
     case "general":
@@ -136,28 +138,28 @@ function SettingsSectionContent(props: {
       return (
         <FeatureWipNotice
           description="Configure alerts to notify workspace members when tracked time exceeds project or task budgets."
-          title="Alerts"
+          title={props.t("alerts")}
         />
       );
     case "reminders":
       return (
         <FeatureWipNotice
           description="Set up tracking reminders to help your team remember to log their time consistently."
-          title="Reminders"
+          title={props.t("reminders")}
         />
       );
     case "sso":
       return (
         <FeatureWipNotice
           description="Enable Single Sign On to let your team authenticate through your organization's identity provider."
-          title="Single Sign On"
+          title={props.t("singleSignOn")}
         />
       );
     default:
       return (
         <SettingsState
-          description="This section has no configurable settings."
-          title={settingsTabs.find((tab) => tab.id === props.section)?.label ?? "Section"}
+          description={props.t("noConfigurableSettings")}
+          title="Section"
           tone="empty"
         />
       );

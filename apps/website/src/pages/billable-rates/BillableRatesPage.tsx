@@ -83,7 +83,7 @@ function useCreateWorkspaceRateMutation(workspaceId: number) {
 }
 
 export function BillableRatesContent({ workspaceId }: { workspaceId: number }): ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation("billableRates");
   const session = useSession();
   const defaultCurrency = session.currentWorkspace.defaultCurrency ?? "USD";
   const defaultHourlyRate = session.currentWorkspace.defaultHourlyRate ?? 0;
@@ -166,6 +166,7 @@ export function BillableRatesContent({ workspaceId }: { workspaceId: number }): 
 }
 
 function AboutBillableRatesSection(): ReactElement {
+  const { t } = useTranslation("billableRates");
   return (
     <SurfaceCard>
       <div className="flex gap-3 p-5">
@@ -174,32 +175,34 @@ function AboutBillableRatesSection(): ReactElement {
         </div>
         <div>
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
-            About Billable Rates
+            {t("aboutBillableRates")}
           </h2>
           <p className="mb-3 text-[12px] leading-5 text-[var(--track-text-soft)]">
-            Billable rates determine how much to charge for tracked time. There are 5 levels of
-            billable rates, each overriding the previous one:
+            {t("aboutBillableRatesDescription")}
           </p>
           <ol className="list-inside list-decimal space-y-1 text-[12px] leading-5 text-[var(--track-text-soft)]">
             <li>
-              <strong className="text-[var(--track-text)]">Workspace rate</strong> &mdash; the
-              default rate for all time entries in the workspace
+              <strong className="text-[var(--track-text)]">{t("workspaceRateLevel")}</strong>{" "}
+              &mdash; {t("workspaceRateLevelDescription")}
             </li>
             <li>
-              <strong className="text-[var(--track-text)]">Workspace member rate</strong> &mdash;
-              overrides the workspace rate for a specific member
+              <strong className="text-[var(--track-text)]">{t("workspaceMemberRateLevel")}</strong>{" "}
+              &mdash;
+              {t("workspaceMemberRateLevelDescription")}
             </li>
             <li>
-              <strong className="text-[var(--track-text)]">Project rate</strong> &mdash; overrides
-              workspace-level rates for all entries in a project
+              <strong className="text-[var(--track-text)]">{t("projectRateLevel")}</strong> &mdash;{" "}
+              {t("projectRateLevelDescription")}
             </li>
             <li>
-              <strong className="text-[var(--track-text)]">Project member rate</strong> &mdash;
-              overrides the project rate for a specific member
+              <strong className="text-[var(--track-text)]">{t("projectMemberRateLevel")}</strong>{" "}
+              &mdash;
+              {t("projectMemberRateLevelDescription")}
             </li>
             <li>
-              <strong className="text-[var(--track-text)]">Task-specific rate</strong> &mdash;
-              overrides all other rates for a specific task
+              <strong className="text-[var(--track-text)]">{t("taskSpecificRateLevel")}</strong>{" "}
+              &mdash;
+              {t("taskSpecificRateLevelDescription")}
             </li>
           </ol>
         </div>
@@ -209,6 +212,7 @@ function AboutBillableRatesSection(): ReactElement {
 }
 
 function AboutLaborCostsSection(): ReactElement {
+  const { t } = useTranslation("billableRates");
   return (
     <SurfaceCard>
       <div className="flex gap-3 p-5">
@@ -217,12 +221,10 @@ function AboutLaborCostsSection(): ReactElement {
         </div>
         <div>
           <h2 className="mb-2 text-[14px] font-semibold leading-5 text-[var(--track-text)]">
-            About Labor Costs
+            {t("aboutLaborCosts")}
           </h2>
           <p className="text-[12px] leading-5 text-[var(--track-text-soft)]">
-            Labor costs represent the internal cost of a team member's time. Use them alongside
-            billable rates to calculate profit margins. Labor costs follow the same 5-level
-            hierarchy as billable rates but are only visible to workspace admins.
+            {t("aboutLaborCostsDescription")}
           </p>
         </div>
       </div>

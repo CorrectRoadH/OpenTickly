@@ -1,0 +1,21 @@
+{
+  "subscription": "订阅",
+  "selfHosted": "自托管",
+  "selfHostedDescription": "您正在运行 OpenToggl 的自托管实例。{{organizationName}} 的所有功能均免费包含。",
+  "workspace": "工作区",
+  "access": "访问",
+  "allFeaturesIncluded": "包含所有功能",
+  "billing": "计费",
+  "none": "无",
+  "whatsIncluded": "包含内容",
+  "whatsIncludedDescription": "您的自托管实例提供所有功能，无使用限制。",
+  "unlimitedTimeTracking": "无限时间跟踪",
+  "unlimitedProjects": "无限项目",
+  "unlimitedTeamMembers": "无限团队成员",
+  "reportsAndAnalytics": "报告和分析",
+  "goalsAndFavorites": "目标和收藏",
+  "apiAccess": "API 访问",
+  "opentoggl": "OpenToggl",
+  "opentogglDescription": "OpenToggl 是 Toggl Track 的开源自托管替代方案。您的时间跟踪数据保存在您自己的基础设施上，完全控制隐私、备份和定制。无订阅、无按席位计费、无使用上限。",
+  "viewOnGithub": "在 GitHub 上查看"
+}

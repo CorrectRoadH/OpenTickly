@@ -1,4 +1,5 @@
 import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   CheckboxFilterDropdown,
@@ -118,12 +119,12 @@ function parseDurationToSeconds(value: string): number {
   return 0;
 }
 
-const REPORTS_TABS: Array<{ label: string; slug: ReportsTab }> = [
-  { label: "Summary", slug: "summary" },
-  { label: "Detailed", slug: "detailed" },
-  { label: "Workload", slug: "workload" },
-  { label: "Profitability", slug: "profitability" },
-  { label: "My reports", slug: "custom" },
+const REPORTS_TABS: Array<{ labelKey: string; slug: ReportsTab }> = [
+  { labelKey: "summary", slug: "summary" },
+  { labelKey: "detailed", slug: "detailed" },
+  { labelKey: "workload", slug: "workload" },
+  { labelKey: "profitability", slug: "profitability" },
+  { labelKey: "myReports", slug: "custom" },
 ];
 
 type WorkspaceReportsPageProps = {
@@ -135,6 +136,7 @@ export function WorkspaceReportsPage({
   initialProjectId,
   tab,
 }: WorkspaceReportsPageProps): ReactElement {
+  const { t } = useTranslation("reports");
   const { beginningOfWeek, durationFormat } = useUserPreferences();
   const [roundingEnabled, setRoundingEnabled] = useState(false);
   const [shareToast, setShareToast] = useState(false);
@@ -243,7 +245,7 @@ export function WorkspaceReportsPage({
           })
         }
       >
-        New report
+        {t("newReport")}
       </ToolbarButton>
     ) : (
       <div className="flex flex-wrap items-center gap-2">
@@ -260,7 +262,7 @@ export function WorkspaceReportsPage({
           type="button"
           variant="secondary"
         >
-          {roundingEnabled ? "Rounding on" : "Rounding off"}
+          {roundingEnabled ? t("roundingOn") : t("roundingOff")}
         </AppButton>
         {tab === "summary" || tab === "detailed" ? (
           <ToolbarButton
@@ -277,7 +279,7 @@ export function WorkspaceReportsPage({
               });
             }}
           >
-            Create invoice
+            {t("createInvoice")}
           </ToolbarButton>
         ) : null}
         <AppButton
@@ -287,10 +289,10 @@ export function WorkspaceReportsPage({
           type="button"
           variant="secondary"
         >
-          Export
+          {t("export")}
         </AppButton>
         <ToolbarButton onClick={() => void navigate({ to: `/${workspaceId}/settings/general` })}>
-          Settings
+          {t("settings")}
         </ToolbarButton>
         <AppButton
           className={shareToast ? "" : "text-[var(--track-text)]"}
@@ -300,7 +302,7 @@ export function WorkspaceReportsPage({
           type="button"
           variant={shareToast ? "primary" : "secondary"}
         >
-          Save and share
+          {t("saveAndShare")}
         </AppButton>
       </div>
     );
@@ -308,17 +310,17 @@ export function WorkspaceReportsPage({
   return (
     <PageLayout
       data-testid="reports-page"
-      title="Reports"
+      title={t("reports")}
       headerActions={headerActions}
       data-tabs-testid="reports-tabs"
-      tabs={REPORTS_TABS.map((t) => (
+      tabs={REPORTS_TABS.map((tabItem) => (
         <Link
-          className={pageLayoutTabClass(t.slug === tab)}
-          key={t.slug}
-          to={buildWorkspaceReportsPath(workspaceId, t.slug)}
+          className={pageLayoutTabClass(tabItem.slug === tab)}
+          key={tabItem.slug}
+          to={buildWorkspaceReportsPath(workspaceId, tabItem.slug)}
         >
-          {t.label}
-          {t.slug === tab ? (
+          {t(tabItem.labelKey)}
+          {tabItem.slug === tab ? (
             <AnimatedActiveIndicator
               className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--track-accent)]"
               layoutId="page-layout-tab-indicator"
@@ -345,13 +347,10 @@ export function WorkspaceReportsPage({
           <>
             <SummaryMetrics metrics={displayModel.metrics} />
             {weeklyReportQuery.isPending ? (
-              <ReportsSurfaceMessage message="Loading report data..." />
+              <ReportsSurfaceMessage message={t("loadingReportData")} />
             ) : null}
             {weeklyReportQuery.isError ? (
-              <ReportsSurfaceMessage
-                message="Reports data is temporarily unavailable."
-                tone="error"
-              />
+              <ReportsSurfaceMessage message={t("reportsDataUnavailable")} tone="error" />
             ) : null}
             {!weeklyReportQuery.isPending && !weeklyReportQuery.isError ? (
               <>
@@ -400,7 +399,7 @@ export function WorkspaceReportsPage({
       </div>
       {shareToast ? (
         <div className="fixed bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-4 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] px-5 py-3 shadow-[0_10px_30px_var(--track-shadow-banner)]">
-          <span className="text-[14px] text-white">Report link copied to clipboard</span>
+          <span className="text-[14px] text-white">{t("reportLinkCopied")}</span>
         </div>
       ) : null}
     </PageLayout>
@@ -424,6 +423,7 @@ function ReportsFilterBar({
   tagOptions: { id: number; label: string }[];
   weekStartsOn: number;
 }) {
+  const { t } = useTranslation("reports");
   const selectedDate = useMemo(
     () => new Date(`${state.dateRange.startDate}T00:00:00`),
     [state.dateRange.startDate],
@@ -446,7 +446,7 @@ function ReportsFilterBar({
         weekStartsOn={weekStartsOn}
       />
       <CheckboxFilterDropdown
-        label="Member"
+        label={t("member")}
         onClear={() => state.setMemberFilter([])}
         onToggle={(key: string) =>
           state.setMemberFilter(
@@ -460,7 +460,7 @@ function ReportsFilterBar({
         testId="reports-filter-member"
       />
       <CheckboxFilterDropdown
-        label="Client"
+        label={t("client")}
         onClear={() => state.setClientFilter([])}
         onToggle={(key: string) =>
           state.setClientFilter(
@@ -474,7 +474,7 @@ function ReportsFilterBar({
         testId="reports-filter-client"
       />
       <CheckboxFilterDropdown
-        label="Project"
+        label={t("project")}
         onClear={() => state.updateFilters({ projectIds: [] })}
         onToggle={(key: number) =>
           state.updateFilters({
@@ -488,7 +488,7 @@ function ReportsFilterBar({
         testId="reports-filter-project"
       />
       <CheckboxFilterDropdown
-        label="Tag"
+        label={t("tag")}
         onClear={() => state.updateFilters({ tagIds: [] })}
         onToggle={(key: number) =>
           state.updateFilters({
@@ -565,6 +565,7 @@ function ReportsDateShortcuts({
   state: ReturnType<typeof useReportsPageState>;
   weekStartsOn: number;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const close = useRangePickerClose();
 
   return (
@@ -590,7 +591,7 @@ function ReportsDateShortcuts({
             }}
             type="button"
           >
-            {shortcut.label}
+            {t(shortcut.label)}
           </button>
         );
       })}

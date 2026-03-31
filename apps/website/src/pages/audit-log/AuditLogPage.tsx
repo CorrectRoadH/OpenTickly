@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   DirectorySurfaceMessage,
   DirectoryTable,
@@ -57,6 +58,7 @@ const auditLogColumns: DirectoryTableColumn[] = [
 ];
 
 export function AuditLogPage(): ReactElement {
+  const { t } = useTranslation("auditLog");
   const session = useSession();
   const organizationId = session.currentOrganization?.id;
   const workspaceId = session.currentWorkspace.id;
@@ -92,20 +94,15 @@ export function AuditLogPage(): ReactElement {
   });
 
   if (!organizationId) {
-    return <DirectorySurfaceMessage message="No organization available." />;
+    return <DirectorySurfaceMessage message={t("noOrganizationAvailable")} />;
   }
 
   if (auditLogsQuery.isPending) {
-    return <DirectorySurfaceMessage message="Loading audit logs..." />;
+    return <DirectorySurfaceMessage message={t("loadingAuditLogs")} />;
   }
 
   if (auditLogsQuery.isError) {
-    return (
-      <DirectorySurfaceMessage
-        message="Unable to load audit logs. Refresh to try again."
-        tone="error"
-      />
-    );
+    return <DirectorySurfaceMessage message={t("unableToLoadAuditLogs")} tone="error" />;
   }
 
   const logs = auditLogsQuery.data;
@@ -170,19 +167,19 @@ export function AuditLogPage(): ReactElement {
     >
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] items-center px-5 py-3">
-          <h1 className="text-[20px] font-semibold leading-[30px] text-white">Audit Log</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">{t("auditLog")}</h1>
         </div>
         <div className="flex min-h-[46px] flex-wrap items-center gap-4 border-t border-[var(--track-border)] px-5 py-2">
           <SelectDropdown
-            aria-label="Source filter"
+            aria-label={t("sourceFilter")}
             onChange={(v) => {
               setSourceFilter(v as SourceFilter);
               setPageNumber(1);
             }}
             options={[
-              { value: "", label: "All sources" },
-              { value: "web", label: "Web (Cookie)" },
-              { value: "api", label: "API (Token/CLI)" },
+              { value: "", label: t("allSources") },
+              { value: "web", label: t("webCookie") },
+              { value: "api", label: t("apiTokenCli") },
             ]}
             value={sourceFilter}
           />
@@ -192,7 +189,7 @@ export function AuditLogPage(): ReactElement {
       <DirectoryTable
         columns={auditLogColumns}
         data-testid="audit-log-list"
-        emptyState="No audit log entries found for the last 30 days."
+        emptyState={t("noAuditLogEntries")}
         expandable
         expandedIds={expandedIds}
         onToggleExpand={(id) => {
@@ -210,7 +207,7 @@ export function AuditLogPage(): ReactElement {
             {log.request_body ? (
               <details className="group" open>
                 <summary className="cursor-pointer text-[11px] text-[var(--track-text-muted)] hover:text-white">
-                  Request
+                  {t("request")}
                 </summary>
                 <pre className="mt-1 max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
                   {formatBody(log.request_body)}
@@ -220,7 +217,7 @@ export function AuditLogPage(): ReactElement {
             {log.response_body ? (
               <details className="group">
                 <summary className="cursor-pointer text-[11px] text-[var(--track-text-muted)] hover:text-white">
-                  Response
+                  {t("response")}
                 </summary>
                 <pre className="mt-1 max-h-[200px] overflow-auto rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-3 text-[11px] leading-relaxed text-[var(--track-text-muted)]">
                   {formatBody(log.response_body)}
@@ -232,7 +229,11 @@ export function AuditLogPage(): ReactElement {
         renderRow={renderAuditLogRow}
         rowKey={(log) => log.id}
         rows={logs}
-        footer={<span>Page {pageNumber}</span>}
+        footer={
+          <span>
+            {t("page")} {pageNumber}
+          </span>
+        }
         pagination={
           <div className="flex justify-end gap-2 border-t border-[var(--track-border)] px-5 py-3">
             <button
@@ -241,7 +242,7 @@ export function AuditLogPage(): ReactElement {
               onClick={() => setPageNumber((p) => p - 1)}
               type="button"
             >
-              Previous
+              {t("previous")}
             </button>
             <button
               className="rounded-[6px] border border-[var(--track-border)] px-3 py-1 text-[11px] text-[var(--track-text-muted)] hover:text-white disabled:opacity-40"
@@ -249,7 +250,7 @@ export function AuditLogPage(): ReactElement {
               onClick={() => setPageNumber((p) => p + 1)}
               type="button"
             >
-              Next
+              {t("next")}
             </button>
           </div>
         }

@@ -1,0 +1,21 @@
+{
+  "auditLog": "Audit Log",
+  "action": "Action",
+  "source": "Source",
+  "entityType": "Entity Type",
+  "entityId": "Entity ID",
+  "time": "Time",
+  "noOrganizationAvailable": "No organization available.",
+  "loadingAuditLogs": "Loading audit logs...",
+  "unableToLoadAuditLogs": "Unable to load audit logs. Refresh to try again.",
+  "noAuditLogEntries": "No audit log entries found for the last 30 days.",
+  "sourceFilter": "Source filter",
+  "allSources": "All sources",
+  "webCookie": "Web (Cookie)",
+  "apiTokenCli": "API (Token/CLI)",
+  "request": "Request",
+  "response": "Response",
+  "previous": "Previous",
+  "next": "Next",
+  "page": "Page"
+}
