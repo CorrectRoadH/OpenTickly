@@ -309,9 +309,12 @@ test.describe("Assign Project to Time Entry", () => {
       .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
+    await expect(editor).toBeVisible();
 
     // Open project picker and select project
-    await editor.getByTestId("mobile-project-trigger").click();
+    const projectTrigger = editor.getByTestId("mobile-project-trigger");
+    await expect(projectTrigger).toBeVisible();
+    await projectTrigger.click();
     const projectPicker = page.getByTestId("mobile-project-picker");
     await expect(projectPicker).toBeVisible();
     await projectPicker.getByRole("button", { name: PROJECT_NAME }).click();
@@ -339,7 +342,10 @@ test.describe("Assign Project to Time Entry", () => {
     await page.getByText("Running with project").first().click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
-    await editor.getByTestId("mobile-project-trigger").click();
+    await expect(editor).toBeVisible();
+    const projectTrigger2 = editor.getByTestId("mobile-project-trigger");
+    await expect(projectTrigger2).toBeVisible();
+    await projectTrigger2.click();
     const projectPicker = page.getByTestId("mobile-project-picker");
     await expect(projectPicker).toBeVisible();
     await projectPicker.getByRole("button", { name: PROJECT_NAME }).click();
@@ -418,7 +424,9 @@ test.describe("Assign Tags to Time Entry", () => {
     await expect(editor).toBeVisible();
 
     // Open tag picker and select tag
-    await editor.getByTestId("mobile-tag-trigger").click();
+    const tagTrigger = editor.getByTestId("mobile-tag-trigger");
+    await expect(tagTrigger).toBeVisible();
+    await tagTrigger.click();
     const tagPicker = page.getByTestId("mobile-tag-picker");
     await expect(tagPicker).toBeVisible();
 
