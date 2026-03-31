@@ -1,0 +1,22 @@
+{
+  "noTimeEntriesInThisWorkspaceYet": "此工作区中尚无时间条目。",
+  "dayView": "日视图",
+  "fiveDayView": "5 天视图",
+  "weekView": "周视图",
+  "calendar": "日历",
+  "listView": "列表视图",
+  "timesheet": "时间表",
+  "calendarSubView": "日历子视图",
+  "previousDay": "上一天",
+  "nextDay": "下一天",
+  "previousPeriod": "上一周期",
+  "nextPeriod": "下一周期",
+  "previousWeek": "上一周",
+  "nextWeek": "下一周",
+  "selectDateRange": "选择日期范围",
+  "previousMonth": "上个月",
+  "nextMonth": "下个月",
+  "previousYears": "前几年",
+  "nextYears": "后几年",
+  "selectWeek": "选择周 {{start}} 至 {{end}}"
+}

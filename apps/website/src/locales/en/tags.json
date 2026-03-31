@@ -1,0 +1,22 @@
+{
+  "tags": "Tags",
+  "tag": "Tag",
+  "status": "Status",
+  "newTag": "New tag",
+  "tagName": "Tag name",
+  "createTag": "Create tag",
+  "createNewTag": "Create new tag",
+  "all": "All",
+  "active": "Active",
+  "inactive": "Inactive",
+  "showingTagsInWorkspace": "Showing {{count}} tags in {{workspaceName}}. Active: {{activeCount}} · Inactive: {{inactiveCount}}",
+  "loadingTags": "Loading tags...",
+  "unableToLoadTags": "Unable to load tags. Refresh to try again.",
+  "tagCreated": "Tag created",
+  "tagDeleted": "Tag deleted",
+  "tagRenamed": "Tag renamed",
+  "tagDetailsFor": "Tag details for {{name}}",
+  "noTagsMatchFilters": "No tags match your filters.",
+  "noActiveTags": "No active tags. Create your first tag to get started.",
+  "noInactiveTags": "No inactive tags."
+}

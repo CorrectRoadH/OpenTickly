@@ -1,0 +1,23 @@
+{
+  "track": "Track",
+  "analyze": "Analyze",
+  "manage": "Manage",
+  "admin": "Admin",
+  "overview": "Overview",
+  "timer": "Timer",
+  "reports": "Reports",
+  "approvals": "Approvals",
+  "projects": "Projects",
+  "clients": "Clients",
+  "members": "Members",
+  "billableRates": "Billable rates",
+  "invoices": "Invoices",
+  "tags": "Tags",
+  "goals": "Goals",
+  "import": "Import",
+  "integrations": "Integrations",
+  "auditLog": "Audit Log",
+  "subscription": "Subscription",
+  "settings": "Settings",
+  "instanceAdmin": "Instance Admin"
+}

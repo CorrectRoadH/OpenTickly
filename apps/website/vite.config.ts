@@ -108,6 +108,7 @@ export default defineConfig(() => {
               if (id.includes("@tanstack/react-router")) return "vendor-router";
               if (id.includes("react-hook-form") || id.includes("zod")) return "vendor-forms";
               if (id.includes("baseui") || id.includes("styletron")) return "vendor-baseui";
+              if (id.includes("i18next") || id.includes("react-i18next")) return "vendor-i18n";
             }
           },
         },

@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { createAppQueryClient } from "../shared/query/query-client.ts";
 import { AppDisplayProvider } from "./AppDisplayProvider.tsx";
 import { type AppRouter } from "./create-app-router.tsx";
+import "./i18n.ts";
 
 type AppProvidersProps = {
   router: AppRouter;

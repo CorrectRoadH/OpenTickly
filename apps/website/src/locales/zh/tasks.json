@@ -1,0 +1,23 @@
+{
+  "tasks": "任务",
+  "task": "任务",
+  "project": "项目",
+  "status": "状态",
+  "newTask": "新建任务",
+  "taskName": "任务名称",
+  "saveTask": "保存任务",
+  "cancel": "取消",
+  "projectRequired": "需要项目",
+  "workspaceCatalog": "工作区目录",
+  "active": "活跃",
+  "inactive": "非活跃",
+  "projectScoped": "项目范围的任务管理（项目 {{projectId}}）。Track API 通过项目入口点创建任务，因此此页面有意锚定在该上下文中。",
+  "createTasksFromProject": "从项目上下文创建任务。打开项目的任务入口以添加第一个任务。",
+  "showingTasksInWorkspace": "显示工作区 {{workspaceId}} 中的 {{count}} 个任务。活跃：{{activeCount}}。",
+  "loadingTasks": "加载任务中...",
+  "unableToLoadTasks": "无法加载任务。请刷新页面重试。",
+  "taskCreated": "任务已创建",
+  "viewAllWorkspaceTasks": "查看所有工作区任务",
+  "noTasksInProject": "此项目中尚无任务。",
+  "noTasksInWorkspace": "此工作区中尚无任务。打开项目任务入口以创建第一个任务。"
+}

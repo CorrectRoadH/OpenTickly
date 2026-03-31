@@ -13,6 +13,20 @@ const mockUseProfileQuery = vi.fn();
 const mockUseUpdateProfileMutation = vi.fn();
 const mockUseUpdateWebSessionMutation = vi.fn();
 const mockShellNavigationItems = vi.fn();
+const mockTranslations = {
+  closeMenu: "Close menu",
+  opentogglFocusComing: "opentoggl focus is coming",
+  opentogglPlanComing: "opentoggl plan is coming",
+  profile: "Profile",
+  profileMenu: "Profile menu",
+  toggleMenu: "Toggle menu",
+} as const;
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: keyof typeof mockTranslations) => mockTranslations[key] ?? key,
+  }),
+}));
 
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ children, className, to }: { children: ReactNode; className?: string; to: string }) => (

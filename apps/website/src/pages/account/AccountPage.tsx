@@ -2,6 +2,7 @@ import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/
 import { type ReactElement, useState } from "react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import {
   getCountries,
@@ -9,23 +10,32 @@ import {
   postCloseAccount,
 } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
-import { useProfileQuery, useUpdateProfileMutation } from "../../shared/query/web-shell.ts";
+import {
+  usePreferencesQuery,
+  useUpdatePreferencesMutation,
+  useProfileQuery,
+  useUpdateProfileMutation,
+} from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { PreferenceCard, PreferenceSelect } from "../profile/ProfilePagePrimitives.tsx";
+import i18n, { languageLabels, supportedLanguages } from "../../app/i18n.ts";
 
 export function AccountPage(): ReactElement {
   const session = useSession();
   const profileQuery = useProfileQuery();
   const updateProfileMutation = useUpdateProfileMutation();
+  const preferencesQuery = usePreferencesQuery();
+  const updatePreferencesMutation = useUpdatePreferencesMutation();
+  const { t } = useTranslation();
 
   if (profileQuery.isPending) {
     return (
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent text-[var(--track-text-muted)]"
-          description="Fetching account details."
-          title="Loading account"
+          description={t("account:fetchingAccountDetails")}
+          title={t("account:loadingAccount")}
           tone="loading"
         />
       </SurfaceCard>
@@ -37,8 +47,8 @@ export function AccountPage(): ReactElement {
       <SurfaceCard>
         <AppSurfaceState
           className="border-none bg-transparent"
-          description="We could not load account details right now. Refresh or try again shortly."
-          title="Account unavailable"
+          description={t("account:couldNotLoadAccount")}
+          title={t("account:accountUnavailable")}
           tone="error"
         />
       </SurfaceCard>
@@ -50,7 +60,7 @@ export function AccountPage(): ReactElement {
   return (
     <div className="space-y-4 pb-6" data-testid="account-page">
       <section className="sticky top-0 z-10 bg-[var(--track-surface)]">
-        <PageHeader bordered title="Account Settings" />
+        <PageHeader bordered title={t("account:accountSettings")} />
       </section>
 
       <section className="px-3 pb-10 pt-3 md:flex md:gap-3">
@@ -61,7 +71,7 @@ export function AccountPage(): ReactElement {
             fullname={profile.fullname ?? ""}
             onSave={(values) =>
               updateProfileMutation.mutateAsync(values).then(() => {
-                toast.success("Personal details updated");
+                toast.success(t("account:personalDetailsUpdated"));
               })
             }
           />
@@ -70,7 +80,7 @@ export function AccountPage(): ReactElement {
             timezone={profile.timezone ?? "UTC"}
             onSave={(timezone) =>
               updateProfileMutation.mutateAsync({ timezone }).then(() => {
-                toast.success("Timezone updated");
+                toast.success(t("account:timezoneUpdated"));
               })
             }
           />
@@ -79,8 +89,21 @@ export function AccountPage(): ReactElement {
             countryId={profile.country_id ?? 0}
             onSave={(country_id) =>
               updateProfileMutation.mutateAsync({ country_id }).then(() => {
-                toast.success("Country updated");
+                toast.success(t("account:countryUpdated"));
               })
+            }
+          />
+
+          <LanguageSection
+            languageCode={preferencesQuery.data?.language_code ?? i18n.language}
+            onSave={(languageCode) =>
+              updatePreferencesMutation
+                .mutateAsync({ language_code: languageCode })
+                .then(() => {
+                  void i18n.changeLanguage(languageCode);
+                  toast.success(t("languageUpdated"));
+                })
+                .catch(() => toast.error(t("failedToUpdateLanguage")))
             }
           />
 
@@ -88,7 +111,7 @@ export function AccountPage(): ReactElement {
             hasPassword={session.user.hasPassword}
             onSave={(current_password, password) =>
               updateProfileMutation.mutateAsync({ current_password, password }).then(() => {
-                toast.success("Password changed");
+                toast.success(t("account:passwordChanged"));
               })
             }
           />
@@ -111,6 +134,7 @@ function PersonalDetailsSection({
   fullname: string;
   onSave: (values: { fullname?: string; email?: string }) => Promise<void>;
 }): ReactElement {
+  const { t } = useTranslation("account");
   const [editName, setEditName] = useState(fullname);
   const [editEmail, setEditEmail] = useState(email);
   const [saving, setSaving] = useState(false);
@@ -119,8 +143,8 @@ function PersonalDetailsSection({
 
   return (
     <PreferenceCard
-      description="These will be shown across all of your Organizations and the Toggl tools within them"
-      title="Personal Details"
+      description={t("personalDetailsDescription")}
+      title={t("personalDetails")}
       action={
         hasChanges ? (
           <AppButton
@@ -132,11 +156,11 @@ function PersonalDetailsSection({
               if (editName !== fullname) payload.fullname = editName;
               if (editEmail !== email) payload.email = editEmail;
               void onSave(payload)
-                .catch(() => toast.error("Failed to save personal details"))
+                .catch(() => toast.error(t("failedToSavePersonalDetails")))
                 .finally(() => setSaving(false));
             }}
           >
-            Save
+            {t("save")}
           </AppButton>
         ) : undefined
       }
@@ -149,14 +173,14 @@ function PersonalDetailsSection({
           textClassName="text-2xl font-semibold md:text-3xl"
         />
         <div className="w-full space-y-4 md:flex-1">
-          <AccountField label="Full name">
+          <AccountField label={t("fullName")}>
             <input
               className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none md:max-w-[300px]"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
           </AccountField>
-          <AccountField label="Email">
+          <AccountField label={t("emailLabel")}>
             <div className="flex items-center gap-3">
               <input
                 className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none md:max-w-[300px]"
@@ -179,6 +203,7 @@ function TimezoneSection({
   onSave: (timezone: string) => Promise<void>;
   timezone: string;
 }): ReactElement {
+  const { t } = useTranslation("account");
   const timezonesQuery = useQuery({
     queryFn: () => unwrapWebApiResult(getTimezones()),
     queryKey: ["timezones"],
@@ -191,12 +216,12 @@ function TimezoneSection({
   });
 
   return (
-    <PreferenceCard title="Time Preferences">
+    <PreferenceCard title={t("timePreferences")}>
       <div className="px-5 py-5">
         <PreferenceSelect
-          label="Timezone"
+          label={t("timezone")}
           onChange={(value) => {
-            void onSave(value).catch(() => toast.error("Failed to update timezone"));
+            void onSave(value).catch(() => toast.error(t("failedToUpdateTimezone")));
           }}
           options={options}
           value={timezone}
@@ -213,6 +238,7 @@ function CountrySection({
   countryId: number;
   onSave: (countryId: number) => Promise<void>;
 }): ReactElement {
+  const { t } = useTranslation("account");
   const countriesQuery = useQuery({
     queryFn: () => unwrapWebApiResult(getCountries()),
     queryKey: ["countries"],
@@ -225,14 +251,14 @@ function CountrySection({
   }));
 
   return (
-    <PreferenceCard title="Country">
+    <PreferenceCard title={t("country")}>
       <div className="px-5 py-5">
         <PreferenceSelect
-          label="Country"
+          label={t("country")}
           onChange={(value) => {
-            void onSave(Number(value)).catch(() => toast.error("Failed to update country"));
+            void onSave(Number(value)).catch(() => toast.error(t("failedToUpdateCountry")));
           }}
-          options={[{ label: "Not set", value: "0" }, ...options]}
+          options={[{ label: t("notSet"), value: "0" }, ...options]}
           value={String(countryId)}
         />
       </div>
@@ -247,6 +273,7 @@ function ChangePasswordSection({
   hasPassword: boolean;
   onSave: (currentPassword: string, newPassword: string) => Promise<void>;
 }): ReactElement {
+  const { t } = useTranslation("account");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -258,26 +285,24 @@ function ChangePasswordSection({
 
   if (!hasPassword) {
     return (
-      <PreferenceCard title="Password Actions">
+      <PreferenceCard title={t("passwordActions")}>
         <div className="px-5 py-5">
-          <p className="text-[14px] text-[var(--track-text-muted)]">
-            No password set. You signed up with a third-party provider.
-          </p>
+          <p className="text-[14px] text-[var(--track-text-muted)]">{t("noPasswordSet")}</p>
         </div>
       </PreferenceCard>
     );
   }
 
   return (
-    <PreferenceCard title="Password Actions">
+    <PreferenceCard title={t("passwordActions")}>
       <div className="px-5 py-5">
         {!open ? (
           <AppButton type="button" onClick={() => setOpen(true)}>
-            Change Password
+            {t("changePassword")}
           </AppButton>
         ) : (
           <div className="space-y-4 md:max-w-[300px]">
-            <AccountField label="Current password">
+            <AccountField label={t("currentPassword")}>
               <input
                 autoComplete="current-password"
                 className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none"
@@ -286,7 +311,7 @@ function ChangePasswordSection({
                 value={currentPassword}
               />
             </AccountField>
-            <AccountField label="New password">
+            <AccountField label={t("newPassword")}>
               <input
                 autoComplete="new-password"
                 className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none"
@@ -295,7 +320,7 @@ function ChangePasswordSection({
                 value={newPassword}
               />
             </AccountField>
-            <AccountField label="Confirm new password">
+            <AccountField label={t("confirmNewPassword")}>
               <input
                 autoComplete="new-password"
                 className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none"
@@ -305,10 +330,10 @@ function ChangePasswordSection({
               />
             </AccountField>
             {newPassword.length > 0 && newPassword.length < 6 ? (
-              <p className="text-[12px] text-red-400">Password must be at least 6 characters</p>
+              <p className="text-[12px] text-red-400">{t("passwordMinLength")}</p>
             ) : null}
             {confirmPassword.length > 0 && newPassword !== confirmPassword ? (
-              <p className="text-[12px] text-red-400">Passwords do not match</p>
+              <p className="text-[12px] text-red-400">{t("passwordsDoNotMatch")}</p>
             ) : null}
             <div className="flex items-center gap-3 pt-2">
               <AppButton
@@ -323,11 +348,11 @@ function ChangePasswordSection({
                       setConfirmPassword("");
                       setOpen(false);
                     })
-                    .catch(() => toast.error("Failed to change password"))
+                    .catch(() => toast.error(t("failedToChangePassword")))
                     .finally(() => setSaving(false));
                 }}
               >
-                Change Password
+                {t("changePassword")}
               </AppButton>
               <AppButton
                 type="button"
@@ -338,7 +363,7 @@ function ChangePasswordSection({
                   setConfirmPassword("");
                 }}
               >
-                Cancel
+                {t("cancel")}
               </AppButton>
             </div>
           </div>
@@ -349,29 +374,31 @@ function ChangePasswordSection({
 }
 
 function AccountActionsSection({ organizationName }: { organizationName: string }): ReactElement {
+  const { t } = useTranslation("account");
   const [confirming, setConfirming] = useState(false);
   const [closing, setClosing] = useState(false);
 
   return (
-    <PreferenceCard
-      description="Close your account or leave a workspace or organization associated with your account"
-      title="Account Actions"
-    >
+    <PreferenceCard description={t("accountActionsDescription")} title={t("accountActions")}>
       <div className="space-y-4 px-5 py-5">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] font-medium text-[var(--track-text)]">Organization</span>
+          <span className="text-[14px] font-medium text-[var(--track-text)]">
+            {t("organization")}
+          </span>
           <span className="text-[14px] text-[var(--track-text-muted)]">{organizationName}</span>
         </div>
 
         <div className="flex items-center justify-between border-t border-[var(--track-border)] pt-4">
-          <span className="text-[14px] font-medium text-[var(--track-text)]">Toggl Account</span>
+          <span className="text-[14px] font-medium text-[var(--track-text)]">
+            {t("togglAccount")}
+          </span>
           {!confirming ? (
             <AppButton onClick={() => setConfirming(true)} danger type="button">
-              Close Account
+              {t("closeAccount")}
             </AppButton>
           ) : (
             <div className="flex items-center gap-3">
-              <span className="text-[12px] text-red-400">Are you sure? This cannot be undone.</span>
+              <span className="text-[12px] text-red-400">{t("areYouSureCannotUndo")}</span>
               <AppButton
                 disabled={closing}
                 danger
@@ -380,24 +407,51 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
                   setClosing(true);
                   void unwrapWebApiResult(postCloseAccount())
                     .then(() => {
-                      toast.success("Account closed");
+                      toast.success(t("accountClosed"));
                       globalThis.location.href = "/login";
                     })
                     .catch(() => {
-                      toast.error("Failed to close account");
+                      toast.error(t("failedToCloseAccount"));
                       setClosing(false);
                       setConfirming(false);
                     });
                 }}
               >
-                Confirm Close
+                {t("confirmClose")}
               </AppButton>
               <AppButton type="button" onClick={() => setConfirming(false)}>
-                Cancel
+                {t("cancel")}
               </AppButton>
             </div>
           )}
         </div>
+      </div>
+    </PreferenceCard>
+  );
+}
+
+function LanguageSection({
+  languageCode,
+  onSave,
+}: {
+  languageCode: string;
+  onSave: (languageCode: string) => void;
+}): ReactElement {
+  const { t } = useTranslation("account");
+  const options = supportedLanguages.map((code) => ({
+    label: languageLabels[code],
+    value: code,
+  }));
+
+  return (
+    <PreferenceCard title={t("language")}>
+      <div className="px-5 py-5">
+        <PreferenceSelect
+          label={t("language")}
+          onChange={onSave}
+          options={options}
+          value={languageCode}
+        />
       </div>
     </PreferenceCard>
   );

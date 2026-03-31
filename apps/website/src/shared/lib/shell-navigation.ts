@@ -17,93 +17,96 @@ export type ShellNavigationSection = {
   title: string;
 };
 
-export function shellNavigationItems(session: SessionBootstrapViewModel): ShellNavigationSection[] {
+export function shellNavigationItems(
+  session: SessionBootstrapViewModel,
+  t: (key: string) => string,
+): ShellNavigationSection[] {
   return [
     {
-      title: "Track",
+      title: t("navigation:track"),
       items: [
         {
-          label: "Overview",
+          label: t("navigation:overview"),
           to: buildOverviewPath(),
         },
         {
-          label: "Timer",
+          label: t("navigation:timer"),
           to: buildTimerPath(),
         },
       ],
     },
     {
-      title: "Analyze",
+      title: t("navigation:analyze"),
       items: [
         {
-          label: "Reports",
+          label: t("navigation:reports"),
           to: buildWorkspaceReportsPath(session.currentWorkspace.id),
         },
         {
-          label: "Approvals",
+          label: t("navigation:approvals"),
           to: `/workspaces/${session.currentWorkspace.id}/approvals/team`,
         },
       ],
     },
     {
-      title: "Manage",
+      title: t("navigation:manage"),
       items: [
         {
-          label: "Projects",
+          label: t("navigation:projects"),
           to: buildProjectsPath(session.currentWorkspace.id),
         },
         {
-          label: "Clients",
+          label: t("navigation:clients"),
           to: `/workspaces/${session.currentWorkspace.id}/clients`,
         },
         {
-          label: "Members",
+          label: t("navigation:members"),
           to: `/workspaces/${session.currentWorkspace.id}/members`,
         },
         {
-          label: "Billable rates",
+          label: t("navigation:billableRates"),
           to: buildWorkspaceSettingsPathWithSection(session.currentWorkspace.id, "billable-rates"),
         },
         {
-          label: "Invoices",
+          label: t("navigation:invoices"),
           to: `/workspaces/${session.currentWorkspace.id}/invoices`,
         },
         {
-          label: "Tags",
+          label: t("navigation:tags"),
           to: `/workspaces/${session.currentWorkspace.id}/tags`,
         },
         {
-          label: "Goals",
+          label: t("navigation:goals"),
           to: `/workspaces/${session.currentWorkspace.id}/goals`,
         },
         // Import: primary entry point for Toggl data migration — do not remove
         {
-          label: "Import",
+          label: t("navigation:import"),
           to: `/workspaces/${session.currentWorkspace.id}/import`,
         },
         {
-          label: "Integrations",
+          label: t("navigation:integrations"),
           to: `/workspaces/${session.currentWorkspace.id}/integrations`,
         },
       ],
     },
     {
-      title: "Admin",
+      title: t("navigation:admin"),
       items: [
         {
-          label: "Audit Log",
+          label: t("navigation:auditLog"),
           to: `/workspaces/${session.currentWorkspace.id}/audit-log`,
         },
         {
-          label: "Subscription",
+          label: t("navigation:subscription"),
           to: `/workspaces/${session.currentWorkspace.id}/subscription`,
         },
         {
-          label: "Settings",
+          label: t("navigation:settings"),
           to: buildWorkspaceSettingsPathWithSection(session.currentWorkspace.id),
         },
         {
-          label: "Instance Admin",
+          label: t("navigation:instanceAdmin"),
           to: "/instance-admin/overview",
         },
       ],

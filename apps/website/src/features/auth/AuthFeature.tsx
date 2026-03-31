@@ -1,5 +1,6 @@
 import { useState, type ReactElement } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
@@ -12,6 +13,7 @@ type AuthFeatureProps = {
 };
 
 export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
+  const { t } = useTranslation("auth");
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
@@ -31,7 +33,7 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
         to: resolveHomePath(),
       });
     } catch (error) {
-      setErrorMessage(resolveAuthErrorMessage(error));
+      setErrorMessage(resolveAuthErrorMessage(error, t));
     }
   }
 
@@ -45,7 +47,7 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
   );
 }
 
-function resolveAuthErrorMessage(error: unknown): string {
+function resolveAuthErrorMessage(error: unknown, t: (key: string) => string): string {
   if (error instanceof WebApiError) {
     if (typeof error.data === "string" && error.data.length > 0) {
       return error.data;
@@ -62,5 +64,5 @@ function resolveAuthErrorMessage(error: unknown): string {
     }
   }
 
-  return "We couldn't complete that request. Try again.";
+  return t("couldNotCompleteRequest");
 }

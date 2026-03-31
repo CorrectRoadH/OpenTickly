@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Dropdown, MenuSeparator, useDropdownClose } from "@opentoggl/web-ui";
 
@@ -39,6 +40,7 @@ type AppShellProps = {
 };
 
 export function AppShell({ children }: AppShellProps): ReactElement {
+  const { t } = useTranslation("appShell");
   const navigate = useNavigate();
   const location = useRouterState({
     select: (state) => state.location,
@@ -49,7 +51,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const profileQuery = useProfileQuery();
   const updateProfileMutation = useUpdateProfileMutation();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
-  const sections = shellNavigationItems(session);
+  const sections = shellNavigationItems(session, t);
   const adminSection = sections[sections.length - 1];
   const primarySections = sections.slice(0, -1);
   const profileName = session.user.fullName || session.user.email || "Profile";
@@ -149,7 +151,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       {/* Mobile top bar -- sticky at viewport top, visible below lg */}
       <div className="sticky top-0 z-40 flex h-[56px] items-center gap-3 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-4 lg:hidden">
         <button
-          aria-label="Toggle menu"
+          aria-label={t("toggleMenu")}
           className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/6 hover:text-white"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           type="button"
@@ -163,7 +165,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       {mobileMenuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            aria-label="Close menu"
+            aria-label={t("closeMenu")}
             className="absolute inset-0 bg-black/50"
             onClick={closeMobileMenu}
             onKeyDown={(event) => {
@@ -189,12 +191,12 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             <RailButton
               icon={<PlanIcon className="size-4" />}
               label="plan"
-              tooltip="opentoggl plan is coming"
+              tooltip={t("opentogglPlanComing")}
             />
             <RailButton
               icon={<FocusIcon className="size-4" />}
               label="focus"
-              tooltip="opentoggl focus is coming"
+              tooltip={t("opentogglFocusComing")}
             />
           </div>
           <div className="space-y-1">
@@ -238,6 +240,7 @@ function ProfileMenuButton({
   imageUrl?: string | null;
   name: string;
 }): ReactElement {
+  const { t } = useTranslation("appShell");
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
@@ -249,7 +252,7 @@ function ProfileMenuButton({
         panelClassName="w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
         trigger={
           <button
-            aria-label="Profile menu"
+            aria-label={t("profileMenu")}
             className="flex flex-col items-center gap-1 py-1 text-[var(--track-text-muted)] transition hover:text-white"
             type="button"
           >
@@ -259,7 +262,9 @@ function ProfileMenuButton({
               name={name}
               textClassName="text-[11px] font-semibold"
             />
-            <span className="text-[8px] font-medium uppercase tracking-[0.08em]">Profile</span>
+            <span className="text-[8px] font-medium uppercase tracking-[0.08em]">
+              {t("profile")}
+            </span>
           </button>
         }
       >
@@ -293,6 +298,7 @@ function ProfileMenuContent({
   logoutMutation: ReturnType<typeof useLogoutMutation>;
   onShortcuts: () => void;
 }): ReactElement {
+  const { t } = useTranslation("appShell");
   const close = useDropdownClose();
 
   return (
@@ -314,21 +320,21 @@ function ProfileMenuContent({
 
       <div className="space-y-1 py-1">
         <ProfileMenuAction
-          label="Profile settings"
+          label={t("profileSettings")}
           onClick={() => {
             close();
             void navigate({ to: "/profile" });
           }}
         />
         <ProfileMenuAction
-          label="Account settings"
+          label={t("accountSettings")}
           onClick={() => {
             close();
             void navigate({ to: "/account" });
           }}
         />
         <ProfileMenuAction
-          label="Keyboard shortcuts"
+          label={t("keyboardShortcuts")}
           onClick={() => {
             close();
             onShortcuts();
@@ -346,7 +352,7 @@ function ProfileMenuContent({
       <div className="py-1">
         <ProfileMenuAction
           destructive
-          label="Log out"
+          label={t("logOut")}
           onClick={() => {
             close();
             void logoutMutation.mutateAsync().then(() => {

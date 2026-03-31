@@ -1,0 +1,23 @@
+{
+  "tasks": "Tasks",
+  "task": "Task",
+  "project": "Project",
+  "status": "Status",
+  "newTask": "New task",
+  "taskName": "Task name",
+  "saveTask": "Save task",
+  "cancel": "Cancel",
+  "projectRequired": "Project required",
+  "workspaceCatalog": "Workspace catalog",
+  "active": "Active",
+  "inactive": "Inactive",
+  "projectScoped": "Project-scoped task management for project {{projectId}}. Track API creates tasks through a project entry point, so this page is intentionally anchored to that context.",
+  "createTasksFromProject": "Create tasks from a project context. Open a project's task entry to add the first task.",
+  "showingTasksInWorkspace": "Showing {{count}} tasks in workspace {{workspaceId}}. Active: {{activeCount}}.",
+  "loadingTasks": "Loading tasks...",
+  "unableToLoadTasks": "Unable to load tasks. Refresh to try again.",
+  "taskCreated": "Task created",
+  "viewAllWorkspaceTasks": "View all workspace tasks",
+  "noTasksInProject": "No tasks in this project yet.",
+  "noTasksInWorkspace": "No tasks in this workspace yet. Open a project task entry point to create the first task."
+}

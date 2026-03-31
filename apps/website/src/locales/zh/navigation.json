@@ -1,0 +1,23 @@
+{
+  "track": "跟踪",
+  "analyze": "分析",
+  "manage": "管理",
+  "admin": "管理后台",
+  "overview": "概览",
+  "timer": "计时器",
+  "reports": "报告",
+  "approvals": "审批",
+  "projects": "项目",
+  "clients": "客户",
+  "members": "成员",
+  "billableRates": "可计费费率",
+  "invoices": "发票",
+  "tags": "标签",
+  "goals": "目标",
+  "import": "导入",
+  "integrations": "集成",
+  "auditLog": "审计日志",
+  "subscription": "订阅",
+  "settings": "设置",
+  "instanceAdmin": "实例管理"
+}

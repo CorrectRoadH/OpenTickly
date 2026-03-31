@@ -1,97 +1,3 @@
----
-lockfileVersion: '9.0'
-
-importers:
-
-  .:
-    configDependencies: {}
-    packageManagerDependencies:
-      '@pnpm/exe':
-        specifier: 10.32.1
-        version: 10.32.1
-      pnpm:
-        specifier: 10.32.1
-        version: 10.32.1
-
-packages:
-
-  '@pnpm/exe@10.32.1':
-    hasBin: true
-    resolution: {integrity: sha512-baEtwHeZwmZAdBuuDDL6tbdGg5KpxhPxr3QFfYTGXvY6ws+Z1bN0mQ7ZjcaXBSC1HuLpVXnZ6NsBiaZ2DMv4vg==}
-
-  '@pnpm/linux-arm64@10.32.1':
-    cpu: [arm64]
-    hasBin: true
-    os: [linux]
-    resolution: {integrity: sha512-6uB0B+XvunQwHGzIMk2JCkl4Ur6BtM4XbJSwB/mgpWmXDoX/KTJmgx2lodcTjgJSGSySCHfIVuTR9sj/F2D4EA==}
-
-  '@pnpm/linux-x64@10.32.1':
-    cpu: [x64]
-    hasBin: true
-    os: [linux]
-    resolution: {integrity: sha512-AM2tv23Fg7h+nV+adqA/SkZKUysSIEetHfBwYFl8ArgdgkqbGoQy0rAOdKYQBb920CqfexXfI8OA8kPCzRxYng==}
-
-  '@pnpm/macos-arm64@10.32.1':
-    cpu: [arm64]
-    hasBin: true
-    os: [darwin]
-    resolution: {integrity: sha512-Zr4JkhRbtGVsYgbuGZO0dq/6FPOn072Pdo0ubmqWtc14cUATKgAJD7efG03yqr3MLgtwFHgdtUzZ1WsaYAtUTA==}
-
-  '@pnpm/macos-x64@10.32.1':
-    cpu: [x64]
-    hasBin: true
-    os: [darwin]
-    resolution: {integrity: sha512-Yk6q3oFDu//OniXJxfTSHo+aew1LX81FcbzJAtEkcCeTQ0SLbQT6J3QiOMNikp8n8IjNhsy+bn2bdkUxaw+akA==}
-
-  '@pnpm/win-arm64@10.32.1':
-    cpu: [arm64]
-    hasBin: true
-    os: [win32]
-    resolution: {integrity: sha512-P8rsP5IUetpYjr2iwggoswL2qUukYrJoToXWuMyo8immn58CsYxaXsHVQ1Oq1R3XMfmGGWTXLsiJuQ7H991MRg==}
-
-  '@pnpm/win-x64@10.32.1':
-    cpu: [x64]
-    hasBin: true
-    os: [win32]
-    resolution: {integrity: sha512-i24GwbtBO8ojrhp8WWimX7NgZs0UKH1171oRt6qcRL+a+FxE0Eggv2y0KP7ZI7F3+LZMarwr3tnYsZryfciUOg==}
-
-  pnpm@10.32.1:
-    engines: {node: '>=18.12'}
-    hasBin: true
-    resolution: {integrity: sha512-pwaTjw6JrBRWtlY+q07fHR+vM2jRGR/FxZeQ6W3JGORFarLmfWE94QQ9LoyB+HMD5rQNT/7KnfFe8a1Wc0jyvg==}
-
-snapshots:
-
-  '@pnpm/exe@10.32.1':
-    optionalDependencies:
-      '@pnpm/win-arm64': 10.32.1
-      '@pnpm/macos-arm64': 10.32.1
-      '@pnpm/linux-arm64': 10.32.1
-      '@pnpm/win-x64': 10.32.1
-      '@pnpm/macos-x64': 10.32.1
-      '@pnpm/linux-x64': 10.32.1
-
-  '@pnpm/linux-arm64@10.32.1':
-    optional: true
-
-  '@pnpm/linux-x64@10.32.1':
-    optional: true
-
-  '@pnpm/macos-arm64@10.32.1':
-    optional: true
-
-  '@pnpm/macos-x64@10.32.1':
-    optional: true
-
-  '@pnpm/win-arm64@10.32.1':
-    optional: true
-
-  '@pnpm/win-x64@10.32.1':
-    optional: true
-
-  pnpm@10.32.1: {}
-
----
 lockfileVersion: '9.0'
 
 settings:
@@ -118,6 +24,12 @@ catalogs:
     execa:
       specifier: ^9.6.1
       version: 9.6.1
+    i18next:
+      specifier: ^26.0.3
+      version: 26.0.3
+    i18next-resources-to-backend:
+      specifier: ^1.2.1
+      version: 1.2.1
     jspdf:
       specifier: ^4.2.1
       version: 4.2.1
@@ -139,6 +51,9 @@ catalogs:
     react-hook-form:
       specifier: ^7.71.2
       version: 7.71.2
+    react-i18next:
+      specifier: ^17.0.2
+      version: 17.0.2
     sonner:
       specifier: ^2.0.7
       version: 2.0.7
@@ -296,6 +211,12 @@ importers:
       date-fns:
         specifier: 'catalog:'
         version: 4.1.0
+      i18next:
+        specifier: 'catalog:'
+        version: 26.0.3(typescript@5.9.3)
+      i18next-resources-to-backend:
+        specifier: 'catalog:'
+        version: 1.2.1
       jspdf:
         specifier: 'catalog:'
         version: 4.2.1
@@ -320,6 +241,9 @@ importers:
       react-hook-form:
         specifier: 'catalog:'
         version: 7.71.2(react@18.3.1)
+      react-i18next:
+        specifier: 'catalog:'
+        version: 17.0.2(i18next@26.0.3(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3)
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react-is@17.0.2)(react@18.3.1)(redux@5.0.1)
@@ -4023,6 +3947,9 @@ packages:
     resolution: {integrity: sha512-CV9TW3Y3f8/wT0BRFc1/KAVQ3TUHiXmaAb6VW9vtiMFf7SLoMd1PdAc4W3KFOFETBJUb90KatHqlsZMWV+R9Gg==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
+  html-parse-stringify@3.0.1:
+    resolution: {integrity: sha512-KknJ50kTInJ7qIScF3jeaFRpMpE8/lfiTdzf/twXyPBLAGrLRTmkz3AdTnKeh40X8k9L2fdYwEp/42WGXIRGcg==}
+
   html-void-elements@3.0.0:
     resolution: {integrity: sha512-bEqo66MRXsUGxWHV5IP0PUiAWwoEjba4VCzg0LjFJBpchPaTfyfCKTG6bc5F8ucKec3q5y6qOdGyYTSBEvhCrg==}
 
@@ -4048,6 +3975,17 @@ packages:
 
   hyphenate-style-name@1.1.0:
     resolution: {integrity: sha512-WDC/ui2VVRrz3jOVi+XtjqkDjiVjTtFaAGiW37k6b+ohyQ5wYDOGkvCZa8+H0nx3gyvv0+BST9xuOgIyGQ00gw==}
+
+  i18next-resources-to-backend@1.2.1:
+    resolution: {integrity: sha512-okHbVA+HZ7n1/76MsfhPqDou0fptl2dAlhRDu2ideXloRRduzHsqDOznJBef+R3DFZnbvWoBW+KxJ7fnFjd6Yw==}
+
+  i18next@26.0.3:
+    resolution: {integrity: sha512-1571kXINxHKY7LksWp8wP+zP0YqHSSpl/OW0Y0owFEf2H3s8gCAffWaZivcz14rMkOvn3R/psiQxVsR9t2Nafg==}
+    peerDependencies:
+      typescript: ^5 || ^6
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
@@ -5120,6 +5058,22 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
 
+  react-i18next@17.0.2:
+    resolution: {integrity: sha512-shBftH2vaTWK2Bsp7FiL+cevx3xFJlvFxmsDFQSrJc+6twHkP0tv/bGa01VVWzpreUVVwU+3Hev5iFqRg65RwA==}
+    peerDependencies:
+      i18next: '>= 26.0.1'
+      react: '>= 16.8.0'
+      react-dom: '*'
+      react-native: '*'
+      typescript: ^5 || ^6
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+      typescript:
+        optional: true
+
   react-input-mask@2.0.4:
     resolution: {integrity: sha512-1hwzMr/aO9tXfiroiVCx5EtKohKwLk/NT8QlJXHQ4N+yJJFyUuMT+zfTpLBwX/lK3PkuMlievIffncpMZ3HGRQ==}
     peerDependencies:
@@ -6037,6 +5991,10 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  void-elements@3.1.0:
+    resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
+    engines: {node: '>=0.10.0'}
 
   vt-pbf@3.1.3:
     resolution: {integrity: sha512-2LzDFzt0mZKZ9IpVF2r69G9bXaP2Q2sArJCmcCgvfTdCCZzSyz4aCLoQyUilu37Ll56tCblIZrXFIjNUpGIlmA==}
@@ -10057,6 +10015,10 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
+  html-parse-stringify@3.0.1:
+    dependencies:
+      void-elements: 3.1.0
+
   html-void-elements@3.0.0: {}
 
   html2canvas@1.4.1:
@@ -10084,6 +10046,16 @@ snapshots:
   human-signals@8.0.1: {}
 
   hyphenate-style-name@1.1.0: {}
+
+  i18next-resources-to-backend@1.2.1:
+    dependencies:
+      '@babel/runtime': 7.29.2
+
+  i18next@26.0.3(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.29.2
+    optionalDependencies:
+      typescript: 5.9.3
 
   iconv-lite@0.4.24:
     dependencies:
@@ -11424,6 +11396,17 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
+  react-i18next@17.0.2(i18next@26.0.3(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.9.3):
+    dependencies:
+      '@babel/runtime': 7.29.2
+      html-parse-stringify: 3.0.1
+      i18next: 26.0.3(typescript@5.9.3)
+      react: 18.3.1
+      use-sync-external-store: 1.6.0(react@18.3.1)
+    optionalDependencies:
+      react-dom: 18.3.1(react@18.3.1)
+      typescript: 5.9.3
+
   react-input-mask@2.0.4(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       invariant: 2.2.4
@@ -12692,6 +12675,8 @@ snapshots:
       jiti: 2.6.1
       terser: 5.46.1
       yaml: 2.8.2
+
+  void-elements@3.1.0: {}
 
   vt-pbf@3.1.3:
     dependencies:

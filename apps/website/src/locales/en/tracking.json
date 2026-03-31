@@ -1,0 +1,22 @@
+{
+  "noTimeEntriesInThisWorkspaceYet": "No time entries in this workspace yet.",
+  "dayView": "Day view",
+  "fiveDayView": "5 days view",
+  "weekView": "Week view",
+  "calendar": "Calendar",
+  "listView": "List view",
+  "timesheet": "Timesheet",
+  "calendarSubView": "Calendar sub-view",
+  "previousDay": "Previous day",
+  "nextDay": "Next day",
+  "previousPeriod": "Previous period",
+  "nextPeriod": "Next period",
+  "previousWeek": "Previous week",
+  "nextWeek": "Next week",
+  "selectDateRange": "Select date range",
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "previousYears": "Previous years",
+  "nextYears": "Next years",
+  "selectWeek": "Select week {{start}} to {{end}}"
+}

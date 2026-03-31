@@ -1,0 +1,22 @@
+{
+  "tags": "标签",
+  "tag": "标签",
+  "status": "状态",
+  "newTag": "新建标签",
+  "tagName": "标签名称",
+  "createTag": "创建标签",
+  "createNewTag": "创建新标签",
+  "all": "全部",
+  "active": "活跃",
+  "inactive": "非活跃",
+  "showingTagsInWorkspace": "在 {{workspaceName}} 中显示 {{count}} 个标签。活跃：{{activeCount}} · 非活跃：{{inactiveCount}}",
+  "loadingTags": "加载标签中...",
+  "unableToLoadTags": "无法加载标签。请刷新页面重试。",
+  "tagCreated": "标签已创建",
+  "tagDeleted": "标签已删除",
+  "tagRenamed": "标签已重命名",
+  "tagDetailsFor": "{{name}} 的标签详情",
+  "noTagsMatchFilters": "没有标签符合您的筛选条件。",
+  "noActiveTags": "没有活跃标签。创建您的第一个标签以开始。",
+  "noInactiveTags": "没有非活跃标签。"
+}

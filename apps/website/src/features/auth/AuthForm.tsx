@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
@@ -35,6 +36,7 @@ export function AuthForm({
   mode,
   onSubmit,
 }: AuthFormProps): ReactElement {
+  const { t } = useTranslation("auth");
   const form = useForm<LoginFormValues & RegisterFormValues>({
     defaultValues: {
       email: "",
@@ -61,24 +63,24 @@ export function AuthForm({
   return (
     <form className="space-y-5" onSubmit={form.handleSubmit(handleSubmit)}>
       {mode === "register" ? (
-        <Field label="Full name">
+        <Field label={t("fullName")}>
           <input className={fieldClassName} {...form.register("fullName")} />
         </Field>
       ) : null}
 
-      <Field label="Email">
+      <Field label={t("email")}>
         <input
           className={fieldClassName}
-          placeholder="name@company.com"
+          placeholder={t("emailPlaceholder")}
           type="email"
           {...form.register("email")}
         />
       </Field>
 
-      <Field label="Password">
+      <Field label={t("password")}>
         <input
           className={fieldClassName}
-          placeholder="Enter your password"
+          placeholder={t("passwordPlaceholder")}
           type="password"
           {...form.register("password")}
         />
@@ -89,7 +91,7 @@ export function AuthForm({
         disabled={isSubmitting}
         type="submit"
       >
-        {isSubmitting ? "Submitting…" : mode === "login" ? "Log in" : "Register"}
+        {isSubmitting ? t("submitting") : mode === "login" ? t("logIn") : t("register")}
       </button>
 
       {errorMessage ? (
@@ -102,12 +104,12 @@ export function AuthForm({
       ) : null}
 
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
-        {mode === "login" ? "Need an account?" : "Already have an account?"}{" "}
+        {mode === "login" ? t("needAnAccount") : t("alreadyHaveAnAccount")}{" "}
         <Link
           className="font-semibold text-[var(--track-accent-text)] underline-offset-4 hover:underline"
           to={mode === "login" ? "/register" : "/login"}
         >
-          {mode === "login" ? "Register" : "Log in"}
+          {mode === "login" ? t("register") : t("logIn")}
         </Link>
       </p>
     </form>
