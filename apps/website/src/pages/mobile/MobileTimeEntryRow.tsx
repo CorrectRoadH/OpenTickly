@@ -41,7 +41,12 @@ export function MobileTimeEntryRow({
       >
         <PlayIcon className="size-3.5" />
       </button>
-      <button className="min-w-0 flex-1 text-left" onClick={() => onEdit?.(entry)} type="button">
+      <button
+        aria-label={`Edit ${description}`}
+        className="min-w-0 flex-1 text-left"
+        onClick={() => onEdit?.(entry)}
+        type="button"
+      >
         <p className="truncate text-[13px] text-white">{description}</p>
         {projectName || hasTags ? (
           <p className="flex items-center gap-1 truncate text-[11px] text-[var(--track-text-muted)]">

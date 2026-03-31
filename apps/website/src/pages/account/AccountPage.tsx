@@ -53,8 +53,8 @@ export function AccountPage(): ReactElement {
         <PageHeader bordered title="Account Settings" />
       </section>
 
-      <section className="flex gap-3 px-3 pb-10 pt-3">
-        <div className="w-full max-w-[1352px] space-y-4">
+      <section className="px-3 pb-10 pt-3 md:flex md:gap-3">
+        <div className="w-full space-y-4 md:max-w-[1352px]">
           <PersonalDetailsSection
             avatarImageUrl={profile.image_url ?? session.user.imageUrl}
             email={profile.email ?? ""}
@@ -141,17 +141,17 @@ function PersonalDetailsSection({
         ) : undefined
       }
     >
-      <div className="flex items-start gap-6 px-5 py-5">
+      <div className="flex flex-col items-center gap-4 px-5 py-5 md:flex-row md:items-start">
         <UserAvatar
-          className="size-[100px] shrink-0 rounded-full bg-[var(--track-surface)]"
+          className="size-[80px] shrink-0 rounded-full bg-[var(--track-surface)] md:size-[100px]"
           imageUrl={avatarImageUrl ?? undefined}
           name={fullname || "U"}
-          textClassName="text-3xl font-semibold"
+          textClassName="text-2xl font-semibold md:text-3xl"
         />
-        <div className="flex-1 space-y-4">
+        <div className="w-full space-y-4 md:flex-1">
           <AccountField label="Full name">
             <input
-              className="h-[39px] w-full max-w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none"
+              className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none md:max-w-[300px]"
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
             />
@@ -159,7 +159,7 @@ function PersonalDetailsSection({
           <AccountField label="Email">
             <div className="flex items-center gap-3">
               <input
-                className="h-[39px] w-full max-w-[300px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none"
+                className="h-[39px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-[10px] text-[14px] font-medium text-[var(--track-text)] outline-none md:max-w-[300px]"
                 value={editEmail}
                 onChange={(e) => setEditEmail(e.target.value)}
                 type="email"
@@ -276,7 +276,7 @@ function ChangePasswordSection({
             Change Password
           </AppButton>
         ) : (
-          <div className="max-w-[300px] space-y-4">
+          <div className="space-y-4 md:max-w-[300px]">
             <AccountField label="Current password">
               <input
                 autoComplete="current-password"

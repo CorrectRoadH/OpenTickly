@@ -91,10 +91,14 @@ export function MobileTimeEntryEditor({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[var(--track-surface)] text-[var(--track-text)]">
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-[var(--track-surface)] text-[var(--track-text)]"
+      data-testid="mobile-time-entry-editor"
+    >
       {/* Header */}
       <div className="flex h-[52px] items-center justify-between border-b border-[var(--track-border)] px-4">
         <button
+          aria-label="Cancel editing"
           className="text-[14px] text-[var(--track-text-muted)]"
           onClick={onClose}
           type="button"
@@ -103,6 +107,7 @@ export function MobileTimeEntryEditor({
         </button>
         <span className="text-[14px] font-semibold text-white">Edit Entry</span>
         <button
+          aria-label="Save changes"
           className="text-[14px] font-semibold text-[var(--track-accent)]"
           disabled={updateMutation.isPending}
           onClick={() => void handleSave()}
@@ -117,6 +122,7 @@ export function MobileTimeEntryEditor({
         {/* Description */}
         <div className="border-b border-[var(--track-border)] px-4 py-3">
           <input
+            aria-label="Time entry description"
             autoFocus
             className="w-full bg-transparent text-[15px] text-white placeholder-[var(--track-text-muted)] outline-none"
             onChange={(e) => setDescription(e.target.value)}
@@ -197,6 +203,7 @@ export function MobileTimeEntryEditor({
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">Start</span>
             <input
+              aria-label="Edit start time"
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
               onChange={(e) => {
                 const parsed = parseTimeInput(e.target.value, startIso, timezone);
@@ -209,6 +216,7 @@ export function MobileTimeEntryEditor({
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">End</span>
             <input
+              aria-label="Edit end time"
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
               onChange={(e) => {
                 const parsed = parseTimeInput(e.target.value, stopIso, timezone);
@@ -227,6 +235,7 @@ export function MobileTimeEntryEditor({
         {/* Delete */}
         <div className="px-4 py-4">
           <button
+            aria-label="Delete this time entry"
             className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-2.5 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)]"
             disabled={deleteMutation.isPending}
             onClick={() => void handleDelete()}

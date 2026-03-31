@@ -190,8 +190,8 @@ export function ProfilePage(): ReactElement {
         />
       </section>
 
-      <section className="flex gap-3 px-3 pb-10 pt-3">
-        <div className="w-full max-w-[1352px] space-y-4">
+      <section className="px-3 pb-10 pt-3 md:flex md:gap-3">
+        <div className="w-full space-y-4 md:max-w-[1352px]">
           <ProfileHeroCard
             accountSettingsHref="/account"
             avatarImageUrl={profileQuery.data.image_url ?? session.user.imageUrl}

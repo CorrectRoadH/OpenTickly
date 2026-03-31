@@ -125,8 +125,8 @@ export function TimeAndDateSection(props: {
       id="time-and-date"
       title="Time and date"
     >
-      <div className="flex flex-wrap gap-0 px-0 py-5">
-        <div className="w-[240px] px-5">
+      <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:gap-0">
+        <div className="w-full md:w-[240px]">
           <PreferenceSelect
             label="Duration Display Format"
             onChange={(value) => {
@@ -146,7 +146,7 @@ export function TimeAndDateSection(props: {
             value={String(props.getValue("timeofdayFormat"))}
           />
         </div>
-        <div className="w-[240px] px-5">
+        <div className="w-full md:w-[240px]">
           <PreferenceSelect
             label="Date Format"
             onChange={(value) => {

@@ -154,7 +154,7 @@ function PreferenceSelectBase({
       <label className="block text-[11px] font-semibold uppercase leading-[11px] text-[var(--track-text-soft)]">
         {label}
       </label>
-      <div className="mt-[10px] w-[200px]">
+      <div className="mt-[10px] w-full md:w-[200px]">
         <SelectDropdown data-testid={testId} onChange={onChange} options={options} value={value} />
       </div>
     </div>
@@ -213,9 +213,9 @@ export function ProfileHeroCard({
 
   return (
     <AppPanel className="p-0" tone="transparent">
-      <div className="flex min-h-[331px] items-start">
-        <div className="flex h-[331px] w-[268px] items-start p-6">
-          <div className="group relative flex size-[220px] items-start rounded-[110px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+      <div className="flex flex-col md:flex-row md:min-h-[331px] md:items-start">
+        <div className="flex items-center justify-center p-6 md:flex md:h-[331px] md:w-[268px] md:items-start">
+          <div className="group relative flex size-[160px] items-start rounded-[80px] border border-[var(--track-border)] bg-[var(--track-surface)] md:size-[220px] md:rounded-[110px]">
             <input
               accept="image/png,image/jpeg,image/gif"
               className="hidden"
@@ -229,15 +229,15 @@ export function ProfileHeroCard({
               ref={fileInputRef}
               type="file"
             />
-            <div className="flex h-full items-center justify-center py-[2px]">
+            <div className="flex h-full w-full items-center justify-center py-[2px]">
               <UserAvatar
-                className="size-[216px] rounded-[108px] bg-[var(--track-surface)]"
+                className="size-[156px] rounded-[78px] bg-[var(--track-surface)] md:size-[216px] md:rounded-[108px]"
                 imageUrl={avatarImageUrl ?? undefined}
                 name={profileName}
-                textClassName="text-6xl font-semibold"
+                textClassName="text-5xl font-semibold md:text-6xl"
               />
             </div>
-            <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-[110px] bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-[80px] bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 md:rounded-[110px]">
               <button
                 className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
                 disabled={uploading}
@@ -262,7 +262,7 @@ export function ProfileHeroCard({
           </div>
         </div>
 
-        <div className="flex min-h-[331px] min-w-0 flex-1 flex-col pl-3">
+        <div className="flex min-w-0 flex-1 flex-col px-4 md:min-h-[331px] md:pl-3">
           <div className="border-b border-[var(--track-border)] pb-3">
             <h2 className="text-[14px] font-semibold leading-[22.96px] text-white">
               Personal details & preferences
@@ -278,7 +278,9 @@ export function ProfileHeroCard({
                 <dt className="min-w-[130px] text-[11px] font-semibold uppercase tracking-[0.4px] text-[var(--track-text-muted)]">
                   {row.label}
                 </dt>
-                <dd className="text-[14px] font-medium leading-5 text-white">{row.value}</dd>
+                <dd className="min-w-0 flex-1 text-[14px] font-medium leading-5 text-white">
+                  <span className="block truncate">{row.value}</span>
+                </dd>
               </div>
             ))}
           </dl>

@@ -90,7 +90,6 @@ export function MobileMePage(): ReactElement {
       <div className="border-b border-[var(--track-border)]">
         <MenuLink label="Profile settings" onClick={() => void navigate({ to: "/profile" })} />
         <MenuLink label="Account settings" onClick={() => void navigate({ to: "/account" })} />
-        <MenuLink label="Desktop version" onClick={() => void navigate({ to: "/timer" })} />
       </div>
 
       {/* Logout */}
