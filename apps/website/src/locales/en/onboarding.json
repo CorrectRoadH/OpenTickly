@@ -1,0 +1,14 @@
+{
+  "languageTitle": "Choose your language",
+  "languageDescription": "Select your preferred language. You can change this later in Account settings.",
+  "aiWorkflowTitle": "AI-powered workflow",
+  "aiWorkflowDescription": "Connect Toggl CLI to track time directly from your terminal. Install with: npm install -g toggl-cli. Then run: toggl login to connect your account.",
+  "configureWorkspaceTitle": "Configure your workspace",
+  "configureWorkspaceDescription": "Set up your workspace name, currency, and time tracking preferences in Settings. This helps organize your team's work.",
+  "starUsTitle": "Support OpenToggl",
+  "starUsDescription": "If you enjoy OpenToggl, please star us on GitHub! Your support helps the project grow and attract more contributors.",
+  "continue": "Continue",
+  "starOnGitHub": "Star on GitHub",
+  "startTracking": "Start tracking",
+  "failedToComplete": "Failed to complete onboarding"
+}

@@ -103,12 +103,10 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	return server.handlers.updateWorkspaceSettings(ctx)
 }
 
-func (server *webOpenAPIServer) GetWorkspaceOnboarding(ctx echo.Context, workspaceId int) error {
-	_ = workspaceId
-	return server.handlers.getWorkspaceOnboarding(ctx)
+func (server *webOpenAPIServer) GetOnboarding(ctx echo.Context) error {
+	return server.handlers.getOnboarding(ctx)
 }
 
-func (server *webOpenAPIServer) UpdateWorkspaceOnboarding(ctx echo.Context, workspaceId int) error {
-	_ = workspaceId
-	return server.handlers.updateWorkspaceOnboarding(ctx)
+func (server *webOpenAPIServer) CompleteOnboarding(ctx echo.Context) error {
+	return server.handlers.completeOnboarding(ctx)
 }

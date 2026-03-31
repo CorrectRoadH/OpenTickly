@@ -25,6 +25,9 @@ export async function registerE2eUser(
   await page.waitForURL(/\/timer(?:\?.*)?$/);
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
+  // Complete the post-registration onboarding dialog if it appears.
+  await completeOnboardingDialogIfVisible(page);
+
   // Desktop shell has the Organization sidebar button; mobile shell does not.
   const organizationButton = page.getByRole("button", { exact: true, name: "Organization" });
   if (await organizationButton.isVisible().catch(() => false)) {
@@ -61,6 +64,41 @@ export async function loginE2eUser(
   return {
     currentWorkspaceId,
   };
+}
+
+/**
+ * Completes the onboarding dialog if it is visible.
+ * This helper is called automatically by registerE2eUser, but can also be used
+ * after loginE2eUser when testing onboarding-related flows.
+ *
+ * @param page - The Playwright page object.
+ */
+export async function completeOnboardingDialogIfVisible(page: Page): Promise<void> {
+  const dialog = page.getByTestId("onboarding-dialog");
+
+  if (!(await dialog.isVisible().catch(() => false))) {
+    return;
+  }
+
+  // Click through all steps by clicking Continue/Start tracking until dialog closes
+  while (await dialog.isVisible().catch(() => false)) {
+    // Try "Start tracking" first (last step), then "Continue"
+    const startTrackingBtn = dialog.getByRole("button", { name: "Start tracking" });
+    const continueBtn = dialog.getByRole("button", { name: "Continue" });
+
+    if (await startTrackingBtn.isVisible().catch(() => false)) {
+      await startTrackingBtn.click();
+    } else if (await continueBtn.isVisible().catch(() => false)) {
+      await continueBtn.click();
+    } else {
+      break;
+    }
+
+    // Small delay to let the dialog transition
+    await page.waitForTimeout(100);
+  }
+
+  await expect(dialog).not.toBeVisible({ timeout: 5000 });
 }
 
 export async function readSessionBootstrap(page: Page): Promise<WebSessionBootstrapDto> {

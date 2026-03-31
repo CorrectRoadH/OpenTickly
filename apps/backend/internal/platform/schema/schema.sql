@@ -597,10 +597,8 @@ create table billing_invoice_taxes (
 
 create index billing_invoice_taxes_invoice_id_idx on billing_invoice_taxes (invoice_id);
 
-create table onboarding_progress (
-    user_id bigint not null references identity_users (id) on delete cascade,
-    workspace_id bigint not null references tenant_workspaces (id) on delete cascade,
-    dismissed boolean not null default false,
-    completed_steps jsonb not null default '[]'::jsonb,
-    primary key (user_id, workspace_id)
+create table user_onboarding (
+    user_id bigint primary key references identity_users (id) on delete cascade,
+    completed_at timestamptz not null default now(),
+    version integer not null default 1
 );

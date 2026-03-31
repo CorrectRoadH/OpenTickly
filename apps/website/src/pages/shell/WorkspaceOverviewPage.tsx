@@ -3,8 +3,10 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
 import { AppButton, PageLayout, SurfaceCard } from "@opentoggl/web-ui";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import i18n from "../../app/i18n.ts";
 import {
   formatClockDuration,
   formatDateKey,
@@ -27,10 +29,10 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { InviteMemberDialog } from "../members/InviteMemberDialog.tsx";
-import { OnboardingChecklist } from "./OnboardingChecklist.tsx";
 import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
+  const { t } = useTranslation();
   const { beginningOfWeek, durationFormat } = useUserPreferences();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
@@ -77,7 +79,7 @@ export function WorkspaceOverviewPage(): ReactElement {
       { email: inviteEmail.trim(), role: inviteRole },
       {
         onSuccess: () => {
-          toast.success(`Invitation sent to ${inviteEmail.trim()}`);
+          toast.success(t("toast:invitationSent", { email: inviteEmail.trim() }));
           setInviteDialogOpen(false);
           setInviteEmail("");
           setInviteRole("member");
@@ -85,9 +87,7 @@ export function WorkspaceOverviewPage(): ReactElement {
         onError: (error) => {
           const message = error instanceof Error ? error.message : "Failed to send invitation";
           if (message.includes("SMTP") || message.includes("email sending")) {
-            toast.error(
-              "Email sending is not configured. Configure SMTP in Instance Admin before sending invitations.",
-            );
+            toast.error(t("toast:emailSendingNotConfigured"));
           } else {
             toast.error(message);
           }
@@ -125,11 +125,6 @@ export function WorkspaceOverviewPage(): ReactElement {
             data-testid="workspace-overview-grid"
           >
             <div className="flex flex-col gap-5">
-              <OnboardingChecklist
-                onInviteClick={() => setInviteDialogOpen(true)}
-                workspaceId={workspaceId}
-              />
-
               <OverviewSurface className="lg:min-h-[240px]">
                 <div className="flex h-full flex-col gap-4">
                   <OverviewCardHeader
@@ -568,7 +563,7 @@ function formatAxisLabel(totalSeconds: number): string {
 }
 
 function formatShortAxisDay(day: Date): { weekday: string; date: string; label: string } {
-  const weekday = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(day);
+  const weekday = new Intl.DateTimeFormat(i18n.language, { weekday: "short" }).format(day);
   const month = String(day.getMonth() + 1).padStart(2, "0");
   const d = String(day.getDate()).padStart(2, "0");
   return { weekday, date: `${month}/${d}`, label: `${weekday} ${month}/${d}` };

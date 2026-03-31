@@ -2,7 +2,7 @@ package bootstrap
 
 import (
 	"context"
-	"encoding/json"
+	"database/sql"
 	"errors"
 	"net/http"
 	"strconv"
@@ -1036,16 +1036,9 @@ func workspacePublicProjectAccess(limitPublicProjectData bool) tenantdomain.Work
 	return tenantdomain.WorkspacePublicProjectAccessMembers
 }
 
-func (handlers *routeHandlers) getWorkspaceOnboarding(ctx echo.Context) error {
+func (handlers *routeHandlers) getOnboarding(ctx echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
-	}
-	workspaceID, ok := parsePathID(ctx, "workspace_id")
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	if err := handlers.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
-		return err
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
@@ -1053,23 +1046,19 @@ func (handlers *routeHandlers) getWorkspaceOnboarding(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
 	}
 
-	state, err := handlers.buildOnboardingState(ctx.Request().Context(), user.ID, workspaceID)
+	completed, err := handlers.getOnboardingCompleted(ctx.Request().Context(), user.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
-	return ctx.JSON(http.StatusOK, state)
+
+	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{
+		Completed: completed,
+	})
 }
 
-func (handlers *routeHandlers) updateWorkspaceOnboarding(ctx echo.Context) error {
+func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
 	if response, ok := handlers.authorizeSession(ctx); !ok {
 		return response
-	}
-	workspaceID, ok := parsePathID(ctx, "workspace_id")
-	if !ok {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
-	}
-	if err := handlers.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
-		return err
 	}
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
@@ -1077,148 +1066,55 @@ func (handlers *routeHandlers) updateWorkspaceOnboarding(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
 	}
 
-	var request webapi.UpdateOnboardingRequest
+	var request webapi.CompleteOnboardingRequest
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	if err := handlers.applyOnboardingUpdate(ctx.Request().Context(), user.ID, workspaceID, request); err != nil {
+	if err := handlers.applyOnboardingComplete(ctx.Request().Context(), user.ID, request); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
-	state, err := handlers.buildOnboardingState(ctx.Request().Context(), user.ID, workspaceID)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-	}
-	return ctx.JSON(http.StatusOK, state)
+	return ctx.JSON(http.StatusOK, webapi.OnboardingStatus{
+		Completed: true,
+	})
 }
 
-func (handlers *routeHandlers) buildOnboardingState(
-	ctx context.Context,
-	userID int64,
-	workspaceID int64,
-) (webapi.OnboardingState, error) {
-	isAdmin := handlers.isWorkspaceAdmin(ctx, userID, workspaceID)
-
-	dismissed, completedSteps, err := handlers.loadOnboardingProgress(ctx, userID, workspaceID)
-	if err != nil {
-		return webapi.OnboardingState{}, err
-	}
-
-	allMembers, _ := handlers.membershipApp.ListWorkspaceMembers(ctx, workspaceID, userID)
-	memberCount := len(allMembers)
-
-	wsIDStr := strconv.FormatInt(workspaceID, 10)
-
-	var steps []webapi.OnboardingStep
-	if isAdmin {
-		importHref := lo.ToPtr("/workspaces/" + wsIDStr + "/import")
-		settingsHref := lo.ToPtr("/workspaces/" + wsIDStr + "/settings")
-
-		steps = []webapi.OnboardingStep{
-			{StepId: "import_data", Label: "Import data from Toggl", Completed: completedSteps["import_data"], Href: importHref},
-			{StepId: "configure_workspace", Label: "Configure your workspace", Completed: completedSteps["configure_workspace"], Href: settingsHref},
-			{StepId: "invite_team", Label: "Invite team members", Completed: completedSteps["invite_team"] || memberCount > 1, Href: nil},
-			{StepId: "connect_cli", Label: "Connect AI/CLI", Completed: completedSteps["connect_cli"], Href: nil},
-		}
-	} else {
-		importHref := lo.ToPtr("/workspaces/" + wsIDStr + "/import")
-
-		steps = []webapi.OnboardingStep{
-			{StepId: "import_data", Label: "Import your data", Completed: completedSteps["import_data"], Href: importHref},
-			{StepId: "connect_cli", Label: "Connect AI/CLI", Completed: completedSteps["connect_cli"], Href: nil},
-			{StepId: "start_tracking", Label: "Start tracking time", Completed: completedSteps["start_tracking"], Href: nil},
-		}
-	}
-
-	return webapi.OnboardingState{
-		Steps:     steps,
-		Dismissed: dismissed,
-	}, nil
-}
-
-func (handlers *routeHandlers) isWorkspaceAdmin(ctx context.Context, userID int64, workspaceID int64) bool {
-	members, err := handlers.membershipApp.ListWorkspaceMembers(ctx, workspaceID, userID)
-	if err != nil {
-		return false
-	}
-	for _, member := range members {
-		if member.UserID != nil && *member.UserID == userID {
-			return member.Role == membershipdomain.WorkspaceRoleAdmin
-		}
-	}
-	return false
-}
-
-func (handlers *routeHandlers) loadOnboardingProgress(
-	ctx context.Context,
-	userID int64,
-	workspaceID int64,
-) (dismissed bool, completedSteps map[string]bool, err error) {
-	completedSteps = make(map[string]bool)
-
+func (handlers *routeHandlers) getOnboardingCompleted(ctx context.Context, userID int64) (bool, error) {
 	row := handlers.pool.QueryRow(ctx,
-		`SELECT dismissed, completed_steps FROM onboarding_progress WHERE user_id = $1 AND workspace_id = $2`,
-		userID, workspaceID,
+		`SELECT 1 FROM user_onboarding WHERE user_id = $1`,
+		userID,
 	)
 
-	var stepsJSON []byte
-	if scanErr := row.Scan(&dismissed, &stepsJSON); scanErr != nil {
-		return false, completedSteps, nil
+	var exists int
+	err := row.Scan(&exists)
+	if err == sql.ErrNoRows {
+		return false, nil
 	}
-
-	if len(stepsJSON) > 0 {
-		var steps []string
-		if jsonErr := json.Unmarshal(stepsJSON, &steps); jsonErr == nil {
-			for _, stepID := range steps {
-				completedSteps[stepID] = true
-			}
-		}
+	if err != nil {
+		return false, err
 	}
-
-	return dismissed, completedSteps, nil
+	return true, nil
 }
 
-func (handlers *routeHandlers) applyOnboardingUpdate(
-	ctx context.Context,
-	userID int64,
-	workspaceID int64,
-	request webapi.UpdateOnboardingRequest,
-) error {
-	dismissed, completedSteps, err := handlers.loadOnboardingProgress(ctx, userID, workspaceID)
+func (handlers *routeHandlers) applyOnboardingComplete(ctx context.Context, userID int64, request webapi.CompleteOnboardingRequest) error {
+	_, err := handlers.pool.Exec(ctx,
+		`INSERT INTO user_onboarding (user_id, version)
+		 VALUES ($1, $2)
+		 ON CONFLICT (user_id) DO UPDATE SET version = $2, completed_at = now()`,
+		userID, request.Version,
+	)
 	if err != nil {
 		return err
 	}
 
-	if request.Dismissed != nil {
-		dismissed = *request.Dismissed
-	}
-
-	if request.Steps != nil {
-		for _, stepUpdate := range *request.Steps {
-			if stepUpdate.Completed {
-				completedSteps[stepUpdate.StepId] = true
-			} else {
-				delete(completedSteps, stepUpdate.StepId)
-			}
+	if request.LanguageCode != nil && *request.LanguageCode != "" {
+		if updateErr := handlers.identityApp.UpdatePreferences(ctx, userID, "web", identitydomain.Preferences{
+			LanguageCode: *request.LanguageCode,
+		}); updateErr != nil {
+			return updateErr
 		}
 	}
 
-	stepsList := make([]string, 0, len(completedSteps))
-	for stepID := range completedSteps {
-		stepsList = append(stepsList, stepID)
-	}
-	stepsJSON, err := json.Marshal(stepsList)
-	if err != nil {
-		return err
-	}
-
-	_, err = handlers.pool.Exec(ctx,
-		`INSERT INTO onboarding_progress (user_id, workspace_id, dismissed, completed_steps)
-		 VALUES ($1, $2, $3, $4)
-		 ON CONFLICT (user_id, workspace_id)
-		 DO UPDATE SET dismissed = $3, completed_steps = $4`,
-		userID, workspaceID, dismissed, stepsJSON,
-	)
-	return err
+	return nil
 }

@@ -45,10 +45,6 @@ vi.mock("../../shared/query/web-shell.ts", () => ({
   useWorkspaceTopActivityQuery: (...args: unknown[]) => mockUseWorkspaceTopActivityQuery(...args),
 }));
 
-vi.mock("./OnboardingChecklist.tsx", () => ({
-  OnboardingChecklist: () => <div data-testid="onboarding-checklist" />,
-}));
-
 vi.mock("./OverviewWeekChart.tsx", () => ({
   OverviewWeekChart: ({ axisLabels }: { axisLabels: string[] }) => (
     <div data-testid="overview-week-chart">{axisLabels.join("|")}</div>

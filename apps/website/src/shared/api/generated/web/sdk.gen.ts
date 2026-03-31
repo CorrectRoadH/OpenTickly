@@ -4,16 +4,18 @@
 import { client } from "./client.gen.js";
 import type { Client, Options as Options2, TDataShape } from "./client/index.js";
 import type {
+  CompleteOnboardingData,
+  CompleteOnboardingResponses,
   DeleteOrganizationData,
   DeleteOrganizationResponses,
   DisableWorkspaceMemberData,
   DisableWorkspaceMemberResponses,
+  GetOnboardingData,
+  GetOnboardingResponses,
   GetWebSessionData,
   GetWebSessionResponses,
   GetWorkspaceCapabilitiesData,
   GetWorkspaceCapabilitiesResponses,
-  GetWorkspaceOnboardingData,
-  GetWorkspaceOnboardingResponses,
   GetWorkspacePermissionsData,
   GetWorkspacePermissionsResponses,
   GetWorkspaceQuotaData,
@@ -38,8 +40,6 @@ import type {
   UpdateWebSessionResponses,
   UpdateWorkspaceMemberRateCostData,
   UpdateWorkspaceMemberRateCostResponses,
-  UpdateWorkspaceOnboardingData,
-  UpdateWorkspaceOnboardingResponses,
   UpdateWorkspacePermissionsData,
   UpdateWorkspacePermissionsResponses,
   UpdateWorkspaceSettingsData,
@@ -290,24 +290,24 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Get onboarding state for the current user in this workspace
+ * Get onboarding status for the current user
  */
-export const getWorkspaceOnboarding = <ThrowOnError extends boolean = false>(
-  options: Options<GetWorkspaceOnboardingData, ThrowOnError>,
+export const getOnboarding = <ThrowOnError extends boolean = false>(
+  options?: Options<GetOnboardingData, ThrowOnError>,
 ) =>
-  (options.client ?? client).get<GetWorkspaceOnboardingResponses, unknown, ThrowOnError>({
-    url: "/web/v1/workspaces/{workspace_id}/onboarding",
+  (options?.client ?? client).get<GetOnboardingResponses, unknown, ThrowOnError>({
+    url: "/web/v1/onboarding",
     ...options,
   });
 
 /**
- * Update onboarding state for the current user in this workspace
+ * Complete onboarding for the current user
  */
-export const updateWorkspaceOnboarding = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateWorkspaceOnboardingData, ThrowOnError>,
+export const completeOnboarding = <ThrowOnError extends boolean = false>(
+  options: Options<CompleteOnboardingData, ThrowOnError>,
 ) =>
-  (options.client ?? client).put<UpdateWorkspaceOnboardingResponses, unknown, ThrowOnError>({
-    url: "/web/v1/workspaces/{workspace_id}/onboarding",
+  (options.client ?? client).put<CompleteOnboardingResponses, unknown, ThrowOnError>({
+    url: "/web/v1/onboarding",
     ...options,
     headers: {
       "Content-Type": "application/json",

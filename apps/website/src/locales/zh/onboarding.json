@@ -1,0 +1,14 @@
+{
+  "languageTitle": "选择语言",
+  "languageDescription": "选择您的首选语言。您之后可以在账户设置中随时更改。",
+  "aiWorkflowTitle": "AI 工作流",
+  "aiWorkflowDescription": "连接 Toggl CLI，直接在终端中追踪时间。安装命令：npm install -g toggl-cli。然后运行：toggl login 连接您的账户。",
+  "configureWorkspaceTitle": "配置工作区",
+  "configureWorkspaceDescription": "在设置中设置您的工作区名称、货币和时间追踪偏好。这有助于组织团队的工作。",
+  "starUsTitle": "支持 OpenToggl",
+  "starUsDescription": "如果您喜欢 OpenToggl，请在 GitHub 上给我们点个星！您的支持有助于项目发展并吸引更多贡献者。",
+  "continue": "继续",
+  "starOnGitHub": "在 GitHub 上 Star",
+  "startTracking": "开始追踪",
+  "failedToComplete": "完成新手引导失败"
+}

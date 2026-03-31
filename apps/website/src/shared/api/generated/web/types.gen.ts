@@ -277,26 +277,13 @@ export type WorkspaceSettingsUpdate = {
   preferences?: WorkspacePreferences;
 };
 
-export type OnboardingStep = {
-  step_id: string;
-  label: string;
-  completed: boolean;
-  href: string;
-};
-
-export type OnboardingState = {
-  steps: Array<OnboardingStep>;
-  dismissed: boolean;
-};
-
-export type UpdateOnboardingStepRequest = {
-  step_id: string;
+export type OnboardingStatus = {
   completed: boolean;
 };
 
-export type UpdateOnboardingRequest = {
-  steps?: Array<UpdateOnboardingStepRequest>;
-  dismissed?: boolean;
+export type CompleteOnboardingRequest = {
+  version: number;
+  language_code?: string;
 };
 
 export type CapabilityContext = {
@@ -656,40 +643,35 @@ export type InviteWorkspaceMemberResponses = {
 export type InviteWorkspaceMemberResponse =
   InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
 
-export type GetWorkspaceOnboardingData = {
+export type GetOnboardingData = {
   body?: never;
-  path: {
-    workspace_id: number;
-  };
+  path?: never;
   query?: never;
-  url: "/web/v1/workspaces/{workspace_id}/onboarding";
+  url: "/web/v1/onboarding";
 };
 
-export type GetWorkspaceOnboardingResponses = {
+export type GetOnboardingResponses = {
   /**
-   * Onboarding state
+   * Onboarding status
    */
-  200: OnboardingState;
+  200: OnboardingStatus;
 };
 
-export type GetWorkspaceOnboardingResponse =
-  GetWorkspaceOnboardingResponses[keyof GetWorkspaceOnboardingResponses];
+export type GetOnboardingResponse = GetOnboardingResponses[keyof GetOnboardingResponses];
 
-export type UpdateWorkspaceOnboardingData = {
-  body: UpdateOnboardingRequest;
-  path: {
-    workspace_id: number;
-  };
+export type CompleteOnboardingData = {
+  body: CompleteOnboardingRequest;
+  path?: never;
   query?: never;
-  url: "/web/v1/workspaces/{workspace_id}/onboarding";
+  url: "/web/v1/onboarding";
 };
 
-export type UpdateWorkspaceOnboardingResponses = {
+export type CompleteOnboardingResponses = {
   /**
-   * Updated onboarding state
+   * Updated onboarding status
    */
-  200: OnboardingState;
+  200: OnboardingStatus;
 };
 
-export type UpdateWorkspaceOnboardingResponse =
-  UpdateWorkspaceOnboardingResponses[keyof UpdateWorkspaceOnboardingResponses];
+export type CompleteOnboardingResponse =
+  CompleteOnboardingResponses[keyof CompleteOnboardingResponses];

@@ -552,27 +552,17 @@
         }
       }
     },
-    "/web/v1/workspaces/{workspace_id}/onboarding": {
+    "/web/v1/onboarding": {
       "get": {
-        "summary": "Get onboarding state for the current user in this workspace",
-        "operationId": "get-workspace-onboarding",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
+        "summary": "Get onboarding status for the current user",
+        "operationId": "get-onboarding",
         "responses": {
           "200": {
-            "description": "Onboarding state",
+            "description": "Onboarding status",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OnboardingState"
+                  "$ref": "#/components/schemas/OnboardingStatus"
                 }
               }
             }
@@ -580,35 +570,25 @@
         }
       },
       "put": {
-        "summary": "Update onboarding state for the current user in this workspace",
-        "operationId": "update-workspace-onboarding",
-        "parameters": [
-          {
-            "name": "workspace_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer"
-            }
-          }
-        ],
+        "summary": "Complete onboarding for the current user",
+        "operationId": "complete-onboarding",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateOnboardingRequest"
+                "$ref": "#/components/schemas/CompleteOnboardingRequest"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Updated onboarding state",
+            "description": "Updated onboarding status",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OnboardingState"
+                  "$ref": "#/components/schemas/OnboardingStatus"
                 }
               }
             }
@@ -1508,65 +1488,26 @@
           }
         }
       },
-      "OnboardingStep": {
+      "OnboardingStatus": {
         "type": "object",
         "properties": {
-          "step_id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "completed": {
-            "type": "boolean"
-          },
-          "href": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "required": ["step_id", "label", "completed", "href"]
-      },
-      "OnboardingState": {
-        "type": "object",
-        "properties": {
-          "steps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/OnboardingStep"
-            }
-          },
-          "dismissed": {
-            "type": "boolean"
-          }
-        },
-        "required": ["steps", "dismissed"]
-      },
-      "UpdateOnboardingStepRequest": {
-        "type": "object",
-        "properties": {
-          "step_id": {
-            "type": "string"
-          },
           "completed": {
             "type": "boolean"
           }
         },
-        "required": ["step_id", "completed"]
+        "required": ["completed"]
       },
-      "UpdateOnboardingRequest": {
+      "CompleteOnboardingRequest": {
         "type": "object",
         "properties": {
-          "steps": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/UpdateOnboardingStepRequest"
-            }
+          "version": {
+            "type": "integer"
           },
-          "dismissed": {
-            "type": "boolean"
+          "language_code": {
+            "type": "string"
           }
-        }
+        },
+        "required": ["version"]
       }
     }
   }

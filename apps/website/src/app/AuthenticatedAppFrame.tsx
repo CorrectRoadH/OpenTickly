@@ -4,7 +4,9 @@ import type { WebSessionBootstrapDto } from "../shared/api/web-contract.ts";
 import { usePreferencesQuery } from "../shared/query/web-shell.ts";
 import { SessionProvider } from "../shared/session/session-context.tsx";
 import { AppShell } from "./AppShell.tsx";
+import { normalizeSupportedLanguage } from "./i18n.ts";
 import i18n from "./i18n.ts";
+import { OnboardingDialog } from "../features/onboarding/OnboardingDialog.tsx";
 
 type AuthenticatedAppFrameProps = {
   children: ReactNode;
@@ -24,16 +26,18 @@ export function AuthenticatedAppFrame({
     >
       <LanguageSync />
       <AppShell>{children}</AppShell>
+      <OnboardingDialog />
     </SessionProvider>
   );
 }
 
 function LanguageSync(): null {
   const preferencesQuery = usePreferencesQuery();
-  const languageCode = preferencesQuery.data?.language_code;
+  const languageCode = normalizeSupportedLanguage(preferencesQuery.data?.language_code);
 
   useEffect(() => {
-    if (languageCode && languageCode !== i18n.language) {
+    const normalizedCurrent = normalizeSupportedLanguage(i18n.language);
+    if (languageCode && languageCode !== normalizedCurrent) {
       void i18n.changeLanguage(languageCode);
     }
   }, [languageCode]);
