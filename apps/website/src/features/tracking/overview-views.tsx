@@ -262,12 +262,17 @@ const VIEW_TAB_LABELS: Record<TimerViewMode, string> = {
   list: "List view",
   timesheet: "Timesheet",
 };
+const VIEW_TAB_RADIUS_CLASS: Record<TimerViewMode, string> = {
+  calendar: "rounded-l-[6px]",
+  list: "rounded-none",
+  timesheet: "rounded-r-[6px]",
+};
 
 const viewTabGroupClass =
-  "inline-flex items-center overflow-hidden rounded-[8px] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]";
+  "inline-flex items-center overflow-hidden rounded-[8px] bg-[var(--track-surface-muted)] p-[2px] shadow-[var(--track-depth-shadow-rest)]";
 
 const viewTabClass =
-  "inline-flex h-8 min-w-[96px] items-center justify-center px-4 text-[14px] font-semibold focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-1px] focus-visible:outline-[var(--track-accent-outline)]";
+  "inline-flex h-8 min-w-[96px] items-center justify-center px-4 text-[14px] font-semibold transition-[transform,box-shadow,background-color,color] duration-[var(--duration-fast)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[var(--track-accent-outline)]";
 
 export function CalendarSubviewSelect({
   onChange,
@@ -387,10 +392,10 @@ export function ViewTab({
   return (
     <button
       aria-checked={isSelected}
-      className={`${viewTabClass} ${
+      className={`${viewTabClass} ${VIEW_TAB_RADIUS_CLASS[targetView]} ${
         isSelected
-          ? "translate-y-px bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-text)] shadow-[inset_0_1px_0_0_rgba(0,0,0,0.28)]"
-          : "text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white active:translate-y-px"
+          ? "translate-y-px bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-text)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.32)]"
+          : "text-[var(--track-text-muted)] hover:translate-y-[1px] hover:bg-[var(--track-row-hover)] hover:text-white hover:shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] active:translate-y-px active:shadow-none"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
@@ -531,9 +536,15 @@ export function ListView({
         const groupChecked = isGroupFullySelected(group);
         const groupIndeterminate = isGroupPartiallySelected(group);
         return (
-          <ul key={group.key} className="border-b-[4px] border-[var(--track-border)]">
+          <ul
+            key={group.key}
+            className="grid border-b-[4px] border-[var(--track-border)]"
+            style={{
+              gridTemplateColumns: "1fr 150px 30px auto auto 40px 30px",
+            }}
+          >
             {/* Day header row */}
-            <li className="flex h-[50px] items-center px-5">
+            <li className="col-span-full flex h-[50px] items-center px-5">
               <input
                 aria-label={`Select all entries for ${formatGroupLabel(group.key, timezone)}`}
                 checked={groupChecked}
@@ -577,7 +588,7 @@ export function ListView({
                 return (
                   <li
                     key={`${renderEntry.id ?? "no-id"}-${subIdx}`}
-                    className={`group grid h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
+                    className={`group col-span-full grid h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
                     data-entry-description={renderEntry.description?.trim() || ""}
@@ -586,8 +597,7 @@ export function ListView({
                     }
                     data-testid="time-entry-list-row"
                     style={{
-                      gridTemplateColumns:
-                        "1fr minmax(50px, 180px) 30px 100px 120px 40px 30px",
+                      gridTemplateColumns: "subgrid",
                     }}
                   >
                     {/* Left: checkbox + badge + description + project */}
@@ -684,7 +694,7 @@ export function ListView({
                     {/* Duration */}
                     <button
                       aria-label={`Edit ${renderEntry.description?.trim() || "time entry"}`}
-                      className="flex items-center justify-end text-[14px] font-medium tabular-nums"
+                      className="flex items-center justify-end whitespace-nowrap text-[14px] font-medium tabular-nums"
                       data-testid="time-entry-list-edit-button"
                       onClick={(event) =>
                         onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
@@ -701,7 +711,7 @@ export function ListView({
 
                     {/* Time range */}
                     <button
-                      className="flex items-center justify-end text-[14px] font-medium tabular-nums"
+                      className="flex items-center justify-end whitespace-nowrap pl-3 text-[14px] font-medium tabular-nums"
                       onClick={(event) =>
                         onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
                       }
