@@ -25,7 +25,6 @@ export type SessionOrganizationViewModel = {
   isDefault: boolean;
   isCurrent: boolean;
   name: string;
-  planName: string | null;
   isAdmin: boolean;
   maxWorkspaces: number | null;
   isMultiWorkspaceEnabled: boolean;
@@ -94,7 +93,6 @@ export function mapSessionBootstrap(
           organization,
           organization.id === defaultOrganizationId,
           organization.id === currentOrganizationId,
-          dto.organization_subscription?.plan_name ?? null,
         ),
       )
       .filter(
@@ -106,7 +104,6 @@ export function mapSessionBootstrap(
       dto.organizations.find((entry) => entry.id === currentOrganizationId) ?? null,
       defaultOrganizationId === currentOrganizationId,
       true,
-      dto.organization_subscription?.plan_name ?? null,
     ),
     currentWorkspace: mapWorkspace(selectedWorkspace, true),
     availableWorkspaces: dto.workspaces
@@ -167,7 +164,6 @@ function mapOrganization(
   organization: WebOrganizationSettingsDto | null,
   isDefault: boolean,
   isCurrent: boolean,
-  planName: string | null,
 ): SessionOrganizationViewModel | null {
   if (!organization?.id) {
     return null;
@@ -182,7 +178,6 @@ function mapOrganization(
     isDefault,
     isCurrent,
     name: organization.name ?? "",
-    planName: planName ?? organization.pricing_plan_name ?? null,
     isAdmin: organization.admin ?? false,
     maxWorkspaces: organization.max_workspaces ?? null,
     isMultiWorkspaceEnabled: organization.is_multi_workspace_enabled ?? false,

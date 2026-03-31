@@ -110,15 +110,8 @@ export function ProjectDetailPage({
 
                 <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
                   <HeaderCell label="All members/teams" />
-                  <HeaderCell label="Rate">
-                    <FeatureBadge label="Starter" tone="starter" />
-                  </HeaderCell>
-                  <HeaderCell label="Cost">
-                    <FeatureBadge
-                      label={session.currentWorkspace.isPremium ? "Premium" : "Free"}
-                      tone="premium"
-                    />
-                  </HeaderCell>
+                  <HeaderCell label="Rate" />
+                  <HeaderCell label="Cost" />
                   <HeaderCell label="Role" />
                 </div>
 
@@ -213,26 +206,6 @@ function HeaderCell({ children, label }: { children?: ReactElement; label: strin
       <span>{label}</span>
       {children}
     </div>
-  );
-}
-
-function FeatureBadge({
-  label,
-  tone,
-}: {
-  label: string;
-  tone: "premium" | "starter";
-}): ReactElement {
-  return (
-    <span
-      className={`rounded-full px-2 py-[3px] text-[10px] font-semibold uppercase ${
-        tone === "premium"
-          ? "bg-[var(--track-surface-danger-alt)] text-[var(--track-danger-text-strong)]"
-          : "bg-[var(--track-accent-soft)] text-[var(--track-accent-warm-text)]"
-      }`}
-    >
-      {label}
-    </span>
   );
 }
 

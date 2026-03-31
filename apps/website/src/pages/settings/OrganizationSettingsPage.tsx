@@ -79,14 +79,10 @@ export function OrganizationSettingsPage({
                 Manage organization-wide governance and settings that apply across workspaces.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <SummaryCard
                 label="Organization"
                 value={organizationQuery.data.name ?? "Unnamed org"}
-              />
-              <SummaryCard
-                label="Plan"
-                value={organizationQuery.data.pricing_plan_name ?? "Free"}
               />
               <SummaryCard label="Members" value={String(organizationQuery.data.user_count ?? 0)} />
             </div>

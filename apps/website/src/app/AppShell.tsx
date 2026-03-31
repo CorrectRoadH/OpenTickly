@@ -8,12 +8,12 @@ import {
   useState,
 } from "react";
 
-import { Dropdown, useDropdownClose } from "@opentoggl/web-ui";
+import { Dropdown, MenuSeparator, useDropdownClose } from "@opentoggl/web-ui";
 
 import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
-import { FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
+import { ChevronRightIcon, FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
 import {
   formatClockDuration,
   resolveEntryDurationSeconds,
@@ -296,81 +296,93 @@ function ProfileMenuContent({
   const close = useDropdownClose();
 
   return (
-    <div role="menu">
-      {/* User info */}
-      <div className="flex items-center gap-3 px-5 py-4">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[14px] font-semibold text-white">{name}</p>
-          <p className="truncate text-[12px] text-[var(--track-text-muted)]">{email}</p>
-        </div>
+    <div className="p-2" role="menu">
+      <div className="flex items-center gap-3 px-3 py-3">
         <UserAvatar
-          className="size-[40px] shrink-0 overflow-hidden"
+          className="size-[42px] shrink-0 overflow-hidden border border-[var(--track-border)]"
           imageUrl={imageUrl}
           name={name}
           textClassName="text-[14px] font-semibold"
         />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-semibold text-white">{name}</p>
+          <p className="truncate text-[12px] text-[var(--track-text-muted)]">{email}</p>
+        </div>
       </div>
 
-      <div className="mx-4 border-t border-[var(--track-border)]" />
+      <MenuSeparator />
 
-      {/* Menu items */}
-      <div className="py-1">
-        <button
-          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+      <div className="space-y-1 py-1">
+        <ProfileMenuAction
+          label="Profile settings"
           onClick={() => {
             close();
             void navigate({ to: "/profile" });
           }}
-          role="menuitem"
-          type="button"
-        >
-          Profile settings
-        </button>
-        <button
-          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+        />
+        <ProfileMenuAction
+          label="Account settings"
           onClick={() => {
             close();
             void navigate({ to: "/account" });
           }}
-          role="menuitem"
-          type="button"
-        >
-          Account settings
-        </button>
-        <button
-          className="flex w-full items-center justify-between px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+        />
+        <ProfileMenuAction
+          label="Keyboard shortcuts"
           onClick={() => {
             close();
             onShortcuts();
           }}
-          role="menuitem"
-          type="button"
-        >
-          <span>Keyboard shortcuts</span>
-          <kbd className="flex size-[22px] items-center justify-center rounded-[5px] border border-[var(--track-border)] text-[12px] font-medium text-[var(--track-text-muted)]">
-            ?
-          </kbd>
-        </button>
+          trailing={
+            <kbd className="flex h-5 min-w-5 items-center justify-center rounded-[5px] border border-[var(--track-border)] px-1 text-[11px] font-medium text-[var(--track-text-muted)]">
+              ?
+            </kbd>
+          }
+        />
       </div>
 
-      <div className="mx-4 border-t border-[var(--track-border)]" />
+      <MenuSeparator />
 
       <div className="py-1">
-        <button
-          className="flex w-full items-center px-5 py-2.5 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+        <ProfileMenuAction
+          destructive
+          label="Log out"
           onClick={() => {
             close();
             void logoutMutation.mutateAsync().then(() => {
               window.location.href = "/";
             });
           }}
-          role="menuitem"
-          type="button"
-        >
-          Log out
-        </button>
+          trailing={null}
+        />
       </div>
     </div>
+  );
+}
+
+function ProfileMenuAction({
+  destructive = false,
+  label,
+  onClick,
+  trailing = <ChevronRightIcon className="size-4 text-[var(--track-text-muted)]" />,
+}: {
+  destructive?: boolean;
+  label: string;
+  onClick: () => void;
+  trailing?: ReactNode;
+}): ReactElement {
+  return (
+    <button
+      className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-[13px] font-medium transition hover:bg-[var(--track-row-hover)] ${
+        destructive ? "text-[var(--track-danger-text)]" : "text-white"
+      }`}
+      onClick={onClick}
+      role="menuitem"
+      type="button"
+    >
+      <span>{label}</span>
+      {trailing}
+    </button>
   );
 }
 

@@ -125,7 +125,7 @@ describe("WorkspaceSwitcher", () => {
     expect(within(listbox).getByRole("button", { name: /Beta Org/ })).toBeTruthy();
   });
 
-  it("shows a single default badge, exposes set-to-default on hover, and marks the current organization with a trailing check", () => {
+  it("shows a single default badge, exposes set default as an inline action, and keeps the current organization marked with a trailing check", () => {
     const onChange = vi.fn();
     const onSetDefault = vi.fn();
 
@@ -168,13 +168,12 @@ describe("WorkspaceSwitcher", () => {
 
     expect(screen.getAllByText("Default")).toHaveLength(1);
     expect(screen.getByRole("button", { name: /Alpha Org/ })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Set to default Beta Org" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Set default" })).toBeTruthy();
     expect(screen.getByLabelText("Current organization")).toBeTruthy();
-    expect(screen.queryByText("Selected")).toBeNull();
+    expect(screen.queryByText("Current organization")).toBeNull();
 
     const betaOrganizationButton = screen.getByRole("button", { name: /Beta Org/ });
-    fireEvent.mouseEnter(betaOrganizationButton.parentElement!);
-    fireEvent.click(screen.getByRole("button", { name: "Set to default Beta Org" }));
+    fireEvent.click(screen.getByRole("button", { name: "Set default" }));
 
     expect(onSetDefault).toHaveBeenCalledWith(202);
     expect(screen.getAllByText("Default")).toHaveLength(1);
@@ -195,7 +194,6 @@ function createOrganization(overrides: Partial<OrganizationFixture> = {}): Organ
     isMultiWorkspaceEnabled: true,
     maxWorkspaces: 12,
     name: "Alpha Org",
-    planName: "Starter",
     userCount: 3,
     ...overrides,
   };
@@ -210,6 +208,5 @@ type OrganizationFixture = {
   isMultiWorkspaceEnabled: boolean;
   maxWorkspaces: number | null;
   name: string;
-  planName: string | null;
   userCount: number | null;
 };

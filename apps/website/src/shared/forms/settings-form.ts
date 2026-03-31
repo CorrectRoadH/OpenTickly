@@ -12,7 +12,6 @@ import type {
 export const organizationSettingsFormSchema = z.object({
   name: z.string().min(1),
   maxWorkspaces: z.number().int().nonnegative(),
-  planName: z.string().min(1),
   isMultiWorkspaceEnabled: z.boolean(),
   userCount: z.number().int().nonnegative(),
 });
@@ -48,7 +47,6 @@ export function createOrganizationSettingsFormValues(
   return {
     name: organization.name ?? "",
     maxWorkspaces: organization.max_workspaces ?? 0,
-    planName: organization.pricing_plan_name ?? "Free",
     isMultiWorkspaceEnabled: organization.is_multi_workspace_enabled ?? false,
     userCount: organization.user_count ?? 0,
   };

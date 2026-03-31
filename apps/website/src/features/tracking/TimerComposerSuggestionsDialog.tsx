@@ -1,5 +1,6 @@
 import { type ReactElement, useMemo, useRef, useState } from "react";
 
+import { MenuSeparator } from "@opentoggl/web-ui";
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
@@ -78,21 +79,22 @@ export function TimerComposerSuggestionsDialog({
     >
       <div
         aria-label="Timer suggestions"
-        className="pointer-events-auto absolute w-[580px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]"
+        className="pointer-events-auto absolute w-[520px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_18px_48px_var(--track-shadow-overlay)]"
         data-testid="timer-composer-suggestions-dialog"
         ref={dialogRef}
         role="dialog"
         style={position}
       >
-        {/* Workspace selector */}
-        <div className="flex items-center gap-3 px-5 py-3">
-          <WsBriefcaseIcon />
-          <span className="min-w-0 flex-1 truncate text-[14px] font-medium text-white">
+        <div className="flex items-center gap-2.5 px-3 py-2.5">
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)]">
+            <WsBriefcaseIcon />
+          </div>
+          <p className="min-w-0 flex-1 truncate text-[13px] font-semibold text-white">
             {currentWorkspaceName}
-          </span>
+          </p>
           <div className="relative">
             <button
-              className="flex items-center gap-1 text-[14px] text-[var(--track-text-muted)] transition hover:text-white"
+              className="flex items-center gap-1 rounded-[7px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] px-2 py-1 text-[11px] font-semibold text-[var(--track-text-muted)] transition hover:text-white"
               onClick={() => setWorkspaceMenuOpen((current) => !current)}
               type="button"
             >
@@ -100,10 +102,10 @@ export function TimerComposerSuggestionsDialog({
               <ChevronDownIcon />
             </button>
             {workspaceMenuOpen ? (
-              <div className="absolute right-0 top-8 z-10 min-w-[240px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] py-2 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
+              <div className="absolute right-0 top-8 z-10 min-w-[220px] rounded-[10px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1 shadow-[0_16px_32px_var(--track-shadow-subtle)]">
                 {workspaces.map((workspace) => (
                   <button
-                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left text-[14px] transition hover:bg-white/4 ${
+                    className={`flex w-full items-center justify-between rounded-[8px] px-2.5 py-2 text-left text-[12px] transition hover:bg-white/4 ${
                       workspace.id === currentWorkspaceId
                         ? "text-white"
                         : "text-[var(--track-overlay-text-muted)]"
@@ -117,7 +119,9 @@ export function TimerComposerSuggestionsDialog({
                   >
                     <span className="truncate">{workspace.name}</span>
                     {workspace.id === currentWorkspaceId ? (
-                      <span className="text-[12px] text-[var(--track-accent-text)]">Current</span>
+                      <span className="text-[11px] font-semibold text-[var(--track-accent-text)]">
+                        Current
+                      </span>
                     ) : null}
                   </button>
                 ))}
@@ -128,47 +132,22 @@ export function TimerComposerSuggestionsDialog({
 
         {filteredFavorites.length > 0 ? (
           <>
-            <div className="px-5 pb-1 pt-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
-                Favorites
-              </div>
-            </div>
-            <div>
+            <MenuSeparator />
+            <SuggestionSectionTitle title="Favorites" />
+            <div className="px-1.5 pb-1.5">
               {filteredFavorites.map((fav) => {
                 const label = fav.description?.trim() || fav.project_name || "Untitled";
                 const projectLabel = fav.project_name?.trim();
                 const projectColor = fav.project_color?.trim();
                 return (
-                  <button
-                    className="flex w-full items-center overflow-hidden px-5 py-2 text-left transition hover:bg-white/4"
+                  <SuggestionRow
                     key={fav.favorite_id}
                     onClick={() => onFavoriteSelect?.(fav)}
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    <PlayIcon className="mr-2 size-3 shrink-0 text-[var(--track-text-muted)]" />
-                    <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[14px]">
-                      {fav.description?.trim() ? (
-                        <span className="truncate text-[var(--track-overlay-text-quiet)]">
-                          {label}
-                        </span>
-                      ) : null}
-                      {projectLabel ? (
-                        <span className="flex shrink-0 items-center gap-1.5">
-                          <span
-                            className="size-[6px] shrink-0 rounded-full"
-                            style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
-                          />
-                          <span
-                            className="truncate text-[14px]"
-                            style={{ color: projectColor ?? "var(--track-text-muted)" }}
-                          >
-                            {projectLabel}
-                          </span>
-                        </span>
-                      ) : null}
-                    </span>
-                  </button>
+                    prefix={<PlayIcon className="size-3.5 text-[var(--track-text-muted)]" />}
+                    subtitle={projectLabel}
+                    subtitleColor={projectColor ?? "var(--track-text-muted)"}
+                    title={label}
+                  />
                 );
               })}
             </div>
@@ -177,46 +156,31 @@ export function TimerComposerSuggestionsDialog({
 
         {previousEntries.length > 0 ? (
           <>
-            <div className="px-5 pb-1 pt-2">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
-                Previously tracked time entries
-              </div>
-            </div>
-            <div>
+            <MenuSeparator />
+            <SuggestionSectionTitle title="Previously tracked time entries" />
+            <div className="px-1.5 pb-1.5">
               {previousEntries.map((entry) => {
                 const hasDescription = Boolean(entry.description?.trim());
                 const projectLabel = entry.project_name?.trim();
                 const projectColor = entry.project_color?.trim();
                 return (
-                  <button
-                    className="flex w-full items-center overflow-hidden px-5 py-2 text-left transition hover:bg-white/4"
+                  <SuggestionRow
                     key={buildEntryKey(entry)}
                     onClick={() => onTimeEntrySelect(entry)}
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-[14px]">
-                      {hasDescription ? (
-                        <span className="truncate text-[var(--track-overlay-text-quiet)]">
-                          {entry.description?.trim()}
-                        </span>
-                      ) : null}
-                      {projectLabel ? (
-                        <span className="flex shrink-0 items-center gap-1.5">
-                          <span
-                            className="size-[6px] shrink-0 rounded-full"
-                            style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
-                          />
-                          <span
-                            className="truncate text-[14px]"
-                            style={{ color: projectColor ?? "var(--track-text-muted)" }}
-                          >
-                            {projectLabel}
-                          </span>
-                        </span>
-                      ) : null}
-                    </span>
-                  </button>
+                    prefix={
+                      <span
+                        className="size-[7px] rounded-full"
+                        style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
+                      />
+                    }
+                    subtitle={projectLabel}
+                    subtitleColor={projectColor ?? "var(--track-text-muted)"}
+                    title={
+                      hasDescription
+                        ? (entry.description?.trim() ?? "")
+                        : projectLabel || "Untitled"
+                    }
+                  />
                 );
               })}
             </div>
@@ -225,34 +189,29 @@ export function TimerComposerSuggestionsDialog({
 
         {suggestedProjects.length > 0 ? (
           <>
-            <div className="px-5 pb-1 pt-3">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
-                Projects
-              </div>
-            </div>
-            <div className="pb-2">
+            <MenuSeparator />
+            <SuggestionSectionTitle title="Projects" />
+            <div className="px-1.5 pb-1.5">
               {suggestedProjects.map((project) => {
                 const color = resolveProjectColorValue(project);
                 return (
-                  <button
-                    className="flex w-full items-center gap-1.5 overflow-hidden px-5 py-2 text-left transition hover:bg-white/4"
+                  <SuggestionRow
                     key={project.id}
                     onClick={() => {
                       if (project.id != null) {
                         onProjectSelect(project.id);
                       }
                     }}
-                    tabIndex={-1}
-                    type="button"
-                  >
-                    <span
-                      className="size-[6px] shrink-0 rounded-full"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="truncate text-[14px]" style={{ color }}>
-                      {project.name?.trim() || "Untitled project"}
-                    </span>
-                  </button>
+                    prefix={
+                      <span
+                        className="size-[7px] rounded-full"
+                        style={{ backgroundColor: color }}
+                      />
+                    }
+                    subtitle="Project"
+                    title={project.name?.trim() || "Untitled project"}
+                    titleColor={color}
+                  />
                 );
               })}
             </div>
@@ -290,6 +249,61 @@ function ChevronDownIcon(): ReactElement {
       size={10}
       strokeWidth={2}
     />
+  );
+}
+
+function SuggestionSectionTitle({ title }: { title: string }): ReactElement {
+  return (
+    <div className="px-3 pb-0.5 pt-2.5">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
+        {title}
+      </div>
+    </div>
+  );
+}
+
+function SuggestionRow({
+  onClick,
+  prefix,
+  subtitle,
+  subtitleColor,
+  title,
+  titleColor,
+}: {
+  onClick: () => void;
+  prefix?: ReactElement;
+  subtitle?: string;
+  subtitleColor?: string;
+  title: string;
+  titleColor?: string;
+}): ReactElement {
+  return (
+    <button
+      className="flex w-full items-center gap-2.5 overflow-hidden rounded-[9px] px-2.5 py-2 text-left transition hover:bg-white/4"
+      onClick={onClick}
+      tabIndex={-1}
+      type="button"
+    >
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--track-overlay-surface-raised)] text-[var(--track-text-muted)]">
+        {prefix ?? <PlayIcon className="size-3.5" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span
+          className="block truncate text-[13px] font-medium"
+          style={{ color: titleColor ?? "white" }}
+        >
+          {title}
+        </span>
+        {subtitle ? (
+          <span
+            className="mt-0.5 block truncate text-[11px]"
+            style={{ color: subtitleColor ?? "var(--track-text-muted)" }}
+          >
+            {subtitle}
+          </span>
+        ) : null}
+      </span>
+    </button>
   );
 }
 

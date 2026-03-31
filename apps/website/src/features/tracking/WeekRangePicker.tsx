@@ -91,13 +91,12 @@ export function WeekRangePicker({
 
   return (
     <div className="relative" ref={rootRef}>
-      {/* Outer pill: prev arrow + label trigger + next arrow */}
-      <div className="flex h-9 min-w-[220px] items-center rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] text-white">
+      <div className="flex h-10 min-w-[228px] items-center gap-1 rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] px-1 text-white shadow-[var(--track-depth-shadow-rest)]">
         <button
           aria-label={
             mode === "day" ? "Previous day" : mode === "range" ? "Previous period" : "Previous week"
           }
-          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
+          className={`flex size-8 shrink-0 items-center justify-center rounded-[8px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
           onClick={onPrev}
           type="button"
@@ -108,7 +107,7 @@ export function WeekRangePicker({
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label={`${label}. Press Enter to open date picker.`}
-          className="flex min-w-0 flex-1 items-center justify-center gap-2 px-1 text-left"
+          className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-[8px] px-3 text-left transition hover:bg-[var(--track-row-hover)]"
           onClick={() => setIsOpen((current) => !current)}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
@@ -120,11 +119,11 @@ export function WeekRangePicker({
           type="button"
         >
           <CalendarIcon className="size-4 shrink-0 text-[var(--track-text-muted)]" />
-          <span className="truncate text-[12px] font-medium">{label}</span>
+          <span className="truncate text-[12px] font-semibold">{label}</span>
         </button>
         <button
           aria-label={mode === "day" ? "Next day" : mode === "range" ? "Next period" : "Next week"}
-          className={`flex size-9 shrink-0 items-center justify-center text-[var(--track-text-muted)] transition hover:text-white ${disabled ? "opacity-40" : ""}`}
+          className={`flex size-8 shrink-0 items-center justify-center rounded-[8px] text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white ${disabled ? "opacity-40" : ""}`}
           disabled={disabled}
           onClick={onNext}
           type="button"
@@ -137,7 +136,7 @@ export function WeekRangePicker({
         <div
           aria-label="Select date range"
           aria-modal="false"
-          className={`absolute left-0 top-[calc(100%+8px)] z-30 rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_4px_16px_var(--track-shadow-tooltip)] ${hasSidebar ? "w-[480px]" : "w-[320px]"}`}
+          className={`absolute left-0 top-[calc(100%+8px)] z-30 rounded-[12px] border border-[var(--track-border)] bg-[var(--track-surface)] p-4 shadow-[0_18px_48px_var(--track-shadow-elevated)] ${hasSidebar ? "w-[480px]" : "w-[320px]"}`}
           data-testid="week-range-dialog"
           role="dialog"
         >

@@ -1,21 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { SelectButton } from "@opentoggl/web-ui";
 import {
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type MutableRefObject,
-  type ReactElement,
-} from "react";
-import { createPortal } from "react-dom";
+  AppButton,
+  Dropdown,
+  MenuSeparator,
+  SelectButton,
+  useDropdownClose,
+} from "@opentoggl/web-ui";
+import { useEffect, useId, useRef, useState, type ReactElement } from "react";
 
 import type { SessionOrganizationViewModel } from "../../entities/session/session-bootstrap.ts";
 import { useCreateOrganizationMutation } from "../../shared/query/web-shell.ts";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
-import { CheckIcon, MembersIcon, OverviewIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
+import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
+import { CheckIcon, ChevronRightIcon, MembersIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 
 type WorkspaceSwitcherProps = {
   currentOrganization: SessionOrganizationViewModel | null;
@@ -24,12 +21,6 @@ type WorkspaceSwitcherProps = {
   onChange: (workspaceId: number) => void;
   onSetDefault?: (workspaceId: number) => Promise<void> | void;
   organizations: SessionOrganizationViewModel[];
-};
-
-type FloatingPanelPosition = {
-  left: number;
-  top: number;
-  width: number;
 };
 
 export function WorkspaceSwitcher({
@@ -41,17 +32,13 @@ export function WorkspaceSwitcher({
   organizations,
 }: WorkspaceSwitcherProps): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [optimisticOrganization, setOptimisticOrganization] =
     useState<SessionOrganizationViewModel | null>(null);
   const [optimisticDefaultWorkspaceId, setOptimisticDefaultWorkspaceId] = useState<number | null>(
     null,
   );
   const [organizationName, setOrganizationName] = useState("");
-  const [panelPosition, setPanelPosition] = useState<FloatingPanelPosition | null>(null);
-  const rootRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null!);
   const listboxId = useId();
   const createOrganizationMutation = useCreateOrganizationMutation();
   const displayedOrganizations = applyOptimisticDefault(
@@ -93,73 +80,6 @@ export function WorkspaceSwitcher({
     }
   }, [optimisticDefaultWorkspaceId, organizations]);
 
-  useEffect(() => {
-    function handlePointerDown(event: MouseEvent) {
-      const target = event.target as Node;
-
-      if (!rootRef.current?.contains(target) && !panelRef.current?.contains(target)) {
-        setIsOpen(false);
-      }
-    }
-
-    function handleKeyDown(event: globalThis.KeyboardEvent) {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-
-        if (!createDialogOpen) {
-          buttonRef.current?.focus();
-        }
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [createDialogOpen]);
-
-  useLayoutEffect(() => {
-    if (!isOpen || !buttonRef.current) {
-      return;
-    }
-
-    function updatePanelPosition() {
-      const rect = buttonRef.current?.getBoundingClientRect();
-
-      if (!rect) {
-        return;
-      }
-
-      const width = Math.min(620, Math.max(rect.width + 304, 360));
-      const maxLeft = Math.max(16, window.innerWidth - width - 16);
-
-      setPanelPosition({
-        left: Math.min(rect.left, maxLeft),
-        top: rect.bottom + 10,
-        width,
-      });
-    }
-
-    updatePanelPosition();
-    window.addEventListener("resize", updatePanelPosition);
-    window.addEventListener("scroll", updatePanelPosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updatePanelPosition);
-      window.removeEventListener("scroll", updatePanelPosition, true);
-    };
-  }, [isOpen]);
-
-  function handleButtonKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
-    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      setIsOpen(true);
-    }
-  }
-
   function handleSelectOrganization(organization: SessionOrganizationViewModel) {
     if (!organization.defaultWorkspaceId) {
       return;
@@ -167,7 +87,6 @@ export function WorkspaceSwitcher({
 
     setOptimisticOrganization(null);
     onChange(organization.defaultWorkspaceId);
-    setIsOpen(false);
     buttonRef.current?.focus();
   }
 
@@ -197,7 +116,6 @@ export function WorkspaceSwitcher({
         isMultiWorkspaceEnabled: true,
         maxWorkspaces: null,
         name: nextOrganizationName,
-        planName: visibleOrganization?.planName ?? "Free",
         userCount: 1,
       });
       onChange(createdWorkspaceId);
@@ -205,45 +123,38 @@ export function WorkspaceSwitcher({
   }
 
   return (
-    <div className="relative w-full" ref={rootRef}>
+    <div className="relative w-full">
       <span className="sr-only" id={`${listboxId}-label`}>
         Organization
       </span>
-      <SelectButton
-        aria-controls={listboxId}
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-labelledby={`${listboxId}-label`}
-        onClick={() => {
-          setIsOpen((open) => !open);
-        }}
-        onKeyDown={handleButtonKeyDown}
-        ref={buttonRef}
+      <Dropdown
+        panelClassName="w-[min(360px,calc(100vw-2rem))] rounded-[12px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
+        testId="workspace-switcher-panel"
+        trigger={
+          <SelectButton
+            aria-controls={listboxId}
+            aria-haspopup="listbox"
+            aria-labelledby={`${listboxId}-label`}
+            ref={buttonRef}
+          >
+            {visibleOrganization?.name ?? ""}
+          </SelectButton>
+        }
       >
-        {visibleOrganization?.name ?? ""}
-      </SelectButton>
-
-      {isOpen && panelPosition
-        ? createPortal(
-            <OrganizationOptionsPanel
-              inviteMembersPath={inviteMembersPath}
-              listboxId={listboxId}
-              managePath={managePath}
-              onCreateOrganization={() => {
-                setIsOpen(false);
-                setCreateDialogOpen(true);
-              }}
-              onSelectOrganization={handleSelectOrganization}
-              onSetDefaultRequested={setOptimisticDefaultWorkspaceId}
-              onSetDefault={onSetDefault}
-              organization={visibleOrganization}
-              organizations={displayedOrganizations}
-              panelPosition={panelPosition}
-              panelRef={panelRef}
-            />,
-            document.body,
-          )
-        : null}
+        <OrganizationOptionsPanel
+          inviteMembersPath={inviteMembersPath}
+          listboxId={listboxId}
+          managePath={managePath}
+          onCreateOrganization={() => {
+            setCreateDialogOpen(true);
+          }}
+          onSelectOrganization={handleSelectOrganization}
+          onSetDefaultRequested={setOptimisticDefaultWorkspaceId}
+          onSetDefault={onSetDefault}
+          organization={visibleOrganization}
+          organizations={displayedOrganizations}
+        />
+      </Dropdown>
 
       {createDialogOpen ? (
         <CreateNameDialog
@@ -338,8 +249,6 @@ function OrganizationOptionsPanel({
   onSetDefault,
   organization,
   organizations,
-  panelPosition,
-  panelRef,
 }: {
   inviteMembersPath?: string;
   listboxId: string;
@@ -350,166 +259,176 @@ function OrganizationOptionsPanel({
   onSetDefault?: (workspaceId: number) => void;
   organization: SessionOrganizationViewModel | null;
   organizations: SessionOrganizationViewModel[];
-  panelPosition: FloatingPanelPosition;
-  panelRef: MutableRefObject<HTMLDivElement | null>;
 }): ReactElement {
-  const planName = organization?.planName ? `${organization.planName} plan` : "Free plan";
+  const close = useDropdownClose();
   const memberCount = organization?.userCount ?? 1;
-  const [hoveredOrganizationId, setHoveredOrganizationId] = useState<number | null>(null);
 
   return (
-    <div
-      className="fixed z-50 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5 shadow-[0_18px_48px_var(--track-shadow-elevated)]"
-      data-testid="workspace-switcher-panel"
-      ref={(node) => {
-        panelRef.current = node;
-      }}
-      style={{
-        left: panelPosition.left,
-        top: panelPosition.top,
-        width: panelPosition.width,
-      }}
-    >
-      <div className="space-y-5">
-        <div className="flex items-center gap-5">
-          <div className="flex size-[74px] items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-soft)]">
-            <OverviewIcon className="size-8" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="truncate text-[14px] font-semibold leading-[23px] text-white">
-              {organization?.name ?? ""}
-            </h2>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          {managePath ? (
-            <Link
-              className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
-              to={managePath}
-            >
-              <SettingsIcon className="size-5" />
-              <span>Manage</span>
-            </Link>
-          ) : (
-            <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
-              <SettingsIcon className="size-5" />
-              <span>Manage</span>
-            </div>
-          )}
-
-          {inviteMembersPath ? (
-            <Link
-              className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-white transition hover:bg-[var(--track-row-hover)]"
-              to={inviteMembersPath}
-            >
-              <MembersIcon className="size-5" />
-              <span>Invite members</span>
-            </Link>
-          ) : (
-            <div className="flex h-12 items-center justify-center gap-3 rounded-[8px] border border-[var(--track-border)] text-[14px] font-semibold text-[var(--track-text-soft)]">
-              <MembersIcon className="size-5" />
-              <span>Invite members</span>
-            </div>
-          )}
-        </div>
-
-        <div className="border-t border-[var(--track-border)] pt-5 text-[14px] leading-6 text-[var(--track-text-muted)]">
-          Your organization is currently on {planName} with {memberCount} member
-          {memberCount === 1 ? "" : "s"}.
-        </div>
-
-        <div className="border-t border-[var(--track-border)] pt-5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            Organizations
+    <div className="p-2">
+      <div className="flex items-center gap-3 px-3 py-3.5">
+        <UserAvatar
+          className="size-12 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
+          name={organization?.name ?? "Organization"}
+          textClassName="text-[18px] font-semibold"
+        />
+        <div className="min-w-0 flex-1">
+          <h2 className="truncate text-[14px] font-semibold leading-5 text-white">
+            {organization?.name ?? ""}
+          </h2>
+          <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
+            {memberCount} member{memberCount === 1 ? "" : "s"}
           </p>
-          <ul
-            aria-labelledby={`${listboxId}-label`}
-            className="mt-4 space-y-2"
-            id={listboxId}
-            role="listbox"
-          >
-            {organizations.map((entry) => {
-              const selected = entry.isCurrent;
-              const showSetDefault =
-                !entry.isDefault && entry.defaultWorkspaceId != null && onSetDefault != null;
-
-              return (
-                <li aria-selected={selected} key={entry.id} role="option">
-                  <div
-                    className="flex items-center gap-3 rounded-[8px] px-2 py-3 transition hover:bg-[var(--track-row-hover)]"
-                    onMouseEnter={() => {
-                      setHoveredOrganizationId(entry.id);
-                    }}
-                    onMouseLeave={() => {
-                      setHoveredOrganizationId((current) =>
-                        current === entry.id ? null : current,
-                      );
-                    }}
-                  >
-                    <button
-                      className="flex min-w-0 flex-1 items-center gap-4 text-left"
-                      onClick={() => {
-                        onSelectOrganization(entry);
-                      }}
-                      type="button"
-                    >
-                      <span className="flex size-7 shrink-0 items-center justify-center text-[var(--track-text-soft)]">
-                        <OverviewIcon className="size-5" />
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-white">
-                        {entry.name}
-                      </span>
-                    </button>
-                    <div className="ml-auto flex shrink-0 items-center gap-3">
-                      {entry.isDefault ? (
-                        <span className="rounded-full border border-[var(--track-border)] px-3 py-1 text-[11px] font-semibold text-[var(--track-text-muted)]">
-                          Default
-                        </span>
-                      ) : null}
-                      {showSetDefault && hoveredOrganizationId === entry.id ? (
-                        <button
-                          aria-label={`Set to default ${entry.name}`}
-                          className="text-[12px] font-semibold text-[var(--track-accent)] transition hover:text-white"
-                          onClick={() => {
-                            onSetDefaultRequested(entry.defaultWorkspaceId!);
-                            void Promise.resolve(onSetDefault(entry.defaultWorkspaceId!)).catch(
-                              () => {
-                                onSetDefaultRequested(null);
-                              },
-                            );
-                          }}
-                          type="button"
-                        >
-                          Set to default
-                        </button>
-                      ) : null}
-                      {selected ? (
-                        <span
-                          aria-label="Current organization"
-                          className="text-[var(--track-accent)]"
-                        >
-                          <CheckIcon className="size-4" />
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-
-        <div className="border-t border-[var(--track-border)] pt-5">
-          <button
-            className="text-[14px] font-semibold leading-[23px] text-white transition hover:text-[var(--track-accent-text)]"
-            onClick={onCreateOrganization}
-            type="button"
-          >
-            Create organization
-          </button>
         </div>
       </div>
+
+      <MenuSeparator />
+
+      <div className="space-y-1 py-1">
+        <OrganizationActionLink
+          icon={<SettingsIcon className="size-4" />}
+          label="Manage"
+          muted={!managePath}
+          to={managePath}
+        />
+        <OrganizationActionLink
+          icon={<MembersIcon className="size-4" />}
+          label="Invite members"
+          muted={!inviteMembersPath}
+          to={inviteMembersPath}
+        />
+      </div>
+
+      <div className="px-3 pb-1 pt-3">
+        <AppButton
+          className="w-full justify-center"
+          onClick={() => {
+            close();
+            onCreateOrganization();
+          }}
+          variant="secondary"
+        >
+          Create organization
+        </AppButton>
+      </div>
+
+      <MenuSeparator />
+
+      <div className="px-3 pb-3 pt-3">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+          Organizations
+        </p>
+        <ul
+          aria-labelledby={`${listboxId}-label`}
+          className="mt-2 space-y-1"
+          id={listboxId}
+          role="listbox"
+        >
+          {organizations.map((entry) => {
+            const selected = entry.isCurrent;
+            const showSetDefault =
+              !entry.isDefault && entry.defaultWorkspaceId != null && onSetDefault != null;
+
+            return (
+              <li aria-selected={selected} key={entry.id} role="option">
+                <div className="flex items-center gap-2 rounded-[10px] px-2 py-2 transition hover:bg-[var(--track-row-hover)]">
+                  <button
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    onClick={() => {
+                      close();
+                      onSelectOrganization(entry);
+                    }}
+                    type="button"
+                  >
+                    <UserAvatar
+                      className="size-9 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
+                      name={entry.name}
+                      textClassName="text-[14px] font-semibold"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14px] font-semibold text-white">
+                        {entry.name}
+                      </span>
+                    </span>
+                  </button>
+                  <div className="ml-auto flex shrink-0 items-center gap-2">
+                    {entry.isDefault ? (
+                      <span className="rounded-full border border-[var(--track-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+                        Default
+                      </span>
+                    ) : null}
+                    {showSetDefault ? (
+                      <button
+                        className="h-6 rounded-[6px] border border-[var(--track-border)] px-2 text-[10px] font-semibold text-[var(--track-text-muted)] transition hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
+                        onClick={() => {
+                          onSetDefaultRequested(entry.defaultWorkspaceId!);
+                          void Promise.resolve(onSetDefault(entry.defaultWorkspaceId!)).catch(
+                            () => {
+                              onSetDefaultRequested(null);
+                            },
+                          );
+                        }}
+                        type="button"
+                      >
+                        Set default
+                      </button>
+                    ) : null}
+                    {selected ? (
+                      <span
+                        aria-label="Current organization"
+                        className="text-[var(--track-accent)]"
+                      >
+                        <CheckIcon className="size-4" />
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
+  );
+}
+
+function OrganizationActionLink({
+  icon,
+  label,
+  muted = false,
+  to,
+}: {
+  icon: ReactElement;
+  label: string;
+  muted?: boolean;
+  to?: string;
+}): ReactElement {
+  const content = (
+    <>
+      <span className="flex items-center gap-3">
+        <span
+          className={muted ? "text-[var(--track-text-soft)]" : "text-[var(--track-text-muted)]"}
+        >
+          {icon}
+        </span>
+        <span>{label}</span>
+      </span>
+      {!muted ? <ChevronRightIcon className="size-4 text-[var(--track-text-muted)]" /> : null}
+    </>
+  );
+
+  const className = `flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-left text-[14px] font-medium transition ${
+    muted
+      ? "cursor-default text-[var(--track-text-soft)]"
+      : "text-white hover:bg-[var(--track-row-hover)]"
+  }`;
+
+  if (!to || muted) {
+    return <div className={className}>{content}</div>;
+  }
+
+  return (
+    <Link className={className} to={to}>
+      {content}
+    </Link>
   );
 }

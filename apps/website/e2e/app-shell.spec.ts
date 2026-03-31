@@ -159,7 +159,7 @@ test.describe("Story: enter the tracking shell", () => {
       workspaceListbox.locator("li", {
         has: page.getByRole("button", { name: initialOrganizationName }),
       }),
-    ).not.toContainText("Set to default");
+    ).not.toContainText("Set default");
 
     await page.getByRole("button", { name: "Create organization" }).click();
 
@@ -183,10 +183,7 @@ test.describe("Story: enter the tracking shell", () => {
     const currentOrganizationRow = workspaceListbox.locator("li", {
       has: page.getByRole("button", { name: secondOrganizationName }),
     });
-    await currentOrganizationRow.hover();
-    await currentOrganizationRow
-      .getByRole("button", { name: `Set to default ${secondOrganizationName}` })
-      .click();
+    await currentOrganizationRow.getByRole("button", { name: "Set default" }).click();
 
     await expect
       .poll(async () => (await pollSessionBootstrap(page))?.user?.default_workspace_id)

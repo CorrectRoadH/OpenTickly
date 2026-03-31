@@ -19,7 +19,6 @@ export const defaultSessionSnapshot: SessionSnapshot = {
       isMultiWorkspaceEnabled: true,
       maxWorkspaces: 12,
       name: "North Ridge Org",
-      planName: "Starter",
       userCount: 8,
     },
   ],
@@ -41,7 +40,6 @@ export const defaultSessionSnapshot: SessionSnapshot = {
     isMultiWorkspaceEnabled: true,
     maxWorkspaces: 12,
     name: "North Ridge Org",
-    planName: "Starter",
     userCount: 8,
   },
   currentWorkspace: {

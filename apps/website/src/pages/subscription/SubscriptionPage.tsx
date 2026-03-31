@@ -50,12 +50,7 @@ export function SubscriptionPage(): ReactElement {
               <SubscriptionIcon className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[14px] font-semibold leading-6 text-white">Self-Hosted</h2>
-                <span className="rounded-full bg-[var(--track-accent)] px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-white">
-                  Free
-                </span>
-              </div>
+              <h2 className="text-[14px] font-semibold leading-6 text-white">Self-Hosted</h2>
               <p className="mt-1.5 text-[14px] leading-5 text-[var(--track-text-muted)]">
                 You are running a self-hosted instance of OpenToggl. All features are included at no
                 cost for{" "}
@@ -70,8 +65,8 @@ export function SubscriptionPage(): ReactElement {
               <span className="text-white">{workspaceName}</span>
             </div>
             <div>
-              <span className="text-[var(--track-text-soft)]">Plan</span>{" "}
-              <span className="text-white">Unlimited</span>
+              <span className="text-[var(--track-text-soft)]">Access</span>{" "}
+              <span className="text-white">All features included</span>
             </div>
             <div>
               <span className="text-[var(--track-text-soft)]">Billing</span>{" "}
