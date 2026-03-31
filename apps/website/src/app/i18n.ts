@@ -2,6 +2,27 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import resourcesToBackend from "i18next-resources-to-backend";
 
+import account from "../locales/en/account.json";
+import appShell from "../locales/en/appShell.json";
+import auditLog from "../locales/en/auditLog.json";
+import auth from "../locales/en/auth.json";
+import billableRates from "../locales/en/billableRates.json";
+import clients from "../locales/en/clients.json";
+import common from "../locales/en/common.json";
+import instanceAdmin from "../locales/en/instanceAdmin.json";
+import members from "../locales/en/members.json";
+import navigation from "../locales/en/navigation.json";
+import onboarding from "../locales/en/onboarding.json";
+import profile from "../locales/en/profile.json";
+import projects from "../locales/en/projects.json";
+import reports from "../locales/en/reports.json";
+import settings from "../locales/en/settings.json";
+import subscription from "../locales/en/subscription.json";
+import tags from "../locales/en/tags.json";
+import tasks from "../locales/en/tasks.json";
+import toast from "../locales/en/toast.json";
+import tracking from "../locales/en/tracking.json";
+
 export const supportedLanguages = ["en", "zh"] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
@@ -33,6 +54,31 @@ void i18n
     fallbackLng: "en",
     supportedLngs: supportedLanguages,
     interpolation: { escapeValue: false },
+    resources: {
+      en: {
+        account,
+        appShell,
+        auditLog,
+        auth,
+        billableRates,
+        clients,
+        common,
+        instanceAdmin,
+        members,
+        navigation,
+        onboarding,
+        profile,
+        projects,
+        reports,
+        settings,
+        subscription,
+        tags,
+        tasks,
+        toast,
+        tracking,
+      },
+    },
+    partialBundledLanguages: true,
   });
 
 export default i18n;

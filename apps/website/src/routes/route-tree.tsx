@@ -670,17 +670,11 @@ function WorkspaceTagDetailRouteComponent() {
   );
 }
 
-const VALID_APPROVALS_VIEWS = ["team", "me", "settings"] as const;
-type ApprovalsView = (typeof VALID_APPROVALS_VIEWS)[number];
-
 function WorkspaceApprovalsRouteComponent() {
   const params = workspaceApprovalsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
-  const view = (VALID_APPROVALS_VIEWS as readonly string[]).includes(params.view)
-    ? (params.view as ApprovalsView)
-    : "team";
 
-  return renderProtectedRoute(<ApprovalsPage view={view} />, workspaceId);
+  return renderProtectedRoute(<ApprovalsPage />, workspaceId);
 }
 
 function LegacyWorkspaceApprovalsRouteComponent() {

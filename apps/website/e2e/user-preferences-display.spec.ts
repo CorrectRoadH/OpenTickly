@@ -23,9 +23,14 @@ async function switchToListView(page: Page) {
   await page.getByRole("radio", { name: "List view" }).click();
 }
 
-/** Find the entry row button in the Timer list view. */
-function entryRow(page: Page) {
+/** Find the duration cell in the Timer list view. */
+function durationCell(page: Page) {
   return page.getByTestId("time-entry-list-edit-button").first();
+}
+
+/** Find the full entry row (includes duration + time range) in the Timer list view. */
+function entryRow(page: Page) {
+  return page.getByTestId("time-entry-list-row").first();
 }
 
 test.describe("Story: user preferences control how times and durations display", () => {
@@ -66,7 +71,7 @@ test.describe("Story: user preferences control how times and durations display",
   }) => {
     await loginE2eUser(page, test.info(), { email, password });
     await switchToListView(page);
-    await expect(entryRow(page)).toContainText("0:47:27");
+    await expect(durationCell(page)).toContainText("0:47:27");
   });
 
   test("Duration format Classic shows correct format on Timer page", async ({ page }) => {
@@ -77,7 +82,7 @@ test.describe("Story: user preferences control how times and durations display",
 
     await page.getByRole("link", { name: "Timer" }).click();
     await switchToListView(page);
-    await expect(entryRow(page)).toContainText("47:27 min");
+    await expect(durationCell(page)).toContainText("47:27 min");
   });
 
   test("Duration format Decimal shows correct format on Timer page", async ({ page }) => {
@@ -88,7 +93,7 @@ test.describe("Story: user preferences control how times and durations display",
 
     await page.getByRole("link", { name: "Timer" }).click();
     await switchToListView(page);
-    await expect(entryRow(page)).toContainText("0.79 h");
+    await expect(durationCell(page)).toContainText("0.79 h");
   });
 
   test("Time format 24-hour shows correct format on Timer page", async ({ page }) => {

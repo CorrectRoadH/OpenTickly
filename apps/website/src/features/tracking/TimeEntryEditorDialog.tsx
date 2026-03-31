@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { AppInput, DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -144,6 +145,7 @@ export function TimeEntryEditorDialog({
   timezone,
   workspaces,
 }: TimeEntryEditorDialogProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const { durationFormat } = useUserPreferences();
   const [ui, dispatch] = useEditorUIState();
   const {
@@ -365,13 +367,13 @@ export function TimeEntryEditorDialog({
             }
           >
             <MenuItem disabled={!onSplit} onClick={() => void onSplit?.()}>
-              Split
+              {t("split")}
             </MenuItem>
             <MenuItem disabled={!onFavorite} onClick={() => void onFavorite?.()}>
-              Pin as favorite
+              {t("pinAsFavorite")}
             </MenuItem>
             {selectedProjectId ? (
-              <MenuLink href={`/projects/${currentWorkspaceId}/list`}>Go to project</MenuLink>
+              <MenuLink href={`/projects/${currentWorkspaceId}/list`}>{t("goToProject")}</MenuLink>
             ) : null}
             <MenuItem
               onClick={() =>
@@ -382,11 +384,11 @@ export function TimeEntryEditorDialog({
                 )
               }
             >
-              Copy start link
+              {t("copyStartLink")}
             </MenuItem>
             {description.trim() ? (
               <MenuItem onClick={() => void copyToClipboard(description.trim())}>
-                Copy description
+                {t("copyDescription")}
               </MenuItem>
             ) : null}
             <MenuItem
@@ -394,7 +396,7 @@ export function TimeEntryEditorDialog({
               disabled={!onDelete || isDeleting}
               onClick={() => void onDelete?.()}
             >
-              {isDeleting ? "Deleting..." : "Delete entry"}
+              {isDeleting ? t("loading") : t("delete")}
             </MenuItem>
           </DropdownMenu>
         </div>

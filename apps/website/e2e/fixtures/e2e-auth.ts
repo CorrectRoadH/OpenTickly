@@ -52,6 +52,8 @@ export async function loginE2eUser(
   await page.waitForURL(/\/timer(?:\?.*)?$/);
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
+  await completeOnboardingDialogIfVisible(page);
+
   const currentWorkspaceId = await resolveCurrentWorkspaceId(page);
 
   // Desktop shell has the Organization sidebar button; mobile shell does not.

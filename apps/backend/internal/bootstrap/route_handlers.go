@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"net/http"
 	"strconv"
@@ -40,6 +39,7 @@ import (
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -1088,7 +1088,7 @@ func (handlers *routeHandlers) getOnboardingCompleted(ctx context.Context, userI
 
 	var exists int
 	err := row.Scan(&exists)
-	if err == sql.ErrNoRows {
+	if err == pgx.ErrNoRows {
 		return false, nil
 	}
 	if err != nil {
