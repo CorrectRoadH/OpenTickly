@@ -1,3 +1,4 @@
+import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 
@@ -14,6 +15,7 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { CalendarIcon, ProfileIcon, ReportsIcon, TimerIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
+import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { OfflineBanner } from "./OfflineBanner.tsx";
 import { PwaInstallBanner } from "./PwaInstallBanner.tsx";
 
@@ -35,6 +37,8 @@ export function MobileShell(): ReactElement {
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [draftDescription, setDraftDescription] = useState("");
+  const [editingEntry, setEditingEntry] =
+    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
 
   useEffect(() => {
     if (!runningEntry) return;
@@ -80,6 +84,9 @@ export function MobileShell(): ReactElement {
     <div className="flex h-[100dvh] flex-col bg-[var(--track-surface)] text-[var(--track-text)]">
       <OfflineBanner />
       <PwaInstallBanner />
+      {editingEntry ? (
+        <MobileTimeEntryEditor entry={editingEntry} onClose={() => setEditingEntry(null)} />
+      ) : null}
       {/* Page content */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <Outlet />
@@ -89,12 +96,16 @@ export function MobileShell(): ReactElement {
       <div className="border-t border-[var(--track-border)] bg-[var(--track-panel)] px-4 py-2">
         {runningEntry ? (
           <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
+            <button
+              className="min-w-0 flex-1 text-left"
+              onClick={() => setEditingEntry(runningEntry)}
+              type="button"
+            >
               <p className="truncate text-[13px] font-medium text-white">
                 {runningEntry.description || "No description"}
               </p>
               <p className="text-[12px] tabular-nums text-[var(--track-accent)]">{timerLabel}</p>
-            </div>
+            </button>
             <TimerActionButton isRunning onClick={handleStop} size="sm" />
           </div>
         ) : (
