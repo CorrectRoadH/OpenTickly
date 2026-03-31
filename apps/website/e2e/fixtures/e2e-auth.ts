@@ -16,6 +16,12 @@ export async function registerE2eUser(
   },
 ): Promise<void> {
   await page.goto(resolveAppUrl(resolveAppBaseUrl(testInfo), "/register"));
+
+  // Wait for the full auth form to be stable before interacting.
+  // The PublicAuthRoute renders SessionPendingPanel → Suspense fallback → AuthPage,
+  // so the form may mount/remount. Waiting for the submit button ensures the form is ready.
+  await expect(page.getByRole("button", { name: "Register" })).toBeVisible();
+
   await page.getByLabel("Full name").fill(options.fullName);
   await page.getByLabel("Email").fill(options.email);
   await page.getByLabel("Password").fill(options.password);
@@ -45,6 +51,10 @@ export async function loginE2eUser(
   },
 ): Promise<E2eWorkspaceSession> {
   await page.goto(resolveAppUrl(resolveAppBaseUrl(testInfo), "/login"));
+
+  // Wait for the full auth form to be stable before interacting.
+  await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
+
   await page.getByLabel("Email").fill(options.email);
   await page.getByLabel("Password").fill(options.password);
 

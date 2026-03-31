@@ -8,7 +8,7 @@ import type {
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { ChevronDown } from "lucide-react";
-import { PlayIcon } from "../../shared/ui/icons.tsx";
+import { PinIcon, PlayIcon, ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 
@@ -85,7 +85,7 @@ export function TimerComposerSuggestionsDialog({
         role="dialog"
         style={position}
       >
-        <div className="flex items-center gap-2.5 px-3 py-2.5">
+        <div className="flex items-center gap-2 px-2.5 py-2">
           <div className="flex size-7 shrink-0 items-center justify-center rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)]">
             <WsBriefcaseIcon />
           </div>
@@ -134,7 +134,7 @@ export function TimerComposerSuggestionsDialog({
           <>
             <MenuSeparator />
             <SuggestionSectionTitle title="Favorites" />
-            <div className="px-1.5 pb-1.5">
+            <div className="px-1 pb-1">
               {filteredFavorites.map((fav) => {
                 const label = fav.description?.trim() || fav.project_name || "Untitled";
                 const projectLabel = fav.project_name?.trim();
@@ -146,6 +146,7 @@ export function TimerComposerSuggestionsDialog({
                     prefix={<PlayIcon className="size-3.5 text-[var(--track-text-muted)]" />}
                     subtitle={projectLabel}
                     subtitleColor={projectColor ?? "var(--track-text-muted)"}
+                    tags={fav.tags?.filter(Boolean)}
                     title={label}
                   />
                 );
@@ -158,7 +159,7 @@ export function TimerComposerSuggestionsDialog({
           <>
             <MenuSeparator />
             <SuggestionSectionTitle title="Previously tracked time entries" />
-            <div className="px-1.5 pb-1.5">
+            <div className="px-1 pb-1">
               {previousEntries.map((entry) => {
                 const hasDescription = Boolean(entry.description?.trim());
                 const projectLabel = entry.project_name?.trim();
@@ -168,13 +169,21 @@ export function TimerComposerSuggestionsDialog({
                     key={buildEntryKey(entry)}
                     onClick={() => onTimeEntrySelect(entry)}
                     prefix={
-                      <span
-                        className="size-[7px] rounded-full"
-                        style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
-                      />
+                      projectLabel ? (
+                        <ProjectsIcon
+                          className="size-3.5"
+                          style={{ color: projectColor ?? "var(--track-text-muted)" }}
+                        />
+                      ) : (
+                        <span
+                          className="size-[7px] rounded-full"
+                          style={{ backgroundColor: projectColor ?? "var(--track-text-muted)" }}
+                        />
+                      )
                     }
                     subtitle={projectLabel}
                     subtitleColor={projectColor ?? "var(--track-text-muted)"}
+                    tags={entry.tags?.filter(Boolean)}
                     title={
                       hasDescription
                         ? (entry.description?.trim() ?? "")
@@ -191,7 +200,7 @@ export function TimerComposerSuggestionsDialog({
           <>
             <MenuSeparator />
             <SuggestionSectionTitle title="Projects" />
-            <div className="px-1.5 pb-1.5">
+            <div className="px-1 pb-1">
               {suggestedProjects.map((project) => {
                 const color = resolveProjectColorValue(project);
                 return (
@@ -203,10 +212,14 @@ export function TimerComposerSuggestionsDialog({
                       }
                     }}
                     prefix={
-                      <span
-                        className="size-[7px] rounded-full"
-                        style={{ backgroundColor: color }}
-                      />
+                      project.pinned ? (
+                        <PinIcon className="size-3.5" style={{ color }} />
+                      ) : (
+                        <span
+                          className="size-[7px] rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                      )
                     }
                     subtitle="Project"
                     title={project.name?.trim() || "Untitled project"}
@@ -254,7 +267,7 @@ function ChevronDownIcon(): ReactElement {
 
 function SuggestionSectionTitle({ title }: { title: string }): ReactElement {
   return (
-    <div className="px-3 pb-0.5 pt-2.5">
+    <div className="px-2.5 pb-0.5 pt-2">
       <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-muted)]">
         {title}
       </div>
@@ -267,6 +280,7 @@ function SuggestionRow({
   prefix,
   subtitle,
   subtitleColor,
+  tags,
   title,
   titleColor,
 }: {
@@ -274,18 +288,20 @@ function SuggestionRow({
   prefix?: ReactElement;
   subtitle?: string;
   subtitleColor?: string;
+  tags?: string[];
   title: string;
   titleColor?: string;
 }): ReactElement {
+  const visibleTags = tags?.length ? tags.slice(0, 3) : undefined;
   return (
     <button
-      className="flex w-full items-center gap-2.5 overflow-hidden rounded-[9px] px-2.5 py-2 text-left transition hover:bg-white/4"
+      className="flex w-full items-center gap-2 overflow-hidden rounded-[9px] px-2 py-1.5 text-left transition hover:bg-white/4"
       onClick={onClick}
       tabIndex={-1}
       type="button"
     >
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--track-overlay-surface-raised)] text-[var(--track-text-muted)]">
-        {prefix ?? <PlayIcon className="size-3.5" />}
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-[var(--track-overlay-surface-raised)]">
+        {prefix ?? <PlayIcon className="size-3.5 text-[var(--track-text-muted)]" />}
       </span>
       <span className="min-w-0 flex-1">
         <span
@@ -294,14 +310,22 @@ function SuggestionRow({
         >
           {title}
         </span>
-        {subtitle ? (
-          <span
-            className="mt-0.5 block truncate text-[11px]"
-            style={{ color: subtitleColor ?? "var(--track-text-muted)" }}
-          >
-            {subtitle}
-          </span>
-        ) : null}
+        <span className="mt-0.5 flex items-center gap-1.5 truncate text-[11px]">
+          {subtitle ? (
+            <span
+              className="truncate"
+              style={{ color: subtitleColor ?? "var(--track-text-muted)" }}
+            >
+              {subtitle}
+            </span>
+          ) : null}
+          {visibleTags ? (
+            <span className="flex shrink-0 items-center gap-0.5 text-[var(--track-text-muted)]">
+              <TagsIcon className="size-2.5" />
+              <span className="truncate">{visibleTags.join(", ")}</span>
+            </span>
+          ) : null}
+        </span>
       </span>
     </button>
   );
@@ -338,7 +362,10 @@ function buildPreviousEntries(
 function buildProjectSuggestions(
   projects: GithubComTogglTogglApiInternalModelsProject[],
 ): GithubComTogglTogglApiInternalModelsProject[] {
-  return projects.filter((project) => project.id != null && project.active !== false).slice(0, 8);
+  const active = projects.filter((project) => project.id != null && project.active !== false);
+  const pinned = active.filter((p) => p.pinned);
+  const unpinned = active.filter((p) => !p.pinned);
+  return [...pinned, ...unpinned].slice(0, 5);
 }
 
 function buildEntryKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
