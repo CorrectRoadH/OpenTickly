@@ -265,10 +265,14 @@ export function useUpdatePreferencesMutation() {
   return useMutation({
     mutationFn: (request: ProfilePreferencesDto) =>
       unwrapWebApiResult(postPreferences({ body: request })),
-    onSuccess: async () => {
+    onSuccess: async (_data, request) => {
       await queryClient.invalidateQueries({
         queryKey: ["web-preferences"],
       });
+      // Directly update the query cache to ensure LanguageSync reacts immediately
+      queryClient.setQueryData<ProfilePreferencesDto>(["web-preferences"], (old) =>
+        old ? { ...old, language_code: request.language_code } : old,
+      );
     },
   });
 }

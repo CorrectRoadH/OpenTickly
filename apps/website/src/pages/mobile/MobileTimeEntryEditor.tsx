@@ -12,8 +12,9 @@ import {
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { TrashIcon } from "../../shared/ui/icons.tsx";
+import { MobilePickerOverlay } from "./MobilePickerOverlay.tsx";
 
 type MobileTimeEntryEditorProps = {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
@@ -83,6 +84,11 @@ export function MobileTimeEntryEditor({
     onClose();
   }
 
+  const selectedProject = useMemo(
+    () => projects.find((p) => p.id === projectId) ?? null,
+    [projects, projectId],
+  );
+
   const selectedTagNames = useMemo(
     () =>
       tagIds
@@ -92,11 +98,127 @@ export function MobileTimeEntryEditor({
     [tagIds, tags],
   );
 
+  const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-[var(--track-surface)] text-[var(--track-text)]"
       data-testid="mobile-time-entry-editor"
     >
+      {/* Project picker overlay */}
+      {projectPickerOpen ? (
+        <MobilePickerOverlay
+          onClose={() => setProjectPickerOpen(false)}
+          testId="mobile-project-picker"
+          title="Project"
+        >
+          {(search) => {
+            const query = search.trim().toLowerCase();
+            const filtered = query
+              ? projects.filter((p) => {
+                  const haystack = `${p.name} ${p.client_name ?? ""}`.toLowerCase();
+                  return haystack.includes(query);
+                })
+              : projects;
+            return (
+              <>
+                <button
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4"
+                  onClick={() => {
+                    setProjectId(null);
+                    setProjectPickerOpen(false);
+                  }}
+                  type="button"
+                >
+                  <span className="size-2.5 shrink-0 rounded-full bg-[var(--track-text-muted)]" />
+                  <span className="text-[14px] text-[var(--track-text-muted)]">No project</span>
+                </button>
+                {filtered.map((p) => (
+                  <button
+                    className={`flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4 ${
+                      p.id === projectId ? "bg-white/4" : ""
+                    }`}
+                    key={p.id}
+                    onClick={() => {
+                      setProjectId(p.id ?? null);
+                      setProjectPickerOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span
+                      className="size-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: p.color ?? "var(--track-text-muted)" }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <span className="truncate text-[14px] text-white">{p.name}</span>
+                      {p.client_name ? (
+                        <span className="ml-2 text-[12px] text-[var(--track-text-muted)]">
+                          {p.client_name}
+                        </span>
+                      ) : null}
+                    </div>
+                    {p.id === projectId ? (
+                      <Check className="size-4 shrink-0 text-[var(--track-accent)]" />
+                    ) : null}
+                  </button>
+                ))}
+              </>
+            );
+          }}
+        </MobilePickerOverlay>
+      ) : null}
+
+      {/* Tag picker overlay */}
+      {tagPickerOpen ? (
+        <MobilePickerOverlay
+          onClose={() => setTagPickerOpen(false)}
+          testId="mobile-tag-picker"
+          title="Tags"
+        >
+          {(search) => {
+            const query = search.trim().toLowerCase();
+            const filtered = tags
+              .filter((tag): tag is typeof tag & { id: number } => typeof tag.id === "number")
+              .filter((tag) => !query || (tag.name ?? "").toLowerCase().includes(query));
+            return (
+              <>
+                {filtered.map((tag) => {
+                  const active = tagIds.includes(tag.id);
+                  return (
+                    <button
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4 ${
+                        active ? "bg-white/4" : ""
+                      }`}
+                      key={tag.id}
+                      onClick={() =>
+                        setTagIds((prev) =>
+                          active ? prev.filter((id) => id !== tag.id) : [...prev, tag.id],
+                        )
+                      }
+                      type="button"
+                    >
+                      <span
+                        className={`flex size-5 items-center justify-center rounded border transition ${
+                          active
+                            ? "border-[var(--track-accent)] bg-[var(--track-accent)]"
+                            : "border-[var(--track-border)]"
+                        }`}
+                      >
+                        {active ? (
+                          <Check className="size-3.5 text-black" strokeWidth={2.5} />
+                        ) : null}
+                      </span>
+                      <span className="truncate text-[14px] text-white">{tag.name}</span>
+                    </button>
+                  );
+                })}
+              </>
+            );
+          }}
+        </MobilePickerOverlay>
+      ) : null}
+
       {/* Header */}
       <div className="flex h-[52px] items-center justify-between border-b border-[var(--track-border)] px-4">
         <button
@@ -135,52 +257,38 @@ export function MobileTimeEntryEditor({
 
         {/* Project */}
         <FieldRow label="Project">
-          <select
-            className="min-w-0 flex-1 appearance-none bg-transparent text-right text-[14px] text-white outline-none"
-            onChange={(e) => setProjectId(e.target.value ? Number(e.target.value) : null)}
-            value={projectId ?? ""}
+          <button
+            className="flex min-w-0 flex-1 items-center justify-end gap-2"
+            data-testid="mobile-project-trigger"
+            onClick={() => setProjectPickerOpen(true)}
+            type="button"
           >
-            <option value="">No project</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            {selectedProject ? (
+              <>
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: selectedProject.color ?? "var(--track-text-muted)" }}
+                />
+                <span className="truncate text-[14px] text-white">{selectedProject.name}</span>
+              </>
+            ) : (
+              <span className="text-[14px] text-[var(--track-text-muted)]">No project</span>
+            )}
+            <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
+          </button>
         </FieldRow>
 
         {/* Tags */}
         <FieldRow label="Tags">
-          <details className="min-w-0 flex-1">
-            <summary className="cursor-pointer list-none text-right text-[14px] text-white">
-              {selectedTagNames || "No tags"}
-            </summary>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {tags
-                .filter((tag): tag is typeof tag & { id: number } => typeof tag.id === "number")
-                .map((tag) => {
-                  const active = tagIds.includes(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      className={`rounded-full border px-3 py-1 text-[12px] transition ${
-                        active
-                          ? "border-[var(--track-accent)] bg-[var(--track-accent)]/15 text-[var(--track-accent)]"
-                          : "border-[var(--track-border)] text-[var(--track-text-muted)]"
-                      }`}
-                      onClick={() =>
-                        setTagIds((prev) =>
-                          active ? prev.filter((id) => id !== tag.id) : [...prev, tag.id],
-                        )
-                      }
-                      type="button"
-                    >
-                      {tag.name}
-                    </button>
-                  );
-                })}
-            </div>
-          </details>
+          <button
+            className="flex min-w-0 flex-1 items-center justify-end gap-2"
+            data-testid="mobile-tag-trigger"
+            onClick={() => setTagPickerOpen(true)}
+            type="button"
+          >
+            <span className="truncate text-[14px] text-white">{selectedTagNames || "No tags"}</span>
+            <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
+          </button>
         </FieldRow>
 
         {/* Billable */}

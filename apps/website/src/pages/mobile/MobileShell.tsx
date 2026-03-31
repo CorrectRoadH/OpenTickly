@@ -11,9 +11,17 @@ import {
   useCurrentTimeEntryQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
+  useTimeEntriesQuery,
 } from "../../shared/query/web-shell.ts";
+import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import { CalendarIcon, ProfileIcon, ReportsIcon, TimerIcon } from "../../shared/ui/icons.tsx";
+import {
+  CalendarIcon,
+  PlayIcon,
+  ProfileIcon,
+  ReportsIcon,
+  TimerIcon,
+} from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { OfflineBanner } from "./OfflineBanner.tsx";
@@ -34,6 +42,30 @@ export function MobileShell(): ReactElement {
   const startMutation = useStartTimeEntryMutation(session.currentWorkspace.id);
   const stopMutation = useStopTimeEntryMutation();
   const runningEntry = currentTimeEntryQuery.data;
+
+  // Fetch recent entries for continue suggestions
+  const recentEntriesQuery = useTimeEntriesQuery({
+    startDate: useMemo(() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      return d.toISOString();
+    }, []),
+  });
+  const recentStoppedEntries = useMemo(() => {
+    const entries = recentEntriesQuery.data ?? [];
+    // Deduplicate by description+project, keep most recent, exclude running
+    const seen = new Set<string>();
+    return entries
+      .filter((e) => e.stop && e.description?.trim())
+      .sort((a, b) => new Date(b.stop!).getTime() - new Date(a.stop!).getTime())
+      .filter((e) => {
+        const key = `${e.description?.trim()}::${resolveTimeEntryProjectId(e)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 3);
+  }, [recentEntriesQuery.data]);
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [draftDescription, setDraftDescription] = useState("");
@@ -78,6 +110,16 @@ export function MobileShell(): ReactElement {
       start: new Date().toISOString(),
     });
     setDraftDescription("");
+  }
+
+  function handleContinue(entry: GithubComTogglTogglApiInternalModelsTimeEntry) {
+    void startMutation.mutateAsync({
+      billable: entry.billable,
+      description: (entry.description ?? "").trim(),
+      projectId: resolveTimeEntryProjectId(entry),
+      start: new Date().toISOString(),
+      tagIds: entry.tag_ids ?? [],
+    });
   }
 
   return (
@@ -133,17 +175,43 @@ export function MobileShell(): ReactElement {
             <TimerActionButton isRunning onClick={handleStop} size="sm" />
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <input
-              className="min-w-0 flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none focus:border-[var(--track-accent)]"
-              onChange={(e) => setDraftDescription(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleStart();
-              }}
-              placeholder="What are you working on?"
-              value={draftDescription}
-            />
-            <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                className="min-w-0 flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none focus:border-[var(--track-accent)]"
+                onChange={(e) => setDraftDescription(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleStart();
+                }}
+                placeholder="What are you working on?"
+                value={draftDescription}
+              />
+              <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
+            </div>
+            {!draftDescription && recentStoppedEntries.length > 0 ? (
+              <div className="flex gap-2 overflow-x-auto">
+                {recentStoppedEntries.map((entry) => (
+                  <button
+                    aria-label={`Continue ${entry.description}`}
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1 text-left transition active:bg-white/4"
+                    key={entry.id}
+                    onClick={() => handleContinue(entry)}
+                    type="button"
+                  >
+                    <PlayIcon className="size-3 shrink-0 text-[var(--track-text-muted)]" />
+                    {entry.project_color ? (
+                      <span
+                        className="inline-block size-[6px] shrink-0 rounded-full"
+                        style={{ backgroundColor: entry.project_color }}
+                      />
+                    ) : null}
+                    <span className="max-w-[120px] truncate text-[12px] text-white">
+                      {entry.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

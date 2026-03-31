@@ -36,11 +36,14 @@ function LanguageSync(): null {
   const languageCode = normalizeSupportedLanguage(preferencesQuery.data?.language_code);
 
   useEffect(() => {
+    if (preferencesQuery.isPending) {
+      return;
+    }
     const normalizedCurrent = normalizeSupportedLanguage(i18n.language);
     if (languageCode && languageCode !== normalizedCurrent) {
       void i18n.changeLanguage(languageCode);
     }
-  }, [languageCode]);
+  }, [languageCode, preferencesQuery.isPending]);
 
   return null;
 }
