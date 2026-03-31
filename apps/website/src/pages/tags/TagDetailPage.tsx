@@ -10,7 +10,6 @@ export function TagDetailPage({ tagId, workspaceId }: TagDetailPageProps): React
   return (
     <PageLayout
       title={`Tag ${tagId}`}
-      subtitle="Tag detail view"
       headerActions={
         <AppButton
           variant="secondary"

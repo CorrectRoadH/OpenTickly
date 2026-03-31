@@ -1,4 +1,3 @@
-import { AnimatedActiveIndicator } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 
@@ -7,6 +6,7 @@ import {
   isSectionNavActive,
   isTimerNavActive,
 } from "./shell-navigation-state.ts";
+import { AnimatedActiveIndicator } from "../shared/ui/AnimatedActiveIndicator.tsx";
 import {
   ApprovalsIcon,
   AuditLogIcon,
@@ -75,6 +75,7 @@ export function SidebarNavSections({
                   disabled={item.disabled}
                   key={`${section.title}-${item.label}`}
                   label={item.label}
+                  sectionId={section.title}
                   to={item.to}
                 />
               ))}
@@ -96,6 +97,7 @@ export function SidebarNavSections({
                 disabled={item.disabled}
                 key={`${adminSection.title}-${item.label}`}
                 label={item.label}
+                sectionId={adminSection.title}
                 to={item.to}
               />
             ))}
@@ -111,12 +113,14 @@ function ShellNavItem({
   badge,
   disabled = false,
   label,
+  sectionId,
   to,
 }: {
   active: boolean;
   badge?: string;
   disabled?: boolean;
   label: string;
+  sectionId: string;
   to?: string;
 }): ReactElement {
   const content = (
@@ -128,7 +132,7 @@ function ShellNavItem({
       {active ? (
         <AnimatedActiveIndicator
           className="absolute inset-0 rounded-[6px] bg-[var(--track-accent-soft)]"
-          layoutId="shell-nav-active-item"
+          layoutId={`shell-nav-${sectionId}`}
         />
       ) : null}
       <span className="relative z-[1]">{navIcon(label)}</span>

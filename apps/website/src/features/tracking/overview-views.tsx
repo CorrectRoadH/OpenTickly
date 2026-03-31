@@ -1313,8 +1313,8 @@ export function CalendarView({
             data-testid={`calendar-day-header-${dayName.toLowerCase()}`}
           >
             <span
-              className={`flex size-[32px] items-center justify-center text-[22px] font-semibold leading-none ${
-                isToday ? "rounded-full bg-[var(--track-accent)] text-white" : "text-white"
+              className={`flex h-[32px] w-[36px] items-center justify-center text-[22px] font-semibold leading-none ${
+                isToday ? "rounded-full bg-[var(--track-accent)]/30 text-white p-2" : "text-white"
               }`}
             >
               {dayNum}

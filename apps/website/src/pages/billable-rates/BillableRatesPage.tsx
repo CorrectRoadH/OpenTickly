@@ -380,14 +380,9 @@ function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): 
   return (
     <SurfaceCard>
       <div className="p-5">
-        <div className="flex items-center gap-2">
-          <h2 className="text-[14px] font-semibold leading-5 text-[var(--track-text)]">
-            Workspace member rate and labor cost
-          </h2>
-          <span className="rounded-[4px] bg-[var(--track-accent)] px-[6px] py-[2px] text-[10px] font-bold uppercase tracking-wider text-white">
-            Premium
-          </span>
-        </div>
+        <h2 className="text-[14px] font-semibold leading-5 text-[var(--track-text)]">
+          Workspace member rate and labor cost
+        </h2>
         <p className="mt-2 text-[12px] leading-5 text-[var(--track-text-soft)]">
           Set individual billable rates and labor costs for each workspace member. Member rates
           override the workspace-level rate.

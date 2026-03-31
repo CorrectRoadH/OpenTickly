@@ -41,7 +41,6 @@ function isPageLayoutTabArray(tabs: unknown): tabs is PageLayoutTab[] {
 
 type PageLayoutProps = {
   title: string;
-  subtitle?: string;
   headerActions?: ReactNode;
   toolbar?: ReactNode;
   tabs?: PageLayoutTab[] | ReactNode;
@@ -57,7 +56,6 @@ type PageLayoutProps = {
 
 export function PageLayout({
   title,
-  subtitle,
   headerActions,
   toolbar,
   tabs,
@@ -76,9 +74,6 @@ export function PageLayout({
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
           <div className="space-y-1">
             <h1 className="text-[20px] font-semibold leading-[30px] text-white">{title}</h1>
-            {subtitle ? (
-              <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">{subtitle}</p>
-            ) : null}
           </div>
           {headerActions ? (
             <div className="flex shrink-0 items-center gap-2">{headerActions}</div>

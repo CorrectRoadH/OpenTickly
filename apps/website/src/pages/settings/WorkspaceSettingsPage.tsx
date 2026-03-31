@@ -1,10 +1,4 @@
-import {
-  AppSurfaceState,
-  PageLayout,
-  PageLayoutTabIndicator,
-  pageLayoutTabClass,
-  SurfaceCard,
-} from "@opentoggl/web-ui";
+import { AppSurfaceState, PageLayout, pageLayoutTabClass, SurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement } from "react";
 import { toast } from "sonner";
@@ -22,6 +16,7 @@ import {
   useWorkspaceSettingsQuery,
 } from "../../shared/query/web-shell.ts";
 import { FeatureWipNotice } from "../../shared/ui/FeatureWipNotice.tsx";
+import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
 import type { WorkspaceSettingsSection } from "../../shared/url-state/workspace-settings-location.ts";
 
 type WorkspaceSettingsPageProps = {
@@ -61,7 +56,12 @@ export function WorkspaceSettingsPage({
           to={buildWorkspaceSettingsPathWithSection(workspaceId, tab.id)}
         >
           {tab.label}
-          {section === tab.id ? <PageLayoutTabIndicator /> : null}
+          {section === tab.id ? (
+            <AnimatedActiveIndicator
+              className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--track-accent)]"
+              layoutId="page-layout-tab-indicator"
+            />
+          ) : null}
         </Link>
       ))}
     >

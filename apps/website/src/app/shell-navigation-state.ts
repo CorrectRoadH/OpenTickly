@@ -16,9 +16,16 @@ export function isSectionNavActive(pathname: string, to?: string): boolean {
     return pathname === to || pathname.startsWith(`/${projectListMatch[1]}/projects/`);
   }
 
-  const settingsBase = to.match(/^(\/\d+\/settings)\/[^/]+$/);
+  const settingsBase = to.match(/^(\/\d+\/settings)\/([^/]+)$/);
   if (settingsBase) {
-    return pathname === to || pathname.startsWith(`${settingsBase[1]}/`);
+    const section = settingsBase[2];
+    if (section === "general") {
+      return (
+        pathname.startsWith(`${settingsBase[1]}/`) &&
+        !pathname.startsWith(`${settingsBase[1]}/billable-rates`)
+      );
+    }
+    return pathname === to;
   }
 
   return pathname === to || pathname.startsWith(`${to}/`);

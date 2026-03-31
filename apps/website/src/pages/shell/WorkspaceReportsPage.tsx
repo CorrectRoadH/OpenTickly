@@ -3,7 +3,6 @@ import {
   AppButton,
   CheckboxFilterDropdown,
   PageLayout,
-  PageLayoutTabIndicator,
   pageLayoutTabClass,
 } from "@opentoggl/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -45,6 +44,7 @@ import {
 import { useReportsPageState } from "./useReportsPageState.ts";
 import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
 
 /** Round seconds up to the nearest 15-minute block (900 seconds). */
 function roundTo15Min(seconds: number): number {
@@ -318,7 +318,12 @@ export function WorkspaceReportsPage({
           to={buildWorkspaceReportsPath(workspaceId, t.slug)}
         >
           {t.label}
-          {t.slug === tab ? <PageLayoutTabIndicator /> : null}
+          {t.slug === tab ? (
+            <AnimatedActiveIndicator
+              className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--track-accent)]"
+              layoutId="page-layout-tab-indicator"
+            />
+          ) : null}
         </Link>
       ))}
       toolbar={

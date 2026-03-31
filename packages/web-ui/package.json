@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "baseui": "^15.0.0",
-    "motion": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
     "styletron-react": "^6.1.1"
   },

@@ -49,6 +49,9 @@ export default defineConfig(() => {
     "http://127.0.0.1:8080";
 
   return {
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     plugins: [
       react(),
       tailwindcss(),

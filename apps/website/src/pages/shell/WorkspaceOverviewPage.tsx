@@ -117,7 +117,6 @@ export function WorkspaceOverviewPage(): ReactElement {
             Refresh data
           </AppButton>
         }
-        subtitle="Set up your organization and keep your team on track"
         title="Admin Overview"
       >
         <div className="px-5 py-5" data-testid="workspace-overview-content">
