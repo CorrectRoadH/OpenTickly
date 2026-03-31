@@ -3,13 +3,12 @@ import {
   type ReactElement,
   type ReactNode,
   type Ref,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { AppInput } from "@opentoggl/web-ui";
+import { AppInput, DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -29,9 +28,9 @@ import {
 } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 
 export type TimeEntryEditorAnchor = {
   containerHeight?: number;
@@ -148,7 +147,6 @@ export function TimeEntryEditorDialog({
   const { durationFormat } = useUserPreferences();
   const [ui, dispatch] = useEditorUIState();
   const {
-    actionsMenuOpen,
     descriptionSuggestionsOpen,
     picker,
     search,
@@ -167,12 +165,6 @@ export function TimeEntryEditorDialog({
   const position = useMemo(() => resolveEditorPosition(anchor, picker), [anchor, picker]);
   const startDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
   const stopDatePickerTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const actionsMenuRef = useRef<HTMLDivElement | null>(null);
-  const closeActionsMenu = useCallback(
-    () => dispatch({ type: "SET_ACTIONS_MENU", open: false }),
-    [dispatch],
-  );
-  useDismiss(actionsMenuRef, actionsMenuOpen, closeActionsMenu);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
   const selectedProject = useMemo(
@@ -360,87 +352,55 @@ export function TimeEntryEditorDialog({
               </svg>
             </button>
           ) : null}
-          <div className="relative" ref={actionsMenuRef}>
-            <button
-              aria-label="Entry actions"
-              aria-expanded={actionsMenuOpen}
-              className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
-              onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: !actionsMenuOpen })}
-              type="button"
-            >
-              <MoreIcon className="size-4" />
-            </button>
-            {actionsMenuOpen ? (
-              <div
-                className="absolute left-0 top-11 z-20 min-w-[220px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
-                role="menu"
+          <DropdownMenu
+            placement="bottom-left"
+            trigger={
+              <button
+                aria-label="Entry actions"
+                className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
+                type="button"
               >
-                <ActionMenuButton
-                  disabled={!onSplit}
-                  label="Split"
-                  onClick={() => {
-                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                    void onSplit?.();
-                  }}
-                />
-                <ActionMenuButton
-                  disabled={!onFavorite}
-                  label="Pin as favorite"
-                  onClick={() => {
-                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                    void onFavorite?.();
-                  }}
-                />
-                {selectedProjectId ? (
-                  <a
-                    className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4"
-                    href={`/projects/${currentWorkspaceId}/list`}
-                    onClick={() => dispatch({ type: "SET_ACTIONS_MENU", open: false })}
-                    role="menuitem"
-                  >
-                    Go to project
-                  </a>
-                ) : null}
-                <ActionMenuButton
-                  label="Copy start link"
-                  onClick={() => {
-                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                    void copyToClipboard(
-                      typeof window === "undefined"
-                        ? (entry.start ?? "")
-                        : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
-                    );
-                  }}
-                />
-                {description.trim() ? (
-                  <ActionMenuButton
-                    label="Copy description"
-                    onClick={() => {
-                      dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                      void copyToClipboard(description.trim());
-                    }}
-                  />
-                ) : null}
-                <button
-                  aria-label="Delete entry"
-                  className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-danger-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
-                  disabled={!onDelete || isDeleting}
-                  onClick={() => {
-                    dispatch({ type: "SET_ACTIONS_MENU", open: false });
-                    void onDelete?.();
-                  }}
-                  role="menuitem"
-                  type="button"
-                >
-                  {isDeleting ? "Deleting..." : "Delete entry"}
-                </button>
-              </div>
+                <MoreIcon className="size-4" />
+              </button>
+            }
+          >
+            <MenuItem disabled={!onSplit} onClick={() => void onSplit?.()}>
+              Split
+            </MenuItem>
+            <MenuItem disabled={!onFavorite} onClick={() => void onFavorite?.()}>
+              Pin as favorite
+            </MenuItem>
+            {selectedProjectId ? (
+              <MenuLink href={`/projects/${currentWorkspaceId}/list`}>Go to project</MenuLink>
             ) : null}
-          </div>
+            <MenuItem
+              onClick={() =>
+                void copyToClipboard(
+                  typeof window === "undefined"
+                    ? (entry.start ?? "")
+                    : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
+                )
+              }
+            >
+              Copy start link
+            </MenuItem>
+            {description.trim() ? (
+              <MenuItem onClick={() => void copyToClipboard(description.trim())}>
+                Copy description
+              </MenuItem>
+            ) : null}
+            <MenuItem
+              destructive
+              disabled={!onDelete || isDeleting}
+              onClick={() => void onDelete?.()}
+            >
+              {isDeleting ? "Deleting..." : "Delete entry"}
+            </MenuItem>
+          </DropdownMenu>
         </div>
         <button
           aria-label="Close editor"
-          className="flex size-7 items-center justify-center rounded-full text-[20px] leading-none text-[var(--track-overlay-icon-subtle)] transition hover:bg-white/6 hover:text-white"
+          className="flex size-7 items-center justify-center rounded-full text-[14px] leading-none text-[var(--track-overlay-icon-subtle)] transition hover:bg-white/6 hover:text-white"
           onClick={() => {
             if (isDirty) {
               dispatch({ type: "SET_DISCARD_CONFIRMATION", show: true });
@@ -658,7 +618,7 @@ export function TimeEntryEditorDialog({
                     }}
                     type="button"
                   >
-                    <span className="text-[22px] leading-none">+</span>
+                    <span className="text-[14px] leading-none">+</span>
                     <span>Create a new tag</span>
                   </button>
                 </div>
@@ -778,7 +738,7 @@ export function TimeEntryEditorDialog({
           </div>
         </div>
 
-        {saveError ? <p className="mt-4 text-sm text-rose-300">{saveError}</p> : null}
+        {saveError ? <p className="mt-4 text-[12px] text-rose-300">{saveError}</p> : null}
       </div>
 
       {showDiscardConfirmation ? (
@@ -864,7 +824,7 @@ function DescriptionSuggestionsSurface({
       {(entryMode === "default" || entryDescription.trim().length === 0) &&
       suggestionEntries.length > 0 ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
             Previously tracked time entries
           </p>
           <div className="mt-2 space-y-1">
@@ -888,7 +848,7 @@ function DescriptionSuggestionsSurface({
       ) : null}
       {(entryMode === "default" || entryMode === "project") && projects.length > 0 ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
             Projects
           </p>
           <div className="mt-2 space-y-1">
@@ -911,7 +871,7 @@ function DescriptionSuggestionsSurface({
       ) : null}
       {entryMode === "tag" ? (
         <div className="px-4 pt-3">
-          <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-overlay-text-soft)]">
+          <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
             Tags
           </p>
           <div className="mt-2 space-y-1">
@@ -930,27 +890,6 @@ function DescriptionSuggestionsSurface({
         </div>
       ) : null}
     </div>
-  );
-}
-
-function ActionMenuButton({
-  disabled = false,
-  label,
-  onClick,
-}: {
-  disabled?: boolean;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      className="flex w-full items-center rounded-[10px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition hover:bg-white/4 disabled:cursor-not-allowed disabled:opacity-60"
-      disabled={disabled}
-      onClick={onClick}
-      type="button"
-    >
-      {label}
-    </button>
   );
 }
 
@@ -982,8 +921,8 @@ function PickerButton({
       aria-pressed={ariaPressed}
       className={`flex items-center justify-center transition ${
         selected
-          ? "h-10 max-w-[168px] gap-2 rounded-[14px] px-3 text-[14px] font-semibold"
-          : "size-10 rounded-[12px]"
+          ? "h-8 max-w-[168px] gap-2 rounded-[10px] px-2.5 text-[12px] font-medium"
+          : "size-8 rounded-[10px]"
       } ${
         selected
           ? ""
@@ -1002,7 +941,7 @@ function PickerButton({
       type="button"
     >
       {variant === "project" && label ? (
-        <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+        <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
       ) : (
         icon
       )}
@@ -1342,7 +1281,7 @@ function buildSuggestionEntries(
 function buildSuggestionKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
   return [
     entry.description?.trim() ?? "",
-    entry.project_id ?? entry.pid ?? "",
+    resolveTimeEntryProjectId(entry) ?? "",
     (entry.tag_ids ?? []).join(","),
   ].join("::");
 }

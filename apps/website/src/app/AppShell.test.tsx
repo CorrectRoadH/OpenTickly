@@ -8,6 +8,7 @@ const mockUseRouterState = vi.fn();
 const mockUseSession = vi.fn();
 const mockUseSessionActions = vi.fn();
 const mockUseCurrentTimeEntryQuery = vi.fn();
+const mockUseLogoutMutation = vi.fn();
 const mockUseProfileQuery = vi.fn();
 const mockUseUpdateProfileMutation = vi.fn();
 const mockUseUpdateWebSessionMutation = vi.fn();
@@ -37,6 +38,7 @@ vi.mock("../shared/session/session-context.tsx", () => ({
 
 vi.mock("../shared/query/web-shell.ts", () => ({
   useCurrentTimeEntryQuery: () => mockUseCurrentTimeEntryQuery(),
+  useLogoutMutation: () => mockUseLogoutMutation(),
   useProfileQuery: () => mockUseProfileQuery(),
   useUpdateProfileMutation: () => mockUseUpdateProfileMutation(),
   useUpdateWebSessionMutation: () => mockUseUpdateWebSessionMutation(),
@@ -86,6 +88,9 @@ describe("AppShell", () => {
     mockUseCurrentTimeEntryQuery.mockReturnValue({
       data: undefined,
     });
+    mockUseLogoutMutation.mockReturnValue({
+      mutateAsync: vi.fn(),
+    });
     mockUseProfileQuery.mockReturnValue({
       data: {
         email: "alex@example.com",
@@ -120,14 +125,14 @@ describe("AppShell", () => {
     ]);
   });
 
-  it("renders the profile rail item as a link to the profile page", () => {
+  it("renders the profile rail trigger", () => {
     const markup = renderToStaticMarkup(
       <AppShell>
         <div>Content</div>
       </AppShell>,
     );
 
-    expect(markup).toContain('href="/profile"');
+    expect(markup).toContain('aria-label="Profile menu"');
     expect(markup).toContain("Profile");
   });
 
@@ -165,5 +170,16 @@ describe("AppShell", () => {
 
     expect(markup).toContain(">A</span>");
     expect(markup).not.toContain('src="https://cdn.example.com/avatar.png"');
+  });
+
+  it("keeps the workspace switcher outside the sidebar scroll container", () => {
+    const markup = renderToStaticMarkup(
+      <AppShell>
+        <div>Content</div>
+      </AppShell>,
+    );
+
+    expect(markup).toContain('class="shrink-0 overflow-x-clip px-[6px] pb-[5px] pt-2"');
+    expect(markup).not.toContain('class="overflow-x-clip overflow-y-auto px-[6px] pt-2"');
   });
 });

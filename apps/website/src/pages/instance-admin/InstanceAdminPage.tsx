@@ -1,8 +1,8 @@
 import {
   AppSurfaceState,
   PageLayout,
+  PageLayoutTabIndicator,
   pageLayoutTabClass,
-  pageLayoutTabIndicatorClass,
   SurfaceCard,
 } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
@@ -39,7 +39,7 @@ export function InstanceAdminPage({ section }: InstanceAdminPageProps): ReactEle
           to="/instance-admin/$section"
         >
           {tab.label}
-          {section === tab.id ? <span className={pageLayoutTabIndicatorClass} /> : null}
+          {section === tab.id ? <PageLayoutTabIndicator /> : null}
         </Link>
       ))}
     >

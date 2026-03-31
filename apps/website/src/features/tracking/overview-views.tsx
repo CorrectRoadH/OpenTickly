@@ -35,6 +35,7 @@ import {
   useListSelection,
 } from "./list-bulk-actions.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import type { CalendarSubview, TimerViewMode } from "./timer-view-mode.ts";
 import {
   ChevronDownIcon,
@@ -960,7 +961,7 @@ function ListRowMoreActions({
           {entry.project_id || entry.pid ? (
             <a
               className={menuItemClass}
-              href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${entry.project_id ?? entry.pid}`}
+              href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${resolveTimeEntryProjectId(entry)}`}
               onClick={() => setOpen(false)}
               role="menuitem"
             >

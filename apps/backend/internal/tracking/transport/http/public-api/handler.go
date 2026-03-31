@@ -2,7 +2,9 @@ package publicapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -188,7 +190,8 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 	var payload publictrackapi.TimeentryPayload
-	if err := ctx.Bind(&payload); err != nil {
+	rawBodyFields, err := bindTrackRequestBody(ctx, &payload)
+	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
@@ -215,7 +218,7 @@ func (handler *Handler) PutPublicTrackTimeEntry(ctx echo.Context) error {
 		Start:       start,
 		Stop:        stop,
 		Duration:    int64PointerToIntPointer(payload.Duration),
-		ProjectID:   firstTrackIntPointerAsInt64(payload.ProjectId, payload.Pid),
+		ProjectID:   resolveTrackNullableProjectID(rawBodyFields, payload.ProjectId, payload.Pid),
 		TaskID:      firstTrackIntPointerAsInt64(payload.TaskId, payload.Tid),
 		TagIDs:      tagIDs,
 		ReplaceTags: payload.TagIds != nil || payload.Tags != nil,
@@ -931,6 +934,43 @@ func firstTrackIntPointerAsInt64(values ...*int) *int64 {
 		}
 	}
 	return nil
+}
+
+func bindTrackRequestBody(ctx echo.Context, payload any) (map[string]json.RawMessage, error) {
+	bodyBytes, err := io.ReadAll(ctx.Request().Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var rawFields map[string]json.RawMessage
+	if err := json.Unmarshal(bodyBytes, &rawFields); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(bodyBytes, payload); err != nil {
+		return nil, err
+	}
+
+	return rawFields, nil
+}
+
+func resolveTrackNullableProjectID(rawFields map[string]json.RawMessage, values ...*int) *int64 {
+	if resolved := firstTrackIntPointerAsInt64(values...); resolved != nil {
+		return resolved
+	}
+	if hasExplicitTrackJSONNull(rawFields, "project_id", "pid") {
+		return lo.ToPtr(int64(0))
+	}
+	return nil
+}
+
+func hasExplicitTrackJSONNull(rawFields map[string]json.RawMessage, keys ...string) bool {
+	for _, key := range keys {
+		rawValue, ok := rawFields[key]
+		if ok && strings.TrimSpace(string(rawValue)) == "null" {
+			return true
+		}
+	}
+	return false
 }
 
 func int64PointerToIntPointer(value *int) *int {

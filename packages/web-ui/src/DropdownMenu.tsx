@@ -183,7 +183,7 @@ export function DropdownMenu({
       {open && style
         ? createPortal(
             <div
-              className="fixed z-50 rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1.5 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
+              className="fixed z-50 rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface-raised)] p-1 shadow-[0_16px_32px_var(--track-shadow-overlay)]"
               data-testid={testId}
               ref={panelRef}
               role="menu"
@@ -294,7 +294,7 @@ export function MenuItem({
 
   return (
     <button
-      className={`flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-left text-[14px] font-medium transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`flex min-h-[28px] w-full items-center gap-2 rounded-[6px] px-2.5 text-left text-[14px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
         destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
       data-testid={testId}
@@ -328,7 +328,7 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
 
   return (
     <a
-      className="flex w-full items-center gap-2 rounded-[6px] px-3 py-2.5 text-left text-[14px] font-medium text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
+      className="flex min-h-[28px] w-full items-center gap-2 rounded-[6px] px-2.5 text-left text-[14px] text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
       data-testid={testId}
       href={href}
       onClick={() => close?.()}

@@ -1,5 +1,6 @@
+import { AppButton } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
-import { type ChangeEvent, type ReactElement, useEffect, useId, useRef, useState } from "react";
+import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { ImportIcon, PlusIcon, TimerIcon } from "../../shared/ui/icons.tsx";
@@ -15,8 +16,8 @@ import { useSession } from "../../shared/session/session-context.tsx";
 type ImportFlow = "archive" | "time_entries";
 
 export function WorkspaceImportPage(): ReactElement {
-  const archiveInputId = useId();
-  const csvInputId = useId();
+  const archiveInputRef = useRef<HTMLInputElement>(null);
+  const csvInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const session = useSession();
   const createArchiveImportJobMutation = useCreateArchiveImportJobMutation();
@@ -194,17 +195,14 @@ export function WorkspaceImportPage(): ReactElement {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <label
-                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-                  htmlFor={archiveInputId}
-                >
+                <AppButton onClick={() => archiveInputRef.current?.click()}>
                   <PlusIcon className="size-3.5" />
                   Choose zip
-                </label>
+                </AppButton>
                 <input
+                  ref={archiveInputRef}
                   accept=".zip,application/zip"
                   className="sr-only"
-                  id={archiveInputId}
                   onChange={handleArchiveFileChange}
                   type="file"
                 />
@@ -215,17 +213,15 @@ export function WorkspaceImportPage(): ReactElement {
 
               {selectedArchive ? (
                 <div className="mt-4">
-                  <button
-                    className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
+                  <AppButton
                     disabled={
                       organizationName.trim().length === 0 ||
                       createArchiveImportJobMutation.isPending
                     }
                     onClick={() => void handleArchiveUpload()}
-                    type="button"
                   >
                     {createArchiveImportJobMutation.isPending ? "Importing…" : "Upload & import"}
-                  </button>
+                  </AppButton>
                   {organizationName.trim().length === 0 ? (
                     <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
                       Enter an organization name above to start import.
@@ -264,17 +260,14 @@ export function WorkspaceImportPage(): ReactElement {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                <label
-                  className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-[8px] bg-[var(--track-button)] px-4 text-[12px] font-semibold text-black"
-                  htmlFor={csvInputId}
-                >
+                <AppButton onClick={() => csvInputRef.current?.click()}>
                   <PlusIcon className="size-3.5" />
                   Choose CSV
-                </label>
+                </AppButton>
                 <input
+                  ref={csvInputRef}
                   accept=".csv,text/csv"
                   className="sr-only"
-                  id={csvInputId}
                   multiple
                   onChange={handleCSVFileChange}
                   type="file"
@@ -290,16 +283,14 @@ export function WorkspaceImportPage(): ReactElement {
 
               {selectedCSVs.length > 0 ? (
                 <div className="mt-4">
-                  <button
-                    className="inline-flex h-10 items-center gap-2 rounded-[8px] bg-[var(--track-accent)] px-5 text-[12px] font-semibold text-black disabled:opacity-50"
+                  <AppButton
                     disabled={createTimeEntriesImportJobMutation.isPending}
                     onClick={() => void handleCSVUpload()}
-                    type="button"
                   >
                     {createTimeEntriesImportJobMutation.isPending
                       ? "Importing…"
                       : "Upload & import"}
-                  </button>
+                  </AppButton>
                 </div>
               ) : null}
             </section>

@@ -38,6 +38,7 @@ import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import type { BulkEditUpdates } from "../../features/tracking/BulkEditDialog.tsx";
 import type { TimeEntryEditorAnchor } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import type { TimerComposerSuggestionsAnchor } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
+import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import type {
   CalendarSubview,
   TimerInputMode,
@@ -510,7 +511,7 @@ export function useTimerPageOrchestration(options?: {
       return false;
     }
 
-    const originalProjectId = selectedEntry.project_id ?? selectedEntry.pid ?? null;
+    const originalProjectId = resolveTimeEntryProjectId(selectedEntry);
     const originalTagIds = selectedEntry.tag_ids ?? [];
 
     return (
@@ -711,7 +712,7 @@ export function useTimerPageOrchestration(options?: {
     }
     selectedEntryIdRef.current = entryId;
     setSelectedDescription(selectedEntry?.description ?? "");
-    setSelectedProjectId(selectedEntry?.project_id ?? selectedEntry?.pid ?? null);
+    setSelectedProjectId(selectedEntry ? resolveTimeEntryProjectId(selectedEntry) : null);
     setSelectedTagIds(selectedEntry?.tag_ids ?? []);
     setSelectedStartIso(selectedEntry?.start ?? null);
     setSelectedStopIso(selectedEntry?.stop ?? null);
@@ -811,7 +812,7 @@ export function useTimerPageOrchestration(options?: {
       await startTimeEntryMutation.mutateAsync({
         billable: entry.billable,
         description: continuedDescription,
-        projectId: entry.project_id ?? entry.pid ?? null,
+        projectId: resolveTimeEntryProjectId(entry),
         start: new Date().toISOString(),
         tagIds: entry.tag_ids ?? [],
         taskId: entry.task_id ?? entry.tid ?? null,
@@ -1047,7 +1048,7 @@ export function useTimerPageOrchestration(options?: {
   const handleSelectedEntrySuggestionSelect = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
       setSelectedDescription(entry.description ?? "");
-      setSelectedProjectId(entry.project_id ?? entry.pid ?? null);
+      setSelectedProjectId(resolveTimeEntryProjectId(entry));
       setSelectedTagIds(entry.tag_ids ?? []);
     },
     [],
@@ -1193,7 +1194,7 @@ export function useTimerPageOrchestration(options?: {
         request: {
           billable: targetEntry.billable,
           description: targetEntry.description ?? "",
-          projectId: targetEntry.project_id ?? targetEntry.pid ?? null,
+          projectId: resolveTimeEntryProjectId(targetEntry),
           start: toTrackIso(nextStart),
           stop: nextStop ? toTrackIso(nextStop) : undefined,
           tagIds: targetEntry.tag_ids ?? [],
@@ -1236,7 +1237,7 @@ export function useTimerPageOrchestration(options?: {
         request: {
           billable: targetEntry.billable,
           description: targetEntry.description ?? "",
-          projectId: targetEntry.project_id ?? targetEntry.pid ?? null,
+          projectId: resolveTimeEntryProjectId(targetEntry),
           start: toTrackIso(new Date(nextStartMs)),
           stop: toTrackIso(new Date(nextStopMs)),
           tagIds: targetEntry.tag_ids ?? [],
@@ -1303,7 +1304,7 @@ export function useTimerPageOrchestration(options?: {
           request: {
             billable: entry.billable,
             description: entry.description ?? "",
-            projectId: entry.project_id ?? entry.pid ?? null,
+            projectId: resolveTimeEntryProjectId(entry),
             start: entry.start,
             stop: toTrackIso(nextStop),
             tagIds: entry.tag_ids ?? [],
@@ -1338,7 +1339,7 @@ export function useTimerPageOrchestration(options?: {
         request: {
           billable: firstEntry.billable,
           description: firstEntry.description ?? "",
-          projectId: firstEntry.project_id ?? firstEntry.pid ?? null,
+          projectId: resolveTimeEntryProjectId(firstEntry),
           start: firstEntry.start,
           stop: toTrackIso(nextStop),
           tagIds: firstEntry.tag_ids ?? [],
@@ -1395,7 +1396,7 @@ export function useTimerPageOrchestration(options?: {
         billable: entry.billable,
         description: (entry.description ?? "").trim(),
         duration: durationSec,
-        projectId: entry.project_id ?? entry.pid ?? null,
+        projectId: resolveTimeEntryProjectId(entry),
         start: toTrackIso(newStart),
         stop: toTrackIso(newStop),
         tagIds: entry.tag_ids ?? [],

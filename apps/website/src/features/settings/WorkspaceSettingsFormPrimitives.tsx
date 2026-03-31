@@ -78,7 +78,10 @@ export function LogoCard({
   const hasLogo = logoUrl.length > 0;
 
   return (
-    <div className="flex h-[216px] w-[216px] shrink-0 flex-col items-center justify-center rounded-[20px] border-2 border-dashed border-[var(--track-border)] bg-[var(--track-surface)] px-[22px] py-[22px] shadow-[0px_1px_3px_0px_var(--track-shadow-subtle)]">
+    <div
+      className={`flex h-[216px] w-[216px] shrink-0 flex-col items-center justify-center rounded-[20px] border-2 border-dashed bg-[var(--track-surface)] px-[22px] py-[22px] shadow-[0px_1px_3px_0px_var(--track-shadow-subtle)] transition-[border-color,background-color] duration-150 ${hasLogo ? "border-[var(--track-border)]" : "cursor-pointer border-[var(--track-border)] hover:border-[var(--track-accent)] hover:bg-[var(--track-surface-muted)]"}`}
+      onClick={hasLogo ? undefined : () => fileInputRef.current?.click()}
+    >
       <input
         accept="image/png,image/jpeg,image/gif,image/svg+xml"
         className="hidden"
@@ -102,7 +105,7 @@ export function LogoCard({
           />
           <div className="flex gap-2">
             <button
-              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-[var(--track-text-muted)] hover:text-white"
+              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-[var(--track-text-muted)] transition-colors hover:bg-[var(--track-row-hover)] hover:text-white"
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
               type="button"
@@ -111,7 +114,7 @@ export function LogoCard({
               Replace
             </button>
             <button
-              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-red-400 hover:text-red-300"
+              className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-red-400 transition-colors hover:bg-red-400/10 hover:text-red-300"
               disabled={uploading}
               onClick={() => void handleDelete()}
               type="button"
@@ -123,12 +126,12 @@ export function LogoCard({
         </>
       ) : (
         <button
-          className="flex flex-col items-center gap-3"
+          className="flex flex-col items-center gap-3 transition-colors"
           disabled={uploading}
           onClick={() => fileInputRef.current?.click()}
           type="button"
         >
-          <Upload className="size-8 text-[var(--track-text-muted)]" />
+          <Upload className="size-8 text-[var(--track-text-muted)] transition-colors group-hover:text-[var(--track-accent-text)]" />
           <span className="text-center text-[12px] font-medium leading-4 text-[var(--track-text-muted)]">
             {uploading ? "Uploading…" : "Upload your workspace logo"}
           </span>

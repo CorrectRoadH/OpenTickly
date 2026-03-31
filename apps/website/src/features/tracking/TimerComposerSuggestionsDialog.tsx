@@ -9,6 +9,7 @@ import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { ChevronDown } from "lucide-react";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 
 export type TimerComposerSuggestionsAnchor = {
   height: number;
@@ -329,7 +330,7 @@ function buildProjectSuggestions(
 function buildEntryKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
   return [
     entry.description?.trim().toLowerCase() || "",
-    String(entry.project_id ?? entry.pid ?? 0),
+    String(resolveTimeEntryProjectId(entry) ?? 0),
     (entry.tag_ids ?? []).join(","),
   ].join("::");
 }

@@ -1,8 +1,8 @@
 import {
   AppSurfaceState,
   PageLayout,
+  PageLayoutTabIndicator,
   pageLayoutTabClass,
-  pageLayoutTabIndicatorClass,
   SurfaceCard,
 } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
@@ -61,7 +61,7 @@ export function WorkspaceSettingsPage({
           to={buildWorkspaceSettingsPathWithSection(workspaceId, tab.id)}
         >
           {tab.label}
-          {section === tab.id ? <span className={pageLayoutTabIndicatorClass} /> : null}
+          {section === tab.id ? <PageLayoutTabIndicator /> : null}
         </Link>
       ))}
     >

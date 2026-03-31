@@ -173,7 +173,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
             tabIndex={-1}
           />
           <aside className="relative z-10 flex h-full w-[226px] flex-col overflow-hidden bg-[var(--track-panel)] shadow-[1px_0px_0px_0px_var(--track-border)]">
-            <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
+            <div className="shrink-0 overflow-x-clip px-[6px] pb-[5px] pt-2">
               <WorkspaceSwitcher {...workspaceSwitcherProps} />
             </div>
             <SidebarNavSections {...navProps} />
@@ -207,7 +207,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col bg-[var(--track-panel)]">
-          <div className="overflow-x-clip overflow-y-auto px-[6px] pt-2">
+          <div className="shrink-0 overflow-x-clip px-[6px] pb-[5px] pt-2">
             <WorkspaceSwitcher {...workspaceSwitcherProps} />
           </div>
           <SidebarNavSections {...navProps} />

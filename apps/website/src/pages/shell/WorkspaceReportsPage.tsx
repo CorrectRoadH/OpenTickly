@@ -3,8 +3,8 @@ import {
   AppButton,
   CheckboxFilterDropdown,
   PageLayout,
+  PageLayoutTabIndicator,
   pageLayoutTabClass,
-  pageLayoutTabIndicatorClass,
 } from "@opentoggl/web-ui";
 import { Link, useNavigate } from "@tanstack/react-router";
 
@@ -318,7 +318,7 @@ export function WorkspaceReportsPage({
           to={buildWorkspaceReportsPath(workspaceId, t.slug)}
         >
           {t.label}
-          {t.slug === tab ? <span className={pageLayoutTabIndicatorClass} /> : null}
+          {t.slug === tab ? <PageLayoutTabIndicator /> : null}
         </Link>
       ))}
       toolbar={

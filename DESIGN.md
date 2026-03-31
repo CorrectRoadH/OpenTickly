@@ -468,6 +468,44 @@ Rules:
 - Dropdowns, popovers, and dialogs should share overlay surface and overlay border roles instead of each file picking its own near-black.
 - Search rows, picker panels, and context menus should look related even when their contents differ.
 
+### Context Menu / Dropdown Menu
+
+Action menus, context menus, and dropdown menus share one compact spec. Information density is a priority — menus should feel tight and operational, not padded or spacious.
+
+#### Menu Container
+
+- Background: `var(--track-overlay-surface-raised)`
+- Border: `1px solid var(--track-overlay-border)`
+- Border-radius: `8px`
+- Padding: `4px`
+- Shadow: `var(--track-shadow-overlay)`
+- Min-width: `180px`
+
+#### Menu Item
+
+- Height: `28px` (fixed via `min-height`, no vertical padding)
+- Padding: `0 10px`
+- Font: 14px/400, `var(--track-overlay-text)`
+- Border-radius: `6px`
+- Hover: `background: var(--track-row-hover)`
+- Active: `translateY(1px)` press-down
+- Disabled: `opacity: 0.5`, no hover
+- Danger variant: `color: var(--track-danger-text)`
+
+#### Menu Separator
+
+- Height: `1px`
+- Background: `var(--track-border-soft)`
+- Margin: `4px 0`
+
+Rules:
+
+- Every menu item must use the same component. No inline `<a>`, `<button>`, or `<div>` with ad-hoc styles.
+- Menu items do not use `font-semibold` or `font-medium` — regular weight only.
+- No vertical padding on items. Height is controlled by `min-height: 28px` + vertical centering.
+- Container padding is `4px`, not `6px` or `8px`.
+- Border-radius on items is `6px`, not `10px` or `14px` — menus are tighter than cards.
+
 ### Data views
 
 - Tables, list rows, filter chips, and compact summary widgets should use one consistent density model.

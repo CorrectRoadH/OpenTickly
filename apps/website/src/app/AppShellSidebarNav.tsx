@@ -1,3 +1,4 @@
+import { AnimatedActiveIndicator } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
 import { type ReactElement, type ReactNode } from "react";
 
@@ -120,16 +121,20 @@ function ShellNavItem({
 }): ReactElement {
   const content = (
     <div
-      className={`flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium ${
-        active
-          ? "bg-[var(--track-accent-soft)] text-[var(--track-accent-text)]"
-          : "text-[var(--track-text-muted)]"
+      className={`relative flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium transition-colors duration-[160ms] ${
+        active ? "text-[var(--track-accent-text)]" : "text-[var(--track-text-muted)]"
       } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
     >
-      {navIcon(label)}
-      <span className="truncate">{label}</span>
+      {active ? (
+        <AnimatedActiveIndicator
+          className="absolute inset-0 rounded-[6px] bg-[var(--track-accent-soft)]"
+          layoutId="shell-nav-active-item"
+        />
+      ) : null}
+      <span className="relative z-[1]">{navIcon(label)}</span>
+      <span className="relative z-[1] truncate">{label}</span>
       {badge ? (
-        <span className="ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
+        <span className="relative z-[1] ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
           {badge}
         </span>
       ) : null}

@@ -255,7 +255,7 @@ export function ReportsProfitabilityView({
                 />
               </div>
             </div>
-            {dayAmounts.length === 0 || dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
+            {dayAmounts.every((d) => d.amount === 0 && d.cost === 0) ? (
               <EmptyChart />
             ) : (
               <DayTrendsChart days={dayAmounts} show={showMetric} />

@@ -103,7 +103,7 @@ describe("WorkspaceSwitcher", () => {
     fireEvent.click(screen.getByLabelText("Organization"));
     fireEvent.click(screen.getByRole("button", { name: "Create organization" }));
 
-    const dialog = screen.getByRole("dialog", { name: "New organization" });
+    const dialog = screen.getByTestId("create-organization-dialog");
     fireEvent.change(within(dialog).getByLabelText("Organization name"), {
       target: { value: "Beta Org" },
     });

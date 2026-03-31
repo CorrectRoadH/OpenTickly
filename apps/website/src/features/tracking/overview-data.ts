@@ -1,5 +1,6 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { isTrackHexColor, pickTrackColorFromSeed } from "../../shared/lib/project-colors.ts";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 
 export type EntryGroup = {
   entries: DisplayEntry[];
@@ -393,7 +394,7 @@ export function collapseSimilarEntries(groups: EntryGroup[]): EntryGroup[] {
 
 function buildSimilarityKey(entry: GithubComTogglTogglApiInternalModelsTimeEntry): string {
   const desc = (entry.description ?? "").trim().toLowerCase();
-  const projectId = entry.project_id ?? entry.pid ?? 0;
+  const projectId = resolveTimeEntryProjectId(entry) ?? 0;
   const tagIds = [...(entry.tag_ids ?? [])].sort((a, b) => a - b).join(",");
   return `${desc}|${projectId}|${tagIds}`;
 }

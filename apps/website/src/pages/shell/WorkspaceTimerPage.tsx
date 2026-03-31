@@ -34,6 +34,7 @@ import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.t
 import { SplitTimeEntryDialog } from "../../features/tracking/SplitTimeEntryDialog.tsx";
 import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
+import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import {
   formatDayLabel,
@@ -545,7 +546,7 @@ export function WorkspaceTimerPage({
                     billable: entry.billable,
                     description: (entry.description ?? "").trim(),
                     duration: durationSec,
-                    projectId: entry.project_id ?? entry.pid ?? null,
+                    projectId: resolveTimeEntryProjectId(entry),
                     start: entry.start,
                     stop: entry.stop,
                     tagIds: entry.tag_ids ?? [],
@@ -926,7 +927,7 @@ function snapshotEntryForUndo(entry: {
     billable: entry.billable ?? false,
     description: (entry.description ?? "").trim(),
     duration: durationSec,
-    projectId: entry.project_id ?? entry.pid ?? null,
+    projectId: resolveTimeEntryProjectId(entry),
     start: entry.start,
     stop: entry.stop,
     tagIds: entry.tag_ids ?? [],
@@ -944,7 +945,7 @@ function isEntryAlreadyFavorited(
   favorites: Array<{ description?: string; project_id?: number; tag_ids?: number[] }>,
 ): boolean {
   const desc = (entry.description ?? "").trim().toLowerCase();
-  const projectId = entry.project_id ?? entry.pid ?? null;
+  const projectId = resolveTimeEntryProjectId(entry);
   const tagIds = [...(entry.tag_ids ?? [])].sort((a, b) => a - b);
   return favorites.some((fav) => {
     const favTags = [...(fav.tag_ids ?? [])].sort((a, b) => a - b);
@@ -975,7 +976,7 @@ function handleCalendarContextMenuAction(
           billable: entry.billable,
           description: (entry.description ?? "").trim(),
           duration: durationSec,
-          projectId: entry.project_id ?? entry.pid ?? null,
+          projectId: resolveTimeEntryProjectId(entry),
           start: entry.start,
           stop: entry.stop,
           tagIds: entry.tag_ids ?? [],
@@ -1005,8 +1006,9 @@ function handleCalendarContextMenuAction(
     case "copy-start-link": {
       const params = new URLSearchParams();
       if (entry.description) params.set("description", entry.description.trim());
-      if (entry.project_id ?? entry.pid) {
-        params.set("project_id", String(entry.project_id ?? entry.pid));
+      const projectId = resolveTimeEntryProjectId(entry);
+      if (projectId != null) {
+        params.set("project_id", String(projectId));
       }
       if (entry.tag_ids?.length) {
         params.set("tag_ids", entry.tag_ids.join(","));
@@ -1021,7 +1023,7 @@ function handleCalendarContextMenuAction(
       void orch.createWorkspaceFavoriteMutation.mutateAsync({
         billable: entry.billable,
         description: (entry.description ?? "").trim(),
-        projectId: entry.project_id ?? entry.pid ?? null,
+        projectId: resolveTimeEntryProjectId(entry),
         tagIds: entry.tag_ids ?? [],
         taskId: entry.task_id ?? entry.tid ?? null,
       });
@@ -1073,9 +1075,7 @@ function TimerBarProjectPicker({
 
   // When a running entry exists, display its project; otherwise use draft project
   const displayProjectId =
-    runningEntry?.id != null
-      ? (runningEntry.project_id ?? runningEntry.pid ?? null)
-      : draftProjectId;
+    runningEntry?.id != null ? resolveTimeEntryProjectId(runningEntry) : draftProjectId;
   const selectedProject = projects.find((p) => p.id === displayProjectId);
   const hasProject = displayProjectId != null;
 
@@ -1473,7 +1473,7 @@ function resolveTimeEntryProjectId(entry: {
   project_id?: number | null;
   pid?: number | null;
 }): number | null {
-  const projectId = entry.project_id ?? entry.pid ?? null;
+  const projectId = resolveCanonicalTimeEntryProjectId(entry);
   if (projectId == null || projectId <= 0) {
     return null;
   }

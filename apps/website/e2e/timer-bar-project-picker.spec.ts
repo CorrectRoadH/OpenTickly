@@ -77,6 +77,27 @@ test.describe("Story: timer bar project picker search and archived filtering", (
     // Stop the timer
     await page.getByRole("button", { name: "Stop timer" }).click();
   });
+
+  test("when the user clears an existing project selection with No Project, the timer bar returns to the empty project state", async ({
+    page,
+  }) => {
+    await page.getByLabel("Time entry description").fill("Project clearing regression");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    await page.getByLabel("Add a project").click();
+    const picker = page.getByTestId("bulk-edit-project-picker");
+    await expect(picker).toBeVisible();
+    await picker.getByText(ACTIVE_PROJECT).click();
+
+    await expect(page.getByLabel(`Add a project: ${ACTIVE_PROJECT}`)).toBeVisible();
+
+    await page.getByLabel(`Add a project: ${ACTIVE_PROJECT}`).click();
+    await expect(picker).toBeVisible();
+    await picker.getByText("No Project").click();
+
+    await expect(page.getByLabel("Add a project")).toBeVisible();
+  });
 });
 
 async function archiveProject(

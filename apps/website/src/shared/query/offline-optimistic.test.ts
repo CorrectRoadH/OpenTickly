@@ -255,6 +255,37 @@ describe("Offline optimistic mutations", () => {
       ]);
       expect(cached?.description).toBe("Working on feature");
     });
+
+    it("sends null project_id when clearing an existing project", async () => {
+      mockPutUpdate.mockResolvedValue({
+        data: makeTimeEntry({
+          id: stoppedEntry.id,
+          duration: stoppedEntry.duration,
+          project_id: null,
+          stop: stoppedEntry.stop,
+        }),
+      });
+
+      const { result } = renderHook(() => useUpdateTimeEntryMutation(), {
+        wrapper: createWrapper(queryClient),
+      });
+
+      await act(async () => {
+        await result.current.mutateAsync({
+          request: { projectId: null },
+          timeEntryId: stoppedEntry.id!,
+          workspaceId: WORKSPACE_ID,
+        });
+      });
+
+      expect(mockPutUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.objectContaining({
+            project_id: null,
+          }),
+        }),
+      );
+    });
   });
 
   describe("useStartTimeEntryMutation", () => {

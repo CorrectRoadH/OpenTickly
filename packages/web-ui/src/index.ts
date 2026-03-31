@@ -1,4 +1,5 @@
 export { AppButton, type AppButtonSize } from "./AppButton.tsx";
+export { AnimatedActiveIndicator } from "./AnimatedActiveIndicator.tsx";
 export { AppInput, type AppInputSize } from "./AppInput.tsx";
 export { AppInlineNotice } from "./AppInlineNotice.tsx";
 export { AppPanel } from "./AppPanel.tsx";
@@ -29,6 +30,7 @@ export { IconButton } from "./IconButton.tsx";
 export { SelectButton, SelectDropdown, type SelectOption } from "./SelectButton.tsx";
 export {
   PageLayout,
+  PageLayoutTabIndicator,
   type PageLayoutTab,
   pageLayoutTabClass,
   pageLayoutTabIndicatorClass,

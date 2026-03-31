@@ -3,7 +3,7 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 import { clientsClaim } from "workbox-core";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { NetworkFirst, CacheFirst } from "workbox-strategies";
+import { NetworkFirst } from "workbox-strategies";
 import { ExpirationPlugin } from "workbox-expiration";
 import { BackgroundSyncPlugin } from "workbox-background-sync";
 import { createHandlerBoundToURL } from "workbox-precaching";
@@ -11,7 +11,7 @@ import { createHandlerBoundToURL } from "workbox-precaching";
 declare let self: ServiceWorkerGlobalScope;
 
 // Take control immediately
-self.skipWaiting();
+void self.skipWaiting();
 clientsClaim();
 
 // Precache static assets (injected by vite-plugin-pwa)

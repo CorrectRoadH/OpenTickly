@@ -2,6 +2,7 @@ import { type ReactElement, useMemo, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   useDeleteTimeEntryMutation,
@@ -33,7 +34,7 @@ export function MobileTimeEntryEditor({
   const tagsQuery = useTagsQuery(workspaceId);
 
   const [description, setDescription] = useState(entry.description ?? "");
-  const [projectId, setProjectId] = useState<number | null>(entry.project_id ?? entry.pid ?? null);
+  const [projectId, setProjectId] = useState<number | null>(resolveTimeEntryProjectId(entry));
   const [tagIds, setTagIds] = useState<number[]>(entry.tag_ids ?? []);
   const [billable, setBillable] = useState(entry.billable ?? false);
   const [startIso, setStartIso] = useState(entry.start ?? "");

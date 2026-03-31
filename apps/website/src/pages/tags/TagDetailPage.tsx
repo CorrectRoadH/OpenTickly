@@ -1,4 +1,4 @@
-import { AppPanel } from "@opentoggl/web-ui";
+import { AppButton, PageLayout } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
 
 type TagDetailPageProps = {
@@ -8,42 +8,41 @@ type TagDetailPageProps = {
 
 export function TagDetailPage({ tagId, workspaceId }: TagDetailPageProps): ReactElement {
   return (
-    <AppPanel tone="light">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Tag details</h1>
-        <p className="text-sm leading-6 text-slate-600">
-          Formal detail entry point for workspace tags.
-        </p>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-2">
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-          Workspace {workspaceId}
-        </span>
-        <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-800">
-          Tag {tagId}
-        </span>
-      </div>
-
-      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-sm font-semibold text-slate-900">
-          This entry point keeps the formal tag route stable while the workspace directory remains
-          the canonical place to review and update tag records.
-        </p>
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Return to the tags directory to create records, switch status views, and open another tag
-          detail route.
-        </p>
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <a
-          className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:border-emerald-600 hover:text-emerald-800"
-          href={`/workspaces/${workspaceId}/tags`}
+    <PageLayout
+      title={`Tag ${tagId}`}
+      subtitle="Tag detail view"
+      headerActions={
+        <AppButton
+          variant="secondary"
+          onClick={() => {
+            window.location.href = `/workspaces/${workspaceId}/tags`;
+          }}
         >
           Back to tags
-        </a>
+        </AppButton>
+      }
+    >
+      <div className="px-5 py-5">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 py-1 text-[12px] font-medium text-[var(--track-text-muted)]">
+            Workspace {workspaceId}
+          </span>
+          <span className="rounded-[8px] border border-[var(--track-accent)] bg-[var(--track-accent-soft)] px-3 py-1 text-[12px] font-medium text-[var(--track-accent-text)]">
+            Tag {tagId}
+          </span>
+        </div>
+
+        <div className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] p-4">
+          <p className="text-[14px] font-semibold text-white">
+            This entry point keeps the formal tag route stable while the workspace directory remains
+            the canonical place to review and update tag records.
+          </p>
+          <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
+            Return to the tags directory to create records, switch status views, and open another
+            tag detail route.
+          </p>
+        </div>
       </div>
-    </AppPanel>
+    </PageLayout>
   );
 }

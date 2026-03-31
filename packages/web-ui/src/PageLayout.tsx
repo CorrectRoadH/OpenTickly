@@ -1,16 +1,27 @@
 import type { ReactElement, ReactNode } from "react";
 
+import { AnimatedActiveIndicator } from "./AnimatedActiveIndicator.tsx";
+
 const tabBase =
-  "relative flex h-[40px] items-center px-3 text-[14px] font-medium transition-colors";
+  "relative flex h-[40px] items-center px-3 text-[14px] font-medium transition-colors duration-[160ms]";
 const tabActive = "text-white";
 const tabInactive = "text-[var(--track-text-muted)] hover:text-[var(--track-text-soft)]";
 const tabIndicator = "absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--track-accent)]";
+const tabIndicatorLayoutId = "page-layout-tab-indicator";
 
 export function pageLayoutTabClass(active: boolean): string {
   return `${tabBase} ${active ? tabActive : tabInactive}`;
 }
 
 export { tabIndicator as pageLayoutTabIndicatorClass };
+
+export function PageLayoutTabIndicator({
+  layoutId = tabIndicatorLayoutId,
+}: {
+  layoutId?: string;
+}): ReactElement {
+  return <AnimatedActiveIndicator className={tabIndicator} layoutId={layoutId} />;
+}
 
 export type PageLayoutTab = {
   label: string;
@@ -95,7 +106,7 @@ export function PageLayout({
                   type="button"
                 >
                   {tab.label}
-                  {activeTab === tab.value ? <span className={tabIndicator} /> : null}
+                  {activeTab === tab.value ? <PageLayoutTabIndicator /> : null}
                 </button>
               ))
             : tabs}

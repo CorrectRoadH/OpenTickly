@@ -95,7 +95,7 @@ export function calendarDayLayout(args: any): StyledEvent[] {
 
   // Step 5: greedily assign column indices
   for (const item of items) {
-    const taken = new Array(100).fill(1) as number[];
+    const taken = Array.from({ length: 100 }, () => 1);
     for (const friend of item.friends) {
       if (friend.idx !== undefined) {
         taken[friend.idx] = 0;
