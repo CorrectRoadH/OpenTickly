@@ -12,6 +12,7 @@ export {
   type DropdownPlacement,
   MenuItem,
   MenuLink,
+  MenuSeparator,
   useDropdownClose,
 } from "./DropdownMenu.tsx";
 export {

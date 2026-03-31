@@ -8,7 +8,15 @@ import { getDay } from "date-fns/getDay";
 import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
 import { enUS } from "date-fns/locale/en-US";
-import { AppButton, IconButton as AppIconButton, SelectButton } from "@opentoggl/web-ui";
+import {
+  AppButton,
+  DropdownMenu,
+  IconButton as AppIconButton,
+  MenuItem,
+  MenuLink,
+  MenuSeparator,
+  SelectButton,
+} from "@opentoggl/web-ui";
 import "./calendar.css";
 
 import { calendarDayLayout } from "./calendar-day-layout.ts";
@@ -897,128 +905,54 @@ function ListRowMoreActions({
   onFavorite?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onSplit?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const label = entry.description?.trim() || "time entry";
-  const menuItemClass =
-    "flex w-full items-center gap-2 px-3 py-2 text-[12px] text-white transition hover:bg-[var(--track-row-hover)]";
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
-        aria-label={`More actions for ${label}`}
-        className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
-        onClick={() => setOpen((prev) => !prev)}
-        onBlur={(e) => {
-          if (!containerRef.current?.contains(e.relatedTarget as Node)) {
-            setOpen(false);
+    <DropdownMenu
+      minWidth="200px"
+      trigger={
+        <button
+          aria-label={`More actions for ${label}`}
+          className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
+          type="button"
+        >
+          <MoreIcon className="size-3" />
+        </button>
+      }
+    >
+      <MenuItem onClick={() => onBillableToggle?.(entry)}>
+        {entry.billable ? "Set as non-billable" : "Set as billable"}
+      </MenuItem>
+      <MenuItem onClick={() => onDuplicate?.(entry)}>Duplicate</MenuItem>
+      {entry.start && entry.stop ? (
+        <MenuItem onClick={() => onSplit?.(entry)}>Split</MenuItem>
+      ) : null}
+      {entry.project_id || entry.pid ? (
+        <MenuLink
+          href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${resolveTimeEntryProjectId(entry)}`}
+        >
+          Go to project
+        </MenuLink>
+      ) : null}
+      <MenuItem onClick={() => onFavorite?.(entry)}>Pin as favorite</MenuItem>
+      <MenuItem onClick={() => void navigator.clipboard.writeText(entry.description?.trim() ?? "")}>
+        Copy description
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          if (typeof entry.id === "number") {
+            const startLink = `${window.location.origin}/timer?entry=${entry.id}`;
+            void navigator.clipboard.writeText(startLink);
           }
         }}
-        type="button"
       >
-        <MoreIcon className="size-3" />
-      </button>
-      {open ? (
-        <div
-          className="absolute right-0 top-full z-50 mt-1 w-[200px] rounded-lg border border-[var(--track-border)] bg-[var(--track-surface)] py-1 shadow-lg"
-          role="menu"
-        >
-          <button
-            className={menuItemClass}
-            onClick={() => {
-              setOpen(false);
-              onBillableToggle?.(entry);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            {entry.billable ? "Set as non-billable" : "Set as billable"}
-          </button>
-          <button
-            className={menuItemClass}
-            onClick={() => {
-              setOpen(false);
-              onDuplicate?.(entry);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Duplicate
-          </button>
-          {entry.start && entry.stop ? (
-            <button
-              className={menuItemClass}
-              onClick={() => {
-                setOpen(false);
-                onSplit?.(entry);
-              }}
-              role="menuitem"
-              type="button"
-            >
-              Split
-            </button>
-          ) : null}
-          {entry.project_id || entry.pid ? (
-            <a
-              className={menuItemClass}
-              href={`/projects/${entry.workspace_id ?? entry.wid}/edit/${resolveTimeEntryProjectId(entry)}`}
-              onClick={() => setOpen(false)}
-              role="menuitem"
-            >
-              Go to project
-            </a>
-          ) : null}
-          <button
-            className={menuItemClass}
-            onClick={() => {
-              setOpen(false);
-              onFavorite?.(entry);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Pin as favorite
-          </button>
-          <button
-            className={menuItemClass}
-            onClick={() => {
-              setOpen(false);
-              void navigator.clipboard.writeText(entry.description?.trim() ?? "");
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Copy description
-          </button>
-          <button
-            className={menuItemClass}
-            onClick={() => {
-              setOpen(false);
-              if (typeof entry.id === "number") {
-                const startLink = `${window.location.origin}/timer?entry=${entry.id}`;
-                void navigator.clipboard.writeText(startLink);
-              }
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Copy start link
-          </button>
-          <div className="my-1 border-t border-[var(--track-border)]" />
-          <button
-            className="flex w-full items-center gap-2 px-3 py-2 text-[12px] text-rose-400 transition hover:bg-[var(--track-row-hover)]"
-            onClick={() => {
-              setOpen(false);
-              onDelete?.(entry);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            Delete
-          </button>
-        </div>
-      ) : null}
-    </div>
+        Copy start link
+      </MenuItem>
+      <MenuSeparator />
+      <MenuItem destructive onClick={() => onDelete?.(entry)}>
+        Delete
+      </MenuItem>
+    </DropdownMenu>
   );
 }
 

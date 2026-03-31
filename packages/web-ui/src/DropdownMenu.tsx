@@ -340,6 +340,14 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
 }
 
 // ---------------------------------------------------------------------------
+// MenuSeparator — horizontal rule between groups of menu items
+// ---------------------------------------------------------------------------
+
+export function MenuSeparator(): ReactElement {
+  return <div className="my-1 border-t border-[var(--track-border)]" role="separator" />;
+}
+
+// ---------------------------------------------------------------------------
 // Shared internals
 // ---------------------------------------------------------------------------
 
