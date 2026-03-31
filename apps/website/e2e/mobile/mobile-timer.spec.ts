@@ -226,11 +226,12 @@ test.describe("Edit Time Entry Duration", () => {
   test("User cancels editing and the entry remains unchanged", async ({ page }) => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
+    // Wait for entry to appear before clicking
+    const editButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    await expect(editButton).toBeVisible();
+
     // Open entry editor
-    await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
-      .first()
-      .click();
+    await editButton.click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
     await expect(editor).toBeVisible();
@@ -309,9 +310,12 @@ test.describe("Assign Project to Time Entry", () => {
 
     const editor = page.getByTestId("mobile-time-entry-editor");
 
-    // Select project from dropdown
-    const projectSelect = editor.locator("select").first();
-    await projectSelect.selectOption({ label: PROJECT_NAME });
+    // Open project picker and select project
+    await editor.getByTestId("mobile-project-trigger").click();
+    const projectPicker = page.getByTestId("mobile-project-picker");
+    await expect(projectPicker).toBeVisible();
+    await projectPicker.getByRole("button", { name: PROJECT_NAME }).click();
+    await expect(projectPicker).not.toBeVisible();
 
     // Save
     await editor.getByRole("button", { name: "Save changes" }).click();
@@ -335,7 +339,11 @@ test.describe("Assign Project to Time Entry", () => {
     await page.getByText("Running with project").first().click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
-    await editor.locator("select").first().selectOption({ label: PROJECT_NAME });
+    await editor.getByTestId("mobile-project-trigger").click();
+    const projectPicker = page.getByTestId("mobile-project-picker");
+    await expect(projectPicker).toBeVisible();
+    await projectPicker.getByRole("button", { name: PROJECT_NAME }).click();
+    await expect(projectPicker).not.toBeVisible();
 
     // Save - timer should still be running
     await editor.getByRole("button", { name: "Save changes" }).click();
@@ -399,27 +407,28 @@ test.describe("Assign Tags to Time Entry", () => {
   test("User opens entry, adds a tag, and saves", async ({ page }) => {
     await page.goto(new URL("/m/timer", page.url()).toString());
 
+    // Wait for entry to appear before clicking
+    const editButton = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` }).first();
+    await expect(editButton).toBeVisible();
+
     // Open entry editor
-    await page
-      .getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` })
-      .first()
-      .click();
+    await editButton.click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
     await expect(editor).toBeVisible();
 
-    // Click on Tags summary to open tag options (the <details> element must be toggled open)
-    await editor.locator("details > summary").click();
+    // Open tag picker and select tag
+    await editor.getByTestId("mobile-tag-trigger").click();
+    const tagPicker = page.getByTestId("mobile-tag-picker");
+    await expect(tagPicker).toBeVisible();
 
-    // Wait for details to open
-    await expect(editor.locator("details[open]")).toBeVisible({ timeout: 3000 });
-
-    // Wait for tag buttons to appear
-    const tagButton = editor.locator("details[open] button").filter({ hasText: TAG_NAME }).first();
+    const tagButton = tagPicker.getByRole("button", { name: TAG_NAME }).first();
     await expect(tagButton).toBeVisible({ timeout: 5000 });
-
-    // Select the tag
     await tagButton.click();
+
+    // Close tag picker
+    await tagPicker.getByLabel("Close tags picker").click();
+    await expect(tagPicker).not.toBeVisible();
 
     // Click Save button
     const saveButton = editor.getByRole("button", { name: "Save changes" });
