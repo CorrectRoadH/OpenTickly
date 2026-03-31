@@ -104,6 +104,7 @@ export function MobileCalendarDayTimeline({
             return (
               <button
                 key={key}
+                aria-label={`Edit ${description}`}
                 className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
                 onClick={() => onEntryTap?.(entry)}
                 type="button"

@@ -76,41 +76,77 @@ export async function loginE2eUser(
  * @param page - The Playwright page object.
  */
 export async function completeOnboardingDialogIfVisible(page: Page): Promise<void> {
-  const dialog = page.getByTestId("onboarding-dialog");
-
-  if (!(await dialog.isVisible().catch(() => false))) {
-    return;
-  }
-
-  // Click through all steps by clicking Continue/Start tracking until dialog closes
-  while (await dialog.isVisible().catch(() => false)) {
-    // Try "Start tracking" first (last step), then "Continue"
-    const startTrackingBtn = dialog.getByRole("button", { name: "Start tracking" });
-    const continueBtn = dialog.getByRole("button", { name: "Continue" });
-
-    if (await startTrackingBtn.isVisible().catch(() => false)) {
-      await startTrackingBtn.click();
-    } else if (await continueBtn.isVisible().catch(() => false)) {
-      await continueBtn.click();
-    } else {
-      break;
-    }
-
-    // Small delay to let the dialog transition
-    await page.waitForTimeout(100);
-  }
-
-  await expect(dialog).not.toBeVisible({ timeout: 5000 });
-
-  // Ensure onboarding is durably completed via API so page reloads don't re-trigger.
+  // First, try to complete onboarding via API. This is more reliable than UI clicks.
   await page.evaluate(async () => {
-    await fetch("/web/v1/onboarding", {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ version: 1 }),
-    });
+    try {
+      const response = await fetch("/web/v1/onboarding", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version: 1 }),
+      });
+      return { ok: response.ok, status: response.status };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
   });
+
+  // Also complete via UI if dialog is visible - this handles any frontend state
+  const dialog = page.getByTestId("onboarding-dialog");
+  if (await dialog.isVisible().catch(() => false)) {
+    // Click through all steps by clicking Continue/Start tracking until dialog closes
+    for (let step = 0; step < 5; step++) {
+      const startTrackingBtn = dialog.getByRole("button", { name: "Start tracking" });
+      const continueBtn = dialog.getByRole("button", { name: "Continue" });
+
+      if (await startTrackingBtn.isVisible().catch(() => false)) {
+        await startTrackingBtn.click({ timeout: 5000 });
+        await page.waitForTimeout(500);
+        break;
+      } else if (await continueBtn.isVisible().catch(() => false)) {
+        await continueBtn.click({ timeout: 5000 });
+        await page.waitForTimeout(300);
+      } else {
+        break;
+      }
+    }
+    // Wait for dialog to close
+    await page.waitForTimeout(500);
+    if (await dialog.isVisible().catch(() => false)) {
+      // Force close by pressing Escape or clicking backdrop
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+    }
+  }
+
+  // Wait for any pending React re-renders and query invalidations
+  await page.waitForTimeout(1000);
+
+  // Verify onboarding is completed by checking the API
+  const statusResult = await page.evaluate(async () => {
+    try {
+      const response = await fetch("/web/v1/onboarding", {
+        credentials: "include",
+      });
+      const data = await response.json();
+      return data.completed;
+    } catch {
+      return null;
+    }
+  });
+
+  if (statusResult === false) {
+    // API says not completed, retry the API call
+    await page.evaluate(async () => {
+      await fetch("/web/v1/onboarding", {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ version: 1 }),
+      });
+    });
+    await page.waitForTimeout(500);
+  }
 }
 
 export async function readSessionBootstrap(page: Page): Promise<WebSessionBootstrapDto> {

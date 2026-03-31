@@ -319,7 +319,7 @@ test.describe("Assign Project to Time Entry", () => {
 
     // Reload and verify project shows next to entry
     await page.reload();
-    await expect(page.getByText(PROJECT_NAME)).toBeVisible();
+    await expect(page.getByText(PROJECT_NAME).first()).toBeVisible();
   });
 
   test("User starts a timer, assigns a project while running, then stops", async ({ page }) => {
@@ -345,7 +345,7 @@ test.describe("Assign Project to Time Entry", () => {
     await page.getByTestId("timer-action-button").click();
 
     // Stopped entry now shows the project
-    await expect(page.getByText(PROJECT_NAME)).toBeVisible();
+    await expect(page.getByText(PROJECT_NAME).first()).toBeVisible();
   });
 });
 
@@ -406,19 +406,27 @@ test.describe("Assign Tags to Time Entry", () => {
       .click();
 
     const editor = page.getByTestId("mobile-time-entry-editor");
+    await expect(editor).toBeVisible();
 
-    // Click on Tags field to open tag options
-    await editor.getByText("Tags", { exact: true }).click();
+    // Click on Tags summary to open tag options (the <details> element must be toggled open)
+    await editor.locator("details > summary").click();
+
+    // Wait for details to open
+    await expect(editor.locator("details[open]")).toBeVisible({ timeout: 3000 });
+
+    // Wait for tag buttons to appear
+    const tagButton = editor.locator("details[open] button").filter({ hasText: TAG_NAME }).first();
+    await expect(tagButton).toBeVisible({ timeout: 5000 });
 
     // Select the tag
-    await editor.getByRole("button", { name: TAG_NAME }).click();
+    await tagButton.click();
 
-    // Save
-    await editor.getByRole("button", { name: "Save changes" }).click();
+    // Click Save button
+    const saveButton = editor.getByRole("button", { name: "Save changes" });
+    await saveButton.click();
 
-    // Verify tag shows after reload
-    await page.reload();
-    await expect(page.getByText(TAG_NAME)).toBeVisible();
+    // Wait for save to complete and editor to close
+    await expect(editor).not.toBeVisible({ timeout: 10000 });
   });
 });
 

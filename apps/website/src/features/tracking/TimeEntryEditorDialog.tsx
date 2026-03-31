@@ -217,7 +217,8 @@ export function TimeEntryEditorDialog({
       const target = event.target as HTMLElement;
       if (
         !target.closest('[data-testid="time-entry-editor-dialog"]') &&
-        !target.closest('[data-testid="split-time-entry-dialog"]')
+        !target.closest('[data-testid="split-time-entry-dialog"]') &&
+        !target.closest('[role="menu"]')
       ) {
         if (isDirty) {
           dispatch({ type: "SET_DISCARD_CONFIRMATION", show: true });
