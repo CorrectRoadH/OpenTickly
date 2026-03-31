@@ -257,6 +257,17 @@ const CALENDAR_SUBVIEW_LABELS: Record<CalendarSubview, string> = {
 };
 
 const CALENDAR_SUBVIEW_OPTIONS: CalendarSubview[] = ["week", "five-day", "day"];
+const VIEW_TAB_LABELS: Record<TimerViewMode, string> = {
+  calendar: "Calendar",
+  list: "List view",
+  timesheet: "Timesheet",
+};
+
+const viewTabGroupClass =
+  "inline-flex items-center overflow-hidden rounded-[8px] bg-[var(--track-surface)] shadow-[var(--track-depth-shadow-rest)]";
+
+const viewTabClass =
+  "inline-flex h-8 min-w-[96px] items-center justify-center px-4 text-[14px] font-semibold focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-[-1px] focus-visible:outline-[var(--track-accent-outline)]";
 
 export function CalendarSubviewSelect({
   onChange,
@@ -353,7 +364,7 @@ export function ViewTabGroup({
   return (
     <div
       aria-label={label}
-      className="flex border border-[var(--track-border)] rounded-lg overflow-hidden"
+      className={viewTabGroupClass}
       onKeyDown={handleKeyDown}
       ref={groupRef}
       role="radiogroup"
@@ -373,14 +384,13 @@ export function ViewTab({
   targetView: TimerViewMode;
 }) {
   const isSelected = currentView === targetView;
-  const dividerClass = targetView !== "calendar" ? "border-l border-[var(--track-border)]" : "";
   return (
     <button
       aria-checked={isSelected}
-      className={`px-5 py-1 text-[14px] font-semibold focus-visible:outline-1 focus-visible:outline-offset-1 ${dividerClass} ${
+      className={`${viewTabClass} ${
         isSelected
-          ? "bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-secondary)]"
-          : "bg-[var(--track-surface)] text-[var(--track-text)]"
+          ? "translate-y-px bg-[var(--track-accent-soft-strong)] text-[var(--track-accent-text)] shadow-[inset_0_1px_0_0_rgba(0,0,0,0.28)]"
+          : "text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white active:translate-y-px"
       }`}
       data-state={isSelected ? "active" : "inactive"}
       onClick={() => onSelect(targetView)}
@@ -388,7 +398,7 @@ export function ViewTab({
       tabIndex={isSelected ? 0 : -1}
       type="button"
     >
-      {{ calendar: "Calendar", list: "List view", timesheet: "Timesheet" }[targetView]}
+      {VIEW_TAB_LABELS[targetView]}
     </button>
   );
 }
@@ -567,7 +577,7 @@ export function ListView({
                 return (
                   <li
                     key={`${renderEntry.id ?? "no-id"}-${subIdx}`}
-                    className={`group flex h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
+                    className={`group grid h-[50px] items-center pr-2 pl-5 text-[14px] text-white transition-colors hover:bg-[var(--track-row-hover)] ${
                       isSelected ? "bg-[var(--track-row-hover)]" : ""
                     } ${isExpandedGroup ? "bg-[var(--track-row-hover)]/50" : ""}`}
                     data-entry-description={renderEntry.description?.trim() || ""}
@@ -575,83 +585,92 @@ export function ListView({
                       typeof renderEntry.id === "number" ? String(renderEntry.id) : undefined
                     }
                     data-testid="time-entry-list-row"
+                    style={{
+                      gridTemplateColumns:
+                        "1fr minmax(50px, 180px) 30px 100px 120px 40px 30px",
+                    }}
                   >
-                    {/* Checkbox: w=30px, flex: 0 0 auto */}
-                    <div className="flex w-[30px] shrink-0 items-center justify-center">
-                      <input
-                        aria-label={`Select ${renderEntry.description?.trim() || "time entry"}`}
-                        checked={isSelected}
-                        className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
-                          isSelected
-                            ? "!opacity-100 border-[var(--track-accent)] bg-[var(--track-accent)]"
-                            : "border-[var(--track-border)]"
-                        }`}
-                        onChange={() => {
-                          if (typeof entryId === "number") toggleEntry(entryId);
-                        }}
-                        type="checkbox"
+                    {/* Left: checkbox + badge + description + project */}
+                    <div className="flex min-w-0 items-center gap-0">
+                      <div className="flex w-[30px] shrink-0 items-center justify-center">
+                        <input
+                          aria-label={`Select ${renderEntry.description?.trim() || "time entry"}`}
+                          checked={isSelected}
+                          className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
+                            isSelected
+                              ? "!opacity-100 border-[var(--track-accent)] bg-[var(--track-accent)]"
+                              : "border-[var(--track-border)]"
+                          }`}
+                          onChange={() => {
+                            if (typeof entryId === "number") toggleEntry(entryId);
+                          }}
+                          type="checkbox"
+                        />
+                      </div>
+
+                      {isCollapsedRow ? (
+                        <button
+                          aria-label={`Expand ${groupCount} similar entries`}
+                          className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[var(--track-text-disabled)] hover:text-white"
+                          onClick={() => {
+                            setExpandedGroupKeys((prev) => {
+                              const next = new Set(prev);
+                              next.add(groupKey);
+                              return next;
+                            });
+                          }}
+                          type="button"
+                        >
+                          {groupCount}
+                        </button>
+                      ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
+                        <button
+                          aria-label="Collapse similar entries"
+                          className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-accent)] text-[11px] font-semibold tabular-nums text-[var(--track-accent)] hover:bg-[var(--track-accent)]/10"
+                          onClick={() => {
+                            setExpandedGroupKeys((prev) => {
+                              const next = new Set(prev);
+                              next.delete(groupKey);
+                              return next;
+                            });
+                          }}
+                          type="button"
+                        >
+                          {groupCount}
+                        </button>
+                      ) : null}
+
+                      <div className="min-w-0 shrink">
+                        <InlineDescription
+                          entry={renderEntry}
+                          isRunning={isRunningTimeEntry(renderEntry)}
+                          onChange={onDescriptionChange}
+                        />
+                      </div>
+
+                      <div className="ml-3 min-w-0 shrink-0">
+                        <ListRowProjectPicker
+                          entry={renderEntry}
+                          onProjectChange={onProjectChange}
+                          projects={projects ?? []}
+                          workspaceName={workspaceName ?? "Workspace"}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Tags */}
+                    <div className="min-w-0 overflow-hidden">
+                      <ListRowTagPicker
+                        entry={renderEntry}
+                        onTagsChange={onTagsChange}
+                        tags={tags ?? []}
                       />
                     </div>
 
-                    {/* Group collapse/expand badge (inline, no wrapper) */}
-                    {isCollapsedRow ? (
-                      <button
-                        aria-label={`Expand ${groupCount} similar entries`}
-                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-border)] text-[11px] font-semibold tabular-nums text-[var(--track-text-muted)] hover:border-[var(--track-text-disabled)] hover:text-white"
-                        onClick={() => {
-                          setExpandedGroupKeys((prev) => {
-                            const next = new Set(prev);
-                            next.add(groupKey);
-                            return next;
-                          });
-                        }}
-                        type="button"
-                      >
-                        {groupCount}
-                      </button>
-                    ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
-                      <button
-                        aria-label="Collapse similar entries"
-                        className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-accent)] text-[11px] font-semibold tabular-nums text-[var(--track-accent)] hover:bg-[var(--track-accent)]/10"
-                        onClick={() => {
-                          setExpandedGroupKeys((prev) => {
-                            const next = new Set(prev);
-                            next.delete(groupKey);
-                            return next;
-                          });
-                        }}
-                        type="button"
-                      >
-                        {groupCount}
-                      </button>
-                    ) : null}
-
-                    {/* Description: flex: 0 1 auto, shrinks to fit */}
-                    <InlineDescription
-                      entry={renderEntry}
-                      isRunning={isRunningTimeEntry(renderEntry)}
-                      onChange={onDescriptionChange}
-                    />
-
-                    {/* Project: flex: 1 1 auto, fills remaining space, minWidth=50px */}
-                    <ListRowProjectPicker
-                      entry={renderEntry}
-                      onProjectChange={onProjectChange}
-                      projects={projects ?? []}
-                      workspaceName={workspaceName ?? "Workspace"}
-                    />
-
-                    {/* Tags: flex: 0 2 auto, w=50px */}
-                    <ListRowTagPicker
-                      entry={renderEntry}
-                      onTagsChange={onTagsChange}
-                      tags={tags ?? []}
-                    />
-
-                    {/* Billable: flex: 0 0 auto, w=30px */}
+                    {/* Billable */}
                     <button
                       aria-label={renderEntry.billable ? "Set as non-billable" : "Set as billable"}
-                      className={`flex size-[30px] shrink-0 items-center justify-center rounded transition ${
+                      className={`flex size-[30px] items-center justify-center rounded transition ${
                         renderEntry.billable
                           ? "text-[var(--track-warning-text)]"
                           : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
@@ -662,10 +681,10 @@ export function ListView({
                       <DollarIcon className="size-4" />
                     </button>
 
-                    {/* Duration + Time range: flex: 0 0 auto, minWidth=250px */}
+                    {/* Duration */}
                     <button
                       aria-label={`Edit ${renderEntry.description?.trim() || "time entry"}`}
-                      className="flex min-w-[250px] shrink-0 items-center justify-end gap-2 text-[14px] font-medium tabular-nums"
+                      className="flex items-center justify-end text-[14px] font-medium tabular-nums"
                       data-testid="time-entry-list-edit-button"
                       onClick={(event) =>
                         onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
@@ -678,20 +697,23 @@ export function ListView({
                           durationFormat,
                         )}
                       </span>
+                    </button>
+
+                    {/* Time range */}
+                    <button
+                      className="flex items-center justify-end text-[14px] font-medium tabular-nums"
+                      onClick={(event) =>
+                        onEditEntry?.(renderEntry, event.currentTarget.getBoundingClientRect())
+                      }
+                      type="button"
+                    >
                       <span className="text-[var(--track-text-muted)]">
                         {formatEntryRange(renderEntry, timezone, timeofdayFormat)}
                       </span>
                     </button>
 
-                    {/* Continue: flex: 0 0 auto, w=40px */}
-                    <div className="relative flex w-[40px] shrink-0 items-center justify-center">
-                      <div
-                        className="pointer-events-none absolute right-full h-full w-6 opacity-0 transition group-hover:opacity-100"
-                        style={{
-                          background:
-                            "linear-gradient(to right, transparent 0%, var(--track-row-hover) 90%)",
-                        }}
-                      />
+                    {/* Continue */}
+                    <div className="flex items-center justify-center">
                       <button
                         aria-label={`Continue ${renderEntry.description?.trim() || "time entry"}`}
                         className="flex size-7 items-center justify-center rounded-md text-[var(--track-text-muted)] opacity-0 transition hover:text-white group-hover:opacity-100"
@@ -702,7 +724,7 @@ export function ListView({
                       </button>
                     </div>
 
-                    {/* More actions: flex: 0 1 auto, w=30px */}
+                    {/* More actions */}
                     <ListRowMoreActions
                       entry={renderEntry}
                       onBillableToggle={onBillableToggle}
@@ -840,7 +862,7 @@ function ListRowTagPicker({
   }, [hasTags, entryTagIds, tags]);
 
   return (
-    <div className="relative flex min-w-[50px] shrink-[2] items-center" ref={containerRef}>
+    <div className="relative flex items-center" ref={containerRef}>
       <button
         aria-label="Select tags"
         className={`flex h-[30px] w-full items-center gap-1 overflow-hidden rounded transition ${
@@ -980,7 +1002,7 @@ function ListRowProjectPicker({
   const hasProject = !!entry.project_name;
 
   return (
-    <div className="relative min-w-[50px] flex-1" ref={containerRef}>
+    <div className="relative" ref={containerRef}>
       {hasProject ? (
         <button
           aria-label={`Change project for ${entry.description?.trim() || "time entry"}`}

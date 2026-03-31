@@ -24,7 +24,7 @@ export function PageLayoutTabIndicator({
 }
 
 export type PageLayoutTab = {
-  label: string;
+  label: ReactNode;
   value: string;
 };
 

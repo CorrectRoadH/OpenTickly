@@ -2,7 +2,12 @@ import { type ReactElement, useCallback, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { AppButton, CheckboxFilterDropdown } from "@opentoggl/web-ui";
+import {
+  AppButton,
+  CheckboxFilterDropdown,
+  PageLayout,
+  pageLayoutTabClass,
+} from "@opentoggl/web-ui";
 import { ChevronRight } from "lucide-react";
 import { PlusIcon, SettingsIcon } from "../../shared/ui/icons.tsx";
 import { TimesheetSetupDialog } from "./TimesheetSetupDialog.tsx";
@@ -73,93 +78,79 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
   const approvalsParams = { workspaceId: String(workspaceId) };
 
   return (
-    <div
-      className="w-full min-w-0 bg-[var(--track-surface)] text-white"
+    <PageLayout
       data-testid="approvals-page"
-    >
-      {/* Header with tabs */}
-      <header className="border-b border-[var(--track-border)]">
-        <div className="flex min-h-[56px] items-center justify-between gap-4 px-5 py-3">
-          <div className="flex items-center gap-4">
-            <h2 className="text-[14px] font-semibold text-white">Approvals</h2>
-            <nav className="flex items-center gap-1">
-              <Link
-                className={`rounded-[8px] px-3 py-[6px] text-[14px] font-medium ${
-                  view === "team"
-                    ? "text-[var(--track-accent)]"
-                    : "text-[var(--track-text-muted)] hover:text-white"
-                }`}
-                params={{ ...approvalsParams, view: "team" }}
-                to="/workspaces/$workspaceId/approvals/$view"
-              >
-                Team timesheets
-              </Link>
-              <Link
-                className={`rounded-[8px] px-3 py-[6px] text-[14px] font-medium ${
-                  view === "me"
-                    ? "text-[var(--track-accent)]"
-                    : "text-[var(--track-text-muted)] hover:text-white"
-                }`}
-                params={{ ...approvalsParams, view: "me" }}
-                to="/workspaces/$workspaceId/approvals/$view"
-              >
-                Your timesheets
-              </Link>
-              <Link
-                className={`flex items-center gap-1.5 rounded-[8px] px-3 py-[6px] text-[14px] font-medium ${
-                  view === "settings"
-                    ? "text-[var(--track-accent)]"
-                    : "text-[var(--track-text-muted)] hover:text-white"
-                }`}
-                params={{ ...approvalsParams, view: "settings" }}
-                to="/workspaces/$workspaceId/approvals/$view"
-              >
-                <SettingsIcon className="size-3.5" />
-                Settings
-              </Link>
-            </nav>
-          </div>
-          {view === "settings" ? (
-            <AppButton onClick={() => setSetupDialogOpen(true)} type="button">
-              <PlusIcon className="size-3" />
-              Set up timesheets for member
-            </AppButton>
-          ) : null}
-        </div>
-      </header>
-
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-4 border-b border-[var(--track-border)] px-5 py-2">
-        <WeekRangePicker
-          label={weekLabel}
-          onNext={() => setWeekAnchor((prev) => shiftWeek(prev, 1))}
-          onPrev={() => setWeekAnchor((prev) => shiftWeek(prev, -1))}
-          onSelectDate={setWeekAnchor}
-          selectedDate={weekAnchor}
-        />
-        <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-          <span>Filters</span>
-          <CheckboxFilterDropdown
-            label="Approver"
-            onClear={() => setApproverFilter(new Set())}
-            onToggle={(id: number) => setApproverFilter((prev) => toggleInSet(prev, id))}
-            options={approverOptions}
-            selected={approverFilter}
-            testId="approvals-filter-approver"
+      title="Approvals"
+      headerActions={
+        view === "settings" ? (
+          <AppButton onClick={() => setSetupDialogOpen(true)} type="button">
+            <PlusIcon className="size-3" />
+            Set up timesheets for member
+          </AppButton>
+        ) : null
+      }
+      toolbar={
+        <>
+          <WeekRangePicker
+            label={weekLabel}
+            onNext={() => setWeekAnchor((prev) => shiftWeek(prev, 1))}
+            onPrev={() => setWeekAnchor((prev) => shiftWeek(prev, -1))}
+            onSelectDate={setWeekAnchor}
+            selectedDate={weekAnchor}
           />
-          {view === "team" ? (
+          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+            <span>Filters</span>
             <CheckboxFilterDropdown
-              label="Member"
-              onClear={() => setMemberFilter(new Set())}
-              onToggle={(id: number) => setMemberFilter((prev) => toggleInSet(prev, id))}
-              options={memberOptions}
-              selected={memberFilter}
-              testId="approvals-filter-member"
+              label="Approver"
+              onClear={() => setApproverFilter(new Set())}
+              onToggle={(id: number) => setApproverFilter((prev) => toggleInSet(prev, id))}
+              options={approverOptions}
+              selected={approverFilter}
+              testId="approvals-filter-approver"
             />
-          ) : null}
-        </div>
-      </div>
-
+            {view === "team" ? (
+              <CheckboxFilterDropdown
+                label="Member"
+                onClear={() => setMemberFilter(new Set())}
+                onToggle={(id: number) => setMemberFilter((prev) => toggleInSet(prev, id))}
+                options={memberOptions}
+                selected={memberFilter}
+                testId="approvals-filter-member"
+              />
+            ) : null}
+          </div>
+        </>
+      }
+      tabs={[
+        <Link
+          className={pageLayoutTabClass(view === "team")}
+          key="team"
+          params={{ ...approvalsParams, view: "team" }}
+          to="/workspaces/$workspaceId/approvals/$view"
+        >
+          Team timesheets
+        </Link>,
+        <Link
+          className={pageLayoutTabClass(view === "me")}
+          key="me"
+          params={{ ...approvalsParams, view: "me" }}
+          to="/workspaces/$workspaceId/approvals/$view"
+        >
+          Your timesheets
+        </Link>,
+        <Link
+          className={pageLayoutTabClass(view === "settings")}
+          key="settings"
+          params={{ ...approvalsParams, view: "settings" }}
+          to="/workspaces/$workspaceId/approvals/$view"
+        >
+          <span className="flex items-center gap-1.5">
+            <SettingsIcon className="size-3.5" />
+            Settings
+          </span>
+        </Link>,
+      ]}
+    >
       {/* Status tabs (only for team and me views) */}
       {view !== "settings" ? (
         <div className="flex items-center gap-1 border-b border-[var(--track-border)] px-5 py-2">
@@ -171,21 +162,18 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
               { label: "Not submitted", value: "open" },
             ] as const
           ).map((tab) => (
-            <Link
+            <button
               className={`rounded-[6px] px-3 py-1.5 text-[12px] font-medium ${
                 statusFilter === tab.value
                   ? "bg-[var(--track-accent-soft)] text-[var(--track-accent)]"
                   : "text-[var(--track-text-muted)] hover:text-white"
               }`}
               key={tab.value}
-              onClick={(e) => {
-                e.preventDefault();
-                setStatusFilter(tab.value);
-              }}
-              to="."
+              onClick={() => setStatusFilter(tab.value)}
+              type="button"
             >
               {tab.label}
-            </Link>
+            </button>
           ))}
         </div>
       ) : null}
@@ -221,7 +209,7 @@ export function ApprovalsPage({ view }: ApprovalsPageProps): ReactElement {
           workspaceId={workspaceId}
         />
       )}
-    </div>
+    </PageLayout>
   );
 }
 
