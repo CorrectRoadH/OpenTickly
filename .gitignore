@@ -37,6 +37,7 @@ example
 
 toggl_screenshots
 test-results
+e2e-failure-stats.json
 .tmp
 
 research

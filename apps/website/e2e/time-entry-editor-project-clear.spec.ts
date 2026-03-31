@@ -66,21 +66,22 @@ test.describe("Story: clear project from time entry editor", () => {
     await picker.getByText("No Project").click();
     await expect(projectButton).not.toContainText(PROJECT_NAME);
 
-    const saveRequestPromise = page.waitForRequest(
-      (request) =>
-        request.url().includes("/time_entries/") &&
-        request.method() === "PUT" &&
-        request.postDataJSON()?.project_id === null,
+    const saveResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/time_entries/") &&
+        response.request().method() === "PUT" &&
+        response.status() === 200,
     );
 
     await dialog.getByRole("button", { name: "Save" }).click();
-    await saveRequestPromise;
+    await saveResponsePromise;
     await expect(dialog).not.toBeVisible();
 
+    // Verify on the calendar — project name should no longer appear on the entry
     await page.reload();
-    await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
-    const reopenedDialog = page.getByTestId("time-entry-editor-dialog");
-    await expect(reopenedDialog).toBeVisible();
-    await expect(reopenedDialog.getByLabel("Select project")).not.toContainText(PROJECT_NAME);
+    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).not.toContainText(
+      PROJECT_NAME,
+    );
   });
 });

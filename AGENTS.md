@@ -88,3 +88,13 @@ Non-TDD work still requires proportional verification:
 - Docs-only changes need consistency checks, not `vp check`/`vp test`.
 
 A task is complete only when it passes tests **and** matches `docs/`/`openapi/` definitions.
+
+## E2E Flaky Test Tracking
+
+Playwright config has `retries: 1` and a JSON reporter.每次跑完测试后执行：
+
+```bash
+vp run website#test:e2e:stats
+```
+
+失败记录累积在 `e2e-failure-stats.json`（gitignored），按失败次数降序。用它定位长期不稳定的测试。

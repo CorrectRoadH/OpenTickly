@@ -10,6 +10,7 @@
     "check": "vp check",
     "test": "vp exec playwright test",
     "test:e2e": "vp exec playwright test",
+    "test:e2e:stats": "npx tsx scripts/collect-e2e-failures.ts",
     "test:e2e:real-runtime": "vp exec playwright test e2e/account-page.spec.ts e2e/app-shell.spec.ts e2e/catalog-management.spec.ts e2e/clients-page.spec.ts e2e/permission-config.spec.ts e2e/project-page.spec.ts e2e/settings-and-profile.spec.ts e2e/time-entry-editor.spec.ts e2e/time-entry-full-edit.spec.ts e2e/timer-bar-project-picker.spec.ts e2e/timer-page.spec.ts e2e/user-preferences-display.spec.ts"
   },
   "dependencies": {
