@@ -825,6 +825,7 @@ export function WorkspaceTimerPage({
           <GoalsFavoritesSidebar
             favorites={favorites}
             goals={goals}
+            workspaceId={orch.workspaceId}
             onDeleteFavorite={(favoriteId) => {
               void deleteFavoriteMutation.mutateAsync(favoriteId);
             }}

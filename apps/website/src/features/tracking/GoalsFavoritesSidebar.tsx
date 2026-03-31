@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 
 import type {
@@ -12,6 +13,7 @@ type GoalsFavoritesSidebarProps = {
   goals: HandlergoalsApiResponse[];
   onDeleteFavorite?: (favoriteId: number) => void;
   onStartFavorite?: (favorite: ModelsFavorite) => void;
+  workspaceId: number;
 };
 
 export function GoalsFavoritesSidebar({
@@ -19,13 +21,26 @@ export function GoalsFavoritesSidebar({
   goals,
   onDeleteFavorite,
   onStartFavorite,
+  workspaceId,
 }: GoalsFavoritesSidebarProps): ReactElement {
   return (
     <div
-      className="flex w-[220px] shrink-0 flex-col border-l border-[var(--track-border)] bg-[var(--track-surface)]"
+      className="sticky top-[var(--timer-header-height,0px)] flex h-fit max-h-[calc(100vh-var(--timer-header-height,0px))] w-[220px] shrink-0 flex-col overflow-y-auto border-l border-[var(--track-border)] bg-[var(--track-surface)]"
       data-testid="goals-favorites-sidebar"
     >
-      <SidebarSection title="Goals">
+      <SidebarSection
+        title="Goals"
+        action={
+          <Link
+            aria-label="Add goals"
+            className="flex size-5 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+            to="/workspaces/$workspaceId/goals"
+            params={{ workspaceId: String(workspaceId) }}
+          >
+            <PlusIcon className="size-3" />
+          </Link>
+        }
+      >
         {goals.length === 0 ? (
           <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">No goals yet</div>
         ) : (
@@ -59,9 +74,11 @@ export function GoalsFavoritesSidebar({
 }
 
 function SidebarSection({
+  action,
   children,
   title,
 }: {
+  action?: ReactElement;
   children: ReactElement | ReactElement[];
   title: string;
 }): ReactElement {
@@ -70,14 +87,7 @@ function SidebarSection({
       <summary className="flex cursor-pointer items-center gap-2 px-4 py-3 text-[12px] font-medium text-white select-none">
         <ChevronRightIcon className="size-3 text-[var(--track-text-muted)] transition group-open:rotate-90" />
         <span className="flex-1">{title}</span>
-        <button
-          aria-label={`Add ${title.toLowerCase()}`}
-          className="flex size-5 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-          onClick={(e) => e.stopPropagation()}
-          type="button"
-        >
-          <PlusIcon className="size-3" />
-        </button>
+        {action ? <span onClick={(e) => e.stopPropagation()}>{action}</span> : null}
       </summary>
       {children}
     </details>
