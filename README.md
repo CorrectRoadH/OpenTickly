@@ -6,6 +6,8 @@
 
 # OpenToggl
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+
 OpenToggl is a free, private-first, AI-friendly alternative to Toggl.
 
 It exists for a simple reason: for many individuals and teams, Toggl is too expensive; for people who care about data control, it is not private-first enough; and for AI and automation use cases, its rate limit is so low that it becomes almost unusable in practice.

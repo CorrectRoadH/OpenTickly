@@ -132,6 +132,11 @@ func NewService(cfg Config) *Service {
 		knownAlphaFeatures[code] = struct{}{}
 	}
 
+	logger := cfg.Logger
+	if logger == nil {
+		logger = log.NopLogger()
+	}
+
 	return &Service{
 		users:              cfg.Users,
 		sessions:           cfg.Sessions,
@@ -141,7 +146,7 @@ func NewService(cfg Config) *Service {
 		ids:                cfg.IDs,
 		knownAlphaFeatures: knownAlphaFeatures,
 		registrationGuard:  cfg.RegistrationGuard,
-		logger:             cfg.Logger,
+		logger:             logger,
 	}
 }
 
