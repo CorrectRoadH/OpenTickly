@@ -20,34 +20,29 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
 
     // Wait for onboarding dialog to appear
     await expect(dialog).toBeVisible({ timeout: 10000 });
-    {
-      // 选择中文语言
-      const languageOption = dialog.getByText("中文");
-      if (await languageOption.isVisible().catch(() => false)) {
-        await languageOption.click();
-        await page.waitForTimeout(200);
-      }
 
-      // 按钮仍然是英文，因为 i18n 语言还未切换（onboarding 完成后才生效）
-      const continueBtn = dialog.getByRole("button", { name: "Continue" });
-      await continueBtn.click();
-      await page.waitForTimeout(300);
+    // Step 1 (language): select 中文, then click Continue (still English at this point)
+    await dialog.getByRole("button", { name: "中文" }).click();
+    await dialog.getByRole("button", { name: "Continue" }).click();
+    await page.waitForTimeout(300);
 
-      for (let i = 0; i < 3; i++) {
-        const btn = dialog.getByRole("button", { name: "Continue" });
-        if (await btn.isVisible().catch(() => false)) {
-          await btn.click();
-          await page.waitForTimeout(300);
-        } else {
-          const startBtn = dialog.getByRole("button", { name: "Start tracking" });
-          if (await startBtn.isVisible().catch(() => false)) {
-            await startBtn.click();
-            break;
-          }
-        }
+    // After language step completes, i18n switches to Chinese immediately.
+    // Steps 2-4 buttons are now in Chinese: "继续" (Continue), "开始追踪" (Start tracking).
+    for (let i = 0; i < 3; i++) {
+      const continueBtn = dialog.getByRole("button", { name: "继续" });
+      const startBtn = dialog.getByRole("button", { name: "开始追踪" });
+
+      if (await startBtn.isVisible().catch(() => false)) {
+        await startBtn.click();
+        break;
+      } else if (await continueBtn.isVisible().catch(() => false)) {
+        await continueBtn.click();
+        await page.waitForTimeout(300);
+      } else {
+        break;
       }
-      await page.waitForTimeout(500);
     }
+    await page.waitForTimeout(500);
 
     // ===== 第3步：验证 Timer 页面显示中文 =====
     // onboarding 完成后保存偏好到后端，LanguageSync 切换到中文

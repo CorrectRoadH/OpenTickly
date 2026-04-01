@@ -21,16 +21,21 @@ test.describe("Story: bulk edit time entries with CalendarPanel date picker", ()
     await page.context().clearCookies();
     const session = await loginE2eUser(page, test.info(), { email, password });
 
+    // Use yesterday so entries are always in the visible "recent" range
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isoDate = yesterday.toISOString().slice(0, 10);
+
     await createTimeEntryForWorkspace(page, {
       description: ENTRY_A,
-      start: "2026-03-28T09:00:00Z",
-      stop: "2026-03-28T10:00:00Z",
+      start: `${isoDate}T09:00:00Z`,
+      stop: `${isoDate}T10:00:00Z`,
       workspaceId: session.currentWorkspaceId,
     });
     await createTimeEntryForWorkspace(page, {
       description: ENTRY_B,
-      start: "2026-03-28T11:00:00Z",
-      stop: "2026-03-28T12:00:00Z",
+      start: `${isoDate}T11:00:00Z`,
+      stop: `${isoDate}T12:00:00Z`,
       workspaceId: session.currentWorkspaceId,
     });
 
@@ -63,14 +68,26 @@ test.describe("Story: bulk edit time entries with CalendarPanel date picker", ()
     const calendarPanel = page.getByTestId("calendar-panel");
     await expect(calendarPanel).toBeVisible();
 
-    // Pick a date — March 25, 2026
-    await calendarPanel.getByRole("button", { name: "March 25, 2026" }).click();
+    // Pick a date — the 15th of the current month (always visible when calendar opens)
+    const now = new Date();
+    const targetDate = new Date(now.getFullYear(), now.getMonth(), 15);
+    const dateLabel = targetDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const shortDateLabel = targetDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    await calendarPanel.getByRole("button", { name: dateLabel }).click();
 
     // CalendarPanel should close after selection
     await expect(calendarPanel).not.toBeVisible();
 
     // The date picker button should now show the selected date
-    await expect(datePickerButton).toContainText("Mar 25, 2026");
+    await expect(datePickerButton).toContainText(shortDateLabel);
 
     // Save bulk edit
     await dialog.getByTestId("bulk-edit-save").click();
