@@ -127,7 +127,7 @@ function SettingsSectionContent(props: {
         />
       );
     case "billable-rates":
-      return <BillableRatesContent workspaceId={props.workspaceId} />;
+      return <BillableRatesContent />;
     case "import":
       return <SettingsCsvImport workspaceId={props.workspaceId} />;
     case "export":

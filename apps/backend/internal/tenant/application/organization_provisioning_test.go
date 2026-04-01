@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
+	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 )
 
@@ -15,7 +16,7 @@ func TestCreateOrganizationDeletesTenantStateWhenCommercialProvisionFails(t *tes
 		provisionErr: errors.New("provision failed"),
 	}
 
-	service, err := NewService(store, commercial)
+	service, err := NewService(store, commercial, log.NopLogger())
 	if err != nil {
 		t.Fatalf("new tenant service: %v", err)
 	}

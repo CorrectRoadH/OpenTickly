@@ -65,7 +65,7 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 		t.Fatalf("create organization: %v", err)
 	}
 
-	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(log.NopLogger()))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestServiceEnsureWorkspaceOwnerRequiresExistingIdentityUserWithPostgresStor
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
-	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(log.NopLogger()))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}

@@ -8,6 +8,7 @@ import (
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
 	billingpostgres "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -23,7 +24,7 @@ func TestServicePersistsTenantStateWithPostgresStore(t *testing.T) {
 	billingRepository := billingpostgres.NewAccountRepository(database.Pool)
 	workspaceOwnership := billingpostgres.NewWorkspaceOwnershipLookup(database.Pool)
 	billingService := mustNewPostgresBillingService(t, billingRepository, workspaceOwnership)
-	service, err := NewService(store, billingService)
+	service, err := NewService(store, billingService, log.NopLogger())
 	if err != nil {
 		t.Fatalf("new tenant service: %v", err)
 	}
@@ -186,6 +187,7 @@ func mustNewPostgresBillingService(
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+		log.NopLogger(),
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)

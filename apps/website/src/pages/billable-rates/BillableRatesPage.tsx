@@ -82,9 +82,10 @@ function useCreateWorkspaceRateMutation(workspaceId: number) {
   });
 }
 
-export function BillableRatesContent({ workspaceId }: { workspaceId: number }): ReactElement {
+export function BillableRatesContent(): ReactElement {
   const { t } = useTranslation("billableRates");
   const session = useSession();
+  const workspaceId = session.currentWorkspace.id;
   const defaultCurrency = session.currentWorkspace.defaultCurrency ?? "USD";
   const defaultHourlyRate = session.currentWorkspace.defaultHourlyRate ?? 0;
 
