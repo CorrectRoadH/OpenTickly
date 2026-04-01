@@ -129,6 +129,7 @@ export function createProfileFixture(
     country_id: 70,
     has_password: true,
     "2fa_enabled": true,
+    is_instance_admin: false,
     ...overrides,
   };
 }
