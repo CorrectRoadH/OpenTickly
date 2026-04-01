@@ -359,60 +359,10 @@ function StepContent({
   );
 }
 
-/**
- * Illustration placeholder for each onboarding step.
- *
- * ILLUSTRATION NEEDED — replace each placeholder with a real SVG/image asset.
- * Suggested canvas: 480×160px. Overall style: flat vector, dark background (#0f1117),
- * accent color #7C5CFC (purple), secondary highlight #E8D5FF (light lavender).
- * No gradients on objects — solid fills with subtle drop shadows.
- * Rounded corners on all cards/chips (8–12px radius). Stroke weight 1.5px on outlines.
- *
- * ── "language" ──────────────────────────────────────────────────────────────
- *   Center: a slightly tilted globe (wireframe lat/lon lines, accent purple stroke
- *   on a dark surface fill). Around it, 4 floating speech-bubble chips at
- *   different angles: "EN", "中文", "日本語", "Español" — each chip is a white
- *   label on a #1e2030 pill with a 1px accent border. Small dashed arcs connect
- *   the bubbles to the globe implying "all languages supported". Warm, welcoming tone.
- *
- * ── "ai-workflow" ────────────────────────────────────────────────────────────
- *   Left third: a compact terminal window (#1a1d2e bg, green #4ade80 blinking
- *   cursor, one line of white monospace text "$ toggl start"). Center: a dashed
- *   horizontal arrow labeled "CLI" in a small pill above it. Right third: an
- *   OpenToggl timer card (#1e2030 rounded rect, white "00:32:15" digits, small
- *   purple play-button icon below). Arrow flows left→right showing AI controlling
- *   the timer automatically.
- *
- * ── "star-us" ────────────────────────────────────────────────────────────────
- *   Center: a large 5-pointed star (filled #FBBF24 gold, 1px #F59E0B stroke,
- *   soft radial glow behind it). Inside or below the star: GitHub Octocat
- *   silhouette in white at ~40px. Around the star: 6 small 4-pointed sparkle
- *   shapes in #E8D5FF at varying sizes and rotations. Bottom-right corner: a
- *   small pill chip "+★ 1.2k" in accent purple to imply community growth.
- *
- * ── "import-data" ────────────────────────────────────────────────────────────
- *   Left third: a red Toggl "T" logomark on a #1e2030 card, below it 3 stacked
- *   thin rows (gray bars of varying widths) representing existing time entries.
- *   Center: a rightward arrow with a motion trail (3 decreasing-opacity copies).
- *   Right third: OpenToggl logomark on a #1e2030 card, same 3 entry rows now
- *   rendered in accent purple showing they've been migrated. A small green
- *   checkmark badge overlaps the top-right corner of the right card.
- */
 function StepIllustration({ stepId }: { stepId: string }): ReactElement {
-  const labels: Record<string, string> = {
-    language:
-      "[ TODO: flat vector SVG — tilted globe with lat/lon wireframe lines (purple stroke), 4 speech-bubble chips around it: EN / 中文 / 日本語 / Español, dashed arcs connecting them to the globe. Dark #0f1117 bg. ]",
-    "ai-workflow":
-      "[ TODO: flat vector SVG — left: terminal window (#1a1d2e, green cursor, text '$ toggl start'); center: dashed arrow labeled 'CLI'; right: timer card (#1e2030, white '00:32:15', purple play button). Dark #0f1117 bg. ]",
-    "star-us":
-      "[ TODO: flat vector SVG — center: large gold #FBBF24 5-pointed star with radial glow, GitHub Octocat silhouette in white inside it; 6 small #E8D5FF sparkles around it; bottom-right: purple pill '+★ 1.2k'. Dark #0f1117 bg. ]",
-    "import-data":
-      "[ TODO: flat vector SVG — left: Toggl red T logo on #1e2030 card + 3 gray entry rows; center: rightward arrow with motion trail; right: OpenToggl logo on #1e2030 card + same 3 rows in purple + green checkmark badge. Dark #0f1117 bg. ]",
-  };
-
   return (
-    <div className="flex h-[140px] items-center justify-center rounded-xl border border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-center text-[12px] text-[var(--track-text-muted)]">
-      {labels[stepId] ?? "[ Illustration ]"}
+    <div className="overflow-hidden rounded-xl">
+      <img alt="" className="h-[140px] w-full object-cover" src={`/onboarding/${stepId}.png`} />
     </div>
   );
 }
