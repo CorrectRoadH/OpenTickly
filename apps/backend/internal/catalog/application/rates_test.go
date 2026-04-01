@@ -6,6 +6,7 @@ import (
 	"time"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -218,7 +219,7 @@ func TestServicePersistsRatesAcrossSupportedLevels(t *testing.T) {
 func mustNewMembershipService(t *testing.T, database *pgtest.Database) *membershipapplication.Service {
 	t.Helper()
 
-	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(log.NopLogger()))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}

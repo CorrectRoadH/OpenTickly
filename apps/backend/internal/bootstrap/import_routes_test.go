@@ -33,6 +33,7 @@ func TestImportRoutesAcceptWorkspaceArchiveUpload(t *testing.T) {
 		t.Fatalf("NewApp returned error: %v", err)
 	}
 	t.Cleanup(app.Platform.Database.Close)
+	t.Cleanup(func() { _ = app.Platform.Cache.FlushDB(context.Background()) })
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
 		"email":    uniqueEmail,
@@ -268,6 +269,7 @@ func TestImportRoutesAcceptTimeEntriesCSVUpload(t *testing.T) {
 		t.Fatalf("NewApp returned error: %v", err)
 	}
 	t.Cleanup(app.Platform.Database.Close)
+	t.Cleanup(func() { _ = app.Platform.Cache.FlushDB(context.Background()) })
 
 	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
 		"email":    uniqueEmail,

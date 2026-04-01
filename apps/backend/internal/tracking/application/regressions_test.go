@@ -127,7 +127,7 @@ func TestRunningTimerAutoStopAcrossWorkspaces(t *testing.T) {
 	workspaceBID := int64(workspaceB.ID())
 
 	// Add the same user to workspace B
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}
@@ -240,7 +240,7 @@ func TestCrossWorkspaceRunningTimerEditStop(t *testing.T) {
 	workspaceBID := int64(workspaceB.ID())
 
 	// Add the same user to workspace B so they can access it
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}
@@ -527,7 +527,7 @@ func TestHistoricalEntriesSurviveMemberDisable(t *testing.T) {
 	}
 
 	// Set up membership service
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}

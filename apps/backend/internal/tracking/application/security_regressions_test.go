@@ -89,7 +89,7 @@ func seedTwoUsersInOneWorkspace(t *testing.T, ctx context.Context, database *pgt
 	}
 
 	// Set up membership service
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}

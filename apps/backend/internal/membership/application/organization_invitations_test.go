@@ -73,7 +73,7 @@ func TestServicePersistsOrganizationInvitations(t *testing.T) {
 		t.Fatalf("save sender: %v", err)
 	}
 
-	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership service: %v", err)
 	}

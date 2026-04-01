@@ -65,6 +65,12 @@ func (rc *RedisClient) Del(ctx context.Context, keys ...string) error {
 	return rc.client.Del(ctx, keys...).Err()
 }
 
+// FlushDB removes all keys from the current Redis database.
+// Intended for test cleanup only.
+func (rc *RedisClient) FlushDB(ctx context.Context) error {
+	return rc.client.FlushDB(ctx).Err()
+}
+
 // CacheAside implements the cache-aside (read-through) pattern with generics.
 //
 //   - On Redis hit → return cached value (no DB call).
