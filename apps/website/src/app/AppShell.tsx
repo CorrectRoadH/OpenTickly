@@ -379,7 +379,7 @@ function ProfileMenuAction({
 }): ReactElement {
   return (
     <button
-      className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-[13px] font-medium transition hover:bg-[var(--track-row-hover)] ${
+      className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-[12px] font-medium transition hover:bg-[var(--track-row-hover)] ${
         destructive ? "text-[var(--track-danger-text)]" : "text-white"
       }`}
       onClick={onClick}

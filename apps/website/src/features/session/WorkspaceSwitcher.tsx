@@ -265,7 +265,7 @@ function OrganizationOptionsPanel({
 
   return (
     <div className="p-2">
-      <div className="flex items-center gap-3 px-3 py-3.5">
+      <div className="flex items-center gap-2 px-3 py-3.5">
         <UserAvatar
           className="size-12 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
           name={organization?.name ?? "Organization"}

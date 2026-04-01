@@ -258,6 +258,7 @@ export function usePreferencesQuery() {
   return useQuery({
     queryFn: () => unwrapWebApiResult(getPreferences()) as Promise<ProfilePreferencesDto>,
     queryKey: ["web-preferences"],
+    staleTime: 5 * 60 * 1000,
   });
 }
 
