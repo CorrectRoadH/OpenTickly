@@ -6,6 +6,7 @@ import type {
   GithubComTogglTogglApiInternalModelsTimeEntry,
   ModelsFavorite,
 } from "../../shared/api/generated/public-track/types.gen.ts";
+import type { TimeEntrySearchItem } from "../../shared/api/generated/web/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { ChevronDown } from "lucide-react";
 import { PinIcon, PlayIcon, ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
@@ -30,6 +31,7 @@ type TimerComposerSuggestionsDialogProps = {
   onWorkspaceSelect: (workspaceId: number) => void;
   projects: GithubComTogglTogglApiInternalModelsProject[];
   query?: string;
+  searchResults?: TimeEntrySearchItem[];
   timeEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   workspaces: Array<{
     id: number;
@@ -49,6 +51,7 @@ export function TimerComposerSuggestionsDialog({
   onWorkspaceSelect,
   projects,
   query,
+  searchResults,
   timeEntries,
   workspaces,
 }: TimerComposerSuggestionsDialogProps): ReactElement {
@@ -61,10 +64,13 @@ export function TimerComposerSuggestionsDialog({
     () => filterFavoritesByQuery(favorites, query),
     [favorites, query],
   );
-  const previousEntries = useMemo(
-    () => filterByQuery(buildPreviousEntries(timeEntries), query),
-    [timeEntries, query],
-  );
+  const hasQuery = Boolean(query?.trim());
+  const previousEntries = useMemo(() => {
+    if (hasQuery && searchResults && searchResults.length > 0) {
+      return searchResults.map(searchItemToTimeEntry);
+    }
+    return filterByQuery(buildPreviousEntries(timeEntries), query);
+  }, [timeEntries, query, hasQuery, searchResults]);
   const suggestedProjects = useMemo(
     () => filterProjectsByQuery(buildProjectSuggestions(projects), query),
     [projects, query],
@@ -397,6 +403,24 @@ function filterFavoritesByQuery(favorites: ModelsFavorite[], query?: string): Mo
     const project = (fav.project_name ?? "").toLowerCase();
     return desc.includes(trimmed) || project.includes(trimmed);
   });
+}
+
+function searchItemToTimeEntry(
+  item: TimeEntrySearchItem,
+): GithubComTogglTogglApiInternalModelsTimeEntry {
+  return {
+    id: item.id,
+    workspace_id: item.workspace_id,
+    description: item.description,
+    project_id: item.project_id,
+    project_name: item.project_name,
+    project_color: item.project_color,
+    tag_ids: item.tag_ids,
+    billable: item.billable,
+    start: item.start,
+    stop: item.stop,
+    duration: item.duration,
+  };
 }
 
 function filterProjectsByQuery(

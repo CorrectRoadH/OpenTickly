@@ -31,6 +31,7 @@ import {
   useStopTimeEntryMutation,
   useTagsQuery,
   useTimeEntriesQuery,
+  useSearchTimeEntriesQuery,
   useUpdateTimeEntryMutation,
   useUpdateWebSessionMutation,
 } from "../../shared/query/web-shell.ts";
@@ -276,6 +277,9 @@ export interface TimerPageOrchestration {
   timeEntriesQuery: ReturnType<typeof useTimeEntriesQuery>;
   currentTimeEntryQuery: ReturnType<typeof useCurrentTimeEntryQuery>;
   recentWorkspaceEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  searchedTimeEntries:
+    | import("../../shared/api/generated/web/types.gen.ts").TimeEntrySearchItem[]
+    | undefined;
   projectOptions: GithubComTogglTogglApiInternalModelsProject[];
   tagOptions: { id: number; name: string }[];
   workspaceId: number;
@@ -581,7 +585,6 @@ export function useTimerPageOrchestration(options?: {
       ),
     [recentTimeEntriesQuery.data, workspaceId],
   );
-
   // Pagination: always allow "Load more" in default (all dates) mode;
   // disabled when a custom date range is explicitly set.
   const hasMoreEntries = listDateRange === null;
@@ -613,6 +616,9 @@ export function useTimerPageOrchestration(options?: {
   );
 
   const timerDescriptionValue = runningEntry?.id != null ? runningDescription : draftDescription;
+
+  const searchQuery = useSearchTimeEntriesQuery(workspaceId, timerDescriptionValue);
+  const searchedTimeEntries = searchQuery.data?.entries;
 
   // Today total
   const todayTotalSeconds = useMemo(() => {
@@ -1605,6 +1611,7 @@ export function useTimerPageOrchestration(options?: {
     timeEntriesQuery,
     currentTimeEntryQuery,
     recentWorkspaceEntries,
+    searchedTimeEntries,
     projectOptions,
     tagOptions,
     workspaceId,

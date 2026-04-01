@@ -92,10 +92,12 @@ import {
   registerWebUser,
   removeWorkspaceMember,
   restoreWorkspaceMember,
+  searchWorkspaceTimeEntries,
   updateWorkspacePermissions,
   updateWebSession,
   updateWorkspaceSettings,
 } from "../api/web/index.ts";
+import type { TimeEntrySearchResult } from "../api/generated/web/types.gen.ts";
 
 const sessionQueryKey = ["web-session"] as const;
 const profileQueryKey = ["web-profile"] as const;
@@ -1854,5 +1856,21 @@ export function useResetOnboardingMutation() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: onboardingQueryKey() });
     },
+  });
+}
+
+export function useSearchTimeEntriesQuery(workspaceId: number, query: string) {
+  const trimmed = query.trim();
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        searchWorkspaceTimeEntries({
+          path: { workspace_id: workspaceId },
+          query: { query: trimmed },
+        }),
+      ) as Promise<TimeEntrySearchResult>,
+    queryKey: ["time-entry-search", workspaceId, trimmed],
+    enabled: trimmed.length > 0,
+    staleTime: 5_000,
   });
 }

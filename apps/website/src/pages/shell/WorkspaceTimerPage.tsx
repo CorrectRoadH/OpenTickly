@@ -908,6 +908,7 @@ export function WorkspaceTimerPage({
             orch.closeComposerSuggestions();
           }}
           projects={orch.projectOptions}
+          searchResults={orch.searchedTimeEntries}
           timeEntries={orch.recentWorkspaceEntries}
           workspaces={orch.session.availableWorkspaces.map((workspace) => ({
             id: workspace.id,

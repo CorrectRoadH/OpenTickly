@@ -103,6 +103,12 @@ func (server *webOpenAPIServer) UpdateWorkspaceSettings(ctx echo.Context, worksp
 	return server.handlers.updateWorkspaceSettings(ctx)
 }
 
+func (server *webOpenAPIServer) SearchWorkspaceTimeEntries(ctx echo.Context, workspaceId int, params webapi.SearchWorkspaceTimeEntriesParams) error {
+	_ = workspaceId
+	_ = params
+	return server.handlers.searchWorkspaceTimeEntries(ctx)
+}
+
 func (server *webOpenAPIServer) ResetOnboarding(ctx echo.Context) error {
 	return server.handlers.resetOnboarding(ctx)
 }
