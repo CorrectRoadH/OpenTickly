@@ -37,7 +37,7 @@ test.describe("Story: bulk edit time entries with CalendarPanel date picker", ()
     await page.reload();
 
     // Switch to list view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listView = page.getByTestId("timer-list-view");
     await expect(listView).toBeVisible();
 

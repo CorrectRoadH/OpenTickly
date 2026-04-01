@@ -83,11 +83,8 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await expect(page.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
     // Verify entries are visible in list view
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
     await expect(listViewContainer.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
@@ -174,11 +171,8 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
     await expect(calendarScrollAreaB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
 
     // Verify in list view - workspace A entry should be absent, workspace B entry should be present
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     const listViewContainerB = page.getByTestId("timer-list-view");
     await expect(listViewContainerB).toBeVisible();
     // Workspace A entry should NOT be visible in list view
@@ -239,7 +233,7 @@ test.describe("VAL-REG-002: Workspace scoping regression", () => {
       ).not.toBeVisible();
 
       // Verify in list view
-      await page.getByRole("radio", { name: "List view" }).click();
+      await page.getByRole("radio", { name: "List" }).click();
       const listViewContainerBack = page.getByTestId("timer-list-view");
       await expect(
         listViewContainerBack.locator(`text=${workspaceAEntryDescription}`),
@@ -321,11 +315,8 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // we rely on the UI assertion above (Start timer button visible) as the source of truth.
 
     // Verify the stopped entry appears in history (list view)
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
     // The stopped entry should appear in the list with the initial description
@@ -378,7 +369,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     expect(newRunningResponse.body.description).toBe("New running entry");
 
     // Verify the edited entry is STILL in history (not overwritten)
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
 
     // Phase 5: Restart cycle - stop the running entry and start a new one.
@@ -397,7 +388,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // Skipping current-timer API assertion — backend may lag behind UI state.
 
     // Verify "New running entry" now appears in history as a stopped entry
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     await expect(listViewContainer.locator("text=New running entry")).toBeVisible();
 
     // Start a new timer (restart)
@@ -421,7 +412,7 @@ test.describe("VAL-REG-004: Current timer and history consistency regression", (
     // not with stop time/duration info (stopped state).
     // This is the core contradiction proof: current-timer shows restarted entry as running,
     // and the list view correctly shows it as running, not as stopped.
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     await expect(listViewContainer.locator(`text=${editedDescription}`)).toBeVisible();
     await expect(listViewContainer.locator("text=New running entry")).toBeVisible();
     // The restarted entry SHOULD appear in list view as a RUNNING entry (with Edit button)
@@ -478,7 +469,7 @@ test.describe("Timer page family mainline", () => {
     );
 
     // Assert: List view and Timesheet are inactive (aria-checked=false)
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute(
       "aria-checked",
       "false",
     );
@@ -573,12 +564,9 @@ test.describe("Timer page family mainline", () => {
     );
 
     // Switch to list view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/); // URL unchanged
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await expect(page.getByRole("radio", { name: "Calendar" })).toHaveAttribute(
       "aria-checked",
       "false",
@@ -595,7 +583,7 @@ test.describe("Timer page family mainline", () => {
       "aria-checked",
       "true",
     );
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute(
       "aria-checked",
       "false",
     );
@@ -612,11 +600,8 @@ test.describe("Timer page family mainline", () => {
     await expect(calendarScrollArea).toBeVisible();
 
     // Verify list view shows the seeded entries within the list view content
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
     // Each seeded entry description should appear in the list view specifically
@@ -772,7 +757,7 @@ test.describe("Timer page family mainline", () => {
 
     // Verify same running state across all three views
     // Switch to list view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "stop");
     await expect(page.getByTestId("timer-elapsed")).toBeVisible();
@@ -851,11 +836,8 @@ test.describe("Timer page family mainline", () => {
     await expect(page.getByTestId("timer-action-button")).toHaveAttribute("data-icon", "play");
 
     // Assert: Stopped entry is visible in history (list view)
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
 
     // The stopped entry should appear in the list with the description
     await expect(
@@ -978,21 +960,15 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     );
 
     // Switch to list view
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
 
     // Refresh the page
     await page.reload();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // The selected view should persist - list should still be active after refresh
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await expect(page.getByRole("radio", { name: "Calendar" })).toHaveAttribute(
       "aria-checked",
       "false",
@@ -1012,7 +988,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
       "aria-checked",
       "true",
     );
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute(
       "aria-checked",
       "false",
     );
@@ -1069,11 +1045,8 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     const runningEntryIdBefore = runningEntryBefore.body.id;
 
     // Switch to list view to verify view persistence across workspace switch
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
 
     // Create a second organization (which creates workspace B) and switch to it
     const secondOrganizationName = `Organization ${Date.now()}`;
@@ -1103,10 +1076,7 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // VAL-CROSS-005: The selected view should persist across workspace switch
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await expect(page.getByRole("radio", { name: "Calendar" })).toHaveAttribute(
       "aria-checked",
       "false",
@@ -1478,7 +1448,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(calendarScrollAreaA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
 
     // List view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listViewContainerA = page.getByTestId("timer-list-view");
     await expect(listViewContainerA).toBeVisible();
     await expect(listViewContainerA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
@@ -1549,7 +1519,7 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(calendarScrollAreaB.locator(`text=${workspaceBEntryDescription}`)).toBeVisible();
 
     // List view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listViewContainerB = page.getByTestId("timer-list-view");
     await expect(listViewContainerB).toBeVisible();
     await expect(
@@ -1633,7 +1603,7 @@ test.describe("Cross-workspace running timer header", () => {
     const runningEntryId = runningEntryBefore.body.id;
 
     // Verify the stopped workspace A entry is visible in list view while on workspace A
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listViewContainerA = page.getByTestId("timer-list-view");
     await expect(listViewContainerA).toBeVisible();
     await expect(listViewContainerA.locator(`text=${workspaceAEntryDescription}`)).toBeVisible();
@@ -1695,11 +1665,8 @@ test.describe("Cross-workspace running timer header", () => {
 
     // VAL-CROSS-001: History re-scopes to workspace B - workspace A entry should be absent
     // Explicitly switch to list view to test history re-scoping
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await page.waitForTimeout(500);
     const listViewContainerB = page.getByTestId("timer-list-view");
     await expect(listViewContainerB).toBeVisible();
@@ -1850,11 +1817,8 @@ test.describe("Cross-workspace running timer header", () => {
     await expect(calendarScrollArea.locator(`text=${runningDescription}`)).not.toBeVisible();
 
     // List view
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await page.waitForTimeout(500);
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
@@ -1930,7 +1894,7 @@ test.describe("Date range picker in list view", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // Switch to list view
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listView = page.getByTestId("timer-list-view");
     await expect(listView).toBeVisible();
 
@@ -1949,10 +1913,7 @@ test.describe("Date range picker in list view", () => {
     await datePickerDialog.getByRole("button", { name: "Today" }).click();
 
     // Should still be in list view (NOT calendar)
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
     await expect(listView).toBeVisible();
 
     // Today entry should be visible, old entry should be filtered out

@@ -61,7 +61,7 @@ test.describe("Story: calendar event card shows project without client", () => {
     await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();
 
     // Switch to list view where stopped entries are always visible regardless of duration
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
     const listView = page.getByTestId("timer-list-view");
     await expect(listView).toBeVisible();
 

@@ -400,13 +400,10 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     expect(shellEntryElapsed).toBe(directEntryElapsed);
     expect(shellEntryElapsed).toBe(true);
 
-    await page.getByRole("radio", { name: "List view" }).click();
-    await expect(page.getByRole("radio", { name: "List view" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
-    await page2.getByRole("radio", { name: "List view" }).click();
-    await expect(page2.getByRole("radio", { name: "List view" })).toHaveAttribute(
+    await page.getByRole("radio", { name: "List" }).click();
+    await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
+    await page2.getByRole("radio", { name: "List" }).click();
+    await expect(page2.getByRole("radio", { name: "List" })).toHaveAttribute(
       "aria-checked",
       "true",
     );

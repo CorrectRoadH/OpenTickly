@@ -18,7 +18,7 @@ test.describe("Date picker shortcut active state", () => {
     // Navigate to timer page and switch to list view (which has "Last 30 days" shortcut)
     await page.getByRole("link", { name: "Timer" }).click();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
 
     // Open the date picker
     await page.getByTestId("week-range-dialog").waitFor({ state: "detached" });
@@ -71,7 +71,7 @@ test.describe("Date picker shortcut active state", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // Switch to list view (defaults to "All dates")
-    await page.getByRole("radio", { name: "List view" }).click();
+    await page.getByRole("radio", { name: "List" }).click();
 
     const pickerButton = page.getByRole("button", { name: /Press Enter to open date picker/ });
     const dialog = page.getByTestId("week-range-dialog");

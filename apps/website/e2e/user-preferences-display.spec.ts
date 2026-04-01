@@ -20,7 +20,7 @@ async function changePreferenceSelect(page: Page, testId: string, optionLabel: s
 
 /** Switch to list view. */
 async function switchToListView(page: Page) {
-  await page.getByRole("radio", { name: "List view" }).click();
+  await page.getByRole("radio", { name: "List" }).click();
 }
 
 /** Find the duration cell in the Timer list view. */

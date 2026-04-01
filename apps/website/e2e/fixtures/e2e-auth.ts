@@ -86,8 +86,8 @@ export async function loginE2eUser(
  * @param page - The Playwright page object.
  */
 export async function completeOnboardingDialogIfVisible(page: Page): Promise<void> {
-  // First, try to complete onboarding via API. This is more reliable than UI clicks.
-  await page.evaluate(async () => {
+  // Complete onboarding via API — this is the authoritative mechanism.
+  const apiResult = await page.evaluate(async () => {
     try {
       const response = await fetch("/web/v1/onboarding", {
         method: "PUT",
@@ -95,67 +95,18 @@ export async function completeOnboardingDialogIfVisible(page: Page): Promise<voi
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ version: 1 }),
       });
-      return { ok: response.ok, status: response.status };
-    } catch (e) {
-      return { ok: false, error: String(e) };
-    }
-  });
-
-  // Also complete via UI if dialog is visible - this handles any frontend state
-  const dialog = page.getByTestId("onboarding-dialog");
-  if (await dialog.isVisible().catch(() => false)) {
-    // Click through all steps by clicking Continue/Start tracking until dialog closes
-    for (let step = 0; step < 5; step++) {
-      const startTrackingBtn = dialog.getByRole("button", { name: "Start tracking" });
-      const continueBtn = dialog.getByRole("button", { name: "Continue" });
-
-      if (await startTrackingBtn.isVisible().catch(() => false)) {
-        await startTrackingBtn.click({ timeout: 5000 });
-        await page.waitForTimeout(500);
-        break;
-      } else if (await continueBtn.isVisible().catch(() => false)) {
-        await continueBtn.click({ timeout: 5000 });
-        await page.waitForTimeout(300);
-      } else {
-        break;
-      }
-    }
-    // Wait for dialog to close
-    await page.waitForTimeout(500);
-    if (await dialog.isVisible().catch(() => false)) {
-      // Force close by pressing Escape or clicking backdrop
-      await page.keyboard.press("Escape");
-      await page.waitForTimeout(300);
-    }
-  }
-
-  // Wait for any pending React re-renders and query invalidations
-  await page.waitForTimeout(1000);
-
-  // Verify onboarding is completed by checking the API
-  const statusResult = await page.evaluate(async () => {
-    try {
-      const response = await fetch("/web/v1/onboarding", {
-        credentials: "include",
-      });
-      const data = await response.json();
-      return data.completed;
+      return response.ok;
     } catch {
-      return null;
+      return false;
     }
   });
 
-  if (statusResult === false) {
-    // API says not completed, retry the API call
-    await page.evaluate(async () => {
-      await fetch("/web/v1/onboarding", {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ version: 1 }),
-      });
-    });
-    await page.waitForTimeout(500);
+  // If the dialog is visible, the React Query cache still has stale data.
+  // Reload so the onboarding query refetches and sees completed=true.
+  const dialog = page.getByTestId("onboarding-dialog");
+  if (apiResult && (await dialog.isVisible({ timeout: 500 }).catch(() => false))) {
+    await page.reload();
+    await expect(page.getByTestId("app-shell")).toBeVisible();
   }
 }
 
