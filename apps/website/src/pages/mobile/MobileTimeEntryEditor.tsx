@@ -14,7 +14,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { Check, ChevronRight } from "lucide-react";
-import { TrashIcon } from "../../shared/ui/icons.tsx";
+import { PinIcon, TrashIcon } from "../../shared/ui/icons.tsx";
 import { MobilePickerOverlay } from "./MobilePickerOverlay.tsx";
 
 type MobileTimeEntryEditorProps = {
@@ -117,12 +117,13 @@ export function MobileTimeEntryEditor({
         >
           {(search) => {
             const query = search.trim().toLowerCase();
+            const active = projects.filter((p) => p.active !== false);
             const filtered = query
-              ? projects.filter((p) => {
+              ? active.filter((p) => {
                   const haystack = `${p.name} ${p.client_name ?? ""}`.toLowerCase();
                   return haystack.includes(query);
                 })
-              : projects;
+              : active;
             return (
               <>
                 <button
@@ -162,6 +163,14 @@ export function MobileTimeEntryEditor({
                         </span>
                       ) : null}
                     </div>
+                    {p.pinned ? (
+                      <span
+                        className="flex shrink-0 items-center text-[var(--track-text-muted)]"
+                        data-testid="pin-icon"
+                      >
+                        <PinIcon className="size-3.5" />
+                      </span>
+                    ) : null}
                     {p.id === projectId ? (
                       <Check className="size-4 shrink-0 text-[var(--track-accent)]" />
                     ) : null}
