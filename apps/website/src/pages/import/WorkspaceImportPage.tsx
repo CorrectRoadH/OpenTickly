@@ -1,5 +1,4 @@
 import { AppButton, PageLayout } from "@opentoggl/web-ui";
-import { useNavigate } from "@tanstack/react-router";
 import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -13,6 +12,7 @@ import {
 } from "../../shared/query/import-jobs.ts";
 import { useUpdateWebSessionMutation } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import type { SessionWorkspaceSummaryViewModel } from "../../entities/session/session-bootstrap.ts";
 
 type ImportFlow = "archive" | "time_entries";
 
@@ -20,7 +20,6 @@ export function WorkspaceImportPage(): ReactElement {
   const { t } = useTranslation();
   const archiveInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
-  const navigate = useNavigate();
   const session = useSession();
   const createArchiveImportJobMutation = useCreateArchiveImportJobMutation();
   const createTimeEntriesImportJobMutation = useCreateTimeEntriesImportJobMutation();
@@ -33,8 +32,44 @@ export function WorkspaceImportPage(): ReactElement {
     organizationId: number;
     workspaceId: number;
   } | null>(null);
+  const [pendingCsvTarget, setPendingCsvTarget] = useState<{
+    organizationId: number;
+    workspaceId: number;
+  } | null>(null);
   const importJobQuery = useImportJobQuery(submittedJob?.id ?? null);
-  const hasRedirected = useRef(false);
+  const hasUpdatedSelector = useRef(false);
+
+  // CSV import target: defaults to current org/workspace
+  const [selectedOrgId, setSelectedOrgId] = useState<number | null>(
+    session.currentOrganization?.id ?? null,
+  );
+
+  // When a new org/workspace is created by archive import, switch the Step 2 selector
+  // once the session data refreshes and the org becomes available.
+  useEffect(() => {
+    if (!pendingCsvTarget) return;
+    const orgExists = session.availableOrganizations.some(
+      (org) => org.id === pendingCsvTarget.organizationId,
+    );
+    if (!orgExists) return;
+    setSelectedOrgId(pendingCsvTarget.organizationId);
+    setSelectedWorkspaceId(pendingCsvTarget.workspaceId);
+    setPendingCsvTarget(null);
+  }, [pendingCsvTarget, session.availableOrganizations]);
+  const workspacesForOrg: SessionWorkspaceSummaryViewModel[] = session.availableWorkspaces.filter(
+    (ws) => ws.organizationId === selectedOrgId,
+  );
+
+  const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<number | null>(
+    session.currentWorkspace.id,
+  );
+
+  // When selected org changes, pick first workspace of that org
+  function handleOrgChange(orgId: number) {
+    setSelectedOrgId(orgId);
+    const firstWs = session.availableWorkspaces.find((ws) => ws.organizationId === orgId);
+    setSelectedWorkspaceId(firstWs?.id ?? null);
+  }
 
   function handleArchiveFileChange(event: ChangeEvent<HTMLInputElement>) {
     setSelectedArchive(event.target.files?.[0] ?? null);
@@ -49,13 +84,14 @@ export function WorkspaceImportPage(): ReactElement {
       });
       setSubmittedJob({ id: job.job_id, source: "archive" });
       if (job.organization_id) {
-        setArchiveImportTarget({
-          organizationId: job.organization_id,
-          workspaceId: job.workspace_id,
-        });
+        const target = { organizationId: job.organization_id, workspaceId: job.workspace_id };
+        setArchiveImportTarget(target);
+        // Refresh session so the new org appears in availableOrganizations.
+        void updateWebSessionMutation
+          .mutateAsync({ workspace_id: job.workspace_id })
+          .catch(() => undefined);
       }
       setSelectedArchive(null);
-      toast.success(t("toast:organizationCreated", { name: organizationName }));
     } catch (error) {
       setSubmittedJob(null);
       toast.error(resolveArchiveImportErrorMessage(error) ?? t("toast:unexpectedError"), {
@@ -65,29 +101,19 @@ export function WorkspaceImportPage(): ReactElement {
   }
 
   useEffect(() => {
-    if (
-      archiveImportTarget &&
-      submittedJob?.source === "archive" &&
-      importJobQuery.data?.status === "completed" &&
-      !hasRedirected.current
-    ) {
-      hasRedirected.current = true;
-      void (async () => {
-        await updateWebSessionMutation.mutateAsync({
-          workspace_id: archiveImportTarget.workspaceId,
-        });
-        void navigate({
-          to: `/organizations/${String(archiveImportTarget.organizationId)}/settings`,
-        });
-      })();
+    if (submittedJob?.source !== "archive") return;
+    const status = importJobQuery.data?.status;
+    if (!status || status === "queued" || status === "running") return;
+    if (hasUpdatedSelector.current) return;
+    hasUpdatedSelector.current = true;
+
+    if (status === "completed" && archiveImportTarget) {
+      toast.success(t("toast:organizationCreated", { name: organizationName }));
+      setPendingCsvTarget(archiveImportTarget);
+    } else {
+      toast.error("Archive import failed.", { duration: 4000 });
     }
-  }, [
-    archiveImportTarget,
-    submittedJob,
-    importJobQuery.data?.status,
-    navigate,
-    updateWebSessionMutation,
-  ]);
+  }, [archiveImportTarget, submittedJob, importJobQuery.data?.status, organizationName, t]);
 
   function handleCSVFileChange(event: ChangeEvent<HTMLInputElement>) {
     const files = event.target.files;
@@ -97,13 +123,13 @@ export function WorkspaceImportPage(): ReactElement {
   }
 
   async function handleCSVUpload() {
-    if (selectedCSVs.length === 0) return;
+    if (selectedCSVs.length === 0 || !selectedWorkspaceId) return;
     try {
       let lastJob = null;
       for (const file of selectedCSVs) {
         lastJob = await createTimeEntriesImportJobMutation.mutateAsync({
           archive: file,
-          workspaceId: session.currentWorkspace.id,
+          workspaceId: selectedWorkspaceId,
         });
       }
       if (lastJob) {
@@ -121,15 +147,11 @@ export function WorkspaceImportPage(): ReactElement {
 
   const latestStatus = submittedJob ? (importJobQuery.data?.status ?? "queued") : null;
 
+  const selectedWorkspaceName =
+    session.availableWorkspaces.find((ws) => ws.id === selectedWorkspaceId)?.name ?? "";
+
   return (
-    <PageLayout
-      title="Import"
-      toolbar={
-        <span className="text-[12px] text-[var(--track-text-muted)]">
-          Current workspace: <span className="text-white">{session.currentWorkspace.name}</span>
-        </span>
-      }
-    >
+    <PageLayout title="Import">
       <div className="grid gap-5 p-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-5">
           {/* Step 1: Archive import */}
@@ -225,12 +247,52 @@ export function WorkspaceImportPage(): ReactElement {
                 </h2>
                 <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
                   Upload a CSV exported from Toggl time entries. The backend imports rows into
-                  <span className="mx-1 font-medium text-white">
-                    {session.currentWorkspace.name}
-                  </span>
+                  <span className="mx-1 font-medium text-white">{selectedWorkspaceName}</span>
                   and links them to matching clients, projects, tasks, and tags.
                 </p>
               </div>
+            </div>
+
+            {/* Org + workspace selector */}
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+                  Organization
+                </span>
+                <select
+                  className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
+                  onChange={(e) => handleOrgChange(Number(e.target.value))}
+                  value={selectedOrgId ?? ""}
+                >
+                  {session.availableOrganizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
+                  Workspace
+                </span>
+                <select
+                  className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)] disabled:opacity-50"
+                  disabled={workspacesForOrg.length === 0}
+                  onChange={(e) => setSelectedWorkspaceId(Number(e.target.value))}
+                  value={selectedWorkspaceId ?? ""}
+                >
+                  {workspacesForOrg.length === 0 ? (
+                    <option value="">No workspaces</option>
+                  ) : (
+                    workspacesForOrg.map((ws) => (
+                      <option key={ws.id} value={ws.id}>
+                        {ws.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
             </div>
 
             <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
@@ -239,7 +301,10 @@ export function WorkspaceImportPage(): ReactElement {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
-              <AppButton onClick={() => csvInputRef.current?.click()}>
+              <AppButton
+                disabled={!selectedWorkspaceId}
+                onClick={() => csvInputRef.current?.click()}
+              >
                 <PlusIcon className="size-3.5" />
                 Choose CSV
               </AppButton>
@@ -263,7 +328,7 @@ export function WorkspaceImportPage(): ReactElement {
             {selectedCSVs.length > 0 ? (
               <div className="mt-4">
                 <AppButton
-                  disabled={createTimeEntriesImportJobMutation.isPending}
+                  disabled={createTimeEntriesImportJobMutation.isPending || !selectedWorkspaceId}
                   onClick={() => void handleCSVUpload()}
                 >
                   {createTimeEntriesImportJobMutation.isPending ? "Importing…" : "Upload & import"}
@@ -291,7 +356,7 @@ export function WorkspaceImportPage(): ReactElement {
           </div>
           <p className="mt-5 text-[12px] leading-6 text-[var(--track-text-muted)]">
             Each upload creates a job record. Archive import creates a new organization workspace;
-            CSV import targets the workspace shown at the top of this page.
+            CSV import targets the workspace selected above.
           </p>
         </aside>
       </div>

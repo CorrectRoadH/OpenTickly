@@ -123,6 +123,10 @@
       "ImportJob": {
         "type": "object",
         "properties": {
+          "error_message": {
+            "type": "string",
+            "nullable": true
+          },
           "job_id": {
             "type": "string"
           },

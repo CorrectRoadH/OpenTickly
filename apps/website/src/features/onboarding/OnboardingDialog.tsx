@@ -11,6 +11,7 @@ import i18n, {
   type SupportedLanguage,
 } from "../../app/i18n.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
+import { useSession } from "../../shared/session/session-context.tsx";
 import {
   useCompleteOnboardingMutation,
   useOnboardingQuery,
@@ -33,7 +34,11 @@ export type OnboardingStepAction = {
   labelKey: string;
   variant?: "primary" | "secondary";
   href?: string;
+  /** Use workspace-relative import path instead of a static href */
+  importHref?: boolean;
   onComplete?: boolean;
+  /** After completing onboarding, navigate to the import page instead of home */
+  navigateToImport?: boolean;
 };
 
 export function getOnboardingSteps(): OnboardingStepConfig[] {
@@ -48,13 +53,14 @@ export function getOnboardingSteps(): OnboardingStepConfig[] {
       id: "ai-workflow",
       titleKey: "onboarding:aiWorkflowTitle",
       descriptionKey: "onboarding:aiWorkflowDescription",
-      actions: [{ labelKey: "onboarding:continue", variant: "primary", onComplete: true }],
-    },
-    {
-      id: "configure-workspace",
-      titleKey: "onboarding:configureWorkspaceTitle",
-      descriptionKey: "onboarding:configureWorkspaceDescription",
-      actions: [{ labelKey: "onboarding:continue", variant: "primary", onComplete: true }],
+      actions: [
+        {
+          labelKey: "onboarding:aiWorkflowSetupGuide",
+          variant: "primary",
+          href: "https://opentoggl.com/docs/ai-integration",
+        },
+        { labelKey: "onboarding:continue", variant: "secondary", onComplete: true },
+      ],
     },
     {
       id: "star-us",
@@ -65,7 +71,21 @@ export function getOnboardingSteps(): OnboardingStepConfig[] {
           labelKey: "onboarding:starOnGitHub",
           variant: "primary",
           href: "https://github.com/CorrectRoadH/opentoggl",
+        },
+        { labelKey: "onboarding:continue", variant: "secondary", onComplete: true },
+      ],
+    },
+    {
+      id: "import-data",
+      titleKey: "onboarding:importDataTitle",
+      descriptionKey: "onboarding:importDataDescription",
+      actions: [
+        {
+          labelKey: "onboarding:importDataButton",
+          variant: "primary",
+          importHref: true,
           onComplete: true,
+          navigateToImport: true,
         },
         { labelKey: "onboarding:startTracking", variant: "secondary", onComplete: true },
       ],
@@ -99,6 +119,7 @@ function saveStep(stepIndex: number): void {
 export function OnboardingDialog(): ReactElement | null {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { currentWorkspace } = useSession();
 
   const onboardingQuery = useOnboardingQuery();
   const preferencesQuery = usePreferencesQuery();
@@ -138,12 +159,6 @@ export function OnboardingDialog(): ReactElement | null {
     isOpen,
   ]);
 
-  const handleNext = useCallback(() => {
-    const nextIndex = Math.min(currentStepIndex + 1, steps.length - 1);
-    setCurrentStepIndex(nextIndex);
-    saveStep(nextIndex);
-  }, [currentStepIndex, steps.length]);
-
   const handlePrev = useCallback(() => {
     const prevIndex = Math.max(currentStepIndex - 1, 0);
     setCurrentStepIndex(prevIndex);
@@ -151,15 +166,19 @@ export function OnboardingDialog(): ReactElement | null {
   }, [currentStepIndex]);
 
   const isFirstStep = currentStepIndex === 0;
-  const isLastStep = currentStepIndex === steps.length - 1;
 
   const handleClose = useCallback(() => {
     setIsOpen(false);
   }, []);
 
   const handleCompleteStep = useCallback(
-    async (stepConfig: OnboardingStepConfig) => {
+    async (stepConfig: OnboardingStepConfig, action: OnboardingStepAction) => {
       const nextIndex = steps.findIndex((s) => s.id === stepConfig.id) + 1;
+
+      // Apply language immediately when leaving the language step so subsequent steps render in the chosen language
+      if (stepConfig.id === "language") {
+        await i18n.changeLanguage(selectedLanguage);
+      }
 
       if (nextIndex >= steps.length) {
         // Last step - complete onboarding
@@ -176,7 +195,12 @@ export function OnboardingDialog(): ReactElement | null {
 
           localStorage.removeItem(ONBOARDING_STEP_STORAGE_KEY);
           setIsOpen(false);
-          void navigate({ to: resolveHomePath() });
+
+          if (action.navigateToImport) {
+            void navigate({ to: `/workspaces/${currentWorkspace.id}/import` });
+          } else {
+            void navigate({ to: resolveHomePath() });
+          }
         } catch {
           toast.error(t("onboarding:failedToComplete"));
         }
@@ -185,7 +209,15 @@ export function OnboardingDialog(): ReactElement | null {
         saveStep(nextIndex);
       }
     },
-    [steps, selectedLanguage, updatePreferencesMutation, completeOnboardingMutation, navigate, t],
+    [
+      steps,
+      selectedLanguage,
+      updatePreferencesMutation,
+      completeOnboardingMutation,
+      navigate,
+      t,
+      currentWorkspace.id,
+    ],
   );
 
   if (!isOpen || !currentStep) {
@@ -205,7 +237,7 @@ export function OnboardingDialog(): ReactElement | null {
                   window.open(action.href, "_blank", "noopener,noreferrer");
                 }
                 if (action.onComplete) {
-                  void handleCompleteStep(currentStep);
+                  void handleCompleteStep(currentStep, action);
                 }
               }}
               type="button"
@@ -217,19 +249,11 @@ export function OnboardingDialog(): ReactElement | null {
         </div>
       }
       navigation={
-        <div className="flex items-center justify-between">
-          {!isFirstStep && (
-            <AppButton onClick={handlePrev} type="button" variant="secondary">
-              {t("onboarding:previous")}
-            </AppButton>
-          )}
-          <div className="flex-1" />
-          {!isLastStep && (
-            <AppButton onClick={handleNext} type="button" variant="secondary">
-              {t("onboarding:next")}
-            </AppButton>
-          )}
-        </div>
+        isFirstStep ? undefined : (
+          <AppButton onClick={handlePrev} type="button" variant="secondary">
+            {t("onboarding:previous")}
+          </AppButton>
+        )
       }
       onClose={handleClose}
       testId="onboarding-dialog"
@@ -237,15 +261,11 @@ export function OnboardingDialog(): ReactElement | null {
       width="max-w-[560px]"
     >
       <div className="space-y-4">
+        <StepIllustration stepId={currentStep.id} />
         {currentStep.id === "language" ? (
           <LanguageStep selectedLanguage={selectedLanguage} onSelect={handleLanguageSelect} t={t} />
-        ) : currentStep.id === "star-us" ? (
-          <StarUsStep t={t} />
         ) : (
-          <>
-            <StepIllustration stepId={currentStep.id} />
-            <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
-          </>
+          <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
         )}
       </div>
     </ModalDialogWithNav>
@@ -342,55 +362,57 @@ function StepContent({
 /**
  * Illustration placeholder for each onboarding step.
  *
- * ILLUSTRATION NEEDED — replace each placeholder SVG with a real image/SVG asset:
+ * ILLUSTRATION NEEDED — replace each placeholder with a real SVG/image asset.
+ * Suggested canvas: 480×160px. Overall style: flat vector, dark background (#0f1117),
+ * accent color #7C5CFC (purple), secondary highlight #E8D5FF (light lavender).
+ * No gradients on objects — solid fills with subtle drop shadows.
+ * Rounded corners on all cards/chips (8–12px radius). Stroke weight 1.5px on outlines.
  *
- * "ai-workflow":
- *   Show an AI chat bubble (e.g. Claude logo or generic robot icon) on the left
- *   connected by an arrow to an OpenToggl timer card on the right.
- *   The arrow should be labeled "CLI". Dark background, accent color highlights.
- *   Suggested size: 480×160px.
+ * ── "language" ──────────────────────────────────────────────────────────────
+ *   Center: a slightly tilted globe (wireframe lat/lon lines, accent purple stroke
+ *   on a dark surface fill). Around it, 4 floating speech-bubble chips at
+ *   different angles: "EN", "中文", "日本語", "Español" — each chip is a white
+ *   label on a #1e2030 pill with a 1px accent border. Small dashed arcs connect
+ *   the bubbles to the globe implying "all languages supported". Warm, welcoming tone.
  *
- * "configure-workspace":
- *   Show a simple workspace settings card — workspace name field, currency dropdown,
- *   and a checkmark indicating it's configured. Clean, minimal line-art style.
- *   Suggested size: 480×160px.
+ * ── "ai-workflow" ────────────────────────────────────────────────────────────
+ *   Left third: a compact terminal window (#1a1d2e bg, green #4ade80 blinking
+ *   cursor, one line of white monospace text "$ toggl start"). Center: a dashed
+ *   horizontal arrow labeled "CLI" in a small pill above it. Right third: an
+ *   OpenToggl timer card (#1e2030 rounded rect, white "00:32:15" digits, small
+ *   purple play-button icon below). Arrow flows left→right showing AI controlling
+ *   the timer automatically.
+ *
+ * ── "star-us" ────────────────────────────────────────────────────────────────
+ *   Center: a large 5-pointed star (filled #FBBF24 gold, 1px #F59E0B stroke,
+ *   soft radial glow behind it). Inside or below the star: GitHub Octocat
+ *   silhouette in white at ~40px. Around the star: 6 small 4-pointed sparkle
+ *   shapes in #E8D5FF at varying sizes and rotations. Bottom-right corner: a
+ *   small pill chip "+★ 1.2k" in accent purple to imply community growth.
+ *
+ * ── "import-data" ────────────────────────────────────────────────────────────
+ *   Left third: a red Toggl "T" logomark on a #1e2030 card, below it 3 stacked
+ *   thin rows (gray bars of varying widths) representing existing time entries.
+ *   Center: a rightward arrow with a motion trail (3 decreasing-opacity copies).
+ *   Right third: OpenToggl logomark on a #1e2030 card, same 3 entry rows now
+ *   rendered in accent purple showing they've been migrated. A small green
+ *   checkmark badge overlaps the top-right corner of the right card.
  */
 function StepIllustration({ stepId }: { stepId: string }): ReactElement {
-  // Placeholder: a labeled dashed box indicating where the illustration goes.
-  // Replace this with <img src={...} /> or an inline SVG per step.
-  const label =
-    stepId === "ai-workflow"
-      ? "[ Illustration: AI agent → CLI → OpenToggl timer ]"
-      : "[ Illustration: Workspace settings card ]";
+  const labels: Record<string, string> = {
+    language:
+      "[ TODO: flat vector SVG — tilted globe with lat/lon wireframe lines (purple stroke), 4 speech-bubble chips around it: EN / 中文 / 日本語 / Español, dashed arcs connecting them to the globe. Dark #0f1117 bg. ]",
+    "ai-workflow":
+      "[ TODO: flat vector SVG — left: terminal window (#1a1d2e, green cursor, text '$ toggl start'); center: dashed arrow labeled 'CLI'; right: timer card (#1e2030, white '00:32:15', purple play button). Dark #0f1117 bg. ]",
+    "star-us":
+      "[ TODO: flat vector SVG — center: large gold #FBBF24 5-pointed star with radial glow, GitHub Octocat silhouette in white inside it; 6 small #E8D5FF sparkles around it; bottom-right: purple pill '+★ 1.2k'. Dark #0f1117 bg. ]",
+    "import-data":
+      "[ TODO: flat vector SVG — left: Toggl red T logo on #1e2030 card + 3 gray entry rows; center: rightward arrow with motion trail; right: OpenToggl logo on #1e2030 card + same 3 rows in purple + green checkmark badge. Dark #0f1117 bg. ]",
+  };
 
   return (
     <div className="flex h-[140px] items-center justify-center rounded-xl border border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-center text-[12px] text-[var(--track-text-muted)]">
-      {label}
-    </div>
-  );
-}
-
-/**
- * Final "Star us on GitHub" step.
- *
- * ILLUSTRATION NEEDED:
- *   A large GitHub Octocat or star icon centered in the hero area, surrounded by
- *   small sparkle/star shapes. The star should look "lit up" (filled yellow).
- *   Optionally show a rising star count number (e.g. "★ 1,234"). Dark bg.
- *   Suggested size: 480×180px.
- */
-function StarUsStep({ t }: { t: (key: string) => string }): ReactElement {
-  return (
-    <div className="space-y-4">
-      {/* Illustration placeholder — replace with real asset */}
-      <div className="flex h-[160px] items-center justify-center rounded-xl border border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-center text-[12px] text-[var(--track-text-muted)]">
-        {"[ Illustration: GitHub star hero — Octocat + glowing ★ ]"}
-      </div>
-      <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] px-5 py-4 text-center">
-        <p className="text-[14px] leading-6 text-[var(--track-text-muted)]">
-          {t("onboarding:starUsDescription")}
-        </p>
-      </div>
+      {labels[stepId] ?? "[ Illustration ]"}
     </div>
   );
 }

@@ -232,8 +232,14 @@ const workspaceMembersRoute = createRoute({
 
 const workspaceImportRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/workspaces/$workspaceId/import",
+  path: "/import",
   component: WorkspaceImportRouteComponent,
+});
+
+const legacyWorkspaceImportRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/workspaces/$workspaceId/import",
+  component: LegacyWorkspaceImportRouteComponent,
 });
 
 const workspaceClientsRoute = createRoute({
@@ -406,6 +412,7 @@ export const routeTree = rootRoute.addChildren([
   legacyWorkspaceProjectDetailRoute,
   workspaceMembersRoute,
   workspaceImportRoute,
+  legacyWorkspaceImportRoute,
   workspaceClientsRoute,
   workspaceClientDetailRoute,
   workspaceGroupsRoute,
@@ -613,10 +620,11 @@ function WorkspaceMembersRouteComponent() {
 }
 
 function WorkspaceImportRouteComponent() {
-  const params = workspaceImportRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
+  return renderProtectedRoute(<WorkspaceImportPage />);
+}
 
-  return renderProtectedRoute(<WorkspaceImportPage />, workspaceId);
+function LegacyWorkspaceImportRouteComponent() {
+  return <Navigate replace to="/import" />;
 }
 
 function WorkspaceClientsRouteComponent() {

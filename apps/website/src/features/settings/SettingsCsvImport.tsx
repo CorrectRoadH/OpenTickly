@@ -16,10 +16,10 @@ const expectedColumns = [
 ];
 
 type SettingsCsvImportProps = {
-  workspaceId: number;
+  workspaceId?: number;
 };
 
-export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): ReactElement {
+export function SettingsCsvImport(_props: SettingsCsvImportProps): ReactElement {
   const navigate = useNavigate();
 
   return (
@@ -62,7 +62,7 @@ export function SettingsCsvImport({ workspaceId }: SettingsCsvImportProps): Reac
 
         <AppButton
           onClick={() => {
-            void navigate({ to: buildWorkspaceImportPath(workspaceId) });
+            void navigate({ to: buildWorkspaceImportPath() });
           }}
           type="button"
         >

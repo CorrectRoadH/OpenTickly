@@ -223,9 +223,10 @@ func optionalString(value string) *string {
 
 func importJobBody(job importingapplication.ImportJobView) importapi.ImportJob {
 	return importapi.ImportJob{
-		JobId:       job.JobID,
-		Status:      importapi.ImportJobStatus(job.Status),
-		WorkspaceId: int(job.WorkspaceID),
+		ErrorMessage: optionalString(job.ErrorMessage),
+		JobId:        job.JobID,
+		Status:       importapi.ImportJobStatus(job.Status),
+		WorkspaceId:  int(job.WorkspaceID),
 	}
 }
 
