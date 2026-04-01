@@ -170,20 +170,17 @@ test.describe("Time entry DnD Resize", () => {
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
     await expect(entry).toBeVisible({ timeout: 10_000 });
 
-    const entryBox = await entry.boundingBox();
-    expect(entryBox).not.toBeNull();
-
-    // For resize, we need to interact with the calendar's resize handle
-    // FullCalendar typically shows resize handles on event edges
-    // Let's try to use dragTo on the entry itself with a smaller offset
-
     await page.evaluate(() => {
       delete (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult;
     });
 
-    // Attempt resize by dragging from top edge using manual mouse events
+    // Scroll to top first so boundingBox coordinates are within the viewport
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await entry.scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
+
+    const entryBox = await entry.boundingBox();
+    expect(entryBox).not.toBeNull();
 
     const startX = entryBox!.x + 5;
     const startY = entryBox!.y + entryBox!.height / 2;
@@ -213,16 +210,17 @@ test.describe("Time entry DnD Resize", () => {
     const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
     await expect(entry).toBeVisible({ timeout: 10_000 });
 
-    const entryBox = await entry.boundingBox();
-    expect(entryBox).not.toBeNull();
-
     await page.evaluate(() => {
       delete (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult;
     });
 
-    // Attempt resize by dragging from bottom edge using manual mouse events
+    // Scroll to top first so boundingBox coordinates are within the viewport
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await entry.scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
+
+    const entryBox = await entry.boundingBox();
+    expect(entryBox).not.toBeNull();
 
     const startX = entryBox!.x + entryBox!.width - 5;
     const startY = entryBox!.y + entryBox!.height / 2;

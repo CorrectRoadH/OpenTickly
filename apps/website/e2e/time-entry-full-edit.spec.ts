@@ -103,6 +103,9 @@ test.describe("Story: full time entry editing from calendar", () => {
     // Tag should show in the picker button
     await expect(dialog.getByLabel("Select tags")).toContainText("urgent");
 
+    // Close the tag picker so it doesn't intercept clicks on Save
+    await dialog.getByLabel("Select tags").click();
+
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Time entry saved")).toBeVisible();

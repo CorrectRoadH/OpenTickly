@@ -641,14 +641,15 @@ export function WorkspaceTimerPage({
                 }
               }}
               projects={orch.projectOptions
-                .filter((project) => project.id != null)
+                .filter((project) => project.id != null && project.active !== false)
                 .map((project) => ({
                   clientName: project.client_name ?? undefined,
                   color: resolveProjectColorValue(project),
                   id: project.id as number,
                   name: project.name ?? "Untitled project",
                   pinned: project.pinned === true,
-                }))}
+                }))
+                .sort((a, b) => Number(b.pinned) - Number(a.pinned))}
               tags={orch.tagOptions}
               timezone={orch.timezone}
               workspaceName={
@@ -836,14 +837,15 @@ export function WorkspaceTimerPage({
                   : t("continueTimeEntry")
               }
               projects={orch.projectOptions
-                .filter((project) => project.id != null)
+                .filter((project) => project.id != null && project.active !== false)
                 .map((project) => ({
                   clientName: project.client_name ?? undefined,
                   color: resolveProjectColorValue(project),
                   id: project.id as number,
                   name: project.name ?? "Untitled project",
                   pinned: project.pinned === true,
-                }))}
+                }))
+                .sort((a, b) => Number(b.pinned) - Number(a.pinned))}
               recentEntries={orch.recentWorkspaceEntries}
               saveError={orch.selectedEntryError}
               selectedProjectId={orch.selectedProjectId}
@@ -1106,7 +1108,8 @@ function TimerBarProjectPicker({
           id: p.id as number,
           name: p.name ?? "Untitled project",
           pinned: p.pinned === true,
-        })),
+        }))
+        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
     [projectOptions],
   );
 
@@ -1553,7 +1556,8 @@ function TimesheetAddRowPicker({
           id: p.id as number,
           name: p.name ?? "Untitled project",
           pinned: p.pinned === true,
-        })),
+        }))
+        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
     [projectOptions],
   );
 

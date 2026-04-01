@@ -145,10 +145,8 @@ test.describe("Story: edit a stopped time entry", () => {
     const timeInput = dialog.getByLabel("Edit time");
     await expect(timeInput).toBeVisible();
     await timeInput.fill("09:28");
-    await timeInput.blur();
+    await timeInput.press("Enter");
 
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
-    await page.waitForTimeout(300);
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
 
     await dialog.getByRole("button", { name: "Edit start date" }).click();

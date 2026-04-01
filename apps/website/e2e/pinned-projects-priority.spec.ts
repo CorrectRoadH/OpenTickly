@@ -1,6 +1,28 @@
 import { expect, test } from "@playwright/test";
 
-import { createProjectForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+import {
+  createProjectForWorkspace,
+  createTimeEntryForWorkspace,
+  loginE2eUser,
+  registerE2eUser,
+} from "./fixtures/e2e-auth.ts";
+
+async function archiveProject(
+  page: import("@playwright/test").Page,
+  options: { projectId: number; workspaceId: number },
+): Promise<void> {
+  await page.evaluate(async ({ projectId, workspaceId }) => {
+    const response = await fetch(`/api/v9/workspaces/${workspaceId}/projects/${projectId}`, {
+      body: JSON.stringify({ active: false }),
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      method: "PUT",
+    });
+    if (!response.ok) {
+      throw new Error(`Archive project failed with ${response.status}`);
+    }
+  }, options);
+}
 
 async function pinProject(
   page: import("@playwright/test").Page,
@@ -153,5 +175,95 @@ test.describe("Pinned projects", () => {
 
     expect(bbbIndex).toBeLessThan(aaaIndex);
     expect(bbbIndex).toBeLessThan(cccIndex);
+  });
+
+  test("project picker: archived projects do not appear in timer bar picker", async ({ page }) => {
+    const email = `archive-timer-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Archive Timer User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+
+    await createProjectForWorkspace(page, { name: "Active Project", workspaceId });
+    const archivedId = await createProjectForWorkspace(page, {
+      name: "Archived Project",
+      workspaceId,
+    });
+    await archiveProject(page, { projectId: archivedId, workspaceId });
+
+    await page.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    await page.getByRole("button", { name: /Add a project/ }).click();
+    const picker = page.getByTestId("bulk-edit-project-picker");
+    await expect(picker).toBeVisible();
+
+    await expect(picker.getByText("Active Project")).toBeVisible();
+    await expect(picker.getByText("Archived Project")).not.toBeVisible();
+  });
+
+  test("project picker: archived projects do not appear in bulk edit picker", async ({ page }) => {
+    const email = `archive-bulk-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Archive Bulk User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+    const workspaceId = session.currentWorkspaceId;
+
+    await createProjectForWorkspace(page, { name: "Active Project", workspaceId });
+    const archivedId = await createProjectForWorkspace(page, {
+      name: "Archived Project",
+      workspaceId,
+    });
+    await archiveProject(page, { projectId: archivedId, workspaceId });
+
+    // Create a time entry to enable bulk edit
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isoDate = yesterday.toISOString().slice(0, 10);
+    await createTimeEntryForWorkspace(page, {
+      description: "bulk edit test entry",
+      start: `${isoDate}T09:00:00Z`,
+      stop: `${isoDate}T10:00:00Z`,
+      workspaceId,
+    });
+
+    await page.reload();
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Switch to list view and select the entry via group checkbox
+    await page.getByRole("radio", { name: "List" }).click();
+    const listView = page.getByTestId("timer-list-view");
+    await expect(listView).toBeVisible();
+    const groupCheckbox = listView.locator('input[type="checkbox"]').first();
+    await groupCheckbox.check();
+
+    // Open bulk edit via toolbar
+    const toolbar = page.getByTestId("bulk-action-toolbar");
+    await expect(toolbar).toBeVisible();
+    await toolbar.getByRole("button", { name: "Bulk edit selected entries" }).click();
+
+    // Open project picker inside bulk edit dialog
+    const bulkDialog = page.getByTestId("bulk-edit-dialog");
+    await expect(bulkDialog).toBeVisible();
+    await bulkDialog.getByTestId("bulk-edit-project-trigger").click();
+    const bulkPicker = page.getByTestId("bulk-edit-project-picker");
+    await expect(bulkPicker).toBeVisible();
+
+    await expect(bulkPicker.getByText("Active Project")).toBeVisible();
+    await expect(bulkPicker.getByText("Archived Project")).not.toBeVisible();
   });
 });
