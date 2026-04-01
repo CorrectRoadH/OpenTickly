@@ -45,7 +45,7 @@ test.describe("Story: manage goals end-to-end", () => {
     // Goal appears in list
     const goalsList = page.getByTestId("goals-list");
     await expect(goalsList).toBeVisible();
-    const row = goalsList.getByTestId("goal-row").filter({ hasText: "Daily coding" });
+    const row = goalsList.locator('[data-testid^="goal-row"]').filter({ hasText: "Daily coding" });
     await expect(row).toBeVisible();
     await expect(row).toContainText("at least");
     await expect(row).toContainText("3 hours");
@@ -81,7 +81,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByTestId("goal-submit-button").click();
     await expect(dialog).not.toBeVisible();
 
-    const row = page.getByTestId("goal-row").filter({ hasText: "Focus work" });
+    const row = page.locator('[data-testid^="goal-row"]').filter({ hasText: "Focus work" });
     await expect(row).toBeVisible();
     await expect(row).toContainText("at least");
     await expect(row).toContainText("4 hours");
@@ -144,7 +144,7 @@ test.describe("Story: manage goals end-to-end", () => {
     // Goal should be in the list
     const goalsList = page.getByTestId("goals-list");
     await expect(goalsList).toBeVisible();
-    const row = goalsList.getByTestId("goal-row").filter({ hasText: "Ship features" });
+    const row = goalsList.locator('[data-testid^="goal-row"]').filter({ hasText: "Ship features" });
     await expect(row).toBeVisible();
     await expect(row).toContainText("2 hours");
 
@@ -203,7 +203,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByTestId("goal-submit-button").click();
     await expect(dialog).not.toBeVisible();
 
-    const row = page.getByTestId("goal-row").filter({ hasText: "Limit meetings" });
+    const row = page.locator('[data-testid^="goal-row"]').filter({ hasText: "Limit meetings" });
     await expect(row).toBeVisible();
     await expect(row).toContainText("less than");
     await expect(row).toContainText("5 hours");
@@ -237,7 +237,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await expect(createDialog).not.toBeVisible();
 
     // Open edit via actions menu
-    const row = page.getByTestId("goal-row").filter({ hasText: "Read books" });
+    const row = page.locator('[data-testid^="goal-row"]').filter({ hasText: "Read books" });
     await expect(row).toBeVisible();
     await row.getByRole("button", { name: /actions/i }).click();
     await page.getByRole("menuitem", { name: "Edit goal" }).click();
@@ -252,7 +252,9 @@ test.describe("Story: manage goals end-to-end", () => {
     await expect(editDialog).not.toBeVisible();
 
     // Verify updated values
-    const updatedRow = page.getByTestId("goal-row").filter({ hasText: "Read more books" });
+    const updatedRow = page
+      .locator('[data-testid^="goal-row"]')
+      .filter({ hasText: "Read more books" });
     await expect(updatedRow).toBeVisible();
     await expect(updatedRow).toContainText("2 hours");
   });
@@ -282,7 +284,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByTestId("goal-submit-button").click();
     await expect(dialog).not.toBeVisible();
 
-    const row = page.getByTestId("goal-row").filter({ hasText: "Morning run" });
+    const row = page.locator('[data-testid^="goal-row"]').filter({ hasText: "Morning run" });
     await expect(row).toBeVisible();
 
     // Archive via actions menu
@@ -296,7 +298,9 @@ test.describe("Story: manage goals end-to-end", () => {
     await selectDropdownOption(page, "goals-status-filter", "Archived goals");
 
     // Goal should appear in archived list
-    const archivedRow = page.getByTestId("goal-row").filter({ hasText: "Morning run" });
+    const archivedRow = page
+      .locator('[data-testid^="goal-row"]')
+      .filter({ hasText: "Morning run" });
     await expect(archivedRow).toBeVisible();
 
     // Restore via actions menu
@@ -306,7 +310,9 @@ test.describe("Story: manage goals end-to-end", () => {
 
     // Switch back to active and verify it's back
     await selectDropdownOption(page, "goals-status-filter", "Active goals");
-    await expect(page.getByTestId("goal-row").filter({ hasText: "Morning run" })).toBeVisible();
+    await expect(
+      page.locator('[data-testid^="goal-row"]').filter({ hasText: "Morning run" }),
+    ).toBeVisible();
   });
 
   test("Given an existing goal, when the user deletes it, then it disappears from the list", async ({
@@ -334,7 +340,7 @@ test.describe("Story: manage goals end-to-end", () => {
     await dialog.getByTestId("goal-submit-button").click();
     await expect(dialog).not.toBeVisible();
 
-    const row = page.getByTestId("goal-row").filter({ hasText: "Temp goal" });
+    const row = page.locator('[data-testid^="goal-row"]').filter({ hasText: "Temp goal" });
     await expect(row).toBeVisible();
 
     // Delete via actions menu — confirm the browser dialog

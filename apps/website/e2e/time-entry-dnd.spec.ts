@@ -181,24 +181,26 @@ test.describe("Time entry DnD Resize", () => {
       delete (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult;
     });
 
-    // Attempt resize by dragging from top edge
-    await entry.dragTo(page.locator("[data-testid='timer-calendar-view']"), {
-      sourcePosition: { x: 5, y: entryBox!.height / 2 },
-      targetPosition: { x: 65, y: entryBox!.height / 2 },
-    });
+    // Attempt resize by dragging from top edge using manual mouse events
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.waitForTimeout(200);
+
+    const startX = entryBox!.x + 5;
+    const startY = entryBox!.y + entryBox!.height / 2;
+    const endX = startX + 60;
+    const endY = startY;
+
+    await page.mouse.move(startX, startY);
+    await page.waitForTimeout(50);
+    await page.mouse.down();
+    await page.waitForTimeout(50);
+    for (let i = 1; i <= 10; i++) {
+      await page.mouse.move(startX + (endX - startX) * (i / 10), endY, { steps: 5 });
+    }
+    await page.waitForTimeout(50);
+    await page.mouse.up();
 
     await page.waitForTimeout(1000);
-
-    await page.evaluate(() => {
-      return (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult as
-        | {
-            eventId: number;
-            minutesDelta: number;
-            start: string;
-            end: string;
-          }
-        | undefined;
-    });
 
     // Just verify entry is still visible (sanity check)
     await expect(entry).toBeVisible({ timeout: 5000 });
@@ -218,11 +220,24 @@ test.describe("Time entry DnD Resize", () => {
       delete (window as Window & { __calendarDragResult?: unknown }).__calendarDragResult;
     });
 
-    // Attempt resize by dragging from bottom edge
-    await entry.dragTo(page.locator("[data-testid='timer-calendar-view']"), {
-      sourcePosition: { x: entryBox!.width - 5, y: entryBox!.height / 2 },
-      targetPosition: { x: entryBox!.width + 55, y: entryBox!.height / 2 },
-    });
+    // Attempt resize by dragging from bottom edge using manual mouse events
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await page.waitForTimeout(200);
+
+    const startX = entryBox!.x + entryBox!.width - 5;
+    const startY = entryBox!.y + entryBox!.height / 2;
+    const endX = startX + 60;
+    const endY = startY;
+
+    await page.mouse.move(startX, startY);
+    await page.waitForTimeout(50);
+    await page.mouse.down();
+    await page.waitForTimeout(50);
+    for (let i = 1; i <= 10; i++) {
+      await page.mouse.move(startX + (endX - startX) * (i / 10), endY, { steps: 5 });
+    }
+    await page.waitForTimeout(50);
+    await page.mouse.up();
 
     await page.waitForTimeout(1000);
 

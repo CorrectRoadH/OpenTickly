@@ -95,8 +95,8 @@ test.describe("Story: create and edit a goal with CalendarPanel date picker", ()
     // Goal should appear in the goals list
     const goalsList = page.getByTestId("goals-list");
     await expect(goalsList).toBeVisible();
-    await expect(goalsList.getByTestId("goal-row")).toContainText("Ship v2");
-    await expect(goalsList.getByTestId("goal-row")).toContainText(isoDate(nextMonth));
+    await expect(goalsList.locator('[data-testid^="goal-row"]')).toContainText("Ship v2");
+    await expect(goalsList.locator('[data-testid^="goal-row"]')).toContainText(isoDate(nextMonth));
   });
 
   test("Given an existing goal with an end date, when the user edits it and changes the end date via CalendarPanel, then the goal list reflects the new date", async ({
@@ -141,7 +141,9 @@ test.describe("Story: create and edit a goal with CalendarPanel date picker", ()
     await expect(createDialog).not.toBeVisible();
 
     // Goal should be in the list
-    const goalRow = page.getByTestId("goal-row").filter({ hasText: "Daily standup prep" });
+    const goalRow = page
+      .locator('[data-testid^="goal-row"]')
+      .filter({ hasText: "Daily standup prep" });
     await expect(goalRow).toBeVisible();
 
     // Open the actions menu and click Edit goal
