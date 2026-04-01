@@ -94,3 +94,18 @@ a {
   scrollbar-width: thin;
   scrollbar-color: var(--track-border) transparent;
 }
+
+/* Force Fumadocs nav to use our dark surface */
+header.fd-nav,
+nav.fd-nav,
+[class*="fd-nav"] {
+  background: var(--track-panel) !important;
+  border-bottom-color: var(--track-border) !important;
+}
+
+/* Landing page hero divider between sections */
+.landing-section-divider {
+  border: none;
+  border-top: 1px solid var(--track-border);
+  margin: 0;
+}
