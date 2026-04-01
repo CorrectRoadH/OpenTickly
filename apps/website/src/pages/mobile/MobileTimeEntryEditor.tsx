@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type ReactElement, useMemo, useState } from "react";
 
 import i18n from "../../app/i18n.ts";
@@ -25,6 +26,7 @@ export function MobileTimeEntryEditor({
   entry,
   onClose,
 }: MobileTimeEntryEditorProps): ReactElement {
+  const { t } = useTranslation("mobile");
   const session = useSession();
   const { durationFormat } = useUserPreferences();
   const timezone = session.user.timezone ?? "UTC";
@@ -111,7 +113,7 @@ export function MobileTimeEntryEditor({
         <MobilePickerOverlay
           onClose={() => setProjectPickerOpen(false)}
           testId="mobile-project-picker"
-          title="Project"
+          title={t("project")}
         >
           {(search) => {
             const query = search.trim().toLowerCase();
@@ -132,7 +134,9 @@ export function MobileTimeEntryEditor({
                   type="button"
                 >
                   <span className="size-2.5 shrink-0 rounded-full bg-[var(--track-text-muted)]" />
-                  <span className="text-[14px] text-[var(--track-text-muted)]">No project</span>
+                  <span className="text-[14px] text-[var(--track-text-muted)]">
+                    {t("noProject")}
+                  </span>
                 </button>
                 {filtered.map((p) => (
                   <button
@@ -174,7 +178,7 @@ export function MobileTimeEntryEditor({
         <MobilePickerOverlay
           onClose={() => setTagPickerOpen(false)}
           testId="mobile-tag-picker"
-          title="Tags"
+          title={t("tags")}
         >
           {(search) => {
             const query = search.trim().toLowerCase();
@@ -222,22 +226,22 @@ export function MobileTimeEntryEditor({
       {/* Header */}
       <div className="flex h-[52px] items-center justify-between border-b border-[var(--track-border)] px-4">
         <button
-          aria-label="Cancel editing"
+          aria-label={t("cancelEditing")}
           className="text-[14px] text-[var(--track-text-muted)]"
           onClick={onClose}
           type="button"
         >
-          Cancel
+          {t("cancel")}
         </button>
-        <span className="text-[14px] font-semibold text-white">Edit Entry</span>
+        <span className="text-[14px] font-semibold text-white">{t("editEntry")}</span>
         <button
-          aria-label="Save changes"
+          aria-label={t("saveChanges")}
           className="text-[14px] font-semibold text-[var(--track-accent)]"
           disabled={updateMutation.isPending}
           onClick={() => void handleSave()}
           type="button"
         >
-          {updateMutation.isPending ? "Saving…" : "Save"}
+          {updateMutation.isPending ? t("saving") : t("save")}
         </button>
       </div>
 
@@ -250,7 +254,7 @@ export function MobileTimeEntryEditor({
             autoFocus
             className="w-full bg-transparent text-[15px] text-white placeholder-[var(--track-text-muted)] outline-none"
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="What are you working on?"
+            placeholder={t("whatAreYouWorkingOn")}
             value={description}
           />
         </div>
@@ -272,27 +276,29 @@ export function MobileTimeEntryEditor({
                 <span className="truncate text-[14px] text-white">{selectedProject.name}</span>
               </>
             ) : (
-              <span className="text-[14px] text-[var(--track-text-muted)]">No project</span>
+              <span className="text-[14px] text-[var(--track-text-muted)]">{t("noProject")}</span>
             )}
             <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
           </button>
         </FieldRow>
 
         {/* Tags */}
-        <FieldRow label="Tags">
+        <FieldRow label={t("tags")}>
           <button
             className="flex min-w-0 flex-1 items-center justify-end gap-2"
             data-testid="mobile-tag-trigger"
             onClick={() => setTagPickerOpen(true)}
             type="button"
           >
-            <span className="truncate text-[14px] text-white">{selectedTagNames || "No tags"}</span>
+            <span className="truncate text-[14px] text-white">
+              {selectedTagNames || t("noTags")}
+            </span>
             <ChevronRight className="size-4 shrink-0 text-[var(--track-text-muted)]" />
           </button>
         </FieldRow>
 
         {/* Billable */}
-        <FieldRow label="Billable">
+        <FieldRow label={t("billable")}>
           <button
             className={`size-5 rounded border transition ${
               billable
@@ -311,7 +317,7 @@ export function MobileTimeEntryEditor({
         {/* Time range */}
         <div className="border-b border-[var(--track-border)] px-4 py-3">
           <div className="flex items-center justify-between">
-            <span className="text-[13px] text-[var(--track-text-muted)]">Start</span>
+            <span className="text-[13px] text-[var(--track-text-muted)]">{t("start")}</span>
             <input
               aria-label="Edit start time"
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
@@ -324,7 +330,7 @@ export function MobileTimeEntryEditor({
             />
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[13px] text-[var(--track-text-muted)]">End</span>
+            <span className="text-[13px] text-[var(--track-text-muted)]">{t("end")}</span>
             <input
               aria-label="Edit end time"
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
@@ -337,7 +343,7 @@ export function MobileTimeEntryEditor({
             />
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <span className="text-[13px] text-[var(--track-text-muted)]">Duration</span>
+            <span className="text-[13px] text-[var(--track-text-muted)]">{t("duration")}</span>
             <span className="text-[14px] tabular-nums text-white">{duration}</span>
           </div>
         </div>
@@ -345,14 +351,14 @@ export function MobileTimeEntryEditor({
         {/* Delete */}
         <div className="px-4 py-4">
           <button
-            aria-label="Delete this time entry"
+            aria-label={t("deleteThisTimeEntry")}
             className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-2.5 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)]"
             disabled={deleteMutation.isPending}
             onClick={() => void handleDelete()}
             type="button"
           >
             <TrashIcon className="size-4" />
-            {deleteMutation.isPending ? "Deleting…" : "Delete entry"}
+            {deleteMutation.isPending ? t("deletingEntry") : t("deleteEntry")}
           </button>
         </div>
       </div>

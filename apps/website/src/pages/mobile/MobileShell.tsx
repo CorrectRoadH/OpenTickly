@@ -1,5 +1,6 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 
 import {
@@ -27,15 +28,19 @@ import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { OfflineBanner } from "./OfflineBanner.tsx";
 import { PwaInstallBanner } from "./PwaInstallBanner.tsx";
 
-const TABS = [
-  { path: "/m/timer", label: "Timer", Icon: TimerIcon },
-  { path: "/m/calendar", label: "Calendar", Icon: CalendarIcon },
-  { path: "/m/report", label: "Report", Icon: ReportsIcon },
-  { path: "/m/me", label: "Me", Icon: ProfileIcon },
-] as const;
-
 export function MobileShell(): ReactElement {
+  const { t } = useTranslation("mobile");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const TABS = useMemo(
+    () => [
+      { path: "/m/timer", label: t("timer"), Icon: TimerIcon },
+      { path: "/m/calendar", label: t("calendar"), Icon: CalendarIcon },
+      { path: "/m/report", label: t("report"), Icon: ReportsIcon },
+      { path: "/m/me", label: t("me"), Icon: ProfileIcon },
+    ],
+    [t],
+  );
   const { durationFormat } = useUserPreferences();
   const session = useSession();
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
@@ -147,7 +152,7 @@ export function MobileShell(): ReactElement {
               type="button"
             >
               <p className="truncate text-[13px] font-medium text-white">
-                {runningEntry.description || "No description"}
+                {runningEntry.description || t("noDescription")}
               </p>
               {runningEntry.project_name || runningEntry.tags?.length ? (
                 <p className="flex items-center gap-1 truncate text-[11px] text-[var(--track-text-muted)]">
@@ -183,7 +188,7 @@ export function MobileShell(): ReactElement {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleStart();
                 }}
-                placeholder="What are you working on?"
+                placeholder={t("whatAreYouWorkingOn")}
                 value={draftDescription}
               />
               <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
@@ -192,7 +197,7 @@ export function MobileShell(): ReactElement {
               <div className="flex gap-2 overflow-x-auto">
                 {recentStoppedEntries.map((entry) => (
                   <button
-                    aria-label={`Continue ${entry.description}`}
+                    aria-label={t("continueEntry", { description: entry.description })}
                     className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1 text-left transition active:bg-white/4"
                     key={entry.id}
                     onClick={() => handleContinue(entry)}

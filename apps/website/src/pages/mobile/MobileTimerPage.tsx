@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
 
 import { GoalItem } from "../../features/tracking/GoalsFavoritesSidebar.tsx";
@@ -18,6 +19,7 @@ import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { MobileTimeEntryRow } from "./MobileTimeEntryRow.tsx";
 
 export function MobileTimerPage(): ReactElement {
+  const { t } = useTranslation("mobile");
   const orch = useTimerPageOrchestration({ showAllEntries: false });
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
@@ -45,7 +47,7 @@ export function MobileTimerPage(): ReactElement {
       {/* Goals */}
       {goals.length > 0 ? (
         <section>
-          <SectionHeader title="Goals" />
+          <SectionHeader title={t("goals")} />
           <div className="flex flex-col gap-0.5 px-2">
             {goals.map((goal) => (
               <GoalItem key={goal.goal_id} goal={goal} />
@@ -57,7 +59,7 @@ export function MobileTimerPage(): ReactElement {
       {/* Favorites */}
       {favorites.length > 0 ? (
         <section>
-          <SectionHeader title="Favorites" />
+          <SectionHeader title={t("favorites")} />
           <div className="flex flex-col">
             {favorites.map((fav) => (
               <FavoriteRow key={fav.favorite_id} favorite={fav} onStart={handleStartFavorite} />
@@ -69,7 +71,7 @@ export function MobileTimerPage(): ReactElement {
       {/* Recent entries */}
       {orch.recentWorkspaceEntries.length > 0 ? (
         <section>
-          <SectionHeader title="Recent" />
+          <SectionHeader title={t("recent")} />
           <div className="flex flex-col">
             {orch.recentWorkspaceEntries.slice(0, 10).map((entry, i) => (
               <MobileTimeEntryRow
@@ -87,7 +89,7 @@ export function MobileTimerPage(): ReactElement {
       {/* Grouped entries */}
       {orch.groupedEntries.length > 0 ? (
         <section>
-          <SectionHeader title="This week" />
+          <SectionHeader title={t("thisWeek")} />
           {orch.groupedEntries.map((group) => (
             <div key={group.key}>
               <GroupHeader

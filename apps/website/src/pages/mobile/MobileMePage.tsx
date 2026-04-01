@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import type { ReactElement } from "react";
 
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
@@ -7,6 +8,7 @@ import { useSession, useSessionActions } from "../../shared/session/session-cont
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 export function MobileMePage(): ReactElement {
+  const { t } = useTranslation("mobile");
   const navigate = useNavigate();
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
@@ -48,7 +50,7 @@ export function MobileMePage(): ReactElement {
       </div>
 
       {/* Organization switcher */}
-      <SectionHeader title="Organization" />
+      <SectionHeader title={t("organization")} />
       <div className="border-b border-[var(--track-border)]">
         {session.availableOrganizations.map((org) => {
           const isCurrent = org.isCurrent;
@@ -74,10 +76,10 @@ export function MobileMePage(): ReactElement {
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {org.isDefault ? (
-                  <span className="text-[11px] text-[var(--track-text-muted)]">Default</span>
+                  <span className="text-[11px] text-[var(--track-text-muted)]">{t("default")}</span>
                 ) : null}
                 {isCurrent ? (
-                  <span className="text-[12px] text-[var(--track-accent)]">Current</span>
+                  <span className="text-[12px] text-[var(--track-accent)]">{t("current")}</span>
                 ) : null}
               </div>
             </button>
@@ -86,10 +88,10 @@ export function MobileMePage(): ReactElement {
       </div>
 
       {/* Navigation */}
-      <SectionHeader title="Settings" />
+      <SectionHeader title={t("settings")} />
       <div className="border-b border-[var(--track-border)]">
-        <MenuLink label="Profile settings" onClick={() => void navigate({ to: "/profile" })} />
-        <MenuLink label="Account settings" onClick={() => void navigate({ to: "/account" })} />
+        <MenuLink label={t("profileSettings")} onClick={() => void navigate({ to: "/profile" })} />
+        <MenuLink label={t("accountSettings")} onClick={() => void navigate({ to: "/account" })} />
       </div>
 
       {/* Logout */}
@@ -100,7 +102,7 @@ export function MobileMePage(): ReactElement {
           onClick={handleLogout}
           type="button"
         >
-          {logoutMutation.isPending ? "Logging out…" : "Log out"}
+          {logoutMutation.isPending ? t("loggingOut") : t("logOut")}
         </button>
       </div>
     </div>

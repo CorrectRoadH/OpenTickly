@@ -1,9 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { type ReactElement, useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 
 import { useOnlineStatusWithTransition } from "../../shared/hooks/useOnlineStatus.ts";
 
 export function OfflineBanner(): ReactElement | null {
+  const { t } = useTranslation("mobile");
   const { isOnline, wasOffline } = useOnlineStatusWithTransition();
   const [pendingCount, setPendingCount] = useState(0);
   const [syncedJustNow, setSyncedJustNow] = useState(false);
@@ -50,7 +52,7 @@ export function OfflineBanner(): ReactElement | null {
   if (syncedJustNow && isOnline) {
     return (
       <div className="flex items-center justify-center bg-emerald-600/90 px-4 py-2 text-[13px] font-medium text-white">
-        离线操作已同步完成
+        {t("offlineSynced")}
       </div>
     );
   }
@@ -59,7 +61,7 @@ export function OfflineBanner(): ReactElement | null {
   if (isOnline && wasOffline) {
     return (
       <div className="flex items-center justify-center bg-emerald-600/90 px-4 py-2 text-[13px] font-medium text-white">
-        已恢复连接
+        {t("connectionRestored")}
       </div>
     );
   }
@@ -70,8 +72,7 @@ export function OfflineBanner(): ReactElement | null {
     <div className="flex items-center justify-center gap-2 bg-amber-600/90 px-4 py-2 text-[13px] font-medium text-white">
       <WifiOff className="size-4" />
       <span>
-        你已离线 — 操作将在连网后自动同步
-        {pendingCount > 0 ? `（${pendingCount} 项待同步）` : ""}
+        {pendingCount > 0 ? t("offlinePending", { count: pendingCount }) : t("offlineMessage")}
       </span>
     </div>
   );
