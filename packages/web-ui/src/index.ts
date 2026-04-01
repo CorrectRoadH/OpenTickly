@@ -1,4 +1,9 @@
-export { AppButton, type AppButtonSize } from "./AppButton.tsx";
+export {
+  AppButton,
+  AppLinkButton,
+  getAppButtonClassName,
+  type AppButtonSize,
+} from "./AppButton.tsx";
 export { AnimatedActiveIndicator } from "./AnimatedActiveIndicator.tsx";
 export { AppInput, type AppInputSize } from "./AppInput.tsx";
 export { AppInlineNotice } from "./AppInlineNotice.tsx";
@@ -38,4 +43,5 @@ export {
 } from "./PageLayout.tsx";
 export { Dialog, DialogBody, DialogFooter, DialogHeader } from "./Dialog.tsx";
 export { appTheme } from "./theme.ts";
+export { MarketingCard, MarketingEyebrow, MarketingSection } from "./MarketingPrimitives.tsx";
 export { useDismiss } from "./useDismiss.ts";

@@ -1,19 +1,28 @@
-import type { ReactNode } from "react";
+import type { AnchorHTMLAttributes, ReactNode } from "react";
 
 export type AppButtonSize = "default" | "sm";
 export type AppButtonVariant = "ghost" | "primary" | "secondary";
 
-type AppButtonProps = {
-  children?: ReactNode;
+type AppButtonStyleProps = {
   className?: string;
   danger?: boolean;
+  size?: AppButtonSize;
+  variant?: AppButtonVariant;
+};
+
+type AppButtonProps = AppButtonStyleProps & {
+  children?: ReactNode;
   "data-testid"?: string;
   disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
-  size?: AppButtonSize;
   type?: "button" | "submit";
-  variant?: AppButtonVariant;
 };
+
+type AppLinkButtonProps = AppButtonStyleProps &
+  AnchorHTMLAttributes<HTMLAnchorElement> & {
+    children?: ReactNode;
+    "data-testid"?: string;
+  };
 
 const base =
   "inline-flex items-center justify-center gap-1.5 rounded-[8px] border font-semibold select-none transition-[transform,box-shadow,border-color,background-color,color] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
@@ -35,6 +44,23 @@ const sizeClass: Record<AppButtonSize, string> = {
   sm: "h-8 px-3 text-[12px]",
 };
 
+export function getAppButtonClassName({
+  className = "",
+  danger = false,
+  size = "default",
+  variant = "primary",
+}: AppButtonStyleProps = {}): string {
+  const variantClassName = danger
+    ? dangerous
+    : variant === "secondary"
+      ? secondary
+      : variant === "ghost"
+        ? ghost
+        : normal;
+
+  return `${base} ${variantClassName} ${sizeClass[size]} ${className}`.trim();
+}
+
 export function AppButton({
   children,
   className = "",
@@ -46,17 +72,9 @@ export function AppButton({
   type = "button",
   variant = "primary",
 }: AppButtonProps) {
-  const variantClassName = danger
-    ? dangerous
-    : variant === "secondary"
-      ? secondary
-      : variant === "ghost"
-        ? ghost
-        : normal;
-
   return (
     <button
-      className={`${base} ${variantClassName} ${sizeClass[size]} ${className}`}
+      className={getAppButtonClassName({ className, danger, size, variant })}
       data-testid={testId}
       disabled={disabled}
       onClick={onClick}
@@ -65,5 +83,36 @@ export function AppButton({
     >
       {children}
     </button>
+  );
+}
+
+export function AppLinkButton({
+  children,
+  className = "",
+  danger = false,
+  "data-testid": testId,
+  rel,
+  size = "default",
+  style,
+  target,
+  variant = "primary",
+  ...props
+}: AppLinkButtonProps) {
+  const safeRel =
+    target === "_blank"
+      ? [rel, "noreferrer"].filter((value): value is string => Boolean(value)).join(" ")
+      : rel;
+
+  return (
+    <a
+      {...props}
+      className={getAppButtonClassName({ className, danger, size, variant })}
+      data-testid={testId}
+      rel={safeRel}
+      style={{ ...style, transitionTimingFunction: "var(--ease-spring)" }}
+      target={target}
+    >
+      {children}
+    </a>
   );
 }

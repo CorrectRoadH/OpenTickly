@@ -1,6 +1,6 @@
 import type { Route } from "./+types/not-found";
+import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import { Link } from "react-router";
 import { baseOptions } from "@/lib/layout.shared";
 
 export function meta(_: Route.MetaArgs) {
@@ -18,16 +18,24 @@ export function meta(_: Route.MetaArgs) {
 export default function NotFound() {
   return (
     <HomeLayout {...baseOptions()}>
-      <div className="p-4 flex flex-col items-center justify-center text-center flex-1">
-        <h1 className="text-xl font-bold mb-2">Not Found</h1>
-        <p className="text-fd-muted-foreground mb-4">This page could not be found.</p>
-        <Link
-          className="text-sm bg-fd-primary text-fd-primary-foreground rounded-full font-medium px-4 py-2.5"
-          to="/docs"
-        >
-          Back to Docs
-        </Link>
-      </div>
+      <main className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-4 py-8">
+        <SurfaceCard className="w-full space-y-4 p-6 text-center">
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-accent-text)]">
+              Missing page
+            </p>
+            <h1 className="text-[20px] font-semibold text-white">Not Found</h1>
+            <p className="text-[14px] leading-6 text-[var(--track-text-muted)]">
+              This page could not be found.
+            </p>
+          </div>
+          <div className="flex justify-center">
+            <AppLinkButton href="/docs" variant="secondary">
+              Back to Docs
+            </AppLinkButton>
+          </div>
+        </SurfaceCard>
+      </main>
     </HomeLayout>
   );
 }
