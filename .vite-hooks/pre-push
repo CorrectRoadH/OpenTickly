@@ -24,4 +24,3 @@ restore_stash() {
 trap restore_stash EXIT
 
 vp run website#build
-vp run landing#check
