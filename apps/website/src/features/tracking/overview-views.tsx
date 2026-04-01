@@ -221,10 +221,28 @@ export function ToolbarButton({
   );
 }
 
-export function SummaryStat({ label, value }: { label: string; value: string }) {
+export function SummaryStat({
+  hideLabel = false,
+  label,
+  value,
+}: {
+  hideLabel?: boolean;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="flex items-center gap-2 rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 shadow-[var(--track-depth-shadow-rest)]">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+    <div
+      className={`flex items-center rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 shadow-[var(--track-depth-shadow-rest)] ${
+        hideLabel ? "gap-0" : "gap-2"
+      }`}
+    >
+      <p
+        className={
+          hideLabel
+            ? "sr-only"
+            : "text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]"
+        }
+      >
         {label}
       </p>
       <p className="text-[14px] font-semibold tabular-nums text-white">{value}</p>
@@ -265,7 +283,7 @@ const CALENDAR_SUBVIEW_LABELS: Record<CalendarSubview, string> = {
 const CALENDAR_SUBVIEW_OPTIONS: CalendarSubview[] = ["week", "five-day", "day"];
 const VIEW_TAB_LABELS: Record<TimerViewMode, string> = {
   calendar: "Calendar",
-  list: "List view",
+  list: "List",
   timesheet: "Timesheet",
 };
 const VIEW_TAB_RADIUS_CLASS: Record<TimerViewMode, string> = {

@@ -96,8 +96,10 @@ export function WorkspaceTimerPage({
   const [displaySettings, setDisplaySettings] = useState<DisplaySettings>(() =>
     readDisplaySettings(),
   );
+  const [hideSecondaryHeaderLabels, setHideSecondaryHeaderLabels] = useState(false);
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headerControlsRef = useRef<HTMLDivElement | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const { durationFormat } = useUserPreferences();
@@ -168,6 +170,36 @@ export function WorkspaceTimerPage({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const node = headerControlsRef.current;
+    if (!node || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    let frameId = 0;
+    const syncHeaderDensity = () => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        const shouldHideLabels = node.scrollWidth > node.clientWidth;
+        setHideSecondaryHeaderLabels((current) =>
+          current === shouldHideLabels ? current : shouldHideLabels,
+        );
+      });
+    };
+
+    syncHeaderDensity();
+
+    const observer = new ResizeObserver(syncHeaderDensity);
+    observer.observe(node);
+    window.addEventListener("resize", syncHeaderDensity);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      observer.disconnect();
+      window.removeEventListener("resize", syncHeaderDensity);
+    };
+  }, [orch.view, orch.calendarSubview, orch.todayTotalSeconds, orch.weekTotalSeconds]);
 
   const handleTimesheetAddRow = useCallback(
     (projectId: number | null) => {
@@ -431,10 +463,11 @@ export function WorkspaceTimerPage({
         </div>
 
         <div className="px-5 pb-4 pt-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4" ref={headerControlsRef}>
             <TimerRangePicker orch={orch} />
             {orch.view === "list" ? (
               <SummaryStat
+                hideLabel={hideSecondaryHeaderLabels}
                 label={t("todayTotal")}
                 value={
                   orch.todayTotalSeconds > 0
@@ -444,6 +477,7 @@ export function WorkspaceTimerPage({
               />
             ) : null}
             <SummaryStat
+              hideLabel={hideSecondaryHeaderLabels}
               label={t("weekTotal")}
               value={formatClockDuration(orch.weekTotalSeconds, durationFormat)}
             />

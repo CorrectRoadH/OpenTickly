@@ -552,6 +552,43 @@
         }
       }
     },
+    "/web/v1/workspaces/{workspace_id}/time-entries/search": {
+      "get": {
+        "summary": "Search time entries by description within a workspace",
+        "operationId": "search-workspace-time-entries",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Substring to match against time entry descriptions (case-insensitive)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching time entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeEntrySearchResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/web/v1/onboarding": {
       "get": {
         "summary": "Get onboarding status for the current user",
@@ -1524,6 +1561,76 @@
           }
         },
         "required": ["version"]
+      },
+      "TimeEntrySearchItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "workspace_id": {
+            "type": "integer"
+          },
+          "description": {
+            "type": "string"
+          },
+          "project_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "project_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "project_color": {
+            "type": "string",
+            "nullable": true
+          },
+          "tag_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "billable": {
+            "type": "boolean"
+          },
+          "start": {
+            "type": "string"
+          },
+          "stop": {
+            "type": "string",
+            "nullable": true
+          },
+          "duration": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "description",
+          "project_id",
+          "project_name",
+          "project_color",
+          "tag_ids",
+          "billable",
+          "start",
+          "stop",
+          "duration"
+        ]
+      },
+      "TimeEntrySearchResult": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TimeEntrySearchItem"
+            }
+          }
+        },
+        "required": ["entries"]
       }
     }
   }

@@ -65,6 +65,7 @@ export function getOnboardingSteps(): OnboardingStepConfig[] {
           labelKey: "onboarding:starOnGitHub",
           variant: "primary",
           href: "https://github.com/CorrectRoadH/opentoggl",
+          onComplete: true,
         },
         { labelKey: "onboarding:startTracking", variant: "secondary", onComplete: true },
       ],
@@ -238,8 +239,13 @@ export function OnboardingDialog(): ReactElement | null {
       <div className="space-y-4">
         {currentStep.id === "language" ? (
           <LanguageStep selectedLanguage={selectedLanguage} onSelect={handleLanguageSelect} t={t} />
+        ) : currentStep.id === "star-us" ? (
+          <StarUsStep t={t} />
         ) : (
-          <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
+          <>
+            <StepIllustration stepId={currentStep.id} />
+            <StepContent descriptionKey={currentStep.descriptionKey} t={t} />
+          </>
         )}
       </div>
     </ModalDialogWithNav>
@@ -329,6 +335,62 @@ function StepContent({
           return part;
         })}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Illustration placeholder for each onboarding step.
+ *
+ * ILLUSTRATION NEEDED — replace each placeholder SVG with a real image/SVG asset:
+ *
+ * "ai-workflow":
+ *   Show an AI chat bubble (e.g. Claude logo or generic robot icon) on the left
+ *   connected by an arrow to an OpenToggl timer card on the right.
+ *   The arrow should be labeled "CLI". Dark background, accent color highlights.
+ *   Suggested size: 480×160px.
+ *
+ * "configure-workspace":
+ *   Show a simple workspace settings card — workspace name field, currency dropdown,
+ *   and a checkmark indicating it's configured. Clean, minimal line-art style.
+ *   Suggested size: 480×160px.
+ */
+function StepIllustration({ stepId }: { stepId: string }): ReactElement {
+  // Placeholder: a labeled dashed box indicating where the illustration goes.
+  // Replace this with <img src={...} /> or an inline SVG per step.
+  const label =
+    stepId === "ai-workflow"
+      ? "[ Illustration: AI agent → CLI → OpenToggl timer ]"
+      : "[ Illustration: Workspace settings card ]";
+
+  return (
+    <div className="flex h-[140px] items-center justify-center rounded-xl border border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-center text-[12px] text-[var(--track-text-muted)]">
+      {label}
+    </div>
+  );
+}
+
+/**
+ * Final "Star us on GitHub" step.
+ *
+ * ILLUSTRATION NEEDED:
+ *   A large GitHub Octocat or star icon centered in the hero area, surrounded by
+ *   small sparkle/star shapes. The star should look "lit up" (filled yellow).
+ *   Optionally show a rising star count number (e.g. "★ 1,234"). Dark bg.
+ *   Suggested size: 480×180px.
+ */
+function StarUsStep({ t }: { t: (key: string) => string }): ReactElement {
+  return (
+    <div className="space-y-4">
+      {/* Illustration placeholder — replace with real asset */}
+      <div className="flex h-[160px] items-center justify-center rounded-xl border border-dashed border-[var(--track-border)] bg-[var(--track-surface)] text-center text-[12px] text-[var(--track-text-muted)]">
+        {"[ Illustration: GitHub star hero — Octocat + glowing ★ ]"}
+      </div>
+      <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] px-5 py-4 text-center">
+        <p className="text-[14px] leading-6 text-[var(--track-text-muted)]">
+          {t("onboarding:starUsDescription")}
+        </p>
+      </div>
     </div>
   );
 }

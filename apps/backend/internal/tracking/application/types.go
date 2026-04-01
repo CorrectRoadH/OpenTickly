@@ -263,12 +263,27 @@ type TimelineEventView struct {
 	Idle      bool
 }
 
+type TimeEntrySearchView struct {
+	ID           int64
+	WorkspaceID  int64
+	Description  string
+	ProjectID    *int64
+	ProjectName  *string
+	ProjectColor *string
+	TagIDs       []int64
+	Billable     bool
+	Start        time.Time
+	Stop         *time.Time
+	Duration     int
+}
+
 type Store interface {
 	CreateTimeEntry(context.Context, CreateTimeEntryRecord) (TimeEntryView, error)
 	GetTimeEntry(context.Context, int64, int64, int64) (TimeEntryView, bool, error)
 	GetTimeEntryForUser(context.Context, int64, int64) (TimeEntryView, bool, error)
 	ListTimeEntries(context.Context, int64, ListTimeEntriesFilter) ([]TimeEntryView, error)
 	ListTimeEntriesForUser(context.Context, ListTimeEntriesFilter) ([]TimeEntryView, error)
+	SearchTimeEntries(context.Context, int64, int64, string) ([]TimeEntrySearchView, error)
 	ListWorkspaceTimeEntries(context.Context, int64, *time.Time) ([]TimeEntryView, error)
 	GetCurrentTimeEntry(context.Context, int64) (TimeEntryView, bool, error)
 	UpdateTimeEntry(context.Context, UpdateTimeEntryRecord) (TimeEntryView, error)

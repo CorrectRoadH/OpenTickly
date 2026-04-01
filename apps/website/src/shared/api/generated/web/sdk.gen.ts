@@ -38,6 +38,8 @@ import type {
   ResetOnboardingResponses,
   RestoreWorkspaceMemberData,
   RestoreWorkspaceMemberResponses,
+  SearchWorkspaceTimeEntriesData,
+  SearchWorkspaceTimeEntriesResponses,
   UpdateWebSessionData,
   UpdateWebSessionResponses,
   UpdateWorkspaceMemberRateCostData,
@@ -289,6 +291,17 @@ export const inviteWorkspaceMember = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Search time entries by description within a workspace
+ */
+export const searchWorkspaceTimeEntries = <ThrowOnError extends boolean = false>(
+  options: Options<SearchWorkspaceTimeEntriesData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<SearchWorkspaceTimeEntriesResponses, unknown, ThrowOnError>({
+    url: "/web/v1/workspaces/{workspace_id}/time-entries/search",
+    ...options,
   });
 
 /**

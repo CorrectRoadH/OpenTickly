@@ -294,6 +294,62 @@ func (store *Store) ListTimeEntriesForUser(
 	return entries, rows.Err()
 }
 
+func (store *Store) SearchTimeEntries(
+	ctx context.Context,
+	workspaceID int64,
+	userID int64,
+	query string,
+) ([]trackingapplication.TimeEntrySearchView, error) {
+	sql := `select
+		te.id,
+		te.workspace_id,
+		te.description,
+		te.project_id,
+		p.name,
+		p.color,
+		te.tag_ids,
+		te.billable,
+		te.start_time,
+		te.stop_time,
+		te.duration_seconds
+	from tracking_time_entries te
+	left join catalog_projects p on p.id = te.project_id
+	where te.workspace_id = $1
+	  and te.user_id = $2
+	  and te.deleted_at is null
+	  and te.description ilike '%' || $3 || '%'
+	order by te.start_time desc
+	limit 20`
+
+	rows, err := store.pool.Query(ctx, sql, workspaceID, userID, query)
+	if err != nil {
+		return nil, writeTrackingError("search time entries", err)
+	}
+	defer rows.Close()
+
+	results := make([]trackingapplication.TimeEntrySearchView, 0)
+	for rows.Next() {
+		var entry trackingapplication.TimeEntrySearchView
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.WorkspaceID,
+			&entry.Description,
+			&entry.ProjectID,
+			&entry.ProjectName,
+			&entry.ProjectColor,
+			&entry.TagIDs,
+			&entry.Billable,
+			&entry.Start,
+			&entry.Stop,
+			&entry.Duration,
+		); err != nil {
+			return nil, writeTrackingError("scan search time entry", err)
+		}
+		results = append(results, entry)
+	}
+	return results, rows.Err()
+}
+
 func (store *Store) ListWorkspaceTimeEntries(
 	ctx context.Context,
 	workspaceID int64,

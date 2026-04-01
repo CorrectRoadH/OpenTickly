@@ -286,6 +286,24 @@ export type CompleteOnboardingRequest = {
   language_code?: string;
 };
 
+export type TimeEntrySearchItem = {
+  id: number;
+  workspace_id: number;
+  description: string;
+  project_id: number;
+  project_name: string;
+  project_color: string;
+  tag_ids: Array<number>;
+  billable: boolean;
+  start: string;
+  stop: string;
+  duration: number;
+};
+
+export type TimeEntrySearchResult = {
+  entries: Array<TimeEntrySearchItem>;
+};
+
 export type CapabilityContext = {
   organization_id?: number;
   workspace_id?: number;
@@ -642,6 +660,30 @@ export type InviteWorkspaceMemberResponses = {
 
 export type InviteWorkspaceMemberResponse =
   InviteWorkspaceMemberResponses[keyof InviteWorkspaceMemberResponses];
+
+export type SearchWorkspaceTimeEntriesData = {
+  body?: never;
+  path: {
+    workspace_id: number;
+  };
+  query: {
+    /**
+     * Substring to match against time entry descriptions (case-insensitive)
+     */
+    query: string;
+  };
+  url: "/web/v1/workspaces/{workspace_id}/time-entries/search";
+};
+
+export type SearchWorkspaceTimeEntriesResponses = {
+  /**
+   * Matching time entries
+   */
+  200: TimeEntrySearchResult;
+};
+
+export type SearchWorkspaceTimeEntriesResponse =
+  SearchWorkspaceTimeEntriesResponses[keyof SearchWorkspaceTimeEntriesResponses];
 
 export type ResetOnboardingData = {
   body?: never;

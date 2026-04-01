@@ -4,6 +4,7 @@ import resourcesToBackend from "i18next-resources-to-backend";
 
 import account from "../locales/en/account.json";
 import appShell from "../locales/en/appShell.json";
+import mobile from "../locales/en/mobile.json";
 import auditLog from "../locales/en/auditLog.json";
 import auth from "../locales/en/auth.json";
 import billableRates from "../locales/en/billableRates.json";
@@ -61,6 +62,7 @@ void i18n
       "common",
       "instanceAdmin",
       "members",
+      "mobile",
       "navigation",
       "onboarding",
       "profile",
@@ -87,6 +89,7 @@ void i18n
         common,
         instanceAdmin,
         members,
+        mobile,
         navigation,
         onboarding,
         profile,

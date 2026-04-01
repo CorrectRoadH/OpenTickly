@@ -192,6 +192,13 @@ func (service *Service) ListUserTimeEntries(ctx context.Context, filter ListTime
 	return service.store.ListTimeEntriesForUser(ctx, filter)
 }
 
+func (service *Service) SearchTimeEntries(ctx context.Context, workspaceID int64, userID int64, query string) ([]TimeEntrySearchView, error) {
+	if err := requireWorkspaceID(workspaceID); err != nil {
+		return nil, err
+	}
+	return service.store.SearchTimeEntries(ctx, workspaceID, userID, query)
+}
+
 func (service *Service) ListWorkspaceTimeEntries(
 	ctx context.Context,
 	workspaceID int64,
