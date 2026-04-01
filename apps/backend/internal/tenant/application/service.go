@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	billingdomain "opentoggl/backend/apps/backend/internal/billing/domain"
+	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/tenant/domain"
 )
 
@@ -14,6 +15,7 @@ var (
 	ErrWorkspaceNotFound             = errors.New("workspace not found")
 	ErrCommercialTruthSourceRequired = errors.New("tenant commercial truth source is required")
 	ErrStoreRequired                 = errors.New("tenant store is required")
+	ErrLoggerRequired               = errors.New("tenant logger is required")
 )
 
 type CommercialSnapshot = billingdomain.CommercialStatus
@@ -110,9 +112,10 @@ type Store interface {
 type Service struct {
 	store      Store
 	commercial CommercialTruthSource
+	logger     log.Logger
 }
 
-func NewService(store Store, commercial CommercialTruthSource) (*Service, error) {
+func NewService(store Store, commercial CommercialTruthSource, logger log.Logger) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
 	}
@@ -121,10 +124,14 @@ func NewService(store Store, commercial CommercialTruthSource) (*Service, error)
 		// truth instead of silently fabricating a local "free" status.
 		return nil, ErrCommercialTruthSourceRequired
 	}
+	if logger == nil {
+		return nil, ErrLoggerRequired
+	}
 
 	return &Service{
 		store:      store,
 		commercial: commercial,
+		logger:     logger,
 	}, nil
 }
 
@@ -132,6 +139,10 @@ func (service *Service) CreateOrganization(
 	ctx context.Context,
 	command CreateOrganizationCommand,
 ) (CreateOrganizationResult, error) {
+	service.logger.InfoContext(ctx, "creating organization",
+		"name", command.Name,
+		"workspace_name", command.WorkspaceName,
+	)
 	organization, workspace, err := service.store.CreateOrganization(
 		ctx,
 		command.Name,
@@ -139,10 +150,18 @@ func (service *Service) CreateOrganization(
 		domain.DefaultWorkspaceSettings(),
 	)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create organization",
+			"error", err.Error(),
+		)
 		return CreateOrganizationResult{}, err
 	}
 	if err := service.commercial.ProvisionDefaultOrganization(ctx, int64(organization.ID())); err != nil {
 		if cleanupErr := service.store.DeleteOrganization(ctx, organization.ID()); cleanupErr != nil {
+			service.logger.ErrorContext(ctx, "failed to provision commercial account and cleanup failed",
+				"organization_id", organization.ID(),
+				"error", err.Error(),
+				"cleanup_error", cleanupErr.Error(),
+			)
 			return CreateOrganizationResult{}, fmt.Errorf(
 				"provision default commercial account for organization %d: %w (cleanup failed: %v)",
 				organization.ID(),
@@ -150,6 +169,10 @@ func (service *Service) CreateOrganization(
 				cleanupErr,
 			)
 		}
+		service.logger.ErrorContext(ctx, "failed to provision commercial account",
+			"organization_id", organization.ID(),
+			"error", err.Error(),
+		)
 		return CreateOrganizationResult{}, fmt.Errorf(
 			"provision default commercial account for organization %d: %w",
 			organization.ID(),
@@ -157,6 +180,10 @@ func (service *Service) CreateOrganization(
 		)
 	}
 
+	service.logger.InfoContext(ctx, "organization created",
+		"organization_id", organization.ID(),
+		"workspace_id", workspace.ID(),
+	)
 	return CreateOrganizationResult{
 		OrganizationID: organization.ID(),
 		WorkspaceID:    workspace.ID(),
@@ -167,15 +194,31 @@ func (service *Service) CreateWorkspace(
 	ctx context.Context,
 	command CreateWorkspaceCommand,
 ) (CreateWorkspaceResult, error) {
+	service.logger.InfoContext(ctx, "creating workspace",
+		"organization_id", command.OrganizationID,
+		"name", command.Name,
+	)
 	settings, err := domain.NewWorkspaceSettings(command.Settings)
 	if err != nil {
+		service.logger.WarnContext(ctx, "invalid workspace settings",
+			"organization_id", command.OrganizationID,
+			"error", err.Error(),
+		)
 		return CreateWorkspaceResult{}, err
 	}
 	workspace, err := service.store.CreateWorkspace(ctx, command.OrganizationID, command.Name, settings)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create workspace",
+			"organization_id", command.OrganizationID,
+			"error", err.Error(),
+		)
 		return CreateWorkspaceResult{}, err
 	}
 
+	service.logger.InfoContext(ctx, "workspace created",
+		"workspace_id", workspace.ID(),
+		"organization_id", command.OrganizationID,
+	)
 	return CreateWorkspaceResult{WorkspaceID: workspace.ID()}, nil
 }
 
@@ -185,14 +228,25 @@ func (service *Service) GetOrganization(
 ) (OrganizationView, error) {
 	organization, ok, err := service.store.GetOrganization(ctx, organizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get organization",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return OrganizationView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "organization not found",
+			"organization_id", organizationID,
+		)
 		return OrganizationView{}, ErrOrganizationNotFound
 	}
 
 	commercial, err := service.commercial.CommercialStatusForOrganization(ctx, int64(organizationID))
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get commercial status for organization",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return OrganizationView{}, err
 	}
 
@@ -210,14 +264,25 @@ func (service *Service) GetWorkspace(
 ) (WorkspaceView, error) {
 	workspace, ok, err := service.store.GetWorkspace(ctx, workspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return WorkspaceView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "workspace not found",
+			"workspace_id", workspaceID,
+		)
 		return WorkspaceView{}, ErrWorkspaceNotFound
 	}
 
 	commercial, err := service.commercial.CommercialStatusForWorkspace(ctx, int64(workspaceID))
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get commercial status for workspace",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return WorkspaceView{}, err
 	}
 
@@ -237,6 +302,10 @@ func (service *Service) ListOrganizationsByUserID(
 ) ([]OrganizationView, error) {
 	organizations, err := service.store.ListOrganizationsByUserID(ctx, userID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list organizations for user",
+			"user_id", userID,
+			"error", err.Error(),
+		)
 		return nil, err
 	}
 
@@ -247,6 +316,10 @@ func (service *Service) ListOrganizationsByUserID(
 			int64(organization.ID()),
 		)
 		if commercialErr != nil {
+			service.logger.ErrorContext(ctx, "failed to get commercial status for organization",
+				"organization_id", organization.ID(),
+				"error", commercialErr.Error(),
+			)
 			return nil, commercialErr
 		}
 		views = append(views, OrganizationView{
@@ -266,6 +339,10 @@ func (service *Service) ListWorkspacesByUserID(
 ) ([]WorkspaceView, error) {
 	workspaces, err := service.store.ListWorkspacesByUserID(ctx, userID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list workspaces for user",
+			"user_id", userID,
+			"error", err.Error(),
+		)
 		return nil, err
 	}
 
@@ -276,6 +353,10 @@ func (service *Service) ListWorkspacesByUserID(
 			int64(workspace.ID()),
 		)
 		if commercialErr != nil {
+			service.logger.ErrorContext(ctx, "failed to get commercial status for workspace",
+				"workspace_id", workspace.ID(),
+				"error", commercialErr.Error(),
+			)
 			return nil, commercialErr
 		}
 		views = append(views, WorkspaceView{
@@ -292,47 +373,109 @@ func (service *Service) ListWorkspacesByUserID(
 }
 
 func (service *Service) UpdateWorkspace(ctx context.Context, command UpdateWorkspaceCommand) error {
+	service.logger.InfoContext(ctx, "updating workspace",
+		"workspace_id", command.WorkspaceID,
+	)
 	workspace, ok, err := service.store.GetWorkspace(ctx, command.WorkspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace for update",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "workspace not found for update",
+			"workspace_id", command.WorkspaceID,
+		)
 		return ErrWorkspaceNotFound
 	}
 
 	settings, err := domain.NewWorkspaceSettings(command.Settings)
 	if err != nil {
+		service.logger.WarnContext(ctx, "invalid workspace settings",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if err := workspace.Rename(command.Name); err != nil {
+		service.logger.WarnContext(ctx, "failed to rename workspace",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return err
 	}
 
 	workspace.UpdateSettings(settings)
-	return service.store.SaveWorkspace(ctx, workspace)
+	if err := service.store.SaveWorkspace(ctx, workspace); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save workspace",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "workspace updated",
+		"workspace_id", command.WorkspaceID,
+	)
+	return nil
 }
 
 func (service *Service) UpdateOrganization(ctx context.Context, command UpdateOrganizationCommand) error {
+	service.logger.InfoContext(ctx, "updating organization",
+		"organization_id", command.OrganizationID,
+	)
 	organization, ok, err := service.store.GetOrganization(ctx, command.OrganizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get organization for update",
+			"organization_id", command.OrganizationID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "organization not found for update",
+			"organization_id", command.OrganizationID,
+		)
 		return ErrOrganizationNotFound
 	}
 	if err := organization.Rename(command.Name); err != nil {
+		service.logger.WarnContext(ctx, "failed to rename organization",
+			"organization_id", command.OrganizationID,
+			"error", err.Error(),
+		)
 		return err
 	}
 
-	return service.store.SaveOrganization(ctx, organization)
+	if err := service.store.SaveOrganization(ctx, organization); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save organization",
+			"organization_id", command.OrganizationID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "organization updated",
+		"organization_id", command.OrganizationID,
+	)
+	return nil
 }
 
 func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command UpdateWorkspaceBrandingCommand) error {
+	service.logger.InfoContext(ctx, "updating workspace branding",
+		"workspace_id", command.WorkspaceID,
+	)
 	workspace, ok, err := service.store.GetWorkspace(ctx, command.WorkspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace for branding update",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "workspace not found for branding update",
+			"workspace_id", command.WorkspaceID,
+		)
 		return ErrWorkspaceNotFound
 	}
 
@@ -346,6 +489,10 @@ func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command Upd
 	if command.LogoStorageKey != "" {
 		logo, err := domain.NewBrandingAsset(domain.BrandingAssetKindLogo, command.LogoStorageKey)
 		if err != nil {
+			service.logger.WarnContext(ctx, "invalid logo asset",
+				"workspace_id", command.WorkspaceID,
+				"error", err.Error(),
+			)
 			return err
 		}
 		branding = branding.WithAsset(logo)
@@ -353,26 +500,60 @@ func (service *Service) UpdateWorkspaceBranding(ctx context.Context, command Upd
 	if command.AvatarStorageKey != "" {
 		avatar, err := domain.NewBrandingAsset(domain.BrandingAssetKindAvatar, command.AvatarStorageKey)
 		if err != nil {
+			service.logger.WarnContext(ctx, "invalid avatar asset",
+				"workspace_id", command.WorkspaceID,
+				"error", err.Error(),
+			)
 			return err
 		}
 		branding = branding.WithAsset(avatar)
 	}
 
 	workspace.UpdateBranding(branding)
-	return service.store.SaveWorkspace(ctx, workspace)
+	if err := service.store.SaveWorkspace(ctx, workspace); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save workspace branding",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "workspace branding updated",
+		"workspace_id", command.WorkspaceID,
+	)
+	return nil
 }
 
 func (service *Service) DeleteWorkspace(ctx context.Context, workspaceID domain.WorkspaceID) error {
+	service.logger.InfoContext(ctx, "deleting workspace",
+		"workspace_id", workspaceID,
+	)
 	if err := service.store.DeleteWorkspace(ctx, workspaceID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete workspace",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return err
 	}
+	service.logger.InfoContext(ctx, "workspace deleted",
+		"workspace_id", workspaceID,
+	)
 	return nil
 }
 
 func (service *Service) DeleteOrganization(ctx context.Context, organizationID domain.OrganizationID) error {
+	service.logger.InfoContext(ctx, "deleting organization",
+		"organization_id", organizationID,
+	)
 	if err := service.store.DeleteOrganization(ctx, organizationID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete organization",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return err
 	}
+	service.logger.InfoContext(ctx, "organization deleted",
+		"organization_id", organizationID,
+	)
 	return nil
 }
 

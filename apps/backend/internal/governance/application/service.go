@@ -4,19 +4,26 @@ import (
 	"context"
 	"strings"
 	"time"
+
+	"opentoggl/backend/apps/backend/internal/log"
 )
 
 type Service struct {
-	store Store
-	now   func() time.Time
+	store  Store
+	logger log.Logger
+	now    func() time.Time
 }
 
-func NewService(store Store) (*Service, error) {
+func NewService(store Store, logger log.Logger) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
 	}
+	if logger == nil {
+		return nil, ErrLoggerRequired
+	}
 	return &Service{
-		store: store,
+		store:  store,
+		logger: logger,
 		now: func() time.Time {
 			return time.Now().UTC()
 		},
@@ -30,7 +37,15 @@ func (service *Service) GetTimeEntryConstraints(
 	if workspaceID <= 0 {
 		return TimeEntryConstraintsView{}, ErrInvalidWorkspace
 	}
-	return service.store.GetTimeEntryConstraints(ctx, workspaceID)
+	view, err := service.store.GetTimeEntryConstraints(ctx, workspaceID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get time entry constraints",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
+		return TimeEntryConstraintsView{}, err
+	}
+	return view, nil
 }
 
 func (service *Service) UpdateTimeEntryConstraints(
@@ -40,31 +55,83 @@ func (service *Service) UpdateTimeEntryConstraints(
 	if view.WorkspaceID <= 0 {
 		return ErrInvalidWorkspace
 	}
+	service.logger.InfoContext(ctx, "updating time entry constraints",
+		"workspace_id", view.WorkspaceID,
+	)
 	view.TimeEntryConstraintsEnabled = view.DescriptionPresent || view.ProjectPresent || view.TagPresent || view.TaskPresent
-	return service.store.SaveTimeEntryConstraints(ctx, view)
+	if err := service.store.SaveTimeEntryConstraints(ctx, view); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save time entry constraints",
+			"workspace_id", view.WorkspaceID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "time entry constraints updated",
+		"workspace_id", view.WorkspaceID,
+	)
+	return nil
 }
 
 func (service *Service) ListAlerts(ctx context.Context, workspaceID int64) ([]AlertView, error) {
 	if workspaceID <= 0 {
 		return nil, ErrInvalidWorkspace
 	}
-	return service.store.ListAlerts(ctx, workspaceID)
+	views, err := service.store.ListAlerts(ctx, workspaceID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list alerts",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return views, nil
 }
 
 func (service *Service) SaveAlert(ctx context.Context, command SaveAlertCommand) (AlertView, error) {
 	if command.WorkspaceID <= 0 {
 		return AlertView{}, ErrInvalidWorkspace
 	}
+	service.logger.InfoContext(ctx, "saving alert",
+		"workspace_id", command.WorkspaceID,
+		"alert_id", command.AlertID,
+	)
 	command.SourceKind = strings.TrimSpace(command.SourceKind)
 	command.ThresholdType = strings.TrimSpace(command.ThresholdType)
-	return service.store.SaveAlert(ctx, command)
+	view, err := service.store.SaveAlert(ctx, command)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to save alert",
+			"workspace_id", command.WorkspaceID,
+			"error", err.Error(),
+		)
+		return AlertView{}, err
+	}
+	service.logger.InfoContext(ctx, "alert saved",
+		"alert_id", view.ID,
+	)
+	return view, nil
 }
 
 func (service *Service) DeleteAlert(ctx context.Context, workspaceID int64, alertID int64) error {
 	if workspaceID <= 0 {
 		return ErrInvalidWorkspace
 	}
-	return service.store.DeleteAlert(ctx, workspaceID, alertID)
+	service.logger.InfoContext(ctx, "deleting alert",
+		"workspace_id", workspaceID,
+		"alert_id", alertID,
+	)
+	if err := service.store.DeleteAlert(ctx, workspaceID, alertID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete alert",
+			"workspace_id", workspaceID,
+			"alert_id", alertID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "alert deleted",
+		"workspace_id", workspaceID,
+		"alert_id", alertID,
+	)
+	return nil
 }
 
 func (service *Service) ListTimesheetSetups(
@@ -75,7 +142,15 @@ func (service *Service) ListTimesheetSetups(
 	if workspaceID <= 0 {
 		return nil, ErrInvalidWorkspace
 	}
-	return service.store.ListTimesheetSetups(ctx, workspaceID, filter)
+	views, err := service.store.ListTimesheetSetups(ctx, workspaceID, filter)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to list timesheet setups",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
+		return nil, err
+	}
+	return views, nil
 }
 
 func (service *Service) CreateTimesheetSetups(

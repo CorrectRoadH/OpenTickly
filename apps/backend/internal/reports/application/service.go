@@ -9,6 +9,7 @@ import (
 
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+	"opentoggl/backend/apps/backend/internal/log"
 )
 
 type TrackingQueries interface {
@@ -37,26 +38,41 @@ type Service struct {
 	now        func() time.Time
 	rates      RateResolver
 	tracking   TrackingQueries
+	logger     log.Logger
 }
 
-func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver) *Service {
+func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver, logger log.Logger) *Service {
 	return &Service{
 		membership: membership,
 		now:        time.Now,
 		rates:      rates,
 		tracking:   tracking,
+		logger:     logger,
 	}
 }
 
 func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (WeeklyReport, error) {
+	service.logger.InfoContext(ctx, "building weekly report",
+		"workspace_id", query.WorkspaceID,
+		"start_date", query.StartDate,
+		"end_date", query.EndDate,
+	)
 	location := resolveLocation(query.Timezone)
 	startUTC := query.StartDate.In(location).UTC()
 	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get time entries for weekly report",
+			"workspace_id", query.WorkspaceID,
+			"error", err.Error(),
+		)
 		return WeeklyReport{}, err
 	}
 	members, err := service.membership.ListWorkspaceMembers(ctx, query.WorkspaceID, query.RequestedBy)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace members for weekly report",
+			"workspace_id", query.WorkspaceID,
+			"error", err.Error(),
+		)
 		return WeeklyReport{}, err
 	}
 
@@ -159,6 +175,11 @@ func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (Wee
 }
 
 func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (SummaryReport, error) {
+	service.logger.InfoContext(ctx, "building summary report",
+		"workspace_id", query.WorkspaceID,
+		"start_date", query.StartDate,
+		"end_date", query.EndDate,
+	)
 	weekly, err := service.BuildWeeklyReport(ctx, query)
 	if err != nil {
 		return SummaryReport{}, err

@@ -10,7 +10,9 @@ import (
 	"strings"
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
+	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
+	"opentoggl/backend/apps/backend/internal/platform"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
@@ -87,8 +89,12 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 						ResponseBody:   responseBody,
 						Metadata:       metadata,
 					}
+					job := platform.Job{
+						Name:    governancepostgres.AuditLogJobName,
+						Payload: command,
+					}
 					go func() {
-						_ = handlers.governanceApp.InsertAuditLog(context.Background(), command)
+						_ = handlers.platformHandles.Jobs.RunOnce(context.Background(), job)
 					}()
 				}
 			}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -13,11 +14,14 @@ import (
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 )
+
+var testLogger = log.NewZapLogger(slog.Default())
 
 func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 	database := pgtest.Open(t)
-	service, err := importingapplication.NewService(importingpostgres.NewStore(database.Pool))
+	service, err := importingapplication.NewService(importingpostgres.NewStore(database.Pool), testLogger)
 	if err != nil {
 		t.Fatalf("new service: %v", err)
 	}
@@ -30,6 +34,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		JobRecorder:        identitypostgres.NewJobRecorder(database.Pool),
 		RunningTimerLookup: trackingpostgres.NewRunningTimerLookup(database.Pool),
 		IDs:                identitypostgres.NewSequence(database.Pool),
+		Logger:             testLogger,
 	})
 
 	// Generate unique email and workspace ID to avoid collisions when tests run in parallel

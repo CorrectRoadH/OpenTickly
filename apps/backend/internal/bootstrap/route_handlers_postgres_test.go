@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
@@ -15,7 +16,10 @@ import (
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	"opentoggl/backend/apps/backend/internal/log"
 )
+
+var testLogger = log.NewZapLogger(slog.Default())
 
 func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 	// This test uses hardcoded user ID 101 which can collide with existing data
@@ -26,12 +30,13 @@ func TestBillingBackedSessionShellPersistsUserHomeInPostgres(t *testing.T) {
 
 	tenantService := mustNewTenantPostgresService(t, database)
 	billingService := mustNewBillingPostgresService(t, database)
-	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool))
+	membershipService, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(testLogger))
 	if err != nil {
 		t.Fatalf("new membership postgres service: %v", err)
 	}
 	identityService := identityapplication.NewService(identityapplication.Config{
-		Users: identitypostgres.NewUserRepository(database.Pool),
+		Users:  identitypostgres.NewUserRepository(database.Pool),
+		Logger: testLogger,
 	})
 	homes := tenantpostgres.NewUserHomeRepository(database.Pool)
 
@@ -100,7 +105,7 @@ func mustNewTenantPostgresService(t *testing.T, database *pgtest.Database) *tena
 	t.Helper()
 
 	billingService := mustNewBillingPostgresService(t, database)
-	service, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService)
+	service, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService, testLogger)
 	if err != nil {
 		t.Fatalf("new tenant postgres service: %v", err)
 	}
@@ -118,6 +123,7 @@ func mustNewBillingPostgresService(t *testing.T, database *pgtest.Database) *bil
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing postgres service: %v", err)

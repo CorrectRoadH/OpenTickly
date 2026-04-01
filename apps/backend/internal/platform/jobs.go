@@ -8,7 +8,8 @@ import (
 )
 
 type Job struct {
-	Name string
+	Name    string
+	Payload any
 }
 
 type JobDefinition struct {

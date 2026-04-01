@@ -11,10 +11,13 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"opentoggl/backend/apps/backend/internal/log"
 )
 
 var (
 	ErrStoreRequired    = errors.New("importing store is required")
+	ErrLoggerRequired   = errors.New("importing logger is required")
 	ErrExportNotFound   = errors.New("export archive not found")
 	ErrObjectsRequired  = errors.New("at least one object is required")
 	ErrInvalidScopeID   = errors.New("scope id must be positive")
@@ -22,16 +25,21 @@ var (
 )
 
 type Service struct {
-	store Store
-	now   func() time.Time
+	store  Store
+	logger log.Logger
+	now    func() time.Time
 }
 
-func NewService(store Store) (*Service, error) {
+func NewService(store Store, logger log.Logger) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
 	}
+	if logger == nil {
+		return nil, ErrLoggerRequired
+	}
 	return &Service{
-		store: store,
+		store:  store,
+		logger: logger,
 		now: func() time.Time {
 			return time.Now().UTC()
 		},
@@ -109,12 +117,29 @@ func (service *Service) startExport(
 		return "", ErrObjectsRequired
 	}
 
+	service.logger.InfoContext(ctx, "starting export",
+		"scope", string(scope),
+		"scope_id", scopeID,
+		"requested_by", requestedBy,
+		"objects", normalized,
+	)
+
 	token, err := newExportToken()
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to generate export token",
+			"scope", string(scope),
+			"scope_id", scopeID,
+			"error", err.Error(),
+		)
 		return "", err
 	}
 	content, err := buildArchive(scope, scopeID, requestedBy, normalized, service.now())
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to build export archive",
+			"scope", string(scope),
+			"scope_id", scopeID,
+			"error", err.Error(),
+		)
 		return "", err
 	}
 
@@ -127,8 +152,18 @@ func (service *Service) startExport(
 		Content:     content,
 	})
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to save export",
+			"scope", string(scope),
+			"scope_id", scopeID,
+			"error", err.Error(),
+		)
 		return "", err
 	}
+	service.logger.InfoContext(ctx, "export started",
+		"token", record.Token,
+		"scope", string(scope),
+		"scope_id", scopeID,
+	)
 	return record.Token, nil
 }
 
@@ -143,9 +178,19 @@ func (service *Service) getArchive(
 	}
 	archive, ok, err := service.store.GetExportArchive(ctx, scope, scopeID, strings.TrimSpace(token))
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get export archive",
+			"scope", string(scope),
+			"scope_id", scopeID,
+			"error", err.Error(),
+		)
 		return ExportArchiveView{}, err
 	}
 	if !ok {
+		service.logger.WarnContext(ctx, "export archive not found",
+			"scope", string(scope),
+			"scope_id", scopeID,
+			"token", token,
+		)
 		return ExportArchiveView{}, ErrExportNotFound
 	}
 	return archive, nil

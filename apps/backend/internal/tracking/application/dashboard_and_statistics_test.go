@@ -153,7 +153,7 @@ func TestServiceBuildsWorkspaceDashboardAggregates(t *testing.T) {
 func mustNewTrackingCatalogService(t *testing.T, database *pgtest.Database) *catalogapplication.Service {
 	t.Helper()
 
-	service, err := catalogapplication.NewService(catalogpostgres.NewStore(database.Pool))
+	service, err := catalogapplication.NewService(catalogpostgres.NewStore(database.Pool), log.NopLogger())
 	if err != nil {
 		t.Fatalf("new tracking catalog service: %v", err)
 	}

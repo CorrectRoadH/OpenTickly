@@ -7,6 +7,7 @@ import (
 	"slices"
 
 	"opentoggl/backend/apps/backend/internal/billing/domain"
+	"opentoggl/backend/apps/backend/internal/log"
 
 	"github.com/samber/lo"
 )
@@ -42,18 +43,23 @@ type Service struct {
 	workspaces      WorkspaceOwnershipLookup
 	capabilityRules map[string]domain.CapabilityRule
 	capabilityKeys  []string
+	logger          log.Logger
 }
 
 func NewService(
 	accounts AccountRepository,
 	workspaces WorkspaceOwnershipLookup,
 	rules []domain.CapabilityRule,
+	logger log.Logger,
 ) (*Service, error) {
 	if accounts == nil {
 		return nil, fmt.Errorf("billing accounts repository is required")
 	}
 	if workspaces == nil {
 		return nil, fmt.Errorf("workspace ownership lookup is required")
+	}
+	if logger == nil {
+		return nil, fmt.Errorf("billing logger is required")
 	}
 
 	capabilityRules := make(map[string]domain.CapabilityRule, len(rules))
@@ -75,6 +81,7 @@ func NewService(
 		workspaces:      workspaces,
 		capabilityRules: capabilityRules,
 		capabilityKeys:  capabilityKeys,
+		logger:          logger,
 	}, nil
 }
 
@@ -82,8 +89,15 @@ func (service *Service) WorkspaceQuotaSnapshot(
 	ctx context.Context,
 	workspaceID int64,
 ) (domain.QuotaWindow, map[string]string, error) {
+	service.logger.InfoContext(ctx, "getting workspace quota snapshot",
+		"workspace_id", workspaceID,
+	)
 	account, _, err := service.resolveWorkspaceAccount(ctx, workspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace quota snapshot",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return domain.QuotaWindow{}, nil, err
 	}
 	return account.Quota, account.Quota.Headers(), nil
@@ -93,8 +107,15 @@ func (service *Service) OrganizationQuotaSnapshot(
 	ctx context.Context,
 	organizationID int64,
 ) (domain.QuotaWindow, map[string]string, error) {
+	service.logger.InfoContext(ctx, "getting organization quota snapshot",
+		"organization_id", organizationID,
+	)
 	account, err := service.resolveOrganizationAccount(ctx, organizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get organization quota snapshot",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return domain.QuotaWindow{}, nil, err
 	}
 	return account.Quota, account.Quota.Headers(), nil
@@ -104,8 +125,15 @@ func (service *Service) WorkspaceCapabilitySnapshot(
 	ctx context.Context,
 	workspaceID int64,
 ) (domain.CapabilitySnapshot, error) {
+	service.logger.InfoContext(ctx, "getting workspace capability snapshot",
+		"workspace_id", workspaceID,
+	)
 	account, organizationID, err := service.resolveWorkspaceAccount(ctx, workspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get workspace capability snapshot",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return domain.CapabilitySnapshot{}, err
 	}
 
@@ -128,13 +156,25 @@ func (service *Service) CheckWorkspaceCapability(
 	ctx context.Context,
 	check CapabilityCheck,
 ) (domain.FeatureGateDecision, error) {
+	service.logger.InfoContext(ctx, "checking workspace capability",
+		"workspace_id", check.WorkspaceID,
+		"capability_key", check.CapabilityKey,
+	)
 	account, _, err := service.resolveWorkspaceAccount(ctx, check.WorkspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to check workspace capability",
+			"workspace_id", check.WorkspaceID,
+			"capability_key", check.CapabilityKey,
+			"error", err.Error(),
+		)
 		return domain.FeatureGateDecision{}, err
 	}
 
 	rule, ok := service.capabilityRules[check.CapabilityKey]
 	if !ok {
+		service.logger.WarnContext(ctx, "capability rule not found",
+			"capability_key", check.CapabilityKey,
+		)
 		return domain.FeatureGateDecision{}, fmt.Errorf(
 			"%w: %s",
 			ErrCapabilityRuleNotFound,
@@ -149,8 +189,15 @@ func (service *Service) CommercialStatusForOrganization(
 	ctx context.Context,
 	organizationID int64,
 ) (domain.CommercialStatus, error) {
+	service.logger.InfoContext(ctx, "getting commercial status for organization",
+		"organization_id", organizationID,
+	)
 	account, err := service.resolveOrganizationAccount(ctx, organizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get commercial status for organization",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return domain.CommercialStatus{}, err
 	}
 	return account.OrganizationStatus(), nil
@@ -160,8 +207,15 @@ func (service *Service) CommercialStatusForWorkspace(
 	ctx context.Context,
 	workspaceID int64,
 ) (domain.CommercialStatus, error) {
+	service.logger.InfoContext(ctx, "getting commercial status for workspace",
+		"workspace_id", workspaceID,
+	)
 	account, _, err := service.resolveWorkspaceAccount(ctx, workspaceID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get commercial status for workspace",
+			"workspace_id", workspaceID,
+			"error", err.Error(),
+		)
 		return domain.CommercialStatus{}, err
 	}
 	return account.WorkspaceStatus(workspaceID)
@@ -197,8 +251,15 @@ func (service *Service) AvailablePlans() []PlanCatalogEntry {
 }
 
 func (service *Service) ProvisionDefaultOrganization(ctx context.Context, organizationID int64) error {
+	service.logger.InfoContext(ctx, "provisioning default organization",
+		"organization_id", organizationID,
+	)
 	account, ok, err := service.accounts.FindByOrganizationID(ctx, organizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to find account for provisioning",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return err
 	}
 	if ok {
@@ -210,9 +271,23 @@ func (service *Service) ProvisionDefaultOrganization(ctx context.Context, organi
 
 	account, err = domain.DefaultCommercialAccount(organizationID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to create default account",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
 		return err
 	}
-	return service.accounts.Save(ctx, account)
+	if err := service.accounts.Save(ctx, account); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save default account",
+			"organization_id", organizationID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "provisioned default organization",
+		"organization_id", organizationID,
+	)
+	return nil
 }
 
 func (service *Service) resolveWorkspaceAccount(

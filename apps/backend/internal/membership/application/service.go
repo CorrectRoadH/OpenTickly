@@ -7,12 +7,14 @@ import (
 	"errors"
 	"strings"
 
+	"opentoggl/backend/apps/backend/internal/log"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	"opentoggl/backend/apps/backend/internal/xptr"
 )
 
 var (
 	ErrStoreRequired                 = errors.New("membership store is required")
+	ErrLoggerRequired                = errors.New("membership logger is required")
 	ErrWorkspaceIdentityUserNotFound = errors.New("workspace identity user not found")
 	ErrWorkspaceMemberNotFound       = errors.New("workspace member not found")
 	ErrWorkspaceManagerRequired      = errors.New("workspace manager role is required")
@@ -32,8 +34,9 @@ type SMTPChecker interface {
 }
 
 type Service struct {
-	store        Store
-	smtpChecker  SMTPChecker
+	store       Store
+	smtpChecker SMTPChecker
+	logger      log.Logger
 }
 
 func NewService(store Store, opts ...ServiceOption) (*Service, error) {
@@ -44,6 +47,9 @@ func NewService(store Store, opts ...ServiceOption) (*Service, error) {
 	for _, opt := range opts {
 		opt(svc)
 	}
+	if svc.logger == nil {
+		return nil, ErrLoggerRequired
+	}
 	return svc, nil
 }
 
@@ -53,6 +59,11 @@ type ServiceOption func(*Service)
 // WithSMTPChecker sets the SMTP checker for invitation gating.
 func WithSMTPChecker(checker SMTPChecker) ServiceOption {
 	return func(s *Service) { s.smtpChecker = checker }
+}
+
+// WithLogger sets the logger for the membership Service.
+func WithLogger(logger log.Logger) ServiceOption {
+	return func(s *Service) { s.logger = logger }
 }
 
 func (service *Service) EnsureWorkspaceOwner(

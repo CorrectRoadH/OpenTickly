@@ -88,6 +88,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+		appLogger,
 	)
 	if err != nil {
 		return nil, err
@@ -101,13 +102,13 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		return nil, err
 	}
 
-	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(pool), billingService)
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(pool), billingService, appLogger)
 	if err != nil {
 		return nil, err
 	}
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
-	catalogService, err := catalogapplication.NewService(newCachedCatalogStore(catalogpostgres.NewStore(pool), cache))
+	catalogService, err := catalogapplication.NewService(newCachedCatalogStore(catalogpostgres.NewStore(pool), cache), appLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -121,17 +122,21 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	membershipService, err := membershipapplication.NewService(
 		membershippostgres.NewStore(pool),
 		membershipapplication.WithSMTPChecker(smtpChecker),
+		membershipapplication.WithLogger(appLogger),
 	)
 	if err != nil {
 		return nil, err
 	}
 	rateResolver := reportsapplication.NewCatalogRateResolver(catalogService)
-	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver)
-	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool))
+	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver, appLogger)
+	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool), appLogger)
 	if err != nil {
 		return nil, err
 	}
-	importingService, err := importingapplication.NewService(importingpostgres.NewStore(pool))
+	if err := platformHandles.Jobs.Register(governancepostgres.NewAuditLogJobDefinition(governanceService)); err != nil {
+		return nil, err
+	}
+	importingService, err := importingapplication.NewService(importingpostgres.NewStore(pool), appLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +150,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 		RegistrationGuard:  &registrationPolicyGuard{pool: pool},
+		Logger:             appLogger,
 	})
 	userHomes := newCachedUserHomeRepository(tenantpostgres.NewUserHomeRepository(pool), cache)
 	shellProvider := newCachedSessionShellProvider(

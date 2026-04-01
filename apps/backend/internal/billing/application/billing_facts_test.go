@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
@@ -12,7 +13,10 @@ import (
 	"opentoggl/backend/apps/backend/internal/billing/application"
 	"opentoggl/backend/apps/backend/internal/billing/domain"
 	postgresinfra "opentoggl/backend/apps/backend/internal/billing/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 )
+
+var testLogger = log.NewZapLogger(slog.Default())
 
 func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 	database := pgtest.Open(t)
@@ -39,6 +43,7 @@ func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 			{Key: "reports.summary", MinimumPlan: domain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: domain.PlanFree},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)
@@ -125,6 +130,7 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		[]domain.CapabilityRule{
 			{Key: "reports.summary", MinimumPlan: domain.PlanStarter, RequiresQuota: true},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing service for provision: %v", err)
@@ -146,6 +152,7 @@ func TestServiceRequiresPersistedBillingAccount(t *testing.T) {
 		[]domain.CapabilityRule{
 			{Key: "reports.summary", MinimumPlan: domain.PlanStarter, RequiresQuota: true},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)
@@ -177,6 +184,7 @@ func TestServiceProvisionsDefaultBillingAccount(t *testing.T) {
 		[]domain.CapabilityRule{
 			{Key: "time_tracking", MinimumPlan: domain.PlanFree},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)

@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
+	"opentoggl/backend/apps/backend/internal/log"
 )
 
 var (
@@ -27,6 +28,7 @@ type Config struct {
 	IDs                Sequence
 	KnownAlphaFeatures []string
 	RegistrationGuard  RegistrationGuard
+	Logger             log.Logger
 }
 
 type UserRepository interface {
@@ -121,6 +123,7 @@ type Service struct {
 	ids                Sequence
 	knownAlphaFeatures map[string]struct{}
 	registrationGuard  RegistrationGuard
+	logger             log.Logger
 }
 
 func NewService(cfg Config) *Service {
@@ -138,6 +141,7 @@ func NewService(cfg Config) *Service {
 		ids:                cfg.IDs,
 		knownAlphaFeatures: knownAlphaFeatures,
 		registrationGuard:  cfg.RegistrationGuard,
+		logger:             cfg.Logger,
 	}
 }
 
@@ -180,18 +184,31 @@ func (service *Service) DeletePushService(ctx context.Context, userID int64, tok
 }
 
 func (service *Service) Register(ctx context.Context, input RegisterInput) (AuthenticatedSession, error) {
+	service.logger.InfoContext(ctx, "registering user",
+		"email", input.Email,
+	)
 	if service.registrationGuard != nil {
 		if err := service.registrationGuard.CanRegister(ctx); err != nil {
+			service.logger.WarnContext(ctx, "registration denied",
+				"email", input.Email,
+				"error", err.Error(),
+			)
 			return AuthenticatedSession{}, err
 		}
 	}
 
 	userID, err := service.ids.NextUserID()
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to generate user ID",
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 	apiToken, err := service.ids.NextAPIToken()
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to generate API token",
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 
@@ -203,27 +220,62 @@ func (service *Service) Register(ctx context.Context, input RegisterInput) (Auth
 		APIToken: apiToken,
 	})
 	if err != nil {
+		service.logger.WarnContext(ctx, "invalid registration data",
+			"email", input.Email,
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 
 	if err := service.users.Save(ctx, user); err != nil {
+		service.logger.ErrorContext(ctx, "failed to save user",
+			"user_id", userID,
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 
-	return service.issueSession(ctx, user)
+	session, err := service.issueSession(ctx, user)
+	if err != nil {
+		return AuthenticatedSession{}, err
+	}
+	service.logger.InfoContext(ctx, "user registered",
+		"user_id", userID,
+		"session_id", session.SessionID,
+	)
+	return session, nil
 }
 
 func (service *Service) LoginBasic(ctx context.Context, credentials domain.BasicCredentials) (AuthenticatedSession, error) {
+	service.logger.InfoContext(ctx, "login attempt",
+		"username", credentials.Username,
+	)
 	user, err := service.userForBasicCredentials(ctx, credentials)
 	if err != nil {
+		service.logger.WarnContext(ctx, "login failed - user not found",
+			"username", credentials.Username,
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 
 	if err := user.AuthenticateBasic(credentials); err != nil {
+		service.logger.WarnContext(ctx, "login failed - authentication failed",
+			"username", credentials.Username,
+			"error", err.Error(),
+		)
 		return AuthenticatedSession{}, err
 	}
 
-	return service.issueSession(ctx, user)
+	session, err := service.issueSession(ctx, user)
+	if err != nil {
+		return AuthenticatedSession{}, err
+	}
+	service.logger.InfoContext(ctx, "login successful",
+		"user_id", user.ID(),
+		"session_id", session.SessionID,
+	)
+	return session, nil
 }
 
 func (service *Service) ResolveBasicUser(ctx context.Context, credentials domain.BasicCredentials) (UserSnapshot, error) {
@@ -241,11 +293,19 @@ func (service *Service) ResolveBasicUser(ctx context.Context, credentials domain
 func (service *Service) ResolveCurrentUser(ctx context.Context, sessionID string) (UserSnapshot, error) {
 	userID, err := service.sessions.UserIDBySession(ctx, sessionID)
 	if err != nil {
+		service.logger.WarnContext(ctx, "session not found",
+			"session_id", sessionID,
+			"error", err.Error(),
+		)
 		return UserSnapshot{}, err
 	}
 
 	user, err := service.users.ByID(ctx, userID)
 	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to get user by session",
+			"user_id", userID,
+			"error", err.Error(),
+		)
 		return UserSnapshot{}, err
 	}
 	if !user.CanAuthenticate() {
@@ -256,7 +316,17 @@ func (service *Service) ResolveCurrentUser(ctx context.Context, sessionID string
 }
 
 func (service *Service) Logout(ctx context.Context, sessionID string) error {
-	return service.sessions.Delete(ctx, sessionID)
+	service.logger.InfoContext(ctx, "logout",
+		"session_id", sessionID,
+	)
+	if err := service.sessions.Delete(ctx, sessionID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete session",
+			"session_id", sessionID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	return nil
 }
 
 func (service *Service) CreateDesktopLoginToken(ctx context.Context, userID int64) (string, error) {

@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -14,9 +15,12 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	catalogpostgres "opentoggl/backend/apps/backend/internal/catalog/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 
 	"github.com/samber/lo"
 )
+
+var testLogger = log.NewZapLogger(slog.Default())
 
 func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	database := pgtest.Open(t)
@@ -704,7 +708,7 @@ func TestServiceReturnsRecurringProjectPeriodWithinBoundary(t *testing.T) {
 func mustNewCatalogService(t *testing.T, database *pgtest.Database) *catalogapplication.Service {
 	t.Helper()
 
-	service, err := catalogapplication.NewService(catalogpostgres.NewStore(database.Pool))
+	service, err := catalogapplication.NewService(catalogpostgres.NewStore(database.Pool), testLogger)
 	if err != nil {
 		t.Fatalf("new catalog service: %v", err)
 	}

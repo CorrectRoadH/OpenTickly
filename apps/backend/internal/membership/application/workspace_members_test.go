@@ -17,6 +17,7 @@ import (
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	"opentoggl/backend/apps/backend/internal/log"
 
 	"github.com/samber/lo"
 )
@@ -46,12 +47,13 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+		log.NopLogger(),
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)
 	}
 
-	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService)
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService, log.NopLogger())
 	if err != nil {
 		t.Fatalf("new tenant service: %v", err)
 	}

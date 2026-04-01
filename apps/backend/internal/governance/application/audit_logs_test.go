@@ -7,6 +7,7 @@ import (
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	governancepostgres "opentoggl/backend/apps/backend/internal/governance/infra/postgres"
+	"opentoggl/backend/apps/backend/internal/log"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
@@ -26,7 +27,7 @@ func TestServiceListsAuditLogsByOrganizationWindowAndFilters(t *testing.T) {
 		t.Fatalf("create organization: %v", err)
 	}
 
-	service, err := governanceapplication.NewService(governancepostgres.NewStore(database.Pool))
+	service, err := governanceapplication.NewService(governancepostgres.NewStore(database.Pool), log.NopLogger())
 	if err != nil {
 		t.Fatalf("new governance service: %v", err)
 	}

@@ -3,6 +3,7 @@ package application_test
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -16,7 +17,10 @@ import (
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/testsupport/pgtest"
+	"opentoggl/backend/apps/backend/internal/log"
 )
+
+var testLogger = log.NewZapLogger(slog.Default())
 
 func TestServicePersistsOrganizationInvitations(t *testing.T) {
 	database := pgtest.Open(t)
@@ -37,12 +41,13 @@ func TestServicePersistsOrganizationInvitations(t *testing.T) {
 			{Key: "reports.summary", MinimumPlan: billingdomain.PlanStarter, RequiresQuota: true},
 			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
 		},
+		testLogger,
 	)
 	if err != nil {
 		t.Fatalf("new billing service: %v", err)
 	}
 
-	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService)
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService, testLogger)
 	if err != nil {
 		t.Fatalf("new tenant service: %v", err)
 	}

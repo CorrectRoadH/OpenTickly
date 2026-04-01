@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/billing/domain"
+	"opentoggl/backend/apps/backend/internal/log"
 )
 
 type stubAccountRepository struct{}
@@ -31,6 +32,7 @@ func TestAvailablePlansReturnsOrderedCatalog(t *testing.T) {
 			{Key: "reports.summary", MinimumPlan: domain.PlanStarter},
 			{Key: "reports.profitability", MinimumPlan: domain.PlanEnterprise},
 		},
+		log.NopLogger(),
 	)
 	if err != nil {
 		t.Fatalf("expected service to build, got %v", err)

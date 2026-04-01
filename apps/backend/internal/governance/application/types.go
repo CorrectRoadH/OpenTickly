@@ -8,6 +8,7 @@ import (
 
 var (
 	ErrStoreRequired          = errors.New("governance store is required")
+	ErrLoggerRequired         = errors.New("governance logger is required")
 	ErrInvalidOrganization    = errors.New("governance organization id must be positive")
 	ErrInvalidWorkspace       = errors.New("governance workspace id must be positive")
 	ErrInvalidAuditLogWindow  = errors.New("governance audit log window is invalid")
