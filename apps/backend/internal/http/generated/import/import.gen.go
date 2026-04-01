@@ -41,6 +41,7 @@ type FeatureGateDecision = externalRef0.FeatureGateDecision
 
 // ImportJob defines model for ImportJob.
 type ImportJob struct {
+	ErrorMessage   *string         `json:"error_message"`
 	JobId          string          `json:"job_id"`
 	OrganizationId *int            `json:"organization_id"`
 	Status         ImportJobStatus `json:"status"`

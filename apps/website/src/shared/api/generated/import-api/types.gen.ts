@@ -22,6 +22,7 @@ export type ImportJobCreateRequest = (
 };
 
 export type ImportJob = {
+  error_message?: string | null;
   job_id: string;
   organization_id?: number;
   status: "queued" | "running" | "completed" | "failed";

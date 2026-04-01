@@ -19,17 +19,7 @@ export function AppProviders({ router }: AppProvidersProps): ReactElement {
     <AppDisplayProvider>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "var(--track-surface)",
-              border: "1px solid var(--track-border)",
-              color: "var(--track-text)",
-            },
-          }}
-          theme="dark"
-        />
+        <Toaster position="bottom-right" richColors theme="dark" />
       </QueryClientProvider>
     </AppDisplayProvider>
   );

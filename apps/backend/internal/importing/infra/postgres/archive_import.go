@@ -690,13 +690,13 @@ func (importer *archiveImporter) insertClientWithID(
 	err := importer.tx.QueryRow(ctx, `
 		insert into catalog_clients (id, workspace_id, name, archived, created_by)
 		values ($1, $2, $3, $4, $5)
+		on conflict do nothing
 		returning id
 	`, clientID, importer.workspaceID, strings.TrimSpace(name), archived, createdBy).Scan(&insertedID)
 	if err == nil {
 		return insertedID, true, nil
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, nil
 	}
 	return 0, false, fmt.Errorf("insert client %d: %w", clientID, err)
@@ -729,18 +729,15 @@ func (importer *archiveImporter) insertTagWithID(
 	name string,
 	createdBy *int64,
 ) (bool, error) {
-	_, err := importer.tx.Exec(ctx, `
+	tag, err := importer.tx.Exec(ctx, `
 		insert into catalog_tags (id, workspace_id, name, created_by)
 		values ($1, $2, $3, $4)
+		on conflict do nothing
 	`, tagID, importer.workspaceID, strings.TrimSpace(name), createdBy)
-	if err == nil {
-		return true, nil
+	if err != nil {
+		return false, fmt.Errorf("insert tag %d: %w", tagID, err)
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-		return false, nil
-	}
-	return false, fmt.Errorf("insert tag %d: %w", tagID, err)
+	return tag.RowsAffected() > 0, nil
 }
 
 func (importer *archiveImporter) insertScopedProject(
@@ -791,6 +788,7 @@ func (importer *archiveImporter) insertProjectWithID(
 			color, billable, is_private, template, recurring,
 			start_date, estimated_seconds, fixed_fee, currency, rate
 		) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+		on conflict do nothing
 		returning id
 	`, project.ID, importer.workspaceID, clientID, strings.TrimSpace(project.Name), project.Active,
 		project.Pinned, project.ActualSeconds, createdBy, color, project.Billable, project.IsPrivate,
@@ -799,8 +797,7 @@ func (importer *archiveImporter) insertProjectWithID(
 	if err == nil {
 		return insertedID, true, nil
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, nil
 	}
 	return 0, false, fmt.Errorf("insert project %d: %w", project.ID, err)
