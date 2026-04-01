@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { AppInput, DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
+import { AppButton, AppInput, DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -703,11 +703,10 @@ export function TimeEntryEditorDialog({
                   Running
                 </span>
               )}
-              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[12px] tabular-nums text-[var(--track-overlay-text-muted)]">
+              <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[11px] tabular-nums text-[var(--track-overlay-text-muted)]">
                 {duration}
               </span>
-              <button
-                className="flex h-[38px] shrink-0 items-center rounded-[10px] bg-[var(--track-accent-fill-hover)] px-5 text-[14px] font-semibold text-[var(--track-button-text)] transition hover:bg-[var(--track-accent-fill-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              <AppButton
                 disabled={isSaving}
                 onClick={() => {
                   if (!isSaving) {
@@ -715,9 +714,10 @@ export function TimeEntryEditorDialog({
                   }
                 }}
                 type="button"
+                variant="primary"
               >
                 {isSaving ? (isNewEntry ? "Adding..." : "Saving...") : isNewEntry ? "Add" : "Save"}
-              </button>
+              </AppButton>
             </div>
 
             {/* Date picker renders inline (not portaled) since all ancestors
@@ -928,7 +928,7 @@ function PickerButton({
       aria-pressed={ariaPressed}
       className={`flex items-center justify-center transition ${
         selected
-          ? "h-8 max-w-[168px] gap-2 rounded-[10px] px-2.5 text-[12px] font-medium"
+          ? "h-8 max-w-[168px] gap-2 rounded-[10px] px-2.5 text-[8px] font-medium"
           : "size-8 rounded-[10px]"
       } ${
         selected
@@ -1058,7 +1058,7 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[38px] w-[90px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[14px] font-semibold tabular-nums text-white outline-none ${
+            className={`h-[38px] w-[90px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[12px] font-semibold tabular-nums text-white outline-none ${
               hasError ? "border-rose-400" : "border-[var(--track-accent-secondary)]"
             }`}
             value={draft}
@@ -1089,7 +1089,7 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex h-[38px] w-[90px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[14px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
+          className={`flex h-[38px] w-[90px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[12px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
           onClick={onEditStart}
           type="button"
         >
