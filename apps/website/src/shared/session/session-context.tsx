@@ -74,6 +74,7 @@ export const defaultSessionSnapshot: SessionSnapshot = {
     imageUrl: null,
     timezone: "Europe/Tallinn",
     twoFactorEnabled: true,
+    isInstanceAdmin: false,
   },
   workspaceCapabilities: null,
   workspaceQuota: null,

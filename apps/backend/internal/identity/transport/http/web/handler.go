@@ -325,6 +325,7 @@ func profileBody(user application.UserSnapshot, defaultWorkspaceID int64) webapi
 		HasPassword:        user.HasPassword,
 		Id:                 int(user.ID),
 		ImageUrl:           webAvatarURL(user.AvatarStorageKey),
+		IsInstanceAdmin:    user.IsInstanceAdmin,
 		Timezone:           user.Timezone,
 	}
 }

@@ -191,7 +191,13 @@ func (handlers *routeHandlers) register(ctx echo.Context) error {
 	if err := ctx.Bind(&request); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	return handlers.writeIdentityResponse(ctx, handlers.identity.Register(ctx.Request().Context(), request))
+	response := handlers.identity.Register(ctx.Request().Context(), request)
+	if response.StatusCode == http.StatusCreated {
+		if err := maybeBootstrapFirstUser(ctx.Request().Context(), handlers.pool, request.Email); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		}
+	}
+	return handlers.writeIdentityResponse(ctx, response)
 }
 
 func (handlers *routeHandlers) login(ctx echo.Context) error {

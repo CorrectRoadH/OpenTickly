@@ -19,6 +19,7 @@ export type CurrentUserProfile = {
   country_id: number;
   has_password: boolean;
   "2fa_enabled": boolean;
+  is_instance_admin: boolean;
 };
 
 export type CurrentUserApiToken = {

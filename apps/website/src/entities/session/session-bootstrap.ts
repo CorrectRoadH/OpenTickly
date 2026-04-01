@@ -17,6 +17,7 @@ export type SessionUserViewModel = {
   beginningOfWeek: number | null;
   hasPassword: boolean;
   twoFactorEnabled: boolean;
+  isInstanceAdmin: boolean;
 };
 
 export type SessionOrganizationViewModel = {
@@ -156,6 +157,7 @@ function mapUser(dto: WebCurrentUserProfileDto): SessionUserViewModel {
     beginningOfWeek: dto.beginning_of_week ?? null,
     hasPassword: dto.has_password ?? false,
     twoFactorEnabled: dto["2fa_enabled"] ?? false,
+    isInstanceAdmin: dto.is_instance_admin ?? false,
   };
 }
 

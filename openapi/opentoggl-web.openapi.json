@@ -692,6 +692,9 @@
           },
           "2fa_enabled": {
             "type": "boolean"
+          },
+          "is_instance_admin": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -704,7 +707,8 @@
           "beginning_of_week",
           "country_id",
           "has_password",
-          "2fa_enabled"
+          "2fa_enabled",
+          "is_instance_admin"
         ]
       },
       "CurrentUserAPIToken": {

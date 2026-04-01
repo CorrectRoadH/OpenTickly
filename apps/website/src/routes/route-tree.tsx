@@ -786,6 +786,24 @@ function InstanceAdminRouteComponent() {
     ? (params.section as InstanceAdminSection)
     : "overview";
 
+  const sessionQuery = useSessionBootstrapQuery();
+
+  if (sessionQuery.isPending) {
+    return <SessionPendingPanel />;
+  }
+
+  if (isSessionAccessDenied(sessionQuery.error)) {
+    return <SessionExpiredRedirect />;
+  }
+
+  if (sessionQuery.isError || !sessionQuery.data) {
+    return <SessionUnavailablePanel />;
+  }
+
+  if (!sessionQuery.data.user.is_instance_admin) {
+    return <Navigate replace to="/" />;
+  }
+
   return renderProtectedRoute(<InstanceAdminPage section={section} />);
 }
 

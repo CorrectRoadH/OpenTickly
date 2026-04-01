@@ -122,11 +122,15 @@ export function shellNavigationItems(
           label: t("navigation:settings"),
           to: buildWorkspaceSettingsPathWithSection(session.currentWorkspace.id),
         },
-        {
-          id: "instanceAdmin",
-          label: t("navigation:instanceAdmin"),
-          to: "/instance-admin/overview",
-        },
+        ...(session.user.isInstanceAdmin
+          ? [
+              {
+                id: "instanceAdmin",
+                label: t("navigation:instanceAdmin"),
+                to: "/instance-admin/overview",
+              },
+            ]
+          : []),
       ],
     },
   ];
