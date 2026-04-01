@@ -35,5 +35,7 @@
   "failedToRemoveLogo": "Failed to remove logo",
   "workspaceSettingsSaved": "Your workspace has been updated",
   "failedToSaveWorkspaceSettings": "We could not save this change. Try again in a moment.",
-  "failedToUpdateLanguage": "Failed to update language"
+  "failedToUpdateLanguage": "Failed to update language",
+  "timeEntrySaved": "Time entry saved",
+  "failedToSaveTimeEntry": "Failed to save time entry. Try again."
 }

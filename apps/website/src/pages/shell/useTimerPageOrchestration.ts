@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
+
 import {
   buildEntryGroups,
   buildTimesheetRows,
@@ -368,6 +371,7 @@ export function useTimerPageOrchestration(options?: {
 }): TimerPageOrchestration {
   const showAllEntries = options?.showAllEntries ?? false;
   const initialDate = options?.initialDate;
+  const { t } = useTranslation("toast");
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
@@ -891,19 +895,25 @@ export function useTimerPageOrchestration(options?: {
     // before the API call. If offline, BackgroundSync replays later.
     setSelectedEntryError(null);
     closeSelectedEntryEditor();
-    updateTimeEntryMutation.mutate({
-      request: {
-        billable: selectedEntry.billable,
-        description: selectedDescription.trim(),
-        projectId: selectedProjectId,
-        start: selectedEntry.start,
-        stop: selectedEntry.stop,
-        tagIds: selectedTagIds,
-        taskId: selectedEntry.task_id ?? selectedEntry.tid,
+    updateTimeEntryMutation.mutate(
+      {
+        request: {
+          billable: selectedEntry.billable,
+          description: selectedDescription.trim(),
+          projectId: selectedProjectId,
+          start: selectedEntry.start,
+          stop: selectedEntry.stop,
+          tagIds: selectedTagIds,
+          taskId: selectedEntry.task_id ?? selectedEntry.tid,
+        },
+        timeEntryId: selectedEntry.id,
+        workspaceId: selectedWorkspaceId,
       },
-      timeEntryId: selectedEntry.id,
-      workspaceId: selectedWorkspaceId,
-    });
+      {
+        onSuccess: () => toast.success(t("timeEntrySaved")),
+        onError: () => toast.error(t("failedToSaveTimeEntry")),
+      },
+    );
   }, [
     selectedEntry,
     selectedDescription,

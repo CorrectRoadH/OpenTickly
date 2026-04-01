@@ -79,7 +79,7 @@ test.describe("Story: full time entry editing from calendar", () => {
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("Time entry saved")).toBeVisible();
 
     // Verify: reload — the calendar entry itself should show the project name
     await page.reload();
@@ -105,7 +105,7 @@ test.describe("Story: full time entry editing from calendar", () => {
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("Time entry saved")).toBeVisible();
 
     // Verify: reload — the calendar entry itself should show the tag
     await page.reload();
@@ -134,7 +134,7 @@ test.describe("Story: full time entry editing from calendar", () => {
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("Time entry saved")).toBeVisible();
 
     // Verify: reload and reopen — billable and stop time must persist from the API
     await page.reload();
@@ -159,7 +159,7 @@ test.describe("Story: full time entry editing from calendar", () => {
 
     // Save
     await dialog.getByRole("button", { name: "Save" }).click();
-    await expect(dialog).not.toBeVisible();
+    await expect(page.getByText("Time entry saved")).toBeVisible();
 
     // The calendar should now show the updated description
     await expect(page.getByRole("button", { name: "Updated task name" }).first()).toBeVisible();

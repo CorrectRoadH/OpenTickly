@@ -35,5 +35,7 @@
   "failedToRemoveLogo": "移除 Logo 失败",
   "workspaceSettingsSaved": "您的工作区已更新",
   "failedToSaveWorkspaceSettings": "无法保存此更改，请稍后重试。",
-  "failedToUpdateLanguage": "更新语言失败"
+  "failedToUpdateLanguage": "更新语言失败",
+  "timeEntrySaved": "时间条目已保存",
+  "failedToSaveTimeEntry": "保存时间条目失败，请重试。"
 }

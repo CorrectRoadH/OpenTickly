@@ -8,8 +8,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const RESULTS_PATH = path.resolve("test-results/results.json");
-const STATS_PATH = path.resolve("e2e-failure-stats.json");
+const APP_ROOT = path.resolve(import.meta.dirname, "..");
+const RESULTS_PATH = path.join(APP_ROOT, "test-results/results.json");
+const STATS_PATH = path.join(APP_ROOT, "e2e-failure-stats.json");
 
 type FailureRecord = {
   count: number;
