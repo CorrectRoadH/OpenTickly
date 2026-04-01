@@ -11,7 +11,6 @@ import (
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type importedIDBinding struct {
@@ -264,8 +263,7 @@ func (importer *archiveImporter) insertIdentityUserWithID(
 	if err == nil {
 		return insertedID, true, nil
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return 0, false, nil
 	}
 	return 0, false, err
@@ -313,6 +311,7 @@ func (importer *archiveImporter) insertIdentityUserRow(
 				product_emails_disable_code,
 				weekly_report_disable_code
 			) values ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9)
+			on conflict do nothing
 			returning id
 		`, *userID, email, fullName, passwordHash, apiToken, timezone, importer.workspaceID, productCode, weeklyCode)
 	} else {
@@ -491,7 +490,7 @@ func (importer *archiveImporter) insertWorkspaceMemberWithID(
 	if fullName == "" {
 		fullName = normalizedImportedEmail(workspaceUser.Email, workspaceUser.UID)
 	}
-	_, err := importer.tx.Exec(ctx, `
+	tag, err := importer.tx.Exec(ctx, `
 		insert into membership_workspace_members (
 			id,
 			workspace_id,
@@ -502,15 +501,12 @@ func (importer *archiveImporter) insertWorkspaceMemberWithID(
 			state,
 			created_by
 		) values ($1, $2, $3, $4, $5, $6, $7, $8)
+		on conflict do nothing
 	`, memberID, importer.workspaceID, userID, normalizedImportedEmail(workspaceUser.Email, workspaceUser.UID), fullName, string(role), string(state), importer.requestedBy)
-	if err == nil {
-		return true, nil
+	if err != nil {
+		return false, fmt.Errorf("insert workspace member %d: %w", memberID, err)
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-		return false, nil
-	}
-	return false, fmt.Errorf("insert workspace member %d: %w", memberID, err)
+	return tag.RowsAffected() > 0, nil
 }
 
 func (importer *archiveImporter) insertWorkspaceMember(
@@ -534,6 +530,7 @@ func (importer *archiveImporter) insertWorkspaceMember(
 			state,
 			created_by
 		) values ($1, $2, $3, $4, $5, $6, $7)
+		on conflict do nothing
 	`, importer.workspaceID, userID, normalizedImportedEmail(workspaceUser.Email, workspaceUser.UID), fullName, string(role), string(state), importer.requestedBy)
 	if err != nil {
 		return fmt.Errorf("insert workspace member for user %d: %w", userID, err)

@@ -555,10 +555,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 <div className="flex items-center gap-3 overflow-hidden">
                   <span
                     className="size-2 shrink-0 rounded-full"
+                    data-testid="project-color"
                     style={{ backgroundColor: resolveProjectColor(project) }}
                   />
                   <a
                     className="truncate font-medium"
+                    data-testid="project-name"
                     href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
                     style={{ color: resolveProjectColor(project) }}
                   >
@@ -618,6 +620,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               </p>
             }
             data-testid="projects-list"
+            data-row-testid="project-row"
           />
         ) : null}
       </PageLayout>

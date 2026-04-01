@@ -146,12 +146,14 @@ export function TagsPage(): ReactElement {
         rows={filteredTags}
         rowKey={(tag) => tag.id}
         data-testid="tags-list"
+        data-row-testid="tag-row"
         emptyState={<span data-testid="tags-empty-state">{emptyTagsStateTitle(statusFilter)}</span>}
         renderRow={(tag) => (
           <>
             <div className="flex h-[44px] items-center">
               <span
                 className="size-2 rounded-full"
+                data-testid="tag-color"
                 style={{ backgroundColor: resolveProjectColorValue({ name: tag.name }) }}
               />
             </div>
@@ -159,6 +161,7 @@ export function TagsPage(): ReactElement {
               <a
                 aria-label={`Tag details for ${tag.name}`}
                 className="truncate text-[14px] text-white"
+                data-testid="tag-name"
                 href={`/workspaces/${workspaceId}/tags/${tag.id}`}
               >
                 {tag.name}

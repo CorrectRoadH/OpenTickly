@@ -36,6 +36,8 @@ function toggleInSet<T>(set: Set<T>, value: T): Set<T> {
 function computeInitialStatuses(statusFilter: ProjectStatusFilter): Set<ProjectCategory> {
   if (statusFilter === "active") return new Set<ProjectCategory>(["active"]);
   if (statusFilter === "archived") return new Set<ProjectCategory>(["archived"]);
+  if (statusFilter === "all")
+    return new Set<ProjectCategory>(["upcoming", "active", "archived", "ended"]);
   return new Set(DEFAULT_SELECTED_STATUSES);
 }
 

@@ -105,7 +105,7 @@ export function DirectoryTable<T>({
           const expanded = expandable && expandedIds?.has(id);
 
           return (
-            <div data-testid={rowTestId} key={id}>
+            <div data-testid={rowTestId != null ? `${rowTestId}-${id}` : undefined} key={id}>
               <div
                 className={`group/row grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
                   selected
