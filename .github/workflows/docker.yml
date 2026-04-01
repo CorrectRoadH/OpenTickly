@@ -81,3 +81,42 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{ steps.changelog.outputs.content }}
+
+  build-binary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm@10.32.1
+
+      - name: Build frontend
+        run: |
+          pnpm install --filter @opentoggl/website... --no-frozen-lockfile --ignore-scripts
+          pnpm --filter @opentoggl/website run build
+          cp -r apps/website/dist apps/backend/internal/web/dist
+
+      - name: Build binary
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+            go build -trimpath -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
+            -o opentoggl-linux-amd64 ./apps/backend
+
+      - name: Upload binary to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: opentoggl-linux-amd64
