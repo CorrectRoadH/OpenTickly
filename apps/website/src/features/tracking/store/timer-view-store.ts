@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, type PersistStorage, type StorageValue } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
+import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../../shared/api/generated/public-track/types.gen.ts";
+import type { TimeEntryEditorAnchor } from "../TimeEntryEditorDialog.tsx";
 import type { CalendarSubview, TimerInputMode, TimerViewMode } from "../timer-view-mode.ts";
 
 // ---------------------------------------------------------------------------
@@ -20,6 +22,12 @@ interface TimerViewState {
   calendarZoom: number;
   selectedWeekDate: Date;
   listDateRange: DateRange | null;
+
+  // Editor popup state
+  selectedEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+  selectedEntryAnchor: TimeEntryEditorAnchor | null;
+  isNewEntry: boolean;
+  calendarDraftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
 }
 
 interface TimerViewActions {
@@ -29,6 +37,13 @@ interface TimerViewActions {
   setCalendarZoom: (zoom: number) => void;
   setSelectedWeekDate: (date: Date) => void;
   setListDateRange: (range: DateRange | null) => void;
+
+  // Editor popup actions
+  setSelectedEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
+  setSelectedEntryAnchor: (anchor: TimeEntryEditorAnchor | null) => void;
+  setIsNewEntry: (isNew: boolean) => void;
+  setCalendarDraftEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
+  closeEditor: () => void;
 }
 
 // Only view preferences are persisted; calendarZoom is transient.
@@ -120,6 +135,12 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       selectedWeekDate: new Date(),
       listDateRange: null,
 
+      // Editor popup state
+      selectedEntry: null,
+      selectedEntryAnchor: null,
+      isNewEntry: false,
+      calendarDraftEntry: null,
+
       // Actions
       setView: (next) =>
         set((state) => {
@@ -152,6 +173,35 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       setListDateRange: (range) =>
         set((state) => {
           state.listDateRange = range;
+        }),
+
+      // Editor popup actions
+      setSelectedEntry: (entry) =>
+        set((state) => {
+          state.selectedEntry = entry as any;
+        }),
+
+      setSelectedEntryAnchor: (anchor) =>
+        set((state) => {
+          state.selectedEntryAnchor = anchor as any;
+        }),
+
+      setIsNewEntry: (isNew) =>
+        set((state) => {
+          state.isNewEntry = isNew;
+        }),
+
+      setCalendarDraftEntry: (entry) =>
+        set((state) => {
+          state.calendarDraftEntry = entry as any;
+        }),
+
+      closeEditor: () =>
+        set((state) => {
+          state.selectedEntry = null;
+          state.selectedEntryAnchor = null;
+          state.isNewEntry = false;
+          state.calendarDraftEntry = null;
         }),
     })),
     {

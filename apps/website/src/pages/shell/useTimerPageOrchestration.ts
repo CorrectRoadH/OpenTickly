@@ -265,6 +265,15 @@ export function useTimerPageOrchestration(options?: {
   const setSelectedWeekDate = useTimerViewStore((s) => s.setSelectedWeekDate);
   const listDateRange = useTimerViewStore((s) => s.listDateRange);
   const setListDateRange = useTimerViewStore((s) => s.setListDateRange);
+  const selectedEntry = useTimerViewStore((s) => s.selectedEntry);
+  const setSelectedEntry = useTimerViewStore((s) => s.setSelectedEntry);
+  const selectedEntryAnchor = useTimerViewStore((s) => s.selectedEntryAnchor);
+  const setSelectedEntryAnchor = useTimerViewStore((s) => s.setSelectedEntryAnchor);
+  const isNewEntry = useTimerViewStore((s) => s.isNewEntry);
+  const setIsNewEntry = useTimerViewStore((s) => s.setIsNewEntry);
+  const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
+  const setCalendarDraftEntry = useTimerViewStore((s) => s.setCalendarDraftEntry);
+  const closeEditor = useTimerViewStore((s) => s.closeEditor);
 
   // Apply initialDate if provided (e.g. from URL params)
   useEffect(() => {
@@ -327,14 +336,6 @@ export function useTimerPageOrchestration(options?: {
 
   // Running description state
   const [runningDescription, setRunningDescription] = useState("");
-
-  // Selected entry state for popup
-  const [selectedEntry, setSelectedEntry] =
-    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-  const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
-    null,
-  );
-  const [isNewEntry, setIsNewEntry] = useState(false);
 
   // Composer suggestions
   const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
@@ -499,12 +500,7 @@ export function useTimerPageOrchestration(options?: {
   }, [runningEntry]);
 
   // Handlers
-  const closeSelectedEntryEditor = useCallback(() => {
-    setSelectedEntry(null);
-    setSelectedEntryAnchor(null);
-    setIsNewEntry(false);
-    setCalendarDraftEntry(null);
-  }, []);
+  const closeSelectedEntryEditor = closeEditor;
 
   const closeComposerSuggestions = useCallback(() => {
     setComposerSuggestionsAnchor(null);
@@ -884,9 +880,6 @@ export function useTimerPageOrchestration(options?: {
     },
     [],
   );
-
-  const [calendarDraftEntry, setCalendarDraftEntry] =
-    useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
 
   const handleCalendarSlotCreate = useCallback(
     (slot: { end: Date; start: Date }) => {
