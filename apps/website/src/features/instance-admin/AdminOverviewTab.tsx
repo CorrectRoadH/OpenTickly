@@ -1,4 +1,4 @@
-import { AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
+import { AppLinkButton, AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { Github, Zap } from "lucide-react";
@@ -41,31 +41,29 @@ function OnboardingBanner(): ReactElement {
             {t("instanceAdmin:welcomeDescription")}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <a
-              className="inline-flex items-center gap-2 rounded-[8px] bg-[var(--track-overlay-surface-raised)] px-4 py-2 text-[14px] font-medium text-white transition hover:bg-[var(--track-overlay-border-strong)]"
+            <AppLinkButton
               href="https://github.com/CorrectRoadH/opentoggl"
               rel="noopener noreferrer"
               target="_blank"
+              variant="primary"
             >
               <Github aria-hidden="true" className="h-5 w-5" size={20} />
               {t("instanceAdmin:starOnGithub")}
-            </a>
-            <a
-              className="inline-flex items-center gap-1 text-[14px] text-[var(--track-accent)] hover:underline"
+            </AppLinkButton>
+            <AppLinkButton
               href="https://github.com/CorrectRoadH/opentoggl/issues"
-              rel="noopener noreferrer"
               target="_blank"
+              variant="ghost"
             >
               {t("instanceAdmin:reportAnIssue")}
-            </a>
-            <a
-              className="inline-flex items-center gap-1 text-[14px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
+            </AppLinkButton>
+            <AppLinkButton
               href="https://github.com/CorrectRoadH/opentoggl/blob/main/CHANGELOG.md"
-              rel="noopener noreferrer"
               target="_blank"
+              variant="ghost"
             >
               {t("instanceAdmin:changelog")}
-            </a>
+            </AppLinkButton>
           </div>
         </div>
       </div>
@@ -110,24 +108,14 @@ function VersionCard(): ReactElement {
         </div>
         <div className="flex items-center gap-3">
           {version?.update_available && version.release_url ? (
-            <a
-              className="rounded-[8px] bg-[var(--track-accent)] px-3 py-1.5 text-[12px] font-medium text-white hover:opacity-90"
-              href={version.release_url}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
+            <AppLinkButton href={version.release_url} target="_blank" variant="primary" size="sm">
               {t("instanceAdmin:viewRelease")}
-            </a>
+            </AppLinkButton>
           ) : null}
           {version?.changelog_url ? (
-            <a
-              className="text-[12px] text-[var(--track-text-muted)] hover:text-[var(--track-text)]"
-              href={version.changelog_url}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
+            <AppLinkButton href={version.changelog_url} target="_blank" variant="ghost" size="sm">
               {t("instanceAdmin:changelog")}
-            </a>
+            </AppLinkButton>
           ) : null}
         </div>
       </div>
@@ -195,17 +183,18 @@ function HealthSection(): ReactElement {
   );
 }
 
+const statusBadgeColors: Record<string, string> = {
+  healthy: "bg-green-500/20 text-green-400",
+  degraded: "bg-yellow-500/20 text-yellow-400",
+  unhealthy: "bg-red-500/20 text-red-400",
+};
+
 function StatusBadge({ status }: { status: string }): ReactElement {
   const { t } = useTranslation();
-  const colors: Record<string, string> = {
-    healthy: "bg-green-500/20 text-green-400",
-    degraded: "bg-yellow-500/20 text-yellow-400",
-    unhealthy: "bg-red-500/20 text-red-400",
-  };
 
   return (
     <span
-      className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-medium ${colors[status] ?? "bg-gray-500/20 text-gray-400"}`}
+      className={`inline-flex items-center rounded-full px-3 py-1 text-[12px] font-medium ${statusBadgeColors[status] ?? "bg-gray-500/20 text-gray-400"}`}
     >
       {t(`instanceAdmin:${status}`)}
     </span>
