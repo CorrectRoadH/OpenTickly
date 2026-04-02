@@ -167,7 +167,10 @@ test.describe("Time entry DnD Resize", () => {
     const description = `resize-start-${Date.now()}`;
     await setupCalendarWithEntry(page, test.info(), description);
 
-    const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
+    const entry = page
+      .locator(`[data-testid^="calendar-entry-"]`)
+      .filter({ hasText: description })
+      .first();
     await expect(entry).toBeVisible({ timeout: 10_000 });
 
     await page.evaluate(() => {
@@ -207,7 +210,10 @@ test.describe("Time entry DnD Resize", () => {
     const description = `resize-end-${Date.now()}`;
     await setupCalendarWithEntry(page, test.info(), description);
 
-    const entry = page.locator(`[data-testid^="calendar-entry-"]`).filter({ hasText: description });
+    const entry = page
+      .locator(`[data-testid^="calendar-entry-"]`)
+      .filter({ hasText: description })
+      .first();
     await expect(entry).toBeVisible({ timeout: 10_000 });
 
     await page.evaluate(() => {
