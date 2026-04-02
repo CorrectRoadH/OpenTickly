@@ -230,6 +230,7 @@ export function ConnectedCalendarView({
   const onContextMenu = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => {
       if (action === "split" && entry.start && entry.stop) {
+        useTimerViewStore.getState().setPendingSplit(true);
         handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
         return;
       }
@@ -262,7 +263,17 @@ export function ConnectedCalendarView({
       if (typeof wid === "number") {
         void mutRef.current.stop.mutateAsync({ timeEntryId: running.id, workspaceId: wid });
       }
+      return;
     }
+    // No running entry — start a new empty timer
+    void mutRef.current.start.mutateAsync({
+      billable: false,
+      description: "",
+      projectId: null,
+      start: new Date().toISOString(),
+      tagIds: [],
+      taskId: null,
+    });
   }, []);
 
   const onZoomIn = useCallback(() => {

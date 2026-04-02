@@ -1,5 +1,5 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -55,24 +55,22 @@ const permissionFields: Array<{
 export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps): ReactElement {
   const permissionsQuery = useWorkspacePermissionsQuery(workspaceId);
   const updateMutation = useUpdateWorkspacePermissionsMutation(workspaceId);
-  const { handleSubmit, register, reset } = useForm<PermissionFormValues>({
-    defaultValues: defaultPermissionValues,
+  const serverValues: PermissionFormValues = permissionsQuery.data
+    ? {
+        limitPublicProjectData: permissionsQuery.data.workspace.limit_public_project_data ?? false,
+        onlyAdminsMayCreateProjects:
+          permissionsQuery.data.workspace.only_admins_may_create_projects ?? false,
+        onlyAdminsMayCreateTags:
+          permissionsQuery.data.workspace.only_admins_may_create_tags ?? false,
+        onlyAdminsSeeTeamDashboard:
+          permissionsQuery.data.workspace.only_admins_see_team_dashboard ?? false,
+      }
+    : defaultPermissionValues;
+  const { handleSubmit, register } = useForm<PermissionFormValues>({
+    values: serverValues,
   });
   const [status, setStatus] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!permissionsQuery.data) {
-      return;
-    }
-
-    reset({
-      limitPublicProjectData: permissionsQuery.data.workspace.limit_public_project_data,
-      onlyAdminsMayCreateProjects: permissionsQuery.data.workspace.only_admins_may_create_projects,
-      onlyAdminsMayCreateTags: permissionsQuery.data.workspace.only_admins_may_create_tags,
-      onlyAdminsSeeTeamDashboard: permissionsQuery.data.workspace.only_admins_see_team_dashboard,
-    });
-  }, [permissionsQuery.data, reset]);
 
   if (permissionsQuery.isPending || !permissionsQuery.data) {
     if (permissionsQuery.isError) {

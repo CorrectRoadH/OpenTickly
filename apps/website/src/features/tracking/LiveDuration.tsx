@@ -13,9 +13,11 @@ import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 export function LiveDuration({
   entry,
   className,
+  "data-testid": dataTestId,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   className?: string;
+  "data-testid"?: string;
 }): ReactElement {
   const { durationFormat } = useUserPreferences();
   const [seconds, setSeconds] = useState(() => resolveEntryDurationSeconds(entry, Date.now()));
@@ -28,5 +30,9 @@ export function LiveDuration({
     return () => clearInterval(id);
   }, [entry]);
 
-  return <span className={className}>{formatClockDuration(seconds, durationFormat)}</span>;
+  return (
+    <span className={className} data-testid={dataTestId}>
+      {formatClockDuration(seconds, durationFormat)}
+    </span>
+  );
 }

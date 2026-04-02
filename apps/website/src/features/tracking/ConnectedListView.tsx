@@ -205,6 +205,7 @@ export function ConnectedListView({
   const onSplitEntry = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
       if (entry.start && entry.stop) {
+        useTimerViewStore.getState().setPendingSplit(true);
         handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
       }
     },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -121,6 +121,7 @@ export function useTimeEntryEditor(
   },
 ): TimeEntryEditorState {
   const { t } = useTranslation("toast");
+  const { t: tTracking } = useTranslation("tracking");
   const { currentWorkspaceId, initialProjects, initialRecentEntries, initialTags, timezone } =
     options;
 
@@ -137,6 +138,14 @@ export function useTimeEntryEditor(
   const [projects, setProjects] = useState<TimeEntryEditorProject[]>(initialProjects);
   const [tags, setTags] = useState<TimeEntryEditorTag[]>(initialTags);
   const [error, setError] = useState<string | null>(null);
+
+  // Sync with external data when it arrives (e.g. after page reload)
+  useEffect(() => {
+    if (initialProjects.length > 0) setProjects(initialProjects);
+  }, [initialProjects]);
+  useEffect(() => {
+    if (initialTags.length > 0) setTags(initialTags);
+  }, [initialTags]);
 
   // Workspace for queries/mutations
   const entryWorkspaceId = useMemo(() => {
@@ -174,7 +183,7 @@ export function useTimeEntryEditor(
   const isPrimaryActionPending =
     startTimeEntryMutation.isPending || stopTimeEntryMutation.isPending;
   const primaryActionIcon = isRunning ? ("stop" as const) : ("play" as const);
-  const primaryActionLabel = isRunning ? t("stopTimer") : t("continueTimeEntry");
+  const primaryActionLabel = isRunning ? tTracking("stopTimer") : tTracking("continueTimeEntry");
 
   // Loading states
   const isSaving = isNewEntry
@@ -223,8 +232,8 @@ export function useTimeEntryEditor(
     }
     setError(null);
     onClose();
-    updateTimeEntryMutation.mutate(
-      {
+    updateTimeEntryMutation
+      .mutateAsync({
         request: {
           billable: entry.billable,
           description: description.trim(),
@@ -236,12 +245,9 @@ export function useTimeEntryEditor(
         },
         timeEntryId: entry.id,
         workspaceId: wid,
-      },
-      {
-        onSuccess: () => toast.success(t("timeEntrySaved")),
-        onError: () => toast.error(t("failedToSaveTimeEntry")),
-      },
-    );
+      })
+      .then(() => toast.success(t("timeEntrySaved")))
+      .catch(() => toast.error(t("failedToSaveTimeEntry")));
   }, [
     entry,
     description,

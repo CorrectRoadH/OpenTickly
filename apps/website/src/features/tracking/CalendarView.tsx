@@ -398,6 +398,25 @@ export const CalendarView = React.memo(function CalendarView({
   const step = zoom > 0 ? 15 : 30;
   const timeslots = zoom > 0 ? 4 : 2;
 
+  // RBC's scrollToTime doesn't work because .rbc-time-content has overflow:visible.
+  // Scroll the page so the current-time indicator is visible on mount.
+  const scrollToTime = useMemo(() => {
+    const now = new Date();
+    now.setMinutes(0, 0, 0);
+    now.setHours(Math.max(0, now.getHours() - 1));
+    return now;
+  }, []);
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const indicator = document.querySelector(".rbc-current-time-indicator");
+      if (indicator) {
+        indicator.scrollIntoView({ block: "center", behavior: "instant" });
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   // Context menu state lives at CalendarView level (not inside EventCard).
   // Toggl does the same — the menu is a sibling of the calendar grid in the
   // DOM, not inside the event card. This way RBC can re-render event cards
@@ -611,6 +630,7 @@ export const CalendarView = React.memo(function CalendarView({
         resizableAccessor={(event) =>
           !event.resource.isLocked && !event.resource.isRunning && !event.resource.isDraft
         }
+        scrollToTime={scrollToTime}
         selectable
         startAccessor={(event) => event.start}
         step={step}

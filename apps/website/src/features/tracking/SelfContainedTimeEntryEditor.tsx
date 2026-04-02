@@ -1,4 +1,4 @@
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useSessionActions } from "../../shared/session/session-context.tsx";
@@ -12,6 +12,7 @@ import {
   type TimeEntryEditorTag,
   type TimeEntryEditorWorkspace,
 } from "./TimeEntryEditorDialog.tsx";
+import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useTimeEntryEditor } from "./useTimeEntryEditor.ts";
 
 type DeletedEntrySnapshot = {
@@ -104,6 +105,15 @@ export function SelfContainedTimeEntryEditor({
   });
   const { setCurrentWorkspaceId } = useSessionActions();
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
+
+  // Auto-open split dialog when triggered from context menu
+  const pendingSplit = useTimerViewStore((s) => s.pendingSplit);
+  useEffect(() => {
+    if (pendingSplit) {
+      setSplitDialogOpen(true);
+      useTimerViewStore.getState().setPendingSplit(false);
+    }
+  }, [pendingSplit]);
 
   return (
     <>

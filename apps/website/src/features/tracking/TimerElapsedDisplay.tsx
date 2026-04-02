@@ -19,6 +19,7 @@ export function TimerElapsedDisplay({
   return (
     <LiveDuration
       className="text-[29px] font-medium tabular-nums text-white"
+      data-testid="timer-elapsed"
       entry={runningEntry}
     />
   );

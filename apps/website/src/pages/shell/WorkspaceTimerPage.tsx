@@ -36,7 +36,9 @@ import {
   useDeleteFavoriteMutation,
   useFavoritesQuery,
   useGoalsQuery,
+  useProjectsQuery,
   useStartTimeEntryMutation,
+  useTagsQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import { useTimerViewStore } from "../../features/tracking/store/timer-view-store.ts";
@@ -322,9 +324,8 @@ function EditorPortal({
       typeof createPreferencesFormValues
     >[0]) ?? {},
   );
-  const editorProjects = normalizeProjects(
-    queryClient.getQueryData(["projects", editorWorkspaceId, "all"]),
-  )
+  const projectsQuery = useProjectsQuery(editorWorkspaceId, "all");
+  const editorProjects = normalizeProjects(projectsQuery.data)
     .filter((project) => project.id != null && project.active !== false)
     .map((project) => ({
       clientName: project.client_name ?? undefined,
@@ -334,7 +335,8 @@ function EditorPortal({
       pinned: project.pinned === true,
     }))
     .sort((a, b) => Number(b.pinned) - Number(a.pinned));
-  const editorTags = normalizeTags(queryClient.getQueryData(["tags", editorWorkspaceId]));
+  const tagsQuery = useTagsQuery(editorWorkspaceId);
+  const editorTags = normalizeTags(tagsQuery.data);
   const editorRecentEntries = queryClient.getQueryData(["time-entries", null, null, false]);
 
   if (!selectedEntry || !selectedEntryAnchor) return null;

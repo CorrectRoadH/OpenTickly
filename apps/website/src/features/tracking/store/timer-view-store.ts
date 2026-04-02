@@ -28,6 +28,7 @@ interface TimerViewState {
   selectedEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
   selectedEntryAnchor: TimeEntryEditorAnchor | null;
   isNewEntry: boolean;
+  pendingSplit: boolean;
   calendarDraftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
 
   // Composer draft state
@@ -51,6 +52,7 @@ interface TimerViewActions {
   setSelectedEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
   setSelectedEntryAnchor: (anchor: TimeEntryEditorAnchor | null) => void;
   setIsNewEntry: (isNew: boolean) => void;
+  setPendingSplit: (pending: boolean) => void;
   setCalendarDraftEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
   closeEditor: () => void;
 
@@ -157,6 +159,7 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       selectedEntry: null,
       selectedEntryAnchor: null,
       isNewEntry: false,
+      pendingSplit: false,
       calendarDraftEntry: null,
 
       // Composer draft state
@@ -217,6 +220,11 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
           state.isNewEntry = isNew;
         }),
 
+      setPendingSplit: (pending) =>
+        set((state) => {
+          state.pendingSplit = pending;
+        }),
+
       setCalendarDraftEntry: (entry) =>
         set((state) => {
           state.calendarDraftEntry = entry as any;
@@ -227,6 +235,7 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
           state.selectedEntry = null;
           state.selectedEntryAnchor = null;
           state.isNewEntry = false;
+          state.pendingSplit = false;
           state.calendarDraftEntry = null;
         }),
 
