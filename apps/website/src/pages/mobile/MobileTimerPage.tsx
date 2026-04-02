@@ -77,7 +77,6 @@ export function MobileTimerPage(): ReactElement {
               <MobileTimeEntryRow
                 key={entry.id ?? i}
                 entry={entry}
-                nowMs={orch.nowMs}
                 onContinue={orch.handleContinueEntry}
                 onEdit={setEditingEntry}
               />
@@ -102,7 +101,6 @@ export function MobileTimerPage(): ReactElement {
                   <MobileTimeEntryRow
                     key={entry.id ?? i}
                     entry={entry}
-                    nowMs={orch.nowMs}
                     onContinue={orch.handleContinueEntry}
                   />
                 ))}

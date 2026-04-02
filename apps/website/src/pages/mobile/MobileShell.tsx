@@ -7,6 +7,7 @@ import {
   formatClockDuration,
   resolveEntryDurationSeconds,
 } from "../../features/tracking/overview-data.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   useCurrentTimeEntryQuery,
@@ -72,17 +73,10 @@ export function MobileShell(): ReactElement {
       .slice(0, 3);
   }, [recentEntriesQuery.data]);
 
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  const nowMs = useNowMs();
   const [draftDescription, setDraftDescription] = useState("");
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-
-  useEffect(() => {
-    if (!runningEntry) return;
-    setNowMs(Date.now());
-    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [runningEntry]);
 
   useEffect(() => {
     if (!runningEntry) {

@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useNowMs } from "../shared/hooks/useNowMs.ts";
 
 import { Dropdown, MenuSeparator, useDropdownClose } from "@opentoggl/web-ui";
 
@@ -64,20 +65,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const runningEntry = currentTimeEntryQuery.data;
-  const [nowMs, setNowMs] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!runningEntry) {
-      return;
-    }
-    setNowMs(Date.now());
-    const intervalId = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1000);
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [runningEntry]);
+  const nowMs = useNowMs();
 
   useEffect(() => {
     if (!runningEntry) {

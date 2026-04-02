@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import {
   formatClockDuration,
   resolveEntryColor,
@@ -11,17 +12,16 @@ import { PlayIcon } from "../../shared/ui/icons.tsx";
 
 type MobileTimeEntryRowProps = {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
-  nowMs: number;
   onContinue: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onEdit?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
 };
 
 export function MobileTimeEntryRow({
   entry,
-  nowMs,
   onContinue,
   onEdit,
 }: MobileTimeEntryRowProps): ReactElement {
+  const nowMs = useNowMs();
   const { durationFormat } = useUserPreferences();
   const color = resolveEntryColor(entry);
   const seconds = resolveEntryDurationSeconds(entry, nowMs);

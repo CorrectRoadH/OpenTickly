@@ -48,7 +48,6 @@ import type {
 import { useTimerViewStore } from "../../features/tracking/store/timer-view-store.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import { getTimeEntries } from "../../shared/api/public/track/index.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 
@@ -122,7 +121,6 @@ export interface TimerPageOrchestration {
   setListDateRange: (range: { startDate: string; endDate: string } | null) => void;
 
   // Time state
-  nowMs: number;
   selectedWeekDate: Date;
   setSelectedWeekDate: (date: Date) => void;
   beginningOfWeek: number;
@@ -131,7 +129,6 @@ export interface TimerPageOrchestration {
 
   // Running entry state
   runningEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
-  runningDurationSeconds: number;
   runningDescription: string;
   setRunningDescription: (desc: string) => void;
 
@@ -298,9 +295,6 @@ export function useTimerPageOrchestration(options?: {
     setListDaysLoaded((prev) => prev + LIST_PAGE_INCREMENT);
   }, []);
 
-  // Time state
-  const nowMs = useNowMs();
-
   // Preferences
   const { beginningOfWeek, collapseTimeEntries } = useUserPreferences();
 
@@ -404,12 +398,6 @@ export function useTimerPageOrchestration(options?: {
   // disabled when a custom date range is explicitly set.
   const hasMoreEntries = listDateRange === null;
   const isLoadingMoreEntries = timeEntriesQuery.isFetching && listDaysLoaded > LIST_INITIAL_DAYS;
-
-  // Computed values
-  const runningDurationSeconds = useMemo(
-    () => resolveEntryDurationSeconds(runningEntry ?? { duration: 0 }, nowMs),
-    [runningEntry, nowMs],
-  );
 
   const displayProject = useMemo(
     () =>
@@ -1010,7 +998,6 @@ export function useTimerPageOrchestration(options?: {
 
     // Time state
     beginningOfWeek,
-    nowMs,
     selectedWeekDate,
     setSelectedWeekDate,
     weekDays,
@@ -1018,7 +1005,6 @@ export function useTimerPageOrchestration(options?: {
 
     // Running entry state
     runningEntry,
-    runningDurationSeconds,
     runningDescription,
     setRunningDescription,
 

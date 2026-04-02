@@ -11,6 +11,7 @@ import {
   resolveEntryDurationSeconds,
 } from "../../features/tracking/overview-data.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 const HOUR_HEIGHT = 60; // px per hour
@@ -19,7 +20,6 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 type MobileCalendarDayTimelineProps = {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
-  nowMs: number;
   onEntryTap?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   timezone: string;
   viewDate?: Date;
@@ -27,11 +27,11 @@ type MobileCalendarDayTimelineProps = {
 
 export function MobileCalendarDayTimeline({
   entries,
-  nowMs,
   onEntryTap,
   timezone,
   viewDate,
 }: MobileCalendarDayTimelineProps): ReactElement {
+  const nowMs = useNowMs();
   const { durationFormat } = useUserPreferences();
   const scrollRef = useRef<HTMLDivElement>(null);
 

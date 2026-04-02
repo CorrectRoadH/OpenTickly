@@ -33,6 +33,7 @@ import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcu
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
 import { SelfContainedTimeEntryEditor } from "../../features/tracking/SelfContainedTimeEntryEditor.tsx";
+import { TimerElapsedDisplay } from "../../features/tracking/TimerElapsedDisplay.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
@@ -440,14 +441,7 @@ export function WorkspaceTimerPage({
               />
             ) : (
               <>
-                <span
-                  className="text-[29px] font-medium tabular-nums text-white"
-                  data-testid="timer-elapsed"
-                >
-                  {orch.runningDurationSeconds > 0
-                    ? formatClockDuration(orch.runningDurationSeconds, durationFormat)
-                    : "0:00:00"}
-                </span>
+                <TimerElapsedDisplay runningEntry={orch.runningEntry} />
                 <TimerActionButton
                   isRunning={!!orch.runningEntry}
                   disabled={orch.timerMutationPending}
@@ -546,7 +540,6 @@ export function WorkspaceTimerPage({
               groups={orch.groupedEntries}
               hasMore={orch.hasMoreEntries}
               isLoadingMore={orch.isLoadingMoreEntries}
-              nowMs={orch.nowMs}
               onLoadMore={orch.loadMoreEntries}
               onBulkDelete={(ids) => {
                 void orch.handleBulkDelete(ids);
@@ -663,7 +656,6 @@ export function WorkspaceTimerPage({
               draftEntry={orch.calendarDraftEntry}
               entries={orch.visibleEntries}
               isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
-              nowMs={orch.nowMs}
               onContinueEntry={(entry) => {
                 void orch.handleContinueEntry(entry);
               }}

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { DollarIcon, MoreIcon, PlayIcon, ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -34,7 +35,6 @@ export function ListView({
   groups,
   hasMore,
   isLoadingMore,
-  nowMs,
   onBillableToggle,
   onBulkDelete,
   onBulkEdit,
@@ -56,7 +56,6 @@ export function ListView({
   groups: EntryGroup[];
   hasMore?: boolean;
   isLoadingMore?: boolean;
-  nowMs?: number;
   onBillableToggle?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onBulkDelete?: (ids: number[]) => void;
   onBulkEdit?: (ids: number[], updates: import("./list-bulk-actions.tsx").BulkEditUpdates) => void;
@@ -82,6 +81,7 @@ export function ListView({
   workspaceName?: string;
 }): ReactElement {
   const { t } = useTranslation("tracking");
+  const nowMs = useNowMs();
   const { durationFormat, timeofdayFormat } = useUserPreferences();
   const {
     clearSelection,

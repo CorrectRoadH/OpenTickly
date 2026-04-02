@@ -36,7 +36,6 @@ export function MobileCalendarPage(): ReactElement {
       />
       <MobileCalendarDayTimeline
         entries={dayEntries}
-        nowMs={orch.nowMs}
         onEntryTap={setEditingEntry}
         timezone={orch.timezone}
         viewDate={selectedDate}

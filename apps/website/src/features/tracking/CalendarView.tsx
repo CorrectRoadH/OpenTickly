@@ -23,6 +23,7 @@ import {
   resolveEntryDurationSeconds,
   sumForDate,
 } from "./overview-data.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import type { CalendarSubview } from "./timer-view-mode.ts";
 import { MinusIcon, PlayIcon, PlusIcon, TagsIcon } from "../../shared/ui/icons.tsx";
@@ -183,7 +184,6 @@ export function CalendarView({
   calendarHours = "all",
   draftEntry,
   entries,
-  nowMs,
   isEntryFavorited,
   onContextMenuAction,
   onContinueEntry,
@@ -213,7 +213,6 @@ export function CalendarView({
   ) => void;
   onContinueEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onMoveEntry?: (entryId: number, minutesDelta: number) => void;
-  nowMs?: number;
   onEditEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => void;
   onResizeEntry?: (entryId: number, edge: "start" | "end", minutesDelta: number) => void;
   onSelectSlot?: (slot: { end: Date; start: Date }) => void;
@@ -229,7 +228,8 @@ export function CalendarView({
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   zoom?: number;
 }): ReactElement {
-  const now = new Date(nowMs ?? Date.now());
+  const nowMs = useNowMs();
+  const now = new Date(nowMs);
   const calendarLocalizer = useMemo(() => buildCalendarLocalizer(weekStartsOn), [weekStartsOn]);
   const calendarDate = useMemo(() => {
     if (subview === "day" && selectedSubviewDateIso) {
@@ -304,10 +304,7 @@ export function CalendarView({
   // tick, which would destroy local state (e.g. context menu) in EventCards.
   // We round nowMs down to the nearest minute so the events array only changes
   // when the minute rolls over.
-  const nowMinuteMs = useMemo(() => {
-    if (nowMs == null) return undefined;
-    return Math.floor(nowMs / 60_000) * 60_000;
-  }, [nowMs]);
+  const nowMinuteMs = useMemo(() => Math.floor(nowMs / 60_000) * 60_000, [nowMs]);
 
   const events = useMemo<CalendarEvent[]>(() => {
     // Include the running entry even if the time-entries query hasn't yet
@@ -342,7 +339,7 @@ export function CalendarView({
         // Running entry end is "now" rounded to the current minute.
         // This matches Toggl's behavior: calendar events update every ~60s,
         // not every second, so RBC doesn't re-render and destroy event cards.
-        const end = new Date(nowMinuteMs ?? Date.now());
+        const end = new Date(nowMinuteMs);
         const resource = {
           color: resolveEntryColor(entry),
           isDraft: false,
