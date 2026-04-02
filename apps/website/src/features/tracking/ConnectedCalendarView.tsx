@@ -1,0 +1,376 @@
+import { type ReactElement, useCallback, useRef } from "react";
+
+import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import {
+  useCreateTimeEntryMutation,
+  useCreateWorkspaceFavoriteMutation,
+  useDeleteTimeEntryMutation,
+  useUpdateTimeEntryMutation,
+} from "../../shared/query/web-shell.ts";
+import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
+import { CalendarView, type CalendarContextMenuAction } from "./CalendarView.tsx";
+import { SurfaceMessage } from "./overview-views.tsx";
+import { useTimerViewStore } from "./store/timer-view-store.ts";
+import { useTimerComposer } from "./useTimerComposer.ts";
+import { useWorkspaceData } from "./useWorkspaceData.ts";
+import { useWeekNavigation } from "./useWeekNavigation.ts";
+import { useTimeEntryViews } from "./useTimeEntryViews.ts";
+import type { DisplaySettings } from "./DisplaySettingsPopover.tsx";
+
+function resolveTimeEntryProjectId(entry: {
+  project_id?: number | null;
+  pid?: number | null;
+}): number | null {
+  const projectId = resolveCanonicalTimeEntryProjectId(entry);
+  if (projectId == null || projectId <= 0) return null;
+  return projectId;
+}
+
+function toTrackIso(date: Date): string {
+  return date.toISOString().replace(".000Z", "Z");
+}
+
+type DeletedEntrySnapshot = {
+  billable: boolean;
+  description: string;
+  duration: number;
+  projectId: number | null;
+  start: string;
+  stop: string;
+  tagIds: number[];
+  taskId: number | null;
+};
+
+export function ConnectedCalendarView({
+  calendarHours,
+  showAllEntries,
+  onDeleteWithUndo,
+}: {
+  calendarHours: DisplaySettings["calendarHours"];
+  showAllEntries: boolean;
+  onDeleteWithUndo: (snapshot: DeletedEntrySnapshot) => void;
+}): ReactElement {
+  const { workspaceId, timezone } = useWorkspaceData();
+  const { weekDays, beginningOfWeek } = useWeekNavigation();
+  const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
+  const composer = useTimerComposer();
+
+  const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
+  const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
+  const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
+
+  const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
+  const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
+  const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
+  const updateTimeEntryMutation = useUpdateTimeEntryMutation();
+
+  const mutRef = useRef({
+    create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
+    del: deleteTimeEntryMutation,
+    update: updateTimeEntryMutation,
+  });
+  mutRef.current = {
+    create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
+    del: deleteTimeEntryMutation,
+    update: updateTimeEntryMutation,
+  };
+
+  const composerRef = useRef(composer);
+  composerRef.current = composer;
+
+  const viewsRef = useRef(views);
+  viewsRef.current = views;
+
+  const handleEntryEdit = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
+      const pageContainer = document.querySelector<HTMLElement>(
+        '[data-testid="tracking-timer-page"]',
+      );
+      const pageRect = pageContainer?.getBoundingClientRect();
+      const pageLeft = pageRect?.left ?? 0;
+      const pageTop = (pageRect?.top ?? 0) + window.scrollY;
+      const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
+      const anchorLeft = anchorRect.left - pageLeft;
+      const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
+      const store = useTimerViewStore.getState();
+      store.setSelectedEntry(entry);
+      store.setSelectedEntryAnchor({
+        containerWidth,
+        height: anchorRect.height,
+        left: anchorLeft,
+        preferredPlacement,
+        top: anchorRect.top + window.scrollY - pageTop,
+        width: anchorRect.width,
+      });
+    },
+    [],
+  );
+
+  const handleCalendarSlotCreate = useCallback(
+    (slot: { end: Date; start: Date }) => {
+      const store = useTimerViewStore.getState();
+      if (store.selectedEntry != null) {
+        store.closeEditor();
+        store.setCalendarDraftEntry(null);
+        return;
+      }
+
+      const startDate = slot.start;
+      const endDate = slot.end;
+      const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
+
+      const draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry = {
+        billable: false,
+        description: "",
+        duration: durationSeconds > 0 ? durationSeconds : 1800,
+        start: toTrackIso(startDate),
+        stop: toTrackIso(endDate),
+        workspace_id: workspaceId,
+        tag_ids: [],
+      };
+
+      store.setIsNewEntry(true);
+      store.setCalendarDraftEntry(draftEntry);
+      store.setSelectedEntry(draftEntry);
+    },
+    [workspaceId],
+  );
+
+  const handleCalendarEntryMove = useCallback(async (entryId: number, minutesDelta: number) => {
+    if (minutesDelta === 0) return;
+
+    const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
+    if (!targetEntry?.start) return;
+
+    const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+    if (typeof workspaceForEntry !== "number") return;
+
+    const nextStart = new Date(new Date(targetEntry.start).getTime() + minutesDelta * 60_000);
+    const nextStop = targetEntry.stop
+      ? new Date(new Date(targetEntry.stop).getTime() + minutesDelta * 60_000)
+      : undefined;
+
+    await mutRef.current.update.mutateAsync({
+      request: {
+        billable: targetEntry.billable,
+        description: targetEntry.description ?? "",
+        projectId: resolveTimeEntryProjectId(targetEntry),
+        start: toTrackIso(nextStart),
+        stop: nextStop ? toTrackIso(nextStop) : undefined,
+        tagIds: targetEntry.tag_ids ?? [],
+        taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+      },
+      timeEntryId: entryId,
+      workspaceId: workspaceForEntry,
+    });
+  }, []);
+
+  const handleCalendarEntryResize = useCallback(
+    async (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+      if (minutesDelta === 0) return;
+
+      const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
+      if (!targetEntry?.start || !targetEntry.stop) return;
+
+      const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+      if (typeof workspaceForEntry !== "number") return;
+
+      const startMs = new Date(targetEntry.start).getTime();
+      const stopMs = new Date(targetEntry.stop).getTime();
+      const deltaMs = minutesDelta * 60_000;
+      const nextStartMs = edge === "start" ? startMs + deltaMs : startMs;
+      const nextStopMs = edge === "end" ? stopMs + deltaMs : stopMs;
+
+      if (nextStartMs >= nextStopMs) return;
+
+      await mutRef.current.update.mutateAsync({
+        request: {
+          billable: targetEntry.billable,
+          description: targetEntry.description ?? "",
+          projectId: resolveTimeEntryProjectId(targetEntry),
+          start: toTrackIso(new Date(nextStartMs)),
+          stop: toTrackIso(new Date(nextStopMs)),
+          tagIds: targetEntry.tag_ids ?? [],
+          taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+        },
+        timeEntryId: entryId,
+        workspaceId: workspaceForEntry,
+      });
+    },
+    [],
+  );
+
+  const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    void composerRef.current.handleContinueEntry(entry);
+  }, []);
+
+  const onContextMenu = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => {
+      if (action === "split" && entry.start && entry.stop) {
+        handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+        return;
+      }
+      handleCalendarContextMenuAction(entry, action, mutRef.current, onDeleteWithUndo);
+    },
+    [handleEntryEdit, onDeleteWithUndo],
+  );
+
+  const onMoveEntry = useCallback(
+    (entryId: number, minutesDelta: number) => {
+      void handleCalendarEntryMove(entryId, minutesDelta);
+    },
+    [handleCalendarEntryMove],
+  );
+
+  const onResizeEntry = useCallback(
+    (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+      void handleCalendarEntryResize(entryId, edge, minutesDelta);
+    },
+    [handleCalendarEntryResize],
+  );
+
+  const onStartEntry = useCallback(() => {
+    void composerRef.current.handleTimerAction();
+  }, []);
+
+  const onZoomIn = useCallback(() => {
+    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom + 1);
+  }, []);
+
+  const onZoomOut = useCallback(() => {
+    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom - 1);
+  }, []);
+
+  if (views.timeEntriesQuery.isPending) {
+    return <SurfaceMessage message="Loading time entries..." />;
+  }
+  if (views.timeEntriesQuery.isError) {
+    return <SurfaceMessage message={views.timerErrorMessage} tone="error" />;
+  }
+
+  return (
+    <CalendarView
+      calendarHours={calendarHours}
+      draftEntry={calendarDraftEntry}
+      entries={views.visibleEntries}
+      onContinueEntry={onContinueEntry}
+      onContextMenuAction={onContextMenu}
+      onEditEntry={handleEntryEdit}
+      onMoveEntry={onMoveEntry}
+      onResizeEntry={onResizeEntry}
+      onSelectSlot={handleCalendarSlotCreate}
+      onStartEntry={onStartEntry}
+      onZoomIn={onZoomIn}
+      onZoomOut={onZoomOut}
+      runningEntry={composer.runningEntry}
+      subview={calendarSubview}
+      timezone={timezone}
+      weekDays={weekDays}
+      weekStartsOn={beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+      zoom={calendarZoom}
+    />
+  );
+}
+
+function snapshotEntryForUndo(entry: {
+  billable?: boolean | null;
+  description?: string | null;
+  project_id?: number | null;
+  pid?: number | null;
+  start?: string | null;
+  stop?: string | null;
+  tag_ids?: number[] | null;
+  task_id?: number | null;
+  tid?: number | null;
+}): DeletedEntrySnapshot | null {
+  if (!entry.start || !entry.stop) return null;
+  const durationSec = Math.round(
+    (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+  );
+  return {
+    billable: entry.billable ?? false,
+    description: (entry.description ?? "").trim(),
+    duration: durationSec,
+    projectId: resolveTimeEntryProjectId(entry),
+    start: entry.start,
+    stop: entry.stop,
+    tagIds: entry.tag_ids ?? [],
+    taskId: entry.task_id ?? entry.tid ?? null,
+  };
+}
+
+function handleCalendarContextMenuAction(
+  entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+  action: CalendarContextMenuAction,
+  mutations: {
+    create: ReturnType<typeof useCreateTimeEntryMutation>;
+    createFavorite: ReturnType<typeof useCreateWorkspaceFavoriteMutation>;
+    del: ReturnType<typeof useDeleteTimeEntryMutation>;
+  },
+  showDeleteToast: (snapshot: DeletedEntrySnapshot) => void,
+): void {
+  const wid = entry.workspace_id ?? entry.wid;
+  switch (action) {
+    case "duplicate": {
+      if (entry.start && entry.stop) {
+        const durationSec = Math.round(
+          (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+        );
+        void mutations.create.mutateAsync({
+          billable: entry.billable,
+          description: (entry.description ?? "").trim(),
+          duration: durationSec,
+          projectId: resolveTimeEntryProjectId(entry),
+          start: entry.start,
+          stop: entry.stop,
+          tagIds: entry.tag_ids ?? [],
+          taskId: entry.task_id ?? entry.tid ?? null,
+        });
+      }
+      break;
+    }
+    case "delete": {
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        const snapshot = snapshotEntryForUndo(entry);
+        void mutations.del.mutateAsync({ timeEntryId: entry.id, workspaceId: wid }).then(() => {
+          if (snapshot) showDeleteToast(snapshot);
+        });
+      }
+      break;
+    }
+    case "copy-description": {
+      const description = (entry.description ?? "").trim();
+      if (description) {
+        void navigator.clipboard.writeText(description);
+      }
+      break;
+    }
+    case "copy-start-link": {
+      const params = new URLSearchParams();
+      if (entry.description) params.set("description", entry.description.trim());
+      const projectId = resolveTimeEntryProjectId(entry);
+      if (projectId != null) {
+        params.set("project_id", String(projectId));
+      }
+      if (entry.tag_ids?.length) {
+        params.set("tag_ids", entry.tag_ids.join(","));
+      }
+      if (entry.billable) params.set("billable", "true");
+      const link = `${window.location.origin}/timer?${params.toString()}`;
+      void navigator.clipboard.writeText(link);
+      break;
+    }
+    case "favorite": {
+      void mutations.createFavorite.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        projectId: resolveTimeEntryProjectId(entry),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+      break;
+    }
+  }
+}

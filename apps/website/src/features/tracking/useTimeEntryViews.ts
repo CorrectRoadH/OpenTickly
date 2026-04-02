@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
@@ -12,6 +12,7 @@ import {
   summarizeProjects,
   sumForDate,
 } from "./overview-data.ts";
+import { stabilizeEntryGroups, stabilizeTimeEntryList } from "./time-entry-stability.ts";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
 import { formatTrackQueryDate } from "./week-range.ts";
@@ -53,26 +54,35 @@ export function useTimeEntryViews(options: {
   const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? listQueryRange : { ...weekRange });
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
 
+  const visibleEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);
+  const recentWorkspaceEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);
+  const groupedEntriesRef = useRef<ReturnType<typeof buildEntryGroups>>([]);
+
   const entries = useMemo(
     () => sortTimeEntries(timeEntriesQuery.data ?? []),
     [timeEntriesQuery.data],
   );
 
-  const visibleEntries = useMemo(
-    () =>
-      showAllEntries
-        ? entries
-        : entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId),
-    [entries, showAllEntries, workspaceId],
-  );
+  const visibleEntries = useMemo(() => {
+    const nextEntries = showAllEntries
+      ? entries
+      : entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId);
+    const stabilizedEntries = stabilizeTimeEntryList(visibleEntriesRef.current, nextEntries);
+    visibleEntriesRef.current = stabilizedEntries;
+    return stabilizedEntries;
+  }, [entries, showAllEntries, workspaceId]);
 
-  const recentWorkspaceEntries = useMemo(
-    () =>
-      sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
-        (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
-      ),
-    [recentTimeEntriesQuery.data, workspaceId],
-  );
+  const recentWorkspaceEntries = useMemo(() => {
+    const nextEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
+      (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
+    );
+    const stabilizedEntries = stabilizeTimeEntryList(
+      recentWorkspaceEntriesRef.current,
+      nextEntries,
+    );
+    recentWorkspaceEntriesRef.current = stabilizedEntries;
+    return stabilizedEntries;
+  }, [recentTimeEntriesQuery.data, workspaceId]);
 
   const hasMoreEntries = listDateRange === null;
   const isLoadingMoreEntries = timeEntriesQuery.isFetching && listDaysLoaded > LIST_INITIAL_DAYS;
@@ -104,7 +114,10 @@ export function useTimeEntryViews(options: {
 
   const groupedEntries = useMemo(() => {
     const groups = buildEntryGroups(visibleEntries, timezone);
-    return collapseTimeEntries ? collapseSimilarEntries(groups) : groups;
+    const nextGroups = collapseTimeEntries ? collapseSimilarEntries(groups) : groups;
+    const stabilizedGroups = stabilizeEntryGroups(groupedEntriesRef.current, nextGroups);
+    groupedEntriesRef.current = stabilizedGroups;
+    return stabilizedGroups;
   }, [visibleEntries, timezone, collapseTimeEntries]);
 
   const trackStrip = useMemo(

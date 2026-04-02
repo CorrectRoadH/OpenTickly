@@ -2,11 +2,14 @@ import { type ReactElement, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useSessionActions } from "../../shared/session/session-context.tsx";
+import type { DurationFormat, TimeFormat } from "./overview-data.ts";
 import { SplitTimeEntryDialog } from "./SplitTimeEntryDialog.tsx";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import {
   TimeEntryEditorDialog,
   type TimeEntryEditorAnchor,
+  type TimeEntryEditorProject,
+  type TimeEntryEditorTag,
   type TimeEntryEditorWorkspace,
 } from "./TimeEntryEditorDialog.tsx";
 import { useTimeEntryEditor } from "./useTimeEntryEditor.ts";
@@ -61,24 +64,44 @@ function isEntryAlreadyFavorited(
 
 type SelfContainedTimeEntryEditorProps = {
   anchor: TimeEntryEditorAnchor;
+  currentWorkspaceId: number;
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   favorites: Array<{ description?: string; project_id?: number; tag_ids?: number[] }>;
   isNewEntry: boolean;
   onClose: () => void;
   onDeleteWithUndo?: (snapshot: DeletedEntrySnapshot) => void;
+  projects: TimeEntryEditorProject[];
+  recentEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  tags: TimeEntryEditorTag[];
+  durationFormat: DurationFormat;
+  timeofdayFormat: TimeFormat;
+  timezone: string;
   workspaces: TimeEntryEditorWorkspace[];
 };
 
 export function SelfContainedTimeEntryEditor({
   anchor,
+  currentWorkspaceId,
   entry: initialEntry,
   favorites,
   isNewEntry,
   onClose,
   onDeleteWithUndo,
+  projects,
+  recentEntries,
+  tags,
+  durationFormat,
+  timeofdayFormat,
+  timezone,
   workspaces,
 }: SelfContainedTimeEntryEditorProps): ReactElement {
-  const editor = useTimeEntryEditor(initialEntry, isNewEntry, onClose);
+  const editor = useTimeEntryEditor(initialEntry, isNewEntry, onClose, {
+    currentWorkspaceId,
+    initialProjects: projects,
+    initialRecentEntries: recentEntries,
+    initialTags: tags,
+    timezone,
+  });
   const { setCurrentWorkspaceId } = useSessionActions();
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
 
@@ -99,6 +122,7 @@ export function SelfContainedTimeEntryEditor({
         anchor={anchor}
         currentWorkspaceId={editor.workspaceId}
         description={editor.description}
+        durationFormat={durationFormat}
         entry={editor.entry}
         isCreatingProject={editor.isCreatingProject}
         isCreatingTag={editor.isCreatingTag}
@@ -161,6 +185,7 @@ export function SelfContainedTimeEntryEditor({
         selectedProjectId={editor.projectId}
         selectedTagIds={editor.tagIds}
         tags={editor.tags}
+        timeofdayFormat={timeofdayFormat}
         timezone={editor.timezone}
         workspaces={workspaces}
       />

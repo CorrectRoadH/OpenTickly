@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from "react";
-
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -11,18 +10,15 @@ import {
   useCreateTimeEntryMutation,
   useCreateWorkspaceFavoriteMutation,
   useDeleteTimeEntryMutation,
-  useProjectsQuery,
   useStartTimeEntryMutation,
   useStopTimeEntryMutation,
-  useTagsQuery,
-  useTimeEntriesQuery,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { resolveEntryDurationSeconds } from "./overview-data.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
-import { useSession } from "../../shared/session/session-context.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
+import { normalizeTags } from "./useWorkspaceData.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -116,11 +112,17 @@ export function useTimeEntryEditor(
   initialEntry: GithubComTogglTogglApiInternalModelsTimeEntry,
   isNew: boolean,
   onClose: () => void,
+  options: {
+    currentWorkspaceId: number;
+    initialProjects: TimeEntryEditorProject[];
+    initialRecentEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+    initialTags: TimeEntryEditorTag[];
+    timezone: string;
+  },
 ): TimeEntryEditorState {
   const { t } = useTranslation("toast");
-  const session = useSession();
-  const currentWorkspaceId = session.currentWorkspace.id;
-  const timezone = session.user.timezone || "UTC";
+  const { currentWorkspaceId, initialProjects, initialRecentEntries, initialTags, timezone } =
+    options;
 
   // Entry state — we keep a mutable copy so time edits update in place
   const [entry, setEntry] = useState(initialEntry);
@@ -132,6 +134,8 @@ export function useTimeEntryEditor(
     resolveTimeEntryProjectId(initialEntry),
   );
   const [tagIds, setTagIds] = useState<number[]>(initialEntry.tag_ids ?? []);
+  const [projects, setProjects] = useState<TimeEntryEditorProject[]>(initialProjects);
+  const [tags, setTags] = useState<TimeEntryEditorTag[]>(initialTags);
   const [error, setError] = useState<string | null>(null);
 
   // Workspace for queries/mutations
@@ -153,11 +157,6 @@ export function useTimeEntryEditor(
     );
   }, [description, projectId, tagIds, entry.start, entry.stop, initialEntry]);
 
-  // Queries — React Query caches these, no duplicate fetches
-  const projectsQuery = useProjectsQuery(entryWorkspaceId, "all");
-  const tagsQuery = useTagsQuery(entryWorkspaceId);
-  const recentTimeEntriesQuery = useTimeEntriesQuery({});
-
   // Mutations
   const createProjectMutation = useCreateProjectMutation(entryWorkspaceId);
   const createTimeEntryMutation = useCreateTimeEntryMutation(entryWorkspaceId);
@@ -168,34 +167,7 @@ export function useTimeEntryEditor(
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
 
-  // Normalize projects for the editor
-  const projects = useMemo<TimeEntryEditorProject[]>(() => {
-    const raw = projectsQuery.data;
-    if (!Array.isArray(raw)) return [];
-    return raw
-      .filter((p) => p.id != null && p.active !== false)
-      .map((p) => ({
-        clientName: p.client_name ?? undefined,
-        color: resolveProjectColorValue(p),
-        id: p.id as number,
-        name: p.name ?? "Untitled project",
-        pinned: p.pinned === true,
-      }))
-      .sort((a, b) => Number(b.pinned) - Number(a.pinned));
-  }, [projectsQuery.data]);
-
-  // Normalize tags
-  const tags = useMemo<TimeEntryEditorTag[]>(() => {
-    const raw = tagsQuery.data;
-    if (!Array.isArray(raw)) return [];
-    return raw.filter((t): t is { id: number; name: string } => t.id != null && t.name != null);
-  }, [tagsQuery.data]);
-
-  // Recent entries for suggestion surface
-  const recentEntries = useMemo(() => {
-    const raw = recentTimeEntriesQuery.data;
-    return Array.isArray(raw) ? raw : [];
-  }, [recentTimeEntriesQuery.data]);
+  const recentEntries = initialRecentEntries;
 
   // Primary action state
   const isRunning = isRunningTimeEntry(entry);
@@ -413,6 +385,21 @@ export function useTimeEntryEditor(
     async (name: string, color?: string) => {
       try {
         const project = await createProjectMutation.mutateAsync({ color, name });
+        if (typeof project.id === "number") {
+          const projectId = project.id;
+          setProjects((current) =>
+            [
+              ...current,
+              {
+                clientName: project.client_name ?? undefined,
+                color: resolveProjectColorValue(project),
+                id: projectId,
+                name: project.name ?? "Untitled project",
+                pinned: project.pinned === true,
+              },
+            ].sort((a, b) => Number(b.pinned) - Number(a.pinned)),
+          );
+        }
         setProjectId(project.id ?? null);
         setError(null);
       } catch (err) {
@@ -426,7 +413,16 @@ export function useTimeEntryEditor(
   const createTag = useCallback(
     async (name: string) => {
       try {
-        await createTagMutation.mutateAsync(name);
+        const [tag] = normalizeTags(await createTagMutation.mutateAsync(name));
+        if (typeof tag?.id === "number" && typeof tag?.name === "string") {
+          setTags((current) => {
+            if (current.some((currentTag) => currentTag.id === tag.id)) {
+              return current;
+            }
+            return [...current, { id: tag.id, name: tag.name }];
+          });
+          setTagIds((current) => (current.includes(tag.id) ? current : [...current, tag.id]));
+        }
         setError(null);
       } catch (err) {
         setError(resolveSingleTimerErrorMessage(err));

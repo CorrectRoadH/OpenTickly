@@ -15,6 +15,8 @@ import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared
 import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
 import { CalendarPanel } from "./CalendarPanel.tsx";
 import {
+  type DurationFormat,
+  type TimeFormat,
   formatClockDuration,
   formatClockTime,
   resolveEntryDurationSeconds,
@@ -28,7 +30,6 @@ import {
   TagsIcon,
 } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
-import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useEditorKeyboard } from "./useEditorKeyboard.ts";
 import { useEditorUIState } from "./useEditorUIState.ts";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
@@ -66,6 +67,7 @@ type TimeEntryEditorDialogProps = {
   anchor: TimeEntryEditorAnchor;
   currentWorkspaceId: number;
   description: string;
+  durationFormat: DurationFormat;
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
   isCreatingProject: boolean;
   isCreatingTag: boolean;
@@ -100,6 +102,7 @@ type TimeEntryEditorDialogProps = {
   selectedProjectId?: number | null;
   selectedTagIds: number[];
   tags: TimeEntryEditorTag[];
+  timeofdayFormat: TimeFormat;
   timezone: string;
   workspaces: TimeEntryEditorWorkspace[];
 };
@@ -108,6 +111,7 @@ export function TimeEntryEditorDialog({
   anchor,
   currentWorkspaceId,
   description,
+  durationFormat,
   entry,
   isCreatingProject,
   isCreatingTag,
@@ -142,11 +146,11 @@ export function TimeEntryEditorDialog({
   selectedProjectId,
   selectedTagIds,
   tags,
+  timeofdayFormat,
   timezone,
   workspaces,
 }: TimeEntryEditorDialogProps): ReactElement {
   const { t } = useTranslation("tracking");
-  const { durationFormat } = useUserPreferences();
   const [ui, dispatch] = useEditorUIState();
   const {
     descriptionSuggestionsOpen,
@@ -658,6 +662,7 @@ export function TimeEntryEditorDialog({
                 time={start}
                 timeAriaLabel="Edit start time"
                 timeValue={toTimeInputValue(start, timezone)}
+                timeofdayFormat={timeofdayFormat}
                 timezone={timezone}
               />
               <svg
@@ -696,6 +701,7 @@ export function TimeEntryEditorDialog({
                   time={stop}
                   timeAriaLabel="Edit stop time"
                   timeValue={stop ? toTimeInputValue(stop, timezone) : ""}
+                  timeofdayFormat={timeofdayFormat}
                   timezone={timezone}
                 />
               ) : (
@@ -1017,6 +1023,7 @@ function TimeDisplay({
   time,
   timeAriaLabel,
   timeValue,
+  timeofdayFormat,
   timezone,
 }: {
   dialogRootTestId?: string;
@@ -1032,9 +1039,9 @@ function TimeDisplay({
   time: Date;
   timeAriaLabel: string;
   timeValue: string;
+  timeofdayFormat: TimeFormat;
   timezone: string;
 }): ReactElement {
-  const { timeofdayFormat } = useUserPreferences();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState(timeValue);
 

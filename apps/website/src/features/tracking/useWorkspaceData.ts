@@ -4,7 +4,7 @@ import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/a
 import { useProjectsQuery, useTagsQuery } from "../../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 
-function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
+export function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
   if (Array.isArray(data)) {
     return data.filter((project): project is GithubComTogglTogglApiInternalModelsProject =>
       Boolean(project && typeof project === "object" && "id" in project),
@@ -30,7 +30,7 @@ function hasProjectArray(
   );
 }
 
-function normalizeTags(data: unknown): { id: number; name: string }[] {
+export function normalizeTags(data: unknown): { id: number; name: string }[] {
   if (Array.isArray(data)) {
     return data.filter((tag): tag is { id: number; name: string } =>
       Boolean(tag && typeof tag === "object" && "id" in tag && "name" in tag),
