@@ -14,20 +14,33 @@ import {
   useStartTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
-import { useTimerPageOrchestration } from "../shell/useTimerPageOrchestration.ts";
+import { TimerPageProviders } from "../../features/tracking/contexts/TimerPageProviders.tsx";
+import { useWorkspaceContext } from "../../features/tracking/contexts/WorkspaceContext.tsx";
+import { useTimeEntriesContext } from "../../features/tracking/contexts/TimeEntriesContext.tsx";
+import { useRunningTimerContext } from "../../features/tracking/contexts/RunningTimerContext.tsx";
 import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { MobileTimeEntryRow } from "./MobileTimeEntryRow.tsx";
 
 export function MobileTimerPage(): ReactElement {
+  return (
+    <TimerPageProviders>
+      <MobileTimerPageContent />
+    </TimerPageProviders>
+  );
+}
+
+function MobileTimerPageContent(): ReactElement {
   const { t } = useTranslation("mobile");
-  const orch = useTimerPageOrchestration({ showAllEntries: false });
+  const { workspaceId, timezone } = useWorkspaceContext();
+  const { recentWorkspaceEntries, groupedEntries } = useTimeEntriesContext();
+  const { nowMs, handleContinueEntry } = useRunningTimerContext();
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-  const favoritesQuery = useFavoritesQuery(orch.workspaceId);
-  const goalsQuery = useGoalsQuery(orch.workspaceId, true);
+  const favoritesQuery = useFavoritesQuery(workspaceId);
+  const goalsQuery = useGoalsQuery(workspaceId, true);
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
   const goals = Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
-  const startMutation = useStartTimeEntryMutation(orch.workspaceId);
+  const startMutation = useStartTimeEntryMutation(workspaceId);
 
   function handleStartFavorite(fav: ModelsFavorite) {
     void startMutation.mutateAsync({
@@ -44,7 +57,6 @@ export function MobileTimerPage(): ReactElement {
       {editingEntry ? (
         <MobileTimeEntryEditor entry={editingEntry} onClose={() => setEditingEntry(null)} />
       ) : null}
-      {/* Goals */}
       {goals.length > 0 ? (
         <section>
           <SectionHeader title={t("goals")} />
@@ -56,7 +68,6 @@ export function MobileTimerPage(): ReactElement {
         </section>
       ) : null}
 
-      {/* Favorites */}
       {favorites.length > 0 ? (
         <section>
           <SectionHeader title={t("favorites")} />
@@ -68,17 +79,16 @@ export function MobileTimerPage(): ReactElement {
         </section>
       ) : null}
 
-      {/* Recent entries */}
-      {orch.recentWorkspaceEntries.length > 0 ? (
+      {recentWorkspaceEntries.length > 0 ? (
         <section>
           <SectionHeader title={t("recent")} />
           <div className="flex flex-col">
-            {orch.recentWorkspaceEntries.slice(0, 10).map((entry, i) => (
+            {recentWorkspaceEntries.slice(0, 10).map((entry, i) => (
               <MobileTimeEntryRow
                 key={entry.id ?? i}
                 entry={entry}
-                nowMs={orch.nowMs}
-                onContinue={orch.handleContinueEntry}
+                nowMs={nowMs}
+                onContinue={handleContinueEntry}
                 onEdit={setEditingEntry}
               />
             ))}
@@ -86,15 +96,14 @@ export function MobileTimerPage(): ReactElement {
         </section>
       ) : null}
 
-      {/* Grouped entries */}
-      {orch.groupedEntries.length > 0 ? (
+      {groupedEntries.length > 0 ? (
         <section>
           <SectionHeader title={t("thisWeek")} />
-          {orch.groupedEntries.map((group) => (
+          {groupedEntries.map((group) => (
             <div key={group.key}>
               <GroupHeader
                 dateKey={group.key}
-                timezone={orch.timezone}
+                timezone={timezone}
                 totalSeconds={group.totalSeconds}
               />
               <div className="flex flex-col">
@@ -102,8 +111,8 @@ export function MobileTimerPage(): ReactElement {
                   <MobileTimeEntryRow
                     key={entry.id ?? i}
                     entry={entry}
-                    nowMs={orch.nowMs}
-                    onContinue={orch.handleContinueEntry}
+                    nowMs={nowMs}
+                    onContinue={handleContinueEntry}
                   />
                 ))}
               </div>
