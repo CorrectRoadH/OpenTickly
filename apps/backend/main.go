@@ -25,7 +25,11 @@ import (
 var version = "dev"
 
 func main() {
-	instanceadmintransport.CurrentVersion = version
+	v := version
+	if len(v) > 0 && v[0] == 'v' {
+		v = v[1:]
+	}
+	instanceadmintransport.CurrentVersion = v
 
 	if err := run(os.Args[1:]); err != nil {
 		slog.Error("command failed", "error", err)
