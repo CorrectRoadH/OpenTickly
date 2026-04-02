@@ -23,7 +23,6 @@ import {
   resolveEntryDurationSeconds,
   sumForDate,
 } from "./overview-data.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import type { CalendarSubview } from "./timer-view-mode.ts";
 import { MinusIcon, PlayIcon, PlusIcon, TagsIcon } from "../../shared/ui/icons.tsx";
@@ -228,8 +227,18 @@ export function CalendarView({
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   zoom?: number;
 }): ReactElement {
-  const nowMs = useNowMs();
-  const now = new Date(nowMs);
+  // Minute-resolution tick — only re-renders CalendarView once per minute
+  // (for running entry block position and current-time indicator).
+  const [nowMinuteMs, setNowMinuteMs] = useState(() => Math.floor(Date.now() / 60_000) * 60_000);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const next = Math.floor(Date.now() / 60_000) * 60_000;
+      setNowMinuteMs((prev) => (prev === next ? prev : next));
+    }, 5_000); // check every 5s, only update on minute boundary
+    return () => clearInterval(id);
+  }, []);
+
+  const now = new Date(nowMinuteMs);
   const calendarLocalizer = useMemo(() => buildCalendarLocalizer(weekStartsOn), [weekStartsOn]);
   const calendarDate = useMemo(() => {
     if (subview === "day" && selectedSubviewDateIso) {
@@ -237,8 +246,6 @@ export function CalendarView({
     }
     return weekDays[0] ?? now;
   }, [now, selectedSubviewDateIso, subview, weekDays]);
-  // Build stopped/draft events without nowMs so they stay referentially
-  // stable while a timer is running (nowMs ticks every second).
   const stoppedEvents = useMemo<CalendarEvent[]>(() => {
     const DRAFT_ENTRY_ID = -1;
 
@@ -300,12 +307,6 @@ export function CalendarView({
   }, [draftEntry, entries]);
 
   // Toggl updates running entries in the calendar every ~60 seconds, not every
-  // second. This prevents RBC from re-rendering all event components on every
-  // tick, which would destroy local state (e.g. context menu) in EventCards.
-  // We round nowMs down to the nearest minute so the events array only changes
-  // when the minute rolls over.
-  const nowMinuteMs = useMemo(() => Math.floor(nowMs / 60_000) * 60_000, [nowMs]);
-
   const events = useMemo<CalendarEvent[]>(() => {
     // Include the running entry even if the time-entries query hasn't yet
     // returned it (e.g. immediately after starting a new timer).

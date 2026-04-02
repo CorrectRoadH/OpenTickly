@@ -32,7 +32,7 @@ export type NavSection = {
 };
 
 type NavItem = {
-  badge?: string;
+  badge?: React.ReactNode;
   disabled?: boolean;
   id: string;
   label: string;
@@ -48,7 +48,7 @@ export function SidebarNavSections({
   adminSection: NavSection | undefined;
   pathname: string;
   primarySections: NavSection[];
-  timerBadge?: string;
+  timerBadge?: React.ReactNode;
 }): ReactElement {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -121,7 +121,7 @@ function ShellNavItem({
   to,
 }: {
   active: boolean;
-  badge?: string;
+  badge?: React.ReactNode;
   disabled?: boolean;
   id: string;
   label: string;

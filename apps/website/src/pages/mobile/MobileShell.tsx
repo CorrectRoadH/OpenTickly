@@ -3,12 +3,8 @@ import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 
-import {
-  formatClockDuration,
-  resolveEntryDurationSeconds,
-} from "../../features/tracking/overview-data.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
-import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
+import { resolveEntryDurationSeconds } from "../../features/tracking/overview-data.ts";
+import { LiveDuration } from "../../features/tracking/LiveDuration.tsx";
 import {
   useCurrentTimeEntryQuery,
   useStartTimeEntryMutation,
@@ -42,7 +38,6 @@ export function MobileShell(): ReactElement {
     ],
     [t],
   );
-  const { durationFormat } = useUserPreferences();
   const session = useSession();
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const startMutation = useStartTimeEntryMutation(session.currentWorkspace.id);
@@ -73,27 +68,30 @@ export function MobileShell(): ReactElement {
       .slice(0, 3);
   }, [recentEntriesQuery.data]);
 
-  const nowMs = useNowMs();
   const [draftDescription, setDraftDescription] = useState("");
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
 
+  // Update document.title every second when a timer is running (no re-render).
   useEffect(() => {
     if (!runningEntry) {
       document.title = "OpenToggl";
       return;
     }
-    const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
-    const h = Math.floor(seconds / 3600);
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
-  }, [runningEntry, nowMs]);
-
-  const timerLabel = useMemo(() => {
-    if (!runningEntry) return undefined;
-    return formatClockDuration(resolveEntryDurationSeconds(runningEntry, nowMs), durationFormat);
-  }, [runningEntry, nowMs, durationFormat]);
+    function updateTitle() {
+      const seconds = resolveEntryDurationSeconds(runningEntry!, Date.now());
+      const h = Math.floor(seconds / 3600);
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
+    }
+    updateTitle();
+    const id = setInterval(updateTitle, 1000);
+    return () => {
+      clearInterval(id);
+      document.title = "OpenToggl";
+    };
+  }, [runningEntry]);
 
   function handleStop() {
     if (!runningEntry?.id) return;
@@ -169,7 +167,12 @@ export function MobileShell(): ReactElement {
                   ) : null}
                 </p>
               ) : null}
-              <p className="text-[12px] tabular-nums text-[var(--track-accent)]">{timerLabel}</p>
+              {runningEntry ? (
+                <LiveDuration
+                  className="text-[12px] tabular-nums text-[var(--track-accent)]"
+                  entry={runningEntry}
+                />
+              ) : null}
             </button>
             <TimerActionButton isRunning onClick={handleStop} size="sm" />
           </div>

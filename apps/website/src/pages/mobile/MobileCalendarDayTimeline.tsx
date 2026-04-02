@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useRef } from "react";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import i18n from "../../app/i18n.ts";
 import {
@@ -11,7 +11,6 @@ import {
   resolveEntryDurationSeconds,
 } from "../../features/tracking/overview-data.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
 const HOUR_HEIGHT = 60; // px per hour
@@ -31,7 +30,15 @@ export function MobileCalendarDayTimeline({
   timezone,
   viewDate,
 }: MobileCalendarDayTimelineProps): ReactElement {
-  const nowMs = useNowMs();
+  // Minute-resolution tick for running entry block position + current-time indicator
+  const [nowMs, setNowMs] = useState(() => Math.floor(Date.now() / 60_000) * 60_000);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const next = Math.floor(Date.now() / 60_000) * 60_000;
+      setNowMs((prev) => (prev === next ? prev : next));
+    }, 5_000);
+    return () => clearInterval(id);
+  }, []);
   const { durationFormat } = useUserPreferences();
   const scrollRef = useRef<HTMLDivElement>(null);
 

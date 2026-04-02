@@ -5,9 +5,9 @@ import { useTranslation } from "react-i18next";
 import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { DollarIcon, MoreIcon, PlayIcon, ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
+import { LiveDuration } from "./LiveDuration.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
 import {
   BulkActionToolbar,
@@ -81,7 +81,6 @@ export function ListView({
   workspaceName?: string;
 }): ReactElement {
   const { t } = useTranslation("tracking");
-  const nowMs = useNowMs();
   const { durationFormat, timeofdayFormat } = useUserPreferences();
   const {
     clearSelection,
@@ -305,12 +304,19 @@ export function ListView({
                       }
                       type="button"
                     >
-                      <span className="text-[var(--track-text-muted)]">
-                        {formatClockDuration(
-                          resolveEntryDurationSeconds(renderEntry, nowMs),
-                          durationFormat,
-                        )}
-                      </span>
+                      {isRunningTimeEntry(renderEntry) ? (
+                        <LiveDuration
+                          className="text-[var(--track-text-muted)]"
+                          entry={renderEntry}
+                        />
+                      ) : (
+                        <span className="text-[var(--track-text-muted)]">
+                          {formatClockDuration(
+                            resolveEntryDurationSeconds(renderEntry),
+                            durationFormat,
+                          )}
+                        </span>
+                      )}
                     </button>
 
                     {/* Time range */}

@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useNowMs } from "../../shared/hooks/useNowMs.ts";
+import { LiveDuration } from "../../features/tracking/LiveDuration.tsx";
 import {
   formatClockDuration,
   resolveEntryColor,
@@ -9,6 +9,10 @@ import {
 } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
+
+function isRunning(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
+  return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
+}
 
 type MobileTimeEntryRowProps = {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
@@ -21,11 +25,8 @@ export function MobileTimeEntryRow({
   onContinue,
   onEdit,
 }: MobileTimeEntryRowProps): ReactElement {
-  const nowMs = useNowMs();
   const { durationFormat } = useUserPreferences();
   const color = resolveEntryColor(entry);
-  const seconds = resolveEntryDurationSeconds(entry, nowMs);
-  const duration = formatClockDuration(seconds, durationFormat);
   const description = entry.description?.trim() || "No description";
   const projectName = entry.project_name?.trim();
   const tagNames = entry.tags ?? [];
@@ -68,9 +69,16 @@ export function MobileTimeEntryRow({
           </p>
         ) : null}
       </button>
-      <span className="shrink-0 text-[12px] tabular-nums text-[var(--track-text-muted)]">
-        {duration}
-      </span>
+      {isRunning(entry) ? (
+        <LiveDuration
+          className="shrink-0 text-[12px] tabular-nums text-[var(--track-text-muted)]"
+          entry={entry}
+        />
+      ) : (
+        <span className="shrink-0 text-[12px] tabular-nums text-[var(--track-text-muted)]">
+          {formatClockDuration(resolveEntryDurationSeconds(entry), durationFormat)}
+        </span>
+      )}
     </div>
   );
 }

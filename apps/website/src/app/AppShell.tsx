@@ -1,14 +1,7 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import {
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type ReactElement, type ReactNode, useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNowMs } from "../shared/hooks/useNowMs.ts";
+import { LiveDuration } from "../features/tracking/LiveDuration.tsx";
 
 import { Dropdown, MenuSeparator, useDropdownClose } from "@opentoggl/web-ui";
 
@@ -16,11 +9,7 @@ import { SidebarNavSections } from "./AppShellSidebarNav.tsx";
 import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ChevronRightIcon, FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
-import {
-  formatClockDuration,
-  resolveEntryDurationSeconds,
-} from "../features/tracking/overview-data.ts";
-import { useUserPreferences } from "../shared/query/useUserPreferences.ts";
+import { resolveEntryDurationSeconds } from "../features/tracking/overview-data.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { UserAvatar } from "../shared/ui/UserAvatar.tsx";
 import {
@@ -46,7 +35,6 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const location = useRouterState({
     select: (state) => state.location,
   });
-  const { durationFormat } = useUserPreferences();
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const profileQuery = useProfileQuery();
@@ -65,27 +53,32 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const runningEntry = currentTimeEntryQuery.data;
-  const nowMs = useNowMs();
 
+  // Update document.title every second when a timer is running.
+  // Uses a self-contained interval so the Shell component never re-renders.
   useEffect(() => {
     if (!runningEntry) {
       document.title = "OpenToggl";
       return;
     }
-    const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
-    const h = Math.floor(seconds / 3600);
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-    const s = String(seconds % 60).padStart(2, "0");
-    document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
-  }, [runningEntry, nowMs]);
-
-  const timerBadge = useMemo(() => {
-    if (!runningEntry) {
-      return undefined;
+    function updateTitle() {
+      const seconds = resolveEntryDurationSeconds(runningEntry!, Date.now());
+      const h = Math.floor(seconds / 3600);
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const s = String(seconds % 60).padStart(2, "0");
+      document.title = `${h}:${m}:${s} \u00B7 OpenToggl`;
     }
-    const seconds = resolveEntryDurationSeconds(runningEntry, nowMs);
-    return formatClockDuration(seconds, durationFormat);
-  }, [runningEntry, nowMs]);
+    updateTitle();
+    const id = setInterval(updateTitle, 1000);
+    return () => {
+      clearInterval(id);
+      document.title = "OpenToggl";
+    };
+  }, [runningEntry]);
+
+  // Timer badge in sidebar — LiveDuration handles its own tick internally,
+  // so the Shell never re-renders for timer display.
+  const timerBadge = runningEntry ? <LiveDuration entry={runningEntry} /> : undefined;
 
   function handleWorkspaceChange(workspaceId: number) {
     if (isAccountScopedShellPath(location.pathname)) {
