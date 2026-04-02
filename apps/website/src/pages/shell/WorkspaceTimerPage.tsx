@@ -32,8 +32,7 @@ import { useDismiss } from "../../shared/ui/useDismiss.ts";
 import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ProjectPickerDropdown } from "../../features/tracking/bulk-edit-pickers.tsx";
 import { ManualModeComposer } from "../../features/tracking/ManualModeComposer.tsx";
-import { SplitTimeEntryDialog } from "../../features/tracking/SplitTimeEntryDialog.tsx";
-import { TimeEntryEditorDialog } from "../../features/tracking/TimeEntryEditorDialog.tsx";
+import { SelfContainedTimeEntryEditor } from "../../features/tracking/SelfContainedTimeEntryEditor.tsx";
 import { TimerComposerSuggestionsDialog } from "../../features/tracking/TimerComposerSuggestionsDialog.tsx";
 import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
@@ -101,7 +100,6 @@ export function WorkspaceTimerPage({
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerControlsRef = useRef<HTMLDivElement | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
-  const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const { durationFormat } = useUserPreferences();
   const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
   const favoritesQuery = useFavoritesQuery(orch.workspaceId);
@@ -627,7 +625,6 @@ export function WorkspaceTimerPage({
               onSplitEntry={(entry) => {
                 if (entry.start && entry.stop) {
                   orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                  setSplitDialogOpen(true);
                 }
               }}
               onProjectChange={(entry, projectId) => {
@@ -672,8 +669,8 @@ export function WorkspaceTimerPage({
               }}
               onContextMenuAction={(entry, action) => {
                 if (action === "split" && entry.start && entry.stop) {
+                  // Open the editor — user can use the split button from there
                   orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                  setSplitDialogOpen(true);
                   return;
                 }
                 handleCalendarContextMenuAction(entry, action, orch, showDeleteToast, favorites);
@@ -730,128 +727,16 @@ export function WorkspaceTimerPage({
               ) : null}
             </div>
           ) : null}
-          {/* Editor dialog — positioned absolutely inside the page container.
-              Anchor coordinates are page-relative so the editor scrolls with
-              window scroll natively, no JS compensation needed. */}
+          {/* Editor dialog — self-contained: manages its own field state,
+              queries, and mutations via useTimeEntryEditor hook. */}
           {orch.selectedEntry && orch.selectedEntryAnchor ? (
-            <TimeEntryEditorDialog
+            <SelfContainedTimeEntryEditor
               anchor={orch.selectedEntryAnchor}
-              currentWorkspaceId={orch.selectedEntryWorkspaceId}
-              description={orch.selectedDescription}
               entry={orch.selectedEntry}
-              isCreatingProject={orch.createProjectMutation.isPending}
-              isCreatingTag={orch.createTagMutation.isPending}
-              isDeleting={orch.deleteTimeEntryMutation.isPending}
-              isDirty={orch.selectedEntryDirty}
+              favorites={favorites}
               isNewEntry={orch.isNewEntry}
-              isPrimaryActionPending={orch.timerMutationPending}
-              isSaving={
-                orch.isNewEntry
-                  ? orch.createTimeEntryMutation.isPending
-                  : orch.updateTimeEntryMutation.isPending
-              }
               onClose={orch.closeSelectedEntryEditor}
-              onCreateProject={orch.handleSelectedEntryProjectCreate}
-              onCreateTag={orch.handleSelectedEntryTagCreate}
-              onBillableToggle={orch.handleSelectedEntryBillableToggle}
-              onDuplicate={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryDuplicate();
-                    }
-              }
-              onDelete={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      const snapshot = orch.selectedEntry
-                        ? snapshotEntryForUndo(orch.selectedEntry)
-                        : null;
-                      void orch
-                        .handleSelectedEntryDelete()
-                        .then(() => {
-                          if (snapshot) showDeleteToast(snapshot);
-                        })
-                        .catch(() => {
-                          // Error is already displayed in the editor via selectedEntryError
-                        });
-                    }
-              }
-              onDescriptionChange={orch.setSelectedDescription}
-              onFavorite={
-                orch.isNewEntry ||
-                isEntryAlreadyFavorited(
-                  {
-                    description: orch.selectedDescription,
-                    project_id: orch.selectedProjectId,
-                    tag_ids: orch.selectedTagIds,
-                  },
-                  favorites,
-                )
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryFavorite();
-                    }
-              }
-              onPrimaryAction={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      void orch.handleSelectedEntryPrimaryAction();
-                    }
-              }
-              onProjectSelect={orch.setSelectedProjectId}
-              onSave={() => {
-                void orch.handleSelectedEntrySave();
-              }}
-              onSplit={
-                orch.isNewEntry
-                  ? undefined
-                  : () => {
-                      setSplitDialogOpen(true);
-                    }
-              }
-              onStartTimeChange={orch.handleSelectedEntryStartTimeChange}
-              onStopTimeChange={orch.handleSelectedEntryStopTimeChange}
-              onSuggestionEntrySelect={orch.handleSelectedEntrySuggestionSelect}
-              onTagToggle={(tagId) => {
-                orch.setSelectedTagIds((current) =>
-                  current.includes(tagId)
-                    ? current.filter((id) => id !== tagId)
-                    : [...current, tagId],
-                );
-              }}
-              onWorkspaceSelect={(nextWorkspaceId) => {
-                orch.switchWorkspace(nextWorkspaceId);
-                orch.closeSelectedEntryEditor();
-              }}
-              primaryActionIcon={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? "stop"
-                  : "play"
-              }
-              primaryActionLabel={
-                orch.selectedEntry.stop == null || (orch.selectedEntry.duration ?? 0) < 0
-                  ? t("stopTimer")
-                  : t("continueTimeEntry")
-              }
-              projects={orch.projectOptions
-                .filter((project) => project.id != null && project.active !== false)
-                .map((project) => ({
-                  clientName: project.client_name ?? undefined,
-                  color: resolveProjectColorValue(project),
-                  id: project.id as number,
-                  name: project.name ?? "Untitled project",
-                  pinned: project.pinned === true,
-                }))
-                .sort((a, b) => Number(b.pinned) - Number(a.pinned))}
-              recentEntries={orch.recentWorkspaceEntries}
-              saveError={orch.selectedEntryError}
-              selectedProjectId={orch.selectedProjectId}
-              selectedTagIds={orch.selectedTagIds}
-              tags={orch.tagOptions}
-              timezone={orch.timezone}
+              onDeleteWithUndo={showDeleteToast}
               workspaces={orch.session.availableWorkspaces.map((workspace) => ({
                 id: workspace.id,
                 isCurrent: workspace.isCurrent,
@@ -917,17 +802,6 @@ export function WorkspaceTimerPage({
             isCurrent: workspace.isCurrent,
             name: workspace.name,
           }))}
-        />
-      ) : null}
-      {splitDialogOpen && orch.selectedEntry?.start && orch.selectedEntry?.stop ? (
-        <SplitTimeEntryDialog
-          start={orch.selectedEntry.start}
-          stop={orch.selectedEntry.stop}
-          onCancel={() => setSplitDialogOpen(false)}
-          onConfirm={(splitAtMs) => {
-            setSplitDialogOpen(false);
-            void orch.handleSelectedEntrySplit(splitAtMs);
-          }}
         />
       ) : null}
       {deleteToast ? (

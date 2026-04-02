@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
-
 import {
   buildEntryGroups,
   buildTimesheetRows,
@@ -48,109 +45,15 @@ import type {
   TimerInputMode,
   TimerViewMode,
 } from "../../features/tracking/timer-view-mode.ts";
+import { useTimerViewStore } from "../../features/tracking/store/timer-view-store.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "../../features/tracking/week-range.ts";
 import { getTimeEntries } from "../../shared/api/public/track/index.ts";
+import { useNowMs } from "../../shared/hooks/useNowMs.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
 
-const TIMER_VIEW_STORAGE_KEY = "opentoggl:user-prefs:timer-view";
-
-function loadPersistedTimerView(): TimerViewMode {
-  try {
-    const stored = localStorage.getItem(TIMER_VIEW_STORAGE_KEY);
-    if (stored === "calendar" || stored === "list" || stored === "timesheet") {
-      return stored;
-    }
-  } catch {
-    // localStorage not available or parse error
-  }
-  return "calendar";
-}
-
-function persistTimerView(view: TimerViewMode): void {
-  try {
-    localStorage.setItem(TIMER_VIEW_STORAGE_KEY, view);
-  } catch {
-    // localStorage not available or write error
-  }
-}
-
-const CALENDAR_SUBVIEW_STORAGE_KEY = "opentoggl:user-prefs:calendar-subview";
-
-function loadPersistedCalendarSubview(): CalendarSubview {
-  try {
-    const stored = localStorage.getItem(CALENDAR_SUBVIEW_STORAGE_KEY);
-    if (stored === "day" || stored === "five-day" || stored === "week") {
-      return stored;
-    }
-  } catch {
-    // localStorage not available or parse error
-  }
-  return "week";
-}
-
-function persistCalendarSubview(subview: CalendarSubview): void {
-  try {
-    localStorage.setItem(CALENDAR_SUBVIEW_STORAGE_KEY, subview);
-  } catch {
-    // localStorage not available or write error
-  }
-}
-
-const TIMER_INPUT_MODE_STORAGE_KEY = "opentoggl:user-prefs:timer-input-mode";
-
-function loadPersistedTimerInputMode(): TimerInputMode {
-  try {
-    const stored = localStorage.getItem(TIMER_INPUT_MODE_STORAGE_KEY);
-    if (stored === "automatic" || stored === "manual") {
-      return stored;
-    }
-  } catch {
-    // localStorage not available or parse error
-  }
-  return "automatic";
-}
-
-function persistTimerInputMode(mode: TimerInputMode): void {
-  try {
-    localStorage.setItem(TIMER_INPUT_MODE_STORAGE_KEY, mode);
-  } catch {
-    // localStorage not available or write error
-  }
-}
-
-function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry): boolean {
-  return entry.stop == null || (entry.duration ?? 0) < 0;
-}
-
-function areNumberListsEqual(left: number[], right: number[]): boolean {
-  if (left.length !== right.length) {
-    return false;
-  }
-
-  return left.every((value, index) => value === right[index]);
-}
-
 function toTrackIso(date: Date): string {
   return date.toISOString().replace(".000Z", "Z");
-}
-
-function resolveSingleTimerErrorMessage(error: unknown): string {
-  if (error instanceof WebApiError) {
-    if (typeof error.data === "string" && error.data.trim()) {
-      return error.data;
-    }
-    if (
-      error.data &&
-      typeof error.data === "object" &&
-      "message" in error.data &&
-      typeof error.data.message === "string"
-    ) {
-      return error.data.message;
-    }
-    return error.message;
-  }
-  return "We could not update this time entry right now.";
 }
 
 function normalizeProjects(data: unknown): GithubComTogglTogglApiInternalModelsProject[] {
@@ -253,16 +156,6 @@ export interface TimerPageOrchestration {
   setSelectedEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
   selectedEntryAnchor: TimeEntryEditorAnchor | null;
   setSelectedEntryAnchor: (anchor: TimeEntryEditorAnchor | null) => void;
-  selectedEntryWorkspaceId: number;
-  selectedDescription: string;
-  setSelectedDescription: (desc: string) => void;
-  selectedEntryError: string | null;
-  setSelectedEntryError: (error: string | null) => void;
-  selectedProjectId: number | null;
-  setSelectedProjectId: (id: number | null) => void;
-  selectedTagIds: number[];
-  setSelectedTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
-  selectedEntryDirty: boolean;
   isNewEntry: boolean;
   calendarDraftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
 
@@ -310,20 +203,6 @@ export interface TimerPageOrchestration {
   // Handlers
   handleTimerAction: () => Promise<void>;
   handleRunningDescriptionCommit: () => Promise<void>;
-  handleSelectedEntrySave: () => Promise<void>;
-  handleSelectedEntryPrimaryAction: () => Promise<void>;
-  handleSelectedEntryBillableToggle: () => void;
-  handleSelectedEntryDelete: () => Promise<void>;
-  handleSelectedEntryFavorite: () => Promise<void>;
-  handleSelectedEntryDuplicate: () => Promise<void>;
-  handleSelectedEntryProjectCreate: (name: string, color?: string) => Promise<void>;
-  handleSelectedEntrySuggestionSelect: (
-    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
-  ) => void;
-  handleSelectedEntrySplit: (splitAtMs?: number) => Promise<void>;
-  handleSelectedEntryTagCreate: (name: string) => Promise<void>;
-  handleSelectedEntryStartTimeChange: (time: Date) => void;
-  handleSelectedEntryStopTimeChange: (time: Date) => void;
   handleContinueEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => Promise<void>;
   handleStartFromUrl: (params: {
     description?: string;
@@ -370,57 +249,32 @@ export function useTimerPageOrchestration(options?: {
   showAllEntries?: boolean;
 }): TimerPageOrchestration {
   const showAllEntries = options?.showAllEntries ?? false;
-  const initialDate = options?.initialDate;
-  const { t } = useTranslation("toast");
   const session = useSession();
   const { setCurrentWorkspaceId } = useSessionActions();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
   const workspaceId = session.currentWorkspace.id;
   const timezone = session.user.timezone || "UTC";
 
-  // View state with persistence
-  const [view, setViewState] = useState<TimerViewMode>(loadPersistedTimerView);
+  // View state — sourced from Zustand store (fine-grained subscriptions)
+  const view = useTimerViewStore((s) => s.view);
+  const setView = useTimerViewStore((s) => s.setView);
+  const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
+  const setCalendarSubview = useTimerViewStore((s) => s.setCalendarSubview);
+  const timerInputMode = useTimerViewStore((s) => s.timerInputMode);
+  const setTimerInputMode = useTimerViewStore((s) => s.setTimerInputMode);
+  const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
+  const setCalendarZoom = useTimerViewStore((s) => s.setCalendarZoom);
+  const selectedWeekDate = useTimerViewStore((s) => s.selectedWeekDate);
+  const setSelectedWeekDate = useTimerViewStore((s) => s.setSelectedWeekDate);
+  const listDateRange = useTimerViewStore((s) => s.listDateRange);
+  const setListDateRange = useTimerViewStore((s) => s.setListDateRange);
 
-  const setView = useCallback((next: TimerViewMode) => {
-    persistTimerView(next);
-    setViewState(next);
-    if (next === "list") {
-      setListDateRange(null);
+  // Apply initialDate if provided (e.g. from URL params)
+  useEffect(() => {
+    if (options?.initialDate) {
+      setSelectedWeekDate(options.initialDate);
     }
-  }, []);
-
-  // Calendar subview state with persistence
-  const [calendarSubview, setCalendarSubviewState] = useState<CalendarSubview>(
-    loadPersistedCalendarSubview,
-  );
-
-  const setCalendarSubview = useCallback((next: CalendarSubview) => {
-    persistCalendarSubview(next);
-    setCalendarSubviewState(next);
-  }, []);
-
-  // Timer input mode state with persistence
-  const [timerInputMode, setTimerInputModeState] = useState<TimerInputMode>(
-    loadPersistedTimerInputMode,
-  );
-
-  const setTimerInputMode = useCallback((next: TimerInputMode) => {
-    persistTimerInputMode(next);
-    setTimerInputModeState(next);
-  }, []);
-
-  // Calendar zoom level: -1 = zoomed out (fewer hours), 0 = default, +1 = zoomed in (more hours)
-  const [calendarZoom, setCalendarZoomState] = useState(0);
-
-  const setCalendarZoom = useCallback((zoom: number) => {
-    setCalendarZoomState(Math.max(-1, Math.min(1, zoom)));
-  }, []);
-
-  // Date range filter for list view: null = all dates, otherwise a specific range
-  const [listDateRange, setListDateRange] = useState<{
-    startDate: string;
-    endDate: string;
-  } | null>(null);
+  }, [options?.initialDate, setSelectedWeekDate]);
 
   // List view pagination: number of days to fetch backwards from today.
   // Toggl API returns ~9 days by default; "Load more" extends by 7 days each time.
@@ -445,8 +299,7 @@ export function useTimerPageOrchestration(options?: {
   }, []);
 
   // Time state
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const [selectedWeekDate, setSelectedWeekDate] = useState(() => initialDate ?? new Date());
+  const nowMs = useNowMs();
 
   // Preferences
   const { beginningOfWeek, collapseTimeEntries } = useUserPreferences();
@@ -487,18 +340,7 @@ export function useTimerPageOrchestration(options?: {
   const [selectedEntryAnchor, setSelectedEntryAnchor] = useState<TimeEntryEditorAnchor | null>(
     null,
   );
-  const [selectedDescription, setSelectedDescription] = useState("");
-  const [selectedEntryError, setSelectedEntryError] = useState<string | null>(null);
-  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
-  const [selectedStartIso, setSelectedStartIso] = useState<string | null>(null);
-  const [selectedStopIso, setSelectedStopIso] = useState<string | null>(null);
   const [isNewEntry, setIsNewEntry] = useState(false);
-
-  // Track which entry ID is currently open so the initialization effect only
-  // fires when a genuinely different entry is selected, not when the entry
-  // object is updated in-place (e.g. via time edits).
-  const selectedEntryIdRef = useRef<number | null>(null);
 
   // Composer suggestions
   const [composerSuggestionsAnchor, setComposerSuggestionsAnchor] =
@@ -508,49 +350,18 @@ export function useTimerPageOrchestration(options?: {
   const timerDescriptionInputRef = useRef<HTMLInputElement | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement | null>(null);
 
-  // Derived state for selected entry workspace
-  const selectedEntryWorkspaceId = useMemo(() => {
-    const entryWorkspaceId = selectedEntry?.workspace_id ?? selectedEntry?.wid;
-    return typeof entryWorkspaceId === "number" ? entryWorkspaceId : workspaceId;
-  }, [selectedEntry, workspaceId]);
-
-  const selectedEntryDirty = useMemo(() => {
-    if (!selectedEntry) {
-      return false;
-    }
-
-    const originalProjectId = resolveTimeEntryProjectId(selectedEntry);
-    const originalTagIds = selectedEntry.tag_ids ?? [];
-
-    return (
-      selectedDescription !== (selectedEntry.description ?? "") ||
-      selectedProjectId !== originalProjectId ||
-      !areNumberListsEqual(selectedTagIds, originalTagIds) ||
-      selectedStartIso !== (selectedEntry.start ?? null) ||
-      selectedStopIso !== (selectedEntry.stop ?? null)
-    );
-  }, [
-    selectedDescription,
-    selectedEntry,
-    selectedProjectId,
-    selectedStartIso,
-    selectedStopIso,
-    selectedTagIds,
-  ]);
-
   // Workspace-scoped queries
-  const projectsQuery = useProjectsQuery(selectedEntryWorkspaceId, "all");
-  const tagsQuery = useTagsQuery(selectedEntryWorkspaceId);
+  const projectsQuery = useProjectsQuery(workspaceId, "all");
+  const tagsQuery = useTagsQuery(workspaceId);
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
 
   // Mutations
-  const createProjectMutation = useCreateProjectMutation(selectedEntryWorkspaceId);
-  const createTimeEntryMutation = useCreateTimeEntryMutation(selectedEntryWorkspaceId);
-  const createWorkspaceFavoriteMutation =
-    useCreateWorkspaceFavoriteMutation(selectedEntryWorkspaceId);
+  const createProjectMutation = useCreateProjectMutation(workspaceId);
+  const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
+  const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const stopTimeEntryMutation = useStopTimeEntryMutation();
-  const createTagMutation = useCreateTagMutation(selectedEntryWorkspaceId);
+  const createTagMutation = useCreateTagMutation(workspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
   const bulkEditMutation = useBulkEditTimeEntriesMutation(workspaceId);
@@ -685,19 +496,6 @@ export function useTimerPageOrchestration(options?: {
 
   // Effects
   useEffect(() => {
-    if (!runningEntry) {
-      return;
-    }
-    setNowMs(Date.now());
-    const intervalId = window.setInterval(() => {
-      setNowMs(Date.now());
-    }, 1000);
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [runningEntry]);
-
-  useEffect(() => {
     setRunningDescription(runningEntry?.description ?? "");
   }, [runningEntry]);
 
@@ -712,29 +510,10 @@ export function useTimerPageOrchestration(options?: {
     closeComposerSuggestions();
   }, [runningEntry]);
 
-  useEffect(() => {
-    const entryId = selectedEntry?.id ?? null;
-    if (entryId != null && entryId === selectedEntryIdRef.current) {
-      // Same entry — do not reinitialize editable fields. This avoids
-      // resetting description/project/tags when start or stop time is
-      // edited in-place (which updates the entry object).
-      return;
-    }
-    selectedEntryIdRef.current = entryId;
-    setSelectedDescription(selectedEntry?.description ?? "");
-    setSelectedProjectId(selectedEntry ? resolveTimeEntryProjectId(selectedEntry) : null);
-    setSelectedTagIds(selectedEntry?.tag_ids ?? []);
-    setSelectedStartIso(selectedEntry?.start ?? null);
-    setSelectedStopIso(selectedEntry?.stop ?? null);
-    setSelectedEntryError(null);
-  }, [selectedEntry]);
-
   // Handlers
   const closeSelectedEntryEditor = useCallback(() => {
-    selectedEntryIdRef.current = null;
     setSelectedEntry(null);
     setSelectedEntryAnchor(null);
-    setSelectedEntryError(null);
     setIsNewEntry(false);
     setCalendarDraftEntry(null);
   }, []);
@@ -854,336 +633,6 @@ export function useTimerPageOrchestration(options?: {
     },
     [runningEntry, startTimeEntryMutation],
   );
-
-  const handleSelectedEntrySave = useCallback(async () => {
-    if (!selectedEntry) {
-      return;
-    }
-
-    // New entry: create via API, then close
-    if (isNewEntry) {
-      try {
-        const durationSeconds = selectedEntry.duration ?? 1800;
-        await createTimeEntryMutation.mutateAsync({
-          billable: selectedEntry.billable,
-          description: selectedDescription.trim(),
-          duration: durationSeconds > 0 ? durationSeconds : 1800,
-          projectId: selectedProjectId,
-          start: selectedEntry.start ?? toTrackIso(new Date()),
-          stop: selectedEntry.stop ?? toTrackIso(new Date()),
-          tagIds: selectedTagIds,
-          taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-        });
-        setSelectedEntryError(null);
-        closeSelectedEntryEditor();
-      } catch (error) {
-        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-      }
-      return;
-    }
-
-    // Existing entry: update via API
-    if (!selectedEntry.id) {
-      return;
-    }
-    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-    if (typeof selectedWorkspaceId !== "number") {
-      setSelectedEntryError("This time entry is missing a workspace and cannot be updated.");
-      return;
-    }
-    // Close editor immediately — optimistic update applies changes to cache
-    // before the API call. If offline, BackgroundSync replays later.
-    setSelectedEntryError(null);
-    closeSelectedEntryEditor();
-    updateTimeEntryMutation.mutate(
-      {
-        request: {
-          billable: selectedEntry.billable,
-          description: selectedDescription.trim(),
-          projectId: selectedProjectId,
-          start: selectedEntry.start,
-          stop: selectedEntry.stop,
-          tagIds: selectedTagIds,
-          taskId: selectedEntry.task_id ?? selectedEntry.tid,
-        },
-        timeEntryId: selectedEntry.id,
-        workspaceId: selectedWorkspaceId,
-      },
-      {
-        onSuccess: () => toast.success(t("timeEntrySaved")),
-        onError: () => toast.error(t("failedToSaveTimeEntry")),
-      },
-    );
-  }, [
-    selectedEntry,
-    selectedDescription,
-    selectedProjectId,
-    selectedTagIds,
-    runningEntry,
-    isNewEntry,
-    createTimeEntryMutation,
-    updateTimeEntryMutation,
-    closeSelectedEntryEditor,
-  ]);
-
-  const handleSelectedEntryPrimaryAction = useCallback(async () => {
-    if (!selectedEntry?.id) {
-      return;
-    }
-    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-    if (typeof selectedWorkspaceId !== "number") {
-      setSelectedEntryError("This time entry is missing a workspace.");
-      return;
-    }
-    try {
-      if (isRunningTimeEntry(selectedEntry)) {
-        await stopTimeEntryMutation.mutateAsync({
-          timeEntryId: selectedEntry.id,
-          workspaceId: selectedWorkspaceId,
-        });
-        setSelectedEntryError(null);
-        closeSelectedEntryEditor();
-        return;
-      }
-      if (selectedWorkspaceId !== workspaceId) {
-        switchWorkspace(selectedWorkspaceId);
-        closeSelectedEntryEditor();
-        return;
-      }
-      await startTimeEntryMutation.mutateAsync({
-        billable: selectedEntry.billable,
-        description: selectedDescription.trim() || (selectedEntry.description ?? ""),
-        projectId: selectedProjectId,
-        start: new Date().toISOString(),
-        tagIds: selectedTagIds,
-        taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-      });
-      closeSelectedEntryEditor();
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-    }
-  }, [
-    selectedEntry,
-    selectedDescription,
-    selectedProjectId,
-    selectedTagIds,
-    workspaceId,
-    switchWorkspace,
-    startTimeEntryMutation,
-    stopTimeEntryMutation,
-    closeSelectedEntryEditor,
-  ]);
-
-  const handleSelectedEntryDelete = useCallback(async () => {
-    if (!selectedEntry?.id) {
-      return;
-    }
-    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-    if (typeof selectedWorkspaceId !== "number") {
-      setSelectedEntryError("This time entry is missing a workspace.");
-      return;
-    }
-    try {
-      await deleteTimeEntryMutation.mutateAsync({
-        timeEntryId: selectedEntry.id,
-        workspaceId: selectedWorkspaceId,
-      });
-      setSelectedEntryError(null);
-      closeSelectedEntryEditor();
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-      throw error;
-    }
-  }, [selectedEntry, deleteTimeEntryMutation, closeSelectedEntryEditor]);
-
-  const handleSelectedEntryDuplicate = useCallback(async () => {
-    if (!selectedEntry?.id) {
-      return;
-    }
-    const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-    if (typeof selectedWorkspaceId !== "number") {
-      setSelectedEntryError("This time entry is missing a workspace.");
-      return;
-    }
-    if (isRunningTimeEntry(selectedEntry) || !selectedEntry.start || !selectedEntry.stop) {
-      setSelectedEntryError("Only stopped time entries can be duplicated.");
-      return;
-    }
-    try {
-      await createTimeEntryMutation.mutateAsync({
-        billable: selectedEntry.billable,
-        description: selectedDescription.trim(),
-        duration: resolveEntryDurationSeconds(selectedEntry),
-        projectId: selectedProjectId,
-        start: selectedEntry.start,
-        stop: selectedEntry.stop,
-        tagIds: selectedTagIds,
-        taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-      });
-      setSelectedEntryError(null);
-      closeSelectedEntryEditor();
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-    }
-  }, [
-    selectedEntry,
-    selectedDescription,
-    selectedProjectId,
-    selectedTagIds,
-    createTimeEntryMutation,
-    closeSelectedEntryEditor,
-  ]);
-
-  const handleSelectedEntryProjectCreate = useCallback(
-    async (name: string, color?: string) => {
-      try {
-        const project = await createProjectMutation.mutateAsync({ color, name });
-        setSelectedProjectId(project.id ?? null);
-        setSelectedEntryError(null);
-      } catch (error) {
-        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-        throw error;
-      }
-    },
-    [createProjectMutation],
-  );
-
-  const handleSelectedEntryTagCreate = useCallback(
-    async (name: string) => {
-      try {
-        await createTagMutation.mutateAsync(name);
-        setSelectedEntryError(null);
-      } catch (error) {
-        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-        throw error;
-      }
-    },
-    [createTagMutation],
-  );
-
-  const handleSelectedEntrySuggestionSelect = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      setSelectedDescription(entry.description ?? "");
-      setSelectedProjectId(resolveTimeEntryProjectId(entry));
-      setSelectedTagIds(entry.tag_ids ?? []);
-    },
-    [],
-  );
-
-  const handleSelectedEntryBillableToggle = useCallback(() => {
-    setSelectedEntry((current) => {
-      if (!current) {
-        return current;
-      }
-
-      return { ...current, billable: current.billable !== true };
-    });
-  }, []);
-
-  const handleSelectedEntrySplit = useCallback(
-    async (splitAtMs?: number) => {
-      if (!selectedEntry?.id || !selectedEntry.start || !selectedEntry.stop) {
-        setSelectedEntryError("Only stopped time entries can be split.");
-        return;
-      }
-
-      const selectedWorkspaceId = selectedEntry.workspace_id ?? selectedEntry.wid;
-      if (typeof selectedWorkspaceId !== "number") {
-        setSelectedEntryError("This time entry is missing a workspace.");
-        return;
-      }
-
-      const startMs = new Date(selectedEntry.start).getTime();
-      const stopMs = new Date(selectedEntry.stop).getTime();
-      const resolvedSplitMs = splitAtMs ?? startMs + Math.floor((stopMs - startMs) / 2);
-      if (
-        !Number.isFinite(resolvedSplitMs) ||
-        resolvedSplitMs <= startMs ||
-        resolvedSplitMs >= stopMs
-      ) {
-        setSelectedEntryError("This time entry is too short to split.");
-        return;
-      }
-
-      try {
-        await updateTimeEntryMutation.mutateAsync({
-          request: {
-            billable: selectedEntry.billable,
-            description: selectedDescription.trim(),
-            projectId: selectedProjectId,
-            start: selectedEntry.start,
-            stop: new Date(resolvedSplitMs).toISOString(),
-            tagIds: selectedTagIds,
-            taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-          },
-          timeEntryId: selectedEntry.id,
-          workspaceId: selectedWorkspaceId,
-        });
-        await createTimeEntryMutation.mutateAsync({
-          billable: selectedEntry.billable,
-          description: selectedDescription.trim(),
-          duration: Math.round((stopMs - resolvedSplitMs) / 1000),
-          projectId: selectedProjectId,
-          start: new Date(resolvedSplitMs).toISOString(),
-          stop: selectedEntry.stop,
-          tagIds: selectedTagIds,
-          taskId: selectedEntry.task_id ?? selectedEntry.tid ?? null,
-        });
-        setSelectedEntryError(null);
-        closeSelectedEntryEditor();
-      } catch (error) {
-        setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-      }
-    },
-    [
-      closeSelectedEntryEditor,
-      createTimeEntryMutation,
-      selectedDescription,
-      selectedEntry,
-      selectedProjectId,
-      selectedTagIds,
-      updateTimeEntryMutation,
-    ],
-  );
-
-  const handleSelectedEntryFavorite = useCallback(async () => {
-    try {
-      await createWorkspaceFavoriteMutation.mutateAsync({
-        billable: selectedEntry?.billable,
-        description: selectedDescription.trim(),
-        projectId: selectedProjectId,
-        tagIds: selectedTagIds,
-        taskId: selectedEntry?.task_id ?? selectedEntry?.tid ?? null,
-      });
-      setSelectedEntryError(null);
-    } catch (error) {
-      setSelectedEntryError(resolveSingleTimerErrorMessage(error));
-    }
-  }, [
-    createWorkspaceFavoriteMutation,
-    selectedDescription,
-    selectedEntry,
-    selectedProjectId,
-    selectedTagIds,
-  ]);
-
-  const handleSelectedEntryStartTimeChange = useCallback((time: Date) => {
-    const nextIso = time.toISOString();
-    setSelectedStartIso(nextIso);
-    setSelectedEntry((current) => {
-      if (!current) return current;
-      return { ...current, start: nextIso };
-    });
-  }, []);
-
-  const handleSelectedEntryStopTimeChange = useCallback((time: Date) => {
-    const nextIso = time.toISOString();
-    setSelectedStopIso(nextIso);
-    setSelectedEntry((current) => {
-      if (!current) return current;
-      return { ...current, stop: nextIso };
-    });
-  }, []);
 
   const handleCalendarEntryMove = useCallback(
     async (entryId: number, minutesDelta: number) => {
@@ -1594,16 +1043,6 @@ export function useTimerPageOrchestration(options?: {
     setSelectedEntry,
     selectedEntryAnchor,
     setSelectedEntryAnchor,
-    selectedEntryWorkspaceId,
-    selectedDescription,
-    setSelectedDescription,
-    selectedEntryError,
-    setSelectedEntryError,
-    selectedProjectId,
-    setSelectedProjectId,
-    selectedTagIds,
-    setSelectedTagIds,
-    selectedEntryDirty,
     isNewEntry,
     calendarDraftEntry,
 
@@ -1649,18 +1088,6 @@ export function useTimerPageOrchestration(options?: {
     // Handlers
     handleTimerAction,
     handleRunningDescriptionCommit,
-    handleSelectedEntrySave,
-    handleSelectedEntryPrimaryAction,
-    handleSelectedEntryBillableToggle,
-    handleSelectedEntryDelete,
-    handleSelectedEntryFavorite,
-    handleSelectedEntryDuplicate,
-    handleSelectedEntryProjectCreate,
-    handleSelectedEntryTagCreate,
-    handleSelectedEntrySuggestionSelect,
-    handleSelectedEntrySplit,
-    handleSelectedEntryStartTimeChange,
-    handleSelectedEntryStopTimeChange,
     handleContinueEntry,
     handleStartFromUrl,
     handleCalendarSlotCreate,
