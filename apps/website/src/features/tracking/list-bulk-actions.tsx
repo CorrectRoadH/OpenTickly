@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { EntryGroup } from "./overview-data.ts";
@@ -58,27 +58,24 @@ export function useListSelection(groups: EntryGroup[]) {
     setSelectedIds(new Set());
   }, []);
 
-  const isGroupFullySelected = useCallback(
-    (group: EntryGroup) => {
-      const groupIds = group.entries
-        .map((e) => e.id)
-        .filter((id): id is number => typeof id === "number");
-      return groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
-    },
-    [selectedIds],
-  );
+  const selectedIdsRef = useRef(selectedIds);
+  selectedIdsRef.current = selectedIds;
 
-  const isGroupPartiallySelected = useCallback(
-    (group: EntryGroup) => {
-      const groupIds = group.entries
-        .map((e) => e.id)
-        .filter((id): id is number => typeof id === "number");
-      const someSelected = groupIds.some((id) => selectedIds.has(id));
-      const allSelected = groupIds.every((id) => selectedIds.has(id));
-      return someSelected && !allSelected;
-    },
-    [selectedIds],
-  );
+  const isGroupFullySelected = useCallback((group: EntryGroup) => {
+    const groupIds = group.entries
+      .map((e) => e.id)
+      .filter((id): id is number => typeof id === "number");
+    return groupIds.length > 0 && groupIds.every((id) => selectedIdsRef.current.has(id));
+  }, []);
+
+  const isGroupPartiallySelected = useCallback((group: EntryGroup) => {
+    const groupIds = group.entries
+      .map((e) => e.id)
+      .filter((id): id is number => typeof id === "number");
+    const someSelected = groupIds.some((id) => selectedIdsRef.current.has(id));
+    const allSelected = groupIds.every((id) => selectedIdsRef.current.has(id));
+    return someSelected && !allSelected;
+  }, []);
 
   return {
     allEntryIds,

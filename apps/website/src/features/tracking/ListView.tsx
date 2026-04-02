@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { DropdownMenu, MenuItem, MenuLink, MenuSeparator } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { DollarIcon, MoreIcon, PlayIcon, ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { LiveDuration } from "./LiveDuration.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
@@ -22,7 +21,9 @@ import {
   resolveEntryColor,
   resolveEntryDurationSeconds,
   type DisplayEntry,
+  type DurationFormat,
   type EntryGroup,
+  type TimeFormat,
 } from "./overview-data.ts";
 import { SurfaceMessage } from "./overview-views.tsx";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
@@ -34,6 +35,7 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
 const LIST_VIEW_GRID_TEMPLATE_COLUMNS = "1fr 150px 30px auto auto 40px 30px";
 
 export const ListView = memo(function ListView({
+  durationFormat,
   groups,
   hasMore,
   isLoadingMore,
@@ -52,9 +54,11 @@ export const ListView = memo(function ListView({
   onTagsChange,
   projects,
   tags,
+  timeofdayFormat,
   timezone,
   workspaceName,
 }: {
+  durationFormat: DurationFormat;
   groups: EntryGroup[];
   hasMore?: boolean;
   isLoadingMore?: boolean;
@@ -79,11 +83,11 @@ export const ListView = memo(function ListView({
   onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
   projects?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorProject[];
   tags?: import("./TimeEntryEditorDialog.tsx").TimeEntryEditorTag[];
+  timeofdayFormat: TimeFormat;
   timezone: string;
   workspaceName?: string;
 }): ReactElement {
   const { t } = useTranslation("tracking");
-  const { durationFormat, timeofdayFormat } = useUserPreferences();
   const {
     clearSelection,
     isGroupFullySelected,

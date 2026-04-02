@@ -9,6 +9,7 @@ import {
   useStartTimeEntryMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
 import { SurfaceMessage } from "./overview-views.tsx";
@@ -46,6 +47,7 @@ export function ConnectedListView({
   onDeleteWithUndo: (snapshot: DeletedEntrySnapshot) => void;
 }): ReactElement {
   const { workspaceId, timezone, session, projectOptions, tagOptions } = useWorkspaceData();
+  const { durationFormat, timeofdayFormat } = useUserPreferences();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
@@ -95,24 +97,24 @@ export function ConnectedListView({
     [],
   );
 
-  const onContinueEntry = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      const continuedDescription = (entry.description ?? "").trim();
-      void startTimeEntryMutation
-        .mutateAsync({
-          billable: entry.billable,
-          description: continuedDescription,
-          projectId: resolveTimeEntryProjectId(entry),
-          start: new Date().toISOString(),
-          tagIds: entry.tag_ids ?? [],
-          taskId: entry.task_id ?? entry.tid ?? null,
-        })
-        .then(() => {
-          useTimerViewStore.getState().setRunningDescription(continuedDescription);
-        });
-    },
-    [startTimeEntryMutation],
-  );
+  const startMutRef = useRef(startTimeEntryMutation);
+  startMutRef.current = startTimeEntryMutation;
+
+  const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    const continuedDescription = (entry.description ?? "").trim();
+    void startMutRef.current
+      .mutateAsync({
+        billable: entry.billable,
+        description: continuedDescription,
+        projectId: resolveTimeEntryProjectId(entry),
+        start: new Date().toISOString(),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      })
+      .then(() => {
+        useTimerViewStore.getState().setRunningDescription(continuedDescription);
+      });
+  }, []);
 
   const onDeleteEntry = useCallback(
     (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
@@ -265,12 +267,13 @@ export function ConnectedListView({
 
   return (
     <ListView
+      durationFormat={durationFormat}
       groups={views.groupedEntries}
       hasMore={views.hasMoreEntries}
       isLoadingMore={views.isLoadingMoreEntries}
       onLoadMore={views.loadMoreEntries}
-      onBulkDelete={(ids) => void onBulkDelete(ids)}
-      onBulkEdit={(ids, updates) => void onBulkEdit(ids, updates)}
+      onBulkDelete={onBulkDelete}
+      onBulkEdit={onBulkEdit}
       onContinueEntry={onContinueEntry}
       onDeleteEntry={onDeleteEntry}
       onDuplicateEntry={onDuplicateEntry}
@@ -283,6 +286,7 @@ export function ConnectedListView({
       onProjectChange={onProjectChange}
       projects={listViewProjects}
       tags={tagOptions}
+      timeofdayFormat={timeofdayFormat}
       timezone={timezone}
       workspaceName={workspaceName}
     />

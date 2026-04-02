@@ -4,14 +4,16 @@ import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared
 import {
   useCreateTimeEntryMutation,
   useCreateWorkspaceFavoriteMutation,
+  useCurrentTimeEntryQuery,
   useDeleteTimeEntryMutation,
+  useStartTimeEntryMutation,
+  useStopTimeEntryMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
 import { CalendarView, type CalendarContextMenuAction } from "./CalendarView.tsx";
 import { SurfaceMessage } from "./overview-views.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
-import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
@@ -53,7 +55,11 @@ export function ConnectedCalendarView({
   const { workspaceId, timezone } = useWorkspaceData();
   const { weekDays, beginningOfWeek } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
-  const composer = useTimerComposer();
+
+  // Only subscribe to the running entry query — not the full useTimerComposer hook
+  // which pulls in dozens of Zustand selectors and mutation objects that cause re-renders
+  const currentTimeEntryQuery = useCurrentTimeEntryQuery();
+  const runningEntry = currentTimeEntryQuery.data ?? null;
 
   const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
   const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
@@ -63,22 +69,25 @@ export function ConnectedCalendarView({
   const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
+  const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
+  const stopTimeEntryMutation = useStopTimeEntryMutation();
 
   const mutRef = useRef({
     create: createTimeEntryMutation,
     createFavorite: createWorkspaceFavoriteMutation,
     del: deleteTimeEntryMutation,
     update: updateTimeEntryMutation,
+    start: startTimeEntryMutation,
+    stop: stopTimeEntryMutation,
   });
   mutRef.current = {
     create: createTimeEntryMutation,
     createFavorite: createWorkspaceFavoriteMutation,
     del: deleteTimeEntryMutation,
     update: updateTimeEntryMutation,
+    start: startTimeEntryMutation,
+    stop: stopTimeEntryMutation,
   };
-
-  const composerRef = useRef(composer);
-  composerRef.current = composer;
 
   const viewsRef = useRef(views);
   viewsRef.current = views;
@@ -203,7 +212,19 @@ export function ConnectedCalendarView({
   );
 
   const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-    void composerRef.current.handleContinueEntry(entry);
+    const continuedDescription = (entry.description ?? "").trim();
+    void mutRef.current.start
+      .mutateAsync({
+        billable: entry.billable,
+        description: continuedDescription,
+        projectId: resolveTimeEntryProjectId(entry),
+        start: new Date().toISOString(),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      })
+      .then(() => {
+        useTimerViewStore.getState().setRunningDescription(continuedDescription);
+      });
   }, []);
 
   const onContextMenu = useCallback(
@@ -231,8 +252,17 @@ export function ConnectedCalendarView({
     [handleCalendarEntryResize],
   );
 
+  const runningEntryRef = useRef(runningEntry);
+  runningEntryRef.current = runningEntry;
+
   const onStartEntry = useCallback(() => {
-    void composerRef.current.handleTimerAction();
+    const running = runningEntryRef.current;
+    if (running?.id != null) {
+      const wid = running.workspace_id ?? running.wid;
+      if (typeof wid === "number") {
+        void mutRef.current.stop.mutateAsync({ timeEntryId: running.id, workspaceId: wid });
+      }
+    }
   }, []);
 
   const onZoomIn = useCallback(() => {
@@ -264,7 +294,7 @@ export function ConnectedCalendarView({
       onStartEntry={onStartEntry}
       onZoomIn={onZoomIn}
       onZoomOut={onZoomOut}
-      runningEntry={composer.runningEntry}
+      runningEntry={runningEntry}
       subview={calendarSubview}
       timezone={timezone}
       weekDays={weekDays}
