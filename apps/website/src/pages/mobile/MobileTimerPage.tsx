@@ -14,20 +14,24 @@ import {
   useStartTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { PlayIcon } from "../../shared/ui/icons.tsx";
-import { useTimerPageOrchestration } from "../shell/useTimerPageOrchestration.ts";
+import { useTimerComposer } from "../../features/tracking/useTimerComposer.ts";
+import { useWorkspaceData } from "../../features/tracking/useWorkspaceData.ts";
+import { useTimeEntryViews } from "../../features/tracking/useTimeEntryViews.ts";
 import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
 import { MobileTimeEntryRow } from "./MobileTimeEntryRow.tsx";
 
 export function MobileTimerPage(): ReactElement {
   const { t } = useTranslation("mobile");
-  const orch = useTimerPageOrchestration({ showAllEntries: false });
+  const { workspaceId, timezone } = useWorkspaceData();
+  const composer = useTimerComposer();
+  const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries: false });
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-  const favoritesQuery = useFavoritesQuery(orch.workspaceId);
-  const goalsQuery = useGoalsQuery(orch.workspaceId, true);
+  const favoritesQuery = useFavoritesQuery(workspaceId);
+  const goalsQuery = useGoalsQuery(workspaceId, true);
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
   const goals = Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
-  const startMutation = useStartTimeEntryMutation(orch.workspaceId);
+  const startMutation = useStartTimeEntryMutation(workspaceId);
 
   function handleStartFavorite(fav: ModelsFavorite) {
     void startMutation.mutateAsync({
@@ -69,15 +73,15 @@ export function MobileTimerPage(): ReactElement {
       ) : null}
 
       {/* Recent entries */}
-      {orch.recentWorkspaceEntries.length > 0 ? (
+      {views.recentWorkspaceEntries.length > 0 ? (
         <section>
           <SectionHeader title={t("recent")} />
           <div className="flex flex-col">
-            {orch.recentWorkspaceEntries.slice(0, 10).map((entry, i) => (
+            {views.recentWorkspaceEntries.slice(0, 10).map((entry, i) => (
               <MobileTimeEntryRow
                 key={entry.id ?? i}
                 entry={entry}
-                onContinue={orch.handleContinueEntry}
+                onContinue={composer.handleContinueEntry}
                 onEdit={setEditingEntry}
               />
             ))}
@@ -86,14 +90,14 @@ export function MobileTimerPage(): ReactElement {
       ) : null}
 
       {/* Grouped entries */}
-      {orch.groupedEntries.length > 0 ? (
+      {views.groupedEntries.length > 0 ? (
         <section>
           <SectionHeader title={t("thisWeek")} />
-          {orch.groupedEntries.map((group) => (
+          {views.groupedEntries.map((group) => (
             <div key={group.key}>
               <GroupHeader
                 dateKey={group.key}
-                timezone={orch.timezone}
+                timezone={timezone}
                 totalSeconds={group.totalSeconds}
               />
               <div className="flex flex-col">
@@ -101,7 +105,7 @@ export function MobileTimerPage(): ReactElement {
                   <MobileTimeEntryRow
                     key={entry.id ?? i}
                     entry={entry}
-                    onContinue={orch.handleContinueEntry}
+                    onContinue={composer.handleContinueEntry}
                   />
                 ))}
               </div>

@@ -1,8 +1,10 @@
 import { type ReactElement, useMemo, useState } from "react";
 
 import { formatDateKey } from "../../features/tracking/overview-data.ts";
+import { useWeekNavigation } from "../../features/tracking/useWeekNavigation.ts";
+import { useWorkspaceData } from "../../features/tracking/useWorkspaceData.ts";
+import { useTimeEntryViews } from "../../features/tracking/useTimeEntryViews.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { useTimerPageOrchestration } from "../shell/useTimerPageOrchestration.ts";
 import { MobileCalendarDayTimeline } from "./MobileCalendarDayTimeline.tsx";
 import { MobileDayStrip } from "./MobileDayStrip.tsx";
 import { MobileTimeEntryEditor } from "./MobileTimeEntryEditor.tsx";
@@ -11,33 +13,34 @@ export function MobileCalendarPage(): ReactElement {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
-  const orch = useTimerPageOrchestration({ showAllEntries: false });
+  const { workspaceId, timezone } = useWorkspaceData();
+  const { beginningOfWeek } = useWeekNavigation();
+  const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries: false });
 
   const dayEntries = useMemo(() => {
-    const selectedKey = formatDateKey(selectedDate, orch.timezone);
-    return orch.visibleEntries.filter((entry) => {
+    const selectedKey = formatDateKey(selectedDate, timezone);
+    return views.visibleEntries.filter((entry) => {
       const startDate = new Date(entry.start ?? entry.at ?? Date.now());
-      if (formatDateKey(startDate, orch.timezone) === selectedKey) return true;
-      // Include cross-day entries whose stop falls on the selected day
+      if (formatDateKey(startDate, timezone) === selectedKey) return true;
       if (entry.stop) {
         const stopDate = new Date(entry.stop);
-        if (formatDateKey(stopDate, orch.timezone) === selectedKey) return true;
+        if (formatDateKey(stopDate, timezone) === selectedKey) return true;
       }
       return false;
     });
-  }, [selectedDate, orch.visibleEntries, orch.timezone]);
+  }, [selectedDate, views.visibleEntries, timezone]);
 
   return (
     <div className="flex h-full flex-col">
       <MobileDayStrip
         selectedDate={selectedDate}
         onSelectDate={setSelectedDate}
-        weekStartsOn={orch.beginningOfWeek}
+        weekStartsOn={beginningOfWeek}
       />
       <MobileCalendarDayTimeline
         entries={dayEntries}
         onEntryTap={setEditingEntry}
-        timezone={orch.timezone}
+        timezone={timezone}
         viewDate={selectedDate}
       />
       {editingEntry ? (

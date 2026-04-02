@@ -9,11 +9,12 @@ catalog:
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^24
   "@types/react-big-calendar": ^1.16.3
+  babel-plugin-react-compiler: ^1.0.0
   date-fns: ^4.1.0
-  immer: ^10.1.1
   execa: ^9.6.1
   i18next: ^26.0.3
   i18next-resources-to-backend: ^1.2.1
+  immer: ^10.1.1
   jspdf: ^4.2.1
   jspdf-autotable: ^5.0.7
   lucide-react: ^0.577.0
@@ -21,12 +22,12 @@ catalog:
   polished: ^4.3.1
   react: ^18.3.1
   react-big-calendar: ^1.19.4
+  react-compiler-runtime: ^1.0.0
   react-grab: ^0.1.28
   react-hook-form: ^7.71.2
   react-i18next: ^17.0.2
   sonner: ^2.0.7
   typescript: ^5
-  zustand: ^5.0.5
   vite: npm:@voidzero-dev/vite-plus-core@0.1.12
   vite-plugin-pwa: ^1.2.0
   vite-plus: 0.1.12
@@ -37,6 +38,7 @@ catalog:
   workbox-precaching: ^7.4.0
   workbox-routing: ^7.4.0
   workbox-strategies: ^7.4.0
+  zustand: ^5.0.5
 
 catalogMode: prefer
 overrides:

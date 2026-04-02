@@ -53,7 +53,11 @@ export default defineConfig(() => {
       dedupe: ["react", "react-dom"],
     },
     plugins: [
-      react(),
+      react({
+        babel: {
+          plugins: [["babel-plugin-react-compiler", { target: "18" }]],
+        },
+      }),
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",

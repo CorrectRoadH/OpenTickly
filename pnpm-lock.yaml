@@ -18,6 +18,9 @@ catalogs:
     '@types/react-big-calendar':
       specifier: ^1.16.3
       version: 1.16.3
+    babel-plugin-react-compiler:
+      specifier: ^1.0.0
+      version: 1.0.0
     date-fns:
       specifier: ^4.1.0
       version: 4.1.0
@@ -51,6 +54,9 @@ catalogs:
     react-big-calendar:
       specifier: ^1.19.4
       version: 1.19.4
+    react-compiler-runtime:
+      specifier: ^1.0.0
+      version: 1.0.0
     react-grab:
       specifier: ^0.1.28
       version: 0.1.28
@@ -305,9 +311,15 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^5.1.0
         version: 5.2.0(@voidzero-dev/vite-plus-core@0.1.12(@types/node@24.12.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(typescript@5.9.3)(yaml@2.8.2))
+      babel-plugin-react-compiler:
+        specifier: 'catalog:'
+        version: 1.0.0
       jsdom:
         specifier: ^27.0.1
         version: 27.4.0
+      react-compiler-runtime:
+        specifier: 'catalog:'
+        version: 1.0.0(react@18.3.1)
       react-grab:
         specifier: 'catalog:'
         version: 0.1.28(@types/react@18.3.28)(react@18.3.1)
@@ -2893,6 +2905,9 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
+  babel-plugin-react-compiler@1.0.0:
+    resolution: {integrity: sha512-Ixm8tFfoKKIPYdCCKYTsqv+Fd4IJ0DQqMyEimo+pxUOMUR9cVPlwTrFt9Avu+3cb6Zp3mAzl+t1MrG2fxxKsxw==}
+
   bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
 
@@ -5026,6 +5041,11 @@ packages:
     resolution: {integrity: sha512-ma2FePH0z3px2+WOu6h+YycZcEvFmmxIlAb62cF52bG86eMySciO/EQZeQMXd07kPCYB0a1dWDT5J+KE9mCDUw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+
+  react-compiler-runtime@1.0.0:
+    resolution: {integrity: sha512-rRfjYv66HlG8896yPUDONgKzG5BxZD1nV9U6rkm+7VCuvQc903C4MjcoZR4zPw53IKSOX9wMQVpA1IAbRtzQ7w==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0 || ^0.0.0-experimental
 
   react-d3-tree@3.6.6:
     resolution: {integrity: sha512-E9ByUdeqvlxLlF9BSL7KWQH3ikYHtHO+g1rAPcVgj6mu92tjRUCan2AWxoD4eTSzzAATf8BZtf+CXGSoSd6ioQ==}
@@ -8749,6 +8769,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  babel-plugin-react-compiler@1.0.0:
+    dependencies:
+      '@babel/types': 7.29.0
+
   bail@2.0.2: {}
 
   balanced-match@1.0.2: {}
@@ -11368,6 +11392,10 @@ snapshots:
   react-clientside-effect@1.2.8(react@18.3.1):
     dependencies:
       '@babel/runtime': 7.29.2
+      react: 18.3.1
+
+  react-compiler-runtime@1.0.0(react@18.3.1):
+    dependencies:
       react: 18.3.1
 
   react-d3-tree@3.6.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4):

@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +31,7 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 }
 
-export function ListView({
+export const ListView = memo(function ListView({
   groups,
   hasMore,
   isLoadingMore,
@@ -374,7 +374,7 @@ export function ListView({
       ) : null}
     </div>
   );
-}
+});
 
 /**
  * Inline description editor — click to edit, blur/Enter to save.

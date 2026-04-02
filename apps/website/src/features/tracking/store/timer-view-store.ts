@@ -4,6 +4,7 @@ import { immer } from "zustand/middleware/immer";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../../shared/api/generated/public-track/types.gen.ts";
 import type { TimeEntryEditorAnchor } from "../TimeEntryEditorDialog.tsx";
+import type { TimerComposerSuggestionsAnchor } from "../TimerComposerSuggestionsDialog.tsx";
 import type { CalendarSubview, TimerInputMode, TimerViewMode } from "../timer-view-mode.ts";
 
 // ---------------------------------------------------------------------------
@@ -28,6 +29,14 @@ interface TimerViewState {
   selectedEntryAnchor: TimeEntryEditorAnchor | null;
   isNewEntry: boolean;
   calendarDraftEntry: GithubComTogglTogglApiInternalModelsTimeEntry | null;
+
+  // Composer draft state
+  draftDescription: string;
+  draftProjectId: number | null;
+  draftTagIds: number[];
+  draftBillable: boolean;
+  runningDescription: string;
+  composerSuggestionsAnchor: TimerComposerSuggestionsAnchor | null;
 }
 
 interface TimerViewActions {
@@ -44,6 +53,15 @@ interface TimerViewActions {
   setIsNewEntry: (isNew: boolean) => void;
   setCalendarDraftEntry: (entry: GithubComTogglTogglApiInternalModelsTimeEntry | null) => void;
   closeEditor: () => void;
+
+  // Composer draft actions
+  setDraftDescription: (desc: string) => void;
+  setDraftProjectId: (id: number | null) => void;
+  setDraftTagIds: (ids: number[]) => void;
+  setDraftBillable: (billable: boolean) => void;
+  setRunningDescription: (desc: string) => void;
+  setComposerSuggestionsAnchor: (anchor: TimerComposerSuggestionsAnchor | null) => void;
+  clearDraft: () => void;
 }
 
 // Only view preferences are persisted; calendarZoom is transient.
@@ -141,6 +159,14 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       isNewEntry: false,
       calendarDraftEntry: null,
 
+      // Composer draft state
+      draftDescription: "",
+      draftProjectId: null,
+      draftTagIds: [],
+      draftBillable: false,
+      runningDescription: "",
+      composerSuggestionsAnchor: null,
+
       // Actions
       setView: (next) =>
         set((state) => {
@@ -202,6 +228,46 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
           state.selectedEntryAnchor = null;
           state.isNewEntry = false;
           state.calendarDraftEntry = null;
+        }),
+
+      // Composer draft actions
+      setDraftDescription: (desc) =>
+        set((state) => {
+          state.draftDescription = desc;
+        }),
+
+      setDraftProjectId: (id) =>
+        set((state) => {
+          state.draftProjectId = id;
+        }),
+
+      setDraftTagIds: (ids) =>
+        set((state) => {
+          state.draftTagIds = ids;
+        }),
+
+      setDraftBillable: (billable) =>
+        set((state) => {
+          state.draftBillable = billable;
+        }),
+
+      setRunningDescription: (desc) =>
+        set((state) => {
+          state.runningDescription = desc;
+        }),
+
+      setComposerSuggestionsAnchor: (anchor) =>
+        set((state) => {
+          state.composerSuggestionsAnchor = anchor as any;
+        }),
+
+      clearDraft: () =>
+        set((state) => {
+          state.draftDescription = "";
+          state.draftProjectId = null;
+          state.draftTagIds = [];
+          state.draftBillable = false;
+          state.composerSuggestionsAnchor = null;
         }),
     })),
     {

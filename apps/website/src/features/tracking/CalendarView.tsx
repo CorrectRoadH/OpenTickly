@@ -179,7 +179,7 @@ export type CalendarContextMenuAction =
   | "go-to-project"
   | "split";
 
-export function CalendarView({
+export const CalendarView = React.memo(function CalendarView({
   calendarHours = "all",
   draftEntry,
   entries,
@@ -668,7 +668,7 @@ export function CalendarView({
       ) : null}
     </div>
   );
-}
+});
 
 function CalendarEventCard({
   event,

@@ -52,14 +52,36 @@ import { PanelRightIcon, ProjectsIcon, SettingsIcon, TagsIcon } from "../../shar
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { getTimeEntries } from "../../shared/api/public/track/index.ts";
 import {
+  useBulkDeleteTimeEntriesMutation,
+  useBulkEditTimeEntriesMutation,
+  useCreateWorkspaceFavoriteMutation,
+  useCreateTagMutation,
+  useCreateTimeEntryMutation,
   useDeleteFavoriteMutation,
+  useDeleteTimeEntryMutation,
   useFavoritesQuery,
   useGoalsQuery,
+  useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
-import { formatClockDuration } from "../../features/tracking/overview-data.ts";
-import { useTimerPageOrchestration } from "./useTimerPageOrchestration.ts";
+import {
+  formatClockDuration,
+  resolveEntryDurationSeconds,
+  formatDateKey,
+} from "../../features/tracking/overview-data.ts";
+import type { BulkEditUpdates } from "../../features/tracking/BulkEditDialog.tsx";
+import { useTimerViewStore } from "../../features/tracking/store/timer-view-store.ts";
+import { useWeekNavigation } from "../../features/tracking/useWeekNavigation.ts";
+import { useWorkspaceData } from "../../features/tracking/useWorkspaceData.ts";
+import { useTimerComposer } from "../../features/tracking/useTimerComposer.ts";
+import { useTimeEntryViews } from "../../features/tracking/useTimeEntryViews.ts";
+
+function toTrackIso(date: Date): string {
+  return date.toISOString().replace(".000Z", "Z");
+}
 
 type DeletedEntrySnapshot = {
   billable: boolean;
@@ -89,6 +111,8 @@ export function WorkspaceTimerPage({
   startParams,
 }: WorkspaceTimerPageProps): ReactElement {
   const { t } = useTranslation("tracking");
+
+  // Local UI state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showAllEntries, setShowAllEntries] = useState(false);
@@ -101,26 +125,80 @@ export function WorkspaceTimerPage({
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerControlsRef = useRef<HTMLDivElement | null>(null);
   const [timesheetAddRowOpen, setTimesheetAddRowOpen] = useState(false);
+
+  // New hooks — replace useTimerPageOrchestration
   const { durationFormat } = useUserPreferences();
-  const orch = useTimerPageOrchestration({ initialDate, showAllEntries });
-  const favoritesQuery = useFavoritesQuery(orch.workspaceId);
-  const deleteFavoriteMutation = useDeleteFavoriteMutation(orch.workspaceId);
+  const { session, workspaceId, timezone, projectOptions, tagOptions } = useWorkspaceData();
+  const { selectedWeekDate, setSelectedWeekDate, beginningOfWeek, weekDays } = useWeekNavigation();
+  const composer = useTimerComposer();
+  const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
+
+  // View state from store
+  const view = useTimerViewStore((s) => s.view);
+  const setView = useTimerViewStore((s) => s.setView);
+  const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
+  const setCalendarSubview = useTimerViewStore((s) => s.setCalendarSubview);
+  const timerInputMode = useTimerViewStore((s) => s.timerInputMode);
+  const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
+  const listDateRange = useTimerViewStore((s) => s.listDateRange);
+  const setListDateRange = useTimerViewStore((s) => s.setListDateRange);
+
+  // Editor popup — only subscribe to calendarDraftEntry (needed as a CalendarView prop).
+  // selectedEntry / selectedEntryAnchor live in EditorPortal to avoid full-page re-render.
+  const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
+
+  // Mutations — keep latest in refs so useCallback closures stay stable
+  const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
+  const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
+  const createTagMutation = useCreateTagMutation(workspaceId);
+  const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
+  const updateTimeEntryMutation = useUpdateTimeEntryMutation();
+  const bulkEditMutation = useBulkEditTimeEntriesMutation(workspaceId);
+  const bulkDeleteMutation = useBulkDeleteTimeEntriesMutation(workspaceId);
+
+  const mutRef = useRef({
+    create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
+    del: deleteTimeEntryMutation,
+    update: updateTimeEntryMutation,
+    bulkEdit: bulkEditMutation,
+    bulkDelete: bulkDeleteMutation,
+  });
+  mutRef.current = {
+    create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
+    del: deleteTimeEntryMutation,
+    update: updateTimeEntryMutation,
+    bulkEdit: bulkEditMutation,
+    bulkDelete: bulkDeleteMutation,
+  };
+
+  const composerRef = useRef(composer);
+  composerRef.current = composer;
+
+  // Sidebar data
+  const favoritesQuery = useFavoritesQuery(workspaceId);
+  const deleteFavoriteMutation = useDeleteFavoriteMutation(workspaceId);
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
-  const goalsQuery = useGoalsQuery(orch.workspaceId, true);
+  const goalsQuery = useGoalsQuery(workspaceId, true);
   const goals = Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
 
-  // Auto-start timer from URL params (e.g. /timer?description=foo&billable=true
-  // or /timer/start?desc=foo). Fires once when start params are present and the
-  // current-timer query has resolved (so we know whether a timer is already running).
+  // Apply initialDate if provided (e.g. from URL params)
+  useEffect(() => {
+    if (initialDate) {
+      setSelectedWeekDate(initialDate);
+    }
+  }, [initialDate, setSelectedWeekDate]);
+
+  // Auto-start timer from URL params
   const startParamsConsumedRef = useRef(false);
   const currentEntryLoaded =
-    !orch.currentTimeEntryQuery.isPending && !orch.currentTimeEntryQuery.isFetching;
+    !composer.currentTimeEntryQuery.isPending && !composer.currentTimeEntryQuery.isFetching;
   useEffect(() => {
     if (!startParams || startParamsConsumedRef.current || !currentEntryLoaded) return;
     startParamsConsumedRef.current = true;
 
-    void orch.handleStartFromUrl(startParams).then(() => {
-      // Strip start params from URL without triggering navigation
+    void composer.handleStartFromUrl(startParams).then(() => {
       const url = new URL(window.location.href);
       url.searchParams.delete("description");
       url.searchParams.delete("desc");
@@ -130,7 +208,9 @@ export function WorkspaceTimerPage({
       url.searchParams.delete("wid");
       window.history.replaceState(window.history.state, "", url.toString());
     });
-  }, [startParams, currentEntryLoaded, orch]);
+  }, [startParams, currentEntryLoaded, composer]);
+
+  // --- Handlers ---
 
   const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
     if (deleteToastTimerRef.current) {
@@ -149,7 +229,7 @@ export function WorkspaceTimerPage({
       clearTimeout(deleteToastTimerRef.current);
       deleteToastTimerRef.current = null;
     }
-    void orch.createTimeEntryMutation.mutateAsync({
+    void createTimeEntryMutation.mutateAsync({
       billable: deleteToast.billable,
       description: deleteToast.description,
       duration: deleteToast.duration,
@@ -160,7 +240,7 @@ export function WorkspaceTimerPage({
       taskId: deleteToast.taskId,
     });
     setDeleteToast(null);
-  }, [deleteToast, orch.createTimeEntryMutation]);
+  }, [deleteToast, createTimeEntryMutation]);
 
   useEffect(() => {
     return () => {
@@ -172,9 +252,7 @@ export function WorkspaceTimerPage({
 
   useEffect(() => {
     const node = headerControlsRef.current;
-    if (!node || typeof ResizeObserver === "undefined") {
-      return;
-    }
+    if (!node || typeof ResizeObserver === "undefined") return;
 
     let frameId = 0;
     const syncHeaderDensity = () => {
@@ -188,7 +266,6 @@ export function WorkspaceTimerPage({
     };
 
     syncHeaderDensity();
-
     const observer = new ResizeObserver(syncHeaderDensity);
     observer.observe(node);
     window.addEventListener("resize", syncHeaderDensity);
@@ -198,18 +275,316 @@ export function WorkspaceTimerPage({
       observer.disconnect();
       window.removeEventListener("resize", syncHeaderDensity);
     };
-  }, [orch.view, orch.calendarSubview, orch.todayTotalSeconds, orch.weekTotalSeconds]);
+  }, [view, calendarSubview, views.todayTotalSeconds, views.weekTotalSeconds]);
+
+  const handleEntryEdit = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
+      const pageContainer = document.querySelector<HTMLElement>(
+        '[data-testid="tracking-timer-page"]',
+      );
+      const pageRect = pageContainer?.getBoundingClientRect();
+      const pageLeft = pageRect?.left ?? 0;
+      const pageTop = (pageRect?.top ?? 0) + window.scrollY;
+      const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
+      const anchorLeft = anchorRect.left - pageLeft;
+      const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
+      const store = useTimerViewStore.getState();
+      store.setSelectedEntry(entry);
+      store.setSelectedEntryAnchor({
+        containerWidth,
+        height: anchorRect.height,
+        left: anchorLeft,
+        preferredPlacement,
+        top: anchorRect.top + window.scrollY - pageTop,
+        width: anchorRect.width,
+      });
+    },
+    [],
+  );
+
+  const handleCalendarSlotCreate = useCallback(
+    (slot: { end: Date; start: Date }) => {
+      const store = useTimerViewStore.getState();
+      if (store.selectedEntry != null) {
+        store.closeEditor();
+        store.setCalendarDraftEntry(null);
+        return;
+      }
+
+      const startDate = slot.start;
+      const endDate = slot.end;
+      const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
+
+      const draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry = {
+        billable: false,
+        description: "",
+        duration: durationSeconds > 0 ? durationSeconds : 1800,
+        start: toTrackIso(startDate),
+        stop: toTrackIso(endDate),
+        workspace_id: workspaceId,
+        tag_ids: [],
+      };
+
+      store.setIsNewEntry(true);
+      store.setCalendarDraftEntry(draftEntry);
+      store.setSelectedEntry(draftEntry);
+    },
+    [workspaceId],
+  );
+
+  const viewsRef = useRef(views);
+  viewsRef.current = views;
+
+  const handleCalendarEntryMove = useCallback(async (entryId: number, minutesDelta: number) => {
+    if (minutesDelta === 0) return;
+
+    const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
+    if (!targetEntry?.start) return;
+
+    const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+    if (typeof workspaceForEntry !== "number") return;
+
+    const nextStart = new Date(new Date(targetEntry.start).getTime() + minutesDelta * 60_000);
+    const nextStop = targetEntry.stop
+      ? new Date(new Date(targetEntry.stop).getTime() + minutesDelta * 60_000)
+      : undefined;
+
+    await mutRef.current.update.mutateAsync({
+      request: {
+        billable: targetEntry.billable,
+        description: targetEntry.description ?? "",
+        projectId: resolveTimeEntryProjectId(targetEntry),
+        start: toTrackIso(nextStart),
+        stop: nextStop ? toTrackIso(nextStop) : undefined,
+        tagIds: targetEntry.tag_ids ?? [],
+        taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+      },
+      timeEntryId: entryId,
+      workspaceId: workspaceForEntry,
+    });
+  }, []);
+
+  const handleCalendarEntryResize = useCallback(
+    async (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+      if (minutesDelta === 0) return;
+
+      const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
+      if (!targetEntry?.start || !targetEntry.stop) return;
+
+      const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+      if (typeof workspaceForEntry !== "number") return;
+
+      const startMs = new Date(targetEntry.start).getTime();
+      const stopMs = new Date(targetEntry.stop).getTime();
+      const deltaMs = minutesDelta * 60_000;
+      const nextStartMs = edge === "start" ? startMs + deltaMs : startMs;
+      const nextStopMs = edge === "end" ? stopMs + deltaMs : stopMs;
+
+      if (nextStartMs >= nextStopMs) return;
+
+      await mutRef.current.update.mutateAsync({
+        request: {
+          billable: targetEntry.billable,
+          description: targetEntry.description ?? "",
+          projectId: resolveTimeEntryProjectId(targetEntry),
+          start: toTrackIso(new Date(nextStartMs)),
+          stop: toTrackIso(new Date(nextStopMs)),
+          tagIds: targetEntry.tag_ids ?? [],
+          taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+        },
+        timeEntryId: entryId,
+        workspaceId: workspaceForEntry,
+      });
+    },
+    [],
+  );
+
+  const handleTimesheetCellEdit = useCallback(
+    async (projectLabel: string, dayIndex: number, durationSeconds: number) => {
+      const wd = viewsRef.current;
+      if (dayIndex < 0 || dayIndex >= weekDays.length) return;
+
+      const dayKey = formatDateKey(weekDays[dayIndex], timezone);
+
+      const matchingEntries = wd.visibleEntries.filter((entry) => {
+        const entryLabel = entry.project_name?.trim() || "(No project)";
+        const entryDay = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
+        return entryLabel === projectLabel && entryDay === dayKey;
+      });
+
+      if (matchingEntries.length === 0 && durationSeconds > 0) {
+        const dayDate = weekDays[dayIndex];
+        const start = new Date(dayDate);
+        start.setHours(9, 0, 0, 0);
+        const stop = new Date(start.getTime() + durationSeconds * 1000);
+
+        await mutRef.current.create.mutateAsync({
+          billable: false,
+          description: "",
+          duration: durationSeconds,
+          projectId: null,
+          start: start.toISOString(),
+          stop: stop.toISOString(),
+          tagIds: [],
+        });
+        return;
+      }
+
+      if (matchingEntries.length === 1) {
+        const entry = matchingEntries[0];
+        const entryWid = entry.workspace_id ?? entry.wid;
+        if (typeof entry.id !== "number" || typeof entryWid !== "number" || !entry.start) return;
+
+        if (durationSeconds === 0) {
+          await mutRef.current.del.mutateAsync({
+            timeEntryId: entry.id,
+            workspaceId: entryWid,
+          });
+          return;
+        }
+
+        const startMs = new Date(entry.start).getTime();
+        const nextStop = new Date(startMs + durationSeconds * 1000);
+
+        await mutRef.current.update.mutateAsync({
+          request: {
+            billable: entry.billable,
+            description: entry.description ?? "",
+            projectId: resolveTimeEntryProjectId(entry),
+            start: entry.start,
+            stop: toTrackIso(nextStop),
+            tagIds: entry.tag_ids ?? [],
+            taskId: entry.task_id ?? entry.tid ?? null,
+          },
+          timeEntryId: entry.id,
+          workspaceId: entryWid,
+        });
+        return;
+      }
+
+      // Multiple entries: adjust the first entry
+      const currentTotal = matchingEntries.reduce(
+        (sum, e) => sum + resolveEntryDurationSeconds(e),
+        0,
+      );
+      if (currentTotal === 0) return;
+
+      const firstEntry = matchingEntries[0];
+      const firstWid = firstEntry.workspace_id ?? firstEntry.wid;
+      if (typeof firstEntry.id !== "number" || typeof firstWid !== "number" || !firstEntry.start)
+        return;
+
+      const firstDuration = resolveEntryDurationSeconds(firstEntry);
+      const diff = durationSeconds - currentTotal;
+      const newFirstDuration = Math.max(0, firstDuration + diff);
+      const startMs = new Date(firstEntry.start).getTime();
+      const nextStop = new Date(startMs + newFirstDuration * 1000);
+
+      await mutRef.current.update.mutateAsync({
+        request: {
+          billable: firstEntry.billable,
+          description: firstEntry.description ?? "",
+          projectId: resolveTimeEntryProjectId(firstEntry),
+          start: firstEntry.start,
+          stop: toTrackIso(nextStop),
+          tagIds: firstEntry.tag_ids ?? [],
+          taskId: firstEntry.task_id ?? firstEntry.tid ?? null,
+        },
+        timeEntryId: firstEntry.id,
+        workspaceId: firstWid,
+      });
+    },
+    [timezone, weekDays],
+  );
+
+  const handleCopyLastWeek = useCallback(async () => {
+    const lastWeekDate = new Date(weekDays[0]);
+    lastWeekDate.setDate(lastWeekDate.getDate() - 7);
+    const lastWeekDays = getWeekDaysForDate(lastWeekDate, beginningOfWeek);
+    const lastWeekStart = formatTrackQueryDate(lastWeekDays[0]);
+    const lastWeekEnd = formatTrackQueryDate(lastWeekDays[6]);
+
+    const lastWeekEntries = await unwrapWebApiResult(
+      getTimeEntries({
+        query: {
+          end_date: lastWeekEnd,
+          meta: true,
+          start_date: lastWeekStart,
+        },
+      }),
+    );
+
+    const filtered = (lastWeekEntries ?? []).filter(
+      (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+        const wid = entry.workspace_id ?? entry.wid;
+        return wid === workspaceId && entry.start && entry.stop;
+      },
+    );
+
+    for (const entry of filtered) {
+      if (!entry.start || !entry.stop) continue;
+      const startMs = new Date(entry.start).getTime();
+      const stopMs = new Date(entry.stop).getTime();
+      const shiftMs = 7 * 24 * 60 * 60 * 1000;
+      const newStart = new Date(startMs + shiftMs);
+      const newStop = new Date(stopMs + shiftMs);
+      const durationSec = Math.round((stopMs - startMs) / 1000);
+
+      await mutRef.current.create.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        duration: durationSec,
+        projectId: resolveTimeEntryProjectId(entry),
+        start: toTrackIso(newStart),
+        stop: toTrackIso(newStop),
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+    }
+  }, [weekDays, beginningOfWeek, workspaceId]);
+
+  const handleBulkEdit = useCallback(async (ids: number[], updates: BulkEditUpdates) => {
+    const operations: { op: "add" | "remove" | "replace"; path: string; value: unknown }[] = [];
+
+    if (updates.description != null) {
+      operations.push({ op: "replace", path: "/description", value: updates.description });
+    }
+    if (updates.projectId !== undefined) {
+      operations.push({
+        op: "replace",
+        path: "/project_id",
+        value: updates.projectId ?? 0,
+      });
+    }
+    if (updates.tagIds != null && updates.tagIds.length > 0) {
+      operations.push({ op: "add", path: "/tag_ids", value: updates.tagIds });
+    }
+    if (updates.removeExistingTags) {
+      operations.push({ op: "remove", path: "/tag_ids", value: [] });
+    }
+    if (updates.billable != null) {
+      operations.push({ op: "replace", path: "/billable", value: updates.billable });
+    }
+
+    if (operations.length === 0) return;
+
+    await mutRef.current.bulkEdit.mutateAsync({ operations, timeEntryIds: ids });
+  }, []);
+
+  const handleBulkDelete = useCallback(async (ids: number[]) => {
+    await mutRef.current.bulkDelete.mutateAsync(ids);
+  }, []);
 
   const handleTimesheetAddRow = useCallback(
     (projectId: number | null) => {
       setTimesheetAddRowOpen(false);
-      if (orch.weekDays.length === 0) return;
-      const firstDay = orch.weekDays[0];
+      if (weekDays.length === 0) return;
+      const firstDay = weekDays[0];
       const start = new Date(firstDay);
       start.setHours(9, 0, 0, 0);
       const stop = new Date(start);
       stop.setSeconds(stop.getSeconds() + 1);
-      void orch.createTimeEntryMutation.mutateAsync({
+      void createTimeEntryMutation.mutateAsync({
         billable: false,
         description: "",
         duration: 1,
@@ -220,7 +595,7 @@ export function WorkspaceTimerPage({
         taskId: null,
       });
     },
-    [orch.weekDays, orch.createTimeEntryMutation],
+    [weekDays, createTimeEntryMutation],
   );
 
   const handleGlobalKeyDown = useCallback(
@@ -243,16 +618,16 @@ export function WorkspaceTimerPage({
 
       if (event.key === "n") {
         event.preventDefault();
-        orch.timerDescriptionInputRef.current?.focus();
+        composer.timerDescriptionInputRef.current?.focus();
         return;
       }
 
-      if (event.key === "s" && orch.runningEntry?.id != null) {
+      if (event.key === "s" && composer.runningEntry?.id != null) {
         event.preventDefault();
-        void orch.handleTimerAction();
+        void composer.handleTimerAction();
       }
     },
-    [orch.runningEntry, orch.handleTimerAction, orch.timerDescriptionInputRef],
+    [composer],
   );
 
   useEffect(() => {
@@ -263,14 +638,11 @@ export function WorkspaceTimerPage({
   }, [handleGlobalKeyDown]);
 
   // On mount, scroll the window so the current time indicator is centered
-  // in the visible area below the sticky headers. Matches Toggl's behavior:
-  // scrollY = indicatorPageY - stickyHeadersHeight - availableHeight / 2
   const hasScrolledToNow = useRef(false);
   useEffect(() => {
-    if (hasScrolledToNow.current || orch.view !== "calendar") return;
-    if (orch.timeEntriesQuery.isPending) return;
+    if (hasScrolledToNow.current || view !== "calendar") return;
+    if (views.timeEntriesQuery.isPending) return;
 
-    // Wait one frame for the calendar to render
     requestAnimationFrame(() => {
       const indicator = document.querySelector(".rbc-current-time-indicator");
       if (!indicator) return;
@@ -278,7 +650,6 @@ export function WorkspaceTimerPage({
       const indicatorRect = indicator.getBoundingClientRect();
       const indicatorPageY = indicatorRect.top + window.scrollY;
 
-      // Sum all sticky header heights
       let stickyHeight = 0;
       document.querySelectorAll<HTMLElement>('[class*="sticky"]').forEach((el) => {
         if (getComputedStyle(el).position === "sticky" && el.offsetWidth > 200) {
@@ -292,16 +663,170 @@ export function WorkspaceTimerPage({
       window.scrollTo({ top: Math.max(0, targetScrollY), behavior: "instant" });
       hasScrolledToNow.current = true;
     });
-  }, [orch.view, orch.timeEntriesQuery.isPending]);
+  }, [view, views.timeEntriesQuery.isPending]);
+
+  // Stable callbacks for ListView — close over refs so they never change identity
+  const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    void composerRef.current.handleContinueEntry(entry);
+  }, []);
+  const onDeleteEntry = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+      const wid = entry.workspace_id ?? entry.wid;
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        const snapshot = snapshotEntryForUndo(entry);
+        void mutRef.current.del
+          .mutateAsync({ timeEntryId: entry.id, workspaceId: wid })
+          .then(() => {
+            if (snapshot) showDeleteToast(snapshot);
+          });
+      }
+    },
+    [showDeleteToast],
+  );
+  const onDuplicateEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    if (entry.start && entry.stop) {
+      const durationSec = Math.round(
+        (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
+      );
+      void mutRef.current.create.mutateAsync({
+        billable: entry.billable,
+        description: (entry.description ?? "").trim(),
+        duration: durationSec,
+        projectId: resolveTimeEntryProjectId(entry),
+        start: entry.start,
+        stop: entry.stop,
+        tagIds: entry.tag_ids ?? [],
+        taskId: entry.task_id ?? entry.tid ?? null,
+      });
+    }
+  }, []);
+  const onDescriptionChange = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => {
+      const wid = entry.workspace_id ?? entry.wid;
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        void mutRef.current.update.mutateAsync({
+          request: { description },
+          timeEntryId: entry.id,
+          workspaceId: wid,
+        });
+      }
+    },
+    [],
+  );
+  const onTagsChange = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => {
+      const wid = entry.workspace_id ?? entry.wid;
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        void mutRef.current.update.mutateAsync({
+          request: { tagIds },
+          timeEntryId: entry.id,
+          workspaceId: wid,
+        });
+      }
+    },
+    [],
+  );
+  const onBillableToggle = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      void mutRef.current.update.mutateAsync({
+        request: { billable: !entry.billable },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+    }
+  }, []);
+  const onProjectChange = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, projectId: number | null) => {
+      const wid = entry.workspace_id ?? entry.wid;
+      if (typeof entry.id === "number" && typeof wid === "number") {
+        void mutRef.current.update.mutateAsync({
+          request: { projectId },
+          timeEntryId: entry.id,
+          workspaceId: wid,
+        });
+      }
+    },
+    [],
+  );
+  const onSplitEntry = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+      if (entry.start && entry.stop) {
+        handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+      }
+    },
+    [handleEntryEdit],
+  );
+  const onBulkEditList = useCallback(
+    (ids: number[], updates: BulkEditUpdates) => {
+      void handleBulkEdit(ids, updates);
+    },
+    [handleBulkEdit],
+  );
+  const onBulkDeleteList = useCallback(
+    (ids: number[]) => {
+      void handleBulkDelete(ids);
+    },
+    [handleBulkDelete],
+  );
+  const noopFavorite = useCallback(() => {}, []);
+  const listViewProjects = useMemo(
+    () =>
+      projectOptions
+        .filter((project) => project.id != null && project.active !== false)
+        .map((project) => ({
+          clientName: project.client_name ?? undefined,
+          color: resolveProjectColorValue(project),
+          id: project.id as number,
+          name: project.name ?? "Untitled project",
+          pinned: project.pinned === true,
+        }))
+        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
+    [projectOptions],
+  );
+  const workspaceName = useMemo(
+    () => session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace",
+    [session.availableWorkspaces, workspaceId],
+  );
+
+  // Stable CalendarView callbacks
+  const onCalContextMenu = useCallback(
+    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => {
+      if (action === "split" && entry.start && entry.stop) {
+        handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+        return;
+      }
+      handleCalendarContextMenuAction(entry, action, mutRef.current, showDeleteToast, []);
+    },
+    [handleEntryEdit, showDeleteToast],
+  );
+  const onCalMoveEntry = useCallback(
+    (entryId: number, minutesDelta: number) => {
+      void handleCalendarEntryMove(entryId, minutesDelta);
+    },
+    [handleCalendarEntryMove],
+  );
+  const onCalResizeEntry = useCallback(
+    (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+      void handleCalendarEntryResize(entryId, edge, minutesDelta);
+    },
+    [handleCalendarEntryResize],
+  );
+  const onCalStartEntry = useCallback(() => {
+    void composerRef.current.handleTimerAction();
+  }, []);
+  const onCalZoomIn = useCallback(() => {
+    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom + 1);
+  }, []);
+  const onCalZoomOut = useCallback(() => {
+    useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom - 1);
+  }, []);
 
   return (
     <div
       className="relative min-h-screen bg-[var(--track-surface)] text-white"
       data-testid="tracking-timer-page"
     >
-      {/* Timer header bar — sticky at viewport top. The calendar day headers
-          (.rbc-time-header) use a CSS variable --timer-header-height to position
-          themselves just below this header. */}
       <header
         className="sticky top-0 z-20 border-b border-[var(--track-border)] bg-[var(--track-surface)]"
         ref={(el) => {
@@ -320,101 +845,104 @@ export function WorkspaceTimerPage({
             <input
               className="h-10 w-full bg-transparent text-[14px] font-medium text-white outline-none placeholder:text-[var(--track-text-muted)]"
               id="timer-description"
-              ref={orch.timerDescriptionInputRef as unknown as React.LegacyRef<HTMLInputElement>}
+              ref={
+                composer.timerDescriptionInputRef as unknown as React.LegacyRef<HTMLInputElement>
+              }
               onBlur={() => {
-                void orch.handleRunningDescriptionCommit();
+                void composer.handleRunningDescriptionCommit();
               }}
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                if (orch.runningEntry?.id != null) {
-                  orch.setRunningDescription(event.target.value);
+                if (composer.runningEntry?.id != null) {
+                  composer.setRunningDescription(event.target.value);
                   return;
                 }
-                orch.setDraftDescription(event.target.value);
+                composer.setDraftDescription(event.target.value);
               }}
               onKeyDown={(event) => {
-                if (event.key !== "Enter" || orch.runningEntry?.id == null) {
-                  return;
-                }
+                if (event.key !== "Enter" || composer.runningEntry?.id == null) return;
                 event.preventDefault();
                 event.currentTarget.blur();
               }}
-              onFocus={orch.handleIdleDescriptionFocus}
+              onFocus={composer.handleIdleDescriptionFocus}
               placeholder={t("whatAreYouWorkingOn")}
-              value={orch.timerDescriptionValue}
+              value={composer.timerDescriptionValue}
             />
           </div>
           <TimerBarProjectPicker
-            draftProjectId={orch.draftProjectId}
+            draftProjectId={composer.draftProjectId}
             onProjectSelect={(projectId) => {
-              if (orch.runningEntry?.id != null) {
-                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
+              if (composer.runningEntry?.id != null) {
+                const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
                 if (typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
+                  void composer.updateTimeEntryMutation.mutateAsync({
                     request: { projectId },
-                    timeEntryId: orch.runningEntry.id,
+                    timeEntryId: composer.runningEntry.id,
                     workspaceId: wid,
                   });
                 }
               } else {
-                orch.setDraftProjectId(projectId);
+                composer.setDraftProjectId(projectId);
               }
             }}
-            projectOptions={orch.projectOptions}
-            runningEntry={orch.runningEntry}
+            projectOptions={projectOptions}
+            runningEntry={composer.runningEntry}
             workspaceName={
-              orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-              "Workspace"
+              session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace"
             }
           />
           <TimerBarTagPicker
-            draftTagIds={orch.draftTagIds}
+            draftTagIds={composer.draftTagIds}
             onCreateTag={async (name) => {
-              await orch.createTagMutation.mutateAsync(name);
+              await createTagMutation.mutateAsync(name);
             }}
             onTagToggle={(tagId) => {
-              if (orch.runningEntry?.id != null) {
-                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
-                const currentTags = orch.runningEntry.tag_ids ?? [];
+              if (composer.runningEntry?.id != null) {
+                const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
+                const currentTags = composer.runningEntry.tag_ids ?? [];
                 const nextTags = currentTags.includes(tagId)
                   ? currentTags.filter((id) => id !== tagId)
                   : [...currentTags, tagId];
                 if (typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
+                  void composer.updateTimeEntryMutation.mutateAsync({
                     request: { tagIds: nextTags },
-                    timeEntryId: orch.runningEntry.id,
+                    timeEntryId: composer.runningEntry.id,
                     workspaceId: wid,
                   });
                 }
               } else {
-                orch.setDraftTagIds(
-                  orch.draftTagIds.includes(tagId)
-                    ? orch.draftTagIds.filter((id) => id !== tagId)
-                    : [...orch.draftTagIds, tagId],
+                composer.setDraftTagIds(
+                  composer.draftTagIds.includes(tagId)
+                    ? composer.draftTagIds.filter((id) => id !== tagId)
+                    : [...composer.draftTagIds, tagId],
                 );
               }
             }}
-            runningEntry={orch.runningEntry}
-            tagOptions={orch.tagOptions}
+            runningEntry={composer.runningEntry}
+            tagOptions={tagOptions}
           />
           <button
-            aria-label={orch.draftBillable ? "Set as non-billable" : "Set as billable"}
+            aria-label={composer.draftBillable ? "Set as non-billable" : "Set as billable"}
             className={`flex size-9 items-center justify-center rounded-md transition hover:bg-[var(--track-row-hover)] ${
-              (orch.runningEntry?.id != null ? orch.runningEntry.billable : orch.draftBillable)
+              (
+                composer.runningEntry?.id != null
+                  ? composer.runningEntry.billable
+                  : composer.draftBillable
+              )
                 ? "text-[var(--track-accent)]"
                 : "text-[var(--track-text-muted)] hover:text-white"
             }`}
             onClick={() => {
-              if (orch.runningEntry?.id != null) {
-                const wid = orch.runningEntry.workspace_id ?? orch.runningEntry.wid;
+              if (composer.runningEntry?.id != null) {
+                const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
                 if (typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { billable: !orch.runningEntry.billable },
-                    timeEntryId: orch.runningEntry.id,
+                  void composer.updateTimeEntryMutation.mutateAsync({
+                    request: { billable: !composer.runningEntry.billable },
+                    timeEntryId: composer.runningEntry.id,
                     workspaceId: wid,
                   });
                 }
               } else {
-                orch.setDraftBillable(!orch.draftBillable);
+                composer.setDraftBillable(!composer.draftBillable);
               }
             }}
             type="button"
@@ -422,31 +950,31 @@ export function WorkspaceTimerPage({
             <span className="text-[14px] font-semibold">$</span>
           </button>
           <div className="ml-auto flex shrink-0 items-center gap-3">
-            {orch.timerInputMode === "manual" && orch.runningEntry == null ? (
+            {timerInputMode === "manual" && composer.runningEntry == null ? (
               <ManualModeComposer
                 onAddTimeEntry={(start, stop) => {
                   const durationSec = Math.round((stop.getTime() - start.getTime()) / 1000);
-                  void orch.createTimeEntryMutation.mutateAsync({
-                    billable: orch.draftBillable,
-                    description: orch.timerDescriptionValue.trim(),
+                  void createTimeEntryMutation.mutateAsync({
+                    billable: composer.draftBillable,
+                    description: composer.timerDescriptionValue.trim(),
                     duration: durationSec,
-                    projectId: orch.draftProjectId ?? null,
+                    projectId: composer.draftProjectId ?? null,
                     start: start.toISOString(),
                     stop: stop.toISOString(),
-                    tagIds: orch.draftTagIds ?? [],
+                    tagIds: composer.draftTagIds ?? [],
                     taskId: null,
                   });
                 }}
-                timezone={orch.timezone}
+                timezone={timezone}
               />
             ) : (
               <>
-                <TimerElapsedDisplay runningEntry={orch.runningEntry} />
+                <TimerElapsedDisplay runningEntry={composer.runningEntry} />
                 <TimerActionButton
-                  isRunning={!!orch.runningEntry}
-                  disabled={orch.timerMutationPending}
+                  isRunning={!!composer.runningEntry}
+                  disabled={composer.timerMutationPending}
                   onClick={() => {
-                    void orch.handleTimerAction();
+                    void composer.handleTimerAction();
                   }}
                 />
               </>
@@ -456,14 +984,24 @@ export function WorkspaceTimerPage({
 
         <div className="px-5 pb-4 pt-4">
           <div className="flex items-center gap-4" ref={headerControlsRef}>
-            <TimerRangePicker orch={orch} />
-            {orch.view === "list" ? (
+            <TimerRangePicker
+              beginningOfWeek={beginningOfWeek}
+              calendarSubview={calendarSubview}
+              listDateRange={listDateRange}
+              selectedWeekDate={selectedWeekDate}
+              setCalendarSubview={setCalendarSubview}
+              setListDateRange={setListDateRange}
+              setSelectedWeekDate={setSelectedWeekDate}
+              setView={setView}
+              view={view}
+            />
+            {view === "list" ? (
               <SummaryStat
                 hideLabel={hideSecondaryHeaderLabels}
                 label={t("todayTotal")}
                 value={
-                  orch.todayTotalSeconds > 0
-                    ? formatClockDuration(orch.todayTotalSeconds, durationFormat)
+                  views.todayTotalSeconds > 0
+                    ? formatClockDuration(views.todayTotalSeconds, durationFormat)
                     : "0:00:00"
                 }
               />
@@ -471,31 +1009,30 @@ export function WorkspaceTimerPage({
             <SummaryStat
               hideLabel={hideSecondaryHeaderLabels}
               label={t("weekTotal")}
-              value={formatClockDuration(orch.weekTotalSeconds, durationFormat)}
+              value={formatClockDuration(views.weekTotalSeconds, durationFormat)}
             />
             <div className="ml-auto flex items-center gap-3">
-              {orch.view === "calendar" ? (
+              {view === "calendar" ? (
                 <CalendarSubviewSelect
                   onChange={(next) => {
-                    orch.setCalendarSubview(next);
-                    if (next === "day" && orch.calendarSubview !== "day") {
-                      // When switching to day view, default to today
-                      orch.setSelectedWeekDate(new Date());
+                    setCalendarSubview(next);
+                    if (next === "day" && calendarSubview !== "day") {
+                      setSelectedWeekDate(new Date());
                     }
                   }}
-                  value={orch.calendarSubview}
+                  value={calendarSubview}
                 />
               ) : null}
               <ViewTabGroup
                 aria-label={t("timerView")}
                 label={t("timerView")}
-                onSelect={orch.setView}
+                onSelect={setView}
                 options={["calendar", "list", "timesheet"]}
-                value={orch.view}
+                value={view}
               >
-                <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="calendar" />
-                <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="list" />
-                <ViewTab currentView={orch.view} onSelect={orch.setView} targetView="timesheet" />
+                <ViewTab currentView={view} onSelect={setView} targetView="calendar" />
+                <ViewTab currentView={view} onSelect={setView} targetView="list" />
+                <ViewTab currentView={view} onSelect={setView} targetView="timesheet" />
               </ViewTabGroup>
               <div className="relative">
                 <ChromeIconButton
@@ -521,275 +1058,159 @@ export function WorkspaceTimerPage({
               />
             </div>
           </div>
-          {orch.trackStrip.length > 0 ? <ProjectFilterStrip items={orch.trackStrip} /> : null}
+          {views.trackStrip.length > 0 ? <ProjectFilterStrip items={views.trackStrip} /> : null}
         </div>
       </header>
-      {/* Content area + optional right sidebar */}
       <div className="flex min-h-0">
         <div className="min-w-0 flex-1">
-          {orch.timeEntriesQuery.isPending ? (
+          {views.timeEntriesQuery.isPending ? (
             <SurfaceMessage message={t("loadingTimeEntries")} />
           ) : null}
-          {orch.timeEntriesQuery.isError ? (
-            <SurfaceMessage message={orch.timerErrorMessage} tone="error" />
+          {views.timeEntriesQuery.isError ? (
+            <SurfaceMessage message={views.timerErrorMessage} tone="error" />
           ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "list" ? (
+          {!views.timeEntriesQuery.isPending &&
+          !views.timeEntriesQuery.isError &&
+          view === "list" ? (
             <ListView
-              groups={orch.groupedEntries}
-              hasMore={orch.hasMoreEntries}
-              isLoadingMore={orch.isLoadingMoreEntries}
-              onLoadMore={orch.loadMoreEntries}
-              onBulkDelete={(ids) => {
-                void orch.handleBulkDelete(ids);
-              }}
-              onBulkEdit={(ids, updates) => {
-                void orch.handleBulkEdit(ids, updates);
-              }}
-              onContinueEntry={(entry) => {
-                void orch.handleContinueEntry(entry);
-              }}
-              onDeleteEntry={(entry) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  const snapshot = snapshotEntryForUndo(entry);
-                  void orch.deleteTimeEntryMutation
-                    .mutateAsync({
-                      timeEntryId: entry.id,
-                      workspaceId: wid,
-                    })
-                    .then(() => {
-                      if (snapshot) showDeleteToast(snapshot);
-                    });
-                }
-              }}
-              onDuplicateEntry={(entry) => {
-                if (entry.start && entry.stop) {
-                  const durationSec = Math.round(
-                    (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
-                  );
-                  void orch.createTimeEntryMutation.mutateAsync({
-                    billable: entry.billable,
-                    description: (entry.description ?? "").trim(),
-                    duration: durationSec,
-                    projectId: resolveTimeEntryProjectId(entry),
-                    start: entry.start,
-                    stop: entry.stop,
-                    tagIds: entry.tag_ids ?? [],
-                    taskId: entry.task_id ?? entry.tid ?? null,
-                  });
-                }
-              }}
-              onDescriptionChange={(entry, description) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { description },
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
-                }
-              }}
-              onEditEntry={orch.handleEntryEdit}
-              onFavoriteEntry={() => {
-                // Pin as favorite is handled through the editor dialog
-              }}
-              onTagsChange={(entry, tagIds) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { tagIds },
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
-                }
-              }}
-              onBillableToggle={(entry) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { billable: !entry.billable },
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
-                }
-              }}
-              onSplitEntry={(entry) => {
-                if (entry.start && entry.stop) {
-                  orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                }
-              }}
-              onProjectChange={(entry, projectId) => {
-                const wid = entry.workspace_id ?? entry.wid;
-                if (typeof entry.id === "number" && typeof wid === "number") {
-                  void orch.updateTimeEntryMutation.mutateAsync({
-                    request: { projectId },
-                    timeEntryId: entry.id,
-                    workspaceId: wid,
-                  });
-                }
-              }}
-              projects={orch.projectOptions
-                .filter((project) => project.id != null && project.active !== false)
-                .map((project) => ({
-                  clientName: project.client_name ?? undefined,
-                  color: resolveProjectColorValue(project),
-                  id: project.id as number,
-                  name: project.name ?? "Untitled project",
-                  pinned: project.pinned === true,
-                }))
-                .sort((a, b) => Number(b.pinned) - Number(a.pinned))}
-              tags={orch.tagOptions}
-              timezone={orch.timezone}
-              workspaceName={
-                orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
-                "Workspace"
-              }
+              groups={views.groupedEntries}
+              hasMore={views.hasMoreEntries}
+              isLoadingMore={views.isLoadingMoreEntries}
+              onLoadMore={views.loadMoreEntries}
+              onBulkDelete={onBulkDeleteList}
+              onBulkEdit={onBulkEditList}
+              onContinueEntry={onContinueEntry}
+              onDeleteEntry={onDeleteEntry}
+              onDuplicateEntry={onDuplicateEntry}
+              onDescriptionChange={onDescriptionChange}
+              onEditEntry={handleEntryEdit}
+              onFavoriteEntry={noopFavorite}
+              onTagsChange={onTagsChange}
+              onBillableToggle={onBillableToggle}
+              onSplitEntry={onSplitEntry}
+              onProjectChange={onProjectChange}
+              projects={listViewProjects}
+              tags={tagOptions}
+              timezone={timezone}
+              workspaceName={workspaceName}
             />
           ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "calendar" ? (
+          {!views.timeEntriesQuery.isPending &&
+          !views.timeEntriesQuery.isError &&
+          view === "calendar" ? (
             <CalendarView
               calendarHours={displaySettings.calendarHours}
-              draftEntry={orch.calendarDraftEntry}
-              entries={orch.visibleEntries}
-              isEntryFavorited={(entry) => isEntryAlreadyFavorited(entry, favorites)}
-              onContinueEntry={(entry) => {
-                void orch.handleContinueEntry(entry);
-              }}
-              onContextMenuAction={(entry, action) => {
-                if (action === "split" && entry.start && entry.stop) {
-                  // Open the editor — user can use the split button from there
-                  orch.handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-                  return;
-                }
-                handleCalendarContextMenuAction(entry, action, orch, showDeleteToast, favorites);
-              }}
-              onEditEntry={orch.handleEntryEdit}
-              onMoveEntry={(entryId, minutesDelta) => {
-                void orch.handleCalendarEntryMove(entryId, minutesDelta);
-              }}
-              onResizeEntry={(entryId, edge, minutesDelta) => {
-                void orch.handleCalendarEntryResize(entryId, edge, minutesDelta);
-              }}
-              onSelectSlot={(slot) => {
-                orch.handleCalendarSlotCreate(slot);
-              }}
-              onStartEntry={() => {
-                void orch.handleTimerAction();
-              }}
-              onZoomIn={() => orch.setCalendarZoom(orch.calendarZoom + 1)}
-              onZoomOut={() => orch.setCalendarZoom(orch.calendarZoom - 1)}
-              runningEntry={orch.runningEntry}
-              subview={orch.calendarSubview}
-              timezone={orch.timezone}
-              weekDays={orch.weekDays}
-              weekStartsOn={orch.beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
-              zoom={orch.calendarZoom}
+              draftEntry={calendarDraftEntry}
+              entries={views.visibleEntries}
+              onContinueEntry={onContinueEntry}
+              onContextMenuAction={onCalContextMenu}
+              onEditEntry={handleEntryEdit}
+              onMoveEntry={onCalMoveEntry}
+              onResizeEntry={onCalResizeEntry}
+              onSelectSlot={handleCalendarSlotCreate}
+              onStartEntry={onCalStartEntry}
+              onZoomIn={onCalZoomIn}
+              onZoomOut={onCalZoomOut}
+              runningEntry={composer.runningEntry}
+              subview={calendarSubview}
+              timezone={timezone}
+              weekDays={weekDays}
+              weekStartsOn={beginningOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6}
+              zoom={calendarZoom}
             />
           ) : null}
-          {!orch.timeEntriesQuery.isPending &&
-          !orch.timeEntriesQuery.isError &&
-          orch.view === "timesheet" ? (
+          {!views.timeEntriesQuery.isPending &&
+          !views.timeEntriesQuery.isError &&
+          view === "timesheet" ? (
             <div className="relative min-h-screen">
               <TimesheetView
                 onAddRow={() => setTimesheetAddRowOpen((prev) => !prev)}
                 onCellEdit={(projectLabel, dayIndex, durationSeconds) => {
-                  void orch.handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
+                  void handleTimesheetCellEdit(projectLabel, dayIndex, durationSeconds);
                 }}
                 onCopyLastWeek={() => {
-                  void orch.handleCopyLastWeek();
+                  void handleCopyLastWeek();
                 }}
-                rows={orch.timesheetRows}
-                timezone={orch.timezone}
-                weekDays={orch.weekDays}
+                rows={views.timesheetRows}
+                timezone={timezone}
+                weekDays={weekDays}
               />
               {timesheetAddRowOpen ? (
                 <TimesheetAddRowPicker
                   onClose={() => setTimesheetAddRowOpen(false)}
                   onSelect={handleTimesheetAddRow}
-                  projectOptions={orch.projectOptions}
+                  projectOptions={projectOptions}
                   workspaceName={
-                    orch.session.availableWorkspaces.find((w) => w.id === orch.workspaceId)?.name ??
+                    session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ??
                     "Workspace"
                   }
                 />
               ) : null}
             </div>
           ) : null}
-          {/* Editor dialog — self-contained: manages its own field state,
-              queries, and mutations via useTimeEntryEditor hook. */}
-          {orch.selectedEntry && orch.selectedEntryAnchor ? (
-            <SelfContainedTimeEntryEditor
-              anchor={orch.selectedEntryAnchor}
-              entry={orch.selectedEntry}
-              favorites={favorites}
-              isNewEntry={orch.isNewEntry}
-              onClose={orch.closeSelectedEntryEditor}
-              onDeleteWithUndo={showDeleteToast}
-              workspaces={orch.session.availableWorkspaces.map((workspace) => ({
-                id: workspace.id,
-                isCurrent: workspace.isCurrent,
-                name: workspace.name,
-              }))}
-            />
-          ) : null}
+          <EditorPortal
+            favorites={favorites}
+            onDeleteWithUndo={showDeleteToast}
+            workspaces={session.availableWorkspaces.map((workspace) => ({
+              id: workspace.id,
+              isCurrent: workspace.isCurrent,
+              name: workspace.name,
+            }))}
+          />
         </div>
         {sidebarOpen ? (
           <GoalsFavoritesSidebar
             favorites={favorites}
             goals={goals}
-            workspaceId={orch.workspaceId}
+            workspaceId={workspaceId}
             onDeleteFavorite={(favoriteId) => {
               void deleteFavoriteMutation.mutateAsync(favoriteId);
             }}
             onStartFavorite={(fav) => {
-              void orch.handleContinueEntry({
+              void composer.handleContinueEntry({
                 billable: fav.billable,
                 description: fav.description,
                 project_id: fav.project_id,
                 tag_ids: fav.tag_ids,
                 task_id: fav.task_id,
-              } as Parameters<typeof orch.handleContinueEntry>[0]);
+              } as Parameters<typeof composer.handleContinueEntry>[0]);
             }}
           />
         ) : null}
       </div>
       {shortcutsOpen ? <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} /> : null}
-      {orch.composerSuggestionsAnchor ? (
+      {composer.composerSuggestionsAnchor ? (
         <TimerComposerSuggestionsDialog
-          anchor={orch.composerSuggestionsAnchor}
-          currentWorkspaceId={orch.workspaceId}
+          anchor={composer.composerSuggestionsAnchor}
+          currentWorkspaceId={workspaceId}
           favorites={favorites}
-          onClose={orch.closeComposerSuggestions}
+          onClose={composer.closeComposerSuggestions}
           onFavoriteSelect={(fav) => {
-            orch.setDraftDescription(fav.description ?? "");
-            orch.setDraftProjectId(fav.project_id ?? null);
-            orch.setDraftTagIds(fav.tag_ids ?? []);
-            orch.setDraftBillable(fav.billable ?? false);
-            orch.closeComposerSuggestions();
+            composer.setDraftDescription(fav.description ?? "");
+            composer.setDraftProjectId(fav.project_id ?? null);
+            composer.setDraftTagIds(fav.tag_ids ?? []);
+            composer.setDraftBillable(fav.billable ?? false);
+            composer.closeComposerSuggestions();
           }}
-          query={orch.timerDescriptionValue}
+          query={composer.timerDescriptionValue}
           onProjectSelect={(projectId) => {
-            orch.setDraftProjectId(projectId);
-            orch.closeComposerSuggestions();
+            composer.setDraftProjectId(projectId);
+            composer.closeComposerSuggestions();
           }}
           onTimeEntrySelect={(entry) => {
-            orch.setDraftDescription(entry.description ?? "");
-            orch.setDraftProjectId(resolveTimeEntryProjectId(entry));
-            orch.setDraftTagIds(entry.tag_ids ?? []);
-            orch.closeComposerSuggestions();
+            composer.setDraftDescription(entry.description ?? "");
+            composer.setDraftProjectId(resolveTimeEntryProjectId(entry));
+            composer.setDraftTagIds(entry.tag_ids ?? []);
+            composer.closeComposerSuggestions();
           }}
           onWorkspaceSelect={(nextWorkspaceId) => {
-            orch.switchWorkspace(nextWorkspaceId);
-            orch.closeComposerSuggestions();
+            composer.switchWorkspace(nextWorkspaceId);
+            composer.closeComposerSuggestions();
           }}
-          projects={orch.projectOptions}
-          searchResults={orch.searchedTimeEntries}
-          timeEntries={orch.recentWorkspaceEntries}
-          workspaces={orch.session.availableWorkspaces.map((workspace) => ({
+          projects={projectOptions}
+          searchResults={composer.searchedTimeEntries}
+          timeEntries={views.recentWorkspaceEntries}
+          workspaces={session.availableWorkspaces.map((workspace) => ({
             id: workspace.id,
             isCurrent: workspace.isCurrent,
             name: workspace.name,
@@ -809,6 +1230,39 @@ export function WorkspaceTimerPage({
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Reads editor state from the store — isolated from WorkspaceTimerPage
+ * so that opening/closing the editor does not re-render the entry lists.
+ */
+function EditorPortal({
+  favorites,
+  onDeleteWithUndo,
+  workspaces,
+}: {
+  favorites: Array<{ description?: string; project_id?: number; tag_ids?: number[] }>;
+  onDeleteWithUndo: (snapshot: DeletedEntrySnapshot) => void;
+  workspaces: Array<{ id: number; isCurrent: boolean; name: string }>;
+}): ReactElement | null {
+  const selectedEntry = useTimerViewStore((s) => s.selectedEntry);
+  const selectedEntryAnchor = useTimerViewStore((s) => s.selectedEntryAnchor);
+  const isNewEntry = useTimerViewStore((s) => s.isNewEntry);
+  const closeEditor = useTimerViewStore((s) => s.closeEditor);
+
+  if (!selectedEntry || !selectedEntryAnchor) return null;
+
+  return (
+    <SelfContainedTimeEntryEditor
+      anchor={selectedEntryAnchor}
+      entry={selectedEntry}
+      favorites={favorites}
+      isNewEntry={isNewEntry}
+      onClose={closeEditor}
+      onDeleteWithUndo={onDeleteWithUndo}
+      workspaces={workspaces}
+    />
   );
 }
 
@@ -866,7 +1320,11 @@ function isEntryAlreadyFavorited(
 function handleCalendarContextMenuAction(
   entry: GithubComTogglTogglApiInternalModelsTimeEntry,
   action: CalendarContextMenuAction,
-  orch: ReturnType<typeof useTimerPageOrchestration>,
+  mutations: {
+    create: ReturnType<typeof useCreateTimeEntryMutation>;
+    createFavorite: ReturnType<typeof useCreateWorkspaceFavoriteMutation>;
+    del: ReturnType<typeof useDeleteTimeEntryMutation>;
+  },
   showDeleteToast: (snapshot: DeletedEntrySnapshot) => void,
   favorites: Array<{ description?: string; project_id?: number }> = [],
 ): void {
@@ -877,7 +1335,7 @@ function handleCalendarContextMenuAction(
         const durationSec = Math.round(
           (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
         );
-        void orch.createTimeEntryMutation.mutateAsync({
+        void mutations.create.mutateAsync({
           billable: entry.billable,
           description: (entry.description ?? "").trim(),
           duration: durationSec,
@@ -893,11 +1351,9 @@ function handleCalendarContextMenuAction(
     case "delete": {
       if (typeof entry.id === "number" && typeof wid === "number") {
         const snapshot = snapshotEntryForUndo(entry);
-        void orch.deleteTimeEntryMutation
-          .mutateAsync({ timeEntryId: entry.id, workspaceId: wid })
-          .then(() => {
-            if (snapshot) showDeleteToast(snapshot);
-          });
+        void mutations.del.mutateAsync({ timeEntryId: entry.id, workspaceId: wid }).then(() => {
+          if (snapshot) showDeleteToast(snapshot);
+        });
       }
       break;
     }
@@ -925,7 +1381,7 @@ function handleCalendarContextMenuAction(
     }
     case "favorite": {
       if (isEntryAlreadyFavorited(entry, favorites)) break;
-      void orch.createWorkspaceFavoriteMutation.mutateAsync({
+      void mutations.createFavorite.mutateAsync({
         billable: entry.billable,
         description: (entry.description ?? "").trim(),
         projectId: resolveTimeEntryProjectId(entry),
@@ -979,7 +1435,6 @@ function TimerBarProjectPicker({
     [projectOptions],
   );
 
-  // When a running entry exists, display its project; otherwise use draft project
   const displayProjectId =
     runningEntry?.id != null ? resolveTimeEntryProjectId(runningEntry) : draftProjectId;
   const selectedProject = projects.find((p) => p.id === displayProjectId);
@@ -1062,7 +1517,6 @@ function TimerBarTagPicker({
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // When a running entry exists, display its tags; otherwise use draft tags
   const displayTagIds = runningEntry?.id != null ? (runningEntry.tag_ids ?? []) : draftTagIds;
   const hasTags = displayTagIds.length > 0;
   const displayTags = useMemo(
@@ -1193,10 +1647,6 @@ function TimerBarTagPicker({
   );
 }
 
-/**
- * Horizontal project filter strip with proportional-width colored bars.
- * Each segment is sized by its share of total tracked seconds.
- */
 function ProjectFilterStrip({
   items,
 }: {
@@ -1230,13 +1680,29 @@ function ProjectFilterStrip({
 }
 
 function TimerRangePicker({
-  orch,
+  beginningOfWeek,
+  calendarSubview,
+  listDateRange,
+  selectedWeekDate,
+  setCalendarSubview,
+  setListDateRange,
+  setSelectedWeekDate,
+  setView,
+  view,
 }: {
-  orch: ReturnType<typeof useTimerPageOrchestration>;
+  beginningOfWeek: number;
+  calendarSubview: string;
+  listDateRange: { startDate: string; endDate: string } | null;
+  selectedWeekDate: Date;
+  setCalendarSubview: (next: "day" | "five-day" | "week") => void;
+  setListDateRange: (range: { startDate: string; endDate: string } | null) => void;
+  setSelectedWeekDate: (date: Date) => void;
+  setView: (next: "calendar" | "list" | "timesheet") => void;
+  view: string;
 }): ReactElement {
   const { t } = useTranslation("tracking");
-  const isAllDates = orch.view === "list" && orch.listDateRange == null;
-  const isDayMode = !isAllDates && orch.view !== "list" && orch.calendarSubview === "day";
+  const isAllDates = view === "list" && listDateRange == null;
+  const isDayMode = !isAllDates && view !== "list" && calendarSubview === "day";
   const mode = isDayMode ? "day" : "week";
   const [activeShortcut, setActiveShortcut] = useState<string | null>("this-week");
 
@@ -1245,74 +1711,70 @@ function TimerRangePicker({
     : activeShortcut === "last-30-days"
       ? t("last30Days")
       : isDayMode
-        ? formatDayLabel(orch.selectedWeekDate)
-        : formatWeekRangeLabel(orch.selectedWeekDate, orch.beginningOfWeek);
+        ? formatDayLabel(selectedWeekDate)
+        : formatWeekRangeLabel(selectedWeekDate, beginningOfWeek);
 
   const handleSelectDate = useCallback(
     (date: Date) => {
-      if (orch.view === "list") {
-        const days = getWeekDaysForDate(date, orch.beginningOfWeek);
-        orch.setListDateRange({
+      if (view === "list") {
+        const days = getWeekDaysForDate(date, beginningOfWeek);
+        setListDateRange({
           startDate: formatTrackQueryDate(days[0]),
           endDate: formatTrackQueryDate(days[6]),
         });
       }
-      orch.setSelectedWeekDate(date);
+      setSelectedWeekDate(date);
       setActiveShortcut(null);
     },
-    [orch],
+    [view, beginningOfWeek, setListDateRange, setSelectedWeekDate],
   );
 
   const handlePrev = useCallback(() => {
-    handleSelectDate(
-      isDayMode ? shiftDay(orch.selectedWeekDate, -1) : shiftWeek(orch.selectedWeekDate, -1),
-    );
-  }, [handleSelectDate, isDayMode, orch.selectedWeekDate]);
+    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, -1) : shiftWeek(selectedWeekDate, -1));
+  }, [handleSelectDate, isDayMode, selectedWeekDate]);
 
   const handleNext = useCallback(() => {
-    handleSelectDate(
-      isDayMode ? shiftDay(orch.selectedWeekDate, 1) : shiftWeek(orch.selectedWeekDate, 1),
-    );
-  }, [handleSelectDate, isDayMode, orch.selectedWeekDate]);
+    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, 1) : shiftWeek(selectedWeekDate, 1));
+  }, [handleSelectDate, isDayMode, selectedWeekDate]);
 
   const handleShortcut = useCallback(
     (shortcutId: string, date: Date) => {
       setActiveShortcut(shortcutId);
       if (shortcutId === "all-dates") {
-        orch.setListDateRange(null);
-        if (orch.view !== "list") orch.setView("list");
+        setListDateRange(null);
+        if (view !== "list") setView("list");
       } else if (shortcutId === "last-30-days") {
-        if (orch.view === "list") {
-          orch.setListDateRange({
+        if (view === "list") {
+          setListDateRange({
             startDate: formatTrackQueryDate(date),
             endDate: formatTrackQueryDate(new Date()),
           });
         } else {
-          orch.setCalendarSubview("week");
+          setCalendarSubview("week");
         }
-        orch.setSelectedWeekDate(date);
+        setSelectedWeekDate(date);
       } else if (shortcutId === "today" || shortcutId === "yesterday") {
-        if (orch.view === "list") {
+        if (view === "list") {
           const dayStr = formatTrackQueryDate(date);
-          orch.setListDateRange({ startDate: dayStr, endDate: dayStr });
+          setListDateRange({ startDate: dayStr, endDate: dayStr });
         } else {
-          orch.setCalendarSubview("day");
+          setCalendarSubview("day");
         }
-        orch.setSelectedWeekDate(date);
+        setSelectedWeekDate(date);
       } else {
-        if (orch.view === "list") {
-          const days = getWeekDaysForDate(date, orch.beginningOfWeek);
-          orch.setListDateRange({
+        if (view === "list") {
+          const days = getWeekDaysForDate(date, beginningOfWeek);
+          setListDateRange({
             startDate: formatTrackQueryDate(days[0]),
             endDate: formatTrackQueryDate(days[6]),
           });
         } else {
-          orch.setCalendarSubview("week");
+          setCalendarSubview("week");
         }
-        orch.setSelectedWeekDate(date);
+        setSelectedWeekDate(date);
       }
     },
-    [orch],
+    [view, beginningOfWeek, setListDateRange, setSelectedWeekDate, setView, setCalendarSubview],
   );
 
   return (
@@ -1323,15 +1785,15 @@ function TimerRangePicker({
       onNext={handleNext}
       onPrev={handlePrev}
       onSelectDate={handleSelectDate}
-      selectedDate={orch.selectedWeekDate}
+      selectedDate={selectedWeekDate}
       sidebar={
         <TimerDateShortcuts
           activeShortcut={activeShortcut}
           onShortcut={handleShortcut}
-          shortcuts={orch.view === "list" ? WEEK_SHORTCUTS : CALENDAR_SHORTCUTS}
+          shortcuts={view === "list" ? WEEK_SHORTCUTS : CALENDAR_SHORTCUTS}
         />
       }
-      weekStartsOn={orch.beginningOfWeek}
+      weekStartsOn={beginningOfWeek}
     />
   );
 }
@@ -1388,10 +1850,6 @@ function resolveTimeEntryProjectId(entry: {
   return projectId;
 }
 
-/**
- * Self-contained project picker for the timesheet "Add row" button.
- * Manages its own search state and filters projects accordingly.
- */
 function TimesheetAddRowPicker({
   onClose,
   onSelect,
