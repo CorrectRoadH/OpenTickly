@@ -66,6 +66,20 @@ func WithLogger(logger log.Logger) ServiceOption {
 	return func(s *Service) { s.logger = logger }
 }
 
+func (service *Service) EnsureOrganizationMember(
+	ctx context.Context,
+	command EnsureOrganizationMemberCommand,
+) (OrganizationMemberView, error) {
+	return service.store.EnsureOrganizationMember(ctx, command)
+}
+
+func (service *Service) ListOrganizationMembers(
+	ctx context.Context,
+	organizationID int64,
+) ([]OrganizationMemberView, error) {
+	return service.store.ListOrganizationMembers(ctx, organizationID)
+}
+
 func (service *Service) EnsureWorkspaceOwner(
 	ctx context.Context,
 	command EnsureWorkspaceOwnerCommand,

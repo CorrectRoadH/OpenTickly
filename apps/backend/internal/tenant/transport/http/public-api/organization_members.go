@@ -28,33 +28,28 @@ type organizationUserAggregate struct {
 }
 
 func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error {
-	organization, requester, err := handler.organizationAggregate(ctx)
+	organization, _, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
 	}
 
-	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0)
-	for _, workspaceID := range organization.WorkspaceIDs {
-		if _, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID); memberErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-		}
+	groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
+	if groupErr != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
 
-		groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspaceID))
-		if groupErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
-		}
-		for _, group := range groups {
-			permissions := []string{"view"}
-			at := group.CreatedAt.UTC().Format(time.RFC3339)
-			response = append(response, publictrackapi.GroupOrganizationGroupResponse{
-				At:          lo.ToPtr(at),
-				GroupId:     lo.ToPtr(int(group.ID)),
-				Name:        lo.ToPtr(group.Name),
-				Permissions: &permissions,
-				Users:       lo.ToPtr([]publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{}),
-				Workspaces:  lo.ToPtr([]int{int(workspaceID)}),
-			})
-		}
+	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
+	for _, group := range groups {
+		permissions := []string{"view"}
+		at := group.CreatedAt.UTC().Format(time.RFC3339)
+		response = append(response, publictrackapi.GroupOrganizationGroupResponse{
+			At:          lo.ToPtr(at),
+			GroupId:     lo.ToPtr(int(group.ID)),
+			Name:        lo.ToPtr(group.Name),
+			Permissions: &permissions,
+			Users:       lo.ToPtr([]publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{}),
+			Workspaces:  lo.ToPtr([]int{}),
+		})
 	}
 	return ctx.JSON(http.StatusOK, response)
 }
@@ -143,7 +138,7 @@ func (handler *Handler) organizationUsers(
 			}
 
 			active := member.State == membershipdomain.WorkspaceMemberStateJoined || member.State == membershipdomain.WorkspaceMemberStateRestored
-			admin := member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin
+			admin := member.Role == membershipdomain.WorkspaceRoleAdmin
 			item.Admin = item.Admin || admin
 			item.Joined = item.Joined || active
 			item.Inactive = item.Inactive && !active
@@ -272,12 +267,14 @@ func organizationUserMatches(
 
 func organizationRoleID(role membershipdomain.WorkspaceRole) *int {
 	switch role {
-	case membershipdomain.WorkspaceRoleOwner:
-		return lo.ToPtr(1)
 	case membershipdomain.WorkspaceRoleAdmin:
 		return lo.ToPtr(2)
 	case membershipdomain.WorkspaceRoleMember:
 		return lo.ToPtr(3)
+	case membershipdomain.WorkspaceRoleProjectLead:
+		return lo.ToPtr(4)
+	case membershipdomain.WorkspaceRoleTeamLead:
+		return lo.ToPtr(5)
 	default:
 		return nil
 	}

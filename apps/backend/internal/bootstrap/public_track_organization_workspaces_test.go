@@ -77,8 +77,8 @@ func TestPublicTrackOrganizationWorkspacesAndWorkspaceScopedReads(t *testing.T) 
 
 	if _, err := database.Pool.Exec(
 		context.Background(),
-		"insert into catalog_groups (workspace_id, name, created_by) values ($1, $2, $3)",
-		workspaceID,
+		"insert into catalog_groups (organization_id, name, created_by) values ($1, $2, $3)",
+		organizationID,
 		"Ops Group",
 		registerBody.User.ID,
 	); err != nil {

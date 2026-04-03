@@ -296,29 +296,26 @@ func (service *Service) RestoreClient(ctx context.Context, command RestoreClient
 	return view, nil
 }
 
-func (service *Service) ListGroups(ctx context.Context, workspaceID int64) ([]GroupView, error) {
-	if err := requireWorkspaceID(workspaceID); err != nil {
-		return nil, err
+func (service *Service) ListGroups(ctx context.Context, organizationID int64) ([]GroupView, error) {
+	if organizationID <= 0 {
+		return nil, fmt.Errorf("%w: %d", ErrInvalidWorkspace, organizationID)
 	}
-	return service.store.ListGroups(ctx, workspaceID)
+	return service.store.ListGroups(ctx, organizationID)
 }
 
-func (service *Service) GetGroup(ctx context.Context, workspaceID int64, groupID int64) (GroupView, error) {
-	if err := requireWorkspaceID(workspaceID); err != nil {
-		return GroupView{}, err
-	}
-	return service.loadGroup(ctx, workspaceID, groupID)
+func (service *Service) GetGroup(ctx context.Context, organizationID int64, groupID int64) (GroupView, error) {
+	return service.loadGroup(ctx, organizationID, groupID)
 }
 
 func (service *Service) CreateGroup(ctx context.Context, command CreateGroupCommand) (GroupView, error) {
 	service.logger.InfoContext(ctx, "creating group",
-		"workspace_id", command.WorkspaceID,
+		"organization_id", command.OrganizationID,
 		"name", command.Name,
 	)
 	name, err := domain.NormalizeCatalogName(command.Name)
 	if err != nil {
 		service.logger.WarnContext(ctx, "invalid group data",
-			"workspace_id", command.WorkspaceID,
+			"organization_id", command.OrganizationID,
 			"error", err.Error(),
 		)
 		return GroupView{}, err
@@ -327,27 +324,27 @@ func (service *Service) CreateGroup(ctx context.Context, command CreateGroupComm
 	view, err := service.store.CreateGroup(ctx, command)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to create group",
-			"workspace_id", command.WorkspaceID,
+			"organization_id", command.OrganizationID,
 			"error", err.Error(),
 		)
 		return GroupView{}, err
 	}
 	service.logger.InfoContext(ctx, "group created",
-		"workspace_id", command.WorkspaceID,
+		"organization_id", command.OrganizationID,
 		"group_id", view.ID,
 	)
 	return view, nil
 }
 
-func (service *Service) UpdateGroup(ctx context.Context, workspaceID int64, groupID int64, name string) (GroupView, error) {
+func (service *Service) UpdateGroup(ctx context.Context, organizationID int64, groupID int64, name string) (GroupView, error) {
 	service.logger.InfoContext(ctx, "updating group",
-		"workspace_id", workspaceID,
+		"organization_id", organizationID,
 		"group_id", groupID,
 	)
-	current, ok, err := service.store.GetGroup(ctx, workspaceID, groupID)
+	current, ok, err := service.store.GetGroup(ctx, organizationID, groupID)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to get group for update",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 			"error", err.Error(),
 		)
@@ -355,7 +352,7 @@ func (service *Service) UpdateGroup(ctx context.Context, workspaceID int64, grou
 	}
 	if !ok {
 		service.logger.WarnContext(ctx, "group not found for update",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 		)
 		return GroupView{}, ErrGroupNotFound
@@ -363,7 +360,7 @@ func (service *Service) UpdateGroup(ctx context.Context, workspaceID int64, grou
 	normalized, err := domain.NormalizeCatalogName(name)
 	if err != nil {
 		service.logger.WarnContext(ctx, "invalid group name",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 			"error", err.Error(),
 		)
@@ -372,55 +369,52 @@ func (service *Service) UpdateGroup(ctx context.Context, workspaceID int64, grou
 	current.Name = normalized
 	if err := service.store.UpdateGroup(ctx, current); err != nil {
 		service.logger.ErrorContext(ctx, "failed to update group",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 			"error", err.Error(),
 		)
 		return GroupView{}, err
 	}
-	view, err := service.loadGroup(ctx, workspaceID, groupID)
+	view, err := service.loadGroup(ctx, organizationID, groupID)
 	if err != nil {
 		return GroupView{}, err
 	}
 	service.logger.InfoContext(ctx, "group updated",
-		"workspace_id", workspaceID,
+		"organization_id", organizationID,
 		"group_id", groupID,
 	)
 	return view, nil
 }
 
-func (service *Service) DeleteGroup(ctx context.Context, workspaceID int64, groupID int64) error {
-	if err := requireWorkspaceID(workspaceID); err != nil {
-		return err
-	}
+func (service *Service) DeleteGroup(ctx context.Context, organizationID int64, groupID int64) error {
 	service.logger.InfoContext(ctx, "deleting group",
-		"workspace_id", workspaceID,
+		"organization_id", organizationID,
 		"group_id", groupID,
 	)
-	if _, ok, err := service.store.GetGroup(ctx, workspaceID, groupID); err != nil {
+	if _, ok, err := service.store.GetGroup(ctx, organizationID, groupID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to get group for deletion",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 			"error", err.Error(),
 		)
 		return err
 	} else if !ok {
 		service.logger.WarnContext(ctx, "group not found for deletion",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 		)
 		return ErrGroupNotFound
 	}
-	if err := service.store.DeleteGroup(ctx, workspaceID, groupID); err != nil {
+	if err := service.store.DeleteGroup(ctx, organizationID, groupID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to delete group",
-			"workspace_id", workspaceID,
+			"organization_id", organizationID,
 			"group_id", groupID,
 			"error", err.Error(),
 		)
 		return err
 	}
 	service.logger.InfoContext(ctx, "group deleted",
-		"workspace_id", workspaceID,
+		"organization_id", organizationID,
 		"group_id", groupID,
 	)
 	return nil
@@ -1266,8 +1260,8 @@ func (service *Service) loadTag(ctx context.Context, workspaceID int64, tagID in
 	return tag, nil
 }
 
-func (service *Service) loadGroup(ctx context.Context, workspaceID int64, groupID int64) (GroupView, error) {
-	group, ok, err := service.store.GetGroup(ctx, workspaceID, groupID)
+func (service *Service) loadGroup(ctx context.Context, organizationID int64, groupID int64) (GroupView, error) {
+	group, ok, err := service.store.GetGroup(ctx, organizationID, groupID)
 	if err != nil {
 		return GroupView{}, err
 	}

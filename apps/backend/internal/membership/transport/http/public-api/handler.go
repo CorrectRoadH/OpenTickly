@@ -241,7 +241,7 @@ func simpleWorkspaceUserBody(member membershipapplication.WorkspaceMemberView) p
 		Id:       lo.ToPtr(int(memberUserID(member))),
 		Inactive: lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateDisabled || member.State == membershipdomain.WorkspaceMemberStateRemoved),
 		IsActive: lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateJoined || member.State == membershipdomain.WorkspaceMemberStateRestored),
-		IsAdmin:  lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin),
+		IsAdmin:  lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleAdmin),
 		Role:     lo.ToPtr(string(member.Role)),
 	}
 }
@@ -249,7 +249,7 @@ func simpleWorkspaceUserBody(member membershipapplication.WorkspaceMemberView) p
 func workspaceUserBody(member membershipapplication.WorkspaceMemberView) publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser {
 	return publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser{
 		Active:            lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateJoined || member.State == membershipdomain.WorkspaceMemberStateRestored),
-		Admin:             lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin),
+		Admin:             lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleAdmin),
 		Email:             lo.ToPtr(member.Email),
 		Id:                lo.ToPtr(int(member.ID)),
 		Inactive:          lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateDisabled || member.State == membershipdomain.WorkspaceMemberStateRemoved),
@@ -262,7 +262,7 @@ func workspaceUserBody(member membershipapplication.WorkspaceMemberView) publict
 		Uid:               lo.ToPtr(int(memberUserID(member))),
 		UserId:            lo.ToPtr(int(memberUserID(member))),
 		Wid:               lo.ToPtr(int(member.WorkspaceID)),
-		WorkspaceAdmin:    lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin),
+		WorkspaceAdmin:    lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleAdmin),
 		WorkspaceId:       lo.ToPtr(int(member.WorkspaceID)),
 	}
 }
@@ -281,12 +281,14 @@ func findWorkspaceMemberByUserID(
 
 func publicTrackWorkspaceRole(value string) (membershipdomain.WorkspaceRole, error) {
 	switch strings.TrimSpace(strings.ToLower(value)) {
-	case "owner":
-		return membershipdomain.WorkspaceRoleOwner, nil
-	case "admin":
+	case "owner", "admin":
 		return membershipdomain.WorkspaceRoleAdmin, nil
 	case "user", "member":
 		return membershipdomain.WorkspaceRoleMember, nil
+	case "projectlead":
+		return membershipdomain.WorkspaceRoleProjectLead, nil
+	case "teamlead":
+		return membershipdomain.WorkspaceRoleTeamLead, nil
 	default:
 		return "", membershipdomain.ErrInvalidWorkspaceRole
 	}

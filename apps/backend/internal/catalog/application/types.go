@@ -45,11 +45,20 @@ type ClientView struct {
 }
 
 type GroupView struct {
-	ID          int64
+	ID             int64
+	OrganizationID int64
+	Name           string
+	CreatedAt      time.Time
+}
+
+type GroupMemberView struct {
+	GroupID int64
+	UserID  int64
+}
+
+type GroupWorkspaceView struct {
+	GroupID     int64
 	WorkspaceID int64
-	Name        string
-	HasUsers    bool
-	CreatedAt   time.Time
 }
 
 type TagView struct {
@@ -195,9 +204,9 @@ type CreateClientCommand struct {
 }
 
 type CreateGroupCommand struct {
-	WorkspaceID int64
-	CreatedBy   int64
-	Name        string
+	OrganizationID int64
+	CreatedBy      int64
+	Name           string
 }
 
 type CreateTagCommand struct {
@@ -311,11 +320,17 @@ type Store interface {
 	DeleteClients(context.Context, int64, []int64) error
 	ArchiveClientAndProjects(context.Context, int64, int64) ([]int64, error)
 	RestoreClientAndProjects(context.Context, int64, int64, []int64, bool) error
-	ListGroups(context.Context, int64) ([]GroupView, error)
-	GetGroup(context.Context, int64, int64) (GroupView, bool, error)
+	ListGroups(ctx context.Context, organizationID int64) ([]GroupView, error)
+	GetGroup(ctx context.Context, organizationID int64, groupID int64) (GroupView, bool, error)
 	CreateGroup(context.Context, CreateGroupCommand) (GroupView, error)
 	UpdateGroup(context.Context, GroupView) error
-	DeleteGroup(context.Context, int64, int64) error
+	DeleteGroup(ctx context.Context, organizationID int64, groupID int64) error
+	ListGroupMembers(ctx context.Context, groupID int64) ([]GroupMemberView, error)
+	AddGroupMember(ctx context.Context, groupID int64, userID int64) error
+	RemoveGroupMember(ctx context.Context, groupID int64, userID int64) error
+	ListGroupWorkspaces(ctx context.Context, groupID int64) ([]GroupWorkspaceView, error)
+	AddGroupWorkspace(ctx context.Context, groupID int64, workspaceID int64) error
+	RemoveGroupWorkspace(ctx context.Context, groupID int64, workspaceID int64) error
 	ListTags(context.Context, int64, ListTagsFilter) ([]TagView, error)
 	GetTag(context.Context, int64, int64) (TagView, bool, error)
 	CreateTag(context.Context, CreateTagCommand) (TagView, error)

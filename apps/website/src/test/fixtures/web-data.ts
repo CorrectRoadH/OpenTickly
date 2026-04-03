@@ -238,7 +238,7 @@ export function createWorkspaceMemberFixture(
     workspace_id: 202,
     email: "alex@example.com",
     name: "Alex Johnson",
-    role: "owner",
+    role: "admin",
     status: "joined",
     hourly_rate: 0,
     labor_cost: 0,

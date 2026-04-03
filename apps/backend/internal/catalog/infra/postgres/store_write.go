@@ -185,13 +185,13 @@ func (store *Store) CreateGroup(
 	var group catalogapplication.GroupView
 	err := store.pool.QueryRow(
 		ctx,
-		`insert into catalog_groups (workspace_id, name, created_by)
+		`insert into catalog_groups (organization_id, name, created_by)
 		values ($1, $2, $3)
-		returning id, workspace_id, name, has_users, created_at`,
-		command.WorkspaceID,
+		returning id, organization_id, name, created_at`,
+		command.OrganizationID,
 		command.Name,
 		command.CreatedBy,
-	).Scan(&group.ID, &group.WorkspaceID, &group.Name, &group.HasUsers, &group.CreatedAt)
+	).Scan(&group.ID, &group.OrganizationID, &group.Name, &group.CreatedAt)
 	if err != nil {
 		return catalogapplication.GroupView{}, writeCatalogError("create catalog group", err)
 	}
@@ -203,8 +203,8 @@ func (store *Store) UpdateGroup(ctx context.Context, group catalogapplication.Gr
 		ctx,
 		`update catalog_groups
 		set name = $3
-		where workspace_id = $1 and id = $2`,
-		group.WorkspaceID,
+		where organization_id = $1 and id = $2`,
+		group.OrganizationID,
 		group.ID,
 		group.Name,
 	)
@@ -214,15 +214,59 @@ func (store *Store) UpdateGroup(ctx context.Context, group catalogapplication.Gr
 	return nil
 }
 
-func (store *Store) DeleteGroup(ctx context.Context, workspaceID int64, groupID int64) error {
+func (store *Store) DeleteGroup(ctx context.Context, organizationID int64, groupID int64) error {
 	_, err := store.pool.Exec(
 		ctx,
-		"delete from catalog_groups where workspace_id = $1 and id = $2",
-		workspaceID,
+		"delete from catalog_groups where organization_id = $1 and id = $2",
+		organizationID,
 		groupID,
 	)
 	if err != nil {
 		return writeCatalogError("delete catalog group", err)
+	}
+	return nil
+}
+
+func (store *Store) AddGroupMember(ctx context.Context, groupID int64, userID int64) error {
+	_, err := store.pool.Exec(ctx,
+		`insert into catalog_group_members (group_id, user_id) values ($1, $2) on conflict do nothing`,
+		groupID, userID,
+	)
+	if err != nil {
+		return writeCatalogError("add group member", err)
+	}
+	return nil
+}
+
+func (store *Store) RemoveGroupMember(ctx context.Context, groupID int64, userID int64) error {
+	_, err := store.pool.Exec(ctx,
+		`delete from catalog_group_members where group_id = $1 and user_id = $2`,
+		groupID, userID,
+	)
+	if err != nil {
+		return writeCatalogError("remove group member", err)
+	}
+	return nil
+}
+
+func (store *Store) AddGroupWorkspace(ctx context.Context, groupID int64, workspaceID int64) error {
+	_, err := store.pool.Exec(ctx,
+		`insert into catalog_group_workspaces (group_id, workspace_id) values ($1, $2) on conflict do nothing`,
+		groupID, workspaceID,
+	)
+	if err != nil {
+		return writeCatalogError("add group workspace", err)
+	}
+	return nil
+}
+
+func (store *Store) RemoveGroupWorkspace(ctx context.Context, groupID int64, workspaceID int64) error {
+	_, err := store.pool.Exec(ctx,
+		`delete from catalog_group_workspaces where group_id = $1 and workspace_id = $2`,
+		groupID, workspaceID,
+	)
+	if err != nil {
+		return writeCatalogError("remove group workspace", err)
 	}
 	return nil
 }

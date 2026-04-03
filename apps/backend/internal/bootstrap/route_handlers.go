@@ -936,6 +936,9 @@ func (provider *billingBackedSessionShell) ensureHome(
 	if err := provider.userHomes.Save(ctx, user.ID, home.organizationID, home.workspaceID); err != nil {
 		return sessionHome{}, err
 	}
+	if err := provider.ensureOrganizationOwner(ctx, user, home); err != nil {
+		return sessionHome{}, err
+	}
 	if err := provider.ensureWorkspaceOwner(ctx, user, home); err != nil {
 		return sessionHome{}, err
 	}
@@ -943,6 +946,19 @@ func (provider *billingBackedSessionShell) ensureHome(
 		return sessionHome{}, err
 	}
 	return home, nil
+}
+
+func (provider *billingBackedSessionShell) ensureOrganizationOwner(
+	ctx context.Context,
+	user identityapplication.UserSnapshot,
+	home sessionHome,
+) error {
+	_, err := provider.membership.EnsureOrganizationMember(ctx, membershipapplication.EnsureOrganizationMemberCommand{
+		OrganizationID: home.organizationID,
+		UserID:         user.ID,
+		Role:           membershipdomain.OrganizationRoleOwner,
+	})
+	return err
 }
 
 func (provider *billingBackedSessionShell) ensureWorkspaceOwner(

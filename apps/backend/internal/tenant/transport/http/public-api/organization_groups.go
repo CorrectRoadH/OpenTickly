@@ -12,7 +12,6 @@ import (
 )
 
 // PostOrganizationGroup creates a group under the organization.
-// The group is created in the primary workspace of the organization.
 func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
@@ -24,16 +23,10 @@ func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	// Create group in the first workspace (primary workspace)
-	if len(organization.WorkspaceIDs) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
-	}
-	workspaceID := organization.WorkspaceIDs[0]
-
 	group, groupErr := handler.catalog.CreateGroup(ctx.Request().Context(), catalogapplication.CreateGroupCommand{
-		WorkspaceID: int64(workspaceID),
-		CreatedBy:   requester.ID,
-		Name:        lo.FromPtr(payload.Name),
+		OrganizationID: int64(organization.ID),
+		CreatedBy:      requester.ID,
+		Name:           lo.FromPtr(payload.Name),
 	})
 	if groupErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
@@ -47,7 +40,7 @@ func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 		Name:        lo.ToPtr(group.Name),
 		Permissions: &permissions,
 		Users:       lo.ToPtr([]publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{}),
-		Workspaces:  lo.ToPtr([]int{int(workspaceID)}),
+		Workspaces:  lo.ToPtr([]int{}),
 	})
 }
 
@@ -62,15 +55,10 @@ func (handler *Handler) DeleteOrganizationGroup(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	// Delete group from all workspaces
-	for _, workspaceID := range organization.WorkspaceIDs {
-		if delErr := handler.catalog.DeleteGroup(ctx.Request().Context(), int64(workspaceID), groupID); delErr != nil {
-			// If not found in one workspace, try the next
-			continue
-		}
-		return ctx.JSON(http.StatusOK, "OK")
+	if delErr := handler.catalog.DeleteGroup(ctx.Request().Context(), int64(organization.ID), groupID); delErr != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	}
-	return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	return ctx.JSON(http.StatusOK, "OK")
 }
 
 // PatchOrganizationGroup updates a group in the organization.
@@ -89,13 +77,7 @@ func (handler *Handler) PatchOrganizationGroup(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	// Update group in the first workspace (primary workspace)
-	if len(organization.WorkspaceIDs) == 0 {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
-	}
-	workspaceID := organization.WorkspaceIDs[0]
-
-	group, groupErr := handler.catalog.UpdateGroup(ctx.Request().Context(), int64(workspaceID), groupID, lo.FromPtr(payload.Name))
+	group, groupErr := handler.catalog.UpdateGroup(ctx.Request().Context(), int64(organization.ID), groupID, lo.FromPtr(payload.Name))
 	if groupErr != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -108,7 +90,7 @@ func (handler *Handler) PatchOrganizationGroup(ctx echo.Context) error {
 		Name:        lo.ToPtr(group.Name),
 		Permissions: &permissions,
 		Users:       lo.ToPtr([]publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{}),
-		Workspaces:  lo.ToPtr([]int{int(workspaceID)}),
+		Workspaces:  lo.ToPtr([]int{}),
 	})
 }
 

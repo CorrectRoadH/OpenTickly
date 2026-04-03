@@ -26,7 +26,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
-	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	organizationID, workspaceID, userID := seedCatalogOrgWorkspaceAndUser(t, ctx, database)
 	service := mustNewCatalogService(t, database)
 
 	client, err := service.CreateClient(ctx, catalogapplication.CreateClientCommand{
@@ -60,7 +60,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 	}
 
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
-		WorkspaceID: workspaceID,
+		OrganizationID: organizationID,
 		CreatedBy:   userID,
 		Name:        "Core Team",
 	})
@@ -180,7 +180,7 @@ func TestServicePersistsCatalogStateWithPostgresStore(t *testing.T) {
 		t.Fatalf("expected archived client filter to return archived client, got %#v", clients)
 	}
 
-	groups, err := service.ListGroups(ctx, workspaceID)
+	groups, err := service.ListGroups(ctx, organizationID)
 	if err != nil {
 		t.Fatalf("list groups: %v", err)
 	}
@@ -292,7 +292,7 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
-	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	organizationID, workspaceID, userID := seedCatalogOrgWorkspaceAndUser(t, ctx, database)
 	service := mustNewCatalogService(t, database)
 
 	clientA, err := service.CreateClient(ctx, catalogapplication.CreateClientCommand{
@@ -392,24 +392,24 @@ func TestServiceSupportsAdditionalCatalogMutations(t *testing.T) {
 	}
 
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
-		WorkspaceID: workspaceID,
+		OrganizationID: organizationID,
 		CreatedBy:   userID,
 		Name:        "Team A",
 	})
 	if err != nil {
 		t.Fatalf("create group: %v", err)
 	}
-	updatedGroup, err := service.UpdateGroup(ctx, workspaceID, group.ID, "Team Alpha")
+	updatedGroup, err := service.UpdateGroup(ctx, organizationID, group.ID, "Team Alpha")
 	if err != nil {
 		t.Fatalf("update group: %v", err)
 	}
 	if updatedGroup.Name != "Team Alpha" {
 		t.Fatalf("expected updated group name, got %#v", updatedGroup)
 	}
-	if err := service.DeleteGroup(ctx, workspaceID, group.ID); err != nil {
+	if err := service.DeleteGroup(ctx, organizationID, group.ID); err != nil {
 		t.Fatalf("delete group: %v", err)
 	}
-	if _, err := service.GetGroup(ctx, workspaceID, group.ID); !errors.Is(err, catalogapplication.ErrGroupNotFound) {
+	if _, err := service.GetGroup(ctx, organizationID, group.ID); !errors.Is(err, catalogapplication.ErrGroupNotFound) {
 		t.Fatalf("expected ErrGroupNotFound after group delete, got %v", err)
 	}
 
@@ -591,7 +591,7 @@ func TestServicePersistsProjectGroupAssignments(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
-	workspaceID, userID := seedCatalogWorkspaceAndUser(t, ctx, database)
+	organizationID, workspaceID, userID := seedCatalogOrgWorkspaceAndUser(t, ctx, database)
 	service := mustNewCatalogService(t, database)
 
 	project, err := service.CreateProject(ctx, catalogapplication.CreateProjectCommand{
@@ -603,7 +603,7 @@ func TestServicePersistsProjectGroupAssignments(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 	group, err := service.CreateGroup(ctx, catalogapplication.CreateGroupCommand{
-		WorkspaceID: workspaceID,
+		OrganizationID: organizationID,
 		CreatedBy:   userID,
 		Name:        "Delivery Team",
 	})
@@ -717,9 +717,15 @@ func mustNewCatalogService(t *testing.T, database *pgtest.Database) *catalogappl
 
 func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pgtest.Database) (workspaceID int64, userID int64) {
 	t.Helper()
+	_, workspaceID, userID = seedCatalogOrgWorkspaceAndUser(t, ctx, database)
+	return workspaceID, userID
+}
+
+func seedCatalogOrgWorkspaceAndUser(t *testing.T, ctx context.Context, database *pgtest.Database) (organizationID int64, workspaceID int64, userID int64) {
+	t.Helper()
 
 	tenantStore := tenantpostgres.NewStore(database.Pool)
-	_, workspace, err := tenantStore.CreateOrganization(
+	org, workspace, err := tenantStore.CreateOrganization(
 		ctx,
 		"Catalog Org",
 		"Catalog Workspace",
@@ -732,7 +738,7 @@ func seedCatalogWorkspaceAndUser(t *testing.T, ctx context.Context, database *pg
 	userID = 101
 	seedCatalogIdentityUser(t, ctx, database, userID, "catalog@example.com", "Catalog User")
 
-	return int64(workspace.ID()), userID
+	return int64(org.ID()), int64(workspace.ID()), userID
 }
 
 func seedCatalogIdentityUser(

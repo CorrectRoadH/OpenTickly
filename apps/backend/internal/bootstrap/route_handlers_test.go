@@ -744,8 +744,8 @@ func TestWebWorkspaceMemberRoutesPersistLifecycle(t *testing.T) {
 	if len(membersBody.Members) != 1 {
 		t.Fatalf("expected one owner member, got %#v", membersBody.Members)
 	}
-	if membersBody.Members[0]["role"] != "owner" || membersBody.Members[0]["status"] != "joined" {
-		t.Fatalf("expected joined owner membership, got %#v", membersBody.Members[0])
+	if membersBody.Members[0]["role"] != "admin" || membersBody.Members[0]["status"] != "joined" {
+		t.Fatalf("expected joined admin membership, got %#v", membersBody.Members[0])
 	}
 
 	invite := performJSONRequest(
@@ -1976,7 +1976,7 @@ func TestWebRoutesRejectCrossWorkspaceAccess(t *testing.T) {
 	var firstOwnerMemberID int64
 	if err := database.Pool.QueryRow(
 		context.Background(),
-		"select id from membership_workspace_members where workspace_id = $1 and role = 'owner'",
+		"select id from membership_workspace_members where workspace_id = $1 and role = 'admin'",
 		*firstRegisterBody.CurrentWorkspaceID,
 	).Scan(&firstOwnerMemberID); err != nil {
 		t.Fatalf("expected first owner membership row: %v", err)

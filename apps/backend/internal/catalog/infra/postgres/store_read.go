@@ -103,11 +103,11 @@ func (store *Store) ListClientsByIDs(
 	return clients, rows.Err()
 }
 
-func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalogapplication.GroupView, error) {
+func (store *Store) ListGroups(ctx context.Context, organizationID int64) ([]catalogapplication.GroupView, error) {
 	rows, err := store.pool.Query(
 		ctx,
-		"select id, workspace_id, name, has_users, created_at from catalog_groups where workspace_id = $1 order by lower(name), id",
-		workspaceID,
+		"select id, organization_id, name, created_at from catalog_groups where organization_id = $1 order by lower(name), id",
+		organizationID,
 	)
 	if err != nil {
 		return nil, writeCatalogError("list catalog groups", err)
@@ -117,7 +117,7 @@ func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalo
 	groups := make([]catalogapplication.GroupView, 0)
 	for rows.Next() {
 		var group catalogapplication.GroupView
-		if err := rows.Scan(&group.ID, &group.WorkspaceID, &group.Name, &group.HasUsers, &group.CreatedAt); err != nil {
+		if err := rows.Scan(&group.ID, &group.OrganizationID, &group.Name, &group.CreatedAt); err != nil {
 			return nil, writeCatalogError("scan catalog group", err)
 		}
 		groups = append(groups, group)
@@ -127,26 +127,68 @@ func (store *Store) ListGroups(ctx context.Context, workspaceID int64) ([]catalo
 
 func (store *Store) GetGroup(
 	ctx context.Context,
-	workspaceID int64,
+	organizationID int64,
 	groupID int64,
 ) (catalogapplication.GroupView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select id, workspace_id, name, has_users, created_at
+		`select id, organization_id, name, created_at
 		from catalog_groups
-		where workspace_id = $1 and id = $2`,
-		workspaceID,
+		where organization_id = $1 and id = $2`,
+		organizationID,
 		groupID,
 	)
 
 	var group catalogapplication.GroupView
-	if err := row.Scan(&group.ID, &group.WorkspaceID, &group.Name, &group.HasUsers, &group.CreatedAt); err != nil {
+	if err := row.Scan(&group.ID, &group.OrganizationID, &group.Name, &group.CreatedAt); err != nil {
 		if notFound(err) {
 			return catalogapplication.GroupView{}, false, nil
 		}
 		return catalogapplication.GroupView{}, false, writeCatalogError("get catalog group", err)
 	}
 	return group, true, nil
+}
+
+func (store *Store) ListGroupMembers(ctx context.Context, groupID int64) ([]catalogapplication.GroupMemberView, error) {
+	rows, err := store.pool.Query(ctx,
+		"select group_id, user_id from catalog_group_members where group_id = $1 order by user_id",
+		groupID,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list group members", err)
+	}
+	defer rows.Close()
+
+	var members []catalogapplication.GroupMemberView
+	for rows.Next() {
+		var m catalogapplication.GroupMemberView
+		if err := rows.Scan(&m.GroupID, &m.UserID); err != nil {
+			return nil, writeCatalogError("scan group member", err)
+		}
+		members = append(members, m)
+	}
+	return members, rows.Err()
+}
+
+func (store *Store) ListGroupWorkspaces(ctx context.Context, groupID int64) ([]catalogapplication.GroupWorkspaceView, error) {
+	rows, err := store.pool.Query(ctx,
+		"select group_id, workspace_id from catalog_group_workspaces where group_id = $1 order by workspace_id",
+		groupID,
+	)
+	if err != nil {
+		return nil, writeCatalogError("list group workspaces", err)
+	}
+	defer rows.Close()
+
+	var gws []catalogapplication.GroupWorkspaceView
+	for rows.Next() {
+		var gw catalogapplication.GroupWorkspaceView
+		if err := rows.Scan(&gw.GroupID, &gw.WorkspaceID); err != nil {
+			return nil, writeCatalogError("scan group workspace", err)
+		}
+		gws = append(gws, gw)
+	}
+	return gws, rows.Err()
 }
 
 func (store *Store) ListTags(

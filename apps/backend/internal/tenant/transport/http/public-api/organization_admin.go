@@ -25,7 +25,7 @@ func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error 
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
 		for _, member := range members {
-			if member.UserID == nil || member.Role != membershipdomain.WorkspaceRoleOwner {
+			if member.UserID == nil || member.Role != membershipdomain.WorkspaceRoleAdmin {
 				continue
 			}
 			return ctx.JSON(http.StatusOK, publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationOwner{
@@ -100,7 +100,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx echo.
 		if memberErr != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
-		groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspaceID))
+		groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
 		if groupErr != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 		}
@@ -112,7 +112,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx echo.
 				continue
 			}
 			memberCount++
-			if member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin {
+			if member.Role == membershipdomain.WorkspaceRoleAdmin {
 				admins = append(admins, publictrackapi.ModelsUserData{
 					Name:   lo.ToPtr(member.FullName),
 					UserId: lo.ToPtr(int(memberUserID(member))),

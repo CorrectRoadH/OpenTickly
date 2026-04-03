@@ -45,6 +45,26 @@ func (handlers *routeHandlers) requirePublicTrackWorkspace(ctx echo.Context, wor
 	return handlers.RequirePublicTrackWorkspace(ctx, workspaceID)
 }
 
+func (handlers *routeHandlers) WorkspaceOrganizationID(ctx echo.Context, workspaceID int64) (int64, error) {
+	user, err := handlers.requirePublicTrackUser(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		return 0, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	ws, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
+		return int64(workspace.ID) == workspaceID
+	})
+	if !found {
+		return 0, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+	}
+	return int64(ws.OrganizationID), nil
+}
+
 func (handlers *routeHandlers) RequirePublicTrackHome(
 	ctx echo.Context,
 ) (organizationID int64, workspaceID int64, err error) {

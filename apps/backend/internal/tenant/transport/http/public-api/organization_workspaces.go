@@ -85,7 +85,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Conte
 		return err
 	}
 
-	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.ID))
+	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -159,7 +159,7 @@ func organizationWorkspaceUserBody(
 ) publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser {
 	return publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser{
 		Active:            lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateJoined || member.State == membershipdomain.WorkspaceMemberStateRestored),
-		Admin:             lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin),
+		Admin:             lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleAdmin),
 		Email:             lo.ToPtr(member.Email),
 		Id:                lo.ToPtr(int(member.ID)),
 		Inactive:          lo.ToPtr(member.State == membershipdomain.WorkspaceMemberStateDisabled || member.State == membershipdomain.WorkspaceMemberStateRemoved),
@@ -172,7 +172,7 @@ func organizationWorkspaceUserBody(
 		Uid:               lo.ToPtr(int(memberUserID(member))),
 		UserId:            lo.ToPtr(int(memberUserID(member))),
 		Wid:               lo.ToPtr(int(member.WorkspaceID)),
-		WorkspaceAdmin:    lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin),
+		WorkspaceAdmin:    lo.ToPtr(member.Role == membershipdomain.WorkspaceRoleAdmin),
 		WorkspaceId:       lo.ToPtr(int(member.WorkspaceID)),
 	}
 }

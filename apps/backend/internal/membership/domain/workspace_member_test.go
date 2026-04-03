@@ -14,7 +14,7 @@ func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
 		1,
 		"owner@example.com",
 		"Owner",
-		WorkspaceRoleOwner,
+		WorkspaceRoleAdmin,
 		WorkspaceMemberStateInvited,
 		lo.ToPtr(100.0),
 		lo.ToPtr(80.0),
@@ -22,8 +22,8 @@ func TestNewWorkspaceMemberAcceptsDocumentedRolesAndStates(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if member.Role != WorkspaceRoleOwner {
-		t.Fatalf("expected role %s got %s", WorkspaceRoleOwner, member.Role)
+	if member.Role != WorkspaceRoleAdmin {
+		t.Fatalf("expected role %s got %s", WorkspaceRoleAdmin, member.Role)
 	}
 	if member.State != WorkspaceMemberStateInvited {
 		t.Fatalf("expected state %s got %s", WorkspaceMemberStateInvited, member.State)
@@ -50,7 +50,7 @@ func TestNewWorkspaceMemberInvalidState(t *testing.T) {
 		1,
 		"user@example.com",
 		"User Example",
-		WorkspaceRoleOwner,
+		WorkspaceRoleAdmin,
 		WorkspaceMemberState("pending"),
 		lo.ToPtr(100.0),
 		lo.ToPtr(80.0),
@@ -122,7 +122,7 @@ func TestWorkspaceMemberLifecycleInvitedJoinedDisabledRestoredRemoved(t *testing
 }
 
 func TestWorkspaceMemberRoleCapabilities(t *testing.T) {
-	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleOwner, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
+	owner, _ := NewWorkspaceMember(1, "owner@example.com", "Owner", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
 	admin, _ := NewWorkspaceMember(2, "admin@example.com", "Admin", WorkspaceRoleAdmin, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
 	member, _ := NewWorkspaceMember(3, "member@example.com", "Member", WorkspaceRoleMember, WorkspaceMemberStateJoined, lo.ToPtr(0.0), lo.ToPtr(0.0))
 

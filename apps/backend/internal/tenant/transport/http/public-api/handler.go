@@ -326,7 +326,11 @@ func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx echo.Context) erro
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
-	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), workspaceID)
+	workspace, wsErr := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
+	if wsErr != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -338,7 +342,7 @@ func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx echo.Context) erro
 			continue
 		}
 		memberCount++
-		if member.Role == membershipdomain.WorkspaceRoleOwner || member.Role == membershipdomain.WorkspaceRoleAdmin {
+		if member.Role == membershipdomain.WorkspaceRoleAdmin {
 			admins = append(admins, publictrackapi.ModelsUserData{
 				Name:   lo.ToPtr(member.FullName),
 				UserId: intPointer(memberUserID(member)),

@@ -6,12 +6,28 @@ import (
 	"opentoggl/backend/apps/backend/internal/xptr"
 )
 
+type OrganizationRole string
+
+const (
+	OrganizationRoleOwner  OrganizationRole = "owner"
+	OrganizationRoleAdmin  OrganizationRole = "admin"
+	OrganizationRoleMember OrganizationRole = "member"
+)
+
+type OrganizationMemberState string
+
+const (
+	OrganizationMemberStateJoined   OrganizationMemberState = "joined"
+	OrganizationMemberStateInactive OrganizationMemberState = "inactive"
+)
+
 type WorkspaceRole string
 
 const (
-	WorkspaceRoleOwner  WorkspaceRole = "owner"
-	WorkspaceRoleAdmin  WorkspaceRole = "admin"
-	WorkspaceRoleMember WorkspaceRole = "member"
+	WorkspaceRoleAdmin       WorkspaceRole = "admin"
+	WorkspaceRoleMember      WorkspaceRole = "member"
+	WorkspaceRoleProjectLead WorkspaceRole = "projectlead"
+	WorkspaceRoleTeamLead    WorkspaceRole = "teamlead"
 )
 
 type WorkspaceMemberState string
@@ -171,7 +187,7 @@ CanManageMembers reports whether the member role is allowed to manage
 membership lifecycle operations.
 */
 func (m WorkspaceMember) CanManageMembers() bool {
-	return m.Role == WorkspaceRoleOwner || m.Role == WorkspaceRoleAdmin
+	return m.Role == WorkspaceRoleAdmin
 }
 
 /*
@@ -224,7 +240,7 @@ func (m *WorkspaceMember) recordLifecycleFact(state WorkspaceMemberState) {
 
 func isValidWorkspaceRole(role WorkspaceRole) bool {
 	switch role {
-	case WorkspaceRoleOwner, WorkspaceRoleAdmin, WorkspaceRoleMember:
+	case WorkspaceRoleAdmin, WorkspaceRoleMember, WorkspaceRoleProjectLead, WorkspaceRoleTeamLead:
 		return true
 	default:
 		return false

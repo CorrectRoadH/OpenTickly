@@ -22,6 +22,78 @@ func NewStore(pool *pgxpool.Pool) *Store {
 	return &Store{pool: pool}
 }
 
+func (store *Store) EnsureOrganizationMember(
+	ctx context.Context,
+	command membershipapplication.EnsureOrganizationMemberCommand,
+) (membershipapplication.OrganizationMemberView, error) {
+	var view membershipapplication.OrganizationMemberView
+	err := store.pool.QueryRow(ctx, `
+		insert into membership_organization_members (organization_id, user_id, role, state)
+		values ($1, $2, $3, 'joined')
+		on conflict (organization_id, user_id) do update set updated_at = now()
+		returning id, organization_id, user_id, role, state, created_at, updated_at
+	`, command.OrganizationID, command.UserID, string(command.Role)).Scan(
+		&view.ID, &view.OrganizationID, &view.UserID,
+		&view.Role, &view.State, &view.CreatedAt, &view.UpdatedAt,
+	)
+	if err != nil {
+		return membershipapplication.OrganizationMemberView{}, fmt.Errorf("ensure organization member: %w", err)
+	}
+	return view, nil
+}
+
+func (store *Store) ListOrganizationMembers(
+	ctx context.Context,
+	organizationID int64,
+) ([]membershipapplication.OrganizationMemberView, error) {
+	rows, err := store.pool.Query(ctx, `
+		select id, organization_id, user_id, role, state, created_at, updated_at
+		from membership_organization_members
+		where organization_id = $1
+		order by id
+	`, organizationID)
+	if err != nil {
+		return nil, fmt.Errorf("list organization members: %w", err)
+	}
+	defer rows.Close()
+
+	var members []membershipapplication.OrganizationMemberView
+	for rows.Next() {
+		var view membershipapplication.OrganizationMemberView
+		if err := rows.Scan(
+			&view.ID, &view.OrganizationID, &view.UserID,
+			&view.Role, &view.State, &view.CreatedAt, &view.UpdatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("scan organization member: %w", err)
+		}
+		members = append(members, view)
+	}
+	return members, rows.Err()
+}
+
+func (store *Store) FindOrganizationMemberByUserID(
+	ctx context.Context,
+	organizationID int64,
+	userID int64,
+) (membershipapplication.OrganizationMemberView, bool, error) {
+	var view membershipapplication.OrganizationMemberView
+	err := store.pool.QueryRow(ctx, `
+		select id, organization_id, user_id, role, state, created_at, updated_at
+		from membership_organization_members
+		where organization_id = $1 and user_id = $2
+	`, organizationID, userID).Scan(
+		&view.ID, &view.OrganizationID, &view.UserID,
+		&view.Role, &view.State, &view.CreatedAt, &view.UpdatedAt,
+	)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return membershipapplication.OrganizationMemberView{}, false, nil
+	}
+	if err != nil {
+		return membershipapplication.OrganizationMemberView{}, false, fmt.Errorf("find organization member: %w", err)
+	}
+	return view, true, nil
+}
+
 func (store *Store) EnsureWorkspaceOwner(
 	ctx context.Context,
 	command membershipapplication.EnsureWorkspaceOwnerCommand,
@@ -48,7 +120,7 @@ func (store *Store) EnsureWorkspaceOwner(
 		&command.UserID,
 		email,
 		fullName,
-		membershipdomain.WorkspaceRoleOwner,
+		membershipdomain.WorkspaceRoleAdmin,
 		membershipdomain.WorkspaceMemberStateJoined,
 		nil,
 		nil,

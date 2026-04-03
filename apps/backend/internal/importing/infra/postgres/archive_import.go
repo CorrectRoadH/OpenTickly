@@ -453,8 +453,8 @@ func (importer *archiveImporter) updateWorkspaceMember(
 	`, importer.workspaceID, memberID).Scan(&existingRole); err != nil {
 		return fmt.Errorf("load workspace member %d role: %w", memberID, err)
 	}
-	if existingRole == string(membershipdomain.WorkspaceRoleOwner) {
-		role = membershipdomain.WorkspaceRoleOwner
+	if existingRole == string(membershipdomain.WorkspaceRoleAdmin) {
+		role = membershipdomain.WorkspaceRoleAdmin
 		state = membershipdomain.WorkspaceMemberStateJoined
 	}
 
@@ -910,9 +910,7 @@ func normalizedImportedEmail(email string, userID int64) string {
 
 func importedWorkspaceRole(user importingapplication.ImportedWorkspaceUser) membershipdomain.WorkspaceRole {
 	switch strings.ToLower(strings.TrimSpace(user.Role)) {
-	case "owner":
-		return membershipdomain.WorkspaceRoleOwner
-	case "admin":
+	case "owner", "admin":
 		return membershipdomain.WorkspaceRoleAdmin
 	default:
 		if user.Admin {

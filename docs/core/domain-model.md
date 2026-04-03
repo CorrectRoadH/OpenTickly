@@ -360,15 +360,17 @@ Instance Administration
 ## 4. 关系模型
 
 ```text
-User 1---* OrganizationUser *---1 Organization
-User 1---* WorkspaceUser    *---1 Workspace
-Workspace 1---* Group
-Group 1---* GroupMember *---1 User
+User 1---* OrganizationMember *---1 Organization
+User 1---* WorkspaceUser       *---1 Workspace
+Organization 1---* Group
+Group *---* User      (via GroupMember)
+Group *---* Workspace (via GroupWorkspace)
 Workspace 1---* Client
 Workspace 1---* Project
 Project 1---* Task
 Workspace 1---* Tag
-Project 1---* ProjectUser *---1 User
+Project *---* User  (via ProjectUser)
+Project *---* Group (via ProjectGroup)
 Workspace 1---* TimeEntry
 TimeEntry *---* Tag
 TimeEntry *---1 Project
@@ -405,11 +407,11 @@ Workspace 1---* SavedReport
 
 #### Membership 表
 
-- `organization_users`
-- `workspace_users`
-- `roles`
-- `groups`
-- `group_members`
+- `organization_members`
+- `workspace_members`
+- `groups` (organization-scoped)
+- `group_members` (user ↔ group N:N)
+- `group_workspaces` (group ↔ workspace N:N)
 
 #### Catalog 表
 

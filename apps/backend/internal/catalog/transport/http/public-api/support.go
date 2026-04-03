@@ -20,6 +20,7 @@ type ScopeAuthorizer interface {
 	RequirePublicTrackUser(ctx echo.Context) (*identityapplication.UserSnapshot, error)
 	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
+	WorkspaceOrganizationID(ctx echo.Context, workspaceID int64) (int64, error)
 }
 
 type Handler struct {

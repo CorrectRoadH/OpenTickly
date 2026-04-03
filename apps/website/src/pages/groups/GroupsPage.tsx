@@ -13,8 +13,6 @@ export function GroupsPage(): ReactElement {
   const groupNameInputRef = useRef<HTMLInputElement | null>(null);
 
   const groups = normalizeGroups(groupsQuery.data);
-  const activeCount = groups.filter((group) => Boolean(group.has_users)).length;
-  const inactiveCount = groups.length - activeCount;
   const trimmedGroupName = groupName.trim();
 
   if (groupsQuery.isPending) {
@@ -53,15 +51,15 @@ export function GroupsPage(): ReactElement {
     <AppPanel data-testid="groups-page" tone="muted">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Groups</h1>
-          <p className="text-sm text-slate-500">Workspace group directory</p>
+          <h1 className="text-3xl font-semibold text-white">Teams</h1>
+          <p className="text-sm text-slate-500">Organization team directory</p>
           <p className="text-sm leading-6 text-slate-400">
-            Review workspace groups, member allocation boundaries, and active status from one page
-            inside the current workspace scope.
+            Manage teams (groups) across the organization. Teams can be assigned to workspaces and
+            projects for batch access control.
           </p>
         </div>
         <AppButton onClick={() => groupNameInputRef.current?.focus()} type="button">
-          Create group
+          Create team
         </AppButton>
       </div>
 
@@ -71,7 +69,7 @@ export function GroupsPage(): ReactElement {
         onSubmit={handleCreateGroup}
       >
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
-          Group name
+          Team name
           <input
             ref={groupNameInputRef}
             className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white"
@@ -83,7 +81,7 @@ export function GroupsPage(): ReactElement {
           disabled={trimmedGroupName.length === 0 || createGroupMutation.isPending}
           type="submit"
         >
-          Save group
+          Save team
         </AppButton>
         {status ? (
           <p className="text-sm font-medium text-[var(--track-text-accent)]">{status}</p>
@@ -93,38 +91,26 @@ export function GroupsPage(): ReactElement {
       {groups.length > 0 ? (
         <ul
           className="mt-6 divide-y divide-white/8"
-          aria-label="Groups list"
+          aria-label="Teams list"
           data-testid="groups-list"
         >
-          <li className="py-2 text-[11px] font-medium uppercase text-slate-500">
-            Workspace {session.currentWorkspace.id}
-          </li>
-          {groups.map((group) => {
-            const statusLabel = group.has_users ? "Active" : "Inactive";
-
-            return (
-              <li key={group.id} className="flex items-center justify-between py-3">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-white">{group.name}</p>
-                  <p className="text-xs text-slate-400">Group · {statusLabel}</p>
-                  <p className="text-[11px] text-slate-500">Workspace {group.workspace_id}</p>
-                </div>
-                <span className="rounded-lg border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-3 py-1 text-xs font-medium text-slate-300">
-                  {statusLabel}
-                </span>
-              </li>
-            );
-          })}
+          {groups.map((group) => (
+            <li key={group.id} className="flex items-center justify-between py-3">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-white">{group.name}</p>
+                <p className="text-xs text-slate-400">Team</p>
+              </div>
+            </li>
+          ))}
         </ul>
       ) : (
         <section
           className="mt-6 rounded-xl border border-dashed border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-5 py-5 text-sm text-slate-300"
           data-testid="groups-empty-state"
         >
-          <p className="font-semibold text-white">No groups in this workspace yet.</p>
+          <p className="font-semibold text-white">No teams in this organization yet.</p>
           <p className="mt-2 text-slate-400">
-            Create a group to keep project access and member assignments discoverable from the
-            workspace app.
+            Create a team to batch-assign users to workspaces and projects across the organization.
           </p>
         </section>
       )}
@@ -134,8 +120,7 @@ export function GroupsPage(): ReactElement {
         data-testid="groups-summary"
       >
         <p className="font-medium text-white">
-          Showing {groups.length} group{groups.length === 1 ? "" : "s"} for workspace{" "}
-          {session.currentWorkspace.id}, with {activeCount} active and {inactiveCount} inactive.
+          Showing {groups.length} team{groups.length === 1 ? "" : "s"}.
         </p>
       </div>
     </AppPanel>
@@ -143,10 +128,8 @@ export function GroupsPage(): ReactElement {
 }
 
 type GroupListItem = {
-  has_users?: boolean | null;
   id: number;
   name: string;
-  workspace_id?: number | null;
 };
 
 function normalizeGroups(data: unknown): GroupListItem[] {

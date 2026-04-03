@@ -23,7 +23,12 @@ func (handler *Handler) GetPublicTrackGroups(ctx echo.Context) error {
 		return err
 	}
 
-	views, err := handler.catalog.ListGroups(ctx.Request().Context(), workspaceID)
+	organizationID, err := handler.scope.WorkspaceOrganizationID(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
+	views, err := handler.catalog.ListGroups(ctx.Request().Context(), organizationID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
 	}
@@ -48,14 +53,19 @@ func (handler *Handler) PostPublicTrackGroups(ctx echo.Context) error {
 		return err
 	}
 
+	organizationID, err := handler.scope.WorkspaceOrganizationID(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
 	var request publictrackapi.GroupNamePayload
 	if err := bindPublicTrackJSON(ctx, &request, false); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 	view, err := handler.catalog.CreateGroup(ctx.Request().Context(), catalogapplication.CreateGroupCommand{
-		WorkspaceID: workspaceID,
-		CreatedBy:   user.ID,
-		Name:        lo.FromPtr(request.Name),
+		OrganizationID: organizationID,
+		CreatedBy:      user.ID,
+		Name:           lo.FromPtr(request.Name),
 	})
 	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
@@ -80,12 +90,17 @@ func (handler *Handler) PutPublicTrackGroup(ctx echo.Context) error {
 		return err
 	}
 
+	organizationID, err := handler.scope.WorkspaceOrganizationID(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
 	var request publictrackapi.GroupNamePayload
 	if err := bindPublicTrackJSON(ctx, &request, false); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	view, err := handler.catalog.UpdateGroup(ctx.Request().Context(), workspaceID, groupID, lo.FromPtr(request.Name))
+	view, err := handler.catalog.UpdateGroup(ctx.Request().Context(), organizationID, groupID, lo.FromPtr(request.Name))
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrGroupNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
@@ -111,7 +126,12 @@ func (handler *Handler) DeletePublicTrackGroup(ctx echo.Context) error {
 		return err
 	}
 
-	if err := handler.catalog.DeleteGroup(ctx.Request().Context(), workspaceID, groupID); err != nil {
+	organizationID, err := handler.scope.WorkspaceOrganizationID(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+
+	if err := handler.catalog.DeleteGroup(ctx.Request().Context(), organizationID, groupID); err != nil {
 		if errors.Is(err, catalogapplication.ErrGroupNotFound) {
 			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 		}
@@ -122,10 +142,8 @@ func (handler *Handler) DeletePublicTrackGroup(ctx echo.Context) error {
 
 func groupViewToAPI(view catalogapplication.GroupView) publictrackapi.GithubComTogglTogglApiInternalModelsGroup {
 	return publictrackapi.GithubComTogglTogglApiInternalModelsGroup{
-		At:          timePointer(view.CreatedAt),
-		HasUsers:    lo.ToPtr(view.HasUsers),
-		Id:          lo.ToPtr(int(view.ID)),
-		Name:        lo.ToPtr(view.Name),
-		WorkspaceId: lo.ToPtr(int(view.WorkspaceID)),
+		At:   timePointer(view.CreatedAt),
+		Id:   lo.ToPtr(int(view.ID)),
+		Name: lo.ToPtr(view.Name),
 	}
 }

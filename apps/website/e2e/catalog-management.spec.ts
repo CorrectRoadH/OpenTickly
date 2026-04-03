@@ -26,14 +26,12 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await expect(page.getByTestId("groups-page")).toBeVisible();
 
     const form = page.getByTestId("groups-create-form");
-    await form.getByLabel("Group name").fill(groupName);
-    await form.getByRole("button", { name: "Save group" }).click();
+    await form.getByLabel("Team name").fill(groupName);
+    await form.getByRole("button", { name: "Save team" }).click();
 
     await expect(page.getByText("Group created")).toBeVisible();
     await expect(page.getByTestId("groups-list")).toContainText(groupName);
-    await expect(page.getByTestId("groups-summary")).toContainText(
-      `Showing 1 group for workspace ${workspaceId}`,
-    );
+    await expect(page.getByTestId("groups-summary")).toContainText("Showing 1 team");
   });
 
   test("Given a newly registered account, when the user creates a tag, then the tag appears in the tracking catalog", async ({
