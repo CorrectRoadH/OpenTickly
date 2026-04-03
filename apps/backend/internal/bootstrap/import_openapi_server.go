@@ -19,6 +19,13 @@ func newImportOpenAPIServer(handlers *routeHandlers) importapi.ServerInterface {
 			handlers.tenantApp,
 			handlers.membershipApp,
 			handlers.userHomes,
+			handlers.catalogApp,
+			handlers.membershipApp,
+			handlers.governanceApp,
+			handlers.trackingApp,
+			handlers.reportsApp,
+			handlers.invoiceApp,
+			handlers.tenantApp,
 		),
 	}
 }

@@ -70,6 +70,52 @@ func (service *Service) StartWorkspaceExport(
 	return service.startExport(ctx, ExportScopeWorkspace, workspaceID, requestedBy, objects)
 }
 
+// StartWorkspaceExportWithData creates an export archive containing real workspace
+// data (projects, clients, tags, etc.) in the same JSON format as the Toggl export
+// archive, enabling round-trip import/export.
+func (service *Service) StartWorkspaceExportWithData(
+	ctx context.Context,
+	workspaceID int64,
+	requestedBy int64,
+	objects []string,
+	data WorkspaceExportData,
+) (string, error) {
+	if workspaceID <= 0 || requestedBy <= 0 {
+		return "", ErrInvalidScopeID
+	}
+	normalized := normalizeObjects(objects)
+	if len(normalized) == 0 {
+		return "", ErrObjectsRequired
+	}
+
+	service.logger.InfoContext(ctx, "starting workspace export with data",
+		"workspace_id", workspaceID,
+		"requested_by", requestedBy,
+		"objects", normalized,
+	)
+
+	token, err := newExportToken()
+	if err != nil {
+		return "", err
+	}
+	content, err := BuildWorkspaceArchive(workspaceID, requestedBy, normalized, data, service.now())
+	if err != nil {
+		return "", err
+	}
+	record, err := service.store.SaveExport(ctx, SaveExportCommand{
+		Scope:       ExportScopeWorkspace,
+		ScopeID:     workspaceID,
+		RequestedBy: requestedBy,
+		Token:       token,
+		Objects:     normalized,
+		Content:     content,
+	})
+	if err != nil {
+		return "", err
+	}
+	return record.Token, nil
+}
+
 func (service *Service) ListUserExports(ctx context.Context, userID int64) ([]ExportRecordView, error) {
 	return service.listExports(ctx, ExportScopeUser, userID)
 }

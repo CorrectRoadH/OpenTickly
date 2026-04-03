@@ -2,18 +2,25 @@ package publicapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"strconv"
 	"strings"
 
+	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
+	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	importapi "opentoggl/backend/apps/backend/internal/http/generated/import"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	importingapplication "opentoggl/backend/apps/backend/internal/importing/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
+	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
+	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -42,12 +49,53 @@ type UserHomeRepository interface {
 	Save(ctx context.Context, userID int64, organizationID int64, workspaceID int64) error
 }
 
+type CatalogQueries interface {
+	ListClients(ctx context.Context, workspaceID int64, filter catalogapplication.ListClientsFilter) ([]catalogapplication.ClientView, error)
+	ListProjects(ctx context.Context, workspaceID int64, filter catalogapplication.ListProjectsFilter) ([]catalogapplication.ProjectView, error)
+	ListTags(ctx context.Context, workspaceID int64, filter catalogapplication.ListTagsFilter) ([]catalogapplication.TagView, error)
+	ListTasks(ctx context.Context, workspaceID int64, filter catalogapplication.ListTasksFilter) (catalogapplication.TaskPage, error)
+	ListProjectUsers(ctx context.Context, workspaceID int64, filter catalogapplication.ListProjectUsersFilter) ([]catalogapplication.ProjectUserView, error)
+	ListGroups(ctx context.Context, organizationID int64) ([]catalogapplication.GroupView, error)
+}
+
+type MembershipQueries interface {
+	ListWorkspaceMembers(ctx context.Context, workspaceID int64, requestedBy int64) ([]membershipapplication.WorkspaceMemberView, error)
+}
+
+type GovernanceQueries interface {
+	ListAlerts(ctx context.Context, workspaceID int64) ([]governanceapplication.AlertView, error)
+}
+
+type TrackingQueries interface {
+	ListReminders(ctx context.Context, workspaceID int64) ([]trackingapplication.ReminderView, error)
+}
+
+type ReportsQueries interface {
+	ListSavedReports(ctx context.Context, workspaceID int64) ([]reportsapplication.SavedReportView, error)
+	ListScheduledReports(ctx context.Context, workspaceID int64) ([]reportsapplication.ScheduledReportView, error)
+}
+
+type InvoiceQueries interface {
+	ListInvoices(ctx context.Context, workspaceID int64, filter billingapplication.ListInvoicesFilter) ([]billingapplication.InvoiceView, error)
+}
+
+type WorkspaceQueries interface {
+	GetWorkspace(ctx context.Context, workspaceID tenantdomain.WorkspaceID) (tenantapplication.WorkspaceView, error)
+}
+
 type Handler struct {
-	importing *importingapplication.Service
-	homes     UserHomeRepository
-	members   WorkspaceOwnerEnsurer
-	scope     ScopeAuthorizer
-	tenant    OrganizationCreator
+	importing  *importingapplication.Service
+	catalog    CatalogQueries
+	membership MembershipQueries
+	governance GovernanceQueries
+	tracking   TrackingQueries
+	reports    ReportsQueries
+	invoices   InvoiceQueries
+	workspace  WorkspaceQueries
+	homes      UserHomeRepository
+	members    WorkspaceOwnerEnsurer
+	scope      ScopeAuthorizer
+	tenant     OrganizationCreator
 }
 
 func NewHandler(
@@ -56,13 +104,27 @@ func NewHandler(
 	tenant OrganizationCreator,
 	members WorkspaceOwnerEnsurer,
 	homes UserHomeRepository,
+	catalog CatalogQueries,
+	membership MembershipQueries,
+	governance GovernanceQueries,
+	tracking TrackingQueries,
+	reports ReportsQueries,
+	invoices InvoiceQueries,
+	workspace WorkspaceQueries,
 ) *Handler {
 	return &Handler{
-		importing: importing,
-		homes:     homes,
-		members:   members,
-		scope:     scope,
-		tenant:    tenant,
+		importing:  importing,
+		catalog:    catalog,
+		membership: membership,
+		governance: governance,
+		tracking:   tracking,
+		reports:    reports,
+		invoices:   invoices,
+		workspace:  workspace,
+		homes:      homes,
+		members:    members,
+		scope:      scope,
+		tenant:     tenant,
 	}
 }
 
@@ -133,11 +195,166 @@ func (handler *Handler) PostPublicTrackWorkspaceExports(ctx echo.Context, worksp
 	if err := ctx.Bind(&payload); err != nil {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
-	token, err := handler.importing.StartWorkspaceExport(ctx.Request().Context(), workspaceID, user.ID, payload)
+	data, err := handler.collectWorkspaceExportData(ctx.Request().Context(), workspaceID, user.ID, payload)
+	if err != nil {
+		return writeImportingError(err)
+	}
+	token, err := handler.importing.StartWorkspaceExportWithData(ctx.Request().Context(), workspaceID, user.ID, payload, data)
 	if err != nil {
 		return writeImportingError(err)
 	}
 	return ctx.JSON(http.StatusOK, token)
+}
+
+func (handler *Handler) collectWorkspaceExportData(
+	ctx context.Context,
+	workspaceID int64,
+	requestedBy int64,
+	objects []string,
+) (importingapplication.WorkspaceExportData, error) {
+	objectSet := make(map[string]bool, len(objects))
+	for _, o := range objects {
+		objectSet[strings.TrimSpace(strings.ToLower(o))] = true
+	}
+
+	var data importingapplication.WorkspaceExportData
+
+	if objectSet["clients"] {
+		clients, err := handler.catalog.ListClients(ctx, workspaceID, catalogapplication.ListClientsFilter{
+			Status: catalogapplication.ClientStatusBoth,
+		})
+		if err != nil {
+			return data, err
+		}
+		data.Clients = make([]importingapplication.ImportedClient, len(clients))
+		for i, c := range clients {
+			data.Clients[i] = clientViewToImported(c)
+		}
+	}
+
+	if objectSet["projects"] {
+		projects, err := handler.catalog.ListProjects(ctx, workspaceID, catalogapplication.ListProjectsFilter{
+			Page:    1,
+			PerPage: 5000,
+		})
+		if err != nil {
+			return data, err
+		}
+		data.Projects = make([]importingapplication.ImportedProject, len(projects))
+		for i, p := range projects {
+			data.Projects[i] = projectViewToImported(p)
+		}
+	}
+
+	if objectSet["tags"] {
+		tags, err := handler.catalog.ListTags(ctx, workspaceID, catalogapplication.ListTagsFilter{
+			Page:    1,
+			PerPage: 5000,
+		})
+		if err != nil {
+			return data, err
+		}
+		data.Tags = make([]importingapplication.ImportedTag, len(tags))
+		for i, t := range tags {
+			data.Tags[i] = tagViewToImported(t)
+		}
+	}
+
+	if objectSet["team"] || objectSet["workspace_users"] {
+		members, err := handler.membership.ListWorkspaceMembers(ctx, workspaceID, requestedBy)
+		if err != nil {
+			return data, err
+		}
+		data.WorkspaceUsers = make([]importingapplication.ImportedWorkspaceUser, len(members))
+		for i, m := range members {
+			data.WorkspaceUsers[i] = workspaceMemberViewToImported(m)
+		}
+	}
+
+	if objectSet["projects_users"] {
+		projectUsers, err := handler.catalog.ListProjectUsers(ctx, workspaceID, catalogapplication.ListProjectUsersFilter{})
+		if err != nil {
+			return data, err
+		}
+		data.ProjectUsers = make([]importingapplication.ImportedProjectUser, len(projectUsers))
+		for i, pu := range projectUsers {
+			data.ProjectUsers[i] = projectUserViewToImported(pu)
+		}
+	}
+
+	if objectSet["project_tasks"] {
+		taskPage, err := handler.catalog.ListTasks(ctx, workspaceID, catalogapplication.ListTasksFilter{
+			IncludeAll: true,
+			Page:       1,
+			PerPage:    5000,
+		})
+		if err != nil {
+			return data, err
+		}
+		data.Tasks, _ = json.Marshal(taskPage.Tasks)
+	}
+
+	if objectSet["teams"] {
+		ws, err := handler.workspace.GetWorkspace(ctx, tenantdomain.WorkspaceID(workspaceID))
+		if err != nil {
+			return data, err
+		}
+		groups, err := handler.catalog.ListGroups(ctx, int64(ws.OrganizationID))
+		if err != nil {
+			return data, err
+		}
+		data.Teams, _ = json.Marshal(groups)
+	}
+
+	if objectSet["workspace_settings"] {
+		ws, err := handler.workspace.GetWorkspace(ctx, tenantdomain.WorkspaceID(workspaceID))
+		if err != nil {
+			return data, err
+		}
+		data.WorkspaceSettings, _ = json.Marshal(ws)
+	}
+
+	if objectSet["alerts"] {
+		alerts, err := handler.governance.ListAlerts(ctx, workspaceID)
+		if err != nil {
+			return data, err
+		}
+		data.Alerts, _ = json.Marshal(alerts)
+	}
+
+	if objectSet["custom_reports"] {
+		reports, err := handler.reports.ListSavedReports(ctx, workspaceID)
+		if err != nil {
+			return data, err
+		}
+		data.CustomReports, _ = json.Marshal(reports)
+	}
+
+	if objectSet["scheduled_reports"] {
+		reports, err := handler.reports.ListScheduledReports(ctx, workspaceID)
+		if err != nil {
+			return data, err
+		}
+		data.ScheduledReports, _ = json.Marshal(reports)
+	}
+
+	if objectSet["tracking_reminders"] {
+		reminders, err := handler.tracking.ListReminders(ctx, workspaceID)
+		if err != nil {
+			return data, err
+		}
+		data.TrackingReminders, _ = json.Marshal(reminders)
+	}
+
+	if objectSet["invoices"] {
+		invoices, err := handler.invoices.ListInvoices(ctx, workspaceID, billingapplication.ListInvoicesFilter{})
+		if err != nil {
+			return data, err
+		}
+		data.Invoices, _ = json.Marshal(invoices)
+	}
+
+	return data, nil
 }
 
 func (handler *Handler) GetPublicTrackWorkspaceExportArchive(
