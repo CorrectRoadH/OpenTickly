@@ -65,6 +65,11 @@ func (server *publicTrackUnimplementedServer) GetIcal(ctx echo.Context, token st
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
 
+// Calendar integration endpoints are intentionally unimplemented.
+// These require third-party OAuth connections (Google Calendar, Outlook)
+// which are not supported in self-hosted OpenToggl deployments.
+// Upstream Toggl Track provides these as a SaaS-only feature.
+
 func (server *publicTrackUnimplementedServer) GetIntegrationsCalendar(ctx echo.Context) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
@@ -924,6 +929,9 @@ func (server *publicTrackUnimplementedServer) CreateRate(ctx echo.Context, works
 func (server *publicTrackUnimplementedServer) GetRatesByLevel(ctx echo.Context, workspaceId int, level string, levelId int, params GetRatesByLevelParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
 }
+
+// Saved/shared report endpoints — to be implemented with full persistence stack.
+// See: saved_reports and scheduled_reports tables in schema.sql.
 
 func (server *publicTrackUnimplementedServer) GetSharedReport(ctx echo.Context, workspaceId int, params GetSharedReportParams) error {
 	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")

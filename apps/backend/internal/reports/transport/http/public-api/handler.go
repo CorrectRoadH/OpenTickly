@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,90 +37,303 @@ func workspaceIDFromPath(ctx echo.Context) (int64, error) {
 	return value, nil
 }
 
-// GetSharedReport returns a shared report.
+func reportIDFromPath(ctx echo.Context) (int64, error) {
+	value, err := strconv.ParseInt(ctx.Param("report_id"), 10, 64)
+	if err != nil {
+		return 0, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	return value, nil
+}
+
+// ---------------------------------------------------------------------------
+// Saved/Shared Reports
+// ---------------------------------------------------------------------------
+
 func (handler *Handler) GetSharedReport(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	views, err := handler.reports.ListSavedReports(ctx.Request().Context(), workspaceID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	result := make([]publictrackapi.ModelsSavedReport, 0, len(views))
+	for _, v := range views {
+		result = append(result, savedReportViewToAPI(v))
+	}
+	return ctx.JSON(http.StatusOK, result)
 }
 
-// PostSharedReport creates a shared report.
 func (handler *Handler) PostSharedReport(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
+	if err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.ModelsSavedReport
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := handler.reports.CreateSavedReport(ctx.Request().Context(), reportsapplication.CreateSavedReportCommand{
+		WorkspaceID:    workspaceID,
+		Name:           lo.FromPtr(request.Name),
+		Public:         lo.FromPtr(request.Public),
+		FixedDateRange: lo.FromPtr(request.FixedDaterange),
+		Params:         paramsToJSON(request.Params),
+		CreatedBy:      user.ID,
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
 }
 
-// PutSharedReport updates a shared report.
 func (handler *Handler) PutSharedReport(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.ModelsSavedReport
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := handler.reports.UpdateSavedReport(ctx.Request().Context(), reportsapplication.UpdateSavedReportCommand{
+		ID:             int64(lo.FromPtr(request.Id)),
+		WorkspaceID:    workspaceID,
+		Name:           lo.FromPtr(request.Name),
+		Public:         lo.FromPtr(request.Public),
+		FixedDateRange: lo.FromPtr(request.FixedDaterange),
+		Params:         paramsToJSON(request.Params),
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
 }
 
-// BulkDeleteSavedReportResource deletes multiple saved reports.
-func (handler *Handler) BulkDeleteSavedReportResource(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
-}
-
-// DeleteSavedReportResource deletes a single saved report.
-func (handler *Handler) DeleteSavedReportResource(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	_ = ctx.Param("report_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
-}
-
-// GetSavedReportResource returns a single saved report.
 func (handler *Handler) GetSavedReportResource(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	_ = ctx.Param("report_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	reportID, err := reportIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	view, err := handler.reports.GetSavedReport(ctx.Request().Context(), workspaceID, reportID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	}
+
+	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
 }
 
-// PutSavedReportResource updates a single saved report.
 func (handler *Handler) PutSavedReportResource(ctx echo.Context) error {
-	_ = ctx.Param("workspace_id")
-	_ = ctx.Param("report_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	reportID, err := reportIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request publictrackapi.ModelsSavedReport
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := handler.reports.UpdateSavedReport(ctx.Request().Context(), reportsapplication.UpdateSavedReportCommand{
+		ID:             reportID,
+		WorkspaceID:    workspaceID,
+		Name:           lo.FromPtr(request.Name),
+		Public:         lo.FromPtr(request.Public),
+		FixedDateRange: lo.FromPtr(request.FixedDaterange),
+		Params:         paramsToJSON(request.Params),
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
 }
 
-// GetWorkspaceScheduledReports returns scheduled reports for a workspace.
+func (handler *Handler) DeleteSavedReportResource(ctx echo.Context) error {
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	reportID, err := reportIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	if err := handler.reports.DeleteSavedReport(ctx.Request().Context(), workspaceID, reportID); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	}
+	return ctx.NoContent(http.StatusOK)
+}
+
+func (handler *Handler) BulkDeleteSavedReportResource(ctx echo.Context) error {
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	var request struct {
+		IDs []int64 `json:"ids"`
+	}
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+	if len(request.IDs) == 0 {
+		return ctx.NoContent(http.StatusOK)
+	}
+
+	if err := handler.reports.BulkDeleteSavedReports(ctx.Request().Context(), workspaceID, request.IDs); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+	return ctx.NoContent(http.StatusOK)
+}
+
+// ---------------------------------------------------------------------------
+// Scheduled Reports
+// ---------------------------------------------------------------------------
+
 func (handler *Handler) GetWorkspaceScheduledReports(ctx echo.Context) error {
 	workspaceID, err := workspaceIDFromPath(ctx)
 	if err != nil {
 		return err
 	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	_ = workspaceID
-	return ctx.JSON(http.StatusOK, []publictrackapi.ModelsScheduledReport{})
+
+	views, err := handler.reports.ListScheduledReports(ctx.Request().Context(), workspaceID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	result := make([]publictrackapi.ModelsScheduledReport, 0, len(views))
+	for _, v := range views {
+		result = append(result, scheduledReportViewToAPI(v))
+	}
+	return ctx.JSON(http.StatusOK, result)
 }
 
-// PostWorkspaceScheduledReports creates a scheduled report for a workspace.
 func (handler *Handler) PostWorkspaceScheduledReports(ctx echo.Context) error {
 	workspaceID, err := workspaceIDFromPath(ctx)
 	if err != nil {
 		return err
 	}
-	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
-		return err
-	}
-	_ = workspaceID
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
-}
-
-// DeleteWorkspaceScheduledReports deletes a scheduled report.
-func (handler *Handler) DeleteWorkspaceScheduledReports(ctx echo.Context) error {
-	workspaceID, err := workspaceIDFromPath(ctx)
+	user, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
 		return err
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	_ = workspaceID
-	_ = ctx.Param("report_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+
+	var request publictrackapi.ModelsScheduledReport
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+	}
+
+	view, err := handler.reports.CreateScheduledReport(ctx.Request().Context(), reportsapplication.CreateScheduledReportCommand{
+		WorkspaceID: workspaceID,
+		ReportID:    int64(lo.FromPtr(request.ReportId)),
+		Frequency:   lo.FromPtr(request.Frequency),
+		CreatorID:   user.ID,
+		UserIDs:     intsToInt64s(lo.FromPtr(request.UserIds)),
+		GroupIDs:    intsToInt64s(lo.FromPtr(request.GroupIds)),
+	})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return ctx.JSON(http.StatusOK, scheduledReportViewToAPI(view))
 }
+
+func (handler *Handler) DeleteWorkspaceScheduledReports(ctx echo.Context) error {
+	workspaceID, err := workspaceIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	reportID, err := reportIDFromPath(ctx)
+	if err != nil {
+		return err
+	}
+	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
+		return err
+	}
+	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
+		return err
+	}
+
+	if err := handler.reports.DeleteScheduledReport(ctx.Request().Context(), workspaceID, reportID); err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	}
+	return ctx.NoContent(http.StatusOK)
+}
+
+// ---------------------------------------------------------------------------
+// Report Generation (existing)
+// ---------------------------------------------------------------------------
 
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 	ctx echo.Context,
@@ -234,6 +448,10 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 	})
 }
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
 func buildQuery(
 	workspaceID int64,
 	user *identityapplication.UserSnapshot,
@@ -269,8 +487,6 @@ func buildQuery(
 	}, nil
 }
 
-// applyBasePostFilters copies filter fields from a BasePost request into the
-// application Query so the reports service can narrow results.
 func applyBasePostFilters(query *reportsapplication.Query, request publicreportsapi.BasePost) {
 	if request.ProjectIds != nil {
 		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
@@ -286,8 +502,6 @@ func applyBasePostFilters(query *reportsapplication.Query, request publicreports
 	}
 }
 
-// applySummaryPostFilters copies filter fields from a SummaryReportPost request
-// into the application Query.
 func applySummaryPostFilters(query *reportsapplication.Query, request publicreportsapi.SummaryReportPost) {
 	if request.ProjectIds != nil {
 		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
@@ -320,4 +534,57 @@ func (handler *Handler) requireReportsScope(
 		return nil, err
 	}
 	return user, nil
+}
+
+func savedReportViewToAPI(v reportsapplication.SavedReportView) publictrackapi.ModelsSavedReport {
+	updatedAt := v.UpdatedAt.UTC().Format(time.RFC3339)
+	uid := int(v.CreatedBy)
+	return publictrackapi.ModelsSavedReport{
+		Id:             lo.ToPtr(int(v.ID)),
+		Name:           lo.ToPtr(v.Name),
+		Public:         lo.ToPtr(v.Public),
+		FixedDaterange: lo.ToPtr(v.FixedDateRange),
+		Token:          v.Token,
+		Params:         paramsFromJSON(v.Params),
+		Uid:            lo.ToPtr(uid),
+		UpdatedAt:      lo.ToPtr(updatedAt),
+		UpdatedBy:      lo.ToPtr(uid),
+	}
+}
+
+func scheduledReportViewToAPI(v reportsapplication.ScheduledReportView) publictrackapi.ModelsScheduledReport {
+	createdAt := v.CreatedAt.UTC().Format(time.RFC3339)
+	return publictrackapi.ModelsScheduledReport{
+		BookmarkId:  lo.ToPtr(int(v.ReportID)),
+		ReportId:    lo.ToPtr(int(v.ReportID)),
+		WorkspaceId: lo.ToPtr(int(v.WorkspaceID)),
+		Frequency:   lo.ToPtr(v.Frequency),
+		CreatorId:   lo.ToPtr(int(v.CreatorID)),
+		UserIds:     lo.ToPtr(int64sToInts(v.UserIDs)),
+		GroupIds:    lo.ToPtr(int64sToInts(v.GroupIDs)),
+		CreatedAt:   lo.ToPtr(createdAt),
+	}
+}
+
+func int64sToInts(values []int64) []int {
+	result := make([]int, len(values))
+	for i, v := range values {
+		result[i] = int(v)
+	}
+	return result
+}
+
+func paramsToJSON(s *string) json.RawMessage {
+	if s == nil || *s == "" {
+		return json.RawMessage("{}")
+	}
+	return json.RawMessage(*s)
+}
+
+func paramsFromJSON(raw json.RawMessage) *string {
+	if raw == nil {
+		return nil
+	}
+	s := string(raw)
+	return &s
 }

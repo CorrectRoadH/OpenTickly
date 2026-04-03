@@ -1,6 +1,9 @@
 package application
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Query struct {
 	Description string
@@ -54,4 +57,57 @@ type SummaryReport struct {
 	Groups       []SummaryGroup
 	TotalSeconds int
 	TrackedDays  int
+}
+
+// SavedReportView is the read model for a persisted report definition.
+type SavedReportView struct {
+	ID             int64
+	WorkspaceID    int64
+	Name           string
+	Public         bool
+	FixedDateRange bool
+	Token          *string
+	Params         json.RawMessage
+	CreatedBy      int64
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type CreateSavedReportCommand struct {
+	WorkspaceID    int64
+	Name           string
+	Public         bool
+	FixedDateRange bool
+	Params         json.RawMessage
+	CreatedBy      int64
+}
+
+type UpdateSavedReportCommand struct {
+	ID             int64
+	WorkspaceID    int64
+	Name           string
+	Public         bool
+	FixedDateRange bool
+	Params         json.RawMessage
+}
+
+// ScheduledReportView is the read model for a scheduled report delivery.
+type ScheduledReportView struct {
+	ID          int64
+	WorkspaceID int64
+	ReportID    int64
+	Frequency   int
+	CreatorID   int64
+	UserIDs     []int64
+	GroupIDs    []int64
+	CreatedAt   time.Time
+}
+
+type CreateScheduledReportCommand struct {
+	WorkspaceID int64
+	ReportID    int64
+	Frequency   int
+	CreatorID   int64
+	UserIDs     []int64
+	GroupIDs    []int64
 }

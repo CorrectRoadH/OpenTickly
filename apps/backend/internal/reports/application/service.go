@@ -12,6 +12,21 @@ import (
 	"opentoggl/backend/apps/backend/internal/log"
 )
 
+type SavedReportStore interface {
+	List(ctx context.Context, workspaceID int64) ([]SavedReportView, error)
+	Get(ctx context.Context, workspaceID, reportID int64) (SavedReportView, error)
+	Create(ctx context.Context, cmd CreateSavedReportCommand) (SavedReportView, error)
+	Update(ctx context.Context, cmd UpdateSavedReportCommand) (SavedReportView, error)
+	Delete(ctx context.Context, workspaceID, reportID int64) error
+	BulkDelete(ctx context.Context, workspaceID int64, reportIDs []int64) error
+}
+
+type ScheduledReportStore interface {
+	List(ctx context.Context, workspaceID int64) ([]ScheduledReportView, error)
+	Create(ctx context.Context, cmd CreateScheduledReportCommand) (ScheduledReportView, error)
+	Delete(ctx context.Context, workspaceID, reportID int64) error
+}
+
 type TrackingQueries interface {
 	ListWorkspaceTimeEntries(
 		ctx context.Context,
@@ -34,11 +49,13 @@ type RateResolver interface {
 }
 
 type Service struct {
-	membership MembershipQueries
-	now        func() time.Time
-	rates      RateResolver
-	tracking   TrackingQueries
-	logger     log.Logger
+	membership       MembershipQueries
+	now              func() time.Time
+	rates            RateResolver
+	tracking         TrackingQueries
+	savedReports     SavedReportStore
+	scheduledReports ScheduledReportStore
+	logger           log.Logger
 }
 
 func NewService(tracking TrackingQueries, membership MembershipQueries, rates RateResolver, logger log.Logger) *Service {
@@ -49,6 +66,52 @@ func NewService(tracking TrackingQueries, membership MembershipQueries, rates Ra
 		tracking:   tracking,
 		logger:     logger,
 	}
+}
+
+// WithSavedReportStore attaches saved report persistence to the service.
+func (s *Service) WithSavedReportStore(store SavedReportStore) {
+	s.savedReports = store
+}
+
+// WithScheduledReportStore attaches scheduled report persistence to the service.
+func (s *Service) WithScheduledReportStore(store ScheduledReportStore) {
+	s.scheduledReports = store
+}
+
+func (s *Service) ListSavedReports(ctx context.Context, workspaceID int64) ([]SavedReportView, error) {
+	return s.savedReports.List(ctx, workspaceID)
+}
+
+func (s *Service) GetSavedReport(ctx context.Context, workspaceID, reportID int64) (SavedReportView, error) {
+	return s.savedReports.Get(ctx, workspaceID, reportID)
+}
+
+func (s *Service) CreateSavedReport(ctx context.Context, cmd CreateSavedReportCommand) (SavedReportView, error) {
+	return s.savedReports.Create(ctx, cmd)
+}
+
+func (s *Service) UpdateSavedReport(ctx context.Context, cmd UpdateSavedReportCommand) (SavedReportView, error) {
+	return s.savedReports.Update(ctx, cmd)
+}
+
+func (s *Service) DeleteSavedReport(ctx context.Context, workspaceID, reportID int64) error {
+	return s.savedReports.Delete(ctx, workspaceID, reportID)
+}
+
+func (s *Service) BulkDeleteSavedReports(ctx context.Context, workspaceID int64, reportIDs []int64) error {
+	return s.savedReports.BulkDelete(ctx, workspaceID, reportIDs)
+}
+
+func (s *Service) ListScheduledReports(ctx context.Context, workspaceID int64) ([]ScheduledReportView, error) {
+	return s.scheduledReports.List(ctx, workspaceID)
+}
+
+func (s *Service) CreateScheduledReport(ctx context.Context, cmd CreateScheduledReportCommand) (ScheduledReportView, error) {
+	return s.scheduledReports.Create(ctx, cmd)
+}
+
+func (s *Service) DeleteScheduledReport(ctx context.Context, workspaceID, reportID int64) error {
+	return s.scheduledReports.Delete(ctx, workspaceID, reportID)
 }
 
 func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (WeeklyReport, error) {

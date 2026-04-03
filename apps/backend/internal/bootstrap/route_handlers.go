@@ -32,6 +32,7 @@ import (
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
+	reportspostgres "opentoggl/backend/apps/backend/internal/reports/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
@@ -129,6 +130,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 	rateResolver := reportsapplication.NewCatalogRateResolver(catalogService)
 	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver, appLogger)
+	reportsService.WithSavedReportStore(reportspostgres.NewSavedReportStore(pool))
+	reportsService.WithScheduledReportStore(reportspostgres.NewScheduledReportStore(pool))
 	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool), appLogger)
 	if err != nil {
 		return nil, err
