@@ -1,0 +1,185 @@
+name: Upgrade Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  BACKEND_ENV: |
+    OPENTOGGL_SERVICE_NAME=opentoggl-api
+    PORT=8080
+    DATABASE_URL=postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+    REDIS_URL=redis://127.0.0.1:6379/0
+    OPENTOGGL_FILESTORE_NAMESPACE=opentoggl
+    OPENTOGGL_JOBS_QUEUE_NAME=default
+
+jobs:
+  upgrade-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (full history + tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: "pnpm"
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      # ── Infrastructure ──────────────────────────────────────────────────────
+
+      - name: Start postgres and redis
+        run: |
+          docker logout || true
+          docker compose -f docker-compose.yml up -d postgres redis
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null && docker compose -f docker-compose.yml exec -T redis redis-cli ping &>/dev/null; do sleep 1; done'
+
+      - name: Create database
+        run: |
+          docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c \
+            "SELECT 1 FROM pg_database WHERE datname='opentoggl'" | grep -q 1 || \
+          docker compose -f docker-compose.yml exec -T postgres psql -U postgres -c \
+            "CREATE DATABASE opentoggl"
+
+      # ── Phase 1: v0.0.17 ────────────────────────────────────────────────────
+
+      - name: Switch to v0.0.17
+        run: git checkout v0.0.17
+
+      - name: Install dependencies (v0.0.17)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend (v0.0.17)
+        env:
+          CGO_ENABLED: 0
+        run: go build -o /tmp/opentoggl-v0.0.17 ./apps/backend
+
+      - name: Install pgschema (required by v0.0.17)
+        run: GOBIN=/usr/local/bin go install github.com/pgplex/pgschema@v1.7.3
+
+      - name: Apply schema (v0.0.17)
+        env:
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: /tmp/opentoggl-v0.0.17 schema-apply
+
+      - name: Build frontend (v0.0.17)
+        run: pnpm --filter @opentoggl/website run build
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Start backend (v0.0.17)
+        env:
+          OPENTOGGL_SERVICE_NAME: opentoggl-api
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
+          OPENTOGGL_FILESTORE_NAMESPACE: opentoggl
+          OPENTOGGL_JOBS_QUEUE_NAME: default
+        run: |
+          /tmp/opentoggl-v0.0.17 &
+          echo $! > /tmp/backend-v0017.pid
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/readyz > /dev/null 2>&1; then
+              echo "v0.0.17 backend ready"
+              break
+            fi
+            echo "Waiting for v0.0.17 backend... ($i/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:8080/readyz || (echo "v0.0.17 backend failed to start" && exit 1)
+
+      - name: Start frontend dev server (v0.0.17)
+        env:
+          OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
+        run: |
+          pnpm exec vp run website#dev -- --port 5173 &
+          echo $! > /tmp/frontend.pid
+          sleep 5
+
+      - name: Seed data via v0.0.17 e2e
+        run: |
+          cd apps/website
+          pnpm exec playwright test e2e/upgrade-seed.spec.ts \
+            --reporter=list
+
+      - name: Stop v0.0.17 backend and frontend
+        run: |
+          kill $(cat /tmp/backend-v0017.pid) 2>/dev/null || true
+          kill $(cat /tmp/frontend.pid) 2>/dev/null || true
+          # wait for port 8080 to be free
+          for i in {1..10}; do
+            lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+            nc -z localhost 8080 2>/dev/null || break
+            sleep 1
+          done
+
+      # ── Phase 2: main ───────────────────────────────────────────────────────
+
+      - name: Switch back to main
+        run: git checkout main
+
+      - name: Install dependencies (main)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build backend (main)
+        env:
+          CGO_ENABLED: 0
+        run: go build -o /tmp/opentoggl-main ./apps/backend
+
+      - name: Build frontend (main)
+        run: pnpm --filter @opentoggl/website run build
+
+      - name: Start backend (main) — migrate.Run fires automatically
+        env:
+          OPENTOGGL_SERVICE_NAME: opentoggl-api
+          PORT: 8080
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/opentoggl?sslmode=disable
+          REDIS_URL: redis://127.0.0.1:6379/0
+          OPENTOGGL_FILESTORE_NAMESPACE: opentoggl
+          OPENTOGGL_JOBS_QUEUE_NAME: default
+        run: |
+          /tmp/opentoggl-main &
+          echo $! > /tmp/backend-main.pid
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/readyz > /dev/null 2>&1; then
+              echo "main backend ready"
+              break
+            fi
+            echo "Waiting for main backend... ($i/30)"
+            sleep 2
+          done
+          curl -sf http://localhost:8080/readyz || (echo "main backend failed to start after migration" && exit 1)
+
+      - name: Start frontend dev server (main)
+        env:
+          OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
+        run: |
+          pnpm exec vp run website#dev -- --port 5173 &
+          sleep 5
+
+      - name: Verify seeded data survives upgrade
+        run: |
+          cd apps/website
+          pnpm exec playwright test e2e/upgrade-verify.spec.ts \
+            --reporter=list
+
+      - name: Upload Playwright traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-smoke-traces
+          path: apps/website/test-results/
+          retention-days: 7
