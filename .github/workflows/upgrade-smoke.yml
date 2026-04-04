@@ -96,7 +96,10 @@ jobs:
         run: |
           pnpm exec vp run website#dev -- --port 5173 &
           echo $! > /tmp/frontend.pid
-          sleep 5
+          for i in {1..30}; do
+            curl -sf http://localhost:5173 > /dev/null 2>&1 && echo "v0.0.17 frontend ready" && break
+            echo "Waiting for v0.0.17 frontend... ($i/30)" && sleep 2
+          done
 
       - name: Run e2e against v0.0.17
         run: |
@@ -152,7 +155,10 @@ jobs:
           OPENTOGGL_WEB_PROXY_TARGET: http://127.0.0.1:8080
         run: |
           pnpm exec vp run website#dev -- --port 5173 &
-          sleep 5
+          for i in {1..30}; do
+            curl -sf http://localhost:5173 > /dev/null 2>&1 && echo "main frontend ready" && break
+            echo "Waiting for main frontend... ($i/30)" && sleep 2
+          done
 
       - name: Run e2e against main (DB already has v0.0.17 data)
         run: |
