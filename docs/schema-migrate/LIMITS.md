@@ -94,6 +94,9 @@ Go 生态里常见的 migration framework，支持 SQL migration 和 Go migratio
 - 复杂数据迁移可以写 Go
 - 很容易内置到 Go 二进制和 Docker 启动链路
 - 很适合 baseline + incremental migrations 的模式
+- 内置 advisory lock，多副本部署开箱安全
+- migration checksum 校验：已执行的 migration 文件被修改后会报错
+- 支持 out-of-order migration（`--allow-missing`），多分支并行开发时可补执行漏掉的 migration
 
 ## 限制
 
@@ -129,6 +132,8 @@ pgx 作者（jackc）写的 migration framework，直接接受 `*pgx.Conn`。
 - 团队同样需要额外维护 `latest.sql` 快照（与 goose 相同）
 - 仍然不会自动替你解决大表回填、兼容期、双写切换（与 goose 相同）
 - 模板语法如果滥用会降低 SQL migration 可读性
+- 无 checksum 校验：已执行的 migration 文件被修改后 tern 不会检测到
+- 不支持 out-of-order migration：严格顺序编号，多分支并行开发时 migration 序号容易冲突
 
 ## 直接影响
 

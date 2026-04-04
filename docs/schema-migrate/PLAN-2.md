@@ -38,7 +38,16 @@ apps/backend/db/migrations/
 - 用 `Atlas` 生成 migration 草稿
 - 人工审阅并提交 migration
 - 运行时仍通过内置 migrate runner 执行 migration
-- 部署时由 OpenToggl 二进制负责 `migrate up`
+- 正式版单二进制启动时由 OpenToggl 二进制自动检查并执行 pending migrations
+
+### self-hosting 与升级支持边界
+
+- 正式版启动时，应用自动检查并执行 pending migrations；用户不需要显式调用独立 migrate 命令
+- migration 正确性由开发期、本地测试、CI 和发布验证保证，而不是转嫁给最终操作者手工执行
+- 支持空库初始化到当前 schema
+- 正式支持从 `v0.0.17` 的现状 schema 迁移到新 migration 体系
+- `v0.0.17` 是旧世界到新 migration 世界的受支持桥接起点
+- 早于 `v0.0.17` 的历史版本不承诺自动升级；如果未来需要支持，必须单独补桥接 migration 和验证证据
 
 ### 各类变更如何产生 schema 与 migration
 
