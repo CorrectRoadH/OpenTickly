@@ -102,9 +102,7 @@ jobs:
           done
 
       - name: Run e2e against v0.0.17
-        run: |
-          cd apps/website
-          pnpm exec playwright test e2e/foundation-smoke.spec.ts
+        run: vp run website#test:e2e
 
       - name: Stop v0.0.17 backend and frontend
         run: |
@@ -160,10 +158,8 @@ jobs:
             echo "Waiting for main frontend... ($i/30)" && sleep 2
           done
 
-      - name: Run e2e against main (DB already has v0.0.17 data)
-        run: |
-          cd apps/website
-          pnpm exec playwright test e2e/foundation-smoke.spec.ts
+      - name: Run e2e against main (DB migrated from v0.0.17)
+        run: vp run website#test:e2e
 
       - name: Upload traces and backend log on failure
         if: failure()
