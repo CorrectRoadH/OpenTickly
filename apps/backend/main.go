@@ -9,12 +9,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
 
 	"opentoggl/backend/apps/backend/internal/bootstrap"
 	instanceadmintransport "opentoggl/backend/apps/backend/internal/instance-admin/transport/http/admin"
+	"opentoggl/backend/apps/backend/internal/platform/migrate"
 )
 
 // version is injected at build time via:
@@ -45,13 +47,12 @@ func run(args []string) error {
 			return fmt.Errorf("bootstrap api startup: %w", err)
 		}
 
+		if err := migrate.Run(context.Background(), app.Platform.Database.Pool()); err != nil {
+			return fmt.Errorf("database migration: %w", err)
+		}
+
 		if err := app.Start(); err != nil {
 			return fmt.Errorf("start api startup: %w", err)
-		}
-		return nil
-	case "schema-apply":
-		if err := bootstrap.ApplySchemaFromEnvironment(os.Stdout, os.Stderr, nil); err != nil {
-			return fmt.Errorf("apply database schema: %w", err)
 		}
 		return nil
 	default:

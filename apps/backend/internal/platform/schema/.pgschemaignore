@@ -1,3 +1,0 @@
-# Reserved for future pgschema dump filtering.
-#
-# The desired-state entrypoint for plan/apply remains schema.sql.

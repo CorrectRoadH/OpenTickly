@@ -322,6 +322,7 @@ type Store interface {
 	RestoreClientAndProjects(context.Context, int64, int64, []int64, bool) error
 	ListGroups(ctx context.Context, organizationID int64) ([]GroupView, error)
 	GetGroup(ctx context.Context, organizationID int64, groupID int64) (GroupView, bool, error)
+	GetGroupByID(ctx context.Context, groupID int64) (GroupView, bool, error)
 	CreateGroup(context.Context, CreateGroupCommand) (GroupView, error)
 	UpdateGroup(context.Context, GroupView) error
 	DeleteGroup(ctx context.Context, organizationID int64, groupID int64) error

@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"opentoggl/backend/apps/backend/internal/platform/schema"
+	"opentoggl/backend/apps/backend/internal/platform/migrate"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -141,27 +141,8 @@ func newSchemaScopedPool(baseDSN string, schemaName string) (*pgxpool.Pool, erro
 func applySchema(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 
-	// Check if schema already has tables (meaning it was already initialized)
-	// This is safe for the shared canonical schema where we only want to init once
-	var count int
-	err := pool.QueryRow(context.Background(), "select count(*) from information_schema.tables where table_schema = current_schema()").Scan(&count)
-	if err != nil {
-		t.Fatalf("check existing schema tables: %v", err)
-	}
-	if count > 0 {
-		// Schema already initialized, skip applying schema
-		return
-	}
-
-	contents, err := os.ReadFile(schema.Path())
-	if err != nil {
-		t.Fatalf("read schema sql: %v", err)
-	}
-	if strings.TrimSpace(string(contents)) == "" {
-		return
-	}
-	if _, err := pool.Exec(context.Background(), string(contents)); err != nil {
-		t.Fatalf("apply schema sql: %v", err)
+	if err := migrate.Run(context.Background(), pool); err != nil {
+		t.Fatalf("apply schema via goose: %v", err)
 	}
 }
 

@@ -149,6 +149,28 @@ func (store *Store) GetGroup(
 	return group, true, nil
 }
 
+func (store *Store) GetGroupByID(
+	ctx context.Context,
+	groupID int64,
+) (catalogapplication.GroupView, bool, error) {
+	row := store.pool.QueryRow(
+		ctx,
+		`select id, organization_id, name, created_at
+		from catalog_groups
+		where id = $1`,
+		groupID,
+	)
+
+	var group catalogapplication.GroupView
+	if err := row.Scan(&group.ID, &group.OrganizationID, &group.Name, &group.CreatedAt); err != nil {
+		if notFound(err) {
+			return catalogapplication.GroupView{}, false, nil
+		}
+		return catalogapplication.GroupView{}, false, writeCatalogError("get catalog group by id", err)
+	}
+	return group, true, nil
+}
+
 func (store *Store) ListGroupMembers(ctx context.Context, groupID int64) ([]catalogapplication.GroupMemberView, error) {
 	rows, err := store.pool.Query(ctx,
 		"select group_id, user_id from catalog_group_members where group_id = $1 order by user_id",

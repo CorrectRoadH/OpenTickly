@@ -35,7 +35,7 @@ func (service *Service) CreateProjectGroup(
 	} else if !ok {
 		return ProjectGroupView{}, ErrProjectNotFound
 	}
-	if _, ok, err := service.store.GetGroup(ctx, command.WorkspaceID, command.GroupID); err != nil {
+	if _, ok, err := service.store.GetGroupByID(ctx, command.GroupID); err != nil {
 		return ProjectGroupView{}, err
 	} else if !ok {
 		return ProjectGroupView{}, ErrGroupNotFound

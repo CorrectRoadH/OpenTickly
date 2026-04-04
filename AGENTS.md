@@ -20,7 +20,7 @@ Rules:
 - All JS/TS toolchain commands go through `vp`. Never invoke `node`, `vitest`, `vite`, `playwright`, `pnpm`, `npm`, or `yarn` directly.
 - Env vars live at repo root: `.env.local` (runtime) and `.env.example` (committed template).
 - Backend must require explicit datasource config from env; fail immediately if missing. No silent fallback to in-memory stores.
-- PostgreSQL schema via `pgschema` only. No second migration toolchain.
+- PostgreSQL schema via `goose` versioned migrations only. Migrations live in `apps/backend/internal/platform/migrate/migrations/`. Current schema snapshot in `apps/backend/db/schema/latest.sql`. See `docs/schema-migrate/PLAN-1.md` for rules.
 - Backend hot reload config lives in root `.air.toml`.
 - New entrypoints go in root `package.json`, `vp`, or a Go CLI — not in `scripts/*.sh`, `apps/**/scripts/*.mjs`, or wrapper CLIs.
 - `apps/landing` is built independently outside the workspace (no `pnpm-workspace.yaml` context). Never use `"catalog:"` references in `apps/landing/package.json` — always pin explicit versions.
@@ -84,7 +84,7 @@ Non-TDD work still requires proportional verification:
 - Run unit tests, E2E tests, type checks, lint checks.
 - Smoke test with Playwright; take screenshots to verify UI.
 - Infra/config changes: verify with startup checks and runtime evidence.
-- Schema changes: verify with `pgschema` plan/apply + runtime startup.
+- Schema changes: add a new goose migration + update `latest.sql`, verify with `air` startup and tests.
 - Docs-only changes need consistency checks, not `vp check`/`vp test`.
 
 A task is complete only when it passes tests **and** matches `docs/`/`openapi/` definitions.

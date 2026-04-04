@@ -19,8 +19,6 @@ WORKDIR /workspace
 
 COPY go.mod go.sum ./
 RUN go mod download
-RUN GOBIN=/out CGO_ENABLED=0 GOOS=linux go install github.com/pgplex/pgschema@v1.7.3
-
 COPY apps ./apps
 COPY --from=website-builder /workspace/apps/website/dist ./apps/backend/internal/web/dist
 
@@ -31,8 +29,6 @@ FROM alpine:3.22
 WORKDIR /app
 
 COPY --from=builder /out/opentoggl /usr/local/bin/opentoggl
-COPY --from=builder /out/pgschema /usr/local/bin/pgschema
-COPY apps/backend/internal/platform/schema/schema.sql /app/schema.sql
 COPY apps/backend/opentoggl-entrypoint.sh /usr/local/bin/opentoggl-entrypoint
 
 RUN apk add --no-cache ca-certificates wget tzdata

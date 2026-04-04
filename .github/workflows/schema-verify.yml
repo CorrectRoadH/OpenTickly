@@ -1,0 +1,33 @@
+name: Schema Verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/internal/platform/migrate/**"
+      - "apps/backend/db/schema/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/backend/internal/platform/migrate/**"
+      - "apps/backend/db/schema/**"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  verify-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start postgres
+        run: |
+          docker logout || true
+          docker compose -f docker-compose.yml up -d postgres
+          timeout 60 bash -c 'until docker compose -f docker-compose.yml exec -T postgres pg_isready -U postgres &>/dev/null; do sleep 1; done'
+
+      - name: Verify latest.sql matches migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
+        run: go test ./apps/backend/internal/platform/migrate/ -v -count=1 -run TestLatestSQLMatchesMigrations
