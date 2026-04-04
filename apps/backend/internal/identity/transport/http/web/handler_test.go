@@ -106,14 +106,17 @@ func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
 }
 
 func TestGetSessionLogsUnexpectedSessionBootstrapError(t *testing.T) {
+	// Create handler before overriding slog.Default so that goose migration
+	// logs (emitted during pgtest.Open) are not captured in our log buffer.
+	handler := newTestHandlerWithShell(t, failingSessionShellProvider{err: errors.New("shell bootstrap failed")})
+
 	var logs strings.Builder
 	previousLogger := slog.Default()
 	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
 	defer func() {
 		slog.SetDefault(previousLogger)
 	}()
-
-	handler := newTestHandlerWithShell(t, failingSessionShellProvider{err: errors.New("shell bootstrap failed")})
+	handler.logger = slog.Default()
 	uniqueEmail := fmt.Sprintf("web-handler-%d@example.com", time.Now().UnixNano())
 
 	auth, err := handler.service.Register(context.Background(), application.RegisterInput{
