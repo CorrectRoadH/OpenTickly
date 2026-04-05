@@ -176,12 +176,14 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
 
       await page.waitForTimeout(500);
-      const col = await timeGridEntries.first().evaluate((el) => {
+      const colInfo = await timeGridEntries.first().evaluate((el) => {
         const slot = el.closest(".rbc-day-slot");
-        return slot?.parentElement ? Array.from(slot.parentElement.children).indexOf(slot) : -1;
+        if (!slot?.parentElement) return { index: -1, total: 0 };
+        const siblings = Array.from(slot.parentElement.children);
+        return { index: siblings.indexOf(slot), total: siblings.length };
       });
-      // Last day of a 7-day grid = index 6
-      expect(col).toBe(6);
+      // Should be the last day-slot column (regardless of gutter columns)
+      expect(colInfo.index).toBe(colInfo.total - 1);
     }
   });
 
