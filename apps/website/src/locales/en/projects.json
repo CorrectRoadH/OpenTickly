@@ -67,5 +67,20 @@
   "workspaceMember": "Workspace member",
   "added": "Added",
   "add": "Add",
-  "noMatchingWorkspaceMembers": "No matching workspace members."
+  "noMatchingWorkspaceMembers": "No matching workspace members.",
+  "standard": "Standard",
+  "projectDetails": "Project details",
+  "projectTasks": "Project tasks",
+  "unassigned": "Unassigned",
+  "actual": "Actual",
+  "period": "Period",
+  "recurring": "recurring",
+  "none": "none",
+  "memberCount": "{{count}} member{{count !== 1 ? 's' : ''}}",
+  "projectWithStatus": "Project · {{status}}",
+  "workspaceWidMembers": "Workspace {{wid}} · {{count}} member{{count !== 1 ? 's' : ''}}",
+  "pinProjectAction": "Pin project {{name}}",
+  "unpinProjectAction": "Unpin project {{name}}",
+  "archiveProjectAction": "Archive project {{name}}",
+  "restoreProjectAction": "Restore project {{name}}"
 }

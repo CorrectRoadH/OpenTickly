@@ -67,5 +67,20 @@
   "workspaceMember": "工作区成员",
   "added": "已添加",
   "add": "添加",
-  "noMatchingWorkspaceMembers": "没有匹配的工作区成员。"
+  "noMatchingWorkspaceMembers": "没有匹配的工作区成员。",
+  "standard": "标准",
+  "projectDetails": "项目详情",
+  "projectTasks": "项目任务",
+  "unassigned": "未分配",
+  "actual": "实际",
+  "period": "周期",
+  "recurring": "重复",
+  "none": "无",
+  "memberCount": "{{count}} 位成员",
+  "projectWithStatus": "项目 · {{status}}",
+  "workspaceWidMembers": "工作区 {{wid}} · {{count}} 位成员",
+  "pinProjectAction": "固定项目 {{name}}",
+  "unpinProjectAction": "取消固定项目 {{name}}",
+  "archiveProjectAction": "归档项目 {{name}}",
+  "restoreProjectAction": "恢复项目 {{name}}"
 }

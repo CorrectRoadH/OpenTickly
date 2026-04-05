@@ -1,5 +1,6 @@
 import { AppButton } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import type {
   GithubComTogglTogglApiInternalModelsProject,
@@ -11,14 +12,6 @@ import {
   buildProjectTeamPath,
 } from "../../shared/url-state/projects-location.ts";
 import { ProjectMembersSection } from "./ProjectMembersSection.tsx";
-
-function projectStatusLabel(project: GithubComTogglTogglApiInternalModelsProject): string {
-  return project.active ? "Active" : "Archived";
-}
-
-function projectTemplateLabel(project: GithubComTogglTogglApiInternalModelsProject): string {
-  return project.template ? "Template" : "Standard";
-}
 
 type ProjectListItemProps = {
   mutationPending: boolean;
@@ -35,13 +28,12 @@ export function ProjectListItem({
   project,
   workspaceId,
 }: ProjectListItemProps): ReactElement {
+  const { t } = useTranslation("projects");
   const projectMembersQuery = useProjectMembersQuery(workspaceId, project.id ?? 0);
   const projectMembers = normalizeProjectMembers(projectMembersQuery.data);
   const memberCount = projectMembers.length;
-  const statusLabel = projectStatusLabel(project);
-  const pinActionLabel = project.pinned ? "Unpin" : "Pin";
-  const archiveActionLabel = project.active ? "Archive" : "Restore";
-  const templateLabel = projectTemplateLabel(project);
+  const statusLabel = project.active ? t("active") : t("archived");
+  const templateLabel = project.template ? t("template") : t("standard");
 
   return (
     <li aria-label={`Project ${project.name}`} className="py-4">
@@ -57,19 +49,25 @@ export function ProjectListItem({
             </span>
             {project.pinned ? (
               <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-200">
-                Pinned
+                {t("pinned")}
               </span>
             ) : null}
           </div>
-          <p className="text-xs text-slate-400">Project · {statusLabel}</p>
+          <p className="text-xs text-slate-400">
+            {t("projectWithStatus", { status: statusLabel })}
+          </p>
           <p className="text-[11px] text-slate-500">
-            Workspace {project.wid} · {memberCount} member{memberCount === 1 ? "" : "s"}
+            {t("workspaceWidMembers", { wid: project.wid, count: memberCount })}
           </p>
           <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
-            <span>Client {project.client_name ?? "Unassigned"}</span>
-            <span>Actual {project.actual_seconds ?? 0}s</span>
             <span>
-              Period {project.recurring ? "recurring" : "none"}
+              {t("client")} {project.client_name ?? t("unassigned")}
+            </span>
+            <span>
+              {t("actual")} {project.actual_seconds ?? 0}s
+            </span>
+            <span>
+              {t("period")} {project.recurring ? t("recurring") : t("none")}
               {project.current_period?.start_date && project.current_period?.end_date
                 ? ` · ${project.current_period.start_date} to ${project.current_period.end_date}`
                 : ""}
@@ -79,18 +77,18 @@ export function ProjectListItem({
 
         <div className="flex flex-wrap gap-2">
           <a
-            aria-label={`Project details for ${project.name}`}
+            aria-label={`${t("projectDetails")} for ${project.name}`}
             className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
             href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
           >
-            Project details
+            {t("projectDetails")}
           </a>
           <a
-            aria-label={`Project tasks for ${project.name}`}
+            aria-label={`${t("projectTasks")} for ${project.name}`}
             className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
             href={buildProjectTasksPath(workspaceId, project.id ?? 0)}
           >
-            Project tasks
+            {t("projectTasks")}
           </a>
           <AppButton
             disabled={mutationPending}
@@ -98,9 +96,11 @@ export function ProjectListItem({
             type="button"
           >
             <span className="sr-only">
-              {pinActionLabel} project {project.name}
+              {project.pinned
+                ? t("unpinProjectAction", { name: project.name })
+                : t("pinProjectAction", { name: project.name })}
             </span>
-            <span aria-hidden="true">{pinActionLabel}</span>
+            <span aria-hidden="true">{project.pinned ? t("unpin") : t("pin")}</span>
           </AppButton>
           <AppButton
             disabled={mutationPending}
@@ -108,9 +108,11 @@ export function ProjectListItem({
             type="button"
           >
             <span className="sr-only">
-              {archiveActionLabel} project {project.name}
+              {project.active
+                ? t("archiveProjectAction", { name: project.name })
+                : t("restoreProjectAction", { name: project.name })}
             </span>
-            <span aria-hidden="true">{archiveActionLabel}</span>
+            <span aria-hidden="true">{project.active ? t("archive") : t("restore")}</span>
           </AppButton>
         </div>
       </div>
