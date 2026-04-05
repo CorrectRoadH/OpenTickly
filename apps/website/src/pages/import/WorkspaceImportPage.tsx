@@ -14,7 +14,8 @@ import { useSession } from "../../shared/session/session-context.tsx";
 import type { SessionWorkspaceSummaryViewModel } from "../../entities/session/session-bootstrap.ts";
 
 export function WorkspaceImportPage(): ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation("import");
+  const toastT = useTranslation();
   const archiveInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const session = useSession();
@@ -70,8 +71,8 @@ export function WorkspaceImportPage(): ReactElement {
       if (job.status === "failed") {
         toast.error(
           job.error_message
-            ? `Archive import failed: ${job.error_message}`
-            : "Archive import failed.",
+            ? t("archiveImportFailedWithMessage", { message: job.error_message })
+            : t("archiveImportFailed"),
           { duration: 6000 },
         );
         return;
@@ -84,9 +85,9 @@ export function WorkspaceImportPage(): ReactElement {
           .mutateAsync({ workspace_id: job.workspace_id })
           .catch(() => undefined);
       }
-      toast.success(t("toast:organizationCreated", { name: organizationName }));
+      toast.success(toastT.t("toast:organizationCreated", { name: organizationName }));
     } catch (error) {
-      toast.error(resolveArchiveImportErrorMessage(error) ?? t("toast:unexpectedError"), {
+      toast.error(resolveArchiveImportErrorMessage(error, t) ?? toastT.t("toast:unexpectedError"), {
         duration: 4000,
       });
     }
@@ -103,19 +104,20 @@ export function WorkspaceImportPage(): ReactElement {
         if (job.status === "failed") {
           toast.error(
             job.error_message
-              ? `Import failed: ${job.error_message}`
-              : "Time entries import failed.",
+              ? t("csvImportFailedWithMessage", { message: job.error_message })
+              : t("csvImportFailed"),
             { duration: 6000 },
           );
           return;
         }
       }
       setSelectedCSVs([]);
-      toast.success(t("toast:timeEntriesImported"));
+      toast.success(toastT.t("toast:timeEntriesImported"));
     } catch (error) {
-      toast.error(resolveTimeEntriesImportErrorMessage(error) ?? t("toast:unexpectedError"), {
-        duration: 4000,
-      });
+      toast.error(
+        resolveTimeEntriesImportErrorMessage(error, t) ?? toastT.t("toast:unexpectedError"),
+        { duration: 4000 },
+      );
     }
   }
 
@@ -123,7 +125,7 @@ export function WorkspaceImportPage(): ReactElement {
     session.availableWorkspaces.find((ws) => ws.id === selectedWorkspaceId)?.name ?? "";
 
   return (
-    <PageLayout title="Import">
+    <PageLayout title={t("import")}>
       <div className="mx-auto max-w-2xl space-y-5 p-5">
         {/* Step 1: Archive import */}
         <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
@@ -133,38 +135,36 @@ export function WorkspaceImportPage(): ReactElement {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-                Step 1
+                {t("step1")}
               </p>
               <h2 className="mt-2 text-[14px] font-semibold leading-[23px] text-white">
-                Create a new organization from Toggl export zip
+                {t("createOrgFromZip")}
               </h2>
               <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
-                Upload the original `*.zip` file exported from Toggl. The backend creates a new
-                organization and its default workspace, then imports the extracted JSON bundle into
-                that new workspace.
+                {t("zipUploadDescription")}
               </p>
             </div>
           </div>
 
           <label className="mt-5 block">
             <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-              New organization name
+              {t("newOrgName")}
             </span>
             <input
               className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
               onChange={(event) => setOrganizationName(event.target.value)}
-              placeholder="Imported Org"
+              placeholder={t("importedOrg")}
               type="text"
               value={organizationName}
             />
           </label>
 
           <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
-            The archive should contain a root folder like
+            {t("zipHint")}
             <span className="mx-1 rounded bg-black/30 px-1.5 py-0.5 font-mono text-[12px] text-white">
-              toggl_workspace_3550374_export_...
+              {t("zipHintExample")}
             </span>
-            with JSON files inside.
+            {t("zipHintEnd")}
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -173,7 +173,7 @@ export function WorkspaceImportPage(): ReactElement {
               onClick={() => archiveInputRef.current?.click()}
             >
               <PlusIcon className="size-3.5" />
-              Choose zip
+              {t("chooseZip")}
             </AppButton>
             <input
               ref={archiveInputRef}
@@ -185,7 +185,7 @@ export function WorkspaceImportPage(): ReactElement {
               type="file"
             />
             <span className="min-w-0 truncate text-[12px] text-[var(--track-text-muted)]">
-              {selectedArchive ? selectedArchive.name : "No file selected"}
+              {selectedArchive ? selectedArchive.name : t("noFileSelected")}
             </span>
           </div>
 
@@ -197,11 +197,11 @@ export function WorkspaceImportPage(): ReactElement {
                 }
                 onClick={() => void handleArchiveUpload()}
               >
-                {createArchiveImportJobMutation.isPending ? "Importing…" : "Upload & import"}
+                {createArchiveImportJobMutation.isPending ? t("importing") : t("uploadImport")}
               </AppButton>
               {organizationName.trim().length === 0 ? (
                 <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
-                  Enter an organization name above to start import.
+                  {t("enterOrgNameHint")}
                 </p>
               ) : null}
             </div>
@@ -216,15 +216,14 @@ export function WorkspaceImportPage(): ReactElement {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-                Step 2
+                {t("step2")}
               </p>
               <h2 className="mt-2 text-[14px] font-semibold leading-[23px] text-white">
-                Import time entries CSV into current workspace
+                {t("importTimeEntriesCsv")}
               </h2>
               <p className="mt-2 text-[14px] leading-6 text-[var(--track-text-muted)]">
-                Upload a CSV exported from Toggl time entries. The backend imports rows into
-                <span className="mx-1 font-medium text-white">{selectedWorkspaceName}</span>
-                and links them to matching clients, projects, tasks, and tags.
+                {t("csvUploadDescription")}{" "}
+                <span className="mx-1 font-medium text-white">{selectedWorkspaceName}</span>.
               </p>
             </div>
           </div>
@@ -233,7 +232,7 @@ export function WorkspaceImportPage(): ReactElement {
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-                Organization
+                {t("organization")}
               </span>
               <select
                 className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
@@ -250,7 +249,7 @@ export function WorkspaceImportPage(): ReactElement {
 
             <label className="block">
               <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
-                Workspace
+                {t("workspace")}
               </span>
               <select
                 className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)] disabled:opacity-50"
@@ -259,7 +258,7 @@ export function WorkspaceImportPage(): ReactElement {
                 value={selectedWorkspaceId ?? ""}
               >
                 {workspacesForOrg.length === 0 ? (
-                  <option value="">No workspaces</option>
+                  <option value="">{t("noWorkspaces")}</option>
                 ) : (
                   workspacesForOrg.map((ws) => (
                     <option key={ws.id} value={ws.id}>
@@ -272,8 +271,7 @@ export function WorkspaceImportPage(): ReactElement {
           </div>
 
           <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
-            Expected columns include `User`, `Email`, `Project`, `Description`, `Start date`, `Start
-            time`, `Duration`, and `Tags`.
+            {t("csvHint")}
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -282,7 +280,7 @@ export function WorkspaceImportPage(): ReactElement {
               onClick={() => csvInputRef.current?.click()}
             >
               <PlusIcon className="size-3.5" />
-              Choose CSV
+              {t("chooseCsv")}
             </AppButton>
             <input
               ref={csvInputRef}
@@ -297,10 +295,10 @@ export function WorkspaceImportPage(): ReactElement {
             />
             <span className="min-w-0 truncate text-[12px] text-[var(--track-text-muted)]">
               {selectedCSVs.length > 1
-                ? `${String(selectedCSVs.length)} files selected`
+                ? `${String(selectedCSVs.length)} ${t("filesSelected")}`
                 : selectedCSVs.length === 1
                   ? selectedCSVs[0].name
-                  : "No file selected"}
+                  : t("noFileSelected")}
             </span>
           </div>
 
@@ -310,7 +308,7 @@ export function WorkspaceImportPage(): ReactElement {
                 disabled={createTimeEntriesImportJobMutation.isPending || !selectedWorkspaceId}
                 onClick={() => void handleCSVUpload()}
               >
-                {createTimeEntriesImportJobMutation.isPending ? "Importing…" : "Upload & import"}
+                {createTimeEntriesImportJobMutation.isPending ? t("importing") : t("uploadImport")}
               </AppButton>
             </div>
           ) : null}
@@ -320,25 +318,31 @@ export function WorkspaceImportPage(): ReactElement {
   );
 }
 
-function resolveArchiveImportErrorMessage(error: unknown): string | null {
+function resolveArchiveImportErrorMessage(
+  error: unknown,
+  t: (key: string) => string,
+): string | null {
   if (!(error instanceof WebApiError)) {
     return null;
   }
   if (error.status === 400) {
-    return "Enter a new organization name and upload a valid Toggl export zip.";
+    return t("enterNewOrgName");
   }
-  return "Archive import upload failed. Retry with the original Toggl export zip.";
+  return t("archiveUploadFailed");
 }
 
-function resolveTimeEntriesImportErrorMessage(error: unknown): string | null {
+function resolveTimeEntriesImportErrorMessage(
+  error: unknown,
+  t: (key: string) => string,
+): string | null {
   if (!(error instanceof WebApiError)) {
     return null;
   }
   if (error.status === 400) {
-    return "The uploaded CSV is not a valid Toggl time entries export.";
+    return t("csvNotValid");
   }
   if (error.status === 403) {
-    return "You do not have permission to import time entries into this workspace.";
+    return t("noPermission");
   }
-  return "Time entries import failed. Retry with the original Toggl CSV export.";
+  return t("retryWithOriginalCsv");
 }
