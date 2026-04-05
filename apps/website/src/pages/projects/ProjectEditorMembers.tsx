@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { ProjectEditorMember } from "./ProjectEditorDialog.tsx";
@@ -18,6 +19,7 @@ export function ProjectEditorMembers({
   onToggleMember,
   selectedMemberIds,
 }: ProjectEditorMembersProps): ReactElement {
+  const { t } = useTranslation("projects");
   const [memberQuery, setMemberQuery] = useState("");
   const filteredMembers = useMemo(() => {
     const query = memberQuery.trim().toLowerCase();
@@ -33,30 +35,30 @@ export function ProjectEditorMembers({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            Manage project members
+            {t("manageProjectMembers")}
           </p>
-          <p className="mt-2 text-[14px] text-white">Invite members</p>
+          <p className="mt-2 text-[14px] text-white">{t("inviteMembers")}</p>
         </div>
         <label className="flex items-center gap-2 text-[12px] text-[var(--track-overlay-text)]">
-          <span>Access</span>
+          <span>{t("access")}</span>
           <SelectDropdown
-            aria-label="Member access"
+            aria-label={t("memberAccess")}
             onChange={(value) => onMemberRoleChange(value === "manager" ? "manager" : "regular")}
             options={[
-              { label: "Regular member", value: "regular" },
-              { label: "Project manager", value: "manager" },
+              { label: t("regularMember"), value: "regular" },
+              { label: t("projectManager"), value: "manager" },
             ]}
             value={memberRole}
           />
         </label>
       </div>
       <label className="mt-4 block">
-        <span className="sr-only">Invite members</span>
+        <span className="sr-only">{t("inviteMembers")}</span>
         <input
-          aria-label="Invite members"
+          aria-label={t("inviteMembers")}
           className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
           onChange={(event: ChangeEvent<HTMLInputElement>) => setMemberQuery(event.target.value)}
-          placeholder="Type a name or email to invite"
+          placeholder={t("typeNameOrEmailToInvite")}
           value={memberQuery}
         />
       </label>
@@ -78,16 +80,16 @@ export function ProjectEditorMembers({
               <div className="min-w-0">
                 <div className="truncate text-[14px] font-medium">{member.name}</div>
                 <div className="truncate text-[12px] text-[var(--track-text-muted)]">
-                  {member.email ?? "Workspace member"}
+                  {member.email ?? t("workspaceMember")}
                 </div>
               </div>
-              <span className="text-[12px]">{selected ? "Added" : "Add"}</span>
+              <span className="text-[12px]">{selected ? t("added") : t("add")}</span>
             </button>
           );
         })}
         {filteredMembers.length === 0 ? (
           <p className="rounded-[10px] bg-[var(--track-control-surface-muted)] px-3 py-3 text-[12px] text-[var(--track-text-muted)]">
-            No matching workspace members.
+            {t("noMatchingWorkspaceMembers")}
           </p>
         ) : null}
       </div>

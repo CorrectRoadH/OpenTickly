@@ -85,5 +85,9 @@
   "welcomeToOpenToggl": "欢迎使用 OpenToggl",
   "welcomeDescription": "OpenToggl 是一个开源、自托管的时间追踪平台，兼容 Toggl Track。如果您觉得有用，请在 GitHub 上给我们加星 — 这能帮助更多人发现这个项目。",
   "starOnGithub": "在 GitHub 上加星",
-  "reportAnIssue": "报告问题"
+  "reportAnIssue": "报告问题",
+  "instanceAdmin": "实例管理",
+  "overview": "概览",
+  "section": "部分",
+  "sectionNotAvailable": "此部分不可用。"
 }

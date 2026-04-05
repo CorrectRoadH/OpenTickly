@@ -25,15 +25,15 @@ import { MemberRowActions } from "./MemberRowActions.tsx";
 
 type MemberStatusFilter = "all" | "active" | "disabled" | "invited";
 
-function resolveMemberStatusLabel(status: string): string {
+function resolveMemberStatusLabel(status: string, t: (key: string) => string): string {
   switch (status) {
     case "joined":
     case "restored":
-      return "Active";
+      return t("active");
     case "disabled":
-      return "Disabled";
+      return t("disabled");
     case "invited":
-      return "Invited";
+      return t("invited");
     default:
       return status;
   }
@@ -43,11 +43,11 @@ function isActiveMember(status: string): boolean {
   return status === "joined" || status === "restored";
 }
 
-const memberColumns: DirectoryTableColumn[] = [
+const memberColumns = (t: (key: string) => string): DirectoryTableColumn[] => [
   { key: "avatar", label: "", width: "42px" },
-  { key: "name", label: "Name", width: "minmax(0,2fr)" },
-  { key: "role", label: "Role", width: "100px" },
-  { key: "status", label: "Status", width: "100px" },
+  { key: "name", label: t("name"), width: "minmax(0,2fr)" },
+  { key: "role", label: t("role"), width: "100px" },
+  { key: "status", label: t("status"), width: "100px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
@@ -135,7 +135,7 @@ export function WorkspaceMembersPage(): ReactElement {
                   : "bg-amber-900/40 text-amber-400"
             }`}
           >
-            {resolveMemberStatusLabel(member.status)}
+            {resolveMemberStatusLabel(member.status, t)}
           </span>
         </div>
         <div className="flex h-[54px] items-center justify-end">
@@ -232,7 +232,7 @@ export function WorkspaceMembersPage(): ReactElement {
       </header>
 
       <DirectoryTable
-        columns={memberColumns}
+        columns={memberColumns(t)}
         data-testid="members-list"
         emptyState={
           search.trim()

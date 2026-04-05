@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -22,6 +23,7 @@ export function InviteMemberDialog({
   onSubmit,
   role,
 }: InviteMemberDialogProps): ReactElement {
+  const { t } = useTranslation("members");
   const trimmedEmail = email.trim();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -33,15 +35,19 @@ export function InviteMemberDialog({
   }
 
   return (
-    <ModalDialog onClose={onClose} title="Invite member" titleId="invite-member-dialog-title">
+    <ModalDialog
+      onClose={onClose}
+      title={t("inviteMemberDialogTitle")}
+      titleId="invite-member-dialog-title"
+    >
       <form onSubmit={handleSubmit}>
         <div className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              Email address
+              {t("emailAddress")}
             </span>
             <input
-              aria-label="Email address"
+              aria-label={t("emailAddress")}
               className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               onChange={(event) => onEmailChange(event.target.value)}
               placeholder="colleague@company.com"
@@ -52,14 +58,14 @@ export function InviteMemberDialog({
 
           <label className="block">
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              Role
+              {t("role")}
             </span>
             <SelectDropdown
-              aria-label="Member role"
+              aria-label={t("role")}
               onChange={(v) => onRoleChange(v)}
               options={[
-                { value: "member", label: "Member" },
-                { value: "admin", label: "Admin" },
+                { value: "member", label: t("member") },
+                { value: "admin", label: t("admin") },
               ]}
               value={role}
             />
@@ -72,14 +78,14 @@ export function InviteMemberDialog({
             onClick={onClose}
             type="button"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
             disabled={isPending || !trimmedEmail}
             type="submit"
           >
-            Send invite
+            {t("sendInvite")}
           </button>
         </div>
       </form>

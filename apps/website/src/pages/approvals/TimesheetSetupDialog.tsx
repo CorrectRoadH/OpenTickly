@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown as ChevronDownLucide, Search as SearchLucide } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AppButton, Dropdown, SelectDropdown, useDropdownClose } from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
@@ -14,6 +15,7 @@ type TimesheetSetupDialogProps = {
 };
 
 export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): ReactElement {
+  const { t } = useTranslation("approvals");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const currentUserId = session.user.id ?? 0;
@@ -97,7 +99,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
       <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[480px] flex-col bg-[var(--track-surface)] shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--track-border)] px-6 py-5">
-          <h1 className="text-[14px] font-semibold text-white">Set up timesheets for members</h1>
+          <h1 className="text-[14px] font-semibold text-white">{t("setUpTimesheetsForMembers")}</h1>
           <button
             className="flex h-8 w-8 items-center justify-center rounded-[6px] text-[var(--track-text-muted)] hover:bg-[var(--track-row-hover)] hover:text-white"
             onClick={onClose}
@@ -110,13 +112,11 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <p className="mb-6 text-[12px] leading-5 text-[var(--track-text-muted)]">
-            Timesheet setup allows automatic timesheet creation from tracked time. Each period,
-            members can review and submit their timesheets, which assigned approvers can then review
-            and approve.
+            {t("timesheetSetupDescription")}
           </p>
 
           {/* Members */}
-          <FieldLabel>Members</FieldLabel>
+          <FieldLabel>{t("members")}</FieldLabel>
           <Dropdown
             className="mb-5"
             trigger={
@@ -130,8 +130,8 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                   }
                 >
                   {selectedMemberIds.size > 0
-                    ? `${selectedMemberIds.size} member${selectedMemberIds.size > 1 ? "s" : ""} selected`
-                    : "Select member(s)"}
+                    ? t("membersSelected", { count: selectedMemberIds.size })
+                    : t("selectMembers")}
                 </span>
                 <ChevronDown />
               </button>
@@ -142,26 +142,26 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
               <input
                 className="flex-1 bg-transparent text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
                 onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="Find members"
+                placeholder={t("findMembers")}
                 type="text"
                 value={memberSearch}
               />
             </div>
             <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-3 py-1.5 text-[11px]">
-              <span className="text-[var(--track-text-muted)]">Active Users</span>
+              <span className="text-[var(--track-text-muted)]">{t("activeUsers")}</span>
               <button
                 className="text-[var(--track-accent)] hover:underline"
                 onClick={selectAllMembers}
                 type="button"
               >
-                All
+                {t("all")}
               </button>
               <button
                 className="text-[var(--track-accent)] hover:underline"
                 onClick={selectNoneMembers}
                 type="button"
               >
-                None
+                {t("none")}
               </button>
             </div>
             <div className="max-h-[200px] overflow-y-auto py-1">
@@ -184,14 +184,14 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
               ))}
               {filteredMembers.length === 0 ? (
                 <div className="px-3 py-3 text-center text-[12px] text-[var(--track-text-muted)]">
-                  No members found
+                  {t("noMembersFound")}
                 </div>
               ) : null}
             </div>
           </Dropdown>
 
           {/* Approver */}
-          <FieldLabel>Approver(s) Level 1</FieldLabel>
+          <FieldLabel>{t("approverLevel1")}</FieldLabel>
           <Dropdown
             className="mb-5"
             trigger={
@@ -205,8 +205,8 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                   }
                 >
                   {approverIds.length > 0
-                    ? (members.find((m) => m.id === approverIds[0])?.name ?? "Selected")
-                    : "Select timesheet approver"}
+                    ? (members.find((m) => m.id === approverIds[0])?.name ?? t("selected"))
+                    : t("selectTimesheetApprover")}
                 </span>
                 <ChevronDown />
               </button>
@@ -216,19 +216,21 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           </Dropdown>
 
           {/* Period */}
-          <FieldLabel>Period</FieldLabel>
+          <FieldLabel>{t("period")}</FieldLabel>
           <div className="mb-5 flex items-center gap-3">
             <SelectDropdown
               onChange={(v) => setPeriodicity(v)}
               options={[
-                { value: "weekly", label: "Weekly" },
-                { value: "daily", label: "Daily" },
-                { value: "monthly", label: "Monthly" },
+                { value: "weekly", label: t("weekly") },
+                { value: "daily", label: t("daily") },
+                { value: "monthly", label: t("monthly") },
               ]}
               value={periodicity}
             />
             <div className="flex items-center gap-2">
-              <span className="text-[12px] text-[var(--track-text-muted)]">Starting from</span>
+              <span className="text-[12px] text-[var(--track-text-muted)]">
+                {t("startingFrom")}
+              </span>
               <input
                 className="h-9 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white"
                 onChange={(e) => setStartDate(e.target.value)}
@@ -247,27 +249,25 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                 onChange={(e) => setReminderEnabled(e.target.checked)}
                 type="checkbox"
               />
-              <span className="text-[12px] text-white">
-                Remind members to submit their timesheet
-              </span>
+              <span className="text-[12px] text-white">{t("remindMembersToSubmit")}</span>
             </label>
             {reminderEnabled ? (
               <div className="mt-3 pl-7">
                 <div className="mb-3 flex flex-wrap items-center gap-1.5 text-[12px] text-white">
                   <span className="text-[var(--track-text-muted)]">
-                    {periodicity === "daily" ? "daily at" : `${periodicity} on`}
+                    {periodicity === "daily" ? t("dailyAt") : `${t(periodicity)} ${t("on")}`}
                   </span>
                   {periodicity !== "daily" ? (
                     <SelectDropdown
                       onChange={(v) => setReminderDay(Number(v))}
-                      options={WEEKDAYS.map((day) => ({
-                        value: String(day.value),
-                        label: day.label,
+                      options={WEEKDAY_KEYS.map((key, i) => ({
+                        value: String(WEEKDAY_VALUES[i]),
+                        label: t(key),
                       }))}
                       value={String(reminderDay)}
                     />
                   ) : null}
-                  <span className="text-[var(--track-text-muted)]">at</span>
+                  <span className="text-[var(--track-text-muted)]">{t("at")}</span>
                   <SelectDropdown
                     onChange={(v) => setReminderTime(v)}
                     options={TIMES.map((t) => ({ value: t, label: t }))}
@@ -281,7 +281,7 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     onChange={(e) => setSendViaSlack(e.target.checked)}
                     type="checkbox"
                   />
-                  <span className="text-[12px] text-white">Send reminder via Slack</span>
+                  <span className="text-[12px] text-white">{t("sendReminderViaSlack")}</span>
                 </label>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
                   <input
@@ -290,10 +290,10 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                     onChange={(e) => setSendViaEmail(e.target.checked)}
                     type="checkbox"
                   />
-                  <span className="text-[12px] text-white">Send reminder via email</span>
+                  <span className="text-[12px] text-white">{t("sendReminderViaEmail")}</span>
                 </label>
                 <p className="mt-2 text-[12px] text-[var(--track-text-muted)]">
-                  The first reminder will be sent on {computeFirstReminder(startDate, reminderDay)}
+                  {t("firstReminderSentOn", { date: computeFirstReminder(startDate, reminderDay) })}
                 </p>
               </div>
             ) : null}
@@ -307,11 +307,11 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
             onClick={() => createMutation.mutate()}
             type="button"
           >
-            {createMutation.isPending ? "Setting up..." : "Set up timesheet(s)"}
+            {createMutation.isPending ? t("settingUp") : t("setUpTimesheets")}
           </AppButton>
           {createMutation.isError ? (
             <p className="mt-2 text-center text-[12px] text-[var(--track-status-rejected)]">
-              Failed to create timesheet setup. Try again.
+              {t("failedToCreateTimesheetSetup")}
             </p>
           ) : null}
         </div>
@@ -330,15 +330,16 @@ function formatMemberName(user: ModelsSimpleWorkspaceUser, currentUserId: number
   return user.id === currentUserId ? `${name} (You)` : name;
 }
 
-const WEEKDAYS = [
-  { label: "Monday", value: 1 },
-  { label: "Tuesday", value: 2 },
-  { label: "Wednesday", value: 3 },
-  { label: "Thursday", value: 4 },
-  { label: "Friday", value: 5 },
-  { label: "Saturday", value: 6 },
-  { label: "Sunday", value: 0 },
-];
+const WEEKDAY_KEYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+const WEEKDAY_VALUES = [1, 2, 3, 4, 5, 6, 0] as const;
 
 const TIMES = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`);
 

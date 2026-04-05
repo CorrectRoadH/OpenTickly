@@ -85,5 +85,9 @@
   "welcomeToOpenToggl": "Welcome to OpenToggl",
   "welcomeDescription": "OpenToggl is an open-source, self-hosted time tracking platform compatible with Toggl Track. If you find it useful, consider starring us on GitHub — it helps others discover the project.",
   "starOnGithub": "Star on GitHub",
-  "reportAnIssue": "Report an issue"
+  "reportAnIssue": "Report an issue",
+  "instanceAdmin": "Instance Admin",
+  "overview": "Overview",
+  "section": "Section",
+  "sectionNotAvailable": "This section is not available."
 }

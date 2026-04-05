@@ -9,6 +9,7 @@
   "all": "All",
   "active": "Active",
   "inactive": "Inactive",
+  "filters": "Filters:",
   "showingTagsInWorkspace": "Showing {{count}} tags in {{workspaceName}}. Active: {{activeCount}} · Inactive: {{inactiveCount}}",
   "loadingTags": "Loading tags...",
   "unableToLoadTags": "Unable to load tags. Refresh to try again.",

@@ -9,6 +9,7 @@
   "disabled": "Disabled",
   "invited": "Invited",
   "searchMembers": "Search members...",
+  "filters": "Filters:",
   "showingMembersInWorkspace": "{{count}} member{{count === 1 ? '' : 's'}} in {{workspaceName}}. Active: {{activeCount}} · Disabled: {{disabledCount}} · Invited: {{invitedCount}}",
   "loadingMembers": "Loading members...",
   "unableToLoadMembers": "Unable to load members. Refresh to try again.",
@@ -24,5 +25,13 @@
   "noMembersInWorkspace": "No members in this workspace yet. Invite someone to get started.",
   "noActiveMembers": "No active members.",
   "noDisabledMembers": "No disabled members.",
-  "noInvitedMembers": "No invited members."
+  "noInvitedMembers": "No invited members.",
+  "member": "Member",
+  "admin": "Admin",
+  "inviteMember": "Invite member",
+  "emailAddress": "Email address",
+  "role": "Role",
+  "cancel": "Cancel",
+  "sendInvite": "Send invite",
+  "inviteMemberDialogTitle": "Invite member"
 }

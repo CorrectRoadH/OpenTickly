@@ -1,5 +1,6 @@
 import { AppSurfaceState, PageLayout, pageLayoutTabClass, SurfaceCard } from "@opentoggl/web-ui";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import type { ReactElement } from "react";
 
 import { AdminConfigTab } from "../../features/instance-admin/AdminConfigTab.tsx";
@@ -10,22 +11,24 @@ import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator
 
 export type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
 
-const adminTabs: Array<{ id: InstanceAdminSection; label: string }> = [
-  { id: "overview", label: "Overview" },
-  { id: "users", label: "Users" },
-  { id: "organizations", label: "Organizations" },
-  { id: "config", label: "Config" },
-];
-
 type InstanceAdminPageProps = {
   section: InstanceAdminSection;
 };
 
 export function InstanceAdminPage({ section }: InstanceAdminPageProps): ReactElement {
+  const { t } = useTranslation("instanceAdmin");
+
+  const adminTabs: Array<{ id: InstanceAdminSection; label: string }> = [
+    { id: "overview", label: t("overview") },
+    { id: "users", label: t("users") },
+    { id: "organizations", label: t("organizations") },
+    { id: "config", label: t("config") },
+  ];
+
   return (
     <PageLayout
       data-testid="instance-admin-page"
-      title="Instance Admin"
+      title={t("instanceAdmin")}
       tabs={adminTabs.map((tab) => (
         <Link
           className={pageLayoutTabClass(section === tab.id)}
@@ -44,13 +47,19 @@ export function InstanceAdminPage({ section }: InstanceAdminPageProps): ReactEle
       ))}
     >
       <div className="px-5 pb-10 pt-5">
-        <AdminSectionContent section={section} />
+        <AdminSectionContent section={section} t={t} />
       </div>
     </PageLayout>
   );
 }
 
-function AdminSectionContent({ section }: { section: InstanceAdminSection }): ReactElement {
+function AdminSectionContent({
+  section,
+  t,
+}: {
+  section: InstanceAdminSection;
+  t: (key: string) => string;
+}): ReactElement {
   switch (section) {
     case "overview":
       return <AdminOverviewTab />;
@@ -65,8 +74,8 @@ function AdminSectionContent({ section }: { section: InstanceAdminSection }): Re
         <SurfaceCard>
           <AppSurfaceState
             className="border-none bg-transparent text-[var(--track-text-muted)]"
-            description="This section is not available."
-            title="Section"
+            description={t("sectionNotAvailable")}
+            title={t("section")}
             tone="empty"
           />
         </SurfaceCard>

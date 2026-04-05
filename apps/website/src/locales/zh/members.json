@@ -9,6 +9,7 @@
   "disabled": "已禁用",
   "invited": "已邀请",
   "searchMembers": "搜索成员...",
+  "filters": "筛选：",
   "showingMembersInWorkspace": "{{count}} 位成员在 {{workspaceName}} 中。活跃：{{activeCount}} · 已禁用：{{disabledCount}} · 已邀请：{{invitedCount}}",
   "loadingMembers": "加载成员中...",
   "unableToLoadMembers": "无法加载成员。请刷新页面重试。",
@@ -24,5 +25,13 @@
   "noMembersInWorkspace": "此工作区中尚无成员。邀请某人开始。",
   "noActiveMembers": "没有活跃成员。",
   "noDisabledMembers": "没有已禁用成员。",
-  "noInvitedMembers": "没有已邀请成员。"
+  "noInvitedMembers": "没有已邀请成员。",
+  "member": "成员",
+  "admin": "管理员",
+  "inviteMember": "邀请成员",
+  "emailAddress": "邮箱地址",
+  "role": "角色",
+  "cancel": "取消",
+  "sendInvite": "发送邀请",
+  "inviteMemberDialogTitle": "邀请成员"
 }

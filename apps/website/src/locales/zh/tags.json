@@ -9,6 +9,7 @@
   "all": "全部",
   "active": "活跃",
   "inactive": "非活跃",
+  "filters": "筛选：",
   "showingTagsInWorkspace": "在 {{workspaceName}} 中显示 {{count}} 个标签。活跃：{{activeCount}} · 非活跃：{{inactiveCount}}",
   "loadingTags": "加载标签中...",
   "unableToLoadTags": "无法加载标签。请刷新页面重试。",
