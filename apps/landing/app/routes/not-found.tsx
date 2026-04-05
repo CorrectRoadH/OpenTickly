@@ -18,13 +18,16 @@ export function meta(_: Route.MetaArgs) {
 export default function NotFound() {
   return (
     <HomeLayout {...baseOptions()}>
-      <main className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-4 py-8">
+      <main
+        id="main-content"
+        className="mx-auto flex w-full max-w-3xl flex-1 items-center justify-center px-4 py-8"
+      >
         <SurfaceCard className="w-full space-y-4 p-6 text-center">
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-accent-text)]">
               Missing page
             </p>
-            <h1 className="text-[20px] font-semibold text-white">Not Found</h1>
+            <h1 className="text-[20px] font-semibold text-[var(--track-text)]">Not Found</h1>
             <p className="text-[14px] leading-6 text-[var(--track-text-muted)]">
               This page could not be found.
             </p>

@@ -1,30 +1,40 @@
+import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import { AppLinkButton } from "@opentoggl/web-ui";
 import {
   ArrowUpRight,
-  Github,
-  Server,
-  Clock,
   BarChart3,
-  Webhook,
-  Lock,
+  CircleDollarSign,
+  Clock,
+  FileText,
+  Github,
   GitBranch,
+  Lock,
+  Play,
+  Server,
+  Smartphone,
+  Webhook,
+  Zap,
 } from "lucide-react";
 import { useParams } from "react-router";
 
 import HomeHeroScreenshots from "@/components/home-hero-screenshots";
-import { baseOptions } from "@/lib/layout.shared";
-import { homeContent } from "@/lib/home-content";
+import { ListCard, ProofGridCard, SectionHeading } from "@/components/home-primitives";
 import Seo from "@/components/seo";
+import { homeContent } from "@/lib/home-content";
+import { i18n } from "@/lib/i18n";
+import { baseOptions } from "@/lib/layout.shared";
 import {
   buildFaqSchema,
   buildOrganizationSchema,
   defaultDescription,
   resolveSiteUrl,
 } from "@/lib/seo";
-import { i18n } from "@/lib/i18n";
 
-const featureIcons = [Clock, BarChart3, Webhook, Server, Lock, GitBranch];
+const whatIsIcons = [GitBranch, FileText, Clock];
+const capabilityIcons = [Clock, BarChart3, Webhook];
+const whyIcons = [CircleDollarSign, Lock, Zap, Smartphone];
+const selfHostIcons = [Server, GitBranch, FileText];
+const proofIcons = [Play, Github, FileText];
 
 export default function Home() {
   const params = useParams();
@@ -35,138 +45,155 @@ export default function Home() {
   const prefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
   const strings = homeContent[locale];
   const siteUrl = resolveSiteUrl();
+  const labels =
+    locale === "zh"
+      ? {
+          capability: "兼容目标",
+          proof: "公开证据",
+          selfHost: "自托管",
+          whatIs: "产品定位",
+          why: "切换理由",
+        }
+      : {
+          capability: "Compatibility Surface",
+          proof: "Open Source Proof",
+          selfHost: "Self-Hosting",
+          whatIs: "What It Is",
+          why: "Why Switch",
+        };
 
   return (
     <HomeLayout {...baseOptions(locale)}>
       <Seo
+        locale={locale}
         pathname={`${prefix}/`}
         description={defaultDescription}
         schema={[buildOrganizationSchema(siteUrl), buildFaqSchema([...strings.faq])]}
       />
 
-      {/* Hero */}
-      <section className="mx-auto w-full max-w-6xl px-4 pt-16 pb-12 md:px-6 md:pt-24 md:pb-16">
-        <div className="max-w-3xl">
-          <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--track-accent-text)]">
-            {strings.hero.eyebrow}
-          </p>
-          <h1 className="mb-6 text-[36px] font-semibold leading-[1.2] tracking-[-0.02em] text-white md:text-[48px]">
-            {strings.hero.title}
-          </h1>
-          <p className="mb-8 max-w-xl text-[16px] leading-7 text-[var(--track-text-muted)]">
-            {strings.hero.body}
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <AppLinkButton href="https://track.opentoggl.com" target="_blank">
-              {strings.hero.ctas.liveDemo}
-              <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
-            </AppLinkButton>
-            <AppLinkButton
-              href="https://github.com/CorrectRoadH/opentoggl"
-              target="_blank"
-              variant="secondary"
-            >
-              <Github className="h-4 w-4" aria-hidden="true" />
-              {strings.hero.ctas.github}
-            </AppLinkButton>
-            <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
-              {strings.hero.ctas.selfHosting}
-            </AppLinkButton>
-          </div>
-        </div>
-      </section>
-
-      {/* Screenshot */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 md:px-6">
-        <HomeHeroScreenshots />
-      </section>
-
-      {/* Divider */}
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-        <div className="border-t border-[var(--track-border)]" />
-      </div>
-
-      {/* Features grid */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6">
-        <div className="mb-12">
-          <h2 className="text-[24px] font-semibold text-white">{strings.capability.title}</h2>
-          <p className="mt-2 max-w-xl text-[14px] leading-6 text-[var(--track-text-muted)]">
-            {strings.capability.description}
-          </p>
-        </div>
-        <div className="grid gap-px border border-[var(--track-border)] bg-[var(--track-border)] rounded-[10px] overflow-hidden md:grid-cols-3">
-          {strings.capability.items.map((item, i) => {
-            const Icon = featureIcons[i % featureIcons.length];
-            return (
-              <div
-                key={item.title}
-                className="bg-[var(--track-surface)] p-6 hover:bg-[var(--track-surface-muted)] transition-colors duration-[var(--duration-fast)]"
-              >
-                <div className="mb-4 inline-flex h-9 w-9 items-center justify-center rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-accent)]">
-                  <Icon className="h-4 w-4" aria-hidden="true" />
-                </div>
-                <h3 className="mb-2 text-[14px] font-semibold text-white">{item.title}</h3>
-                <p className="text-[13px] leading-[1.6] text-[var(--track-text-muted)]">
-                  {item.body}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Why — horizontal list */}
-      <section className="mx-auto w-full max-w-6xl px-4 pb-20 md:px-6">
-        <div className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] divide-y divide-[var(--track-border)] md:divide-y-0 md:grid md:grid-cols-4 md:divide-x">
-          {strings.why.items.map((item) => (
-            <div key={item.title} className="px-6 py-5">
-              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-accent-text)]">
-                {item.title}
+      <main id="main-content" className="landing-home">
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-10">
+            <SurfaceCard className="p-5 md:p-6">
+              <p className="landing-kicker">{strings.hero.eyebrow}</p>
+              <h1 className="mt-3 max-w-2xl text-[20px] font-semibold leading-[30px] text-[var(--track-text)]">
+                {strings.hero.title}
+              </h1>
+              <p className="mt-4 max-w-2xl text-[14px] leading-7 text-[var(--track-text-muted)]">
+                {strings.hero.body}
               </p>
-              <p className="text-[13px] leading-[1.6] text-[var(--track-text-muted)]">
-                {item.body}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* Divider */}
-      <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
-        <div className="border-t border-[var(--track-border)]" />
-      </div>
-
-      {/* CTA bottom */}
-      <section className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          {strings.proof.items.map((item) => {
-            const external = item.href.startsWith("http");
-            return (
-              <div
-                key={item.title}
-                className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-surface)] p-6"
-              >
-                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-accent-text)]">
-                  {item.title}
-                </p>
-                <p className="mb-1 text-[18px] font-semibold text-white">{item.value}</p>
-                <p className="mb-5 text-[13px] leading-[1.6] text-[var(--track-text-muted)]">
-                  {item.body}
-                </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <AppLinkButton href="https://track.opentoggl.com" target="_blank">
+                  {strings.hero.ctas.liveDemo}
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                </AppLinkButton>
                 <AppLinkButton
-                  href={item.href}
-                  size="sm"
-                  target={external ? "_blank" : undefined}
+                  href="https://github.com/CorrectRoadH/opentoggl"
+                  target="_blank"
                   variant="secondary"
                 >
-                  {item.cta}
-                  {external ? <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /> : null}
+                  <Github className="size-4" aria-hidden="true" />
+                  {strings.hero.ctas.github}
+                </AppLinkButton>
+                <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
+                  {strings.hero.ctas.selfHosting}
                 </AppLinkButton>
               </div>
-            );
-          })}
-        </div>
-      </section>
+            </SurfaceCard>
+
+            <HomeHeroScreenshots locale={locale} />
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div className="space-y-6">
+              <SectionHeading
+                eyebrow={labels.whatIs}
+                title={strings.whatIs.title}
+                body={strings.whatIs.description}
+              />
+              <ListCard
+                items={strings.whatIs.items.map((item, index) => ({
+                  body: item.body,
+                  icon: whatIsIcons[index % whatIsIcons.length]!,
+                  title: item.title,
+                }))}
+              />
+            </div>
+
+            <div className="space-y-6">
+              <SectionHeading
+                eyebrow={labels.capability}
+                title={strings.capability.title}
+                body={strings.capability.description}
+              />
+              <ListCard
+                items={strings.capability.items.map((item, index) => ({
+                  body: item.body,
+                  icon: capabilityIcons[index % capabilityIcons.length]!,
+                  title: item.title,
+                }))}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div className="space-y-6">
+              <SectionHeading
+                eyebrow={labels.why}
+                title={strings.why.title}
+                body={strings.why.description}
+              />
+              <ListCard
+                items={strings.why.items.map((item, index) => ({
+                  body: item.body,
+                  icon: whyIcons[index % whyIcons.length]!,
+                  title: item.title,
+                }))}
+              />
+            </div>
+
+            <div className="space-y-6">
+              <SectionHeading
+                eyebrow={labels.selfHost}
+                title={strings.selfHost.title}
+                body={strings.selfHost.description}
+              />
+              <div className="flex flex-wrap gap-3">
+                <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
+                  {strings.hero.ctas.selfHosting}
+                </AppLinkButton>
+                <AppLinkButton href="https://track.opentoggl.com" target="_blank">
+                  {strings.hero.ctas.liveDemo}
+                  <ArrowUpRight className="size-4" aria-hidden="true" />
+                </AppLinkButton>
+              </div>
+              <ListCard
+                items={strings.selfHost.items.map((item, index) => ({
+                  body: item.body,
+                  icon: selfHostIcons[index % selfHostIcons.length]!,
+                  title: item.title,
+                }))}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+          <SectionHeading
+            eyebrow={labels.proof}
+            title={strings.proof.title}
+            body={strings.proof.description}
+          />
+          <div className="mt-6">
+            <ProofGridCard icons={proofIcons} items={strings.proof.items} />
+          </div>
+        </section>
+      </main>
     </HomeLayout>
   );
 }

@@ -14,7 +14,7 @@ import "./app.css";
 import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
 import { i18n } from "@/lib/i18n";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 const localeItems = [
   { name: "English", locale: "en" },
@@ -47,6 +47,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="flex flex-col min-h-screen">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-[var(--track-accent)] focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-[var(--track-button-text)]"
+        >
+          Skip to content
+        </a>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -58,6 +64,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const locale = useLocaleFromPath();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const onLocaleChange = useCallback(
     (newLocale: string) => {
@@ -112,7 +122,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 w-full max-w-[1400px] mx-auto">
+    <main id="main-content" className="pt-16 p-4 w-full max-w-[1400px] mx-auto">
       <h1>{message}</h1>
       <p>{details}</p>
       {stack && (

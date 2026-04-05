@@ -55,6 +55,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
     return (
       <DocsPage toc={toc}>
         <Seo
+          locale={locale}
           pathname={pathname}
           title={frontmatter.title}
           description={description}

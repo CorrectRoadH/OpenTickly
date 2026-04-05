@@ -1,0 +1,19 @@
+.landing-home {
+  padding-bottom: 24px;
+}
+
+.landing-kicker {
+  margin: 0;
+  color: var(--track-accent-text);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-shot-image-frame {
+  overflow: hidden;
+  border: 1px solid var(--track-border);
+  border-radius: 8px;
+  background: var(--track-panel);
+}

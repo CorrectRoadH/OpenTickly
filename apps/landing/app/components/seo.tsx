@@ -12,6 +12,7 @@ type SeoProps = {
   description?: string;
   imagePath?: string;
   keywords?: string;
+  locale?: string;
   pathname: string;
   robots?: string;
   schema?: Record<string, unknown> | Array<Record<string, unknown>>;
@@ -19,10 +20,13 @@ type SeoProps = {
   type?: "article" | "website";
 };
 
+const ogLocaleMap: Record<string, string> = { en: "en_US", zh: "zh_CN" };
+
 export default function Seo({
   description = defaultDescription,
   imagePath = defaultOgImagePath,
   keywords = defaultKeywords,
+  locale = "en",
   pathname,
   robots = "index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1",
   schema,
@@ -42,7 +46,7 @@ export default function Seo({
       <meta name="author" content={siteName} />
       <meta name="robots" content={robots} />
       <link rel="canonical" href={canonicalUrl} />
-      <meta property="og:locale" content="en_US" />
+      <meta property="og:locale" content={ogLocaleMap[locale] ?? "en_US"} />
       <meta property="og:site_name" content={siteName} />
       <meta property="og:type" content={type} />
       <meta property="og:title" content={pageTitle} />
