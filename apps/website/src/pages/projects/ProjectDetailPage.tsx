@@ -37,12 +37,92 @@ export function ProjectDetailPage({
   const billableSeconds = project?.billable ? totalSeconds : 0;
 
   return (
-    <ProjectDetailLayout
-      activeTab="team"
-      projectId={projectId}
-      workspaceId={workspaceId}
-      sidebar={
-        <aside className="pt-6 lg:pt-14">
+    <ProjectDetailLayout activeTab="team" projectId={projectId} workspaceId={workspaceId}>
+      <div className="grid gap-6 pt-3 lg:grid-cols-[minmax(0,1fr)_210px]">
+        <div className="min-w-0">
+          {projectQuery.isPending ? (
+            <ProjectDetailMessage message="Loading project team..." />
+          ) : null}
+          {projectQuery.isError ? (
+            <ProjectDetailMessage
+              message="Project detail is temporarily unavailable."
+              tone="error"
+            />
+          ) : null}
+
+          {project ? (
+            <SurfaceCard className="overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-4 text-[12px] text-[var(--track-text-muted)]">
+                <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
+                  i
+                </span>
+                <p>
+                  {project.is_private
+                    ? "This project is private."
+                    : "Everyone in this Workspace can see this Project."}{" "}
+                  <a className="text-[var(--track-accent-text)] underline" href="#privacy">
+                    {project.is_private ? "Manage access" : "You can make it private"}
+                  </a>
+                </p>
+              </div>
+
+              <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+                <HeaderCell label="All members/teams" />
+                <HeaderCell label="Rate" />
+                <HeaderCell label="Cost" />
+                <HeaderCell label="Role" />
+              </div>
+
+              {membersQuery.isPending ? (
+                <ProjectDetailMessage message="Loading members..." />
+              ) : (
+                <ul aria-label="Project team members">
+                  {members.map((member) => {
+                    const display = resolveProjectMemberDisplay(
+                      member,
+                      workspaceMembers,
+                      session.user.fullName,
+                      members.length === 1,
+                    );
+
+                    return (
+                      <li
+                        className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] items-center border-t border-[var(--track-border)] px-4"
+                        key={`${member.project_id}-${member.user_id}`}
+                      >
+                        <div className="flex min-h-[66px] items-center gap-3">
+                          <Avatar initials={display.initials} />
+                          <span className="truncate text-[14px] font-medium text-white">
+                            {display.name}
+                          </span>
+                        </div>
+                        <ValueCell value={member.rate == null ? "-" : formatMoney(member.rate)} />
+                        <ValueCell
+                          value={member.labor_cost == null ? "-" : formatMoney(member.labor_cost)}
+                        />
+                        <div className="py-4">
+                          <p className="text-[14px] font-medium text-white">
+                            {member.manager ? "Manager" : "Member"}
+                          </p>
+                          <p className="text-[12px] text-[var(--track-text-muted)]">
+                            {member.manager ? "Views all entries." : "Can view assigned work."}
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  {!membersQuery.isPending && members.length === 0 ? (
+                    <li className="border-t border-[var(--track-border)] px-4 py-6 text-[14px] text-[var(--track-text-muted)]">
+                      No members assigned.
+                    </li>
+                  ) : null}
+                </ul>
+              )}
+            </SurfaceCard>
+          ) : null}
+        </div>
+
+        <aside className="pt-2">
           <div className="space-y-5">
             <StatBlock label="Total hours" value={formatDuration(totalSeconds)} />
             <StatBlock label="Billable hours" value={formatDuration(billableSeconds)} />
@@ -52,85 +132,7 @@ export function ProjectDetailPage({
             <TimelineBlock statistics={statisticsQuery.data} />
           </div>
         </aside>
-      }
-    >
-      {projectQuery.isPending ? <ProjectDetailMessage message="Loading project team..." /> : null}
-      {projectQuery.isError ? (
-        <ProjectDetailMessage message="Project detail is temporarily unavailable." tone="error" />
-      ) : null}
-
-      {project ? (
-        <section className="pt-3">
-          <SurfaceCard className="overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-4 text-[12px] text-[var(--track-text-muted)]">
-              <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
-                i
-              </span>
-              <p>
-                {project.is_private
-                  ? "This project is private."
-                  : "Everyone in this Workspace can see this Project."}{" "}
-                <a className="text-[var(--track-accent-text)] underline" href="#privacy">
-                  {project.is_private ? "Manage access" : "You can make it private"}
-                </a>
-              </p>
-            </div>
-
-            <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <HeaderCell label="All members/teams" />
-              <HeaderCell label="Rate" />
-              <HeaderCell label="Cost" />
-              <HeaderCell label="Role" />
-            </div>
-
-            {membersQuery.isPending ? (
-              <ProjectDetailMessage message="Loading members..." />
-            ) : (
-              <ul aria-label="Project team members">
-                {members.map((member) => {
-                  const display = resolveProjectMemberDisplay(
-                    member,
-                    workspaceMembers,
-                    session.user.fullName,
-                    members.length === 1,
-                  );
-
-                  return (
-                    <li
-                      className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] items-center border-t border-[var(--track-border)] px-4"
-                      key={`${member.project_id}-${member.user_id}`}
-                    >
-                      <div className="flex min-h-[66px] items-center gap-3">
-                        <Avatar initials={display.initials} />
-                        <span className="truncate text-[14px] font-medium text-white">
-                          {display.name}
-                        </span>
-                      </div>
-                      <ValueCell value={member.rate == null ? "-" : formatMoney(member.rate)} />
-                      <ValueCell
-                        value={member.labor_cost == null ? "-" : formatMoney(member.labor_cost)}
-                      />
-                      <div className="py-4">
-                        <p className="text-[14px] font-medium text-white">
-                          {member.manager ? "Manager" : "Member"}
-                        </p>
-                        <p className="text-[12px] text-[var(--track-text-muted)]">
-                          {member.manager ? "Views all entries." : "Can view assigned work."}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-                {!membersQuery.isPending && members.length === 0 ? (
-                  <li className="border-t border-[var(--track-border)] px-4 py-6 text-[14px] text-[var(--track-text-muted)]">
-                    No members assigned.
-                  </li>
-                ) : null}
-              </ul>
-            )}
-          </SurfaceCard>
-        </section>
-      ) : null}
+      </div>
     </ProjectDetailLayout>
   );
 }
