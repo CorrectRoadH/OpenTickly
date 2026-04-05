@@ -120,7 +120,9 @@ jobs:
       # ── Phase 2: main (migrate.Run fires on startup) ─────────────────────────
 
       - name: Switch back to main
-        run: git checkout main
+        run: |
+          git checkout main
+          git checkout main -- .
 
       - name: Install dependencies (main)
         run: pnpm install --frozen-lockfile
