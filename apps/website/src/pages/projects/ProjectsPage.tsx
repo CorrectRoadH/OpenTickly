@@ -57,21 +57,23 @@ import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
 import { useProjectForm } from "./useProjectForm.ts";
 import { useProjectFilters, type ProjectCategory } from "./useProjectFilters.ts";
 
-const PROJECT_STATUS_OPTIONS: { label: string; value: ProjectCategory }[] = [
-  { label: "Upcoming", value: "upcoming" },
-  { label: "Active", value: "active" },
-  { label: "Archived", value: "archived" },
-  { label: "Ended", value: "ended" },
+const PROJECT_STATUS_OPTIONS = (
+  t: (key: string) => string,
+): { label: string; value: ProjectCategory }[] => [
+  { label: t("upcoming"), value: "upcoming" },
+  { label: t("active"), value: "active" },
+  { label: t("archived"), value: "archived" },
+  { label: t("ended"), value: "ended" },
 ];
 
-const PROJECT_COLUMNS: DirectoryTableColumn[] = [
-  { key: "project", label: "Project", width: "minmax(160px,1fr)" },
-  { key: "client", label: "Client", width: "120px" },
-  { key: "timeframe", label: "Timeframe", width: "140px" },
-  { key: "time-status", label: "Time status", width: "100px" },
-  { key: "billable-status", label: "Billable status", width: "120px" },
-  { key: "team", label: "Team", width: "100px" },
-  { key: "pinned", label: "Pinned", width: "64px" },
+const PROJECT_COLUMNS = (t: (key: string) => string): DirectoryTableColumn[] => [
+  { key: "project", label: t("project"), width: "minmax(160px,1fr)" },
+  { key: "client", label: t("client"), width: "120px" },
+  { key: "timeframe", label: t("timeframe"), width: "140px" },
+  { key: "time-status", label: t("timeStatus"), width: "100px" },
+  { key: "billable-status", label: t("billableStatus"), width: "120px" },
+  { key: "team", label: t("team"), width: "100px" },
+  { key: "pinned", label: t("pinned"), width: "64px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
@@ -302,8 +304,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
       closeEditor();
       setStatusMessage(editorMode === "edit" ? t("projectUpdated") : t("projectCreated"));
-      if (statusFilter !== "all") {
-        await navigateToStatus("all");
+      if (statusFilter === "archived") {
+        await navigateToStatus("default");
       }
     } catch {
       formDispatch({ type: "SET_ERROR", error: "Project name already exists" });
@@ -317,12 +319,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
     if (project.pinned) {
       await unpinProjectMutation.mutateAsync(project.id);
-      setStatusMessage(`Unpinned ${project.name}`);
+      setStatusMessage(t("unpinProject", { name: project.name }));
       return;
     }
 
     await pinProjectMutation.mutateAsync(project.id);
-    setStatusMessage(`Pinned ${project.name}`);
+    setStatusMessage(t("pinProject", { name: project.name }));
   }
 
   async function handleArchiveToggle(project: GithubComTogglTogglApiInternalModelsProject) {
@@ -332,12 +334,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
 
     if (project.active) {
       await archiveProjectMutation.mutateAsync(project.id);
-      setStatusMessage(`Archived ${project.name}`);
+      setStatusMessage(t("archiveProject", { name: project.name }));
       return;
     }
 
     await restoreProjectMutation.mutateAsync(project.id);
-    setStatusMessage(`Restored ${project.name}`);
+    setStatusMessage(t("restoreProject", { name: project.name }));
   }
 
   async function handleTemplateToggle(project: GithubComTogglTogglApiInternalModelsProject) {
@@ -348,35 +350,37 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     await updateProjectMutation.mutateAsync({
       color: resolveProjectColor(project),
       isPrivate: project.is_private === true,
-      name: project.name ?? "Untitled project",
+      name: project.name ?? t("untitledProject"),
       projectId: project.id,
       template: project.template !== true,
     });
     setStatusMessage(
-      project.template ? `Removed template ${project.name}` : `Templated ${project.name}`,
+      project.template
+        ? t("untemplateProject", { name: project.name })
+        : t("templateProject", { name: project.name }),
     );
   }
 
   async function handleDelete(project: GithubComTogglTogglApiInternalModelsProject) {
-    if (project.id == null || !window.confirm(`Delete ${project.name}?`)) {
+    if (project.id == null || !window.confirm(t("deleteProjectConfirm", { name: project.name }))) {
       return;
     }
 
     await deleteProjectMutation.mutateAsync(project.id);
-    setStatusMessage(`Deleted ${project.name}`);
+    setStatusMessage(t("deleteProject", { name: project.name }));
   }
 
   const toolbarContent = (
     <div className="flex flex-wrap items-center gap-4" data-testid="projects-filter-bar">
       <DirectoryStatusFilter
         onChange={(statuses) => filterDispatch({ type: "SET_STATUSES", statuses })}
-        options={PROJECT_STATUS_OPTIONS}
+        options={PROJECT_STATUS_OPTIONS(t)}
         selected={selectedStatuses}
       />
       <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-        <span>Filters:</span>
+        <span>{t("filters")}</span>
         <CheckboxFilterDropdown
-          label="Client"
+          label={t("client")}
           onClear={() => filterDispatch({ type: "CLEAR_CLIENT_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_CLIENT_ID", id })}
           options={clientsList.map((c) => ({ key: c.id, label: c.name }))}
@@ -384,7 +388,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           testId="projects-filter-client"
         />
         <CheckboxFilterDropdown
-          label="Member"
+          label={t("member")}
           onClear={() => filterDispatch({ type: "CLEAR_MEMBER_IDS" })}
           onToggle={(id: number) => filterDispatch({ type: "TOGGLE_MEMBER_ID", id })}
           options={workspaceMembers.map((m) => ({ key: m.id, label: m.name }))}
@@ -392,23 +396,23 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           testId="projects-filter-member"
         />
         <RadioFilterDropdown
-          label="Billable"
+          label={t("billable")}
           onChange={(value) => filterDispatch({ type: "SET_BILLABLE", value })}
           options={[
-            { key: "all" as const, label: "All" },
-            { key: "billable" as const, label: "Billable" },
-            { key: "non-billable" as const, label: "Non-billable" },
+            { key: "all" as const, label: t("all") },
+            { key: "billable" as const, label: t("billable") },
+            { key: "non-billable" as const, label: t("nonBillable") },
           ]}
           selected={filterBillable}
           testId="projects-filter-billable"
         />
         <RadioFilterDropdown
-          label="Template"
+          label={t("template")}
           onChange={(value) => filterDispatch({ type: "SET_TEMPLATE", value })}
           options={[
-            { key: "all" as const, label: "All" },
-            { key: "template" as const, label: "Template" },
-            { key: "non-template" as const, label: "Non-template" },
+            { key: "all" as const, label: t("all") },
+            { key: "template" as const, label: t("template") },
+            { key: "non-template" as const, label: t("nonTemplate") },
           ]}
           selected={filterTemplate}
           testId="projects-filter-template"
@@ -418,7 +422,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
             data-testid="projects-filter-name"
             onChange={(e) => filterDispatch({ type: "SET_NAME", name: e.target.value })}
-            placeholder="Project name"
+            placeholder={t("projectName")}
             type="text"
             value={filterName}
           />
@@ -443,7 +447,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     selectedIds.size > 0 ? (
       <div className="flex items-center gap-4 border-b border-[var(--track-border)] px-6 py-2.5">
         <span className="text-[14px] font-medium text-white">
-          {selectedIds.size} item{selectedIds.size !== 1 ? "s" : ""} selected
+          {t("itemsSelected", { count: selectedIds.size })}
         </span>
         <span className="h-4 w-px bg-[var(--track-border)]" />
         <AppButton
@@ -457,7 +461,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           size="sm"
         >
           <EditIcon className="size-3.5" />
-          <span>Edit</span>
+          <span>{t("edit")}</span>
         </AppButton>
         <AppButton
           onClick={() => {
@@ -465,29 +469,29 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
               void archiveProjectMutation.mutateAsync(id);
             }
             setSelectedIds(new Set());
-            setStatusMessage(`${selectedIds.size} project(s) archived`);
+            setStatusMessage(t("archiveProjectsConfirm", { count: selectedIds.size }));
           }}
           size="sm"
         >
           <ArchiveIcon className="size-3.5" />
-          <span>Archive</span>
+          <span>{t("archive")}</span>
         </AppButton>
         <AppButton
           onClick={() => {
-            if (!window.confirm(`Delete ${selectedIds.size} project(s)?`)) return;
+            if (!window.confirm(t("deleteProjectsConfirm", { count: selectedIds.size }))) return;
             for (const id of selectedIds) {
               void deleteProjectMutation.mutateAsync(id);
             }
             setSelectedIds(new Set());
-            setStatusMessage(`${selectedIds.size} project(s) deleted`);
+            setStatusMessage(t("deleteProjectsConfirm", { count: selectedIds.size }));
           }}
           size="sm"
         >
           <TrashIcon className="size-3.5" />
-          <span>Delete</span>
+          <span>{t("delete")}</span>
         </AppButton>
         <IconButton
-          aria-label="Clear selection"
+          aria-label={t("clearSelection")}
           onClick={() => setSelectedIds(new Set())}
           size="sm"
         >
@@ -502,10 +506,10 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         className="flex items-center justify-between border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
         data-testid="projects-summary"
       >
+        <span>{t("showingProjectsInWorkspace", { count: projects.length, workspaceId })}</span>
         <span>
-          Showing {projects.length} projects in workspace {workspaceId}.
+          {t("pinnedCount", { count: projects.filter((project) => project.pinned).length })}
         </span>
-        <span>Pinned: {projects.filter((project) => project.pinned).length}</span>
       </div>
     ) : null;
 
@@ -532,7 +536,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         ) : null}
         {!projectsQuery.isPending && !projectsQuery.isError ? (
           <DirectoryTable
-            columns={PROJECT_COLUMNS}
+            columns={PROJECT_COLUMNS(t)}
             rows={projects}
             rowKey={(p) => p.id!}
             selectable
@@ -564,7 +568,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     href={buildProjectTeamPath(workspaceId, project.id ?? 0)}
                     style={{ color: resolveProjectColor(project) }}
                   >
-                    {project.name ?? "Untitled project"}
+                    {project.name ?? t("untitledProject")}
                   </a>
                 </div>
                 <DirectoryTableCell>{project.client_name ?? ""}</DirectoryTableCell>
@@ -573,14 +577,14 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 </DirectoryTableCell>
                 <DirectoryTableCell>{formatProjectHours(project)}</DirectoryTableCell>
                 <DirectoryTableCell>
-                  {project.billable ? "Billable" : "Non-billable"}
+                  {project.billable ? t("billable") : t("nonBillable")}
                 </DirectoryTableCell>
                 <DirectoryTableCell>
-                  {project.is_private ? "Private" : "Everyone"}
+                  {project.is_private ? t("private") : t("everyone")}
                 </DirectoryTableCell>
                 <div className="flex items-center">
                   <IconButton
-                    aria-label={`${project.pinned ? "Unpin" : "Pin"} ${project.name}`}
+                    aria-label={`${project.pinned ? t("unpin") : t("pin")} ${project.name}`}
                     className={
                       project.pinned
                         ? "text-[var(--track-accent)]"
@@ -677,9 +681,9 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           recurring={projectRecurring}
           selectedMemberIds={selectedMemberIds}
           startDate={projectStartDate}
-          submitLabel={editorMode === "edit" ? "Save" : "Create project"}
+          submitLabel={editorMode === "edit" ? t("save") : t("createProject")}
           template={projectTemplate}
-          title={editorMode === "edit" ? "Edit Project" : "Create new project"}
+          title={editorMode === "edit" ? t("editProject") : t("createNewProject")}
         />
       ) : null}
     </>

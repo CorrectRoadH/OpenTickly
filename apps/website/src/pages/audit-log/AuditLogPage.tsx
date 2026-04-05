@@ -43,18 +43,18 @@ function defaultTo(): string {
   return toRFC3339(new Date());
 }
 
-function sourceLabel(source: string): string {
-  if (source === "web") return "Web";
-  if (source === "api") return "API";
+function sourceLabel(source: string, t: (key: string) => string): string {
+  if (source === "web") return t("webCookie");
+  if (source === "api") return t("apiTokenCli");
   return source || "-";
 }
 
-const auditLogColumns: DirectoryTableColumn[] = [
-  { key: "action", label: "Action", width: "minmax(0,1fr)" },
-  { key: "source", label: "Source", width: "80px" },
-  { key: "entityType", label: "Entity Type", width: "120px" },
-  { key: "entityId", label: "Entity ID", width: "80px" },
-  { key: "time", label: "Time", width: "180px" },
+const auditLogColumns = (t: (key: string) => string): DirectoryTableColumn[] => [
+  { key: "action", label: t("action"), width: "minmax(0,1fr)" },
+  { key: "source", label: t("source"), width: "80px" },
+  { key: "entityType", label: t("entityType"), width: "120px" },
+  { key: "entityId", label: t("entityId"), width: "80px" },
+  { key: "time", label: t("time"), width: "180px" },
 ];
 
 export function AuditLogPage(): ReactElement {
@@ -144,7 +144,7 @@ export function AuditLogPage(): ReactElement {
                   : "bg-[var(--track-border)] text-[var(--track-text-muted)]"
             }`}
           >
-            {sourceLabel(log.source)}
+            {sourceLabel(log.source, t)}
           </span>
         </div>
         <div className="flex h-[46px] items-center text-[12px] text-[var(--track-text-muted)]">
@@ -187,7 +187,7 @@ export function AuditLogPage(): ReactElement {
       </header>
 
       <DirectoryTable
-        columns={auditLogColumns}
+        columns={auditLogColumns(t)}
         data-testid="audit-log-list"
         emptyState={t("noAuditLogEntries")}
         expandable
