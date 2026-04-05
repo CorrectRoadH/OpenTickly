@@ -1,5 +1,6 @@
 import { SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { DashboardAllActivities } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -13,16 +14,16 @@ function formatDurationHours(seconds: number): string {
   return `${h}h`;
 }
 
-function formatActivityDuration(seconds: number | undefined): string {
-  if (seconds == null || seconds < 0) return "Running";
+function formatActivityDuration(seconds: number | undefined, t: (key: string) => string): string {
+  if (seconds == null || seconds < 0) return t("running");
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
 
-function formatActivityTimestamp(isoStop: string | undefined): string {
-  if (!isoStop) return "In progress";
+function formatActivityTimestamp(isoStop: string | undefined, t: (key: string) => string): string {
+  if (!isoStop) return t("inProgress");
   try {
     const d = new Date(isoStop);
     return d.toLocaleString("en-US", {
@@ -37,10 +38,10 @@ function formatActivityTimestamp(isoStop: string | undefined): string {
   }
 }
 
-function describeAction(entry: DashboardAllActivities): string {
+function describeAction(entry: DashboardAllActivities, t: (key: string) => string): string {
   const desc = entry.description?.trim();
-  if (desc) return `Tracked: ${desc}`;
-  return "Tracked time (no description)";
+  if (desc) return `${t("tracked")} ${desc}`;
+  return t("trackedTimeNoDescription");
 }
 
 type SettingsActivityProps = {
@@ -48,6 +49,7 @@ type SettingsActivityProps = {
 };
 
 export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactElement {
+  const { t } = useTranslation("settings");
   const activitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
   const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
@@ -90,13 +92,13 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
     return (activitiesQuery.data ?? []).map((a) => {
       const userId = a.user_id ?? 0;
       return {
-        action: describeAction(a),
-        date: formatActivityTimestamp(a.stop),
-        duration: formatActivityDuration(a.duration),
+        action: describeAction(a, t),
+        date: formatActivityTimestamp(a.stop, t),
+        duration: formatActivityDuration(a.duration, t),
         userName: memberNameById.get(userId) ?? `User ${userId}`,
       };
     });
-  }, [activitiesQuery.data, memberNameById]);
+  }, [activitiesQuery.data, memberNameById, t]);
 
   const isLoading =
     activitiesQuery.isPending || membersQuery.isPending || mostActiveQuery.isPending;
@@ -106,19 +108,19 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
     <SurfaceCard>
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-[14px] font-semibold text-white">Workspace Activity</h2>
+          <h2 className="text-[14px] font-semibold text-white">{t("workspaceActivity")}</h2>
           <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
-            Overview of recent workspace usage and member activity.
+            {t("overviewOfRecentWorkspaceUsage")}
           </p>
         </div>
 
         {isLoading ? (
           <p className="py-8 text-center text-[12px] text-[var(--track-text-muted)]">
-            Loading activity data...
+            {t("loadingActivityData")}
           </p>
         ) : isError ? (
           <p className="py-8 text-center text-[12px] text-[var(--track-text-muted)]">
-            Could not load activity data. Try again later.
+            {t("couldNotLoadActivityData")}
           </p>
         ) : (
           <>
@@ -126,16 +128,16 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
               className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4"
               data-testid="activity-stats"
             >
-              <StatCard label="Recent Entries" value={String(stats.totalEntries)} />
-              <StatCard label="Total Hours" value={stats.totalHours} />
-              <StatCard label="Members" value={String(stats.memberCount)} />
-              <StatCard label="Active Projects" value={String(stats.uniqueProjects)} />
+              <StatCard label={t("recentEntries")} value={String(stats.totalEntries)} />
+              <StatCard label={t("totalHours")} value={stats.totalHours} />
+              <StatCard label={t("members")} value={String(stats.memberCount)} />
+              <StatCard label={t("activeProjects")} value={String(stats.uniqueProjects)} />
             </div>
 
             {topMembers.length > 0 ? (
               <div>
                 <h3 className="mb-3 text-[14px] font-medium text-[var(--track-text-soft)]">
-                  Most Active Members
+                  {t("mostActiveMembers")}
                 </h3>
                 <div className="overflow-x-auto">
                   <table
@@ -144,8 +146,8 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                   >
                     <thead>
                       <tr className="border-b border-[var(--track-border)] text-[var(--track-text-soft)]">
-                        <th className="pb-2 pr-4 font-medium">Member</th>
-                        <th className="pb-2 font-medium">Duration</th>
+                        <th className="pb-2 pr-4 font-medium">{t("members")}</th>
+                        <th className="pb-2 font-medium">{t("duration")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -168,14 +170,14 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
               </div>
             ) : (
               <p className="py-4 text-center text-[12px] text-[var(--track-text-muted)]">
-                No member activity data available yet.
+                {t("noMemberActivityDataAvailableYet")}
               </p>
             )}
 
             {activityRows.length > 0 ? (
               <div className="mt-6">
                 <h3 className="mb-3 text-[14px] font-medium text-[var(--track-text-soft)]">
-                  Recent Activity
+                  {t("recentActivity")}
                 </h3>
                 <div className="overflow-x-auto">
                   <table
@@ -184,10 +186,10 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
                   >
                     <thead>
                       <tr className="border-b border-[var(--track-border)] text-[var(--track-text-soft)]">
-                        <th className="pb-2 pr-4 font-medium">Date</th>
-                        <th className="pb-2 pr-4 font-medium">User</th>
-                        <th className="pb-2 pr-4 font-medium">Action</th>
-                        <th className="pb-2 font-medium">Duration</th>
+                        <th className="pb-2 pr-4 font-medium">{t("date")}</th>
+                        <th className="pb-2 pr-4 font-medium">{t("user")}</th>
+                        <th className="pb-2 pr-4 font-medium">{t("action")}</th>
+                        <th className="pb-2 font-medium">{t("duration")}</th>
                       </tr>
                     </thead>
                     <tbody>

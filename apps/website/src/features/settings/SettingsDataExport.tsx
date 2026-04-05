@@ -1,5 +1,6 @@
 import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 
@@ -109,27 +110,33 @@ async function buildAndDownloadPdf(
   doc.save(`time-entries-${startDate}-to-${endDate}.pdf`);
 }
 
-const EXPORT_OBJECT_TYPES = [
-  { key: "projects", label: "Projects" },
-  { key: "projects_users", label: "Project members" },
-  { key: "project_tasks", label: "Project tasks" },
-  { key: "clients", label: "Clients" },
-  { key: "tags", label: "Tags" },
-  { key: "team", label: "Team" },
-  { key: "teams", label: "Teams" },
-  { key: "workspace_settings", label: "Workspace Settings" },
-  { key: "alerts", label: "Alerts" },
-  { key: "custom_reports", label: "Custom Reports" },
-  { key: "scheduled_reports", label: "Scheduled Reports" },
-  { key: "tracking_reminders", label: "Tracking Reminders" },
-  { key: "invoices", label: "Invoices" },
+const EXPORT_OBJECT_KEYS = [
+  "projects",
+  "projects_users",
+  "project_tasks",
+  "clients",
+  "tags",
+  "team",
+  "teams",
+  "workspace_settings",
+  "alerts",
+  "custom_reports",
+  "scheduled_reports",
+  "tracking_reminders",
+  "invoices",
 ] as const;
 
+function getExportObjectTypes(t: (key: string) => string) {
+  return EXPORT_OBJECT_KEYS.map((key) => ({ key, label: t(key) }));
+}
+
 function WorkspaceDataExport(): ReactElement {
+  const { t } = useTranslation("settings");
   const session = useSession();
+  const exportObjectTypes = useMemo(() => getExportObjectTypes(t), [t]);
   const workspaceId = session.currentWorkspace.id;
   const [selected, setSelected] = useState<Set<string>>(
-    () => new Set(EXPORT_OBJECT_TYPES.map((t) => t.key)),
+    () => new Set(exportObjectTypes.map((t) => t.key)),
   );
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,10 +154,10 @@ function WorkspaceDataExport(): ReactElement {
   }
 
   function toggleAll() {
-    if (selected.size === EXPORT_OBJECT_TYPES.length) {
+    if (selected.size === exportObjectTypes.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(EXPORT_OBJECT_TYPES.map((t) => t.key)));
+      setSelected(new Set(exportObjectTypes.map((t) => t.key)));
     }
   }
 
@@ -165,7 +172,7 @@ function WorkspaceDataExport(): ReactElement {
       });
       const token = result.data as string;
       if (!token) {
-        setError("Export failed: no token received");
+        setError(t("exportFailedNoTokenReceived"));
         return;
       }
       const archiveResult = await getWorkspaceExportsDataUuidZip({
@@ -174,7 +181,7 @@ function WorkspaceDataExport(): ReactElement {
       });
       const blob = archiveResult.data as unknown as Blob;
       if (!blob) {
-        setError("Export failed: could not download archive");
+        setError(t("exportFailedCouldNotDownloadArchive"));
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -186,7 +193,7 @@ function WorkspaceDataExport(): ReactElement {
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
     } catch {
-      setError("Export failed. Please try again.");
+      setError(t("exportFailedPleaseTryAgain"));
     } finally {
       setExporting(false);
     }
@@ -196,24 +203,24 @@ function WorkspaceDataExport(): ReactElement {
     <SurfaceCard>
       <div className="space-y-4 p-6">
         <div>
-          <h2 className="text-[14px] font-semibold text-white">Data Export</h2>
+          <h2 className="text-[14px] font-semibold text-white">{t("dataExport")}</h2>
           <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
-            Export workspace data as a ZIP archive.
+            {t("exportWorkspaceDataAsZip")}
           </p>
         </div>
 
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-[12px] text-white">
             <input
-              checked={selected.size === EXPORT_OBJECT_TYPES.length}
+              checked={selected.size === exportObjectTypes.length}
               className="accent-[var(--track-accent)]"
               data-testid="export-select-all"
               onChange={toggleAll}
               type="checkbox"
             />
-            Select items for export:
+            {t("selectItemsForExport")}
           </label>
-          {EXPORT_OBJECT_TYPES.map((type) => (
+          {exportObjectTypes.map((type) => (
             <label className="flex items-center gap-2 pl-4 text-[12px] text-white" key={type.key}>
               <input
                 checked={selected.has(type.key)}
@@ -245,6 +252,7 @@ function WorkspaceDataExport(): ReactElement {
 type ExportFormat = "csv" | "pdf";
 
 export function SettingsDataExport(): ReactElement {
+  const { t } = useTranslation("settings");
   const [startDate, setStartDate] = useState(thirtyDaysAgoIso);
   const [endDate, setEndDate] = useState(todayIso);
   const [format, setFormat] = useState<ExportFormat>("csv");
@@ -282,16 +290,16 @@ export function SettingsDataExport(): ReactElement {
       <SurfaceCard>
         <div className="space-y-6 p-6">
           <div>
-            <h2 className="text-[14px] font-semibold text-white">Export time entries</h2>
+            <h2 className="text-[14px] font-semibold text-white">{t("exportTimeEntries")}</h2>
             <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
-              Download your workspace time entries for a selected date range.
+              {t("downloadTimeEntriesForDateRange")}
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="block">
               <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
-                Start date
+                {t("startDate")}
               </span>
               <DatePickerButton
                 className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white"
@@ -303,7 +311,7 @@ export function SettingsDataExport(): ReactElement {
 
             <div className="block">
               <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
-                End date
+                {t("endDate")}
               </span>
               <DatePickerButton
                 className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[12px] text-white"
@@ -316,15 +324,15 @@ export function SettingsDataExport(): ReactElement {
 
           <label className="block">
             <span className="mb-1 block text-[12px] font-medium text-[var(--track-text-soft)]">
-              Export format
+              {t("exportFormat")}
             </span>
             <SelectDropdown
               className="sm:w-48"
               data-testid="export-format"
               onChange={(v) => setFormat(v as ExportFormat)}
               options={[
-                { value: "csv", label: "CSV" },
-                { value: "pdf", label: "PDF" },
+                { value: "csv", label: t("csv") },
+                { value: "pdf", label: t("pdf") },
               ]}
               value={format}
             />
@@ -337,12 +345,12 @@ export function SettingsDataExport(): ReactElement {
               onClick={handleExport}
               type="button"
             >
-              {exporting ? "Exporting..." : "Export"}
+              {exporting ? t("exporting") : t("export")}
             </AppButton>
             <span className="text-[12px] text-[var(--track-text-muted)]">
               {entriesQuery.isPending
-                ? "Loading entries..."
-                : `${entryCount} entries in selected range`}
+                ? t("loadingEntries")
+                : t("entriesInSelectedRange", { count: entryCount })}
             </span>
           </div>
         </div>
