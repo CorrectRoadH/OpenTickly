@@ -1,20 +1,18 @@
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
-import { useState, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { Toaster } from "sonner";
 
-import { createAppQueryClient } from "../shared/query/query-client.ts";
 import { AppDisplayProvider } from "./AppDisplayProvider.tsx";
 import { type AppRouter } from "./create-app-router.tsx";
 import "./i18n.ts";
 
 type AppProvidersProps = {
+  queryClient: QueryClient;
   router: AppRouter;
 };
 
-export function AppProviders({ router }: AppProvidersProps): ReactElement {
-  const [queryClient] = useState(() => createAppQueryClient());
-
+export function AppProviders({ queryClient, router }: AppProvidersProps): ReactElement {
   return (
     <AppDisplayProvider>
       <QueryClientProvider client={queryClient}>

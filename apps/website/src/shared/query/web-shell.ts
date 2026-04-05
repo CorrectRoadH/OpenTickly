@@ -99,7 +99,7 @@ import {
 } from "../api/web/index.ts";
 import type { TimeEntrySearchResult } from "../api/generated/web/types.gen.ts";
 
-const sessionQueryKey = ["web-session"] as const;
+export const sessionQueryKey = ["web-session"] as const;
 const profileQueryKey = ["web-profile"] as const;
 const workspaceSettingsQueryKey = (workspaceId: number) =>
   ["workspace-settings", workspaceId] as const;
