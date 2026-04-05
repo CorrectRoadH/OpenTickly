@@ -85,6 +85,10 @@ const ProjectDetailPage = lazyNamed(
   () => import("../pages/projects/ProjectDetailPage.tsx"),
   "ProjectDetailPage",
 );
+const ProjectDashboardPage = lazyNamed(
+  () => import("../pages/projects/ProjectDashboardPage.tsx"),
+  "ProjectDashboardPage",
+);
 const ClientsPage = lazyNamed(() => import("../pages/clients/ClientsPage.tsx"), "ClientsPage");
 const ClientDetailPage = lazyNamed(
   () => import("../pages/clients/ClientDetailPage.tsx"),
@@ -211,6 +215,12 @@ const workspaceProjectDetailRoute = createRoute({
   component: WorkspaceProjectDetailRouteComponent,
 });
 
+const projectDashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/$workspaceId/projects/$projectId/dashboard",
+  component: ProjectDashboardRouteComponent,
+});
+
 const legacyWorkspaceProjectsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/projects",
@@ -266,11 +276,17 @@ const workspacePermissionsRoute = createRoute({
   component: WorkspacePermissionsRouteComponent,
 });
 
-const workspaceTasksRoute = createRoute({
+const projectTasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/$workspaceId/projects/$projectId/tasks",
+  component: ProjectTasksRouteComponent,
+});
+
+const legacyWorkspaceTasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/workspaces/$workspaceId/tasks",
   validateSearch: parseTasksSearch,
-  component: WorkspaceTasksRouteComponent,
+  component: LegacyWorkspaceTasksRouteComponent,
 });
 
 const workspaceTagsRoute = createRoute({
@@ -408,6 +424,7 @@ export const routeTree = rootRoute.addChildren([
   legacyWorkspaceReportsRoute,
   workspaceProjectsRoute,
   workspaceProjectDetailRoute,
+  projectDashboardRoute,
   legacyWorkspaceProjectsRoute,
   legacyWorkspaceProjectDetailRoute,
   workspaceMembersRoute,
@@ -417,7 +434,8 @@ export const routeTree = rootRoute.addChildren([
   workspaceClientDetailRoute,
   workspaceGroupsRoute,
   workspacePermissionsRoute,
-  workspaceTasksRoute,
+  projectTasksRoute,
+  legacyWorkspaceTasksRoute,
   workspaceTagsRoute,
   workspaceTagDetailRoute,
   workspaceApprovalsRoute,
@@ -601,6 +619,17 @@ function WorkspaceProjectDetailRouteComponent() {
   );
 }
 
+function ProjectDashboardRouteComponent() {
+  const params = projectDashboardRoute.useParams();
+  const workspaceId = Number(params.workspaceId);
+  const projectId = Number(params.projectId);
+
+  return renderProtectedRoute(
+    <ProjectDashboardPage projectId={projectId} workspaceId={workspaceId} />,
+    workspaceId,
+  );
+}
+
 function LegacyWorkspaceProjectDetailRouteComponent() {
   const params = legacyWorkspaceProjectDetailRoute.useParams();
 
@@ -659,12 +688,39 @@ function WorkspacePermissionsRouteComponent() {
   return renderProtectedRoute(<PermissionConfigPage workspaceId={workspaceId} />, workspaceId);
 }
 
-function WorkspaceTasksRouteComponent() {
-  const params = workspaceTasksRoute.useParams();
-  const search = workspaceTasksRoute.useSearch();
+function ProjectTasksRouteComponent() {
+  const params = projectTasksRoute.useParams();
   const workspaceId = Number(params.workspaceId);
+  const projectId = Number(params.projectId);
 
-  return renderProtectedRoute(<TasksPage projectId={search.projectId} />, workspaceId);
+  return renderProtectedRoute(
+    <TasksPage projectId={projectId} workspaceId={workspaceId} />,
+    workspaceId,
+  );
+}
+
+function LegacyWorkspaceTasksRouteComponent() {
+  const params = legacyWorkspaceTasksRoute.useParams();
+  const search = legacyWorkspaceTasksRoute.useSearch();
+
+  if (typeof search.projectId === "number") {
+    return (
+      <Navigate
+        replace
+        params={{ workspaceId: params.workspaceId, projectId: String(search.projectId) }}
+        to="/$workspaceId/projects/$projectId/tasks"
+      />
+    );
+  }
+
+  return (
+    <Navigate
+      replace
+      params={{ workspaceId: params.workspaceId }}
+      search={{ status: "default" }}
+      to="/projects/$workspaceId/list"
+    />
+  );
 }
 
 function WorkspaceTagsRouteComponent() {
@@ -846,7 +902,32 @@ function ProtectedRouteBoundary({ children, requestedWorkspaceId }: ProtectedRou
 }
 
 function SessionPendingPanel() {
-  return <PublicMainPanelLoading />;
+  return (
+    <div className="flex min-h-dvh items-center justify-center bg-[var(--track-surface)]">
+      <div className="flex flex-col items-center gap-4">
+        <svg
+          aria-hidden="true"
+          className="size-10 animate-pulse"
+          viewBox="0 0 32 32"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect fill="#e05d26" height="32" rx="8" width="32" />
+          <text
+            fill="white"
+            fontFamily="Arial, sans-serif"
+            fontSize="20"
+            fontWeight="bold"
+            textAnchor="middle"
+            x="16"
+            y="23"
+          >
+            t
+          </text>
+        </svg>
+        <span className="sr-only">Loading</span>
+      </div>
+    </div>
+  );
 }
 
 function SessionUnavailablePanel() {
