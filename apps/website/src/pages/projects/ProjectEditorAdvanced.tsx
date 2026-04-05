@@ -94,10 +94,10 @@ export function ProjectEditorAdvanced({
   const showFixedFeeInput = fixedFee > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Client */}
       <div>
-        <p className="mb-2 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Client
         </p>
         <div className="relative">
@@ -161,7 +161,7 @@ export function ProjectEditorAdvanced({
 
       {/* Timeframe */}
       <div>
-        <p className="mb-2 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Timeframe
         </p>
         <div className="flex items-center gap-2">
@@ -184,13 +184,13 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Recurring */}
-      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
+      <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <span className="text-[14px] text-white">Recurring</span>
         <ToggleSwitch label="Recurring" onChange={onRecurringChange} value={recurring} />
       </div>
 
       {/* Time estimate */}
-      <div className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
+      <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">Time estimate</span>
           <ToggleSwitch
@@ -218,13 +218,13 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Billable */}
-      <div className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
+      <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <span className="text-[14px] text-white">Billable</span>
         <ToggleSwitch label="Billable" onChange={onBillableChange} value={billable} />
       </div>
 
       {/* Fixed fee */}
-      <div className="rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
+      <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <div className="flex items-center justify-between">
           <span className="text-[14px] text-white">Fixed fee</span>
           <ToggleSwitch
@@ -254,7 +254,7 @@ export function ProjectEditorAdvanced({
 
       {/* Color */}
       <div>
-        <p className="mb-3 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+        <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Color
         </p>
         <ColorSwatchPicker
@@ -265,7 +265,7 @@ export function ProjectEditorAdvanced({
       </div>
 
       {/* Template */}
-      <label className="flex items-center justify-between rounded-[10px] border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-3">
+      <label className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <span className="text-[14px] text-white">Use as template</span>
         <input
           aria-label="Use as template"

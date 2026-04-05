@@ -284,12 +284,12 @@ function ProfileMenuContent({
 
   return (
     <div className="p-2" role="menu">
-      <div className="flex items-center gap-3 px-3 py-3">
+      <div className="flex items-center gap-2.5 px-2.5 py-2">
         <UserAvatar
-          className="size-[42px] shrink-0 overflow-hidden border border-[var(--track-border)]"
+          className="size-9 shrink-0 overflow-hidden border border-[var(--track-border)]"
           imageUrl={imageUrl}
           name={name}
-          textClassName="text-[14px] font-semibold"
+          textClassName="text-[13px] font-semibold"
         />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[14px] font-semibold text-white">{name}</p>
@@ -360,7 +360,7 @@ function ProfileMenuAction({
 }): ReactElement {
   return (
     <button
-      className={`flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-[12px] font-medium transition hover:bg-[var(--track-row-hover)] ${
+      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[12px] font-medium transition hover:bg-[var(--track-row-hover)] ${
         destructive ? "text-[var(--track-danger-text)]" : "text-white"
       }`}
       onClick={onClick}

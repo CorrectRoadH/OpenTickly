@@ -106,10 +106,10 @@ export function ProjectEditorDialog({
       width="max-w-[620px]"
     >
       <form onSubmit={handleSubmit}>
-        <div className="mt-1 space-y-5">
+        <div className="mt-1 space-y-3">
           {/* Project name + color picker */}
           <div>
-            <span className="mb-2 block text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
+            <span className="mb-1.5 block text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
               Project name
             </span>
             <div className="relative flex items-center gap-2">
@@ -158,13 +158,13 @@ export function ProjectEditorDialog({
           </div>
 
           {/* Privacy toggle */}
-          <section className="rounded-[12px] border border-[var(--track-border)] bg-[var(--track-input-bg)] p-4">
-            <div className="flex items-center justify-between gap-4">
+          <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
+            <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
                   Privacy
                 </p>
-                <p className="mt-2 text-[14px] text-white">
+                <p className="mt-1 text-[14px] text-white">
                   Private, visible only to project members
                 </p>
               </div>
@@ -198,10 +198,10 @@ export function ProjectEditorDialog({
           />
 
           {/* Advanced options */}
-          <section className="rounded-[12px] border border-[var(--track-border)] bg-[var(--track-input-bg)]">
+          <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)]">
             <button
               aria-expanded={advancedOpen}
-              className="flex w-full items-center justify-between px-4 py-3 text-left"
+              className="flex w-full items-center justify-between px-3 py-2.5 text-left"
               onClick={() => setAdvancedOpen((c) => !c)}
               type="button"
             >
@@ -211,7 +211,7 @@ export function ProjectEditorDialog({
               <span className="text-[18px] text-white">{advancedOpen ? "\u2212" : "+"}</span>
             </button>
             {advancedOpen ? (
-              <div className="border-t border-[var(--track-border)] px-4 pb-4 pt-4">
+              <div className="border-t border-[var(--track-border)] px-3 pb-3 pt-3">
                 <ProjectEditorAdvanced
                   billable={billable}
                   clientId={clientId}
@@ -239,7 +239,7 @@ export function ProjectEditorDialog({
           </section>
         </div>
 
-        <div className="mt-5 flex items-center justify-end gap-2">
+        <div className="mt-4 flex items-center justify-end gap-2">
           <button
             className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
             onClick={onClose}

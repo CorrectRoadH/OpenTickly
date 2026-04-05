@@ -31,13 +31,13 @@ export function ProjectEditorMembers({
   }, [memberQuery, members]);
 
   return (
-    <section className="rounded-[12px] border border-[var(--track-border)] bg-[var(--track-input-bg)] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
             {t("manageProjectMembers")}
           </p>
-          <p className="mt-2 text-[14px] text-white">{t("inviteMembers")}</p>
+          <p className="mt-1 text-[14px] text-white">{t("inviteMembers")}</p>
         </div>
         <label className="flex items-center gap-2 text-[12px] text-[var(--track-overlay-text)]">
           <span>{t("access")}</span>
@@ -52,7 +52,7 @@ export function ProjectEditorMembers({
           />
         </label>
       </div>
-      <label className="mt-4 block">
+      <label className="mt-3 block">
         <span className="sr-only">{t("inviteMembers")}</span>
         <input
           aria-label={t("inviteMembers")}
@@ -62,7 +62,7 @@ export function ProjectEditorMembers({
           value={memberQuery}
         />
       </label>
-      <div className="mt-4 max-h-[180px] space-y-2 overflow-y-auto pr-1">
+      <div className="mt-3 max-h-[180px] space-y-1 overflow-y-auto pr-1">
         {filteredMembers.map((member) => {
           const selected = selectedMemberIds.includes(member.id);
           return (

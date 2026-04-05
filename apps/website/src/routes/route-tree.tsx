@@ -1,4 +1,4 @@
-import { Navigate, createRoute, useRouterState } from "@tanstack/react-router";
+import { Navigate, Outlet, createRoute, useRouterState } from "@tanstack/react-router";
 import { Suspense, lazy, useEffect, type ComponentType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -133,8 +133,18 @@ const MobileReportPage = lazyNamed(
 );
 const MobileMePage = lazyNamed(() => import("../pages/mobile/MobileMePage.tsx"), "MobileMePage");
 
-const homeRoute = createRoute({
+/* ---------- protected layout route ---------- */
+// Session guard lives here once. Child routes never re-check the session,
+// so navigating between siblings never flashes a loading/login screen.
+
+const protectedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
+  id: "protected",
+  component: ProtectedLayoutComponent,
+});
+
+const homeRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
   path: "/",
   component: HomeRouteComponent,
 });
@@ -159,217 +169,217 @@ const inviteStatusJoinedRoute = createRoute({
 });
 
 const accountRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/account",
   component: AccountRouteComponent,
 });
 
 const profileRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/profile",
   component: ProfileRouteComponent,
 });
 
 const workspaceOverviewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/overview",
   component: WorkspaceOverviewRouteComponent,
 });
 
 const workspaceTimerRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/timer",
   validateSearch: parseTimerSearch,
   component: WorkspaceTimerRouteComponent,
 });
 
 const workspaceTimerStartRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/timer/start",
   validateSearch: parseTimerSearch,
   component: WorkspaceTimerRouteComponent,
 });
 
 const workspaceReportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/reports/$tab",
   component: WorkspaceReportsRouteComponent,
 });
 
 const legacyWorkspaceReportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/reports",
   component: LegacyWorkspaceReportsRouteComponent,
 });
 
 const workspaceProjectsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/projects/$workspaceId/list",
   validateSearch: parseProjectsSearch,
   component: WorkspaceProjectsRouteComponent,
 });
 
 const workspaceProjectDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/$workspaceId/projects/$projectId/team",
   component: WorkspaceProjectDetailRouteComponent,
 });
 
 const projectDashboardRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/$workspaceId/projects/$projectId/dashboard",
   component: ProjectDashboardRouteComponent,
 });
 
 const legacyWorkspaceProjectsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/projects",
   validateSearch: parseProjectsSearch,
   component: LegacyWorkspaceProjectsRouteComponent,
 });
 
 const legacyWorkspaceProjectDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/projects/$projectId",
   component: LegacyWorkspaceProjectDetailRouteComponent,
 });
 
 const workspaceMembersRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/members",
   component: WorkspaceMembersRouteComponent,
 });
 
 const workspaceImportRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/import",
   component: WorkspaceImportRouteComponent,
 });
 
 const legacyWorkspaceImportRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/import",
   component: LegacyWorkspaceImportRouteComponent,
 });
 
 const workspaceClientsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/clients",
   component: WorkspaceClientsRouteComponent,
 });
 
 const workspaceClientDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/clients/$clientId",
   component: WorkspaceClientDetailRouteComponent,
 });
 
 const workspaceGroupsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/groups",
   component: WorkspaceGroupsRouteComponent,
 });
 
 const workspacePermissionsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/permissions",
   component: WorkspacePermissionsRouteComponent,
 });
 
 const projectTasksRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/$workspaceId/projects/$projectId/tasks",
   component: ProjectTasksRouteComponent,
 });
 
 const legacyWorkspaceTasksRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/tasks",
   validateSearch: parseTasksSearch,
   component: LegacyWorkspaceTasksRouteComponent,
 });
 
 const workspaceTagsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/tags",
   component: WorkspaceTagsRouteComponent,
 });
 
 const workspaceTagDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/tags/$tagId",
   component: WorkspaceTagDetailRouteComponent,
 });
 
 const workspaceApprovalsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/approvals/$view",
   component: WorkspaceApprovalsRouteComponent,
 });
 
 const legacyWorkspaceApprovalsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/approvals",
   component: LegacyWorkspaceApprovalsRouteComponent,
 });
 
 const workspaceInvoicesRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/invoices",
   component: WorkspaceInvoicesRouteComponent,
 });
 
 const workspaceInvoiceNewRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/invoices/new",
   component: WorkspaceInvoiceNewRouteComponent,
 });
 
 const workspaceGoalsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/goals",
   component: WorkspaceGoalsRouteComponent,
 });
 
 const workspaceIntegrationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/integrations",
   component: WorkspaceIntegrationsRouteComponent,
 });
 
 const workspaceAuditLogRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/audit-log",
   component: WorkspaceAuditLogRouteComponent,
 });
 
 const workspaceSubscriptionRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/subscription",
   component: WorkspaceSubscriptionRouteComponent,
 });
 
 const workspaceSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/$workspaceId/settings/$section",
   component: WorkspaceSettingsRouteComponent,
 });
 
 const legacyWorkspaceSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/settings",
   validateSearch: parseLegacyWorkspaceSettingsSearch,
   component: LegacyWorkspaceSettingsRouteComponent,
 });
 
 const organizationSettingsRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/organizations/$organizationId/settings",
   component: OrganizationSettingsRouteComponent,
 });
 
 const instanceAdminRoute = createRoute({
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => protectedLayoutRoute,
   path: "/instance-admin/$section",
   component: InstanceAdminRouteComponent,
 });
@@ -411,45 +421,47 @@ const mobileMeRoute = createRoute({
 });
 
 export const routeTree = rootRoute.addChildren([
-  homeRoute,
   loginRoute,
   registerRoute,
   inviteStatusJoinedRoute,
-  accountRoute,
-  profileRoute,
-  workspaceOverviewRoute,
-  workspaceTimerStartRoute,
-  workspaceTimerRoute,
-  workspaceReportsRoute,
-  legacyWorkspaceReportsRoute,
-  workspaceProjectsRoute,
-  workspaceProjectDetailRoute,
-  projectDashboardRoute,
-  legacyWorkspaceProjectsRoute,
-  legacyWorkspaceProjectDetailRoute,
-  workspaceMembersRoute,
-  workspaceImportRoute,
-  legacyWorkspaceImportRoute,
-  workspaceClientsRoute,
-  workspaceClientDetailRoute,
-  workspaceGroupsRoute,
-  workspacePermissionsRoute,
-  projectTasksRoute,
-  legacyWorkspaceTasksRoute,
-  workspaceTagsRoute,
-  workspaceTagDetailRoute,
-  workspaceApprovalsRoute,
-  legacyWorkspaceApprovalsRoute,
-  workspaceInvoiceNewRoute,
-  workspaceInvoicesRoute,
-  workspaceGoalsRoute,
-  workspaceIntegrationsRoute,
-  workspaceAuditLogRoute,
-  workspaceSubscriptionRoute,
-  workspaceSettingsRoute,
-  legacyWorkspaceSettingsRoute,
-  organizationSettingsRoute,
-  instanceAdminRoute,
+  protectedLayoutRoute.addChildren([
+    homeRoute,
+    accountRoute,
+    profileRoute,
+    workspaceOverviewRoute,
+    workspaceTimerStartRoute,
+    workspaceTimerRoute,
+    workspaceReportsRoute,
+    legacyWorkspaceReportsRoute,
+    workspaceProjectsRoute,
+    workspaceProjectDetailRoute,
+    projectDashboardRoute,
+    legacyWorkspaceProjectsRoute,
+    legacyWorkspaceProjectDetailRoute,
+    workspaceMembersRoute,
+    workspaceImportRoute,
+    legacyWorkspaceImportRoute,
+    workspaceClientsRoute,
+    workspaceClientDetailRoute,
+    workspaceGroupsRoute,
+    workspacePermissionsRoute,
+    projectTasksRoute,
+    legacyWorkspaceTasksRoute,
+    workspaceTagsRoute,
+    workspaceTagDetailRoute,
+    workspaceApprovalsRoute,
+    legacyWorkspaceApprovalsRoute,
+    workspaceInvoiceNewRoute,
+    workspaceInvoicesRoute,
+    workspaceGoalsRoute,
+    workspaceIntegrationsRoute,
+    workspaceAuditLogRoute,
+    workspaceSubscriptionRoute,
+    workspaceSettingsRoute,
+    legacyWorkspaceSettingsRoute,
+    organizationSettingsRoute,
+    instanceAdminRoute,
+  ]),
   mobileLayoutRoute.addChildren([
     mobileIndexRoute,
     mobileTimerRoute,
@@ -459,8 +471,21 @@ export const routeTree = rootRoute.addChildren([
   ]),
 ]);
 
-function HomeRouteComponent() {
+/* ---------- protected layout component ---------- */
+
+function useWorkspaceIdFromUrl(): number | undefined {
+  const params = useRouterState({
+    select: (state) => (state.matches.at(-1)?.params ?? {}) as Record<string, string>,
+  });
+  const raw = params.workspaceId;
+  if (!raw) return undefined;
+  const n = Number(raw);
+  return Number.isNaN(n) ? undefined : n;
+}
+
+function ProtectedLayoutComponent() {
   const sessionQuery = useSessionBootstrapQuery();
+  const requestedWorkspaceId = useWorkspaceIdFromUrl();
 
   if (sessionQuery.isPending) {
     return <SessionPendingPanel />;
@@ -474,15 +499,30 @@ function HomeRouteComponent() {
     return <SessionUnavailablePanel />;
   }
 
+  return (
+    <AuthenticatedAppFrame
+      requestedWorkspaceId={requestedWorkspaceId}
+      sessionBootstrap={sessionQuery.data}
+    >
+      <Suspense fallback={<PublicMainPanelLoading />}>
+        <Outlet />
+      </Suspense>
+    </AuthenticatedAppFrame>
+  );
+}
+
+/* ---------- route components ---------- */
+
+function HomeRouteComponent() {
   return <Navigate replace to={resolveHomePath()} />;
 }
 
 function AccountRouteComponent() {
-  return renderProtectedRoute(<AccountPage />);
+  return <AccountPage />;
 }
 
 function ProfileRouteComponent() {
-  return renderProtectedRoute(<ProfilePage />);
+  return <ProfilePage />;
 }
 
 function LoginRouteComponent() {
@@ -537,7 +577,7 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
 }
 
 function WorkspaceOverviewRouteComponent() {
-  return renderProtectedRoute(<WorkspaceOverviewPage />);
+  return <WorkspaceOverviewPage />;
 }
 
 function WorkspaceTimerRouteComponent() {
@@ -551,9 +591,7 @@ function WorkspaceTimerRouteComponent() {
 
   const initialDate = resolveTimerSearchDate(search.date);
 
-  return renderProtectedRoute(
-    <WorkspaceTimerPage initialDate={initialDate} startParams={search.start} />,
-  );
+  return <WorkspaceTimerPage initialDate={initialDate} startParams={search.start} />;
 }
 
 const VALID_REPORT_TABS = ["summary", "detailed", "workload", "profitability", "custom"] as const;
@@ -568,10 +606,9 @@ function normalizeReportsTab(tab: string | undefined): ReportsTabParam {
 
 function WorkspaceReportsRouteComponent() {
   const params = workspaceReportsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
   const tab = normalizeReportsTab(params.tab);
 
-  return renderProtectedRoute(<WorkspaceReportsPage tab={tab} />, workspaceId);
+  return <WorkspaceReportsPage tab={tab} />;
 }
 
 function LegacyWorkspaceReportsRouteComponent() {
@@ -587,11 +624,9 @@ function LegacyWorkspaceReportsRouteComponent() {
 }
 
 function WorkspaceProjectsRouteComponent() {
-  const params = workspaceProjectsRoute.useParams();
   const search = workspaceProjectsRoute.useSearch();
-  const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(<ProjectsPage statusFilter={search.status} />, workspaceId);
+  return <ProjectsPage statusFilter={search.status} />;
 }
 
 function LegacyWorkspaceProjectsRouteComponent() {
@@ -613,10 +648,7 @@ function WorkspaceProjectDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const projectId = Number(params.projectId);
 
-  return renderProtectedRoute(
-    <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <ProjectDetailPage projectId={projectId} workspaceId={workspaceId} />;
 }
 
 function ProjectDashboardRouteComponent() {
@@ -624,10 +656,7 @@ function ProjectDashboardRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const projectId = Number(params.projectId);
 
-  return renderProtectedRoute(
-    <ProjectDashboardPage projectId={projectId} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <ProjectDashboardPage projectId={projectId} workspaceId={workspaceId} />;
 }
 
 function LegacyWorkspaceProjectDetailRouteComponent() {
@@ -642,14 +671,11 @@ function LegacyWorkspaceProjectDetailRouteComponent() {
 }
 
 function WorkspaceMembersRouteComponent() {
-  const params = workspaceMembersRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<WorkspaceMembersPage />, workspaceId);
+  return <WorkspaceMembersPage />;
 }
 
 function WorkspaceImportRouteComponent() {
-  return renderProtectedRoute(<WorkspaceImportPage />);
+  return <WorkspaceImportPage />;
 }
 
 function LegacyWorkspaceImportRouteComponent() {
@@ -657,10 +683,7 @@ function LegacyWorkspaceImportRouteComponent() {
 }
 
 function WorkspaceClientsRouteComponent() {
-  const params = workspaceClientsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<ClientsPage />, workspaceId);
+  return <ClientsPage />;
 }
 
 function WorkspaceClientDetailRouteComponent() {
@@ -668,24 +691,18 @@ function WorkspaceClientDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const clientId = Number(params.clientId);
 
-  return renderProtectedRoute(
-    <ClientDetailPage clientId={clientId} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <ClientDetailPage clientId={clientId} workspaceId={workspaceId} />;
 }
 
 function WorkspaceGroupsRouteComponent() {
-  const params = workspaceGroupsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<GroupsPage />, workspaceId);
+  return <GroupsPage />;
 }
 
 function WorkspacePermissionsRouteComponent() {
   const params = workspacePermissionsRoute.useParams();
   const workspaceId = Number(params.workspaceId);
 
-  return renderProtectedRoute(<PermissionConfigPage workspaceId={workspaceId} />, workspaceId);
+  return <PermissionConfigPage workspaceId={workspaceId} />;
 }
 
 function ProjectTasksRouteComponent() {
@@ -693,10 +710,7 @@ function ProjectTasksRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const projectId = Number(params.projectId);
 
-  return renderProtectedRoute(
-    <TasksPage projectId={projectId} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <TasksPage projectId={projectId} workspaceId={workspaceId} />;
 }
 
 function LegacyWorkspaceTasksRouteComponent() {
@@ -724,10 +738,7 @@ function LegacyWorkspaceTasksRouteComponent() {
 }
 
 function WorkspaceTagsRouteComponent() {
-  const params = workspaceTagsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<TagsPage />, workspaceId);
+  return <TagsPage />;
 }
 
 function WorkspaceTagDetailRouteComponent() {
@@ -735,17 +746,11 @@ function WorkspaceTagDetailRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const tagId = Number(params.tagId);
 
-  return renderProtectedRoute(
-    <TagDetailPage tagId={tagId} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <TagDetailPage tagId={tagId} workspaceId={workspaceId} />;
 }
 
 function WorkspaceApprovalsRouteComponent() {
-  const params = workspaceApprovalsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<ApprovalsPage />, workspaceId);
+  return <ApprovalsPage />;
 }
 
 function LegacyWorkspaceApprovalsRouteComponent() {
@@ -761,45 +766,27 @@ function LegacyWorkspaceApprovalsRouteComponent() {
 }
 
 function WorkspaceInvoiceNewRouteComponent() {
-  const params = workspaceInvoiceNewRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<InvoiceEditorPage />, workspaceId);
+  return <InvoiceEditorPage />;
 }
 
 function WorkspaceInvoicesRouteComponent() {
-  const params = workspaceInvoicesRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<InvoicesPage />, workspaceId);
+  return <InvoicesPage />;
 }
 
 function WorkspaceGoalsRouteComponent() {
-  const params = workspaceGoalsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<GoalsPage />, workspaceId);
+  return <GoalsPage />;
 }
 
 function WorkspaceIntegrationsRouteComponent() {
-  const params = workspaceIntegrationsRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<IntegrationsPage />, workspaceId);
+  return <IntegrationsPage />;
 }
 
 function WorkspaceAuditLogRouteComponent() {
-  const params = workspaceAuditLogRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<AuditLogPage />, workspaceId);
+  return <AuditLogPage />;
 }
 
 function WorkspaceSubscriptionRouteComponent() {
-  const params = workspaceSubscriptionRoute.useParams();
-  const workspaceId = Number(params.workspaceId);
-
-  return renderProtectedRoute(<SubscriptionPage />, workspaceId);
+  return <SubscriptionPage />;
 }
 
 function WorkspaceSettingsRouteComponent() {
@@ -807,10 +794,7 @@ function WorkspaceSettingsRouteComponent() {
   const workspaceId = Number(params.workspaceId);
   const section = normalizeWorkspaceSettingsSection(params.section);
 
-  return renderProtectedRoute(
-    <WorkspaceSettingsPage section={section} workspaceId={workspaceId} />,
-    workspaceId,
-  );
+  return <WorkspaceSettingsPage section={section} workspaceId={workspaceId} />;
 }
 
 function LegacyWorkspaceSettingsRouteComponent() {
@@ -832,7 +816,7 @@ function OrganizationSettingsRouteComponent() {
   const params = organizationSettingsRoute.useParams();
   const organizationId = Number(params.organizationId);
 
-  return renderProtectedRoute(<OrganizationSettingsPage organizationId={organizationId} />);
+  return <OrganizationSettingsPage organizationId={organizationId} />;
 }
 
 function InstanceAdminRouteComponent() {
@@ -844,62 +828,14 @@ function InstanceAdminRouteComponent() {
 
   const sessionQuery = useSessionBootstrapQuery();
 
-  if (sessionQuery.isPending) {
-    return <SessionPendingPanel />;
-  }
-
-  if (isSessionAccessDenied(sessionQuery.error)) {
-    return <SessionExpiredRedirect />;
-  }
-
-  if (sessionQuery.isError || !sessionQuery.data) {
-    return <SessionUnavailablePanel />;
-  }
-
-  if (!sessionQuery.data.user.is_instance_admin) {
+  if (sessionQuery.data && !sessionQuery.data.user.is_instance_admin) {
     return <Navigate replace to="/" />;
   }
 
-  return renderProtectedRoute(<InstanceAdminPage section={section} />);
+  return <InstanceAdminPage section={section} />;
 }
 
-function renderProtectedRoute(children: ReactNode, requestedWorkspaceId?: number) {
-  return (
-    <ProtectedRouteBoundary requestedWorkspaceId={requestedWorkspaceId}>
-      <Suspense fallback={<PublicMainPanelLoading />}>{children}</Suspense>
-    </ProtectedRouteBoundary>
-  );
-}
-
-type ProtectedRouteBoundaryProps = {
-  children: ReactNode;
-  requestedWorkspaceId?: number;
-};
-
-function ProtectedRouteBoundary({ children, requestedWorkspaceId }: ProtectedRouteBoundaryProps) {
-  const sessionQuery = useSessionBootstrapQuery();
-
-  if (sessionQuery.isPending) {
-    return <SessionPendingPanel />;
-  }
-
-  if (isSessionAccessDenied(sessionQuery.error)) {
-    return <SessionExpiredRedirect />;
-  }
-
-  if (sessionQuery.isError || !sessionQuery.data) {
-    return <SessionUnavailablePanel />;
-  }
-
-  return (
-    <AuthenticatedAppFrame
-      requestedWorkspaceId={requestedWorkspaceId}
-      sessionBootstrap={sessionQuery.data}
-    >
-      {children}
-    </AuthenticatedAppFrame>
-  );
-}
+/* ---------- shared UI ---------- */
 
 function SessionPendingPanel() {
   return (

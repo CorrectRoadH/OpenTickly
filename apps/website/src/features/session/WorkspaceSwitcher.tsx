@@ -265,17 +265,17 @@ function OrganizationOptionsPanel({
 
   return (
     <div className="p-2">
-      <div className="flex items-center gap-2 px-3 py-3.5">
+      <div className="flex items-center gap-2.5 px-2.5 py-2.5">
         <UserAvatar
-          className="size-12 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
+          className="size-10 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
           name={organization?.name ?? "Organization"}
-          textClassName="text-[18px] font-semibold"
+          textClassName="text-[16px] font-semibold"
         />
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-[14px] font-semibold leading-5 text-white">
             {organization?.name ?? ""}
           </h2>
-          <p className="mt-1 text-[12px] text-[var(--track-text-muted)]">
+          <p className="mt-0.5 text-[12px] text-[var(--track-text-muted)]">
             {memberCount} member{memberCount === 1 ? "" : "s"}
           </p>
         </div>
@@ -298,7 +298,7 @@ function OrganizationOptionsPanel({
         />
       </div>
 
-      <div className="px-3 pb-1 pt-3">
+      <div className="px-2.5 py-1">
         <AppButton
           className="w-full justify-center"
           onClick={() => {
@@ -313,13 +313,13 @@ function OrganizationOptionsPanel({
 
       <MenuSeparator />
 
-      <div className="px-3 pb-3 pt-3">
+      <div className="px-2.5 pb-2 pt-2">
         <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           Organizations
         </p>
         <ul
           aria-labelledby={`${listboxId}-label`}
-          className="mt-2 space-y-1"
+          className="mt-1.5 space-y-0.5"
           id={listboxId}
           role="listbox"
         >
@@ -330,7 +330,7 @@ function OrganizationOptionsPanel({
 
             return (
               <li aria-selected={selected} key={entry.id} role="option">
-                <div className="flex items-center gap-2 rounded-[10px] px-2 py-2 transition hover:bg-[var(--track-row-hover)]">
+                <div className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-[var(--track-row-hover)]">
                   <button
                     className="flex min-w-0 flex-1 items-center gap-3 text-left"
                     onClick={() => {
@@ -416,7 +416,7 @@ function OrganizationActionLink({
     </>
   );
 
-  const className = `flex w-full items-center justify-between rounded-[8px] px-3 py-2.5 text-left text-[14px] font-medium transition ${
+  const className = `flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-[14px] font-medium transition ${
     muted
       ? "cursor-default text-[var(--track-text-soft)]"
       : "text-white hover:bg-[var(--track-row-hover)]"
