@@ -121,10 +121,9 @@ jobs:
 
       - name: Switch back to main (clean worktree to avoid stale lockfiles)
         run: |
-          git checkout main
-          git checkout -- .
+          git checkout -f main
           git clean -fdx
-          rm -rf node_modules apps/*/node_modules packages/*/node_modules
+          pnpm store prune || true
 
       - name: Install dependencies (main)
         run: pnpm install --frozen-lockfile
