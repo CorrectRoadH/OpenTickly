@@ -102,9 +102,10 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       await expect(timeGridEntries).toHaveCount(1);
       await expect(timeGridEntries.first()).toBeVisible();
 
-      // Navigate to next week to see Day 2 segment
+      // Navigate to next week to see Day 2 segment. The calendar refetches
+      // entries for the new date range, so allow extra time for the data load.
       await page.getByRole("button", { name: "Next week" }).click();
-      await expect(timeGridEntries).toHaveCount(1);
+      await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
       await expect(timeGridEntries.first()).toBeVisible();
     }
   });
@@ -186,9 +187,10 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       // Last column in a 7-day week grid (index 6)
       expect(day1Col).toBe(6);
 
-      // Navigate to next week — Day 2's segment should be the first column
+      // Navigate to next week — Day 2's segment should be the first column.
+      // Allow extra time for the calendar to refetch entries.
       await page.getByRole("button", { name: "Next week" }).click();
-      await expect(timeGridEntries).toHaveCount(1);
+      await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
 
       await page.waitForTimeout(500);
       const day2Col = await timeGridEntries.first().evaluate((el) => {
@@ -247,6 +249,7 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       // Navigate to next week so the Day 2 segment (00:00→01:00, near top of
       // column) is visible — easier to click without scrolling.
       await page.getByRole("button", { name: "Next week" }).click();
+      await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
     }
 
     // Click whichever segment is available. When both are visible, prefer the

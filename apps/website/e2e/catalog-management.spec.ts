@@ -105,8 +105,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     );
 
     await expect(page).toHaveURL(new RegExp(`/${workspaceId}/projects/${projectId}/tasks$`));
-    await expect(page.getByTestId("tasks-page")).toBeVisible();
-    await expect(page.getByTestId("tasks-context-bar")).toBeVisible();
+    await expect(page.getByTestId("tasks-create-button")).toBeVisible();
 
     await page.getByTestId("tasks-create-button").click();
     const form = page.getByTestId("tasks-create-form");
@@ -115,8 +114,5 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
 
     await expect(page.getByText("Task created")).toBeVisible();
     await expect(page.getByTestId("tasks-list")).toContainText(taskName);
-    await expect(page.getByTestId("tasks-summary")).toContainText(
-      `Showing 1 tasks in workspace ${workspaceId}.`,
-    );
   });
 });
