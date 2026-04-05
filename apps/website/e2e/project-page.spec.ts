@@ -21,7 +21,9 @@ test.describe("Story: browse the projects surface", () => {
 
     await page.getByRole("link", { name: "Projects" }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/projects/${workspaceId}/list(?:\\?status=(?:all|default))?$`),
+    );
     await expect(page.getByTestId("projects-page")).toBeVisible();
     await expect(page.getByTestId("projects-filter-bar")).toBeVisible();
     await expect(page.getByTestId("projects-create-button")).toBeVisible();

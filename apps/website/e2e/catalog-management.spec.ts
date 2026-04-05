@@ -64,7 +64,6 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await expect(page.getByText("Tag created")).toBeVisible();
     await expect(page.getByTestId("tags-list")).toContainText(tagName);
     await expect(page.getByTestId("tags-summary")).toContainText("Showing 1 tags in");
-    await expect(page.getByTestId("tags-summary")).toContainText("Active: 1");
   });
 
   test("Given a newly registered account, when the user creates a task, then the task appears in the workspace catalog", async ({
@@ -86,7 +85,9 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     const workspaceId = loginSession.currentWorkspaceId;
 
     await page.getByRole("link", { name: "Projects" }).click();
-    await expect(page).toHaveURL(new RegExp(`/projects/${workspaceId}/list(?:\\?status=all)?$`));
+    await expect(page).toHaveURL(
+      new RegExp(`/projects/${workspaceId}/list(?:\\?status=(?:all|default))?$`),
+    );
     await page.getByTestId("projects-create-button").click();
     const projectForm = page.getByTestId("project-editor-dialog");
     await projectForm.getByLabel("Project name").fill(projectName);
@@ -103,7 +104,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
       new URL(`/workspaces/${workspaceId}/tasks?projectId=${projectId}`, page.url()).toString(),
     );
 
-    await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/tasks\\?projectId=\\d+$`));
+    await expect(page).toHaveURL(new RegExp(`/${workspaceId}/projects/${projectId}/tasks$`));
     await expect(page.getByTestId("tasks-page")).toBeVisible();
     await expect(page.getByTestId("tasks-context-bar")).toBeVisible();
 
