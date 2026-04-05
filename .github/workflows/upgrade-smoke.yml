@@ -123,7 +123,8 @@ jobs:
         run: |
           git checkout main
           git checkout -- .
-          git clean -fd
+          git clean -fdx
+          rm -rf node_modules apps/*/node_modules packages/*/node_modules
 
       - name: Install dependencies (main)
         run: pnpm install --frozen-lockfile
