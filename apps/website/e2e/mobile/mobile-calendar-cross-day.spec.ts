@@ -14,7 +14,28 @@ test.use({ ...devices["iPhone 13"], timezoneId: "UTC" });
  *
  * New users default to UTC timezone. With timezoneId set to "UTC" in the
  * browser, local dates and user-tz dates are the same, avoiding timezone skew.
+ *
+ * ## Date-boundary resilience
+ *
+ * Uses `new Date()` ("today") so that over time CI naturally exercises every
+ * calendar boundary — week, month, year, leap-year. When today and tomorrow
+ * fall in different calendar weeks (e.g. Sunday → Monday with Monday-start
+ * weeks), the test navigates to the next week via the day strip's "Next week"
+ * button before asserting the second day's segment.
  */
+
+/** Same-week check — see desktop spec for rationale. */
+function sameCalendarWeek(dayA: Date, dayB: Date, weekStartsOn = 1): boolean {
+  const weekStart = (d: Date) => {
+    const copy = new Date(d);
+    copy.setHours(0, 0, 0, 0);
+    const delta = ((copy.getDay() - weekStartsOn + 7) % 7) * -1;
+    copy.setDate(copy.getDate() + delta);
+    return copy.getTime();
+  };
+  return weekStart(dayA) === weekStart(dayB);
+}
+
 test.describe("Mobile calendar: cross-day entries", () => {
   test("Cross-midnight entry appears on both days and starts at 00:00 on the second day", async ({
     page,
@@ -49,15 +70,20 @@ test.describe("Mobile calendar: cross-day entries", () => {
       workspaceId: session.currentWorkspaceId,
     });
 
-    // Navigate to mobile calendar
+    // Navigate to mobile calendar — today is selected by default.
     await page.goto(new URL("/m/calendar", page.url()).toString());
     await expect(page.getByText("22:00")).toBeVisible({ timeout: 10_000 });
 
-    // Day strip defaults to today. Today's column should show the entry.
+    // Today's column should show the entry (22:00 → midnight segment).
     const entryLocator = page.getByRole("button", { name: description });
     await expect(entryLocator).toBeVisible({ timeout: 10_000 });
 
-    // Navigate to tomorrow via the day strip
+    // Navigate to tomorrow — may require switching weeks first.
+    const bothDaysVisible = sameCalendarWeek(now, tomorrow);
+    if (!bothDaysVisible) {
+      await page.getByRole("button", { name: "Next week" }).click();
+    }
+
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const tomorrowDow = dayNames[tomorrow.getUTCDay()];
     const tomorrowDayNum = String(tomorrow.getUTCDate());
