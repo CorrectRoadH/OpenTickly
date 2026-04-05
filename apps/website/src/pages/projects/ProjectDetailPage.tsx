@@ -1,13 +1,12 @@
 import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
-import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
+import { SurfaceCard } from "@opentoggl/web-ui";
 
 import type {
   ModelsProjectStatistics,
   ModelsProjectUser,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { WorkspaceMember } from "../../shared/api/generated/web/types.gen.ts";
-import { ChevronRightIcon, FocusIcon } from "../../shared/ui/icons.tsx";
 import {
   useProjectDetailQuery,
   useProjectMembersQuery,
@@ -15,12 +14,7 @@ import {
   useWorkspaceMembersQuery,
 } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
-import {
-  buildProjectDashboardPath,
-  buildProjectTeamPath,
-  buildProjectsListPath,
-} from "../../shared/url-state/projects-location.ts";
-import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
+import { ProjectDetailLayout } from "./ProjectDetailLayout.tsx";
 
 type ProjectDetailPageProps = {
   projectId: number;
@@ -43,128 +37,11 @@ export function ProjectDetailPage({
   const billableSeconds = project?.billable ? totalSeconds : 0;
 
   return (
-    <main className="min-h-dvh bg-[var(--track-surface)] px-5 py-4 text-white">
-      <div className="mx-auto grid max-w-[1384px] gap-6 lg:grid-cols-[minmax(0,1fr)_210px]">
-        <section className="min-w-0">
-          <header className="border-b border-[var(--track-border)] pb-4">
-            <div className="flex items-center gap-2 text-[12px] text-[var(--track-text-muted)]">
-              <a href={buildProjectsListPath(workspaceId)}>Projects</a>
-              <ChevronRightIcon className="size-3" />
-              <span className="font-medium text-[var(--track-accent)]">
-                {project?.name ?? `Project ${projectId}`}
-              </span>
-              <FocusIcon className="size-3" />
-            </div>
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <nav className="flex items-end gap-6 text-[14px]" aria-label="Project sections">
-                <a
-                  className="pb-3 text-[var(--track-text-muted)] hover:text-white"
-                  href={buildProjectDashboardPath(workspaceId, projectId)}
-                >
-                  Dashboard
-                </a>
-                <a
-                  className="pb-3 text-[var(--track-text-muted)] hover:text-white"
-                  href={buildWorkspaceTasksPath({ projectId, workspaceId })}
-                >
-                  Tasks
-                </a>
-                <a
-                  aria-current="page"
-                  className="border-b-2 border-[var(--track-accent)] pb-3 font-medium text-white"
-                  href={buildProjectTeamPath(workspaceId, projectId)}
-                >
-                  Team
-                </a>
-              </nav>
-              <AppButton type="button">Edit Project</AppButton>
-            </div>
-          </header>
-
-          {projectQuery.isPending ? (
-            <ProjectDetailMessage message="Loading project team..." />
-          ) : null}
-          {projectQuery.isError ? (
-            <ProjectDetailMessage
-              message="Project detail is temporarily unavailable."
-              tone="error"
-            />
-          ) : null}
-
-          {project ? (
-            <section className="pt-3">
-              <SurfaceCard className="overflow-hidden">
-                <div className="flex items-center gap-2 px-4 py-4 text-[12px] text-[var(--track-text-muted)]">
-                  <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
-                    i
-                  </span>
-                  <p>
-                    {project.is_private
-                      ? "This project is private."
-                      : "Everyone in this Workspace can see this Project."}{" "}
-                    <a className="text-[var(--track-accent-text)] underline" href="#privacy">
-                      {project.is_private ? "Manage access" : "You can make it private"}
-                    </a>
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                  <HeaderCell label="All members/teams" />
-                  <HeaderCell label="Rate" />
-                  <HeaderCell label="Cost" />
-                  <HeaderCell label="Role" />
-                </div>
-
-                {membersQuery.isPending ? (
-                  <ProjectDetailMessage message="Loading members..." />
-                ) : (
-                  <ul aria-label="Project team members">
-                    {members.map((member) => {
-                      const display = resolveProjectMemberDisplay(
-                        member,
-                        workspaceMembers,
-                        session.user.fullName,
-                        members.length === 1,
-                      );
-
-                      return (
-                        <li
-                          className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] items-center border-t border-[var(--track-border)] px-4"
-                          key={`${member.project_id}-${member.user_id}`}
-                        >
-                          <div className="flex min-h-[66px] items-center gap-3">
-                            <Avatar initials={display.initials} />
-                            <span className="truncate text-[14px] font-medium text-white">
-                              {display.name}
-                            </span>
-                          </div>
-                          <ValueCell value={member.rate == null ? "-" : formatMoney(member.rate)} />
-                          <ValueCell
-                            value={member.labor_cost == null ? "-" : formatMoney(member.labor_cost)}
-                          />
-                          <div className="py-4">
-                            <p className="text-[14px] font-medium text-white">
-                              {member.manager ? "Manager" : "Member"}
-                            </p>
-                            <p className="text-[12px] text-[var(--track-text-muted)]">
-                              {member.manager ? "Views all entries." : "Can view assigned work."}
-                            </p>
-                          </div>
-                        </li>
-                      );
-                    })}
-                    {!membersQuery.isPending && members.length === 0 ? (
-                      <li className="border-t border-[var(--track-border)] px-4 py-6 text-[14px] text-[var(--track-text-muted)]">
-                        No members assigned.
-                      </li>
-                    ) : null}
-                  </ul>
-                )}
-              </SurfaceCard>
-            </section>
-          ) : null}
-        </section>
-
+    <ProjectDetailLayout
+      activeTab="team"
+      projectId={projectId}
+      workspaceId={workspaceId}
+      sidebar={
         <aside className="pt-6 lg:pt-14">
           <div className="space-y-5">
             <StatBlock label="Total hours" value={formatDuration(totalSeconds)} />
@@ -175,8 +52,86 @@ export function ProjectDetailPage({
             <TimelineBlock statistics={statisticsQuery.data} />
           </div>
         </aside>
-      </div>
-    </main>
+      }
+    >
+      {projectQuery.isPending ? <ProjectDetailMessage message="Loading project team..." /> : null}
+      {projectQuery.isError ? (
+        <ProjectDetailMessage message="Project detail is temporarily unavailable." tone="error" />
+      ) : null}
+
+      {project ? (
+        <section className="pt-3">
+          <SurfaceCard className="overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-4 text-[12px] text-[var(--track-text-muted)]">
+              <span className="flex size-4 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold text-white">
+                i
+              </span>
+              <p>
+                {project.is_private
+                  ? "This project is private."
+                  : "Everyone in this Workspace can see this Project."}{" "}
+                <a className="text-[var(--track-accent-text)] underline" href="#privacy">
+                  {project.is_private ? "Manage access" : "You can make it private"}
+                </a>
+              </p>
+            </div>
+
+            <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+              <HeaderCell label="All members/teams" />
+              <HeaderCell label="Rate" />
+              <HeaderCell label="Cost" />
+              <HeaderCell label="Role" />
+            </div>
+
+            {membersQuery.isPending ? (
+              <ProjectDetailMessage message="Loading members..." />
+            ) : (
+              <ul aria-label="Project team members">
+                {members.map((member) => {
+                  const display = resolveProjectMemberDisplay(
+                    member,
+                    workspaceMembers,
+                    session.user.fullName,
+                    members.length === 1,
+                  );
+
+                  return (
+                    <li
+                      className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] items-center border-t border-[var(--track-border)] px-4"
+                      key={`${member.project_id}-${member.user_id}`}
+                    >
+                      <div className="flex min-h-[66px] items-center gap-3">
+                        <Avatar initials={display.initials} />
+                        <span className="truncate text-[14px] font-medium text-white">
+                          {display.name}
+                        </span>
+                      </div>
+                      <ValueCell value={member.rate == null ? "-" : formatMoney(member.rate)} />
+                      <ValueCell
+                        value={member.labor_cost == null ? "-" : formatMoney(member.labor_cost)}
+                      />
+                      <div className="py-4">
+                        <p className="text-[14px] font-medium text-white">
+                          {member.manager ? "Manager" : "Member"}
+                        </p>
+                        <p className="text-[12px] text-[var(--track-text-muted)]">
+                          {member.manager ? "Views all entries." : "Can view assigned work."}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+                {!membersQuery.isPending && members.length === 0 ? (
+                  <li className="border-t border-[var(--track-border)] px-4 py-6 text-[14px] text-[var(--track-text-muted)]">
+                    No members assigned.
+                  </li>
+                ) : null}
+              </ul>
+            )}
+          </SurfaceCard>
+        </section>
+      ) : null}
+    </ProjectDetailLayout>
   );
 }
 

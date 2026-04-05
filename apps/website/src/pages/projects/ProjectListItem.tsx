@@ -6,8 +6,10 @@ import type {
   ModelsProjectUser,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useProjectMembersQuery } from "../../shared/query/web-shell.ts";
-import { buildProjectTeamPath } from "../../shared/url-state/projects-location.ts";
-import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
+import {
+  buildProjectTasksPath,
+  buildProjectTeamPath,
+} from "../../shared/url-state/projects-location.ts";
 import { ProjectMembersSection } from "./ProjectMembersSection.tsx";
 
 function projectStatusLabel(project: GithubComTogglTogglApiInternalModelsProject): string {
@@ -86,10 +88,7 @@ export function ProjectListItem({
           <a
             aria-label={`Project tasks for ${project.name}`}
             className="rounded-lg border border-white/10 bg-white/4 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-white/8"
-            href={buildWorkspaceTasksPath({
-              workspaceId,
-              projectId: project.id,
-            })}
+            href={buildProjectTasksPath(workspaceId, project.id ?? 0)}
           >
             Project tasks
           </a>

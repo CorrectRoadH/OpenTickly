@@ -108,8 +108,8 @@ export function swapWorkspaceInPath(pathname: string, workspaceId: number, searc
     return `/workspaces/${workspaceId}/permissions${section}`;
   }
 
-  if (/^\/workspaces\/\d+\/tasks$/.test(pathname)) {
-    return `/workspaces/${workspaceId}/tasks${section}`;
+  if (/^\/\d+\/projects\/\d+\/tasks$/.test(pathname)) {
+    return pathname.replace(/^\/\d+/, `/${workspaceId}`) + section;
   }
 
   if (/^\/workspaces\/\d+\/tags$/.test(pathname)) {

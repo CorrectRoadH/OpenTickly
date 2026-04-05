@@ -2,21 +2,19 @@ import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AppButton,
-  DirectoryFilterChip,
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
   DirectoryTableCell,
-  PageLayout,
 } from "@opentoggl/web-ui";
 
 import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import { useCreateTaskMutation, useTasksQuery } from "../../shared/query/web-shell.ts";
-import { useSession } from "../../shared/session/session-context.tsx";
-import { buildWorkspaceTasksPath } from "../../shared/url-state/tasks-location.ts";
+import { ProjectDetailLayout } from "../projects/ProjectDetailLayout.tsx";
 
 type TasksPageProps = {
-  projectId?: number;
+  projectId: number;
+  workspaceId: number;
 };
 
 type TaskListItem = {
@@ -29,29 +27,24 @@ type TaskListItem = {
 const TASK_COLUMNS: DirectoryTableColumn[] = [
   { key: "dot", label: "", width: "42px" },
   { key: "name", label: "Task", width: "minmax(0,1fr)" },
-  { key: "project", label: "Project", width: "120px" },
   { key: "status", label: "Status", width: "130px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
-export function TasksPage({ projectId }: TasksPageProps): ReactElement {
+export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElement {
   const { t } = useTranslation("tasks");
-  const session = useSession();
-  const workspaceId = session.currentWorkspace.id;
   const tasksQuery = useTasksQuery(workspaceId, projectId);
   const createTaskMutation = useCreateTaskMutation(workspaceId, projectId);
   const [taskName, setTaskName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [composerOpen, setComposerOpen] = useState(false);
-  const hasProjectScope =
-    typeof projectId === "number" && Number.isInteger(projectId) && projectId > 0;
   const tasks = normalizeTasks(tasksQuery.data);
   const activeCount = tasks.filter((task) => task.active !== false).length;
   const trimmedTaskName = taskName.trim();
 
   async function handleCreateTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!hasProjectScope || trimmedTaskName.length === 0) {
+    if (trimmedTaskName.length === 0) {
       return;
     }
 
@@ -61,68 +54,35 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
     setStatus(t("taskCreated"));
   }
 
-  if (tasksQuery.isPending) {
-    return <DirectorySurfaceMessage message={t("loadingTasks")} />;
-  }
-
-  if (tasksQuery.isError) {
-    return <DirectorySurfaceMessage message={t("unableToLoadTasks")} tone="error" />;
-  }
-
   return (
-    <PageLayout
-      data-testid="tasks-page"
-      title={t("tasks")}
-      headerActions={
-        <AppButton
-          data-testid="tasks-create-button"
-          disabled={!hasProjectScope}
-          onClick={() => setComposerOpen((value) => !value)}
-          type="button"
-        >
-          <PlusIcon className="size-3.5" />
-          {t("newTask")}
-        </AppButton>
-      }
-      toolbar={
-        <>
-          <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <span>Filters:</span>
-            <DirectoryFilterChip
-              label={hasProjectScope ? t("project") + ` ${projectId}` : t("projectRequired")}
-            />
-            <DirectoryFilterChip label={t("taskName")} />
-          </div>
-          {status ? (
-            <span className="ml-auto text-[12px] normal-case tracking-normal text-[var(--track-accent-text)]">
-              {status}
+    <ProjectDetailLayout activeTab="tasks" projectId={projectId} workspaceId={workspaceId}>
+      {tasksQuery.isPending ? <DirectorySurfaceMessage message={t("loadingTasks")} /> : null}
+      {tasksQuery.isError ? (
+        <DirectorySurfaceMessage message={t("unableToLoadTasks")} tone="error" />
+      ) : null}
+      {!tasksQuery.isPending && !tasksQuery.isError ? (
+        <section className="pt-3">
+          <div className="flex items-center justify-between py-3">
+            <span className="text-[12px] text-[var(--track-text-muted)]">
+              {tasks.length} tasks · {activeCount} active
             </span>
-          ) : null}
-        </>
-      }
-      composer={
-        <>
-          {hasProjectScope ? (
-            <section
-              className="border-b border-[var(--track-border)] px-5 py-3 text-[14px] text-[var(--track-text-muted)]"
-              data-testid="tasks-context-bar"
+            <AppButton
+              data-testid="tasks-create-button"
+              onClick={() => setComposerOpen((value) => !value)}
+              type="button"
             >
-              Project-scoped task management for project {projectId}. Track API creates tasks
-              through a project entry point, so this page is intentionally anchored to that context.
-            </section>
-          ) : (
-            <section
-              className="border-b border-[var(--track-border)] px-5 py-3 text-[14px] text-[var(--track-text-muted)]"
-              data-testid="tasks-create-unavailable"
-            >
-              Create tasks from a project context. Open a project's task entry to add the first
-              task.
-            </section>
-          )}
+              <PlusIcon className="size-3.5" />
+              {t("newTask")}
+            </AppButton>
+          </div>
 
-          {composerOpen && hasProjectScope ? (
+          {status ? (
+            <div className="pb-2 text-[12px] text-[var(--track-accent-text)]">{status}</div>
+          ) : null}
+
+          {composerOpen ? (
             <form
-              className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3"
+              className="flex items-center gap-3 border-b border-[var(--track-border)] pb-3"
               data-testid="tasks-create-form"
               onSubmit={handleCreateTask}
             >
@@ -147,60 +107,31 @@ export function TasksPage({ projectId }: TasksPageProps): ReactElement {
               </AppButton>
             </form>
           ) : null}
-        </>
-      }
-      footer={
-        <>
-          <div
-            className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
-            data-testid="tasks-summary"
-          >
-            Showing {tasks.length} tasks in workspace {workspaceId}. Active: {activeCount}.
-          </div>
-          {hasProjectScope ? (
-            <div className="px-5 pb-5 pt-1">
-              <a
-                className="text-[11px] text-[var(--track-accent-text)]"
-                href={buildWorkspaceTasksPath({ workspaceId })}
-              >
-                View all workspace tasks
-              </a>
-            </div>
-          ) : null}
-        </>
-      }
-    >
-      <DirectoryTable<TaskListItem>
-        columns={TASK_COLUMNS}
-        rows={tasks}
-        rowKey={(task) => task.id}
-        data-testid="tasks-list"
-        emptyState={
-          <span data-testid="tasks-empty-state">
-            {hasProjectScope
-              ? "No tasks in this project yet."
-              : "No tasks in this workspace yet. Open a project task entry point to create the first task."}
-          </span>
-        }
-        renderRow={(task) => (
-          <>
-            <div className="flex items-center">
-              <span className="size-2 rounded-full bg-[var(--track-accent)]" />
-            </div>
-            <DirectoryTableCell>
-              <span className="truncate text-[14px] text-white">{task.name}</span>
-            </DirectoryTableCell>
-            <div className="flex h-[44px] items-center text-[14px] text-[var(--track-text-muted)]">
-              {hasProjectScope ? `Project ${projectId}` : "Workspace catalog"}
-            </div>
-            <DirectoryTableCell>{task.active === false ? "Inactive" : "Active"}</DirectoryTableCell>
-            <div className="flex items-center justify-end text-[var(--track-text-muted)]">
-              <MoreIcon className="size-4" />
-            </div>
-          </>
-        )}
-      />
-    </PageLayout>
+
+          <DirectoryTable<TaskListItem>
+            columns={TASK_COLUMNS}
+            rows={tasks}
+            rowKey={(task) => task.id}
+            data-testid="tasks-list"
+            emptyState={<span data-testid="tasks-empty-state">No tasks in this project yet.</span>}
+            renderRow={(task) => (
+              <>
+                <div className="flex items-center">
+                  <span className="size-2 rounded-full bg-[var(--track-accent)]" />
+                </div>
+                <DirectoryTableCell>
+                  <span className="truncate text-[14px] text-white">{task.name}</span>
+                </DirectoryTableCell>
+                <DirectoryTableCell>{task.active === false ? "Done" : "Active"}</DirectoryTableCell>
+                <div className="flex items-center justify-end text-[var(--track-text-muted)]">
+                  <MoreIcon className="size-4" />
+                </div>
+              </>
+            )}
+          />
+        </section>
+      ) : null}
+    </ProjectDetailLayout>
   );
 }
 

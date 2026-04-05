@@ -6,7 +6,6 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   PageLayout,
-  RadioFilterDropdown,
 } from "@opentoggl/web-ui";
 
 import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
@@ -20,14 +19,13 @@ import {
 import { useSession } from "../../shared/session/session-context.tsx";
 import { CreateNameDialog } from "../../shared/ui/CreateNameDialog.tsx";
 import { TagRowActions } from "./TagRowActions.tsx";
-import { emptyTagsStateTitle, normalizeTags, type TagStatusFilter } from "./tags-page-helpers.ts";
+import { normalizeTags } from "./tags-page-helpers.ts";
 
 type TagRow = ReturnType<typeof normalizeTags>[number];
 
 const TAG_COLUMNS: DirectoryTableColumn[] = [
   { key: "dot", label: "", width: "42px" },
   { key: "name", label: "Tag", width: "minmax(0,1fr)" },
-  { key: "status", label: "Status", width: "98px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
 
@@ -42,7 +40,6 @@ export function TagsPage(): ReactElement {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<TagStatusFilter>("all");
   const [nameFilter, setNameFilter] = useState("");
 
   if (tagsQuery.isPending) {
@@ -55,14 +52,10 @@ export function TagsPage(): ReactElement {
 
   const tags = normalizeTags(tagsQuery.data);
   const filteredTags = tags.filter((tag) => {
-    if (statusFilter === "active" && tag.deleted_at) return false;
-    if (statusFilter === "inactive" && !tag.deleted_at) return false;
     if (nameFilter.trim() && !tag.name.toLowerCase().includes(nameFilter.trim().toLowerCase()))
       return false;
     return true;
   });
-  const activeCount = tags.filter((tag) => !tag.deleted_at).length;
-  const inactiveCount = tags.length - activeCount;
   const trimmedTagName = tagName.trim();
 
   async function handleCreateTag() {
@@ -73,7 +66,6 @@ export function TagsPage(): ReactElement {
     await createTagMutation.mutateAsync(trimmedTagName);
     setTagName("");
     setCreateDialogOpen(false);
-    setStatusFilter("all");
     setStatus(t("tagCreated"));
   }
 
@@ -94,7 +86,7 @@ export function TagsPage(): ReactElement {
       toolbar={
         <>
           <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            <span>Filters:</span>
+            <span>{t("filters")}</span>
             <div className="relative flex items-center">
               <input
                 className="h-9 w-[160px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] normal-case tracking-normal text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)] focus:outline-none"
@@ -114,17 +106,6 @@ export function TagsPage(): ReactElement {
                 </button>
               ) : null}
             </div>
-            <RadioFilterDropdown
-              label="Status"
-              onChange={(value) => setStatusFilter(value)}
-              options={[
-                { key: "all" as const, label: "All" },
-                { key: "active" as const, label: "Active" },
-                { key: "inactive" as const, label: "Inactive" },
-              ]}
-              selected={statusFilter}
-              testId="tags-filter-status"
-            />
           </div>
           {status ? (
             <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
@@ -136,8 +117,7 @@ export function TagsPage(): ReactElement {
           className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
           data-testid="tags-summary"
         >
-          Showing {tags.length} tags in {session.currentWorkspace.name}. Active: {activeCount} ·
-          Inactive: {inactiveCount}
+          Showing {tags.length} tags in {session.currentWorkspace.name}
         </div>
       }
     >
@@ -147,7 +127,7 @@ export function TagsPage(): ReactElement {
         rowKey={(tag) => tag.id}
         data-testid="tags-list"
         data-row-testid="tag-row"
-        emptyState={<span data-testid="tags-empty-state">{emptyTagsStateTitle(statusFilter)}</span>}
+        emptyState={<span data-testid="tags-empty-state">No tags in this workspace yet.</span>}
         renderRow={(tag) => (
           <>
             <div className="flex h-[44px] items-center">
@@ -166,9 +146,6 @@ export function TagsPage(): ReactElement {
               >
                 {tag.name}
               </a>
-            </div>
-            <div className="flex h-[44px] items-center text-[14px] text-white">
-              {tag.deleted_at ? "Inactive" : "Active"}
             </div>
             <div className="flex h-[44px] items-center justify-end">
               <TagRowActions

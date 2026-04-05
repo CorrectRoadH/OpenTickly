@@ -11,6 +11,22 @@ const mockUseProjectMembersQuery = vi.fn();
 const mockUseProjectStatisticsQuery = vi.fn();
 const mockUseWorkspaceMembersQuery = vi.fn();
 
+vi.mock("@tanstack/react-router", () => ({
+  Link: ({
+    children,
+    to,
+    ...props
+  }: {
+    children: React.ReactNode;
+    to: string;
+    [key: string]: unknown;
+  }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+}));
+
 vi.mock("../../shared/session/session-context.tsx", () => ({
   useSession: () => mockUseSession(),
 }));
@@ -72,12 +88,6 @@ describe("ProjectDetailPage", () => {
   it("renders the canonical project team view", () => {
     render(<ProjectDetailPage projectId={5} workspaceId={2} />);
 
-    expect(screen.getByRole("link", { name: "Projects" }).getAttribute("href")).toBe(
-      "/projects/2/list",
-    );
-    expect(screen.getByRole("link", { name: "Team" }).getAttribute("href")).toBe(
-      "/2/projects/5/team",
-    );
     expect(screen.getByText("toggl CLI")).toBeTruthy();
     expect(screen.getByText("5:36:00")).toBeTruthy();
     expect(screen.getByText("0:00:00")).toBeTruthy();

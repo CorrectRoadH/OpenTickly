@@ -38,6 +38,7 @@ function computeInitialStatuses(statusFilter: ProjectStatusFilter): Set<ProjectC
   if (statusFilter === "archived") return new Set<ProjectCategory>(["archived"]);
   if (statusFilter === "all")
     return new Set<ProjectCategory>(["upcoming", "active", "archived", "ended"]);
+  // "default" or any other value → show all except archived
   return new Set(DEFAULT_SELECTED_STATUSES);
 }
 

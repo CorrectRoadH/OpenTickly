@@ -1,5 +1,3 @@
-export type TagStatusFilter = "active" | "all" | "inactive";
-
 export type TagListItem = {
   deleted_at?: string | null;
   id: number;
@@ -21,18 +19,6 @@ export function normalizeTags(data: unknown): TagListItem[] {
   }
 
   return [];
-}
-
-export function emptyTagsStateTitle(statusFilter: TagStatusFilter): string {
-  if (statusFilter === "active") {
-    return "No active tags match this view.";
-  }
-
-  if (statusFilter === "inactive") {
-    return "No inactive tags match this view.";
-  }
-
-  return "No tags in this workspace yet.";
 }
 
 function hasTagArray(

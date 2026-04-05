@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const projectStatusFilterSchema = z.enum(["active", "all", "archived"]);
+const projectStatusFilterSchema = z.enum(["active", "all", "archived", "default"]);
 
 export type ProjectStatusFilter = z.infer<typeof projectStatusFilterSchema>;
 
@@ -14,7 +14,7 @@ export function parseProjectsSearch(search: ProjectsSearch | undefined): {
   const parsedStatus = projectStatusFilterSchema.safeParse(search?.status);
 
   return {
-    status: parsedStatus.success ? parsedStatus.data : "all",
+    status: parsedStatus.success ? parsedStatus.data : "default",
   };
 }
 
@@ -28,4 +28,8 @@ export function buildProjectTeamPath(workspaceId: number, projectId: number): st
 
 export function buildProjectDashboardPath(workspaceId: number, projectId: number): string {
   return `/${workspaceId}/projects/${projectId}/dashboard`;
+}
+
+export function buildProjectTasksPath(workspaceId: number, projectId: number): string {
+  return `/${workspaceId}/projects/${projectId}/tasks`;
 }

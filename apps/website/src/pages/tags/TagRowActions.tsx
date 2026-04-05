@@ -105,7 +105,7 @@ function TagMenuContent({
     return (
       <div className="px-3 py-2">
         <p className="mb-2 text-[12px] text-[var(--track-text-muted)]">
-          Delete &ldquo;{tagName}&rdquo;?
+          Delete &ldquo;{tagName}&rdquo;? This tag will be removed from all time entries.
         </p>
         <div className="flex gap-2">
           <AppButton
