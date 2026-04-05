@@ -124,6 +124,9 @@ jobs:
           git checkout -f main
           git clean -fdx
           pnpm store prune || true
+          # Verify lockfile is clean
+          head -5 pnpm-lock.yaml
+          git diff --name-only HEAD
 
       - name: Install dependencies (main)
         run: pnpm install --frozen-lockfile
