@@ -1,32 +1,62 @@
+import { useEffect, useState } from "react";
+
 type HomeHeroScreenshotsProps = {
   locale: "en" | "zh";
 };
 
-const heroImageByLocale = {
-  en: {
-    alt: "OpenToggl dashboard preview",
-    src: "/hero/2.png",
-  },
-  zh: {
-    alt: "OpenToggl 仪表盘预览",
-    src: "/hero/2.png",
-  },
+const images = [{ src: "/hero/2.png" }, { src: "/hero/1.png" }, { src: "/hero/3.png" }];
+
+const altByLocale = {
+  en: "OpenToggl dashboard preview",
+  zh: "OpenToggl 仪表盘预览",
 } as const;
 
 export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps) {
-  const image = heroImageByLocale[locale];
+  const [active, setActive] = useState(0);
+  const alt = altByLocale[locale];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActive((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-      <img
-        alt={image.alt}
-        className="block h-full w-full"
-        fetchPriority="high"
-        height={1910}
-        loading="eager"
-        src={image.src}
-        width={3838}
-      />
+    <div className="flex flex-col gap-3">
+      <div className="relative overflow-hidden rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
+        {images.map((image, index) => (
+          <img
+            key={image.src}
+            alt={`${alt} ${index + 1}`}
+            className={`block w-full transition-opacity duration-500 ${
+              index === active ? "relative opacity-100" : "absolute inset-0 opacity-0"
+            }`}
+            fetchPriority={index === 0 ? "high" : "low"}
+            height={1910}
+            loading={index === 0 ? "eager" : "lazy"}
+            src={image.src}
+            width={3838}
+          />
+        ))}
+      </div>
+
+      {/* Dots */}
+      <div className="flex justify-center gap-2">
+        {images.map((image, index) => (
+          <button
+            key={image.src}
+            type="button"
+            aria-label={`Show screenshot ${index + 1}`}
+            className={`size-2 rounded-full transition-colors ${
+              index === active
+                ? "bg-[var(--track-accent)]"
+                : "bg-[var(--track-border)] hover:bg-[var(--track-text-muted)]"
+            }`}
+            onClick={() => setActive(index)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

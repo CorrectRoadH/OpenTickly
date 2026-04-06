@@ -1,0 +1,29 @@
+FROM node:22.12.0-bookworm-slim AS builder
+
+WORKDIR /workspace
+
+RUN npm install -g pnpm@10.32.1
+
+# Copy workspace scaffolding
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
+COPY apps/landing ./apps/landing
+COPY packages ./packages
+
+RUN pnpm install --filter @opentoggl/landing... --no-frozen-lockfile --ignore-scripts
+RUN pnpm --filter @opentoggl/landing run postinstall
+RUN pnpm --filter @opentoggl/landing run build
+
+# ---
+
+FROM node:22.12.0-bookworm-slim
+
+RUN npm install -g serve@14
+
+WORKDIR /app
+
+COPY --from=builder /workspace/apps/landing/dist ./dist
+COPY --from=builder /workspace/apps/landing/serve.json ./dist/serve.json
+
+EXPOSE 3000
+
+CMD ["serve", "-c", "serve.json", "-l", "3000", "./dist"]

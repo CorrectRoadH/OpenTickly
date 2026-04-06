@@ -1,24 +1,11 @@
 import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import {
-  ArrowUpRight,
-  BarChart3,
-  CircleDollarSign,
-  Clock,
-  FileText,
-  Github,
-  GitBranch,
-  Lock,
-  Play,
-  Server,
-  Smartphone,
-  Webhook,
-  Zap,
-} from "lucide-react";
+import { ArrowUpRight, FileText, Github, Play, RefreshCw, Server, Unlock } from "lucide-react";
 import { useParams } from "react-router";
 
 import HomeHeroScreenshots from "@/components/home-hero-screenshots";
-import { ListCard, ProofGridCard, SectionHeading } from "@/components/home-primitives";
+import { ProofGridCard } from "@/components/home-primitives";
+import { RotatingWords } from "@/components/rotating-words";
 import Seo from "@/components/seo";
 import { homeContent } from "@/lib/home-content";
 import { i18n } from "@/lib/i18n";
@@ -30,10 +17,7 @@ import {
   resolveSiteUrl,
 } from "@/lib/seo";
 
-const whatIsIcons = [GitBranch, FileText, Clock];
-const capabilityIcons = [Clock, BarChart3, Webhook];
-const whyIcons = [CircleDollarSign, Lock, Zap, Smartphone];
-const selfHostIcons = [Server, GitBranch, FileText];
+const featureIcons = [RefreshCw, Server, Unlock];
 const proofIcons = [Play, Github, FileText];
 
 export default function Home() {
@@ -45,22 +29,6 @@ export default function Home() {
   const prefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
   const strings = homeContent[locale];
   const siteUrl = resolveSiteUrl();
-  const labels =
-    locale === "zh"
-      ? {
-          capability: "兼容目标",
-          proof: "公开证据",
-          selfHost: "自托管",
-          whatIs: "产品定位",
-          why: "切换理由",
-        }
-      : {
-          capability: "Compatibility Surface",
-          proof: "Open Source Proof",
-          selfHost: "Self-Hosting",
-          whatIs: "What It Is",
-          why: "Why Switch",
-        };
 
   return (
     <HomeLayout {...baseOptions(locale)}>
@@ -72,126 +40,67 @@ export default function Home() {
       />
 
       <main id="main-content" className="landing-home">
-        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-10">
-            <SurfaceCard className="p-5 md:p-6">
-              <p className="landing-kicker">{strings.hero.eyebrow}</p>
-              <h1 className="mt-3 max-w-2xl text-[20px] font-semibold leading-[30px] text-[var(--track-text)]">
-                {strings.hero.title}
-              </h1>
-              <p className="mt-4 max-w-2xl text-[14px] leading-7 text-[var(--track-text-muted)]">
-                {strings.hero.body}
-              </p>
+        {/* Hero */}
+        <section className="mx-auto w-full max-w-6xl px-4 py-12 md:px-6 md:py-16">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.1em] text-[var(--track-text-muted)]">
+              OpenToggl
+            </p>
+            <h1 className="mt-3 text-[28px] font-semibold leading-[38px] text-[var(--track-text)] md:text-[36px] md:leading-[46px]">
+              {strings.hero.taglineBefore}
+              <RotatingWords words={strings.hero.rotatingWords} />
+              {strings.hero.taglineAfter}
+            </h1>
+            <p className="mt-3 text-[15px] leading-7 text-[var(--track-text-muted)]">
+              {strings.hero.subtitle}
+            </p>
+            <div className="mt-8 flex justify-center gap-3">
+              <AppLinkButton href="https://track.opentoggl.com" target="_blank">
+                {strings.hero.ctas.tryDemo}
+                <ArrowUpRight className="size-4" aria-hidden="true" />
+              </AppLinkButton>
+              <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
+                {strings.hero.ctas.selfHost}
+              </AppLinkButton>
+            </div>
+          </div>
 
-              <div className="mt-6 flex flex-wrap gap-3">
-                <AppLinkButton href="https://track.opentoggl.com" target="_blank">
-                  {strings.hero.ctas.liveDemo}
-                  <ArrowUpRight className="size-4" aria-hidden="true" />
-                </AppLinkButton>
-                <AppLinkButton
-                  href="https://github.com/CorrectRoadH/opentoggl"
-                  target="_blank"
-                  variant="secondary"
-                >
-                  <Github className="size-4" aria-hidden="true" />
-                  {strings.hero.ctas.github}
-                </AppLinkButton>
-                <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
-                  {strings.hero.ctas.selfHosting}
-                </AppLinkButton>
-              </div>
-            </SurfaceCard>
-
+          <div className="mx-auto mt-10 max-w-4xl">
             <HomeHeroScreenshots locale={locale} />
           </div>
         </section>
 
+        {/* Features — 3 columns */}
         <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
-          <div className="grid gap-10 lg:grid-cols-2">
-            <div className="space-y-6">
-              <SectionHeading
-                eyebrow={labels.whatIs}
-                title={strings.whatIs.title}
-                body={strings.whatIs.description}
-              />
-              <ListCard
-                items={strings.whatIs.items.map((item, index) => ({
-                  body: item.body,
-                  icon: whatIsIcons[index % whatIsIcons.length]!,
-                  title: item.title,
-                }))}
-              />
-            </div>
+          <SurfaceCard className="p-0">
+            <div className="grid md:grid-cols-3">
+              {strings.features.items.map((item, index) => {
+                const Icon = featureIcons[index % featureIcons.length]!;
 
-            <div className="space-y-6">
-              <SectionHeading
-                eyebrow={labels.capability}
-                title={strings.capability.title}
-                body={strings.capability.description}
-              />
-              <ListCard
-                items={strings.capability.items.map((item, index) => ({
-                  body: item.body,
-                  icon: capabilityIcons[index % capabilityIcons.length]!,
-                  title: item.title,
-                }))}
-              />
+                return (
+                  <div
+                    key={item.title}
+                    className={`p-5 ${index > 0 ? "border-t border-[var(--track-border)] md:border-l md:border-t-0" : ""}`}
+                  >
+                    <div className="flex size-8 items-center justify-center rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-accent)]">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </div>
+                    <h2 className="mt-4 text-[14px] font-semibold text-[var(--track-text)]">
+                      {item.title}
+                    </h2>
+                    <p className="mt-2 text-[12px] leading-5 text-[var(--track-text-muted)]">
+                      {item.body}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </SurfaceCard>
         </section>
 
+        {/* Proof */}
         <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
-          <div className="grid gap-10 lg:grid-cols-2">
-            <div className="space-y-6">
-              <SectionHeading
-                eyebrow={labels.why}
-                title={strings.why.title}
-                body={strings.why.description}
-              />
-              <ListCard
-                items={strings.why.items.map((item, index) => ({
-                  body: item.body,
-                  icon: whyIcons[index % whyIcons.length]!,
-                  title: item.title,
-                }))}
-              />
-            </div>
-
-            <div className="space-y-6">
-              <SectionHeading
-                eyebrow={labels.selfHost}
-                title={strings.selfHost.title}
-                body={strings.selfHost.description}
-              />
-              <div className="flex flex-wrap gap-3">
-                <AppLinkButton href={`${prefix}/docs/self-hosting`} variant="secondary">
-                  {strings.hero.ctas.selfHosting}
-                </AppLinkButton>
-                <AppLinkButton href="https://track.opentoggl.com" target="_blank">
-                  {strings.hero.ctas.liveDemo}
-                  <ArrowUpRight className="size-4" aria-hidden="true" />
-                </AppLinkButton>
-              </div>
-              <ListCard
-                items={strings.selfHost.items.map((item, index) => ({
-                  body: item.body,
-                  icon: selfHostIcons[index % selfHostIcons.length]!,
-                  title: item.title,
-                }))}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
-          <SectionHeading
-            eyebrow={labels.proof}
-            title={strings.proof.title}
-            body={strings.proof.description}
-          />
-          <div className="mt-6">
-            <ProofGridCard icons={proofIcons} items={strings.proof.items} />
-          </div>
+          <ProofGridCard icons={proofIcons} items={strings.proof.items} />
         </section>
       </main>
     </HomeLayout>
