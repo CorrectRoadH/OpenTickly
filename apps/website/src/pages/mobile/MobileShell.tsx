@@ -45,13 +45,14 @@ export function MobileShell(): ReactElement {
   const runningEntry = currentTimeEntryQuery.data;
 
   // Fetch recent entries for continue suggestions
-  const recentEntriesQuery = useTimeEntriesQuery({
-    startDate: useMemo(() => {
-      const d = new Date();
-      d.setDate(d.getDate() - 7);
-      return d.toISOString();
-    }, []),
-  });
+  const recentEntriesDateRange = useMemo(() => {
+    const end = new Date();
+    end.setDate(end.getDate() + 1);
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+    return { startDate: start.toISOString(), endDate: end.toISOString() };
+  }, []);
+  const recentEntriesQuery = useTimeEntriesQuery(recentEntriesDateRange);
   const recentStoppedEntries = useMemo(() => {
     const entries = recentEntriesQuery.data ?? [];
     // Deduplicate by description+project, keep most recent, exclude running

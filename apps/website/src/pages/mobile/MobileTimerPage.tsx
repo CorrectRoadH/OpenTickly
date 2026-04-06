@@ -113,6 +113,22 @@ export function MobileTimerPage(): ReactElement {
           ))}
         </section>
       ) : null}
+
+      {/* Empty state */}
+      {goals.length === 0 &&
+      favorites.length === 0 &&
+      views.recentWorkspaceEntries.length === 0 &&
+      views.groupedEntries.length === 0 &&
+      views.timeEntriesQuery.isSuccess ? (
+        <div
+          className="flex flex-col items-center gap-2 px-4 py-12 text-center"
+          data-testid="mobile-timer-empty-state"
+        >
+          <p className="text-[14px] font-medium text-[var(--track-text-muted)]">
+            {t("noRecentEntries")}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

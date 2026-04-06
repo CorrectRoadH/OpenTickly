@@ -575,6 +575,129 @@ test.describe("Delete a Time Entry", () => {
 });
 
 /* ================================
+   USER STORY 8: Empty State
+   As a new mobile user with no time entries, I want to see a
+   friendly message so I know the page loaded and what to do next.
+   ================================ */
+test.describe("Empty State for New User", () => {
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-empty-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Empty User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+  });
+
+  test("Timer page shows empty state message when user has no time entries", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // The page should show a friendly empty state, not a blank void
+    await expect(page.getByTestId("mobile-timer-empty-state")).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("No API errors on time_entries endpoint when page loads", async ({ page }) => {
+    const apiErrors: string[] = [];
+    page.on("response", (response) => {
+      if (response.url().includes("/time_entries") && response.status() >= 400) {
+        apiErrors.push(`${response.status()} ${response.url()}`);
+      }
+    });
+
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Wait for page to settle
+    await expect(page.getByPlaceholder("What are you working on?")).toBeVisible();
+    // Give time for API calls to complete
+    await page.waitForTimeout(2000);
+
+    expect(apiErrors).toEqual([]);
+  });
+});
+
+/* ================================
+   USER STORY 9: Continue Suggestion Pills
+   As a mobile user with recent entries, I want to see quick-continue
+   pills below the composer input so I can restart common tasks in one tap.
+   ================================ */
+test.describe("Continue Suggestion Pills", () => {
+  const ENTRY_DESCRIPTION = "Pill suggestion entry";
+
+  test.beforeEach(async ({ page }) => {
+    const email = `mobile-pills-${Date.now()}-${Math.random()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Mobile Pills User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+
+    // Create a stopped time entry within the last 7 days
+    const now = new Date();
+    const start = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 10, 0, 0),
+    );
+    const stop = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 11, 0, 0),
+    );
+
+    await createTimeEntryForWorkspace(page, {
+      description: ENTRY_DESCRIPTION,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      workspaceId: session.currentWorkspaceId,
+    });
+  });
+
+  test("Continue pills appear below the composer when no text is entered", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Composer input should be visible (no running timer)
+    await expect(page.getByPlaceholder("What are you working on?")).toBeVisible();
+
+    // The continue pill chips live in the composer bar at the bottom,
+    // which uses rounded-full pill styling (not the timer page's list rows).
+    const pill = page.locator("button.rounded-full", {
+      hasText: ENTRY_DESCRIPTION,
+    });
+    await expect(pill).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("Tapping a continue pill starts a new timer with that description", async ({ page }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    await expect(page.getByPlaceholder("What are you working on?")).toBeVisible();
+
+    // Wait for the pill chip in the composer bar
+    const pill = page.locator("button.rounded-full", {
+      hasText: ENTRY_DESCRIPTION,
+    });
+    await expect(pill).toBeVisible({ timeout: 10_000 });
+
+    // Tap the pill
+    await pill.click();
+
+    // Timer should now be running with the entry's description
+    await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
+    await expect(page.getByTestId("timer-action-button")).toBeVisible();
+
+    // Verify via API
+    const { body: currentEntry } = await pollCurrentRunningEntry(page, { timeoutMs: 5000 });
+    expect(currentEntry).not.toBeNull();
+    expect(currentEntry?.description).toBe(ENTRY_DESCRIPTION);
+  });
+});
+
+/* ================================
    SMOKE TESTS: Navigation
    Basic navigation sanity checks.
    ================================ */

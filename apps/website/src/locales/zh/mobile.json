@@ -58,5 +58,5 @@
   "loading": "加载中…",
   "editTimeEntry": "编辑 {{description}}",
   "continueTimeEntry": "继续 {{description}}",
-  "noRecentEntries": "暂无最近记录 — 开始计时吧！"
+  "noRecentEntries": "还没有时间记录 — 开始计时吧！"
 }
