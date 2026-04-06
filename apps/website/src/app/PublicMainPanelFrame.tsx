@@ -61,30 +61,3 @@ export function PublicMainPanelFrame({
     </div>
   );
 }
-
-export function PublicMainPanelLoading(): ReactElement {
-  return (
-    <PublicMainPanelFrame
-      badge="Loading"
-      description="Checking the current session and preparing the next panel."
-      title="Bootstrapping your workspace"
-    >
-      <div aria-hidden="true" className="space-y-5 animate-pulse">
-        <div className="space-y-2">
-          <div className="h-3 w-20 rounded bg-[var(--track-border)]" />
-          <div className="h-9 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)]" />
-        </div>
-        <div className="space-y-2">
-          <div className="h-3 w-24 rounded bg-[var(--track-border)]" />
-          <div className="h-9 rounded-[6px] border border-[var(--track-border)] bg-[var(--track-surface)]" />
-        </div>
-        <div className="h-9 w-full rounded-[6px] bg-[var(--track-accent-soft)]" />
-        <div className="space-y-2 pt-2">
-          <div className="h-3 w-full rounded bg-[var(--track-border)]" />
-          <div className="h-3 w-4/5 rounded bg-[var(--track-border)]" />
-        </div>
-      </div>
-      <span className="sr-only">Loading workspace session</span>
-    </PublicMainPanelFrame>
-  );
-}

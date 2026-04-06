@@ -190,29 +190,35 @@ export function MobileShell(): ReactElement {
               />
               <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
             </div>
-            {!draftDescription && recentStoppedEntries.length > 0 ? (
-              <div className="flex gap-2 overflow-x-auto">
-                {recentStoppedEntries.map((entry) => (
-                  <button
-                    aria-label={t("continueEntry", { description: entry.description })}
-                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1 text-left transition active:bg-white/4"
-                    key={entry.id}
-                    onClick={() => handleContinue(entry)}
-                    type="button"
-                  >
-                    <PlayIcon className="size-3 shrink-0 text-[var(--track-text-muted)]" />
-                    {entry.project_color ? (
-                      <span
-                        className="inline-block size-[6px] shrink-0 rounded-full"
-                        style={{ backgroundColor: entry.project_color }}
-                      />
-                    ) : null}
-                    <span className="max-w-[120px] truncate text-[12px] text-white">
-                      {entry.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
+            {!draftDescription ? (
+              recentStoppedEntries.length > 0 ? (
+                <div className="flex gap-2 overflow-x-auto">
+                  {recentStoppedEntries.map((entry) => (
+                    <button
+                      aria-label={t("continueEntry", { description: entry.description })}
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1 text-left transition active:bg-white/4"
+                      key={entry.id}
+                      onClick={() => handleContinue(entry)}
+                      type="button"
+                    >
+                      <PlayIcon className="size-3 shrink-0 text-[var(--track-text-muted)]" />
+                      {entry.project_color ? (
+                        <span
+                          className="inline-block size-[6px] shrink-0 rounded-full"
+                          style={{ backgroundColor: entry.project_color }}
+                        />
+                      ) : null}
+                      <span className="max-w-[120px] truncate text-[12px] text-white">
+                        {entry.description}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              ) : recentEntriesQuery.isSuccess ? (
+                <p className="text-center text-[12px] text-[var(--track-text-muted)]">
+                  {t("noRecentEntries")}
+                </p>
+              ) : null
             ) : null}
           </div>
         )}

@@ -1,10 +1,11 @@
 import { Navigate, Outlet, createRoute, useRouterState } from "@tanstack/react-router";
+import { LoaderCircle } from "lucide-react";
 import { Suspense, lazy, useEffect, type ComponentType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { AuthenticatedAppFrame } from "../app/AuthenticatedAppFrame.tsx";
-import { PublicMainPanelFrame, PublicMainPanelLoading } from "../app/PublicMainPanelFrame.tsx";
+import { PublicMainPanelFrame } from "../app/PublicMainPanelFrame.tsx";
 import { WebApiError } from "../shared/api/web-client.ts";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { SessionProvider } from "../shared/session/session-context.tsx";
@@ -27,6 +28,12 @@ import {
 } from "../shared/url-state/workspace-settings-location.ts";
 type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
 import { rootRoute } from "./root-route.tsx";
+
+const pageSpinner = (
+  <div className="flex min-h-screen items-center justify-center">
+    <LoaderCircle className="size-8 animate-spin text-[var(--track-text-muted)]" />
+  </div>
+);
 
 function lazyNamed<T extends Record<string, ComponentType<any>>, K extends keyof T & string>(
   factory: () => Promise<T>,
@@ -504,7 +511,7 @@ function ProtectedLayoutComponent() {
       requestedWorkspaceId={requestedWorkspaceId}
       sessionBootstrap={sessionQuery.data}
     >
-      <Suspense fallback={<PublicMainPanelLoading />}>
+      <Suspense fallback={pageSpinner}>
         <Outlet />
       </Suspense>
     </AuthenticatedAppFrame>
@@ -537,7 +544,7 @@ function InviteStatusJoinedRouteComponent() {
   const search = inviteStatusJoinedRoute.useSearch();
 
   return (
-    <Suspense fallback={<PublicMainPanelLoading />}>
+    <Suspense fallback={pageSpinner}>
       <InviteStatusJoinedPage
         workspaceId={search.workspaceId}
         workspaceName={search.workspaceName}
@@ -559,7 +566,7 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
 
   if (isSessionAccessDenied(sessionQuery.error)) {
     return (
-      <Suspense fallback={<PublicMainPanelLoading />}>
+      <Suspense fallback={pageSpinner}>
         <AuthPage mode={mode} />
       </Suspense>
     );
@@ -567,7 +574,7 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
 
   if (sessionQuery.isError || !sessionQuery.data) {
     return (
-      <Suspense fallback={<PublicMainPanelLoading />}>
+      <Suspense fallback={pageSpinner}>
         <AuthPage mode={mode} />
       </Suspense>
     );
@@ -902,7 +909,7 @@ function MobileLayoutRouteComponent() {
 
   return (
     <MobileProtectedBoundary>
-      <Suspense fallback={<PublicMainPanelLoading />}>
+      <Suspense fallback={pageSpinner}>
         <MobileShell />
       </Suspense>
     </MobileProtectedBoundary>
