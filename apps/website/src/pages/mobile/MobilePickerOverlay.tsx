@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Search, X } from "lucide-react";
 
@@ -13,6 +14,7 @@ export function MobilePickerOverlay({
   testId: string;
   title: string;
 }): ReactElement {
+  const { t } = useTranslation("mobile");
   const [search, setSearch] = useState("");
   return (
     <div
@@ -36,7 +38,7 @@ export function MobilePickerOverlay({
           <input
             className="min-w-0 flex-1 bg-transparent text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none"
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Search ${title.toLowerCase()}…`}
+            placeholder={t("searchPlaceholder", { name: title.toLowerCase() })}
             value={search}
           />
         </div>

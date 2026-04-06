@@ -1,4 +1,5 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import i18n from "../../app/i18n.ts";
 import {
@@ -30,6 +31,7 @@ export function MobileCalendarDayTimeline({
   timezone,
   viewDate,
 }: MobileCalendarDayTimelineProps): ReactElement {
+  const { t } = useTranslation("mobile");
   // Minute-resolution tick for running entry block position + current-time indicator
   const [nowMs, setNowMs] = useState(() => Math.floor(Date.now() / 60_000) * 60_000);
   useEffect(() => {
@@ -106,12 +108,12 @@ export function MobileCalendarDayTimeline({
 
             const color = resolveEntryColor(entry);
             const seconds = resolveEntryDurationSeconds(entry, nowMs);
-            const description = entry.description?.trim() || "No description";
+            const description = entry.description?.trim() || t("noDescription");
 
             return (
               <button
                 key={key}
-                aria-label={`Edit ${description}`}
+                aria-label={t("editTimeEntry", { description })}
                 className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
                 onClick={() => onEntryTap?.(entry)}
                 type="button"

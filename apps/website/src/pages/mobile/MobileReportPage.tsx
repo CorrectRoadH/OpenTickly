@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
@@ -10,6 +11,7 @@ import { buildReportsPageModel, filterReportRows } from "../shell/reports-page-d
 import { useReportsPageState } from "../shell/useReportsPageState.ts";
 
 export function MobileReportPage(): ReactElement {
+  const { t } = useTranslation("mobile");
   const { beginningOfWeek } = useUserPreferences();
   const session = useSession();
   const timezone = session.user.timezone ?? "UTC";
@@ -54,7 +56,7 @@ export function MobileReportPage(): ReactElement {
     <div className="flex flex-col gap-3 px-4 pb-4 pt-3">
       {/* Date picker */}
       <WeekRangePicker
-        label={model?.rangeLabel ?? "This week"}
+        label={model?.rangeLabel ?? t("thisWeek")}
         mode="week"
         onNext={state.goNext}
         onPrev={state.goPrev}
@@ -109,7 +111,9 @@ export function MobileReportPage(): ReactElement {
       ) : null}
 
       {weeklyReportQuery.isPending ? (
-        <p className="py-8 text-center text-[13px] text-[var(--track-text-muted)]">Loading…</p>
+        <p className="py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+          {t("loading")}
+        </p>
       ) : null}
     </div>
   );

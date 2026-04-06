@@ -44,5 +44,19 @@
   "offlinePending": "You are offline — operations will sync when connected ({{count}} pending)",
   "pwaIos": "This app supports offline use. Tap the share button at the bottom, then select \"Add to Home Screen\" to use it like an app.",
   "pwaAndroid": "This app supports offline use. Tap \"Add to Home Screen\" or \"Install App\" in the browser menu to use it like an app.",
-  "closeBanner": "Close banner"
+  "closeBanner": "Close banner",
+  "sunday": "Sun",
+  "monday": "Mon",
+  "tuesday": "Tue",
+  "wednesday": "Wed",
+  "thursday": "Thu",
+  "friday": "Fri",
+  "saturday": "Sat",
+  "previousWeek": "Previous week",
+  "nextWeek": "Next week",
+  "searchPlaceholder": "Search {{name}}…",
+  "loading": "Loading…",
+  "editTimeEntry": "Edit {{description}}",
+  "continueTimeEntry": "Continue {{description}}",
+  "noRecentEntries": "No recent entries — start tracking!"
 }
