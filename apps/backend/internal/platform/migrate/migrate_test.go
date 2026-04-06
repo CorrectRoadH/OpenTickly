@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,12 +32,10 @@ func TestLatestSQLMatchesMigrations(t *testing.T) {
 	migratedPool := scopedPool(t, baseDSN, migratedSchema)
 	latestPool := scopedPool(t, baseDSN, latestSchema)
 
-	// Apply migrations via goose
 	if err := migrate.Run(ctx, migratedPool); err != nil {
 		t.Fatalf("goose up: %v", err)
 	}
 
-	// Apply latest.sql directly
 	latestSQL, err := os.ReadFile(latestSQLPath(t))
 	if err != nil {
 		t.Fatalf("read latest.sql: %v", err)
@@ -45,36 +44,80 @@ func TestLatestSQLMatchesMigrations(t *testing.T) {
 		t.Fatalf("exec latest.sql: %v", err)
 	}
 
-	// Compare columns
-	compareQuery(t, ctx, migratedPool, latestPool,
-		`SELECT table_name, column_name, data_type, is_nullable, column_default
+	assertSchemaMatches(t, ctx, migratedPool, latestPool)
+}
+
+func TestV0017UpgradeMatchesLatestSQL(t *testing.T) {
+	ctx := context.Background()
+	baseDSN := requiredDatabaseURL(t)
+	adminPool, err := pgxpool.New(ctx, baseDSN)
+	if err != nil {
+		t.Fatalf("open admin pool: %v", err)
+	}
+	defer adminPool.Close()
+
+	upgradedSchema := createEphemeralSchema(t, ctx, adminPool)
+	latestSchema := createEphemeralSchema(t, ctx, adminPool)
+
+	upgradedPool := scopedPool(t, baseDSN, upgradedSchema)
+	latestPool := scopedPool(t, baseDSN, latestSchema)
+
+	v0017SQL := gitShow(t, "v0.0.17:apps/backend/internal/platform/schema/schema.sql")
+	if _, err := upgradedPool.Exec(ctx, v0017SQL); err != nil {
+		t.Fatalf("exec v0.0.17 schema: %v", err)
+	}
+
+	if err := migrate.Run(ctx, upgradedPool); err != nil {
+		t.Fatalf("upgrade v0.0.17 via goose: %v", err)
+	}
+
+	latestSQL, err := os.ReadFile(latestSQLPath(t))
+	if err != nil {
+		t.Fatalf("read latest.sql: %v", err)
+	}
+	if _, err := latestPool.Exec(ctx, string(latestSQL)); err != nil {
+		t.Fatalf("exec latest.sql: %v", err)
+	}
+
+	assertSchemaMatches(t, ctx, upgradedPool, latestPool)
+}
+
+func assertSchemaMatches(t *testing.T, ctx context.Context, migrated, latest *pgxpool.Pool) {
+	t.Helper()
+
+	compareQuery(t, ctx, migrated, latest,
+		`SELECT table_name
+		FROM information_schema.tables
+		WHERE table_schema = current_schema()
+			AND table_type = 'BASE TABLE'
+			AND table_name != 'goose_db_version'
+		ORDER BY table_name`,
+		"tables",
+	)
+
+	compareQuery(t, ctx, migrated, latest,
+		`SELECT table_name, column_name, data_type, is_nullable, coalesce(column_default, '')
 		FROM information_schema.columns
 		WHERE table_schema = current_schema() AND table_name != 'goose_db_version'
-		ORDER BY table_name, ordinal_position`,
+		ORDER BY table_name, column_name`,
 		"columns",
 	)
 
-	// Compare indexes
-	compareQuery(t, ctx, migratedPool, latestPool,
-		fmt.Sprintf(
-			`SELECT tablename, indexname, replace(indexdef, '%s.', '%s.')
-			FROM pg_indexes
-			WHERE schemaname = current_schema() AND tablename != 'goose_db_version'
-			ORDER BY tablename, indexname`,
-			migratedSchema, latestSchema,
-		),
+	compareQuery(t, ctx, migrated, latest,
+		`SELECT tablename, indexname, replace(indexdef, current_schema() || '.', '')
+		FROM pg_indexes
+		WHERE schemaname = current_schema() AND tablename != 'goose_db_version'
+		ORDER BY tablename, indexname`,
 		"indexes",
 	)
 
-	// Compare named constraints (exclude auto-generated NOT NULL names which contain OIDs)
-	compareQuery(t, ctx, migratedPool, latestPool,
-		`SELECT tc.table_name, tc.constraint_type, cc.check_clause
-		FROM information_schema.table_constraints tc
-		LEFT JOIN information_schema.check_constraints cc
-			ON tc.constraint_name = cc.constraint_name AND tc.constraint_schema = cc.constraint_schema
-		WHERE tc.table_schema = current_schema() AND tc.table_name != 'goose_db_version'
-			AND tc.constraint_name NOT LIKE '%_not_null'
-		ORDER BY tc.table_name, tc.constraint_type, cc.check_clause`,
+	compareQuery(t, ctx, migrated, latest,
+		`SELECT c.relname, con.contype, replace(pg_get_constraintdef(con.oid, true), current_schema() || '.', '')
+		FROM pg_constraint con
+		JOIN pg_class c ON c.oid = con.conrelid
+		JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = current_schema() AND c.relname != 'goose_db_version'
+		ORDER BY c.relname, con.contype, pg_get_constraintdef(con.oid, true)`,
 		"constraints",
 	)
 }
@@ -210,6 +253,17 @@ func repositoryRoot(t *testing.T) string {
 		}
 		dir = parent
 	}
+}
+
+func gitShow(t *testing.T, ref string) string {
+	t.Helper()
+	cmd := exec.Command("git", "show", ref)
+	cmd.Dir = repositoryRoot(t)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("git show %s: %v\n%s", ref, err, string(out))
+	}
+	return string(out)
 }
 
 func mergeEnvFile(t *testing.T, target map[string]string, path string) {
