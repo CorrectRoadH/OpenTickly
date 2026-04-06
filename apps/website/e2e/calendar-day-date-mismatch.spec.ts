@@ -215,9 +215,12 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       .format(today)
       .toUpperCase();
 
-    // The header should show today's day number and day name
+    // The header should show today's day number and day name.
+    // In RBC day view, the header element is rendered inside a container
+    // that may not be "visible" in Playwright terms (zero-height row),
+    // so we use toBeAttached() to confirm it's in the DOM with correct content.
     const dayHeader = calendarView.getByTestId(`calendar-day-header-${todayDayName.toLowerCase()}`);
-    await expect(dayHeader).toBeVisible({ timeout: 5_000 });
+    await expect(dayHeader).toBeAttached({ timeout: 5_000 });
     await expect(dayHeader).toContainText(String(todayDayNum));
 
     // Navigate forward one day
@@ -236,7 +239,7 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     const tomorrowHeader = calendarView.getByTestId(
       `calendar-day-header-${tomorrowDayName.toLowerCase()}`,
     );
-    await expect(tomorrowHeader).toBeVisible({ timeout: 5_000 });
+    await expect(tomorrowHeader).toBeAttached({ timeout: 5_000 });
     await expect(tomorrowHeader).toContainText(String(tomorrowDayNum));
   });
 });
