@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useRef } from "react";
+import { type ReactElement, useCallback, useMemo, useRef } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -17,6 +17,7 @@ import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
+import { formatTrackQueryDate } from "./week-range.ts";
 import type { DisplaySettings } from "./DisplaySettingsPopover.tsx";
 
 function resolveTimeEntryProjectId(entry: {
@@ -53,7 +54,7 @@ export function ConnectedCalendarView({
   onDeleteWithUndo: (snapshot: DeletedEntrySnapshot) => void;
 }): ReactElement {
   const { workspaceId, timezone } = useWorkspaceData();
-  const { weekDays, beginningOfWeek } = useWeekNavigation();
+  const { selectedWeekDate, setSelectedWeekDate, weekDays, beginningOfWeek } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
 
   // Only subscribe to the running entry query — not the full useTimerComposer hook
@@ -64,6 +65,18 @@ export function ConnectedCalendarView({
   const calendarSubview = useTimerViewStore((s) => s.calendarSubview);
   const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
   const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
+
+  const selectedSubviewDateIso = useMemo(
+    () => (calendarSubview === "day" ? formatTrackQueryDate(selectedWeekDate) : undefined),
+    [calendarSubview, selectedWeekDate],
+  );
+
+  const onSelectSubviewDate = useCallback(
+    (dateIso: string) => {
+      setSelectedWeekDate(new Date(`${dateIso}T00:00:00`));
+    },
+    [setSelectedWeekDate],
+  );
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
@@ -302,10 +315,12 @@ export function ConnectedCalendarView({
       onMoveEntry={onMoveEntry}
       onResizeEntry={onResizeEntry}
       onSelectSlot={handleCalendarSlotCreate}
+      onSelectSubviewDate={onSelectSubviewDate}
       onStartEntry={onStartEntry}
       onZoomIn={onZoomIn}
       onZoomOut={onZoomOut}
       runningEntry={runningEntry}
+      selectedSubviewDateIso={selectedSubviewDateIso}
       subview={calendarSubview}
       timezone={timezone}
       weekDays={weekDays}
