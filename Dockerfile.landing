@@ -24,6 +24,6 @@ WORKDIR /app
 COPY --from=builder /workspace/apps/landing/dist ./dist
 COPY --from=builder /workspace/apps/landing/serve.json ./dist/serve.json
 
-EXPOSE 3000
+EXPOSE 8080
 
-CMD ["serve", "-c", "serve.json", "-l", "3000", "./dist"]
+CMD ["sh", "-c", "serve -c serve.json -l ${PORT:-8080} ./dist"]
