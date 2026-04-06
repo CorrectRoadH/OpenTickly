@@ -168,6 +168,95 @@ func TestServicePersistsWorkspaceMemberLifecycleWithPostgresStore(t *testing.T) 
 	}
 }
 
+// TestServiceListMembersWithLegacyOwnerRole verifies that workspace members
+// created with role='owner' (v0.0.17 data) can still be listed after upgrade.
+// This is a regression test for the missing migration of 'owner' → 'admin'.
+func TestServiceListMembersWithLegacyOwnerRole(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	baseID := uniqueTestID(t)
+	ownerEmail := fmt.Sprintf("legacy-owner-%d@example.com", baseID)
+
+	billingService, err := billingapplication.NewService(
+		billingpostgres.NewAccountRepository(database.Pool),
+		billingpostgres.NewWorkspaceOwnershipLookup(database.Pool),
+		[]billingdomain.CapabilityRule{
+			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
+		},
+		log.NopLogger(),
+	)
+	if err != nil {
+		t.Fatalf("new billing service: %v", err)
+	}
+
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService, log.NopLogger())
+	if err != nil {
+		t.Fatalf("new tenant service: %v", err)
+	}
+	tenantResult, err := tenantService.CreateOrganization(ctx, tenantapplication.CreateOrganizationCommand{
+		Name:          "Legacy Owner Org",
+		WorkspaceName: "Legacy Owner Workspace",
+	})
+	if err != nil {
+		t.Fatalf("create organization: %v", err)
+	}
+
+	// Register the identity user.
+	record, registerErr := identitydomain.RegisterUser(identitydomain.RegisterParams{
+		ID:       baseID,
+		Email:    ownerEmail,
+		FullName: "Legacy Owner",
+		Password: "secret1",
+		APIToken: ownerEmail + "-token",
+	})
+	if registerErr != nil {
+		t.Fatalf("register identity user: %v", registerErr)
+	}
+	if saveErr := identitypostgres.NewUserRepository(database.Pool).Save(ctx, record); saveErr != nil {
+		t.Fatalf("save identity user: %v", saveErr)
+	}
+
+	// Simulate v0.0.17 upgraded DB: temporarily widen the constraint to allow
+	// 'owner', insert a legacy row, then restore the current constraint.
+	// This mirrors what a real v0.0.17 database looks like before migration.
+	_, err = database.Pool.Exec(ctx, `
+		alter table membership_workspace_members
+			drop constraint membership_workspace_members_role_check,
+			add constraint membership_workspace_members_role_check
+				check (role in ('owner', 'admin', 'member', 'projectlead', 'teamlead'))
+	`)
+	if err != nil {
+		t.Fatalf("widen role constraint: %v", err)
+	}
+	_, err = database.Pool.Exec(ctx, `
+		insert into membership_workspace_members
+			(workspace_id, user_id, email, full_name, role, state, created_by)
+		values ($1, $2, $3, $4, 'owner', 'joined', $2)
+	`, tenantResult.WorkspaceID, baseID, ownerEmail, "Legacy Owner")
+	if err != nil {
+		t.Fatalf("insert legacy owner member: %v", err)
+	}
+
+	service, err := membershipapplication.NewService(membershippostgres.NewStore(database.Pool), membershipapplication.WithLogger(log.NopLogger()))
+	if err != nil {
+		t.Fatalf("new membership service: %v", err)
+	}
+
+	// This should succeed: the owner should be treated as admin.
+	members, err := service.ListWorkspaceMembers(ctx, int64(tenantResult.WorkspaceID), baseID)
+	if err != nil {
+		t.Fatalf("list members with legacy owner role: %v", err)
+	}
+	if len(members) != 1 {
+		t.Fatalf("expected 1 member, got %d", len(members))
+	}
+	// After migration, role should be normalized to 'admin'.
+	if members[0].Role != membershipdomain.WorkspaceRoleAdmin {
+		t.Fatalf("expected role admin, got %q", members[0].Role)
+	}
+}
+
 func TestServiceEnsureWorkspaceOwnerRequiresExistingIdentityUserWithPostgresStore(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()

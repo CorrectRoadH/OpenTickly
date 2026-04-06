@@ -360,7 +360,16 @@ func scanWorkspaceMember(row rowScanner) (membershipapplication.WorkspaceMemberV
 		return membershipapplication.WorkspaceMemberView{}, err
 	}
 
-	member.Role = membershipdomain.WorkspaceRole(role)
+	member.Role = normalizeWorkspaceRole(role)
 	member.State = membershipdomain.WorkspaceMemberState(state)
 	return member, nil
+}
+
+// normalizeWorkspaceRole maps legacy DB values to current domain roles.
+// v0.0.17 stored "owner"; current schema uses "admin".
+func normalizeWorkspaceRole(raw string) membershipdomain.WorkspaceRole {
+	if raw == "owner" {
+		return membershipdomain.WorkspaceRoleAdmin
+	}
+	return membershipdomain.WorkspaceRole(raw)
 }
