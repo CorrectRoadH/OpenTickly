@@ -76,7 +76,9 @@ test.describe("Mobile calendar: cross-day entries", () => {
     await expect(page.getByText("22:00")).toBeVisible({ timeout: 10_000 });
 
     // Today's column should show the entry (22:00 → midnight segment).
-    const entryLocator = page.getByRole("button", { name: description });
+    // Scope to the calendar timeline to avoid matching the "Continue" pill in the composer bar.
+    const timeline = page.locator(".overflow-y-auto").first();
+    const entryLocator = timeline.getByRole("button", { name: description });
     await expect(entryLocator).toBeVisible({ timeout: 10_000 });
 
     // When both days are in the same calendar week, navigate to tomorrow and
@@ -97,7 +99,7 @@ test.describe("Mobile calendar: cross-day entries", () => {
         .click();
 
       // Entry should also be visible on tomorrow
-      const nextDayEntry = page.getByRole("button", { name: description });
+      const nextDayEntry = timeline.getByRole("button", { name: description });
       await expect(nextDayEntry).toBeVisible({ timeout: 10_000 });
 
       // On the next day, the entry should start at 00:00 (CSS top ≈ 0px),

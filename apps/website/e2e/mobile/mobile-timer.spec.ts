@@ -113,14 +113,15 @@ test.describe("View Running Timer on Calendar", () => {
     const description = "Running while viewing calendar";
     await composerInput.fill(description);
     await composerInput.press("Enter");
-    await expect(page.getByText(description)).toBeVisible();
+    await expect(page.getByText(description).first()).toBeVisible();
 
     // Navigate to Calendar tab
     await page.getByRole("navigation").getByText("Calendar").click();
     await expect(page).toHaveURL(/\/m\/calendar/);
 
-    // The running entry is visible on the calendar
-    await expect(page.getByText(description)).toBeVisible();
+    // The running entry is visible on the calendar timeline
+    const timeline = page.locator(".overflow-y-auto").first();
+    await expect(timeline.getByText(description)).toBeVisible();
   });
 });
 
