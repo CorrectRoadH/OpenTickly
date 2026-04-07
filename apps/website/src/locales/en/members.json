@@ -34,5 +34,8 @@
   "cancel": "Cancel",
   "sendInvite": "Send invite",
   "inviteMemberDialogTitle": "Invite member",
-  "workspaces": "Workspaces"
+  "workspaces": "Workspaces",
+  "roleUpdated": "Role updated",
+  "couldNotUpdateRole": "Could not update role",
+  "owner": "Owner"
 }

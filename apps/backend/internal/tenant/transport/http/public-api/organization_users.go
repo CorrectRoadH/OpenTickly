@@ -3,7 +3,12 @@ package publicapi
 import (
 	"net/http"
 
+	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
+	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
+
 	"github.com/labstack/echo/v4"
+	"github.com/samber/lo"
 )
 
 // bulkPatchPayload defines the shape for bulk patch operations from the public-track contract.
@@ -70,35 +75,58 @@ func (handler *Handler) DeleteOrganizationUsersLeave(ctx echo.Context) error {
 }
 
 // PutOrganizationUsers updates an organization user.
+// organization_user_id is the user's global ID (identity_users.id).
 func (handler *Handler) PutOrganizationUsers(ctx echo.Context) error {
 	organization, requester, err := handler.organizationAggregate(ctx)
 	if err != nil {
 		return err
 	}
-	organizationUserID, ok := parsePathID(ctx, "organization_user_id")
+	targetUserID, ok := parsePathID(ctx, "organization_user_id")
 	if !ok {
 		return ctx.JSON(http.StatusBadRequest, "Bad Request")
 	}
 
-	// Find the member in any workspace.
-	found := false
+	var payload publictrackapi.GithubComTogglTogglApiInternalServicesOrganizationUserPayload
+	if err := ctx.Bind(&payload); err != nil {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+
+	// Resolve desired workspace role from payload.
+	var desiredRole *membershipdomain.WorkspaceRole
+	if payload.OrganizationAdmin != nil {
+		if lo.FromPtr(payload.OrganizationAdmin) {
+			desiredRole = lo.ToPtr(membershipdomain.WorkspaceRoleAdmin)
+		} else {
+			desiredRole = lo.ToPtr(membershipdomain.WorkspaceRoleMember)
+		}
+	}
+
+	// Update the user's role across all workspaces in the organization.
+	updated := false
 	for _, workspaceID := range organization.WorkspaceIDs {
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
 			continue
 		}
 		for _, m := range members {
-			if m.ID == organizationUserID || (m.UserID != nil && m.UserID == &requester.ID) {
-				found = true
-				break
+			if m.UserID == nil || *m.UserID != targetUserID {
+				continue
+			}
+			updated = true
+			if desiredRole != nil {
+				if _, updateErr := handler.membership.UpdateWorkspaceMember(ctx.Request().Context(), membershipapplication.UpdateWorkspaceMemberCommand{
+					WorkspaceID: int64(workspaceID),
+					MemberID:    m.ID,
+					RequestedBy: requester.ID,
+					Role:        desiredRole,
+				}); updateErr != nil {
+					return echo.NewHTTPError(http.StatusBadRequest, updateErr.Error())
+				}
 			}
 		}
-		if found {
-			break
-		}
 	}
-	if !found {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	if !updated {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found in organization")
 	}
 
 	return ctx.JSON(http.StatusOK, "OK")

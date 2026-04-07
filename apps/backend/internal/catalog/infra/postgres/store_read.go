@@ -173,7 +173,11 @@ func (store *Store) GetGroupByID(
 
 func (store *Store) ListGroupMembers(ctx context.Context, groupID int64) ([]catalogapplication.GroupMemberView, error) {
 	rows, err := store.pool.Query(ctx,
-		"select group_id, user_id from catalog_group_members where group_id = $1 order by user_id",
+		`select gm.group_id, gm.user_id, coalesce(u.full_name, '')
+		 from catalog_group_members gm
+		 left join identity_users u on u.id = gm.user_id
+		 where gm.group_id = $1
+		 order by gm.user_id`,
 		groupID,
 	)
 	if err != nil {
@@ -184,7 +188,7 @@ func (store *Store) ListGroupMembers(ctx context.Context, groupID int64) ([]cata
 	var members []catalogapplication.GroupMemberView
 	for rows.Next() {
 		var m catalogapplication.GroupMemberView
-		if err := rows.Scan(&m.GroupID, &m.UserID); err != nil {
+		if err := rows.Scan(&m.GroupID, &m.UserID, &m.UserName); err != nil {
 			return nil, writeCatalogError("scan group member", err)
 		}
 		members = append(members, m)

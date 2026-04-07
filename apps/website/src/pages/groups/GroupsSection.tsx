@@ -387,6 +387,28 @@ function ManageMembersDialog({
 
   const currentUserIds = new Set(group.users?.map((u) => u.user_id) ?? []);
 
+  const orgMembersMap = useMemo(() => {
+    const map = new Map<number, { name: string; email: string }>();
+    const allMembers = Array.isArray(orgMembersQuery.data) ? orgMembersQuery.data : [];
+    for (const m of allMembers) {
+      if (m.user_id != null) {
+        map.set(m.user_id, { name: m.name ?? "", email: m.email ?? "" });
+      }
+    }
+    return map;
+  }, [orgMembersQuery.data]);
+
+  const currentMembers = useMemo(() => {
+    return (group.users ?? []).map((u) => {
+      const details = orgMembersMap.get(u.user_id!);
+      return {
+        user_id: u.user_id!,
+        name: details?.name || u.name || "",
+        email: details?.email || "",
+      };
+    });
+  }, [group.users, orgMembersMap]);
+
   const availableMembers = useMemo(() => {
     const allMembers = Array.isArray(orgMembersQuery.data) ? orgMembersQuery.data : [];
     return allMembers.filter((m) => {
@@ -409,23 +431,32 @@ function ManageMembersDialog({
           {/* Current members */}
           <div>
             <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              {group.users?.length
-                ? t("members", { count: group.users.length })
+              {currentMembers.length > 0
+                ? t("members", { count: currentMembers.length })
                 : t("noMembersInTeam")}
             </h3>
-            {group.users && group.users.length > 0 ? (
+            {currentMembers.length > 0 ? (
               <ul className="divide-y divide-white/8">
-                {group.users.map((user) => (
+                {currentMembers.map((user) => (
                   <li key={user.user_id} className="flex items-center justify-between py-2">
-                    <div className="flex items-center gap-2">
-                      <span className="flex size-6 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold uppercase text-[var(--track-text-muted)]">
-                        {(user.name ?? "?").charAt(0)}
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-surface-muted)] text-[10px] font-semibold uppercase text-[var(--track-text-muted)]">
+                        {(user.name || "?").charAt(0)}
                       </span>
-                      <span className="text-[13px] text-white">{user.name ?? "—"}</span>
+                      <div className="min-w-0">
+                        <span className="block truncate text-[13px] text-white">
+                          {user.name || "—"}
+                        </span>
+                        {user.email ? (
+                          <span className="block truncate text-[11px] text-[var(--track-text-muted)]">
+                            {user.email}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <button
-                      className="rounded-md px-2 py-1 text-[11px] text-rose-400 hover:bg-rose-900/30"
-                      onClick={() => onRemoveMember(user.user_id!)}
+                      className="shrink-0 rounded-md px-2 py-1 text-[11px] text-rose-400 hover:bg-rose-900/30"
+                      onClick={() => onRemoveMember(user.user_id)}
                       type="button"
                     >
                       {t("removeMember")}
@@ -433,9 +464,7 @@ function ManageMembersDialog({
                   </li>
                 ))}
               </ul>
-            ) : (
-              <p className="text-[12px] text-[var(--track-text-muted)]">{t("noMembersInTeam")}</p>
-            )}
+            ) : null}
           </div>
 
           {/* Add members */}

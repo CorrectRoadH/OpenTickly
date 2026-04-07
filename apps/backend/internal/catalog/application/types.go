@@ -52,8 +52,9 @@ type GroupView struct {
 }
 
 type GroupMemberView struct {
-	GroupID int64
-	UserID  int64
+	GroupID  int64
+	UserID   int64
+	UserName string
 }
 
 type GroupWorkspaceView struct {

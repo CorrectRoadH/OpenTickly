@@ -140,6 +140,7 @@ func (handler *Handler) buildGroupResponse(
 	for _, m := range members {
 		users = append(users, publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{
 			UserId: lo.ToPtr(int(m.UserID)),
+			Name:   lo.ToPtr(m.UserName),
 		})
 	}
 

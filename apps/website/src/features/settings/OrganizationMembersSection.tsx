@@ -1,5 +1,6 @@
 import { type ReactElement, type ReactNode, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   AppInput,
   DirectorySurfaceMessage,
@@ -9,7 +10,10 @@ import {
 } from "@opentoggl/web-ui";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
-import { useOrganizationMembersQuery } from "../../shared/query/web-shell.ts";
+import {
+  useOrganizationMembersQuery,
+  useUpdateOrganizationUserMutation,
+} from "../../shared/query/web-shell.ts";
 import type { ModelsOrgUser } from "../../shared/api/generated/public-track/types.gen.ts";
 
 type MemberStatusFilter = "all" | "active" | "inactive" | "invited";
@@ -51,11 +55,17 @@ type OrganizationMembersSectionProps = {
   organizationId: number;
 };
 
+const roleOptions = (t: (key: string) => string) => [
+  { value: "admin", label: t("admin") },
+  { value: "member", label: t("member") },
+];
+
 export function OrganizationMembersSection({
   organizationId,
 }: OrganizationMembersSectionProps): ReactElement {
   const { t } = useTranslation("members");
   const membersQuery = useOrganizationMembersQuery(organizationId);
+  const updateUserMutation = useUpdateOrganizationUserMutation(organizationId);
   const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
   const [search, setSearch] = useState("");
 
@@ -87,9 +97,23 @@ export function OrganizationMembersSection({
   const inactiveCount = members.filter((m) => resolveOrgMemberStatus(m) === "inactive").length;
   const invitedCount = members.filter((m) => resolveOrgMemberStatus(m) === "invited").length;
 
+  function handleRoleChange(member: ModelsOrgUser, newRole: string) {
+    const userId = member.user_id ?? member.id;
+    if (userId == null) return;
+
+    void updateUserMutation
+      .mutateAsync({
+        organizationUserId: userId,
+        payload: { organization_admin: newRole === "admin" },
+      })
+      .then(() => toast.success(t("roleUpdated")))
+      .catch(() => toast.error(t("couldNotUpdateRole")));
+  }
+
   function renderMemberRow(member: ModelsOrgUser): ReactNode {
     const status = resolveOrgMemberStatus(member);
     const role = resolveOrgMemberRole(member);
+    const isOwner = member.owner === true;
 
     return (
       <>
@@ -104,8 +128,19 @@ export function OrganizationMembersSection({
             {member.email ?? "—"}
           </span>
         </div>
-        <div className="flex h-[54px] items-center text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-          {role}
+        <div className="flex h-[54px] items-center">
+          {isOwner ? (
+            <span className="text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
+              owner
+            </span>
+          ) : (
+            <SelectDropdown
+              aria-label={`Role for ${member.name}`}
+              onChange={(value) => handleRoleChange(member, value)}
+              options={roleOptions(t)}
+              value={role}
+            />
+          )}
         </div>
         <div className="flex h-[54px] items-center text-[11px] text-[var(--track-text-muted)]">
           {member.workspace_count ?? 0}

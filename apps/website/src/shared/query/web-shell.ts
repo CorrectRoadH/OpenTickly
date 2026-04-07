@@ -21,6 +21,7 @@ import type {
   ModelsProjectStatistics,
   WorkspacePayload,
   GroupPayload,
+  GithubComTogglTogglApiInternalServicesOrganizationUserPayload,
 } from "../api/generated/public-track/types.gen.ts";
 import type { SavedWeeklyReportData } from "../api/generated/public-reports/types.gen.ts";
 import { postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries } from "../api/public/reports/index.ts";
@@ -81,6 +82,7 @@ import {
   postOrganizationGroup,
   putOrganizationGroup,
   deleteOrganizationGroup,
+  putOrganizationUsers,
 } from "../api/public/track/index.ts";
 import {
   deleteOrganization,
@@ -388,6 +390,31 @@ export function useOrganizationMembersQuery(organizationId: number) {
         }),
       ),
     queryKey: ["organization-members", organizationId],
+  });
+}
+
+export function useUpdateOrganizationUserMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: {
+      organizationUserId: number;
+      payload: GithubComTogglTogglApiInternalServicesOrganizationUserPayload;
+    }) =>
+      unwrapWebApiResult(
+        putOrganizationUsers({
+          body: request.payload,
+          path: {
+            organization_id: organizationId,
+            organization_user_id: request.organizationUserId,
+          },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["organization-members", organizationId],
+      });
+    },
   });
 }
 
