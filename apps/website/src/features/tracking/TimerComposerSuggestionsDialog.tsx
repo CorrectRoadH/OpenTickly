@@ -1,10 +1,12 @@
 import { type ReactElement, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { MenuSeparator } from "@opentoggl/web-ui";
 import type {
   GithubComTogglTogglApiInternalModelsProject,
   GithubComTogglTogglApiInternalModelsTimeEntry,
   ModelsFavorite,
+  ModelsTask,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { TimeEntrySearchItem } from "../../shared/api/generated/web/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
@@ -27,11 +29,13 @@ type TimerComposerSuggestionsDialogProps = {
   onClose: () => void;
   onFavoriteSelect?: (favorite: ModelsFavorite) => void;
   onProjectSelect: (projectId: number) => void;
+  onTaskSelect?: (projectId: number, taskId: number) => void;
   onTimeEntrySelect: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onWorkspaceSelect: (workspaceId: number) => void;
   projects: GithubComTogglTogglApiInternalModelsProject[];
   query?: string;
   searchResults?: TimeEntrySearchItem[];
+  tasks?: ModelsTask[];
   timeEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   workspaces: Array<{
     id: number;
@@ -47,19 +51,23 @@ export function TimerComposerSuggestionsDialog({
   onClose,
   onFavoriteSelect,
   onProjectSelect,
+  onTaskSelect,
   onTimeEntrySelect,
   onWorkspaceSelect,
   projects,
   query,
   searchResults,
+  tasks = [],
   timeEntries,
   workspaces,
 }: TimerComposerSuggestionsDialogProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const dialogRef = useRef<HTMLDivElement>(null);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const position = useMemo(() => resolveDialogPosition(anchor), [anchor]);
   const currentWorkspaceName =
-    workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ?? "Workspace";
+    workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ??
+    t("workspaceFallback");
   const filteredFavorites = useMemo(
     () => filterFavoritesByQuery(favorites, query),
     [favorites, query],
@@ -75,6 +83,10 @@ export function TimerComposerSuggestionsDialog({
     () => filterProjectsByQuery(buildProjectSuggestions(projects), query),
     [projects, query],
   );
+  const suggestedTasks = useMemo(
+    () => filterTasksByQuery(buildTaskSuggestions(tasks, projects), query),
+    [tasks, projects, query],
+  );
 
   useDismiss(dialogRef, true, onClose);
 
@@ -84,7 +96,7 @@ export function TimerComposerSuggestionsDialog({
       data-testid="timer-composer-suggestions-layer"
     >
       <div
-        aria-label="Timer suggestions"
+        aria-label={t("timerSuggestions")}
         className="pointer-events-auto absolute w-[520px] max-w-[calc(100vw-32px)] rounded-[14px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_18px_48px_var(--track-shadow-overlay)]"
         data-testid="timer-composer-suggestions-dialog"
         ref={dialogRef}
@@ -104,7 +116,7 @@ export function TimerComposerSuggestionsDialog({
               onClick={() => setWorkspaceMenuOpen((current) => !current)}
               type="button"
             >
-              <span>Change</span>
+              <span>{t("change")}</span>
               <ChevronDownIcon />
             </button>
             {workspaceMenuOpen ? (
@@ -126,7 +138,7 @@ export function TimerComposerSuggestionsDialog({
                     <span className="truncate">{workspace.name}</span>
                     {workspace.id === currentWorkspaceId ? (
                       <span className="text-[11px] font-semibold text-[var(--track-accent-text)]">
-                        Current
+                        {t("current")}
                       </span>
                     ) : null}
                   </button>
@@ -139,10 +151,10 @@ export function TimerComposerSuggestionsDialog({
         {filteredFavorites.length > 0 ? (
           <>
             <MenuSeparator />
-            <SuggestionSectionTitle title="Favorites" />
+            <SuggestionSectionTitle title={t("favorites")} />
             <div className="px-1 pb-1">
               {filteredFavorites.map((fav) => {
-                const label = fav.description?.trim() || fav.project_name || "Untitled";
+                const label = fav.description?.trim() || fav.project_name || t("untitledFallback");
                 const projectLabel = fav.project_name?.trim();
                 const projectColor = fav.project_color?.trim();
                 return (
@@ -164,12 +176,15 @@ export function TimerComposerSuggestionsDialog({
         {previousEntries.length > 0 ? (
           <>
             <MenuSeparator />
-            <SuggestionSectionTitle title="Previously tracked time entries" />
+            <SuggestionSectionTitle title={t("previouslyTrackedTimeEntries")} />
             <div className="px-1 pb-1">
               {previousEntries.map((entry) => {
                 const hasDescription = Boolean(entry.description?.trim());
                 const projectLabel = entry.project_name?.trim();
                 const projectColor = entry.project_color?.trim();
+                const taskName = entry.task_id ? resolveTaskName(entry.task_id, tasks) : undefined;
+                const subtitleLabel =
+                  projectLabel && taskName ? `${projectLabel} | ${taskName}` : projectLabel;
                 return (
                   <SuggestionRow
                     key={buildEntryKey(entry)}
@@ -187,13 +202,13 @@ export function TimerComposerSuggestionsDialog({
                         />
                       )
                     }
-                    subtitle={projectLabel}
+                    subtitle={subtitleLabel}
                     subtitleColor={projectColor ?? "var(--track-text-muted)"}
                     tags={entry.tags?.filter(Boolean)}
                     title={
                       hasDescription
                         ? (entry.description?.trim() ?? "")
-                        : projectLabel || "Untitled"
+                        : projectLabel || t("untitledFallback")
                     }
                   />
                 );
@@ -202,11 +217,31 @@ export function TimerComposerSuggestionsDialog({
           </>
         ) : null}
 
-        {suggestedProjects.length > 0 ? (
+        {suggestedProjects.length > 0 || suggestedTasks.length > 0 ? (
           <>
             <MenuSeparator />
-            <SuggestionSectionTitle title="Projects" />
+            <SuggestionSectionTitle title={t("project") + "s"} />
             <div className="px-1 pb-1">
+              {suggestedTasks.map((task) => {
+                const color = resolveProjectColorValue(
+                  projects.find((p) => p.id === task.project_id) ?? {},
+                );
+                const label = `${task.project_name?.trim() ?? ""} | ${task.name?.trim() ?? ""}`;
+                return (
+                  <SuggestionRow
+                    key={`task-${task.id}`}
+                    onClick={() => {
+                      if (task.project_id != null && task.id != null) {
+                        onTaskSelect?.(task.project_id, task.id);
+                      }
+                    }}
+                    prefix={<ProjectsIcon className="size-3.5" style={{ color }} />}
+                    subtitle={t("project")}
+                    title={label}
+                    titleColor={color}
+                  />
+                );
+              })}
               {suggestedProjects.map((project) => {
                 const color = resolveProjectColorValue(project);
                 return (
@@ -228,7 +263,7 @@ export function TimerComposerSuggestionsDialog({
                       )
                     }
                     subtitle="Project"
-                    title={project.name?.trim() || "Untitled project"}
+                    title={project.name?.trim() || t("untitledProjectFallback")}
                     titleColor={color}
                   />
                 );
@@ -422,6 +457,38 @@ function searchItemToTimeEntry(
     stop: item.stop,
     duration: item.duration,
   };
+}
+
+function resolveTaskName(taskId: number, tasks: ModelsTask[]): string | undefined {
+  return tasks.find((t) => t.id === taskId)?.name?.trim();
+}
+
+function buildTaskSuggestions(
+  tasks: ModelsTask[],
+  projects: GithubComTogglTogglApiInternalModelsProject[],
+): ModelsTask[] {
+  const activeProjectIds = new Set(
+    projects.filter((p) => p.active !== false && p.id != null).map((p) => p.id!),
+  );
+  return tasks
+    .filter(
+      (t) =>
+        t.active !== false &&
+        t.id != null &&
+        t.project_id != null &&
+        activeProjectIds.has(t.project_id),
+    )
+    .slice(0, 10);
+}
+
+function filterTasksByQuery(tasks: ModelsTask[], query?: string): ModelsTask[] {
+  const trimmed = query?.trim().toLowerCase();
+  if (!trimmed) return tasks;
+  return tasks.filter((task) => {
+    const name = (task.name ?? "").toLowerCase();
+    const projectName = (task.project_name ?? "").toLowerCase();
+    return name.includes(trimmed) || projectName.includes(trimmed);
+  });
 }
 
 function filterProjectsByQuery(

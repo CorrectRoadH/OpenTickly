@@ -81,12 +81,6 @@ export function PageLayout({
         </div>
       </header>
 
-      {toolbar ? (
-        <div className="flex min-h-[48px] flex-wrap items-center gap-2 border-b border-[var(--track-border)] px-5 py-2">
-          {toolbar}
-        </div>
-      ) : null}
-
       {tabs ? (
         <div
           className="flex h-[40px] items-end gap-0 border-b border-[var(--track-border)] px-5"
@@ -105,6 +99,12 @@ export function PageLayout({
                 </button>
               ))
             : tabs}
+        </div>
+      ) : null}
+
+      {toolbar ? (
+        <div className="flex min-h-[48px] flex-wrap items-center gap-2 border-b border-[var(--track-border)] px-5 py-2">
+          {toolbar}
         </div>
       ) : null}
 

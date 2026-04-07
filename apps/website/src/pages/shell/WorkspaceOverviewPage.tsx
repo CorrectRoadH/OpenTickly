@@ -32,7 +32,7 @@ import { InviteMemberDialog } from "../members/InviteMemberDialog.tsx";
 import { OverviewWeekChart } from "./OverviewWeekChart.tsx";
 
 export function WorkspaceOverviewPage(): ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation("reports");
   const { beginningOfWeek, durationFormat } = useUserPreferences();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
@@ -114,10 +114,10 @@ export function WorkspaceOverviewPage(): ReactElement {
         data-testid="workspace-overview-page"
         headerActions={
           <AppButton onClick={handleRefreshCharts} type="button" variant="secondary">
-            Refresh data
+            {t("refreshData")}
           </AppButton>
         }
-        title="Admin Overview"
+        title={t("adminOverview")}
       >
         <div className="px-5 py-5" data-testid="workspace-overview-content">
           <div
@@ -128,9 +128,9 @@ export function WorkspaceOverviewPage(): ReactElement {
               <OverviewSurface className="lg:min-h-[240px]">
                 <div className="flex h-full flex-col gap-4">
                   <OverviewCardHeader
-                    actionLabel="Open reports"
+                    actionLabel={t("openReports")}
                     onAction={handleViewReports}
-                    title="This week summary"
+                    title={t("thisWeekSummary")}
                   />
                   <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                     <OverviewWeekChart
@@ -140,8 +140,8 @@ export function WorkspaceOverviewPage(): ReactElement {
                     />
                   </div>
                   <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 pt-0.5 text-[11px] text-[var(--track-text-muted)]">
-                    <LegendSwatch color="var(--track-accent)" label="Billable" />
-                    <LegendSwatch color="var(--track-accent-strong)" label="Non-billable" />
+                    <LegendSwatch color="var(--track-accent)" label={t("billable")} />
+                    <LegendSwatch color="var(--track-accent-strong)" label={t("nonBillable")} />
                   </div>
                 </div>
               </OverviewSurface>
@@ -149,9 +149,9 @@ export function WorkspaceOverviewPage(): ReactElement {
               <OverviewSurface className="lg:min-h-[196px]">
                 <div className="flex h-full flex-col gap-4">
                   <OverviewCardHeader
-                    actionLabel="Team reports"
+                    actionLabel={t("openReports")}
                     onAction={handleViewReports}
-                    title="Team activity"
+                    title={t("teamActivity")}
                   />
                   <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                     <div className="grid gap-4 lg:grid-cols-[108px_minmax(0,1fr)_104px]">
@@ -165,7 +165,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                       />
                       <div className="space-y-2">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                          Tracking
+                          {t("tracking")}
                         </p>
                         {teamActivity.activeMembers.length > 0 ? (
                           <div className="space-y-2">
@@ -192,24 +192,26 @@ export function WorkspaceOverviewPage(): ReactElement {
                             ))}
                           </div>
                         ) : (
-                          <OverviewEmptyState message="No active members yet." />
+                          <OverviewEmptyState message={t("noActiveMembersYet")} />
                         )}
                       </div>
                       <div className="space-y-2">
                         <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                          Not tracking
+                          {t("notTracking")}
                         </p>
                         <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                          {Math.max(memberCount - teamActivity.activeCount, 0)} members idle
+                          {t("membersIdle", {
+                            count: Math.max(memberCount - teamActivity.activeCount, 0),
+                          })}
                         </p>
                       </div>
                     </div>
                     <div className="space-y-2 pt-4">
                       <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-                        Bring your team in to unlock better weekly coverage.
+                        {t("bringYourTeamIn")}
                       </p>
                       <AppButton onClick={() => setInviteDialogOpen(true)} size="sm" type="button">
-                        Invite teammates
+                        {t("inviteTeammates")}
                       </AppButton>
                     </div>
                   </div>
@@ -222,17 +224,17 @@ export function WorkspaceOverviewPage(): ReactElement {
                 <div className="flex h-full flex-col gap-4">
                   <div className="space-y-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                      Team size
+                      {t("teamSize")}
                     </p>
                     <p className="text-[14px] font-semibold text-white">
-                      {memberCount} members in your organization
+                      {t("membersInOrganization", { count: memberCount })}
                     </p>
                     <p className="max-w-[260px] text-[12px] leading-4 text-[var(--track-text-muted)]">
-                      Insights improve when the whole team tracks in one workspace.
+                      {t("insightsImprove")}
                     </p>
                   </div>
                   <AppButton onClick={() => setInviteDialogOpen(true)} type="button">
-                    Add teammates
+                    {t("addTeammates")}
                   </AppButton>
                 </div>
               </OverviewSurface>
@@ -240,9 +242,9 @@ export function WorkspaceOverviewPage(): ReactElement {
               <OverviewSurface className="lg:min-h-[156px]">
                 <div className="flex h-full flex-col gap-4">
                   <OverviewCardHeader
-                    actionLabel="Open reports"
+                    actionLabel={t("openReports")}
                     onAction={handleViewReports}
-                    title="Top projects this week"
+                    title={t("topProjectsThisWeek")}
                   />
                   {topProjects.length > 0 ? (
                     <div className="space-y-2 border-t border-[var(--track-border)] pt-4">
@@ -261,7 +263,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                     </div>
                   ) : (
                     <div className="border-t border-[var(--track-border)] pt-4">
-                      <OverviewEmptyState message="No tracked projects in this workspace yet." />
+                      <OverviewEmptyState message={t("noTrackedProjectsYet")} />
                     </div>
                   )}
                 </div>
@@ -270,9 +272,9 @@ export function WorkspaceOverviewPage(): ReactElement {
               <OverviewSurface className="lg:min-h-[170px]">
                 <div className="flex h-full flex-col gap-4">
                   <OverviewCardHeader
-                    actionLabel="Open reports"
+                    actionLabel={t("openReports")}
                     onAction={handleViewReports}
-                    title="Time tracked to projects"
+                    title={t("timeTrackedToProjects")}
                   />
                   <div className="flex-1 border-t border-[var(--track-border)] pt-4">
                     <StatRing
@@ -285,7 +287,7 @@ export function WorkspaceOverviewPage(): ReactElement {
                     />
                   </div>
                   <AppButton size="sm" type="button" variant="secondary">
-                    Add member to project
+                    {t("addMemberToProject")}
                   </AppButton>
                 </div>
               </OverviewSurface>

@@ -19,5 +19,16 @@
   "auditLog": "审计日志",
   "subscription": "订阅",
   "settings": "设置",
-  "instanceAdmin": "实例管理"
+  "instanceAdmin": "实例管理",
+  "organization": "组织",
+  "newOrganization": "新建组织",
+  "createOrganization": "创建组织",
+  "inviteMembers": "邀请成员",
+  "organizations": "组织",
+  "default": "默认",
+  "setDefault": "设为默认",
+  "currentOrganization": "当前组织",
+  "member": "成员",
+  "members": "成员",
+  "organizationName": "组织名称"
 }

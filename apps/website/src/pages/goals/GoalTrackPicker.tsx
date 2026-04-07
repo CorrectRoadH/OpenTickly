@@ -1,6 +1,7 @@
 import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
 import { Check, ChevronLeft, X } from "lucide-react";
 import { AppInput } from "@opentoggl/web-ui";
+import { useTranslation } from "react-i18next";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
@@ -33,6 +34,7 @@ export function GoalTrackPicker({
   tagIds,
   tags,
 }: GoalTrackPickerProps): ReactElement {
+  const { t } = useTranslation("goals");
   const [view, setView] = useState<PickerView>(null);
   const [search, setSearch] = useState("");
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -95,7 +97,7 @@ export function GoalTrackPicker({
         type="button"
       >
         <SearchIcon className="size-3.5" />
-        <span>Search for projects, tasks, billable...</span>
+        <span>{t("searchForProjectsTasksBillable")}</span>
       </button>
 
       {hasSelections ? (
@@ -183,6 +185,7 @@ function TrackMenu({
   onSelectProjects: () => void;
   onSelectTags: () => void;
 }): ReactElement {
+  const { t } = useTranslation("goals");
   return (
     <div className="p-3">
       <p className="mb-2 text-[12px] leading-4 text-[var(--track-text-muted)]">
@@ -194,7 +197,7 @@ function TrackMenu({
         onClick={onSelectProjects}
         type="button"
       >
-        <span>Select project</span>
+        <span>{t("selectProject")}</span>
         <span className="flex size-5 items-center justify-center rounded border border-[var(--track-border)] text-[11px] text-[var(--track-text-muted)]">
           @
         </span>
@@ -204,7 +207,7 @@ function TrackMenu({
         onClick={onSelectTags}
         type="button"
       >
-        <span>Select tags</span>
+        <span>{t("selectTags")}</span>
         <span className="flex size-5 items-center justify-center rounded border border-[var(--track-border)] text-[11px] text-[var(--track-text-muted)]">
           #
         </span>
@@ -214,7 +217,7 @@ function TrackMenu({
         onClick={onSelectBillable}
         type="button"
       >
-        <span>Billable hours</span>
+        <span>{t("billableHours")}</span>
         <span className="flex size-5 items-center justify-center rounded border border-[var(--track-border)] text-[11px] text-[var(--track-text-muted)]">
           $
         </span>
@@ -238,6 +241,7 @@ function ProjectList({
   search: string;
   selectedIds: number[];
 }): ReactElement {
+  const { t } = useTranslation("goals");
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return projects.filter(
@@ -274,7 +278,7 @@ function ProjectList({
           className="flex-1"
           leadingIcon={<SearchIcon className="size-3.5" />}
           onChange={(e) => onSearch(e.target.value)}
-          placeholder="Search by project or client"
+          placeholder={t("searchByProjectOrClient")}
           size="sm"
           value={search}
         />
@@ -282,7 +286,7 @@ function ProjectList({
       <div className="max-h-[240px] overflow-y-auto py-1">
         {filtered.length === 0 ? (
           <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">
-            No projects found
+            {t("noProjectsFound")}
           </div>
         ) : (
           Array.from(grouped.entries()).map(([client, list]) => (
@@ -333,6 +337,7 @@ function TagList({
   selectedIds: number[];
   tags: TagItem[];
 }): ReactElement {
+  const { t } = useTranslation("goals");
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
     return tags.filter((t) => t.name.toLowerCase().includes(q));
@@ -353,14 +358,16 @@ function TagList({
           className="flex-1"
           leadingIcon={<SearchIcon className="size-3.5" />}
           onChange={(e) => onSearch(e.target.value)}
-          placeholder="Search tags"
+          placeholder={t("searchTags")}
           size="sm"
           value={search}
         />
       </div>
       <div className="max-h-[240px] overflow-y-auto py-1">
         {filtered.length === 0 ? (
-          <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">No tags found</div>
+          <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">
+            {t("noTagsFound")}
+          </div>
         ) : (
           filtered.map((t) => {
             const selected = selectedIds.includes(t.id);

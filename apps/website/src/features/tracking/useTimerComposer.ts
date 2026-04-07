@@ -22,6 +22,8 @@ export function useTimerComposer() {
   const setDraftDescription = useTimerViewStore((s) => s.setDraftDescription);
   const draftProjectId = useTimerViewStore((s) => s.draftProjectId);
   const setDraftProjectId = useTimerViewStore((s) => s.setDraftProjectId);
+  const draftTaskId = useTimerViewStore((s) => s.draftTaskId);
+  const setDraftTaskId = useTimerViewStore((s) => s.setDraftTaskId);
   const draftTagIds = useTimerViewStore((s) => s.draftTagIds);
   const setDraftTagIds = useTimerViewStore((s) => s.setDraftTagIds);
   const draftBillable = useTimerViewStore((s) => s.draftBillable);
@@ -123,6 +125,7 @@ export function useTimerComposer() {
       projectId: draftProjectId,
       start: new Date().toISOString(),
       tagIds: draftTagIds,
+      taskId: draftTaskId,
     });
     setRunningDescription(descriptionToStart);
     clearDraft();
@@ -132,6 +135,7 @@ export function useTimerComposer() {
     draftDescription,
     draftProjectId,
     draftTagIds,
+    draftTaskId,
     startTimeEntryMutation,
     stopTimeEntryMutation,
     setRunningDescription,
@@ -202,6 +206,8 @@ export function useTimerComposer() {
     setDraftDescription,
     draftProjectId,
     setDraftProjectId,
+    draftTaskId,
+    setDraftTaskId,
     draftTagIds,
     setDraftTagIds,
     draftBillable,

@@ -19,5 +19,6 @@
   "tagDetailsFor": "{{name}} 的标签详情",
   "noTagsMatchFilters": "没有标签符合您的筛选条件。",
   "noActiveTags": "没有活跃标签。创建您的第一个标签以开始。",
-  "noInactiveTags": "没有非活跃标签。"
+  "noInactiveTags": "没有非活跃标签。",
+  "noTagsInWorkspace": "此工作区中还没有标签。"
 }

@@ -134,7 +134,11 @@ function OrganizationSectionContent({
       );
     default:
       return (
-        <SettingsState description={t("noConfigurableSettings")} title="Section" tone="empty" />
+        <SettingsState
+          description={t("noConfigurableSettings")}
+          title={t("section")}
+          tone="empty"
+        />
       );
   }
 }

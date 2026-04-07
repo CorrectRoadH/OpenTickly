@@ -8,5 +8,6 @@
   "keyboardShortcuts": "Keyboard shortcuts",
   "logOut": "Log out",
   "opentogglPlanComing": "opentoggl plan is coming",
-  "opentogglFocusComing": "opentoggl focus is coming"
+  "opentogglFocusComing": "opentoggl focus is coming",
+  "sessionReady": "Session ready"
 }

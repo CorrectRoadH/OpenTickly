@@ -3,6 +3,7 @@
   "clientsAndProjects": "Clients | Projects",
   "newClient": "New client",
   "searchClients": "Search clients...",
+  "clientDetails": "Client details",
   "active": "Active",
   "inactive": "Inactive",
   "showingClientsInWorkspace": "Showing {{count}} clients in workspace {{workspaceId}}.",

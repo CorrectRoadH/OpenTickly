@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DropdownMenu, IconButton, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
@@ -25,6 +26,7 @@ export function ProjectRowActionsMenu({
   project,
   workspaceId,
 }: ProjectRowActionsMenuProps): ReactElement {
+  const { t } = useTranslation("projects");
   return (
     <DropdownMenu
       trigger={
@@ -34,15 +36,15 @@ export function ProjectRowActionsMenu({
       }
       minWidth="220px"
     >
-      <MenuItem onClick={onEdit}>Edit project</MenuItem>
-      <MenuItem onClick={onAddMember}>Add member</MenuItem>
-      <MenuLink href={buildWorkspaceReportsPath(workspaceId)}>View in reports</MenuLink>
-      <MenuItem onClick={onArchiveToggle}>{project.active ? "Archive" : "Restore"}</MenuItem>
+      <MenuItem onClick={onEdit}>{t("editProject")}</MenuItem>
+      <MenuItem onClick={onAddMember}>{t("addMember")}</MenuItem>
+      <MenuLink href={buildWorkspaceReportsPath(workspaceId)}>{t("viewInReports")}</MenuLink>
+      <MenuItem onClick={onArchiveToggle}>{project.active ? t("archive") : t("active")}</MenuItem>
       <MenuItem onClick={onTemplateToggle}>
         {project.template ? "Remove template" : "Use as a template"}
       </MenuItem>
       <MenuItem destructive onClick={onDelete}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </DropdownMenu>
   );

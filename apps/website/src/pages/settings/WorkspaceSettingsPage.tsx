@@ -159,7 +159,7 @@ function SettingsSectionContent(props: {
       return (
         <SettingsState
           description={props.t("noConfigurableSettings")}
-          title="Section"
+          title={props.t("section")}
           tone="empty"
         />
       );

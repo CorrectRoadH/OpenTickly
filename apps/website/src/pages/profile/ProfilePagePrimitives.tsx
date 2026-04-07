@@ -244,7 +244,7 @@ export function ProfileHeroCard({
                 className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
                 disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
-                title="Upload avatar"
+                title={t("uploadAvatar")}
                 type="button"
               >
                 <Upload className="size-5" />
@@ -254,7 +254,7 @@ export function ProfileHeroCard({
                   className="flex size-10 items-center justify-center rounded-full bg-white/20 text-red-300 hover:bg-white/30"
                   disabled={uploading}
                   onClick={() => void handleDelete()}
-                  title="Remove avatar"
+                  title={t("removeAvatar")}
                   type="button"
                 >
                   <Trash2 className="size-5" />

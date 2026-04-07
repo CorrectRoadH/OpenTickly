@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bar,
   BarChart,
@@ -19,12 +20,6 @@ import { SelectDropdown } from "@opentoggl/web-ui";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 
-const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
-  { label: "Projects", value: "projects" },
-  { label: "Clients", value: "clients" },
-  { label: "Members", value: "members" },
-];
-
 const Y_AXIS_LABELS = ["16h 15", "13h", "9h 45", "6h 30", "3h 15", "0h"] as const;
 const MAX_CHART_SECONDS = 16 * 3600 + 15 * 60;
 
@@ -43,6 +38,7 @@ const DAY_NAMES: Record<string, string> = {
 };
 
 export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): ReactElement {
+  const { t } = useTranslation("reports");
   const data = weekRows.map((row) => ({
     name: row.label,
     seconds: row.seconds,
@@ -59,7 +55,7 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
       className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
       data-testid="reports-duration-chart"
     >
-      <h2 className="text-[14px] font-semibold leading-[23px] text-white">Duration by day</h2>
+      <h2 className="text-[14px] font-semibold leading-[23px] text-white">{t("durationByDay")}</h2>
       <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-4 pt-3">
         <ResponsiveContainer height={248} width="100%">
           <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
@@ -95,7 +91,7 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
         </ResponsiveContainer>
         <div className="flex items-center justify-center gap-2 pt-2 text-[11px] text-[var(--track-text-muted)]">
           <span className="h-1.5 w-4 rounded-full bg-[var(--track-accent)]" />
-          <span>Duration (h)</span>
+          <span>{t("durationH")}</span>
         </div>
       </div>
     </section>
@@ -183,8 +179,14 @@ export function DistributionPanel({
   sliceBy: SliceDimension;
   totalDuration: string;
 }): ReactElement {
+  const { t } = useTranslation("reports");
+  const SLICE_OPTIONS: { label: string; value: SliceDimension }[] = [
+    { label: t("projects"), value: "projects" },
+    { label: t("clients"), value: "clients" },
+    { label: t("members"), value: "members" },
+  ];
   const sliceLabel =
-    sliceBy === "projects" ? "Project" : sliceBy === "clients" ? "Client" : "Member";
+    sliceBy === "projects" ? t("project") : sliceBy === "clients" ? t("client") : t("member");
 
   return (
     <section
@@ -193,7 +195,12 @@ export function DistributionPanel({
     >
       <div className="flex items-start justify-between gap-2">
         <h2 className="max-w-[140px] text-[14px] font-semibold leading-[23px] text-white">
-          {sliceLabel} distribution
+          {sliceLabel}{" "}
+          {sliceBy === "projects"
+            ? t("projectDistribution")
+            : sliceBy === "clients"
+              ? t("clientDistribution")
+              : t("memberDistribution")}
         </h2>
         <SelectDropdown
           data-testid="reports-slice-by"

@@ -1,6 +1,7 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import {
   mapPreferencesFormToRequest,
@@ -19,6 +20,7 @@ export function PreferencesFormSection({
   initialValues,
   onSubmit,
 }: PreferencesFormSectionProps): ReactElement {
+  const { t } = useTranslation("profile");
   const form = useForm<PreferencesFormValues>({
     defaultValues: initialValues,
   });
@@ -32,27 +34,24 @@ export function PreferencesFormSection({
         })}
       >
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-white">Preferences</h2>
-          <p className="text-sm leading-6 text-slate-400">
-            Preferences stay on the dedicated profile page because they belong to the user, not the
-            current workspace.
-          </p>
+          <h2 className="text-2xl font-semibold text-white">{t("preferencesSectionTitle")}</h2>
+          <p className="text-sm leading-6 text-slate-400">{t("preferencesSectionDescription")}</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Date format">
+          <Field label={t("dateFormat")}>
             <input className={fieldClassName} {...form.register("dateFormat")} />
           </Field>
-          <Field label="Duration format">
+          <Field label={t("durationDisplayFormat")}>
             <input className={fieldClassName} {...form.register("durationFormat")} />
           </Field>
-          <Field label="Time of day format">
+          <Field label={t("timeOfDayFormat")}>
             <input className={fieldClassName} {...form.register("timeofdayFormat")} />
           </Field>
-          <Field label="Manual entry mode">
+          <Field label={t("manualEntryMode")}>
             <input className={fieldClassName} {...form.register("manualEntryMode")} />
           </Field>
-          <Field label="Beginning of week">
+          <Field label={t("firstDayOfWeek")}>
             <input
               className={fieldClassName}
               max={6}
@@ -64,21 +63,21 @@ export function PreferencesFormSection({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <ToggleField label="Collapse time entries">
+          <ToggleField label={t("collapseTimeEntries")}>
             <input type="checkbox" {...form.register("collapseTimeEntries")} />
           </ToggleField>
-          <ToggleField label="Show goals view">
+          <ToggleField label={t("showGoalsView")}>
             <input type="checkbox" {...form.register("isGoalsViewShown")} />
           </ToggleField>
-          <ToggleField label="Keyboard shortcuts enabled">
+          <ToggleField label={t("keyboardShortcutsEnabledLabel")}>
             <input type="checkbox" {...form.register("keyboardShortcutsEnabled")} />
           </ToggleField>
-          <ToggleField label="Show running time in title">
+          <ToggleField label={t("showRunningTimeInTitle")}>
             <input type="checkbox" {...form.register("showTimeInTitle")} />
           </ToggleField>
         </div>
 
-        <AppButton type="submit">Save preferences</AppButton>
+        <AppButton type="submit">{t("savePreferences")}</AppButton>
       </form>
     </AppPanel>
   );

@@ -82,5 +82,14 @@
   "pinProjectAction": "Pin project {{name}}",
   "unpinProjectAction": "Unpin project {{name}}",
   "archiveProjectAction": "Archive project {{name}}",
-  "restoreProjectAction": "Restore project {{name}}"
+  "restoreProjectAction": "Restore project {{name}}",
+  "allMembersTeams": "All members/teams",
+  "rate": "Rate",
+  "cost": "Cost",
+  "role": "Role",
+  "totalHours": "Total hours",
+  "billableHours": "Billable hours",
+  "editProject": "Edit project",
+  "addMember": "Add member",
+  "viewInReports": "View in reports"
 }

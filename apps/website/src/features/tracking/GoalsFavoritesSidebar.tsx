@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import type {
   HandlergoalsApiResponse,
@@ -23,16 +24,18 @@ export function GoalsFavoritesSidebar({
   onStartFavorite,
   workspaceId,
 }: GoalsFavoritesSidebarProps): ReactElement {
+  const { t } = useTranslation("goals");
+
   return (
     <div
       className="sticky top-[var(--timer-header-height,0px)] flex h-fit max-h-[calc(100vh-var(--timer-header-height,0px))] w-[220px] shrink-0 flex-col overflow-y-auto border-l border-[var(--track-border)] bg-[var(--track-surface)]"
       data-testid="goals-favorites-sidebar"
     >
       <SidebarSection
-        title="Goals"
+        title={t("sidebarGoals")}
         action={
           <Link
-            aria-label="Add goals"
+            aria-label={t("addGoals")}
             className="flex size-5 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
             to="/workspaces/$workspaceId/goals"
             params={{ workspaceId: String(workspaceId) }}
@@ -42,7 +45,9 @@ export function GoalsFavoritesSidebar({
         }
       >
         {goals.length === 0 ? (
-          <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">No goals yet</div>
+          <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">
+            {t("noGoalsYetSidebar")}
+          </div>
         ) : (
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {goals.map((goal) => (
@@ -51,17 +56,17 @@ export function GoalsFavoritesSidebar({
           </div>
         )}
       </SidebarSection>
-      <SidebarSection title="Favorites">
+      <SidebarSection title={t("favorites")}>
         {favorites.length === 0 ? (
           <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">
-            No favorites yet
+            {t("noFavoritesYet")}
           </div>
         ) : (
           <div className="flex flex-col gap-0.5 px-2 pb-2">
             {favorites.map((fav) => (
               <FavoriteItem
-                key={fav.favorite_id}
                 favorite={fav}
+                key={fav.favorite_id}
                 onDelete={onDeleteFavorite}
                 onStart={onStartFavorite}
               />
@@ -95,6 +100,7 @@ function SidebarSection({
 }
 
 export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElement {
+  const { t } = useTranslation("goals");
   const trackedH = Math.round(((goal.current_recurrence_tracked_seconds ?? 0) / 3600) * 10) / 10;
   const targetH = Math.round(((goal.target_seconds ?? 0) / 3600) * 10) / 10;
   const progress = targetH > 0 ? Math.min((trackedH / targetH) * 100, 100) : 0;
@@ -122,11 +128,11 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-[12px] leading-tight text-white">
-          {goal.name ?? "Untitled"}
+          {goal.name ?? t("untitledGoal")}
         </span>
         <span className="text-[11px] leading-tight text-[var(--track-text-muted)]">
-          {trackedH}/{targetH} hours
-          {(goal.streak ?? 0) > 0 ? ` · ${goal.streak} 🔥` : ""}
+          {t("hoursProgress", { tracked: trackedH, target: targetH })}
+          {(goal.streak ?? 0) > 0 ? ` ${t("streakFire", { streak: goal.streak })}` : ""}
         </span>
       </div>
     </div>
@@ -142,7 +148,8 @@ function FavoriteItem({
   onDelete?: (favoriteId: number) => void;
   onStart?: (favorite: ModelsFavorite) => void;
 }): ReactElement {
-  const label = favorite.description?.trim() || favorite.project_name || "Untitled";
+  const { t } = useTranslation("goals");
+  const label = favorite.description?.trim() || favorite.project_name || t("untitled");
   const projectColor = favorite.project_color;
 
   return (
@@ -151,7 +158,7 @@ function FavoriteItem({
       data-testid={`favorite-item-${favorite.favorite_id}`}
     >
       <button
-        aria-label={`Start ${label}`}
+        aria-label={`${t("continue")} ${label}`}
         className="flex size-5 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-[var(--track-accent)]"
         onClick={() => onStart?.(favorite)}
         type="button"
@@ -173,7 +180,7 @@ function FavoriteItem({
         ) : null}
       </div>
       <button
-        aria-label={`Delete favorite ${label}`}
+        aria-label={`${t("delete")} ${label}`}
         className="flex size-4 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] opacity-0 transition hover:text-[var(--track-danger-text)] group-hover:opacity-100"
         onClick={() => {
           if (typeof favorite.favorite_id === "number") {

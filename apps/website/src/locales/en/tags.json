@@ -19,5 +19,6 @@
   "tagDetailsFor": "Tag details for {{name}}",
   "noTagsMatchFilters": "No tags match your filters.",
   "noActiveTags": "No active tags. Create your first tag to get started.",
-  "noInactiveTags": "No inactive tags."
+  "noInactiveTags": "No inactive tags.",
+  "noTagsInWorkspace": "No tags in this workspace yet."
 }

@@ -34,6 +34,7 @@ interface TimerViewState {
   // Composer draft state
   draftDescription: string;
   draftProjectId: number | null;
+  draftTaskId: number | null;
   draftTagIds: number[];
   draftBillable: boolean;
   runningDescription: string;
@@ -59,6 +60,7 @@ interface TimerViewActions {
   // Composer draft actions
   setDraftDescription: (desc: string) => void;
   setDraftProjectId: (id: number | null) => void;
+  setDraftTaskId: (id: number | null) => void;
   setDraftTagIds: (ids: number[]) => void;
   setDraftBillable: (billable: boolean) => void;
   setRunningDescription: (desc: string) => void;
@@ -165,6 +167,7 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
       // Composer draft state
       draftDescription: "",
       draftProjectId: null,
+      draftTaskId: null,
       draftTagIds: [],
       draftBillable: false,
       runningDescription: "",
@@ -250,6 +253,11 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
           state.draftProjectId = id;
         }),
 
+      setDraftTaskId: (id) =>
+        set((state) => {
+          state.draftTaskId = id;
+        }),
+
       setDraftTagIds: (ids) =>
         set((state) => {
           state.draftTagIds = ids;
@@ -274,6 +282,7 @@ export const useTimerViewStore = create<TimerViewState & TimerViewActions>()(
         set((state) => {
           state.draftDescription = "";
           state.draftProjectId = null;
+          state.draftTaskId = null;
           state.draftTagIds = [];
           state.draftBillable = false;
           state.composerSuggestionsAnchor = null;

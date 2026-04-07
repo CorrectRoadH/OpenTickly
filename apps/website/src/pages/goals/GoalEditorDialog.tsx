@@ -1,6 +1,7 @@
 import { type ReactElement, useCallback, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Check, Info } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, SelectDropdown } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -72,6 +73,7 @@ export function GoalEditorDialog({
   onClose,
   onSubmit,
 }: GoalEditorDialogProps): ReactElement {
+  const { t } = useTranslation("goals");
   const isEdit = goal != null;
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
@@ -115,7 +117,7 @@ export function GoalEditorDialog({
   const members = membersQuery.data?.members ?? [];
   const selectedMember = members.find((m) => m.id === selectedUserId);
   const memberDisplayName =
-    selectedMember?.name ?? goal?.user_name ?? session.user.fullName ?? "Me";
+    selectedMember?.name ?? goal?.user_name ?? session.user.fullName ?? t("me");
 
   function handleSubmit() {
     const values = getValues();
@@ -137,7 +139,7 @@ export function GoalEditorDialog({
     <ModalDialog
       onClose={onClose}
       testId="goal-editor-dialog"
-      title={isEdit ? "Edit goal" : "Create a goal"}
+      title={isEdit ? t("editGoal") : t("createAGoal")}
       width="max-w-[520px]"
     >
       <div className="flex flex-col gap-5">
@@ -152,7 +154,7 @@ export function GoalEditorDialog({
               className="h-[42px] flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[14px] text-white placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent-soft)] focus:outline-none"
               data-testid="goal-name-input"
               onChange={(e) => setValue("name", e.target.value)}
-              placeholder="Goal name"
+              placeholder={t("goalNamePlaceholder")}
               type="text"
               value={name}
             />
@@ -163,7 +165,7 @@ export function GoalEditorDialog({
         {/* MEMBER */}
         <div>
           <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            Member
+            {t("member")}
           </label>
           <div className="relative">
             <button
@@ -189,7 +191,7 @@ export function GoalEditorDialog({
         {/* TRACK */}
         <div>
           <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            Track
+            {t("track")}
             <InfoIcon />
           </label>
           <GoalTrackPicker
@@ -208,7 +210,7 @@ export function GoalEditorDialog({
         {/* FOR */}
         <div>
           <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            for
+            {t("for")}
             <InfoIcon />
           </label>
           <div className="flex items-center gap-2">
@@ -228,7 +230,7 @@ export function GoalEditorDialog({
                 type="number"
                 value={targetHours || ""}
               />
-              <span className="text-[14px] text-[var(--track-text-muted)]">hours</span>
+              <span className="text-[14px] text-[var(--track-text-muted)]">{t("hours")}</span>
             </div>
             <SelectDropdown
               data-testid="goal-recurrence-select"
@@ -243,7 +245,7 @@ export function GoalEditorDialog({
         {/* UNTIL */}
         <div>
           <label className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            until
+            {t("until")}
             <InfoIcon />
           </label>
           <div className="flex flex-col gap-2">
@@ -255,14 +257,14 @@ export function GoalEditorDialog({
                   type="button"
                 >
                   <CalendarIcon className="size-3.5" />
-                  <span className="flex-1">Indefinite</span>
+                  <span className="flex-1">{t("indefinite")}</span>
                   <ChevronDownIcon className="size-2.5 text-[var(--track-text-muted)]" />
                 </button>
               ) : (
                 <DatePickerButton
                   className="h-[42px] w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-left text-[14px] text-white"
                   onChange={(v: string) => setValue("endDate", v)}
-                  placeholder="Select end date"
+                  placeholder={t("selectEndDate")}
                   testId="goal-end-date-input"
                   value={endDate}
                 />
@@ -292,7 +294,7 @@ export function GoalEditorDialog({
                 onChange={(e) => setValue("noEndDate", e.target.checked)}
                 type="checkbox"
               />
-              No end date
+              {t("noEndDate")}
             </label>
           </div>
         </div>
@@ -306,7 +308,7 @@ export function GoalEditorDialog({
 
       <div className="mt-5 flex items-center justify-end gap-3">
         <AppButton onClick={onClose} type="button">
-          Cancel
+          {t("cancel")}
         </AppButton>
         <AppButton
           data-testid="goal-submit-button"
@@ -314,7 +316,7 @@ export function GoalEditorDialog({
           onClick={handleSubmit}
           type="button"
         >
-          {isEdit ? "Edit goal" : "Create goal"}
+          {isEdit ? t("editGoal") : t("createGoal")}
         </AppButton>
       </div>
     </ModalDialog>
@@ -339,6 +341,7 @@ function MemberDropdown({
   onClose: () => void;
   selectedUserId: number;
 }): ReactElement {
+  const { t } = useTranslation("goals");
   const [search, setSearch] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
   useDismiss(panelRef, true, onClose);
@@ -357,7 +360,7 @@ function MemberDropdown({
             autoFocus
             className="h-8 w-full rounded-[6px] bg-[var(--track-surface-muted)] pl-8 pr-3 text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search for members"
+            placeholder={t("searchForMembers")}
             value={search}
           />
         </div>
@@ -366,7 +369,7 @@ function MemberDropdown({
         {filtered.length > 0 ? (
           <>
             <div className="px-3 py-1 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              Active members
+              {t("activeMembers")}
             </div>
             {filtered.map((m) => (
               <button
@@ -387,7 +390,7 @@ function MemberDropdown({
           </>
         ) : (
           <div className="px-3 py-2 text-[12px] text-[var(--track-text-muted)]">
-            No members found
+            {t("noMembersFound")}
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 type ApiTokenSectionProps = {
   isRotating?: boolean;
@@ -12,19 +13,18 @@ export function ApiTokenSection({
   onRotate,
   token,
 }: ApiTokenSectionProps): ReactElement {
+  const { t } = useTranslation("profile");
+
   return (
     <AppPanel data-testid="api-token-section" tone="muted">
       <div className="space-y-5">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold text-white">API token</h2>
-          <p className="text-sm leading-6 text-slate-400">
-            Use this token for the Wave 1 account-level API entrypoints, including Basic auth with
-            the token as both username and password.
-          </p>
+          <h2 className="text-2xl font-semibold text-white">{t("apiTokenSectionTitle")}</h2>
+          <p className="text-sm leading-6 text-slate-400">{t("apiTokenDescription")}</p>
         </div>
 
         <label className="flex flex-col gap-2 text-sm font-medium text-slate-300">
-          Current token
+          {t("currentToken")}
           <input
             className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 font-mono text-sm text-white"
             readOnly
@@ -39,11 +39,9 @@ export function ApiTokenSection({
               void onRotate();
             }}
           >
-            {isRotating ? "Rotating token…" : "Rotate token"}
+            {isRotating ? t("rotatingToken") : t("rotateToken")}
           </AppButton>
-          <p className="text-sm leading-6 text-slate-400">
-            Rotating immediately replaces the current token shown here.
-          </p>
+          <p className="text-sm leading-6 text-slate-400">{t("rotatingTokenDescription")}</p>
         </div>
       </div>
     </AppPanel>

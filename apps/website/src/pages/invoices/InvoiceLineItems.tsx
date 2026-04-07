@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 
@@ -48,15 +49,16 @@ export function InvoiceLineItems({
   onUpdateTax,
   taxes,
 }: InvoiceLineItemsProps): ReactElement {
+  const { t } = useTranslation("invoices");
   const subtotal = computeSubtotal(items);
   const total = computeTotal(items, taxes);
 
   return (
     <div className="mt-6">
       <div className="grid grid-cols-[minmax(0,3fr)_100px_120px_32px] gap-2 border-b border-[var(--track-overlay-border)] pb-2 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
-        <span>Description</span>
-        <span className="text-right">Quantity</span>
-        <span className="text-right">Amount</span>
+        <span>{t("description")}</span>
+        <span className="text-right">{t("quantity")}</span>
+        <span className="text-right">{t("amount")}</span>
         <span />
       </div>
 
@@ -68,7 +70,7 @@ export function InvoiceLineItems({
           <input
             className="h-9 w-full rounded border border-transparent bg-transparent px-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
             onChange={(e) => onUpdateItem(index, "description", e.target.value)}
-            placeholder="Item description"
+            placeholder={t("itemDescription")}
             type="text"
             value={item.description}
           />
@@ -91,7 +93,7 @@ export function InvoiceLineItems({
             value={item.amount || ""}
           />
           <button
-            aria-label="Remove item"
+            aria-label={t("removeItem")}
             className="flex size-8 items-center justify-center rounded text-[var(--track-text-disabled)] hover:text-white"
             onClick={() => onRemoveItem(index)}
             type="button"
@@ -107,12 +109,12 @@ export function InvoiceLineItems({
         type="button"
       >
         <PlusIcon className="size-3" />
-        Add custom charge
+        {t("addCustomCharge")}
       </button>
 
       <div className="mt-4 flex items-center justify-between border-t border-[var(--track-overlay-border)] py-3">
         <span className="text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
-          Subtotal
+          {t("subtotal")}
         </span>
         <span className="text-[14px] text-white">
           {subtotal.toFixed(2)} {currency}
@@ -125,12 +127,12 @@ export function InvoiceLineItems({
             <input
               className="h-8 w-32 rounded border border-transparent bg-transparent px-2 text-[12px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
               onChange={(e) => onUpdateTax(index, "name", e.target.value)}
-              placeholder="Tax name"
+              placeholder={t("taxName")}
               type="text"
               value={tax.name}
             />
             <button
-              aria-label="Remove tax"
+              aria-label={t("removeTax")}
               className="flex size-6 items-center justify-center rounded text-[var(--track-text-disabled)] hover:text-white"
               onClick={() => onRemoveTax(index)}
               type="button"
@@ -155,11 +157,13 @@ export function InvoiceLineItems({
         type="button"
       >
         <PlusIcon className="size-3" />
-        Add tax
+        {t("addTax")}
       </button>
 
       <div className="mt-2 flex items-center justify-between border-t border-[var(--track-overlay-border)] py-3">
-        <span className="text-[14px] font-bold uppercase tracking-[0.06em] text-white">Total</span>
+        <span className="text-[14px] font-bold uppercase tracking-[0.06em] text-white">
+          {t("total")}
+        </span>
         <span className="text-[14px] font-bold text-white">
           {total.toFixed(2)} {currency}
         </span>

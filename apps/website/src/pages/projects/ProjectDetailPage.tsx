@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 import { SurfaceCard } from "@opentoggl/web-ui";
+import { useTranslation } from "react-i18next";
 
 import type {
   ModelsProjectStatistics,
@@ -25,6 +26,7 @@ export function ProjectDetailPage({
   projectId,
   workspaceId,
 }: ProjectDetailPageProps): ReactElement {
+  const { t } = useTranslation("projects");
   const session = useSession();
   const projectQuery = useProjectDetailQuery(workspaceId, projectId);
   const membersQuery = useProjectMembersQuery(workspaceId, projectId);
@@ -67,10 +69,10 @@ export function ProjectDetailPage({
               </div>
 
               <div className="grid grid-cols-[minmax(220px,1.7fr)_112px_112px_160px] border-t border-[var(--track-border)] px-4 text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-                <HeaderCell label="All members/teams" />
-                <HeaderCell label="Rate" />
-                <HeaderCell label="Cost" />
-                <HeaderCell label="Role" />
+                <HeaderCell label={t("allMembersTeams")} />
+                <HeaderCell label={t("rate")} />
+                <HeaderCell label={t("cost")} />
+                <HeaderCell label={t("role")} />
               </div>
 
               {membersQuery.isPending ? (
@@ -124,8 +126,8 @@ export function ProjectDetailPage({
 
         <aside className="pt-2">
           <div className="space-y-5">
-            <StatBlock label="Total hours" value={formatDuration(totalSeconds)} />
-            <StatBlock label="Billable hours" value={formatDuration(billableSeconds)} />
+            <StatBlock label={t("totalHours")} value={formatDuration(totalSeconds)} />
+            <StatBlock label={t("billableHours")} value={formatDuration(billableSeconds)} />
             <div className="flex justify-center pt-1">
               <ProjectDonut billableSeconds={billableSeconds} totalSeconds={totalSeconds} />
             </div>

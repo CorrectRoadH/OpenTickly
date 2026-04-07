@@ -37,5 +37,8 @@
   "back": "返回",
   "close": "关闭",
   "membersColumn": "成员",
-  "workspacesColumn": "工作区"
+  "workspacesColumn": "工作区",
+  "organizationTeamDirectory": "组织团队目录",
+  "groups": "团队",
+  "team": "团队"
 }

@@ -9,9 +9,12 @@ import auditLog from "../locales/en/auditLog.json";
 import auth from "../locales/en/auth.json";
 import billableRates from "../locales/en/billableRates.json";
 import clients from "../locales/en/clients.json";
+import goals from "../locales/en/goals.json";
 import common from "../locales/en/common.json";
 import groups from "../locales/en/groups.json";
 import instanceAdmin from "../locales/en/instanceAdmin.json";
+import integrations from "../locales/en/integrations.json";
+import invoices from "../locales/en/invoices.json";
 import members from "../locales/en/members.json";
 import navigation from "../locales/en/navigation.json";
 import onboarding from "../locales/en/onboarding.json";
@@ -61,8 +64,11 @@ void i18n
       "billableRates",
       "clients",
       "common",
+      "goals",
       "groups",
       "instanceAdmin",
+      "integrations",
+      "invoices",
       "members",
       "mobile",
       "navigation",
@@ -89,8 +95,11 @@ void i18n
         billableRates,
         clients,
         common,
+        goals,
         groups,
         instanceAdmin,
+        integrations,
+        invoices,
         members,
         mobile,
         navigation,

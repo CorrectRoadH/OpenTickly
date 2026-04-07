@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
 import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
@@ -87,6 +88,7 @@ export function ProjectEditorDialog({
   template,
   title,
 }: ProjectEditorDialogProps): ReactElement {
+  const { t } = useTranslation("projects");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const trimmedName = name.trim();
@@ -110,12 +112,12 @@ export function ProjectEditorDialog({
           {/* Project name + color picker */}
           <div>
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-              Project name
+              {t("projectName")}
             </span>
             <div className="relative flex items-center gap-2">
               <div className="relative">
                 <button
-                  aria-label="Select project color"
+                  aria-label={t("projectName")}
                   className="flex size-11 items-center justify-center rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)]"
                   onClick={() => setColorPickerOpen((c) => !c)}
                   type="button"
@@ -139,12 +141,12 @@ export function ProjectEditorDialog({
                 ) : null}
               </div>
               <input
-                aria-label="Project name"
+                aria-label={t("projectName")}
                 className={`h-11 min-w-0 flex-1 rounded-md border bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)] ${
                   error ? "border-rose-400" : "border-[var(--track-border)]"
                 }`}
                 onChange={(event) => onNameChange(event.target.value)}
-                placeholder="Project name"
+                placeholder={t("projectName")}
                 value={name}
               />
             </div>
@@ -152,7 +154,7 @@ export function ProjectEditorDialog({
               <span className="mt-2 block text-[12px] text-rose-400">{error}</span>
             ) : !trimmedName ? (
               <span className="mt-2 block text-[12px] text-[var(--track-danger-text-strong)]">
-                Please enter a Project name
+                {t("projectName")}
               </span>
             ) : null}
           </div>
@@ -245,7 +247,7 @@ export function ProjectEditorDialog({
             onClick={onClose}
             type="button"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"

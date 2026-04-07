@@ -113,7 +113,7 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
             rows={tasks}
             rowKey={(task) => task.id}
             data-testid="tasks-list"
-            emptyState={<span data-testid="tasks-empty-state">No tasks in this project yet.</span>}
+            emptyState={<span data-testid="tasks-empty-state">{t("noTasksInProject")}</span>}
             renderRow={(task) => (
               <>
                 <div className="flex items-center">

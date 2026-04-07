@@ -127,7 +127,7 @@ export function TagsPage(): ReactElement {
         rowKey={(tag) => tag.id}
         data-testid="tags-list"
         data-row-testid="tag-row"
-        emptyState={<span data-testid="tags-empty-state">No tags in this workspace yet.</span>}
+        emptyState={<span data-testid="tags-empty-state">{t("noTagsInWorkspace")}</span>}
         renderRow={(tag) => (
           <>
             <div className="flex h-[44px] items-center">

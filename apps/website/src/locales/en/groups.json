@@ -37,5 +37,8 @@
   "back": "Back",
   "close": "Close",
   "membersColumn": "Members",
-  "workspacesColumn": "Workspaces"
+  "workspacesColumn": "Workspaces",
+  "organizationTeamDirectory": "Organization team directory",
+  "groups": "Groups",
+  "team": "Team"
 }

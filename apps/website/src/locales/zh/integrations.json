@@ -1,0 +1,5 @@
+{
+  "integrations": "集成",
+  "webhooks": "Webhooks",
+  "webhooksDescription": "设置 Webhooks 以在工作区中发生事件时接收实时通知。Webhook 管理功能正在建设中。"
+}

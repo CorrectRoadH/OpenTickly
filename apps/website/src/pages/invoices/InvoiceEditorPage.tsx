@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -47,6 +48,7 @@ function parseProjectsParam(raw: string | undefined): InvoiceItemFormData[] {
 }
 
 export function InvoiceEditorPage(): ReactElement {
+  const { t } = useTranslation("invoices");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const navigate = useNavigate();
@@ -146,20 +148,20 @@ export function InvoiceEditorPage(): ReactElement {
             onClick={() => void navigate({ to: invoicesPath })}
             type="button"
           >
-            Invoices
+            {t("invoices")}
           </button>
           <span className="text-[var(--track-text-disabled)]">&gt;</span>
-          <span className="text-white">{documentId || "New Invoice"}</span>
+          <span className="text-white">{documentId || t("newInvoice")}</span>
         </nav>
         <div className="flex items-center gap-3">
-          <AppButton type="button">Connect QuickBooks</AppButton>
+          <AppButton type="button">{t("connectQuickBooks")}</AppButton>
           <AppButton
             data-testid="invoice-save-button"
             disabled={!documentId.trim() || createMutation.isPending}
             onClick={() => void handleSave()}
             type="button"
           >
-            {createMutation.isPending ? "Saving..." : "Save"}
+            {createMutation.isPending ? t("saving") : t("save")}
           </AppButton>
         </div>
       </header>
@@ -169,7 +171,7 @@ export function InvoiceEditorPage(): ReactElement {
           className="w-full max-w-[720px] rounded-lg bg-[var(--track-tooltip-surface)] p-8 shadow-[0_8px_32px_var(--track-shadow-card)]"
           data-testid="invoice-document"
         >
-          <h2 className="mb-6 text-[28px] font-bold text-white">Invoice</h2>
+          <h2 className="mb-6 text-[28px] font-bold text-white">{t("invoice")}</h2>
 
           <InvoiceHeaderFields
             currency={currency}
@@ -188,16 +190,16 @@ export function InvoiceEditorPage(): ReactElement {
 
           <div className="mt-6 grid grid-cols-2 gap-6">
             <InvoiceAddressField
-              label="Billed to:"
+              label={t("billedTo")}
               onChange={setBillingAddress}
-              placeholder="Client name and address"
+              placeholder={t("clientNameAndAddress")}
               testId="invoice-billing-address"
               value={billingAddress}
             />
             <InvoiceAddressField
-              label="Pay to:"
+              label={t("payTo")}
               onChange={setWorkspaceAddress}
-              placeholder="Your company name and address"
+              placeholder={t("yourCompanyNameAndAddress")}
               testId="invoice-workspace-address"
               value={workspaceAddress}
             />
@@ -217,13 +219,13 @@ export function InvoiceEditorPage(): ReactElement {
 
           <div className="mt-6">
             <label className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--track-text-soft)]">
-              Message
+              {t("message")}
             </label>
             <textarea
               className="min-h-[80px] w-full resize-y rounded border border-transparent bg-[var(--track-input-bg)] px-3 py-2 text-[14px] text-white placeholder:text-[var(--track-text-disabled)] hover:border-[var(--track-control-border)] focus:border-[var(--track-control-border-strong)] focus:outline-none"
               data-testid="invoice-message"
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Thank you for your business..."
+              placeholder={t("thankYouForYourBusiness")}
               value={message}
             />
           </div>

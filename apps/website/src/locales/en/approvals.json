@@ -1,4 +1,6 @@
 {
+  "approvals": "Approvals",
+  "timesheetApprovals": "Timesheet Approvals",
   "setUpTimesheetsForMembers": "Set up timesheets for members",
   "timesheetSetupDescription": "Timesheet setup allows automatic timesheet creation from tracked time. Each period, members can review and submit their timesheets, which assigned approvers can then review and approve.",
   "members": "Members",

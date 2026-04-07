@@ -1,4 +1,6 @@
 {
+  "approvals": "审批",
+  "timesheetApprovals": "工时表审批",
   "setUpTimesheetsForMembers": "为成员设置时间表",
   "timesheetSetupDescription": "时间表设置允许从跟踪的时间自动创建时间表。每个周期，成员可以查看并提交他们的时间表，然后指定的审批人可以查看并批准。",
   "members": "成员",

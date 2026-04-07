@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 
@@ -37,9 +38,10 @@ export function InvoiceHeaderFields({
   paymentTerms,
   purchaseOrder,
 }: InvoiceHeaderFieldsProps): ReactElement {
+  const { t } = useTranslation("invoices");
   return (
     <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-      <InlineField label="Invoice ID" testId="invoice-document-id">
+      <InlineField label={t("invoiceId")} testId="invoice-document-id">
         <input
           className={INLINE_INPUT_CLASS}
           data-testid="invoice-document-id-input"
@@ -48,17 +50,17 @@ export function InvoiceHeaderFields({
           value={documentId}
         />
       </InlineField>
-      <InlineField label="Invoice Date" testId="invoice-date">
+      <InlineField label={t("invoiceDate")} testId="invoice-date">
         <DatePickerButton className={INLINE_INPUT_CLASS} onChange={onDateChange} value={date} />
       </InlineField>
-      <InlineField label="Due date" testId="invoice-due-date">
+      <InlineField label={t("dueDate")} testId="invoice-due-date">
         <DatePickerButton
           className={INLINE_INPUT_CLASS}
           onChange={onDueDateChange}
           value={dueDate}
         />
       </InlineField>
-      <InlineField label="Purchase order" testId="invoice-purchase-order">
+      <InlineField label={t("purchaseOrder")} testId="invoice-purchase-order">
         <input
           className={INLINE_INPUT_PLACEHOLDER_CLASS}
           onChange={(e) => onPurchaseOrderChange(e.target.value)}
@@ -67,7 +69,7 @@ export function InvoiceHeaderFields({
           value={purchaseOrder}
         />
       </InlineField>
-      <InlineField label="Payment terms" testId="invoice-payment-terms">
+      <InlineField label={t("paymentTerms")} testId="invoice-payment-terms">
         <input
           className={INLINE_INPUT_PLACEHOLDER_CLASS}
           onChange={(e) => onPaymentTermsChange(e.target.value)}
@@ -76,7 +78,7 @@ export function InvoiceHeaderFields({
           value={paymentTerms}
         />
       </InlineField>
-      <InlineField label="Currency" testId="invoice-currency">
+      <InlineField label={t("currency")} testId="invoice-currency">
         <input
           className={INLINE_INPUT_CLASS}
           onChange={(e) => onCurrencyChange(e.target.value)}

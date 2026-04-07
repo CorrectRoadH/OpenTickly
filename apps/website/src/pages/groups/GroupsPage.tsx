@@ -1,10 +1,12 @@
 import { AppButton, AppPanel } from "@opentoggl/web-ui";
 import { type FormEvent, type ReactElement, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useCreateGroupMutation, useGroupsQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
 export function GroupsPage(): ReactElement {
+  const { t } = useTranslation("groups");
   const session = useSession();
   const groupsQuery = useGroupsQuery(session.currentWorkspace.id);
   const createGroupMutation = useCreateGroupMutation(session.currentWorkspace.id);
@@ -18,7 +20,7 @@ export function GroupsPage(): ReactElement {
   if (groupsQuery.isPending) {
     return (
       <AppPanel tone="muted">
-        <p className="text-sm text-slate-400">Loading groups…</p>
+        <p className="text-sm text-slate-400">{t("loadingGroups")}</p>
       </AppPanel>
     );
   }
@@ -27,10 +29,8 @@ export function GroupsPage(): ReactElement {
     return (
       <AppPanel tone="danger">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Groups</h1>
-          <p className="text-sm leading-6 text-rose-300">
-            Unable to load groups. Refresh to try again.
-          </p>
+          <h1 className="text-3xl font-semibold text-white">{t("groups")}</h1>
+          <p className="text-sm leading-6 text-rose-300">{t("unableToLoadGroups")}</p>
         </div>
       </AppPanel>
     );
@@ -44,22 +44,22 @@ export function GroupsPage(): ReactElement {
 
     await createGroupMutation.mutateAsync(trimmedGroupName);
     setGroupName("");
-    setStatus("Group created");
+    setStatus(t("teamCreated"));
   }
 
   return (
     <AppPanel data-testid="groups-page" tone="muted">
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <h1 className="text-3xl font-semibold text-white">Teams</h1>
-          <p className="text-sm text-slate-500">Organization team directory</p>
+          <h1 className="text-3xl font-semibold text-white">{t("teams")}</h1>
+          <p className="text-sm text-slate-500">{t("organizationTeamDirectory")}</p>
           <p className="text-sm leading-6 text-slate-400">
             Manage teams (groups) across the organization. Teams can be assigned to workspaces and
             projects for batch access control.
           </p>
         </div>
         <AppButton onClick={() => groupNameInputRef.current?.focus()} type="button">
-          Create team
+          {t("createTeam")}
         </AppButton>
       </div>
 
@@ -69,7 +69,7 @@ export function GroupsPage(): ReactElement {
         onSubmit={handleCreateGroup}
       >
         <label className="flex min-w-[18rem] flex-col gap-2 text-sm font-medium text-slate-300">
-          Team name
+          {t("teamName")}
           <input
             ref={groupNameInputRef}
             className="rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3 text-white"
@@ -81,7 +81,7 @@ export function GroupsPage(): ReactElement {
           disabled={trimmedGroupName.length === 0 || createGroupMutation.isPending}
           type="submit"
         >
-          Save team
+          {t("save")}
         </AppButton>
         {status ? (
           <p className="text-sm font-medium text-[var(--track-text-accent)]">{status}</p>
@@ -98,7 +98,7 @@ export function GroupsPage(): ReactElement {
             <li key={group.id} className="flex items-center justify-between py-3">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-white">{group.name}</p>
-                <p className="text-xs text-slate-400">Team</p>
+                <p className="text-xs text-slate-400">{t("team")}</p>
               </div>
             </li>
           ))}
@@ -108,10 +108,8 @@ export function GroupsPage(): ReactElement {
           className="mt-6 rounded-xl border border-dashed border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-5 py-5 text-sm text-slate-300"
           data-testid="groups-empty-state"
         >
-          <p className="font-semibold text-white">No teams in this organization yet.</p>
-          <p className="mt-2 text-slate-400">
-            Create a team to batch-assign users to workspaces and projects across the organization.
-          </p>
+          <p className="font-semibold text-white">{t("noTeamsYet")}</p>
+          <p className="mt-2 text-slate-400">{t("noTeamsDescription")}</p>
         </section>
       )}
 
@@ -119,9 +117,7 @@ export function GroupsPage(): ReactElement {
         className="mt-6 rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] p-3 text-sm text-slate-300"
         data-testid="groups-summary"
       >
-        <p className="font-medium text-white">
-          Showing {groups.length} team{groups.length === 1 ? "" : "s"}.
-        </p>
+        <p className="font-medium text-white">{t("showingTeams", { count: groups.length })}</p>
       </div>
     </AppPanel>
   );

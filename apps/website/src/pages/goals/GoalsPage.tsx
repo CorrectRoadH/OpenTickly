@@ -1,4 +1,5 @@
 import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AppButton,
   DirectorySurfaceMessage,
@@ -62,26 +63,12 @@ function formatTrackedHours(tracked?: number, target?: number): string {
   return `${trackedH}/${targetH} hours`;
 }
 
-function formatEndDate(goal: HandlergoalsApiResponse): string {
-  if (!goal.end_date) return "No end date";
-  return goal.end_date;
-}
-
 function todayISOString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-const goalColumns: DirectoryTableColumn[] = [
-  { key: "name", label: "Name", width: "minmax(200px,1.5fr)" },
-  { key: "member", label: "Member", width: "100px" },
-  { key: "for", label: "For", width: "minmax(200px,1.5fr)" },
-  { key: "progress", label: "Progress", width: "160px" },
-  { key: "streak", label: "Streak", width: "80px" },
-  { key: "endDate", label: "End date", width: "120px" },
-  { key: "actions", label: "", width: "42px", align: "end" },
-];
-
 export function GoalsPage(): ReactElement {
+  const { t } = useTranslation("goals");
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const [statusFilter, setStatusFilter] = useState<GoalStatusFilter>("active");
@@ -99,6 +86,16 @@ export function GoalsPage(): ReactElement {
 
   const mutationPending =
     createGoalMutation.isPending || updateGoalMutation.isPending || deleteGoalMutation.isPending;
+
+  const goalColumns: DirectoryTableColumn[] = [
+    { key: "name", label: t("nameColumn"), width: "minmax(200px,1.5fr)" },
+    { key: "member", label: t("member"), width: "100px" },
+    { key: "for", label: t("for"), width: "minmax(200px,1.5fr)" },
+    { key: "progress", label: t("progress"), width: "160px" },
+    { key: "streak", label: t("streak"), width: "80px" },
+    { key: "endDate", label: t("endDate"), width: "120px" },
+    { key: "actions", label: "", width: "42px", align: "end" },
+  ];
 
   function openCreateDialog() {
     setEditorMode("create");
@@ -125,7 +122,7 @@ export function GoalsPage(): ReactElement {
           end_date: data.noEndDate ? undefined : data.endDate || undefined,
         },
       });
-      setStatusMessage("Goal updated");
+      setStatusMessage(t("goalUpdated"));
     } else {
       await createGoalMutation.mutateAsync({
         name: data.name,
@@ -138,7 +135,7 @@ export function GoalsPage(): ReactElement {
         tag_ids: data.tagIds.length > 0 ? data.tagIds : undefined,
         billable: data.billable || undefined,
       });
-      setStatusMessage("Goal created");
+      setStatusMessage(t("goalCreated"));
     }
     closeEditor();
   }
@@ -147,7 +144,7 @@ export function GoalsPage(): ReactElement {
     return (
       <>
         <DirectoryTableCell>{goal.name ?? ""}</DirectoryTableCell>
-        <DirectoryTableCell>{goal.user_name ?? "Me"}</DirectoryTableCell>
+        <DirectoryTableCell>{goal.user_name ?? t("me")}</DirectoryTableCell>
         <DirectoryTableCell>
           <span>
             {formatComparisonLabel(goal.comparison)}{" "}
@@ -174,7 +171,7 @@ export function GoalsPage(): ReactElement {
             ) : null}
           </span>
         </DirectoryTableCell>
-        <DirectoryTableCell>{formatEndDate(goal)}</DirectoryTableCell>
+        <DirectoryTableCell>{goal.end_date ?? t("noEndDate")}</DirectoryTableCell>
         <div className="flex h-[54px] items-center justify-end">
           <GoalRowActionsMenu
             goal={goal}
@@ -193,13 +190,15 @@ export function GoalsPage(): ReactElement {
       goalId: goal.goal_id,
       request: { active: !goal.active },
     });
-    setStatusMessage(goal.active ? `Archived ${goal.name}` : `Restored ${goal.name}`);
+    setStatusMessage(
+      goal.active ? `${t("archived")} ${goal.name}` : `${t("restored")} ${goal.name}`,
+    );
   }
 
   async function handleDelete(goal: HandlergoalsApiResponse) {
     if (goal.goal_id == null || !window.confirm(`Delete "${goal.name}"?`)) return;
     await deleteGoalMutation.mutateAsync(goal.goal_id);
-    setStatusMessage(`Deleted ${goal.name}`);
+    setStatusMessage(`${t("deleted")} ${goal.name}`);
   }
 
   return (
@@ -209,7 +208,7 @@ export function GoalsPage(): ReactElement {
       headerActions={
         <AppButton data-testid="goals-create-button" onClick={openCreateDialog} type="button">
           <PlusIcon className="size-3.5" />
-          New goal
+          {t("newGoal")}
         </AppButton>
       }
       toolbar={
@@ -219,8 +218,8 @@ export function GoalsPage(): ReactElement {
             data-testid="goals-status-filter"
             onChange={(v) => setStatusFilter(v as GoalStatusFilter)}
             options={[
-              { value: "active", label: "Active goals" },
-              { value: "archived", label: "Archived goals" },
+              { value: "active", label: t("activeGoals") },
+              { value: "archived", label: t("archivedGoals") },
             ]}
             value={statusFilter}
           />
@@ -232,9 +231,9 @@ export function GoalsPage(): ReactElement {
         </>
       }
     >
-      {goalsQuery.isPending ? <DirectorySurfaceMessage message="Loading goals..." /> : null}
+      {goalsQuery.isPending ? <DirectorySurfaceMessage message={t("loadingGoals")} /> : null}
       {goalsQuery.isError ? (
-        <DirectorySurfaceMessage message="Goals are temporarily unavailable." tone="error" />
+        <DirectorySurfaceMessage message={t("goalsTemporarilyUnavailable")} tone="error" />
       ) : null}
 
       {!goalsQuery.isPending && !goalsQuery.isError ? (
@@ -243,7 +242,7 @@ export function GoalsPage(): ReactElement {
             columns={goalColumns}
             data-testid="goals-list"
             data-row-testid="goal-row"
-            emptyState="No goals found."
+            emptyState={t("noGoalsFound")}
             renderRow={renderGoalRow}
             rowKey={(goal) => goal.goal_id ?? 0}
             rows={goals}
@@ -253,13 +252,13 @@ export function GoalsPage(): ReactElement {
             className="flex flex-col items-center justify-center gap-4 px-5 py-20 text-center"
             data-testid="goals-empty-state"
           >
-            <h2 className="text-[20px] font-semibold text-white">No goals yet?</h2>
+            <h2 className="text-[20px] font-semibold text-white">{t("noGoalsYet")}</h2>
             <p className="max-w-[420px] text-[14px] leading-5 text-[var(--track-text-muted)]">
-              Turn your ambitions into achievements. Set your goals — it&apos;s simple and quick!
+              {t("noGoalsDescription")}
             </p>
             <AppButton onClick={openCreateDialog} type="button">
               <PlusIcon className="size-3.5" />
-              New goal
+              {t("newGoal")}
             </AppButton>
           </div>
         )

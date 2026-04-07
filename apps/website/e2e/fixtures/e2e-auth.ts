@@ -249,6 +249,38 @@ export async function createTagForWorkspace(
   }, options);
 }
 
+export async function createTaskForProject(
+  page: Page,
+  options: {
+    name: string;
+    projectId: number;
+    workspaceId: number;
+  },
+): Promise<number> {
+  return page.evaluate(async (request) => {
+    const response = await fetch(
+      `/api/v9/workspaces/${request.workspaceId}/projects/${request.projectId}/tasks`,
+      {
+        body: JSON.stringify({
+          name: request.name,
+        }),
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Create task failed with ${response.status}`);
+    }
+
+    const payload = await response.json();
+    return payload.id ?? 0;
+  }, options);
+}
+
 function resolveAppBaseUrl(testInfo: TestInfo): string {
   const configuredBaseUrl = testInfo.project.use.baseURL;
 

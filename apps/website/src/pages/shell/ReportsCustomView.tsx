@@ -1,6 +1,7 @@
 import { type ReactElement, useMemo, useState } from "react";
 import { Link, Pin, Search } from "lucide-react";
 import { SelectDropdown } from "@opentoggl/web-ui";
+import { useTranslation } from "react-i18next";
 
 import { useSession } from "../../shared/session/session-context.tsx";
 
@@ -16,6 +17,7 @@ type SavedReport = {
 type ShowFilter = "all" | "mine" | "shared";
 
 export function ReportsCustomView(): ReactElement {
+  const { t } = useTranslation("reports");
   const session = useSession();
   const userName = session.user.fullName ?? session.user.email ?? "You";
 
@@ -56,14 +58,14 @@ export function ReportsCustomView(): ReactElement {
       {/* Filter bar */}
       <div className="flex items-center gap-3 border-b border-[var(--track-border)] px-5 py-3">
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-[var(--track-text-muted)]">Show</span>
+          <span className="text-[11px] text-[var(--track-text-muted)]">{t("show")}</span>
           <SelectDropdown
             data-testid="custom-reports-show-filter"
             onChange={(value) => setShowFilter(value as ShowFilter)}
             options={[
-              { label: "All", value: "all" },
-              { label: "Mine", value: "mine" },
-              { label: "Shared with me", value: "shared" },
+              { label: t("all"), value: "all" },
+              { label: t("mine"), value: "mine" },
+              { label: t("sharedWithMe"), value: "shared" },
             ]}
             value={showFilter}
           />
@@ -79,7 +81,7 @@ export function ReportsCustomView(): ReactElement {
             className="h-8 flex-1 bg-transparent text-[12px] text-white placeholder:text-[var(--track-text-muted)] focus:outline-none"
             data-testid="custom-reports-search"
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Find reports..."
+            placeholder={t("findReports")}
             type="text"
             value={search}
           />
@@ -92,22 +94,22 @@ export function ReportsCustomView(): ReactElement {
           <thead>
             <tr className="border-b border-[var(--track-border)]">
               <th className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Name
+                {t("name")}
               </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Creator
+                {t("creator")}
               </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Scheduling
+                {t("scheduling")}
               </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Sharing
+                {t("sharing")}
               </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Link
+                {t("link")}
               </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                Pin
+                {t("pin")}
               </th>
               <th className="w-10 px-2 py-3" />
             </tr>
@@ -119,7 +121,7 @@ export function ReportsCustomView(): ReactElement {
                   className="px-5 py-12 text-center text-[14px] text-[var(--track-text-muted)]"
                   colSpan={7}
                 >
-                  No saved reports found.
+                  {t("noSavedReports")}
                 </td>
               </tr>
             ) : (
@@ -139,7 +141,7 @@ export function ReportsCustomView(): ReactElement {
                       <span className="text-white">
                         {report.creator}
                         {report.isOwner ? (
-                          <span className="text-[var(--track-text-muted)]"> (you)</span>
+                          <span className="text-[var(--track-text-muted)]"> {t("you")}</span>
                         ) : null}
                       </span>
                     </span>
@@ -149,7 +151,7 @@ export function ReportsCustomView(): ReactElement {
                   <td className="px-4 py-3">
                     <button
                       className="text-[var(--track-text-muted)] hover:text-white"
-                      title="Copy link"
+                      title={t("copyLink")}
                       type="button"
                     >
                       <Link aria-hidden="true" className="h-4 w-4" size={16} strokeWidth={2} />
@@ -158,7 +160,7 @@ export function ReportsCustomView(): ReactElement {
                   <td className="px-4 py-3">
                     <button
                       className="text-[var(--track-text-muted)] hover:text-white"
-                      title="Pin report"
+                      title={t("pinReport")}
                       type="button"
                     >
                       <Pin aria-hidden="true" className="h-4 w-4" size={16} strokeWidth={2} />
@@ -167,7 +169,7 @@ export function ReportsCustomView(): ReactElement {
                   <td className="px-2 py-3">
                     <button
                       className="flex h-6 w-6 items-center justify-center text-[var(--track-text-muted)] hover:text-white"
-                      title="More actions"
+                      title={t("moreActions")}
                       type="button"
                     >
                       ⋯

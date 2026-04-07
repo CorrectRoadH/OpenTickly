@@ -1,5 +1,6 @@
 import { AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 type ClientDetailPageProps = {
   clientId: number;
@@ -7,10 +8,13 @@ type ClientDetailPageProps = {
 };
 
 export function ClientDetailPage({ clientId, workspaceId }: ClientDetailPageProps): ReactElement {
+  const { t } = useTranslation("clients");
   return (
     <AppPanel tone="light">
       <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">Client details</h1>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          {t("clientDetails")}
+        </h1>
         <p className="text-sm leading-6 text-slate-600">
           Formal detail entry point for workspace clients.
         </p>

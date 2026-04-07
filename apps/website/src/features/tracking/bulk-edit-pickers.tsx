@@ -1,9 +1,16 @@
 import { type ReactElement, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
-import { PinIcon, ProjectsIcon } from "../../shared/ui/icons.tsx";
+import { ChevronRightIcon, PinIcon, ProjectsIcon } from "../../shared/ui/icons.tsx";
 import { DEFAULT_PROJECT_COLOR, TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
+
+export type ProjectPickerTask = {
+  id: number;
+  name: string;
+  projectId: number;
+};
 
 type ProjectPickerWorkspace = {
   id: number;
@@ -16,8 +23,10 @@ export function ProjectPickerDropdown({
   isCreatingProject,
   onCreateProject,
   onSelect,
+  onTaskSelect,
   onWorkspaceSelect,
   projects,
+  tasks = [],
   workspaceName,
   workspaces,
 }: {
@@ -25,11 +34,14 @@ export function ProjectPickerDropdown({
   isCreatingProject?: boolean;
   onCreateProject?: (name: string, color: string) => Promise<void> | void;
   onSelect: (id: number | null) => void;
+  onTaskSelect?: (projectId: number, taskId: number) => void;
   onWorkspaceSelect?: (workspaceId: number) => void;
   projects: TimeEntryEditorProject[];
+  tasks?: ProjectPickerTask[];
   workspaceName: string;
   workspaces?: ProjectPickerWorkspace[];
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const [search, setSearch] = useState("");
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
@@ -37,8 +49,20 @@ export function ProjectPickerDropdown({
   const [draftColor, setDraftColor] = useState<string>(DEFAULT_PROJECT_COLOR);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [expandedProjectId, setExpandedProjectId] = useState<number | null>(null);
 
   const hasWorkspaces = workspaces != null && workspaces.length > 1 && onWorkspaceSelect != null;
+  const isSearching = search.trim().length > 0;
+
+  const tasksByProject = useMemo(() => {
+    const map = new Map<number, ProjectPickerTask[]>();
+    for (const task of tasks) {
+      const list = map.get(task.projectId) ?? [];
+      list.push(task);
+      map.set(task.projectId, list);
+    }
+    return map;
+  }, [tasks]);
 
   const filteredProjects = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -48,6 +72,12 @@ export function ProjectPickerDropdown({
       return haystack.includes(query);
     });
   }, [projects, search]);
+
+  const filteredTasks = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return [];
+    return tasks.filter((task) => task.name.toLowerCase().includes(query));
+  }, [tasks, search]);
 
   return (
     <PickerDropdown
@@ -63,14 +93,14 @@ export function ProjectPickerDropdown({
               onClick={() => setWorkspaceMenuOpen((prev) => !prev)}
               type="button"
             >
-              Change &rsaquo;
+              {t("change")} ›
             </button>
           ) : null}
         </div>
       }
       search={{
         onChange: setSearch,
-        placeholder: "Search by project, task or client",
+        placeholder: t("searchByProjectTaskOrClient"),
         value: search,
       }}
       testId="bulk-edit-project-picker"
@@ -102,11 +132,11 @@ export function ProjectPickerDropdown({
                   setSearch("");
                 } catch (err) {
                   const message =
-                    err instanceof Error ? err.message : "Project name already exists";
+                    err instanceof Error ? err.message : t("projectNameAlreadyExists");
                   setCreateError(
                     message.toLowerCase().includes("name")
                       ? message
-                      : "Project name already exists",
+                      : t("projectNameAlreadyExists"),
                   );
                 }
               }}
@@ -121,7 +151,7 @@ export function ProjectPickerDropdown({
               type="button"
             >
               <span className="text-[18px] leading-none">+</span>
-              <span>Create a new project</span>
+              <span>{t("createNewProject")}</span>
             </button>
           )
         ) : undefined
@@ -147,7 +177,9 @@ export function ProjectPickerDropdown({
               >
                 <span className="truncate">{workspace.name}</span>
                 {workspace.id === currentWorkspaceId ? (
-                  <span className="text-[11px] text-[var(--track-accent-text)]">Current</span>
+                  <span className="text-[11px] text-[var(--track-accent-text)]">
+                    {t("current")}
+                  </span>
                 ) : null}
               </button>
             ))}
@@ -164,39 +196,110 @@ export function ProjectPickerDropdown({
         <span className="flex size-2.5 shrink-0 items-center justify-center">
           <ProjectsIcon className="size-4 text-[var(--track-overlay-icon-muted)]" />
         </span>
-        <span className="text-[12px] font-medium text-[var(--track-overlay-text)]">No Project</span>
+        <span className="text-[12px] font-medium text-[var(--track-overlay-text)]">
+          {t("noProject")}
+        </span>
       </button>
 
+      {/* Search: flat task results */}
+      {isSearching && filteredTasks.length > 0
+        ? filteredTasks.map((task) => {
+            const project = projects.find((p) => p.id === task.projectId);
+            return (
+              <button
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+                key={`task-${task.id}`}
+                onClick={() => onTaskSelect?.(task.projectId, task.id)}
+                type="button"
+              >
+                <ProjectsIcon
+                  className="size-3.5 shrink-0"
+                  style={{ color: project?.color ?? "var(--track-text-muted)" }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="truncate text-[12px] font-medium"
+                    style={{ color: project?.color ?? "white" }}
+                  >
+                    {project?.name ?? ""} | {task.name}
+                  </div>
+                </div>
+              </button>
+            );
+          })
+        : null}
+
       {/* Project list */}
-      {filteredProjects.map((project) => (
-        <button
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
-          key={project.id}
-          onClick={() => onSelect(project.id)}
-          type="button"
-        >
-          <span
-            className="size-2.5 shrink-0 rounded-full"
-            style={{ backgroundColor: project.color }}
-          />
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-[12px] font-medium text-white">{project.name}</div>
-            {project.clientName ? (
-              <div className="truncate text-[11px] text-[var(--track-control-placeholder-muted)]">
-                {project.clientName}
+      {filteredProjects.map((project) => {
+        const projectTasks = tasksByProject.get(project.id) ?? [];
+        const hasTasks = projectTasks.length > 0 && onTaskSelect != null;
+        const isExpanded = expandedProjectId === project.id;
+
+        return (
+          <div key={project.id}>
+            <div className="flex w-full items-center gap-0">
+              <button
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+                onClick={() => onSelect(project.id)}
+                type="button"
+              >
+                <span
+                  className="size-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: project.color }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[12px] font-medium text-white">{project.name}</div>
+                  {project.clientName ? (
+                    <div className="truncate text-[11px] text-[var(--track-control-placeholder-muted)]">
+                      {project.clientName}
+                    </div>
+                  ) : null}
+                </div>
+                {project.pinned ? (
+                  <span
+                    data-testid="pin-icon"
+                    className="flex shrink-0 items-center text-[var(--track-text-muted)]"
+                  >
+                    <PinIcon className="size-3.5" />
+                  </span>
+                ) : null}
+              </button>
+              {hasTasks ? (
+                <button
+                  aria-label={isExpanded ? "Collapse tasks" : "Expand tasks"}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-white/4 hover:text-white"
+                  onClick={() => setExpandedProjectId(isExpanded ? null : project.id)}
+                  type="button"
+                >
+                  <ChevronRightIcon
+                    className={`size-3.5 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                  />
+                </button>
+              ) : null}
+            </div>
+            {hasTasks && isExpanded ? (
+              <div className="pl-6">
+                {projectTasks.map((task) => (
+                  <button
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition hover:bg-white/4"
+                    key={task.id}
+                    onClick={() => onTaskSelect!(project.id, task.id)}
+                    type="button"
+                  >
+                    <span
+                      className="size-1.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    <span className="truncate text-[12px] font-medium text-[var(--track-overlay-text)]">
+                      {task.name}
+                    </span>
+                  </button>
+                ))}
               </div>
             ) : null}
           </div>
-          {project.pinned ? (
-            <span
-              data-testid="pin-icon"
-              className="flex shrink-0 items-center text-[var(--track-text-muted)]"
-            >
-              <PinIcon className="size-3.5" />
-            </span>
-          ) : null}
-        </button>
-      ))}
+        );
+      })}
     </PickerDropdown>
   );
 }
@@ -222,6 +325,7 @@ function ProjectComposerForm({
   onNameChange: (name: string) => void;
   onSubmit: () => void;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   return (
     <form
       onSubmit={(event) => {
@@ -270,7 +374,7 @@ function ProjectComposerForm({
             createError ? "border-rose-400" : "border-[var(--track-control-border)]"
           }`}
           onChange={(event) => onNameChange(event.target.value)}
-          placeholder="Project name"
+          placeholder={t("projectNamePlaceholder")}
           value={draftName}
         />
         <button
@@ -278,7 +382,7 @@ function ProjectComposerForm({
           disabled={isCreating || draftName.trim().length === 0}
           type="submit"
         >
-          {isCreating ? "Creating..." : "Create"}
+          {isCreating ? t("creating") : t("save")}
         </button>
       </div>
       {createError ? <p className="mt-1.5 text-[12px] text-rose-400">{createError}</p> : null}
@@ -299,9 +403,10 @@ export function TagPickerDropdown({
   search: string;
   selectedTagIds: Set<number>;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   return (
     <PickerDropdown
-      search={{ onChange: onSearch, placeholder: "Add/filter tags", value: search }}
+      search={{ onChange: onSearch, placeholder: t("addFilterTags"), value: search }}
       testId="bulk-edit-tag-picker"
     >
       {filteredTags.map((tag) => {

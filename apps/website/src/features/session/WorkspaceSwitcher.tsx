@@ -7,6 +7,7 @@ import {
   useDropdownClose,
 } from "@opentoggl/web-ui";
 import { useEffect, useId, useRef, useState, type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { SessionOrganizationViewModel } from "../../entities/session/session-bootstrap.ts";
 import { useCreateOrganizationMutation } from "../../shared/query/web-shell.ts";
@@ -31,6 +32,7 @@ export function WorkspaceSwitcher({
   onSetDefault,
   organizations,
 }: WorkspaceSwitcherProps): ReactElement {
+  const { t } = useTranslation("navigation");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [optimisticOrganization, setOptimisticOrganization] =
     useState<SessionOrganizationViewModel | null>(null);
@@ -125,7 +127,7 @@ export function WorkspaceSwitcher({
   return (
     <div className="relative w-full">
       <span className="sr-only" id={`${listboxId}-label`}>
-        Organization
+        {t("organization")}
       </span>
       <Dropdown
         panelClassName="w-[min(360px,calc(100vw-2rem))] rounded-[12px] border border-[var(--track-border)] bg-[var(--track-surface)] shadow-[0_18px_48px_var(--track-shadow-elevated)]"
@@ -159,9 +161,9 @@ export function WorkspaceSwitcher({
       {createDialogOpen ? (
         <CreateNameDialog
           isPending={createOrganizationMutation.isPending}
-          nameLabel="Organization name"
+          nameLabel={t("organizationName")}
           testId="create-organization-dialog"
-          namePlaceholder="Organization name"
+          namePlaceholder={t("organizationName")}
           nameValue={organizationName}
           onClose={() => {
             if (createOrganizationMutation.isPending) {
@@ -176,8 +178,8 @@ export function WorkspaceSwitcher({
           onSubmit={() => {
             void handleCreateOrganization();
           }}
-          submitLabel="Create organization"
-          title="New organization"
+          submitLabel={t("createOrganization")}
+          title={t("newOrganization")}
         />
       ) : null}
     </div>
@@ -260,6 +262,7 @@ function OrganizationOptionsPanel({
   organization: SessionOrganizationViewModel | null;
   organizations: SessionOrganizationViewModel[];
 }): ReactElement {
+  const { t } = useTranslation("navigation");
   const close = useDropdownClose();
   const memberCount = organization?.userCount ?? 1;
 
@@ -268,7 +271,7 @@ function OrganizationOptionsPanel({
       <div className="flex items-center gap-2.5 px-2.5 py-2.5">
         <UserAvatar
           className="size-10 shrink-0 border border-[var(--track-border)] bg-[var(--track-surface-muted)]"
-          name={organization?.name ?? "Organization"}
+          name={organization?.name ?? t("organization")}
           textClassName="text-[16px] font-semibold"
         />
         <div className="min-w-0 flex-1">
@@ -276,7 +279,7 @@ function OrganizationOptionsPanel({
             {organization?.name ?? ""}
           </h2>
           <p className="mt-0.5 text-[12px] text-[var(--track-text-muted)]">
-            {memberCount} member{memberCount === 1 ? "" : "s"}
+            {memberCount} {memberCount === 1 ? t("member") : t("members")}
           </p>
         </div>
       </div>
@@ -286,13 +289,13 @@ function OrganizationOptionsPanel({
       <div className="space-y-1 py-1">
         <OrganizationActionLink
           icon={<SettingsIcon className="size-4" />}
-          label="Manage"
+          label={t("manage")}
           muted={!managePath}
           to={managePath}
         />
         <OrganizationActionLink
           icon={<MembersIcon className="size-4" />}
-          label="Invite members"
+          label={t("inviteMembers")}
           muted={!inviteMembersPath}
           to={inviteMembersPath}
         />
@@ -307,7 +310,7 @@ function OrganizationOptionsPanel({
           }}
           variant="secondary"
         >
-          Create organization
+          {t("createOrganization")}
         </AppButton>
       </div>
 
@@ -315,7 +318,7 @@ function OrganizationOptionsPanel({
 
       <div className="px-2.5 pb-2 pt-2">
         <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-          Organizations
+          {t("organizations")}
         </p>
         <ul
           aria-labelledby={`${listboxId}-label`}
@@ -353,7 +356,7 @@ function OrganizationOptionsPanel({
                   <div className="ml-auto flex shrink-0 items-center gap-2">
                     {entry.isDefault ? (
                       <span className="rounded-full border border-[var(--track-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                        Default
+                        {t("default")}
                       </span>
                     ) : null}
                     {showSetDefault ? (
@@ -369,12 +372,12 @@ function OrganizationOptionsPanel({
                         }}
                         type="button"
                       >
-                        Set default
+                        {t("setDefault")}
                       </button>
                     ) : null}
                     {selected ? (
                       <span
-                        aria-label="Current organization"
+                        aria-label={t("currentOrganization")}
                         className="text-[var(--track-accent)]"
                       >
                         <CheckIcon className="size-4" />

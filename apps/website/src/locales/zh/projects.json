@@ -82,5 +82,14 @@
   "pinProjectAction": "固定项目 {{name}}",
   "unpinProjectAction": "取消固定项目 {{name}}",
   "archiveProjectAction": "归档项目 {{name}}",
-  "restoreProjectAction": "恢复项目 {{name}}"
+  "restoreProjectAction": "恢复项目 {{name}}",
+  "allMembersTeams": "所有成员/团队",
+  "rate": "费率",
+  "cost": "成本",
+  "role": "角色",
+  "totalHours": "总小时数",
+  "billableHours": "可计费小时数",
+  "editProject": "编辑项目",
+  "addMember": "添加成员",
+  "viewInReports": "在报告中查看"
 }

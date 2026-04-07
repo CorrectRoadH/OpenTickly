@@ -1,4 +1,5 @@
 import { type ReactElement, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -64,6 +65,7 @@ export function ReportsDetailedView({
   filters,
   memberFilter,
 }: ReportsDetailedViewProps): ReactElement {
+  const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const entriesQuery = useTimeEntriesQuery({
     endDate: dateRange.endDate,
@@ -88,17 +90,15 @@ export function ReportsDetailedView({
   );
 
   if (entriesQuery.isPending) {
-    return <ReportsSurfaceMessage message="Loading detailed entries..." />;
+    return <ReportsSurfaceMessage message={t("loadingDetailedEntries")} />;
   }
 
   if (entriesQuery.isError) {
-    return <ReportsSurfaceMessage message="Could not load time entries." tone="error" />;
+    return <ReportsSurfaceMessage message={t("couldNotLoadTimeEntries")} tone="error" />;
   }
 
   if (filteredEntries.length === 0) {
-    return (
-      <ReportsSurfaceMessage message="No time entries found for the selected period and filters." />
-    );
+    return <ReportsSurfaceMessage message={t("noTimeEntriesFound")} />;
   }
 
   return (
@@ -110,14 +110,14 @@ export function ReportsDetailedView({
         <table className="w-full text-left text-[12px]">
           <thead>
             <tr className="border-b border-[var(--track-border)] text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">Project</th>
-              <th className="px-4 py-3">Client</th>
-              <th className="px-4 py-3 text-right">Duration</th>
-              <th className="px-4 py-3">Start</th>
-              <th className="px-4 py-3">End</th>
-              <th className="px-4 py-3">Tags</th>
-              <th className="px-4 py-3 text-center">Billable</th>
+              <th className="px-4 py-3">{t("description")}</th>
+              <th className="px-4 py-3">{t("project")}</th>
+              <th className="px-4 py-3">{t("client")}</th>
+              <th className="px-4 py-3 text-right">{t("duration")}</th>
+              <th className="px-4 py-3">{t("startTime")}</th>
+              <th className="px-4 py-3">{t("stopTime")}</th>
+              <th className="px-4 py-3">{t("tags")}</th>
+              <th className="px-4 py-3 text-center">{t("billable")}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--track-border)]">
@@ -128,7 +128,7 @@ export function ReportsDetailedView({
           <tfoot>
             <tr className="border-t border-[var(--track-border)] bg-[var(--track-surface-muted)]">
               <td className="px-4 py-3 text-[12px] font-semibold text-white" colSpan={3}>
-                Total ({filteredEntries.length} entries)
+                {t("totalEntries", { count: filteredEntries.length })}
               </td>
               <td className="px-4 py-3 text-right text-[12px] font-semibold tabular-nums text-white">
                 {formatClockDuration(totalSeconds, durationFormat)}
@@ -147,6 +147,7 @@ function DetailedRow({
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
 }): ReactElement {
+  const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const tags = entry.tags ?? [];
 
@@ -154,7 +155,7 @@ function DetailedRow({
     <tr className="text-[12px] text-white hover:bg-[var(--track-surface-muted)]">
       <td className="max-w-[240px] truncate px-4 py-3">
         {entry.description?.trim() || (
-          <span className="text-[var(--track-text-soft)]">(no description)</span>
+          <span className="text-[var(--track-text-soft)]">{t("noDescription")}</span>
         )}
       </td>
       <td className="px-4 py-3 text-[var(--track-text-muted)]">

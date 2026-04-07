@@ -1,14 +1,9 @@
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { ReportsBreakdownRow } from "./reports-page-data.ts";
 import type { BreakdownDimension } from "./useReportsPageState.ts";
 import { SelectDropdown } from "@opentoggl/web-ui";
-
-const BREAKDOWN_OPTIONS: { label: string; value: BreakdownDimension }[] = [
-  { label: "Projects", value: "projects" },
-  { label: "Clients", value: "clients" },
-  { label: "Entries", value: "entries" },
-];
 
 type BreakdownPanelProps = {
   breakdownBy: BreakdownDimension;
@@ -29,12 +24,18 @@ export function ReportsBreakdownPanel({
   onBreakdownByChange,
   toggleRow,
 }: BreakdownPanelProps): ReactElement {
+  const { t } = useTranslation("reports");
+  const BREAKDOWN_OPTIONS: { label: string; value: BreakdownDimension }[] = [
+    { label: t("projects"), value: "projects" },
+    { label: t("clients"), value: "clients" },
+    { label: t("entries"), value: "entries" },
+  ];
   const headerLabel =
     breakdownBy === "projects"
-      ? "Project | Member"
+      ? `${t("project")} | ${t("member")}`
       : breakdownBy === "clients"
-        ? "Client | Member"
-        : "Entry";
+        ? `${t("client")} | ${t("member")}`
+        : t("entry");
 
   return (
     <section
@@ -44,7 +45,7 @@ export function ReportsBreakdownPanel({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-[14px] font-semibold leading-[23px] text-white">
-            Project and member breakdown
+            {t("projectAndMemberBreakdown")}
           </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -52,7 +53,7 @@ export function ReportsBreakdownPanel({
             data-testid="reports-breakdown-by"
             onChange={onBreakdownByChange as (value: string) => void}
             options={BREAKDOWN_OPTIONS}
-            prefix="Breakdown by"
+            prefix={t("breakdownBy")}
             value={breakdownBy}
           />
         </div>
@@ -65,8 +66,8 @@ export function ReportsBreakdownPanel({
         <div className="grid grid-cols-[28px_minmax(0,1fr)_98px_98px_24px] items-center gap-3 border-b border-[var(--track-border)] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
           <span />
           <span>{headerLabel}</span>
-          <span>Duration</span>
-          <span>Duration %</span>
+          <span>{t("duration")}</span>
+          <span>{t("durationPercent")}</span>
           <span className="text-right text-base leading-none">+</span>
         </div>
         {breakdownRows.length > 0 ? (
@@ -82,7 +83,7 @@ export function ReportsBreakdownPanel({
           </ul>
         ) : (
           <div className="px-4 py-8 text-[14px] text-[var(--track-text-muted)]">
-            No tracked time for this period yet.
+            {t("noTrackedTimeYet")}
           </div>
         )}
       </div>

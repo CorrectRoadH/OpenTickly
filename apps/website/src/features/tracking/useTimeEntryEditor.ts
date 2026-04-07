@@ -131,13 +131,22 @@ export function useTimeEntryEditor(
 
   // Field state — initialized from entry
   const [description, setDescription] = useState(initialEntry.description ?? "");
-  const [projectId, setProjectId] = useState<number | null>(
+  const [projectId, setProjectIdRaw] = useState<number | null>(
     resolveTimeEntryProjectId(initialEntry),
+  );
+  const [taskId, setTaskId] = useState<number | null>(
+    initialEntry.task_id ?? initialEntry.tid ?? null,
   );
   const [tagIds, setTagIds] = useState<number[]>(initialEntry.tag_ids ?? []);
   const [projects, setProjects] = useState<TimeEntryEditorProject[]>(initialProjects);
   const [tags, setTags] = useState<TimeEntryEditorTag[]>(initialTags);
   const [error, setError] = useState<string | null>(null);
+
+  // Clear task when project changes
+  const setProjectId = useCallback((id: number | null) => {
+    setProjectIdRaw(id);
+    setTaskId(null);
+  }, []);
 
   // Sync with external data when it arrives (e.g. after page reload)
   useEffect(() => {
@@ -156,15 +165,17 @@ export function useTimeEntryEditor(
   // Dirty check
   const isDirty = useMemo(() => {
     const originalProjectId = resolveTimeEntryProjectId(initialEntry);
+    const originalTaskId = initialEntry.task_id ?? initialEntry.tid ?? null;
     const originalTagIds = initialEntry.tag_ids ?? [];
     return (
       description !== (initialEntry.description ?? "") ||
       projectId !== originalProjectId ||
+      taskId !== originalTaskId ||
       !areNumberListsEqual(tagIds, originalTagIds) ||
       (entry.start ?? null) !== (initialEntry.start ?? null) ||
       (entry.stop ?? null) !== (initialEntry.stop ?? null)
     );
-  }, [description, projectId, tagIds, entry.start, entry.stop, initialEntry]);
+  }, [description, projectId, taskId, tagIds, entry.start, entry.stop, initialEntry]);
 
   // Mutations
   const createProjectMutation = useCreateProjectMutation(entryWorkspaceId);
@@ -214,7 +225,7 @@ export function useTimeEntryEditor(
           start: entry.start ?? toTrackIso(new Date()),
           stop: entry.stop ?? toTrackIso(new Date()),
           tagIds,
-          taskId: entry.task_id ?? entry.tid ?? null,
+          taskId,
         });
         setError(null);
         onClose();
@@ -241,7 +252,7 @@ export function useTimeEntryEditor(
           start: entry.start,
           stop: entry.stop,
           tagIds,
-          taskId: entry.task_id ?? entry.tid,
+          taskId,
         },
         timeEntryId: entry.id,
         workspaceId: wid,
@@ -252,6 +263,7 @@ export function useTimeEntryEditor(
     entry,
     description,
     projectId,
+    taskId,
     tagIds,
     isNewEntry,
     createTimeEntryMutation,
@@ -300,14 +312,14 @@ export function useTimeEntryEditor(
         start: entry.start,
         stop: entry.stop,
         tagIds,
-        taskId: entry.task_id ?? entry.tid ?? null,
+        taskId,
       });
       setError(null);
       onClose();
     } catch (err) {
       setError(resolveSingleTimerErrorMessage(err));
     }
-  }, [entry, description, projectId, tagIds, createTimeEntryMutation, onClose]);
+  }, [entry, description, projectId, taskId, tagIds, createTimeEntryMutation, onClose]);
 
   const favorite = useCallback(async () => {
     try {
@@ -355,7 +367,7 @@ export function useTimeEntryEditor(
             start: entry.start,
             stop: new Date(resolvedSplitMs).toISOString(),
             tagIds,
-            taskId: entry.task_id ?? entry.tid ?? null,
+            taskId,
           },
           timeEntryId: entry.id,
           workspaceId: wid,
@@ -368,7 +380,7 @@ export function useTimeEntryEditor(
           start: new Date(resolvedSplitMs).toISOString(),
           stop: entry.stop,
           tagIds,
-          taskId: entry.task_id ?? entry.tid ?? null,
+          taskId,
         });
         setError(null);
         onClose();

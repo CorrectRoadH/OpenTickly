@@ -14,6 +14,7 @@ import {
   useCreateTagMutation,
   useCreateTimeEntryMutation,
   useFavoritesQuery,
+  useTasksQuery,
   useTimeEntriesQuery,
 } from "../../shared/query/web-shell.ts";
 import { ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
@@ -65,9 +66,11 @@ export function TimerComposerBar({
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const createTagMutation = useCreateTagMutation(workspaceId);
 
-  // Favorites for suggestions dialog
+  // Favorites and tasks for suggestions dialog
   const favoritesQuery = useFavoritesQuery(workspaceId);
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
+  const tasksQuery = useTasksQuery(workspaceId);
+  const allTasks = tasksQuery.data?.data ?? [];
 
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
   const recentWorkspaceEntriesRef = useRef<GithubComTogglTogglApiInternalModelsTimeEntry[]>([]);
@@ -194,6 +197,7 @@ export function TimerComposerBar({
             }
           } else {
             composer.setDraftProjectId(projectId);
+            composer.setDraftTaskId(null);
           }
         }}
         projectOptions={projectOptions}
@@ -274,7 +278,7 @@ export function TimerComposerBar({
                 start: start.toISOString(),
                 stop: stop.toISOString(),
                 tagIds: composer.draftTagIds ?? [],
-                taskId: null,
+                taskId: composer.draftTaskId,
               });
             }}
             timezone={timezone}
@@ -299,6 +303,7 @@ export function TimerComposerBar({
           projectOptions={projectOptions}
           recentWorkspaceEntries={recentWorkspaceEntries}
           session={session}
+          tasks={allTasks}
           workspaceId={workspaceId}
         />
       ) : null}
@@ -312,6 +317,7 @@ function ComposerSuggestionsPortal({
   projectOptions,
   recentWorkspaceEntries,
   session,
+  tasks,
   workspaceId,
 }: {
   composer: ReturnType<typeof useTimerComposer>;
@@ -324,6 +330,7 @@ function ComposerSuggestionsPortal({
   projectOptions: Parameters<typeof TimerComposerSuggestionsDialog>[0]["projects"];
   recentWorkspaceEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   session: ReturnType<typeof useWorkspaceData>["session"];
+  tasks: Parameters<typeof TimerComposerSuggestionsDialog>[0]["tasks"];
   workspaceId: number;
 }): ReactElement {
   return (
@@ -342,11 +349,18 @@ function ComposerSuggestionsPortal({
       query={composer.timerDescriptionValue}
       onProjectSelect={(projectId) => {
         composer.setDraftProjectId(projectId);
+        composer.setDraftTaskId(null);
+        composer.closeComposerSuggestions();
+      }}
+      onTaskSelect={(projectId, taskId) => {
+        composer.setDraftProjectId(projectId);
+        composer.setDraftTaskId(taskId);
         composer.closeComposerSuggestions();
       }}
       onTimeEntrySelect={(entry) => {
         composer.setDraftDescription(entry.description ?? "");
         composer.setDraftProjectId(resolveTimeEntryProjectId(entry));
+        composer.setDraftTaskId(entry.task_id ?? null);
         composer.setDraftTagIds(entry.tag_ids ?? []);
         composer.closeComposerSuggestions();
       }}
@@ -356,6 +370,7 @@ function ComposerSuggestionsPortal({
       }}
       projects={projectOptions}
       searchResults={composer.searchedTimeEntries}
+      tasks={tasks}
       timeEntries={recentWorkspaceEntries}
       workspaces={session.availableWorkspaces.map((workspace) => ({
         id: workspace.id,

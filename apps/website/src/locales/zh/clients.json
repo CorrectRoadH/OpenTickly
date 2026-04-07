@@ -3,6 +3,7 @@
   "clientsAndProjects": "客户 | 项目",
   "newClient": "新建客户",
   "searchClients": "搜索客户...",
+  "clientDetails": "客户详情",
   "active": "活跃",
   "inactive": "非活跃",
   "showingClientsInWorkspace": "显示工作区 {{workspaceId}} 中的 {{count}} 个客户。",

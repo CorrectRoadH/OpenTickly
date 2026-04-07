@@ -1,0 +1,5 @@
+{
+  "integrations": "Integrations",
+  "webhooks": "Webhooks",
+  "webhooksDescription": "Set up webhooks to receive real-time notifications when events happen in your workspace. Webhook management is being built."
+}

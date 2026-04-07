@@ -19,5 +19,16 @@
   "auditLog": "Audit Log",
   "subscription": "Subscription",
   "settings": "Settings",
-  "instanceAdmin": "Instance Admin"
+  "instanceAdmin": "Instance Admin",
+  "organization": "Organization",
+  "newOrganization": "New organization",
+  "createOrganization": "Create organization",
+  "inviteMembers": "Invite members",
+  "organizations": "Organizations",
+  "default": "Default",
+  "setDefault": "Set default",
+  "currentOrganization": "Current organization",
+  "member": "member",
+  "members": "members",
+  "organizationName": "Organization name"
 }

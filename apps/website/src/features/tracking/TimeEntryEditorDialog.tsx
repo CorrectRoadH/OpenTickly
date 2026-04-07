@@ -334,7 +334,7 @@ export function TimeEntryEditorDialog({
         <div className="relative flex items-center gap-3">
           <TimerActionButton
             ariaLabel={
-              primaryActionLabel === "Continue Time Entry" ? "Continue entry" : primaryActionLabel
+              primaryActionLabel === "Continue Time Entry" ? t("continueEntry") : primaryActionLabel
             }
             disabled={!onPrimaryAction || isPrimaryActionPending}
             isRunning={primaryActionIcon === "stop"}
@@ -343,7 +343,7 @@ export function TimeEntryEditorDialog({
           />
           {canDuplicate ? (
             <button
-              aria-label="Duplicate entry"
+              aria-label={t("duplicateEntry")}
               className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
               disabled={isDirty}
               onClick={() => {
@@ -367,7 +367,7 @@ export function TimeEntryEditorDialog({
             placement="bottom-left"
             trigger={
               <button
-                aria-label="Entry actions"
+                aria-label={t("entryActions")}
                 className="flex size-8 items-center justify-center rounded-full text-[var(--track-overlay-icon)] transition hover:bg-white/6"
                 type="button"
               >
@@ -410,7 +410,7 @@ export function TimeEntryEditorDialog({
           </DropdownMenu>
         </div>
         <button
-          aria-label="Close editor"
+          aria-label={t("closeEditor")}
           className="flex size-7 items-center justify-center rounded-full text-[14px] leading-none text-[var(--track-overlay-icon-subtle)] transition hover:bg-white/6 hover:text-white"
           onClick={() => {
             if (isDirty) {
@@ -459,7 +459,7 @@ export function TimeEntryEditorDialog({
                 void onSave();
               }
             }}
-            placeholder="Add a description"
+            placeholder={t("addDescriptionPlaceholder")}
             value={description}
           />
         </label>
@@ -562,7 +562,7 @@ export function TimeEntryEditorDialog({
           {picker === "tag" ? (
             <PickerSurface
               icon={<TagsIcon className="size-4 shrink-0 text-[var(--track-overlay-icon-muted)]" />}
-              title="Tags"
+              title={t("tags")}
             >
               <SearchField
                 placeholder="Search tags"
@@ -590,7 +590,7 @@ export function TimeEntryEditorDialog({
                       </div>
                       {selected ? (
                         <span className="text-[12px] text-[var(--track-accent-text)]">
-                          Selected
+                          {t("selected")}
                         </span>
                       ) : null}
                     </button>
@@ -628,7 +628,7 @@ export function TimeEntryEditorDialog({
                       disabled={isCreatingTag || tagDraftName.trim().length === 0}
                       type="submit"
                     >
-                      {isCreatingTag ? "Creating..." : "Create"}
+                      {isCreatingTag ? t("creating") : t("save")}
                     </button>
                   </div>
                 </form>
@@ -643,7 +643,7 @@ export function TimeEntryEditorDialog({
                     type="button"
                   >
                     <span className="text-[14px] leading-none">+</span>
-                    <span>Create a new tag</span>
+                    <span>{t("createNewTag")}</span>
                   </button>
                 </div>
               )}
@@ -719,7 +719,7 @@ export function TimeEntryEditorDialog({
                 />
               ) : (
                 <span className="flex h-[38px] shrink-0 items-center rounded-[10px] border border-[var(--track-control-border-contrast)] px-3 text-[14px] font-semibold tabular-nums text-[var(--track-control-border-contrast)]">
-                  Running
+                  {t("running")}
                 </span>
               )}
               <span className="flex h-[38px] shrink-0 items-center justify-center px-1 text-[11px] tabular-nums text-[var(--track-overlay-text-muted)]">
@@ -735,7 +735,13 @@ export function TimeEntryEditorDialog({
                 type="button"
                 variant="primary"
               >
-                {isSaving ? (isNewEntry ? "Adding..." : "Saving...") : isNewEntry ? "Add" : "Save"}
+                {isSaving
+                  ? isNewEntry
+                    ? t("adding")
+                    : t("loading")
+                  : isNewEntry
+                    ? t("addTimeEntry")
+                    : t("save")}
               </AppButton>
             </div>
 
@@ -773,9 +779,9 @@ export function TimeEntryEditorDialog({
           data-testid="time-entry-editor-discard-confirmation"
         >
           <div className="w-full max-w-[280px] rounded-[14px] border border-[var(--track-control-border)] bg-[var(--track-overlay-surface-raised)] p-4 shadow-[0_16px_32px_var(--track-shadow-overlay-strong)]">
-            <h3 className="text-[14px] font-semibold text-white">Discard changes?</h3>
+            <h3 className="text-[14px] font-semibold text-white">{t("discardChanges")}</h3>
             <p className="mt-2 text-[12px] text-[var(--track-overlay-text-subtle)]">
-              You have unsaved changes in this time entry. Discard them before closing?
+              {t("unsavedChangesMessage")}
             </p>
             <div className="mt-4 flex justify-end gap-2">
               <button
@@ -783,7 +789,7 @@ export function TimeEntryEditorDialog({
                 onClick={() => dispatch({ type: "SET_DISCARD_CONFIRMATION", show: false })}
                 type="button"
               >
-                Keep editing
+                {t("keepEditing")}
               </button>
               <button
                 className="rounded-[10px] bg-[var(--track-danger-fill)] px-3 py-2 text-[12px] font-semibold text-[var(--track-button-text)] transition hover:brightness-110"
@@ -794,7 +800,7 @@ export function TimeEntryEditorDialog({
                 }}
                 type="button"
               >
-                Discard
+                {t("discard")}
               </button>
             </div>
           </div>
@@ -826,13 +832,14 @@ function DescriptionSuggestionsSurface({
   projects: TimeEntryEditorProject[];
   suggestionEntries: GithubComTogglTogglApiInternalModelsTimeEntry[];
   tags: TimeEntryEditorTag[];
-}) {
+}): ReactElement {
+  const { t } = useTranslation("tracking");
   return (
     <div className="absolute left-0 top-[calc(100%+12px)] z-20 w-[360px] rounded-[12px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
       <div className="flex items-center justify-between gap-3 border-b border-white/6 px-4 pb-3">
         <div className="min-w-0">
           <p className="truncate text-[14px] font-semibold text-white">{currentWorkspaceName}</p>
-          <p className="text-[12px] text-[var(--track-control-placeholder-muted)]">Change</p>
+          <p className="text-[12px] text-[var(--track-control-placeholder-muted)]">{t("change")}</p>
         </div>
       </div>
       {entryMode === "billable" ? (
@@ -842,7 +849,7 @@ function DescriptionSuggestionsSurface({
             onClick={onBillableToggle}
             type="button"
           >
-            <span>Billable hours</span>
+            <span>{t("billableHours")}</span>
             <DollarIcon className="size-4 text-[var(--track-accent-secondary)]" />
           </button>
         </div>
@@ -851,7 +858,7 @@ function DescriptionSuggestionsSurface({
       suggestionEntries.length > 0 ? (
         <div className="px-4 pt-3">
           <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
-            Previously tracked time entries
+            {t("previouslyTrackedTimeEntries")}
           </p>
           <div className="mt-2 space-y-1">
             {suggestionEntries.map((suggestion) => (
@@ -862,10 +869,10 @@ function DescriptionSuggestionsSurface({
                 type="button"
               >
                 <span className="truncate text-[14px] font-medium text-white">
-                  {suggestion.description?.trim() || suggestion.project_name || "No description"}
+                  {suggestion.description?.trim() || suggestion.project_name || t("noDescription")}
                 </span>
                 <span className="truncate text-[12px] text-[var(--track-control-placeholder-muted)]">
-                  {suggestion.project_name || "No project"}
+                  {suggestion.project_name || t("noProjectLabel")}
                 </span>
               </button>
             ))}
@@ -875,7 +882,7 @@ function DescriptionSuggestionsSurface({
       {(entryMode === "default" || entryMode === "project") && projects.length > 0 ? (
         <div className="px-4 pt-3">
           <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
-            Projects
+            {t("project")}s
           </p>
           <div className="mt-2 space-y-1">
             {projects.map((project) => (
@@ -898,7 +905,7 @@ function DescriptionSuggestionsSurface({
       {entryMode === "tag" ? (
         <div className="px-4 pt-3">
           <p className="text-[12px] font-semibold uppercase tracking-[0.04em] text-[var(--track-overlay-text-soft)]">
-            Tags
+            {t("tags")}
           </p>
           <div className="mt-2 space-y-1">
             {tags.map((tag) => (
@@ -1055,6 +1062,7 @@ function TimeDisplay({
   timeofdayFormat: TimeFormat;
   timezone: string;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [draft, setDraft] = useState(timeValue);
 
@@ -1072,9 +1080,9 @@ function TimeDisplay({
     <div className="relative flex items-center gap-1.5">
       {editing ? (
         <label className="block">
-          <span className="sr-only">Edit time</span>
+          <span className="sr-only">{t("editTime")}</span>
           <input
-            aria-label="Edit time"
+            aria-label={t("editTime")}
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
@@ -1128,7 +1136,9 @@ function TimeDisplay({
         </button>
       ) : null}
       {hasError ? (
-        <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">Invalid time</span>
+        <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">
+          {t("invalidTime")}
+        </span>
       ) : null}
     </div>
   );

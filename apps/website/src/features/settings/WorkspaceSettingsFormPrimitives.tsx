@@ -35,7 +35,7 @@ export function LogoCard({
   workspaceId: number;
   onLogoChange: (url: string) => void;
 }): ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation("settings");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -52,9 +52,9 @@ export function LogoCard({
         }),
       );
       onLogoChange(result.logo ?? "");
-      toast.success(t("toast:logoUploaded"));
+      toast.success(t("logoUploaded", { ns: "toast" }));
     } catch {
-      toast.error(t("toast:failedToUploadLogo"));
+      toast.error(t("failedToUploadLogo", { ns: "toast" }));
     } finally {
       setUploading(false);
     }
@@ -69,9 +69,9 @@ export function LogoCard({
         }),
       );
       onLogoChange("");
-      toast.success(t("toast:logoRemoved"));
+      toast.success(t("logoRemoved", { ns: "toast" }));
     } catch {
-      toast.error(t("toast:failedToRemoveLogo"));
+      toast.error(t("failedToRemoveLogo", { ns: "toast" }));
     } finally {
       setUploading(false);
     }
@@ -101,7 +101,7 @@ export function LogoCard({
       {hasLogo ? (
         <>
           <img
-            alt="Workspace logo"
+            alt={t("workspaceLogo")}
             className="mb-3 max-h-[120px] max-w-[160px] rounded-[8px] object-contain"
             src={logoUrl}
           />
@@ -113,7 +113,7 @@ export function LogoCard({
               type="button"
             >
               <Upload className="size-3" />
-              Replace
+              {t("replace")}
             </button>
             <button
               className="flex items-center gap-1 rounded-[6px] px-2 py-1 text-[12px] font-medium text-red-400 transition-colors hover:bg-red-400/10 hover:text-red-300"
@@ -122,7 +122,7 @@ export function LogoCard({
               type="button"
             >
               <Trash2 className="size-3" />
-              Remove
+              {t("remove")}
             </button>
           </div>
         </>
@@ -135,7 +135,7 @@ export function LogoCard({
         >
           <Upload className="size-8 text-[var(--track-text-muted)] transition-colors group-hover:text-[var(--track-accent-text)]" />
           <span className="text-center text-[12px] font-medium leading-4 text-[var(--track-text-muted)]">
-            {uploading ? "Uploading…" : "Upload your workspace logo"}
+            {uploading ? t("uploading") : t("uploadYourWorkspaceLogo")}
           </span>
         </button>
       )}
