@@ -5,7 +5,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
@@ -40,16 +39,7 @@ func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error
 
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
 	for _, group := range groups {
-		permissions := []string{"view"}
-		at := group.CreatedAt.UTC().Format(time.RFC3339)
-		response = append(response, publictrackapi.GroupOrganizationGroupResponse{
-			At:          lo.ToPtr(at),
-			GroupId:     lo.ToPtr(int(group.ID)),
-			Name:        lo.ToPtr(group.Name),
-			Permissions: &permissions,
-			Users:       lo.ToPtr([]publictrackapi.GithubComTogglTogglApiInternalModelsOrganizationUserSimple{}),
-			Workspaces:  lo.ToPtr([]int{}),
-		})
+		response = append(response, handler.buildGroupResponse(ctx, group))
 	}
 	return ctx.JSON(http.StatusOK, response)
 }

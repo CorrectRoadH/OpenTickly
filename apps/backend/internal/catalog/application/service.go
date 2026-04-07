@@ -420,6 +420,89 @@ func (service *Service) DeleteGroup(ctx context.Context, organizationID int64, g
 	return nil
 }
 
+func (service *Service) ListGroupMembers(ctx context.Context, groupID int64) ([]GroupMemberView, error) {
+	return service.store.ListGroupMembers(ctx, groupID)
+}
+
+func (service *Service) ListGroupWorkspaces(ctx context.Context, groupID int64) ([]GroupWorkspaceView, error) {
+	return service.store.ListGroupWorkspaces(ctx, groupID)
+}
+
+// SyncGroupMembers replaces the group's member list with the given user IDs.
+// It diffs the current state, adding missing members and removing extra ones.
+func (service *Service) SyncGroupMembers(ctx context.Context, groupID int64, desiredUserIDs []int64) error {
+	current, err := service.store.ListGroupMembers(ctx, groupID)
+	if err != nil {
+		return err
+	}
+
+	currentSet := make(map[int64]bool, len(current))
+	for _, m := range current {
+		currentSet[m.UserID] = true
+	}
+
+	desiredSet := make(map[int64]bool, len(desiredUserIDs))
+	for _, id := range desiredUserIDs {
+		desiredSet[id] = true
+	}
+
+	// Add missing
+	for _, id := range desiredUserIDs {
+		if !currentSet[id] {
+			if err := service.store.AddGroupMember(ctx, groupID, id); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Remove extra
+	for _, m := range current {
+		if !desiredSet[m.UserID] {
+			if err := service.store.RemoveGroupMember(ctx, groupID, m.UserID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// SyncGroupWorkspaces replaces the group's workspace list with the given workspace IDs.
+func (service *Service) SyncGroupWorkspaces(ctx context.Context, groupID int64, desiredWorkspaceIDs []int64) error {
+	current, err := service.store.ListGroupWorkspaces(ctx, groupID)
+	if err != nil {
+		return err
+	}
+
+	currentSet := make(map[int64]bool, len(current))
+	for _, w := range current {
+		currentSet[w.WorkspaceID] = true
+	}
+
+	desiredSet := make(map[int64]bool, len(desiredWorkspaceIDs))
+	for _, id := range desiredWorkspaceIDs {
+		desiredSet[id] = true
+	}
+
+	for _, id := range desiredWorkspaceIDs {
+		if !currentSet[id] {
+			if err := service.store.AddGroupWorkspace(ctx, groupID, id); err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, w := range current {
+		if !desiredSet[w.WorkspaceID] {
+			if err := service.store.RemoveGroupWorkspace(ctx, groupID, w.WorkspaceID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (service *Service) ListTags(ctx context.Context, workspaceID int64, filter ListTagsFilter) ([]TagView, error) {
 	if err := requireWorkspaceID(workspaceID); err != nil {
 		return nil, err

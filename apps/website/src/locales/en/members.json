@@ -33,5 +33,6 @@
   "role": "Role",
   "cancel": "Cancel",
   "sendInvite": "Send invite",
-  "inviteMemberDialogTitle": "Invite member"
+  "inviteMemberDialogTitle": "Invite member",
+  "workspaces": "Workspaces"
 }

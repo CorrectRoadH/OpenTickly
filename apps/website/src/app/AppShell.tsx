@@ -107,7 +107,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
     currentOrganization: session.currentOrganization,
     inviteMembersPath: `/workspaces/${session.currentWorkspace.id}/members`,
     managePath: session.currentOrganization
-      ? buildOrganizationSettingsPath(session.currentOrganization.id)
+      ? buildOrganizationSettingsPath({ organizationId: session.currentOrganization.id })
       : undefined,
     onChange: handleWorkspaceChange,
     onSetDefault: handleSetDefault,

@@ -20,6 +20,7 @@ import type {
   ModelsPostPayload,
   ModelsProjectStatistics,
   WorkspacePayload,
+  GroupPayload,
 } from "../api/generated/public-track/types.gen.ts";
 import type { SavedWeeklyReportData } from "../api/generated/public-reports/types.gen.ts";
 import { postReportsApiV3WorkspaceByWorkspaceIdWeeklyTimeEntries } from "../api/public/reports/index.ts";
@@ -75,6 +76,11 @@ import {
   postWorkspacesByWorkspaceIdGoals,
   putWorkspacesByWorkspaceIdGoalsByGoalId,
   deleteWorkspacesByWorkspaceIdGoalsByGoalId,
+  getOrganizationUsers,
+  getOrganizationGroups,
+  postOrganizationGroup,
+  putOrganizationGroup,
+  deleteOrganizationGroup,
 } from "../api/public/track/index.ts";
 import {
   deleteOrganization,
@@ -368,6 +374,20 @@ export function useOrganizationSettingsQuery(organizationId: number) {
         }),
       ),
     queryKey: ["organization-settings", organizationId],
+  });
+}
+
+export function useOrganizationMembersQuery(organizationId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getOrganizationUsers({
+          path: {
+            organization_id: organizationId,
+          },
+        }),
+      ),
+    queryKey: ["organization-members", organizationId],
   });
 }
 
@@ -1500,6 +1520,93 @@ export function useCreateGroupMutation(workspaceId: number) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: ["groups", workspaceId],
+      });
+    },
+  });
+}
+
+export function useOrgGroupsQuery(organizationId: number) {
+  return useQuery({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getOrganizationGroups({
+          path: { organization_id: organizationId },
+        }),
+      ),
+    queryKey: ["org-groups", organizationId],
+  });
+}
+
+export function useCreateOrgGroupMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: GroupPayload) =>
+      unwrapWebApiResult(
+        postOrganizationGroup({
+          body: payload,
+          path: { organization_id: organizationId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["org-groups", organizationId],
+      });
+    },
+  });
+}
+
+export function useRenameOrgGroupMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ groupId, name }: { groupId: number; name: string }) =>
+      unwrapWebApiResult(
+        putOrganizationGroup({
+          body: { name },
+          path: { organization_id: organizationId, group_id: groupId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["org-groups", organizationId],
+      });
+    },
+  });
+}
+
+export function useDeleteOrgGroupMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (groupId: number) =>
+      unwrapWebApiResult(
+        deleteOrganizationGroup({
+          path: { organization_id: organizationId, group_id: groupId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["org-groups", organizationId],
+      });
+    },
+  });
+}
+
+export function useUpdateOrgGroupMutation(organizationId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ groupId, payload }: { groupId: number; payload: GroupPayload }) =>
+      unwrapWebApiResult(
+        putOrganizationGroup({
+          body: payload,
+          path: { organization_id: organizationId, group_id: groupId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["org-groups", organizationId],
       });
     },
   });

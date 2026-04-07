@@ -10,6 +10,7 @@ import auth from "../locales/en/auth.json";
 import billableRates from "../locales/en/billableRates.json";
 import clients from "../locales/en/clients.json";
 import common from "../locales/en/common.json";
+import groups from "../locales/en/groups.json";
 import instanceAdmin from "../locales/en/instanceAdmin.json";
 import members from "../locales/en/members.json";
 import navigation from "../locales/en/navigation.json";
@@ -60,6 +61,7 @@ void i18n
       "billableRates",
       "clients",
       "common",
+      "groups",
       "instanceAdmin",
       "members",
       "mobile",
@@ -87,6 +89,7 @@ void i18n
         billableRates,
         clients,
         common,
+        groups,
         instanceAdmin,
         members,
         mobile,

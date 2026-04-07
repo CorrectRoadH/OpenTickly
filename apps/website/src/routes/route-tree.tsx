@@ -26,6 +26,10 @@ import {
   normalizeWorkspaceSettingsSection,
   parseLegacyWorkspaceSettingsSearch,
 } from "../shared/url-state/workspace-settings-location.ts";
+import {
+  buildOrganizationSettingsPath,
+  normalizeOrganizationSettingsSection,
+} from "../shared/url-state/organization-settings-location.ts";
 type InstanceAdminSection = "overview" | "users" | "organizations" | "config";
 import { rootRoute } from "./root-route.tsx";
 
@@ -381,8 +385,14 @@ const legacyWorkspaceSettingsRoute = createRoute({
 
 const organizationSettingsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
-  path: "/organizations/$organizationId/settings",
+  path: "/organizations/$organizationId/settings/$section",
   component: OrganizationSettingsRouteComponent,
+});
+
+const legacyOrganizationSettingsRoute = createRoute({
+  getParentRoute: () => protectedLayoutRoute,
+  path: "/organizations/$organizationId/settings",
+  component: LegacyOrganizationSettingsRouteComponent,
 });
 
 const instanceAdminRoute = createRoute({
@@ -467,6 +477,7 @@ export const routeTree = rootRoute.addChildren([
     workspaceSettingsRoute,
     legacyWorkspaceSettingsRoute,
     organizationSettingsRoute,
+    legacyOrganizationSettingsRoute,
     instanceAdminRoute,
   ]),
   mobileLayoutRoute.addChildren([
@@ -822,8 +833,24 @@ function LegacyWorkspaceSettingsRouteComponent() {
 function OrganizationSettingsRouteComponent() {
   const params = organizationSettingsRoute.useParams();
   const organizationId = Number(params.organizationId);
+  const section = normalizeOrganizationSettingsSection(params.section);
 
-  return <OrganizationSettingsPage organizationId={organizationId} />;
+  return <OrganizationSettingsPage organizationId={organizationId} section={section} />;
+}
+
+function LegacyOrganizationSettingsRouteComponent() {
+  const params = legacyOrganizationSettingsRoute.useParams();
+  const organizationId = Number(params.organizationId);
+
+  return (
+    <Navigate
+      replace
+      to={buildOrganizationSettingsPath({
+        organizationId,
+        section: "general",
+      })}
+    />
+  );
 }
 
 function InstanceAdminRouteComponent() {

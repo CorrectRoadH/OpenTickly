@@ -1,6 +1,8 @@
 import type { WorkspaceSettingsSection } from "../url-state/workspace-settings-location.ts";
+import type { OrganizationSettingsSection } from "../url-state/organization-settings-location.ts";
 import { buildProjectsListPath } from "../url-state/projects-location.ts";
 import { buildWorkspaceSettingsPath } from "../url-state/workspace-settings-location.ts";
+import { buildOrganizationSettingsPath as _buildOrgSettingsPath } from "../url-state/organization-settings-location.ts";
 
 export function buildOverviewPath(): string {
   return "/overview";
@@ -45,9 +47,14 @@ export function buildWorkspaceSettingsPathWithSection(
   });
 }
 
-export function buildOrganizationSettingsPath(organizationId: number): string {
-  return `/organizations/${organizationId}/settings`;
+export function buildOrganizationSettingsPathWithSection(
+  organizationId: number,
+  section: OrganizationSettingsSection = "general",
+): string {
+  return _buildOrgSettingsPath({ organizationId, section });
 }
+
+export { buildOrganizationSettingsPath } from "../url-state/organization-settings-location.ts";
 
 export function resolveHomePath(): string {
   if (typeof window !== "undefined" && window.innerWidth < 768) {
