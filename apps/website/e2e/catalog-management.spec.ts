@@ -29,7 +29,7 @@ test.describe("Story: manage catalog surfaces from the workspace shell", () => {
     await form.getByLabel("Team name").fill(groupName);
     await form.getByRole("button", { name: "Save team" }).click();
 
-    await expect(page.getByText("Group created")).toBeVisible();
+    await expect(page.getByText("Team created")).toBeVisible();
     await expect(page.getByTestId("groups-list")).toContainText(groupName);
     await expect(page.getByTestId("groups-summary")).toContainText("Showing 1 team");
   });
