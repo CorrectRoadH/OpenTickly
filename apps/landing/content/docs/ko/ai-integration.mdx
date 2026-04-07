@@ -1,0 +1,61 @@
+---
+title: AI 연동
+description: toggl-cli와 설치 가능한 스킬 팩으로 AI 에이전트가 OpenToggl을 조작할 수 있습니다.
+---
+
+OpenToggl의 AI 연동은 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)를 중심으로 구축되어 있습니다. AI 에이전트와 자동화를 위해 전문적으로 관리되는 CLI입니다. 두 가지 사용 방법:
+
+- `toggl` CLI — 커맨드라인에서 직접 조작
+- `SKILL.md` 스킬 팩 — 에이전트 환경에 설치
+
+## 설치
+
+에이전트 환경:
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+CLI 수동 설치:
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## CLI가 지원하는 기능
+
+설치 후 에이전트는 HTTP 요청을 직접 만드는 대신 명령어로 일반적인 작업을 수행할 수 있습니다:
+
+- 타임 엔트리: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
+- 워크스페이스: `list`, `create`, `rename`, `delete`
+- 사용자 정보: `me`, `preferences`
+- 조직: `organization list`, `organization show`
+
+## OpenToggl에 연결
+
+CLI는 공식 Toggl Track과 OpenToggl 셀프호스팅 모두 지원합니다. 첫 인증 시 선택하세요:
+
+- Toggl Track → 공식 서비스에 연결
+- OpenToggl → 인스턴스 URL 입력, 예: `https://your-instance.com/api/v9`
+
+## API 직접 호출 대신 CLI를 쓰는 이유
+
+- 명령어가 일반적인 작업에 직접 대응 — 에이전트가 하위 API를 이해할 필요 없음
+- 인증 내장, 수동 토큰 관리 불필요
+- 읽기 작업의 로컬 캐시, 쓰기 시 자동 캐시 무효화
+- 스킬 팩을 에이전트 환경에 설치하고 재사용 가능
+
+## 추천 설정
+
+1. OpenToggl 배포 (또는 호스팅 버전 사용)
+2. toggl-cli 또는 스킬 팩 설치
+3. 인스턴스에 인증
+4. 에이전트가 CLI 명령어로 일상 작업 수행
+5. 더 세밀한 제어가 필요하면 OpenAPI 문서 참조
+
+## 참고
+
+- [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 저장소
+- `skills/toggl-cli/SKILL.md` 스킬 팩 정의
+- OpenToggl OpenAPI 컨트랙트 및 제품 문서

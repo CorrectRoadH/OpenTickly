@@ -1,0 +1,46 @@
+---
+title: OpenToggl이란
+description: OpenToggl은 오픈소스 Toggl 대안입니다. Toggl API 호환, 셀프호스팅 지원.
+---
+
+OpenToggl은 오픈소스 시간 추적 도구입니다. 목표는 간단합니다: Toggl과 호환되면서, 데이터를 직접 관리할 수 있게 하는 것.
+
+구체적으로:
+
+- `Track API v9`, `Reports API v3`, `Webhooks API v1` 호환
+- 완전한 웹 인터페이스 포함
+- 호스팅 및 셀프호스팅 모두 지원
+- Toggl에서 데이터 가져오기 가능
+
+<Cards>
+  <Card title="AI 연동" href="/ko/docs/ai-integration" />
+  <Card title="셀프호스팅" href="/ko/docs/self-hosting" />
+  <Card title="GitHub 저장소" href="https://github.com/CorrectRoadH/opentoggl" />
+</Cards>
+
+## 이 프로젝트가 존재하는 이유
+
+Toggl은 좋은 도구지만, 데이터는 남의 서버에 있습니다. OpenToggl은 같은 API, 같은 경험을 제공하면서 직접 배포할 수 있습니다.
+
+프로젝트는 OpenAPI 컨트랙트와 제품 문서를 구현 기준으로 사용합니다:
+
+- 셀프호스팅 버전과 호스팅 버전은 완전히 동일
+- 문서, 컨트랙트, 코드가 항상 동기화
+- 미완성 릴리스 없음
+
+## 저장소 구조
+
+- `docs/` — 제품 정의
+- `openapi/` — OpenAPI 컨트랙트
+- `apps/` — 프론트엔드 및 백엔드 소스코드
+- `docs/self-hosting/` — 셀프호스팅 가이드
+
+## 현재 범위
+
+- Track API를 통한 시간 추적 및 워크스페이스 관리
+- Reports API를 통한 리포트
+- Webhooks API를 통한 웹훅 관리
+- 위 모든 기능의 웹 UI
+- Toggl 데이터 가져오기
+
+AI에 대해: OpenToggl은 별도의 AI 제품이 아닙니다. 하지만 안정적인 API, 충실한 문서, 셀프호스팅 지원으로 에이전트와 자동화에 최적입니다.

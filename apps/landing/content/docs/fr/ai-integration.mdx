@@ -1,0 +1,61 @@
+---
+title: Intégration IA
+description: Permettez aux agents IA d'opérer OpenToggl via toggl-cli et des packs de compétences installables.
+---
+
+L'intégration IA d'OpenToggl repose sur [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) — un CLI maintenu spécifiquement pour les agents IA et l'automatisation. Deux façons de l'utiliser :
+
+- `toggl` CLI — opérez directement en ligne de commande
+- Pack de compétences `SKILL.md` — installez-le dans un environnement d'agent
+
+## Installation
+
+Pour les environnements d'agent :
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+Installation manuelle du CLI :
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## Ce que couvre le CLI
+
+Une fois installé, les agents peuvent exécuter des opérations courantes en commandes au lieu de construire des requêtes HTTP à la main :
+
+- Entrées de temps : `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
+- Workspaces : `list`, `create`, `rename`, `delete`
+- Infos utilisateur : `me`, `preferences`
+- Organisations : `organization list`, `organization show`
+
+## Connexion à OpenToggl
+
+Le CLI supporte à la fois Toggl Track officiel et OpenToggl auto-hébergé. Choisissez lors de la première authentification :
+
+- Toggl Track → se connecte au service officiel
+- OpenToggl → entrez l'URL de votre instance, ex. `https://your-instance.com/api/v9`
+
+## Pourquoi un CLI plutôt que des appels API directs
+
+- Les commandes correspondent directement aux tâches courantes — les agents n'ont pas besoin de comprendre l'API sous-jacente
+- Authentification intégrée, pas de gestion manuelle de tokens
+- Cache local pour les lectures, invalidation automatique du cache en écriture
+- Le pack de compétences peut être installé et réutilisé dans les environnements d'agent
+
+## Configuration recommandée
+
+1. Déployez OpenToggl (ou utilisez la version hébergée)
+2. Installez toggl-cli ou le pack de compétences
+3. Authentifiez-vous sur votre instance
+4. Les agents utilisent les commandes CLI pour les opérations quotidiennes
+5. Pour un contrôle plus fin, consultez la documentation OpenAPI
+
+## Références
+
+- Dépôt [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)
+- Définition du pack de compétences `skills/toggl-cli/SKILL.md`
+- Contrats OpenAPI et documentation produit d'OpenToggl

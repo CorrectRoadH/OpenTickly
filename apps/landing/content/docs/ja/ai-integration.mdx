@@ -1,0 +1,61 @@
+---
+title: AI 連携
+description: toggl-cli とインストール可能なスキルパックで AI エージェントから OpenToggl を操作。
+---
+
+OpenToggl の AI 連携は [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) を中心に構築されています。AI エージェントと自動化のために専用にメンテナンスされている CLI です。2つの使い方があります：
+
+- `toggl` CLI — コマンドラインから直接操作
+- `SKILL.md` スキルパック — エージェント環境にインストール
+
+## インストール
+
+エージェント環境の場合：
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+CLI を手動インストール：
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## CLI でできること
+
+インストール後、エージェントは HTTP リクエストを組み立てる代わりにコマンドで操作できます：
+
+- タイムエントリ：`start`、`stop`、`continue`、`running`、`show`、`edit`、`delete`
+- ワークスペース：`list`、`create`、`rename`、`delete`
+- ユーザー情報：`me`、`preferences`
+- 組織：`organization list`、`organization show`
+
+## OpenToggl への接続
+
+CLI は公式 Toggl Track と OpenToggl セルフホストの両方に対応しています。初回認証時に選択してください：
+
+- Toggl Track → 公式サービスに接続
+- OpenToggl → インスタンスの URL を入力（例：`https://your-instance.com/api/v9`）
+
+## なぜ API 直接呼び出しではなく CLI なのか
+
+- コマンドが一般的なタスクに直接対応 — エージェントが API の詳細を理解する必要がない
+- 認証が組み込み済み、トークンの手動管理が不要
+- 読み取り操作のローカルキャッシュ、書き込み時の自動キャッシュ無効化
+- スキルパックはエージェント環境に横断的にインストール・再利用可能
+
+## おすすめの構成
+
+1. OpenToggl をデプロイ（またはホスト版を利用）
+2. toggl-cli またはスキルパックをインストール
+3. インスタンスに認証
+4. エージェントは CLI コマンドで日常操作
+5. より細かい制御が必要な場合は OpenAPI ドキュメントを参照
+
+## 参考
+
+- [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) リポジトリ
+- `skills/toggl-cli/SKILL.md` スキルパック定義
+- OpenToggl の OpenAPI コントラクトとプロダクトドキュメント

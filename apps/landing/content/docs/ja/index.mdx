@@ -1,0 +1,46 @@
+---
+title: OpenToggl とは
+description: OpenToggl はオープンソースの Toggl 代替ツール。Toggl API 互換、セルフホスト対応。
+---
+
+OpenToggl はオープンソースのタイムトラッキングツールです。目標はシンプル：Toggl と互換性を持ち、データを自分で管理できること。
+
+具体的には：
+
+- `Track API v9`、`Reports API v3`、`Webhooks API v1` と互換
+- フル機能の Web インターフェース付き
+- ホスト版・セルフホスト版の両方に対応
+- Toggl からデータをインポート可能
+
+<Cards>
+  <Card title="AI 連携" href="/ja/docs/ai-integration" />
+  <Card title="セルフホスト" href="/ja/docs/self-hosting" />
+  <Card title="GitHub リポジトリ" href="https://github.com/CorrectRoadH/opentoggl" />
+</Cards>
+
+## このプロジェクトが存在する理由
+
+Toggl は優れたツールですが、データは他人のサーバーにあります。OpenToggl は同じ API、同じ体験を提供しつつ、自分でデプロイできます。
+
+プロジェクトは OpenAPI コントラクトとプロダクトドキュメントを実装基準としています：
+
+- セルフホスト版とホスト版は完全に同一
+- ドキュメント、コントラクト、コードは常に同期
+- 中途半端なリリースはしない
+
+## リポジトリ構成
+
+- `docs/` — プロダクト定義
+- `openapi/` — OpenAPI コントラクト
+- `apps/` — フロントエンド・バックエンドのソースコード
+- `docs/self-hosting/` — セルフホストガイド
+
+## 現在のスコープ
+
+- Track API によるタイムトラッキングとワークスペース管理
+- Reports API によるレポート
+- Webhooks API による Webhook 管理
+- 上記すべての Web UI
+- Toggl データのインポート
+
+AI について：OpenToggl は独立した AI プロダクトではありません。ただし、安定した API、充実したドキュメント、セルフホスト対応により、エージェントや自動化に最適です。

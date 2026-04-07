@@ -1,0 +1,46 @@
+---
+title: Qu'est-ce qu'OpenToggl
+description: OpenToggl est une alternative open source à Toggl. Compatible avec l'API Toggl, auto-hébergeable.
+---
+
+OpenToggl est un outil de suivi du temps open source. L'objectif est simple : être compatible avec Toggl et vous laisser maître de vos données.
+
+Concrètement :
+
+- Compatible avec `Track API v9`, `Reports API v3`, `Webhooks API v1`
+- Interface web complète incluse
+- Fonctionne hébergé ou auto-hébergé
+- Importez vos données depuis Toggl
+
+<Cards>
+  <Card title="Intégration IA" href="/fr/docs/ai-integration" />
+  <Card title="Auto-hébergement" href="/fr/docs/self-hosting" />
+  <Card title="Dépôt GitHub" href="https://github.com/CorrectRoadH/opentoggl" />
+</Cards>
+
+## Pourquoi ce projet existe
+
+Toggl est super, mais vos données sont sur les serveurs de quelqu'un d'autre. OpenToggl vous offre la même API et la même expérience, mais vous pouvez le déployer vous-même.
+
+Le projet utilise les contrats OpenAPI et la documentation produit comme standard d'implémentation :
+
+- Les versions auto-hébergée et hébergée sont identiques
+- Documentation, contrats et code restent synchronisés
+- Pas de versions inachevées
+
+## Structure du dépôt
+
+- `docs/` — Définitions produit
+- `openapi/` — Contrats OpenAPI
+- `apps/` — Code source frontend et backend
+- `docs/self-hosting/` — Guides d'auto-hébergement
+
+## Périmètre actuel
+
+- Suivi du temps et gestion des workspaces via Track API
+- Rapports via Reports API
+- Gestion des webhooks via Webhooks API
+- Interface web pour tout ce qui précède
+- Import des données Toggl
+
+Sur l'IA : OpenToggl n'est pas un produit IA à part. Mais son API stable, sa documentation complète et son support de l'auto-hébergement en font un choix naturel pour les agents et l'automatisation.

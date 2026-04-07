@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
+import type { Locale } from "@/lib/i18n";
 
 type HomeHeroScreenshotsProps = {
-  locale: "en" | "zh";
+  locale: Locale;
 };
 
 const images = [{ src: "/hero/2.png" }, { src: "/hero/1.png" }, { src: "/hero/3.png" }];
 
-const altByLocale = {
+const altByLocale: Record<Locale, string> = {
   en: "OpenToggl dashboard preview",
   zh: "OpenToggl 仪表盘预览",
-} as const;
+  es: "Vista previa del panel de OpenToggl",
+  ja: "OpenToggl ダッシュボードプレビュー",
+  fr: "Aperçu du tableau de bord OpenToggl",
+  ko: "OpenToggl 대시보드 미리보기",
+};
 
 export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps) {
   const [active, setActive] = useState(0);

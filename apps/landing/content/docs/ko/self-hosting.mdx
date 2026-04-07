@@ -1,0 +1,151 @@
+---
+title: 셀프호스팅
+description: Docker Compose, CasaOS, Synology, fnOS 등으로 자체 인프라에 OpenToggl을 배포하세요.
+---
+
+## Docker Compose
+
+OpenToggl을 셀프호스팅하는 가장 빠른 방법.
+
+### 빠른 시작
+
+```bash
+mkdir -p opentoggl && cd opentoggl
+
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+
+docker compose up -d
+```
+
+모든 서비스가 정상이 되면 확인:
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+```
+
+완료. 브라우저에서 `http://localhost:8080`을 열어주세요.
+
+### 아키텍처
+
+compose 파일은 격리된 내부 네트워크에서 세 개의 서비스를 시작합니다:
+
+| 서비스      | 역할          | 호스트 노출     |
+| ----------- | ------------- | --------------- |
+| `opentoggl` | Web + API     | 예 (`8080`)     |
+| `postgres`  | 데이터베이스  | 아니오          |
+| `redis`     | 캐시 / 큐     | 아니오          |
+
+Postgres와 Redis는 호스트 네트워크에 노출되지 않습니다. `opentoggl` 서비스만 포트를 공개합니다.
+
+### 설정
+
+기본값으로 바로 동작합니다. 환경 변수 또는 `docker-compose.yml`과 같은 디렉토리의 `.env` 파일로 덮어쓸 수 있습니다:
+
+| 변수                          | 기본값                                  | 설명                                                |
+| ----------------------------- | --------------------------------------- | --------------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 및 API의 호스트 포트                         |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 컨테이너 이미지 (안정성을 위해 버전 태그 권장)      |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 데이터베이스 이름                                   |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 데이터베이스 사용자                                 |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 데이터베이스 비밀번호                               |
+| `OPENTOGGL_DATABASE_URL`      | 자동                                    | 전체 연결 문자열 (개별 PG 변수 덮어쓰기)            |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 연결 문자열                                   |
+
+### 업그레이드
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+스키마 마이그레이션은 시작 시 자동으로 실행됩니다.
+
+### 백업 및 복원
+
+데이터베이스 데이터는 `opentoggl-postgres-data` 네임드 볼륨에 저장됩니다.
+
+```bash
+# 백업
+docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
+
+# 복원
+docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
+```
+
+### 제거
+
+```bash
+docker compose down      # 서비스 중지, 데이터 유지
+docker compose down -v   # 서비스 중지 및 모든 데이터 삭제
+```
+
+---
+
+## CasaOS
+
+[CasaOS](https://casaos.io)는 Docker Compose 파일에서 앱을 설치할 수 있습니다.
+
+1. CasaOS 대시보드 열기
+2. **App Store** > **커스텀 설치** > **docker-compose 가져오기**
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
+4. **Web UI** 포트를 `8080`으로 설정하고 저장
+5. 대시보드에서 앱 실행
+
+설치 후 `http://<CasaOS IP>:8080`에서 OpenToggl에 접속.
+
+---
+
+## Synology (시놀로지)
+
+Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합니다.
+
+1. **Container Manager** > **프로젝트** > **생성** 열기
+2. 프로젝트 이름 설정 (예: `opentoggl`)
+3. **docker-compose.yml 사용**을 선택하고 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
+4. **다음**을 클릭하고 마법사 완료
+
+`http://<Synology IP>:8080`에서 OpenToggl에 접속.
+
+<Callout type="info">
+  포트 8080이 DSM과 충돌하면, 프로젝트 생성 전 환경 설정에서 `OPENTOGGL_PORT=9090` (또는 빈 포트)을 추가하세요.
+</Callout>
+
+---
+
+## fnOS (飞牛)
+
+[fnOS](https://www.fnnas.com)는 Docker 앱 배포를 지원합니다.
+
+1. fnOS에서 **Docker** 관리 열기
+2. 새 Compose 프로젝트 생성
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
+4. 배포 및 시작
+
+`http://<fnOS IP>:8080`에서 OpenToggl에 접속.
+
+---
+
+## 기타 NAS / Homelab 플랫폼
+
+OpenToggl은 Docker Compose를 지원하는 모든 플랫폼에서 실행됩니다:
+
+- **Unraid** — Community Applications 또는 Compose Manager 플러그인 경유
+- **TrueNAS SCALE** — Docker Compose를 사용한 커스텀 앱 경유
+- **Proxmox LXC** — LXC 컨테이너에 Docker를 설치한 후 Docker Compose 가이드를 따르기
+
+단계는 동일: `docker-compose.yml` 가져오기, `docker compose up -d` 실행, 포트 `8080` 접속.
+
+---
+
+## 인스턴스 확인
+
+플랫폼에 관계없이, 다음 검사로 배포가 정상인지 확인:
+
+```bash
+curl -fsS http://<당신의 IP>:8080/healthz
+curl -fsS http://<당신의 IP>:8080/readyz
+```
+
+둘 다 성공하면 준비 완료입니다.

@@ -1,0 +1,151 @@
+---
+title: Auto-hébergement
+description: Déployez OpenToggl sur votre propre infrastructure avec Docker Compose, CasaOS, Synology, fnOS et plus.
+---
+
+## Docker Compose
+
+Le moyen le plus rapide d'auto-héberger OpenToggl.
+
+### Démarrage rapide
+
+```bash
+mkdir -p opentoggl && cd opentoggl
+
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+
+docker compose up -d
+```
+
+Attendez que tous les services soient en bonne santé, puis vérifiez :
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+```
+
+Terminé. Ouvrez `http://localhost:8080` dans votre navigateur.
+
+### Architecture
+
+Le fichier compose lance trois services sur un réseau interne isolé :
+
+| Service     | Rôle           | Exposé à l'hôte |
+| ----------- | -------------- | ---------------- |
+| `opentoggl` | Web + API      | Oui (`8080`)     |
+| `postgres`  | Base de données | Non             |
+| `redis`     | Cache / File   | Non              |
+
+Postgres et Redis ne sont pas exposés au réseau hôte. Seul le service `opentoggl` publie un port.
+
+### Configuration
+
+Toutes les valeurs par défaut fonctionnent immédiatement. Remplacez-les via des variables d'environnement ou un fichier `.env` dans le même répertoire que `docker-compose.yml` :
+
+| Variable                      | Par défaut                              | Description                                                          |
+| ----------------------------- | --------------------------------------- | -------------------------------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Port hôte pour la Web UI et l'API                                    |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | Image conteneur (fixez un tag de version pour plus de stabilité)     |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | Nom de la base de données                                            |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | Utilisateur de la base de données                                    |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | Mot de passe de la base de données                                   |
+| `OPENTOGGL_DATABASE_URL`      | auto                                    | Chaîne de connexion complète (remplace les variables PG individuelles) |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Chaîne de connexion Redis                                            |
+
+### Mise à jour
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Les migrations de schéma s'exécutent automatiquement au démarrage.
+
+### Sauvegarde et restauration
+
+Les données de la base sont stockées dans le volume nommé `opentoggl-postgres-data`.
+
+```bash
+# Sauvegarde
+docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
+
+# Restauration
+docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
+```
+
+### Désinstallation
+
+```bash
+docker compose down      # Arrête les services, conserve les données
+docker compose down -v   # Arrête les services et supprime toutes les données
+```
+
+---
+
+## CasaOS
+
+[CasaOS](https://casaos.io) supporte l'installation d'apps depuis un fichier Docker Compose.
+
+1. Ouvrez le tableau de bord CasaOS
+2. Allez dans **App Store** > **Installation personnalisée** > **Importer docker-compose**
+3. Collez le contenu de [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+4. Ajustez le port **Web UI** à `8080` et enregistrez
+5. Lancez l'app depuis votre tableau de bord
+
+Après installation, accédez à OpenToggl sur `http://<votre-ip-casaos>:8080`.
+
+---
+
+## Synology
+
+Synology DSM 7.2+ supporte Docker Compose via **Container Manager**.
+
+1. Ouvrez **Container Manager** > **Projet** > **Créer**
+2. Définissez un nom de projet (ex. `opentoggl`)
+3. Choisissez **Utiliser docker-compose.yml** et collez le contenu de [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+4. Cliquez sur **Suivant** et terminez l'assistant
+
+Accédez à OpenToggl sur `http://<votre-ip-synology>:8080`.
+
+<Callout type="info">
+  Si le port 8080 entre en conflit avec DSM, ajoutez `OPENTOGGL_PORT=9090` (ou tout port libre) dans les paramètres d'environnement avant de créer le projet.
+</Callout>
+
+---
+
+## fnOS
+
+[fnOS](https://www.fnnas.com) supporte le déploiement d'apps Docker.
+
+1. Ouvrez la gestion **Docker** dans fnOS
+2. Créez un nouveau projet Compose
+3. Collez le contenu de [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+4. Déployez et lancez le projet
+
+Accédez à OpenToggl sur `http://<votre-ip-fnos>:8080`.
+
+---
+
+## Autres plateformes NAS / Homelab
+
+OpenToggl fonctionne sur toute plateforme supportant Docker Compose, notamment :
+
+- **Unraid** — via Community Applications ou le plugin Compose Manager
+- **TrueNAS SCALE** — via une app personnalisée avec Docker Compose
+- **Proxmox LXC** — installez Docker dans un conteneur LXC, puis suivez le guide Docker Compose
+
+Les étapes sont identiques : récupérez le `docker-compose.yml`, exécutez `docker compose up -d`, accédez au port `8080`.
+
+---
+
+## Vérifiez votre instance
+
+Quelle que soit la plateforme, exécutez ces vérifications pour confirmer un déploiement sain :
+
+```bash
+curl -fsS http://<votre-ip>:8080/healthz
+curl -fsS http://<votre-ip>:8080/readyz
+```
+
+Si les deux répondent avec succès, tout est prêt.

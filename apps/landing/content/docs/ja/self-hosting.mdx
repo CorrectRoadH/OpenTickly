@@ -1,0 +1,151 @@
+---
+title: セルフホスト
+description: Docker Compose、CasaOS、Synology、fnOS などで OpenToggl を自分のインフラにデプロイ。
+---
+
+## Docker Compose
+
+OpenToggl をセルフホストする最速の方法。
+
+### クイックスタート
+
+```bash
+mkdir -p opentoggl && cd opentoggl
+
+wget -O docker-compose.yml \
+  https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+
+docker compose up -d
+```
+
+すべてのサービスが正常になったら、確認：
+
+```bash
+curl -fsS http://localhost:8080/healthz
+curl -fsS http://localhost:8080/readyz
+```
+
+完了。ブラウザで `http://localhost:8080` を開いてください。
+
+### アーキテクチャ
+
+compose ファイルは隔離された内部ネットワーク上で3つのサービスを起動します：
+
+| サービス    | 役割            | ホストに公開   |
+| ----------- | --------------- | -------------- |
+| `opentoggl` | Web + API       | はい（`8080`） |
+| `postgres`  | データベース    | いいえ         |
+| `redis`     | キャッシュ/キュー | いいえ       |
+
+Postgres と Redis はホストネットワークに公開されません。`opentoggl` サービスのみがポートを公開します。
+
+### 設定
+
+デフォルト値でそのまま動きます。環境変数または `docker-compose.yml` と同じディレクトリの `.env` ファイルで上書き可能：
+
+| 変数                          | デフォルト                              | 説明                                                   |
+| ----------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| `OPENTOGGL_PORT`              | `8080`                                  | Web UI と API のホストポート                           |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | コンテナイメージ（安定性のためバージョンタグを推奨）   |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | データベース名                                         |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | データベースユーザー                                   |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | データベースパスワード                                 |
+| `OPENTOGGL_DATABASE_URL`      | 自動                                    | 完全な接続文字列（個別の PG 変数を上書き）             |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 接続文字列                                       |
+
+### アップグレード
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+スキーマのマイグレーションは起動時に自動実行されます。
+
+### バックアップとリストア
+
+データベースデータは `opentoggl-postgres-data` 名前付きボリュームに保存されます。
+
+```bash
+# バックアップ
+docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
+
+# リストア
+docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
+```
+
+### アンインストール
+
+```bash
+docker compose down      # サービス停止、データ保持
+docker compose down -v   # サービス停止、全データ削除
+```
+
+---
+
+## CasaOS
+
+[CasaOS](https://casaos.io) は Docker Compose ファイルからのアプリインストールに対応しています。
+
+1. CasaOS ダッシュボードを開く
+2. **App Store** > **カスタムインストール** > **docker-compose をインポート**
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) の内容を貼り付け
+4. **Web UI** ポートを `8080` に設定して保存
+5. ダッシュボードからアプリを起動
+
+インストール後、`http://<CasaOS の IP>:8080` で OpenToggl にアクセス。
+
+---
+
+## Synology（群暉）
+
+Synology DSM 7.2+ は **Container Manager** を通じて Docker Compose に対応しています。
+
+1. **Container Manager** > **プロジェクト** > **作成** を開く
+2. プロジェクト名を設定（例：`opentoggl`）
+3. **docker-compose.yml を使用** を選択し、[`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) の内容を貼り付け
+4. **次へ** をクリックしてウィザードを完了
+
+`http://<Synology の IP>:8080` で OpenToggl にアクセス。
+
+<Callout type="info">
+  ポート 8080 が DSM と競合する場合、プロジェクト作成前に環境設定で `OPENTOGGL_PORT=9090`（または空きポート）を追加してください。
+</Callout>
+
+---
+
+## fnOS（飛牛）
+
+[fnOS](https://www.fnnas.com) は Docker アプリのデプロイに対応しています。
+
+1. fnOS の **Docker** 管理を開く
+2. 新しい Compose プロジェクトを作成
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) の内容を貼り付け
+4. デプロイして起動
+
+`http://<fnOS の IP>:8080` で OpenToggl にアクセス。
+
+---
+
+## その他の NAS / Homelab プラットフォーム
+
+OpenToggl は Docker Compose に対応するあらゆるプラットフォームで動作します：
+
+- **Unraid** — Community Applications または Compose Manager プラグイン経由
+- **TrueNAS SCALE** — Docker Compose を使ったカスタムアプリ経由
+- **Proxmox LXC** — LXC コンテナ内に Docker をインストールし、Docker Compose ガイドに従う
+
+手順は同じ：`docker-compose.yml` を取得、`docker compose up -d` を実行、ポート `8080` にアクセス。
+
+---
+
+## インスタンスの確認
+
+プラットフォームに関係なく、以下のチェックでデプロイが正常か確認：
+
+```bash
+curl -fsS http://<あなたの IP>:8080/healthz
+curl -fsS http://<あなたの IP>:8080/readyz
+```
+
+両方成功すれば、準備完了です。
