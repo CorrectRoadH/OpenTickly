@@ -1,18 +1,16 @@
 ---
 title: OpenToggl 是什么
-description: OpenToggl 是一个开源、可自托管的时间追踪平台，提供与 Toggl 一致的 Track、Reports 和 Webhooks 接口。
+description: OpenToggl 是开源的 Toggl 替代方案，兼容 Toggl API，支持自托管。
 ---
 
-OpenToggl 是一个开源时间追踪平台，以 Toggl 当前的公开接口作为自身产品的实现目标。
+OpenToggl 是一个开源时间追踪工具，目标很简单：兼容 Toggl，让你把数据握在自己手里。
 
-它不是一个模糊的"类 Toggl"克隆。目标很明确：
+具体来说：
 
-- 覆盖 `Track API v9`
-- 覆盖 `Reports API v3`
-- 覆盖 `Webhooks API v1`
-- 提供配套的 Web 界面
-- 同时支持托管和自托管部署形态
-- 支持导入 Toggl 导出数据
+- 兼容 `Track API v9`、`Reports API v3`、`Webhooks API v1`
+- 提供完整的 Web 界面
+- 支持托管和自托管两种方式
+- 支持从 Toggl 导入数据
 
 <Cards>
   <Card title="AI 集成" href="/zh/docs/ai-integration" />
@@ -20,33 +18,29 @@ OpenToggl 是一个开源时间追踪平台，以 Toggl 当前的公开接口作
   <Card title="GitHub 仓库" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
 
-## 为什么要做 OpenToggl
+## 为什么做这个项目
 
-本项目以公开的产品定义、OpenAPI 合约和 Web 界面作为唯一的事实来源。
+Toggl 好用，但数据不在自己手里。OpenToggl 想解决这个问题——用同样的 API，同样的体验，但你可以自己部署、自己掌控。
 
-这让承诺变得具体：
+项目以 OpenAPI 合约和产品文档作为实现标准，确保：
 
-- 不搞含糊的"类似 Toggl"定位
-- 不做仅有 API 的首发版本
-- SaaS 和自托管的功能范围不会有隐性差异
-- 文档、合约与实现之间不会出现漂移
+- 自托管和托管版功能完全一致
+- 文档、合约、代码三者保持同步
+- 不做半成品发布
 
-## 仓库里有什么
+## 仓库结构
 
-- `docs/` 下的产品定义
-- `openapi/` 下的公开和 OpenToggl 特有的 OpenAPI 合约
-- `apps/` 下的前后端源码
-- `docs/self-hosting/` 和 `docs/testing/evidence/` 下的自托管手册和冒烟测试证据
+- `docs/` — 产品定义
+- `openapi/` — OpenAPI 合约
+- `apps/` — 前后端源码
+- `docs/self-hosting/` — 自托管指南
 
-## 产品边界
+## 当前范围
 
-首个正式范围包括：
+- 通过 Track API 进行时间追踪和工作区管理
+- 通过 Reports API 查询报表
+- 通过 Webhooks API 管理 Webhook
+- 配套 Web 界面
+- Toggl 数据导入
 
-- 通过 `Track API v9` 进行时间追踪和工作区操作
-- 通过 `Reports API v3` 进行报表查询
-- 通过 `Webhooks API v1` 管理 Webhook 生命周期和投递
-- 上述功能对应的 Web UI
-- Toggl 导出数据导入
-- 面向实例运维的托管/运行时能力
-
-OpenToggl 不声称有独立的 AI 原生产品线。它的 AI 故事是合约清晰和自动化友好，而不是藏在营销语言后面的第二个产品。
+关于 AI：OpenToggl 不做独立的 AI 产品，但它的 API 稳定、文档齐全、支持自部署，天然适合 agent 和自动化场景。

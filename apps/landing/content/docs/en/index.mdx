@@ -1,18 +1,16 @@
 ---
 title: What Is OpenToggl
-description: OpenToggl is an open source, self-hosted time tracking platform with Toggl-shaped Track, Reports, and Webhooks surfaces.
+description: OpenToggl is an open-source Toggl alternative. Compatible with the Toggl API, self-hostable.
 ---
 
-OpenToggl is an open source time tracking platform that takes the current public Toggl surface as the implementation target for its own product.
+OpenToggl is an open-source time tracking tool. The goal is simple: be compatible with Toggl, and let you own your data.
 
-It is not positioned as a vague "Toggl-like" clone. The goal is explicit:
+What that means in practice:
 
-- cover `Track API v9`
-- cover `Reports API v3`
-- cover `Webhooks API v1`
-- provide the matching web interface
-- support both hosted and self-hosted runtime shapes
-- add import support for Toggl export data
+- Compatible with `Track API v9`, `Reports API v3`, `Webhooks API v1`
+- Full web interface included
+- Works hosted or self-hosted
+- Import your data from Toggl
 
 <Cards>
   <Card title="AI Integration" href="/docs/ai-integration" />
@@ -20,33 +18,29 @@ It is not positioned as a vague "Toggl-like" clone. The goal is explicit:
   <Card title="GitHub Repository" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
 
-## Why OpenToggl exists
+## Why this project exists
 
-The project treats public product definitions, OpenAPI contracts, and the web surface as the source of truth.
+Toggl is great, but your data lives on someone else's servers. OpenToggl gives you the same API and the same experience, but you can deploy it yourself.
 
-That keeps the promise concrete:
+The project uses OpenAPI contracts and product docs as the implementation standard:
 
-- no hand-wavy "similar to Toggl" positioning
-- no API-only first release
-- no hidden split between SaaS and self-hosted capability surface
-- no drift between docs, contracts, and implementation as the intended target
+- Self-hosted and hosted versions are identical
+- Docs, contracts, and code stay in sync
+- No half-baked releases
 
-## What is inside the repository
+## Repository layout
 
-- product definitions under `docs/`
-- public and OpenToggl-specific OpenAPI contracts under `openapi/`
-- backend and frontend source under `apps/`
-- self-hosting runbooks and smoke evidence under `docs/self-hosting/` and `docs/testing/evidence/`
+- `docs/` — Product definitions
+- `openapi/` — OpenAPI contracts
+- `apps/` — Frontend and backend source
+- `docs/self-hosting/` — Self-hosting guides
 
-## Product boundaries
+## Current scope
 
-The first formal scope is:
+- Time tracking and workspace management via Track API
+- Reporting via Reports API
+- Webhook management via Webhooks API
+- Web UI for all of the above
+- Toggl data import
 
-- time tracking and workspace operations through `Track API v9`
-- reporting through `Reports API v3`
-- webhook lifecycle and delivery through `Webhooks API v1`
-- a web UI for the same capability surface
-- Toggl export import
-- instance and operator-facing hosting/runtime capabilities
-
-OpenToggl does not claim a separate AI-native product surface. Its AI story is contract clarity and automation friendliness, not a second product hidden behind marketing language.
+On AI: OpenToggl isn't a separate AI product. But its stable API, thorough docs, and self-hosting support make it a natural fit for agents and automation.

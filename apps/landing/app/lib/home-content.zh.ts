@@ -2,11 +2,11 @@ export const homeContentZh = {
   hero: {
     taglineBefore: "",
     taglineAfter: "的 Toggl 替代方案。",
-    rotatingWords: ["免费", "私有优先", "可自托管", "AI 友好"],
-    subtitle: "同一套 API，同一套工作流，数据在你手里。",
+    rotatingWords: ["免费", "数据私有", "可自托管", "AI 友好"],
+    subtitle: "兼容 Toggl API，数据完全由你掌控。",
     ctas: {
-      tryDemo: "在线演示",
-      selfHost: "自托管",
+      tryDemo: "在线试用",
+      selfHost: "自托管部署",
     },
   },
 
@@ -14,15 +14,15 @@ export const homeContentZh = {
     items: [
       {
         title: "直接兼容",
-        body: "完全兼容 Toggl，现有集成无需修改。",
+        body: "兼容 Toggl API，现有工具和集成无需改动。",
       },
       {
-        title: "分钟级部署",
-        body: "一条 Docker Compose 命令。支持 CasaOS、Synology、fnOS。",
+        title: "几分钟部署",
+        body: "一条 docker compose 命令搞定。CasaOS、群晖、飞牛都能跑。",
       },
       {
-        title: "免费且开源",
-        body: "无席位限制，无定价分层。托管版和自托管版完全一致。",
+        title: "免费开源",
+        body: "不限人数，不分版本。自托管和托管版功能完全一样。",
       },
     ],
   },
@@ -32,21 +32,21 @@ export const homeContentZh = {
       {
         title: "在线演示",
         value: "track.opentoggl.com",
-        body: "先试用真实产品，再决定是否采用。",
+        body: "先用起来，好不好自己判断。",
         cta: "打开演示",
         href: "https://track.opentoggl.com",
       },
       {
-        title: "代码仓库",
+        title: "源码",
         value: "CorrectRoadH/opentoggl",
-        body: "直接读代码、看 issue，全部公开。",
+        body: "代码、issue、讨论，全部公开。",
         cta: "打开 GitHub",
         href: "https://github.com/CorrectRoadH/opentoggl",
       },
       {
         title: "文档",
         value: "文档与指南",
-        body: "部署指南、API 参考、产品定义。",
+        body: "部署、API、产品设计，都在这里。",
         cta: "查看文档",
         href: "/zh/docs",
       },
@@ -55,27 +55,26 @@ export const homeContentZh = {
 
   faq: [
     {
-      question: "OpenToggl 是 Toggl Track 的直接替代品吗？",
+      question: "能直接替代 Toggl Track 吗？",
       answer:
-        "OpenToggl 直接以 Toggl 当前公开产品面为实现目标，包括 Track API v9、Reports API v3 和 Webhooks API v1。使用这些公开 API 的现有集成通常不需要修改。Web 界面是独立实现的，但操作面以公开定义为准。",
+        "能。OpenToggl 兼容 Toggl 的 Track、Reports 和 Webhooks API。如果你现在用的工具是通过 Toggl API 对接的，切过来基本不用改。",
     },
     {
-      question: "我能迁移现有的 Toggl 数据吗？",
-      answer: "可以。OpenToggl 支持导入 Toggl 导出文件，因此迁移时可以保留你的时间条目历史。",
+      question: "能把 Toggl 的数据迁移过来吗？",
+      answer: "能。支持导入 Toggl 导出文件，历史记录不会丢。",
     },
     {
-      question: "自托管需要什么条件？",
+      question: "自托管需要什么？",
       answer:
-        "OpenToggl 需要 Docker 和 Docker Compose。它运行 Go 后端和 React 前端，底层是 PostgreSQL。单个 compose 配置就能拉起完整技术栈，文档也覆盖了 CasaOS、Synology 和 fnOS。",
+        "装好 Docker 就行。一个 docker compose up -d 拉起整套服务（Go 后端 + React 前端 + PostgreSQL）。群晖、CasaOS、飞牛也有部署指南。",
     },
     {
-      question: "托管版本和自托管版本一样吗？",
-      answer: "是的。托管实例和自托管版本运行同一套产品，公开能力范围一致，没有隐藏功能差异。",
+      question: "托管版和自托管版有区别吗？",
+      answer: "没有。同一套代码，同一套功能，不搞区别对待。",
     },
     {
-      question: "为什么说 OpenToggl 对 AI 友好？",
-      answer:
-        "因为它围绕稳定的公开合约和自托管能力构建。这让它比受制于厂商限额的闭源产品更适合作为 agent、脚本和自动化的后端。",
+      question: "为什么说对 AI 友好？",
+      answer: "API 稳定、文档齐全、可以自己部署。用 agent 或脚本对接不受第三方限制。",
     },
   ],
 } as const;

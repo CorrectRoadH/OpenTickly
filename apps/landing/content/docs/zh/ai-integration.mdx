@@ -1,102 +1,61 @@
 ---
 title: AI 集成
-description: 通过 toggl-cli、可安装的 Agent 技能包和 OpenToggl API 将 OpenToggl 与 AI Agent 集成。
+description: 通过 toggl-cli 和技能包，让 AI Agent 直接操作 OpenToggl。
 ---
 
-OpenToggl 的 AI 集成路径不是一个空泛的"AI-ready"口号。它是一个围绕持续维护的 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 项目构建的工具驱动工作流。
+OpenToggl 的 AI 集成围绕 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 构建。这个 CLI 工具专门为 AI Agent 和自动化场景维护，提供两种接入方式：
 
-该仓库为 Agent 提供两个具体的接口：
+- `toggl` CLI — 命令行直接操作
+- `SKILL.md` 技能包 — 装进 Agent 环境一键使用
 
-- 用于日常操作的 `toggl` CLI
-- 用于 Agent 环境的可安装 `SKILL.md` 技能包
+## 安装
 
-## 真正的集成路径
-
-`toggl-cli` fork 明确定位为专注于 AI Agent 友好性和自动化工作流的积极维护分支。其 README 还提供了一键技能安装流程。
-
-对于 Agent 环境，文档化的安装命令是：
+Agent 环境装技能包：
 
 ```bash
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-对于直接 CLI 使用，文档化的 npm 安装路径是：
+手动装 CLI：
 
 ```bash
 npm install -g @correctroadh/toggl-cli
 toggl --help
 ```
 
-## CLI 为 Agent 提供什么
+## CLI 能做什么
 
-安装的 `toggl` 二进制文件为 Agent 提供了一个精简、具体的命令接口，而不是强迫它们为每个操作手工拼装原始 HTTP 调用。
+装好之后，Agent 可以用命令行完成常见操作，不需要自己拼 HTTP 请求：
 
-根据已发布的技能包和 README，CLI 覆盖：
+- 时间条目：`start`、`stop`、`continue`、`running`、`show`、`edit`、`delete`
+- 工作区：`list`、`create`、`rename`、`delete`
+- 用户信息：`me`、`preferences`
+- 组织查看：`organization list`、`organization show`
 
-- `Track API v9`
-- 时间条目操作如 `start`、`stop`、`continue`、`running`、`show`、`edit` 和 `delete`
-- 工作区资源操作如 `list`、`create`、`rename` 和 `delete`
-- 用户/配置命令如 `me` 和 `preferences`
-- 组织查看命令如 `organization list` 和 `organization show`
+## 连接 OpenToggl 实例
 
-这比泛泛的"AI API"承诺对 Agent 工作流更有用，因为 Agent 获得的是一个经过测试的、面向任务的常见操作接口。
+CLI 支持官方 Toggl Track 和 OpenToggl 自托管两种后端。首次认证时选择即可：
 
-## OpenToggl 相关性
+- 选 Toggl Track → 连接官方服务
+- 选 OpenToggl → 输入你的实例地址，比如 `https://your-instance.com/api/v9`
 
-同一个 `toggl-cli` 项目还文档化了对 `OpenToggl 自托管` 的支持。
+## 为什么用 CLI 而不是直接调 API
 
-其交互式认证流程让用户在以下选项间选择：
+- 命令和常见任务一一对应，Agent 不用理解底层接口
+- 内置认证，不用手动管 token
+- 读操作有本地缓存，写操作自动刷新缓存
+- 技能包可以直接装进 Agent 环境复用
 
-- 官方 Toggl Track
-- OpenToggl 自托管
+## 推荐配置流程
 
-对于 OpenToggl，它需要完整的 API URL，例如：
-
-```bash
-https://your-instance.com/api/v9
-```
-
-这意味着预期的 Agent 流程是：
-
-1. 安装技能包或 CLI
-2. 认证一次
-3. 将工具指向官方 Toggl Track 或 OpenToggl 部署
-4. 让 Agent 使用稳定的 CLI 命令进行常规追踪工作流
-
-## 为什么用 CLI + 技能包而不是只用 OpenAPI
-
-使用 `toggl-cli` 加 `SKILL.md` 给 Agent 带来：
-
-- 已经匹配常见用户任务的命令形态
-- 内置认证流程
-- 读密集型操作的本地缓存
-- 比从头拼装每个请求更简单的自动化循环
-- 可安装到 Agent 环境的可复用技能包
-
-`toggl-cli` 的 README 特别提到了本地 HTTP 响应缓存和数据变更时的自动缓存失效。这对 Agent 循环很重要，因为它减少了重复读取调用同时保持变更状态的新鲜度。
-
-## OpenToggl 本身的价值
-
-CLI/技能包是执行层，但 OpenToggl 仍然提供产品和部署目标：
-
-- OpenToggl 定义了工具可以对接的 API 和产品接口
-- OpenToggl 自托管给你一个在自己控制下的、Agent 可以对接的实例
-- OpenToggl 文档和 OpenAPI 文件解释了这些命令背后的语义
-
-## Agent 工作流推荐配置
-
-如果你想让 Agent 与 OpenToggl 配合工作，实际配置是：
-
-1. 部署或运行 OpenToggl。
-2. 安装 `CorrectRoadH/toggl-cli` 作为 CLI 或技能包。
-3. 将工具认证到你的实例。
-4. 使用 CLI 命令接口进行常规运维任务。
-5. 当 Agent 需要更底层的合约细节时，回退到 OpenAPI 和产品文档。
+1. 部署 OpenToggl（或使用托管版）
+2. 安装 toggl-cli 或技能包
+3. 认证到你的实例
+4. Agent 通过 CLI 命令完成日常操作
+5. 需要更细粒度的控制时，查阅 OpenAPI 文档
 
 ## 参考
 
-- `CorrectRoadH/toggl-cli` 仓库
-- `skills/toggl-cli/SKILL.md`
-- OpenToggl 产品文档和 OpenAPI 合约
-
-如果通过 CLI、技能包、合约和自托管运行时的 Agent 路径已经稳固，OpenToggl 就不需要一个单独的 AI 产品线。
+- [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 仓库
+- `skills/toggl-cli/SKILL.md` 技能包定义
+- OpenToggl OpenAPI 合约和产品文档

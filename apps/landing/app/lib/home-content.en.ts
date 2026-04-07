@@ -3,9 +3,9 @@ export const homeContentEn = {
     taglineBefore: "The ",
     taglineAfter: " Toggl alternative.",
     rotatingWords: ["free", "private", "self-hosted", "AI-friendly"],
-    subtitle: "Same API. Same workflow. Your data.",
+    subtitle: "Compatible with the Toggl API. Your data stays yours.",
     ctas: {
-      tryDemo: "Try Demo",
+      tryDemo: "Try It Live",
       selfHost: "Self-Host",
     },
   },
@@ -14,15 +14,15 @@ export const homeContentEn = {
     items: [
       {
         title: "Drop-in compatible",
-        body: "Fully compatible with Toggl. Existing integrations just work.",
+        body: "Works with the Toggl API. Your existing tools and integrations carry over.",
       },
       {
-        title: "Self-host in minutes",
-        body: "One Docker Compose command. Runs on CasaOS, Synology, fnOS.",
+        title: "Deploy in minutes",
+        body: "One docker compose command. Runs on CasaOS, Synology, fnOS.",
       },
       {
         title: "Free & open source",
-        body: "No seat limits. No pricing tiers. Same product hosted or self-hosted.",
+        body: "No seat limits, no tiers. Self-hosted and hosted are the same product.",
       },
     ],
   },
@@ -32,21 +32,21 @@ export const homeContentEn = {
       {
         title: "Live demo",
         value: "track.opentoggl.com",
-        body: "Try the real product before you commit.",
+        body: "Try it first, decide later.",
         cta: "Open demo",
         href: "https://track.opentoggl.com",
       },
       {
-        title: "Repository",
+        title: "Source code",
         value: "CorrectRoadH/opentoggl",
-        body: "Read the code, follow issues, inspect everything.",
+        body: "Code, issues, discussions — all in the open.",
         cta: "Open GitHub",
         href: "https://github.com/CorrectRoadH/opentoggl",
       },
       {
-        title: "Documentation",
+        title: "Docs",
         value: "Docs & guides",
-        body: "Deployment, API reference, and product definitions.",
+        body: "Deployment, API reference, product design.",
         cta: "View docs",
         href: "/docs",
       },
@@ -55,29 +55,27 @@ export const homeContentEn = {
 
   faq: [
     {
-      question: "Is OpenToggl a drop-in replacement for Toggl Track?",
+      question: "Can it replace Toggl Track?",
       answer:
-        "OpenToggl targets the current public Toggl surface, including Track API v9, Reports API v3, and Webhooks API v1. Existing integrations that use these APIs should work without changes. The web interface is independently implemented, but the operating surface is intended to match the public definition.",
+        "Yes. OpenToggl is compatible with Toggl's Track, Reports, and Webhooks APIs. If your tools talk to Toggl via its API, they should work with OpenToggl without changes.",
     },
     {
-      question: "Can I migrate my existing Toggl data?",
-      answer:
-        "Yes. OpenToggl supports importing Toggl export files so your time entry history comes with you when you migrate.",
+      question: "Can I bring my Toggl data?",
+      answer: "Yes. You can import Toggl export files — your history comes with you.",
     },
     {
-      question: "What are the self-hosting requirements?",
+      question: "What do I need to self-host?",
       answer:
-        "OpenToggl requires Docker and Docker Compose. It runs a Go backend and React frontend backed by PostgreSQL. A single compose setup brings up the full stack, and docs cover CasaOS, Synology, and fnOS as well.",
+        "Docker. One docker compose up -d brings up the full stack (Go backend, React frontend, PostgreSQL). We also have guides for Synology, CasaOS, and fnOS.",
     },
     {
-      question: "Is the hosted instance and self-hosted version the same?",
-      answer:
-        "Yes. The managed instance and self-hosted version run the same product with the same public capability surface. There is no hidden split.",
+      question: "Are hosted and self-hosted the same?",
+      answer: "Yes. Same code, same features. No premium tier, no feature gating.",
     },
     {
-      question: "Why is OpenToggl described as AI-friendly?",
+      question: "Why AI-friendly?",
       answer:
-        "Because the product is built around a stable public contract and self-hosting support. That makes it a much better backend for agents, scripts, and automation than a product constrained by someone else's vendor limits.",
+        "Stable API, solid docs, self-hostable. Agents and scripts can integrate without third-party rate limits getting in the way.",
     },
   ],
 } as const;
