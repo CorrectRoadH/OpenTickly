@@ -1,7 +1,7 @@
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { type ReactElement, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { resolveEntryDurationSeconds } from "../../features/tracking/overview-data.ts";
 import { LiveDuration } from "../../features/tracking/LiveDuration.tsx";
@@ -29,15 +29,12 @@ export function MobileShell(): ReactElement {
   const { t } = useTranslation("mobile");
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  const TABS = useMemo(
-    () => [
-      { path: "/m/timer", label: t("timer"), Icon: TimerIcon },
-      { path: "/m/calendar", label: t("calendar"), Icon: CalendarIcon },
-      { path: "/m/report", label: t("report"), Icon: ReportsIcon },
-      { path: "/m/me", label: t("me"), Icon: ProfileIcon },
-    ],
-    [t],
-  );
+  const TABS = [
+    { path: "/m/timer", label: t("timer"), Icon: TimerIcon },
+    { path: "/m/calendar", label: t("calendar"), Icon: CalendarIcon },
+    { path: "/m/report", label: t("report"), Icon: ReportsIcon },
+    { path: "/m/me", label: t("me"), Icon: ProfileIcon },
+  ];
   const session = useSession();
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const startMutation = useStartTimeEntryMutation(session.currentWorkspace.id);
@@ -45,15 +42,15 @@ export function MobileShell(): ReactElement {
   const runningEntry = currentTimeEntryQuery.data;
 
   // Fetch recent entries for continue suggestions
-  const recentEntriesDateRange = useMemo(() => {
+  const recentEntriesDateRange = (() => {
     const end = new Date();
     end.setDate(end.getDate() + 1);
     const start = new Date();
     start.setDate(start.getDate() - 7);
     return { startDate: start.toISOString(), endDate: end.toISOString() };
-  }, []);
+  })();
   const recentEntriesQuery = useTimeEntriesQuery(recentEntriesDateRange);
-  const recentStoppedEntries = useMemo(() => {
+  const recentStoppedEntries = (() => {
     const entries = recentEntriesQuery.data ?? [];
     // Deduplicate by description+project, keep most recent, exclude running
     const seen = new Set<string>();
@@ -67,7 +64,7 @@ export function MobileShell(): ReactElement {
         return true;
       })
       .slice(0, 3);
-  }, [recentEntriesQuery.data]);
+  })();
 
   const [draftDescription, setDraftDescription] = useState("");
   const [editingEntry, setEditingEntry] =

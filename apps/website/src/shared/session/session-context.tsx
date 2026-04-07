@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 import {
   mapSessionBootstrap,
@@ -108,20 +108,13 @@ export function SessionProvider({
     setCurrentWorkspaceId(requestedWorkspaceId ?? fallbackWorkspaceId);
   }, [fallbackWorkspaceId, requestedWorkspaceId]);
 
-  const session = useMemo(
-    () =>
-      mapSessionBootstrap(sessionBootstrap, {
-        requestedWorkspaceId: currentWorkspaceId,
-      }),
-    [currentWorkspaceId, sessionBootstrap],
-  );
-  const value = useMemo(
-    () => ({
-      session,
-      setCurrentWorkspaceId,
-    }),
-    [session],
-  );
+  const session = mapSessionBootstrap(sessionBootstrap, {
+    requestedWorkspaceId: currentWorkspaceId,
+  });
+  const value = {
+    session,
+    setCurrentWorkspaceId,
+  };
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

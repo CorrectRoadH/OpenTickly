@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
@@ -35,7 +35,7 @@ export function useTimeEntryViews(options: {
   // List view pagination
   const [listDaysLoaded, setListDaysLoaded] = useState(LIST_INITIAL_DAYS);
 
-  const listQueryRange = useMemo(() => {
+  const listQueryRange = (() => {
     if (listDateRange) return listDateRange;
     const end = new Date();
     end.setDate(end.getDate() + 1);
@@ -45,11 +45,11 @@ export function useTimeEntryViews(options: {
       endDate: formatTrackQueryDate(end),
       startDate: formatTrackQueryDate(start),
     };
-  }, [listDateRange, listDaysLoaded]);
+  })();
 
-  const loadMoreEntries = useCallback(() => {
+  const loadMoreEntries = () => {
     setListDaysLoaded((prev) => prev + LIST_PAGE_INCREMENT);
-  }, []);
+  };
 
   const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? listQueryRange : { ...weekRange });
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
@@ -58,37 +58,28 @@ export function useTimeEntryViews(options: {
   const recentWorkspaceEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);
   const groupedEntriesRef = useRef<ReturnType<typeof buildEntryGroups>>([]);
 
-  const entries = useMemo(
-    () => sortTimeEntries(timeEntriesQuery.data ?? []),
-    [timeEntriesQuery.data],
+  const entries = sortTimeEntries(timeEntriesQuery.data ?? []);
+
+  const nextVisibleEntries = showAllEntries
+    ? entries
+    : entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId);
+  const visibleEntries = stabilizeTimeEntryList(visibleEntriesRef.current, nextVisibleEntries);
+  visibleEntriesRef.current = visibleEntries;
+
+  const nextRecentEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
+    (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
   );
-
-  const visibleEntries = useMemo(() => {
-    const nextEntries = showAllEntries
-      ? entries
-      : entries.filter((entry) => (entry.workspace_id ?? entry.wid) === workspaceId);
-    const stabilizedEntries = stabilizeTimeEntryList(visibleEntriesRef.current, nextEntries);
-    visibleEntriesRef.current = stabilizedEntries;
-    return stabilizedEntries;
-  }, [entries, showAllEntries, workspaceId]);
-
-  const recentWorkspaceEntries = useMemo(() => {
-    const nextEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
-      (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
-    );
-    const stabilizedEntries = stabilizeTimeEntryList(
-      recentWorkspaceEntriesRef.current,
-      nextEntries,
-    );
-    recentWorkspaceEntriesRef.current = stabilizedEntries;
-    return stabilizedEntries;
-  }, [recentTimeEntriesQuery.data, workspaceId]);
+  const recentWorkspaceEntries = stabilizeTimeEntryList(
+    recentWorkspaceEntriesRef.current,
+    nextRecentEntries,
+  );
+  recentWorkspaceEntriesRef.current = recentWorkspaceEntries;
 
   const hasMoreEntries = listDateRange === null;
   const isLoadingMoreEntries = timeEntriesQuery.isFetching && listDaysLoaded > LIST_INITIAL_DAYS;
 
   // Today total
-  const todayTotalSeconds = useMemo(() => {
+  const todayTotalSeconds = (() => {
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
       day: "2-digit",
       month: "2-digit",
@@ -97,10 +88,10 @@ export function useTimeEntryViews(options: {
     });
     const todayKey = dateFormatter.format(new Date());
     return sumForDate(visibleEntries, todayKey, timezone);
-  }, [visibleEntries, timezone]);
+  })();
 
   // Week total
-  const weekTotalSeconds = useMemo(() => {
+  const weekTotalSeconds = (() => {
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
       day: "2-digit",
       month: "2-digit",
@@ -110,38 +101,28 @@ export function useTimeEntryViews(options: {
     return weekDays.reduce((total, day) => {
       return total + sumForDate(visibleEntries, dateFormatter.format(day), timezone);
     }, 0);
-  }, [weekDays, visibleEntries, timezone]);
+  })();
 
-  const groupedEntries = useMemo(() => {
-    const groups = buildEntryGroups(visibleEntries, timezone);
-    const nextGroups = collapseTimeEntries ? collapseSimilarEntries(groups) : groups;
-    const stabilizedGroups = stabilizeEntryGroups(groupedEntriesRef.current, nextGroups);
-    groupedEntriesRef.current = stabilizedGroups;
-    return stabilizedGroups;
-  }, [visibleEntries, timezone, collapseTimeEntries]);
+  const groupedEntriesRaw = buildEntryGroups(visibleEntries, timezone);
+  const groupedEntriesNext = collapseTimeEntries
+    ? collapseSimilarEntries(groupedEntriesRaw)
+    : groupedEntriesRaw;
+  const groupedEntries = stabilizeEntryGroups(groupedEntriesRef.current, groupedEntriesNext);
+  groupedEntriesRef.current = groupedEntries;
 
-  const trackStrip = useMemo(
-    () => summarizeProjects(visibleEntries).slice(0, 12),
-    [visibleEntries],
-  );
+  const trackStrip = summarizeProjects(visibleEntries).slice(0, 12);
 
-  const calendarHours = useMemo(
-    () => getCalendarHours(visibleEntries, weekDays, timezone),
-    [visibleEntries, weekDays, timezone],
-  );
+  const calendarHours = getCalendarHours(visibleEntries, weekDays, timezone);
 
-  const timesheetRows = useMemo(
-    () => buildTimesheetRows(visibleEntries, weekDays, timezone).slice(0, 18),
-    [visibleEntries, weekDays, timezone],
-  );
+  const timesheetRows = buildTimesheetRows(visibleEntries, weekDays, timezone).slice(0, 18);
 
-  const timerErrorMessage = useMemo(() => {
+  const timerErrorMessage = (() => {
     const failure = timeEntriesQuery.error;
     if (failure instanceof WebApiError) {
       return failure.message;
     }
     return "We could not load or update time entries right now.";
-  }, [timeEntriesQuery.error]);
+  })();
 
   return {
     timeEntriesQuery,

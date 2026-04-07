@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { Check, ChevronLeft, X } from "lucide-react";
 import { AppInput } from "@opentoggl/web-ui";
 import { useTranslation } from "react-i18next";
@@ -38,17 +38,14 @@ export function GoalTrackPicker({
   const [view, setView] = useState<PickerView>(null);
   const [search, setSearch] = useState("");
   const pickerRef = useRef<HTMLDivElement>(null);
-  const handleDismiss = useCallback(() => {
+  const handleDismiss = () => {
     setView(null);
     setSearch("");
-  }, []);
+  };
   useDismiss(pickerRef, view != null, handleDismiss);
 
-  const selectedProjects = useMemo(
-    () => projects.filter((p) => p.id != null && projectIds.includes(p.id)),
-    [projects, projectIds],
-  );
-  const selectedTags = useMemo(() => tags.filter((t) => tagIds.includes(t.id)), [tags, tagIds]);
+  const selectedProjects = projects.filter((p) => p.id != null && projectIds.includes(p.id));
+  const selectedTags = tags.filter((t) => tagIds.includes(t.id));
 
   const hasSelections = selectedProjects.length > 0 || selectedTags.length > 0 || billable;
 
@@ -242,7 +239,7 @@ function ProjectList({
   selectedIds: number[];
 }): ReactElement {
   const { t } = useTranslation("goals");
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     const q = search.toLowerCase();
     return projects.filter(
       (p) =>
@@ -250,9 +247,9 @@ function ProjectList({
         ((p.name ?? "").toLowerCase().includes(q) ||
           (p.client_name ?? "").toLowerCase().includes(q)),
     );
-  }, [projects, search]);
+  })();
 
-  const grouped = useMemo(() => {
+  const grouped = (() => {
     const map = new Map<string, GithubComTogglTogglApiInternalModelsProject[]>();
     for (const p of filtered) {
       const client = p.client_name ?? "No Client";
@@ -261,7 +258,7 @@ function ProjectList({
       map.set(client, list);
     }
     return map;
-  }, [filtered]);
+  })();
 
   return (
     <div>
@@ -338,10 +335,10 @@ function TagList({
   tags: TagItem[];
 }): ReactElement {
   const { t } = useTranslation("goals");
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     const q = search.toLowerCase();
     return tags.filter((t) => t.name.toLowerCase().includes(q));
-  }, [tags, search]);
+  })();
 
   return (
     <div>

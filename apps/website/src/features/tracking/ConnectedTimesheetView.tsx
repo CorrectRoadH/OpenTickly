@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
@@ -61,105 +61,106 @@ export function ConnectedTimesheetView({
   const viewsRef = useRef(views);
   viewsRef.current = views;
 
-  const handleTimesheetCellEdit = useCallback(
-    async (projectLabel: string, dayIndex: number, durationSeconds: number) => {
-      const wd = viewsRef.current;
-      if (dayIndex < 0 || dayIndex >= weekDays.length) return;
+  const handleTimesheetCellEdit = async (
+    projectLabel: string,
+    dayIndex: number,
+    durationSeconds: number,
+  ) => {
+    const wd = viewsRef.current;
+    if (dayIndex < 0 || dayIndex >= weekDays.length) return;
 
-      const dayKey = formatDateKey(weekDays[dayIndex], timezone);
+    const dayKey = formatDateKey(weekDays[dayIndex], timezone);
 
-      const matchingEntries = wd.visibleEntries.filter((entry) => {
-        const entryLabel = entry.project_name?.trim() || "(No project)";
-        const entryDay = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
-        return entryLabel === projectLabel && entryDay === dayKey;
+    const matchingEntries = wd.visibleEntries.filter((entry) => {
+      const entryLabel = entry.project_name?.trim() || "(No project)";
+      const entryDay = formatDateKey(new Date(entry.start ?? entry.at ?? Date.now()), timezone);
+      return entryLabel === projectLabel && entryDay === dayKey;
+    });
+
+    if (matchingEntries.length === 0 && durationSeconds > 0) {
+      const dayDate = weekDays[dayIndex];
+      const start = new Date(dayDate);
+      start.setHours(9, 0, 0, 0);
+      const stop = new Date(start.getTime() + durationSeconds * 1000);
+
+      await mutRef.current.create.mutateAsync({
+        billable: false,
+        description: "",
+        duration: durationSeconds,
+        projectId: null,
+        start: start.toISOString(),
+        stop: stop.toISOString(),
+        tagIds: [],
       });
+      return;
+    }
 
-      if (matchingEntries.length === 0 && durationSeconds > 0) {
-        const dayDate = weekDays[dayIndex];
-        const start = new Date(dayDate);
-        start.setHours(9, 0, 0, 0);
-        const stop = new Date(start.getTime() + durationSeconds * 1000);
+    if (matchingEntries.length === 1) {
+      const entry = matchingEntries[0];
+      const entryWid = entry.workspace_id ?? entry.wid;
+      if (typeof entry.id !== "number" || typeof entryWid !== "number" || !entry.start) return;
 
-        await mutRef.current.create.mutateAsync({
-          billable: false,
-          description: "",
-          duration: durationSeconds,
-          projectId: null,
-          start: start.toISOString(),
-          stop: stop.toISOString(),
-          tagIds: [],
-        });
-        return;
-      }
-
-      if (matchingEntries.length === 1) {
-        const entry = matchingEntries[0];
-        const entryWid = entry.workspace_id ?? entry.wid;
-        if (typeof entry.id !== "number" || typeof entryWid !== "number" || !entry.start) return;
-
-        if (durationSeconds === 0) {
-          await mutRef.current.del.mutateAsync({
-            timeEntryId: entry.id,
-            workspaceId: entryWid,
-          });
-          return;
-        }
-
-        const startMs = new Date(entry.start).getTime();
-        const nextStop = new Date(startMs + durationSeconds * 1000);
-
-        await mutRef.current.update.mutateAsync({
-          request: {
-            billable: entry.billable,
-            description: entry.description ?? "",
-            projectId: resolveTimeEntryProjectId(entry),
-            start: entry.start,
-            stop: toTrackIso(nextStop),
-            tagIds: entry.tag_ids ?? [],
-            taskId: entry.task_id ?? entry.tid ?? null,
-          },
+      if (durationSeconds === 0) {
+        await mutRef.current.del.mutateAsync({
           timeEntryId: entry.id,
           workspaceId: entryWid,
         });
         return;
       }
 
-      // Multiple entries: adjust the first entry
-      const currentTotal = matchingEntries.reduce(
-        (sum, e) => sum + resolveEntryDurationSeconds(e),
-        0,
-      );
-      if (currentTotal === 0) return;
-
-      const firstEntry = matchingEntries[0];
-      const firstWid = firstEntry.workspace_id ?? firstEntry.wid;
-      if (typeof firstEntry.id !== "number" || typeof firstWid !== "number" || !firstEntry.start)
-        return;
-
-      const firstDuration = resolveEntryDurationSeconds(firstEntry);
-      const diff = durationSeconds - currentTotal;
-      const newFirstDuration = Math.max(0, firstDuration + diff);
-      const startMs = new Date(firstEntry.start).getTime();
-      const nextStop = new Date(startMs + newFirstDuration * 1000);
+      const startMs = new Date(entry.start).getTime();
+      const nextStop = new Date(startMs + durationSeconds * 1000);
 
       await mutRef.current.update.mutateAsync({
         request: {
-          billable: firstEntry.billable,
-          description: firstEntry.description ?? "",
-          projectId: resolveTimeEntryProjectId(firstEntry),
-          start: firstEntry.start,
+          billable: entry.billable,
+          description: entry.description ?? "",
+          projectId: resolveTimeEntryProjectId(entry),
+          start: entry.start,
           stop: toTrackIso(nextStop),
-          tagIds: firstEntry.tag_ids ?? [],
-          taskId: firstEntry.task_id ?? firstEntry.tid ?? null,
+          tagIds: entry.tag_ids ?? [],
+          taskId: entry.task_id ?? entry.tid ?? null,
         },
-        timeEntryId: firstEntry.id,
-        workspaceId: firstWid,
+        timeEntryId: entry.id,
+        workspaceId: entryWid,
       });
-    },
-    [timezone, weekDays],
-  );
+      return;
+    }
 
-  const handleCopyLastWeek = useCallback(async () => {
+    // Multiple entries: adjust the first entry
+    const currentTotal = matchingEntries.reduce(
+      (sum, e) => sum + resolveEntryDurationSeconds(e),
+      0,
+    );
+    if (currentTotal === 0) return;
+
+    const firstEntry = matchingEntries[0];
+    const firstWid = firstEntry.workspace_id ?? firstEntry.wid;
+    if (typeof firstEntry.id !== "number" || typeof firstWid !== "number" || !firstEntry.start)
+      return;
+
+    const firstDuration = resolveEntryDurationSeconds(firstEntry);
+    const diff = durationSeconds - currentTotal;
+    const newFirstDuration = Math.max(0, firstDuration + diff);
+    const startMs = new Date(firstEntry.start).getTime();
+    const nextStop = new Date(startMs + newFirstDuration * 1000);
+
+    await mutRef.current.update.mutateAsync({
+      request: {
+        billable: firstEntry.billable,
+        description: firstEntry.description ?? "",
+        projectId: resolveTimeEntryProjectId(firstEntry),
+        start: firstEntry.start,
+        stop: toTrackIso(nextStop),
+        tagIds: firstEntry.tag_ids ?? [],
+        taskId: firstEntry.task_id ?? firstEntry.tid ?? null,
+      },
+      timeEntryId: firstEntry.id,
+      workspaceId: firstWid,
+    });
+  };
+
+  const handleCopyLastWeek = async () => {
     const lastWeekDate = new Date(weekDays[0]);
     lastWeekDate.setDate(lastWeekDate.getDate() - 7);
     const lastWeekDays = getWeekDaysForDate(lastWeekDate, beginningOfWeek);
@@ -203,30 +204,27 @@ export function ConnectedTimesheetView({
         taskId: entry.task_id ?? entry.tid ?? null,
       });
     }
-  }, [weekDays, beginningOfWeek, workspaceId]);
+  };
 
-  const handleTimesheetAddRow = useCallback(
-    (projectId: number | null) => {
-      setTimesheetAddRowOpen(false);
-      if (weekDays.length === 0) return;
-      const firstDay = weekDays[0];
-      const start = new Date(firstDay);
-      start.setHours(9, 0, 0, 0);
-      const stop = new Date(start);
-      stop.setSeconds(stop.getSeconds() + 1);
-      void createTimeEntryMutation.mutateAsync({
-        billable: false,
-        description: "",
-        duration: 1,
-        projectId,
-        start: start.toISOString(),
-        stop: stop.toISOString(),
-        tagIds: [],
-        taskId: null,
-      });
-    },
-    [weekDays, createTimeEntryMutation],
-  );
+  const handleTimesheetAddRow = (projectId: number | null) => {
+    setTimesheetAddRowOpen(false);
+    if (weekDays.length === 0) return;
+    const firstDay = weekDays[0];
+    const start = new Date(firstDay);
+    start.setHours(9, 0, 0, 0);
+    const stop = new Date(start);
+    stop.setSeconds(stop.getSeconds() + 1);
+    void createTimeEntryMutation.mutateAsync({
+      billable: false,
+      description: "",
+      duration: 1,
+      projectId,
+      start: start.toISOString(),
+      stop: stop.toISOString(),
+      tagIds: [],
+      taskId: null,
+    });
+  };
 
   if (views.timeEntriesQuery.isPending) {
     return <SurfaceMessage message="Loading time entries..." />;
@@ -283,20 +281,16 @@ function TimesheetAddRowPicker({
 }): ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const projects = useMemo(
-    () =>
-      projectOptions
-        .filter((p) => p.id != null && p.active !== false)
-        .map((p) => ({
-          clientName: p.client_name ?? undefined,
-          color: resolveProjectColorValue(p),
-          id: p.id as number,
-          name: p.name ?? "Untitled project",
-          pinned: p.pinned === true,
-        }))
-        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
-    [projectOptions],
-  );
+  const projects = projectOptions
+    .filter((p) => p.id != null && p.active !== false)
+    .map((p) => ({
+      clientName: p.client_name ?? undefined,
+      color: resolveProjectColorValue(p),
+      id: p.id as number,
+      name: p.name ?? "Untitled project",
+      pinned: p.pinned === true,
+    }))
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
   useDismiss(containerRef, true, onClose);
 

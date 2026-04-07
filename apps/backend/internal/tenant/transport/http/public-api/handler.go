@@ -32,6 +32,24 @@ type HomeRepository interface {
 	Save(context.Context, int64, int64, int64) error
 }
 
+// workspaceSubscriptionResponse is the JSON shape for workspace subscription info.
+type workspaceSubscriptionResponse struct {
+	PlanName string `json:"plan_name"`
+	State    string `json:"state"`
+}
+
+// organizationResponse is the JSON shape for a single organization returned by
+// the public track API, replacing an untyped map[string]any.
+type organizationResponse struct {
+	ID                      int64  `json:"id"`
+	Name                    string `json:"name"`
+	Admin                   bool   `json:"admin"`
+	MaxWorkspaces           int    `json:"max_workspaces"`
+	PricingPlanName         string `json:"pricing_plan_name"`
+	IsMultiWorkspaceEnabled bool   `json:"is_multi_workspace_enabled"`
+	UserCount               int    `json:"user_count"`
+}
+
 type Handler struct {
 	tenant     *tenantapplication.Service
 	billing    *billingapplication.Service
@@ -303,9 +321,9 @@ func (handler *Handler) GetPublicTrackWorkspaceSubscription(ctx echo.Context) er
 	if err != nil {
 		return mapError(err)
 	}
-	return ctx.JSON(http.StatusOK, map[string]any{
-		"plan_name": titleCasePlan(view.Commercial.Subscription.Plan),
-		"state":     string(view.Commercial.Subscription.State),
+	return ctx.JSON(http.StatusOK, workspaceSubscriptionResponse{
+		PlanName: titleCasePlan(view.Commercial.Subscription.Plan),
+		State:    string(view.Commercial.Subscription.State),
 	})
 }
 
@@ -373,15 +391,15 @@ func meOrganizationBody(view tenantapplication.OrganizationView) publictrackapi.
 	}
 }
 
-func organizationBody(view tenantapplication.OrganizationView) map[string]any {
-	return map[string]any{
-		"id":                         int64(view.ID),
-		"name":                       view.Name,
-		"admin":                      true,
-		"max_workspaces":             12,
-		"pricing_plan_name":          titleCasePlan(view.Commercial.Subscription.Plan),
-		"is_multi_workspace_enabled": true,
-		"user_count":                 len(view.WorkspaceIDs),
+func organizationBody(view tenantapplication.OrganizationView) organizationResponse {
+	return organizationResponse{
+		ID:                       int64(view.ID),
+		Name:                     view.Name,
+		Admin:                    true,
+		MaxWorkspaces:            12,
+		PricingPlanName:          titleCasePlan(view.Commercial.Subscription.Plan),
+		IsMultiWorkspaceEnabled:  true,
+		UserCount:                len(view.WorkspaceIDs),
 	}
 }
 

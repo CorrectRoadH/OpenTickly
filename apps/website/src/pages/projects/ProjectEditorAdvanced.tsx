@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactElement, useCallback, useState } from "react";
+import { type ChangeEvent, type ReactElement, useState } from "react";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
@@ -84,10 +84,7 @@ export function ProjectEditorAdvanced({
   template,
 }: ProjectEditorAdvancedProps): ReactElement {
   const [clientQuery, setClientQuery] = useState("");
-  const matchClient = useCallback(
-    (c: ClientOption, q: string) => c.name.toLowerCase().includes(q),
-    [],
-  );
+  const matchClient = (c: ClientOption, q: string) => c.name.toLowerCase().includes(q);
   const filteredClients = useFilteredList(clients, clientQuery, matchClient);
 
   const showEstimatedInput = estimatedHours > 0;

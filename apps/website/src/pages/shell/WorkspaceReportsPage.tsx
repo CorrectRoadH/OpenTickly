@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AppButton,
@@ -146,10 +146,7 @@ export function WorkspaceReportsPage({
   const workspaceId = session.currentWorkspace.id;
   const navigate = useNavigate();
 
-  const initialProjectIds = useMemo(
-    () => (initialProjectId != null ? [initialProjectId] : undefined),
-    [initialProjectId],
-  );
+  const initialProjectIds = initialProjectId != null ? [initialProjectId] : undefined;
   const state = useReportsPageState(timezone, weekStartsOn, initialProjectIds);
 
   const projectsQuery = useProjectsQuery(workspaceId);
@@ -163,53 +160,43 @@ export function WorkspaceReportsPage({
     tagIds: state.filters.tagIds,
   });
 
-  const memberOptions = useMemo(
-    () => extractUniqueMembers(weeklyReportQuery.data),
-    [weeklyReportQuery.data],
+  const memberOptions = extractUniqueMembers(weeklyReportQuery.data);
+
+  const clientOptions = extractUniqueClients(weeklyReportQuery.data);
+
+  const filteredReport = filterReportRows(
+    weeklyReportQuery.data,
+    state.memberFilter,
+    state.clientFilter,
   );
 
-  const clientOptions = useMemo(
-    () => extractUniqueClients(weeklyReportQuery.data),
-    [weeklyReportQuery.data],
-  );
+  const liveModel = buildReportsPageModel({
+    endDate: state.dateRange.endDate,
+    report: filteredReport,
+    startDate: state.dateRange.startDate,
+    timezone,
+    weekStartsOn,
+  });
 
-  const filteredReport = useMemo(
-    () => filterReportRows(weeklyReportQuery.data, state.memberFilter, state.clientFilter),
-    [weeklyReportQuery.data, state.memberFilter, state.clientFilter],
-  );
+  const displayModel = roundingEnabled
+    ? applyRoundingToModel(liveModel, durationFormat)
+    : liveModel;
 
-  const liveModel = useMemo(
-    () =>
-      buildReportsPageModel({
-        endDate: state.dateRange.endDate,
-        report: filteredReport,
-        startDate: state.dateRange.startDate,
-        timezone,
-        weekStartsOn,
-      }),
-    [state.dateRange.endDate, state.dateRange.startDate, filteredReport, timezone, weekStartsOn],
-  );
-
-  const displayModel = useMemo(
-    () => (roundingEnabled ? applyRoundingToModel(liveModel, durationFormat) : liveModel),
-    [liveModel, roundingEnabled, durationFormat],
-  );
-
-  const handleShareReport = useCallback(() => {
+  const handleShareReport = () => {
     const url = window.location.href;
     void navigator.clipboard.writeText(url).then(() => {
       setShareToast(true);
       setTimeout(() => setShareToast(false), 3000);
     });
-  }, []);
+  };
 
-  const displayBreakdownRows = useMemo(() => {
+  const displayBreakdownRows = (() => {
     if (state.breakdownBy === "clients") return regroupByClient(displayModel.breakdownRows);
     if (state.breakdownBy === "entries") return regroupByEntry(displayModel.breakdownRows);
     return displayModel.breakdownRows;
-  }, [displayModel.breakdownRows, state.breakdownBy]);
+  })();
 
-  const displayDistributionSegments = useMemo(() => {
+  const displayDistributionSegments = (() => {
     if (state.sliceBy === "projects") return displayModel.distributionSegments;
     const regrouped =
       state.sliceBy === "clients"
@@ -218,23 +205,15 @@ export function WorkspaceReportsPage({
     return regrouped
       .slice(0, 10)
       .map((r) => ({ color: r.color, duration: r.duration, label: r.name, value: r.shareValue }));
-  }, [displayModel.breakdownRows, displayModel.distributionSegments, state.sliceBy]);
+  })();
 
-  const projectOptions = useMemo(
-    () =>
-      (projectsQuery.data ?? [])
-        .filter((p) => p.id != null && p.name)
-        .map((p) => ({ id: p.id!, label: p.name! })),
-    [projectsQuery.data],
-  );
+  const projectOptions = (projectsQuery.data ?? [])
+    .filter((p) => p.id != null && p.name)
+    .map((p) => ({ id: p.id!, label: p.name! }));
 
-  const tagOptions = useMemo(
-    () =>
-      (tagsQuery.data ?? [])
-        .filter((t) => t.id != null && t.name)
-        .map((t) => ({ id: t.id!, label: t.name! })),
-    [tagsQuery.data],
-  );
+  const tagOptions = (tagsQuery.data ?? [])
+    .filter((t) => t.id != null && t.name)
+    .map((t) => ({ id: t.id!, label: t.name! }));
 
   const headerActions =
     tab === "custom" ? (
@@ -424,17 +403,11 @@ function ReportsFilterBar({
   weekStartsOn: number;
 }) {
   const { t } = useTranslation("reports");
-  const selectedDate = useMemo(
-    () => new Date(`${state.dateRange.startDate}T00:00:00`),
-    [state.dateRange.startDate],
-  );
+  const selectedDate = new Date(`${state.dateRange.startDate}T00:00:00`);
 
-  const handleSelectDate = useCallback(
-    (date: Date) => {
-      state.selectDateRange(resolveShortcutRange("this-week", weekStartsOn, date));
-    },
-    [state, weekStartsOn],
-  );
+  const handleSelectDate = (date: Date) => {
+    state.selectDateRange(resolveShortcutRange("this-week", weekStartsOn, date));
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-2 py-3" data-testid="reports-filter-bar">
@@ -522,24 +495,15 @@ function ReportsRangePicker({
   state: ReturnType<typeof useReportsPageState>;
   weekStartsOn: number;
 }): ReactElement {
-  const rangeStart = useMemo(
-    () => new Date(`${state.dateRange.startDate}T00:00:00`),
-    [state.dateRange.startDate],
-  );
-  const rangeEnd = useMemo(
-    () => new Date(`${state.dateRange.endDate}T00:00:00`),
-    [state.dateRange.endDate],
-  );
+  const rangeStart = new Date(`${state.dateRange.startDate}T00:00:00`);
+  const rangeEnd = new Date(`${state.dateRange.endDate}T00:00:00`);
 
-  const handleSelectRange = useCallback(
-    (start: Date, end: Date) => {
-      state.selectDateRange({
-        startDate: formatTrackQueryDate(start),
-        endDate: formatTrackQueryDate(end),
-      });
-    },
-    [state],
-  );
+  const handleSelectRange = (start: Date, end: Date) => {
+    state.selectDateRange({
+      startDate: formatTrackQueryDate(start),
+      endDate: formatTrackQueryDate(end),
+    });
+  };
 
   return (
     <WeekRangePicker

@@ -1,6 +1,6 @@
 import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -111,7 +111,7 @@ export function BillableRatesContent(): ReactElement {
     setIsDirty(false);
   }, [currentRate, defaultHourlyRate, defaultCurrency]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = () => {
     const amount = billingMode === "non-billable" ? 0 : parseFloat(hourlyRate) || 0;
 
     rateMutation.mutate(
@@ -132,7 +132,7 @@ export function BillableRatesContent(): ReactElement {
         },
       },
     );
-  }, [billingMode, hourlyRate, workspaceId, rateMutation]);
+  };
 
   return (
     <div className="flex flex-col gap-5" data-testid="billable-rates-section">
@@ -370,17 +370,13 @@ function CurrencyField(props: {
 
 function WorkspaceMemberRatesSection({ workspaceId }: { workspaceId: number }): ReactElement {
   const membersQuery = useWorkspaceUsersQuery(workspaceId);
-  const members = useMemo(
-    () =>
-      (membersQuery.data ?? [])
-        .filter((m) => m.id != null && m.inactive !== true)
-        .map((m) => ({
-          id: m.id as number,
-          name: m.fullname?.trim() || m.email?.trim() || `User ${m.id}`,
-          email: m.email ?? "",
-        })),
-    [membersQuery.data],
-  );
+  const members = (membersQuery.data ?? [])
+    .filter((m) => m.id != null && m.inactive !== true)
+    .map((m) => ({
+      id: m.id as number,
+      name: m.fullname?.trim() || m.email?.trim() || `User ${m.id}`,
+      email: m.email ?? "",
+    }));
 
   return (
     <SurfaceCard>

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactElement, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AppButton,
@@ -150,7 +150,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         }),
       ),
   });
-  const projectUsersByProject = useMemo(() => {
+  const projectUsersByProject = (() => {
     const map = new Map<number, Set<number>>();
     for (const pu of projectUsersQuery.data ?? []) {
       const pid = pu.project_id;
@@ -161,16 +161,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       map.set(pid, set);
     }
     return map;
-  }, [projectUsersQuery.data]);
+  })();
 
-  const clientsList = useMemo(
-    () =>
-      (clientsQuery.data ?? [])
-        .filter((c): c is { id: number; name: string } => c.id != null && c.name != null)
-        .map((c) => ({ id: c.id, name: c.name })),
-    [clientsQuery.data],
-  );
-  const projects = useMemo(() => {
+  const clientsList = (clientsQuery.data ?? [])
+    .filter((c): c is { id: number; name: string } => c.id != null && c.name != null)
+    .map((c) => ({ id: c.id, name: c.name }));
+  const projects = (() => {
     const all = normalizeProjects(projectsQuery.data);
     return all.filter((p) => {
       if (!selectedStatuses.has(categorizeProject(p))) return false;
@@ -190,37 +186,20 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       }
       return true;
     });
-  }, [
-    projectsQuery.data,
-    selectedStatuses,
-    filterClientIds,
-    filterMemberIds,
-    projectUsersByProject,
-    filterBillable,
-    filterName,
-    filterTemplate,
-  ]);
-  const workspaceMembers = useMemo(
-    () =>
-      (workspaceUsersQuery.data ?? [])
-        .filter((member) => member.id != null && member.inactive !== true)
-        .map((member) => ({
-          email: member.email ?? undefined,
-          id: member.id as number,
-          name: member.fullname?.trim() || member.email?.trim() || `User ${member.id}`,
-        })),
-    [workspaceUsersQuery.data],
-  );
-  const existingProjectMemberIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (projectMembersQuery.data ?? [])
-            .map((member) => member.user_id)
-            .filter((memberId): memberId is number => typeof memberId === "number"),
-        ),
-      ),
-    [projectMembersQuery.data],
+  })();
+  const workspaceMembers = (workspaceUsersQuery.data ?? [])
+    .filter((member) => member.id != null && member.inactive !== true)
+    .map((member) => ({
+      email: member.email ?? undefined,
+      id: member.id as number,
+      name: member.fullname?.trim() || member.email?.trim() || `User ${member.id}`,
+    }));
+  const existingProjectMemberIds = Array.from(
+    new Set(
+      (projectMembersQuery.data ?? [])
+        .map((member) => member.user_id)
+        .filter((memberId): memberId is number => typeof memberId === "number"),
+    ),
   );
   const mutationPending =
     createProjectMutation.isPending ||

@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import { buildMonthWeeks, isSameDay } from "./week-range.ts";
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
@@ -28,7 +28,7 @@ export function CalendarPanel({
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(date.getFullYear(), date.getMonth(), 1),
   );
-  const weeks = useMemo(() => buildMonthWeeks(visibleMonth), [visibleMonth]);
+  const weeks = buildMonthWeeks(visibleMonth);
 
   const today = new Date();
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -145,10 +145,10 @@ export function useTimeEntryEditor(
   const [error, setError] = useState<string | null>(null);
 
   // Clear task when project changes
-  const setProjectId = useCallback((id: number | null) => {
+  const setProjectId = (id: number | null) => {
     setProjectIdRaw(id);
     setTaskId(null);
-  }, []);
+  };
 
   // Sync with external data when it arrives (e.g. after page reload)
   useEffect(() => {
@@ -159,13 +159,13 @@ export function useTimeEntryEditor(
   }, [initialTags]);
 
   // Workspace for queries/mutations
-  const entryWorkspaceId = useMemo(() => {
+  const entryWorkspaceId = (() => {
     const wid = entry.workspace_id ?? entry.wid;
     return typeof wid === "number" ? wid : currentWorkspaceId;
-  }, [entry, currentWorkspaceId]);
+  })();
 
   // Dirty check
-  const isDirty = useMemo(() => {
+  const isDirty = (() => {
     const originalProjectId = resolveTimeEntryProjectId(initialEntry);
     const originalTaskId = initialEntry.task_id ?? initialEntry.tid ?? null;
     const originalTagIds = initialEntry.tag_ids ?? [];
@@ -177,7 +177,7 @@ export function useTimeEntryEditor(
       (entry.start ?? null) !== (initialEntry.start ?? null) ||
       (entry.stop ?? null) !== (initialEntry.stop ?? null)
     );
-  }, [description, projectId, taskId, tagIds, entry.start, entry.stop, initialEntry]);
+  })();
 
   // Mutations
   const createProjectMutation = useCreateProjectMutation(entryWorkspaceId);
@@ -207,15 +207,15 @@ export function useTimeEntryEditor(
   const isDeleting = deleteTimeEntryMutation.isPending;
 
   // Handlers
-  const close = useCallback(() => {
+  const close = () => {
     onClose();
-  }, [onClose]);
+  };
 
-  const discard = useCallback(() => {
+  const discard = () => {
     onClose();
-  }, [onClose]);
+  };
 
-  const save = useCallback(async () => {
+  const save = async () => {
     if (isNewEntry) {
       try {
         const durationSeconds = entry.duration ?? 1800;
@@ -261,20 +261,9 @@ export function useTimeEntryEditor(
       })
       .then(() => toast.success(t("timeEntrySaved")))
       .catch(() => toast.error(t("failedToSaveTimeEntry")));
-  }, [
-    entry,
-    description,
-    projectId,
-    taskId,
-    tagIds,
-    isNewEntry,
-    createTimeEntryMutation,
-    updateTimeEntryMutation,
-    onClose,
-    t,
-  ]);
+  };
 
-  const deleteEntry = useCallback(async () => {
+  const deleteEntry = async () => {
     if (!entry.id) return;
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof wid !== "number") {
@@ -292,9 +281,9 @@ export function useTimeEntryEditor(
       setError(resolveSingleTimerErrorMessage(err));
       throw err;
     }
-  }, [entry, deleteTimeEntryMutation, onClose]);
+  };
 
-  const duplicate = useCallback(async () => {
+  const duplicate = async () => {
     if (!entry.id) return;
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof wid !== "number") {
@@ -321,9 +310,9 @@ export function useTimeEntryEditor(
     } catch (err) {
       setError(resolveSingleTimerErrorMessage(err));
     }
-  }, [entry, description, projectId, taskId, tagIds, createTimeEntryMutation, onClose]);
+  };
 
-  const favorite = useCallback(async () => {
+  const favorite = async () => {
     try {
       await createWorkspaceFavoriteMutation.mutateAsync({
         billable: entry.billable,
@@ -336,147 +325,126 @@ export function useTimeEntryEditor(
     } catch (err) {
       setError(resolveSingleTimerErrorMessage(err));
     }
-  }, [createWorkspaceFavoriteMutation, description, entry, projectId, taskId, tagIds]);
+  };
 
-  const split = useCallback(
-    async (splitAtMs?: number) => {
-      if (!entry.id || !entry.start || !entry.stop) {
-        setError("Only stopped time entries can be split.");
-        return;
-      }
-      const wid = entry.workspace_id ?? entry.wid;
-      if (typeof wid !== "number") {
-        setError("This time entry is missing a workspace.");
-        return;
-      }
-      const startMs = new Date(entry.start).getTime();
-      const stopMs = new Date(entry.stop).getTime();
-      const resolvedSplitMs = splitAtMs ?? startMs + Math.floor((stopMs - startMs) / 2);
-      if (
-        !Number.isFinite(resolvedSplitMs) ||
-        resolvedSplitMs <= startMs ||
-        resolvedSplitMs >= stopMs
-      ) {
-        setError("This time entry is too short to split.");
-        return;
-      }
-      try {
-        await updateTimeEntryMutation.mutateAsync({
-          request: {
-            billable: entry.billable,
-            description: description.trim(),
-            projectId,
-            start: entry.start,
-            stop: new Date(resolvedSplitMs).toISOString(),
-            tagIds,
-            taskId,
-          },
-          timeEntryId: entry.id,
-          workspaceId: wid,
-        });
-        await createTimeEntryMutation.mutateAsync({
+  const split = async (splitAtMs?: number) => {
+    if (!entry.id || !entry.start || !entry.stop) {
+      setError("Only stopped time entries can be split.");
+      return;
+    }
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof wid !== "number") {
+      setError("This time entry is missing a workspace.");
+      return;
+    }
+    const startMs = new Date(entry.start).getTime();
+    const stopMs = new Date(entry.stop).getTime();
+    const resolvedSplitMs = splitAtMs ?? startMs + Math.floor((stopMs - startMs) / 2);
+    if (
+      !Number.isFinite(resolvedSplitMs) ||
+      resolvedSplitMs <= startMs ||
+      resolvedSplitMs >= stopMs
+    ) {
+      setError("This time entry is too short to split.");
+      return;
+    }
+    try {
+      await updateTimeEntryMutation.mutateAsync({
+        request: {
           billable: entry.billable,
           description: description.trim(),
-          duration: Math.round((stopMs - resolvedSplitMs) / 1000),
           projectId,
-          start: new Date(resolvedSplitMs).toISOString(),
-          stop: entry.stop,
+          start: entry.start,
+          stop: new Date(resolvedSplitMs).toISOString(),
           tagIds,
           taskId,
+        },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+      await createTimeEntryMutation.mutateAsync({
+        billable: entry.billable,
+        description: description.trim(),
+        duration: Math.round((stopMs - resolvedSplitMs) / 1000),
+        projectId,
+        start: new Date(resolvedSplitMs).toISOString(),
+        stop: entry.stop,
+        tagIds,
+        taskId,
+      });
+      setError(null);
+      onClose();
+    } catch (err) {
+      setError(resolveSingleTimerErrorMessage(err));
+    }
+  };
+
+  const createProject = async (name: string, color?: string) => {
+    try {
+      const project = await createProjectMutation.mutateAsync({ color, name });
+      if (typeof project.id === "number") {
+        const projectId = project.id;
+        setProjects((current) =>
+          [
+            ...current,
+            {
+              clientName: project.client_name ?? undefined,
+              color: resolveProjectColorValue(project),
+              id: projectId,
+              name: project.name ?? "Untitled project",
+              pinned: project.pinned === true,
+            },
+          ].sort((a, b) => Number(b.pinned) - Number(a.pinned)),
+        );
+      }
+      setProjectId(project.id ?? null);
+      setError(null);
+    } catch (err) {
+      setError(resolveSingleTimerErrorMessage(err));
+      throw err;
+    }
+  };
+
+  const createTag = async (name: string) => {
+    try {
+      const [tag] = normalizeTags(await createTagMutation.mutateAsync(name));
+      if (typeof tag?.id === "number" && typeof tag?.name === "string") {
+        setTags((current) => {
+          if (current.some((currentTag) => currentTag.id === tag.id)) {
+            return current;
+          }
+          return [...current, { id: tag.id, name: tag.name }];
         });
-        setError(null);
-        onClose();
-      } catch (err) {
-        setError(resolveSingleTimerErrorMessage(err));
+        setTagIds((current) => (current.includes(tag.id) ? current : [...current, tag.id]));
       }
-    },
-    [
-      entry,
-      description,
-      projectId,
-      taskId,
-      tagIds,
-      createTimeEntryMutation,
-      updateTimeEntryMutation,
-      onClose,
-    ],
-  );
+      setError(null);
+    } catch (err) {
+      setError(resolveSingleTimerErrorMessage(err));
+      throw err;
+    }
+  };
 
-  const createProject = useCallback(
-    async (name: string, color?: string) => {
-      try {
-        const project = await createProjectMutation.mutateAsync({ color, name });
-        if (typeof project.id === "number") {
-          const projectId = project.id;
-          setProjects((current) =>
-            [
-              ...current,
-              {
-                clientName: project.client_name ?? undefined,
-                color: resolveProjectColorValue(project),
-                id: projectId,
-                name: project.name ?? "Untitled project",
-                pinned: project.pinned === true,
-              },
-            ].sort((a, b) => Number(b.pinned) - Number(a.pinned)),
-          );
-        }
-        setProjectId(project.id ?? null);
-        setError(null);
-      } catch (err) {
-        setError(resolveSingleTimerErrorMessage(err));
-        throw err;
-      }
-    },
-    [createProjectMutation],
-  );
-
-  const createTag = useCallback(
-    async (name: string) => {
-      try {
-        const [tag] = normalizeTags(await createTagMutation.mutateAsync(name));
-        if (typeof tag?.id === "number" && typeof tag?.name === "string") {
-          setTags((current) => {
-            if (current.some((currentTag) => currentTag.id === tag.id)) {
-              return current;
-            }
-            return [...current, { id: tag.id, name: tag.name }];
-          });
-          setTagIds((current) => (current.includes(tag.id) ? current : [...current, tag.id]));
-        }
-        setError(null);
-      } catch (err) {
-        setError(resolveSingleTimerErrorMessage(err));
-        throw err;
-      }
-    },
-    [createTagMutation],
-  );
-
-  const toggleBillable = useCallback(() => {
+  const toggleBillable = () => {
     setEntry((current) => ({ ...current, billable: current.billable !== true }));
-  }, []);
+  };
 
-  const changeStartTime = useCallback((time: Date) => {
+  const changeStartTime = (time: Date) => {
     const nextIso = time.toISOString();
     setEntry((current) => ({ ...current, start: nextIso }));
-  }, []);
+  };
 
-  const changeStopTime = useCallback((time: Date) => {
+  const changeStopTime = (time: Date) => {
     const nextIso = time.toISOString();
     setEntry((current) => ({ ...current, stop: nextIso }));
-  }, []);
+  };
 
-  const selectSuggestion = useCallback(
-    (suggestionEntry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      setDescription(suggestionEntry.description ?? "");
-      setProjectId(resolveTimeEntryProjectId(suggestionEntry));
-      setTagIds(suggestionEntry.tag_ids ?? []);
-    },
-    [],
-  );
+  const selectSuggestion = (suggestionEntry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    setDescription(suggestionEntry.description ?? "");
+    setProjectId(resolveTimeEntryProjectId(suggestionEntry));
+    setTagIds(suggestionEntry.tag_ids ?? []);
+  };
 
-  const primaryAction = useCallback(async () => {
+  const primaryAction = async () => {
     if (!entry.id) return;
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof wid !== "number") {
@@ -502,16 +470,7 @@ export function useTimeEntryEditor(
     } catch (err) {
       setError(resolveSingleTimerErrorMessage(err));
     }
-  }, [
-    entry,
-    description,
-    projectId,
-    taskId,
-    tagIds,
-    startTimeEntryMutation,
-    stopTimeEntryMutation,
-    onClose,
-  ]);
+  };
 
   return {
     description,

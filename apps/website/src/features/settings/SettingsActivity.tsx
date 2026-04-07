@@ -1,5 +1,5 @@
 import { SurfaceCard } from "@opentoggl/web-ui";
-import { type ReactElement, useMemo } from "react";
+import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { DashboardAllActivities } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -54,7 +54,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
   const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
 
-  const stats = useMemo(() => {
+  const stats = (() => {
     const entries = activitiesQuery.data ?? [];
     const totalEntries = entries.length;
     const totalSeconds = entries.reduce((sum, e) => {
@@ -70,25 +70,25 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
       totalHours: formatDurationHours(totalSeconds),
       uniqueProjects,
     };
-  }, [activitiesQuery.data, membersQuery.data]);
+  })();
 
-  const topMembers = useMemo(() => {
+  const topMembers = (() => {
     const data = mostActiveQuery.data ?? [];
     return data
       .filter((m) => (m.duration ?? 0) > 0)
       .sort((a, b) => (b.duration ?? 0) - (a.duration ?? 0))
       .slice(0, 10);
-  }, [mostActiveQuery.data]);
+  })();
 
-  const memberNameById = useMemo(() => {
+  const memberNameById = (() => {
     const lookup = new Map<number, string>();
     for (const m of membersQuery.data?.members ?? []) {
       if (m.id && m.name) lookup.set(m.id, m.name);
     }
     return lookup;
-  }, [membersQuery.data]);
+  })();
 
-  const activityRows = useMemo(() => {
+  const activityRows = (() => {
     return (activitiesQuery.data ?? []).map((a) => {
       const userId = a.user_id ?? 0;
       return {
@@ -98,7 +98,7 @@ export function SettingsActivity({ workspaceId }: SettingsActivityProps): ReactE
         userName: memberNameById.get(userId) ?? `User ${userId}`,
       };
     });
-  }, [activitiesQuery.data, memberNameById, t]);
+  })();
 
   const isLoading =
     activitiesQuery.isPending || membersQuery.isPending || mostActiveQuery.isPending;

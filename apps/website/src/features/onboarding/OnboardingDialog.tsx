@@ -1,6 +1,6 @@
 import { AppButton } from "@opentoggl/web-ui";
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactElement, useCallback, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -132,9 +132,9 @@ export function OnboardingDialog(): ReactElement | null {
     normalizeSupportedLanguage(i18n.language),
   );
 
-  const handleLanguageSelect = useCallback((lang: SupportedLanguage) => {
+  const handleLanguageSelect = (lang: SupportedLanguage) => {
     setSelectedLanguage(lang);
-  }, []);
+  };
 
   const steps = getOnboardingSteps();
   const currentStep = steps[currentStepIndex];
@@ -159,66 +159,58 @@ export function OnboardingDialog(): ReactElement | null {
     isOpen,
   ]);
 
-  const handlePrev = useCallback(() => {
+  const handlePrev = () => {
     const prevIndex = Math.max(currentStepIndex - 1, 0);
     setCurrentStepIndex(prevIndex);
     saveStep(prevIndex);
-  }, [currentStepIndex]);
+  };
 
   const isFirstStep = currentStepIndex === 0;
 
-  const handleClose = useCallback(() => {
+  const handleClose = () => {
     setIsOpen(false);
-  }, []);
+  };
 
-  const handleCompleteStep = useCallback(
-    async (stepConfig: OnboardingStepConfig, action: OnboardingStepAction) => {
-      const nextIndex = steps.findIndex((s) => s.id === stepConfig.id) + 1;
+  const handleCompleteStep = async (
+    stepConfig: OnboardingStepConfig,
+    action: OnboardingStepAction,
+  ) => {
+    const nextIndex = steps.findIndex((s) => s.id === stepConfig.id) + 1;
 
-      // Apply language immediately when leaving the language step so subsequent steps render in the chosen language
-      if (stepConfig.id === "language") {
+    // Apply language immediately when leaving the language step so subsequent steps render in the chosen language
+    if (stepConfig.id === "language") {
+      await i18n.changeLanguage(selectedLanguage);
+    }
+
+    if (nextIndex >= steps.length) {
+      // Last step - complete onboarding
+      try {
+        await updatePreferencesMutation.mutateAsync({
+          language_code: selectedLanguage,
+        });
         await i18n.changeLanguage(selectedLanguage);
-      }
 
-      if (nextIndex >= steps.length) {
-        // Last step - complete onboarding
-        try {
-          await updatePreferencesMutation.mutateAsync({
-            language_code: selectedLanguage,
-          });
-          await i18n.changeLanguage(selectedLanguage);
+        await completeOnboardingMutation.mutateAsync({
+          version: ONBOARDING_VERSION,
+          language_code: selectedLanguage,
+        });
 
-          await completeOnboardingMutation.mutateAsync({
-            version: ONBOARDING_VERSION,
-            language_code: selectedLanguage,
-          });
+        localStorage.removeItem(ONBOARDING_STEP_STORAGE_KEY);
+        setIsOpen(false);
 
-          localStorage.removeItem(ONBOARDING_STEP_STORAGE_KEY);
-          setIsOpen(false);
-
-          if (action.navigateToImport) {
-            void navigate({ to: `/workspaces/${currentWorkspace.id}/import` });
-          } else {
-            void navigate({ to: resolveHomePath() });
-          }
-        } catch {
-          toast.error(t("onboarding:failedToComplete"));
+        if (action.navigateToImport) {
+          void navigate({ to: `/workspaces/${currentWorkspace.id}/import` });
+        } else {
+          void navigate({ to: resolveHomePath() });
         }
-      } else {
-        setCurrentStepIndex(nextIndex);
-        saveStep(nextIndex);
+      } catch {
+        toast.error(t("onboarding:failedToComplete"));
       }
-    },
-    [
-      steps,
-      selectedLanguage,
-      updatePreferencesMutation,
-      completeOnboardingMutation,
-      navigate,
-      t,
-      currentWorkspace.id,
-    ],
-  );
+    } else {
+      setCurrentStepIndex(nextIndex);
+      saveStep(nextIndex);
+    }
+  };
 
   if (!isOpen || !currentStep) {
     return null;

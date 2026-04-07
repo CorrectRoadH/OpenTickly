@@ -1,5 +1,5 @@
 import { AppButton, AppInlineNotice } from "@opentoggl/web-ui";
-import { type ReactElement, useCallback, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { PreferencesFormValues } from "../../shared/forms/profile-form.ts";
@@ -286,11 +286,11 @@ function ApiTokenCopyButton(props: { token: string }): ReactElement {
     };
   }, [copied]);
 
-  const handleCopy = useCallback(() => {
+  const handleCopy = () => {
     void navigator.clipboard.writeText(props.token).then(() => {
       setCopied(true);
     });
-  }, [props.token]);
+  };
 
   return (
     <button

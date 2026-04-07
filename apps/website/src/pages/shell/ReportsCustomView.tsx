@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { Link, Pin, Search } from "lucide-react";
 import { SelectDropdown } from "@opentoggl/web-ui";
 import { useTranslation } from "react-i18next";
@@ -25,21 +25,18 @@ export function ReportsCustomView(): ReactElement {
   const [search, setSearch] = useState("");
 
   // For now, generate one default saved report matching what Toggl shows
-  const savedReports: SavedReport[] = useMemo(
-    () => [
-      {
-        creator: userName,
-        id: "default-summary",
-        isOwner: true,
-        name: "Summary report (This week)",
-        scheduling: "Off",
-        sharing: "Private",
-      },
-    ],
-    [userName],
-  );
+  const savedReports: SavedReport[] = [
+    {
+      creator: userName,
+      id: "default-summary",
+      isOwner: true,
+      name: "Summary report (This week)",
+      scheduling: "Off",
+      sharing: "Private",
+    },
+  ];
 
-  const filtered = useMemo(() => {
+  const filtered = (() => {
     let list = savedReports;
     if (showFilter === "mine") list = list.filter((r) => r.isOwner);
     if (showFilter === "shared") list = list.filter((r) => r.sharing === "Workspace");
@@ -48,7 +45,7 @@ export function ReportsCustomView(): ReactElement {
       list = list.filter((r) => r.name.toLowerCase().includes(q));
     }
     return list;
-  }, [savedReports, showFilter, search]);
+  })();
 
   return (
     <section

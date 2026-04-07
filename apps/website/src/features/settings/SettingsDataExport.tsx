@@ -1,5 +1,5 @@
 import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -133,7 +133,7 @@ function getExportObjectTypes(t: (key: string) => string) {
 function WorkspaceDataExport(): ReactElement {
   const { t } = useTranslation("settings");
   const session = useSession();
-  const exportObjectTypes = useMemo(() => getExportObjectTypes(t), [t]);
+  const exportObjectTypes = getExportObjectTypes(t);
   const workspaceId = session.currentWorkspace.id;
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(exportObjectTypes.map((t) => t.key)),
@@ -263,12 +263,12 @@ export function SettingsDataExport(): ReactElement {
     startDate,
   });
 
-  const entryCount = useMemo(() => {
+  const entryCount = (() => {
     if (!entriesQuery.data) return 0;
     return entriesQuery.data.filter((e) => (e.duration ?? 0) >= 0).length;
-  }, [entriesQuery.data]);
+  })();
 
-  const handleExport = useCallback(async () => {
+  const handleExport = async () => {
     if (!entriesQuery.data || entriesQuery.data.length === 0) return;
 
     setExporting(true);
@@ -282,7 +282,7 @@ export function SettingsDataExport(): ReactElement {
     } finally {
       setExporting(false);
     }
-  }, [entriesQuery.data, format, startDate, endDate]);
+  };
 
   return (
     <div className="space-y-6">

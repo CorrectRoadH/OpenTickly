@@ -12,6 +12,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// sendTestEmailResponse is the JSON shape for the send-test-email endpoint.
+type sendTestEmailResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+}
+
 // Handler implements adminapi.ServerInterface for the instance-admin module.
 type Handler struct {
 	service  *application.Service
@@ -223,14 +229,14 @@ func (h *Handler) SendTestEmail(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Email address required")
 	}
 	if err := h.service.SendTestEmail(ctx.Request().Context(), req.To); err != nil {
-		return ctx.JSON(http.StatusOK, map[string]any{
-			"success": false,
-			"message": err.Error(),
+		return ctx.JSON(http.StatusOK, sendTestEmailResponse{
+			Success: false,
+			Message: err.Error(),
 		})
 	}
-	return ctx.JSON(http.StatusOK, map[string]any{
-		"success": true,
-		"message": "Test email sent to " + req.To,
+	return ctx.JSON(http.StatusOK, sendTestEmailResponse{
+		Success: true,
+		Message: "Test email sent to " + req.To,
 	})
 }
 

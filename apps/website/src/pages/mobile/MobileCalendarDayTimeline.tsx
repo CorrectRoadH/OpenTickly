@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import i18n from "../../app/i18n.ts";
@@ -44,14 +44,11 @@ export function MobileCalendarDayTimeline({
   const { durationFormat } = useUserPreferences();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const layouts = useMemo(
-    () => buildCalendarEventLayouts(entries, timezone, nowMs, viewDate),
-    [entries, timezone, nowMs, viewDate],
-  );
+  const layouts = buildCalendarEventLayouts(entries, timezone, nowMs, viewDate);
 
   // Current time position
-  const nowDate = useMemo(() => new Date(nowMs), [nowMs]);
-  const nowMinutes = useMemo(() => {
+  const nowDate = new Date(nowMs);
+  const nowMinutes = (() => {
     const h = Number(
       new Intl.DateTimeFormat(i18n.language, {
         hour: "2-digit",
@@ -65,7 +62,7 @@ export function MobileCalendarDayTimeline({
       ),
     );
     return h * 60 + m;
-  }, [nowDate, timezone]);
+  })();
 
   // Scroll to current hour on mount
   useEffect(() => {

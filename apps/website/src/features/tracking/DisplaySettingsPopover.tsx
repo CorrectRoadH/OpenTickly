@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { ChevronDownIcon, ChevronRightIcon } from "../../shared/ui/icons.tsx";
@@ -181,7 +181,7 @@ function SettingsDropdown({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedOption = options.find((opt) => opt.value === value);
-  const closeDropdown = useCallback(() => setOpen(false), []);
+  const closeDropdown = () => setOpen(false);
   useDismiss(containerRef, open, closeDropdown);
 
   return (

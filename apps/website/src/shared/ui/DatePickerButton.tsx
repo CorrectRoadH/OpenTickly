@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 
 import { CalendarPanel } from "../../features/tracking/CalendarPanel.tsx";
 import { useDismiss } from "./useDismiss.ts";
@@ -28,7 +28,7 @@ export function DatePickerButton({
 }: DatePickerButtonProps): ReactElement {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const handleDismiss = useCallback(() => setOpen(false), []);
+  const handleDismiss = () => setOpen(false);
   useDismiss(containerRef, open, handleDismiss);
 
   const dateObj = value ? parseDateString(value) : new Date();

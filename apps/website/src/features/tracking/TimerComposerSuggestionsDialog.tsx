@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { MenuSeparator } from "@opentoggl/web-ui";
@@ -64,29 +64,20 @@ export function TimerComposerSuggestionsDialog({
   const { t } = useTranslation("tracking");
   const dialogRef = useRef<HTMLDivElement>(null);
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
-  const position = useMemo(() => resolveDialogPosition(anchor), [anchor]);
+  const position = resolveDialogPosition(anchor);
   const currentWorkspaceName =
     workspaces.find((workspace) => workspace.id === currentWorkspaceId)?.name ??
     t("workspaceFallback");
-  const filteredFavorites = useMemo(
-    () => filterFavoritesByQuery(favorites, query),
-    [favorites, query],
-  );
+  const filteredFavorites = filterFavoritesByQuery(favorites, query);
   const hasQuery = Boolean(query?.trim());
-  const previousEntries = useMemo(() => {
+  const previousEntries = (() => {
     if (hasQuery && searchResults && searchResults.length > 0) {
       return buildPreviousEntries(searchResults.map(searchItemToTimeEntry));
     }
     return filterByQuery(buildPreviousEntries(timeEntries), query);
-  }, [timeEntries, query, hasQuery, searchResults]);
-  const suggestedProjects = useMemo(
-    () => filterProjectsByQuery(buildProjectSuggestions(projects), query),
-    [projects, query],
-  );
-  const suggestedTasks = useMemo(
-    () => filterTasksByQuery(buildTaskSuggestions(tasks, projects), query),
-    [tasks, projects, query],
-  );
+  })();
+  const suggestedProjects = filterProjectsByQuery(buildProjectSuggestions(projects), query);
+  const suggestedTasks = filterTasksByQuery(buildTaskSuggestions(tasks, projects), query);
 
   useDismiss(dialogRef, true, onClose);
 

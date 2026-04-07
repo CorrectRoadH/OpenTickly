@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import { formatDateKey } from "../../features/tracking/overview-data.ts";
 import { useWeekNavigation } from "../../features/tracking/useWeekNavigation.ts";
@@ -17,7 +17,7 @@ export function MobileCalendarPage(): ReactElement {
   const { beginningOfWeek } = useWeekNavigation();
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries: false });
 
-  const dayEntries = useMemo(() => {
+  const dayEntries = (() => {
     const selectedKey = formatDateKey(selectedDate, timezone);
     return views.visibleEntries.filter((entry) => {
       const startDate = new Date(entry.start ?? entry.at ?? Date.now());
@@ -28,7 +28,7 @@ export function MobileCalendarPage(): ReactElement {
       }
       return false;
     });
-  }, [selectedDate, views.visibleEntries, timezone]);
+  })();
 
   return (
     <div className="flex h-full flex-col">

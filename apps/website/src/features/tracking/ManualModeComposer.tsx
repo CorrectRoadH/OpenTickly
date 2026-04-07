@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -19,7 +19,7 @@ export function ManualModeComposer({
   timezone,
 }: ManualModeComposerProps): ReactElement {
   const { t } = useTranslation("tracking");
-  const now = useMemo(() => new Date(), []);
+  const now = new Date();
 
   const [startTime, setStartTime] = useState(() => formatTimeHHMM(now, timezone));
   const [stopTime, setStopTime] = useState(() => formatTimeHHMM(now, timezone));
@@ -30,7 +30,7 @@ export function ManualModeComposer({
    * Auto-bump stop date to the next day when stop time is earlier than start
    * time on the same date (cross-midnight scenario, e.g. 23:00 -> 01:00).
    */
-  const effectiveStopDate = useMemo(() => {
+  const effectiveStopDate = (() => {
     if (startDate !== stopDate) return stopDate;
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
     const stopMs = parseLocalDateTime(stopDate, stopTime, timezone);
@@ -41,9 +41,9 @@ export function ManualModeComposer({
       return formatDateISO(nextDay, timezone);
     }
     return stopDate;
-  }, [startDate, startTime, stopDate, stopTime, timezone]);
+  })();
 
-  const durationDisplay = useMemo(() => {
+  const durationDisplay = (() => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
     const stopMs = parseLocalDateTime(effectiveStopDate, stopTime, timezone);
     if (startMs == null || stopMs == null || stopMs <= startMs) {
@@ -51,16 +51,16 @@ export function ManualModeComposer({
     }
     const totalSeconds = Math.floor((stopMs - startMs) / 1000);
     return formatDuration(totalSeconds);
-  }, [startDate, startTime, effectiveStopDate, stopTime, timezone]);
+  })();
 
-  const handleAdd = useCallback(() => {
+  const handleAdd = () => {
     const startMs = parseLocalDateTime(startDate, startTime, timezone);
     const stopMs = parseLocalDateTime(effectiveStopDate, stopTime, timezone);
     if (startMs == null || stopMs == null || stopMs <= startMs) {
       return;
     }
     onAddTimeEntry(new Date(startMs), new Date(stopMs));
-  }, [startDate, startTime, effectiveStopDate, stopTime, timezone, onAddTimeEntry]);
+  };
 
   return (
     <div className="flex items-center gap-2" data-testid="manual-mode-composer">

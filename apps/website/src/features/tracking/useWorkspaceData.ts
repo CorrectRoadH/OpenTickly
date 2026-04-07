@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useProjectsQuery, useTagsQuery } from "../../shared/query/web-shell.ts";
 import { useSession, useSessionActions } from "../../shared/session/session-context.tsx";
@@ -65,8 +63,8 @@ export function useWorkspaceData() {
   const projectsQuery = useProjectsQuery(workspaceId, "all");
   const tagsQuery = useTagsQuery(workspaceId);
 
-  const projectOptions = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
-  const tagOptions = useMemo(() => normalizeTags(tagsQuery.data), [tagsQuery.data]);
+  const projectOptions = normalizeProjects(projectsQuery.data);
+  const tagOptions = normalizeTags(tagsQuery.data);
 
   return {
     session,

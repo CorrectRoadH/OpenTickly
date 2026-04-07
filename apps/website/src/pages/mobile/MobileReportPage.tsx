@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo } from "react";
+import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import { WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
@@ -23,22 +23,19 @@ export function MobileReportPage(): ReactElement {
     startDate: state.dateRange.startDate,
   });
 
-  const filteredReport = useMemo(
-    () => filterReportRows(weeklyReportQuery.data, state.memberFilter, state.clientFilter),
-    [weeklyReportQuery.data, state.memberFilter, state.clientFilter],
+  const filteredReport = filterReportRows(
+    weeklyReportQuery.data,
+    state.memberFilter,
+    state.clientFilter,
   );
 
-  const model = useMemo(
-    () =>
-      buildReportsPageModel({
-        endDate: state.dateRange.endDate,
-        report: filteredReport,
-        startDate: state.dateRange.startDate,
-        timezone,
-        weekStartsOn: beginningOfWeek,
-      }),
-    [filteredReport, state.dateRange, timezone, beginningOfWeek],
-  );
+  const model = buildReportsPageModel({
+    endDate: state.dateRange.endDate,
+    report: filteredReport,
+    startDate: state.dateRange.startDate,
+    timezone,
+    weekStartsOn: beginningOfWeek,
+  });
 
   function handleSelectDate(date: Date) {
     const startDate = new Date(date);

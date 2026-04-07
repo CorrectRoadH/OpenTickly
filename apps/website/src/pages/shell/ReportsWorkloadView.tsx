@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
@@ -76,7 +76,7 @@ export function ReportsWorkloadView({
   const [metric, setMetric] = useState<WorkloadMetric>("utilization");
   const [target] = useState(80);
 
-  const members = useMemo(() => {
+  const members = (() => {
     const raw = buildMemberWorkloads(report);
     if (!roundingEnabled) return raw;
     return raw.map((m) => {
@@ -91,7 +91,7 @@ export function ReportsWorkloadView({
         utilization: totalSeconds > 0 ? (billableSeconds / totalSeconds) * 100 : 0,
       };
     });
-  }, [report, roundingEnabled]);
+  })();
 
   const totalSeconds = members.reduce((s, m) => s + m.totalSeconds, 0);
   const billableSeconds = members.reduce((s, m) => s + m.billableSeconds, 0);

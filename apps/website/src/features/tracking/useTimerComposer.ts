@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
 import {
@@ -74,11 +74,11 @@ export function useTimerComposer() {
     clearDraft();
   }, [runningEntry, clearDraft]);
 
-  const closeComposerSuggestions = useCallback(() => {
+  const closeComposerSuggestions = () => {
     setComposerSuggestionsAnchor(null);
-  }, [setComposerSuggestionsAnchor]);
+  };
 
-  const openComposerSuggestions = useCallback(() => {
+  const openComposerSuggestions = () => {
     if (!timerDescriptionInputRef.current || runningEntry?.id != null) return;
     const anchorRect = timerDescriptionInputRef.current.getBoundingClientRect();
     setComposerSuggestionsAnchor({
@@ -87,9 +87,9 @@ export function useTimerComposer() {
       top: anchorRect.top,
       width: anchorRect.width,
     });
-  }, [runningEntry, setComposerSuggestionsAnchor]);
+  };
 
-  const handleRunningDescriptionCommit = useCallback(async () => {
+  const handleRunningDescriptionCommit = async () => {
     if (runningEntry?.id == null) return;
     const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
     if (typeof runningWorkspaceId !== "number") return;
@@ -105,9 +105,9 @@ export function useTimerComposer() {
     } catch {
       // Keep the local draft so the user can retry without losing their change.
     }
-  }, [runningEntry, runningDescription, updateTimeEntryMutation]);
+  };
 
-  const handleTimerAction = useCallback(async () => {
+  const handleTimerAction = async () => {
     if (runningEntry?.id != null) {
       const runningWorkspaceId = runningEntry.workspace_id ?? runningEntry.wid;
       if (typeof runningWorkspaceId === "number") {
@@ -129,72 +129,52 @@ export function useTimerComposer() {
     });
     setRunningDescription(descriptionToStart);
     clearDraft();
-  }, [
-    runningEntry,
-    draftBillable,
-    draftDescription,
-    draftProjectId,
-    draftTagIds,
-    draftTaskId,
-    startTimeEntryMutation,
-    stopTimeEntryMutation,
-    setRunningDescription,
-    clearDraft,
-  ]);
+  };
 
-  const handleContinueEntry = useCallback(
-    async (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      const continuedDescription = (entry.description ?? "").trim();
-      await startTimeEntryMutation.mutateAsync({
-        billable: entry.billable,
-        description: continuedDescription,
-        projectId: resolveTimeEntryProjectId(entry),
-        start: new Date().toISOString(),
-        tagIds: entry.tag_ids ?? [],
-        taskId: entry.task_id ?? entry.tid ?? null,
-      });
-      setRunningDescription(continuedDescription);
-    },
-    [startTimeEntryMutation, setRunningDescription],
-  );
+  const handleContinueEntry = async (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    const continuedDescription = (entry.description ?? "").trim();
+    await startTimeEntryMutation.mutateAsync({
+      billable: entry.billable,
+      description: continuedDescription,
+      projectId: resolveTimeEntryProjectId(entry),
+      start: new Date().toISOString(),
+      tagIds: entry.tag_ids ?? [],
+      taskId: entry.task_id ?? entry.tid ?? null,
+    });
+    setRunningDescription(continuedDescription);
+  };
 
-  const handleStartFromUrl = useCallback(
-    async (params: {
-      description?: string;
-      projectId?: number;
-      tagIds?: number[];
-      billable?: boolean;
-    }) => {
-      if (runningEntry?.id != null) return;
-      const desc = (params.description ?? "").trim();
-      await startTimeEntryMutation.mutateAsync({
-        billable: params.billable,
-        description: desc,
-        projectId: params.projectId ?? null,
-        start: new Date().toISOString(),
-        tagIds: params.tagIds ?? [],
-      });
-      setRunningDescription(desc);
-    },
-    [runningEntry, startTimeEntryMutation, setRunningDescription],
-  );
+  const handleStartFromUrl = async (params: {
+    description?: string;
+    projectId?: number;
+    tagIds?: number[];
+    billable?: boolean;
+  }) => {
+    if (runningEntry?.id != null) return;
+    const desc = (params.description ?? "").trim();
+    await startTimeEntryMutation.mutateAsync({
+      billable: params.billable,
+      description: desc,
+      projectId: params.projectId ?? null,
+      start: new Date().toISOString(),
+      tagIds: params.tagIds ?? [],
+    });
+    setRunningDescription(desc);
+  };
 
-  const handleIdleDescriptionFocus = useCallback(() => {
+  const handleIdleDescriptionFocus = () => {
     if (runningEntry?.id != null) return;
     if (draftProjectId != null || draftTagIds.length > 0) return;
     openComposerSuggestions();
-  }, [runningEntry, draftProjectId, draftTagIds, openComposerSuggestions]);
+  };
 
-  const switchWorkspace = useCallback(
-    (nextWorkspaceId: number) => {
-      const previousWorkspaceId = workspaceId;
-      setCurrentWorkspaceId(nextWorkspaceId);
-      void updateWebSessionMutation.mutateAsync({ workspace_id: nextWorkspaceId }).catch(() => {
-        setCurrentWorkspaceId(previousWorkspaceId);
-      });
-    },
-    [workspaceId, setCurrentWorkspaceId, updateWebSessionMutation],
-  );
+  const switchWorkspace = (nextWorkspaceId: number) => {
+    const previousWorkspaceId = workspaceId;
+    setCurrentWorkspaceId(nextWorkspaceId);
+    void updateWebSessionMutation.mutateAsync({ workspace_id: nextWorkspaceId }).catch(() => {
+      setCurrentWorkspaceId(previousWorkspaceId);
+    });
+  };
 
   return {
     // State

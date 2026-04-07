@@ -10,7 +10,7 @@ import {
   IconButton,
   useDropdownClose,
 } from "@opentoggl/web-ui";
-import { type FormEvent, type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { type FormEvent, type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -387,7 +387,7 @@ function ManageMembersDialog({
 
   const currentUserIds = new Set(group.users?.map((u) => u.user_id) ?? []);
 
-  const orgMembersMap = useMemo(() => {
+  const orgMembersMap = (() => {
     const map = new Map<number, { name: string; email: string }>();
     const allMembers = Array.isArray(orgMembersQuery.data) ? orgMembersQuery.data : [];
     for (const m of allMembers) {
@@ -396,9 +396,9 @@ function ManageMembersDialog({
       }
     }
     return map;
-  }, [orgMembersQuery.data]);
+  })();
 
-  const currentMembers = useMemo(() => {
+  const currentMembers = (() => {
     return (group.users ?? []).map((u) => {
       const details = orgMembersMap.get(u.user_id!);
       return {
@@ -407,9 +407,9 @@ function ManageMembersDialog({
         email: details?.email || "",
       };
     });
-  }, [group.users, orgMembersMap]);
+  })();
 
-  const availableMembers = useMemo(() => {
+  const availableMembers = (() => {
     const allMembers = Array.isArray(orgMembersQuery.data) ? orgMembersQuery.data : [];
     return allMembers.filter((m) => {
       if (currentUserIds.has(m.user_id)) return false;
@@ -421,7 +421,7 @@ function ManageMembersDialog({
       }
       return true;
     });
-  }, [orgMembersQuery.data, currentUserIds, search]);
+  })();
 
   return (
     <Dialog onClose={onClose} width="max-w-[480px]">

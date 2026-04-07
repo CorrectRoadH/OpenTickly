@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useRef, useState } from "react";
+import { type ReactElement, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Check, Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -407,7 +407,7 @@ function GoalIconPicker({
 }): ReactElement {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const closeDropdown = useCallback(() => setOpen(false), []);
+  const closeDropdown = () => setOpen(false);
   useDismiss(rootRef, open, closeDropdown);
   const current = ICON_OPTIONS.find((o) => o.value === value) ?? ICON_OPTIONS[0];
 

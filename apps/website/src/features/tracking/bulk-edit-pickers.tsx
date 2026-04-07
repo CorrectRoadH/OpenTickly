@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
@@ -54,7 +54,7 @@ export function ProjectPickerDropdown({
   const hasWorkspaces = workspaces != null && workspaces.length > 1 && onWorkspaceSelect != null;
   const isSearching = search.trim().length > 0;
 
-  const tasksByProject = useMemo(() => {
+  const tasksByProject = (() => {
     const map = new Map<number, ProjectPickerTask[]>();
     for (const task of tasks) {
       const list = map.get(task.projectId) ?? [];
@@ -62,22 +62,22 @@ export function ProjectPickerDropdown({
       map.set(task.projectId, list);
     }
     return map;
-  }, [tasks]);
+  })();
 
-  const filteredProjects = useMemo(() => {
+  const filteredProjects = (() => {
     const query = search.trim().toLowerCase();
     if (!query) return projects;
     return projects.filter((p) => {
       const haystack = `${p.name} ${p.clientName ?? ""}`.toLowerCase();
       return haystack.includes(query);
     });
-  }, [projects, search]);
+  })();
 
-  const filteredTasks = useMemo(() => {
+  const filteredTasks = (() => {
     const query = search.trim().toLowerCase();
-    if (!query) return [];
+    if (!query) return [] as ProjectPickerTask[];
     return tasks.filter((task) => task.name.toLowerCase().includes(query));
-  }, [tasks, search]);
+  })();
 
   return (
     <PickerDropdown

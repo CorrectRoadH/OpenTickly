@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -55,12 +55,12 @@ export function InvoiceEditorPage(): ReactElement {
   const queryClient = useQueryClient();
 
   const search = useSearch({ strict: false }) as Record<string, string | undefined>;
-  const initialItems = useMemo(() => {
+  const initialItems = (() => {
     const fromProjects = parseProjectsParam(search.projects);
     return fromProjects.length > 0
       ? fromProjects
       : [{ amount: 0, description: "", id: crypto.randomUUID(), quantity: 1 }];
-  }, [search.projects]);
+  })();
 
   const [documentId, setDocumentId] = useState(() => generateInvoiceId());
   const [date, setDate] = useState(() => todayISO());

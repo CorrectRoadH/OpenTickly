@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -69,12 +69,12 @@ export function OrganizationMembersSection({
   const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
   const [search, setSearch] = useState("");
 
-  const members = useMemo(() => {
+  const members = (() => {
     if (!Array.isArray(membersQuery.data)) return [];
     return membersQuery.data;
-  }, [membersQuery.data]);
+  })();
 
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = (() => {
     return members.filter((member) => {
       const status = resolveOrgMemberStatus(member);
       if (statusFilter === "active" && status !== "active") return false;
@@ -91,7 +91,7 @@ export function OrganizationMembersSection({
 
       return true;
     });
-  }, [members, statusFilter, search]);
+  })();
 
   const activeCount = members.filter((m) => resolveOrgMemberStatus(m) === "active").length;
   const inactiveCount = members.filter((m) => resolveOrgMemberStatus(m) === "inactive").length;

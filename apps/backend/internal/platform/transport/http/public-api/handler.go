@@ -68,9 +68,14 @@ func (handler *Handler) GetOffsets(ctx echo.Context) error {
 	return ctx.JSON(http.StatusOK, handler.references.Offsets())
 }
 
+// keysResponse is the JSON shape for the keys endpoint.
+type keysResponse struct {
+	Keys []struct{} `json:"keys"`
+}
+
 func (handler *Handler) GetKeys(ctx echo.Context) error {
-	return ctx.JSON(http.StatusOK, map[string]any{
-		"keys": []any{},
+	return ctx.JSON(http.StatusOK, keysResponse{
+		Keys: []struct{}{},
 	})
 }
 

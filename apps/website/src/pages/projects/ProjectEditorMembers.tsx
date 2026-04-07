@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactElement, useMemo, useState } from "react";
+import { type ChangeEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
@@ -21,14 +21,14 @@ export function ProjectEditorMembers({
 }: ProjectEditorMembersProps): ReactElement {
   const { t } = useTranslation("projects");
   const [memberQuery, setMemberQuery] = useState("");
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = (() => {
     const query = memberQuery.trim().toLowerCase();
     if (!query) return members;
     return members.filter((member) => {
       const haystack = `${member.name} ${member.email ?? ""}`.toLowerCase();
       return haystack.includes(query);
     });
-  }, [memberQuery, members]);
+  })();
 
   return (
     <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">

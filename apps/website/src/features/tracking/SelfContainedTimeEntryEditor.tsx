@@ -1,4 +1,4 @@
-import { type ReactElement, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useSessionActions } from "../../shared/session/session-context.tsx";
@@ -110,17 +110,10 @@ export function SelfContainedTimeEntryEditor({
 
   // Tasks for the project picker
   const tasksQuery = useTasksQuery(currentWorkspaceId);
-  const pickerTasks: ProjectPickerTask[] = useMemo(
-    () =>
-      (tasksQuery.data?.data ?? [])
-        .filter((t) => t.id != null && t.name && t.project_id != null && t.active !== false)
-        .map((t) => ({ id: t.id!, name: t.name!, projectId: t.project_id! })),
-    [tasksQuery.data],
-  );
-  const selectedTaskName = useMemo(
-    () => pickerTasks.find((t) => t.id === editor.taskId)?.name ?? null,
-    [pickerTasks, editor.taskId],
-  );
+  const pickerTasks: ProjectPickerTask[] = (tasksQuery.data?.data ?? [])
+    .filter((t) => t.id != null && t.name && t.project_id != null && t.active !== false)
+    .map((t) => ({ id: t.id!, name: t.name!, projectId: t.project_id! }));
+  const selectedTaskName = pickerTasks.find((t) => t.id === editor.taskId)?.name ?? null;
 
   // Auto-open split dialog when triggered from context menu
   const pendingSplit = useTimerViewStore((s) => s.pendingSplit);

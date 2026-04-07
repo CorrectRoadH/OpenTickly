@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
@@ -24,7 +24,7 @@ export function ReportsDescriptionFilter({
     setDraft(value);
   }, [value]);
 
-  const closeDropdown = useCallback(() => setOpen(false), []);
+  const closeDropdown = () => setOpen(false);
   useDismiss(containerRef, open, closeDropdown);
 
   useEffect(() => {

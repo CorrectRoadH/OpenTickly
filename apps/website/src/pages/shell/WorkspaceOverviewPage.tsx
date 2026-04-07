@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
@@ -37,14 +37,14 @@ export function WorkspaceOverviewPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const memberCount = session.currentOrganization?.userCount ?? 1;
-  const weekDays = useMemo(() => getCurrentWeekDays(beginningOfWeek), [beginningOfWeek]);
+  const weekDays = getCurrentWeekDays(beginningOfWeek);
   const timezone = session.user.timezone ?? "UTC";
   const projectsQuery = useProjectsQuery(workspaceId, "all");
   const allActivitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
   const topActivityQuery = useWorkspaceTopActivityQuery(workspaceId);
   const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
-  const memberNameById = useMemo(() => {
+  const memberNameById = (() => {
     const lookup = new Map<number, string>();
     const members = membersQuery.data?.members ?? [];
     for (const m of members) {
@@ -52,29 +52,17 @@ export function WorkspaceOverviewPage(): ReactElement {
       if (m.id && m.email && !lookup.has(m.id)) lookup.set(m.id, m.email);
     }
     return lookup;
-  }, [membersQuery.data]);
-  const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
-  const weekSummary = useMemo(
-    () => buildWeekSummary(allActivitiesQuery.data ?? [], weekDays, timezone),
-    [allActivitiesQuery.data, timezone, weekDays],
-  );
-  const topProjects = useMemo(
-    () => buildTopProjects(topActivityQuery.data ?? [], projects),
-    [projects, topActivityQuery.data],
-  );
-  const teamActivity = useMemo(
-    () => buildTeamActivity(mostActiveQuery.data ?? [], memberCount),
-    [memberCount, mostActiveQuery.data],
-  );
-  const projectCoverage = useMemo(
-    () => buildProjectCoverage(topActivityQuery.data ?? []),
-    [topActivityQuery.data],
-  );
+  })();
+  const projects = normalizeProjects(projectsQuery.data);
+  const weekSummary = buildWeekSummary(allActivitiesQuery.data ?? [], weekDays, timezone);
+  const topProjects = buildTopProjects(topActivityQuery.data ?? [], projects);
+  const teamActivity = buildTeamActivity(mostActiveQuery.data ?? [], memberCount);
+  const projectCoverage = buildProjectCoverage(topActivityQuery.data ?? []);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("member");
   const inviteMutation = useInviteWorkspaceMemberMutation(workspaceId);
-  const handleInviteSubmit = useCallback(() => {
+  const handleInviteSubmit = () => {
     inviteMutation.mutate(
       { email: inviteEmail.trim(), role: inviteRole },
       {
@@ -94,20 +82,20 @@ export function WorkspaceOverviewPage(): ReactElement {
         },
       },
     );
-  }, [inviteEmail, inviteMutation, inviteRole]);
+  };
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const handleRefreshCharts = useCallback(() => {
+  const handleRefreshCharts = () => {
     void queryClient.invalidateQueries({
       predicate: (query) => {
         const key = query.queryKey[0];
         return typeof key === "string" && key.startsWith("workspace-dashboard-");
       },
     });
-  }, [queryClient]);
-  const handleViewReports = useCallback(() => {
+  };
+  const handleViewReports = () => {
     void navigate({ to: `/workspaces/${workspaceId}/reports` });
-  }, [navigate, workspaceId]);
+  };
   return (
     <>
       <PageLayout

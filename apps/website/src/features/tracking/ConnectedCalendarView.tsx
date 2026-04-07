@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useRef } from "react";
+import { type ReactElement, useRef } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -66,17 +66,12 @@ export function ConnectedCalendarView({
   const calendarZoom = useTimerViewStore((s) => s.calendarZoom);
   const calendarDraftEntry = useTimerViewStore((s) => s.calendarDraftEntry);
 
-  const selectedSubviewDateIso = useMemo(
-    () => (calendarSubview === "day" ? formatTrackQueryDate(selectedWeekDate) : undefined),
-    [calendarSubview, selectedWeekDate],
-  );
+  const selectedSubviewDateIso =
+    calendarSubview === "day" ? formatTrackQueryDate(selectedWeekDate) : undefined;
 
-  const onSelectSubviewDate = useCallback(
-    (dateIso: string) => {
-      setSelectedWeekDate(new Date(`${dateIso}T00:00:00`));
-    },
-    [setSelectedWeekDate],
-  );
+  const onSelectSubviewDate = (dateIso: string) => {
+    setSelectedWeekDate(new Date(`${dateIso}T00:00:00`));
+  };
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
   const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
@@ -105,62 +100,59 @@ export function ConnectedCalendarView({
   const viewsRef = useRef(views);
   viewsRef.current = views;
 
-  const handleEntryEdit = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
-      const pageContainer = document.querySelector<HTMLElement>(
-        '[data-testid="tracking-timer-page"]',
-      );
-      const pageRect = pageContainer?.getBoundingClientRect();
-      const pageLeft = pageRect?.left ?? 0;
-      const pageTop = (pageRect?.top ?? 0) + window.scrollY;
-      const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
-      const anchorLeft = anchorRect.left - pageLeft;
-      const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
-      const store = useTimerViewStore.getState();
-      store.setSelectedEntry(entry);
-      store.setSelectedEntryAnchor({
-        containerWidth,
-        height: anchorRect.height,
-        left: anchorLeft,
-        preferredPlacement,
-        top: anchorRect.top + window.scrollY - pageTop,
-        width: anchorRect.width,
-      });
-    },
-    [],
-  );
+  const handleEntryEdit = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    anchorRect: DOMRect,
+  ) => {
+    const pageContainer = document.querySelector<HTMLElement>(
+      '[data-testid="tracking-timer-page"]',
+    );
+    const pageRect = pageContainer?.getBoundingClientRect();
+    const pageLeft = pageRect?.left ?? 0;
+    const pageTop = (pageRect?.top ?? 0) + window.scrollY;
+    const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
+    const anchorLeft = anchorRect.left - pageLeft;
+    const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
+    const store = useTimerViewStore.getState();
+    store.setSelectedEntry(entry);
+    store.setSelectedEntryAnchor({
+      containerWidth,
+      height: anchorRect.height,
+      left: anchorLeft,
+      preferredPlacement,
+      top: anchorRect.top + window.scrollY - pageTop,
+      width: anchorRect.width,
+    });
+  };
 
-  const handleCalendarSlotCreate = useCallback(
-    (slot: { end: Date; start: Date }) => {
-      const store = useTimerViewStore.getState();
-      if (store.selectedEntry != null) {
-        store.closeEditor();
-        store.setCalendarDraftEntry(null);
-        return;
-      }
+  const handleCalendarSlotCreate = (slot: { end: Date; start: Date }) => {
+    const store = useTimerViewStore.getState();
+    if (store.selectedEntry != null) {
+      store.closeEditor();
+      store.setCalendarDraftEntry(null);
+      return;
+    }
 
-      const startDate = slot.start;
-      const endDate = slot.end;
-      const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
+    const startDate = slot.start;
+    const endDate = slot.end;
+    const durationSeconds = Math.round((endDate.getTime() - startDate.getTime()) / 1000);
 
-      const draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry = {
-        billable: false,
-        description: "",
-        duration: durationSeconds > 0 ? durationSeconds : 1800,
-        start: toTrackIso(startDate),
-        stop: toTrackIso(endDate),
-        workspace_id: workspaceId,
-        tag_ids: [],
-      };
+    const draftEntry: GithubComTogglTogglApiInternalModelsTimeEntry = {
+      billable: false,
+      description: "",
+      duration: durationSeconds > 0 ? durationSeconds : 1800,
+      start: toTrackIso(startDate),
+      stop: toTrackIso(endDate),
+      workspace_id: workspaceId,
+      tag_ids: [],
+    };
 
-      store.setIsNewEntry(true);
-      store.setCalendarDraftEntry(draftEntry);
-      store.setSelectedEntry(draftEntry);
-    },
-    [workspaceId],
-  );
+    store.setIsNewEntry(true);
+    store.setCalendarDraftEntry(draftEntry);
+    store.setSelectedEntry(draftEntry);
+  };
 
-  const handleCalendarEntryMove = useCallback(async (entryId: number, minutesDelta: number) => {
+  const handleCalendarEntryMove = async (entryId: number, minutesDelta: number) => {
     if (minutesDelta === 0) return;
 
     const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
@@ -187,44 +179,45 @@ export function ConnectedCalendarView({
       timeEntryId: entryId,
       workspaceId: workspaceForEntry,
     });
-  }, []);
+  };
 
-  const handleCalendarEntryResize = useCallback(
-    async (entryId: number, edge: "start" | "end", minutesDelta: number) => {
-      if (minutesDelta === 0) return;
+  const handleCalendarEntryResize = async (
+    entryId: number,
+    edge: "start" | "end",
+    minutesDelta: number,
+  ) => {
+    if (minutesDelta === 0) return;
 
-      const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
-      if (!targetEntry?.start || !targetEntry.stop) return;
+    const targetEntry = viewsRef.current.visibleEntries.find((entry) => entry.id === entryId);
+    if (!targetEntry?.start || !targetEntry.stop) return;
 
-      const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
-      if (typeof workspaceForEntry !== "number") return;
+    const workspaceForEntry = targetEntry.workspace_id ?? targetEntry.wid;
+    if (typeof workspaceForEntry !== "number") return;
 
-      const startMs = new Date(targetEntry.start).getTime();
-      const stopMs = new Date(targetEntry.stop).getTime();
-      const deltaMs = minutesDelta * 60_000;
-      const nextStartMs = edge === "start" ? startMs + deltaMs : startMs;
-      const nextStopMs = edge === "end" ? stopMs + deltaMs : stopMs;
+    const startMs = new Date(targetEntry.start).getTime();
+    const stopMs = new Date(targetEntry.stop).getTime();
+    const deltaMs = minutesDelta * 60_000;
+    const nextStartMs = edge === "start" ? startMs + deltaMs : startMs;
+    const nextStopMs = edge === "end" ? stopMs + deltaMs : stopMs;
 
-      if (nextStartMs >= nextStopMs) return;
+    if (nextStartMs >= nextStopMs) return;
 
-      await mutRef.current.update.mutateAsync({
-        request: {
-          billable: targetEntry.billable,
-          description: targetEntry.description ?? "",
-          projectId: resolveTimeEntryProjectId(targetEntry),
-          start: toTrackIso(new Date(nextStartMs)),
-          stop: toTrackIso(new Date(nextStopMs)),
-          tagIds: targetEntry.tag_ids ?? [],
-          taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
-        },
-        timeEntryId: entryId,
-        workspaceId: workspaceForEntry,
-      });
-    },
-    [],
-  );
+    await mutRef.current.update.mutateAsync({
+      request: {
+        billable: targetEntry.billable,
+        description: targetEntry.description ?? "",
+        projectId: resolveTimeEntryProjectId(targetEntry),
+        start: toTrackIso(new Date(nextStartMs)),
+        stop: toTrackIso(new Date(nextStopMs)),
+        tagIds: targetEntry.tag_ids ?? [],
+        taskId: targetEntry.task_id ?? targetEntry.tid ?? null,
+      },
+      timeEntryId: entryId,
+      workspaceId: workspaceForEntry,
+    });
+  };
 
-  const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+  const onContinueEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
     const continuedDescription = (entry.description ?? "").trim();
     void mutRef.current.start
       .mutateAsync({
@@ -238,38 +231,32 @@ export function ConnectedCalendarView({
       .then(() => {
         useTimerViewStore.getState().setRunningDescription(continuedDescription);
       });
-  }, []);
+  };
 
-  const onContextMenu = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, action: CalendarContextMenuAction) => {
-      if (action === "split" && entry.start && entry.stop) {
-        useTimerViewStore.getState().setPendingSplit(true);
-        handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-        return;
-      }
-      handleCalendarContextMenuAction(entry, action, mutRef.current, onDeleteWithUndo);
-    },
-    [handleEntryEdit, onDeleteWithUndo],
-  );
+  const onContextMenu = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    action: CalendarContextMenuAction,
+  ) => {
+    if (action === "split" && entry.start && entry.stop) {
+      useTimerViewStore.getState().setPendingSplit(true);
+      handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+      return;
+    }
+    handleCalendarContextMenuAction(entry, action, mutRef.current, onDeleteWithUndo);
+  };
 
-  const onMoveEntry = useCallback(
-    (entryId: number, minutesDelta: number) => {
-      void handleCalendarEntryMove(entryId, minutesDelta);
-    },
-    [handleCalendarEntryMove],
-  );
+  const onMoveEntry = (entryId: number, minutesDelta: number) => {
+    void handleCalendarEntryMove(entryId, minutesDelta);
+  };
 
-  const onResizeEntry = useCallback(
-    (entryId: number, edge: "start" | "end", minutesDelta: number) => {
-      void handleCalendarEntryResize(entryId, edge, minutesDelta);
-    },
-    [handleCalendarEntryResize],
-  );
+  const onResizeEntry = (entryId: number, edge: "start" | "end", minutesDelta: number) => {
+    void handleCalendarEntryResize(entryId, edge, minutesDelta);
+  };
 
   const runningEntryRef = useRef(runningEntry);
   runningEntryRef.current = runningEntry;
 
-  const onStartEntry = useCallback(() => {
+  const onStartEntry = () => {
     const running = runningEntryRef.current;
     if (running?.id != null) {
       const wid = running.workspace_id ?? running.wid;
@@ -287,15 +274,15 @@ export function ConnectedCalendarView({
       tagIds: [],
       taskId: null,
     });
-  }, []);
+  };
 
-  const onZoomIn = useCallback(() => {
+  const onZoomIn = () => {
     useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom + 1);
-  }, []);
+  };
 
-  const onZoomOut = useCallback(() => {
+  const onZoomOut = () => {
     useTimerViewStore.getState().setCalendarZoom(useTimerViewStore.getState().calendarZoom - 1);
-  }, []);
+  };
 
   if (views.timeEntriesQuery.isPending) {
     return <SurfaceMessage message="Loading time entries..." />;

@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
@@ -49,15 +49,9 @@ export function BulkEditDialog({
 
   const entryWord = count === 1 ? t("timeEntry") : t("timeEntries");
 
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === selectedProjectId) ?? null,
-    [projects, selectedProjectId],
-  );
+  const selectedProject = projects.find((p) => p.id === selectedProjectId) ?? null;
 
-  const matchTag = useCallback(
-    (t: TimeEntryEditorTag, q: string) => t.name.toLowerCase().includes(q),
-    [],
-  );
+  const matchTag = (t: TimeEntryEditorTag, q: string) => t.name.toLowerCase().includes(q);
   const filteredTags = useFilteredList(tags, search, matchTag);
 
   function handleSave() {

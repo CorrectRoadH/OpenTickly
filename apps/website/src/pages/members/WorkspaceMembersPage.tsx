@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AppButton,
@@ -67,9 +67,9 @@ export function WorkspaceMembersPage(): ReactElement {
   const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
   const [search, setSearch] = useState("");
 
-  const members = useMemo(() => membersQuery.data?.members ?? [], [membersQuery.data]);
+  const members = membersQuery.data?.members ?? [];
 
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = (() => {
     return members.filter((member) => {
       if (statusFilter === "active" && !isActiveMember(member.status)) return false;
       if (statusFilter === "disabled" && member.status !== "disabled") return false;
@@ -82,7 +82,7 @@ export function WorkspaceMembersPage(): ReactElement {
 
       return true;
     });
-  }, [members, statusFilter, search]);
+  })();
 
   const activeCount = members.filter((m) => isActiveMember(m.status)).length;
   const disabledCount = members.filter((m) => m.status === "disabled").length;

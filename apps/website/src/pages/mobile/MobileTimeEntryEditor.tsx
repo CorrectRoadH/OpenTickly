@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -44,22 +44,16 @@ export function MobileTimeEntryEditor({
   const [startIso, setStartIso] = useState(entry.start ?? "");
   const [stopIso, setStopIso] = useState(entry.stop ?? "");
 
-  const projects = useMemo(
-    () => (Array.isArray(projectsQuery.data) ? projectsQuery.data : []),
-    [projectsQuery.data],
-  );
-  const tags = useMemo(
-    () => (Array.isArray(tagsQuery.data) ? tagsQuery.data : []),
-    [tagsQuery.data],
-  );
+  const projects = Array.isArray(projectsQuery.data) ? projectsQuery.data : [];
+  const tags = Array.isArray(tagsQuery.data) ? tagsQuery.data : [];
 
-  const durationSeconds = useMemo(() => {
+  const durationSeconds = (() => {
     if (!startIso || !stopIso) return 0;
     return Math.max(
       0,
       Math.round((new Date(stopIso).getTime() - new Date(startIso).getTime()) / 1000),
     );
-  }, [startIso, stopIso]);
+  })();
 
   const duration = formatClockDuration(durationSeconds, durationFormat);
 
@@ -86,19 +80,12 @@ export function MobileTimeEntryEditor({
     onClose();
   }
 
-  const selectedProject = useMemo(
-    () => projects.find((p) => p.id === projectId) ?? null,
-    [projects, projectId],
-  );
+  const selectedProject = projects.find((p) => p.id === projectId) ?? null;
 
-  const selectedTagNames = useMemo(
-    () =>
-      tagIds
-        .map((id) => tags.find((t) => t.id === id)?.name)
-        .filter(Boolean)
-        .join(", "),
-    [tagIds, tags],
-  );
+  const selectedTagNames = tagIds
+    .map((id) => tags.find((t) => t.id === id)?.name)
+    .filter(Boolean)
+    .join(", ");
 
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);

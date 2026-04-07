@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -108,7 +108,7 @@ export function WorkspaceTimerPage({
   const workspaceId = session.currentWorkspace.id;
 
   // Delete toast handlers
-  const showDeleteToast = useCallback((snapshot: DeletedEntrySnapshot) => {
+  const showDeleteToast = (snapshot: DeletedEntrySnapshot) => {
     if (deleteToastTimerRef.current) {
       clearTimeout(deleteToastTimerRef.current);
     }
@@ -117,10 +117,10 @@ export function WorkspaceTimerPage({
       setDeleteToast(null);
       deleteToastTimerRef.current = null;
     }, 5000);
-  }, []);
+  };
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
-  const handleUndoDelete = useCallback(() => {
+  const handleUndoDelete = () => {
     if (!deleteToast) return;
     if (deleteToastTimerRef.current) {
       clearTimeout(deleteToastTimerRef.current);
@@ -137,7 +137,7 @@ export function WorkspaceTimerPage({
       taskId: deleteToast.taskId,
     });
     setDeleteToast(null);
-  }, [deleteToast, createTimeEntryMutation]);
+  };
 
   useEffect(() => {
     return () => {
@@ -175,9 +175,9 @@ export function WorkspaceTimerPage({
     };
   }, [view, calendarSubview]);
 
-  const onShortcutsToggle = useCallback(() => {
+  const onShortcutsToggle = () => {
     setShortcutsOpen((prev) => !prev);
-  }, []);
+  };
 
   return (
     <div
@@ -400,68 +400,62 @@ function TimerRangePicker({
         ? formatDayLabel(selectedWeekDate)
         : formatWeekRangeLabel(selectedWeekDate, beginningOfWeek);
 
-  const handleSelectDate = useCallback(
-    (date: Date) => {
+  const handleSelectDate = (date: Date) => {
+    if (view === "list") {
+      const days = getWeekDaysForDate(date, beginningOfWeek);
+      setListDateRange({
+        startDate: formatTrackQueryDate(days[0]),
+        endDate: formatTrackQueryDate(days[6]),
+      });
+    }
+    setSelectedWeekDate(date);
+    setActiveShortcut(null);
+  };
+
+  const handlePrev = () => {
+    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, -1) : shiftWeek(selectedWeekDate, -1));
+  };
+
+  const handleNext = () => {
+    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, 1) : shiftWeek(selectedWeekDate, 1));
+  };
+
+  const handleShortcut = (shortcutId: string, date: Date) => {
+    setActiveShortcut(shortcutId);
+    if (shortcutId === "all-dates") {
+      setListDateRange(null);
+      if (view !== "list") setView("list");
+    } else if (shortcutId === "last-30-days") {
+      if (view === "list") {
+        setListDateRange({
+          startDate: formatTrackQueryDate(date),
+          endDate: formatTrackQueryDate(new Date()),
+        });
+      } else {
+        setCalendarSubview("week");
+      }
+      setSelectedWeekDate(date);
+    } else if (shortcutId === "today" || shortcutId === "yesterday") {
+      if (view === "list") {
+        const dayStr = formatTrackQueryDate(date);
+        setListDateRange({ startDate: dayStr, endDate: dayStr });
+      } else {
+        setCalendarSubview("day");
+      }
+      setSelectedWeekDate(date);
+    } else {
       if (view === "list") {
         const days = getWeekDaysForDate(date, beginningOfWeek);
         setListDateRange({
           startDate: formatTrackQueryDate(days[0]),
           endDate: formatTrackQueryDate(days[6]),
         });
+      } else {
+        setCalendarSubview("week");
       }
       setSelectedWeekDate(date);
-      setActiveShortcut(null);
-    },
-    [view, beginningOfWeek, setListDateRange, setSelectedWeekDate],
-  );
-
-  const handlePrev = useCallback(() => {
-    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, -1) : shiftWeek(selectedWeekDate, -1));
-  }, [handleSelectDate, isDayMode, selectedWeekDate]);
-
-  const handleNext = useCallback(() => {
-    handleSelectDate(isDayMode ? shiftDay(selectedWeekDate, 1) : shiftWeek(selectedWeekDate, 1));
-  }, [handleSelectDate, isDayMode, selectedWeekDate]);
-
-  const handleShortcut = useCallback(
-    (shortcutId: string, date: Date) => {
-      setActiveShortcut(shortcutId);
-      if (shortcutId === "all-dates") {
-        setListDateRange(null);
-        if (view !== "list") setView("list");
-      } else if (shortcutId === "last-30-days") {
-        if (view === "list") {
-          setListDateRange({
-            startDate: formatTrackQueryDate(date),
-            endDate: formatTrackQueryDate(new Date()),
-          });
-        } else {
-          setCalendarSubview("week");
-        }
-        setSelectedWeekDate(date);
-      } else if (shortcutId === "today" || shortcutId === "yesterday") {
-        if (view === "list") {
-          const dayStr = formatTrackQueryDate(date);
-          setListDateRange({ startDate: dayStr, endDate: dayStr });
-        } else {
-          setCalendarSubview("day");
-        }
-        setSelectedWeekDate(date);
-      } else {
-        if (view === "list") {
-          const days = getWeekDaysForDate(date, beginningOfWeek);
-          setListDateRange({
-            startDate: formatTrackQueryDate(days[0]),
-            endDate: formatTrackQueryDate(days[6]),
-          });
-        } else {
-          setCalendarSubview("week");
-        }
-        setSelectedWeekDate(date);
-      }
-    },
-    [view, beginningOfWeek, setListDateRange, setSelectedWeekDate, setView, setCalendarSubview],
-  );
+    }
+  };
 
   return (
     <WeekRangePicker

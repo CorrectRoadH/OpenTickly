@@ -1,12 +1,4 @@
-import {
-  type ReactElement,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactElement, type ReactNode, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import i18n from "../../app/i18n.ts";
@@ -58,10 +50,7 @@ export function WeekRangePicker({
   const rootRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const selectedWeekStart = getWeekStart(selectedDate, weekStartsOn);
-  const weeks = useMemo(
-    () => buildMonthWeeks(visibleMonth, weekStartsOn),
-    [visibleMonth, weekStartsOn],
-  );
+  const weeks = buildMonthWeeks(visibleMonth, weekStartsOn);
 
   // Range mode state: first click sets pendingStart, second click completes the range
   const [pendingStart, setPendingStart] = useState<Date | null>(null);
@@ -78,7 +67,7 @@ export function WeekRangePicker({
     setVisibleMonth(new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1));
   }, [isOpen, selectedDate]);
 
-  const handleDismiss = useCallback(() => setIsOpen(false), []);
+  const handleDismiss = () => setIsOpen(false);
   useDismiss(rootRef, isOpen, handleDismiss);
 
   useEffect(() => {
@@ -88,7 +77,7 @@ export function WeekRangePicker({
     triggerRef.current?.focus();
   }, [isOpen]);
 
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = () => setIsOpen(false);
 
   const hasSidebar = sidebar != null;
 

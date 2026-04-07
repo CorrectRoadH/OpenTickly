@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown as ChevronDownLucide, Search as SearchLucide } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -23,14 +23,14 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
   const usersQuery = useWorkspaceUsersQuery(workspaceId);
   const queryClient = useQueryClient();
 
-  const members: MemberOption[] = useMemo(() => {
+  const members: MemberOption[] = (() => {
     return (usersQuery.data ?? [])
       .filter((u) => u.id != null && u.inactive !== true)
       .map((u) => ({
         id: u.id as number,
         name: formatMemberName(u, currentUserId),
       }));
-  }, [usersQuery.data, currentUserId]);
+  })();
 
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<number>>(new Set());
   const [approverIds, setApproverIds] = useState<number[]>([]);
@@ -43,11 +43,11 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
   const [sendViaEmail, setSendViaEmail] = useState(true);
   const [memberSearch, setMemberSearch] = useState("");
 
-  const filteredMembers = useMemo(() => {
+  const filteredMembers = (() => {
     if (!memberSearch.trim()) return members;
     const q = memberSearch.trim().toLowerCase();
     return members.filter((m) => m.name.toLowerCase().includes(q));
-  }, [members, memberSearch]);
+  })();
 
   const createMutation = useMutation({
     mutationFn: () =>

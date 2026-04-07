@@ -25,6 +25,15 @@ type Handler struct {
 	scope   ScopeAuthorizer
 }
 
+// summarySubGroupEntry is the JSON shape for a single sub-group entry in a
+// summary report response, replacing an untyped map[string]any.
+type summarySubGroupEntry struct {
+	BillableSeconds int    `json:"billable_seconds"`
+	ID              int64  `json:"id"`
+	Seconds         int    `json:"seconds"`
+	Title           string `json:"title"`
+}
+
 func NewHandler(scope ScopeAuthorizer, reports *reportsapplication.Service) *Handler {
 	return &Handler{reports: reports, scope: scope}
 }
@@ -359,13 +368,13 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 
 	groups := make([]publicreportsapi.SummaryGroupData, 0, len(report.Groups))
 	for _, group := range report.Groups {
-		subGroups := make(map[string]interface{}, len(group.SubGroups))
+		subGroups := make(publicreportsapi.IndexedIndexedSummarySubGroupDataString, len(group.SubGroups))
 		for _, subGroup := range group.SubGroups {
-			subGroups[strconv.FormatInt(subGroup.UserID, 10)] = map[string]any{
-				"billable_seconds": subGroup.BillableSeconds,
-				"id":               subGroup.UserID,
-				"seconds":          subGroup.Seconds,
-				"title":            subGroup.Label,
+			subGroups[strconv.FormatInt(subGroup.UserID, 10)] = summarySubGroupEntry{
+				BillableSeconds: subGroup.BillableSeconds,
+				ID:              subGroup.UserID,
+				Seconds:         subGroup.Seconds,
+				Title:           subGroup.Label,
 			}
 		}
 		projectID := int(group.ProjectID)

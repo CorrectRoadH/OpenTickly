@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
@@ -173,17 +173,17 @@ export function ReportsProfitabilityView({
   const [bottomDimension, setBottomDimension] = useState<EarningDimension>("projects");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  const projectRows = useMemo(() => buildProfitRows(report), [report]);
-  const memberRows = useMemo(() => buildMemberRows(report), [report]);
-  const dayAmounts = useMemo(() => buildDayAmounts(report), [report]);
+  const projectRows = buildProfitRows(report);
+  const memberRows = buildMemberRows(report);
+  const dayAmounts = buildDayAmounts(report);
 
-  const totalBillableSeconds = useMemo(() => {
+  const totalBillableSeconds = (() => {
     if (!report?.report) return 0;
     return report.report.reduce(
       (s, r) => s + (r.billable_seconds ?? []).reduce((a, b) => a + b, 0),
       0,
     );
-  }, [report]);
+  })();
 
   const totalAmount = projectRows.reduce((s, r) => s + r.amount, 0);
   const totalCost = projectRows.reduce((s, r) => s + r.cost, 0);

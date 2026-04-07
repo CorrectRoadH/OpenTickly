@@ -1,5 +1,3 @@
-import { useMemo } from "react";
-
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "./week-range.ts";
@@ -9,18 +7,12 @@ export function useWeekNavigation() {
   const setSelectedWeekDate = useTimerViewStore((s) => s.setSelectedWeekDate);
   const { beginningOfWeek } = useUserPreferences();
 
-  const weekDays = useMemo(
-    () => getWeekDaysForDate(selectedWeekDate, beginningOfWeek),
-    [selectedWeekDate, beginningOfWeek],
-  );
+  const weekDays = getWeekDaysForDate(selectedWeekDate, beginningOfWeek);
 
-  const weekRange = useMemo(
-    () => ({
-      endDate: formatTrackQueryDate(weekDays[6]),
-      startDate: formatTrackQueryDate(weekDays[0]),
-    }),
-    [weekDays],
-  );
+  const weekRange = {
+    endDate: formatTrackQueryDate(weekDays[6]),
+    startDate: formatTrackQueryDate(weekDays[0]),
+  };
 
   return { selectedWeekDate, setSelectedWeekDate, beginningOfWeek, weekDays, weekRange };
 }

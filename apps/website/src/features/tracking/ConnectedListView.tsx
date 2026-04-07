@@ -1,4 +1,4 @@
-import { type ReactElement, useCallback, useMemo, useRef } from "react";
+import { type ReactElement, useRef } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
@@ -72,35 +72,35 @@ export function ConnectedListView({
     bulkDelete: bulkDeleteMutation,
   };
 
-  const handleEntryEdit = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, anchorRect: DOMRect) => {
-      const pageContainer = document.querySelector<HTMLElement>(
-        '[data-testid="tracking-timer-page"]',
-      );
-      const pageRect = pageContainer?.getBoundingClientRect();
-      const pageLeft = pageRect?.left ?? 0;
-      const pageTop = (pageRect?.top ?? 0) + window.scrollY;
-      const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
-      const anchorLeft = anchorRect.left - pageLeft;
-      const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
-      const store = useTimerViewStore.getState();
-      store.setSelectedEntry(entry);
-      store.setSelectedEntryAnchor({
-        containerWidth,
-        height: anchorRect.height,
-        left: anchorLeft,
-        preferredPlacement,
-        top: anchorRect.top + window.scrollY - pageTop,
-        width: anchorRect.width,
-      });
-    },
-    [],
-  );
+  const handleEntryEdit = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    anchorRect: DOMRect,
+  ) => {
+    const pageContainer = document.querySelector<HTMLElement>(
+      '[data-testid="tracking-timer-page"]',
+    );
+    const pageRect = pageContainer?.getBoundingClientRect();
+    const pageLeft = pageRect?.left ?? 0;
+    const pageTop = (pageRect?.top ?? 0) + window.scrollY;
+    const containerWidth = pageContainer?.clientWidth ?? window.innerWidth;
+    const anchorLeft = anchorRect.left - pageLeft;
+    const preferredPlacement = anchorLeft > containerWidth / 2 ? "left" : "right";
+    const store = useTimerViewStore.getState();
+    store.setSelectedEntry(entry);
+    store.setSelectedEntryAnchor({
+      containerWidth,
+      height: anchorRect.height,
+      left: anchorLeft,
+      preferredPlacement,
+      top: anchorRect.top + window.scrollY - pageTop,
+      width: anchorRect.width,
+    });
+  };
 
   const startMutRef = useRef(startTimeEntryMutation);
   startMutRef.current = startTimeEntryMutation;
 
-  const onContinueEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+  const onContinueEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
     const continuedDescription = (entry.description ?? "").trim();
     void startMutRef.current
       .mutateAsync({
@@ -114,24 +114,19 @@ export function ConnectedListView({
       .then(() => {
         useTimerViewStore.getState().setRunningDescription(continuedDescription);
       });
-  }, []);
+  };
 
-  const onDeleteEntry = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      const wid = entry.workspace_id ?? entry.wid;
-      if (typeof entry.id === "number" && typeof wid === "number") {
-        const snapshot = snapshotEntryForUndo(entry);
-        void mutRef.current.del
-          .mutateAsync({ timeEntryId: entry.id, workspaceId: wid })
-          .then(() => {
-            if (snapshot) onDeleteWithUndo(snapshot);
-          });
-      }
-    },
-    [onDeleteWithUndo],
-  );
+  const onDeleteEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      const snapshot = snapshotEntryForUndo(entry);
+      void mutRef.current.del.mutateAsync({ timeEntryId: entry.id, workspaceId: wid }).then(() => {
+        if (snapshot) onDeleteWithUndo(snapshot);
+      });
+    }
+  };
 
-  const onDuplicateEntry = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+  const onDuplicateEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
     if (entry.start && entry.stop) {
       const durationSec = Math.round(
         (new Date(entry.stop).getTime() - new Date(entry.start).getTime()) / 1000,
@@ -147,37 +142,34 @@ export function ConnectedListView({
         taskId: entry.task_id ?? entry.tid ?? null,
       });
     }
-  }, []);
+  };
 
-  const onDescriptionChange = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, description: string) => {
-      const wid = entry.workspace_id ?? entry.wid;
-      if (typeof entry.id === "number" && typeof wid === "number") {
-        void mutRef.current.update.mutateAsync({
-          request: { description },
-          timeEntryId: entry.id,
-          workspaceId: wid,
-        });
-      }
-    },
-    [],
-  );
+  const onDescriptionChange = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    description: string,
+  ) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      void mutRef.current.update.mutateAsync({
+        request: { description },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+    }
+  };
 
-  const onTagsChange = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => {
-      const wid = entry.workspace_id ?? entry.wid;
-      if (typeof entry.id === "number" && typeof wid === "number") {
-        void mutRef.current.update.mutateAsync({
-          request: { tagIds },
-          timeEntryId: entry.id,
-          workspaceId: wid,
-        });
-      }
-    },
-    [],
-  );
+  const onTagsChange = (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      void mutRef.current.update.mutateAsync({
+        request: { tagIds },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+    }
+  };
 
-  const onBillableToggle = useCallback((entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+  const onBillableToggle = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof entry.id === "number" && typeof wid === "number") {
       void mutRef.current.update.mutateAsync({
@@ -186,33 +178,30 @@ export function ConnectedListView({
         workspaceId: wid,
       });
     }
-  }, []);
+  };
 
-  const onProjectChange = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry, projectId: number | null) => {
-      const wid = entry.workspace_id ?? entry.wid;
-      if (typeof entry.id === "number" && typeof wid === "number") {
-        void mutRef.current.update.mutateAsync({
-          request: { projectId },
-          timeEntryId: entry.id,
-          workspaceId: wid,
-        });
-      }
-    },
-    [],
-  );
+  const onProjectChange = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number | null,
+  ) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      void mutRef.current.update.mutateAsync({
+        request: { projectId },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+    }
+  };
 
-  const onSplitEntry = useCallback(
-    (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
-      if (entry.start && entry.stop) {
-        useTimerViewStore.getState().setPendingSplit(true);
-        handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
-      }
-    },
-    [handleEntryEdit],
-  );
+  const onSplitEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    if (entry.start && entry.stop) {
+      useTimerViewStore.getState().setPendingSplit(true);
+      handleEntryEdit(entry, new DOMRect(0, 0, 0, 0));
+    }
+  };
 
-  const onBulkEdit = useCallback(async (ids: number[], updates: BulkEditUpdates) => {
+  const onBulkEdit = async (ids: number[], updates: BulkEditUpdates) => {
     const operations: { op: "add" | "remove" | "replace"; path: string; value: unknown }[] = [];
     if (updates.description != null) {
       operations.push({ op: "replace", path: "/description", value: updates.description });
@@ -231,33 +220,27 @@ export function ConnectedListView({
     }
     if (operations.length === 0) return;
     await mutRef.current.bulkEdit.mutateAsync({ operations, timeEntryIds: ids });
-  }, []);
+  };
 
-  const onBulkDelete = useCallback(async (ids: number[]) => {
+  const onBulkDelete = async (ids: number[]) => {
     await mutRef.current.bulkDelete.mutateAsync(ids);
-  }, []);
+  };
 
-  const noopFavorite = useCallback(() => {}, []);
+  const noopFavorite = () => {};
 
-  const listViewProjects = useMemo(
-    () =>
-      projectOptions
-        .filter((project) => project.id != null && project.active !== false)
-        .map((project) => ({
-          clientName: project.client_name ?? undefined,
-          color: resolveProjectColorValue(project),
-          id: project.id as number,
-          name: project.name ?? "Untitled project",
-          pinned: project.pinned === true,
-        }))
-        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
-    [projectOptions],
-  );
+  const listViewProjects = projectOptions
+    .filter((project) => project.id != null && project.active !== false)
+    .map((project) => ({
+      clientName: project.client_name ?? undefined,
+      color: resolveProjectColorValue(project),
+      id: project.id as number,
+      name: project.name ?? "Untitled project",
+      pinned: project.pinned === true,
+    }))
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
-  const workspaceName = useMemo(
-    () => session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace",
-    [session.availableWorkspaces, workspaceId],
-  );
+  const workspaceName =
+    session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace";
 
   if (views.timeEntriesQuery.isPending) {
     return <SurfaceMessage message="Loading time entries..." />;

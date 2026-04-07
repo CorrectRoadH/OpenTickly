@@ -1,12 +1,4 @@
-import {
-  type ChangeEvent,
-  type ReactElement,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -74,17 +66,14 @@ export function TimerComposerBar({
 
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
   const recentWorkspaceEntriesRef = useRef<GithubComTogglTogglApiInternalModelsTimeEntry[]>([]);
-  const recentWorkspaceEntries = useMemo(() => {
-    const nextEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
-      (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
-    );
-    const stabilizedEntries = stabilizeTimeEntryList(
-      recentWorkspaceEntriesRef.current,
-      nextEntries,
-    );
-    recentWorkspaceEntriesRef.current = stabilizedEntries;
-    return stabilizedEntries;
-  }, [recentTimeEntriesQuery.data, workspaceId]);
+  const nextEntries = sortTimeEntries(recentTimeEntriesQuery.data ?? []).filter(
+    (entry) => (entry.workspace_id ?? entry.wid) === workspaceId,
+  );
+  const recentWorkspaceEntries = stabilizeTimeEntryList(
+    recentWorkspaceEntriesRef.current,
+    nextEntries,
+  );
+  recentWorkspaceEntriesRef.current = recentWorkspaceEntries;
 
   // Apply initialDate if provided (e.g. from URL params)
   useEffect(() => {
@@ -114,44 +103,41 @@ export function TimerComposerBar({
   }, [startParams, currentEntryLoaded, composer]);
 
   // Keyboard shortcuts
-  const handleGlobalKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      const target = event.target;
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target instanceof HTMLSelectElement ||
-        (target instanceof HTMLElement && target.isContentEditable)
-      ) {
-        return;
-      }
+  const handleGlobalKeyDown = (event: KeyboardEvent) => {
+    const target = event.target;
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      (target instanceof HTMLElement && target.isContentEditable)
+    ) {
+      return;
+    }
 
-      if (event.key === "?") {
-        event.preventDefault();
-        onShortcutsToggle();
-        return;
-      }
+    if (event.key === "?") {
+      event.preventDefault();
+      onShortcutsToggle();
+      return;
+    }
 
-      if (event.key === "n") {
-        event.preventDefault();
-        composer.timerDescriptionInputRef.current?.focus();
-        return;
-      }
+    if (event.key === "n") {
+      event.preventDefault();
+      composer.timerDescriptionInputRef.current?.focus();
+      return;
+    }
 
-      if (event.key === "s" && composer.runningEntry?.id != null) {
-        event.preventDefault();
-        void composer.handleTimerAction();
-      }
-    },
-    [composer, onShortcutsToggle],
-  );
+    if (event.key === "s" && composer.runningEntry?.id != null) {
+      event.preventDefault();
+      void composer.handleTimerAction();
+    }
+  };
 
   useEffect(() => {
     document.addEventListener("keydown", handleGlobalKeyDown);
     return () => {
       document.removeEventListener("keydown", handleGlobalKeyDown);
     };
-  }, [handleGlobalKeyDown]);
+  });
 
   return (
     <div className="flex min-h-[70px] flex-wrap items-center gap-x-3 gap-y-3 px-5 py-3">
@@ -414,20 +400,16 @@ function TimerBarProjectPicker({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const projects = useMemo(
-    () =>
-      projectOptions
-        .filter((p) => p.id != null && p.active !== false)
-        .map((p) => ({
-          clientName: p.client_name ?? undefined,
-          color: resolveProjectColorValue(p),
-          id: p.id as number,
-          name: p.name ?? "Untitled project",
-          pinned: p.pinned === true,
-        }))
-        .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
-    [projectOptions],
-  );
+  const projects = projectOptions
+    .filter((p) => p.id != null && p.active !== false)
+    .map((p) => ({
+      clientName: p.client_name ?? undefined,
+      color: resolveProjectColorValue(p),
+      id: p.id as number,
+      name: p.name ?? "Untitled project",
+      pinned: p.pinned === true,
+    }))
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned));
 
   const displayProjectId =
     runningEntry?.id != null ? resolveTimeEntryProjectId(runningEntry) : draftProjectId;
@@ -513,23 +495,16 @@ function TimerBarTagPicker({
 
   const displayTagIds = runningEntry?.id != null ? (runningEntry.tag_ids ?? []) : draftTagIds;
   const hasTags = displayTagIds.length > 0;
-  const displayTags = useMemo(
-    () => tagOptions.filter((tag) => displayTagIds.includes(tag.id)),
-    [tagOptions, displayTagIds],
-  );
-  const tagLabel = useMemo(() => {
+  const displayTags = tagOptions.filter((tag) => displayTagIds.includes(tag.id));
+  const tagLabel = (() => {
     if (displayTags.length === 0) return undefined;
     if (displayTags.length === 1) return displayTags[0]?.name;
     return `${displayTags[0]?.name ?? "Tag"} +${displayTags.length - 1}`;
-  }, [displayTags]);
+  })();
 
-  const filteredTags = useMemo(
-    () =>
-      search.trim()
-        ? tagOptions.filter((tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
-        : tagOptions,
-    [tagOptions, search],
-  );
+  const filteredTags = search.trim()
+    ? tagOptions.filter((tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
+    : tagOptions;
 
   return (
     <div className="relative" ref={containerRef}>

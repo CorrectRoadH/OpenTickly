@@ -1,5 +1,5 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { type ReactElement, type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactElement, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LiveDuration } from "../features/tracking/LiveDuration.tsx";
 
@@ -45,7 +45,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
   const primarySections = sections.slice(0, -1);
   const profileName = session.user.fullName || session.user.email || "Profile";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   useEffect(() => {
     setMobileMenuOpen(false);

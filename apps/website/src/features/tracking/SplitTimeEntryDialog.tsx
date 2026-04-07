@@ -1,11 +1,4 @@
-import {
-  type PointerEvent as ReactPointerEvent,
-  type ReactElement,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type PointerEvent as ReactPointerEvent, type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { X } from "lucide-react";
 
@@ -31,8 +24,8 @@ export function SplitTimeEntryDialog({
   onConfirm,
 }: SplitTimeEntryDialogProps): ReactElement {
   const { t } = useTranslation("tracking");
-  const startMs = useMemo(() => new Date(start).getTime(), [start]);
-  const stopMs = useMemo(() => new Date(stop).getTime(), [stop]);
+  const startMs = new Date(start).getTime();
+  const stopMs = new Date(stop).getTime();
   const totalSeconds = Math.round((stopMs - startMs) / 1000);
 
   const midpointSeconds = Math.round(totalSeconds / 2 / STEP_SECONDS) * STEP_SECONDS;
@@ -47,37 +40,34 @@ export function SplitTimeEntryDialog({
 
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handlePointerDown = useCallback(
-    (e: ReactPointerEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const container = containerRef.current;
-      if (!container) return;
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
 
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
 
-      const onPointerMove = (me: globalThis.PointerEvent) => {
-        const rect = container.getBoundingClientRect();
-        const y = Math.max(0, Math.min(rect.height, me.clientY - rect.top));
-        const ratio = y / rect.height;
-        const rawSeconds = ratio * totalSeconds;
-        const snapped = Math.round(rawSeconds / STEP_SECONDS) * STEP_SECONDS;
-        setSplitSeconds(Math.max(STEP_SECONDS, Math.min(totalSeconds - STEP_SECONDS, snapped)));
-      };
+    const onPointerMove = (me: globalThis.PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      const y = Math.max(0, Math.min(rect.height, me.clientY - rect.top));
+      const ratio = y / rect.height;
+      const rawSeconds = ratio * totalSeconds;
+      const snapped = Math.round(rawSeconds / STEP_SECONDS) * STEP_SECONDS;
+      setSplitSeconds(Math.max(STEP_SECONDS, Math.min(totalSeconds - STEP_SECONDS, snapped)));
+    };
 
-      const onPointerUp = () => {
-        document.removeEventListener("pointermove", onPointerMove);
-        document.removeEventListener("pointerup", onPointerUp);
-      };
+    const onPointerUp = () => {
+      document.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerup", onPointerUp);
+    };
 
-      document.addEventListener("pointermove", onPointerMove);
-      document.addEventListener("pointerup", onPointerUp);
-    },
-    [totalSeconds],
-  );
+    document.addEventListener("pointermove", onPointerMove);
+    document.addEventListener("pointerup", onPointerUp);
+  };
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = () => {
     onConfirm(splitMs);
-  }, [onConfirm, splitMs]);
+  };
 
   return (
     <div

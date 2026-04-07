@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -65,8 +65,8 @@ export function ClientsPage(): ReactElement {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [collapsedIds, setCollapsedIds] = useState<number[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const clients = useMemo(() => normalizeClients(clientsQuery.data), [clientsQuery.data]);
-  const projects = useMemo(() => normalizeProjects(projectsQuery.data), [projectsQuery.data]);
+  const clients = normalizeClients(clientsQuery.data);
+  const projects = normalizeProjects(projectsQuery.data);
   const statusFilter: ClientStatusFilter =
     selectedStatuses.size === 2 ? "all" : selectedStatuses.has("inactive") ? "inactive" : "active";
   const visibleClients = clients.filter((client) => {
@@ -93,11 +93,11 @@ export function ClientsPage(): ReactElement {
     ),
   }));
 
-  const expandedIds = useMemo(() => {
+  const expandedIds = (() => {
     const all = new Set<number | string>(groupedClients.map((g) => g.client.id));
     for (const id of collapsedIds) all.delete(id);
     return all;
-  }, [groupedClients, collapsedIds]);
+  })();
 
   async function handleCreateClient() {
     const trimmedName = clientName.trim();

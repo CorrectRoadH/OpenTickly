@@ -1,4 +1,4 @@
-import { type ReactElement, useMemo } from "react";
+import { type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -72,7 +72,7 @@ export function ReportsDetailedView({
     startDate: dateRange.startDate,
   });
 
-  const filteredEntries = useMemo(() => {
+  const filteredEntries = (() => {
     if (!entriesQuery.data) return [];
     return (entriesQuery.data as GithubComTogglTogglApiInternalModelsTimeEntry[])
       .filter((entry) => (entry.duration ?? 0) >= 0)
@@ -82,12 +82,9 @@ export function ReportsDetailedView({
         const bStart = b.start ?? "";
         return bStart.localeCompare(aStart);
       });
-  }, [entriesQuery.data, filters, clientFilter, memberFilter]);
+  })();
 
-  const totalSeconds = useMemo(
-    () => filteredEntries.reduce((sum, entry) => sum + (entry.duration ?? 0), 0),
-    [filteredEntries],
-  );
+  const totalSeconds = filteredEntries.reduce((sum, entry) => sum + (entry.duration ?? 0), 0);
 
   if (entriesQuery.isPending) {
     return <ReportsSurfaceMessage message={t("loadingDetailedEntries")} />;

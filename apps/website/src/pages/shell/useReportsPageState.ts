@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import {
   type ReportsDateRange,
@@ -63,10 +63,7 @@ export function useReportsPageState(
   weekStartsOn: number,
   initialProjectIds?: number[],
 ): ReportsPageState {
-  const initialRange = useMemo(
-    () => getDateRangeForPeriod("this_week", timezone, weekStartsOn),
-    [timezone, weekStartsOn],
-  );
+  const initialRange = getDateRangeForPeriod("this_week", timezone, weekStartsOn);
 
   const [activeShortcut, setActiveShortcut] = useState<string | null>("this-week");
   const [dateRange, setDateRange] = useState<ReportsDateRange>(initialRange);
@@ -81,27 +78,27 @@ export function useReportsPageState(
   const [memberFilter, setMemberFilter] = useState<string[]>([]);
   const [clientFilter, setClientFilter] = useState<string[]>([]);
 
-  const goPrev = useCallback(() => {
+  const goPrev = () => {
     setDateRange((prev) => shiftWeekRange(prev, "prev"));
     setActiveShortcut(null);
-  }, []);
+  };
 
-  const goNext = useCallback(() => {
+  const goNext = () => {
     setDateRange((prev) => shiftWeekRange(prev, "next"));
     setActiveShortcut(null);
-  }, []);
+  };
 
-  const selectDateRange = useCallback((range: ReportsDateRange) => {
+  const selectDateRange = (range: ReportsDateRange) => {
     setDateRange(range);
     setActiveShortcut(null);
-  }, []);
+  };
 
-  const selectShortcutRange = useCallback((shortcutId: string, range: ReportsDateRange) => {
+  const selectShortcutRange = (shortcutId: string, range: ReportsDateRange) => {
     setDateRange(range);
     setActiveShortcut(shortcutId);
-  }, []);
+  };
 
-  const toggleRow = useCallback((name: string) => {
+  const toggleRow = (name: string) => {
     setExpandedRows((prev) => {
       const next = new Set(prev);
       if (next.has(name)) {
@@ -111,11 +108,11 @@ export function useReportsPageState(
       }
       return next;
     });
-  }, []);
+  };
 
-  const updateFilters = useCallback((patch: Partial<ReportsFilters>) => {
+  const updateFilters = (patch: Partial<ReportsFilters>) => {
     setFilters((prev) => ({ ...prev, ...patch }));
-  }, []);
+  };
 
   return {
     activeShortcut,

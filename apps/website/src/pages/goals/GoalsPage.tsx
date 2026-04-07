@@ -1,4 +1,4 @@
-import { type ReactElement, type ReactNode, useMemo, useState } from "react";
+import { type ReactElement, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   AppButton,
@@ -82,7 +82,7 @@ export function GoalsPage(): ReactElement {
   const updateGoalMutation = useUpdateGoalMutation(workspaceId);
   const deleteGoalMutation = useDeleteGoalMutation(workspaceId);
 
-  const goals = useMemo(() => goalsQuery.data ?? [], [goalsQuery.data]);
+  const goals = goalsQuery.data ?? [];
 
   const mutationPending =
     createGoalMutation.isPending || updateGoalMutation.isPending || deleteGoalMutation.isPending;

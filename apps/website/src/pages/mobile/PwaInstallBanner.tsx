@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { type ReactElement, useCallback, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { X } from "lucide-react";
 
 const DISMISSED_KEY = "pwa-install-banner-dismissed";
@@ -34,10 +34,10 @@ export function PwaInstallBanner(): ReactElement | null {
     setVisible(true);
   }, []);
 
-  const dismiss = useCallback(() => {
+  const dismiss = () => {
     setVisible(false);
     localStorage.setItem(DISMISSED_KEY, "1");
-  }, []);
+  };
 
   if (!visible || !platform) return null;
 
