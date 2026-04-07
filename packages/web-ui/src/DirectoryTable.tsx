@@ -64,37 +64,41 @@ export function DirectoryTable<T>({
 }: DirectoryTableProps<T>) {
   const gridTemplate = buildGridTemplate(columns, selectable, expandable);
 
+  const isEmpty = rows.length === 0 && !isLoading;
+
   return (
     <div data-testid={testId}>
-      {/* Header */}
-      <div
-        className="sticky top-0 z-10 grid h-9 items-center border-b border-[var(--track-border)] bg-[var(--track-surface-muted)] px-5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]"
-        style={{ gridTemplateColumns: gridTemplate }}
-      >
-        {selectable && (
-          <div className="flex items-center">
-            <AppCheckbox
-              aria-label="Select all"
-              checked={
-                selectedIds != null && selectedIds.size > 0 && selectedIds.size === rows.length
-              }
-              indeterminate={
-                selectedIds != null && selectedIds.size > 0 && selectedIds.size < rows.length
-              }
-              onChange={onToggleSelectAll}
-            />
-          </div>
-        )}
-        {expandable && <div />}
-        {columns.map((col) => (
-          <div className={col.align === "end" ? "text-end" : undefined} key={col.key}>
-            {col.label}
-          </div>
-        ))}
-      </div>
+      {/* Header – hidden when empty */}
+      {!isEmpty && (
+        <div
+          className="sticky top-0 z-10 grid h-9 items-center border-b border-[var(--track-border)] bg-[var(--track-surface-muted)] px-5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]"
+          style={{ gridTemplateColumns: gridTemplate }}
+        >
+          {selectable && (
+            <div className="flex items-center">
+              <AppCheckbox
+                aria-label="Select all"
+                checked={
+                  selectedIds != null && selectedIds.size > 0 && selectedIds.size === rows.length
+                }
+                indeterminate={
+                  selectedIds != null && selectedIds.size > 0 && selectedIds.size < rows.length
+                }
+                onChange={onToggleSelectAll}
+              />
+            </div>
+          )}
+          {expandable && <div />}
+          {columns.map((col) => (
+            <div className={col.align === "end" ? "text-end" : undefined} key={col.key}>
+              {col.label}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Rows */}
-      {rows.length === 0 && !isLoading ? (
+      {isEmpty ? (
         <div className="px-5 py-10 text-center text-[14px] text-[var(--track-text-muted)]">
           {emptyState ?? "No items found."}
         </div>

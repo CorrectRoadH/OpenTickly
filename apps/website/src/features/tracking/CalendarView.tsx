@@ -1,4 +1,12 @@
-import React, { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  type ReactElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { mix, transparentize } from "polished";
 import { Calendar, dateFnsLocalizer, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
@@ -123,22 +131,38 @@ const CalendarDayColumnWrapper = React.forwardRef<
     [ref],
   );
 
-  useEffect(() => {
+  const syncPosition = useCallback(() => {
+    const indicator = columnRef.current?.querySelector<HTMLElement>(".rbc-current-time-indicator");
+    if (indicator && playRef.current) {
+      playRef.current.style.top = indicator.style.top;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
     if (!isNow || !columnRef.current || !playRef.current) return;
 
-    function syncPosition() {
-      const indicator = columnRef.current?.querySelector<HTMLElement>(
-        ".rbc-current-time-indicator",
-      );
-      if (indicator && playRef.current) {
-        playRef.current.style.top = indicator.style.top;
-      }
+    const frame = requestAnimationFrame(syncPosition);
+    const interval = window.setInterval(syncPosition, 10_000);
+    const mutationObserver = new MutationObserver(syncPosition);
+    mutationObserver.observe(columnRef.current, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(syncPosition);
+      resizeObserver.observe(columnRef.current);
     }
 
-    syncPosition();
-    const interval = setInterval(syncPosition, 10_000);
-    return () => clearInterval(interval);
-  }, [isNow]);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearInterval(interval);
+      mutationObserver.disconnect();
+      resizeObserver?.disconnect();
+    };
+  }, [children, className, isNow, style, syncPosition]);
 
   return (
     <div className={className} ref={setRef} style={style}>

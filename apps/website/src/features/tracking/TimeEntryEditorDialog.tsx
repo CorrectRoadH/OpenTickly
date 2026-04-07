@@ -446,6 +446,19 @@ export function TimeEntryEditorDialog({
               onDescriptionChange(event.target.value)
             }
             onFocus={() => dispatch({ type: "SET_DESCRIPTION_SUGGESTIONS", open: true })}
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                !isSaving &&
+                !picker &&
+                !timeEditor &&
+                timePicker == null &&
+                !descriptionSuggestionsOpen
+              ) {
+                event.preventDefault();
+                void onSave();
+              }
+            }}
             placeholder="Add a description"
             value={description}
           />

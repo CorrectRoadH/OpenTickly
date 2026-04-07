@@ -1,6 +1,57 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fixtures/e2e-auth.ts";
+
+async function freezePageDateToWeekday(page: Page) {
+  const mondayAfternoonUtc = Date.UTC(2026, 3, 6, 15, 30, 0);
+  await page.addInitScript((fixedNow: number) => {
+    const RealDate = Date;
+
+    class MockDate extends RealDate {
+      constructor(...args: unknown[]) {
+        if (args.length === 0) {
+          super(fixedNow);
+          return;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        super(...(args as [any]));
+      }
+
+      static now() {
+        return fixedNow;
+      }
+    }
+
+    MockDate.parse = RealDate.parse;
+    MockDate.UTC = RealDate.UTC;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    window.Date = MockDate as any;
+  }, mondayAfternoonUtc);
+}
+
+async function expectIndicatorPlayButtonAligned(page: Page) {
+  const indicator = page.locator(".rbc-current-time-indicator").first();
+  const playButton = page.getByTestId("current-time-indicator-play");
+
+  await expect(indicator).toBeVisible();
+  await expect(playButton).toBeVisible();
+
+  const indicatorBox = await indicator.boundingBox();
+  const playButtonBox = await playButton.boundingBox();
+
+  expect(indicatorBox).not.toBeNull();
+  expect(playButtonBox).not.toBeNull();
+
+  if (!indicatorBox || !playButtonBox) {
+    return;
+  }
+
+  const indicatorCenterY = indicatorBox.y + indicatorBox.height / 2;
+  const playButtonCenterY = playButtonBox.y + playButtonBox.height / 2;
+
+  expect(Math.abs(playButtonCenterY - indicatorCenterY)).toBeLessThanOrEqual(2);
+}
 
 test.describe("Calendar event card continue button", () => {
   test("clicking the continue button on a stopped calendar entry starts a new timer with the same details", async ({
@@ -73,6 +124,8 @@ test.describe("Calendar current-time-indicator play button", () => {
   test("clicking the play button on the current time indicator starts a new timer", async ({
     page,
   }) => {
+    await freezePageDateToWeekday(page);
+
     const email = `cal-indicator-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -104,5 +157,33 @@ test.describe("Calendar current-time-indicator play button", () => {
 
     // Verify a timer is now running — the action button should show stop icon
     await expect(timerButton).toHaveAttribute("data-icon", "stop", { timeout: 10_000 });
+  });
+
+  test("the play button stays vertically aligned with the current-time indicator in 5 day view", async ({
+    page,
+  }) => {
+    await freezePageDateToWeekday(page);
+
+    const email = `cal-indicator-5day-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Calendar Indicator 5 Day User",
+      password,
+    });
+
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
+
+    await page.getByTestId("calendar-subview-select").click();
+    await page.getByRole("option", { name: "5 days view" }).click();
+
+    await expect(page.getByTestId("calendar-subview-select")).toContainText("5 days view");
+    await expectIndicatorPlayButtonAligned(page);
   });
 });
