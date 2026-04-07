@@ -271,6 +271,7 @@ type TimeEntrySearchView struct {
 	ProjectName  *string
 	ProjectColor *string
 	TagIDs       []int64
+	TagNames     []string
 	Billable     bool
 	Start        time.Time
 	Stop         *time.Time

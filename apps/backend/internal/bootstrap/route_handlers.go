@@ -1104,6 +1104,7 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 			ProjectName: entry.ProjectName,
 			ProjectColor: entry.ProjectColor,
 			TagIds:      int64SliceToIntSlice(entry.TagIDs),
+			Tags:        entry.TagNames,
 			Billable:    entry.Billable,
 			Start:       entry.Start.Format(time.RFC3339),
 			Duration:    entry.Duration,

@@ -1596,6 +1596,12 @@
               "type": "integer"
             }
           },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "billable": {
             "type": "boolean"
           },
@@ -1618,6 +1624,7 @@
           "project_name",
           "project_color",
           "tag_ids",
+          "tags",
           "billable",
           "start",
           "stop",

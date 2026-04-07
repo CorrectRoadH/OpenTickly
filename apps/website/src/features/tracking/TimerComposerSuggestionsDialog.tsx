@@ -67,7 +67,7 @@ export function TimerComposerSuggestionsDialog({
   const hasQuery = Boolean(query?.trim());
   const previousEntries = useMemo(() => {
     if (hasQuery && searchResults && searchResults.length > 0) {
-      return searchResults.map(searchItemToTimeEntry);
+      return buildPreviousEntries(searchResults.map(searchItemToTimeEntry));
     }
     return filterByQuery(buildPreviousEntries(timeEntries), query);
   }, [timeEntries, query, hasQuery, searchResults]);
@@ -416,6 +416,7 @@ function searchItemToTimeEntry(
     project_name: item.project_name,
     project_color: item.project_color,
     tag_ids: item.tag_ids,
+    tags: item.tags,
     billable: item.billable,
     start: item.start,
     stop: item.stop,

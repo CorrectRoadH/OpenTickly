@@ -295,6 +295,7 @@ export type TimeEntrySearchItem = {
   project_name: string;
   project_color: string;
   tag_ids: Array<number>;
+  tags: Array<string>;
   billable: boolean;
   start: string;
   stop: string;
