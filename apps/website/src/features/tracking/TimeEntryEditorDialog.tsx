@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { AppButton, AppInput, DropdownMenu, MenuItem, MenuLink } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import { ProjectPickerDropdown } from "./bulk-edit-pickers.tsx";
+import { ProjectPickerDropdown, type ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import { CalendarPanel } from "./CalendarPanel.tsx";
 import {
   type DurationFormat,
@@ -93,6 +93,7 @@ type TimeEntryEditorDialogProps = {
   onStopTimeChange: (time: Date) => void;
   onSuggestionEntrySelect?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onTagToggle: (tagId: number) => void;
+  onTaskSelect?: (projectId: number, taskId: number) => void;
   onWorkspaceSelect: (workspaceId: number) => void;
   primaryActionIcon: "play" | "stop";
   primaryActionLabel: string;
@@ -101,7 +102,10 @@ type TimeEntryEditorDialogProps = {
   saveError?: string | null;
   selectedProjectId?: number | null;
   selectedTagIds: number[];
+  selectedTaskId?: number | null;
+  selectedTaskName?: string | null;
   tags: TimeEntryEditorTag[];
+  tasks?: ProjectPickerTask[];
   timeofdayFormat: TimeFormat;
   timezone: string;
   workspaces: TimeEntryEditorWorkspace[];
@@ -137,6 +141,7 @@ export function TimeEntryEditorDialog({
   onStopTimeChange,
   onSuggestionEntrySelect,
   onTagToggle,
+  onTaskSelect,
   onWorkspaceSelect,
   primaryActionIcon,
   primaryActionLabel,
@@ -145,7 +150,9 @@ export function TimeEntryEditorDialog({
   saveError,
   selectedProjectId,
   selectedTagIds,
+  selectedTaskName,
   tags,
+  tasks,
   timeofdayFormat,
   timezone,
   workspaces,
@@ -508,7 +515,13 @@ export function TimeEntryEditorDialog({
               active={picker === "project"}
               ariaLabel="Select project"
               icon={<ProjectsIcon className="size-5 shrink-0" />}
-              label={selectedProject?.name}
+              label={
+                selectedProject
+                  ? selectedTaskName
+                    ? `${selectedProject.name} | ${selectedTaskName}`
+                    : selectedProject.name
+                  : undefined
+              }
               onClick={() => {
                 dispatch({ type: "SET_SEARCH", query: "" });
                 dispatch({ type: "SET_PICKER", picker: picker === "project" ? null : "project" });
@@ -548,11 +561,20 @@ export function TimeEntryEditorDialog({
                   onProjectSelect(projectId);
                   dispatch({ type: "SET_PICKER", picker: null });
                 }}
+                onTaskSelect={
+                  onTaskSelect
+                    ? (projectId, taskId) => {
+                        onTaskSelect(projectId, taskId);
+                        dispatch({ type: "SET_PICKER", picker: null });
+                      }
+                    : undefined
+                }
                 onWorkspaceSelect={(workspaceId) => {
                   onWorkspaceSelect(workspaceId);
                   dispatch({ type: "SET_PICKER", picker: null });
                 }}
                 projects={projects}
+                tasks={tasks}
                 workspaceName={currentWorkspaceName}
                 workspaces={workspaces}
               />

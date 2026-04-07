@@ -1,7 +1,9 @@
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useState } from "react";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { useSessionActions } from "../../shared/session/session-context.tsx";
+import { useTasksQuery } from "../../shared/query/web-shell.ts";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import type { DurationFormat, TimeFormat } from "./overview-data.ts";
 import { SplitTimeEntryDialog } from "./SplitTimeEntryDialog.tsx";
 import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
@@ -106,6 +108,20 @@ export function SelfContainedTimeEntryEditor({
   const { setCurrentWorkspaceId } = useSessionActions();
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
 
+  // Tasks for the project picker
+  const tasksQuery = useTasksQuery(currentWorkspaceId);
+  const pickerTasks: ProjectPickerTask[] = useMemo(
+    () =>
+      (tasksQuery.data?.data ?? [])
+        .filter((t) => t.id != null && t.name && t.project_id != null && t.active !== false)
+        .map((t) => ({ id: t.id!, name: t.name!, projectId: t.project_id! })),
+    [tasksQuery.data],
+  );
+  const selectedTaskName = useMemo(
+    () => pickerTasks.find((t) => t.id === editor.taskId)?.name ?? null,
+    [pickerTasks, editor.taskId],
+  );
+
   // Auto-open split dialog when triggered from context menu
   const pendingSplit = useTimerViewStore((s) => s.pendingSplit);
   useEffect(() => {
@@ -178,6 +194,10 @@ export function SelfContainedTimeEntryEditor({
         onStartTimeChange={editor.changeStartTime}
         onStopTimeChange={editor.changeStopTime}
         onSuggestionEntrySelect={editor.selectSuggestion}
+        onTaskSelect={(projectId, taskId) => {
+          editor.setProjectId(projectId);
+          editor.setTaskId(taskId);
+        }}
         onTagToggle={(tagId) => {
           editor.setTagIds((current) =>
             current.includes(tagId) ? current.filter((id) => id !== tagId) : [...current, tagId],
@@ -194,7 +214,9 @@ export function SelfContainedTimeEntryEditor({
         saveError={editor.error}
         selectedProjectId={editor.projectId}
         selectedTagIds={editor.tagIds}
+        selectedTaskName={selectedTaskName}
         tags={editor.tags}
+        tasks={pickerTasks}
         timeofdayFormat={timeofdayFormat}
         timezone={editor.timezone}
         workspaces={workspaces}

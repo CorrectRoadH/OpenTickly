@@ -68,6 +68,8 @@ export interface TimeEntryEditorState {
   setDescription: (value: string) => void;
   projectId: number | null;
   setProjectId: (id: number | null) => void;
+  taskId: number | null;
+  setTaskId: (id: number | null) => void;
   tagIds: number[];
   setTagIds: (ids: number[] | ((prev: number[]) => number[])) => void;
   error: string | null;
@@ -328,13 +330,13 @@ export function useTimeEntryEditor(
         description: description.trim(),
         projectId,
         tagIds,
-        taskId: entry.task_id ?? entry.tid ?? null,
+        taskId,
       });
       setError(null);
     } catch (err) {
       setError(resolveSingleTimerErrorMessage(err));
     }
-  }, [createWorkspaceFavoriteMutation, description, entry, projectId, tagIds]);
+  }, [createWorkspaceFavoriteMutation, description, entry, projectId, taskId, tagIds]);
 
   const split = useCallback(
     async (splitAtMs?: number) => {
@@ -392,6 +394,7 @@ export function useTimeEntryEditor(
       entry,
       description,
       projectId,
+      taskId,
       tagIds,
       createTimeEntryMutation,
       updateTimeEntryMutation,
@@ -493,7 +496,7 @@ export function useTimeEntryEditor(
         projectId,
         start: new Date().toISOString(),
         tagIds,
-        taskId: entry.task_id ?? entry.tid ?? null,
+        taskId,
       });
       onClose();
     } catch (err) {
@@ -503,6 +506,7 @@ export function useTimeEntryEditor(
     entry,
     description,
     projectId,
+    taskId,
     tagIds,
     startTimeEntryMutation,
     stopTimeEntryMutation,
@@ -514,6 +518,8 @@ export function useTimeEntryEditor(
     setDescription,
     projectId,
     setProjectId,
+    taskId,
+    setTaskId,
     tagIds,
     setTagIds,
     error,
