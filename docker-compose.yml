@@ -2,7 +2,7 @@ name: opentoggl-self-hosted
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     environment:
       POSTGRES_DB: ${OPENTOGGL_POSTGRES_DB:-opentoggl}
       POSTGRES_USER: ${OPENTOGGL_POSTGRES_USER:-postgres}
@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: redis:8-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     networks: [internal]
     ports:
