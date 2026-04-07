@@ -174,9 +174,13 @@ export function TimerComposerBar({
             composer.setDraftDescription(event.target.value);
           }}
           onKeyDown={(event) => {
-            if (event.key !== "Enter" || composer.runningEntry?.id == null) return;
+            if (event.key !== "Enter") return;
             event.preventDefault();
-            event.currentTarget.blur();
+            if (composer.runningEntry?.id != null) {
+              event.currentTarget.blur();
+            } else {
+              void composer.handleTimerAction();
+            }
           }}
           onFocus={composer.handleIdleDescriptionFocus}
           placeholder={t("whatAreYouWorkingOn")}

@@ -117,7 +117,7 @@ export function ProjectEditorDialog({
             <div className="relative flex items-center gap-2">
               <div className="relative">
                 <button
-                  aria-label={t("projectName")}
+                  aria-label={t("projectColor")}
                   className="flex size-11 items-center justify-center rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)]"
                   onClick={() => setColorPickerOpen((c) => !c)}
                   type="button"

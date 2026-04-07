@@ -49,6 +49,7 @@
   "nonTemplate": "Non-template",
   "filters": "Filters:",
   "projectName": "Project name",
+  "projectColor": "Project color",
   "untitledProject": "Untitled project",
   "private": "Private",
   "everyone": "Everyone",

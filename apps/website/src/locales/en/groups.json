@@ -12,7 +12,7 @@
   "couldNotDeleteTeam": "Could not delete team",
   "confirmDeleteTeam": "Remove \"{{name}}\"?",
   "cancel": "Cancel",
-  "save": "Save",
+  "save": "Save team",
   "loadingGroups": "Loading groups…",
   "unableToLoadGroups": "Unable to load groups. Refresh to try again.",
   "noTeamsYet": "No teams in this organization yet.",
