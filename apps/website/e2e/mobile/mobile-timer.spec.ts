@@ -610,12 +610,13 @@ test.describe("Empty State for New User", () => {
       }
     });
 
+    // Wait for the initial time_entries fetch to complete before checking errors
+    const initialFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await page.goto(new URL("/m/timer", page.url()).toString());
-
-    // Wait for page to settle
     await expect(page.getByPlaceholder("What are you working on?")).toBeVisible();
-    // Give time for API calls to complete
-    await page.waitForTimeout(2000);
+    await initialFetch;
 
     expect(apiErrors).toEqual([]);
   });

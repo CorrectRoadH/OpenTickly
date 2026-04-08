@@ -94,9 +94,13 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     // In day mode, the aria-label for the previous/next buttons uses the
     // translation key "nextDay" — but the button text may vary. Use the
     // chevron button that comes after the date label.
+    // Wait for the data refetch triggered by date navigation
     const nextDayButton = page.getByRole("button", { name: /next\s*day/i });
+    const dayNavFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await nextDayButton.click();
-    await page.waitForTimeout(1_000);
+    await dayNavFetch;
 
     // After navigating to tomorrow:
     // - Tomorrow's entry SHOULD be visible
@@ -137,10 +141,13 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       .filter({ hasText: todayDesc });
     await expect(todayEntry).toBeVisible({ timeout: 10_000 });
 
-    // Switch to 5-day view
+    // Switch to 5-day view; wait for the data refetch after view change
+    const fiveDayFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await page.getByTestId("calendar-subview-select").click();
     await page.getByRole("option", { name: "5 days view" }).click();
-    await page.waitForTimeout(500);
+    await fiveDayFetch;
 
     // In 5-day view (work week), the calendar should show Mon–Fri.
     // Both today and tomorrow entries should be visible if both fall
@@ -163,10 +170,13 @@ test.describe("Calendar: selected date matches displayed entries", () => {
       await expect(todayEntry).toBeVisible({ timeout: 5_000 });
     }
 
-    // Navigate forward one week
+    // Navigate forward one week; wait for the data refetch
     const nextWeekButton = page.getByRole("button", { name: /next\s*week/i });
+    const weekNavFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await nextWeekButton.click();
-    await page.waitForTimeout(1_000);
+    await weekNavFetch;
 
     // After navigating forward one week, neither today's nor tomorrow's
     // entry should be visible (they're in the previous week)
@@ -203,9 +213,13 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     const calendarView = page.getByTestId("timer-calendar-view");
     await expect(calendarView).toBeVisible({ timeout: 10_000 });
 
+    // Wait for the data refetch after switching to day view
+    const dayViewFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await page.getByTestId("calendar-subview-select").click();
     await page.getByRole("option", { name: "Day view" }).click();
-    await page.waitForTimeout(500);
+    await dayViewFetch;
 
     // In day view, there should be exactly one day-slot column header.
     // Verify it shows today's date.
@@ -223,10 +237,13 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     await expect(dayHeader).toBeAttached({ timeout: 5_000 });
     await expect(dayHeader).toContainText(String(todayDayNum));
 
-    // Navigate forward one day
+    // Navigate forward one day; wait for the data refetch
     const nextDayButton = page.getByRole("button", { name: /next\s*day/i });
+    const nextDayFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await nextDayButton.click();
-    await page.waitForTimeout(1_000);
+    await nextDayFetch;
 
     // The header should now show tomorrow's date
     const tomorrow = new Date(today);

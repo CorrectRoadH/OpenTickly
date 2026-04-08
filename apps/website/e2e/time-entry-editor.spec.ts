@@ -144,9 +144,9 @@ test.describe("Story: edit a stopped time entry", () => {
     await dialog.getByRole("button", { name: "Edit start time" }).click();
     const timeInput = dialog.getByLabel("Edit time");
     await expect(timeInput).toBeVisible();
-    // Use triple-click + type to ensure React onChange fires and updates draft state
-    await timeInput.click({ clickCount: 3 });
-    await timeInput.type("09:28");
+    // fill() sets the value atomically and fires a single change event,
+    // avoiding the per-keystroke race between type() and React controlled state.
+    await timeInput.fill("09:28");
     await timeInput.press("Enter");
 
     await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");

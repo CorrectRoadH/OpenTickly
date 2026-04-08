@@ -817,15 +817,15 @@ test.describe("Timer page family mainline", () => {
 
     const description = "Timer to be stopped";
 
-    // Start a timer
+    // Start a timer and wait for the POST to complete before proceeding
     await page.goto(new URL("/timer", page.url()).toString());
     await page.getByLabel("Time entry description").fill(description);
+    const startResponse = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "POST",
+    );
     await page.getByRole("button", { name: "Start timer" }).click();
+    await startResponse;
 
-    // Wait a moment for the timer to accumulate some duration
-    await page.waitForTimeout(2000);
-
-    // Verify running state
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
 
     // Stop the timer
@@ -1359,11 +1359,12 @@ test.describe("Cross-workspace running timer header", () => {
     await descriptionInput.clear();
     await descriptionInput.fill("Edited from workspace B");
 
-    // Blur to commit the edit
+    // Blur to commit the edit; wait for the PUT to complete before verifying
+    const editResponse = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "PUT",
+    );
     await descriptionInput.blur();
-
-    // Wait a moment for the edit to be sent
-    await page.waitForTimeout(500);
+    await editResponse;
 
     // Verify the edit was persisted by checking the current-timer API
     const afterEdit = await pollCurrentRunningEntry(page);
@@ -1663,11 +1664,14 @@ test.describe("Cross-workspace running timer header", () => {
     expect(runningEntryAfter.body).not.toBeNull();
     expect(runningEntryAfter.body.id).toBe(runningEntryId);
 
-    // VAL-CROSS-001: History re-scopes to workspace B - workspace A entry should be absent
-    // Explicitly switch to list view to test history re-scoping
+    // VAL-CROSS-001: History re-scopes to workspace B - workspace A entry should be absent.
+    // Wait for the list data fetch after switching views.
+    const listFetchB = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await page.getByRole("radio", { name: "List" }).click();
     await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
-    await page.waitForTimeout(500);
+    await listFetchB;
     const listViewContainerB = page.getByTestId("timer-list-view");
     await expect(listViewContainerB).toBeVisible();
     // Workspace A stopped entry should NOT be visible in workspace B's history
@@ -1816,10 +1820,13 @@ test.describe("Cross-workspace running timer header", () => {
     // (it was started in workspace A, so it should not leak into workspace B history)
     await expect(calendarScrollArea.locator(`text=${runningDescription}`)).not.toBeVisible();
 
-    // List view
+    // List view — wait for the data fetch after switching views
+    const listFetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await page.getByRole("radio", { name: "List" }).click();
     await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
-    await page.waitForTimeout(500);
+    await listFetch;
     const listViewContainer = page.getByTestId("timer-list-view");
     await expect(listViewContainer).toBeVisible();
     // The stopped running timer description should NOT appear in workspace B's list
@@ -1902,7 +1909,8 @@ test.describe("Date range picker in list view", () => {
     await expect(listView.locator("text=Today entry")).toBeVisible();
     await expect(listView.locator("text=Old entry one week ago")).toBeVisible();
 
-    // Open the date picker and select "Today"
+    // Open the date picker and select "Today".
+    // Wait for the refetch so we assert against settled data, not a transient empty state.
     const datePickerTrigger = page
       .getByTestId("tracking-timer-page")
       .locator("button", { hasText: "All dates" });
@@ -1910,7 +1918,11 @@ test.describe("Date range picker in list view", () => {
 
     const datePickerDialog = page.getByTestId("week-range-dialog");
     await expect(datePickerDialog).toBeVisible();
+    const filterRefetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await datePickerDialog.getByRole("button", { name: "Today" }).click();
+    await filterRefetch;
 
     // Should still be in list view (NOT calendar)
     await expect(page.getByRole("radio", { name: "List" })).toHaveAttribute("aria-checked", "true");
@@ -1920,14 +1932,18 @@ test.describe("Date range picker in list view", () => {
     await expect(listView.locator("text=Today entry")).toBeVisible();
     await expect(listView.locator("text=Old entry one week ago")).not.toBeVisible();
 
-    // Now select "All dates" to go back to unfiltered
-    // The trigger should now show the day label, not "All dates"
+    // Now select "All dates" to go back to unfiltered.
+    // Again wait for the refetch before asserting list contents.
     const updatedTrigger = page
       .getByTestId("tracking-timer-page")
       .locator('[aria-haspopup="dialog"]');
     await updatedTrigger.click();
     await expect(datePickerDialog).toBeVisible();
+    const unfilterRefetch = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
     await datePickerDialog.getByRole("button", { name: "All dates" }).click();
+    await unfilterRefetch;
 
     // Both entries should be visible again
     await expect(listView).toBeVisible();

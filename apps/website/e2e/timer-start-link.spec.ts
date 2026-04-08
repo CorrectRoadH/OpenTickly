@@ -105,9 +105,9 @@ test.describe("Timer start link", () => {
     await page.goto(`/timer?description=${encodeURIComponent(desc)}`);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
-    // Wait a moment to make sure no new timer is started
-    await page.waitForTimeout(2000);
-
+    // The stop button should still show the original timer (not a new one).
+    // Verify via API that the original entry is still the current running entry.
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     const { body: entry } = await pollCurrentRunningEntry(page);
     expect(entry).not.toBeNull();
     expect(entry.description).toBe("already-running");

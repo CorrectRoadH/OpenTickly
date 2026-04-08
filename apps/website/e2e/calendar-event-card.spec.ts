@@ -53,9 +53,13 @@ test.describe("Story: calendar event card shows project without client", () => {
 
     await expect(projectDropdown).not.toBeVisible();
 
+    // Wait for the start mutation to complete before stopping
+    const startResponse = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "POST",
+    );
     await page.getByRole("button", { name: "Start timer" }).click();
-
-    await page.waitForTimeout(2000);
+    await startResponse;
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
     await page.getByRole("button", { name: "Stop timer" }).click();
 
     await expect(page.getByRole("button", { name: "Start timer" })).toBeVisible();

@@ -117,10 +117,10 @@ test.describe("Split time entry", () => {
       .filter({ hasText: description });
     await expect(entryLocator).toBeVisible({ timeout: 10_000 });
 
-    // Wait for calendar to stabilize before interacting — re-renders can detach the node
+    // Scroll to top and wait for the entry to be stable before interacting
     await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    await page.waitForTimeout(500);
     await entryLocator.scrollIntoViewIfNeeded();
+    await expect(entryLocator).toBeVisible();
     await entryLocator.click({ position: { x: 10, y: 10 } });
 
     const moreActionsButton = page.getByRole("button", { name: "Entry actions" });
