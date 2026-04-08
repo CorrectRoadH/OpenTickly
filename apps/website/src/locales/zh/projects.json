@@ -106,5 +106,21 @@
   "viewInReports": "在报告中查看",
   "teamUpdated": "已更新 {{name}} 的团队访问权限",
   "teamUpdatedToGroup": "已将 {{name}} 设为对群组 {{group}} 可见",
-  "teamUpdateFailed": "更新团队访问权限失败"
+  "teamUpdateFailed": "更新团队访问权限失败",
+  "privacy": "隐私",
+  "privacyPublic": "公开，对所有项目成员可见",
+  "privacyPrivate": "私有，仅自己可见",
+  "advancedOptions": "高级选项",
+  "searchOrCreateClient": "搜索或创建客户",
+  "selectOrCreateClient": "选择或创建客户",
+  "createClientName": "创建客户「{{name}}」",
+  "clearClient": "清除客户",
+  "startDate": "开始日期",
+  "endDate": "结束日期",
+  "noEndDate": "无结束日期",
+  "timeEstimate": "时间估算",
+  "estimatedHours": "预估小时数",
+  "hours": "小时",
+  "fixedFee": "固定费用",
+  "fixedFeeAmount": "固定费用金额"
 }

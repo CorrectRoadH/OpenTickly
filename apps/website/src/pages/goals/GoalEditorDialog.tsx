@@ -137,6 +137,21 @@ export function GoalEditorDialog({
 
   return (
     <ModalDialog
+      footer={
+        <>
+          <AppButton onClick={onClose} type="button">
+            {t("cancel")}
+          </AppButton>
+          <AppButton
+            data-testid="goal-submit-button"
+            disabled={!name.trim() || isPending}
+            onClick={handleSubmit}
+            type="button"
+          >
+            {isEdit ? t("editGoal") : t("createGoal")}
+          </AppButton>
+        </>
+      }
       onClose={onClose}
       testId="goal-editor-dialog"
       title={isEdit ? t("editGoal") : t("createAGoal")}
@@ -304,20 +319,6 @@ export function GoalEditorDialog({
           Note: you cannot change the projects, tasks, tags, billable or recurrence period of a
           created goal.
         </p>
-      </div>
-
-      <div className="mt-5 flex items-center justify-end gap-3">
-        <AppButton onClick={onClose} type="button">
-          {t("cancel")}
-        </AppButton>
-        <AppButton
-          data-testid="goal-submit-button"
-          disabled={!name.trim() || isPending}
-          onClick={handleSubmit}
-          type="button"
-        >
-          {isEdit ? t("editGoal") : t("createGoal")}
-        </AppButton>
       </div>
     </ModalDialog>
   );

@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
@@ -28,7 +28,6 @@ import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/a
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useAddProjectGroupMutation,
-  useAddProjectMemberMutation,
   useArchiveProjectMutation,
   useClientsQuery,
   useCreateClientMutation,
@@ -38,7 +37,6 @@ import {
   useGroupsQuery,
   usePinProjectMutation,
   useProjectGroupsQuery,
-  useProjectMembersQuery,
   useProjectsQuery,
   useRestoreProjectMutation,
   useUnpinProjectMutation,
@@ -116,8 +114,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     recurring: projectRecurring,
     estimatedHours: projectEstimatedHours,
     fixedFee: projectFixedFee,
-    memberRole,
-    selectedMemberIds,
     error: projectEditorError,
   } = form;
   const {
@@ -141,7 +137,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const restoreProjectMutation = useRestoreProjectMutation(workspaceId);
   const pinProjectMutation = usePinProjectMutation(workspaceId);
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
-  const addProjectMemberMutation = useAddProjectMemberMutation(workspaceId);
   const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
   const groupsQuery = useGroupsQuery(workspaceId);
   const projectGroupsQuery = useProjectGroupsQuery(workspaceId);
@@ -149,7 +144,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const deleteProjectGroupMutation = useDeleteProjectGroupMutation(workspaceId);
   const clientsQuery = useClientsQuery(workspaceId);
   const createClientMutation = useCreateClientMutation(workspaceId);
-  const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
   // Fetch all project-user mappings for member filtering
   const projectUsersQuery = useQuery({
     queryKey: ["project-users-all", workspaceId],
@@ -222,13 +216,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       id: member.id as number,
       name: member.fullname?.trim() || member.email?.trim() || `User ${member.id}`,
     }));
-  const existingProjectMemberIds = Array.from(
-    new Set(
-      (projectMembersQuery.data ?? [])
-        .map((member) => member.user_id)
-        .filter((memberId): memberId is number => typeof memberId === "number"),
-    ),
-  );
   const mutationPending =
     createProjectMutation.isPending ||
     updateProjectMutation.isPending ||
@@ -236,16 +223,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     restoreProjectMutation.isPending ||
     pinProjectMutation.isPending ||
     unpinProjectMutation.isPending ||
-    addProjectMemberMutation.isPending ||
     deleteProjectMutation.isPending ||
     createClientMutation.isPending;
-
-  useEffect(() => {
-    if (editorMode !== "edit" || !editorProject?.id) {
-      return;
-    }
-    formDispatch({ type: "SET_MEMBER_IDS", ids: existingProjectMemberIds });
-  }, [editorMode, editorProject?.id, existingProjectMemberIds, formDispatch]);
 
   async function navigateToStatus(nextStatus: ProjectStatusFilter) {
     await navigate({
@@ -287,26 +266,13 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         startDate: projectStartDate || undefined,
         template: projectTemplate,
       };
-      const project =
-        editorMode === "edit" && editorProject?.id != null
-          ? await updateProjectMutation.mutateAsync({
-              ...sharedFields,
-              projectId: editorProject.id,
-            })
-          : await createProjectMutation.mutateAsync(sharedFields);
-
-      const projectId = project.id ?? editorProject?.id;
-      if (projectId != null) {
-        const pendingMemberIds = selectedMemberIds.filter(
-          (memberId) => !existingProjectMemberIds.includes(memberId),
-        );
-        for (const memberId of pendingMemberIds) {
-          await addProjectMemberMutation.mutateAsync({
-            isManager: memberRole === "manager",
-            projectId,
-            userId: memberId,
-          });
-        }
+      if (editorMode === "edit" && editorProject?.id != null) {
+        await updateProjectMutation.mutateAsync({
+          ...sharedFields,
+          projectId: editorProject.id,
+        });
+      } else {
+        await createProjectMutation.mutateAsync(sharedFields);
       }
 
       closeEditor();
@@ -713,8 +679,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           fixedFee={projectFixedFee}
           isPending={mutationPending}
           isPrivate={projectPrivate}
-          memberRole={memberRole}
-          members={workspaceMembers}
           name={projectName}
           onBillableChange={(v) => formDispatch({ type: "SET_BILLABLE", value: v })}
           onClientChange={(v) => formDispatch({ type: "SET_CLIENT_ID", value: v })}
@@ -730,7 +694,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onEndDateChange={(v) => formDispatch({ type: "SET_END_DATE", value: v })}
           onEstimatedHoursChange={(v) => formDispatch({ type: "SET_ESTIMATED_HOURS", value: v })}
           onFixedFeeChange={(v) => formDispatch({ type: "SET_FIXED_FEE", value: v })}
-          onMemberRoleChange={(v) => formDispatch({ type: "SET_MEMBER_ROLE", value: v })}
           onNameChange={(value) => {
             formDispatch({ type: "SET_NAME", value });
             formDispatch({ type: "SET_ERROR", error: null });
@@ -742,16 +705,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             void handleSubmitProject();
           }}
           onTemplateChange={(v) => formDispatch({ type: "SET_TEMPLATE", value: v })}
-          onToggleMember={(memberId) =>
-            formDispatch({
-              type: "SET_MEMBER_IDS",
-              ids: selectedMemberIds.includes(memberId)
-                ? selectedMemberIds.filter((id) => id !== memberId)
-                : [...selectedMemberIds, memberId],
-            })
-          }
           recurring={projectRecurring}
-          selectedMemberIds={selectedMemberIds}
           startDate={projectStartDate}
           submitLabel={editorMode === "edit" ? t("save") : t("createProject")}
           template={projectTemplate}

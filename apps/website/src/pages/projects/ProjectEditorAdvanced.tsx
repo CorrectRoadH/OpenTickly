@@ -1,9 +1,8 @@
-import { type ChangeEvent, type ReactElement, useState } from "react";
+import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
-import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
-import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
-import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
+import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 
 type ClientOption = {
   id: number;
@@ -14,13 +13,11 @@ type ProjectEditorAdvancedProps = {
   billable: boolean;
   clientId: number | null;
   clients: ClientOption[];
-  color: string;
   endDate: string;
   estimatedHours: number;
   fixedFee: number;
   onBillableChange: (value: boolean) => void;
   onClientChange: (clientId: number | null) => void;
-  onColorChange: (value: string) => void;
   onCreateClient: (name: string) => void;
   onEndDateChange: (value: string) => void;
   onEstimatedHoursChange: (value: number) => void;
@@ -65,13 +62,11 @@ export function ProjectEditorAdvanced({
   billable,
   clientId,
   clients,
-  color,
   endDate,
   estimatedHours,
   fixedFee,
   onBillableChange,
   onClientChange,
-  onColorChange,
   onCreateClient,
   onEndDateChange,
   onEstimatedHoursChange,
@@ -83,9 +78,17 @@ export function ProjectEditorAdvanced({
   startDate,
   template,
 }: ProjectEditorAdvancedProps): ReactElement {
-  const [clientQuery, setClientQuery] = useState("");
-  const matchClient = (c: ClientOption, q: string) => c.name.toLowerCase().includes(q);
-  const filteredClients = useFilteredList(clients, clientQuery, matchClient);
+  const { t } = useTranslation("projects");
+  const [clientPickerOpen, setClientPickerOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
+
+  const selectedClient = clientId ? clients.find((c) => c.id === clientId) : null;
+
+  const filteredClients = (() => {
+    const query = clientSearch.trim().toLowerCase();
+    if (!query) return clients;
+    return clients.filter((c) => c.name.toLowerCase().includes(query));
+  })();
 
   const showEstimatedInput = estimatedHours > 0;
   const showFixedFeeInput = fixedFee > 0;
@@ -95,86 +98,100 @@ export function ProjectEditorAdvanced({
       {/* Client */}
       <div>
         <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-          Client
+          {t("client")}
         </p>
         <div className="relative">
-          <input
-            aria-label="Search or create client"
-            className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              setClientQuery(event.target.value);
-              if (!event.target.value.trim()) {
-                onClientChange(null);
+          <button
+            aria-label={t("selectOrCreateClient")}
+            className="flex h-11 w-full items-center rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[14px] text-white"
+            onClick={() => setClientPickerOpen((prev) => !prev)}
+            type="button"
+          >
+            <span
+              className={
+                selectedClient ? "text-white" : "text-[var(--track-control-placeholder-muted)]"
               }
-            }}
-            placeholder="Select or create a client"
-            value={
-              clientQuery || (clientId ? (clients.find((c) => c.id === clientId)?.name ?? "") : "")
-            }
-          />
-          {clientQuery.trim() ? (
-            <div className="absolute left-0 top-[calc(100%+4px)] z-10 max-h-[160px] w-full overflow-y-auto rounded-[10px] border border-[var(--track-overlay-border-strong)] bg-[var(--track-overlay-surface)] shadow-[0_12px_28px_var(--track-shadow-overlay)]">
+            >
+              {selectedClient?.name ?? t("selectOrCreateClient")}
+            </span>
+          </button>
+          {clientPickerOpen ? (
+            <PickerDropdown
+              search={{
+                onChange: setClientSearch,
+                placeholder: t("searchOrCreateClient"),
+                value: clientSearch,
+              }}
+              testId="client-picker"
+              footer={
+                clientSearch.trim() && filteredClients.length === 0 ? (
+                  <button
+                    className="flex items-center gap-3 text-[12px] font-medium text-[var(--track-overlay-text-accent)]"
+                    onClick={() => {
+                      onCreateClient(clientSearch.trim());
+                      setClientSearch("");
+                      setClientPickerOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span className="text-[18px] leading-none">+</span>
+                    <span>{t("createClientName", { name: clientSearch.trim() })}</span>
+                  </button>
+                ) : undefined
+              }
+            >
+              {/* No client option */}
+              <button
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
+                onClick={() => {
+                  onClientChange(null);
+                  setClientSearch("");
+                  setClientPickerOpen(false);
+                }}
+                type="button"
+              >
+                <span className="text-[12px] font-medium text-[var(--track-overlay-text)]">
+                  {t("clearClient")}
+                </span>
+              </button>
               {filteredClients.map((c) => (
                 <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[12px] text-white hover:bg-[var(--track-tooltip-surface)]"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-white/4"
                   key={c.id}
                   onClick={() => {
                     onClientChange(c.id);
-                    setClientQuery("");
+                    setClientSearch("");
+                    setClientPickerOpen(false);
                   }}
                   type="button"
                 >
-                  {c.name}
+                  <span className="truncate text-[12px] font-medium text-white">{c.name}</span>
                 </button>
               ))}
-              {filteredClients.length === 0 ? (
-                <button
-                  className="flex w-full items-center px-3 py-2 text-left text-[12px] text-[var(--track-accent-text)] hover:bg-[var(--track-tooltip-surface)]"
-                  onClick={() => {
-                    onCreateClient(clientQuery.trim());
-                    setClientQuery("");
-                  }}
-                  type="button"
-                >
-                  Create client "{clientQuery.trim()}"
-                </button>
-              ) : null}
-            </div>
+            </PickerDropdown>
           ) : null}
         </div>
-        {clientId ? (
-          <button
-            className="mt-1 text-[12px] text-[var(--track-text-muted)] hover:text-white"
-            onClick={() => {
-              onClientChange(null);
-              setClientQuery("");
-            }}
-            type="button"
-          >
-            Clear client
-          </button>
-        ) : null}
       </div>
 
       {/* Timeframe */}
       <div>
         <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-          Timeframe
+          {t("timeframe")}
         </p>
         <div className="flex items-center gap-2">
           <DatePickerButton
-            ariaLabel="Start date"
+            ariaLabel={t("startDate")}
             className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
             onChange={onStartDateChange}
-            placeholder="Start date"
+            placeholder={t("startDate")}
             value={startDate}
           />
           <span className="text-[12px] text-[var(--track-text-muted)]">-</span>
           <DatePickerButton
-            ariaLabel="End date"
+            ariaLabel={t("endDate")}
             className="h-9 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-left text-[12px] text-white"
             onChange={onEndDateChange}
-            placeholder="No end date"
+            placeholder={t("noEndDate")}
             value={endDate}
           />
         </div>
@@ -182,16 +199,16 @@ export function ProjectEditorAdvanced({
 
       {/* Recurring */}
       <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
-        <span className="text-[14px] text-white">Recurring</span>
-        <ToggleSwitch label="Recurring" onChange={onRecurringChange} value={recurring} />
+        <span className="text-[14px] text-white">{t("recurring")}</span>
+        <ToggleSwitch label={t("recurring")} onChange={onRecurringChange} value={recurring} />
       </div>
 
       {/* Time estimate */}
       <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] text-white">Time estimate</span>
+          <span className="text-[14px] text-white">{t("timeEstimate")}</span>
           <ToggleSwitch
-            label="Time estimate"
+            label={t("timeEstimate")}
             onChange={(on) => {
               if (on && estimatedHours === 0) onEstimatedHoursChange(1);
               if (!on) onEstimatedHoursChange(0);
@@ -202,30 +219,30 @@ export function ProjectEditorAdvanced({
         {showEstimatedInput ? (
           <div className="mt-3 flex items-center gap-2">
             <input
-              aria-label="Estimated hours"
+              aria-label={t("estimatedHours")}
               className="h-9 w-24 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onEstimatedHoursChange(Number(event.target.value) || 0)}
               type="number"
               value={estimatedHours || ""}
             />
-            <span className="text-[12px] text-[var(--track-text-muted)]">hours</span>
+            <span className="text-[12px] text-[var(--track-text-muted)]">{t("hours")}</span>
           </div>
         ) : null}
       </div>
 
       {/* Billable */}
       <div className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
-        <span className="text-[14px] text-white">Billable</span>
-        <ToggleSwitch label="Billable" onChange={onBillableChange} value={billable} />
+        <span className="text-[14px] text-white">{t("billable")}</span>
+        <ToggleSwitch label={t("billable")} onChange={onBillableChange} value={billable} />
       </div>
 
       {/* Fixed fee */}
       <div className="rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-[14px] text-white">Fixed fee</span>
+          <span className="text-[14px] text-white">{t("fixedFee")}</span>
           <ToggleSwitch
-            label="Fixed fee"
+            label={t("fixedFee")}
             onChange={(on) => {
               if (on && fixedFee === 0) onFixedFeeChange(1);
               if (!on) onFixedFeeChange(0);
@@ -236,7 +253,7 @@ export function ProjectEditorAdvanced({
         {showFixedFeeInput ? (
           <div className="mt-3 flex items-center gap-2">
             <input
-              aria-label="Fixed fee amount"
+              aria-label={t("fixedFeeAmount")}
               className="h-9 w-28 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
               min={0}
               onChange={(event) => onFixedFeeChange(Number(event.target.value) || 0)}
@@ -249,23 +266,11 @@ export function ProjectEditorAdvanced({
         ) : null}
       </div>
 
-      {/* Color */}
-      <div>
-        <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-          Color
-        </p>
-        <ColorSwatchPicker
-          colors={TRACK_COLOR_SWATCHES}
-          onSelect={onColorChange}
-          selected={color}
-        />
-      </div>
-
       {/* Template */}
       <label className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
-        <span className="text-[14px] text-white">Use as template</span>
+        <span className="text-[14px] text-white">{t("useAsTemplate")}</span>
         <input
-          aria-label="Use as template"
+          aria-label={t("useAsTemplate")}
           checked={template}
           className="size-4"
           onChange={(event) => onTemplateChange(event.target.checked)}

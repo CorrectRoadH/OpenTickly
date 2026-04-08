@@ -5,14 +5,6 @@ import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
 import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { ProjectEditorAdvanced } from "./ProjectEditorAdvanced.tsx";
-import { ProjectEditorMembers } from "./ProjectEditorMembers.tsx";
-
-export type ProjectEditorMember = {
-  email?: string;
-  id: number;
-  name: string;
-};
-
 type ProjectEditorDialogProps = {
   billable: boolean;
   clientId: number | null;
@@ -24,8 +16,6 @@ type ProjectEditorDialogProps = {
   fixedFee: number;
   isPending?: boolean;
   isPrivate: boolean;
-  memberRole: "manager" | "regular";
-  members: ProjectEditorMember[];
   name: string;
   onBillableChange: (value: boolean) => void;
   onClientChange: (clientId: number | null) => void;
@@ -35,16 +25,13 @@ type ProjectEditorDialogProps = {
   onEndDateChange: (value: string) => void;
   onEstimatedHoursChange: (value: number) => void;
   onFixedFeeChange: (value: number) => void;
-  onMemberRoleChange: (value: "manager" | "regular") => void;
   onNameChange: (value: string) => void;
   onPrivacyChange: (value: boolean) => void;
   onRecurringChange: (value: boolean) => void;
   onStartDateChange: (value: string) => void;
   onSubmit: () => void;
   onTemplateChange: (value: boolean) => void;
-  onToggleMember: (memberId: number) => void;
   recurring: boolean;
-  selectedMemberIds: number[];
   startDate: string;
   submitLabel: string;
   template: boolean;
@@ -62,8 +49,6 @@ export function ProjectEditorDialog({
   fixedFee,
   isPending = false,
   isPrivate,
-  memberRole,
-  members,
   name,
   onBillableChange,
   onClientChange,
@@ -73,16 +58,13 @@ export function ProjectEditorDialog({
   onEndDateChange,
   onEstimatedHoursChange,
   onFixedFeeChange,
-  onMemberRoleChange,
   onNameChange,
   onPrivacyChange,
   onRecurringChange,
   onStartDateChange,
   onSubmit,
   onTemplateChange,
-  onToggleMember,
   recurring,
-  selectedMemberIds,
   startDate,
   submitLabel,
   template,
@@ -101,13 +83,32 @@ export function ProjectEditorDialog({
 
   return (
     <ModalDialog
+      footer={
+        <>
+          <button
+            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            onClick={onClose}
+            type="button"
+          >
+            {t("cancel")}
+          </button>
+          <button
+            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            disabled={isPending || !trimmedName}
+            form="project-editor-form"
+            type="submit"
+          >
+            {submitLabel}
+          </button>
+        </>
+      }
       onClose={onClose}
       testId="project-editor-dialog"
       title={title}
       titleId="project-editor-title"
       width="max-w-[620px]"
     >
-      <form onSubmit={handleSubmit}>
+      <form id="project-editor-form" onSubmit={handleSubmit}>
         <div className="mt-1 space-y-3">
           {/* Project name + color picker */}
           <div>
@@ -164,14 +165,14 @@ export function ProjectEditorDialog({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                  Privacy
+                  {t("privacy")}
                 </p>
                 <p className="mt-1 text-[14px] text-white">
-                  Private, visible only to project members
+                  {isPrivate ? t("privacyPrivate") : t("privacyPublic")}
                 </p>
               </div>
               <button
-                aria-label="Private, visible only to project members"
+                aria-label={isPrivate ? t("privacyPrivate") : t("privacyPublic")}
                 aria-pressed={isPrivate}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
                   isPrivate
@@ -190,15 +191,6 @@ export function ProjectEditorDialog({
             </div>
           </section>
 
-          {/* Members */}
-          <ProjectEditorMembers
-            memberRole={memberRole}
-            members={members}
-            onMemberRoleChange={onMemberRoleChange}
-            onToggleMember={onToggleMember}
-            selectedMemberIds={selectedMemberIds}
-          />
-
           {/* Advanced options */}
           <section className="rounded-lg border border-[var(--track-border)] bg-[var(--track-input-bg)]">
             <button
@@ -208,7 +200,7 @@ export function ProjectEditorDialog({
               type="button"
             >
               <span className="text-[11px] uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-                Advanced options
+                {t("advancedOptions")}
               </span>
               <span className="text-[18px] text-white">{advancedOpen ? "\u2212" : "+"}</span>
             </button>
@@ -218,13 +210,11 @@ export function ProjectEditorDialog({
                   billable={billable}
                   clientId={clientId}
                   clients={clients}
-                  color={color}
                   endDate={endDate}
                   estimatedHours={estimatedHours}
                   fixedFee={fixedFee}
                   onBillableChange={onBillableChange}
                   onClientChange={onClientChange}
-                  onColorChange={onColorChange}
                   onCreateClient={onCreateClient}
                   onEndDateChange={onEndDateChange}
                   onEstimatedHoursChange={onEstimatedHoursChange}
@@ -239,23 +229,6 @@ export function ProjectEditorDialog({
               </div>
             ) : null}
           </section>
-        </div>
-
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
-            {t("cancel")}
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
-            disabled={isPending || !trimmedName}
-            type="submit"
-          >
-            {submitLabel}
-          </button>
         </div>
       </form>
     </ModalDialog>

@@ -19,8 +19,6 @@ export type ProjectFormState = {
   recurring: boolean;
   estimatedHours: number;
   fixedFee: number;
-  memberRole: "manager" | "regular";
-  selectedMemberIds: number[];
   error: string | null;
 };
 
@@ -39,8 +37,6 @@ export type ProjectFormAction =
   | { type: "SET_RECURRING"; value: boolean }
   | { type: "SET_ESTIMATED_HOURS"; value: number }
   | { type: "SET_FIXED_FEE"; value: number }
-  | { type: "SET_MEMBER_ROLE"; value: "manager" | "regular" }
-  | { type: "SET_MEMBER_IDS"; ids: number[] }
   | { type: "SET_ERROR"; error: string | null };
 
 const DEFAULT_STATE: ProjectFormState = {
@@ -57,8 +53,6 @@ const DEFAULT_STATE: ProjectFormState = {
   recurring: false,
   estimatedHours: 0,
   fixedFee: 0,
-  memberRole: "regular",
-  selectedMemberIds: [],
   error: null,
 };
 
@@ -82,7 +76,6 @@ function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFor
         recurring: action.project.recurring === true,
         estimatedHours: action.project.estimated_hours ?? 0,
         fixedFee: action.project.fixed_fee ?? 0,
-        memberRole: "regular",
         error: null,
       };
     case "CLOSE":
@@ -109,10 +102,6 @@ function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFor
       return { ...state, estimatedHours: action.value };
     case "SET_FIXED_FEE":
       return { ...state, fixedFee: action.value };
-    case "SET_MEMBER_ROLE":
-      return { ...state, memberRole: action.value };
-    case "SET_MEMBER_IDS":
-      return { ...state, selectedMemberIds: action.ids };
     case "SET_ERROR":
       return { ...state, error: action.error };
   }

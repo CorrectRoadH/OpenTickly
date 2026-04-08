@@ -106,5 +106,21 @@
   "viewInReports": "View in reports",
   "teamUpdated": "Updated team access for {{name}}",
   "teamUpdatedToGroup": "Set {{name}} visible to group {{group}}",
-  "teamUpdateFailed": "Failed to update team access"
+  "teamUpdateFailed": "Failed to update team access",
+  "privacy": "Privacy",
+  "privacyPublic": "Public, visible to all project members",
+  "privacyPrivate": "Private, visible only to you",
+  "advancedOptions": "Advanced options",
+  "searchOrCreateClient": "Search or create client",
+  "selectOrCreateClient": "Select or create a client",
+  "createClientName": "Create client \"{{name}}\"",
+  "clearClient": "Clear client",
+  "startDate": "Start date",
+  "endDate": "End date",
+  "noEndDate": "No end date",
+  "timeEstimate": "Time estimate",
+  "estimatedHours": "Estimated hours",
+  "hours": "hours",
+  "fixedFee": "Fixed fee",
+  "fixedFeeAmount": "Fixed fee amount"
 }
