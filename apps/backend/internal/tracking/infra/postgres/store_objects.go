@@ -222,6 +222,33 @@ func (store *Store) UpdateGoal(ctx context.Context, record trackingapplication.U
 	return scanGoal(row)
 }
 
+func (store *Store) SumGoalTrackedSeconds(ctx context.Context, query trackingapplication.SumGoalTrackedSecondsQuery) (int, error) {
+	sql := `select coalesce(sum(duration_seconds), 0)
+		from tracking_time_entries
+		where workspace_id = $1 and user_id = $2
+			and deleted_at is null
+			and stop_time is not null
+			and start_time >= $3 and start_time < $4`
+	args := []any{query.WorkspaceID, query.UserID, query.StartDate.UTC(), query.EndDate.UTC()}
+	if len(query.ProjectIDs) > 0 {
+		args = append(args, query.ProjectIDs)
+		sql += " and project_id = any($" + intParam(len(args)) + ")"
+	}
+	if len(query.TaskIDs) > 0 {
+		args = append(args, query.TaskIDs)
+		sql += " and task_id = any($" + intParam(len(args)) + ")"
+	}
+	if len(query.TagIDs) > 0 {
+		args = append(args, query.TagIDs)
+		sql += " and tag_ids && $" + intParam(len(args))
+	}
+	var total int
+	if err := store.pool.QueryRow(ctx, sql, args...).Scan(&total); err != nil {
+		return 0, writeTrackingError("sum goal tracked seconds", err)
+	}
+	return total, nil
+}
+
 func (store *Store) DeleteGoal(ctx context.Context, workspaceID int64, userID int64, goalID int64) error {
 	_, err := store.pool.Exec(
 		ctx,

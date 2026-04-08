@@ -161,6 +161,11 @@ type GoalView struct {
 	DeletedAt     *time.Time
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
+
+	// CurrentRecurrenceTrackedSeconds is the sum of time entry durations (in seconds)
+	// within the current recurrence window, filtered by the goal's project/tag/task IDs.
+	// Populated by the service layer, not stored in the database.
+	CurrentRecurrenceTrackedSeconds int
 }
 
 type CreateGoalCommand struct {
@@ -303,6 +308,7 @@ type Store interface {
 	CreateGoal(context.Context, CreateGoalRecord) (GoalView, error)
 	UpdateGoal(context.Context, UpdateGoalRecord) (GoalView, error)
 	DeleteGoal(context.Context, int64, int64, int64) error
+	SumGoalTrackedSeconds(context.Context, SumGoalTrackedSecondsQuery) (int, error)
 
 	ListReminders(context.Context, int64) ([]ReminderView, error)
 	GetReminder(context.Context, int64, int64) (ReminderView, bool, error)
@@ -391,6 +397,16 @@ type CreateReminderRecord struct {
 
 // UpdateReminderRecord is an alias for ReminderView — the store writes all view fields back.
 type UpdateReminderRecord = ReminderView
+
+type SumGoalTrackedSecondsQuery struct {
+	WorkspaceID int64
+	UserID      int64
+	StartDate   time.Time
+	EndDate     time.Time
+	ProjectIDs  []int64
+	TaskIDs     []int64
+	TagIDs      []int64
+}
 
 type CreateExpenseRecord struct {
 	WorkspaceID   int64

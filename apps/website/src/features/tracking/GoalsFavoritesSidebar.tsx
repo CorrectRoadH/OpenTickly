@@ -104,6 +104,8 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
   const trackedH = Math.round(((goal.current_recurrence_tracked_seconds ?? 0) / 3600) * 10) / 10;
   const targetH = Math.round(((goal.target_seconds ?? 0) / 3600) * 10) / 10;
   const progress = targetH > 0 ? Math.min((trackedH / targetH) * 100, 100) : 0;
+  const isLimit = goal.comparison === "less_than" || goal.comparison === "lte";
+  const ringColor = isLimit ? "var(--track-warning)" : "var(--track-accent)";
 
   return (
     <div
@@ -116,9 +118,10 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
           <circle
             cx="16"
             cy="16"
+            data-testid="goal-progress-ring"
             fill="none"
             r="13"
-            stroke="var(--track-accent)"
+            stroke={ringColor}
             strokeDasharray={`${(progress / 100) * 81.68} 81.68`}
             strokeLinecap="round"
             strokeWidth="3"
@@ -127,8 +130,33 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
         <span className="absolute text-[10px]">{goal.icon ?? "🎯"}</span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-[12px] leading-tight text-white">
+        <span className="flex items-center gap-1 truncate text-[12px] leading-tight text-white">
           {goal.name ?? t("untitledGoal")}
+          <span data-comparison={goal.comparison} data-testid="goal-comparison-indicator">
+            {isLimit ? (
+              <svg
+                data-direction="down"
+                className="size-3 text-[var(--track-warning)]"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 2v8M3 7l3 3 3-3" />
+              </svg>
+            ) : (
+              <svg
+                data-direction="up"
+                className="size-3 text-[var(--track-accent)]"
+                viewBox="0 0 12 12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M6 10V2M3 5l3-3 3 3" />
+              </svg>
+            )}
+          </span>
         </span>
         <span className="text-[11px] leading-tight text-[var(--track-text-muted)]">
           {t("hoursProgress", { tracked: trackedH, target: targetH })}

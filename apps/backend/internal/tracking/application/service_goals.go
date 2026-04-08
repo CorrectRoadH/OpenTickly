@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"strings"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/xptr"
 )
@@ -17,6 +18,10 @@ func (service *Service) ListGoals(ctx context.Context, workspaceID int64, filter
 			"error", err.Error(),
 		)
 		return nil, err
+	}
+	now := service.now()
+	for i := range goals {
+		service.enrichGoalProgress(ctx, &goals[i], now)
 	}
 	return goals, nil
 }
@@ -40,6 +45,7 @@ func (service *Service) GetGoal(ctx context.Context, workspaceID int64, userID i
 		)
 		return GoalView{}, ErrGoalNotFound
 	}
+	service.enrichGoalProgress(ctx, &goal, service.now())
 	return goal, nil
 }
 
@@ -126,6 +132,54 @@ func (service *Service) UpdateGoal(ctx context.Context, command UpdateGoalComman
 		"workspace_id", command.WorkspaceID,
 	)
 	return updated, nil
+}
+
+func (service *Service) enrichGoalProgress(ctx context.Context, goal *GoalView, now time.Time) {
+	start, end := currentRecurrenceWindow(goal.Recurrence, goal.StartDate, now)
+	total, err := service.store.SumGoalTrackedSeconds(ctx, SumGoalTrackedSecondsQuery{
+		WorkspaceID: goal.WorkspaceID,
+		UserID:      goal.UserID,
+		StartDate:   start,
+		EndDate:     end,
+		ProjectIDs:  goal.ProjectIDs,
+		TaskIDs:     goal.TaskIDs,
+		TagIDs:      goal.TagIDs,
+	})
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to sum goal tracked seconds",
+			"goal_id", goal.ID,
+			"error", err.Error(),
+		)
+		return
+	}
+	goal.CurrentRecurrenceTrackedSeconds = total
+}
+
+// currentRecurrenceWindow returns [start, end) for the recurrence period that
+// contains `now`, anchored to the goal's start date.
+func currentRecurrenceWindow(recurrence string, goalStart time.Time, now time.Time) (time.Time, time.Time) {
+	goalStart = goalStart.UTC()
+	now = now.UTC()
+
+	switch recurrence {
+	case "daily", "daily_workdays":
+		dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		return dayStart, dayStart.AddDate(0, 0, 1)
+	case "weekly":
+		// Align to the same weekday as the goal start date.
+		goalWeekday := goalStart.Weekday()
+		nowWeekday := now.Weekday()
+		daysBack := int(nowWeekday - goalWeekday)
+		if daysBack < 0 {
+			daysBack += 7
+		}
+		weekStart := time.Date(now.Year(), now.Month(), now.Day()-daysBack, 0, 0, 0, 0, time.UTC)
+		return weekStart, weekStart.AddDate(0, 0, 7)
+	default:
+		// Fallback to daily window.
+		dayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+		return dayStart, dayStart.AddDate(0, 0, 1)
+	}
 }
 
 func (service *Service) DeleteGoal(ctx context.Context, workspaceID int64, userID int64, goalID int64) error {
