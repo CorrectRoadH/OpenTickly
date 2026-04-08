@@ -31,11 +31,11 @@ curl -fsS http://localhost:8080/readyz
 
 compose 파일은 격리된 내부 네트워크에서 세 개의 서비스를 시작합니다:
 
-| 서비스      | 역할          | 호스트 노출     |
-| ----------- | ------------- | --------------- |
-| `opentoggl` | Web + API     | 예 (`8080`)     |
-| `postgres`  | 데이터베이스  | 아니오          |
-| `redis`     | 캐시 / 큐     | 아니오          |
+| 서비스      | 역할         | 호스트 노출 |
+| ----------- | ------------ | ----------- |
+| `opentoggl` | Web + API    | 예 (`8080`) |
+| `postgres`  | 데이터베이스 | 아니오      |
+| `redis`     | 캐시 / 큐    | 아니오      |
 
 Postgres와 Redis는 호스트 네트워크에 노출되지 않습니다. `opentoggl` 서비스만 포트를 공개합니다.
 
@@ -43,15 +43,15 @@ Postgres와 Redis는 호스트 네트워크에 노출되지 않습니다. `opent
 
 기본값으로 바로 동작합니다. 환경 변수 또는 `docker-compose.yml`과 같은 디렉토리의 `.env` 파일로 덮어쓸 수 있습니다:
 
-| 변수                          | 기본값                                  | 설명                                                |
-| ----------------------------- | --------------------------------------- | --------------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 및 API의 호스트 포트                         |
-| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 컨테이너 이미지 (안정성을 위해 버전 태그 권장)      |
-| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 데이터베이스 이름                                   |
-| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 데이터베이스 사용자                                 |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 데이터베이스 비밀번호                               |
-| `OPENTOGGL_DATABASE_URL`      | 자동                                    | 전체 연결 문자열 (개별 PG 변수 덮어쓰기)            |
-| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 연결 문자열                                   |
+| 변수                          | 기본값                                  | 설명                                           |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 및 API의 호스트 포트                    |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 컨테이너 이미지 (안정성을 위해 버전 태그 권장) |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 데이터베이스 이름                              |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 데이터베이스 사용자                            |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 데이터베이스 비밀번호                          |
+| `OPENTOGGL_DATABASE_URL`      | 자동                                    | 전체 연결 문자열 (개별 PG 변수 덮어쓰기)       |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 연결 문자열                              |
 
 ### 업그레이드
 
@@ -109,7 +109,8 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 `http://<Synology IP>:8080`에서 OpenToggl에 접속.
 
 <Callout type="info">
-  포트 8080이 DSM과 충돌하면, 프로젝트 생성 전 환경 설정에서 `OPENTOGGL_PORT=9090` (또는 빈 포트)을 추가하세요.
+  포트 8080이 DSM과 충돌하면, 프로젝트 생성 전 환경 설정에서 `OPENTOGGL_PORT=9090` (또는 빈 포트)을
+  추가하세요.
 </Callout>
 
 ---

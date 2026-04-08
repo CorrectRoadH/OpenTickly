@@ -31,11 +31,11 @@ Terminé. Ouvrez `http://localhost:8080` dans votre navigateur.
 
 Le fichier compose lance trois services sur un réseau interne isolé :
 
-| Service     | Rôle           | Exposé à l'hôte |
-| ----------- | -------------- | ---------------- |
-| `opentoggl` | Web + API      | Oui (`8080`)     |
+| Service     | Rôle            | Exposé à l'hôte |
+| ----------- | --------------- | --------------- |
+| `opentoggl` | Web + API       | Oui (`8080`)    |
 | `postgres`  | Base de données | Non             |
-| `redis`     | Cache / File   | Non              |
+| `redis`     | Cache / File    | Non             |
 
 Postgres et Redis ne sont pas exposés au réseau hôte. Seul le service `opentoggl` publie un port.
 
@@ -43,15 +43,15 @@ Postgres et Redis ne sont pas exposés au réseau hôte. Seul le service `opento
 
 Toutes les valeurs par défaut fonctionnent immédiatement. Remplacez-les via des variables d'environnement ou un fichier `.env` dans le même répertoire que `docker-compose.yml` :
 
-| Variable                      | Par défaut                              | Description                                                          |
-| ----------------------------- | --------------------------------------- | -------------------------------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`                                  | Port hôte pour la Web UI et l'API                                    |
-| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | Image conteneur (fixez un tag de version pour plus de stabilité)     |
-| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | Nom de la base de données                                            |
-| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | Utilisateur de la base de données                                    |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | Mot de passe de la base de données                                   |
+| Variable                      | Par défaut                              | Description                                                            |
+| ----------------------------- | --------------------------------------- | ---------------------------------------------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`                                  | Port hôte pour la Web UI et l'API                                      |
+| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | Image conteneur (fixez un tag de version pour plus de stabilité)       |
+| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | Nom de la base de données                                              |
+| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | Utilisateur de la base de données                                      |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | Mot de passe de la base de données                                     |
 | `OPENTOGGL_DATABASE_URL`      | auto                                    | Chaîne de connexion complète (remplace les variables PG individuelles) |
-| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Chaîne de connexion Redis                                            |
+| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Chaîne de connexion Redis                                              |
 
 ### Mise à jour
 
@@ -109,7 +109,8 @@ Synology DSM 7.2+ supporte Docker Compose via **Container Manager**.
 Accédez à OpenToggl sur `http://<votre-ip-synology>:8080`.
 
 <Callout type="info">
-  Si le port 8080 entre en conflit avec DSM, ajoutez `OPENTOGGL_PORT=9090` (ou tout port libre) dans les paramètres d'environnement avant de créer le projet.
+  Si le port 8080 entre en conflit avec DSM, ajoutez `OPENTOGGL_PORT=9090` (ou tout port libre) dans
+  les paramètres d'environnement avant de créer le projet.
 </Callout>
 
 ---
