@@ -1,13 +1,29 @@
 import { type ReactElement, useState } from "react";
 import { Cell, Pie, PieChart } from "recharts";
 
-import { useProjectDetailQuery, useProjectStatisticsQuery } from "../../shared/query/web-shell.ts";
+import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import { TimeEntriesTable } from "../../features/tracking/TimeEntriesTable.tsx";
+import {
+  useProjectDetailQuery,
+  useProjectStatisticsQuery,
+  useTimeEntriesQuery,
+} from "../../shared/query/web-shell.ts";
 import { ProjectDetailLayout } from "./ProjectDetailLayout.tsx";
 
 type ProjectDashboardPageProps = {
   projectId: number;
   workspaceId: number;
 };
+
+function last90DaysRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - 90);
+  return {
+    endDate: end.toISOString().slice(0, 10),
+    startDate: start.toISOString().slice(0, 10),
+  };
+}
 
 export function ProjectDashboardPage({
   projectId,
@@ -18,6 +34,20 @@ export function ProjectDashboardPage({
   const project = projectQuery.data;
   const totalSeconds = project?.actual_seconds ?? 0;
   const billableSeconds = project?.billable ? totalSeconds : 0;
+
+  const dateRange = last90DaysRange();
+  const entriesQuery = useTimeEntriesQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
+
+  const filteredEntries = (() => {
+    if (!entriesQuery.data) return [];
+    return (entriesQuery.data as GithubComTogglTogglApiInternalModelsTimeEntry[])
+      .filter((entry) => (entry.duration ?? 0) >= 0)
+      .filter((entry) => entry.project_id === projectId)
+      .sort((a, b) => (b.start ?? "").localeCompare(a.start ?? ""));
+  })();
 
   return (
     <ProjectDetailLayout activeTab="dashboard" projectId={projectId} workspaceId={workspaceId}>
@@ -54,6 +84,10 @@ export function ProjectDashboardPage({
           ) : null}
         </section>
       ) : null}
+
+      <div className="mt-8">
+        <TimeEntriesTable entries={filteredEntries} isPending={entriesQuery.isPending} />
+      </div>
     </ProjectDetailLayout>
   );
 }

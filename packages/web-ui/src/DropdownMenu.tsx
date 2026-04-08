@@ -84,6 +84,7 @@ type FloatingStyle = {
 
 function useFloatingPosition(
   triggerRef: React.RefObject<HTMLElement | null>,
+  panelRef: React.RefObject<HTMLElement | null>,
   isOpen: boolean,
   placement: DropdownPlacement,
   gap: number,
@@ -100,27 +101,49 @@ function useFloatingPosition(
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
 
+      const panelHeight = panelRef.current?.offsetHeight ?? 0;
+      const panelWidth = panelRef.current?.offsetWidth ?? 0;
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+
       switch (placement) {
-        case "bottom-left":
-          setStyle({ left: rect.left, top: rect.bottom + gap });
+        case "bottom-left": {
+          const fitsBelow = rect.bottom + gap + panelHeight <= vh;
+          const top = fitsBelow ? rect.bottom + gap : rect.top - gap - panelHeight;
+          const left = Math.min(rect.left, vw - panelWidth);
+          setStyle({ left: Math.max(0, left), top: Math.max(0, top) });
           break;
-        case "bottom-right":
-          setStyle({ right: window.innerWidth - rect.right, top: rect.bottom + gap });
+        }
+        case "bottom-right": {
+          const fitsBelow = rect.bottom + gap + panelHeight <= vh;
+          const top = fitsBelow ? rect.bottom + gap : rect.top - gap - panelHeight;
+          const right = Math.min(vw - rect.right, vw - panelWidth);
+          setStyle({ right: Math.max(0, right), top: Math.max(0, top) });
           break;
-        case "right-bottom":
-          setStyle({ left: rect.right + gap, bottom: window.innerHeight - rect.bottom });
+        }
+        case "right-bottom": {
+          const fitsRight = rect.right + gap + panelWidth <= vw;
+          const left = fitsRight ? rect.right + gap : rect.left - gap - panelWidth;
+          setStyle({
+            left: Math.max(0, left),
+            bottom: Math.max(0, vh - rect.bottom),
+          });
           break;
+        }
       }
     }
 
+    // Run once immediately, then again on next frame so panelRef is measured.
     update();
+    const raf = requestAnimationFrame(update);
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
     };
-  }, [isOpen, triggerRef, placement, gap]);
+  }, [isOpen, triggerRef, panelRef, placement, gap]);
 
   return style;
 }
@@ -173,7 +196,7 @@ export function DropdownMenu({
 
   useDismiss2Ref(triggerRef, panelRef, open, close);
 
-  const style = useFloatingPosition(triggerRef, open, resolved, 4);
+  const style = useFloatingPosition(triggerRef, panelRef, open, resolved, 4);
 
   return (
     <div className={className} ref={triggerRef}>
@@ -240,7 +263,7 @@ export function Dropdown({
 
   useDismiss2Ref(triggerRef, panelRef, open, close);
 
-  const style = useFloatingPosition(triggerRef, open, resolved, 4);
+  const style = useFloatingPosition(triggerRef, panelRef, open, resolved, 4);
   const triggerWidth = triggerRef.current?.getBoundingClientRect().width;
 
   return (
