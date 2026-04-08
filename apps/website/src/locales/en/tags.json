@@ -20,5 +20,20 @@
   "noTagsMatchFilters": "No tags match your filters.",
   "noActiveTags": "No active tags. Create your first tag to get started.",
   "noInactiveTags": "No inactive tags.",
-  "noTagsInWorkspace": "No tags in this workspace yet."
+  "noTagsInWorkspace": "No tags in this workspace yet.",
+  "backToTags": "Back to tags",
+  "tagNotFound": "Tag not found.",
+  "timeEntries": "Time entries",
+  "noTimeEntriesForTag": "No time entries with this tag.",
+  "loadingTimeEntries": "Loading time entries...",
+  "description": "Description",
+  "project": "Project",
+  "duration": "Duration",
+  "date": "Date",
+  "startTime": "Start",
+  "stopTime": "Stop",
+  "billable": "Billable",
+  "noDescription": "(no description)",
+  "totalEntries": "{{count}} entries",
+  "last90Days": "Last 90 days"
 }

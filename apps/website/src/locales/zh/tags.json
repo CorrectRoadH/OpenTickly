@@ -20,5 +20,20 @@
   "noTagsMatchFilters": "没有标签符合您的筛选条件。",
   "noActiveTags": "没有活跃标签。创建您的第一个标签以开始。",
   "noInactiveTags": "没有非活跃标签。",
-  "noTagsInWorkspace": "此工作区中还没有标签。"
+  "noTagsInWorkspace": "此工作区中还没有标签。",
+  "backToTags": "返回标签列表",
+  "tagNotFound": "标签未找到。",
+  "timeEntries": "时间记录",
+  "noTimeEntriesForTag": "没有使用此标签的时间记录。",
+  "loadingTimeEntries": "加载时间记录中...",
+  "description": "描述",
+  "project": "项目",
+  "duration": "时长",
+  "date": "日期",
+  "startTime": "开始",
+  "stopTime": "结束",
+  "billable": "计费",
+  "noDescription": "（无描述）",
+  "totalEntries": "{{count}} 条记录",
+  "last90Days": "最近 90 天"
 }
