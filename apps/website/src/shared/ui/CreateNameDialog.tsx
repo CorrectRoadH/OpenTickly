@@ -49,12 +49,31 @@ export function CreateNameDialog({
 
   return (
     <ModalDialog
+      footer={
+        <>
+          <button
+            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            onClick={onClose}
+            type="button"
+          >
+            Cancel
+          </button>
+          <button
+            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            disabled={isPending || !trimmedValue}
+            form="create-name-form"
+            type="submit"
+          >
+            {submitLabel}
+          </button>
+        </>
+      }
       onClose={onClose}
       testId={testId}
       title={title}
       titleId="create-entity-dialog-title"
     >
-      <form onSubmit={handleSubmit}>
+      <form id="create-name-form" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <label className="block">
             <span className="sr-only">{nameLabel}</span>
@@ -81,23 +100,6 @@ export function CreateNameDialog({
               </div>
             </div>
           ) : null}
-        </div>
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
-            Cancel
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
-            disabled={isPending || !trimmedValue}
-            type="submit"
-          >
-            {submitLabel}
-          </button>
         </div>
       </form>
     </ModalDialog>

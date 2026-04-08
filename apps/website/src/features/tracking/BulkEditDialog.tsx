@@ -67,6 +67,16 @@ export function BulkEditDialog({
 
   return (
     <ModalDialog
+      footer={
+        <button
+          className="rounded-lg bg-[var(--track-accent)] px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--track-accent-fill-hover)]"
+          data-testid="bulk-edit-save"
+          onClick={handleSave}
+          type="button"
+        >
+          {t("save")}
+        </button>
+      }
       onClose={onClose}
       testId="bulk-edit-dialog"
       title={t("bulkEditTitle", { count, entryWord })}
@@ -207,17 +217,6 @@ export function BulkEditDialog({
             />
           </button>
         </div>
-      </div>
-
-      <div className="mt-5">
-        <button
-          className="rounded-lg bg-[var(--track-accent)] px-5 py-2 text-[12px] font-semibold text-white transition hover:bg-[var(--track-accent-fill-hover)]"
-          data-testid="bulk-edit-save"
-          onClick={handleSave}
-          type="button"
-        >
-          {t("save")}
-        </button>
       </div>
     </ModalDialog>
   );

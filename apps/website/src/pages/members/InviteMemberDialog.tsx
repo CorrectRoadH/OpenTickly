@@ -36,11 +36,30 @@ export function InviteMemberDialog({
 
   return (
     <ModalDialog
+      footer={
+        <>
+          <button
+            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
+            onClick={onClose}
+            type="button"
+          >
+            {t("cancel")}
+          </button>
+          <button
+            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
+            disabled={isPending || !trimmedEmail}
+            form="invite-member-form"
+            type="submit"
+          >
+            {t("sendInvite")}
+          </button>
+        </>
+      }
       onClose={onClose}
       title={t("inviteMemberDialogTitle")}
       titleId="invite-member-dialog-title"
     >
-      <form onSubmit={handleSubmit}>
+      <form id="invite-member-form" onSubmit={handleSubmit}>
         <div className="space-y-4">
           <label className="block">
             <span className="mb-1.5 block text-[11px] uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
@@ -70,23 +89,6 @@ export function InviteMemberDialog({
               value={role}
             />
           </label>
-        </div>
-
-        <div className="mt-5 flex items-center justify-end gap-2">
-          <button
-            className="flex h-9 items-center rounded-md border border-[var(--track-border)] px-4 text-[12px] text-[var(--track-text-muted)]"
-            onClick={onClose}
-            type="button"
-          >
-            {t("cancel")}
-          </button>
-          <button
-            className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
-            disabled={isPending || !trimmedEmail}
-            type="submit"
-          >
-            {t("sendInvite")}
-          </button>
         </div>
       </form>
     </ModalDialog>

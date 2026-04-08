@@ -301,7 +301,7 @@ function OrganizationOptionsPanel({
         />
       </div>
 
-      <div className="px-2.5 py-1">
+      <div className="px-4 py-2">
         <AppButton
           className="w-full justify-center"
           onClick={() => {
