@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 
-import { AppButton, DropdownMenu, IconButton, useDropdownClose } from "@opentoggl/web-ui";
+import { AppButton, DropdownMenu, IconButton, MenuItem, useDropdownClose } from "@opentoggl/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 
@@ -129,25 +129,26 @@ function TagMenuContent({
 
   return (
     <>
-      <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
-        data-testid={`tag-rename-${tagId}`}
-        onClick={() => {
+      <MenuItem
+        testId={`tag-rename-${tagId}`}
+        onClick={(e) => {
+          e.preventDefault();
           close();
           onStartEditing();
         }}
-        type="button"
       >
         Rename
-      </button>
-      <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
-        data-testid={`tag-delete-${tagId}`}
-        onClick={() => setConfirmingDelete(true)}
-        type="button"
+      </MenuItem>
+      <MenuItem
+        destructive
+        testId={`tag-delete-${tagId}`}
+        onClick={(e) => {
+          e.preventDefault();
+          setConfirmingDelete(true);
+        }}
       >
         Delete
-      </button>
+      </MenuItem>
     </>
   );
 }

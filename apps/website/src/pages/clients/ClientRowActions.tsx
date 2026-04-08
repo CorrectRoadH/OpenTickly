@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
 
-import { AppButton, DropdownMenu, IconButton, useDropdownClose } from "@opentoggl/web-ui";
+import { AppButton, DropdownMenu, IconButton, MenuItem, useDropdownClose } from "@opentoggl/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 
@@ -127,35 +127,33 @@ function ClientMenuContent({
 
   return (
     <>
-      <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
-        data-testid={`client-rename-${clientId}`}
-        onClick={() => {
+      <MenuItem
+        testId={`client-rename-${clientId}`}
+        onClick={(e) => {
+          e.preventDefault();
           close();
           onStartEditing();
         }}
-        type="button"
       >
         Edit
-      </button>
-      <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-white hover:bg-[var(--track-surface-muted)]"
+      </MenuItem>
+      <MenuItem
         onClick={() => {
           onArchive(clientId);
-          close();
         }}
-        type="button"
       >
         Archive
-      </button>
-      <button
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[14px] text-rose-400 hover:bg-[var(--track-surface-muted)]"
-        data-testid={`client-delete-${clientId}`}
-        onClick={() => setConfirmingDelete(true)}
-        type="button"
+      </MenuItem>
+      <MenuItem
+        destructive
+        testId={`client-delete-${clientId}`}
+        onClick={(e) => {
+          e.preventDefault();
+          setConfirmingDelete(true);
+        }}
       >
         Delete
-      </button>
+      </MenuItem>
     </>
   );
 }

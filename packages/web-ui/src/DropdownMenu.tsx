@@ -82,6 +82,41 @@ type FloatingStyle = {
   top?: number;
 };
 
+function computeFloatingStyle(
+  triggerRect: DOMRect,
+  panelEl: HTMLElement | null,
+  placement: DropdownPlacement,
+  gap: number,
+): FloatingStyle {
+  const panelHeight = panelEl?.offsetHeight ?? 0;
+  const panelWidth = panelEl?.offsetWidth ?? 0;
+  const vh = window.innerHeight;
+  const vw = window.innerWidth;
+
+  switch (placement) {
+    case "bottom-left": {
+      const fitsBelow = triggerRect.bottom + gap + panelHeight <= vh;
+      const top = fitsBelow ? triggerRect.bottom + gap : triggerRect.top - gap - panelHeight;
+      const left = Math.min(triggerRect.left, vw - panelWidth);
+      return { left: Math.max(0, left), top: Math.max(0, top) };
+    }
+    case "bottom-right": {
+      const fitsBelow = triggerRect.bottom + gap + panelHeight <= vh;
+      const top = fitsBelow ? triggerRect.bottom + gap : triggerRect.top - gap - panelHeight;
+      const right = Math.min(vw - triggerRect.right, vw - panelWidth);
+      return { right: Math.max(0, right), top: Math.max(0, top) };
+    }
+    case "right-bottom": {
+      const fitsRight = triggerRect.right + gap + panelWidth <= vw;
+      const left = fitsRight ? triggerRect.right + gap : triggerRect.left - gap - panelWidth;
+      return {
+        left: Math.max(0, left),
+        bottom: Math.max(0, vh - triggerRect.bottom),
+      };
+    }
+  }
+}
+
 function useFloatingPosition(
   triggerRef: React.RefObject<HTMLElement | null>,
   panelRef: React.RefObject<HTMLElement | null>,
@@ -90,6 +125,21 @@ function useFloatingPosition(
   gap: number,
 ): FloatingStyle | null {
   const [style, setStyle] = useState<FloatingStyle | null>(null);
+  const [panelMounted, setPanelMounted] = useState(false);
+
+  // Detect when panelRef gets populated (panel DOM node mounts).
+  useEffect(() => {
+    if (!isOpen) {
+      setPanelMounted(false);
+      return;
+    }
+    // Panel renders in the same tick as style being set. Use rAF to
+    // detect when panelRef.current is available.
+    const raf = requestAnimationFrame(() => {
+      if (panelRef.current) setPanelMounted(true);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isOpen, panelRef, style]);
 
   useEffect(() => {
     if (!isOpen || !triggerRef.current) {
@@ -100,50 +150,17 @@ function useFloatingPosition(
     function update() {
       const rect = triggerRef.current?.getBoundingClientRect();
       if (!rect) return;
-
-      const panelHeight = panelRef.current?.offsetHeight ?? 0;
-      const panelWidth = panelRef.current?.offsetWidth ?? 0;
-      const vh = window.innerHeight;
-      const vw = window.innerWidth;
-
-      switch (placement) {
-        case "bottom-left": {
-          const fitsBelow = rect.bottom + gap + panelHeight <= vh;
-          const top = fitsBelow ? rect.bottom + gap : rect.top - gap - panelHeight;
-          const left = Math.min(rect.left, vw - panelWidth);
-          setStyle({ left: Math.max(0, left), top: Math.max(0, top) });
-          break;
-        }
-        case "bottom-right": {
-          const fitsBelow = rect.bottom + gap + panelHeight <= vh;
-          const top = fitsBelow ? rect.bottom + gap : rect.top - gap - panelHeight;
-          const right = Math.min(vw - rect.right, vw - panelWidth);
-          setStyle({ right: Math.max(0, right), top: Math.max(0, top) });
-          break;
-        }
-        case "right-bottom": {
-          const fitsRight = rect.right + gap + panelWidth <= vw;
-          const left = fitsRight ? rect.right + gap : rect.left - gap - panelWidth;
-          setStyle({
-            left: Math.max(0, left),
-            bottom: Math.max(0, vh - rect.bottom),
-          });
-          break;
-        }
-      }
+      setStyle(computeFloatingStyle(rect, panelRef.current, placement, gap));
     }
 
-    // Run once immediately, then again on next frame so panelRef is measured.
     update();
-    const raf = requestAnimationFrame(update);
     window.addEventListener("scroll", update, true);
     window.addEventListener("resize", update);
     return () => {
-      cancelAnimationFrame(raf);
       window.removeEventListener("scroll", update, true);
       window.removeEventListener("resize", update);
     };
-  }, [isOpen, triggerRef, panelRef, placement, gap]);
+  }, [isOpen, triggerRef, panelRef, placement, gap, panelMounted]);
 
   return style;
 }
@@ -317,7 +334,7 @@ export function MenuItem({
 
   return (
     <button
-      className={`flex min-h-[28px] w-full items-center gap-2 rounded-[6px] px-2.5 text-left text-[14px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`flex min-h-[32px] w-full items-center gap-2 rounded-[6px] px-3 text-left text-[14px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
         destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
       data-testid={testId}
@@ -351,7 +368,7 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
 
   return (
     <a
-      className="flex min-h-[28px] w-full items-center gap-2 rounded-[6px] px-2.5 text-left text-[14px] text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
+      className="flex min-h-[32px] w-full items-center gap-2 rounded-[6px] px-3 text-left text-[14px] text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
       data-testid={testId}
       href={href}
       onClick={() => close?.()}
