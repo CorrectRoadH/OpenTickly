@@ -67,6 +67,10 @@ export const CalendarDayColumnWrapper = React.forwardRef<
           data-testid="current-time-indicator-play"
           fill="none"
           height="16"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
           onClick={(e) => {
             e.stopPropagation();
             onStartEntry?.();
