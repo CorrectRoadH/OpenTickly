@@ -6,14 +6,18 @@ import type {
   ModelsSimpleWorkspaceUser,
 } from "../api/generated/public-track/types.gen.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
+import type { ModelsProjectGroup } from "../api/generated/public-track/types.gen.ts";
 import {
+  deleteProjectGroup,
   deleteWorkspaceProject,
+  getProjectGroups,
   getProjects,
   getWorkspaceProjectUsers,
   getWorkspaceUsers,
   getWorkspacesByWorkspaceIdProjectsByProjectId,
   getWorkspacesByWorkspaceIdProjectsByProjectIdStatistics,
   postPinnedProject,
+  postProjectGroup,
   postWorkspaceProjectCreate,
   postWorkspaceProjectUsers,
   putWorkspaceProject,
@@ -347,6 +351,57 @@ export function useDeleteProjectMutation(workspaceId: number) {
       await queryClient.invalidateQueries({
         queryKey: ["projects", workspaceId],
       });
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Project Groups — associate workspace groups with projects
+// ---------------------------------------------------------------------------
+
+const projectGroupsQueryKey = (workspaceId: number) => ["project-groups", workspaceId] as const;
+
+export function useProjectGroupsQuery(workspaceId: number) {
+  return useQuery<ModelsProjectGroup[]>({
+    queryFn: () =>
+      unwrapWebApiResult(
+        getProjectGroups({
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    queryKey: projectGroupsQueryKey(workspaceId),
+  });
+}
+
+export function useAddProjectGroupMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, groupId }: { projectId: number; groupId: number }) =>
+      unwrapWebApiResult(
+        postProjectGroup({
+          body: { project_id: projectId, group_id: groupId },
+          path: { workspace_id: workspaceId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: projectGroupsQueryKey(workspaceId) });
+    },
+  });
+}
+
+export function useDeleteProjectGroupMutation(workspaceId: number) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (projectGroupId: number) =>
+      unwrapWebApiResult(
+        deleteProjectGroup({
+          path: { workspace_id: workspaceId, project_group_id: projectGroupId },
+        }),
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: projectGroupsQueryKey(workspaceId) });
     },
   });
 }

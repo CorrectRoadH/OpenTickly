@@ -103,5 +103,8 @@
   "billableHours": "Billable hours",
   "editProject": "Edit project",
   "addMember": "Add member",
-  "viewInReports": "View in reports"
+  "viewInReports": "View in reports",
+  "teamUpdated": "Updated team access for {{name}}",
+  "teamUpdatedToGroup": "Set {{name}} visible to group {{group}}",
+  "teamUpdateFailed": "Failed to update team access"
 }

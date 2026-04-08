@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
   AppButton,
   CheckboxFilterDropdown,
@@ -12,6 +13,7 @@ import {
   IconButton,
   PageLayout,
   RadioFilterDropdown,
+  SelectDropdown,
 } from "@opentoggl/web-ui";
 
 import {
@@ -25,13 +27,17 @@ import {
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
+  useAddProjectGroupMutation,
   useAddProjectMemberMutation,
   useArchiveProjectMutation,
   useClientsQuery,
   useCreateClientMutation,
   useCreateProjectMutation,
+  useDeleteProjectGroupMutation,
   useDeleteProjectMutation,
+  useGroupsQuery,
   usePinProjectMutation,
+  useProjectGroupsQuery,
   useProjectMembersQuery,
   useProjectsQuery,
   useRestoreProjectMutation,
@@ -72,7 +78,7 @@ const PROJECT_COLUMNS = (t: (key: string) => string): DirectoryTableColumn[] => 
   { key: "timeframe", label: t("timeframe"), width: "140px" },
   { key: "time-status", label: t("timeStatus"), width: "100px" },
   { key: "billable-status", label: t("billableStatus"), width: "120px" },
-  { key: "team", label: t("team"), width: "100px" },
+  { key: "team", label: t("team"), width: "140px" },
   { key: "pinned", label: t("pinned"), width: "64px" },
   { key: "actions", label: "", width: "42px", align: "end" },
 ];
@@ -137,6 +143,10 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const unpinProjectMutation = useUnpinProjectMutation(workspaceId);
   const addProjectMemberMutation = useAddProjectMemberMutation(workspaceId);
   const deleteProjectMutation = useDeleteProjectMutation(workspaceId);
+  const groupsQuery = useGroupsQuery(workspaceId);
+  const projectGroupsQuery = useProjectGroupsQuery(workspaceId);
+  const addProjectGroupMutation = useAddProjectGroupMutation(workspaceId);
+  const deleteProjectGroupMutation = useDeleteProjectGroupMutation(workspaceId);
   const clientsQuery = useClientsQuery(workspaceId);
   const createClientMutation = useCreateClientMutation(workspaceId);
   const projectMembersQuery = useProjectMembersQuery(workspaceId, editorProject?.id ?? 0);
@@ -162,6 +172,24 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     }
     return map;
   })();
+
+  const workspaceGroups = (groupsQuery.data ?? []).filter(
+    (g): g is { id: number; name: string } & typeof g => g.id != null && g.name != null,
+  );
+  const projectGroupsByProject = (() => {
+    const map = new Map<number, { projectGroupId: number; groupId: number }>();
+    for (const pg of projectGroupsQuery.data ?? []) {
+      if (pg.pid != null && pg.group_id != null && pg.id != null) {
+        map.set(pg.pid, { projectGroupId: pg.id, groupId: pg.group_id });
+      }
+    }
+    return map;
+  })();
+  const teamOptions = [
+    { label: t("everyone"), value: "everyone" },
+    { label: t("private"), value: "private" },
+    ...workspaceGroups.map((g) => ({ label: g.name, value: `group:${g.id}` })),
+  ];
 
   const clientsList = (clientsQuery.data ?? [])
     .filter((c): c is { id: number; name: string } => c.id != null && c.name != null)
@@ -353,6 +381,52 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       reassignTo: mode === "reassign" ? reassignProjectId : undefined,
     });
     setStatusMessage(t("deleteProject", { name: project.name }));
+  }
+
+  async function handleTeamChange(
+    project: GithubComTogglTogglApiInternalModelsProject,
+    value: string,
+  ) {
+    if (project.id == null) return;
+
+    try {
+      // Remove existing project-group association if any
+      const existing = projectGroupsByProject.get(project.id);
+      if (existing) {
+        await deleteProjectGroupMutation.mutateAsync(existing.projectGroupId);
+      }
+
+      if (value === "everyone") {
+        await updateProjectMutation.mutateAsync({
+          color: resolveProjectColor(project),
+          isPrivate: false,
+          name: project.name ?? t("untitledProject"),
+          projectId: project.id,
+        });
+        toast.success(t("teamUpdated", { name: project.name }));
+      } else if (value === "private") {
+        await updateProjectMutation.mutateAsync({
+          color: resolveProjectColor(project),
+          isPrivate: true,
+          name: project.name ?? t("untitledProject"),
+          projectId: project.id,
+        });
+        toast.success(t("teamUpdated", { name: project.name }));
+      } else if (value.startsWith("group:")) {
+        const groupId = Number(value.slice(6));
+        await updateProjectMutation.mutateAsync({
+          color: resolveProjectColor(project),
+          isPrivate: true,
+          name: project.name ?? t("untitledProject"),
+          projectId: project.id,
+        });
+        await addProjectGroupMutation.mutateAsync({ projectId: project.id, groupId });
+        const groupName = workspaceGroups.find((g) => g.id === groupId)?.name;
+        toast.success(t("teamUpdatedToGroup", { name: project.name, group: groupName }));
+      }
+    } catch {
+      toast.error(t("teamUpdateFailed"));
+    }
   }
 
   const toolbarContent = (
@@ -565,7 +639,17 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   {project.billable ? t("billable") : t("nonBillable")}
                 </DirectoryTableCell>
                 <DirectoryTableCell>
-                  {project.is_private ? t("private") : t("everyone")}
+                  <SelectDropdown
+                    aria-label={`${t("team")} ${project.name}`}
+                    onChange={(value) => void handleTeamChange(project, value)}
+                    options={teamOptions}
+                    value={(() => {
+                      const pg =
+                        project.id != null ? projectGroupsByProject.get(project.id) : undefined;
+                      if (pg) return `group:${pg.groupId}`;
+                      return project.is_private ? "private" : "everyone";
+                    })()}
+                  />
                 </DirectoryTableCell>
                 <div className="flex items-center">
                   <IconButton

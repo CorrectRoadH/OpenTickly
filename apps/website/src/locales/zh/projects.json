@@ -103,5 +103,8 @@
   "billableHours": "可计费小时数",
   "editProject": "编辑项目",
   "addMember": "添加成员",
-  "viewInReports": "在报告中查看"
+  "viewInReports": "在报告中查看",
+  "teamUpdated": "已更新 {{name}} 的团队访问权限",
+  "teamUpdatedToGroup": "已将 {{name}} 设为对群组 {{group}} 可见",
+  "teamUpdateFailed": "更新团队访问权限失败"
 }

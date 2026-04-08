@@ -131,6 +131,9 @@ export {
   useWorkspaceUsersQuery,
   useAddProjectMemberMutation,
   useDeleteProjectMutation,
+  useProjectGroupsQuery,
+  useAddProjectGroupMutation,
+  useDeleteProjectGroupMutation,
 } from "./web-shell-projects.ts";
 
 export {
