@@ -159,6 +159,14 @@ func parsePathID(ctx echo.Context, key string) (int64, bool) {
 	return value, true
 }
 
+func parseQueryInt64(raw string) (int64, bool) {
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return value, true
+}
+
 func (handler *Handler) publicTrackWorkspaceID(ctx echo.Context) (int64, error) {
 	if workspaceID, ok := parsePathID(ctx, "workspace_id"); ok {
 		if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {

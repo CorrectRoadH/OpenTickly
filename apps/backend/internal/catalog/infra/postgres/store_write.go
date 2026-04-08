@@ -509,6 +509,50 @@ func (store *Store) DeleteProject(ctx context.Context, workspaceID int64, projec
 	return nil
 }
 
+func (store *Store) ReassignProjectTimeEntries(ctx context.Context, workspaceID int64, fromProjectID int64, toProjectID int64) (int64, error) {
+	tag, err := store.pool.Exec(
+		ctx,
+		`update tracking_time_entries
+		set project_id = $3
+		where workspace_id = $1 and project_id = $2`,
+		workspaceID,
+		fromProjectID,
+		toProjectID,
+	)
+	if err != nil {
+		return 0, writeCatalogError("reassign project time entries", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (store *Store) DeleteProjectTasks(ctx context.Context, workspaceID int64, projectID int64) (int64, error) {
+	tag, err := store.pool.Exec(
+		ctx,
+		`delete from catalog_tasks where workspace_id = $1 and project_id = $2`,
+		workspaceID,
+		projectID,
+	)
+	if err != nil {
+		return 0, writeCatalogError("delete project tasks", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
+func (store *Store) UnassignProjectTimeEntries(ctx context.Context, workspaceID int64, projectID int64) (int64, error) {
+	tag, err := store.pool.Exec(
+		ctx,
+		`update tracking_time_entries
+		set project_id = null
+		where workspace_id = $1 and project_id = $2`,
+		workspaceID,
+		projectID,
+	)
+	if err != nil {
+		return 0, writeCatalogError("unassign project time entries", err)
+	}
+	return tag.RowsAffected(), nil
+}
+
 func (store *Store) CreateTask(
 	ctx context.Context,
 	command catalogapplication.CreateTaskCommand,

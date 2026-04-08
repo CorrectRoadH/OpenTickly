@@ -340,12 +340,18 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     );
   }
 
-  async function handleDelete(project: GithubComTogglTogglApiInternalModelsProject) {
-    if (project.id == null || !window.confirm(t("deleteProjectConfirm", { name: project.name }))) {
-      return;
-    }
+  async function handleDelete(
+    project: GithubComTogglTogglApiInternalModelsProject,
+    mode: "unassign" | "reassign",
+    reassignProjectId?: number,
+  ) {
+    if (project.id == null) return;
 
-    await deleteProjectMutation.mutateAsync(project.id);
+    await deleteProjectMutation.mutateAsync({
+      projectId: project.id,
+      teDeletionMode: "unassign",
+      reassignTo: mode === "reassign" ? reassignProjectId : undefined,
+    });
     setStatusMessage(t("deleteProject", { name: project.name }));
   }
 
@@ -459,7 +465,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onClick={() => {
             if (!window.confirm(t("deleteProjectsConfirm", { count: selectedIds.size }))) return;
             for (const id of selectedIds) {
-              void deleteProjectMutation.mutateAsync(id);
+              void deleteProjectMutation.mutateAsync({ projectId: id, teDeletionMode: "unassign" });
             }
             setSelectedIds(new Set());
             setStatusMessage(t("deleteProjectsConfirm", { count: selectedIds.size }));
@@ -581,14 +587,17 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                     onArchiveToggle={() => {
                       void handleArchiveToggle(project);
                     }}
-                    onDelete={() => {
-                      void handleDelete(project);
+                    onDelete={(mode, reassignProjectId) => {
+                      void handleDelete(project, mode, reassignProjectId);
                     }}
                     onEdit={() => openEditDialog(project)}
                     onTemplateToggle={() => {
                       void handleTemplateToggle(project);
                     }}
                     project={project}
+                    reassignTargets={projects
+                      .filter((p) => p.id != null && p.id !== project.id && p.active !== false)
+                      .map((p) => ({ id: p.id!, name: p.name ?? t("untitledProject") }))}
                     workspaceId={workspaceId}
                   />
                 </div>

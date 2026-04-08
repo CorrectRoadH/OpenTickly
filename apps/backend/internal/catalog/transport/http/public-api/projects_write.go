@@ -153,11 +153,31 @@ func (handler *Handler) DeletePublicTrackProject(
 		return err
 	}
 
-	if mode := strings.TrimSpace(lo.FromPtr(params.TeDeletionMode)); mode != "" {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	mode := strings.TrimSpace(lo.FromPtr(params.TeDeletionMode))
+	if mode == "" {
+		mode = "unassign"
+	}
+	if mode != "unassign" && mode != "delete" {
+		return ctx.JSON(http.StatusBadRequest, "teDeletionMode must be 'unassign' or 'delete'")
 	}
 
-	if err := handler.catalog.DeleteProject(ctx.Request().Context(), workspaceID, projectID); err != nil {
+	// Parse optional reassign_to from query (extension beyond v9 spec).
+	var reassignTo *int64
+	if raw := ctx.QueryParam("reassign_to"); raw != "" {
+		id, parseOk := parseQueryInt64(raw)
+		if !parseOk {
+			return ctx.JSON(http.StatusBadRequest, "invalid reassign_to")
+		}
+		reassignTo = &id
+	}
+
+	cmd := catalogapplication.DeleteProjectCommand{
+		WorkspaceID:    workspaceID,
+		ProjectID:      projectID,
+		TEDeletionMode: mode,
+		ReassignToID:   reassignTo,
+	}
+	if err := handler.catalog.DeleteProjectWithOptions(ctx.Request().Context(), cmd); err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}

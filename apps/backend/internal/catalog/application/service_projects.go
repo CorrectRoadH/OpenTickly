@@ -175,39 +175,104 @@ func (service *Service) SetProjectPinned(ctx context.Context, command SetProject
 	return view, nil
 }
 
+type DeleteProjectCommand struct {
+	WorkspaceID      int64
+	ProjectID        int64
+	TEDeletionMode   string // "unassign" (default) or "delete"
+	ReassignToID     *int64 // if set, reassign time entries to this project before deleting
+}
+
 func (service *Service) DeleteProject(ctx context.Context, workspaceID int64, projectID int64) error {
-	if err := requireWorkspaceID(workspaceID); err != nil {
+	return service.DeleteProjectWithOptions(ctx, DeleteProjectCommand{
+		WorkspaceID:    workspaceID,
+		ProjectID:      projectID,
+		TEDeletionMode: "unassign",
+	})
+}
+
+func (service *Service) DeleteProjectWithOptions(ctx context.Context, cmd DeleteProjectCommand) error {
+	if err := requireWorkspaceID(cmd.WorkspaceID); err != nil {
 		return err
 	}
 	service.logger.InfoContext(ctx, "deleting project",
-		"workspace_id", workspaceID,
-		"project_id", projectID,
+		"workspace_id", cmd.WorkspaceID,
+		"project_id", cmd.ProjectID,
+		"te_deletion_mode", cmd.TEDeletionMode,
+		"reassign_to", cmd.ReassignToID,
 	)
-	if _, ok, err := service.store.GetProject(ctx, workspaceID, projectID); err != nil {
+	if _, ok, err := service.store.GetProject(ctx, cmd.WorkspaceID, cmd.ProjectID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to get project for deletion",
-			"workspace_id", workspaceID,
-			"project_id", projectID,
+			"workspace_id", cmd.WorkspaceID,
+			"project_id", cmd.ProjectID,
 			"error", err.Error(),
 		)
 		return err
 	} else if !ok {
-		service.logger.WarnContext(ctx, "project not found for deletion",
-			"workspace_id", workspaceID,
-			"project_id", projectID,
-		)
 		return ErrProjectNotFound
 	}
-	if err := service.store.DeleteProject(ctx, workspaceID, projectID); err != nil {
+
+	// If reassigning, verify target project exists and move time entries.
+	if cmd.ReassignToID != nil {
+		if _, ok, err := service.store.GetProject(ctx, cmd.WorkspaceID, *cmd.ReassignToID); err != nil {
+			return err
+		} else if !ok {
+			return ErrProjectNotFound
+		}
+		count, err := service.store.ReassignProjectTimeEntries(ctx, cmd.WorkspaceID, cmd.ProjectID, *cmd.ReassignToID)
+		if err != nil {
+			service.logger.ErrorContext(ctx, "failed to reassign time entries",
+				"workspace_id", cmd.WorkspaceID,
+				"project_id", cmd.ProjectID,
+				"reassign_to", *cmd.ReassignToID,
+				"error", err.Error(),
+			)
+			return err
+		}
+		service.logger.InfoContext(ctx, "reassigned time entries",
+			"count", count,
+			"from_project", cmd.ProjectID,
+			"to_project", *cmd.ReassignToID,
+		)
+	} else if cmd.TEDeletionMode == "unassign" || cmd.TEDeletionMode == "" {
+		// Explicitly unassign before delete (DB FK does SET NULL anyway, but be explicit).
+		if _, err := service.store.UnassignProjectTimeEntries(ctx, cmd.WorkspaceID, cmd.ProjectID); err != nil {
+			service.logger.ErrorContext(ctx, "failed to unassign time entries",
+				"workspace_id", cmd.WorkspaceID,
+				"project_id", cmd.ProjectID,
+				"error", err.Error(),
+			)
+			return err
+		}
+	}
+	// mode "delete" — time entries stay with project_id set to NULL via FK ON DELETE SET NULL.
+
+	// Delete tasks under this project.
+	tasksDeleted, err := service.store.DeleteProjectTasks(ctx, cmd.WorkspaceID, cmd.ProjectID)
+	if err != nil {
+		service.logger.ErrorContext(ctx, "failed to delete project tasks",
+			"workspace_id", cmd.WorkspaceID,
+			"project_id", cmd.ProjectID,
+			"error", err.Error(),
+		)
+		return err
+	}
+	service.logger.InfoContext(ctx, "deleted project tasks",
+		"workspace_id", cmd.WorkspaceID,
+		"project_id", cmd.ProjectID,
+		"tasks_deleted", tasksDeleted,
+	)
+
+	if err := service.store.DeleteProject(ctx, cmd.WorkspaceID, cmd.ProjectID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to delete project",
-			"workspace_id", workspaceID,
-			"project_id", projectID,
+			"workspace_id", cmd.WorkspaceID,
+			"project_id", cmd.ProjectID,
 			"error", err.Error(),
 		)
 		return err
 	}
 	service.logger.InfoContext(ctx, "project deleted",
-		"workspace_id", workspaceID,
-		"project_id", projectID,
+		"workspace_id", cmd.WorkspaceID,
+		"project_id", cmd.ProjectID,
 	)
 	return nil
 }

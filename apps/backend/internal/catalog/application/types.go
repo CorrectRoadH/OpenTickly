@@ -354,6 +354,9 @@ type Store interface {
 	CreateProject(context.Context, CreateProjectCommand) (ProjectView, error)
 	UpdateProject(context.Context, ProjectView) error
 	DeleteProject(context.Context, int64, int64) error
+	ReassignProjectTimeEntries(ctx context.Context, workspaceID int64, fromProjectID int64, toProjectID int64) (int64, error)
+	DeleteProjectTasks(ctx context.Context, workspaceID int64, projectID int64) (int64, error)
+	UnassignProjectTimeEntries(ctx context.Context, workspaceID int64, projectID int64) (int64, error)
 	CountProjectTasks(context.Context, int64, []int64) ([]ProjectCountView, error)
 	CountProjectUsers(context.Context, int64, []int64) ([]ProjectCountView, error)
 	SetProjectPinned(context.Context, int64, int64, bool) error

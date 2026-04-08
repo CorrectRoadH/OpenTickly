@@ -322,7 +322,15 @@ export function useDeleteProjectMutation(workspaceId: number) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (projectId: number) =>
+    mutationFn: ({
+      projectId,
+      teDeletionMode = "unassign",
+      reassignTo,
+    }: {
+      projectId: number;
+      reassignTo?: number;
+      teDeletionMode?: "delete" | "unassign";
+    }) =>
       unwrapWebApiResult(
         deleteWorkspaceProject({
           path: {
@@ -330,8 +338,9 @@ export function useDeleteProjectMutation(workspaceId: number) {
             workspace_id: workspaceId,
           },
           query: {
-            teDeletionMode: "unassign",
-          },
+            teDeletionMode,
+            ...(reassignTo != null ? { reassign_to: String(reassignTo) } : {}),
+          } as Record<string, string>,
         }),
       ),
     onSuccess: async () => {
