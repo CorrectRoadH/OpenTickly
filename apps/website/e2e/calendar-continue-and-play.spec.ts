@@ -151,14 +151,12 @@ test.describe("Calendar current-time-indicator play button", () => {
     await expect(timerButton).toHaveAttribute("data-icon", "play");
 
     // Find and click the current time indicator play button.
-    // Wait for the POST response so the UI has time to reflect the new timer state.
+    // Scroll into view first — on CI the indicator may render outside the viewport
+    // due to the Date mock placing it at a specific hour position.
     const indicatorPlayButton = page.getByTestId("current-time-indicator-play");
     await expect(indicatorPlayButton).toBeVisible();
-    const startTimerResponse = page.waitForResponse(
-      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "POST",
-    );
+    await indicatorPlayButton.scrollIntoViewIfNeeded();
     await indicatorPlayButton.click();
-    await startTimerResponse;
 
     // Verify a timer is now running — the action button should show stop icon
     await expect(timerButton).toHaveAttribute("data-icon", "stop");
