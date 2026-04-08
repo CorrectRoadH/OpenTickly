@@ -30,7 +30,7 @@ func (store *Store) CreateTimeEntry(
 		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
 			expense_ids, deleted_at, created_at, updated_at,
-			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active,
+			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active, null::text as project_color,
 			`+tagNamesReturning+``,
 		record.WorkspaceID,
 		record.UserID,
@@ -79,6 +79,7 @@ func (store *Store) GetTimeEntry(
 			p.name,
 			t.name,
 			p.active,
+			p.color,
 			`+tagNamesSubquery+`
 		from tracking_time_entries te
 		left join catalog_clients c on c.id = te.client_id
@@ -128,6 +129,7 @@ func (store *Store) GetTimeEntryForUser(
 			p.name,
 			t.name,
 			p.active,
+			p.color,
 			`+tagNamesSubquery+`
 		from tracking_time_entries te
 		left join catalog_clients c on c.id = te.client_id
@@ -174,6 +176,7 @@ func (store *Store) ListTimeEntries(
 		p.name,
 		t.name,
 		p.active,
+		p.color,
 		` + tagNamesSubquery + `
 	from tracking_time_entries te
 	left join catalog_clients c on c.id = te.client_id
@@ -245,6 +248,7 @@ func (store *Store) ListTimeEntriesForUser(
 		p.name,
 		t.name,
 		p.active,
+		p.color,
 		` + tagNamesSubquery + `
 	from tracking_time_entries te
 	left join catalog_clients c on c.id = te.client_id
@@ -379,6 +383,7 @@ func (store *Store) ListWorkspaceTimeEntries(
 		p.name,
 		t.name,
 		p.active,
+		p.color,
 		` + tagNamesSubquery + `
 	from tracking_time_entries te
 	left join catalog_clients c on c.id = te.client_id
@@ -435,6 +440,7 @@ func (store *Store) GetCurrentTimeEntry(ctx context.Context, userID int64) (trac
 			p.name,
 			t.name,
 			p.active,
+			p.color,
 			`+tagNamesSubquery+`
 		from tracking_running_timers rt
 		join tracking_time_entries te on te.id = rt.time_entry_id
@@ -479,6 +485,7 @@ func (store *Store) GetCurrentTimeEntry(ctx context.Context, userID int64) (trac
 			p.name,
 			t.name,
 			p.active,
+			p.color,
 			`+tagNamesSubquery+`
 		from tracking_time_entries te
 		left join catalog_clients c on c.id = te.client_id
@@ -535,7 +542,7 @@ func (store *Store) UpdateTimeEntry(
 		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
 			start_time, stop_time, duration_seconds, created_with, tag_ids,
 			expense_ids, deleted_at, created_at, updated_at,
-			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active,
+			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active, null::text as project_color,
 			`+tagNamesReturning+``,
 		record.WorkspaceID,
 		record.UserID,
@@ -610,6 +617,7 @@ func scanTimeEntry(scanner interface {
 		projectName   *string
 		taskName      *string
 		projectActive *bool
+		projectColor  *string
 	)
 	if err := scanner.Scan(
 		&entry.ID,
@@ -633,11 +641,12 @@ func scanTimeEntry(scanner interface {
 		&projectName,
 		&taskName,
 		&projectActive,
+		&projectColor,
 		&entry.TagNames,
 	); err != nil {
 		return trackingapplication.TimeEntryView{}, writeTrackingError("scan tracking time entry", err)
 	}
-	buildTimeEntryView(&entry, start, stop, deletedAt, createdAt, updatedAt, clientName, projectName, taskName, projectActive)
+	buildTimeEntryView(&entry, start, stop, deletedAt, createdAt, updatedAt, clientName, projectName, taskName, projectActive, projectColor)
 	return entry, nil
 }
 

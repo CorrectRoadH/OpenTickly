@@ -142,12 +142,13 @@ type ProjectView struct {
 }
 
 type TaskView struct {
-	ID          int64
-	WorkspaceID int64
-	ProjectID   *int64
-	Name        string
-	Active      bool
-	ProjectName *string
+	ID           int64
+	WorkspaceID  int64
+	ProjectID    *int64
+	Name         string
+	Active       bool
+	ProjectName  *string
+	ProjectColor *string
 }
 
 type TaskPage struct {

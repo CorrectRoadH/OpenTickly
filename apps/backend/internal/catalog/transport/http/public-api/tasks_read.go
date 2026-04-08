@@ -247,12 +247,13 @@ func (handler *Handler) listPublicTrackTasks(
 
 func taskViewToAPI(view catalogapplication.TaskView) publictrackapi.ModelsTask {
 	return publictrackapi.ModelsTask{
-		Active:      lo.ToPtr(view.Active),
-		Id:          lo.ToPtr(int(view.ID)),
-		Name:        lo.ToPtr(view.Name),
-		ProjectId:   intPointerFromInt64Pointer(view.ProjectID),
-		ProjectName: view.ProjectName,
-		WorkspaceId: lo.ToPtr(int(view.WorkspaceID)),
+		Active:       lo.ToPtr(view.Active),
+		Id:           lo.ToPtr(int(view.ID)),
+		Name:         lo.ToPtr(view.Name),
+		ProjectColor: view.ProjectColor,
+		ProjectId:    intPointerFromInt64Pointer(view.ProjectID),
+		ProjectName:  view.ProjectName,
+		WorkspaceId:  lo.ToPtr(int(view.WorkspaceID)),
 	}
 }
 

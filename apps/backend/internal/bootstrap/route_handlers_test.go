@@ -1472,16 +1472,16 @@ func TestPublicTrackRoutesServeRealCatalogAndAccountData(t *testing.T) {
 		t.Fatalf("expected deleted project row to be removed, got %d", remainingProjectCount)
 	}
 
-	var seededTaskProjectID *int64
+	var seededTaskCount int
 	if err := database.Pool.QueryRow(
 		context.Background(),
-		"select project_id from catalog_tasks where name = $1",
+		"select count(*) from catalog_tasks where name = $1",
 		"Prep launch brief",
-	).Scan(&seededTaskProjectID); err != nil {
-		t.Fatalf("load seeded task project id: %v", err)
+	).Scan(&seededTaskCount); err != nil {
+		t.Fatalf("count seeded task after project delete: %v", err)
 	}
-	if seededTaskProjectID != nil {
-		t.Fatalf("expected remaining seeded task to be unassigned from deleted project, got %v", *seededTaskProjectID)
+	if seededTaskCount != 0 {
+		t.Fatalf("expected seeded task to be cascade-deleted with project, got count %d", seededTaskCount)
 	}
 
 	deleteTag := performAuthorizedJSONRequest(

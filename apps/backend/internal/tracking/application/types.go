@@ -44,6 +44,7 @@ type TimeEntryView struct {
 	ProjectName   *string
 	TaskName      *string
 	ProjectActive *bool
+	ProjectColor  *string
 }
 
 type ProjectStatisticsView struct {

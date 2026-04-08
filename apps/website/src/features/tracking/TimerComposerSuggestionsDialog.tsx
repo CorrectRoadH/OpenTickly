@@ -214,9 +214,10 @@ export function TimerComposerSuggestionsDialog({
             <SuggestionSectionTitle title={t("project") + "s"} />
             <div className="px-1 pb-1">
               {suggestedTasks.map((task) => {
-                const color = resolveProjectColorValue(
-                  projects.find((p) => p.id === task.project_id) ?? {},
-                );
+                const color = resolveProjectColorValue({
+                  color: task.project_color,
+                  name: task.project_name,
+                });
                 const label = `${task.project_name?.trim() ?? ""} | ${task.name?.trim() ?? ""}`;
                 return (
                   <SuggestionRow

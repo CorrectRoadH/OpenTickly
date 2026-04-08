@@ -196,6 +196,10 @@ func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.G
 	if tagNames == nil {
 		tagNames = []string{}
 	}
+	expenseIDs := intsFromInt64s(view.ExpenseIDs)
+	if expenseIDs == nil {
+		expenseIDs = []int{}
+	}
 	return publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry{
 		At:            timePointer(view.UpdatedAt),
 		Billable:      lo.ToPtr(view.Billable),
@@ -204,9 +208,11 @@ func timeEntryViewToAPI(view trackingapplication.TimeEntryView) publictrackapi.G
 		Description:   lo.ToPtr(view.Description),
 		Duration:      lo.ToPtr(view.Duration),
 		Duronly:       lo.ToPtr(true),
+		ExpenseIds:    &expenseIDs,
 		Id:            lo.ToPtr(int(view.ID)),
 		Pid:           intPointerFromInt64Pointer(view.ProjectID),
 		ProjectActive: view.ProjectActive,
+		ProjectColor:  view.ProjectColor,
 		ProjectId:     intPointerFromInt64Pointer(view.ProjectID),
 		ProjectName:   view.ProjectName,
 		Start:         timePointer(view.Start),

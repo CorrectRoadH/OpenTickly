@@ -47,6 +47,7 @@ func buildTimeEntryView(
 	projectName *string,
 	taskName *string,
 	projectActive *bool,
+	projectColor *string,
 ) {
 	entry.Start = start.UTC()
 	entry.Stop = xptr.CloneUTC(stop)
@@ -57,6 +58,7 @@ func buildTimeEntryView(
 	entry.ProjectName = xptr.Clone(projectName)
 	entry.TaskName = xptr.Clone(taskName)
 	entry.ProjectActive = xptr.Clone(projectActive)
+	entry.ProjectColor = xptr.Clone(projectColor)
 	entry.TagIDs = coalesceInt64Slice(entry.TagIDs)
 	entry.TagNames = coalesceStringSlice(entry.TagNames)
 	entry.ExpenseIDs = coalesceInt64Slice(entry.ExpenseIDs)

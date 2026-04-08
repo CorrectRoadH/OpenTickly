@@ -529,7 +529,7 @@ func (store *Store) ListTasks(
 	rows, err := store.pool.Query(
 		ctx,
 		fmt.Sprintf(
-			`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+			`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name, p.color
 			from catalog_tasks t
 			left join catalog_projects p on p.id = t.project_id
 			where %s
@@ -575,7 +575,7 @@ func (store *Store) GetTask(
 ) (catalogapplication.TaskView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name, p.color
 		from catalog_tasks t
 		left join catalog_projects p on p.id = t.project_id
 		where t.workspace_id = $1 and t.id = $2`,
@@ -599,7 +599,7 @@ func (store *Store) GetTaskByWorkspace(
 ) (catalogapplication.TaskView, bool, error) {
 	row := store.pool.QueryRow(
 		ctx,
-		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name
+		`select t.id, t.workspace_id, t.project_id, t.name, t.active, p.name, p.color
 		from catalog_tasks t
 		left join catalog_projects p on p.id = t.project_id
 		where t.workspace_id = $1 and t.id = $2`,

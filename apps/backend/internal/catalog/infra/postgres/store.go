@@ -122,6 +122,7 @@ func scanTask(scanner scanner) (catalogapplication.TaskView, error) {
 		&task.Name,
 		&task.Active,
 		&task.ProjectName,
+		&task.ProjectColor,
 	)
 	return task, err
 }

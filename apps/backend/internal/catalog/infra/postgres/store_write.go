@@ -561,7 +561,7 @@ func (store *Store) CreateTask(
 		ctx,
 		`insert into catalog_tasks (workspace_id, project_id, name, active, created_by)
 		values ($1, $2, $3, $4, $5)
-		returning id, workspace_id, project_id, name, active`,
+		returning id, workspace_id, project_id, name, active, null::text as project_name, null::text as project_color`,
 		command.WorkspaceID,
 		command.ProjectID,
 		command.Name,
@@ -569,8 +569,8 @@ func (store *Store) CreateTask(
 		command.CreatedBy,
 	)
 
-	var task catalogapplication.TaskView
-	if err := row.Scan(&task.ID, &task.WorkspaceID, &task.ProjectID, &task.Name, &task.Active); err != nil {
+	task, err := scanTask(row)
+	if err != nil {
 		return catalogapplication.TaskView{}, writeCatalogError("create catalog task", err)
 	}
 	return task, nil
