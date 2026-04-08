@@ -105,7 +105,13 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
   const targetH = Math.round(((goal.target_seconds ?? 0) / 3600) * 10) / 10;
   const progress = targetH > 0 ? Math.min((trackedH / targetH) * 100, 100) : 0;
   const isLimit = goal.comparison === "less_than" || goal.comparison === "lte";
-  const ringColor = isLimit ? "var(--track-warning)" : "var(--track-accent)";
+  const achieved = isLimit ? progress < 100 : progress >= 100;
+  const exceeded = isLimit && progress >= 100;
+  const ringColor = exceeded
+    ? "var(--track-danger-fill)"
+    : isLimit
+      ? "var(--track-warning-fill)"
+      : "var(--track-accent)";
 
   return (
     <div
@@ -127,7 +133,36 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
             strokeWidth="3"
           />
         </svg>
-        <span className="absolute text-[10px]">{goal.icon ?? "🎯"}</span>
+        <span className="absolute text-[10px]" data-testid="goal-ring-icon">
+          {exceeded ? (
+            <svg
+              className="size-3.5"
+              style={{ color: "var(--track-danger-fill)" }}
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path d="M3 3l8 8M11 3l-8 8" />
+            </svg>
+          ) : achieved ? (
+            <svg
+              className="size-3.5"
+              style={{ color: "var(--track-accent)" }}
+              viewBox="0 0 14 14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2.5 7.5l3 3 6-7" />
+            </svg>
+          ) : (
+            (goal.icon ?? "🎯")
+          )}
+        </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-1 truncate text-[12px] leading-tight text-white">
@@ -136,7 +171,10 @@ export function GoalItem({ goal }: { goal: HandlergoalsApiResponse }): ReactElem
             {isLimit ? (
               <svg
                 data-direction="down"
-                className="size-3 text-[var(--track-warning)]"
+                className="size-3"
+                style={{
+                  color: exceeded ? "var(--track-danger-fill)" : "var(--track-warning-fill)",
+                }}
                 viewBox="0 0 12 12"
                 fill="none"
                 stroke="currentColor"

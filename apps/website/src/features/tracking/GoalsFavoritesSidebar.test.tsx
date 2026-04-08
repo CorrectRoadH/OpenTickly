@@ -43,17 +43,28 @@ describe("GoalItem icon differentiation", () => {
     expect(indicator.querySelector("[data-direction='down']")).not.toBeNull();
   });
 
-  it("uses warning color for less_than goals when over threshold", () => {
+  it("uses warning color for less_than goals under limit", () => {
     renderGoalItem(
       makeGoal({
         comparison: "less_than",
         target_seconds: 3600,
-        current_recurrence_tracked_seconds: 3000, // 83% of limit
+        current_recurrence_tracked_seconds: 1800, // 50% of limit
       }),
     );
     const ring = screen.getByTestId("goal-progress-ring");
-    // Should use warning stroke color instead of accent
-    expect(ring.getAttribute("stroke")).toContain("warning");
+    expect(ring.getAttribute("stroke")).toContain("warning-fill");
+  });
+
+  it("uses danger color for less_than goals that exceeded limit", () => {
+    renderGoalItem(
+      makeGoal({
+        comparison: "less_than",
+        target_seconds: 3600,
+        current_recurrence_tracked_seconds: 3600, // 100% - exceeded
+      }),
+    );
+    const ring = screen.getByTestId("goal-progress-ring");
+    expect(ring.getAttribute("stroke")).toContain("danger-fill");
   });
 
   it("uses accent color for more_than goals", () => {
