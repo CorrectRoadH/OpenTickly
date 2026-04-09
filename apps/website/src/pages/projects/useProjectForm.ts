@@ -19,7 +19,6 @@ export type ProjectFormState = {
   recurring: boolean;
   estimatedHours: number;
   fixedFee: number;
-  error: string | null;
 };
 
 export type ProjectFormAction =
@@ -36,8 +35,7 @@ export type ProjectFormAction =
   | { type: "SET_END_DATE"; value: string }
   | { type: "SET_RECURRING"; value: boolean }
   | { type: "SET_ESTIMATED_HOURS"; value: number }
-  | { type: "SET_FIXED_FEE"; value: number }
-  | { type: "SET_ERROR"; error: string | null };
+  | { type: "SET_FIXED_FEE"; value: number };
 
 const DEFAULT_STATE: ProjectFormState = {
   editorMode: null,
@@ -53,7 +51,6 @@ const DEFAULT_STATE: ProjectFormState = {
   recurring: false,
   estimatedHours: 0,
   fixedFee: 0,
-  error: null,
 };
 
 function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFormState {
@@ -76,7 +73,6 @@ function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFor
         recurring: action.project.recurring === true,
         estimatedHours: action.project.estimated_hours ?? 0,
         fixedFee: action.project.fixed_fee ?? 0,
-        error: null,
       };
     case "CLOSE":
       return { ...state, editorMode: null, editorProject: null };
@@ -102,8 +98,6 @@ function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFor
       return { ...state, estimatedHours: action.value };
     case "SET_FIXED_FEE":
       return { ...state, fixedFee: action.value };
-    case "SET_ERROR":
-      return { ...state, error: action.error };
   }
 }
 

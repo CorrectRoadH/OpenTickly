@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 
@@ -269,12 +270,10 @@ export function ProjectEditorAdvanced({
       {/* Template */}
       <label className="flex items-center justify-between rounded-lg border border-[var(--track-border)] bg-[var(--track-control-surface-muted)] px-3 py-2.5">
         <span className="text-[14px] text-white">{t("useAsTemplate")}</span>
-        <input
+        <AppCheckbox
           aria-label={t("useAsTemplate")}
           checked={template}
-          className="size-4"
           onChange={(event) => onTemplateChange(event.target.checked)}
-          type="checkbox"
         />
       </label>
     </div>

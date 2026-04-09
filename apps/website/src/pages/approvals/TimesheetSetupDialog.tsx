@@ -2,7 +2,13 @@ import { type ReactElement, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown as ChevronDownLucide, Search as SearchLucide } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { AppButton, Dropdown, SelectDropdown, useDropdownClose } from "@opentoggl/web-ui";
+import {
+  AppButton,
+  AppCheckbox,
+  Dropdown,
+  SelectDropdown,
+  useDropdownClose,
+} from "@opentoggl/web-ui";
 
 import { postTimesheetSetups } from "../../shared/api/public/track/index.ts";
 import type { ModelsSimpleWorkspaceUser } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -170,11 +176,9 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                   className="flex cursor-pointer items-center gap-2.5 px-3 py-1.5 hover:bg-[var(--track-row-hover)]"
                   key={m.id}
                 >
-                  <input
+                  <AppCheckbox
                     checked={selectedMemberIds.has(m.id)}
-                    className="accent-[var(--track-accent)]"
                     onChange={() => toggleMember(m.id)}
-                    type="checkbox"
                   />
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--track-accent-soft)] text-[10px] font-semibold text-[var(--track-accent)]">
                     {m.name.charAt(0).toUpperCase()}
@@ -243,11 +247,9 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
           {/* Reminder */}
           <div className="border-t border-[var(--track-border)] pt-5">
             <label className="flex cursor-pointer items-center gap-2.5">
-              <input
+              <AppCheckbox
                 checked={reminderEnabled}
-                className="accent-[var(--track-accent)]"
                 onChange={(e) => setReminderEnabled(e.target.checked)}
-                type="checkbox"
               />
               <span className="text-[12px] text-white">{t("remindMembersToSubmit")}</span>
             </label>
@@ -275,20 +277,16 @@ export function TimesheetSetupDialog({ onClose }: TimesheetSetupDialogProps): Re
                   />
                 </div>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
-                  <input
+                  <AppCheckbox
                     checked={sendViaSlack}
-                    className="accent-[var(--track-accent)]"
                     onChange={(e) => setSendViaSlack(e.target.checked)}
-                    type="checkbox"
                   />
                   <span className="text-[12px] text-white">{t("sendReminderViaSlack")}</span>
                 </label>
                 <label className="mb-2 flex cursor-pointer items-center gap-2.5">
-                  <input
+                  <AppCheckbox
                     checked={sendViaEmail}
-                    className="accent-[var(--track-accent)]"
                     onChange={(e) => setSendViaEmail(e.target.checked)}
-                    type="checkbox"
                   />
                   <span className="text-[12px] text-white">{t("sendReminderViaEmail")}</span>
                 </label>

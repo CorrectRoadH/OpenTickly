@@ -1,7 +1,8 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { AppButton, AppCheckbox, AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 import {
   useUpdateWorkspacePermissionsMutation,
@@ -48,11 +49,10 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           permissionsQuery.data.workspace.only_admins_see_team_dashboard ?? false,
       }
     : defaultPermissionValues;
-  const { handleSubmit, register } = useForm<PermissionFormValues>({
+  const { handleSubmit, watch, setValue } = useForm<PermissionFormValues>({
     values: serverValues,
   });
   const [status, setStatus] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   if (permissionsQuery.isPending || !permissionsQuery.data) {
     if (permissionsQuery.isError) {
@@ -86,7 +86,6 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
         data-testid="permission-config-form"
         onSubmit={handleSubmit(async (values) => {
           setStatus(null);
-          setSaveError(null);
 
           try {
             await updateMutation.mutateAsync({
@@ -99,7 +98,7 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
             });
             setStatus(t("permissionsSaved"));
           } catch {
-            setSaveError(t("unableToSavePermissions"));
+            toast.error(t("unableToSavePermissions"));
           }
         })}
       >
@@ -118,12 +117,11 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
               className="flex items-start gap-3 rounded-xl border border-[var(--track-border-input)] bg-[var(--track-input-bg)] px-4 py-3"
               key={name}
             >
-              <input
+              <AppCheckbox
                 aria-label={t(name)}
-                className="mt-1 h-4 w-4 rounded border-white/20 bg-[var(--track-panel)] text-[var(--track-accent-secondary)] focus:ring-[var(--track-accent-secondary)]"
-                disabled={updateMutation.isPending}
-                type="checkbox"
-                {...register(name)}
+                checked={watch(name)}
+                className="mt-1"
+                onChange={(e) => setValue(name, e.target.checked)}
               />
               <span className="space-y-1">
                 <span className="block text-sm font-semibold text-white">{t(name)}</span>
@@ -142,7 +140,6 @@ export function PermissionConfigPage({ workspaceId }: PermissionConfigPageProps)
           {status ? (
             <p className="text-sm font-medium text-[var(--track-text-accent)]">{status}</p>
           ) : null}
-          {saveError ? <p className="text-sm font-medium text-rose-300">{saveError}</p> : null}
         </div>
       </form>
     </AppPanel>

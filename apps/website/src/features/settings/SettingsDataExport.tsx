@@ -1,6 +1,7 @@
-import { AppButton, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
+import { AppButton, AppCheckbox, SelectDropdown, SurfaceCard } from "@opentoggl/web-ui";
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 
@@ -139,7 +140,6 @@ function WorkspaceDataExport(): ReactElement {
     () => new Set(exportObjectTypes.map((t) => t.key)),
   );
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function toggleObject(key: string) {
     setSelected((prev) => {
@@ -164,7 +164,6 @@ function WorkspaceDataExport(): ReactElement {
   async function handleExport() {
     if (selected.size === 0 || !workspaceId) return;
     setExporting(true);
-    setError(null);
     try {
       const result = await postWorkspaceExports({
         path: { workspace_id: workspaceId },
@@ -172,7 +171,7 @@ function WorkspaceDataExport(): ReactElement {
       });
       const token = result.data as string;
       if (!token) {
-        setError(t("exportFailedNoTokenReceived"));
+        toast.error(t("exportFailedNoTokenReceived"));
         return;
       }
       const archiveResult = await getWorkspaceExportsDataUuidZip({
@@ -181,7 +180,7 @@ function WorkspaceDataExport(): ReactElement {
       });
       const blob = archiveResult.data as unknown as Blob;
       if (!blob) {
-        setError(t("exportFailedCouldNotDownloadArchive"));
+        toast.error(t("exportFailedCouldNotDownloadArchive"));
         return;
       }
       const url = URL.createObjectURL(blob);
@@ -193,7 +192,7 @@ function WorkspaceDataExport(): ReactElement {
       document.body.removeChild(anchor);
       URL.revokeObjectURL(url);
     } catch {
-      setError(t("exportFailedPleaseTryAgain"));
+      toast.error(t("exportFailedPleaseTryAgain"));
     } finally {
       setExporting(false);
     }
@@ -211,30 +210,22 @@ function WorkspaceDataExport(): ReactElement {
 
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-[12px] text-white">
-            <input
+            <AppCheckbox
               checked={selected.size === exportObjectTypes.length}
-              className="accent-[var(--track-accent)]"
-              data-testid="export-select-all"
               onChange={toggleAll}
-              type="checkbox"
             />
             {t("selectItemsForExport")}
           </label>
           {exportObjectTypes.map((type) => (
             <label className="flex items-center gap-2 pl-4 text-[12px] text-white" key={type.key}>
-              <input
+              <AppCheckbox
                 checked={selected.has(type.key)}
-                className="accent-[var(--track-accent)]"
-                data-testid={`export-object-${type.key}`}
                 onChange={() => toggleObject(type.key)}
-                type="checkbox"
               />
               {type.label}
             </label>
           ))}
         </div>
-
-        {error && <p className="text-[12px] text-red-400">{error}</p>}
 
         <AppButton
           data-testid="export-workspace-button"

@@ -114,7 +114,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     recurring: projectRecurring,
     estimatedHours: projectEstimatedHours,
     fixedFee: projectFixedFee,
-    error: projectEditorError,
   } = form;
   const {
     filterClientIds,
@@ -281,7 +280,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         await navigateToStatus("default");
       }
     } catch {
-      formDispatch({ type: "SET_ERROR", error: "Project name already exists" });
+      toast.error(t("projectNameAlreadyExists"));
     }
   }
 
@@ -674,7 +673,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           clients={clientsList}
           color={projectColor}
           endDate={projectEndDate}
-          error={projectEditorError}
           estimatedHours={projectEstimatedHours}
           fixedFee={projectFixedFee}
           isPending={mutationPending}
@@ -684,7 +682,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onClientChange={(v) => formDispatch({ type: "SET_CLIENT_ID", value: v })}
           onClose={() => {
             closeEditor();
-            formDispatch({ type: "SET_ERROR", error: null });
           }}
           onColorChange={(v) => formDispatch({ type: "SET_COLOR", value: v })}
           onCreateClient={async (clientName) => {
@@ -696,7 +693,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
           onFixedFeeChange={(v) => formDispatch({ type: "SET_FIXED_FEE", value: v })}
           onNameChange={(value) => {
             formDispatch({ type: "SET_NAME", value });
-            formDispatch({ type: "SET_ERROR", error: null });
           }}
           onPrivacyChange={(v) => formDispatch({ type: "SET_PRIVATE", value: v })}
           onRecurringChange={(v) => formDispatch({ type: "SET_RECURRING", value: v })}

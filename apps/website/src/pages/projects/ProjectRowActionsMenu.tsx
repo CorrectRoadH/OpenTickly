@@ -3,11 +3,13 @@ import { useTranslation } from "react-i18next";
 
 import {
   AppButton,
+  AppCheckbox,
   DropdownMenu,
   IconButton,
   MenuItem,
   MenuLink,
   MenuSeparator,
+  SelectDropdown,
   useDropdownClose,
 } from "@opentoggl/web-ui";
 
@@ -90,40 +92,31 @@ function ProjectMenuContent({
 
         <div className="mb-3 flex flex-col gap-2">
           <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white">
-            <input
+            <AppCheckbox
               checked={deletionMode === "unassign"}
-              name="deletion-mode"
               onChange={() => setDeletionMode("unassign")}
-              type="radio"
-              className="accent-[var(--track-accent)]"
             />
             {t("deletionModeUnassign")}
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white">
-            <input
+            <AppCheckbox
               checked={deletionMode === "reassign"}
-              name="deletion-mode"
               onChange={() => setDeletionMode("reassign")}
-              type="radio"
-              className="accent-[var(--track-accent)]"
             />
             {t("deletionModeReassign")}
           </label>
 
           {deletionMode === "reassign" ? (
             <div className="ml-5">
-              <select
-                className="h-7 w-full rounded-[4px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2 text-[12px] text-white outline-none focus:border-[var(--track-accent)]"
-                onChange={(e) => setReassignProjectId(Number(e.target.value) || null)}
-                value={reassignProjectId ?? ""}
-              >
-                <option value="">{t("selectProject")}</option>
-                {reassignTargets.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <SelectDropdown
+                aria-label={t("selectProject")}
+                onChange={(v) => setReassignProjectId(Number(v) || null)}
+                options={reassignTargets.map((p) => ({
+                  value: String(p.id),
+                  label: p.name,
+                }))}
+                value={reassignProjectId != null ? String(reassignProjectId) : ""}
+              />
             </div>
           ) : null}
         </div>

@@ -1,6 +1,6 @@
 import { type ChangeEvent, type ReactElement, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AppInput, useDismiss } from "@opentoggl/web-ui";
+import { AppCheckbox, AppInput, useDismiss } from "@opentoggl/web-ui";
 
 import { SearchIcon } from "../../shared/ui/icons.tsx";
 
@@ -91,11 +91,9 @@ export function ReportsProjectFilter({
                     className="flex cursor-pointer items-center gap-2.5 rounded px-2 py-1.5 text-[12px] text-white hover:bg-[var(--track-surface-muted)]"
                     key={project.id}
                   >
-                    <input
+                    <AppCheckbox
                       checked={selected.has(project.id)}
-                      className="size-3.5 accent-[var(--track-accent)]"
                       onChange={() => onToggle(project.id)}
-                      type="checkbox"
                     />
                     <span
                       className="size-2.5 shrink-0 rounded-full"

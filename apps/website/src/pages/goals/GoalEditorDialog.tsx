@@ -1,9 +1,9 @@
 import { type ReactElement, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Check, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { AppButton, SelectDropdown } from "@opentoggl/web-ui";
+import { AppButton, AppCheckbox, SelectDropdown } from "@opentoggl/web-ui";
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { CalendarIcon, ChevronDownIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
@@ -37,16 +37,22 @@ export type GoalFormData = {
   targetHours: number;
 };
 
-const COMPARISON_OPTIONS = [
-  { label: "at least", value: "more_than" },
-  { label: "less than", value: "less_than" },
-];
+function useComparisonOptions() {
+  const { t } = useTranslation("goals");
+  return [
+    { label: t("atLeast"), value: "more_than" },
+    { label: t("lessThan"), value: "less_than" },
+  ];
+}
 
-const RECURRENCE_OPTIONS = [
-  { label: "every day", value: "daily" },
-  { label: "every week", value: "weekly" },
-  { label: "weekdays", value: "daily_workdays" },
-];
+function useRecurrenceOptions() {
+  const { t } = useTranslation("goals");
+  return [
+    { label: t("everyDay"), value: "daily" },
+    { label: t("everyWeek"), value: "weekly" },
+    { label: t("weekdays"), value: "daily_workdays" },
+  ];
+}
 
 const ICON_OPTIONS: { emoji: string; label: string; value: string }[] = [
   { emoji: "🎯", label: "Target", value: "target" },
@@ -75,6 +81,8 @@ export function GoalEditorDialog({
 }: GoalEditorDialogProps): ReactElement {
   const { t } = useTranslation("goals");
   const isEdit = goal != null;
+  const comparisonOptions = useComparisonOptions();
+  const recurrenceOptions = useRecurrenceOptions();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
@@ -161,7 +169,7 @@ export function GoalEditorDialog({
         {/* GOAL */}
         <div>
           <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            Goal
+            {t("goalLabel")}
           </label>
           <div className="flex items-center gap-2">
             <input
@@ -233,7 +241,7 @@ export function GoalEditorDialog({
               data-testid="goal-comparison-select"
               disabled={isEdit}
               onChange={(v) => setValue("comparison", v)}
-              options={COMPARISON_OPTIONS}
+              options={comparisonOptions}
               value={comparison}
             />
             <div className="flex h-[42px] items-center gap-2 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3">
@@ -251,7 +259,7 @@ export function GoalEditorDialog({
               data-testid="goal-recurrence-select"
               disabled={isEdit}
               onChange={(v) => setValue("recurrence", v)}
-              options={RECURRENCE_OPTIONS}
+              options={recurrenceOptions}
               value={recurrence}
             />
           </div>
@@ -286,28 +294,9 @@ export function GoalEditorDialog({
               )}
             </div>
             <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white">
-              <span
-                className={`flex size-[14px] items-center justify-center rounded-[4px] ${
-                  noEndDate
-                    ? "bg-[var(--track-accent)]"
-                    : "border border-[var(--track-border)] bg-transparent"
-                }`}
-              >
-                {noEndDate ? (
-                  <Check
-                    aria-hidden="true"
-                    className="size-2.5 text-white"
-                    size={10}
-                    strokeWidth={2.5}
-                  />
-                ) : null}
-              </span>
-              <input
+              <AppCheckbox
                 checked={noEndDate}
-                className="sr-only"
-                data-testid="goal-no-end-date-checkbox"
                 onChange={(e) => setValue("noEndDate", e.target.checked)}
-                type="checkbox"
               />
               {t("noEndDate")}
             </label>
@@ -315,10 +304,7 @@ export function GoalEditorDialog({
         </div>
 
         {/* Note */}
-        <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">
-          Note: you cannot change the projects, tasks, tags, billable or recurrence period of a
-          created goal.
-        </p>
+        <p className="text-[12px] leading-4 text-[var(--track-text-muted)]">{t("goalNote")}</p>
       </div>
     </ModalDialog>
   );
@@ -384,7 +370,7 @@ function MemberDropdown({
                 <MemberAvatar name={m.name} />
                 <span className="truncate">
                   {m.name}
-                  {m.id === selectedUserId ? " (You)" : ""}
+                  {m.id === selectedUserId ? ` ${t("youLabel")}` : ""}
                 </span>
               </button>
             ))}
@@ -406,6 +392,7 @@ function GoalIconPicker({
   onChange: (value: string) => void;
   value: string;
 }): ReactElement {
+  const { t } = useTranslation("goals");
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const closeDropdown = () => setOpen(false);
@@ -415,7 +402,7 @@ function GoalIconPicker({
   return (
     <div className="relative" ref={rootRef}>
       <button
-        aria-label="Goal icon"
+        aria-label={t("goalIcon")}
         className="flex h-[42px] items-center gap-1.5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[18px]"
         data-testid="goal-icon-select"
         onClick={() => setOpen(!open)}

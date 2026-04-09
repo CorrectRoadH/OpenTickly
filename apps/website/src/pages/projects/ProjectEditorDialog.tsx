@@ -11,7 +11,6 @@ type ProjectEditorDialogProps = {
   clients: Array<{ id: number; name: string }>;
   color: string;
   endDate: string;
-  error?: string | null;
   estimatedHours: number;
   fixedFee: number;
   isPending?: boolean;
@@ -44,7 +43,6 @@ export function ProjectEditorDialog({
   clients,
   color,
   endDate,
-  error,
   estimatedHours,
   fixedFee,
   isPending = false,
@@ -143,17 +141,13 @@ export function ProjectEditorDialog({
               </div>
               <input
                 aria-label={t("projectName")}
-                className={`h-11 min-w-0 flex-1 rounded-md border bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)] ${
-                  error ? "border-rose-400" : "border-[var(--track-border)]"
-                }`}
+                className="h-11 min-w-0 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
                 onChange={(event) => onNameChange(event.target.value)}
                 placeholder={t("projectName")}
                 value={name}
               />
             </div>
-            {error ? (
-              <span className="mt-2 block text-[12px] text-rose-400">{error}</span>
-            ) : !trimmedName ? (
+            {!trimmedName ? (
               <span className="mt-2 block text-[12px] text-[var(--track-danger-text-strong)]">
                 {t("projectName")}
               </span>
