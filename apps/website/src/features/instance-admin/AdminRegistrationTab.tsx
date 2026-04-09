@@ -8,6 +8,7 @@ import {
   useRegistrationPolicyQuery,
   useUpdateRegistrationPolicyMutation,
 } from "../../shared/query/instance-admin.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 
 const modes = [
   {
@@ -88,7 +89,12 @@ export function AdminRegistrationTab(): ReactElement {
                       toast.success(
                         t("instanceAdmin:registrationPolicySet", { mode: t(mode.labelKey) }),
                       ),
-                    onError: () => toast.error(t("toast:failedToUpdateRegistrationPolicy")),
+                    onError: (err) =>
+                      toast.error(
+                        err instanceof WebApiError
+                          ? err.userMessage
+                          : t("toast:failedToUpdateRegistrationPolicy"),
+                      ),
                   });
                 }}
                 type="button"

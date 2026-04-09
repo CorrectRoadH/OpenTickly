@@ -45,7 +45,7 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkspaceProjectUsers } from "../../shared/api/public/track/index.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
   buildProjectTeamPath,
@@ -279,8 +279,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       if (statusFilter === "archived") {
         await navigateToStatus("default");
       }
-    } catch {
-      toast.error(t("projectNameAlreadyExists"));
+    } catch (err) {
+      toast.error(err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists"));
     }
   }
 
@@ -389,8 +389,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         const groupName = workspaceGroups.find((g) => g.id === groupId)?.name;
         toast.success(t("teamUpdatedToGroup", { name: project.name, group: groupName }));
       }
-    } catch {
-      toast.error(t("teamUpdateFailed"));
+    } catch (err) {
+      toast.error(err instanceof WebApiError ? err.userMessage : t("teamUpdateFailed"));
     }
   }
 

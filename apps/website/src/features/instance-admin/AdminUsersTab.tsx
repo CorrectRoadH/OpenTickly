@@ -10,6 +10,7 @@ import {
   useRestoreInstanceUserMutation,
 } from "../../shared/query/instance-admin.ts";
 import type { InstanceUser } from "../../shared/api/generated/admin/types.gen.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 
 export function AdminUsersTab(): ReactElement {
   const { t } = useTranslation();
@@ -90,14 +91,24 @@ export function AdminUsersTab(): ReactElement {
                       disableMutation.mutate(user.id, {
                         onSuccess: () =>
                           toast.success(t("toast:userDisabled", { email: user.email })),
-                        onError: () => toast.error(t("toast:failedToDisableUser")),
+                        onError: (err) =>
+                          toast.error(
+                            err instanceof WebApiError
+                              ? err.userMessage
+                              : t("toast:failedToDisableUser"),
+                          ),
                       });
                     }}
                     onRestore={() => {
                       restoreMutation.mutate(user.id, {
                         onSuccess: () =>
                           toast.success(t("toast:userRestored", { email: user.email })),
-                        onError: () => toast.error(t("toast:failedToRestoreUser")),
+                        onError: (err) =>
+                          toast.error(
+                            err instanceof WebApiError
+                              ? err.userMessage
+                              : t("toast:failedToRestoreUser"),
+                          ),
                       });
                     }}
                     user={user}

@@ -12,6 +12,7 @@ import { WorkspaceSettingsForm } from "../../features/settings/WorkspaceSettings
 import { createWorkspaceSettingsFormValues } from "../../shared/forms/settings-form.ts";
 import { buildWorkspaceSettingsPathWithSection } from "../../shared/lib/workspace-routing.ts";
 import type { UpdateWorkspaceSettingsRequestDto } from "../../shared/api/web-contract.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import {
   useUpdateWorkspaceSettingsMutation,
   useWorkspaceSettingsQuery,
@@ -89,8 +90,12 @@ export function WorkspaceSettingsPage({
             onSubmit={async (request) => {
               await updateMutation.mutateAsync(request);
             }}
-            onSubmitError={() => {
-              toast.error(t("toast:failedToSaveWorkspaceSettings"));
+            onSubmitError={(err: unknown) => {
+              toast.error(
+                err instanceof WebApiError
+                  ? err.userMessage
+                  : t("toast:failedToSaveWorkspaceSettings"),
+              );
             }}
             onSubmitSuccess={() => {
               toast.success(t("toast:workspaceSettingsSaved"));
@@ -108,7 +113,7 @@ export function WorkspaceSettingsPage({
 
 function SettingsSectionContent(props: {
   onSubmit: (request: UpdateWorkspaceSettingsRequestDto) => Promise<void> | void;
-  onSubmitError: () => void;
+  onSubmitError: (err: unknown) => void;
   onSubmitSuccess: () => void;
   section: WorkspaceSettingsSection;
   settingsData: Parameters<typeof createWorkspaceSettingsFormValues>[0];

@@ -15,6 +15,7 @@ import {
   useUpdateOrganizationUserMutation,
 } from "../../shared/query/web-shell.ts";
 import type { ModelsOrgUser } from "../../shared/api/generated/public-track/types.gen.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 
 type MemberStatusFilter = "all" | "active" | "inactive" | "invited";
 
@@ -107,7 +108,9 @@ export function OrganizationMembersSection({
         payload: { organization_admin: newRole === "admin" },
       })
       .then(() => toast.success(t("roleUpdated")))
-      .catch(() => toast.error(t("couldNotUpdateRole")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotUpdateRole")),
+      );
   }
 
   function renderMemberRow(member: ModelsOrgUser): ReactNode {

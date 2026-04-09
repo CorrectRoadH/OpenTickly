@@ -22,7 +22,7 @@ import {
 type WorkspaceSettingsFormProps = {
   initialValues: WorkspaceSettingsFormValues;
   onSubmit: (request: ReturnType<typeof mapWorkspaceSettingsFormToRequest>) => Promise<void> | void;
-  onSubmitError?: () => void;
+  onSubmitError?: (err: unknown) => void;
   onSubmitSuccess?: () => void;
   workspaceId: number;
 };
@@ -93,8 +93,8 @@ export function WorkspaceSettingsForm({
       lastSavedValuesRef.current = serializedValues;
       form.reset(latestValues);
       onSubmitSuccess?.();
-    } catch {
-      onSubmitError?.();
+    } catch (err) {
+      onSubmitError?.(err);
     } finally {
       saveInFlightRef.current = false;
 

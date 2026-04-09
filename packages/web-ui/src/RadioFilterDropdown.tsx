@@ -48,7 +48,7 @@ export function RadioFilterDropdown<T extends string>({
         {buttonLabel}
       </button>
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[180px] rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[max(100%,180px)] whitespace-nowrap rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
           {options.map((option) => (
             <button
               className={`w-full rounded px-2 py-1.5 text-left text-[12px] hover:bg-[var(--track-surface-muted)] ${

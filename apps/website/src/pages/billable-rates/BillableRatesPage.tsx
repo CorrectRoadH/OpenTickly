@@ -10,7 +10,7 @@ import type {
   RatesCreationRequest,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import { createRate, getRatesByLevel } from "../../shared/api/public/track/index.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import { useWorkspaceUsersQuery } from "../../shared/query/web-shell.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 
@@ -127,8 +127,10 @@ export function BillableRatesContent(): ReactElement {
           toast.success(t("toast:workspaceBillableRateUpdated"));
           setIsDirty(false);
         },
-        onError: () => {
-          toast.error(t("toast:failedToSaveWorkspaceRate"));
+        onError: (err) => {
+          toast.error(
+            err instanceof WebApiError ? err.userMessage : t("toast:failedToSaveWorkspaceRate"),
+          );
         },
       },
     );

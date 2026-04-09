@@ -8,6 +8,7 @@ import {
   useSendTestEmailMutation,
   useUpdateInstanceConfigMutation,
 } from "../../shared/query/instance-admin.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 
 const registrationModes = [
   {
@@ -50,7 +51,10 @@ export function AdminConfigTab(): ReactElement {
             { site_url: siteUrl },
             {
               onSuccess: () => toast.success(t("toast:siteUrlUpdated")),
-              onError: () => toast.error(t("toast:failedToUpdateSiteUrl")),
+              onError: (err) =>
+                toast.error(
+                  err instanceof WebApiError ? err.userMessage : t("toast:failedToUpdateSiteUrl"),
+                ),
             },
           );
         }}
@@ -64,7 +68,12 @@ export function AdminConfigTab(): ReactElement {
             { registration_mode: mode },
             {
               onSuccess: () => toast.success(t("toast:registrationSet", { mode })),
-              onError: () => toast.error(t("toast:failedToUpdateRegistrationPolicy")),
+              onError: (err) =>
+                toast.error(
+                  err instanceof WebApiError
+                    ? err.userMessage
+                    : t("toast:failedToUpdateRegistrationPolicy"),
+                ),
             },
           );
         }}
@@ -86,7 +95,10 @@ export function AdminConfigTab(): ReactElement {
                 toast.success(
                   t(enabled ? "toast:emailVerificationEnabled" : "toast:emailVerificationDisabled"),
                 ),
-              onError: () => toast.error(t("toast:failedToUpdate")),
+              onError: (err) =>
+                toast.error(
+                  err instanceof WebApiError ? err.userMessage : t("toast:failedToUpdate"),
+                ),
             },
           );
         }}
@@ -100,7 +112,12 @@ export function AdminConfigTab(): ReactElement {
         onSave={(values) => {
           updateMutation.mutate(values, {
             onSuccess: () => toast.success(t("toast:emailSettingsUpdated")),
-            onError: () => toast.error(t("toast:failedToUpdateEmailSettings")),
+            onError: (err) =>
+              toast.error(
+                err instanceof WebApiError
+                  ? err.userMessage
+                  : t("toast:failedToUpdateEmailSettings"),
+              ),
           });
         }}
         saving={updateMutation.isPending}
@@ -372,7 +389,12 @@ function SmtpSection({
                         toast.error(result.message);
                       }
                     },
-                    onError: () => toast.error(t("toast:failedToSendTestEmail")),
+                    onError: (err) =>
+                      toast.error(
+                        err instanceof WebApiError
+                          ? err.userMessage
+                          : t("toast:failedToSendTestEmail"),
+                      ),
                   });
                 }}
                 type="button"

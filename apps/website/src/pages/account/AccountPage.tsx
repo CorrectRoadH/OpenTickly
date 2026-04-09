@@ -9,7 +9,7 @@ import {
   getTimezones,
   postCloseAccount,
 } from "../../shared/api/public/track/index.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import {
   usePreferencesQuery,
   useUpdatePreferencesMutation,
@@ -110,7 +110,11 @@ export function AccountPage(): ReactElement {
                   void i18n.changeLanguage(languageCode);
                   toast.success(t("languageUpdated"));
                 })
-                .catch(() => toast.error(t("failedToUpdateLanguage")))
+                .catch((err: unknown) =>
+                  toast.error(
+                    err instanceof WebApiError ? err.userMessage : t("failedToUpdateLanguage"),
+                  ),
+                )
             }
           />
 
@@ -165,7 +169,11 @@ function PersonalDetailsSection({
               if (editName !== fullname) payload.fullname = editName;
               if (editEmail !== email) payload.email = editEmail;
               void onSave(payload)
-                .catch(() => toast.error(t("failedToSavePersonalDetails")))
+                .catch((err: unknown) =>
+                  toast.error(
+                    err instanceof WebApiError ? err.userMessage : t("failedToSavePersonalDetails"),
+                  ),
+                )
                 .finally(() => setSaving(false));
             }}
           >
@@ -230,7 +238,11 @@ function TimezoneSection({
         <PreferenceSelect
           label={t("timezone")}
           onChange={(value) => {
-            void onSave(value).catch(() => toast.error(t("failedToUpdateTimezone")));
+            void onSave(value).catch((err: unknown) =>
+              toast.error(
+                err instanceof WebApiError ? err.userMessage : t("failedToUpdateTimezone"),
+              ),
+            );
           }}
           options={options}
           value={timezone}
@@ -265,7 +277,11 @@ function CountrySection({
         <PreferenceSelect
           label={t("country")}
           onChange={(value) => {
-            void onSave(Number(value)).catch(() => toast.error(t("failedToUpdateCountry")));
+            void onSave(Number(value)).catch((err: unknown) =>
+              toast.error(
+                err instanceof WebApiError ? err.userMessage : t("failedToUpdateCountry"),
+              ),
+            );
           }}
           options={[{ label: t("notSet"), value: "0" }, ...options]}
           value={String(countryId)}
@@ -357,7 +373,11 @@ function ChangePasswordSection({
                       setConfirmPassword("");
                       setOpen(false);
                     })
-                    .catch(() => toast.error(t("failedToChangePassword")))
+                    .catch((err: unknown) =>
+                      toast.error(
+                        err instanceof WebApiError ? err.userMessage : t("failedToChangePassword"),
+                      ),
+                    )
                     .finally(() => setSaving(false));
                 }}
               >
@@ -398,8 +418,10 @@ function ResetOnboardingSection(): ReactElement {
                 toast.success(t("onboardingReset"));
                 globalThis.location.reload();
               },
-              onError: () => {
-                toast.error(t("failedToResetOnboarding"));
+              onError: (err) => {
+                toast.error(
+                  err instanceof WebApiError ? err.userMessage : t("failedToResetOnboarding"),
+                );
               },
             });
           }}
@@ -448,8 +470,10 @@ function AccountActionsSection({ organizationName }: { organizationName: string 
                       toast.success(t("accountClosed"));
                       globalThis.location.href = "/login";
                     })
-                    .catch(() => {
-                      toast.error(t("failedToCloseAccount"));
+                    .catch((err: unknown) => {
+                      toast.error(
+                        err instanceof WebApiError ? err.userMessage : t("failedToCloseAccount"),
+                      );
                       setClosing(false);
                       setConfirming(false);
                     });

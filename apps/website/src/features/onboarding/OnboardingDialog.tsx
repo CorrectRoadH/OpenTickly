@@ -10,6 +10,7 @@ import i18n, {
   supportedLanguages,
   type SupportedLanguage,
 } from "../../app/i18n.ts";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
 import {
@@ -203,8 +204,10 @@ export function OnboardingDialog(): ReactElement | null {
         } else {
           void navigate({ to: resolveHomePath() });
         }
-      } catch {
-        toast.error(t("onboarding:failedToComplete"));
+      } catch (err) {
+        toast.error(
+          err instanceof WebApiError ? err.userMessage : t("onboarding:failedToComplete"),
+        );
       }
     } else {
       setCurrentStepIndex(nextIndex);

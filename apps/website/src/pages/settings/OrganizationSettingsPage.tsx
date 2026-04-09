@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { PreferenceCard } from "../profile/ProfilePagePrimitives.tsx";
 import { GroupsSection } from "../groups/GroupsSection.tsx";
 import { OrganizationMembersSection } from "../../features/settings/OrganizationMembersSection.tsx";
@@ -162,8 +163,10 @@ function GeneralSection({
           try {
             await updateMutation.mutateAsync(request);
             toast.success(t("organizationSaved"));
-          } catch {
-            toast.error(t("couldNotSaveOrganizationSettings"));
+          } catch (err) {
+            toast.error(
+              err instanceof WebApiError ? err.userMessage : t("couldNotSaveOrganizationSettings"),
+            );
           }
         }}
         t={t}
@@ -284,8 +287,10 @@ function DangerSection({
               try {
                 await deleteMutation.mutateAsync();
                 void navigate({ to: "/" });
-              } catch {
-                toast.error(t("couldNotDeleteOrganization"));
+              } catch (err) {
+                toast.error(
+                  err instanceof WebApiError ? err.userMessage : t("couldNotDeleteOrganization"),
+                );
               }
             }}
             type="button"

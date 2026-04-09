@@ -14,6 +14,7 @@ import { type FormEvent, type ReactElement, type ReactNode, useState } from "rea
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import {
   useOrgGroupsQuery,
@@ -70,21 +71,27 @@ export function GroupsSection({ organizationId }: GroupsSectionProps): ReactElem
         setGroupName("");
         toast.success(t("teamCreated"));
       })
-      .catch(() => toast.error(t("couldNotCreateTeam")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotCreateTeam")),
+      );
   }
 
   function handleRename(groupId: number, name: string) {
     void renameMutation
       .mutateAsync({ groupId, name })
       .then(() => toast.success(t("renamed")))
-      .catch(() => toast.error(t("couldNotRenameTeam")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotRenameTeam")),
+      );
   }
 
   function handleDelete(groupId: number) {
     void deleteMutation
       .mutateAsync(groupId)
       .then(() => toast.success(t("deleted")))
-      .catch(() => toast.error(t("couldNotDeleteTeam")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotDeleteTeam")),
+      );
   }
 
   function handleAddMember(group: GroupOrganizationGroupResponse, userId: number) {
@@ -96,7 +103,9 @@ export function GroupsSection({ organizationId }: GroupsSectionProps): ReactElem
         payload: { name: group.name, users: newUsers },
       })
       .then(() => toast.success(t("memberAdded")))
-      .catch(() => toast.error(t("couldNotAddMember")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotAddMember")),
+      );
   }
 
   function handleRemoveMember(group: GroupOrganizationGroupResponse, userId: number) {
@@ -107,7 +116,9 @@ export function GroupsSection({ organizationId }: GroupsSectionProps): ReactElem
         payload: { name: group.name, users: newUsers },
       })
       .then(() => toast.success(t("memberRemoved")))
-      .catch(() => toast.error(t("couldNotRemoveMember")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("couldNotRemoveMember")),
+      );
   }
 
   function toggleExpand(id: number | string) {

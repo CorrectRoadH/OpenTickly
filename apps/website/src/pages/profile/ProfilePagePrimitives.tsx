@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { AppPanel, SelectDropdown } from "@opentoggl/web-ui";
 
 import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const sectionCardClassName =
@@ -193,8 +193,8 @@ export function ProfileHeroCard({
       const url = result.avatar_urls?.["original"] ?? null;
       onAvatarChange?.(url);
       toast.success(t("toast:avatarUploaded"));
-    } catch {
-      toast.error(t("toast:failedToUploadAvatar"));
+    } catch (err) {
+      toast.error(err instanceof WebApiError ? err.userMessage : t("toast:failedToUploadAvatar"));
     } finally {
       setUploading(false);
     }
@@ -206,8 +206,8 @@ export function ProfileHeroCard({
       await unwrapWebApiResult(deleteAvatars());
       onAvatarChange?.(null);
       toast.success(t("toast:avatarRemoved"));
-    } catch {
-      toast.error(t("toast:failedToRemoveAvatar"));
+    } catch (err) {
+      toast.error(err instanceof WebApiError ? err.userMessage : t("toast:failedToRemoveAvatar"));
     } finally {
       setUploading(false);
     }

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { postWorkspaceLogo, deleteWorkspaceLogo } from "../../shared/api/public/track/index.ts";
-import { unwrapWebApiResult } from "../../shared/api/web-client.ts";
+import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 
 export function SettingsCard(props: {
   children: ReactElement | ReactElement[];
@@ -53,8 +53,10 @@ export function LogoCard({
       );
       onLogoChange(result.logo ?? "");
       toast.success(t("logoUploaded", { ns: "toast" }));
-    } catch {
-      toast.error(t("failedToUploadLogo", { ns: "toast" }));
+    } catch (err) {
+      toast.error(
+        err instanceof WebApiError ? err.userMessage : t("failedToUploadLogo", { ns: "toast" }),
+      );
     } finally {
       setUploading(false);
     }
@@ -70,8 +72,10 @@ export function LogoCard({
       );
       onLogoChange("");
       toast.success(t("logoRemoved", { ns: "toast" }));
-    } catch {
-      toast.error(t("failedToRemoveLogo", { ns: "toast" }));
+    } catch (err) {
+      toast.error(
+        err instanceof WebApiError ? err.userMessage : t("failedToRemoveLogo", { ns: "toast" }),
+      );
     } finally {
       setUploading(false);
     }

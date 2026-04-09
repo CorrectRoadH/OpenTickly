@@ -260,7 +260,9 @@ export function useTimeEntryEditor(
         workspaceId: wid,
       })
       .then(() => toast.success(t("timeEntrySaved")))
-      .catch(() => toast.error(t("failedToSaveTimeEntry")));
+      .catch((err) =>
+        toast.error(err instanceof WebApiError ? err.userMessage : t("failedToSaveTimeEntry")),
+      );
   };
 
   const deleteEntry = async () => {
