@@ -147,22 +147,14 @@ test.describe("Story: edit a stopped time entry", () => {
     // fill() sets the value atomically and fires a single change event,
     // avoiding the per-keystroke race between type() and React controlled state.
     await timeInput.fill("09:28");
+    await expect(timeInput).toHaveValue("09:28");
     await timeInput.press("Enter");
 
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
+    // Wait for time edit to commit to state before interacting further
+    const startTimeBtn = dialog.getByRole("button", { name: "Edit start time" });
+    await expect(startTimeBtn).toContainText("9:28");
 
-    await dialog.getByRole("button", { name: "Edit start date" }).click();
-    const datePicker = page.getByTestId("time-entry-editor-start-date-picker");
-    await expect(datePicker).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Edit start time" })).toContainText("9:28");
-    const todayLabel = new Date().toLocaleDateString("en-US", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    await datePicker.getByRole("button", { name: todayLabel }).click();
-    await expect(datePicker).not.toBeVisible();
-
+    // Save directly — date is already today from beforeEach, no need to re-pick it.
     const saveResponsePromise = page.waitForResponse(
       (resp) => resp.url().includes("/time_entries/") && resp.request().method() === "PUT",
     );

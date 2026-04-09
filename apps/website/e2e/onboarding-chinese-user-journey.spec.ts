@@ -51,7 +51,11 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     // ===== 第3.5步：验证手机端也显示中文 =====
     // Shrink viewport so mobile layout renders instead of redirecting to /timer
     await page.setViewportSize({ width: 375, height: 812 });
+    // Reload first to ensure the language preference saved during onboarding
+    // is picked up by the session bootstrap before navigating to mobile.
     await page.goto("/m/me");
+    await expect(page.getByTestId("app-shell")).toBeVisible({ timeout: 10000 });
+    await page.reload();
     await expect(page.getByTestId("app-shell")).toBeVisible({ timeout: 10000 });
 
     // Bottom tabs should be in Chinese

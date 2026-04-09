@@ -217,10 +217,12 @@ function TimeDisplay({
 }): ReactElement {
   const { t } = useTranslation("tracking");
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const committedByKeyRef = useRef(false);
   const [draft, setDraft] = useState(timeValue);
 
   useEffect(() => {
     if (editing) {
+      committedByKeyRef.current = false;
       setDraft(timeValue);
     }
   }, [editing, timeValue]);
@@ -245,18 +247,21 @@ function TimeDisplay({
             value={draft}
             inputMode="numeric"
             onBlur={(event) => {
+              if (committedByKeyRef.current) return;
               onTimeCommit(event.currentTarget.value);
               onEditEnd();
             }}
             onChange={(event: ChangeEvent<HTMLInputElement>) => setDraft(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
+                committedByKeyRef.current = true;
                 onTimeCommit(inputRef.current?.value ?? draft);
                 onEditEnd();
                 return;
               }
 
               if (event.key === "Escape") {
+                committedByKeyRef.current = true;
                 setDraft(timeValue);
                 onEditEnd();
               }
