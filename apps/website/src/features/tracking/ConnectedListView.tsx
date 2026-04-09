@@ -11,22 +11,13 @@ import {
 } from "../../shared/query/web-shell.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
-import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import { SurfaceMessage } from "./overview-views.tsx";
 import { ListView } from "./ListView.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
 import type { BulkEditUpdates } from "./BulkEditDialog.tsx";
-
-function resolveTimeEntryProjectId(entry: {
-  project_id?: number | null;
-  pid?: number | null;
-}): number | null {
-  const projectId = resolveCanonicalTimeEntryProjectId(entry);
-  if (projectId == null || projectId <= 0) return null;
-  return projectId;
-}
 
 type DeletedEntrySnapshot = {
   billable: boolean;

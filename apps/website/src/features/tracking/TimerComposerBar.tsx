@@ -12,7 +12,7 @@ import {
 import { ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { TimerActionButton } from "../../shared/ui/TimerActionButton.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
-import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
+import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
 import { ManualModeComposer } from "./ManualModeComposer.tsx";
 import { sortTimeEntries } from "./overview-data.ts";
 import { stabilizeTimeEntryList } from "./time-entry-stability.ts";
@@ -23,15 +23,6 @@ import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useTimerComposer } from "./useTimerComposer.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
-
-function resolveTimeEntryProjectId(entry: {
-  project_id?: number | null;
-  pid?: number | null;
-}): number | null {
-  const projectId = resolveCanonicalTimeEntryProjectId(entry);
-  if (projectId == null || projectId <= 0) return null;
-  return projectId;
-}
 
 type StartParams = {
   description?: string;

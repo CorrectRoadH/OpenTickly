@@ -8,7 +8,7 @@ import {
   useDeleteTimeEntryMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
-import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
+import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
 import { formatDateKey, resolveEntryDurationSeconds } from "./overview-data.ts";
 import { SurfaceMessage } from "./overview-views.tsx";
 import { TimesheetView } from "./TimesheetView.tsx";
@@ -19,19 +19,6 @@ import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
 import { formatTrackQueryDate, getWeekDaysForDate } from "./week-range.ts";
-
-function resolveTimeEntryProjectId(entry: {
-  project_id?: number | null;
-  pid?: number | null;
-}): number | null {
-  const projectId = resolveCanonicalTimeEntryProjectId(entry);
-  if (projectId == null || projectId <= 0) return null;
-  return projectId;
-}
-
-function toTrackIso(date: Date): string {
-  return date.toISOString().replace(".000Z", "Z");
-}
 
 export function ConnectedTimesheetView({
   showAllEntries,

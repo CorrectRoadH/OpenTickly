@@ -10,7 +10,7 @@ import {
   useStopTimeEntryMutation,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
-import { resolveTimeEntryProjectId as resolveCanonicalTimeEntryProjectId } from "./time-entry-ids.ts";
+import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
 import { CalendarView, type CalendarContextMenuAction } from "./CalendarView.tsx";
 import { SurfaceMessage } from "./overview-views.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
@@ -19,19 +19,6 @@ import { useWeekNavigation } from "./useWeekNavigation.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
 import { formatTrackQueryDate } from "./week-range.ts";
 import type { DisplaySettings } from "./DisplaySettingsPopover.tsx";
-
-function resolveTimeEntryProjectId(entry: {
-  project_id?: number | null;
-  pid?: number | null;
-}): number | null {
-  const projectId = resolveCanonicalTimeEntryProjectId(entry);
-  if (projectId == null || projectId <= 0) return null;
-  return projectId;
-}
-
-function toTrackIso(date: Date): string {
-  return date.toISOString().replace(".000Z", "Z");
-}
 
 type DeletedEntrySnapshot = {
   billable: boolean;

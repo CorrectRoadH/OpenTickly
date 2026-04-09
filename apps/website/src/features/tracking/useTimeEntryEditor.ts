@@ -15,7 +15,7 @@ import {
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { resolveEntryDurationSeconds } from "./overview-data.ts";
-import { resolveTimeEntryProjectId } from "./time-entry-ids.ts";
+import { resolveTimeEntryProjectId, toTrackIso } from "./time-entry-ids.ts";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { normalizeTags } from "./useWorkspaceData.ts";
@@ -23,10 +23,6 @@ import { normalizeTags } from "./useWorkspaceData.ts";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function toTrackIso(date: Date): string {
-  return date.toISOString().replace(".000Z", "Z");
-}
 
 function resolveSingleTimerErrorMessage(error: unknown): string {
   if (error instanceof WebApiError) {

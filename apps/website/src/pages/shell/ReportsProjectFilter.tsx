@@ -1,4 +1,4 @@
-import { type ChangeEvent, type ReactElement, useCallback, useRef, useState } from "react";
+import { type ChangeEvent, type ReactElement, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppCheckbox, AppInput, useDismiss } from "@opentoggl/web-ui";
 
@@ -29,10 +29,10 @@ export function ReportsProjectFilter({
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const close = useCallback(() => {
+  const close = () => {
     setOpen(false);
     setSearch("");
-  }, []);
+  };
   useDismiss(containerRef, open, close);
 
   const activeCount = selected.size;
