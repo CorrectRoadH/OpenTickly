@@ -466,7 +466,8 @@ function TimerBarProjectPicker({
   );
 }
 
-function TimerBarTagPicker({
+/** @internal Exported for testing only. */
+export function TimerBarTagPicker({
   draftTagIds,
   onCreateTag,
   onTagToggle,
@@ -553,7 +554,7 @@ function TimerBarTagPicker({
           ) : filteredTags.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">
               {filteredTags.map((tag) => {
-                const isSelected = draftTagIds.includes(tag.id);
+                const isSelected = displayTagIds.includes(tag.id);
                 return (
                   <button
                     className={`flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] transition hover:bg-white/5 ${
