@@ -39,11 +39,11 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 
 	from, err := parseRFC3339(ctx.Param("from"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid from date: "+err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid from date: "+err.Error()).SetInternal(err)
 	}
 	to, err := parseRFC3339(ctx.Param("to"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "invalid to date: "+err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, "invalid to date: "+err.Error()).SetInternal(err)
 	}
 
 	filter := governanceapplication.ListAuditLogsFilter{

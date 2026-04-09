@@ -26,5 +26,5 @@ func (handler *Handler) PostWorkspaceTimeEntryInvitationAction(ctx echo.Context)
 	}
 	_ = workspaceID
 	_ = ctx.QueryParam("action")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }

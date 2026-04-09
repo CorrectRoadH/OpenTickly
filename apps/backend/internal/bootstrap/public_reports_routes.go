@@ -31,7 +31,7 @@ func newPublicReportsRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, er
 			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 				echoContext := echomiddleware.GetEchoContext(ctx)
 				if echoContext == nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 				}
 				_, err := handlers.publicTrackUser(echoContext)
 				return err

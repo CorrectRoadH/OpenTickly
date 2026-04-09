@@ -252,6 +252,6 @@ func mapError(err error) Response {
 		errors.Is(err, tenantapplication.ErrWorkspaceNotFound):
 		return Response{StatusCode: 404, Body: "Not Found"}
 	default:
-		return Response{StatusCode: 500, Body: "Internal Server Error"}
+		return Response{StatusCode: 500, Body: err.Error()}
 	}
 }

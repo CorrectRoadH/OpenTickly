@@ -60,7 +60,7 @@ func writeBillingError(err error) error {
 	if err == nil {
 		return nil
 	}
-	return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 }
 
 // Stubs for billing-related routes.

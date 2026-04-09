@@ -41,7 +41,7 @@ func NewHandler(scope ScopeAuthorizer, reports *reportsapplication.Service) *Han
 func workspaceIDFromPath(ctx echo.Context) (int64, error) {
 	value, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return 0, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return 0, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	return value, nil
 }
@@ -49,7 +49,7 @@ func workspaceIDFromPath(ctx echo.Context) (int64, error) {
 func reportIDFromPath(ctx echo.Context) (int64, error) {
 	value, err := strconv.ParseInt(ctx.Param("report_id"), 10, 64)
 	if err != nil {
-		return 0, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return 0, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	return value, nil
 }
@@ -72,7 +72,7 @@ func (handler *Handler) GetSharedReport(ctx echo.Context) error {
 
 	views, err := handler.reports.ListSavedReports(ctx.Request().Context(), workspaceID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	result := make([]publictrackapi.ModelsSavedReport, 0, len(views))
@@ -97,7 +97,7 @@ func (handler *Handler) PostSharedReport(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsSavedReport
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	view, err := handler.reports.CreateSavedReport(ctx.Request().Context(), reportsapplication.CreateSavedReportCommand{
@@ -109,7 +109,7 @@ func (handler *Handler) PostSharedReport(ctx echo.Context) error {
 		CreatedBy:      user.ID,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
@@ -129,7 +129,7 @@ func (handler *Handler) PutSharedReport(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsSavedReport
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	view, err := handler.reports.UpdateSavedReport(ctx.Request().Context(), reportsapplication.UpdateSavedReportCommand{
@@ -141,7 +141,7 @@ func (handler *Handler) PutSharedReport(ctx echo.Context) error {
 		Params:         paramsToJSON(request.Params),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
@@ -165,7 +165,7 @@ func (handler *Handler) GetSavedReportResource(ctx echo.Context) error {
 
 	view, err := handler.reports.GetSavedReport(ctx.Request().Context(), workspaceID, reportID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
@@ -189,7 +189,7 @@ func (handler *Handler) PutSavedReportResource(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsSavedReport
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	view, err := handler.reports.UpdateSavedReport(ctx.Request().Context(), reportsapplication.UpdateSavedReportCommand{
@@ -201,7 +201,7 @@ func (handler *Handler) PutSavedReportResource(ctx echo.Context) error {
 		Params:         paramsToJSON(request.Params),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, savedReportViewToAPI(view))
@@ -224,7 +224,7 @@ func (handler *Handler) DeleteSavedReportResource(ctx echo.Context) error {
 	}
 
 	if err := handler.reports.DeleteSavedReport(ctx.Request().Context(), workspaceID, reportID); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	return ctx.NoContent(http.StatusOK)
 }
@@ -245,14 +245,14 @@ func (handler *Handler) BulkDeleteSavedReportResource(ctx echo.Context) error {
 		IDs []int64 `json:"ids"`
 	}
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if len(request.IDs) == 0 {
 		return ctx.NoContent(http.StatusOK)
 	}
 
 	if err := handler.reports.BulkDeleteSavedReports(ctx.Request().Context(), workspaceID, request.IDs); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	return ctx.NoContent(http.StatusOK)
 }
@@ -275,7 +275,7 @@ func (handler *Handler) GetWorkspaceScheduledReports(ctx echo.Context) error {
 
 	views, err := handler.reports.ListScheduledReports(ctx.Request().Context(), workspaceID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	result := make([]publictrackapi.ModelsScheduledReport, 0, len(views))
@@ -300,7 +300,7 @@ func (handler *Handler) PostWorkspaceScheduledReports(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsScheduledReport
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	view, err := handler.reports.CreateScheduledReport(ctx.Request().Context(), reportsapplication.CreateScheduledReportCommand{
@@ -312,7 +312,7 @@ func (handler *Handler) PostWorkspaceScheduledReports(ctx echo.Context) error {
 		GroupIDs:    intsToInt64s(lo.FromPtr(request.GroupIds)),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, scheduledReportViewToAPI(view))
@@ -335,7 +335,7 @@ func (handler *Handler) DeleteWorkspaceScheduledReports(ctx echo.Context) error 
 	}
 
 	if err := handler.reports.DeleteScheduledReport(ctx.Request().Context(), workspaceID, reportID); err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	return ctx.NoContent(http.StatusOK)
 }
@@ -354,7 +354,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 	}
 	var request publicreportsapi.SummaryReportPost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	query, err := buildQuery(int64(workspaceID), user, request.StartDate, request.EndDate)
 	if err != nil {
@@ -363,7 +363,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 	applySummaryPostFilters(&query, request)
 	report, err := handler.reports.BuildSummaryReport(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	groups := make([]publicreportsapi.SummaryGroupData, 0, len(report.Groups))
@@ -407,7 +407,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 	}
 	var request publicreportsapi.BasePost
 	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	query, err := buildQuery(int64(workspaceID), user, request.StartDate, request.EndDate)
 	if err != nil {
@@ -416,7 +416,7 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 	applyBasePostFilters(&query, request)
 	report, err := handler.reports.BuildWeeklyReport(ctx.Request().Context(), query)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	rows := make([]publicreportsapi.WeeklyDataRow, 0, len(report.Rows))
@@ -477,14 +477,14 @@ func buildQuery(
 	}
 	start, err := time.ParseInLocation(time.DateOnly, *startDate, location)
 	if err != nil {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	end, err := time.ParseInLocation(time.DateOnly, *endDate, location)
 	if err != nil {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if end.Before(start) {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "end date must not be before start date")
 	}
 
 	return reportsapplication.Query{

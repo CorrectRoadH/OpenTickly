@@ -25,7 +25,7 @@ func (handler *Handler) GetPublicTrackProjectStatistics(ctx echo.Context) error 
 	view, err := handler.tracking.GetProjectStatistics(ctx.Request().Context(), workspaceID, projectID)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackTrackingError(err)
 	}

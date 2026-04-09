@@ -35,7 +35,7 @@ func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 			ProjectIDs: projectIDs,
 		})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
 		for _, view := range views {
@@ -46,7 +46,7 @@ func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 
 	views, err := handler.catalog.ListProjectUsers(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectUsersFilter{})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	users := make([]publictrackapi.ModelsProjectUser, 0, len(views))
@@ -91,7 +91,7 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 
 	views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, filter)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
@@ -116,7 +116,7 @@ func (handler *Handler) GetPublicTrackProjectTemplates(ctx echo.Context) error {
 		PerPage:       200,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
@@ -147,7 +147,7 @@ func (handler *Handler) GetPublicTrackProject(ctx echo.Context) error {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
 }
@@ -182,7 +182,7 @@ func (handler *Handler) GetPublicTrackProjectRecurringPeriod(ctx echo.Context) e
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	if period == nil {
 		return ctx.JSON(http.StatusOK, publictrackapi.ModelsRecurringPeriod{})
@@ -235,7 +235,7 @@ func (handler *Handler) publicTrackProjectCount(
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	return ctx.JSON(http.StatusOK, projectCountsToAPI(projectIDs, counts))

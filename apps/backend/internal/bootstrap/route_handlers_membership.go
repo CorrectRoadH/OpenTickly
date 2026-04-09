@@ -26,7 +26,7 @@ func (handlers *routeHandlers) listWorkspaceMembers(ctx echo.Context) error {
 	}
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	members, err := handlers.membershipApp.ListWorkspaceMembers(ctx.Request().Context(), workspaceID, user.ID)
@@ -58,7 +58,7 @@ func (handlers *routeHandlers) inviteWorkspaceMember(ctx echo.Context) error {
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	command := membershipapplication.InviteWorkspaceMemberCommand{
@@ -148,11 +148,11 @@ func (handlers *routeHandlers) workspaceMemberMutationContext(
 ) (workspaceID int64, memberID int64, user identityapplication.UserSnapshot, err error) {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
 	if !ok {
-		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	memberID, ok = parsePathID(ctx, "member_id")
 	if !ok {
-		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return 0, 0, identityapplication.UserSnapshot{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handlers.requireCurrentSessionWorkspace(ctx, workspaceID); err != nil {
 		return 0, 0, identityapplication.UserSnapshot{}, err
@@ -202,11 +202,11 @@ func float32PointerFromFloat64(value *float64) *float32 {
 func writeMembershipError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrSMTPNotConfigured):
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
 		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),
@@ -219,8 +219,8 @@ func writeMembershipError(err error) error {
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotDisabled),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberRemoved),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyRemoved):
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 }

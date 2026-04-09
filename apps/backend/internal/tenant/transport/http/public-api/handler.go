@@ -130,13 +130,13 @@ func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
 		return mapError(err)
 	}
 	if err := handler.homes.Save(ctx.Request().Context(), user.ID, int64(result.OrganizationID), int64(result.WorkspaceID)); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	if _, err := handler.membership.EnsureWorkspaceOwner(ctx.Request().Context(), membershipapplication.EnsureWorkspaceOwnerCommand{
 		WorkspaceID: int64(result.WorkspaceID),
 		UserID:      user.ID,
 	}); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	permissions := []string{"admin"}
@@ -274,7 +274,7 @@ func (handler *Handler) GetPublicTrackWorkspaces(ctx echo.Context) error {
 			},
 		)
 		if projectErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, projectErr.Error()).SetInternal(projectErr)
 		}
 
 		response = append(response, publictrackapi.WorkspaceWithActiveProjectCount{
@@ -342,15 +342,15 @@ func (handler *Handler) GetPublicTrackWorkspaceStatistics(ctx echo.Context) erro
 
 	members, err := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), workspaceID, requester.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	workspace, wsErr := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
 	if wsErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, wsErr.Error()).SetInternal(wsErr)
 	}
 	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	admins := make([]publictrackapi.ModelsUserData, 0)
@@ -457,9 +457,9 @@ func mapError(err error) error {
 	case errors.Is(err, tenantapplication.ErrOrganizationNotFound),
 		errors.Is(err, tenantapplication.ErrWorkspaceNotFound),
 		errors.Is(err, billingapplication.ErrCommercialAccountNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 

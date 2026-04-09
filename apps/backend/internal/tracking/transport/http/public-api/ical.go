@@ -19,7 +19,7 @@ func (handler *Handler) PostWorkspaceIcalReset(ctx echo.Context) error {
 		return err
 	}
 	_ = workspaceID
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 // PostWorkspaceIcalToggle toggles the iCal feature for a workspace.
@@ -29,5 +29,5 @@ func (handler *Handler) PostWorkspaceIcalToggle(ctx echo.Context) error {
 		return err
 	}
 	_ = workspaceID
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }

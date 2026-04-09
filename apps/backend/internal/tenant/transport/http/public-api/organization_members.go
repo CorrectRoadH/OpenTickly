@@ -34,7 +34,7 @@ func (handler *Handler) GetPublicTrackOrganizationGroups(ctx echo.Context) error
 
 	groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))

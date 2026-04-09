@@ -178,7 +178,7 @@ func mapError(err error) Response {
 		errors.Is(err, application.ErrSessionNotFound):
 		return Response{StatusCode: 403, Body: "User does not have access to this resource."}
 	default:
-		return Response{StatusCode: 500, Body: "Internal Server Error"}
+		return Response{StatusCode: 500, Body: err.Error()}
 	}
 }
 

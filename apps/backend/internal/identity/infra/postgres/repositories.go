@@ -10,6 +10,7 @@ import (
 	"opentoggl/backend/apps/backend/internal/identity/domain"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/samber/lo"
 )
@@ -157,6 +158,10 @@ func (repo *UserRepository) Save(ctx context.Context, user *domain.User) error {
 		user.AvatarStorageKey(),
 	)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" && pgErr.ConstraintName == "identity_users_email_key" {
+			return domain.ErrEmailAlreadyRegistered
+		}
 		return fmt.Errorf("save identity user %d: %w", user.ID(), err)
 	}
 

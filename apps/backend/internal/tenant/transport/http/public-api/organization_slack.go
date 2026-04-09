@@ -12,5 +12,5 @@ func (handler *Handler) PostOrganizationSlackIntegrationRequest(ctx echo.Context
 	if err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }

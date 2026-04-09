@@ -26,7 +26,7 @@ func (handler *Handler) GetPublicTrackTags(ctx echo.Context) error {
 		PerPage: max(min(queryInt(ctx, "per_page", 200), 200), 1),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	tags := make([]publictrackapi.ModelsTag, 0, len(views))
@@ -93,7 +93,7 @@ func (handler *Handler) PutPublicTrackTag(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -118,7 +118,7 @@ func (handler *Handler) DeletePublicTrackTag(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteTag(ctx.Request().Context(), workspaceID, tagID); err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -156,7 +156,7 @@ func (handler *Handler) PatchPublicTrackTags(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteTags(ctx.Request().Context(), workspaceID, tagIDs); err != nil {
 		if errors.Is(err, catalogapplication.ErrTagNotFound) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Some tag IDs do not belong to workspace")
+			return echo.NewHTTPError(http.StatusBadRequest, "Some tag IDs do not belong to workspace").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

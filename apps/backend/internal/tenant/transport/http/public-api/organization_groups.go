@@ -29,14 +29,14 @@ func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 		Name:           lo.FromPtr(payload.Name),
 	})
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	// Sync members if provided
 	if payload.Users != nil {
 		userIDs := intsToInt64s(lo.FromPtr(payload.Users))
 		if err := handler.catalog.SyncGroupMembers(ctx.Request().Context(), group.ID, userIDs); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 		}
 	}
 
@@ -44,7 +44,7 @@ func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 	if payload.Workspaces != nil {
 		wsIDs := intsToInt64s(lo.FromPtr(payload.Workspaces))
 		if err := handler.catalog.SyncGroupWorkspaces(ctx.Request().Context(), group.ID, wsIDs); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 		}
 	}
 
@@ -63,7 +63,7 @@ func (handler *Handler) DeleteOrganizationGroup(ctx echo.Context) error {
 	}
 
 	if delErr := handler.catalog.DeleteGroup(ctx.Request().Context(), int64(organization.ID), groupID); delErr != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	return ctx.JSON(http.StatusOK, "OK")
 }
@@ -96,21 +96,21 @@ func (handler *Handler) PutOrganizationGroup(ctx echo.Context) error {
 		// If no name is provided, keep the current name
 		current, loadErr := handler.catalog.GetGroup(ctx.Request().Context(), int64(organization.ID), groupID)
 		if loadErr != nil {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		name = current.Name
 	}
 
 	group, groupErr := handler.catalog.UpdateGroup(ctx.Request().Context(), int64(organization.ID), groupID, name)
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	// Sync members if provided
 	if payload.Users != nil {
 		userIDs := intsToInt64s(lo.FromPtr(payload.Users))
 		if err := handler.catalog.SyncGroupMembers(ctx.Request().Context(), group.ID, userIDs); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 		}
 	}
 
@@ -118,7 +118,7 @@ func (handler *Handler) PutOrganizationGroup(ctx echo.Context) error {
 	if payload.Workspaces != nil {
 		wsIDs := intsToInt64s(lo.FromPtr(payload.Workspaces))
 		if err := handler.catalog.SyncGroupWorkspaces(ctx.Request().Context(), group.ID, wsIDs); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 		}
 	}
 

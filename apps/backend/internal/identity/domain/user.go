@@ -18,6 +18,7 @@ var (
 	ErrInvalidPassword           = errors.New("password should be at least 6 characters")
 	ErrInvalidTimeOfDayFormat    = errors.New("value in timeofday_format is invalid")
 	ErrPreferencesFieldProtected = errors.New("cannot set value for ToSAcceptNeeded")
+	ErrEmailAlreadyRegistered    = errors.New("email is already registered")
 	ErrUserDeactivated           = errors.New("user is deactivated")
 	ErrUserDeleted               = errors.New("user is deleted")
 )

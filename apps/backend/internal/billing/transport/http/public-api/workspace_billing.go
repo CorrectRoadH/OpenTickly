@@ -163,7 +163,7 @@ func (handler *Handler) GetWorkspacePurchaseOrderPdf(ctx echo.Context) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 // GetWorkspacePaymentReceipts returns payment receipts for a workspace.
@@ -175,7 +175,7 @@ func (handler *Handler) GetWorkspacePaymentReceipts(ctx echo.Context) error {
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 func invoiceViewToAPI(view billingapplication.InvoiceView) publictrackapi.ModelsUserInvoice {
@@ -242,7 +242,7 @@ func writeInvoiceError(err error) error {
 	case errors.Is(err, billingapplication.ErrInvalidInvoice):
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 

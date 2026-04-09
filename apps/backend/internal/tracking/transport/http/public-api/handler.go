@@ -26,7 +26,7 @@ func writePublicTrackTrackingError(err error) error {
 		errors.Is(err, trackingapplication.ErrInvalidWorkspace):
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 

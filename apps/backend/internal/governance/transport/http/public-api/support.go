@@ -47,7 +47,7 @@ func writeGovernanceError(err error) error {
 		errors.Is(err, governanceapplication.ErrTimesheetNotFound):
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 

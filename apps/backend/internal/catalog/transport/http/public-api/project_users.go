@@ -36,7 +36,7 @@ func (handler *Handler) PostPublicTrackProjectUser(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -79,7 +79,7 @@ func (handler *Handler) PutPublicTrackProjectUser(ctx echo.Context) error {
 		switch {
 		case errors.Is(err, catalogapplication.ErrProjectNotFound),
 			errors.Is(err, catalogapplication.ErrProjectUserNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		default:
 			return writePublicTrackCatalogError(ctx, err)
 		}
@@ -112,7 +112,7 @@ func (handler *Handler) DeletePublicTrackProjectUser(ctx echo.Context) error {
 		switch {
 		case errors.Is(err, catalogapplication.ErrProjectNotFound),
 			errors.Is(err, catalogapplication.ErrProjectUserNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		default:
 			return writePublicTrackCatalogError(ctx, err)
 		}

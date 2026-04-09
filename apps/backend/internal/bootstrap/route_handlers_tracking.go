@@ -29,7 +29,7 @@ func (handlers *routeHandlers) searchWorkspaceTimeEntries(ctx echo.Context) erro
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	entries, err := handlers.trackingApp.SearchTimeEntries(ctx.Request().Context(), workspaceID, user.ID, query)

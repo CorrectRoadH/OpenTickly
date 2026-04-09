@@ -59,7 +59,7 @@ func (handler *Handler) PostPublicTrackOrganizationInvitation(ctx echo.Context, 
 
 	organization, err := handler.organizations.GetOrganization(ctx.Request().Context(), tenantdomain.OrganizationID(organizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	workspaces := make([]membershipapplication.InvitationWorkspaceAssignment, 0, len(lo.FromPtr(payload.Workspaces)))
@@ -145,13 +145,13 @@ func (handler *Handler) PutPublicTrackInvitation(ctx echo.Context, organizationI
 func writeInvitationError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrInvitationNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrInvitationEmailsRequired),
 		errors.Is(err, membershipapplication.ErrInvitationWorkspacesRequired),
 		errors.Is(err, membershipapplication.ErrInvitationEmailInvalid),
 		errors.Is(err, membershipapplication.ErrInvitationStateConflict):
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }

@@ -42,7 +42,7 @@ func (handler *Handler) PostPublicTrackProjectTask(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

@@ -364,6 +364,8 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 		return Response{StatusCode: 401, Body: "Unauthorized"}
 	case errors.Is(err, application.ErrRegistrationClosed):
 		return Response{StatusCode: 403, Body: "Registration is currently closed."}
+	case errors.Is(err, domain.ErrEmailAlreadyRegistered):
+		return Response{StatusCode: 409, Body: err.Error()}
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, domain.ErrUserDeactivated),
 		errors.Is(err, domain.ErrUserDeleted):
@@ -374,7 +376,7 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 			logger = slog.Default()
 		}
 		logger.ErrorContext(ctx, "identity web handler error", "operation", operation, "error", err.Error())
-		return Response{StatusCode: 500, Body: "Internal Server Error"}
+		return Response{StatusCode: 500, Body: err.Error()}
 	}
 }
 

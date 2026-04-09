@@ -380,22 +380,22 @@ func (handler *Handler) CreateImportJob(ctx echo.Context) error {
 	}
 	source, err := parseRequiredStringField(ctx.FormValue("source"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	uploadedFile, err := ctx.FormFile("archive")
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	fileReader, err := uploadedFile.Open()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	defer fileReader.Close()
 
 	archiveContent, err := io.ReadAll(fileReader)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	switch source {
@@ -488,7 +488,7 @@ func (handler *Handler) createArchiveImportJob(
 ) error {
 	organizationName, err := parseRequiredStringField(ctx.FormValue("organization_name"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	createdTenant, err := handler.tenant.CreateOrganization(
 		ctx.Request().Context(),
@@ -507,7 +507,7 @@ func (handler *Handler) createArchiveImportJob(
 			UserID:      user.ID,
 		},
 	); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	job, err := handler.importing.StartWorkspaceImport(
 		ctx.Request().Context(),
@@ -526,7 +526,7 @@ func (handler *Handler) createArchiveImportJob(
 			int64(createdTenant.OrganizationID),
 			int64(createdTenant.WorkspaceID),
 		); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 	}
 	return ctx.JSON(http.StatusAccepted, importJobBodyWithOrganization(job, int(createdTenant.OrganizationID)))
@@ -540,7 +540,7 @@ func (handler *Handler) createTimeEntriesImportJob(
 ) error {
 	workspaceID, err := parseInt64Field(ctx.FormValue("workspace_id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -571,6 +571,6 @@ func writeImportingError(err error) error {
 	case errors.Is(err, importingapplication.ErrImportJobNotFound):
 		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }

@@ -31,7 +31,7 @@ func newPublicTrackRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, erro
 			AuthenticationFunc: func(ctx context.Context, input *openapi3filter.AuthenticationInput) error {
 				echoContext := echomiddleware.GetEchoContext(ctx)
 				if echoContext == nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 				}
 				_, err := handlers.publicTrackUser(echoContext)
 				return err
@@ -116,9 +116,9 @@ func (handlers *routeHandlers) publicTrackUser(ctx echo.Context) (*application.U
 		case errors.Is(resolveErr, identitydomain.ErrInvalidCredentials),
 			errors.Is(resolveErr, identitydomain.ErrUserDeactivated),
 			errors.Is(resolveErr, identitydomain.ErrUserDeleted):
-			return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+			return nil, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
 		default:
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 	}
 

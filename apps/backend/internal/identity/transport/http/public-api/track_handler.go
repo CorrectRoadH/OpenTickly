@@ -380,7 +380,7 @@ func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (app
 		user, resolveErr := handler.identity.service.ResolveBasicUser(ctx.Request().Context(), credentials)
 		if resolveErr != nil {
 			response := mapError(resolveErr)
-			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body)
+			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body).SetInternal(err)
 		}
 		return user, nil
 	case sessionIDFromTrackContext(ctx) == "":
@@ -389,7 +389,7 @@ func (handler *PublicTrackHandler) resolvePublicTrackUser(ctx echo.Context) (app
 		user, resolveErr := handler.identity.service.ResolveCurrentUser(ctx.Request().Context(), sessionIDFromTrackContext(ctx))
 		if resolveErr != nil {
 			response := mapError(resolveErr)
-			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body)
+			return application.UserSnapshot{}, echo.NewHTTPError(response.StatusCode, response.Body).SetInternal(err)
 		}
 		return user, nil
 	}

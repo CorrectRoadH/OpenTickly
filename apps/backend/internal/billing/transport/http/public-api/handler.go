@@ -86,7 +86,7 @@ func (handler *Handler) GetPublicTrackOrganizationPlan(ctx echo.Context) error {
 
 	availablePlans := handler.billing.AvailablePlans()
 	if planID > len(availablePlans) {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	plan := availablePlans[planID-1]
 	name := strings.ToUpper(string(plan.Plan[:1])) + string(plan.Plan[1:])

@@ -69,7 +69,7 @@ func (handler *Handler) PostPublicTrackOrganizationWorkspace(ctx echo.Context) e
 		WorkspaceID: int64(result.WorkspaceID),
 		UserID:      requester.ID,
 	}); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	view, err := handler.tenant.GetWorkspace(ctx.Request().Context(), result.WorkspaceID)
@@ -87,7 +87,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Conte
 
 	groups, err := handler.catalog.ListGroups(ctx.Request().Context(), int64(workspace.OrganizationID))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
@@ -115,7 +115,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceUsers(ctx echo.Contex
 
 	members, err := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspace.ID), requester.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	response := make([]publictrackapi.GithubComTogglTogglApiInternalModelsWorkspaceUser, 0, len(members))
@@ -149,7 +149,7 @@ func (handler *Handler) organizationWorkspace(
 		return tenantapplication.WorkspaceView{}, nil, mapError(err)
 	}
 	if int64(workspace.OrganizationID) != organizationID {
-		return tenantapplication.WorkspaceView{}, nil, echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return tenantapplication.WorkspaceView{}, nil, echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	return workspace, requester, nil
 }

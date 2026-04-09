@@ -23,5 +23,5 @@ func (handler *Handler) PostMeTimeEntriesSharedWith(ctx echo.Context) error {
 	if err != nil {
 		return err
 	}
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }

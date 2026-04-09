@@ -37,7 +37,7 @@ func (handler *Handler) GetPublicTrackTimeEntries(ctx echo.Context) error {
 	startDate := strings.TrimSpace(ctx.QueryParam("start_date"))
 	endDate := strings.TrimSpace(ctx.QueryParam("end_date"))
 	if (startDate != "" && endDate == "") || (startDate == "" && endDate != "") {
-		return echo.NewHTTPError(http.StatusBadRequest, "start_date and end_date are both required")
+		return echo.NewHTTPError(http.StatusBadRequest, "start_date and end_date are both required").SetInternal(err)
 	}
 	if startDate != "" {
 		value, parseErr := parseTrackDateTime(startDate, false)

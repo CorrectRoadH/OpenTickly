@@ -38,7 +38,7 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 			if strings.HasSuffix(path, "/admin/v1/bootstrap") {
 				bootstrapped, err := cfg.BootstrapChecker.IsBootstrapped()
 				if err != nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+					return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 				}
 				if !bootstrapped {
 					return next(ctx)
@@ -58,10 +58,10 @@ func AdminAuthMiddleware(cfg AdminAuthConfig) echo.MiddlewareFunc {
 
 			isAdmin, err := cfg.SessionResolver.IsInstanceAdmin(sessionID)
 			if err != nil {
-				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required")
+				return echo.NewHTTPError(http.StatusUnauthorized, "Authentication required").SetInternal(err)
 			}
 			if !isAdmin {
-				return echo.NewHTTPError(http.StatusForbidden, "Instance admin access required")
+				return echo.NewHTTPError(http.StatusForbidden, "Instance admin access required").SetInternal(err)
 			}
 
 			return next(ctx)

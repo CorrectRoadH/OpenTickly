@@ -70,7 +70,7 @@ func (handler *Handler) PutPublicTrackClient(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -102,9 +102,9 @@ func (handler *Handler) ArchivePublicTrackClients(ctx echo.Context) error {
 		archivedProjectIDs, err := handler.catalog.ArchiveClient(ctx.Request().Context(), workspaceID, clientID)
 		if err != nil {
 			if errors.Is(err, catalogapplication.ErrClientNotFound) {
-				return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+				return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 			}
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		projectIDs = append(projectIDs, archivedProjectIDs...)
 	}
@@ -136,7 +136,7 @@ func (handler *Handler) DeletePublicTrackClients(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteClients(ctx.Request().Context(), workspaceID, intsToInt64s(request)); err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -161,7 +161,7 @@ func (handler *Handler) DeletePublicTrackClient(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteClients(ctx.Request().Context(), workspaceID, []int64{clientID}); err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -187,9 +187,9 @@ func (handler *Handler) ArchivePublicTrackClient(ctx echo.Context) error {
 	projectIDs, err := handler.catalog.ArchiveClient(ctx.Request().Context(), workspaceID, clientID)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	return ctx.JSON(http.StatusOK, intsFromInt64s(projectIDs))
 }
@@ -229,11 +229,11 @@ func (handler *Handler) RestorePublicTrackClient(ctx echo.Context) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, catalogapplication.ErrClientNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		case errors.Is(err, catalogapplication.ErrProjectNotFound):
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		default:
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 	}
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))

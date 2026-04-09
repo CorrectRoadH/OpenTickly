@@ -162,7 +162,7 @@ func (handler *Handler) PutPublicTrackWorkspaceUser(ctx echo.Context) error {
 
 	member, found := findWorkspaceMemberByUserID(members, userID)
 	if !found {
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	}
 	return handler.updateWorkspaceMember(ctx, workspaceID, member.ID, requester.ID)
 }
@@ -297,9 +297,9 @@ func publicTrackWorkspaceRole(value string) (membershipdomain.WorkspaceRole, err
 func writeMembershipError(err error) error {
 	switch {
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):
-		return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+		return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberExists),
 		errors.Is(err, membershipapplication.ErrWorkspaceMemberEmailBlank),
 		errors.Is(err, membershipdomain.ErrInvalidWorkspaceRole),
@@ -312,9 +312,9 @@ func writeMembershipError(err error) error {
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberNotDisabled),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberRemoved),
 		errors.Is(err, membershipdomain.ErrWorkspaceMemberAlreadyRemoved):
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 

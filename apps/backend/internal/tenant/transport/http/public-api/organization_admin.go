@@ -22,7 +22,7 @@ func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error 
 	for _, workspaceID := range organization.WorkspaceIDs {
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		for _, member := range members {
 			if member.UserID == nil || member.Role != membershipdomain.WorkspaceRoleAdmin {
@@ -38,7 +38,7 @@ func (handler *Handler) GetPublicTrackOrganizationOwner(ctx echo.Context) error 
 		}
 	}
 
-	return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+	return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 }
 
 func (handler *Handler) GetPublicTrackOrganizationRoles(ctx echo.Context) error {
@@ -98,11 +98,11 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspacesStatistics(ctx echo.
 	for _, workspaceID := range organization.WorkspaceIDs {
 		members, memberErr := handler.membership.ListWorkspaceMembers(ctx.Request().Context(), int64(workspaceID), requester.ID)
 		if memberErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		groups, groupErr := handler.catalog.ListGroups(ctx.Request().Context(), int64(organization.ID))
 		if groupErr != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 
 		admins := make([]publictrackapi.ModelsUserData, 0)
@@ -193,7 +193,7 @@ func (handler *Handler) PostPublicTrackOwnershipTransfer(ctx echo.Context) error
 		return err
 	}
 	_ = organization.ID
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 func (handler *Handler) GetPublicTrackOwnershipTransfer(ctx echo.Context) error {
@@ -203,7 +203,7 @@ func (handler *Handler) GetPublicTrackOwnershipTransfer(ctx echo.Context) error 
 	}
 	_ = organization.ID
 	_ = ctx.Param("transfer_id")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx echo.Context) error {
@@ -214,7 +214,7 @@ func (handler *Handler) PostPublicTrackOwnershipTransferActions(ctx echo.Context
 	_ = organization.ID
 	_ = ctx.Param("transfer_id")
 	_ = ctx.Param("action")
-	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented")
+	return echo.NewHTTPError(http.StatusNotImplemented, "Not Implemented").SetInternal(err)
 }
 
 func max(left int, right int) int {

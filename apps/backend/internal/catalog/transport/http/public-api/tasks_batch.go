@@ -49,7 +49,7 @@ func (handler *Handler) PatchWorkspaceProjectTasks(ctx echo.Context) error {
 	success, err := handler.catalog.PatchTasks(ctx.Request().Context(), workspaceID, projectID, taskIDs, commands)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrTaskNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

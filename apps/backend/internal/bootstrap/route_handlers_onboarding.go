@@ -19,7 +19,7 @@ func (handlers *routeHandlers) getOnboarding(ctx echo.Context) error {
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	completed, err := handlers.getOnboardingCompleted(ctx.Request().Context(), user.ID)
@@ -39,7 +39,7 @@ func (handlers *routeHandlers) completeOnboarding(ctx echo.Context) error {
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	var request webapi.CompleteOnboardingRequest
@@ -63,7 +63,7 @@ func (handlers *routeHandlers) resetOnboarding(ctx echo.Context) error {
 
 	user, err := handlers.identityApp.ResolveCurrentUser(ctx.Request().Context(), sessionID(ctx))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusForbidden, "Forbidden")
+		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	}
 
 	_, err = handlers.pool.Exec(ctx.Request().Context(),

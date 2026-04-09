@@ -21,7 +21,7 @@ func (handlers *routeHandlers) register(ctx echo.Context) error {
 	response := handlers.identity.Register(ctx.Request().Context(), request)
 	if response.StatusCode == http.StatusCreated {
 		if err := maybeBootstrapFirstUser(ctx.Request().Context(), handlers.pool, request.Email); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 	}
 	return handlers.writeIdentityResponse(ctx, response)

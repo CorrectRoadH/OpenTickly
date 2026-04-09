@@ -28,7 +28,7 @@ func (handlers *routeHandlers) RequirePublicTrackWorkspace(ctx echo.Context, wor
 
 	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	_, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
@@ -38,7 +38,7 @@ func (handlers *routeHandlers) RequirePublicTrackWorkspace(ctx echo.Context, wor
 		return nil
 	}
 
-	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
 }
 
 func (handlers *routeHandlers) requirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error {
@@ -53,14 +53,14 @@ func (handlers *routeHandlers) WorkspaceOrganizationID(ctx echo.Context, workspa
 
 	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
-		return 0, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return 0, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	ws, found := lo.Find(workspaces, func(workspace tenantapplication.WorkspaceView) bool {
 		return int64(workspace.ID) == workspaceID
 	})
 	if !found {
-		return 0, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		return 0, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
 	}
 	return int64(ws.OrganizationID), nil
 }
@@ -83,7 +83,7 @@ func (handlers *routeHandlers) RequirePublicTrackOrganization(ctx echo.Context, 
 
 	organizations, err := handlers.tenantApp.ListOrganizationsByUserID(ctx.Request().Context(), user.ID)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	_, found := lo.Find(organizations, func(organization tenantapplication.OrganizationView) bool {
@@ -93,7 +93,7 @@ func (handlers *routeHandlers) RequirePublicTrackOrganization(ctx echo.Context, 
 		return nil
 	}
 
-	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+	return echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
 }
 
 func (handlers *routeHandlers) requirePublicTrackOrganization(ctx echo.Context, organizationID int64) error {
@@ -109,9 +109,9 @@ func (handlers *routeHandlers) requirePublicTrackHome(ctx echo.Context) (session
 	organizationID, workspaceID, found, lookupErr := handlers.userHomes.FindByUserID(ctx.Request().Context(), user.ID)
 	switch {
 	case lookupErr != nil:
-		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return sessionHome{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	case !found:
-		return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.")
+		return sessionHome{}, echo.NewHTTPError(http.StatusForbidden, "User does not have access to this resource.").SetInternal(err)
 	default:
 		return sessionHome{organizationID: organizationID, workspaceID: workspaceID}, nil
 	}

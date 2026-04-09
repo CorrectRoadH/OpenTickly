@@ -36,7 +36,7 @@ func (handler *Handler) GetPublicTrackProjectGroups(ctx echo.Context) error {
 	projectGroups, err := handler.catalog.ListProjectGroups(ctx.Request().Context(), workspaceID, projectIDs)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -74,7 +74,7 @@ func (handler *Handler) PostPublicTrackProjectGroup(ctx echo.Context) error {
 		switch {
 		case errors.Is(err, catalogapplication.ErrProjectNotFound),
 			errors.Is(err, catalogapplication.ErrGroupNotFound):
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		default:
 			return writePublicTrackCatalogError(ctx, err)
 		}
@@ -101,7 +101,7 @@ func (handler *Handler) DeletePublicTrackProjectGroup(ctx echo.Context) error {
 
 	if err := handler.catalog.DeleteProjectGroup(ctx.Request().Context(), workspaceID, projectGroupID); err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectGroupNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

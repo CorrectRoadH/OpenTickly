@@ -32,7 +32,7 @@ func (handler *Handler) GetPublicTrackClients(ctx echo.Context) error {
 		Status: status,
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	clients := make([]publictrackapi.ModelsClient, 0, len(views))
@@ -62,7 +62,7 @@ func (handler *Handler) GetPublicTrackClientsData(ctx echo.Context) error {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
 	clientsByID := make(map[int64]catalogapplication.ClientView, len(views))
@@ -93,9 +93,9 @@ func (handler *Handler) GetPublicTrackClient(ctx echo.Context) error {
 	view, err := handler.catalog.GetClient(ctx.Request().Context(), workspaceID, clientID)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrClientNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 	return ctx.JSON(http.StatusOK, clientViewToAPI(view))
 }

@@ -93,7 +93,7 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 	updated, err := handler.catalog.UpdateProject(ctx.Request().Context(), command)
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
@@ -127,7 +127,7 @@ func (handler *Handler) PostPublicTrackPinnedProject(ctx echo.Context) error {
 	})
 	if err != nil {
 		if errors.Is(err, catalogapplication.ErrProjectNotFound) {
-			return echo.NewHTTPError(http.StatusNotFound, "Not Found")
+			return echo.NewHTTPError(http.StatusNotFound, "Not Found").SetInternal(err)
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}

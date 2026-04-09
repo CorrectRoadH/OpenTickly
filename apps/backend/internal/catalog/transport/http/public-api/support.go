@@ -50,7 +50,7 @@ func writePublicTrackCatalogError(ctx echo.Context, err error) error {
 	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503") {
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	}
-	return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+	return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 }
 
 func parseCSVInt64s(value string) ([]int64, error) {

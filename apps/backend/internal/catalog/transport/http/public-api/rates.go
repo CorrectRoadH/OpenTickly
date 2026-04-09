@@ -175,7 +175,7 @@ func writePublicTrackRateError(err error) error {
 		errors.Is(err, catalogapplication.ErrTaskNotFound):
 		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	default:
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error()).SetInternal(err)
 	}
 }
 
