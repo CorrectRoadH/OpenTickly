@@ -1,0 +1,48 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: input
+    id: api-path
+    attributes:
+      label: API Path
+      description: The API endpoint related to this bug (if applicable)
+      placeholder: "e.g. GET /api/v9/me/time_entries"
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+      description: What you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result
+      description: What actually happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other information (logs, screenshots, environment details)
+    validations:
+      required: false

@@ -1,0 +1,49 @@
+name: API Compatibility Issue
+description: Report a difference between OpenToggl and Toggl Track API behavior
+labels: ["api-compat"]
+body:
+  - type: input
+    id: api-path
+    attributes:
+      label: API Path
+      description: The API endpoint with compatibility issues
+      placeholder: "e.g. PUT /api/v9/workspaces/{workspace_id}/tags/{tag_id}"
+    validations:
+      required: true
+
+  - type: textarea
+    id: toggl-behavior
+    attributes:
+      label: Toggl Track Behavior (Expected)
+      description: What Toggl Track returns or does for this endpoint
+    validations:
+      required: true
+
+  - type: textarea
+    id: opentoggl-behavior
+    attributes:
+      label: OpenToggl Behavior (Actual)
+      description: What OpenToggl returns or does for this endpoint
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Request details (method, headers, body) to reproduce the difference
+      render: shell
+      placeholder: |
+        curl -X GET https://localhost:8080/api/v9/... \
+          -H "Authorization: ..." \
+          -H "Content-Type: application/json"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Toggl API docs link, affected clients, workarounds, etc.
+    validations:
+      required: false

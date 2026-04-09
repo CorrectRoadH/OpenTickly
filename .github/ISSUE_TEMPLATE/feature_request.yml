@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: input
+    id: api-path
+    attributes:
+      label: API Path
+      description: The API endpoint this feature relates to (if applicable)
+      placeholder: "e.g. POST /api/v9/workspaces/{workspace_id}/projects"
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you want to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behavior
+      description: What currently happens (if anything)
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other information, use cases, or mockups
+    validations:
+      required: false
