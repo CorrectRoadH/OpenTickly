@@ -116,6 +116,15 @@ export type RegisterRequest = {
   fullname?: string;
 };
 
+export type RegistrationPendingVerification = {
+  email_verification_required: boolean;
+  email: string;
+};
+
+export type VerifyEmailRequest = {
+  token: string;
+};
+
 export type SessionBootstrap = {
   current_organization_id: number;
   current_workspace_id: number;
@@ -372,12 +381,32 @@ export type RegisterWebUserData = {
 
 export type RegisterWebUserResponses = {
   /**
+   * Registration pending email verification
+   */
+  200: RegistrationPendingVerification;
+  /**
    * Registered session bootstrap
    */
   201: SessionBootstrap;
 };
 
 export type RegisterWebUserResponse = RegisterWebUserResponses[keyof RegisterWebUserResponses];
+
+export type VerifyEmailData = {
+  body: VerifyEmailRequest;
+  path?: never;
+  query?: never;
+  url: "/web/v1/auth/verify-email";
+};
+
+export type VerifyEmailResponses = {
+  /**
+   * Email verified, session bootstrap
+   */
+  200: SessionBootstrap;
+};
+
+export type VerifyEmailResponse = VerifyEmailResponses[keyof VerifyEmailResponses];
 
 export type GetWebSessionData = {
   body?: never;

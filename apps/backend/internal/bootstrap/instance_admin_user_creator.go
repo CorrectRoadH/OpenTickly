@@ -16,7 +16,7 @@ type identityUserCreator struct {
 }
 
 func (c *identityUserCreator) CreateUser(ctx context.Context, email string, password string, fullName string) (int64, error) {
-	session, err := c.identityApp.Register(ctx, identityapplication.RegisterInput{
+	result, err := c.identityApp.Register(ctx, identityapplication.RegisterInput{
 		Email:    email,
 		FullName: fullName,
 		Password: password,
@@ -24,7 +24,10 @@ func (c *identityUserCreator) CreateUser(ctx context.Context, email string, pass
 	if err != nil {
 		return 0, fmt.Errorf("create bootstrap user: %w", err)
 	}
-	return session.User.ID, nil
+	if result.Session == nil {
+		return 0, fmt.Errorf("create bootstrap user: registration returned pending verification")
+	}
+	return result.Session.User.ID, nil
 }
 
 func (c *identityUserCreator) MarkInstanceAdmin(ctx context.Context, userID int64) error {

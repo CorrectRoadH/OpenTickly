@@ -581,6 +581,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 		ProductEmailsDisableCode: productEmailsDisableCode,
 		WeeklyReportDisableCode:  weeklyReportDisableCode,
 		AvatarStorageKey:         avatarStorageKey,
+		PendingVerification:      domain.UserState(state) == domain.UserStatePendingVerification,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("rebuild identity user %d: %w", id, err)
@@ -628,7 +629,7 @@ func scanUser(row rowScanner) (*domain.User, error) {
 	}
 
 	switch domain.UserState(state) {
-	case domain.UserStateActive:
+	case domain.UserStateActive, domain.UserStatePendingVerification:
 		return user, nil
 	case domain.UserStateDeactivated:
 		if err := user.Deactivate(); err != nil {

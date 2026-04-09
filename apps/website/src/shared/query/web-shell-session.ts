@@ -5,6 +5,7 @@ import type {
   RegisterRequestDto,
   UpdateWebSessionRequestDto,
 } from "../api/web-contract.ts";
+import type { VerifyEmailRequest } from "../api/web/index.ts";
 import { unwrapWebApiResult } from "../api/web-client.ts";
 import {
   completeOnboarding,
@@ -15,6 +16,7 @@ import {
   registerWebUser,
   resetOnboarding,
   updateWebSession,
+  verifyEmail,
 } from "../api/web/index.ts";
 
 import { sessionQueryKey } from "./web-shell.ts";
@@ -41,8 +43,30 @@ export function useRegisterMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (request: RegisterRequestDto) =>
-      unwrapWebApiResult(registerWebUser({ body: request })),
+    mutationFn: async (request: RegisterRequestDto) => {
+      const result = await registerWebUser({ body: request });
+      if (result.error !== undefined) {
+        throw new (await import("../api/web-client.ts")).WebApiError(
+          `Request failed for ${result.request.url}`,
+          result.response.status,
+          result.error,
+        );
+      }
+      return { data: result.data, status: result.response.status };
+    },
+    onSuccess: ({ data, status }) => {
+      if (status === 201) {
+        queryClient.setQueryData(sessionQueryKey, data);
+      }
+    },
+  });
+}
+
+export function useVerifyEmailMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: VerifyEmailRequest) => unwrapWebApiResult(verifyEmail({ body: request })),
     onSuccess: (data) => {
       queryClient.setQueryData(sessionQueryKey, data);
     },

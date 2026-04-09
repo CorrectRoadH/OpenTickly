@@ -18,6 +18,7 @@ import {
   AuthPage,
   InviteStatusJoinedPage,
   ProfilePage,
+  VerifyEmailPage,
 } from "./route-tree-lazy-pages.tsx";
 
 /* ---------- protected layout route ---------- */
@@ -86,6 +87,12 @@ export const registerRoute = createRoute({
   component: RegisterRouteComponent,
 });
 
+export const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify-email",
+  component: VerifyEmailRouteComponent,
+});
+
 export const inviteStatusJoinedRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/invite-status/joined",
@@ -125,6 +132,14 @@ function LoginRouteComponent() {
 
 function RegisterRouteComponent() {
   return <PublicAuthRoute mode="register" />;
+}
+
+function VerifyEmailRouteComponent() {
+  return (
+    <Suspense fallback={pageSpinner}>
+      <VerifyEmailPage />
+    </Suspense>
+  );
 }
 
 function InviteStatusJoinedRouteComponent() {

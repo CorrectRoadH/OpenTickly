@@ -27,6 +27,17 @@ func (handlers *routeHandlers) register(ctx echo.Context) error {
 	return handlers.writeIdentityResponse(ctx, response)
 }
 
+func (handlers *routeHandlers) verifyEmail(ctx echo.Context) error {
+	var request struct {
+		Token string `json:"token"`
+	}
+	if err := ctx.Bind(&request); err != nil || request.Token == "" {
+		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+	}
+	response := handlers.identity.VerifyEmail(ctx.Request().Context(), request.Token)
+	return handlers.writeIdentityResponse(ctx, response)
+}
+
 func (handlers *routeHandlers) login(ctx echo.Context) error {
 	var request identityweb.LoginRequest
 	if err := ctx.Bind(&request); err != nil {

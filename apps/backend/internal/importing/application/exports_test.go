@@ -49,19 +49,19 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		t.Fatalf("register identity user: %v", err)
 	}
 
-	userToken, err := service.StartUserExport(ctx, auth.User.ID, importingapplication.UserExportSelection{
+	userToken, err := service.StartUserExport(ctx, auth.Session.User.ID, importingapplication.UserExportSelection{
 		Profile: true,
 	})
 	if err != nil {
 		t.Fatalf("start user export: %v", err)
 	}
 
-	workspaceToken, err := service.StartWorkspaceExport(ctx, workspaceID, auth.User.ID, []string{"timeline", "projects"})
+	workspaceToken, err := service.StartWorkspaceExport(ctx, workspaceID, auth.Session.User.ID, []string{"timeline", "projects"})
 	if err != nil {
 		t.Fatalf("start workspace export: %v", err)
 	}
 
-	userExports, err := service.ListUserExports(ctx, auth.User.ID)
+	userExports, err := service.ListUserExports(ctx, auth.Session.User.ID)
 	if err != nil {
 		t.Fatalf("list user exports: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestServicePersistsUserAndWorkspaceExports(t *testing.T) {
 		t.Fatalf("expected one completed workspace export, got %#v", workspaceExports)
 	}
 
-	userArchive, err := service.GetUserExportArchive(ctx, auth.User.ID, userToken)
+	userArchive, err := service.GetUserExportArchive(ctx, auth.Session.User.ID, userToken)
 	if err != nil {
 		t.Fatalf("get user export archive: %v", err)
 	}

@@ -137,7 +137,7 @@ func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession, s
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 	})
 
-	auth, err := service.Register(context.Background(), application.RegisterInput{
+	result, err := service.Register(context.Background(), application.RegisterInput{
 		Email:    uniqueEmail,
 		FullName: "Test Person",
 		Password: "secret1",
@@ -146,5 +146,5 @@ func newTestHandler(t *testing.T) (*Handler, application.AuthenticatedSession, s
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	return NewHandler(service), auth, uniqueEmail
+	return NewHandler(service), *result.Session, uniqueEmail
 }

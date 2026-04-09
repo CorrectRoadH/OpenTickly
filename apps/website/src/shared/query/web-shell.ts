@@ -86,6 +86,7 @@ export {
   useSessionBootstrapQuery,
   useLoginMutation,
   useRegisterMutation,
+  useVerifyEmailMutation,
   useLogoutMutation,
   useUpdateWebSessionMutation,
   useOnboardingQuery,

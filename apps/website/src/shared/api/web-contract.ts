@@ -33,3 +33,8 @@ export type {
   OnboardingStatus as OnboardingStatusDto,
   CompleteOnboardingRequest as CompleteOnboardingRequestDto,
 } from "./web/index.ts";
+
+export type {
+  RegistrationPendingVerification as RegistrationPendingVerificationDto,
+  VerifyEmailRequest as VerifyEmailRequestDto,
+} from "./web/index.ts";

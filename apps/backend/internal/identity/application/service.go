@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"time"
 
 	"opentoggl/backend/apps/backend/internal/identity/domain"
 	"opentoggl/backend/apps/backend/internal/log"
@@ -15,6 +16,8 @@ var (
 	ErrUnknownPreferencesClient = errors.New("unknown client")
 	ErrUnknownAlphaFeature      = errors.New("invalid feature code(s)")
 	ErrRegistrationClosed       = errors.New("registration is currently closed")
+	ErrVerificationTokenExpired = errors.New("verification token has expired")
+	ErrVerificationTokenInvalid = errors.New("verification token is invalid")
 )
 
 const StopRunningTimerJobName = "identity.deactivated.stop_running_timer"
@@ -28,6 +31,8 @@ type Config struct {
 	IDs                Sequence
 	KnownAlphaFeatures []string
 	RegistrationGuard  RegistrationGuard
+	EmailVerifier      EmailVerifier
+	VerificationTokens VerificationTokenRepository
 	Logger             log.Logger
 }
 
@@ -73,6 +78,26 @@ type RegistrationGuard interface {
 	CanRegister(ctx context.Context) error
 }
 
+// EmailVerifier checks whether email verification is required and sends verification emails.
+// When nil, email verification is skipped (backward compatible).
+type EmailVerifier interface {
+	IsVerificationRequired(ctx context.Context) bool
+	SendVerificationEmail(ctx context.Context, email string, token string) error
+}
+
+// VerificationTokenRepository stores and retrieves email verification tokens.
+type VerificationTokenRepository interface {
+	Save(ctx context.Context, token VerificationToken) error
+	ByToken(ctx context.Context, token string) (VerificationToken, error)
+	DeleteByUserID(ctx context.Context, userID int64) error
+}
+
+type VerificationToken struct {
+	UserID    int64
+	Token     string
+	ExpiresAt time.Time
+}
+
 type RegisterInput struct {
 	Email    string
 	FullName string
@@ -114,6 +139,12 @@ type AuthenticatedSession struct {
 	User      UserSnapshot
 }
 
+type RegisterResult struct {
+	Session              *AuthenticatedSession
+	VerificationRequired bool
+	Email                string
+}
+
 type Service struct {
 	users              UserRepository
 	sessions           SessionRepository
@@ -123,6 +154,8 @@ type Service struct {
 	ids                Sequence
 	knownAlphaFeatures map[string]struct{}
 	registrationGuard  RegistrationGuard
+	emailVerifier      EmailVerifier
+	verificationTokens VerificationTokenRepository
 	logger             log.Logger
 }
 
@@ -146,6 +179,8 @@ func NewService(cfg Config) *Service {
 		ids:                cfg.IDs,
 		knownAlphaFeatures: knownAlphaFeatures,
 		registrationGuard:  cfg.RegistrationGuard,
+		emailVerifier:      cfg.EmailVerifier,
+		verificationTokens: cfg.VerificationTokens,
 		logger:             logger,
 	}
 }
@@ -188,7 +223,7 @@ func (service *Service) DeletePushService(ctx context.Context, userID int64, tok
 	return service.pushServices.Delete(ctx, userID, pushToken)
 }
 
-func (service *Service) Register(ctx context.Context, input RegisterInput) (AuthenticatedSession, error) {
+func (service *Service) Register(ctx context.Context, input RegisterInput) (RegisterResult, error) {
 	service.logger.InfoContext(ctx, "registering user",
 		"email", input.Email,
 	)
@@ -198,38 +233,41 @@ func (service *Service) Register(ctx context.Context, input RegisterInput) (Auth
 				"email", input.Email,
 				"error", err.Error(),
 			)
-			return AuthenticatedSession{}, err
+			return RegisterResult{}, err
 		}
 	}
+
+	needsVerification := service.emailVerifier != nil && service.emailVerifier.IsVerificationRequired(ctx)
 
 	userID, err := service.ids.NextUserID()
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to generate user ID",
 			"error", err.Error(),
 		)
-		return AuthenticatedSession{}, err
+		return RegisterResult{}, err
 	}
 	apiToken, err := service.ids.NextAPIToken()
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to generate API token",
 			"error", err.Error(),
 		)
-		return AuthenticatedSession{}, err
+		return RegisterResult{}, err
 	}
 
 	user, err := domain.RegisterUser(domain.RegisterParams{
-		ID:       userID,
-		Email:    input.Email,
-		FullName: input.FullName,
-		Password: input.Password,
-		APIToken: apiToken,
+		ID:                  userID,
+		Email:               input.Email,
+		FullName:            input.FullName,
+		Password:            input.Password,
+		APIToken:            apiToken,
+		PendingVerification: needsVerification,
 	})
 	if err != nil {
 		service.logger.WarnContext(ctx, "invalid registration data",
 			"email", input.Email,
 			"error", err.Error(),
 		)
-		return AuthenticatedSession{}, err
+		return RegisterResult{}, err
 	}
 
 	if err := service.users.Save(ctx, user); err != nil {
@@ -237,15 +275,83 @@ func (service *Service) Register(ctx context.Context, input RegisterInput) (Auth
 			"user_id", userID,
 			"error", err.Error(),
 		)
+		return RegisterResult{}, err
+	}
+
+	if needsVerification {
+		tokenStr, err := service.ids.NextAPIToken()
+		if err != nil {
+			return RegisterResult{}, err
+		}
+		vToken := VerificationToken{
+			UserID:    userID,
+			Token:     tokenStr,
+			ExpiresAt: time.Now().Add(24 * time.Hour),
+		}
+		if err := service.verificationTokens.Save(ctx, vToken); err != nil {
+			return RegisterResult{}, err
+		}
+		if err := service.emailVerifier.SendVerificationEmail(ctx, user.Email(), tokenStr); err != nil {
+			service.logger.ErrorContext(ctx, "failed to send verification email",
+				"user_id", userID,
+				"error", err.Error(),
+			)
+			return RegisterResult{}, err
+		}
+		service.logger.InfoContext(ctx, "user registered, verification email sent",
+			"user_id", userID,
+		)
+		return RegisterResult{
+			VerificationRequired: true,
+			Email:                user.Email(),
+		}, nil
+	}
+
+	session, err := service.issueSession(ctx, user)
+	if err != nil {
+		return RegisterResult{}, err
+	}
+	service.logger.InfoContext(ctx, "user registered",
+		"user_id", userID,
+		"session_id", session.SessionID,
+	)
+	return RegisterResult{Session: &session}, nil
+}
+
+func (service *Service) VerifyEmail(ctx context.Context, token string) (AuthenticatedSession, error) {
+	service.logger.InfoContext(ctx, "verifying email", "token_prefix", token[:min(8, len(token))])
+
+	vToken, err := service.verificationTokens.ByToken(ctx, token)
+	if err != nil {
+		return AuthenticatedSession{}, ErrVerificationTokenInvalid
+	}
+	if time.Now().After(vToken.ExpiresAt) {
+		return AuthenticatedSession{}, ErrVerificationTokenExpired
+	}
+
+	user, err := service.users.ByID(ctx, vToken.UserID)
+	if err != nil {
 		return AuthenticatedSession{}, err
+	}
+	if err := user.Activate(); err != nil {
+		return AuthenticatedSession{}, err
+	}
+	if err := service.users.Save(ctx, user); err != nil {
+		return AuthenticatedSession{}, err
+	}
+	if err := service.verificationTokens.DeleteByUserID(ctx, vToken.UserID); err != nil {
+		service.logger.ErrorContext(ctx, "failed to clean up verification tokens",
+			"user_id", vToken.UserID,
+			"error", err.Error(),
+		)
 	}
 
 	session, err := service.issueSession(ctx, user)
 	if err != nil {
 		return AuthenticatedSession{}, err
 	}
-	service.logger.InfoContext(ctx, "user registered",
-		"user_id", userID,
+	service.logger.InfoContext(ctx, "email verified, user activated",
+		"user_id", user.ID(),
 		"session_id", session.SessionID,
 	)
 	return session, nil

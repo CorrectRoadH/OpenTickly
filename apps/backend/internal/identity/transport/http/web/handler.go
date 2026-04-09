@@ -99,7 +99,7 @@ func NewHandlerWithShell(service *application.Service, shellProvider SessionShel
 }
 
 func (handler *Handler) Register(ctx context.Context, request RegisterRequest) Response {
-	auth, err := handler.service.Register(ctx, application.RegisterInput{
+	result, err := handler.service.Register(ctx, application.RegisterInput{
 		Email:    request.Email,
 		FullName: request.FullName,
 		Password: request.Password,
@@ -108,13 +108,41 @@ func (handler *Handler) Register(ctx context.Context, request RegisterRequest) R
 		return handler.mapError(ctx, "register", err)
 	}
 
-	bootstrap, err := handler.sessionBootstrap(ctx, auth.User)
+	if result.VerificationRequired {
+		return Response{
+			StatusCode: 200,
+			Body: map[string]any{
+				"email_verification_required": true,
+				"email":                       result.Email,
+			},
+		}
+	}
+
+	bootstrap, err := handler.sessionBootstrap(ctx, result.Session.User)
 	if err != nil {
 		return handler.mapError(ctx, "register", err)
 	}
 
 	return Response{
 		StatusCode: 201,
+		Body:       bootstrap,
+		SessionID:  result.Session.SessionID,
+	}
+}
+
+func (handler *Handler) VerifyEmail(ctx context.Context, token string) Response {
+	auth, err := handler.service.VerifyEmail(ctx, token)
+	if err != nil {
+		return handler.mapError(ctx, "verify_email", err)
+	}
+
+	bootstrap, err := handler.sessionBootstrap(ctx, auth.User)
+	if err != nil {
+		return handler.mapError(ctx, "verify_email", err)
+	}
+
+	return Response{
+		StatusCode: 200,
 		Body:       bootstrap,
 		SessionID:  auth.SessionID,
 	}
@@ -366,6 +394,12 @@ func (handler *Handler) mapError(ctx context.Context, operation string, err erro
 		return Response{StatusCode: 403, Body: "Registration is currently closed."}
 	case errors.Is(err, domain.ErrEmailAlreadyRegistered):
 		return Response{StatusCode: 409, Body: err.Error()}
+	case errors.Is(err, domain.ErrUserPendingVerification):
+		return Response{StatusCode: 403, Body: "Email verification is required. Please check your inbox."}
+	case errors.Is(err, application.ErrVerificationTokenInvalid):
+		return Response{StatusCode: 400, Body: "Invalid verification token."}
+	case errors.Is(err, application.ErrVerificationTokenExpired):
+		return Response{StatusCode: 400, Body: "Verification token has expired."}
 	case errors.Is(err, domain.ErrInvalidCredentials),
 		errors.Is(err, domain.ErrUserDeactivated),
 		errors.Is(err, domain.ErrUserDeleted):

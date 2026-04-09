@@ -48,6 +48,8 @@ import type {
   UpdateWorkspacePermissionsResponses,
   UpdateWorkspaceSettingsData,
   UpdateWorkspaceSettingsResponses,
+  VerifyEmailData,
+  VerifyEmailResponses,
 } from "./types.gen.js";
 
 export type Options<
@@ -101,6 +103,21 @@ export const registerWebUser = <ThrowOnError extends boolean = false>(
 ) =>
   (options.client ?? client).post<RegisterWebUserResponses, unknown, ThrowOnError>({
     url: "/web/v1/auth/register",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Verify email address with token
+ */
+export const verifyEmail = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyEmailData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<VerifyEmailResponses, unknown, ThrowOnError>({
+    url: "/web/v1/auth/verify-email",
     ...options,
     headers: {
       "Content-Type": "application/json",

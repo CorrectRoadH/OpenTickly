@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 
 import type { LoginRequestDto, RegisterRequestDto } from "../../shared/api/web-contract.ts";
+import type { RegistrationPendingVerification } from "../../shared/api/web/index.ts";
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { resolveHomePath } from "../../shared/lib/workspace-routing.ts";
 import { useLoginMutation, useRegisterMutation } from "../../shared/query/web-shell.ts";
@@ -11,6 +12,15 @@ import { AuthForm } from "./AuthForm.tsx";
 type AuthFeatureProps = {
   mode: "login" | "register";
 };
+
+function isVerificationPending(data: unknown): data is RegistrationPendingVerification {
+  return (
+    data != null &&
+    typeof data === "object" &&
+    "email_verification_required" in data &&
+    (data as RegistrationPendingVerification).email_verification_required === true
+  );
+}
 
 export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
   const { t } = useTranslation("auth");
@@ -26,7 +36,14 @@ export function AuthFeature({ mode }: AuthFeatureProps): ReactElement {
       if (mode === "login") {
         await loginMutation.mutateAsync(payload as LoginRequestDto);
       } else {
-        await registerMutation.mutateAsync(payload as RegisterRequestDto);
+        const result = await registerMutation.mutateAsync(payload as RegisterRequestDto);
+        if (isVerificationPending(result.data)) {
+          void navigate({
+            to: "/verify-email",
+            search: { email: result.data.email },
+          });
+          return;
+        }
       }
 
       void navigate({

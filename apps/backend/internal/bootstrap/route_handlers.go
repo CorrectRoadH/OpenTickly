@@ -137,6 +137,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		return nil, err
 	}
 
+	emailVerifier := newEmailVerifierFromDB(pool, smtpChecker)
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              newCachedUserRepository(identitypostgres.NewUserRepository(pool), cache),
 		Sessions:           newCachedSessionRepository(identitypostgres.NewSessionRepository(pool), cache),
@@ -146,6 +147,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		IDs:                identitypostgres.NewSequence(pool),
 		KnownAlphaFeatures: []string{"calendar-redesign"},
 		RegistrationGuard:  &registrationPolicyGuard{pool: pool},
+		EmailVerifier:      emailVerifier,
+		VerificationTokens: identitypostgres.NewVerificationTokenRepository(pool),
 		Logger:             appLogger,
 	})
 	userHomes := newCachedUserHomeRepository(tenantpostgres.NewUserHomeRepository(pool), cache)

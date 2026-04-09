@@ -21,14 +21,16 @@ var (
 	ErrEmailAlreadyRegistered    = errors.New("email is already registered")
 	ErrUserDeactivated           = errors.New("user is deactivated")
 	ErrUserDeleted               = errors.New("user is deleted")
+	ErrUserPendingVerification   = errors.New("email verification is pending")
 )
 
 type UserState string
 
 const (
-	UserStateActive      UserState = "active"
-	UserStateDeactivated UserState = "deactivated"
-	UserStateDeleted     UserState = "deleted"
+	UserStateActive              UserState = "active"
+	UserStateDeactivated         UserState = "deactivated"
+	UserStateDeleted             UserState = "deleted"
+	UserStatePendingVerification UserState = "pending_verification"
 )
 
 type RegisterParams struct {
@@ -44,6 +46,7 @@ type RegisterParams struct {
 	ProductEmailsDisableCode string
 	WeeklyReportDisableCode  string
 	AvatarStorageKey         string
+	PendingVerification      bool
 }
 
 type BasicCredentials struct {
@@ -153,6 +156,11 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		weeklyReportDisableCode = notificationCode("weekly-report", params.APIToken)
 	}
 
+	initialState := UserStateActive
+	if params.PendingVerification {
+		initialState = UserStatePendingVerification
+	}
+
 	return &User{
 		id:                       params.ID,
 		email:                    strings.ToLower(strings.TrimSpace(params.Email)),
@@ -161,7 +169,7 @@ func RegisterUser(params RegisterParams) (*User, error) {
 		apiToken:                 params.APIToken,
 		timezone:                 "UTC",
 		beginningOfWeek:          1,
-		state:                    UserStateActive,
+		state:                    initialState,
 		sendProductEmails:        sendProductEmails,
 		sendWeeklyReport:         sendWeeklyReport,
 		tosAcceptNeeded:          tosAcceptNeeded,
@@ -520,9 +528,20 @@ func (user *User) ensureAuthenticatable() error {
 		return ErrUserDeactivated
 	case UserStateDeleted:
 		return ErrUserDeleted
+	case UserStatePendingVerification:
+		return ErrUserPendingVerification
 	default:
 		return nil
 	}
+}
+
+// Activate transitions a user from pending_verification to active.
+func (user *User) Activate() error {
+	if user.state != UserStatePendingVerification {
+		return errors.New("only pending_verification users can be activated")
+	}
+	user.state = UserStateActive
+	return nil
 }
 
 func (user *User) ensureMutable() error {

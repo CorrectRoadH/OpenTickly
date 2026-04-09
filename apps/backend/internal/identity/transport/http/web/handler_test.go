@@ -89,17 +89,17 @@ func TestGetSessionAndLogoutUseSessionTransportState(t *testing.T) {
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	sessionResponse := handler.GetSession(context.Background(), auth.SessionID)
+	sessionResponse := handler.GetSession(context.Background(), auth.Session.SessionID)
 	if sessionResponse.StatusCode != 200 {
 		t.Fatalf("expected session lookup status 200, got %d", sessionResponse.StatusCode)
 	}
 
-	logoutResponse := handler.Logout(context.Background(), auth.SessionID)
+	logoutResponse := handler.Logout(context.Background(), auth.Session.SessionID)
 	if logoutResponse.StatusCode != 204 {
 		t.Fatalf("expected logout status 204, got %d", logoutResponse.StatusCode)
 	}
 
-	loggedOutSession := handler.GetSession(context.Background(), auth.SessionID)
+	loggedOutSession := handler.GetSession(context.Background(), auth.Session.SessionID)
 	if loggedOutSession.StatusCode != 401 {
 		t.Fatalf("expected logged out session status 401, got %d", loggedOutSession.StatusCode)
 	}
@@ -128,7 +128,7 @@ func TestGetSessionLogsUnexpectedSessionBootstrapError(t *testing.T) {
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	response := handler.GetSession(context.Background(), auth.SessionID)
+	response := handler.GetSession(context.Background(), auth.Session.SessionID)
 	if response.StatusCode != 500 {
 		t.Fatalf("expected session lookup status 500, got %d", response.StatusCode)
 	}
@@ -167,7 +167,7 @@ func TestGetProfileReturnsCurrentAPIToken(t *testing.T) {
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	response := handler.GetProfile(context.Background(), auth.SessionID)
+	response := handler.GetProfile(context.Background(), auth.Session.SessionID)
 	if response.StatusCode != 200 {
 		t.Fatalf("expected profile status 200, got %d", response.StatusCode)
 	}
@@ -194,7 +194,7 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 		t.Fatalf("expected register to succeed: %v", err)
 	}
 
-	profile := handler.GetProfile(context.Background(), auth.SessionID)
+	profile := handler.GetProfile(context.Background(), auth.Session.SessionID)
 	profileBody, ok := profile.Body.(webapi.CurrentUserProfile)
 	if !ok {
 		t.Fatalf("expected profile body CurrentUserProfile, got %T", profile.Body)
@@ -204,7 +204,7 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 		t.Fatalf("expected original profile api_token, got %#v", profileBody.ApiToken)
 	}
 
-	reset := handler.ResetAPIToken(context.Background(), auth.SessionID)
+	reset := handler.ResetAPIToken(context.Background(), auth.Session.SessionID)
 	if reset.StatusCode != 200 {
 		t.Fatalf("expected reset token status 200, got %d", reset.StatusCode)
 	}
@@ -221,7 +221,7 @@ func TestResetAPITokenReturnsNewCurrentUserToken(t *testing.T) {
 		t.Fatalf("expected rotated token to change, kept %q", rotatedToken)
 	}
 
-	updatedProfile := handler.GetProfile(context.Background(), auth.SessionID)
+	updatedProfile := handler.GetProfile(context.Background(), auth.Session.SessionID)
 	updatedProfileBody, ok := updatedProfile.Body.(webapi.CurrentUserProfile)
 	if !ok {
 		t.Fatalf("expected updated profile body CurrentUserProfile, got %T", updatedProfile.Body)

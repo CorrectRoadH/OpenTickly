@@ -25,6 +25,7 @@ export {
   updateWorkspaceMemberRateCost,
   updateWorkspacePermissions,
   updateWorkspaceSettings,
+  verifyEmail,
 } from "./sdk.gen.js";
 export type {
   CapabilityContext,
@@ -92,6 +93,7 @@ export type {
   RegisterWebUserData,
   RegisterWebUserResponse,
   RegisterWebUserResponses,
+  RegistrationPendingVerification,
   RemoveWorkspaceMemberData,
   RemoveWorkspaceMemberResponse,
   RemoveWorkspaceMemberResponses,
@@ -128,6 +130,10 @@ export type {
   UpdateWorkspaceSettingsResponses,
   UserPreferences,
   UserPreferencesUpdate,
+  VerifyEmailData,
+  VerifyEmailRequest,
+  VerifyEmailResponse,
+  VerifyEmailResponses,
   WorkspaceMember,
   WorkspaceMemberInvitationRequest,
   WorkspaceMembersEnvelope,

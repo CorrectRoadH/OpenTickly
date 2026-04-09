@@ -59,8 +59,46 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "Registration pending email verification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationPendingVerification"
+                }
+              }
+            }
+          },
           "201": {
             "description": "Registered session bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionBootstrap"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web/v1/auth/verify-email": {
+      "post": {
+        "summary": "Verify email address with token",
+        "operationId": "verify-email",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email verified, session bootstrap",
             "content": {
               "application/json": {
                 "schema": {
@@ -1005,6 +1043,28 @@
           }
         },
         "required": ["email", "password"]
+      },
+      "RegistrationPendingVerification": {
+        "type": "object",
+        "properties": {
+          "email_verification_required": {
+            "type": "boolean"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email_verification_required", "email"]
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": ["token"]
       },
       "SessionBootstrap": {
         "type": "object",

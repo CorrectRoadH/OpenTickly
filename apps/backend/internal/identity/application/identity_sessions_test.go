@@ -33,7 +33,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("register: %v", err)
 	}
 
-	current, err := service.ResolveCurrentUser(ctx, registered.SessionID)
+	current, err := service.ResolveCurrentUser(ctx, registered.Session.SessionID)
 	if err != nil {
 		t.Fatalf("resolve current user: %v", err)
 	}
@@ -41,7 +41,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("expected current user email %s, got %q", uniqueEmail, current.Email)
 	}
 
-	profile, err := service.UpdateProfile(ctx, registered.User.ID, domain.ProfileUpdate{
+	profile, err := service.UpdateProfile(ctx, registered.Session.User.ID, domain.ProfileUpdate{
 		CurrentPassword: "secret1",
 		Password:        "secret2",
 		Email:           renamedEmail,
@@ -55,7 +55,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("expected updated email %s, got %q", renamedEmail, profile.Email)
 	}
 
-	if err := service.UpdatePreferences(ctx, registered.User.ID, "web", domain.Preferences{
+	if err := service.UpdatePreferences(ctx, registered.Session.User.ID, "web", domain.Preferences{
 		CollapseTimeEntries:            lo.ToPtr(true),
 		DateFormat:                     "YYYY-MM-DD",
 		DurationFormat:                 "improved",
@@ -83,7 +83,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("update preferences: %v", err)
 	}
 
-	preferences, err := service.GetPreferences(ctx, registered.User.ID, "web")
+	preferences, err := service.GetPreferences(ctx, registered.Session.User.ID, "web")
 	if err != nil {
 		t.Fatalf("get preferences: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	if preferences.DurationFormat != "improved" || preferences.ManualEntryMode != "timer" {
 		t.Fatalf("expected string preferences to persist, got %#v", preferences)
 	}
-	if currentAfterPreferences, err := service.ResolveCurrentUser(ctx, registered.SessionID); err != nil {
+	if currentAfterPreferences, err := service.ResolveCurrentUser(ctx, registered.Session.SessionID); err != nil {
 		t.Fatalf("resolve current user after preferences: %v", err)
 	} else {
 		if currentAfterPreferences.SendProductEmails {
@@ -107,20 +107,20 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		}
 	}
 
-	if _, err := service.RegisterPushService(ctx, registered.User.ID, "device-token-1"); err != nil {
+	if _, err := service.RegisterPushService(ctx, registered.Session.User.ID, "device-token-1"); err != nil {
 		t.Fatalf("register push service: %v", err)
 	}
-	pushServices, err := service.ListPushServices(ctx, registered.User.ID)
+	pushServices, err := service.ListPushServices(ctx, registered.Session.User.ID)
 	if err != nil {
 		t.Fatalf("list push services: %v", err)
 	}
 	if len(pushServices) != 1 || pushServices[0].Token().String() != "device-token-1" {
 		t.Fatalf("expected saved push service token, got %#v", pushServices)
 	}
-	if err := service.DeletePushService(ctx, registered.User.ID, "device-token-1"); err != nil {
+	if err := service.DeletePushService(ctx, registered.Session.User.ID, "device-token-1"); err != nil {
 		t.Fatalf("delete push service: %v", err)
 	}
-	pushServices, err = service.ListPushServices(ctx, registered.User.ID)
+	pushServices, err = service.ListPushServices(ctx, registered.Session.User.ID)
 	if err != nil {
 		t.Fatalf("list push services after delete: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 		t.Fatalf("expected push services to be empty after delete, got %#v", pushServices)
 	}
 
-	token, err := service.ResetAPIToken(ctx, registered.User.ID)
+	token, err := service.ResetAPIToken(ctx, registered.Session.User.ID)
 	if err != nil {
 		t.Fatalf("reset api token: %v", err)
 	}
@@ -140,8 +140,8 @@ func TestServicePersistsIdentityAndSessionsWithPostgresRepositories(t *testing.T
 	if err != nil {
 		t.Fatalf("token login: %v", err)
 	}
-	if tokenSession.User.ID != registered.User.ID {
-		t.Fatalf("expected token login user %d, got %d", registered.User.ID, tokenSession.User.ID)
+	if tokenSession.User.ID != registered.Session.User.ID {
+		t.Fatalf("expected token login user %d, got %d", registered.Session.User.ID, tokenSession.User.ID)
 	}
 
 	if err := service.Logout(ctx, tokenSession.SessionID); err != nil {
@@ -169,11 +169,11 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 		t.Fatalf("register: %v", err)
 	}
 
-	if err := deps.TimerState.MarkRunning(ctx, auth.User.ID); err != nil {
+	if err := deps.TimerState.MarkRunning(ctx, auth.Session.User.ID); err != nil {
 		t.Fatalf("mark running timer: %v", err)
 	}
 
-	if err := service.Deactivate(ctx, auth.User.ID); err != nil {
+	if err := service.Deactivate(ctx, auth.Session.User.ID); err != nil {
 		t.Fatalf("deactivate: %v", err)
 	}
 
@@ -184,20 +184,20 @@ func TestServiceDeactivationWithPostgresRepositoriesPreservesAuthRules(t *testin
 		t.Fatalf("expected deactivated login to fail with ErrUserDeactivated, got %v", err)
 	}
 
-	if _, err := service.ResolveCurrentUser(ctx, auth.SessionID); !errors.Is(err, domain.ErrUserDeactivated) {
+	if _, err := service.ResolveCurrentUser(ctx, auth.Session.SessionID); !errors.Is(err, domain.ErrUserDeactivated) {
 		t.Fatalf("expected deactivated session lookup to fail with ErrUserDeactivated, got %v", err)
 	}
 
-	if err := service.AuthorizeBusinessWrite(ctx, auth.User.ID); !errors.Is(err, domain.ErrUserDeactivated) {
+	if err := service.AuthorizeBusinessWrite(ctx, auth.Session.User.ID); !errors.Is(err, domain.ErrUserDeactivated) {
 		t.Fatalf("expected deactivated business writes to be blocked, got %v", err)
 	}
 
-	jobs, err := deps.JobRecorder.RecordedForUser(ctx, auth.User.ID)
+	jobs, err := deps.JobRecorder.RecordedForUser(ctx, auth.Session.User.ID)
 	if err != nil {
 		t.Fatalf("recorded jobs: %v", err)
 	}
-	if len(jobs) != 1 || jobs[0].Name != application.StopRunningTimerJobName || jobs[0].UserID != auth.User.ID {
-		t.Fatalf("expected one stop-running-timer job for user %d, got %#v", auth.User.ID, jobs)
+	if len(jobs) != 1 || jobs[0].Name != application.StopRunningTimerJobName || jobs[0].UserID != auth.Session.User.ID {
+		t.Fatalf("expected one stop-running-timer job for user %d, got %#v", auth.Session.User.ID, jobs)
 	}
 }
 
@@ -217,7 +217,7 @@ func TestServicePersistsAccountPreferenceActions(t *testing.T) {
 		t.Fatalf("register: %v", err)
 	}
 
-	current, err := service.ResolveCurrentUser(ctx, auth.SessionID)
+	current, err := service.ResolveCurrentUser(ctx, auth.Session.SessionID)
 	if err != nil {
 		t.Fatalf("resolve current user: %v", err)
 	}
@@ -237,7 +237,7 @@ func TestServicePersistsAccountPreferenceActions(t *testing.T) {
 		t.Fatalf("expected weekly report disable code to be generated, got %#v", current)
 	}
 
-	if err := service.AcceptTOS(ctx, auth.User.ID); err != nil {
+	if err := service.AcceptTOS(ctx, auth.Session.User.ID); err != nil {
 		t.Fatalf("accept tos: %v", err)
 	}
 	if err := service.DisableProductEmailsByCode(ctx, current.ProductEmailsDisableCode); err != nil {
@@ -247,7 +247,7 @@ func TestServicePersistsAccountPreferenceActions(t *testing.T) {
 		t.Fatalf("disable weekly report: %v", err)
 	}
 
-	updated, err := service.ResolveCurrentUser(ctx, auth.SessionID)
+	updated, err := service.ResolveCurrentUser(ctx, auth.Session.SessionID)
 	if err != nil {
 		t.Fatalf("resolve updated current user: %v", err)
 	}
@@ -278,7 +278,7 @@ func TestServiceIssuesDesktopLoginTokensAsSessions(t *testing.T) {
 		t.Fatalf("register: %v", err)
 	}
 
-	token, err := service.CreateDesktopLoginToken(ctx, auth.User.ID)
+	token, err := service.CreateDesktopLoginToken(ctx, auth.Session.User.ID)
 	if err != nil {
 		t.Fatalf("create desktop login token: %v", err)
 	}
@@ -290,8 +290,8 @@ func TestServiceIssuesDesktopLoginTokensAsSessions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve desktop login token session: %v", err)
 	}
-	if current.ID != auth.User.ID {
-		t.Fatalf("expected desktop login token to resolve user %d, got %d", auth.User.ID, current.ID)
+	if current.ID != auth.Session.User.ID {
+		t.Fatalf("expected desktop login token to resolve user %d, got %d", auth.Session.User.ID, current.ID)
 	}
 }
 
