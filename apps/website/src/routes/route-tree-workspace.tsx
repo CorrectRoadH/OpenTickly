@@ -53,9 +53,19 @@ function normalizeReportsTab(tab: string | undefined): ReportsTabParam {
   return "summary";
 }
 
+function parseReportsSearch(search: Record<string, unknown>): { projectId?: number } {
+  const raw = search.projectId;
+  if (raw != null) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) return { projectId: n };
+  }
+  return {};
+}
+
 export const workspaceReportsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: "/workspaces/$workspaceId/reports/$tab",
+  validateSearch: parseReportsSearch,
   component: WorkspaceReportsRouteComponent,
 });
 
@@ -141,9 +151,10 @@ function WorkspaceOverviewRouteComponent() {
 
 function WorkspaceReportsRouteComponent() {
   const params = workspaceReportsRoute.useParams();
+  const search = workspaceReportsRoute.useSearch();
   const tab = normalizeReportsTab(params.tab);
 
-  return <WorkspaceReportsPage tab={tab} />;
+  return <WorkspaceReportsPage initialProjectId={search.projectId} tab={tab} />;
 }
 
 function LegacyWorkspaceReportsRouteComponent() {

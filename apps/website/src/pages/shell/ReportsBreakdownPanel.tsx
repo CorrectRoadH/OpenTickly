@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { ReportsBreakdownRow } from "./reports-page-data.ts";
 import type { BreakdownDimension } from "./useReportsPageState.ts";
 import { SelectDropdown } from "@opentoggl/web-ui";
+import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 type BreakdownPanelProps = {
   breakdownBy: BreakdownDimension;
@@ -107,12 +108,14 @@ function BreakdownRow({
       <div className="grid grid-cols-[28px_minmax(0,1fr)_98px_98px_24px] items-center gap-3 px-4 py-4">
         {hasMembers ? (
           <button
-            className={`text-left text-[12px] transition-transform ${expanded ? "rotate-90" : ""} text-[var(--track-text-soft)]`}
+            className="flex items-center justify-center text-[var(--track-text-soft)]"
             data-testid={`reports-expand-${row.name}`}
             onClick={onToggle}
             type="button"
           >
-            &gt;
+            <ChevronRightIcon
+              className={`size-4 transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
+            />
           </button>
         ) : (
           <span />

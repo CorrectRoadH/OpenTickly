@@ -45,10 +45,20 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
     value: row.value,
   }));
 
+  const count = data.length;
+  const dense = count > 10;
+  const veryDense = count > 21;
+
   const yTicks = Y_AXIS_LABELS.map((_, i) => {
     const frac = i / (Y_AXIS_LABELS.length - 1);
     return Math.round(MAX_CHART_SECONDS * (1 - frac));
   });
+
+  const xAxisAngle = dense ? -45 : 0;
+  const xAxisTextAnchor = dense ? ("end" as const) : ("middle" as const);
+  const bottomMargin = dense ? 40 : 0;
+  const barSize = veryDense ? 10 : dense ? 18 : 34;
+  const xInterval = veryDense ? Math.ceil(count / 15) - 1 : 0;
 
   return (
     <section
@@ -57,13 +67,15 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
     >
       <h2 className="text-[14px] font-semibold leading-[23px] text-white">{t("durationByDay")}</h2>
       <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-4 pt-3">
-        <ResponsiveContainer height={248} width="100%">
-          <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: 0 }}>
+        <ResponsiveContainer height={248 + bottomMargin} width="100%">
+          <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: bottomMargin }}>
             <CartesianGrid stroke="var(--track-border)" strokeDasharray="2 2" vertical={false} />
             <XAxis
+              angle={xAxisAngle}
               axisLine={{ stroke: "var(--track-border)", strokeWidth: 2 }}
               dataKey="name"
-              interval={0}
+              interval={xInterval}
+              textAnchor={xAxisTextAnchor}
               tick={{ fill: "var(--track-text-soft)", fontSize: 11, fontWeight: 500 }}
               tickLine={false}
             />
@@ -81,8 +93,10 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
               offset={20}
               position={{ y: -10 }}
             />
-            <Bar barSize={34} dataKey="seconds" radius={BAR_RADIUS}>
-              <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
+            <Bar barSize={barSize} dataKey="seconds" radius={BAR_RADIUS}>
+              {!dense ? (
+                <LabelList content={<BarDurationLabel />} dataKey="seconds" position="top" />
+              ) : null}
               {data.map((entry) => (
                 <Cell fill={entry.seconds > 0 ? BAR_COLOR : BAR_EMPTY_COLOR} key={entry.name} />
               ))}

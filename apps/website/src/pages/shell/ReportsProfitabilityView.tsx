@@ -1,5 +1,6 @@
 import { type ReactElement, useState } from "react";
 import { SelectDropdown } from "@opentoggl/web-ui";
+import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
@@ -358,11 +359,13 @@ function BreakdownProjectRow({
         <td className="px-2 py-3">
           {row.members.length > 0 ? (
             <button
-              className={`flex h-5 w-5 items-center justify-center text-[var(--track-text-muted)] transition-transform ${expanded ? "rotate-90" : ""}`}
+              className="flex h-5 w-5 items-center justify-center text-[var(--track-text-muted)]"
               onClick={onToggle}
               type="button"
             >
-              ▸
+              <ChevronRightIcon
+                className={`size-4 transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
+              />
             </button>
           ) : null}
         </td>

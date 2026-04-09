@@ -40,11 +40,11 @@ export function ProjectRowActionsMenu({
   return (
     <DropdownMenu
       trigger={
-        <IconButton aria-label={`${project.name} actions`} size="lg">
-          <MoreIcon className="size-4" />
+        <IconButton aria-label={`Actions for ${project.name}`} size="sm">
+          <MoreIcon className="size-3.5" />
         </IconButton>
       }
-      minWidth="240px"
+      minWidth="180px"
     >
       <ProjectMenuContent
         onAddMember={onAddMember}
@@ -155,7 +155,9 @@ function ProjectMenuContent({
     <>
       <MenuItem onClick={onEdit}>{t("editProject")}</MenuItem>
       <MenuItem onClick={onAddMember}>{t("addMember")}</MenuItem>
-      <MenuLink href={buildWorkspaceReportsPath(workspaceId)}>{t("viewInReports")}</MenuLink>
+      <MenuLink href={buildWorkspaceReportsPath(workspaceId, "summary", project.id)}>
+        {t("viewInReports")}
+      </MenuLink>
       <MenuSeparator />
       <MenuItem onClick={onArchiveToggle}>{project.active ? t("archive") : t("active")}</MenuItem>
       <MenuItem onClick={onTemplateToggle}>

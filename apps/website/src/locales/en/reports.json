@@ -103,5 +103,7 @@
   "noTrackedProjectsYet": "No tracked projects in this workspace yet.",
   "openReports": "Open reports",
   "refreshData": "Refresh data",
-  "bringYourTeamIn": "Bring your team in to unlock better weekly coverage."
+  "bringYourTeamIn": "Bring your team in to unlock better weekly coverage.",
+  "searchProjects": "Search projects...",
+  "clearAll": "Clear all"
 }

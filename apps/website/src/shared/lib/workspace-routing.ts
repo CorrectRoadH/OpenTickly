@@ -17,8 +17,11 @@ export type ReportsTab = "summary" | "detailed" | "workload" | "profitability" |
 export function buildWorkspaceReportsPath(
   workspaceId: number,
   tab: ReportsTab = "summary",
+  projectId?: number,
 ): string {
-  return `/workspaces/${workspaceId}/reports/${tab}`;
+  const base = `/workspaces/${workspaceId}/reports/${tab}`;
+  if (projectId != null) return `${base}?projectId=${projectId}`;
+  return base;
 }
 
 export function buildWorkspaceImportPath(_workspaceId?: number): string {

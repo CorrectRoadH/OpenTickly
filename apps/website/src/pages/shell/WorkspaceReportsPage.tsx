@@ -46,6 +46,7 @@ import { useReportsPageState } from "./useReportsPageState.ts";
 import { type DurationFormat, formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { AnimatedActiveIndicator } from "../../shared/ui/AnimatedActiveIndicator.tsx";
+import { ReportsProjectFilter, type ReportsProjectOption } from "./ReportsProjectFilter.tsx";
 
 /** Round seconds up to the nearest 15-minute block (900 seconds). */
 function roundTo15Min(seconds: number): number {
@@ -207,9 +208,9 @@ export function WorkspaceReportsPage({
       .map((r) => ({ color: r.color, duration: r.duration, label: r.name, value: r.shareValue }));
   })();
 
-  const projectOptions = (projectsQuery.data ?? [])
+  const projectOptions: ReportsProjectOption[] = (projectsQuery.data ?? [])
     .filter((p) => p.id != null && p.name)
-    .map((p) => ({ id: p.id!, label: p.name! }));
+    .map((p) => ({ clientName: p.client_name, color: p.color, id: p.id!, label: p.name! }));
 
   const tagOptions = (tagsQuery.data ?? [])
     .filter((t) => t.id != null && t.name)
@@ -397,7 +398,7 @@ function ReportsFilterBar({
   clientOptions: string[];
   liveModel: ReturnType<typeof buildReportsPageModel>;
   memberOptions: string[];
-  projectOptions: { id: number; label: string }[];
+  projectOptions: ReportsProjectOption[];
   state: ReturnType<typeof useReportsPageState>;
   tagOptions: { id: number; label: string }[];
   weekStartsOn: number;
@@ -446,19 +447,17 @@ function ReportsFilterBar({
         selected={new Set(state.clientFilter)}
         testId="reports-filter-client"
       />
-      <CheckboxFilterDropdown
-        label={t("project")}
+      <ReportsProjectFilter
         onClear={() => state.updateFilters({ projectIds: [] })}
-        onToggle={(key: number) =>
+        onToggle={(id: number) =>
           state.updateFilters({
-            projectIds: state.filters.projectIds.includes(key)
-              ? state.filters.projectIds.filter((id) => id !== key)
-              : [...state.filters.projectIds, key],
+            projectIds: state.filters.projectIds.includes(id)
+              ? state.filters.projectIds.filter((pid) => pid !== id)
+              : [...state.filters.projectIds, id],
           })
         }
-        options={projectOptions.map((p) => ({ key: p.id, label: p.label }))}
+        options={projectOptions}
         selected={new Set(state.filters.projectIds)}
-        testId="reports-filter-project"
       />
       <CheckboxFilterDropdown
         label={t("tag")}

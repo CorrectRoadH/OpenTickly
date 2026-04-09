@@ -103,5 +103,7 @@
   "noTrackedProjectsYet": "此工作区中还没有追踪的项目。",
   "openReports": "打开报告",
   "refreshData": "刷新数据",
-  "bringYourTeamIn": "让您的团队加入以解锁更好的每周覆盖率。"
+  "bringYourTeamIn": "让您的团队加入以解锁更好的每周覆盖率。",
+  "searchProjects": "搜索项目...",
+  "clearAll": "全部清除"
 }
