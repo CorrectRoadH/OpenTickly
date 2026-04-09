@@ -13,6 +13,12 @@ type publicReportsOpenAPIServer struct {
 func newPublicReportsOpenAPIServer(handlers *routeHandlers) publicreportsapi.ServerInterface {
 	return &publicReportsOpenAPIServer{
 		publicReportsUnimplementedServer: &publicReportsUnimplementedServer{},
-		reports:                          reportspublicapi.NewHandler(handlers, handlers.reportsApp),
+		reports: reportspublicapi.NewHandler(
+			handlers,
+			handlers.reportsApp,
+			handlers.catalogApp,
+			handlers.membershipApp,
+			handlers.trackingApp,
+		),
 	}
 }

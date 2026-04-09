@@ -111,3 +111,80 @@ type CreateScheduledReportCommand struct {
 	UserIDs     []int64
 	GroupIDs    []int64
 }
+
+// ---------------------------------------------------------------------------
+// Insights: Data Trends
+// ---------------------------------------------------------------------------
+
+// ProjectDataTrendsQuery is the input for the data trends endpoint.
+type ProjectDataTrendsQuery struct {
+	WorkspaceID         int64
+	RequestedBy         int64
+	Timezone            string
+	StartDate           time.Time
+	EndDate             time.Time
+	PreviousPeriodStart *time.Time
+	ProjectIDs          []int64
+	Billable            *bool
+}
+
+// ProjectDataTrend is the result for a single project in the data trends response.
+type ProjectDataTrend struct {
+	ProjectID             int64
+	CurrentPeriodSeconds  []int
+	PreviousPeriodSeconds []int
+	UserIDs               []int64
+	Start                 time.Time
+	End                   time.Time
+	PreviousStart         *time.Time
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Profitability
+// ---------------------------------------------------------------------------
+
+// ProjectProfitabilityQuery is the input for the project profitability endpoint.
+type ProjectProfitabilityQuery struct {
+	WorkspaceID int64
+	RequestedBy int64
+	Timezone    string
+	StartDate   time.Time
+	EndDate     time.Time
+	ProjectIDs  []int64
+	ClientIDs   []int64
+	Billable    *bool
+	Currency    string
+}
+
+// ProjectProfitabilityRow is the result for a single project.
+type ProjectProfitabilityRow struct {
+	ProjectID       int64
+	ProjectName     string
+	ProjectColor    string
+	TotalSeconds    int
+	BillableSeconds int
+	Earnings        int
+	Currency        string
+}
+
+// EmployeeProfitabilityQuery is the input for the employee profitability endpoint.
+type EmployeeProfitabilityQuery struct {
+	WorkspaceID int64
+	RequestedBy int64
+	Timezone    string
+	StartDate   time.Time
+	EndDate     time.Time
+	UserIDs     []int64
+	GroupIDs    []int64
+	Currency    string
+}
+
+// EmployeeProfitabilityRow is the result for a single employee.
+type EmployeeProfitabilityRow struct {
+	UserID          int64
+	UserName        string
+	TotalSeconds    int
+	BillableSeconds int
+	Earnings        int
+	Currency        string
+}

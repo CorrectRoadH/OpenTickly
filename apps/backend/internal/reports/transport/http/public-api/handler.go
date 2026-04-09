@@ -1,15 +1,20 @@
 package publicapi
 
 import (
+	"encoding/csv"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
+	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publicreportsapi "opentoggl/backend/apps/backend/internal/http/generated/publicreports"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
+	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -21,8 +26,11 @@ type ScopeAuthorizer interface {
 }
 
 type Handler struct {
-	reports *reportsapplication.Service
-	scope   ScopeAuthorizer
+	catalog    *catalogapplication.Service
+	membership *membershipapplication.Service
+	reports    *reportsapplication.Service
+	scope      ScopeAuthorizer
+	tracking   *trackingapplication.Service
 }
 
 // summarySubGroupEntry is the JSON shape for a single sub-group entry in a
@@ -34,8 +42,20 @@ type summarySubGroupEntry struct {
 	Title           string `json:"title"`
 }
 
-func NewHandler(scope ScopeAuthorizer, reports *reportsapplication.Service) *Handler {
-	return &Handler{reports: reports, scope: scope}
+func NewHandler(
+	scope ScopeAuthorizer,
+	reports *reportsapplication.Service,
+	catalog *catalogapplication.Service,
+	membership *membershipapplication.Service,
+	tracking *trackingapplication.Service,
+) *Handler {
+	return &Handler{
+		catalog:    catalog,
+		membership: membership,
+		reports:    reports,
+		scope:      scope,
+		tracking:   tracking,
+	}
 }
 
 func workspaceIDFromPath(ctx echo.Context) (int64, error) {
@@ -455,6 +475,339 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 		Report: &rows,
 		Totals: &totals,
 	})
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Data Trends
+// ---------------------------------------------------------------------------
+
+func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdDataTrendsProjects(
+	ctx echo.Context,
+	workspaceID int,
+) error {
+	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
+	if err != nil {
+		return err
+	}
+
+	var request publicreportsapi.ProjectsProjectTrend
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	}
+
+	location, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		location = time.UTC
+	}
+
+	if request.StartDate == nil || request.EndDate == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
+	}
+	startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+	}
+	endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+	}
+
+	query := reportsapplication.ProjectDataTrendsQuery{
+		WorkspaceID: int64(workspaceID),
+		RequestedBy: user.ID,
+		Timezone:    user.Timezone,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		Billable:    request.Billable,
+	}
+	if request.ProjectIds != nil {
+		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
+	}
+	if request.PreviousPeriodStart != nil {
+		prevStart, err := time.ParseInLocation(time.DateOnly, *request.PreviousPeriodStart, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		}
+		query.PreviousPeriodStart = &prevStart
+	}
+
+	trends, err := handler.reports.BuildProjectDataTrends(ctx.Request().Context(), query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	results := make([]publicreportsapi.ProjectsProjectTrends, 0, len(trends))
+	for _, t := range trends {
+		projectID := int(t.ProjectID)
+		start := t.Start.Format(time.DateOnly)
+		end := t.End.Format(time.DateOnly)
+		currentSeconds := append([]int(nil), t.CurrentPeriodSeconds...)
+		previousSeconds := append([]int(nil), t.PreviousPeriodSeconds...)
+		userIDs := int64sToInts(t.UserIDs)
+
+		item := publicreportsapi.ProjectsProjectTrends{
+			ProjectId:             &projectID,
+			Start:                 &start,
+			End:                   &end,
+			CurrentPeriodSeconds:  &currentSeconds,
+			PreviousPeriodSeconds: &previousSeconds,
+			UserIds:               &userIDs,
+		}
+		if t.PreviousStart != nil {
+			ps := t.PreviousStart.Format(time.DateOnly)
+			item.PreviousStart = &ps
+		}
+		results = append(results, item)
+	}
+
+	return ctx.JSON(http.StatusOK, results)
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Profitability Exports
+// ---------------------------------------------------------------------------
+
+func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityProjectsExtension(
+	ctx echo.Context,
+	workspaceID int,
+	extension string,
+) error {
+	if extension != "csv" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Only csv export is currently supported")
+	}
+
+	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
+	if err != nil {
+		return err
+	}
+
+	var request publicreportsapi.DtoProjectProfitability
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+	}
+
+	location, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		location = time.UTC
+	}
+
+	query := reportsapplication.ProjectProfitabilityQuery{
+		WorkspaceID: int64(workspaceID),
+		RequestedBy: user.ID,
+		Timezone:    user.Timezone,
+		Currency:    request.Currency,
+		Billable:    request.Billable,
+	}
+	if request.StartDate != nil {
+		startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+		}
+		query.StartDate = startDate
+	}
+	if request.EndDate != nil {
+		endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+		}
+		query.EndDate = endDate
+	}
+	if request.ProjectIds != nil {
+		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
+	}
+	if request.ClientIds != nil {
+		query.ClientIDs = intsToInt64s(*request.ClientIds)
+	}
+
+	rows, err := handler.reports.BuildProjectProfitability(ctx.Request().Context(), query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	ctx.Response().Header().Set("Content-Type", "text/csv")
+	ctx.Response().Header().Set("Content-Disposition", "attachment; filename=project_profitability.csv")
+	ctx.Response().WriteHeader(http.StatusOK)
+
+	w := csv.NewWriter(ctx.Response())
+	_ = w.Write([]string{"Project", "Total Seconds", "Billable Seconds", "Earnings (" + query.Currency + ")"})
+	for _, row := range rows {
+		_ = w.Write([]string{
+			row.ProjectName,
+			strconv.Itoa(row.TotalSeconds),
+			strconv.Itoa(row.BillableSeconds),
+			fmt.Sprintf("%.2f", float64(row.Earnings)/100),
+		})
+	}
+	w.Flush()
+	return nil
+}
+
+func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityEmployeesExtension(
+	ctx echo.Context,
+	workspaceID int,
+	extension string,
+) error {
+	if extension != "csv" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Only csv export is currently supported")
+	}
+
+	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
+	if err != nil {
+		return err
+	}
+
+	var request publicreportsapi.DtoEmployeeProfitability
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+	}
+
+	location, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		location = time.UTC
+	}
+
+	query := reportsapplication.EmployeeProfitabilityQuery{
+		WorkspaceID: int64(workspaceID),
+		RequestedBy: user.ID,
+		Timezone:    user.Timezone,
+		Currency:    request.Currency,
+	}
+	if request.StartDate != nil {
+		startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+		}
+		query.StartDate = startDate
+	}
+	if request.EndDate != nil {
+		endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+		}
+		query.EndDate = endDate
+	}
+	if request.UserIds != nil {
+		query.UserIDs = intsToInt64s(*request.UserIds)
+	}
+	if request.GroupIds != nil {
+		query.GroupIDs = intsToInt64s(*request.GroupIds)
+	}
+
+	rows, err := handler.reports.BuildEmployeeProfitability(ctx.Request().Context(), query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	ctx.Response().Header().Set("Content-Type", "text/csv")
+	ctx.Response().Header().Set("Content-Disposition", "attachment; filename=employee_profitability.csv")
+	ctx.Response().WriteHeader(http.StatusOK)
+
+	w := csv.NewWriter(ctx.Response())
+	_ = w.Write([]string{"Employee", "Total Seconds", "Billable Seconds", "Earnings (" + query.Currency + ")"})
+	for _, row := range rows {
+		_ = w.Write([]string{
+			row.UserName,
+			strconv.Itoa(row.TotalSeconds),
+			strconv.Itoa(row.BillableSeconds),
+			fmt.Sprintf("%.2f", float64(row.Earnings)/100),
+		})
+	}
+	w.Flush()
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Trends Export
+// ---------------------------------------------------------------------------
+
+func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdTrendsProjectsExtension(
+	ctx echo.Context,
+	workspaceID int,
+	extension string,
+) error {
+	if extension != "csv" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Only csv export is currently supported")
+	}
+
+	user, err := handler.requireReportsScope(ctx, int64(workspaceID))
+	if err != nil {
+		return err
+	}
+
+	var request publicreportsapi.ProjectsProjectTrend
+	if err := ctx.Bind(&request); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	}
+
+	location, err := time.LoadLocation(user.Timezone)
+	if err != nil {
+		location = time.UTC
+	}
+
+	if request.StartDate == nil || request.EndDate == nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
+	}
+	startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+	}
+	endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+	}
+
+	query := reportsapplication.ProjectDataTrendsQuery{
+		WorkspaceID: int64(workspaceID),
+		RequestedBy: user.ID,
+		Timezone:    user.Timezone,
+		StartDate:   startDate,
+		EndDate:     endDate,
+		Billable:    request.Billable,
+	}
+	if request.ProjectIds != nil {
+		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
+	}
+	if request.PreviousPeriodStart != nil {
+		prevStart, err := time.ParseInLocation(time.DateOnly, *request.PreviousPeriodStart, location)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		}
+		query.PreviousPeriodStart = &prevStart
+	}
+
+	trends, err := handler.reports.BuildProjectDataTrends(ctx.Request().Context(), query)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+
+	ctx.Response().Header().Set("Content-Type", "text/csv")
+	ctx.Response().Header().Set("Content-Disposition", "attachment; filename=project_trends.csv")
+	ctx.Response().WriteHeader(http.StatusOK)
+
+	w := csv.NewWriter(ctx.Response())
+	_ = w.Write([]string{"Project ID", "Current Period Total (s)", "Previous Period Total (s)", "User IDs"})
+	for _, t := range trends {
+		currentTotal := 0
+		for _, s := range t.CurrentPeriodSeconds {
+			currentTotal += s
+		}
+		previousTotal := 0
+		for _, s := range t.PreviousPeriodSeconds {
+			previousTotal += s
+		}
+		userIDStrs := make([]string, len(t.UserIDs))
+		for i, uid := range t.UserIDs {
+			userIDStrs[i] = strconv.FormatInt(uid, 10)
+		}
+		_ = w.Write([]string{
+			strconv.FormatInt(t.ProjectID, 10),
+			strconv.Itoa(currentTotal),
+			strconv.Itoa(previousTotal),
+			fmt.Sprintf("%v", userIDStrs),
+		})
+	}
+	w.Flush()
+	return nil
 }
 
 // ---------------------------------------------------------------------------

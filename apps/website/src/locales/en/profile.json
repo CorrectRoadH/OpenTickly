@@ -38,6 +38,7 @@
   "apiBaseUrls": "API Base URLs",
   "trackApiV9": "Track API (v9)",
   "reportsApiV3": "Reports API (v3)",
+  "insightsApiV1": "Insights API (v1)",
   "curlExample": "Example",
   "apiTokenRotated": "API token rotated",
   "couldNotRotateApiToken": "Could not rotate API token",

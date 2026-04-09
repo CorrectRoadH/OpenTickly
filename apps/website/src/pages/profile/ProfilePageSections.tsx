@@ -245,6 +245,7 @@ export function ApiTokenSection(props: {
   const baseUrl = props.siteUrl || window.location.origin;
   const trackUrl = `${baseUrl}/api/v9`;
   const reportsUrl = `${baseUrl}/reports/api/v3`;
+  const insightsUrl = `${baseUrl}/insights/api/v1`;
   const curlCommand = `curl ${trackUrl}/me \\
   -H "Content-Type: application/json" \\
   -u ${props.apiToken}:api_token`;
@@ -285,6 +286,12 @@ export function ApiTokenSection(props: {
               <span className="text-[var(--track-text-soft)]">{t("reportsApiV3")}</span>
               <code className="rounded bg-[var(--track-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--track-text-muted)]">
                 {reportsUrl}
+              </code>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--track-text-soft)]">{t("insightsApiV1")}</span>
+              <code className="rounded bg-[var(--track-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--track-text-muted)]">
+                {insightsUrl}
               </code>
             </div>
           </div>

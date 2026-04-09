@@ -67,6 +67,25 @@ func (store *SavedReportStore) Get(ctx context.Context, workspaceID, reportID in
 	return r, nil
 }
 
+func (store *SavedReportStore) GetByToken(ctx context.Context, token string) (reportsapplication.SavedReportView, error) {
+	row := store.pool.QueryRow(ctx,
+		`SELECT id, workspace_id, name, public, fixed_date_range, token, params,
+		        created_by, created_at, updated_at
+		 FROM saved_reports
+		 WHERE token = $1 AND deleted_at IS NULL`,
+		token,
+	)
+	var r reportsapplication.SavedReportView
+	err := row.Scan(
+		&r.ID, &r.WorkspaceID, &r.Name, &r.Public, &r.FixedDateRange, &r.Token, &r.Params,
+		&r.CreatedBy, &r.CreatedAt, &r.UpdatedAt,
+	)
+	if err != nil {
+		return r, fmt.Errorf("get saved report by token: %w", err)
+	}
+	return r, nil
+}
+
 func (store *SavedReportStore) Create(ctx context.Context, cmd reportsapplication.CreateSavedReportCommand) (reportsapplication.SavedReportView, error) {
 	params := cmd.Params
 	if params == nil {

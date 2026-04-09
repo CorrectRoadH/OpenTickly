@@ -15,6 +15,7 @@ import (
 type SavedReportStore interface {
 	List(ctx context.Context, workspaceID int64) ([]SavedReportView, error)
 	Get(ctx context.Context, workspaceID, reportID int64) (SavedReportView, error)
+	GetByToken(ctx context.Context, token string) (SavedReportView, error)
 	Create(ctx context.Context, cmd CreateSavedReportCommand) (SavedReportView, error)
 	Update(ctx context.Context, cmd UpdateSavedReportCommand) (SavedReportView, error)
 	Delete(ctx context.Context, workspaceID, reportID int64) error
@@ -86,6 +87,10 @@ func (s *Service) GetSavedReport(ctx context.Context, workspaceID, reportID int6
 	return s.savedReports.Get(ctx, workspaceID, reportID)
 }
 
+func (s *Service) GetSavedReportByToken(ctx context.Context, token string) (SavedReportView, error) {
+	return s.savedReports.GetByToken(ctx, token)
+}
+
 func (s *Service) CreateSavedReport(ctx context.Context, cmd CreateSavedReportCommand) (SavedReportView, error) {
 	return s.savedReports.Create(ctx, cmd)
 }
@@ -112,6 +117,51 @@ func (s *Service) CreateScheduledReport(ctx context.Context, cmd CreateScheduled
 
 func (s *Service) DeleteScheduledReport(ctx context.Context, workspaceID, reportID int64) error {
 	return s.scheduledReports.Delete(ctx, workspaceID, reportID)
+}
+
+// BuildWeeklyReportEntries returns the raw time entries matching the query,
+// used by data trends and other endpoints that need entry-level data.
+func (service *Service) BuildWeeklyReportEntries(
+	ctx context.Context,
+	query Query,
+) ([]trackingapplication.TimeEntryView, error) {
+	location := resolveLocation(query.Timezone)
+	startUTC := query.StartDate.In(location).UTC()
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	if err != nil {
+		return nil, err
+	}
+	// Apply query filters.
+	var filtered []trackingapplication.TimeEntryView
+	for _, entry := range entries {
+		entryDay := normalizeToDay(entry.Start, location)
+		startDay := normalizeToDay(query.StartDate, location)
+		endDay := normalizeToDay(query.EndDate, location)
+		if entryDay.Before(startDay) || entryDay.After(endDay) {
+			continue
+		}
+		if !matchesQueryFilters(entry, query) {
+			continue
+		}
+		duration := resolveDurationSeconds(entry, service.now())
+		if duration <= 0 {
+			continue
+		}
+		entry.Duration = duration
+		filtered = append(filtered, entry)
+	}
+	return filtered, nil
+}
+
+// GetWorkspaceBillableRate exposes the rate resolver for handlers.
+func (service *Service) GetWorkspaceBillableRate(
+	ctx context.Context,
+	workspaceID int64,
+) (amountCents int, currency string, ok bool) {
+	if service.rates == nil {
+		return 0, "USD", false
+	}
+	return service.rates.GetWorkspaceBillableRate(ctx, workspaceID)
 }
 
 func (service *Service) BuildWeeklyReport(ctx context.Context, query Query) (WeeklyReport, error) {
@@ -310,6 +360,331 @@ func (service *Service) BuildSummaryReport(ctx context.Context, query Query) (Su
 		TotalSeconds: weekly.TotalSeconds,
 		TrackedDays:  weekly.TrackedDays,
 	}, nil
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Data Trends
+// ---------------------------------------------------------------------------
+
+func (service *Service) BuildProjectDataTrends(ctx context.Context, query ProjectDataTrendsQuery) ([]ProjectDataTrend, error) {
+	service.logger.InfoContext(ctx, "building project data trends",
+		"workspace_id", query.WorkspaceID,
+		"start_date", query.StartDate,
+		"end_date", query.EndDate,
+	)
+
+	location := resolveLocation(query.Timezone)
+
+	// Determine the earliest date we need entries from.
+	earliest := query.StartDate
+	if query.PreviousPeriodStart != nil && query.PreviousPeriodStart.Before(earliest) {
+		earliest = *query.PreviousPeriodStart
+	}
+	earliestUTC := earliest.In(location).UTC()
+
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &earliestUTC)
+	if err != nil {
+		return nil, err
+	}
+
+	currentDays := inclusiveDayCount(query.StartDate, query.EndDate, location)
+
+	// Accumulate per-project.
+	type projectAccum struct {
+		currentSeconds  []int
+		previousSeconds []int
+		userSet         map[int64]struct{}
+	}
+	projects := map[int64]*projectAccum{}
+
+	var previousDays int
+	if query.PreviousPeriodStart != nil {
+		previousDays = inclusiveDayCount(*query.PreviousPeriodStart, query.StartDate.AddDate(0, 0, -1), location)
+	}
+
+	for _, entry := range entries {
+		projectID := derefInt64(entry.ProjectID)
+
+		// Filter by project IDs if specified.
+		if len(query.ProjectIDs) > 0 && !slices.Contains(query.ProjectIDs, projectID) {
+			continue
+		}
+		// Filter by billable if specified.
+		if query.Billable != nil && entry.Billable != *query.Billable {
+			continue
+		}
+
+		duration := resolveDurationSeconds(entry, service.now())
+		if duration <= 0 {
+			continue
+		}
+
+		entryDay := normalizeToDay(entry.Start, location)
+		startDay := normalizeToDay(query.StartDate, location)
+		endDay := normalizeToDay(query.EndDate, location)
+
+		acc, found := projects[projectID]
+		if !found {
+			acc = &projectAccum{
+				currentSeconds:  make([]int, currentDays),
+				previousSeconds: make([]int, previousDays),
+				userSet:         map[int64]struct{}{},
+			}
+			projects[projectID] = acc
+		}
+		acc.userSet[entry.UserID] = struct{}{}
+
+		// Current period.
+		if !entryDay.Before(startDay) && !entryDay.After(endDay) {
+			idx := int(entryDay.Sub(startDay).Hours() / 24)
+			acc.currentSeconds[idx] += duration
+		}
+
+		// Previous period.
+		if query.PreviousPeriodStart != nil && previousDays > 0 {
+			prevStart := normalizeToDay(*query.PreviousPeriodStart, location)
+			prevEnd := startDay.AddDate(0, 0, -1)
+			if !entryDay.Before(prevStart) && !entryDay.After(prevEnd) {
+				idx := int(entryDay.Sub(prevStart).Hours() / 24)
+				if idx < previousDays {
+					acc.previousSeconds[idx] += duration
+				}
+			}
+		}
+	}
+
+	results := make([]ProjectDataTrend, 0, len(projects))
+	for projectID, acc := range projects {
+		userIDs := make([]int64, 0, len(acc.userSet))
+		for uid := range acc.userSet {
+			userIDs = append(userIDs, uid)
+		}
+		slices.Sort(userIDs)
+
+		trend := ProjectDataTrend{
+			ProjectID:             projectID,
+			CurrentPeriodSeconds:  acc.currentSeconds,
+			PreviousPeriodSeconds: acc.previousSeconds,
+			UserIDs:               userIDs,
+			Start:                 query.StartDate,
+			End:                   query.EndDate,
+			PreviousStart:         query.PreviousPeriodStart,
+		}
+		results = append(results, trend)
+	}
+
+	slices.SortFunc(results, func(a, b ProjectDataTrend) int {
+		aTotal := sumSeconds(a.CurrentPeriodSeconds)
+		bTotal := sumSeconds(b.CurrentPeriodSeconds)
+		if aTotal != bTotal {
+			if aTotal > bTotal {
+				return -1
+			}
+			return 1
+		}
+		if a.ProjectID < b.ProjectID {
+			return -1
+		}
+		if a.ProjectID > b.ProjectID {
+			return 1
+		}
+		return 0
+	})
+
+	return results, nil
+}
+
+// ---------------------------------------------------------------------------
+// Insights: Profitability
+// ---------------------------------------------------------------------------
+
+func (service *Service) BuildProjectProfitability(ctx context.Context, query ProjectProfitabilityQuery) ([]ProjectProfitabilityRow, error) {
+	service.logger.InfoContext(ctx, "building project profitability",
+		"workspace_id", query.WorkspaceID,
+	)
+
+	location := resolveLocation(query.Timezone)
+	startUTC := query.StartDate.In(location).UTC()
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	if err != nil {
+		return nil, err
+	}
+
+	rateCents, currency, hasRate := 0, query.Currency, false
+	if service.rates != nil {
+		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(ctx, query.WorkspaceID)
+	}
+	if currency == "" {
+		currency = "USD"
+	}
+
+	type accum struct {
+		name            string
+		color           string
+		totalSeconds    int
+		billableSeconds int
+	}
+	projects := map[int64]*accum{}
+
+	for _, entry := range entries {
+		projectID := derefInt64(entry.ProjectID)
+
+		if len(query.ProjectIDs) > 0 && !slices.Contains(query.ProjectIDs, projectID) {
+			continue
+		}
+		if len(query.ClientIDs) > 0 {
+			clientID := derefInt64(entry.ClientID)
+			if !slices.Contains(query.ClientIDs, clientID) {
+				continue
+			}
+		}
+		if query.Billable != nil && entry.Billable != *query.Billable {
+			continue
+		}
+
+		entryDay := normalizeToDay(entry.Start, location)
+		startDay := normalizeToDay(query.StartDate, location)
+		endDay := normalizeToDay(query.EndDate, location)
+		if entryDay.Before(startDay) || entryDay.After(endDay) {
+			continue
+		}
+
+		duration := resolveDurationSeconds(entry, service.now())
+		if duration <= 0 {
+			continue
+		}
+
+		acc, found := projects[projectID]
+		if !found {
+			acc = &accum{
+				name:  fallbackProjectName(entry.ProjectName),
+				color: derefString(entry.ProjectColor),
+			}
+			projects[projectID] = acc
+		}
+		acc.totalSeconds += duration
+		if entry.Billable {
+			acc.billableSeconds += duration
+		}
+	}
+
+	results := make([]ProjectProfitabilityRow, 0, len(projects))
+	for projectID, acc := range projects {
+		earnings := 0
+		if hasRate {
+			earnings = acc.billableSeconds * rateCents / 3600
+		}
+		results = append(results, ProjectProfitabilityRow{
+			ProjectID:       projectID,
+			ProjectName:     acc.name,
+			ProjectColor:    acc.color,
+			TotalSeconds:    acc.totalSeconds,
+			BillableSeconds: acc.billableSeconds,
+			Earnings:        earnings,
+			Currency:        currency,
+		})
+	}
+
+	slices.SortFunc(results, func(a, b ProjectProfitabilityRow) int {
+		if a.TotalSeconds != b.TotalSeconds {
+			if a.TotalSeconds > b.TotalSeconds {
+				return -1
+			}
+			return 1
+		}
+		return strings.Compare(a.ProjectName, b.ProjectName)
+	})
+
+	return results, nil
+}
+
+func (service *Service) BuildEmployeeProfitability(ctx context.Context, query EmployeeProfitabilityQuery) ([]EmployeeProfitabilityRow, error) {
+	service.logger.InfoContext(ctx, "building employee profitability",
+		"workspace_id", query.WorkspaceID,
+	)
+
+	location := resolveLocation(query.Timezone)
+	startUTC := query.StartDate.In(location).UTC()
+	entries, err := service.tracking.ListWorkspaceTimeEntries(ctx, query.WorkspaceID, &startUTC)
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := service.membership.ListWorkspaceMembers(ctx, query.WorkspaceID, query.RequestedBy)
+	if err != nil {
+		return nil, err
+	}
+	userNames := buildUserNameIndex(members)
+
+	rateCents, currency, hasRate := 0, query.Currency, false
+	if service.rates != nil {
+		rateCents, currency, hasRate = service.rates.GetWorkspaceBillableRate(ctx, query.WorkspaceID)
+	}
+	if currency == "" {
+		currency = "USD"
+	}
+
+	type accum struct {
+		totalSeconds    int
+		billableSeconds int
+	}
+	employees := map[int64]*accum{}
+
+	for _, entry := range entries {
+		if len(query.UserIDs) > 0 && !slices.Contains(query.UserIDs, entry.UserID) {
+			continue
+		}
+
+		entryDay := normalizeToDay(entry.Start, location)
+		startDay := normalizeToDay(query.StartDate, location)
+		endDay := normalizeToDay(query.EndDate, location)
+		if entryDay.Before(startDay) || entryDay.After(endDay) {
+			continue
+		}
+
+		duration := resolveDurationSeconds(entry, service.now())
+		if duration <= 0 {
+			continue
+		}
+
+		acc, found := employees[entry.UserID]
+		if !found {
+			acc = &accum{}
+			employees[entry.UserID] = acc
+		}
+		acc.totalSeconds += duration
+		if entry.Billable {
+			acc.billableSeconds += duration
+		}
+	}
+
+	results := make([]EmployeeProfitabilityRow, 0, len(employees))
+	for userID, acc := range employees {
+		earnings := 0
+		if hasRate {
+			earnings = acc.billableSeconds * rateCents / 3600
+		}
+		results = append(results, EmployeeProfitabilityRow{
+			UserID:          userID,
+			UserName:        fallbackUserName(userNames[userID], userID),
+			TotalSeconds:    acc.totalSeconds,
+			BillableSeconds: acc.billableSeconds,
+			Earnings:        earnings,
+			Currency:        currency,
+		})
+	}
+
+	slices.SortFunc(results, func(a, b EmployeeProfitabilityRow) int {
+		if a.TotalSeconds != b.TotalSeconds {
+			if a.TotalSeconds > b.TotalSeconds {
+				return -1
+			}
+			return 1
+		}
+		return strings.Compare(a.UserName, b.UserName)
+	})
+
+	return results, nil
 }
 
 type weeklyRowKey struct {
