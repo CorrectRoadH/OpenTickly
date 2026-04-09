@@ -1,0 +1,18 @@
+{
+  "languageTitle": "언어 선택",
+  "languageDescription": "선호하는 언어를 선택하세요. 나중에 계정 설정에서 변경할 수 있습니다.",
+  "aiWorkflowTitle": "AI 도구와 함께 사용",
+  "aiWorkflowDescription": "OpenToggl은 CLI를 통해 AI 에이전트 및 코딩 어시스턴트와 통합됩니다. 작업하는 동안 AI가 자동으로 시간을 기록합니다.",
+  "aiWorkflowSetupGuide": "AI 연동 가이드 보기",
+  "importDataTitle": "Toggl 데이터 가져오기",
+  "importDataDescription": "이미 Toggl Track을 사용 중이신가요? 기록을 OpenToggl로 가져올 수 있습니다.",
+  "importDataButton": "가져오기로 이동",
+  "starUsTitle": "모든 준비가 완료되었습니다!",
+  "starUsDescription": "OpenToggl은 커뮤니티가 함께 만드는 오픈소스 프로젝트입니다. 도움이 되셨다면 GitHub 스타를 눌러 주세요.",
+  "continue": "계속",
+  "starOnGitHub": "⭐ GitHub에서 스타",
+  "startTracking": "기록 시작",
+  "failedToComplete": "온보딩을 완료하지 못했습니다",
+  "previous": "이전",
+  "next": "다음"
+}

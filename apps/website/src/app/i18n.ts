@@ -28,11 +28,15 @@ import tasks from "../locales/en/tasks.json";
 import toast from "../locales/en/toast.json";
 import tracking from "../locales/en/tracking.json";
 
-export const supportedLanguages = ["en", "zh"] as const;
+export const supportedLanguages = ["en", "es", "fr", "ja", "ko", "zh"] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
 export const languageLabels: Record<SupportedLanguage, string> = {
   en: "English",
+  es: "Español",
+  fr: "Français",
+  ja: "日本語",
+  ko: "한국어",
   zh: "中文",
 };
 

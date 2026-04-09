@@ -281,7 +281,7 @@ function LanguageStep({
       <p className="text-[14px] leading-5 text-[var(--track-text-muted)]">
         {t("onboarding:languageDescription")}
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-3">
         {supportedLanguages.map((languageCode) => {
           const isSelected = selectedLanguage === languageCode;
           return (

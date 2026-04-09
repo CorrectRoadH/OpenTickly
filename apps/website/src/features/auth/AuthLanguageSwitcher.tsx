@@ -11,7 +11,7 @@ export function AuthLanguageSwitcher(): ReactElement {
   }
 
   return (
-    <div className="mt-4 flex items-center justify-center gap-2 text-[13px] text-[var(--track-text-muted)]">
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-[13px] text-[var(--track-text-muted)]">
       {supportedLanguages.map((lang, index) => (
         <span key={lang} className="inline-flex items-center gap-2">
           {index > 0 && <span aria-hidden="true">·</span>}
