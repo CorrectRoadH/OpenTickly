@@ -44,6 +44,13 @@ This repo is implemented from `docs/` and `openapi/`.
 - Code, dependencies, module boundaries, naming, and API contracts that differ from docs must be fixed in code.
 - Structure fixes take priority over feature expansion.
 
+## OpenAPI File Ownership
+
+Files in `openapi/` fall into two categories:
+
+- **Upstream (read-only)**: `toggl-track-api-v9.swagger.json`, `toggl-reports-v3.swagger.json`, `toggl-webhooks-v1.swagger.json`. These are external Toggl API specs we must stay compatible with. **Never modify these files.** Work around their quirks in code (e.g. skip validator, adapter layer).
+- **Ours (editable)**: `opentoggl-*.openapi.json`. These are our own API definitions. Edit these when adding or changing OpenToggl-specific endpoints.
+
 ## API Contract & Go Typing Rules
 
 - Prefer OpenAPI-generated structs for HTTP request/response bodies. If no generated type exists, update the OpenAPI doc first, regenerate, then use it.
