@@ -1,4 +1,3 @@
-import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatDateKey, resolveEntryDurationSeconds } from "./overview-data.ts";
 
@@ -153,19 +152,19 @@ function buildIndexedEntry(
 }
 
 function resolveMinutesSinceMidnight(date: Date, timezone: string): number {
-  const hours = Number(
-    new Intl.DateTimeFormat(i18n.language, {
-      hour: "2-digit",
-      hour12: false,
-      timeZone: timezone,
-    }).format(date),
-  );
-  const minutes = Number(
-    new Intl.DateTimeFormat(i18n.language, {
-      minute: "2-digit",
-      timeZone: timezone,
-    }).format(date),
-  );
+  const parts = new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    timeZone: timezone,
+  }).formatToParts(date);
+
+  let hours = 0;
+  let minutes = 0;
+  for (const part of parts) {
+    if (part.type === "hour") hours = Number(part.value);
+    if (part.type === "minute") minutes = Number(part.value);
+  }
 
   return hours * 60 + minutes;
 }
