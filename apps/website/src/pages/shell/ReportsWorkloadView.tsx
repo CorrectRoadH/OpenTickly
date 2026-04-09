@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SelectDropdown } from "@opentoggl/web-ui";
 
 import type { SavedWeeklyReportData } from "../../shared/api/generated/public-reports/types.gen.ts";
@@ -72,6 +73,7 @@ export function ReportsWorkloadView({
   report,
   roundingEnabled,
 }: ReportsWorkloadViewProps): ReactElement {
+  const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const [metric, setMetric] = useState<WorkloadMetric>("utilization");
   const [target] = useState(80);
@@ -99,18 +101,18 @@ export function ReportsWorkloadView({
   const avgDaily = trackedDays > 0 ? totalSeconds / 3600 / trackedDays : 0;
 
   const workloadMetrics: ReportsPageMetric[] = [
-    { title: "Total Hours", value: formatClockDuration(totalSeconds, durationFormat) },
-    { title: "Billable Hours", value: formatClockDuration(billableSeconds, durationFormat) },
-    { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
+    { title: t("totalHours"), value: formatClockDuration(totalSeconds, durationFormat) },
+    { title: t("billableHours"), value: formatClockDuration(billableSeconds, durationFormat) },
+    { title: t("averageDailyHours"), value: `${avgDaily.toFixed(2)} ${t("hoursUnit")}` },
   ];
 
   return (
     <>
       <SummaryMetrics metrics={workloadMetrics} />
 
-      {isPending ? <ReportsSurfaceMessage message="Loading report data..." /> : null}
+      {isPending ? <ReportsSurfaceMessage message={t("loadingReportData")} /> : null}
       {isError ? (
-        <ReportsSurfaceMessage message="Reports data is temporarily unavailable." tone="error" />
+        <ReportsSurfaceMessage message={t("reportsDataUnavailable")} tone="error" />
       ) : null}
 
       {!isPending && !isError ? (
@@ -120,18 +122,20 @@ export function ReportsWorkloadView({
         >
           <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-medium text-white">Member utilization</span>
-              <span className="text-[12px] text-[var(--track-text-muted)]">({target}% target)</span>
+              <span className="text-[14px] font-medium text-white">{t("memberUtilization")}</span>
+              <span className="text-[12px] text-[var(--track-text-muted)]">
+                ({t("targetPercent", { target })})
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-[var(--track-text-muted)]">Show:</span>
+              <span className="text-[11px] text-[var(--track-text-muted)]">{t("showLabel")}</span>
               <SelectDropdown
                 data-testid="workload-metric-select"
                 onChange={(value) => setMetric(value as WorkloadMetric)}
                 options={[
-                  { label: "Utilization", value: "utilization" },
-                  { label: "Tracked hours", value: "tracked" },
-                  { label: "Billable hours", value: "billable" },
+                  { label: t("utilization"), value: "utilization" },
+                  { label: t("trackedHours"), value: "tracked" },
+                  { label: t("billableHoursMetric"), value: "billable" },
                 ]}
                 value={metric}
               />
@@ -226,11 +230,12 @@ function MemberWorkloadRow({
 }
 
 function WorkloadEmptyState(): ReactElement {
+  const { t } = useTranslation("reports");
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <h3 className="text-[14px] font-semibold text-white">Nothing to see here...</h3>
+      <h3 className="text-[14px] font-semibold text-white">{t("nothingToSeeHere")}</h3>
       <p className="max-w-[360px] text-[14px] leading-5 text-[var(--track-text-muted)]">
-        We couldn't find any time entries. Try adjusting the date range or applying new filters.
+        {t("noTimeEntriesAdjust")}
       </p>
     </div>
   );

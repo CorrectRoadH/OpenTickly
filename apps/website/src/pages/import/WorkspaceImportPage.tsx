@@ -1,4 +1,4 @@
-import { AppButton, PageLayout } from "@opentoggl/web-ui";
+import { AppButton, PageLayout, SelectDropdown } from "@opentoggl/web-ui";
 import { type ChangeEvent, type ReactElement, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -87,7 +87,7 @@ export function WorkspaceImportPage(): ReactElement {
       }
       toast.success(toastT.t("toast:organizationCreated", { name: organizationName }));
     } catch (error) {
-      toast.error(resolveArchiveImportErrorMessage(error, t) ?? toastT.t("toast:unexpectedError"), {
+      toast.error(resolveImportErrorMessage(error) ?? toastT.t("toast:unexpectedError"), {
         duration: 4000,
       });
     }
@@ -114,10 +114,9 @@ export function WorkspaceImportPage(): ReactElement {
       setSelectedCSVs([]);
       toast.success(toastT.t("toast:timeEntriesImported"));
     } catch (error) {
-      toast.error(
-        resolveTimeEntriesImportErrorMessage(error, t) ?? toastT.t("toast:unexpectedError"),
-        { duration: 4000 },
-      );
+      toast.error(resolveImportErrorMessage(error) ?? toastT.t("toast:unexpectedError"), {
+        duration: 4000,
+      });
     }
   }
 
@@ -127,6 +126,15 @@ export function WorkspaceImportPage(): ReactElement {
   return (
     <PageLayout title={t("import")}>
       <div className="mx-auto max-w-2xl space-y-5 p-5">
+        <a
+          className="inline-flex items-center gap-1.5 text-[13px] text-[var(--track-accent-text)] hover:underline"
+          href="https://track.toggl.com/settings"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {t("openTogglSettings")} ↗
+        </a>
+
         {/* Step 1: Archive import */}
         <section className="rounded-[8px] border border-dashed border-[var(--track-border)] bg-[var(--track-surface-muted)] p-5">
           <div className="flex items-start gap-4">
@@ -230,44 +238,46 @@ export function WorkspaceImportPage(): ReactElement {
 
           {/* Org + workspace selector */}
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <label className="block">
+            <div>
               <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
                 {t("organization")}
               </span>
-              <select
-                className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)]"
-                onChange={(e) => handleOrgChange(Number(e.target.value))}
-                value={selectedOrgId ?? ""}
-              >
-                {session.availableOrganizations.map((org) => (
-                  <option key={org.id} value={org.id}>
-                    {org.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <div className="mt-2">
+                <SelectDropdown
+                  aria-label={t("organization")}
+                  className="h-11 w-full text-[14px]"
+                  onChange={(v) => handleOrgChange(Number(v))}
+                  options={session.availableOrganizations.map((org) => ({
+                    label: org.name,
+                    value: String(org.id),
+                  }))}
+                  value={selectedOrgId ?? ""}
+                />
+              </div>
+            </div>
 
-            <label className="block">
+            <div>
               <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-soft)]">
                 {t("workspace")}
               </span>
-              <select
-                className="mt-2 h-11 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 text-[14px] text-white outline-none transition focus:border-[var(--track-accent-text)] disabled:opacity-50"
-                disabled={workspacesForOrg.length === 0}
-                onChange={(e) => setSelectedWorkspaceId(Number(e.target.value))}
-                value={selectedWorkspaceId ?? ""}
-              >
-                {workspacesForOrg.length === 0 ? (
-                  <option value="">{t("noWorkspaces")}</option>
-                ) : (
-                  workspacesForOrg.map((ws) => (
-                    <option key={ws.id} value={ws.id}>
-                      {ws.name}
-                    </option>
-                  ))
-                )}
-              </select>
-            </label>
+              <div className="mt-2">
+                <SelectDropdown
+                  aria-label={t("workspace")}
+                  className="h-11 w-full text-[14px]"
+                  disabled={workspacesForOrg.length === 0}
+                  onChange={(v) => setSelectedWorkspaceId(Number(v))}
+                  options={
+                    workspacesForOrg.length === 0
+                      ? [{ label: t("noWorkspaces"), value: "" }]
+                      : workspacesForOrg.map((ws) => ({
+                          label: ws.name,
+                          value: String(ws.id),
+                        }))
+                  }
+                  value={selectedWorkspaceId ?? ""}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="mt-5 rounded-[8px] bg-black/20 px-4 py-3 text-[12px] leading-6 text-[var(--track-text-muted)]">
@@ -318,31 +328,9 @@ export function WorkspaceImportPage(): ReactElement {
   );
 }
 
-function resolveArchiveImportErrorMessage(
-  error: unknown,
-  t: (key: string) => string,
-): string | null {
-  if (!(error instanceof WebApiError)) {
-    return null;
+function resolveImportErrorMessage(error: unknown): string | null {
+  if (error instanceof WebApiError) {
+    return error.userMessage;
   }
-  if (error.status === 400) {
-    return t("enterNewOrgName");
-  }
-  return t("archiveUploadFailed");
-}
-
-function resolveTimeEntriesImportErrorMessage(
-  error: unknown,
-  t: (key: string) => string,
-): string | null {
-  if (!(error instanceof WebApiError)) {
-    return null;
-  }
-  if (error.status === 400) {
-    return t("csvNotValid");
-  }
-  if (error.status === 403) {
-    return t("noPermission");
-  }
-  return t("retryWithOriginalCsv");
+  return null;
 }

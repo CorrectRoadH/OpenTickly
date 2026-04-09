@@ -43,13 +43,10 @@ export function ProjectDetailPage({
       <div className="grid gap-6 pt-3 lg:grid-cols-[minmax(0,1fr)_210px]">
         <div className="min-w-0">
           {projectQuery.isPending ? (
-            <ProjectDetailMessage message="Loading project team..." />
+            <ProjectDetailMessage message={t("loadingProjectTeam")} />
           ) : null}
           {projectQuery.isError ? (
-            <ProjectDetailMessage
-              message="Project detail is temporarily unavailable."
-              tone="error"
-            />
+            <ProjectDetailMessage message={t("projectDetailUnavailable")} tone="error" />
           ) : null}
 
           {project ? (
@@ -59,11 +56,9 @@ export function ProjectDetailPage({
                   i
                 </span>
                 <p>
-                  {project.is_private
-                    ? "This project is private."
-                    : "Everyone in this Workspace can see this Project."}{" "}
+                  {project.is_private ? t("projectIsPrivate") : t("projectIsPublic")}{" "}
                   <a className="text-[var(--track-accent-text)] underline" href="#privacy">
-                    {project.is_private ? "Manage access" : "You can make it private"}
+                    {project.is_private ? t("manageAccess") : t("canMakePrivate")}
                   </a>
                 </p>
               </div>
@@ -76,9 +71,9 @@ export function ProjectDetailPage({
               </div>
 
               {membersQuery.isPending ? (
-                <ProjectDetailMessage message="Loading members..." />
+                <ProjectDetailMessage message={t("loadingMembers")} />
               ) : (
-                <ul aria-label="Project team members">
+                <ul aria-label={t("projectTeamMembers")}>
                   {members.map((member) => {
                     const display = resolveProjectMemberDisplay(
                       member,
@@ -104,10 +99,10 @@ export function ProjectDetailPage({
                         />
                         <div className="py-4">
                           <p className="text-[14px] font-medium text-white">
-                            {member.manager ? "Manager" : "Member"}
+                            {member.manager ? t("manager") : t("member")}
                           </p>
                           <p className="text-[12px] text-[var(--track-text-muted)]">
-                            {member.manager ? "Views all entries." : "Can view assigned work."}
+                            {member.manager ? t("viewsAllEntries") : t("canViewAssignedWork")}
                           </p>
                         </div>
                       </li>
@@ -115,7 +110,7 @@ export function ProjectDetailPage({
                   })}
                   {!membersQuery.isPending && members.length === 0 ? (
                     <li className="border-t border-[var(--track-border)] px-4 py-6 text-[14px] text-[var(--track-text-muted)]">
-                      No members assigned.
+                      {t("noMembersAssigned")}
                     </li>
                   ) : null}
                 </ul>
@@ -188,14 +183,15 @@ function TimelineBlock({
 }: {
   statistics: ModelsProjectStatistics | undefined;
 }): ReactElement | null {
+  const { t } = useTranslation("projects");
   if (!statistics?.earliest_time_entry && !statistics?.latest_time_entry) {
     return null;
   }
 
   return (
     <div className="text-[12px] text-[var(--track-text-muted)]">
-      <p>First entry: {statistics.earliest_time_entry ?? "-"}</p>
-      <p className="mt-1">Last entry: {statistics.latest_time_entry ?? "-"}</p>
+      <p>{t("firstEntry", { date: statistics.earliest_time_entry ?? "-" })}</p>
+      <p className="mt-1">{t("lastEntry", { date: statistics.latest_time_entry ?? "-" })}</p>
     </div>
   );
 }

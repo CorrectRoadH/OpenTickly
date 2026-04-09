@@ -59,10 +59,16 @@ export function ListRowMoreActions({
       </MenuItem>
       <MenuItem
         onClick={() => {
-          if (typeof entry.id === "number") {
-            const startLink = `${window.location.origin}/timer?entry=${entry.id}`;
-            void navigator.clipboard.writeText(startLink);
-          }
+          const params = new URLSearchParams();
+          const desc = (entry.description ?? "").trim();
+          if (desc) params.set("description", desc);
+          const projectId = resolveTimeEntryProjectId(entry);
+          if (projectId != null) params.set("project_id", String(projectId));
+          if (entry.tag_ids?.length) params.set("tag_ids", entry.tag_ids.join(","));
+          if (entry.billable) params.set("billable", "true");
+          void navigator.clipboard.writeText(
+            `${window.location.origin}/timer?${params.toString()}`,
+          );
         }}
       >
         {t("copyStartLink")}

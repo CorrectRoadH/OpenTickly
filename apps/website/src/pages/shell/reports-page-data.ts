@@ -20,7 +20,7 @@ export type { ReportsDateRange, ReportsTimePeriod } from "./reports-date-utils.t
 export { getDateRangeForPeriod, shiftWeekRange } from "./reports-date-utils.ts";
 
 export type ReportsPageMetric = {
-  title: "Total Hours" | "Billable Hours" | "Amount" | "Average Daily Hours";
+  title: string;
   value: string;
 };
 

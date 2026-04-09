@@ -192,7 +192,7 @@ export function WorkspaceMembersPage(): ReactElement {
     <div className="w-full min-w-0 bg-[var(--track-surface)] text-white" data-testid="members-page">
       <header className="border-b border-[var(--track-border)]">
         <div className="flex min-h-[66px] flex-wrap items-center justify-between gap-3 px-5 py-3">
-          <h1 className="text-[20px] font-semibold leading-[30px] text-white">Members</h1>
+          <h1 className="text-[20px] font-semibold leading-[30px] text-white">{t("members")}</h1>
           <AppButton
             data-testid="members-invite-button"
             onClick={() => setInviteDialogOpen(true)}
@@ -207,7 +207,7 @@ export function WorkspaceMembersPage(): ReactElement {
           data-testid="members-filter-bar"
         >
           <SelectDropdown
-            aria-label="Member status filter"
+            aria-label={t("memberStatusFilter")}
             onChange={(v) => setStatusFilter(v as MemberStatusFilter)}
             options={[
               { value: "all", label: t("allMembers") },
@@ -236,16 +236,26 @@ export function WorkspaceMembersPage(): ReactElement {
         data-testid="members-list"
         emptyState={
           search.trim()
-            ? "No members match your search."
+            ? t("noMembersMatchSearch")
             : statusFilter !== "all"
-              ? `No ${statusFilter} members.`
-              : "No members in this workspace yet. Invite someone to get started."
+              ? t(
+                  statusFilter === "active"
+                    ? "noActiveMembers"
+                    : statusFilter === "disabled"
+                      ? "noDisabledMembers"
+                      : "noInvitedMembers",
+                )
+              : t("noMembersInWorkspace")
         }
         footer={
           <span data-testid="members-summary">
-            {members.length} member{members.length === 1 ? "" : "s"} in{" "}
-            {session.currentWorkspace.name}. Active: {activeCount} · Disabled: {disabledCount} ·
-            Invited: {invitedCount}
+            {t("showingMembersInWorkspace", {
+              count: members.length,
+              workspaceName: session.currentWorkspace.name,
+              activeCount,
+              disabledCount,
+              invitedCount,
+            })}
           </span>
         }
         isLoading={false}

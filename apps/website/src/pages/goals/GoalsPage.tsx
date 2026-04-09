@@ -24,43 +24,46 @@ import { GoalRowActionsMenu } from "./GoalRowActionsMenu.tsx";
 
 type GoalStatusFilter = "active" | "archived";
 
-function formatComparisonLabel(comparison?: string): string {
+function formatComparisonLabel(comparison: string | undefined, t: (key: string) => string): string {
   switch (comparison) {
     case "more_than":
     case "gte":
-      return "at least";
+      return t("atLeast");
     case "less_than":
     case "lte":
-      return "less than";
+      return t("lessThan");
     default:
       return comparison ?? "";
   }
 }
 
-function formatRecurrenceLabel(recurrence?: string): string {
+function formatRecurrenceLabel(recurrence: string | undefined, t: (key: string) => string): string {
   switch (recurrence) {
     case "daily":
-      return "every day";
+      return t("everyDay");
     case "weekly":
-      return "every week";
+      return t("everyWeek");
     case "daily_workdays":
-      return "weekdays";
+      return t("weekdays");
     default:
       return recurrence ?? "";
   }
 }
 
-function formatTargetHours(seconds?: number): string {
-  if (!seconds) return "0 hours";
+function formatTargetHours(seconds: number | undefined, t: (key: string) => string): string {
+  if (!seconds) return `0 ${t("hours")}`;
   const hours = seconds / 3600;
-  if (hours === 1) return "1 hour";
-  return `${hours} hours`;
+  return `${hours} ${t("hours")}`;
 }
 
-function formatTrackedHours(tracked?: number, target?: number): string {
+function formatTrackedHours(
+  tracked: number | undefined,
+  target: number | undefined,
+  t: (key: string) => string,
+): string {
   const trackedH = Math.round(((tracked ?? 0) / 3600) * 10) / 10;
   const targetH = Math.round(((target ?? 0) / 3600) * 10) / 10;
-  return `${trackedH}/${targetH} hours`;
+  return `${trackedH}/${targetH} ${t("hours")}`;
 }
 
 function todayISOString(): string {
@@ -147,15 +150,15 @@ export function GoalsPage(): ReactElement {
         <DirectoryTableCell>{goal.user_name ?? t("me")}</DirectoryTableCell>
         <DirectoryTableCell>
           <span>
-            {formatComparisonLabel(goal.comparison)}{" "}
-            <strong>{formatTargetHours(goal.target_seconds)}</strong>{" "}
-            {formatRecurrenceLabel(goal.recurrence)}
+            {formatComparisonLabel(goal.comparison, t)}{" "}
+            <strong>{formatTargetHours(goal.target_seconds, t)}</strong>{" "}
+            {formatRecurrenceLabel(goal.recurrence, t)}
           </span>
         </DirectoryTableCell>
         <DirectoryTableCell>
           <div className="flex items-center gap-2">
             <span className="text-[12px]">
-              {formatTrackedHours(goal.current_recurrence_tracked_seconds, goal.target_seconds)}
+              {formatTrackedHours(goal.current_recurrence_tracked_seconds, goal.target_seconds, t)}
             </span>
             <ProgressBar
               current={goal.current_recurrence_tracked_seconds ?? 0}
@@ -191,20 +194,21 @@ export function GoalsPage(): ReactElement {
       request: { active: !goal.active },
     });
     setStatusMessage(
-      goal.active ? `${t("archived")} ${goal.name}` : `${t("restored")} ${goal.name}`,
+      goal.active ? t("archivedGoal", { name: goal.name }) : t("restoredGoal", { name: goal.name }),
     );
   }
 
   async function handleDelete(goal: HandlergoalsApiResponse) {
-    if (goal.goal_id == null || !window.confirm(`Delete "${goal.name}"?`)) return;
+    if (goal.goal_id == null || !window.confirm(t("deleteGoalConfirm", { name: goal.name })))
+      return;
     await deleteGoalMutation.mutateAsync(goal.goal_id);
-    setStatusMessage(`${t("deleted")} ${goal.name}`);
+    setStatusMessage(t("deletedGoal", { name: goal.name }));
   }
 
   return (
     <PageLayout
       data-testid="goals-page"
-      title="Goals"
+      title={t("goals")}
       headerActions={
         <AppButton data-testid="goals-create-button" onClick={openCreateDialog} type="button">
           <PlusIcon className="size-3.5" />
@@ -214,7 +218,7 @@ export function GoalsPage(): ReactElement {
       toolbar={
         <>
           <SelectDropdown
-            aria-label="Goal status filter"
+            aria-label={t("goalStatusFilter")}
             data-testid="goals-status-filter"
             onChange={(v) => setStatusFilter(v as GoalStatusFilter)}
             options={[

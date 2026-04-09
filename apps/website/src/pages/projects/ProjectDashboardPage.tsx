@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Cell, Pie, PieChart } from "recharts";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -29,6 +30,7 @@ export function ProjectDashboardPage({
   projectId,
   workspaceId,
 }: ProjectDashboardPageProps): ReactElement {
+  const { t } = useTranslation("projects");
   const projectQuery = useProjectDetailQuery(workspaceId, projectId);
   const statisticsQuery = useProjectStatisticsQuery(workspaceId, projectId);
   const project = projectQuery.data;
@@ -53,21 +55,21 @@ export function ProjectDashboardPage({
     <ProjectDetailLayout activeTab="dashboard" projectId={projectId} workspaceId={workspaceId}>
       {projectQuery.isPending ? (
         <p className="mt-4 rounded-lg border border-[var(--track-border)] px-4 py-3 text-sm text-[var(--track-text-muted)]">
-          Loading dashboard...
+          {t("loadingDashboard")}
         </p>
       ) : null}
       {projectQuery.isError ? (
         <p className="mt-4 rounded-lg border border-rose-600/40 px-4 py-3 text-sm text-rose-300">
-          Dashboard is temporarily unavailable.
+          {t("dashboardUnavailable")}
         </p>
       ) : null}
       {project ? (
         <section className="pt-3">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard label="Total hours" value={formatDuration(totalSeconds)} />
-            <StatCard label="Billable hours" value={formatDuration(billableSeconds)} />
+            <StatCard label={t("totalHours")} value={formatDuration(totalSeconds)} />
+            <StatCard label={t("billableHours")} value={formatDuration(billableSeconds)} />
             <StatCard
-              label="Billable %"
+              label={t("billablePercent")}
               value={
                 totalSeconds > 0 ? `${Math.round((billableSeconds / totalSeconds) * 100)}%` : "0%"
               }
@@ -78,8 +80,10 @@ export function ProjectDashboardPage({
           </div>
           {statisticsQuery.data?.earliest_time_entry || statisticsQuery.data?.latest_time_entry ? (
             <div className="mt-6 text-[12px] text-[var(--track-text-muted)]">
-              <p>First entry: {statisticsQuery.data.earliest_time_entry ?? "-"}</p>
-              <p className="mt-1">Last entry: {statisticsQuery.data.latest_time_entry ?? "-"}</p>
+              <p>{t("firstEntry", { date: statisticsQuery.data.earliest_time_entry ?? "-" })}</p>
+              <p className="mt-1">
+                {t("lastEntry", { date: statisticsQuery.data.latest_time_entry ?? "-" })}
+              </p>
             </div>
           ) : null}
         </section>

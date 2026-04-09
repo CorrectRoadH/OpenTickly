@@ -87,13 +87,18 @@ export function EditorHeader(): ReactElement {
             <MenuLink href={`/projects/${currentWorkspaceId}/list`}>{t("goToProject")}</MenuLink>
           ) : null}
           <MenuItem
-            onClick={() =>
-              void copyToClipboard(
-                typeof window === "undefined"
-                  ? (entry.start ?? "")
-                  : `${window.location.origin}/timer?entry=${entry.id ?? ""}&start=${entry.start ?? ""}`,
-              )
-            }
+            onClick={() => {
+              if (typeof window === "undefined") {
+                void copyToClipboard(entry.start ?? "");
+                return;
+              }
+              const params = new URLSearchParams();
+              if (description.trim()) params.set("description", description.trim());
+              if (selectedProjectId != null) params.set("project_id", String(selectedProjectId));
+              if (entry.tag_ids?.length) params.set("tag_ids", entry.tag_ids.join(","));
+              if (entry.billable) params.set("billable", "true");
+              void copyToClipboard(`${window.location.origin}/timer?${params.toString()}`);
+            }}
           >
             {t("copyStartLink")}
           </MenuItem>

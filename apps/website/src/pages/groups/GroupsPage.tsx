@@ -53,10 +53,7 @@ export function GroupsPage(): ReactElement {
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-white">{t("teams")}</h1>
           <p className="text-sm text-slate-500">{t("organizationTeamDirectory")}</p>
-          <p className="text-sm leading-6 text-slate-400">
-            Manage teams (groups) across the organization. Teams can be assigned to workspaces and
-            projects for batch access control.
-          </p>
+          <p className="text-sm leading-6 text-slate-400">{t("teamsDescription")}</p>
         </div>
         <AppButton onClick={() => groupNameInputRef.current?.focus()} type="button">
           {t("createTeam")}
@@ -91,7 +88,7 @@ export function GroupsPage(): ReactElement {
       {groups.length > 0 ? (
         <ul
           className="mt-6 divide-y divide-white/8"
-          aria-label="Teams list"
+          aria-label={t("teamsList")}
           data-testid="groups-list"
         >
           {groups.map((group) => (

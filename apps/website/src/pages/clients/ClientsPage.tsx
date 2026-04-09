@@ -216,7 +216,7 @@ export function ClientsPage(): ReactElement {
               className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
               data-testid="clients-summary"
             >
-              Showing {groupedClients.length} clients in workspace {workspaceId}.
+              {t("showingClientsInWorkspace", { count: groupedClients.length, workspaceId })}
             </div>
           ) : null
         }
@@ -276,13 +276,13 @@ export function ClientsPage(): ReactElement {
             onToggleSelectAll={onToggleSelectAll}
             pagination={
               <div className="flex items-center justify-center gap-2 px-5 py-4 text-[11px] text-[var(--track-text-muted)]">
-                <IconButton aria-label="Previous page" size="sm">
+                <IconButton aria-label={t("previousPage")} size="sm">
                   &#x2039;
                 </IconButton>
                 <span className="flex size-5 items-center justify-center rounded-[4px] bg-[var(--track-surface-muted)] text-white">
                   1
                 </span>
-                <IconButton aria-label="Next page" size="sm">
+                <IconButton aria-label={t("nextPage")} size="sm">
                   &#x203A;
                 </IconButton>
               </div>
@@ -321,18 +321,18 @@ export function ClientsPage(): ReactElement {
                     clientName={g.client.name}
                     onArchive={(id) => {
                       archiveClientMutation.mutate(id, {
-                        onSuccess: () => setStatusMessage("Client archived"),
+                        onSuccess: () => setStatusMessage(t("clientArchived")),
                       });
                     }}
                     onDelete={(id) => {
                       deleteClientMutation.mutate(id, {
-                        onSuccess: () => setStatusMessage("Client deleted"),
+                        onSuccess: () => setStatusMessage(t("clientDeleted")),
                       });
                     }}
                     onRename={(id, name) => {
                       renameClientMutation.mutate(
                         { clientId: id, name },
-                        { onSuccess: () => setStatusMessage("Client renamed") },
+                        { onSuccess: () => setStatusMessage(t("clientRenamed")) },
                       );
                     }}
                   />
@@ -350,16 +350,16 @@ export function ClientsPage(): ReactElement {
       {composerOpen ? (
         <CreateNameDialog
           isPending={createClientMutation.isPending}
-          nameLabel="Client name"
-          namePlaceholder="Client name"
+          nameLabel={t("clientName")}
+          namePlaceholder={t("clientName")}
           nameValue={clientName}
           onClose={() => setComposerOpen(false)}
           onNameChange={setClientName}
           onSubmit={() => {
             void handleCreateClient();
           }}
-          submitLabel="Create client"
-          title="Create new client"
+          submitLabel={t("createClient")}
+          title={t("createNewClient")}
         />
       ) : null}
     </>

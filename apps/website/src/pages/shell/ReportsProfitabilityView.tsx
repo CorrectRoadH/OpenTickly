@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SelectDropdown } from "@opentoggl/web-ui";
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
 
@@ -166,6 +167,7 @@ export function ReportsProfitabilityView({
   isPending,
   report,
 }: ReportsProfitabilityViewProps): ReactElement {
+  const { t } = useTranslation("reports");
   const { durationFormat } = useUserPreferences();
   const [showMetric, setShowMetric] = useState<ProfitabilityShowMetric>("amount-cost-profit");
   const [topCount, setTopCount] = useState<TopEarningCount>(10);
@@ -221,17 +223,17 @@ export function ReportsProfitabilityView({
         data-testid="reports-profitability-metrics"
       >
         <MetricCell
-          title="Billable hours"
+          title={t("billableHoursMetric")}
           value={`${formatClockDuration(totalBillableSeconds, durationFormat)} (${billablePct}%)`}
         />
-        <MetricCell title="Amount" value={formatCurrency(totalAmount)} />
-        <MetricCell title="Cost" value={formatCurrency(totalCost)} />
-        <MetricCell title="Profit" value={formatCurrency(totalProfit)} last />
+        <MetricCell title={t("amount")} value={formatCurrency(totalAmount)} />
+        <MetricCell title={t("cost")} value={formatCurrency(totalCost)} />
+        <MetricCell title={t("profit")} value={formatCurrency(totalProfit)} last />
       </section>
 
-      {isPending ? <ReportsSurfaceMessage message="Loading report data..." /> : null}
+      {isPending ? <ReportsSurfaceMessage message={t("loadingReportData")} /> : null}
       {isError ? (
-        <ReportsSurfaceMessage message="Reports data is temporarily unavailable." tone="error" />
+        <ReportsSurfaceMessage message={t("reportsDataUnavailable")} tone="error" />
       ) : null}
 
       {!isPending && !isError ? (
@@ -239,18 +241,16 @@ export function ReportsProfitabilityView({
           {/* Day trends chart */}
           <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
             <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
-              <span className="text-[14px] font-medium text-white">
-                Day trends in Amount, Cost and Profit
-              </span>
+              <span className="text-[14px] font-medium text-white">{t("dayTrendsTitle")}</span>
               <div className="flex items-center gap-2">
-                <span className="text-[11px] text-[var(--track-text-muted)]">Show:</span>
+                <span className="text-[11px] text-[var(--track-text-muted)]">{t("showLabel")}</span>
                 <SelectDropdown
                   onChange={(value) => setShowMetric(value as ProfitabilityShowMetric)}
                   options={[
-                    { label: "Amount, Cost and Profit", value: "amount-cost-profit" },
-                    { label: "Amount", value: "amount" },
-                    { label: "Cost", value: "cost" },
-                    { label: "Profit", value: "profit" },
+                    { label: t("amountCostProfit"), value: "amount-cost-profit" },
+                    { label: t("amount"), value: "amount" },
+                    { label: t("cost"), value: "cost" },
+                    { label: t("profit"), value: "profit" },
                   ]}
                   value={showMetric}
                 />
@@ -273,7 +273,7 @@ export function ReportsProfitabilityView({
             options={[5, 10, 20]}
             prefix="Top"
             rows={topDisplayRows}
-            title="Top earning projects"
+            title={t("topEarningProjects")}
           />
 
           {/* Lowest earning */}
@@ -286,7 +286,7 @@ export function ReportsProfitabilityView({
             options={[3, 5, 10]}
             prefix="Bottom"
             rows={bottomDisplayRows}
-            title="Lowest earning projects"
+            title={t("lowestEarningProjects")}
           />
 
           {/* Breakdown table */}
@@ -296,7 +296,7 @@ export function ReportsProfitabilityView({
           >
             <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
               <span className="text-[14px] font-medium text-white">
-                Project and member breakdown
+                {t("projectMemberBreakdown")}
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -305,16 +305,16 @@ export function ReportsProfitabilityView({
                   <tr className="border-b border-[var(--track-border)]">
                     <th className="w-8 px-2 py-3" />
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Project | Member
+                      {t("projectMemberHeader")}
                     </th>
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Amount
+                      {t("amount")}
                     </th>
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Cost
+                      {t("cost")}
                     </th>
                     <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
-                      Profit
+                      {t("profit")}
                     </th>
                   </tr>
                 </thead>
@@ -329,7 +329,7 @@ export function ReportsProfitabilityView({
                   ))}
                   <tr className="border-t border-[var(--track-border)] font-semibold">
                     <td className="px-2 py-3" />
-                    <td className="px-4 py-3 text-white">Total</td>
+                    <td className="px-4 py-3 text-white">{t("total")}</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalAmount)}</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalCost)}</td>
                     <td className="px-4 py-3 text-white">{formatCurrency(totalProfit)}</td>
@@ -412,6 +412,7 @@ function DayTrendsChart({
   days: DayAmounts[];
   show: ProfitabilityShowMetric;
 }): ReactElement {
+  const { t } = useTranslation("reports");
   const maxVal = Math.max(
     ...days.map((d) => {
       if (show === "amount") return d.amount;
@@ -438,7 +439,7 @@ function DayTrendsChart({
                     height: `${(day.amount / maxVal) * 100}%`,
                     minHeight: day.amount > 0 ? 2 : 0,
                   }}
-                  title={`Amount: ${formatCurrency(day.amount)}`}
+                  title={t("amountTooltip", { value: formatCurrency(day.amount) })}
                 />
               ) : null}
               {showCost ? (
@@ -448,7 +449,7 @@ function DayTrendsChart({
                     height: `${(day.cost / maxVal) * 100}%`,
                     minHeight: day.cost > 0 ? 2 : 0,
                   }}
-                  title={`Cost: ${formatCurrency(day.cost)}`}
+                  title={t("costTooltip", { value: formatCurrency(day.cost) })}
                 />
               ) : null}
               {showProfit ? (
@@ -458,7 +459,7 @@ function DayTrendsChart({
                     height: `${(Math.abs(day.profit) / maxVal) * 100}%`,
                     minHeight: day.profit !== 0 ? 2 : 0,
                   }}
-                  title={`Profit: ${formatCurrency(day.profit)}`}
+                  title={t("profitTooltip", { value: formatCurrency(day.profit) })}
                 />
               ) : null}
             </div>
@@ -490,6 +491,7 @@ function EarningPanel({
   rows: ProfitRow[];
   title: string;
 }): ReactElement {
+  const { t } = useTranslation("reports");
   return (
     <section className="mt-5 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)]">
       <div className="flex items-center justify-between border-b border-[var(--track-border)] px-5 py-4">
@@ -497,14 +499,17 @@ function EarningPanel({
         <div className="flex items-center gap-2">
           <SelectDropdown
             onChange={(value) => onCountChange(Number(value))}
-            options={options.map((n) => ({ label: `${prefix} ${n}`, value: String(n) }))}
+            options={options.map((n) => ({
+              label: `${t(prefix === "Top" ? "top" : "bottom")} ${n}`,
+              value: String(n),
+            }))}
             value={String(count)}
           />
           <SelectDropdown
             onChange={(value) => onDimensionChange(value as EarningDimension)}
             options={[
-              { label: "Projects", value: "projects" },
-              { label: "Members", value: "members" },
+              { label: t("projects"), value: "projects" },
+              { label: t("members"), value: "members" },
             ]}
             value={dimension}
           />
@@ -556,11 +561,12 @@ function MetricCell({
 }
 
 function EmptyChart(): ReactElement {
+  const { t } = useTranslation("reports");
   return (
     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <h3 className="text-[14px] font-semibold text-white">Nothing to see here...</h3>
+      <h3 className="text-[14px] font-semibold text-white">{t("nothingToSeeHere")}</h3>
       <p className="max-w-[360px] text-[14px] leading-5 text-[var(--track-text-muted)]">
-        We couldn't find any time entries. Try adjusting the date range or applying new filters.
+        {t("noTimeEntriesAdjust")}
       </p>
     </div>
   );

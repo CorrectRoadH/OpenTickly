@@ -117,7 +117,10 @@ export function TagsPage(): ReactElement {
           className="border-t border-[var(--track-border)] px-5 py-3 text-[11px] text-[var(--track-text-muted)]"
           data-testid="tags-summary"
         >
-          Showing {tags.length} tags in {session.currentWorkspace.name}
+          {t("showingTagsCount", {
+            count: tags.length,
+            workspaceName: session.currentWorkspace.name,
+          })}
         </div>
       }
     >
@@ -139,7 +142,7 @@ export function TagsPage(): ReactElement {
             </div>
             <div className="flex h-[44px] items-center overflow-hidden">
               <a
-                aria-label={`Tag details for ${tag.name}`}
+                aria-label={t("tagDetailsFor", { name: tag.name })}
                 className="truncate text-[14px] text-white"
                 data-testid="tag-name"
                 href={`/workspaces/${workspaceId}/tags/${tag.id}`}
@@ -179,8 +182,8 @@ export function TagsPage(): ReactElement {
           onSubmit={() => {
             void handleCreateTag();
           }}
-          submitLabel="Create tag"
-          title="Create new tag"
+          submitLabel={t("createTag")}
+          title={t("createNewTag")}
         />
       ) : null}
     </PageLayout>

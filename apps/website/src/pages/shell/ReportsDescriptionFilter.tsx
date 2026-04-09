@@ -1,4 +1,5 @@
 import { type ReactElement, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useDismiss } from "../../shared/ui/useDismiss.ts";
 
@@ -15,6 +16,7 @@ export function ReportsDescriptionFilter({
   onChange,
   value,
 }: ReportsDescriptionFilterProps): ReactElement {
+  const { t } = useTranslation("reports");
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +34,7 @@ export function ReportsDescriptionFilter({
   }, [open]);
 
   const hasValue = value.trim().length > 0;
-  const buttonLabel = hasValue ? `Description: ${value}` : "Description";
+  const buttonLabel = hasValue ? t("descriptionWithValue", { value }) : t("descriptionFilter");
 
   function applyFilter() {
     onChange(draft);
@@ -59,7 +61,7 @@ export function ReportsDescriptionFilter({
           data-testid="reports-filter-description-dropdown"
         >
           <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.04em] text-[var(--track-text-muted)]">
-            Filter by description
+            {t("filterByDescription")}
           </p>
           <input
             className="h-9 w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-3 text-[12px] text-white outline-none focus:border-[var(--track-accent-soft)]"
@@ -68,7 +70,7 @@ export function ReportsDescriptionFilter({
             onKeyDown={(e) => {
               if (e.key === "Enter") applyFilter();
             }}
-            placeholder="Contains..."
+            placeholder={t("containsPlaceholder")}
             ref={inputRef}
             value={draft}
           />
@@ -79,7 +81,7 @@ export function ReportsDescriptionFilter({
               onClick={applyFilter}
               type="button"
             >
-              Apply
+              {t("apply")}
             </button>
             {hasValue ? (
               <button
@@ -91,7 +93,7 @@ export function ReportsDescriptionFilter({
                 }}
                 type="button"
               >
-                Clear
+                {t("clear")}
               </button>
             ) : null}
           </div>

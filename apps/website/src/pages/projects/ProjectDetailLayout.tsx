@@ -60,7 +60,7 @@ export function ProjectDetailLayout({
           </div>
           <nav
             className="flex h-[40px] items-end gap-0 border-b border-[var(--track-border)] px-5"
-            aria-label="Project sections"
+            aria-label={t("projectSections")}
           >
             {PROJECT_TABS.map((tab) => {
               const isActive = activeTab === tab.key;
