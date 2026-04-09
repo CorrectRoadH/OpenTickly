@@ -1,9 +1,11 @@
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 import { AppButton, SurfaceCard } from "@opentoggl/web-ui";
 
 import type { ReportsPageMetric } from "./reports-page-data.ts";
 
 export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): ReactElement {
+  const { t } = useTranslation("reports");
   return (
     <SurfaceCard
       className={`mt-5 grid overflow-hidden ${
@@ -14,10 +16,10 @@ export function SummaryMetrics({ metrics }: { metrics: ReportsPageMetric[] }): R
       {metrics.map((metric, index) => (
         <div
           className={`px-5 py-4 ${index === metrics.length - 1 ? "" : "border-b border-[var(--track-border)] lg:border-b-0 lg:border-r"}`}
-          key={metric.title}
+          key={metric.titleKey}
         >
           <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--track-text-muted)]">
-            {metric.title}
+            {t(metric.titleKey)}
           </p>
           <p className="mt-3 text-[14px] font-semibold leading-[23px] tabular-nums text-white">
             {metric.value}

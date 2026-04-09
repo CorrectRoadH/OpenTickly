@@ -80,7 +80,7 @@ function applyRoundingToModel(
     const rs = roundTo15Min(r.seconds);
     return { ...r, seconds: rs, value: formatClockDuration(rs, durationFormat) };
   });
-  const billableMetric = model.metrics.find((m) => m.title === "Billable Hours");
+  const billableMetric = model.metrics.find((m) => m.titleKey === "billableHours");
   const billableSeconds = billableMetric ? parseDurationToSeconds(billableMetric.value) : 0;
   const trackedDays = roundedWeekRows.filter((r) => r.seconds > 0).length;
   const avgDaily = trackedDays > 0 ? roundedTotal / 3600 / trackedDays : 0;
@@ -95,13 +95,16 @@ function applyRoundingToModel(
       value: r.shareValue,
     })),
     metrics: [
-      { title: "Total Hours", value: formatClockDuration(roundedTotal, durationFormat) },
+      { titleKey: "totalHours", value: formatClockDuration(roundedTotal, durationFormat) },
       {
-        title: "Billable Hours",
+        titleKey: "billableHours",
         value: formatClockDuration(roundTo15Min(billableSeconds), durationFormat),
       },
-      { title: "Amount", value: model.metrics.find((m) => m.title === "Amount")?.value ?? "-" },
-      { title: "Average Daily Hours", value: `${avgDaily.toFixed(2)} Hours` },
+      {
+        titleKey: "amount",
+        value: model.metrics.find((m) => m.titleKey === "amount")?.value ?? "-",
+      },
+      { titleKey: "averageDailyHours", value: avgDaily.toFixed(2) },
     ],
     totalDuration: formatClockDuration(roundedTotal, durationFormat),
     totalSeconds: roundedTotal,

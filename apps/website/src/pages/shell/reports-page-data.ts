@@ -20,7 +20,7 @@ export type { ReportsDateRange, ReportsTimePeriod } from "./reports-date-utils.t
 export { getDateRangeForPeriod, shiftWeekRange } from "./reports-date-utils.ts";
 
 export type ReportsPageMetric = {
-  title: string;
+  titleKey: string;
   value: string;
 };
 
@@ -165,10 +165,10 @@ export function buildReportsPageModel(args: {
     })),
     endDate,
     metrics: [
-      { title: "Total Hours", value: formatClockDuration(totalSeconds, fmt) },
-      { title: "Billable Hours", value: formatClockDuration(billableSeconds, fmt) },
-      { title: "Amount", value: formatAmountCents(billableAmountCents) },
-      { title: "Average Daily Hours", value: `${averageDailyHours.toFixed(2)} Hours` },
+      { titleKey: "totalHours", value: formatClockDuration(totalSeconds, fmt) },
+      { titleKey: "billableHours", value: formatClockDuration(billableSeconds, fmt) },
+      { titleKey: "amount", value: formatAmountCents(billableAmountCents) },
+      { titleKey: "averageDailyHours", value: averageDailyHours.toFixed(2) },
     ],
     rangeLabel: buildRangeLabel(
       startDate,

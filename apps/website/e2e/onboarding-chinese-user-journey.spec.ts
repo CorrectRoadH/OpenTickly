@@ -48,6 +48,30 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     // onboarding 完成后保存偏好到后端，LanguageSync 切换到中文
     await expect(page.getByText("本周合计")).toBeVisible({ timeout: 10000 });
 
+    // ===== 第3.5步：验证手机端也显示中文 =====
+    // Shrink viewport so mobile layout renders instead of redirecting to /timer
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/m/me");
+    await expect(page.getByTestId("app-shell")).toBeVisible({ timeout: 10000 });
+
+    // Bottom tabs should be in Chinese
+    await expect(page.getByRole("link", { name: "计时器" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "日历" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "报告" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "我的" })).toBeVisible();
+
+    // Me page content should be in Chinese
+    await expect(page.getByText("组织")).toBeVisible();
+    await expect(page.getByText("设置", { exact: true })).toBeVisible();
+    await expect(page.getByText("个人资料设置")).toBeVisible();
+    await expect(page.getByText("账户设置")).toBeVisible();
+    await expect(page.getByText("退出登录")).toBeVisible();
+
+    // Restore desktop viewport and go back
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto("/timer");
+    await expect(page.getByText("本周合计")).toBeVisible({ timeout: 10000 });
+
     // ===== 第4步：进入账户设置，切换回英文 =====
     await page.getByRole("button", { name: "个人资料菜单" }).click();
     await page.getByRole("menuitem", { name: "账户设置" }).click();

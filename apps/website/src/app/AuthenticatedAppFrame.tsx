@@ -31,7 +31,7 @@ export function AuthenticatedAppFrame({
   );
 }
 
-function LanguageSync(): null {
+export function LanguageSync(): null {
   const preferencesQuery = usePreferencesQuery();
   const languageCode = normalizeSupportedLanguage(preferencesQuery.data?.language_code);
 

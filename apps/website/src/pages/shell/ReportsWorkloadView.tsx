@@ -101,9 +101,9 @@ export function ReportsWorkloadView({
   const avgDaily = trackedDays > 0 ? totalSeconds / 3600 / trackedDays : 0;
 
   const workloadMetrics: ReportsPageMetric[] = [
-    { title: t("totalHours"), value: formatClockDuration(totalSeconds, durationFormat) },
-    { title: t("billableHours"), value: formatClockDuration(billableSeconds, durationFormat) },
-    { title: t("averageDailyHours"), value: `${avgDaily.toFixed(2)} ${t("hoursUnit")}` },
+    { titleKey: "totalHours", value: formatClockDuration(totalSeconds, durationFormat) },
+    { titleKey: "billableHours", value: formatClockDuration(billableSeconds, durationFormat) },
+    { titleKey: "averageDailyHours", value: avgDaily.toFixed(2) },
   ];
 
   return (

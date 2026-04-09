@@ -1,6 +1,7 @@
 import { Navigate, createRoute } from "@tanstack/react-router";
 import { Suspense, type ReactNode } from "react";
 
+import { LanguageSync } from "../app/AuthenticatedAppFrame.tsx";
 import { useSessionBootstrapQuery } from "../shared/query/web-shell.ts";
 import { SessionProvider } from "../shared/session/session-context.tsx";
 import { rootRoute } from "./root-route.tsx";
@@ -88,7 +89,12 @@ function MobileProtectedBoundary({ children }: { children: ReactNode }) {
     return <SessionUnavailablePanel />;
   }
 
-  return <SessionProvider sessionBootstrap={sessionQuery.data}>{children}</SessionProvider>;
+  return (
+    <SessionProvider sessionBootstrap={sessionQuery.data}>
+      <LanguageSync />
+      {children}
+    </SessionProvider>
+  );
 }
 
 function MobileTimerRouteComponent() {
