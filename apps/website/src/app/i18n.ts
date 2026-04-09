@@ -141,4 +141,8 @@ void i18n
     partialBundledLanguages: true,
   });
 
+if (import.meta.env.DEV) {
+  (window as any).__i18n = i18n;
+}
+
 export default i18n;

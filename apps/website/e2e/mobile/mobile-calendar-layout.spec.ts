@@ -6,17 +6,34 @@ import {
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
 
+// Register/login with default locale, then test calendar under zh-CN.
 test.use({ ...devices["iPhone 13"], timezoneId: "UTC" });
 
 /**
- * Mobile calendar: time entry layout correctness.
+ * Mobile calendar: time entry layout under CJK locales.
  *
- * Verifies entries render at the correct vertical position and width in the
- * mobile day timeline. Covers the regression where CJK locale suffixes
- * (e.g. "14时") caused NaN positions, collapsing all entries to top:0.
+ * Regression test for b022ca67 — resolveMinutesSinceMidnight used i18n.language
+ * with Intl.DateTimeFormat, but CJK locales append unit suffixes (e.g. "14时"),
+ * causing Number() to return NaN and all entries to collapse to top:0.
  */
-test.describe("Mobile calendar: entry layout", () => {
-  test("entry at 14:00 renders at the correct vertical position", async ({ page }) => {
+
+/**
+ * Switch the app's i18n language on the page. Requires the dev-mode
+ * `window.__i18n` global exposed by `src/app/i18n.ts`.
+ */
+async function switchPageLanguage(page: import("@playwright/test").Page, lang: string) {
+  await page.evaluate(async (lng) => {
+    const i18n = (window as any).__i18n;
+    if (i18n?.changeLanguage) {
+      await i18n.changeLanguage(lng);
+    }
+  }, lang);
+  // Allow React to re-render with the new language.
+  await page.waitForTimeout(500);
+}
+
+test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
+  test("entry at 14:00 renders at correct vertical position under zh locale", async ({ page }) => {
     const email = `m-layout-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -45,13 +62,19 @@ test.describe("Mobile calendar: entry layout", () => {
     const entry = timeline.getByRole("button", { name: description });
     await expect(entry).toBeVisible({ timeout: 10_000 });
 
-    // 14:00 at 60px/hour = 840px. Allow ±20px tolerance.
+    // Switch to Chinese — this is the locale that triggered the bug.
+    await switchPageLanguage(page, "zh");
+
+    // Re-locate entry (text may now be Chinese fallback, use same desc since it's user data).
+    await expect(entry).toBeVisible();
+
+    // 14:00 at 60px/hour = 840px. The bug produced NaN → browser rendered at 0.
     const top = await entry.evaluate((el) => parseFloat((el as HTMLElement).style.top));
     expect(top).toBeGreaterThan(820);
     expect(top).toBeLessThan(860);
   });
 
-  test("two non-overlapping entries each get full width", async ({ page }) => {
+  test("two non-overlapping entries each get full width under zh locale", async ({ page }) => {
     const email = `m-seq-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
 
@@ -88,6 +111,10 @@ test.describe("Mobile calendar: entry layout", () => {
     const entryB = timeline.getByRole("button", { name: descB });
     await expect(entryA).toBeVisible({ timeout: 10_000 });
     await expect(entryB).toBeVisible({ timeout: 10_000 });
+
+    // Switch to Chinese locale.
+    await switchPageLanguage(page, "zh");
+    await expect(entryA).toBeVisible();
 
     // Non-overlapping entries should each get ~100% width.
     const widthA = await entryA.evaluate((el) => parseFloat((el as HTMLElement).style.width));
