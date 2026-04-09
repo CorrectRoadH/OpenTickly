@@ -1,0 +1,23 @@
+{
+  "tasks": "Tareas",
+  "task": "Tarea",
+  "project": "Proyecto",
+  "status": "Estado",
+  "newTask": "Nueva tarea",
+  "taskName": "Nombre de la tarea",
+  "saveTask": "Guardar tarea",
+  "cancel": "Cancelar",
+  "projectRequired": "Proyecto requerido",
+  "workspaceCatalog": "Catálogo del espacio de trabajo",
+  "active": "Activa",
+  "inactive": "Inactiva",
+  "projectScoped": "Gestión de tareas del proyecto {{projectId}}. La API de Track crea tareas a través de un punto de entrada del proyecto, por lo que esta página está intencionalmente anclada a ese contexto.",
+  "createTasksFromProject": "Crea tareas desde el contexto de un proyecto. Abre el punto de entrada de tareas de un proyecto para agregar la primera tarea.",
+  "showingTasksInWorkspace": "Mostrando {{count}} tareas en el espacio de trabajo {{workspaceId}}. Activas: {{activeCount}}.",
+  "loadingTasks": "Cargando tareas...",
+  "unableToLoadTasks": "No se pudieron cargar las tareas. Actualiza para intentarlo de nuevo.",
+  "taskCreated": "Tarea creada",
+  "viewAllWorkspaceTasks": "Ver todas las tareas del espacio de trabajo",
+  "noTasksInProject": "Aún no hay tareas en este proyecto.",
+  "noTasksInWorkspace": "Aún no hay tareas en este espacio de trabajo. Abre un punto de entrada de tareas de un proyecto para crear la primera tarea."
+}

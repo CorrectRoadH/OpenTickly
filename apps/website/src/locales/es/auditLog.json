@@ -1,0 +1,21 @@
+{
+  "auditLog": "Registro de auditoría",
+  "action": "Acción",
+  "source": "Origen",
+  "entityType": "Tipo de entidad",
+  "entityId": "ID de entidad",
+  "time": "Hora",
+  "noOrganizationAvailable": "No hay organización disponible.",
+  "loadingAuditLogs": "Cargando registros de auditoría...",
+  "unableToLoadAuditLogs": "No se pudieron cargar los registros de auditoría. Actualiza para intentarlo de nuevo.",
+  "noAuditLogEntries": "No se encontraron entradas de auditoría en los últimos 30 días.",
+  "sourceFilter": "Filtro de origen",
+  "allSources": "Todos los orígenes",
+  "webCookie": "Web (Cookie)",
+  "apiTokenCli": "API (Token/CLI)",
+  "request": "Solicitud",
+  "response": "Respuesta",
+  "previous": "Anterior",
+  "next": "Siguiente",
+  "page": "Página"
+}

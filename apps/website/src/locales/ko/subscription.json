@@ -1,0 +1,21 @@
+{
+  "subscription": "구독",
+  "selfHosted": "셀프 호스팅",
+  "selfHostedDescription": "OpenToggl의 셀프 호스팅 인스턴스를 운영 중입니다. {{organizationName}}에 대한 모든 기능이 무료로 포함되어 있습니다.",
+  "workspace": "워크스페이스",
+  "access": "접근 권한",
+  "allFeaturesIncluded": "모든 기능 포함",
+  "billing": "청구",
+  "none": "없음",
+  "whatsIncluded": "포함된 기능",
+  "whatsIncludedDescription": "셀프 호스팅 인스턴스에서 사용 제한 없이 모든 기능을 사용할 수 있습니다.",
+  "unlimitedTimeTracking": "무제한 시간 추적",
+  "unlimitedProjects": "무제한 프로젝트",
+  "unlimitedTeamMembers": "무제한 팀 멤버",
+  "reportsAndAnalytics": "리포트 및 분석",
+  "goalsAndFavorites": "목표 및 즐겨찾기",
+  "apiAccess": "API 접근",
+  "opentoggl": "OpenToggl",
+  "opentogglDescription": "OpenToggl은 Toggl Track의 오픈소스 셀프 호스팅 대안입니다. 시간 추적 데이터가 개인 정보 보호, 백업 및 사용자 정의를 완전히 제어하면서 자체 인프라에 유지됩니다. 구독, 사용자당 요금, 사용 제한이 없습니다.",
+  "viewOnGithub": "GitHub에서 보기"
+}

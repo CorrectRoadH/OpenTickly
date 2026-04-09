@@ -1,0 +1,23 @@
+{
+  "tasks": "작업",
+  "task": "작업",
+  "project": "프로젝트",
+  "status": "상태",
+  "newTask": "새 작업",
+  "taskName": "작업 이름",
+  "saveTask": "작업 저장",
+  "cancel": "취소",
+  "projectRequired": "프로젝트 필수",
+  "workspaceCatalog": "워크스페이스 카탈로그",
+  "active": "활성",
+  "inactive": "비활성",
+  "projectScoped": "프로젝트 {{projectId}}에 대한 프로젝트 범위 작업 관리입니다. Track API는 프로젝트 진입점을 통해 작업을 생성하므로 이 페이지는 의도적으로 해당 컨텍스트에 고정되어 있습니다.",
+  "createTasksFromProject": "프로젝트 컨텍스트에서 작업을 만듭니다. 첫 번째 작업을 추가하려면 프로젝트의 작업 항목을 열어 주세요.",
+  "showingTasksInWorkspace": "워크스페이스 {{workspaceId}}에서 {{count}}개의 작업을 표시합니다. 활성: {{activeCount}}.",
+  "loadingTasks": "작업 로딩 중...",
+  "unableToLoadTasks": "작업을 불러올 수 없습니다. 새로고침하여 다시 시도해 주세요.",
+  "taskCreated": "작업이 생성되었습니다",
+  "viewAllWorkspaceTasks": "모든 워크스페이스 작업 보기",
+  "noTasksInProject": "이 프로젝트에 아직 작업이 없습니다.",
+  "noTasksInWorkspace": "이 워크스페이스에 아직 작업이 없습니다. 첫 번째 작업을 만들려면 프로젝트 작업 진입점을 열어 주세요."
+}

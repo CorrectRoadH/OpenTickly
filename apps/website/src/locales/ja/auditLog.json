@@ -1,0 +1,21 @@
+{
+  "auditLog": "監査ログ",
+  "action": "アクション",
+  "source": "ソース",
+  "entityType": "エンティティタイプ",
+  "entityId": "エンティティID",
+  "time": "時刻",
+  "noOrganizationAvailable": "利用可能な組織がありません。",
+  "loadingAuditLogs": "監査ログを読み込み中...",
+  "unableToLoadAuditLogs": "監査ログを読み込めません。更新して再度お試しください。",
+  "noAuditLogEntries": "過去30日間の監査ログエントリが見つかりません。",
+  "sourceFilter": "ソースフィルター",
+  "allSources": "すべてのソース",
+  "webCookie": "Web (Cookie)",
+  "apiTokenCli": "API (Token/CLI)",
+  "request": "リクエスト",
+  "response": "レスポンス",
+  "previous": "前へ",
+  "next": "次へ",
+  "page": "ページ"
+}

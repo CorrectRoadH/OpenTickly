@@ -1,0 +1,13 @@
+{
+  "toggleMenu": "메뉴 전환",
+  "closeMenu": "메뉴 닫기",
+  "profile": "프로필",
+  "profileMenu": "프로필 메뉴",
+  "profileSettings": "프로필 설정",
+  "accountSettings": "계정 설정",
+  "keyboardShortcuts": "키보드 단축키",
+  "logOut": "로그아웃",
+  "opentogglPlanComing": "opentoggl plan 출시 예정",
+  "opentogglFocusComing": "opentoggl focus 출시 예정",
+  "sessionReady": "세션 준비 완료"
+}

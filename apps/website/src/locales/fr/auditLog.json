@@ -1,0 +1,21 @@
+{
+  "auditLog": "Journal d'audit",
+  "action": "Action",
+  "source": "Source",
+  "entityType": "Type d'entité",
+  "entityId": "ID de l'entité",
+  "time": "Heure",
+  "noOrganizationAvailable": "Aucune organisation disponible.",
+  "loadingAuditLogs": "Chargement des journaux d'audit...",
+  "unableToLoadAuditLogs": "Impossible de charger les journaux d'audit. Actualisez pour réessayer.",
+  "noAuditLogEntries": "Aucune entrée de journal d'audit trouvée pour les 30 derniers jours.",
+  "sourceFilter": "Filtre par source",
+  "allSources": "Toutes les sources",
+  "webCookie": "Web (Cookie)",
+  "apiTokenCli": "API (Token/CLI)",
+  "request": "Requête",
+  "response": "Réponse",
+  "previous": "Précédent",
+  "next": "Suivant",
+  "page": "Page"
+}

@@ -1,0 +1,5 @@
+{
+  "integrations": "Intégrations",
+  "webhooks": "Webhooks",
+  "webhooksDescription": "Configurez des webhooks pour recevoir des notifications en temps réel lorsque des événements se produisent dans votre espace de travail. La gestion des webhooks est en cours de développement."
+}

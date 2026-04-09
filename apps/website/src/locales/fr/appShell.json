@@ -1,0 +1,13 @@
+{
+  "toggleMenu": "Basculer le menu",
+  "closeMenu": "Fermer le menu",
+  "profile": "Profil",
+  "profileMenu": "Menu du profil",
+  "profileSettings": "Paramètres du profil",
+  "accountSettings": "Paramètres du compte",
+  "keyboardShortcuts": "Raccourcis clavier",
+  "logOut": "Se déconnecter",
+  "opentogglPlanComing": "opentoggl plan arrive bientôt",
+  "opentogglFocusComing": "opentoggl focus arrive bientôt",
+  "sessionReady": "Session prête"
+}

@@ -1,0 +1,21 @@
+{
+  "subscription": "サブスクリプション",
+  "selfHosted": "セルフホスト",
+  "selfHostedDescription": "OpenTogglのセルフホストインスタンスを実行しています。{{organizationName}}のすべての機能が無料で利用できます。",
+  "workspace": "ワークスペース",
+  "access": "アクセス",
+  "allFeaturesIncluded": "すべての機能が含まれています",
+  "billing": "請求",
+  "none": "なし",
+  "whatsIncluded": "含まれる機能",
+  "whatsIncludedDescription": "セルフホストインスタンスではすべての機能が利用制限なしで利用できます。",
+  "unlimitedTimeTracking": "無制限のタイムトラッキング",
+  "unlimitedProjects": "無制限のプロジェクト",
+  "unlimitedTeamMembers": "無制限のチームメンバー",
+  "reportsAndAnalytics": "レポートと分析",
+  "goalsAndFavorites": "目標とお気に入り",
+  "apiAccess": "APIアクセス",
+  "opentoggl": "OpenToggl",
+  "opentogglDescription": "OpenTogglはToggl Trackのオープンソース・セルフホスト型代替ツールです。タイムトラッキングデータは自社インフラに保存され、プライバシー、バックアップ、カスタマイズを完全に制御できます。サブスクリプション不要、シートごとの料金不要、利用制限なし。",
+  "viewOnGithub": "GitHubで見る"
+}

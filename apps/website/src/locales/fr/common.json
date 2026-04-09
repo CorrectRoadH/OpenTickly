@@ -1,0 +1,12 @@
+{
+  "save": "Enregistrer",
+  "cancel": "Annuler",
+  "delete": "Supprimer",
+  "loading": "Chargement…",
+  "languageUpdated": "Langue mise à jour",
+  "failedToUpdateLanguage": "Échec de la mise à jour de la langue",
+  "pageNotFound": "Page non trouvée",
+  "pageNotFoundDescription": "La page que vous recherchez n'existe pas ou a été déplacée.",
+  "goToTimer": "Aller au minuteur",
+  "signedInAs": "Connecté en tant que"
+}

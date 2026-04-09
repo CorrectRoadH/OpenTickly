@@ -1,0 +1,23 @@
+{
+  "tasks": "タスク",
+  "task": "タスク",
+  "project": "プロジェクト",
+  "status": "ステータス",
+  "newTask": "新規タスク",
+  "taskName": "タスク名",
+  "saveTask": "タスクを保存",
+  "cancel": "キャンセル",
+  "projectRequired": "プロジェクトが必要です",
+  "workspaceCatalog": "ワークスペースカタログ",
+  "active": "アクティブ",
+  "inactive": "非アクティブ",
+  "projectScoped": "プロジェクト{{projectId}}のプロジェクトスコープタスク管理。Track APIはプロジェクトのエントリポイントを通じてタスクを作成するため、このページは意図的にそのコンテキストに固定されています。",
+  "createTasksFromProject": "プロジェクトコンテキストからタスクを作成します。プロジェクトのタスクエントリを開いて最初のタスクを追加してください。",
+  "showingTasksInWorkspace": "ワークスペース{{workspaceId}}に{{count}}件のタスクを表示中。アクティブ：{{activeCount}}。",
+  "loadingTasks": "タスクを読み込み中...",
+  "unableToLoadTasks": "タスクを読み込めません。更新して再度お試しください。",
+  "taskCreated": "タスクを作成しました",
+  "viewAllWorkspaceTasks": "ワークスペースのすべてのタスクを表示",
+  "noTasksInProject": "このプロジェクトにはまだタスクがありません。",
+  "noTasksInWorkspace": "このワークスペースにはまだタスクがありません。プロジェクトタスクのエントリポイントを開いて最初のタスクを作成してください。"
+}

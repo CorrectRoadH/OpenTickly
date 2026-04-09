@@ -1,0 +1,12 @@
+{
+  "save": "Guardar",
+  "cancel": "Cancelar",
+  "delete": "Eliminar",
+  "loading": "Cargando…",
+  "languageUpdated": "Idioma actualizado",
+  "failedToUpdateLanguage": "Error al actualizar el idioma",
+  "pageNotFound": "Página no encontrada",
+  "pageNotFoundDescription": "La página que buscas no existe o ha sido movida.",
+  "goToTimer": "Ir al temporizador",
+  "signedInAs": "Conectado como"
+}

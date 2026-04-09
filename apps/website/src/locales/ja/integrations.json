@@ -1,0 +1,5 @@
+{
+  "integrations": "インテグレーション",
+  "webhooks": "Webhook",
+  "webhooksDescription": "ワークスペースでイベントが発生した時にリアルタイム通知を受け取るためのWebhookを設定します。Webhook管理は構築中です。"
+}

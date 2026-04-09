@@ -1,0 +1,5 @@
+{
+  "integrations": "통합",
+  "webhooks": "웹훅",
+  "webhooksDescription": "워크스페이스에서 이벤트가 발생할 때 실시간 알림을 받으려면 웹훅을 설정하세요. 웹훅 관리 기능이 개발 중입니다."
+}

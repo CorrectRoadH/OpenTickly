@@ -1,0 +1,23 @@
+{
+  "tasks": "Tâches",
+  "task": "Tâche",
+  "project": "Projet",
+  "status": "Statut",
+  "newTask": "Nouvelle tâche",
+  "taskName": "Nom de la tâche",
+  "saveTask": "Enregistrer la tâche",
+  "cancel": "Annuler",
+  "projectRequired": "Projet requis",
+  "workspaceCatalog": "Catalogue de l'espace de travail",
+  "active": "Active",
+  "inactive": "Inactive",
+  "projectScoped": "Gestion des tâches au niveau du projet {{projectId}}. L'API Track crée les tâches via un point d'entrée projet, cette page est donc intentionnellement ancrée à ce contexte.",
+  "createTasksFromProject": "Créez des tâches depuis un contexte projet. Ouvrez le point d'entrée des tâches d'un projet pour ajouter la première tâche.",
+  "showingTasksInWorkspace": "Affichage de {{count}} tâches dans l'espace de travail {{workspaceId}}. Actives : {{activeCount}}.",
+  "loadingTasks": "Chargement des tâches...",
+  "unableToLoadTasks": "Impossible de charger les tâches. Actualisez pour réessayer.",
+  "taskCreated": "Tâche créée",
+  "viewAllWorkspaceTasks": "Voir toutes les tâches de l'espace de travail",
+  "noTasksInProject": "Aucune tâche dans ce projet pour le moment.",
+  "noTasksInWorkspace": "Aucune tâche dans cet espace de travail pour le moment. Ouvrez un point d'entrée de tâche de projet pour créer la première tâche."
+}
