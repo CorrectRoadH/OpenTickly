@@ -213,6 +213,7 @@ export type UpdateWorkspacePermissionsRequest = {
 
 export type WorkspaceMember = {
   id: number;
+  user_id?: number;
   workspace_id: number;
   email: string;
   name: string;

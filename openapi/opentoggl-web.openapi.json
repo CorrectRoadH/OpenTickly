@@ -1335,6 +1335,10 @@
           "id": {
             "type": "integer"
           },
+          "user_id": {
+            "type": "integer",
+            "nullable": true
+          },
           "workspace_id": {
             "type": "integer"
           },

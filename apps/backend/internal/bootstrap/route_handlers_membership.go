@@ -174,7 +174,7 @@ func membershipBodies(members []membershipapplication.WorkspaceMemberView) []web
 }
 
 func membershipBody(member membershipapplication.WorkspaceMemberView) webapi.WorkspaceMember {
-	return webapi.WorkspaceMember{
+	body := webapi.WorkspaceMember{
 		Email:       member.Email,
 		HourlyRate:  float32PointerFromFloat64(member.HourlyRate),
 		Id:          int(member.ID),
@@ -184,6 +184,11 @@ func membershipBody(member membershipapplication.WorkspaceMemberView) webapi.Wor
 		Status:      string(member.State),
 		WorkspaceId: int(member.WorkspaceID),
 	}
+	if member.UserID != nil {
+		uid := int(*member.UserID)
+		body.UserId = &uid
+	}
+	return body
 }
 
 func float32PointerFromFloat64(value *float64) *float32 {

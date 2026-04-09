@@ -48,8 +48,9 @@ export function WorkspaceOverviewPage(): ReactElement {
     const lookup = new Map<number, string>();
     const members = membersQuery.data?.members ?? [];
     for (const m of members) {
-      if (m.id && m.name) lookup.set(m.id, m.name);
-      if (m.id && m.email && !lookup.has(m.id)) lookup.set(m.id, m.email);
+      const uid = m.user_id ?? m.id;
+      if (uid && m.name) lookup.set(uid, m.name);
+      if (uid && m.email && !lookup.has(uid)) lookup.set(uid, m.email);
     }
     return lookup;
   })();
@@ -221,8 +222,12 @@ export function WorkspaceOverviewPage(): ReactElement {
                       {t("insightsImprove")}
                     </p>
                   </div>
-                  <AppButton onClick={() => setInviteDialogOpen(true)} type="button">
-                    {t("addTeammates")}
+                  <AppButton
+                    onClick={() => void navigate({ to: `/workspaces/${workspaceId}/members` })}
+                    type="button"
+                    variant="secondary"
+                  >
+                    {t("viewMembers")}
                   </AppButton>
                 </div>
               </OverviewSurface>
@@ -274,8 +279,13 @@ export function WorkspaceOverviewPage(): ReactElement {
                       title={`${projectCoverage.percent}%`}
                     />
                   </div>
-                  <AppButton size="sm" type="button" variant="secondary">
-                    {t("addMemberToProject")}
+                  <AppButton
+                    onClick={() => void navigate({ to: `/workspaces/${workspaceId}/projects` })}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {t("manageProjects")}
                   </AppButton>
                 </div>
               </OverviewSurface>
@@ -571,9 +581,9 @@ function memberTint(index: number): string {
 
 function memberLabel(member: ModelsMostActiveUser, nameById?: Map<number, string>): string {
   return (
+    (member.user_id != null ? nameById?.get(member.user_id) : undefined) ||
     member.fullname?.trim() ||
     member.email?.trim() ||
-    (member.user_id != null ? nameById?.get(member.user_id) : undefined) ||
     `User #${member.user_id ?? "?"}`
   );
 }
