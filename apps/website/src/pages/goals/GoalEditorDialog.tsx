@@ -296,6 +296,7 @@ export function GoalEditorDialog({
             <label className="flex cursor-pointer items-center gap-2 text-[12px] text-white">
               <AppCheckbox
                 checked={noEndDate}
+                data-testid="goal-no-end-date-checkbox"
                 onChange={(e) => setValue("noEndDate", e.target.checked)}
               />
               {t("noEndDate")}

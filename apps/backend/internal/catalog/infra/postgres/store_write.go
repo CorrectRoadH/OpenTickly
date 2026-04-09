@@ -193,6 +193,9 @@ func (store *Store) CreateGroup(
 		command.CreatedBy,
 	).Scan(&group.ID, &group.OrganizationID, &group.Name, &group.CreatedAt)
 	if err != nil {
+		if isConstraintViolation(err) {
+			return catalogapplication.GroupView{}, catalogapplication.ErrGroupNameTaken
+		}
 		return catalogapplication.GroupView{}, writeCatalogError("create catalog group", err)
 	}
 	return group, nil

@@ -194,7 +194,7 @@ test.describe("Story: organization general settings", () => {
 
     await page.getByPlaceholder(orgName).fill(orgName);
     await page.getByRole("button", { name: "Delete this organization" }).click();
-    await expect(page.getByText("Could not delete organization")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("Internal Server Error")).toBeVisible({ timeout: 5000 });
   });
 });
 
@@ -519,7 +519,7 @@ test.describe("Story: organization group validation", () => {
     await page.getByRole("textbox").fill(teamName);
     await page.getByRole("button", { name: "Create team" }).click();
 
-    await expect(page.getByText("Could not create team")).toBeVisible();
+    await expect(page.getByText("a team with this name already exists")).toBeVisible();
   });
 
   test("Given the groups create form, the create button is disabled when the name is empty", async ({

@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -29,7 +30,10 @@ func (handler *Handler) PostOrganizationGroup(ctx echo.Context) error {
 		Name:           lo.FromPtr(payload.Name),
 	})
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		if errors.Is(groupErr, catalogapplication.ErrGroupNameTaken) {
+			return echo.NewHTTPError(http.StatusConflict, groupErr.Error()).SetInternal(groupErr)
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, groupErr.Error()).SetInternal(groupErr)
 	}
 
 	// Sync members if provided
@@ -103,7 +107,7 @@ func (handler *Handler) PutOrganizationGroup(ctx echo.Context) error {
 
 	group, groupErr := handler.catalog.UpdateGroup(ctx.Request().Context(), int64(organization.ID), groupID, name)
 	if groupErr != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		return echo.NewHTTPError(http.StatusInternalServerError, groupErr.Error()).SetInternal(groupErr)
 	}
 
 	// Sync members if provided

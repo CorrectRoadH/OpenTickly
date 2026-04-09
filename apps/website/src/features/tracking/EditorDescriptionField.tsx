@@ -44,7 +44,6 @@ export function EditorDescriptionField({
       <label className="block">
         <span className="sr-only">Time entry description</span>
         <input
-          aria-label={t("addDescriptionPlaceholder")}
           className="w-full bg-transparent text-[14px] font-semibold tracking-tight text-white outline-none placeholder:text-[var(--track-control-placeholder-muted)]"
           id="time-entry-editor-title"
           onBlur={() => {

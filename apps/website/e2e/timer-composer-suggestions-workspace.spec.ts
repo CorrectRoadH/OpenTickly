@@ -54,8 +54,11 @@ test.describe("Timer Composer Suggestions - Workspace Debug", () => {
       JSON.stringify(bootstrap?.workspaces?.map((w) => ({ id: w.id, name: w.name }))),
     );
 
-    // Navigate to timer page
+    // Navigate to timer page — reload ensures React Query fetches fresh data
+    // including the entry created via API above
     await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+    await page.reload();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 
     // Focus on description input

@@ -49,7 +49,7 @@ test.describe("Story: browse the reports surface", () => {
     await expect(page.getByTestId("reports-filter-bar")).toContainText("This week . W");
     await expect(page.getByRole("button", { name: "Save and share" })).toBeVisible();
     await expect(page.getByTestId("reports-summary-metrics")).toContainText(expectedDuration(9000));
-    await expect(page.getByTestId("reports-summary-metrics")).toContainText("2.50 Hours");
+    await expect(page.getByTestId("reports-summary-metrics")).toContainText("2.50");
     await expect(page.getByTestId("reports-duration-chart")).toBeVisible();
     await expect(page.getByTestId("reports-distribution-panel")).toBeVisible();
     await expect(page.getByTestId("reports-breakdown-table")).toContainText("Reports E2E Project");

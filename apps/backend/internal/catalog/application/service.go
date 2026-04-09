@@ -12,6 +12,7 @@ var (
 	ErrLoggerRequired       = errors.New("catalog logger is required")
 	ErrClientNotFound       = errors.New("catalog client not found")
 	ErrGroupNotFound        = errors.New("catalog group not found")
+	ErrGroupNameTaken       = errors.New("a team with this name already exists")
 	ErrProjectNotFound      = errors.New("catalog project not found")
 	ErrProjectGroupNotFound = errors.New("catalog project group not found")
 	ErrProjectUserNotFound  = errors.New("catalog project user not found")

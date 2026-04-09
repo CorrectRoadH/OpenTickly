@@ -3,6 +3,7 @@ import { useCallback, type ChangeEvent } from "react";
 type AppCheckboxProps = {
   "aria-label"?: string;
   checked?: boolean;
+  "data-testid"?: string;
   indeterminate?: boolean;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   className?: string;
@@ -11,6 +12,7 @@ type AppCheckboxProps = {
 export function AppCheckbox({
   "aria-label": ariaLabel,
   checked,
+  "data-testid": testId,
   indeterminate,
   onChange,
   className = "",
@@ -28,6 +30,7 @@ export function AppCheckbox({
     <input
       aria-label={ariaLabel}
       checked={checked}
+      data-testid={testId}
       className={`size-[14px] cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)] transition-[transform,border-color,background-color] duration-[120ms] ${className}`}
       onChange={onChange}
       ref={ref}
