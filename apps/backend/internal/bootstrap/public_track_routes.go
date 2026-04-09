@@ -65,11 +65,20 @@ func withAbsoluteTrackPaths(swagger *openapi3.T, basePath string) *openapi3.T {
 }
 
 func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {
+	path := strings.TrimSpace(ctx.Request().URL.Path)
+
+	// The upstream swagger spec lacks consumes: ["multipart/form-data"] on
+	// several file-upload endpoints, so the OAPI validator tries to parse the
+	// multipart body as JSON. Skip validation for these; the handlers validate
+	// uploads themselves.
+	if ctx.Request().Method == http.MethodPost && isMultipartUploadPath(path) {
+		return true
+	}
+
 	if ctx.Request().Method != http.MethodPatch {
 		return false
 	}
 
-	path := strings.TrimSpace(ctx.Request().URL.Path)
 	if !strings.HasPrefix(path, "/api/v9/workspaces/") {
 		return false
 	}
@@ -87,6 +96,19 @@ func skipPublicTrackOpenAPIValidation(ctx echo.Context) bool {
 	// routing deterministic while the request is still validated by the handler
 	// bind + application layer below.
 	return true
+}
+
+func isMultipartUploadPath(path string) bool {
+	switch {
+	case path == "/api/v9/avatars":
+		return true
+	case strings.HasPrefix(path, "/api/v9/workspaces/") && strings.HasSuffix(path, "/logo"):
+		return true
+	case strings.HasPrefix(path, "/api/v9/workspaces/") && strings.HasSuffix(path, "/expenses/upload"):
+		return true
+	default:
+		return false
+	}
 }
 
 func publicTrackCredentials(ctx echo.Context) (identitydomain.BasicCredentials, error) {
