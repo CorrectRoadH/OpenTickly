@@ -100,9 +100,14 @@ func (service *Service) ListWorkspaceMostActiveUsers(
 		return nil, err
 	}
 
+	nowEpoch := int(service.now().Unix())
 	durationByUser := make(map[int64]int)
 	for _, entry := range entries {
-		durationByUser[entry.UserID] += entry.Duration
+		d := entry.Duration
+		if d < 0 {
+			d = max(0, nowEpoch+d)
+		}
+		durationByUser[entry.UserID] += d
 	}
 	users := make([]MostActiveUserView, 0, len(durationByUser))
 	for userID, duration := range durationByUser {
