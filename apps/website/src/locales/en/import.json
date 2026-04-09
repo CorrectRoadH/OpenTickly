@@ -3,7 +3,7 @@
   "step1": "Step 1",
   "step2": "Step 2",
   "createOrgFromZip": "Create a new organization from Toggl export zip",
-  "zipUploadDescription": "Upload the original `*.zip` file exported from Toggl. The backend creates a new organization and its default workspace, then imports the extracted JSON bundle into that new workspace.",
+  "zipUploadDescription": "In Toggl, go to Settings → Data Export → Data Export to download the zip. Upload the original *.zip file here. The backend creates a new organization and its default workspace, then imports the extracted JSON bundle into that new workspace.",
   "newOrgName": "New organization name",
   "importedOrg": "Imported Org",
   "zipHint": "The archive should contain a root folder like",
@@ -15,7 +15,7 @@
   "importing": "Importing…",
   "enterOrgNameHint": "Enter an organization name above to start import.",
   "importTimeEntriesCsv": "Import time entries CSV into current workspace",
-  "csvUploadDescription": "Upload a CSV exported from Toggl time entries. The backend imports rows into",
+  "csvUploadDescription": "In Toggl, go to Settings → Data Export → Time Entries to download the CSV. Upload it here. The backend imports rows into",
   "csvHint": "Expected columns include `User`, `Email`, `Project`, `Description`, `Start date`, `Start time`, `Duration`, and `Tags`.",
   "chooseCsv": "Choose CSV",
   "filesSelected": "files selected",
@@ -30,5 +30,6 @@
   "csvImportFailedWithMessage": "Import failed: {{message}}",
   "csvNotValid": "The uploaded CSV is not a valid Toggl time entries export.",
   "noPermission": "You do not have permission to import time entries into this workspace.",
-  "retryWithOriginalCsv": "Time entries import failed. Retry with the original Toggl CSV export."
+  "retryWithOriginalCsv": "Time entries import failed. Retry with the original Toggl CSV export.",
+  "openTogglSettings": "Open Toggl Settings"
 }

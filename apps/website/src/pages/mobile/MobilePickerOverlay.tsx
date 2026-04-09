@@ -23,7 +23,7 @@ export function MobilePickerOverlay({
     >
       <div className="flex h-[52px] items-center gap-3 border-b border-[var(--track-border)] px-4">
         <button
-          aria-label={`Close ${title.toLowerCase()} picker`}
+          aria-label={t("closePickerLabel", { name: title.toLowerCase() })}
           className="shrink-0 text-[var(--track-text-muted)]"
           onClick={onClose}
           type="button"

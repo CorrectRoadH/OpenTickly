@@ -58,5 +58,9 @@
   "loading": "Loading…",
   "editTimeEntry": "Edit {{description}}",
   "continueTimeEntry": "Continue {{description}}",
-  "noRecentEntries": "No time entries yet — start tracking!"
+  "noRecentEntries": "No time entries yet — start tracking!",
+  "profile": "Profile",
+  "untitled": "Untitled",
+  "closePickerLabel": "Close {{name}} picker",
+  "startFavorite": "Start {{label}}"
 }

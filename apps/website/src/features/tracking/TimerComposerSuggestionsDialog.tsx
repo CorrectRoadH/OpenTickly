@@ -254,7 +254,7 @@ export function TimerComposerSuggestionsDialog({
                         />
                       )
                     }
-                    subtitle="Project"
+                    subtitle={t("project")}
                     title={project.name?.trim() || t("untitledProjectFallback")}
                     titleColor={color}
                   />

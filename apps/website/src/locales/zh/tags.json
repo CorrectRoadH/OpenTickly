@@ -40,5 +40,6 @@
   "delete": "删除",
   "cancel": "取消",
   "deleteTagConfirm": "删除 \"{{name}}\"？此标签将从所有时间记录中移除。",
-  "actionsFor": "{{name}} 的操作"
+  "actionsFor": "{{name}} 的操作",
+  "showingTagsCount": "在 {{workspaceName}} 中显示 {{count}} 个标签"
 }

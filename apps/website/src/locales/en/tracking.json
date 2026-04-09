@@ -156,5 +156,8 @@
   "noDescription": "No description",
   "noProjectLabel": "No project",
   "invalidTime": "Invalid time",
-  "editTime": "Edit time"
+  "editTime": "Edit time",
+  "selectProjectColor": "Select project color",
+  "tagName": "Tag name",
+  "timeEntryDescription": "Time entry description"
 }

@@ -26,5 +26,10 @@
   "noInactiveClients": "没有非活跃客户。",
   "cancel": "取消",
   "deleteClientConfirm": "删除 \"{{name}}\"？",
-  "actionsFor": "{{name}} 的操作"
+  "actionsFor": "{{name}} 的操作",
+  "previousPage": "上一页",
+  "nextPage": "下一页",
+  "createNewClient": "创建新客户",
+  "clientName": "客户名称",
+  "createClient": "创建客户"
 }

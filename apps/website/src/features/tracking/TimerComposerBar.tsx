@@ -488,6 +488,7 @@ function TimerBarTagPicker({
   runningEntry: { id?: number | null; tag_ids?: number[] | null } | null;
   tagOptions: { id: number; name: string }[];
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const [isCreating, setIsCreating] = useState(false);
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -543,20 +544,20 @@ function TimerBarTagPicker({
           }}
         >
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--track-text-soft)]">
-            Tags
+            {t("tags")}
           </div>
           <div className="px-3 pb-2">
             <input
               className="h-8 w-full rounded-lg border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-2.5 text-[12px] text-white outline-none placeholder:text-[var(--track-text-muted)] focus:border-[var(--track-accent)]"
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search tags"
+              placeholder={t("searchTags")}
               type="text"
               value={search}
             />
           </div>
           {filteredTags.length === 0 && !search.trim() ? (
             <div className="px-3 py-2 text-[12px] text-[var(--track-text-soft)]">
-              No tags available
+              {t("noTagsAvailable")}
             </div>
           ) : filteredTags.length > 0 ? (
             <div className="max-h-[200px] overflow-y-auto">

@@ -174,7 +174,7 @@ export function OrganizationMembersSection({
     <div className="w-full min-w-0 text-white" data-testid="org-members-section">
       <div className="mb-4 flex flex-wrap items-center gap-3" data-testid="org-members-filter-bar">
         <SelectDropdown
-          aria-label="Member status filter"
+          aria-label={t("memberStatusFilter")}
           onChange={(v) => setStatusFilter(v as MemberStatusFilter)}
           options={[
             { value: "all", label: t("allMembers") },

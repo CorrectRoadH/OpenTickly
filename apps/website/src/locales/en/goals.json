@@ -53,5 +53,20 @@
   "archive": "Archive",
   "restore": "Restore",
   "delete": "Delete",
-  "actionsFor": "Actions for {{name}}"
+  "actionsFor": "Actions for {{name}}",
+  "goals": "Goals",
+  "goalStatusFilter": "Goal status filter",
+  "goalIcon": "Goal icon",
+  "goalLabel": "Goal",
+  "goalNote": "Note: you cannot change the projects, tasks, tags, billable or recurrence period of a created goal.",
+  "deleteGoalConfirm": "Delete \"{{name}}\"?",
+  "archivedGoal": "Archived {{name}}",
+  "restoredGoal": "Restored {{name}}",
+  "deletedGoal": "Deleted {{name}}",
+  "atLeast": "at least",
+  "lessThan": "less than",
+  "everyDay": "every day",
+  "everyWeek": "every week",
+  "weekdays": "weekdays",
+  "youLabel": "(You)"
 }

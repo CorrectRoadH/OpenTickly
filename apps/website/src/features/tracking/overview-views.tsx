@@ -1,5 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, IconButton as AppIconButton, SelectButton } from "@opentoggl/web-ui";
 
@@ -121,6 +122,7 @@ export function CalendarSubviewSelect({
   onChange: (next: CalendarSubview) => void;
   value: CalendarSubview;
 }) {
+  const { t } = useTranslation("tracking");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -137,7 +139,7 @@ export function CalendarSubviewSelect({
       <SelectButton
         aria-expanded={open}
         aria-haspopup="listbox"
-        aria-label="Calendar sub-view"
+        aria-label={t("calendarSubView")}
         className="min-w-[118px]"
         data-testid="calendar-subview-select"
         onClick={() => setOpen((prev) => !prev)}

@@ -40,5 +40,7 @@
   "workspacesColumn": "工作区",
   "organizationTeamDirectory": "组织团队目录",
   "groups": "团队",
-  "team": "团队"
+  "team": "团队",
+  "teamsDescription": "管理组织中的团队。可将团队分配到工作区和项目以进行批量访问控制。",
+  "teamsList": "团队列表"
 }

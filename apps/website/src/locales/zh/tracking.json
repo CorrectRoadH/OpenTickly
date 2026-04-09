@@ -156,5 +156,8 @@
   "noDescription": "无描述",
   "noProjectLabel": "无项目",
   "invalidTime": "时间无效",
-  "editTime": "编辑时间"
+  "editTime": "编辑时间",
+  "selectProjectColor": "选择项目颜色",
+  "tagName": "标签名称",
+  "timeEntryDescription": "时间条目描述"
 }

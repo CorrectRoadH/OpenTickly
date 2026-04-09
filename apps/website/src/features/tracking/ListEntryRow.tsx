@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { DollarIcon, PlayIcon } from "../../shared/ui/icons.tsx";
@@ -81,6 +82,7 @@ export function ListEntryRow({
   toggleEntry: (id: number) => void;
   workspaceName: string;
 }): ReactElement {
+  const { t } = useTranslation("tracking");
   const entryId = entry.id;
   const isCollapsedRow = groupCount > 1 && !isExpanded && subIdx === 0;
   const isExpandedGroup = groupCount > 1 && isExpanded;
@@ -125,7 +127,7 @@ export function ListEntryRow({
           </button>
         ) : groupCount > 1 && isExpanded && subIdx === 0 ? (
           <button
-            aria-label="Collapse similar entries"
+            aria-label={t("collapseSimilarEntries")}
             className="mr-2 flex size-6 shrink-0 items-center justify-center rounded-md border border-[var(--track-accent)] text-[11px] font-semibold tabular-nums text-[var(--track-accent)] hover:bg-[var(--track-accent)]/10"
             onClick={() => onCollapseGroup(groupKey)}
             type="button"

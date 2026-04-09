@@ -40,5 +40,6 @@
   "delete": "Delete",
   "cancel": "Cancel",
   "deleteTagConfirm": "Delete \"{{name}}\"? This tag will be removed from all time entries.",
-  "actionsFor": "Actions for {{name}}"
+  "actionsFor": "Actions for {{name}}",
+  "showingTagsCount": "Showing {{count}} tags in {{workspaceName}}"
 }

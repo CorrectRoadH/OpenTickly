@@ -96,6 +96,7 @@ export function ListRowTagPicker({
   onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
   tags: TimeEntryEditorTag[];
 }) {
+  const { t } = useTranslation("tracking");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,7 +117,7 @@ export function ListRowTagPicker({
   return (
     <div className="relative flex items-center" ref={containerRef}>
       <button
-        aria-label="Select tags"
+        aria-label={t("selectTags")}
         className={`flex h-[30px] w-full items-center gap-1 overflow-hidden rounded transition ${
           hasTags
             ? "text-[var(--track-text-muted)]"
@@ -214,7 +215,7 @@ export function ListRowProjectPicker({
         </button>
       ) : (
         <button
-          aria-label="Add a project"
+          aria-label={t("addAProject")}
           className="flex items-center gap-1.5 rounded-[8px] border border-dashed border-[var(--track-border)] px-2.5 py-1 text-[12px] font-medium text-[var(--track-text-muted)] transition hover:border-[var(--track-control-border)] hover:bg-[var(--track-row-hover)] hover:text-white"
           onClick={() => setOpen((prev) => !prev)}
           onBlur={(e) => {

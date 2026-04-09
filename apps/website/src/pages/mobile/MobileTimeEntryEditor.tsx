@@ -246,7 +246,7 @@ export function MobileTimeEntryEditor({
         {/* Description */}
         <div className="border-b border-[var(--track-border)] px-4 py-3">
           <input
-            aria-label="Time entry description"
+            aria-label={t("timeEntryDescription")}
             autoFocus
             className="w-full bg-transparent text-[15px] text-white placeholder-[var(--track-text-muted)] outline-none"
             onChange={(e) => setDescription(e.target.value)}
@@ -256,7 +256,7 @@ export function MobileTimeEntryEditor({
         </div>
 
         {/* Project */}
-        <FieldRow label="Project">
+        <FieldRow label={t("project")}>
           <button
             className="flex min-w-0 flex-1 items-center justify-end gap-2"
             data-testid="mobile-project-trigger"
@@ -315,7 +315,7 @@ export function MobileTimeEntryEditor({
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("start")}</span>
             <input
-              aria-label="Edit start time"
+              aria-label={t("editStartTime")}
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
               onChange={(e) => {
                 const parsed = parseTimeInput(e.target.value, startIso, timezone);
@@ -328,7 +328,7 @@ export function MobileTimeEntryEditor({
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("end")}</span>
             <input
-              aria-label="Edit end time"
+              aria-label={t("editEndTime")}
               className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
               onChange={(e) => {
                 const parsed = parseTimeInput(e.target.value, stopIso, timezone);

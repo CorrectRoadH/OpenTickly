@@ -3,7 +3,7 @@
   "step1": "步骤 1",
   "step2": "步骤 2",
   "createOrgFromZip": "从 Toggl 导出 zip 创建新组织",
-  "zipUploadDescription": "上传从 Toggl 导出的原始 `*.zip` 文件。后端会创建一个新组织及其默认工作区，然后将提取的 JSON 包导入到该工作区。",
+  "zipUploadDescription": "在 Toggl 中，前往 Settings → Data Export → Data Export 下载 zip。上传原始 *.zip 文件到此处。后端会创建一个新组织及其默认工作区，然后将提取的 JSON 包导入到该工作区。",
   "newOrgName": "新组织名称",
   "importedOrg": "导入的组织",
   "zipHint": "归档文件应包含一个根文件夹，例如",
@@ -15,7 +15,7 @@
   "importing": "导入中…",
   "enterOrgNameHint": "请在上方输入组织名称以开始导入。",
   "importTimeEntriesCsv": "将时间条目 CSV 导入当前工作区",
-  "csvUploadDescription": "上传从 Toggl 时间条目导出的 CSV。后端会将行导入到",
+  "csvUploadDescription": "在 Toggl 中，前往 Settings → Data Export → Time Entries 下载 CSV。上传到此处。后端会将行导入到",
   "csvHint": "预期列包括 `User`、`Email`、`Project`、`Description`、`Start date`、`Start time`、`Duration` 和 `Tags`。",
   "chooseCsv": "选择 CSV",
   "filesSelected": "个文件已选择",
@@ -30,5 +30,6 @@
   "csvImportFailedWithMessage": "导入失败：{{message}}",
   "csvNotValid": "上传的 CSV 不是有效的 Toggl 时间条目导出。",
   "noPermission": "您没有权限将时间条目导入到此工作区。",
-  "retryWithOriginalCsv": "时间条目导入失败。请使用原始 Toggl CSV 导出重试。"
+  "retryWithOriginalCsv": "时间条目导入失败。请使用原始 Toggl CSV 导出重试。",
+  "openTogglSettings": "打开 Toggl Settings"
 }

@@ -170,13 +170,14 @@ function FavoriteRow({
   favorite: ModelsFavorite;
   onStart: (fav: ModelsFavorite) => void;
 }): ReactElement {
-  const label = favorite.description?.trim() || favorite.project_name || "Untitled";
+  const { t } = useTranslation("mobile");
+  const label = favorite.description?.trim() || favorite.project_name || t("untitled");
   const projectColor = favorite.project_color;
 
   return (
     <div className="flex items-center gap-3 px-4 py-2.5">
       <button
-        aria-label={`Start ${label}`}
+        aria-label={t("startFavorite", { label })}
         className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:border-[var(--track-accent)] hover:text-[var(--track-accent)]"
         onClick={() => onStart(favorite)}
         type="button"

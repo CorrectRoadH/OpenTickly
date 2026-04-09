@@ -93,7 +93,7 @@ export function CalendarEventCard({
           </span>
         </div>
         <button
-          aria-label="Continue time entry"
+          aria-label={t("continueTimeEntryAria")}
           className="absolute bottom-1 right-1 z-20 flex size-5 items-center justify-center rounded-full bg-[var(--track-accent-secondary)] text-[var(--track-surface)] opacity-0 transition-opacity group-hover:opacity-100"
           onClick={(e) => {
             e.stopPropagation();

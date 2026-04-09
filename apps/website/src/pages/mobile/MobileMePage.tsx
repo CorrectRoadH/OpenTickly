@@ -15,7 +15,7 @@ export function MobileMePage(): ReactElement {
   const logoutMutation = useLogoutMutation();
   const updateWebSessionMutation = useUpdateWebSessionMutation();
 
-  const profileName = session.user.fullName || session.user.email || "Profile";
+  const profileName = session.user.fullName || session.user.email || t("profile");
 
   function handleWorkspaceChange(workspaceId: number) {
     const previousWorkspaceId = session.currentWorkspace.id;

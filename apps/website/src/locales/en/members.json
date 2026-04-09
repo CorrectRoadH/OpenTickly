@@ -42,5 +42,6 @@
   "restore": "Restore",
   "remove": "Remove",
   "removeMemberConfirm": "Remove \"{{name}}\"?",
-  "actionsFor": "Actions for {{name}}"
+  "actionsFor": "Actions for {{name}}",
+  "memberStatusFilter": "Member status filter"
 }

@@ -53,5 +53,20 @@
   "archive": "归档",
   "restore": "恢复",
   "delete": "删除",
-  "actionsFor": "{{name}} 的操作"
+  "actionsFor": "{{name}} 的操作",
+  "goals": "目标",
+  "goalStatusFilter": "目标状态筛选",
+  "goalIcon": "目标图标",
+  "goalLabel": "目标",
+  "goalNote": "注意：创建后无法更改项目、任务、标签、计费方式或重复周期。",
+  "deleteGoalConfirm": "删除「{{name}}」？",
+  "archivedGoal": "已归档 {{name}}",
+  "restoredGoal": "已恢复 {{name}}",
+  "deletedGoal": "已删除 {{name}}",
+  "atLeast": "至少",
+  "lessThan": "少于",
+  "everyDay": "每天",
+  "everyWeek": "每周",
+  "weekdays": "工作日",
+  "youLabel": "（你）"
 }

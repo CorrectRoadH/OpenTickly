@@ -58,5 +58,9 @@
   "loading": "加载中…",
   "editTimeEntry": "编辑 {{description}}",
   "continueTimeEntry": "继续 {{description}}",
-  "noRecentEntries": "还没有时间记录 — 开始计时吧！"
+  "noRecentEntries": "还没有时间记录 — 开始计时吧！",
+  "profile": "个人资料",
+  "untitled": "未命名",
+  "closePickerLabel": "关闭{{name}}选择器",
+  "startFavorite": "开始 {{label}}"
 }

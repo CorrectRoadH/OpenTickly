@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { buildMonthWeeks, isSameDay } from "./week-range.ts";
 import { ChevronRightIcon } from "../../shared/ui/icons.tsx";
@@ -25,6 +26,7 @@ export function CalendarPanel({
   showOutsideDays = true,
   testId,
 }: CalendarPanelProps): ReactElement {
+  const { t } = useTranslation("tracking");
   const [visibleMonth, setVisibleMonth] = useState(
     () => new Date(date.getFullYear(), date.getMonth(), 1),
   );
@@ -44,7 +46,7 @@ export function CalendarPanel({
       <div className="mb-3 grid grid-cols-[2.25rem_1fr_2.25rem] items-center">
         <div className="flex size-6 items-center justify-start">
           <button
-            aria-label="Previous month"
+            aria-label={t("previousMonth")}
             className="flex w-6 h-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(
@@ -64,7 +66,7 @@ export function CalendarPanel({
         </h3>
         <div className="flex size-6 items-center justify-end">
           <button
-            aria-label="Next month"
+            aria-label={t("nextMonth")}
             className="flex w-6 h-6 items-center justify-center rounded-full text-[var(--track-control-placeholder)] transition hover:bg-white/10 hover:text-white"
             onClick={() =>
               setVisibleMonth(

@@ -4,5 +4,9 @@
   "delete": "Delete",
   "loading": "Loading…",
   "languageUpdated": "Language updated",
-  "failedToUpdateLanguage": "Failed to update language"
+  "failedToUpdateLanguage": "Failed to update language",
+  "pageNotFound": "Page not found",
+  "pageNotFoundDescription": "The page you are looking for does not exist or has been moved.",
+  "goToTimer": "Go to Timer",
+  "signedInAs": "Signed in as"
 }

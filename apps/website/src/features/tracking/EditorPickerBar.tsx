@@ -117,7 +117,7 @@ export function EditorPickerBar({
           title={t("tags")}
         >
           <SearchField
-            placeholder="Search tags"
+            placeholder={t("searchTags")}
             value={search}
             onChange={(query: string) => dispatch({ type: "SET_SEARCH", query })}
           />
@@ -172,7 +172,7 @@ export function EditorPickerBar({
                   onChange={(event) =>
                     dispatch({ type: "SET_TAG_DRAFT_NAME", name: event.target.value })
                   }
-                  placeholder="Tag name"
+                  placeholder={t("tagName")}
                   value={tagDraftName}
                 />
                 <button

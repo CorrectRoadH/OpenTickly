@@ -336,7 +336,7 @@ function ProjectComposerForm({
       <div className="flex items-center gap-2">
         <div className="relative">
           <button
-            aria-label="Select project color"
+            aria-label={t("selectProjectColor")}
             className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[var(--track-control-border)] bg-[var(--track-control-surface)]"
             onClick={onColorPickerToggle}
             type="button"

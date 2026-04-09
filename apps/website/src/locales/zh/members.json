@@ -38,5 +38,6 @@
   "restore": "恢复",
   "remove": "移除",
   "removeMemberConfirm": "移除 \"{{name}}\"？",
-  "actionsFor": "{{name}} 的操作"
+  "actionsFor": "{{name}} 的操作",
+  "memberStatusFilter": "成员状态筛选"
 }

@@ -40,5 +40,7 @@
   "workspacesColumn": "Workspaces",
   "organizationTeamDirectory": "Organization team directory",
   "groups": "Groups",
-  "team": "Team"
+  "team": "Team",
+  "teamsDescription": "Manage teams (groups) across the organization. Teams can be assigned to workspaces and projects for batch access control.",
+  "teamsList": "Teams list"
 }

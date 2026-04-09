@@ -26,5 +26,10 @@
   "noInactiveClients": "No inactive clients.",
   "cancel": "Cancel",
   "deleteClientConfirm": "Delete \"{{name}}\"?",
-  "actionsFor": "Actions for {{name}}"
+  "actionsFor": "Actions for {{name}}",
+  "previousPage": "Previous page",
+  "nextPage": "Next page",
+  "createNewClient": "Create new client",
+  "clientName": "Client name",
+  "createClient": "Create client"
 }

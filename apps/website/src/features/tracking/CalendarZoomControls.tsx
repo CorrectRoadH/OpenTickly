@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { MinusIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 
 export function CalendarZoomControls({
@@ -9,13 +10,14 @@ export function CalendarZoomControls({
   onZoomIn?: () => void;
   onZoomOut?: () => void;
 }) {
+  const { t } = useTranslation("tracking");
   return (
     <div
       className="flex items-center justify-center gap-1 py-2"
       data-testid="calendar-zoom-controls"
     >
       <button
-        aria-label="Decrease zoom"
+        aria-label={t("decreaseZoom")}
         className="flex size-6 items-center justify-center rounded text-[var(--track-text-soft)] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
         disabled={zoom <= -1}
         onClick={onZoomOut}
@@ -24,7 +26,7 @@ export function CalendarZoomControls({
         <MinusIcon className="size-3" />
       </button>
       <button
-        aria-label="Increase zoom"
+        aria-label={t("increaseZoom")}
         className="flex size-6 items-center justify-center rounded text-[var(--track-text-soft)] transition hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
         disabled={zoom >= 1}
         onClick={onZoomIn}
