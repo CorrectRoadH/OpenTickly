@@ -28,7 +28,4 @@ func TestQuotaWindowExposesContractBodyAndHeaders(t *testing.T) {
 		)
 	}
 
-	if headers["X-Toggl-Quota-Total"] != "10" {
-		t.Fatalf("expected total header 10, got %q", headers["X-Toggl-Quota-Total"])
-	}
 }

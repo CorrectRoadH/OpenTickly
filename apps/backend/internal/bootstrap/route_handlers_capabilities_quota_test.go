@@ -134,7 +134,6 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 
 	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Remaining"), quotaBody.Remaining, "X-Toggl-Quota-Remaining")
 	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Resets-In"), quotaBody.ResetsInSecs, "X-Toggl-Quota-Resets-In")
-	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Total"), quotaBody.Total, "X-Toggl-Quota-Total")
 
 	invalidCapabilitiesPath := performJSONRequest(
 		t,
