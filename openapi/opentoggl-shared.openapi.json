@@ -6,19 +6,19 @@
   },
   "components": {
     "headers": {
-      "X-OpenToggl-Quota-Remaining": {
+      "X-Toggl-Quota-Remaining": {
         "description": "Remaining requests in the current quota window.",
         "schema": {
           "type": "integer"
         }
       },
-      "X-OpenToggl-Quota-Reset-In-Secs": {
+      "X-Toggl-Quota-Resets-In": {
         "description": "Seconds until the current quota window resets.",
         "schema": {
           "type": "integer"
         }
       },
-      "X-OpenToggl-Quota-Total": {
+      "X-Toggl-Quota-Total": {
         "description": "Total requests allowed in the current quota window.",
         "schema": {
           "type": "integer"

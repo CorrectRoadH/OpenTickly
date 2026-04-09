@@ -47,7 +47,7 @@ func DefaultCommercialAccount(organizationID int64) (CommercialAccount, error) {
 	if err != nil {
 		return CommercialAccount{}, err
 	}
-	quota, err := NewQuotaWindow(organizationID, 0, 0, 0)
+	quota, err := NewQuotaWindow(organizationID, 9999, 0, 9999)
 	if err != nil {
 		return CommercialAccount{}, err
 	}

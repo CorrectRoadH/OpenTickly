@@ -10,19 +10,19 @@ export const sharedContractsDocument = {
   },
   components: {
     headers: {
-      "X-OpenToggl-Quota-Remaining": {
+      "X-Toggl-Quota-Remaining": {
         description: "Remaining requests in the current quota window.",
         schema: {
           type: "integer",
         },
       },
-      "X-OpenToggl-Quota-Reset-In-Secs": {
+      "X-Toggl-Quota-Resets-In": {
         description: "Seconds until the current quota window resets.",
         schema: {
           type: "integer",
         },
       },
-      "X-OpenToggl-Quota-Total": {
+      "X-Toggl-Quota-Total": {
         description: "Total requests allowed in the current quota window.",
         schema: {
           type: "integer",
@@ -138,9 +138,9 @@ export const sharedContractsGeneratedArtifact = {
     "CapabilitySnapshot",
   ],
   headerNames: [
-    "X-OpenToggl-Quota-Remaining",
-    "X-OpenToggl-Quota-Reset-In-Secs",
-    "X-OpenToggl-Quota-Total",
+    "X-Toggl-Quota-Remaining",
+    "X-Toggl-Quota-Resets-In",
+    "X-Toggl-Quota-Total",
     "X-OpenToggl-Feature-Gate",
   ],
 } as const;
@@ -164,11 +164,9 @@ export const capabilitySnapshotSchema =
   sharedContractsDocument.components.schemas.CapabilitySnapshot;
 
 export const quotaWindowHeaderSchemas = {
-  "X-OpenToggl-Quota-Remaining":
-    sharedContractsDocument.components.headers["X-OpenToggl-Quota-Remaining"],
-  "X-OpenToggl-Quota-Reset-In-Secs":
-    sharedContractsDocument.components.headers["X-OpenToggl-Quota-Reset-In-Secs"],
-  "X-OpenToggl-Quota-Total": sharedContractsDocument.components.headers["X-OpenToggl-Quota-Total"],
+  "X-Toggl-Quota-Remaining": sharedContractsDocument.components.headers["X-Toggl-Quota-Remaining"],
+  "X-Toggl-Quota-Resets-In": sharedContractsDocument.components.headers["X-Toggl-Quota-Resets-In"],
+  "X-Toggl-Quota-Total": sharedContractsDocument.components.headers["X-Toggl-Quota-Total"],
 } as const;
 
 export const featureGateDecisionHeaderSchema =

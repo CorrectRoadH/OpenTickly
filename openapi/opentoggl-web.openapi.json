@@ -285,14 +285,14 @@
           "200": {
             "description": "Quota snapshot",
             "headers": {
-              "X-OpenToggl-Quota-Remaining": {
-                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Remaining"
+              "X-Toggl-Quota-Remaining": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-Toggl-Quota-Remaining"
               },
-              "X-OpenToggl-Quota-Reset-In-Secs": {
-                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Reset-In-Secs"
+              "X-Toggl-Quota-Resets-In": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-Toggl-Quota-Resets-In"
               },
-              "X-OpenToggl-Quota-Total": {
-                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-OpenToggl-Quota-Total"
+              "X-Toggl-Quota-Total": {
+                "$ref": "./opentoggl-shared.openapi.json#/components/headers/X-Toggl-Quota-Total"
               }
             },
             "content": {

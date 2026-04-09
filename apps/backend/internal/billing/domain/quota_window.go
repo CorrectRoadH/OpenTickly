@@ -37,9 +37,9 @@ func NewQuotaWindow(
 
 func (window QuotaWindow) Headers() map[string]string {
 	return map[string]string{
-		"X-OpenToggl-Quota-Remaining":     strconv.Itoa(window.Remaining),
-		"X-OpenToggl-Quota-Reset-In-Secs": strconv.Itoa(window.ResetsInSeconds),
-		"X-OpenToggl-Quota-Total":         strconv.Itoa(window.Total),
+		"X-Toggl-Quota-Remaining": strconv.Itoa(window.Remaining),
+		"X-Toggl-Quota-Resets-In": strconv.Itoa(window.ResetsInSeconds),
+		"X-Toggl-Quota-Total":     strconv.Itoa(window.Total),
 	}
 }
 

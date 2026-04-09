@@ -128,13 +128,13 @@ func TestWebWorkspaceCapabilityAndQuotaRoutesMatchOpenAPIShape(t *testing.T) {
 	if quotaBody.OrganizationID == nil || *quotaBody.OrganizationID != organizationID {
 		t.Fatalf("expected quota organization id %d, got %#v", organizationID, quotaBody.OrganizationID)
 	}
-	if quotaBody.Remaining != 0 || quotaBody.ResetsInSecs != 0 || quotaBody.Total != 0 {
-		t.Fatalf("expected default billing quota window to be zeroed, got %#v", quotaBody)
+	if quotaBody.Remaining != 9999 || quotaBody.ResetsInSecs != 0 || quotaBody.Total != 9999 {
+		t.Fatalf("expected default billing quota window remaining=9999 total=9999, got %#v", quotaBody)
 	}
 
-	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-OpenToggl-Quota-Remaining"), quotaBody.Remaining, "X-OpenToggl-Quota-Remaining")
-	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-OpenToggl-Quota-Reset-In-Secs"), quotaBody.ResetsInSecs, "X-OpenToggl-Quota-Reset-In-Secs")
-	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-OpenToggl-Quota-Total"), quotaBody.Total, "X-OpenToggl-Quota-Total")
+	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Remaining"), quotaBody.Remaining, "X-Toggl-Quota-Remaining")
+	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Resets-In"), quotaBody.ResetsInSecs, "X-Toggl-Quota-Resets-In")
+	assertQuotaHeaderMatchesBody(t, quota.Header().Get("X-Toggl-Quota-Total"), quotaBody.Total, "X-Toggl-Quota-Total")
 
 	invalidCapabilitiesPath := performJSONRequest(
 		t,

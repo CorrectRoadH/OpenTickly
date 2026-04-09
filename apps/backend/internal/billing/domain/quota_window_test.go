@@ -17,18 +17,18 @@ func TestQuotaWindowExposesContractBodyAndHeaders(t *testing.T) {
 	}
 
 	headers := window.Headers()
-	if headers["X-OpenToggl-Quota-Remaining"] != "9" {
-		t.Fatalf("expected remaining header 9, got %q", headers["X-OpenToggl-Quota-Remaining"])
+	if headers["X-Toggl-Quota-Remaining"] != "9" {
+		t.Fatalf("expected remaining header 9, got %q", headers["X-Toggl-Quota-Remaining"])
 	}
 
-	if headers["X-OpenToggl-Quota-Reset-In-Secs"] != "60" {
+	if headers["X-Toggl-Quota-Resets-In"] != "60" {
 		t.Fatalf(
 			"expected reset header 60, got %q",
-			headers["X-OpenToggl-Quota-Reset-In-Secs"],
+			headers["X-Toggl-Quota-Resets-In"],
 		)
 	}
 
-	if headers["X-OpenToggl-Quota-Total"] != "10" {
-		t.Fatalf("expected total header 10, got %q", headers["X-OpenToggl-Quota-Total"])
+	if headers["X-Toggl-Quota-Total"] != "10" {
+		t.Fatalf("expected total header 10, got %q", headers["X-Toggl-Quota-Total"])
 	}
 }

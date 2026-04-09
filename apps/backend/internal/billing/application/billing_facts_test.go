@@ -72,8 +72,8 @@ func TestServiceResolvesBillingFactsFromPostgresRepositories(t *testing.T) {
 	if window != quota {
 		t.Fatalf("expected quota %#v, got %#v", quota, window)
 	}
-	if headers["X-OpenToggl-Quota-Remaining"] != "9" {
-		t.Fatalf("expected remaining header 9, got %q", headers["X-OpenToggl-Quota-Remaining"])
+	if headers["X-Toggl-Quota-Remaining"] != "9" {
+		t.Fatalf("expected remaining header 9, got %q", headers["X-Toggl-Quota-Remaining"])
 	}
 
 	capabilities, err := service.WorkspaceCapabilitySnapshot(ctx, int64(workspace.ID()))
