@@ -19,6 +19,10 @@ import { useCallback, useMemo } from "react";
 const localeItems = [
   { name: "English", locale: "en" },
   { name: "中文", locale: "zh" },
+  { name: "Español", locale: "es" },
+  { name: "日本語", locale: "ja" },
+  { name: "Français", locale: "fr" },
+  { name: "한국어", locale: "ko" },
 ];
 
 function useLocaleFromPath() {
