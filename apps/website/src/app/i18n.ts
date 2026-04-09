@@ -47,6 +47,24 @@ export function normalizeSupportedLanguage(language: string | null | undefined):
   return "en";
 }
 
+/**
+ * Detects the best supported language from the browser's language preferences.
+ * Checks navigator.languages (ordered by preference), then navigator.language.
+ * Falls back to "en" if no match is found.
+ */
+function detectBrowserLanguage(): SupportedLanguage {
+  const candidates = [...(navigator.languages ?? []), navigator.language].filter(Boolean);
+  for (const candidate of candidates) {
+    const exact = normalizeSupportedLanguage(candidate);
+    if (candidate === exact) return exact;
+    // Try prefix match (e.g. "zh-CN" → "zh")
+    const prefix = candidate.split("-")[0];
+    const prefixMatch = normalizeSupportedLanguage(prefix);
+    if (prefix === prefixMatch) return prefixMatch;
+  }
+  return "en";
+}
+
 void i18n
   .use(initReactI18next)
   .use(
@@ -83,6 +101,7 @@ void i18n
       "toast",
       "tracking",
     ],
+    lng: detectBrowserLanguage(),
     fallbackLng: "en",
     supportedLngs: supportedLanguages,
     interpolation: { escapeValue: false },
