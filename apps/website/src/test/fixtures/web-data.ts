@@ -103,6 +103,7 @@ export function createSessionFixture(
       plan_name: "Starter",
       state: "active",
     },
+    site_url: "",
     workspaces: [
       createWorkspaceFixture(),
       createWorkspaceFixture({
