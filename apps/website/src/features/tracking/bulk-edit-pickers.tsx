@@ -1,6 +1,7 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { ChevronRightIcon, PinIcon, ProjectsIcon } from "../../shared/ui/icons.tsx";
@@ -132,7 +133,7 @@ export function ProjectPickerDropdown({
                   setSearch("");
                 } catch (err) {
                   const message =
-                    err instanceof Error ? err.message : t("projectNameAlreadyExists");
+                    err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists");
                   setCreateError(
                     message.toLowerCase().includes("name")
                       ? message

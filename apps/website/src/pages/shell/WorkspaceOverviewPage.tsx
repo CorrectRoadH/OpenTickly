@@ -6,6 +6,7 @@ import { AppButton, PageLayout, SurfaceCard } from "@opentoggl/web-ui";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { WebApiError } from "../../shared/api/web-client.ts";
 import i18n from "../../app/i18n.ts";
 import {
   formatClockDuration,
@@ -74,7 +75,8 @@ export function WorkspaceOverviewPage(): ReactElement {
           setInviteRole("member");
         },
         onError: (error) => {
-          const message = error instanceof Error ? error.message : "Failed to send invitation";
+          const message =
+            error instanceof WebApiError ? error.userMessage : "Failed to send invitation";
           if (message.includes("SMTP") || message.includes("email sending")) {
             toast.error(t("toast:emailSendingNotConfigured"));
           } else {
