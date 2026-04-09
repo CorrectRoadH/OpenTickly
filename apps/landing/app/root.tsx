@@ -14,7 +14,7 @@ import "./app.css";
 import SearchDialog from "@/components/search";
 import NotFound from "./routes/not-found";
 import { i18n } from "@/lib/i18n";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 const localeItems = [
   { name: "English", locale: "en" },
@@ -33,8 +33,9 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const locale = useLocaleFromPath();
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -64,10 +65,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const locale = useLocaleFromPath();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-  }, [locale]);
 
   const onLocaleChange = useCallback(
     (newLocale: string) => {

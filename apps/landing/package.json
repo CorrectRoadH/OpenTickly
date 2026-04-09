@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
-    "build": "react-router typegen && fumadocs-mdx && react-router build",
+    "build": "node scripts/optimize-images.mjs && react-router typegen && fumadocs-mdx && react-router build",
     "postbuild": "cp ./serve.json ./build/client/serve.json && rm -rf ./dist && mkdir -p ./dist && cp -R ./build/client/. ./dist/ && cp ./serve.json ./dist/serve.json",
     "preview": "serve -c serve.json ./build/client",
     "check": "react-router typegen && fumadocs-mdx && tsc --noEmit",
@@ -36,6 +36,7 @@
     "@types/react-dom": "^19.2.3",
     "react-router-devtools": "^6.2.0",
     "serve": "^14.2.6",
+    "sharp": "catalog:",
     "tailwindcss": "^4.2.2",
     "typescript": "catalog:",
     "vite": "catalog:"

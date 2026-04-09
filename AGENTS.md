@@ -23,7 +23,7 @@ Rules:
 - PostgreSQL schema via `goose` versioned migrations only. Migrations live in `apps/backend/internal/platform/migrate/migrations/`. Current schema snapshot in `apps/backend/db/schema/latest.sql`. See `docs/schema-migrate/PLAN-1.md` for rules.
 - Backend hot reload config lives in root `.air.toml`.
 - New entrypoints go in root `package.json`, `vp`, or a Go CLI — not in `scripts/*.sh`, `apps/**/scripts/*.mjs`, or wrapper CLIs.
-- `apps/landing` is built independently outside the workspace (no `pnpm-workspace.yaml` context). Never use `"catalog:"` references in `apps/landing/package.json` — always pin explicit versions.
+- `apps/landing` is part of the monorepo workspace. It uses `"catalog:"` references like other workspace packages.
 
 ## Worktree Development
 

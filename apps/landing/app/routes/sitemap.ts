@@ -13,10 +13,11 @@ async function getLastModified(path: string): Promise<string | undefined> {
 }
 
 async function getSitemapEntries(): Promise<SitemapEntry[]> {
+  const homeLastModified = await getLastModified("app/routes/home.tsx");
   const entries: SitemapEntry[] = [
     {
       pathname: "/",
-      lastModified: await getLastModified("app/routes/home.tsx"),
+      lastModified: homeLastModified,
       changeFrequency: "weekly",
       priority: 1,
     },
@@ -26,6 +27,16 @@ async function getSitemapEntries(): Promise<SitemapEntry[]> {
     const isDefault = lang === i18n.defaultLanguage;
     const prefix = isDefault ? "" : `/${lang}`;
     const getDocsUrl = createGetUrl(`${prefix}/docs`);
+
+    // Add localized home pages (skip default, already added above)
+    if (!isDefault) {
+      entries.push({
+        pathname: `${prefix}/`,
+        lastModified: homeLastModified,
+        changeFrequency: "weekly",
+        priority: 0.9,
+      });
+    }
 
     entries.push({
       pathname: `${prefix}/docs`,

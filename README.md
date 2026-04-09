@@ -14,7 +14,7 @@ It exists for a simple reason: for many individuals and teams, Toggl is too expe
 
 OpenToggl aims to stay aligned with Toggl's product surface, so you can keep the workflow you already know while taking back control of deployment, data, and API throughput.
 
-![Screenshot](apps/landing/public/hero/3.png)
+![Screenshot](apps/landing/public/hero/opentoggl-calendar-view.webp)
 
 ## Why OpenToggl
 

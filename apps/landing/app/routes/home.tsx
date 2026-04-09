@@ -1,8 +1,19 @@
 import { AppLinkButton, SurfaceCard } from "@opentoggl/web-ui";
 import { HomeLayout } from "fumadocs-ui/layouts/home";
-import { ArrowUpRight, FileText, Github, Play, RefreshCw, Server, Unlock } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronDown,
+  FileText,
+  Github,
+  Play,
+  RefreshCw,
+  Server,
+  Unlock,
+} from "lucide-react";
+import { useState } from "react";
 import { useParams } from "react-router";
 
+import Footer from "@/components/footer";
 import HomeHeroScreenshots from "@/components/home-hero-screenshots";
 import { ProofGridCard } from "@/components/home-primitives";
 import { RotatingWords } from "@/components/rotating-words";
@@ -16,6 +27,15 @@ import {
   defaultDescription,
   resolveSiteUrl,
 } from "@/lib/seo";
+
+const localizedDescriptions: Record<string, string> = {
+  en: defaultDescription,
+  zh: "OpenToggl 是一款免费开源的时间追踪与时间管理应用，兼容 Toggl API，支持自托管，适合个人和团队使用。",
+  es: "OpenToggl es una aplicación gratuita y de código abierto para el seguimiento del tiempo, compatible con la API de Toggl y autoalojable.",
+  ja: "OpenToggl は無料のオープンソース時間管理アプリです。Toggl API 互換でセルフホスト可能。個人・チーム向け。",
+  fr: "OpenToggl est une application open source gratuite de suivi du temps, compatible avec l'API Toggl et auto-hébergeable.",
+  ko: "OpenToggl은 무료 오픈소스 시간 추적 앱입니다. Toggl API 호환, 셀프호스팅 지원, 개인 및 팀용.",
+};
 
 const featureIcons = [RefreshCw, Server, Unlock];
 const proofIcons = [Play, Github, FileText];
@@ -35,7 +55,20 @@ export default function Home() {
       <Seo
         locale={locale}
         pathname={`${prefix}/`}
-        description={defaultDescription}
+        description={localizedDescriptions[locale] ?? defaultDescription}
+        imageAlt={
+          locale === "zh"
+            ? "OpenToggl 开源时间追踪平台"
+            : locale === "ja"
+              ? "OpenToggl オープンソース時間管理プラットフォーム"
+              : locale === "ko"
+                ? "OpenToggl 오픈소스 시간 추적 플랫폼"
+                : locale === "es"
+                  ? "OpenToggl plataforma de seguimiento de tiempo de código abierto"
+                  : locale === "fr"
+                    ? "OpenToggl plateforme open source de suivi du temps"
+                    : undefined
+        }
         schema={[buildOrganizationSchema(siteUrl), buildFaqSchema([...strings.faq])]}
       />
 
@@ -102,7 +135,53 @@ export default function Home() {
         <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
           <ProofGridCard icons={proofIcons} items={strings.proof.items} />
         </section>
+
+        {/* FAQ */}
+        <section className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10">
+          <h2 className="text-[20px] font-semibold text-[var(--track-text)] mb-4">
+            {locale === "zh"
+              ? "常见问题"
+              : locale === "ja"
+                ? "よくある質問"
+                : locale === "ko"
+                  ? "자주 묻는 질문"
+                  : locale === "es"
+                    ? "Preguntas frecuentes"
+                    : locale === "fr"
+                      ? "Questions fréquentes"
+                      : "Frequently Asked Questions"}
+          </h2>
+          <SurfaceCard className="p-0 divide-y divide-[var(--track-border)]">
+            {strings.faq.map((item) => (
+              <FaqItem key={item.question} question={item.question} answer={item.answer} />
+            ))}
+          </SurfaceCard>
+        </section>
       </main>
+      <Footer locale={locale} />
     </HomeLayout>
+  );
+}
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="px-5">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between py-4 text-left text-[14px] font-semibold text-[var(--track-text)]"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        {question}
+        <ChevronDown
+          className={`size-4 shrink-0 text-[var(--track-text-muted)] transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {open && (
+        <p className="pb-4 text-[13px] leading-6 text-[var(--track-text-muted)]">{answer}</p>
+      )}
+    </div>
   );
 }

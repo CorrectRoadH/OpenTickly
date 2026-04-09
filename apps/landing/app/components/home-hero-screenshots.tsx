@@ -5,20 +5,48 @@ type HomeHeroScreenshotsProps = {
   locale: Locale;
 };
 
-const images = [{ src: "/hero/2.png" }, { src: "/hero/1.png" }, { src: "/hero/3.png" }];
+const images = [
+  { src: "/hero/opentoggl-overview.webp", altKey: "overview" },
+  { src: "/hero/opentoggl-free.webp", altKey: "free" },
+  { src: "/hero/opentoggl-calendar-view.webp", altKey: "calendar" },
+];
 
-const altByLocale: Record<Locale, string> = {
-  en: "OpenToggl dashboard preview",
-  zh: "OpenToggl 仪表盘预览",
-  es: "Vista previa del panel de OpenToggl",
-  ja: "OpenToggl ダッシュボードプレビュー",
-  fr: "Aperçu du tableau de bord OpenToggl",
-  ko: "OpenToggl 대시보드 미리보기",
+const altByLocale: Record<Locale, Record<string, string>> = {
+  en: {
+    overview: "OpenToggl time tracking overview with timer and entries",
+    free: "OpenToggl free and open source time tracking",
+    calendar: "OpenToggl calendar view showing tracked time by day",
+  },
+  zh: {
+    overview: "OpenToggl 时间追踪概览，含计时器和条目",
+    free: "OpenToggl 免费开源时间追踪",
+    calendar: "OpenToggl 日历视图，按天展示追踪时间",
+  },
+  es: {
+    overview: "Vista general de seguimiento de tiempo de OpenToggl",
+    free: "OpenToggl seguimiento de tiempo gratuito y de código abierto",
+    calendar: "Vista de calendario de OpenToggl mostrando tiempo por día",
+  },
+  ja: {
+    overview: "OpenToggl タイムトラッキング概要（タイマーとエントリ付き）",
+    free: "OpenToggl 無料オープンソースのタイムトラッキング",
+    calendar: "OpenToggl カレンダービュー（日別の追跡時間表示）",
+  },
+  fr: {
+    overview: "Vue d'ensemble du suivi du temps OpenToggl avec minuteur et entrées",
+    free: "OpenToggl suivi du temps gratuit et open source",
+    calendar: "Vue calendrier OpenToggl affichant le temps suivi par jour",
+  },
+  ko: {
+    overview: "OpenToggl 시간 추적 개요 (타이머 및 항목 포함)",
+    free: "OpenToggl 무료 오픈소스 시간 추적",
+    calendar: "OpenToggl 캘린더 뷰 (일별 추적 시간 표시)",
+  },
 };
 
 export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps) {
   const [active, setActive] = useState(0);
-  const alt = altByLocale[locale];
+  const alts = altByLocale[locale];
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,15 +61,16 @@ export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps
         {images.map((image, index) => (
           <img
             key={image.src}
-            alt={`${alt} ${index + 1}`}
+            alt={alts[image.altKey]}
             className={`block w-full transition-opacity duration-500 ${
               index === active ? "relative opacity-100" : "absolute inset-0 opacity-0"
             }`}
             fetchPriority={index === 0 ? "high" : "low"}
-            height={1910}
+            height={1924}
             loading={index === 0 ? "eager" : "lazy"}
+            sizes="(max-width: 768px) 100vw, 896px"
             src={image.src}
-            width={3838}
+            width={3836}
           />
         ))}
       </div>
