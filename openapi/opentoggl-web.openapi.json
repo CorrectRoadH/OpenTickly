@@ -1107,6 +1107,10 @@
           "workspace_quota": {
             "$ref": "#/components/schemas/QuotaWindow",
             "nullable": true
+          },
+          "site_url": {
+            "type": "string",
+            "description": "Public URL of this OpenToggl instance, configured by the instance admin."
           }
         },
         "required": [
@@ -1118,7 +1122,8 @@
           "organizations",
           "workspaces",
           "workspace_capabilities",
-          "workspace_quota"
+          "workspace_quota",
+          "site_url"
         ]
       },
       "SubscriptionView": {

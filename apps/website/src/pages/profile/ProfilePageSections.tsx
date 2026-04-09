@@ -239,8 +239,16 @@ export function ApiTokenSection(props: {
   apiToken: string;
   isResetPending: boolean;
   onReset: () => void;
+  siteUrl: string;
 }): ReactElement {
   const { t } = useTranslation("profile");
+  const baseUrl = props.siteUrl || window.location.origin;
+  const trackUrl = `${baseUrl}/api/v9`;
+  const reportsUrl = `${baseUrl}/reports/api/v3`;
+  const curlCommand = `curl ${trackUrl}/me \\
+  -H "Content-Type: application/json" \\
+  -u ${props.apiToken}:api_token`;
+
   return (
     <PreferenceCard
       action={
@@ -263,6 +271,33 @@ export function ApiTokenSection(props: {
         <p className="mt-4 text-[14px] font-medium leading-5 text-[var(--track-text)]">
           {t("openTogglNoRateLimits")}
         </p>
+
+        <div className="mt-5 space-y-3">
+          <p className="text-[13px] font-semibold text-[var(--track-text)]">{t("apiBaseUrls")}</p>
+          <div className="space-y-1.5 text-[13px]">
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--track-text-soft)]">{t("trackApiV9")}</span>
+              <code className="rounded bg-[var(--track-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--track-text-muted)]">
+                {trackUrl}
+              </code>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[var(--track-text-soft)]">{t("reportsApiV3")}</span>
+              <code className="rounded bg-[var(--track-surface)] px-1.5 py-0.5 font-mono text-[12px] text-[var(--track-text-muted)]">
+                {reportsUrl}
+              </code>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-1.5 text-[13px] font-semibold text-[var(--track-text)]">
+              {t("curlExample")}
+            </p>
+            <pre className="overflow-x-auto rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-3 font-mono text-[12px] leading-5 text-[var(--track-text-muted)]">
+              {curlCommand}
+            </pre>
+          </div>
+        </div>
       </div>
     </PreferenceCard>
   );

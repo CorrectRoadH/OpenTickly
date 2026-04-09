@@ -78,6 +78,7 @@ export const defaultSessionSnapshot: SessionSnapshot = {
   },
   workspaceCapabilities: null,
   workspaceQuota: null,
+  siteUrl: "",
 };
 
 type SessionContextValue = {

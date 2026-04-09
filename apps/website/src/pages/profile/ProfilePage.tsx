@@ -217,6 +217,7 @@ export function ProfilePage(): ReactElement {
           <ApiTokenSection
             apiToken={profileQuery.data.api_token ?? ""}
             isResetPending={resetApiTokenMutation.isPending}
+            siteUrl={session.siteUrl}
             onReset={() => {
               void resetApiTokenMutation
                 .mutateAsync()

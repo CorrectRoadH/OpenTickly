@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strconv"
@@ -162,7 +163,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		),
 		cache,
 	)
-	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider)
+	identityHandler := identityweb.NewHandlerWithShell(identityService, shellProvider, &siteURLReaderFromDB{pool: pool})
 
 	return &routeHandlers{
 		pool:            pool,
@@ -319,4 +320,18 @@ func clearSessionCookie(ctx echo.Context) {
 
 func resolveCookieSecure(ctx echo.Context) bool {
 	return ctx.Scheme() == "https"
+}
+
+// siteURLReaderFromDB reads the public site_url from instance_admin_config.
+// It exposes only the site URL — no sensitive fields like SMTP credentials.
+type siteURLReaderFromDB struct {
+	pool *pgxpool.Pool
+}
+
+func (r *siteURLReaderFromDB) ReadSiteURL(ctx context.Context) string {
+	var siteURL string
+	_ = r.pool.QueryRow(ctx,
+		`SELECT site_url FROM instance_admin_config WHERE id = 1`,
+	).Scan(&siteURL)
+	return siteURL
 }

@@ -135,6 +135,10 @@ export type SessionBootstrap = {
   workspaces: Array<WorkspaceSettings>;
   workspace_capabilities: OpentogglSharedOpenapiCapabilitySnapshot;
   workspace_quota: OpentogglSharedOpenapiQuotaWindow;
+  /**
+   * Public URL of this OpenToggl instance, configured by the instance admin.
+   */
+  site_url: string;
 };
 
 export type SubscriptionView = {

@@ -77,9 +77,15 @@ type SessionShellProvider interface {
 	SessionShell(context.Context, application.UserSnapshot) (SessionShellData, error)
 }
 
+// SiteURLReader returns the public site URL configured by the instance admin.
+type SiteURLReader interface {
+	ReadSiteURL(ctx context.Context) string
+}
+
 type Handler struct {
 	service       *application.Service
 	shellProvider SessionShellProvider
+	siteURL       SiteURLReader
 	logger        *slog.Logger
 }
 
@@ -90,10 +96,11 @@ func NewHandler(service *application.Service) *Handler {
 	}
 }
 
-func NewHandlerWithShell(service *application.Service, shellProvider SessionShellProvider) *Handler {
+func NewHandlerWithShell(service *application.Service, shellProvider SessionShellProvider, siteURL SiteURLReader) *Handler {
 	return &Handler{
 		service:       service,
 		shellProvider: shellProvider,
+		siteURL:       siteURL,
 		logger:        slog.Default(),
 	}
 }
@@ -328,6 +335,11 @@ func (handler *Handler) sessionBootstrap(
 		defaultWorkspaceID = int64(*shell.CurrentWorkspaceID)
 	}
 
+	var siteURL string
+	if handler.siteURL != nil {
+		siteURL = handler.siteURL.ReadSiteURL(ctx)
+	}
+
 	return webapi.SessionBootstrap{
 		CurrentOrganizationId:    shell.CurrentOrganizationID,
 		CurrentWorkspaceId:       shell.CurrentWorkspaceID,
@@ -338,6 +350,7 @@ func (handler *Handler) sessionBootstrap(
 		Workspaces:               shell.Workspaces,
 		WorkspaceCapabilities:    shell.WorkspaceCapabilities,
 		WorkspaceQuota:           shell.WorkspaceQuota,
+		SiteUrl:                  siteURL,
 	}, nil
 }
 

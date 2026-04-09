@@ -67,6 +67,7 @@ export type SessionBootstrapViewModel = {
   availableWorkspaces: SessionWorkspaceSummaryViewModel[];
   workspaceCapabilities: CapabilitySnapshot | null;
   workspaceQuota: QuotaWindow | null;
+  siteUrl: string;
 };
 
 type MapSessionBootstrapOptions = {
@@ -118,6 +119,7 @@ export function mapSessionBootstrap(
       })),
     workspaceCapabilities: dto.workspace_capabilities,
     workspaceQuota: dto.workspace_quota,
+    siteUrl: dto.site_url ?? "",
   };
 }
 
