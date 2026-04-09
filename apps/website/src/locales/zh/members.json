@@ -33,5 +33,10 @@
   "role": "角色",
   "cancel": "取消",
   "sendInvite": "发送邀请",
-  "inviteMemberDialogTitle": "邀请成员"
+  "inviteMemberDialogTitle": "邀请成员",
+  "disable": "禁用",
+  "restore": "恢复",
+  "remove": "移除",
+  "removeMemberConfirm": "移除 \"{{name}}\"？",
+  "actionsFor": "{{name}} 的操作"
 }

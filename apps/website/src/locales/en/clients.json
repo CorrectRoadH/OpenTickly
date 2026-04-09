@@ -23,5 +23,8 @@
   "archiveClientsConfirm": "Archive {{count}} client(s)?",
   "noClientsMatchFilters": "No clients match your filters.",
   "noActiveClients": "No active clients. Create your first client to get started.",
-  "noInactiveClients": "No inactive clients."
+  "noInactiveClients": "No inactive clients.",
+  "cancel": "Cancel",
+  "deleteClientConfirm": "Delete \"{{name}}\"?",
+  "actionsFor": "Actions for {{name}}"
 }

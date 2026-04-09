@@ -35,5 +35,10 @@
   "billable": "计费",
   "noDescription": "（无描述）",
   "totalEntries": "{{count}} 条记录",
-  "last90Days": "最近 90 天"
+  "last90Days": "最近 90 天",
+  "rename": "重命名",
+  "delete": "删除",
+  "cancel": "取消",
+  "deleteTagConfirm": "删除 \"{{name}}\"？此标签将从所有时间记录中移除。",
+  "actionsFor": "{{name}} 的操作"
 }

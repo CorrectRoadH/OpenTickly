@@ -1,4 +1,5 @@
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DropdownMenu, IconButton, MenuItem } from "@opentoggl/web-ui";
 
@@ -18,18 +19,19 @@ export function GoalRowActionsMenu({
   onDelete,
   onEdit,
 }: GoalRowActionsMenuProps): ReactElement {
+  const { t } = useTranslation("goals");
   return (
     <DropdownMenu
       trigger={
-        <IconButton aria-label={`${goal.name} actions`} size="lg">
-          <MoreIcon className="size-4" />
+        <IconButton aria-label={t("actionsFor", { name: goal.name })} size="sm">
+          <MoreIcon className="size-3.5" />
         </IconButton>
       }
     >
-      <MenuItem onClick={onEdit}>Edit goal</MenuItem>
-      <MenuItem onClick={onArchiveToggle}>{goal.active ? "Archive" : "Restore"}</MenuItem>
+      <MenuItem onClick={onEdit}>{t("editGoal")}</MenuItem>
+      <MenuItem onClick={onArchiveToggle}>{goal.active ? t("archive") : t("restore")}</MenuItem>
       <MenuItem destructive onClick={onDelete}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </DropdownMenu>
   );

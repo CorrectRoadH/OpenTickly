@@ -4,6 +4,7 @@ type IconButtonProps = {
   "aria-label": string;
   children: ReactNode;
   className?: string;
+  "data-testid"?: string;
   disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   size?: "sm" | "md" | "lg";
@@ -20,6 +21,7 @@ export function IconButton({
   "aria-label": ariaLabel,
   children,
   className = "",
+  "data-testid": testId,
   disabled,
   onClick,
   size = "md",
@@ -29,6 +31,7 @@ export function IconButton({
     <button
       aria-label={ariaLabel}
       className={`inline-flex items-center justify-center rounded-md text-[var(--track-text-muted)] transition-[transform,background-color,color] duration-[120ms] hover:bg-[var(--track-row-hover)] hover:text-white active:translate-y-px disabled:opacity-50 disabled:translate-y-0 disabled:cursor-not-allowed ${sizeClass[size]} ${className}`}
+      data-testid={testId}
       disabled={disabled}
       onClick={onClick}
       style={{ transitionTimingFunction: "var(--ease-spring)" }}

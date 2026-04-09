@@ -49,5 +49,9 @@
   "hoursProgress": "{{tracked}}h / {{target}}h",
   "streakFire": "{{streak}} 🔥",
   "addGoals": "添加目标",
-  "untitledGoal": "无标题目标"
+  "untitledGoal": "无标题目标",
+  "archive": "归档",
+  "restore": "恢复",
+  "delete": "删除",
+  "actionsFor": "{{name}} 的操作"
 }

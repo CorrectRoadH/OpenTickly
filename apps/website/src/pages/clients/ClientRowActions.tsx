@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, DropdownMenu, IconButton, MenuItem, useDropdownClose } from "@opentoggl/web-ui";
 
@@ -12,10 +13,6 @@ type ClientRowActionsProps = {
   onRename: (clientId: number, name: string) => void;
 };
 
-/**
- * Context menu and inline-edit actions for a single client row.
- * Shows a "..." button that opens a dropdown with Rename and Delete options.
- */
 export function ClientRowActions({
   clientId,
   clientName,
@@ -23,6 +20,7 @@ export function ClientRowActions({
   onDelete,
   onRename,
 }: ClientRowActionsProps): ReactElement {
+  const { t } = useTranslation("clients");
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(clientName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -65,12 +63,12 @@ export function ClientRowActions({
   return (
     <DropdownMenu
       trigger={
-        <IconButton aria-label={`Actions for ${clientName}`} size="sm">
+        <IconButton aria-label={t("actionsFor", { name: clientName })} size="sm">
           <MoreIcon className="size-3.5" />
         </IconButton>
       }
       testId={`client-actions-menu-${clientId}`}
-      minWidth="140px"
+      minWidth="180px"
     >
       <ClientMenuContent
         clientId={clientId}
@@ -96,6 +94,7 @@ function ClientMenuContent({
   onDelete: (clientId: number) => void;
   onStartEditing: () => void;
 }): ReactElement {
+  const { t } = useTranslation("clients");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const close = useDropdownClose();
 
@@ -103,7 +102,7 @@ function ClientMenuContent({
     return (
       <div className="px-3 py-2">
         <p className="mb-2 text-[12px] text-[var(--track-text-muted)]">
-          Delete &ldquo;{clientName}&rdquo;?
+          {t("deleteClientConfirm", { name: clientName })}
         </p>
         <div className="flex gap-2">
           <AppButton
@@ -115,10 +114,10 @@ function ClientMenuContent({
             size="sm"
             danger
           >
-            Delete
+            {t("delete")}
           </AppButton>
           <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
-            Cancel
+            {t("cancel")}
           </AppButton>
         </div>
       </div>
@@ -135,14 +134,14 @@ function ClientMenuContent({
           onStartEditing();
         }}
       >
-        Edit
+        {t("edit")}
       </MenuItem>
       <MenuItem
         onClick={() => {
           onArchive(clientId);
         }}
       >
-        Archive
+        {t("archive")}
       </MenuItem>
       <MenuItem
         destructive
@@ -152,7 +151,7 @@ function ClientMenuContent({
           setConfirmingDelete(true);
         }}
       >
-        Delete
+        {t("delete")}
       </MenuItem>
     </>
   );

@@ -1,6 +1,7 @@
 import { type ReactElement } from "react";
+import { useTranslation } from "react-i18next";
 
-import { DropdownMenu, MenuItem } from "@opentoggl/web-ui";
+import { DropdownMenu, IconButton, MenuItem } from "@opentoggl/web-ui";
 
 import { MoreIcon } from "../../shared/ui/icons.tsx";
 import type { ModelsUserInvoice } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -16,21 +17,18 @@ export function InvoiceRowActionsMenu({
   onDelete,
   onEdit,
 }: InvoiceRowActionsMenuProps): ReactElement {
+  const { t } = useTranslation("invoices");
   return (
     <DropdownMenu
       trigger={
-        <button
-          aria-label={`Actions for invoice ${invoice.document_id ?? ""}`}
-          className="flex size-8 items-center justify-center rounded-md text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-          type="button"
-        >
-          <MoreIcon className="size-4" />
-        </button>
+        <IconButton aria-label={t("actionsFor", { id: invoice.document_id ?? "" })} size="sm">
+          <MoreIcon className="size-3.5" />
+        </IconButton>
       }
     >
-      <MenuItem onClick={onEdit}>Edit</MenuItem>
+      <MenuItem onClick={onEdit}>{t("edit")}</MenuItem>
       <MenuItem destructive onClick={onDelete}>
-        Delete
+        {t("delete")}
       </MenuItem>
     </DropdownMenu>
   );

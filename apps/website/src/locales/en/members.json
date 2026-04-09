@@ -37,5 +37,10 @@
   "workspaces": "Workspaces",
   "roleUpdated": "Role updated",
   "couldNotUpdateRole": "Could not update role",
-  "owner": "Owner"
+  "owner": "Owner",
+  "disable": "Disable",
+  "restore": "Restore",
+  "remove": "Remove",
+  "removeMemberConfirm": "Remove \"{{name}}\"?",
+  "actionsFor": "Actions for {{name}}"
 }

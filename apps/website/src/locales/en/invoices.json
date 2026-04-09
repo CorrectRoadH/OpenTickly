@@ -30,5 +30,8 @@
   "clientNameAndAddress": "Client name and address",
   "yourCompanyNameAndAddress": "Your company name and address",
   "message": "Message",
-  "thankYouForYourBusiness": "Thank you for your business..."
+  "thankYouForYourBusiness": "Thank you for your business...",
+  "edit": "Edit",
+  "delete": "Delete",
+  "actionsFor": "Actions for invoice {{id}}"
 }

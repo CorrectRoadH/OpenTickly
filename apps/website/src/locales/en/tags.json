@@ -35,5 +35,10 @@
   "billable": "Billable",
   "noDescription": "(no description)",
   "totalEntries": "{{count}} entries",
-  "last90Days": "Last 90 days"
+  "last90Days": "Last 90 days",
+  "rename": "Rename",
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "deleteTagConfirm": "Delete \"{{name}}\"? This tag will be removed from all time entries.",
+  "actionsFor": "Actions for {{name}}"
 }

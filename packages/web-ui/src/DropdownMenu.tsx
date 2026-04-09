@@ -334,7 +334,7 @@ export function MenuItem({
 
   return (
     <button
-      className={`flex min-h-[32px] w-full items-center gap-2 rounded-[6px] px-3 text-left text-[14px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
+      className={`flex w-full items-center gap-2 rounded-[6px] px-3 py-1 text-left text-[13px] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
         destructive ? "text-[var(--track-danger-text)]" : "text-[var(--track-overlay-text)]"
       }`}
       data-testid={testId}
@@ -367,15 +367,18 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
   const close = useContext(DropdownCloseContext);
 
   return (
-    <a
-      className="flex min-h-[32px] w-full items-center gap-2 rounded-[6px] px-3 text-left text-[14px] text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
+    <button
+      className="flex w-full items-center gap-2 rounded-[6px] px-3 py-1 text-left text-[13px] text-[var(--track-overlay-text)] transition-colors duration-[80ms] hover:bg-[var(--track-row-hover)]"
       data-testid={testId}
-      href={href}
-      onClick={() => close?.()}
+      onClick={() => {
+        close?.();
+        window.location.href = href;
+      }}
       role="menuitem"
+      type="button"
     >
       {children}
-    </a>
+    </button>
   );
 }
 
@@ -384,7 +387,7 @@ export function MenuLink({ children, href, testId }: MenuLinkProps): ReactElemen
 // ---------------------------------------------------------------------------
 
 export function MenuSeparator(): ReactElement {
-  return <div className="my-1 border-t border-[var(--track-border)]" role="separator" />;
+  return <div className="my-0.5 border-t border-[var(--track-border)]" role="separator" />;
 }
 
 // ---------------------------------------------------------------------------

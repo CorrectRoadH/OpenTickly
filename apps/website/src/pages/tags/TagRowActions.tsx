@@ -1,4 +1,5 @@
 import { type FormEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AppButton, DropdownMenu, IconButton, MenuItem, useDropdownClose } from "@opentoggl/web-ui";
 
@@ -11,17 +12,13 @@ type TagRowActionsProps = {
   onRename: (tagId: number, name: string) => void;
 };
 
-/**
- * Context menu and inline-edit actions for a single tag row.
- * Shows a "..." button that opens a dropdown with Rename and Delete options.
- * Follows the same pattern as ClientRowActions.
- */
 export function TagRowActions({
   tagId,
   tagName,
   onDelete,
   onRename,
 }: TagRowActionsProps): ReactElement {
+  const { t } = useTranslation("tags");
   const [editing, setEditing] = useState(false);
   const [editValue, setEditValue] = useState(tagName);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -70,12 +67,12 @@ export function TagRowActions({
   return (
     <DropdownMenu
       trigger={
-        <IconButton aria-label={`Actions for ${tagName}`} size="sm">
+        <IconButton aria-label={t("actionsFor", { name: tagName })} size="sm">
           <MoreIcon className="size-3.5" />
         </IconButton>
       }
       testId={`tag-actions-menu-${tagId}`}
-      minWidth="140px"
+      minWidth="180px"
     >
       <TagMenuContent
         onDelete={onDelete}
@@ -98,6 +95,7 @@ function TagMenuContent({
   tagId: number;
   tagName: string;
 }): ReactElement {
+  const { t } = useTranslation("tags");
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const close = useDropdownClose();
 
@@ -105,7 +103,7 @@ function TagMenuContent({
     return (
       <div className="px-3 py-2">
         <p className="mb-2 text-[12px] text-[var(--track-text-muted)]">
-          Delete &ldquo;{tagName}&rdquo;? This tag will be removed from all time entries.
+          {t("deleteTagConfirm", { name: tagName })}
         </p>
         <div className="flex gap-2">
           <AppButton
@@ -117,10 +115,10 @@ function TagMenuContent({
             size="sm"
             danger
           >
-            Delete
+            {t("delete")}
           </AppButton>
           <AppButton onClick={() => setConfirmingDelete(false)} size="sm">
-            Cancel
+            {t("cancel")}
           </AppButton>
         </div>
       </div>
@@ -137,7 +135,7 @@ function TagMenuContent({
           onStartEditing();
         }}
       >
-        Rename
+        {t("rename")}
       </MenuItem>
       <MenuItem
         destructive
@@ -147,7 +145,7 @@ function TagMenuContent({
           setConfirmingDelete(true);
         }}
       >
-        Delete
+        {t("delete")}
       </MenuItem>
     </>
   );

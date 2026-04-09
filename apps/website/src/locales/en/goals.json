@@ -49,5 +49,9 @@
   "hoursProgress": "{{tracked}}h / {{target}}h",
   "streakFire": "{{streak}} 🔥",
   "addGoals": "Add goals",
-  "untitledGoal": "Untitled goal"
+  "untitledGoal": "Untitled goal",
+  "archive": "Archive",
+  "restore": "Restore",
+  "delete": "Delete",
+  "actionsFor": "Actions for {{name}}"
 }

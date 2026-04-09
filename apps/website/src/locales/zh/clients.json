@@ -23,5 +23,8 @@
   "archiveClientsConfirm": "归档 {{count}} 个客户？",
   "noClientsMatchFilters": "没有客户符合您的筛选条件。",
   "noActiveClients": "没有活跃客户。创建您的第一个客户以开始。",
-  "noInactiveClients": "没有非活跃客户。"
+  "noInactiveClients": "没有非活跃客户。",
+  "cancel": "取消",
+  "deleteClientConfirm": "删除 \"{{name}}\"？",
+  "actionsFor": "{{name}} 的操作"
 }

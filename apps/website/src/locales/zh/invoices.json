@@ -27,5 +27,8 @@
   "clientNameAndAddress": "客户名称和地址",
   "yourCompanyNameAndAddress": "您的公司名称和地址",
   "message": "留言",
-  "thankYouForYourBusiness": "感谢您的惠顾..."
+  "thankYouForYourBusiness": "感谢您的惠顾...",
+  "edit": "编辑",
+  "delete": "删除",
+  "actionsFor": "发票 {{id}} 的操作"
 }
