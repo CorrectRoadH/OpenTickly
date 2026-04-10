@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"context"
 	"fmt"
-	"net"
-	"strings"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	adminapi "opentoggl/backend/apps/backend/internal/http/generated/admin"
@@ -125,25 +125,23 @@ func (h *platformHealthChecker) PingRedis() (time.Duration, error) {
 	if addr == "" {
 		return 0, fmt.Errorf("redis not configured")
 	}
-	// Parse redis:// URL to get host:port for TCP ping
-	host := addr
-	if strings.HasPrefix(host, "redis://") {
-		host = strings.TrimPrefix(host, "redis://")
-		if idx := strings.Index(host, "/"); idx >= 0 {
-			host = host[:idx]
-		}
-	}
-	start := time.Now()
-	conn, err := net.DialTimeout("tcp", host, 2*time.Second)
-	elapsed := time.Since(start)
+	options, err := redis.ParseURL(addr)
 	if err != nil {
-		return elapsed, err
+		return 0, fmt.Errorf("parse REDIS_URL: %w", err)
 	}
-	conn.Close()
+	client := redis.NewClient(options)
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	start := time.Now()
+	err = client.Ping(ctx).Err()
+	elapsed := time.Since(start)
 	if elapsed == 0 {
 		elapsed = time.Microsecond
 	}
-	return elapsed, nil
+	return elapsed, err
 }
 
 type adminSessionResolverAdapter struct {

@@ -242,7 +242,7 @@ export function ApiTokenSection(props: {
   siteUrl: string;
 }): ReactElement {
   const { t } = useTranslation("profile");
-  const baseUrl = props.siteUrl || window.location.origin;
+  const baseUrl = (props.siteUrl || window.location.origin).replace(/\/+$/, "");
   const trackUrl = `${baseUrl}/api/v9`;
   const reportsUrl = `${baseUrl}/reports/api/v3`;
   const insightsUrl = `${baseUrl}/insights/api/v1`;
