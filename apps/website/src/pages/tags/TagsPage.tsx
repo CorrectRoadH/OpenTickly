@@ -8,7 +8,7 @@ import {
   PageLayout,
 } from "@opentoggl/web-ui";
 
-import { CloseIcon, PlusIcon } from "../../shared/ui/icons.tsx";
+import { CloseIcon, PlusIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import {
   useCreateTagMutation,
@@ -130,7 +130,20 @@ export function TagsPage(): ReactElement {
         rowKey={(tag) => tag.id}
         data-testid="tags-list"
         data-row-testid="tag-row"
-        emptyState={<span data-testid="tags-empty-state">{t("noTagsInWorkspace")}</span>}
+        emptyIcon={<TagsIcon className="size-5" />}
+        emptyTitle={nameFilter.trim() ? t("noTagsMatchFilters") : t("noTagsInWorkspace")}
+        emptyDescription={!nameFilter.trim() ? t("createFirstTagHint") : undefined}
+        emptyAction={
+          !nameFilter.trim() ? (
+            <AppButton
+              onClick={() => setCreateDialogOpen(true)}
+              data-testid="tags-empty-state-create"
+            >
+              <PlusIcon className="size-3.5" />
+              {t("newTag")}
+            </AppButton>
+          ) : undefined
+        }
         renderRow={(tag) => (
           <>
             <div className="flex h-[44px] items-center">

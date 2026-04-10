@@ -9,7 +9,7 @@ import {
   SelectDropdown,
 } from "@opentoggl/web-ui";
 
-import { SearchIcon } from "../../shared/ui/icons.tsx";
+import { MembersIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useOrganizationMembersQuery,
   useUpdateOrganizationUserMutation,
@@ -200,7 +200,8 @@ export function OrganizationMembersSection({
       <DirectoryTable
         columns={memberColumns(t)}
         data-testid="org-members-list"
-        emptyState={
+        emptyIcon={<MembersIcon className="size-5" />}
+        emptyTitle={
           search.trim()
             ? "No members match your search."
             : statusFilter !== "all"

@@ -19,5 +19,6 @@
   "taskCreated": "Task created",
   "viewAllWorkspaceTasks": "View all workspace tasks",
   "noTasksInProject": "No tasks in this project yet.",
-  "noTasksInWorkspace": "No tasks in this workspace yet. Open a project task entry point to create the first task."
+  "noTasksInWorkspace": "No tasks in this workspace yet. Open a project task entry point to create the first task.",
+  "createFirstTaskHint": "Add a task to break this project into trackable units of work."
 }

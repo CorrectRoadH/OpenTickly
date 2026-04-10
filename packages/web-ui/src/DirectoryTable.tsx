@@ -16,6 +16,10 @@ type DirectoryTableProps<T> = {
   renderRow: (row: T) => ReactNode;
   isLoading?: boolean;
   emptyState?: ReactNode;
+  emptyIcon?: ReactNode;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyAction?: ReactNode;
   selectable?: boolean;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
@@ -49,6 +53,10 @@ export function DirectoryTable<T>({
   renderRow,
   isLoading,
   emptyState,
+  emptyIcon,
+  emptyTitle,
+  emptyDescription,
+  emptyAction,
   selectable,
   selectedIds,
   onToggleSelect,
@@ -99,9 +107,31 @@ export function DirectoryTable<T>({
 
       {/* Rows */}
       {isEmpty ? (
-        <div className="px-5 py-10 text-center text-[14px] text-[var(--track-text-muted)]">
-          {emptyState ?? "No items found."}
-        </div>
+        emptyState != null ? (
+          <div className="px-5 py-10 text-center text-[14px] text-[var(--track-text-muted)]">
+            {emptyState}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+            {emptyIcon ? (
+              <div className="flex size-10 items-center justify-center rounded-[10px] border border-dashed border-[var(--track-border)] text-[var(--track-text-muted)]">
+                {emptyIcon}
+              </div>
+            ) : null}
+            {emptyTitle ? (
+              <p className="text-[14px] font-semibold text-white">{emptyTitle}</p>
+            ) : null}
+            {emptyDescription ? (
+              <p className="max-w-[360px] text-[13px] leading-5 text-[var(--track-text-muted)]">
+                {emptyDescription}
+              </p>
+            ) : null}
+            {emptyAction ? <div className="mt-1">{emptyAction}</div> : null}
+            {!emptyIcon && !emptyTitle && !emptyDescription ? (
+              <p className="text-[14px] text-[var(--track-text-muted)]">No items found.</p>
+            ) : null}
+          </div>
+        )
       ) : (
         rows.map((row) => {
           const id = rowKey(row);

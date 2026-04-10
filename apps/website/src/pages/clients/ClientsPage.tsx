@@ -14,6 +14,7 @@ import {
 
 import {
   ArchiveIcon,
+  ClientsIcon,
   CloseIcon,
   EditIcon,
   PlusIcon,
@@ -264,10 +265,21 @@ export function ClientsPage(): ReactElement {
           <DirectoryTable
             columns={columns}
             data-testid="clients-list"
-            emptyState={
-              <p className="text-sm text-[var(--track-text-muted)]">
-                {emptyStateTitle(statusFilter)}
-              </p>
+            emptyIcon={<ClientsIcon className="size-5" />}
+            emptyTitle={emptyStateTitle(statusFilter)}
+            emptyDescription={
+              statusFilter === "all" && !search.trim() ? t("createFirstClientHint") : undefined
+            }
+            emptyAction={
+              statusFilter === "all" && !search.trim() ? (
+                <AppButton
+                  onClick={() => setComposerOpen(true)}
+                  data-testid="clients-empty-state-create"
+                >
+                  <PlusIcon className="size-3.5" />
+                  {t("newClient")}
+                </AppButton>
+              ) : undefined
             }
             expandable
             expandedIds={expandedIds}

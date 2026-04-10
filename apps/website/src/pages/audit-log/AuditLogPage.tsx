@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getAuditLogs } from "../../shared/api/public/track/index.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
+import { AuditLogIcon } from "../../shared/ui/icons.tsx";
 import { formatAuditTitle } from "./format-audit-log.ts";
 
 type AuditLogEntry = {
@@ -189,7 +190,8 @@ export function AuditLogPage(): ReactElement {
       <DirectoryTable
         columns={auditLogColumns(t)}
         data-testid="audit-log-list"
-        emptyState={t("noAuditLogEntries")}
+        emptyIcon={<AuditLogIcon className="size-5" />}
+        emptyTitle={t("noAuditLogEntries")}
         expandable
         expandedIds={expandedIds}
         onToggleExpand={(id) => {

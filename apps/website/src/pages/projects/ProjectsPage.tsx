@@ -22,6 +22,7 @@ import {
   EditIcon,
   PinIcon,
   PlusIcon,
+  ProjectsIcon,
   TrashIcon,
 } from "../../shared/ui/icons.tsx";
 import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
@@ -652,13 +653,16 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 </div>
               </>
             )}
-            emptyState={
-              <p
-                className="text-sm text-[var(--track-text-muted)]"
-                data-testid="projects-empty-state"
-              >
-                {emptyProjectsStateTitle(statusFilter)}
-              </p>
+            emptyIcon={<ProjectsIcon className="size-5" />}
+            emptyTitle={emptyProjectsStateTitle(statusFilter)}
+            emptyDescription={statusFilter === "all" ? t("createFirstProjectHint") : undefined}
+            emptyAction={
+              statusFilter === "all" ? (
+                <AppButton onClick={openCreateDialog} data-testid="projects-empty-state-create">
+                  <PlusIcon className="size-3.5" />
+                  {t("newProject")}
+                </AppButton>
+              ) : undefined
             }
             data-testid="projects-list"
             data-row-testid="project-row"

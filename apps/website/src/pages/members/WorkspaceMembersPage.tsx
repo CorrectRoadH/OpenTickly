@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
-import { PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
+import { MembersIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
   useInviteWorkspaceMemberMutation,
@@ -234,7 +234,8 @@ export function WorkspaceMembersPage(): ReactElement {
       <DirectoryTable
         columns={memberColumns(t)}
         data-testid="members-list"
-        emptyState={
+        emptyIcon={<MembersIcon className="size-5" />}
+        emptyTitle={
           search.trim()
             ? t("noMembersMatchSearch")
             : statusFilter !== "all"

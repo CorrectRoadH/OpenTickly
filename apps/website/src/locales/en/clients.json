@@ -31,5 +31,6 @@
   "nextPage": "Next page",
   "createNewClient": "Create new client",
   "clientName": "Client name",
-  "createClient": "Create client"
+  "createClient": "Create client",
+  "createFirstClientHint": "Create your first client to organize projects by customer."
 }

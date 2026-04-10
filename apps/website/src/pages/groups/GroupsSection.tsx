@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
 import { WebApiError } from "../../shared/api/web-client.ts";
-import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
+import { MembersIcon, MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import {
   useOrgGroupsQuery,
   useCreateOrgGroupMutation,
@@ -153,12 +153,9 @@ export function GroupsSection({ organizationId }: GroupsSectionProps): ReactElem
       <DirectoryTable
         columns={groupColumns(t)}
         data-testid="groups-list"
-        emptyState={
-          <div className="space-y-1">
-            <p className="font-semibold text-white">{t("noTeamsYet")}</p>
-            <p className="text-[var(--track-text-muted)]">{t("noTeamsDescription")}</p>
-          </div>
-        }
+        emptyIcon={<MembersIcon className="size-5" />}
+        emptyTitle={t("noTeamsYet")}
+        emptyDescription={t("noTeamsDescription")}
         expandable
         expandedIds={expandedIds}
         onToggleExpand={toggleExpand}

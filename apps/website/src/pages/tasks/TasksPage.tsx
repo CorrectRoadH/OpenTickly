@@ -113,7 +113,9 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
             rows={tasks}
             rowKey={(task) => task.id}
             data-testid="tasks-list"
-            emptyState={<span data-testid="tasks-empty-state">{t("noTasksInProject")}</span>}
+            emptyIcon={<PlusIcon className="size-5" />}
+            emptyTitle={t("noTasksInProject")}
+            emptyDescription={t("createFirstTaskHint")}
             renderRow={(task) => (
               <>
                 <div className="flex items-center">

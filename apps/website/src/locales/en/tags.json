@@ -41,5 +41,6 @@
   "cancel": "Cancel",
   "deleteTagConfirm": "Delete \"{{name}}\"? This tag will be removed from all time entries.",
   "actionsFor": "Actions for {{name}}",
-  "showingTagsCount": "Showing {{count}} tags in {{workspaceName}}"
+  "showingTagsCount": "Showing {{count}} tags in {{workspaceName}}",
+  "createFirstTagHint": "Create your first tag to start categorizing time entries."
 }

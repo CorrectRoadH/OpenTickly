@@ -10,7 +10,7 @@ import {
   SelectDropdown,
 } from "@opentoggl/web-ui";
 
-import { PlusIcon } from "../../shared/ui/icons.tsx";
+import { GoalsIcon, PlusIcon } from "../../shared/ui/icons.tsx";
 import type { HandlergoalsApiResponse } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useCreateGoalMutation,
@@ -246,7 +246,8 @@ export function GoalsPage(): ReactElement {
             columns={goalColumns}
             data-testid="goals-list"
             data-row-testid="goal-row"
-            emptyState={t("noGoalsFound")}
+            emptyIcon={<GoalsIcon className="size-5" />}
+            emptyTitle={t("noGoalsFound")}
             renderRow={renderGoalRow}
             rowKey={(goal) => goal.goal_id ?? 0}
             rows={goals}

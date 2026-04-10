@@ -147,5 +147,6 @@
   "memberUserId": "Member {{userId}}",
   "projectIdLabel": "Project {{projectId}}",
   "noMembersAssignedShort": "No members assigned",
-  "projectNameAlreadyExists": "Project name already exists"
+  "projectNameAlreadyExists": "Project name already exists",
+  "createFirstProjectHint": "Create your first project to start organizing your time entries."
 }

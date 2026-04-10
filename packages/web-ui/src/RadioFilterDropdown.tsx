@@ -31,39 +31,61 @@ export function RadioFilterDropdown<T extends string>({
   const defaultOption = options[0];
   const isActive = defaultOption != null && selected !== defaultOption.key;
   const selectedLabel = options.find((o) => o.key === selected)?.label ?? label;
-  const buttonLabel = isActive ? `${selectedLabel} ✓` : label;
 
   return (
     <div className="relative" ref={containerRef}>
       <button
-        className={`flex h-9 items-center gap-1 rounded-[8px] border px-3 text-[12px] font-medium ${
+        className={`flex h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[12px] font-medium transition ${
           isActive
-            ? "border-[var(--track-accent)] bg-[var(--track-accent)]/10 text-[var(--track-accent-text)]"
-            : "border-[var(--track-border)] bg-[var(--track-surface-muted)] text-[var(--track-text-muted)]"
+            ? "border-transparent bg-[var(--track-accent)]/10 text-[var(--track-accent-text)] hover:bg-[var(--track-accent)]/20"
+            : "border-dashed border-[var(--track-border)] text-[var(--track-text-muted)] hover:border-[var(--track-control-border)] hover:text-white"
         }`}
         data-testid={testId ?? `filter-${label.toLowerCase()}`}
         onClick={() => setOpen(!open)}
         type="button"
       >
-        {buttonLabel}
+        <span>{isActive ? selectedLabel : label}</span>
+        {isActive ? (
+          <span
+            className="flex size-4 shrink-0 items-center justify-center rounded-full opacity-50 hover:opacity-100"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (defaultOption) onChange(defaultOption.key);
+            }}
+            role="button"
+          >
+            <svg className="size-2.5" fill="none" viewBox="0 0 12 12">
+              <path
+                d="M3 3l6 6M9 3l-6 6"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </span>
+        ) : null}
       </button>
       {open ? (
-        <div className="absolute left-0 top-full z-50 mt-1 min-w-[max(100%,180px)] whitespace-nowrap rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-2 shadow-lg">
-          {options.map((option) => (
-            <button
-              className={`w-full rounded px-2 py-1.5 text-left text-[12px] hover:bg-[var(--track-surface-muted)] ${
-                selected === option.key ? "text-[var(--track-accent-text)]" : "text-white"
-              }`}
-              key={option.key}
-              onClick={() => {
-                onChange(option.key);
-                setOpen(false);
-              }}
-              type="button"
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="absolute left-0 top-[calc(100%+4px)] z-50 min-w-[max(100%,180px)] whitespace-nowrap rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]">
+          <div className="px-1">
+            {options.map((option) => (
+              <button
+                className={`flex w-full items-center rounded-lg px-3 py-2.5 text-left text-[12px] transition ${
+                  selected === option.key
+                    ? "bg-[var(--track-accent-soft)] text-white"
+                    : "text-[var(--track-overlay-text)] hover:bg-white/4"
+                }`}
+                key={option.key}
+                onClick={() => {
+                  onChange(option.key);
+                  setOpen(false);
+                }}
+                type="button"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
