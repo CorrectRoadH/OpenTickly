@@ -184,4 +184,32 @@ test.describe("Webhooks UI", () => {
     await expect(page.getByTestId("integrations-page")).toBeVisible();
     await expect(page.getByText(hookName)).toBeVisible();
   });
+
+  test("Checkboxes in the create-webhook dialog toggle when clicked", async ({ page }) => {
+    const { workspaceId } = await setupUser(page, "ui-checkbox");
+
+    await page.goto(`/workspaces/${workspaceId}/integrations`);
+    await expect(page.getByTestId("integrations-page")).toBeVisible();
+
+    // Open create dialog
+    await page
+      .getByRole("button", { name: /create/i })
+      .first()
+      .click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // The "enabled" checkbox should start unchecked, then toggle on click
+    const enabledCheckbox = page.getByRole("checkbox", { name: /enabled/i });
+    await expect(enabledCheckbox).not.toBeChecked();
+    await enabledCheckbox.click();
+    await expect(enabledCheckbox).toBeChecked();
+    await enabledCheckbox.click();
+    await expect(enabledCheckbox).not.toBeChecked();
+
+    // An event-filter checkbox (e.g. "time_entry created") should also toggle
+    const filterCheckbox = page.getByRole("checkbox", { name: "time_entry created" });
+    await expect(filterCheckbox).not.toBeChecked();
+    await filterCheckbox.click();
+    await expect(filterCheckbox).toBeChecked();
+  });
 });
