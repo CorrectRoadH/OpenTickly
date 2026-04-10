@@ -20,6 +20,7 @@ type DirectoryTableProps<T> = {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: ReactNode;
+  "data-empty-testid"?: string;
   selectable?: boolean;
   selectedIds?: Set<number>;
   onToggleSelect?: (id: number) => void;
@@ -69,6 +70,7 @@ export function DirectoryTable<T>({
   pagination,
   "data-testid": testId,
   "data-row-testid": rowTestId,
+  "data-empty-testid": emptyTestId,
 }: DirectoryTableProps<T>) {
   const gridTemplate = buildGridTemplate(columns, selectable, expandable);
 
@@ -112,7 +114,10 @@ export function DirectoryTable<T>({
             {emptyState}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
+          <div
+            className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center"
+            data-testid={emptyTestId}
+          >
             {emptyIcon ? (
               <div className="flex size-10 items-center justify-center rounded-[10px] border border-dashed border-[var(--track-border)] text-[var(--track-text-muted)]">
                 {emptyIcon}

@@ -9,6 +9,9 @@ type AppCheckboxProps = {
   className?: string;
 };
 
+const CHECKMARK_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='2.5 6 5 9 9.5 3'/%3E%3C/svg%3E")`;
+const DASH_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'%3E%3Cline x1='2' y1='6' x2='10' y2='6'/%3E%3C/svg%3E")`;
+
 export function AppCheckbox({
   "aria-label": ariaLabel,
   checked,
@@ -27,33 +30,18 @@ export function AppCheckbox({
   );
 
   return (
-    <span className={`relative inline-flex size-[14px] shrink-0 ${className}`}>
-      <input
-        aria-label={ariaLabel}
-        checked={checked}
-        data-testid={testId}
-        className="peer size-full cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)] transition-[border-color,background-color] duration-[120ms]"
-        onChange={onChange}
-        ref={ref}
-        style={{ transitionTimingFunction: "var(--ease-spring)" }}
-        type="checkbox"
-      />
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 m-auto hidden size-[10px] text-white peer-checked:block peer-indeterminate:block"
-        fill="none"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        viewBox="0 0 12 12"
-      >
-        {indeterminate ? (
-          <line x1="2" x2="10" y1="6" y2="6" />
-        ) : (
-          <polyline points="2.5 6 5 9 9.5 3" />
-        )}
-      </svg>
-    </span>
+    <input
+      aria-label={ariaLabel}
+      checked={checked}
+      data-testid={testId}
+      className={`size-[14px] shrink-0 cursor-pointer appearance-none rounded-[3px] border border-[var(--track-border)] bg-transparent bg-[length:10px_10px] bg-center bg-no-repeat checked:border-[var(--track-accent)] checked:bg-[var(--track-accent)] transition-[border-color,background-color] duration-[120ms] ${className}`}
+      onChange={onChange}
+      ref={ref}
+      style={{
+        transitionTimingFunction: "var(--ease-spring)",
+        backgroundImage: indeterminate ? DASH_SVG : checked ? CHECKMARK_SVG : "none",
+      }}
+      type="checkbox"
+    />
   );
 }

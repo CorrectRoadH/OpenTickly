@@ -94,6 +94,7 @@ export function CheckboxFilterDropdown<T extends string | number>({
                 const checked = selected.has(option.key);
                 return (
                   <button
+                    aria-checked={checked}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[12px] transition ${
                       checked
                         ? "bg-[var(--track-accent-soft)] text-white"
@@ -101,6 +102,7 @@ export function CheckboxFilterDropdown<T extends string | number>({
                     }`}
                     key={option.key}
                     onClick={() => onToggle(option.key)}
+                    role="checkbox"
                     type="button"
                   >
                     <span

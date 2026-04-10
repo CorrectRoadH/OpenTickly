@@ -664,6 +664,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 </AppButton>
               ) : undefined
             }
+            data-empty-testid="projects-empty-state"
             data-testid="projects-list"
             data-row-testid="project-row"
           />

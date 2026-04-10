@@ -101,8 +101,8 @@ test.describe("Story: filter dropdown components work across pages", () => {
     await expect(page.getByText("Alpha Project")).toBeVisible();
     await expect(page.getByText("Beta Project")).not.toBeVisible();
 
-    // Button shows count
-    await expect(clientFilter).toContainText("Client (1)");
+    // Button shows selected label
+    await expect(clientFilter).toContainText("Client Alpha");
 
     // Clear all
     await page.getByRole("button", { name: "Clear all" }).click();
