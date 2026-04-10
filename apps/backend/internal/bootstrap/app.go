@@ -108,6 +108,10 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 	if err != nil {
 		return nil, err
 	}
+	publicWebhooksRoutes, err := newPublicWebhooksRoutes(assembledHandlers)
+	if err != nil {
+		return nil, err
+	}
 	importRoutes, err := newImportRoutes(assembledHandlers)
 	if err != nil {
 		return nil, err
@@ -121,6 +125,7 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 		webRoutes,
 		publicTrackRoutes,
 		publicReportsRoutes,
+		publicWebhooksRoutes,
 		importRoutes,
 		adminRoutes,
 	), nil

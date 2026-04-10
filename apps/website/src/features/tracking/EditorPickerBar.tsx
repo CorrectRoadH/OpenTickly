@@ -40,7 +40,7 @@ export function EditorPickerBar({
 
   return (
     <div className="relative mt-5" data-picker-area>
-      <div className="flex items-center gap-4 text-[var(--track-overlay-text-soft)]">
+      <div className="flex flex-wrap items-center gap-4 text-[var(--track-overlay-text-soft)]">
         <PickerButton
           active={picker === "project"}
           ariaLabel="Select project"
@@ -235,7 +235,7 @@ function PickerButton({
       aria-pressed={ariaPressed}
       className={`flex items-center justify-center transition ${
         selected
-          ? "h-8 max-w-[168px] gap-2 rounded-[10px] px-2.5 text-[8px] font-medium"
+          ? "h-8 gap-2 rounded-[10px] px-2.5 text-[8px] font-medium"
           : "size-8 rounded-[10px]"
       } ${
         selected
@@ -259,7 +259,7 @@ function PickerButton({
       ) : (
         icon
       )}
-      {label ? <span className="min-w-0 truncate">{label}</span> : null}
+      {label ? <span className="whitespace-nowrap">{label}</span> : null}
     </button>
   );
 }

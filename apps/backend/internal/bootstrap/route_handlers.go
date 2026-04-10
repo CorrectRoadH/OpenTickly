@@ -31,6 +31,8 @@ import (
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	reportspostgres "opentoggl/backend/apps/backend/internal/reports/infra/postgres"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
+	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
+	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
@@ -59,6 +61,7 @@ type routeHandlers struct {
 	trackingApp   *trackingapplication.Service
 	reportsApp    *reportsapplication.Service
 	governanceApp *governanceapplication.Service
+	webhooksApp   *webhooksapplication.Service
 	userHomes     userHomeRepository
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
@@ -126,6 +129,8 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	reportsService := reportsapplication.NewService(trackingService, membershipService, rateResolver, appLogger)
 	reportsService.WithSavedReportStore(reportspostgres.NewSavedReportStore(pool))
 	reportsService.WithScheduledReportStore(reportspostgres.NewScheduledReportStore(pool))
+	webhooksService := webhooksapplication.NewService(webhookspostgres.NewStore(pool), appLogger)
+
 	governanceService, err := governanceapplication.NewService(governancepostgres.NewStore(pool), appLogger)
 	if err != nil {
 		return nil, err
@@ -177,6 +182,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		trackingApp:   trackingService,
 		reportsApp:    reportsService,
 		governanceApp: governanceService,
+		webhooksApp:   webhooksService,
 		userHomes:     userHomes,
 		tenant:        tenantHandler,
 		tenantApp:     tenantService,

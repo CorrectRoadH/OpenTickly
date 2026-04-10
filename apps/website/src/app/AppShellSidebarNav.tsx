@@ -44,11 +44,13 @@ export function SidebarNavSections({
   pathname,
   primarySections,
   timerBadge,
+  isTimerRunning = false,
 }: {
   adminSection: NavSection | undefined;
   pathname: string;
   primarySections: NavSection[];
   timerBadge?: React.ReactNode;
+  isTimerRunning?: boolean;
 }): ReactElement {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -75,6 +77,7 @@ export function SidebarNavSections({
                   badge={item.id === "timer" ? timerBadge : item.badge}
                   disabled={item.disabled}
                   id={item.id}
+                  isTimerRunning={item.id === "timer" && isTimerRunning}
                   key={`${section.title}-${item.id}`}
                   label={item.label}
                   sectionId={section.title}
@@ -116,6 +119,7 @@ function ShellNavItem({
   badge,
   disabled = false,
   id,
+  isTimerRunning = false,
   label,
   sectionId,
   to,
@@ -124,29 +128,27 @@ function ShellNavItem({
   badge?: React.ReactNode;
   disabled?: boolean;
   id: string;
+  isTimerRunning?: boolean;
   label: string;
   sectionId: string;
   to?: string;
 }): ReactElement {
+  // When timer is running: show elapsed time as the label, no bg indicator, no badge
+  const showTimerInline = isTimerRunning && badge;
   const content = (
     <div
       className={`relative flex h-7 items-center gap-3 rounded-[6px] px-1.5 text-[14px] font-medium transition-colors duration-[160ms] ${
         active ? "text-[var(--track-accent-text)]" : "text-[var(--track-text-muted)]"
       } ${disabled ? "opacity-55" : "hover:bg-[var(--track-surface)] hover:text-white"}`}
     >
-      {active ? (
+      {active && !showTimerInline ? (
         <AnimatedActiveIndicator
           className="absolute inset-0 rounded-[6px] bg-[var(--track-accent-soft)]"
           layoutId={`shell-nav-${sectionId}`}
         />
       ) : null}
       <span className="relative z-[1]">{navIcon(id)}</span>
-      <span className="relative z-[1] truncate">{label}</span>
-      {badge ? (
-        <span className="relative z-[1] ml-auto rounded-[8px] bg-[var(--track-border)] px-1.5 py-0.5 text-[12px] leading-none text-[var(--track-text-muted)]">
-          {badge}
-        </span>
-      ) : null}
+      <span className="relative z-[1] truncate">{showTimerInline ? badge : label}</span>
     </div>
   );
 

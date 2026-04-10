@@ -183,6 +183,11 @@ export function TimerComposerBar({
         }}
         projectOptions={projectOptions}
         runningEntry={composer.runningEntry}
+        taskName={(() => {
+          const taskId = composer.runningEntry?.task_id ?? composer.draftTaskId;
+          if (taskId == null) return undefined;
+          return allTasks.find((t) => t.id === taskId)?.name ?? undefined;
+        })()}
         workspaceName={
           session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace"
         }
@@ -369,6 +374,7 @@ function TimerBarProjectPicker({
   onProjectSelect,
   projectOptions,
   runningEntry,
+  taskName,
   workspaceName,
 }: {
   draftProjectId: number | null;
@@ -385,7 +391,9 @@ function TimerBarProjectPicker({
     id?: number | null;
     project_id?: number | null;
     pid?: number | null;
+    task_id?: number | null;
   } | null;
+  taskName?: string;
   workspaceName: string;
 }): ReactElement {
   const [open, setOpen] = useState(false);
@@ -439,7 +447,7 @@ function TimerBarProjectPicker({
             className="min-w-0 truncate text-[12px] font-medium"
             style={{ color: selectedProject.color }}
           >
-            {selectedProject.name}
+            {taskName ? `${selectedProject.name} | ${taskName}` : selectedProject.name}
           </span>
         ) : null}
       </button>

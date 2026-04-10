@@ -211,7 +211,7 @@ export function TimerComposerSuggestionsDialog({
         {suggestedProjects.length > 0 || suggestedTasks.length > 0 ? (
           <>
             <MenuSeparator />
-            <SuggestionSectionTitle title={t("project") + "s"} />
+            <SuggestionSectionTitle title={t("projects")} />
             <div className="px-1 pb-1">
               {suggestedTasks.map((task) => {
                 const color = resolveProjectColorValue({

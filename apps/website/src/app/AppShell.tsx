@@ -116,6 +116,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
   const navProps = {
     adminSection,
+    isTimerRunning: !!runningEntry,
     pathname: location.pathname,
     primarySections,
     timerBadge,

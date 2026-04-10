@@ -143,6 +143,9 @@ export default defineConfig(() => {
         "/admin/v1": {
           target: webProxyTarget,
         },
+        "/webhooks/api/v1": {
+          target: webProxyTarget,
+        },
       },
     },
     test: {
