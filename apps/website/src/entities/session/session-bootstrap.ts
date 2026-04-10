@@ -119,7 +119,7 @@ export function mapSessionBootstrap(
       })),
     workspaceCapabilities: dto.workspace_capabilities,
     workspaceQuota: dto.workspace_quota,
-    siteUrl: dto.site_url ?? "",
+    siteUrl: (dto.site_url ?? "").replace(/\/+$/, ""),
   };
 }
 
