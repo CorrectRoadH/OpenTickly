@@ -259,10 +259,10 @@ export function ProfileHeroCard({
         <div className="flex min-w-0 flex-1 flex-col px-4 md:min-h-[331px] md:pl-3">
           <div className="border-b border-[var(--track-border)] pb-3">
             <h2 className="text-[14px] font-semibold leading-[22.96px] text-white">
-              Personal details & preferences
+              {t("profile:personalDetailsAndPreferences")}
             </h2>
             <p className="text-[14px] font-medium leading-[21.98px] text-[var(--track-text-muted)]">
-              Change details, login methods and your password in Account settings.
+              {t("profile:changeDetailsDescription")}
             </p>
           </div>
 
@@ -284,7 +284,7 @@ export function ProfileHeroCard({
               className="inline-flex h-9 items-center rounded-[8px] border border-[var(--track-border)] px-[25px] py-[9px] text-[14px] font-semibold leading-5 text-[var(--track-text-muted)]"
               href={accountSettingsHref}
             >
-              Account settings
+              {t("profile:accountSettings")}
             </a>
           </div>
         </div>

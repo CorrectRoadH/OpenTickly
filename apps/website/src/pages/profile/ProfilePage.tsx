@@ -21,8 +21,6 @@ import { ProfileHeroCard } from "./ProfilePagePrimitives.tsx";
 import {
   ApiTokenSection,
   ApiTokenStatusNotices,
-  EmailPreferencesSection,
-  InAppNotificationsSection,
   KeyboardShortcutsSection,
   TimeAndDateSection,
   TimerPageSection,
@@ -207,8 +205,6 @@ export function ProfilePage(): ReactElement {
             rows={heroRows}
           />
 
-          <EmailPreferencesSection getValue={readPreference} setValue={writePreference} />
-          <InAppNotificationsSection getValue={readPreference} setValue={writePreference} />
           <TimerPageSection getValue={readPreference} setValue={writePreference} />
           <TimeAndDateSection getValue={readPreference} setValue={writePreference} />
           <KeyboardShortcutsSection getValue={readPreference} setValue={writePreference} />

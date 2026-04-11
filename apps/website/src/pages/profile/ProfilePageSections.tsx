@@ -7,8 +7,6 @@ import { CheckIcon, CopyIcon } from "../../shared/ui/icons.tsx";
 import {
   dateFormatOptions,
   durationFormatOptions,
-  figmaEmailPreferences,
-  figmaInAppPreferences,
   figmaShortcutPreferences,
   figmaTimerPreferences,
   firstDayOfWeekOptions,
@@ -20,66 +18,6 @@ import {
   PreferenceNumberSelect,
   PreferenceSelect,
 } from "./ProfilePagePrimitives.tsx";
-
-export function EmailPreferencesSection(props: {
-  getValue: <K extends keyof PreferencesFormValues>(key: K) => PreferencesFormValues[K];
-  setValue: <K extends keyof PreferencesFormValues>(
-    key: K,
-    value: PreferencesFormValues[K],
-  ) => void;
-}): ReactElement {
-  const { t } = useTranslation("profile");
-  return (
-    <PreferenceCard description={t("emailPreferencesDescription")} title={t("emailPreferences")}>
-      <div className="px-5 py-[15px]">
-        {figmaEmailPreferences.map((item) => (
-          <CheckboxRow
-            checked={Boolean(props.getValue(item.key))}
-            key={item.key}
-            label={item.label}
-            onChange={(checked) => {
-              props.setValue(item.key, checked as PreferencesFormValues[typeof item.key]);
-            }}
-          />
-        ))}
-      </div>
-    </PreferenceCard>
-  );
-}
-
-export function InAppNotificationsSection(props: {
-  getValue: <K extends keyof PreferencesFormValues>(key: K) => PreferencesFormValues[K];
-  setValue: <K extends keyof PreferencesFormValues>(
-    key: K,
-    value: PreferencesFormValues[K],
-  ) => void;
-}): ReactElement {
-  const { t } = useTranslation("profile");
-  return (
-    <PreferenceCard
-      description={t("inAppNotificationsDescription")}
-      title={t("inAppNotificationsPreferences")}
-    >
-      <div className="grid gap-0 px-5 py-[15px] md:grid-cols-2">
-        {figmaInAppPreferences.map((item) => (
-          <div key={item.key}>
-            <p className="mb-0 text-[11px] font-semibold uppercase leading-4 text-[var(--track-text-soft)]">
-              {item.section}
-            </p>
-            <CheckboxRow
-              className="px-0"
-              checked={Boolean(props.getValue(item.key))}
-              label={item.label}
-              onChange={(checked) => {
-                props.setValue(item.key, checked as PreferencesFormValues[typeof item.key]);
-              }}
-            />
-          </div>
-        ))}
-      </div>
-    </PreferenceCard>
-  );
-}
 
 export function TimerPageSection(props: {
   getValue: <K extends keyof PreferencesFormValues>(key: K) => PreferencesFormValues[K];
@@ -93,7 +31,7 @@ export function TimerPageSection(props: {
     <PreferenceCard description={t("timerPageDescription")} id="timer-page" title={t("timerPage")}>
       <div className="px-5 py-[15px]">
         <div className="w-full max-w-[500px]">
-          {figmaTimerPreferences.map((item) => (
+          {figmaTimerPreferences(t).map((item) => (
             <CheckboxRow
               checked={Boolean(props.getValue(item.key))}
               key={item.key}
@@ -130,7 +68,7 @@ export function TimeAndDateSection(props: {
             onChange={(value) => {
               props.setValue("durationFormat", value as PreferencesFormValues["durationFormat"]);
             }}
-            options={durationFormatOptions}
+            options={durationFormatOptions(t)}
             testId="pref-duration-format"
             value={String(props.getValue("durationFormat"))}
           />
@@ -139,7 +77,7 @@ export function TimeAndDateSection(props: {
             onChange={(value) => {
               props.setValue("timeofdayFormat", value as PreferencesFormValues["timeofdayFormat"]);
             }}
-            options={timeFormatOptions}
+            options={timeFormatOptions(t)}
             testId="pref-time-format"
             value={String(props.getValue("timeofdayFormat"))}
           />
@@ -159,7 +97,7 @@ export function TimeAndDateSection(props: {
             onChange={(value) => {
               props.setValue("beginningOfWeek", value);
             }}
-            options={firstDayOfWeekOptions}
+            options={firstDayOfWeekOptions(t)}
             testId="pref-first-day-of-week"
             value={Number(props.getValue("beginningOfWeek"))}
           />
@@ -177,24 +115,25 @@ export function KeyboardShortcutsSection(props: {
   ) => void;
 }): ReactElement {
   const { t } = useTranslation("profile");
+  const shortcuts = figmaShortcutPreferences(t);
   return (
     <PreferenceCard id="shortcuts" title={t("keyboardShortcuts")}>
       <div className="grid gap-0 px-0 py-[15px] md:grid-cols-[500px_minmax(0,1fr)]">
         <div className="px-5">
           <CheckboxRow
-            checked={Boolean(props.getValue(figmaShortcutPreferences[0].key))}
-            helper={figmaShortcutPreferences[0].helper}
-            label={figmaShortcutPreferences[0].label}
+            checked={Boolean(props.getValue(shortcuts[0].key))}
+            helper={shortcuts[0].helper}
+            label={shortcuts[0].label}
             onChange={(checked) => {
               props.setValue(
-                figmaShortcutPreferences[0].key,
-                checked as PreferencesFormValues[(typeof figmaShortcutPreferences)[0]["key"]],
+                shortcuts[0].key,
+                checked as PreferencesFormValues[(typeof shortcuts)[0]["key"]],
               );
             }}
           />
         </div>
         <div className="px-5">
-          {figmaShortcutPreferences.slice(1).map((item) => (
+          {shortcuts.slice(1).map((item) => (
             <CheckboxRow
               checked={Boolean(props.getValue(item.key))}
               key={item.key}
