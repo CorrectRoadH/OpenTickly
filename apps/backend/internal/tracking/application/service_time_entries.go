@@ -25,6 +25,32 @@ func (service *Service) CreateTimeEntry(ctx context.Context, command CreateTimeE
 		}
 	}
 
+	// Enforce required time entry fields from workspace settings.
+	settings, err := service.getWorkspaceSettings(ctx, command.WorkspaceID)
+	if err != nil {
+		return TimeEntryView{}, err
+	}
+	for _, field := range settings.RequiredTimeEntryFields() {
+		switch field {
+		case "project":
+			if command.ProjectID == nil {
+				return TimeEntryView{}, ErrRequiredFieldMissing
+			}
+		case "task":
+			if command.TaskID == nil {
+				return TimeEntryView{}, ErrRequiredFieldMissing
+			}
+		case "description":
+			if strings.TrimSpace(command.Description) == "" {
+				return TimeEntryView{}, ErrRequiredFieldMissing
+			}
+		case "tag":
+			if len(command.TagIDs) == 0 {
+				return TimeEntryView{}, ErrRequiredFieldMissing
+			}
+		}
+	}
+
 	service.logger.InfoContext(ctx, "creating time entry",
 		"user_id", command.UserID,
 		"workspace_id", command.WorkspaceID,

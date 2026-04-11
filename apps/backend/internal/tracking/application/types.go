@@ -19,6 +19,8 @@ var (
 	ErrReminderNotFound       = errors.New("tracking reminder not found")
 	ErrExpenseNotFound        = errors.New("tracking expense not found")
 	ErrInvalidTimeRange       = errors.New("tracking time entry values are inconsistent")
+	ErrReportLocked           = errors.New("tracking time entry is locked by report_locked_at")
+	ErrRequiredFieldMissing   = errors.New("tracking time entry missing required field")
 )
 
 type TimeEntryView struct {

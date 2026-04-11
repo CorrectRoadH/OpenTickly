@@ -1,10 +1,12 @@
 package application
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
 	"opentoggl/backend/apps/backend/internal/log"
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 )
 
 var (
@@ -19,21 +21,56 @@ var (
 	ErrTagNotFound          = errors.New("catalog tag not found")
 	ErrTaskNotFound         = errors.New("catalog task not found")
 	ErrInvalidWorkspace     = errors.New("catalog workspace id must be positive")
+	ErrPermissionDenied     = errors.New("catalog permission denied by workspace settings")
+	ErrBillableEnforced     = errors.New("catalog workspace enforces billable projects")
 )
 
-type Service struct {
-	store  Store
-	logger log.Logger
+// WorkspaceSettingsLookup resolves workspace-level policy settings.
+// The catalog service uses this to enforce admin-only creation rules,
+// billable enforcement, and default values for new projects.
+type WorkspaceSettingsLookup interface {
+	GetWorkspaceSettings(ctx context.Context, workspaceID int64) (tenantdomain.WorkspaceSettings, error)
 }
 
-func NewService(store Store, logger log.Logger) (*Service, error) {
+// MemberRoleLookup resolves a user's role within a workspace.
+// Used to check whether a user is an admin when workspace settings
+// restrict certain operations to admins only.
+type MemberRoleLookup interface {
+	IsWorkspaceAdmin(ctx context.Context, workspaceID int64, userID int64) (bool, error)
+}
+
+type Service struct {
+	store    Store
+	settings WorkspaceSettingsLookup
+	members  MemberRoleLookup
+	logger   log.Logger
+}
+
+// ServiceOption configures optional dependencies on the catalog Service.
+type ServiceOption func(*Service)
+
+// WithWorkspaceSettings injects the workspace settings lookup dependency.
+func WithWorkspaceSettings(lookup WorkspaceSettingsLookup) ServiceOption {
+	return func(s *Service) { s.settings = lookup }
+}
+
+// WithMemberRoleLookup injects the member role lookup dependency.
+func WithMemberRoleLookup(lookup MemberRoleLookup) ServiceOption {
+	return func(s *Service) { s.members = lookup }
+}
+
+func NewService(store Store, logger log.Logger, opts ...ServiceOption) (*Service, error) {
 	if store == nil {
 		return nil, ErrStoreRequired
 	}
 	if logger == nil {
 		return nil, ErrLoggerRequired
 	}
-	return &Service{store: store, logger: logger}, nil
+	svc := &Service{store: store, logger: logger}
+	for _, opt := range opts {
+		opt(svc)
+	}
+	return svc, nil
 }
 
 func requireWorkspaceID(workspaceID int64) error {
@@ -95,4 +132,41 @@ func normalizePerPage(value int, fallback int, maximum int) int {
 		return maximum
 	}
 	return value
+}
+
+// requireAdminForSetting checks that the user is an admin when the workspace
+// setting demands it. Returns nil if the check passes or is not applicable
+// (no settings/members lookup configured).
+func (service *Service) requireAdminForSetting(
+	ctx context.Context,
+	workspaceID int64,
+	userID int64,
+	settingEnabled bool,
+) error {
+	if !settingEnabled {
+		return nil
+	}
+	if service.members == nil {
+		return nil
+	}
+	isAdmin, err := service.members.IsWorkspaceAdmin(ctx, workspaceID, userID)
+	if err != nil {
+		return err
+	}
+	if !isAdmin {
+		return ErrPermissionDenied
+	}
+	return nil
+}
+
+// getWorkspaceSettings returns workspace settings if a lookup is configured,
+// otherwise returns default settings.
+func (service *Service) getWorkspaceSettings(
+	ctx context.Context,
+	workspaceID int64,
+) (tenantdomain.WorkspaceSettings, error) {
+	if service.settings == nil {
+		return tenantdomain.DefaultWorkspaceSettings(), nil
+	}
+	return service.settings.GetWorkspaceSettings(ctx, workspaceID)
 }

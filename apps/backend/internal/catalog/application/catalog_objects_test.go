@@ -708,7 +708,28 @@ func TestServiceReturnsRecurringProjectPeriodWithinBoundary(t *testing.T) {
 func mustNewCatalogService(t *testing.T, database *pgtest.Database) *catalogapplication.Service {
 	t.Helper()
 
-	service, err := catalogapplication.NewService(catalogpostgres.NewStore(database.Pool), testLogger)
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	settingsLookup := catalogapplication.WorkspaceSettingsFromTenantStore(tenantStore.GetWorkspace)
+	memberLookup := catalogapplication.MemberRoleFromMembershipStore(
+		func(ctx context.Context, workspaceID int64, userID int64) (string, bool, error) {
+			var role string
+			err := database.Pool.QueryRow(ctx, `
+				select role from membership_workspace_members
+				where workspace_id = $1 and user_id = $2
+			`, workspaceID, userID).Scan(&role)
+			if err != nil {
+				return "", false, nil // not found
+			}
+			return role, true, nil
+		},
+	)
+
+	service, err := catalogapplication.NewService(
+		catalogpostgres.NewStore(database.Pool),
+		testLogger,
+		catalogapplication.WithWorkspaceSettings(settingsLookup),
+		catalogapplication.WithMemberRoleLookup(memberLookup),
+	)
 	if err != nil {
 		t.Fatalf("new catalog service: %v", err)
 	}

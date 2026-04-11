@@ -22,6 +22,20 @@ func (service *Service) CreateTag(ctx context.Context, command CreateTagCommand)
 		"workspace_id", command.WorkspaceID,
 		"name", command.Name,
 	)
+
+	// Enforce workspace settings before any mutation.
+	settings, err := service.getWorkspaceSettings(ctx, command.WorkspaceID)
+	if err != nil {
+		return TagView{}, err
+	}
+	if err := service.requireAdminForSetting(ctx, command.WorkspaceID, command.CreatedBy, settings.OnlyAdminsMayCreateTags()); err != nil {
+		service.logger.WarnContext(ctx, "create tag denied by workspace settings",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.CreatedBy,
+		)
+		return TagView{}, err
+	}
+
 	name, err := domain.NormalizeCatalogName(command.Name)
 	if err != nil {
 		service.logger.WarnContext(ctx, "invalid tag data",

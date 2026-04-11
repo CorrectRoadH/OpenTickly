@@ -108,19 +108,44 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	}
 	tenantHandler := tenantweb.NewHandler(tenantService, billingService)
 
-	catalogService, err := catalogapplication.NewService(newCachedCatalogStore(catalogpostgres.NewStore(pool), cache), appLogger)
+	// Workspace settings and member role lookups for service-layer enforcement.
+	tenantStore := tenantpostgres.NewStore(pool)
+	membershipStore := membershippostgres.NewStore(pool)
+	catalogSettingsLookup := catalogapplication.WorkspaceSettingsFromTenantStore(tenantStore.GetWorkspace)
+	catalogMemberLookup := catalogapplication.MemberRoleFromMembershipStore(
+		func(ctx context.Context, workspaceID int64, userID int64) (string, bool, error) {
+			member, found, err := membershipStore.FindWorkspaceMemberByUserID(ctx, workspaceID, userID)
+			if err != nil || !found {
+				return "", false, err
+			}
+			return string(member.Role), true, nil
+		},
+	)
+
+	catalogService, err := catalogapplication.NewService(
+		newCachedCatalogStore(catalogpostgres.NewStore(pool), cache),
+		appLogger,
+		catalogapplication.WithWorkspaceSettings(catalogSettingsLookup),
+		catalogapplication.WithMemberRoleLookup(catalogMemberLookup),
+	)
 	if err != nil {
 		return nil, err
 	}
 	trackingStore := newCachedTrackingStore(trackingpostgres.NewStore(pool), cache)
-	trackingService, err := trackingapplication.NewService(trackingStore, catalogService, appLogger)
+	trackingSettingsLookup := trackingapplication.WorkspaceSettingsFromTenantStore(tenantStore.GetWorkspace)
+	trackingService, err := trackingapplication.NewService(
+		trackingStore,
+		catalogService,
+		appLogger,
+		trackingapplication.WithWorkspaceSettings(trackingSettingsLookup),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	smtpChecker := newEmailSenderFromDB(pool)
 	membershipService, err := membershipapplication.NewService(
-		membershippostgres.NewStore(pool),
+		membershipStore,
 		membershipapplication.WithSMTPChecker(smtpChecker),
 		membershipapplication.WithLogger(appLogger),
 	)

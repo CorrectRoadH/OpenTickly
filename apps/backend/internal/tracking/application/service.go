@@ -8,13 +8,21 @@ import (
 	"time"
 
 	"opentoggl/backend/apps/backend/internal/log"
+	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 )
 
+// WorkspaceSettingsLookup resolves workspace-level policy settings.
+// The tracking service uses this to enforce report locking and required fields.
+type WorkspaceSettingsLookup interface {
+	GetWorkspaceSettings(ctx context.Context, workspaceID int64) (tenantdomain.WorkspaceSettings, error)
+}
+
 type Service struct {
-	store   Store
-	catalog CatalogQueries
-	logger  log.Logger
-	now     func() time.Time
+	store    Store
+	catalog  CatalogQueries
+	settings WorkspaceSettingsLookup
+	logger   log.Logger
+	now      func() time.Time
 }
 
 // contextKeyAuthenticatedUserID is the context key for storing the authenticated user ID.
@@ -39,7 +47,15 @@ func getAuthenticatedUserID(ctx context.Context) (int64, bool) {
 	return 0, false
 }
 
-func NewService(store Store, catalog CatalogQueries, logger log.Logger) (*Service, error) {
+// TrackingServiceOption configures optional dependencies on the tracking Service.
+type TrackingServiceOption func(*Service)
+
+// WithWorkspaceSettings injects the workspace settings lookup dependency.
+func WithWorkspaceSettings(lookup WorkspaceSettingsLookup) TrackingServiceOption {
+	return func(s *Service) { s.settings = lookup }
+}
+
+func NewService(store Store, catalog CatalogQueries, logger log.Logger, opts ...TrackingServiceOption) (*Service, error) {
 	switch {
 	case store == nil:
 		return nil, ErrStoreRequired
@@ -48,15 +64,61 @@ func NewService(store Store, catalog CatalogQueries, logger log.Logger) (*Servic
 	case logger == nil:
 		return nil, fmt.Errorf("logger is required")
 	default:
-		return &Service{
+		svc := &Service{
 			store:   store,
 			catalog: catalog,
 			logger:  logger,
 			now: func() time.Time {
 				return time.Now().UTC()
 			},
-		}, nil
+		}
+		for _, opt := range opts {
+			opt(svc)
+		}
+		return svc, nil
 	}
+}
+
+// getWorkspaceSettings returns workspace settings if a lookup is configured,
+// otherwise returns default settings.
+func (service *Service) getWorkspaceSettings(
+	ctx context.Context,
+	workspaceID int64,
+) (tenantdomain.WorkspaceSettings, error) {
+	if service.settings == nil {
+		return tenantdomain.DefaultWorkspaceSettings(), nil
+	}
+	return service.settings.GetWorkspaceSettings(ctx, workspaceID)
+}
+
+// checkReportLock verifies that the time entry's start time is not before
+// the workspace's report_locked_at date. Entries before the lock date are
+// immutable — they cannot be updated or deleted.
+func (service *Service) checkReportLock(
+	ctx context.Context,
+	workspaceID int64,
+	entryStart time.Time,
+) error {
+	settings, err := service.getWorkspaceSettings(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+	lockAt := settings.ReportLockedAt()
+	if lockAt == "" {
+		return nil
+	}
+	lockTime, err := time.Parse(time.RFC3339, lockAt)
+	if err != nil {
+		service.logger.WarnContext(ctx, "invalid report_locked_at format, skipping lock check",
+			"workspace_id", workspaceID,
+			"report_locked_at", lockAt,
+		)
+		return nil
+	}
+	if entryStart.Before(lockTime) {
+		return ErrReportLocked
+	}
+	return nil
 }
 
 func (service *Service) resolveTrackingReferences(

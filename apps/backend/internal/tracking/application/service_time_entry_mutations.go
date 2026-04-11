@@ -35,6 +35,11 @@ func (service *Service) UpdateTimeEntry(ctx context.Context, command UpdateTimeE
 		return TimeEntryView{}, ErrTimeEntryNotFound
 	}
 
+	// Enforce report lock: entries before the lock date are immutable.
+	if err := service.checkReportLock(ctx, command.WorkspaceID, current.Start); err != nil {
+		return TimeEntryView{}, err
+	}
+
 	if command.ProjectID != nil {
 		if *command.ProjectID == 0 {
 			current.ProjectID = nil
@@ -223,6 +228,12 @@ func (service *Service) DeleteTimeEntry(ctx context.Context, workspaceID int64, 
 		)
 		return ErrTimeEntryNotFound
 	}
+
+	// Enforce report lock: entries before the lock date cannot be deleted.
+	if err := service.checkReportLock(ctx, workspaceID, entry.Start); err != nil {
+		return err
+	}
+
 	if err := service.store.DeleteTimeEntry(ctx, workspaceID, userID, timeEntryID); err != nil {
 		service.logger.ErrorContext(ctx, "failed to delete time entry",
 			"workspace_id", workspaceID,

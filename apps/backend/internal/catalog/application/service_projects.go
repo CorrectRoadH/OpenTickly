@@ -28,6 +28,31 @@ func (service *Service) CreateProject(ctx context.Context, command CreateProject
 		"name", command.Name,
 		"client_id", command.ClientID,
 	)
+
+	// Enforce workspace settings before any mutation.
+	settings, err := service.getWorkspaceSettings(ctx, command.WorkspaceID)
+	if err != nil {
+		return ProjectView{}, err
+	}
+	if err := service.requireAdminForSetting(ctx, command.WorkspaceID, command.CreatedBy, settings.OnlyAdminsMayCreateProjects()); err != nil {
+		service.logger.WarnContext(ctx, "create project denied by workspace settings",
+			"workspace_id", command.WorkspaceID,
+			"user_id", command.CreatedBy,
+		)
+		return ProjectView{}, err
+	}
+	if settings.ProjectsEnforceBillable() && command.Billable != nil && !*command.Billable {
+		return ProjectView{}, ErrBillableEnforced
+	}
+
+	// Apply workspace defaults when the caller did not specify a value.
+	if command.Billable == nil && settings.ProjectsBillableByDefault() {
+		command.Billable = lo.ToPtr(true)
+	}
+	if command.IsPrivate == nil && settings.ProjectsPrivateByDefault() {
+		command.IsPrivate = lo.ToPtr(true)
+	}
+
 	name, err := domain.NormalizeCatalogName(command.Name)
 	if err != nil {
 		service.logger.WarnContext(ctx, "invalid project data",
@@ -67,6 +92,16 @@ func (service *Service) UpdateProject(ctx context.Context, command UpdateProject
 		"workspace_id", command.WorkspaceID,
 		"project_id", command.ProjectID,
 	)
+
+	// Enforce workspace billable setting before any mutation.
+	settings, err := service.getWorkspaceSettings(ctx, command.WorkspaceID)
+	if err != nil {
+		return ProjectView{}, err
+	}
+	if settings.ProjectsEnforceBillable() && command.Billable != nil && !*command.Billable {
+		return ProjectView{}, ErrBillableEnforced
+	}
+
 	current, ok, err := service.store.GetProject(ctx, command.WorkspaceID, command.ProjectID)
 	if err != nil {
 		service.logger.ErrorContext(ctx, "failed to get project for update",

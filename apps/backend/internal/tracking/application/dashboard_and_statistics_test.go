@@ -168,7 +168,15 @@ func mustNewTrackingService(
 ) *trackingapplication.Service {
 	t.Helper()
 
-	service, err := trackingapplication.NewService(trackingpostgres.NewStore(database.Pool), catalogService, logger)
+	tenantStore := tenantpostgres.NewStore(database.Pool)
+	settingsLookup := trackingapplication.WorkspaceSettingsFromTenantStore(tenantStore.GetWorkspace)
+
+	service, err := trackingapplication.NewService(
+		trackingpostgres.NewStore(database.Pool),
+		catalogService,
+		logger,
+		trackingapplication.WithWorkspaceSettings(settingsLookup),
+	)
 	if err != nil {
 		t.Fatalf("new tracking service: %v", err)
 	}
