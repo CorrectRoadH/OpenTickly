@@ -119,7 +119,7 @@ func (handler *Handler) PostPublicTrackOrganization(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsPostPayload
 	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	result, err := handler.tenant.CreateOrganization(ctx.Request().Context(), tenantapplication.CreateOrganizationCommand{
@@ -176,7 +176,7 @@ func (handler *Handler) PutPublicTrackOrganization(ctx echo.Context) error {
 
 	var request publictrackapi.ModelsPutPayload
 	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	if err := handler.tenant.UpdateOrganization(ctx.Request().Context(), tenantapplication.UpdateOrganizationCommand{
@@ -215,7 +215,7 @@ func (handler *Handler) PutPublicTrackWorkspace(ctx echo.Context) error {
 
 	var request publictrackapi.WorkspacePayload
 	if err := ctx.Bind(&request); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	current, err := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))

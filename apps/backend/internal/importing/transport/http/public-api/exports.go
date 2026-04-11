@@ -147,7 +147,7 @@ func (handler *Handler) PostPublicTrackMeExport(ctx echo.Context) error {
 	}
 	var payload publictrackapi.ExportPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	token, err := handler.importing.StartUserExport(ctx.Request().Context(), user.ID, importingapplication.UserExportSelection{
 		Profile:  lo.FromPtr(payload.Profile),
@@ -193,7 +193,7 @@ func (handler *Handler) PostPublicTrackWorkspaceExports(ctx echo.Context, worksp
 	}
 	var payload []string
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	data, err := handler.collectWorkspaceExportData(ctx.Request().Context(), workspaceID, user.ID, payload)
 	if err != nil {

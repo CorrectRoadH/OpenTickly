@@ -122,7 +122,7 @@ func (handler *Handler) PostPublicTrackTimeEntryConstraints(ctx echo.Context) er
 	}
 	var payload publictrackapi.ModelsTimeEntryConstraints
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	err := handler.governance.UpdateTimeEntryConstraints(ctx.Request().Context(), governanceapplication.TimeEntryConstraintsView{
 		WorkspaceID:        workspaceID,
@@ -224,13 +224,13 @@ func (handler *Handler) PostPublicTrackTimesheetSetups(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsetupsCreatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	startDate := time.Now().UTC()
 	if payload.StartDate != nil && *payload.StartDate != "" {
 		parsed, err := parseDate(*payload.StartDate)
 		if err != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 		}
 		startDate = parsed
 	}
@@ -275,13 +275,13 @@ func (handler *Handler) PutPublicTrackTimesheetSetups(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsetupsUpdatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	var endDate *time.Time
 	if payload.EndDate != nil && *payload.EndDate != "" {
 		parsed, err := parseDate(*payload.EndDate)
 		if err != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 		}
 		endDate = &parsed
 	}
@@ -430,14 +430,14 @@ func (handler *Handler) PutPublicTrackTimesheetsBatch(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPutBatchTimesheetPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if payload.StartDate == nil || payload.TimesheetSetupId == nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	}
 	startDate, err := parseDate(*payload.StartDate)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	view, err := handler.governance.UpdateTimesheet(ctx.Request().Context(), governanceapplication.UpdateTimesheetCommand{
 		WorkspaceID:      workspaceID,
@@ -464,14 +464,14 @@ func (handler *Handler) GetPublicTrackTimesheetHours(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPostTimesheetHoursPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if payload.StartDate == nil || payload.TimesheetSetupId == nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request")
 	}
 	startDate, err := parseDate(*payload.StartDate)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	view, err := handler.governance.GetTimesheetHours(ctx.Request().Context(), workspaceID, int64(*payload.TimesheetSetupId), startDate)
 	if err != nil {
@@ -496,7 +496,7 @@ func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
 	}
 	startDate, err := parseDate(ctx.Param("start_date"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	requester, err := handler.scope.RequirePublicTrackUser(ctx)
 	if err != nil {
@@ -507,7 +507,7 @@ func (handler *Handler) PutPublicTrackTimesheet(ctx echo.Context) error {
 	}
 	var payload publictrackapi.TimesheetsPutTimesheetPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	view, err := handler.governance.UpdateTimesheet(ctx.Request().Context(), governanceapplication.UpdateTimesheetCommand{
 		WorkspaceID:      workspaceID,
@@ -539,7 +539,7 @@ func (handler *Handler) GetPublicTrackTimesheetTimeEntries(ctx echo.Context) err
 	}
 	startDate, err := parseDate(ctx.Param("start_date"))
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -572,7 +572,7 @@ func (handler *Handler) saveAlert(ctx echo.Context, alertID *int64) error {
 		Thresholds    *[]int    `json:"thresholds"`
 	}
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	var projectID *int64
 	if payload.ProjectId != nil {

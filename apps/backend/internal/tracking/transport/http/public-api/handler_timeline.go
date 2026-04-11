@@ -43,7 +43,7 @@ func (handler *Handler) PostPublicTrackTimeline(ctx echo.Context) error {
 	}
 	var payload []publictrackapi.ModelsTimelineEvent
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	events := make([]trackingapplication.TimelineEventView, 0, len(payload))
 	for _, event := range payload {

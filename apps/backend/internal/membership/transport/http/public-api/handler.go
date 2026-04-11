@@ -56,7 +56,7 @@ func (handler *Handler) GetPublicTrackWorkspaceUsers(ctx echo.Context) error {
 	if value := strings.TrimSpace(ctx.QueryParam("exclude_deleted")); value != "" {
 		parsed, parseErr := strconv.ParseBool(value)
 		if parseErr != nil {
-			return ctx.JSON(http.StatusBadRequest, "Bad Request")
+			return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 		}
 		excludeDeleted = parsed
 	}
@@ -79,7 +79,7 @@ func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx echo.Context) erro
 
 	var userIDs []int64
 	if err := ctx.Bind(&userIDs); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	memberByUserID := make(map[int64]membershipapplication.WorkspaceMemberView, len(members))
@@ -102,7 +102,7 @@ func (handler *Handler) PostPublicTrackWorkspaceUsersData(ctx echo.Context) erro
 
 func (handler *Handler) GetPublicTrackWorkspaceWorkspaceUsers(ctx echo.Context) error {
 	if _, parseErr := strconv.ParseBool(ctx.QueryParam("includeIndirect")); parseErr != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(parseErr)
 	}
 
 	_, _, members, err := handler.workspaceMembers(ctx)
@@ -196,7 +196,7 @@ func (handler *Handler) updateWorkspaceMember(
 ) error {
 	var payload publictrackapi.GithubComTogglTogglApiInternalServicesWorkspaceUserPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	if payload.Role != nil || payload.Rate != nil || payload.LaborCost != nil {
@@ -210,7 +210,7 @@ func (handler *Handler) updateWorkspaceMember(
 		if payload.Role != nil {
 			role, err := publicTrackWorkspaceRole(*payload.Role)
 			if err != nil {
-				return ctx.JSON(http.StatusBadRequest, "Bad Request")
+				return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 			}
 			command.Role = &role
 		}

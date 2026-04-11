@@ -33,7 +33,7 @@ func (handler *Handler) PostPublicTrackFavorite(ctx echo.Context) error {
 	}
 	var payload publictrackapi.HandlerfavoritesPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	favorite, err := handler.tracking.UpsertFavorite(ctx.Request().Context(), trackingapplication.UpsertFavoriteCommand{
 		WorkspaceID: workspaceID,
@@ -58,7 +58,7 @@ func (handler *Handler) PutPublicTrackFavorite(ctx echo.Context) error {
 	}
 	var payload publictrackapi.FavoritesUpdateFavorite
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	favoriteID := int64PointerFromTrackIntPointer(payload.FavoriteId)
 	if favoriteID == nil {

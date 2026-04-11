@@ -57,15 +57,15 @@ func (handler *Handler) PostPublicTrackGoal(ctx echo.Context) error {
 	}
 	var payload publictrackapi.HandlergoalsCreatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	startDate, err := parseTrackDate(payload.StartDate)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	endDate, err := parseOptionalTrackDate(payload.EndDate)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	goal, err := handler.tracking.CreateGoal(ctx.Request().Context(), trackingapplication.CreateGoalCommand{
 		WorkspaceID:   workspaceID,
@@ -100,11 +100,11 @@ func (handler *Handler) PutPublicTrackGoal(ctx echo.Context) error {
 	}
 	var payload publictrackapi.HandlergoalsUpdatePayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	endDate, err := parseOptionalTrackDate(payload.EndDate)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	goal, err := handler.tracking.UpdateGoal(ctx.Request().Context(), trackingapplication.UpdateGoalCommand{
 		WorkspaceID:   workspaceID,

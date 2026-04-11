@@ -81,7 +81,7 @@ func (handler *Handler) GetPublicTrackOrganizationPlan(ctx echo.Context) error {
 	}
 	planID, err := strconv.Atoi(ctx.Param("plan_id"))
 	if err != nil || planID <= 0 {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 
 	availablePlans := handler.billing.AvailablePlans()

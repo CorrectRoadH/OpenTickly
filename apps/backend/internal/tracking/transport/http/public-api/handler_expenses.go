@@ -36,7 +36,7 @@ func (handler *Handler) PostPublicTrackExpense(ctx echo.Context) error {
 	}
 	payload, err := bindPublicTrackExpensePayload(ctx)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if payload.DateOfExpense == nil {
 		today := time.Now().UTC().Format("2006-01-02")
@@ -44,7 +44,7 @@ func (handler *Handler) PostPublicTrackExpense(ctx echo.Context) error {
 	}
 	dateOfExpense, err := parseTrackDate(payload.DateOfExpense)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	expense, err := handler.tracking.CreateExpense(ctx.Request().Context(), trackingapplication.CreateExpenseCommand{
 		WorkspaceID:   workspaceID,

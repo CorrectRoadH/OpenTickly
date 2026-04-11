@@ -37,7 +37,7 @@ func (handler *Handler) PostPublicTrackTrackReminder(ctx echo.Context) error {
 	}
 	var payload publictrackapi.RemindersPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	reminder, err := handler.tracking.UpsertReminder(ctx.Request().Context(), trackingapplication.UpsertReminderCommand{
 		WorkspaceID:          workspaceID,
@@ -65,7 +65,7 @@ func (handler *Handler) PutPublicTrackTrackReminder(ctx echo.Context) error {
 	}
 	var payload publictrackapi.RemindersPayload
 	if err := ctx.Bind(&payload); err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	reminder, err := handler.tracking.UpsertReminder(ctx.Request().Context(), trackingapplication.UpsertReminderCommand{
 		WorkspaceID:          workspaceID,

@@ -18,7 +18,7 @@ import (
 func (handler *Handler) GetWorkspaceInvoices(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -44,7 +44,7 @@ func (handler *Handler) GetWorkspaceInvoices(ctx echo.Context) error {
 func (handler *Handler) PostWorkspaceUserInvoice(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -115,7 +115,7 @@ func (handler *Handler) PostWorkspaceUserInvoice(ctx echo.Context) error {
 func (handler *Handler) GetWorkspaceInvoice(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -137,7 +137,7 @@ func (handler *Handler) GetWorkspaceInvoice(ctx echo.Context) error {
 func (handler *Handler) DeleteWorkspaceInvoice(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -158,7 +158,7 @@ func (handler *Handler) DeleteWorkspaceInvoice(ctx echo.Context) error {
 func (handler *Handler) GetWorkspacePurchaseOrderPdf(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
@@ -170,7 +170,7 @@ func (handler *Handler) GetWorkspacePurchaseOrderPdf(ctx echo.Context) error {
 func (handler *Handler) GetWorkspacePaymentReceipts(ctx echo.Context) error {
 	workspaceID, err := strconv.ParseInt(ctx.Param("workspace_id"), 10, 64)
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
