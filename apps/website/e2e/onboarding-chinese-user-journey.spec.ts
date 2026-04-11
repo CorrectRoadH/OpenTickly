@@ -21,6 +21,9 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     // Wait for onboarding dialog to appear
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
+    // Verify dialog card has bottom padding
+    await expect(dialog).toHaveCSS("padding-bottom", "20px");
+
     // Step 1 (language): select 中文, then click Continue (still English at this point)
     await dialog.getByRole("button", { name: "中文" }).click();
     await dialog.getByRole("button", { name: "Continue" }).click();
