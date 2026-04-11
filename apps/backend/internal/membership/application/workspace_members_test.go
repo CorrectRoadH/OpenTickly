@@ -257,6 +257,84 @@ func TestServiceListMembersWithLegacyOwnerRole(t *testing.T) {
 	}
 }
 
+// smtpNotConfigured is a stub SMTPChecker that always reports SMTP as not configured.
+type smtpNotConfigured struct{}
+
+func (s smtpNotConfigured) IsSMTPConfigured() bool { return false }
+
+func TestInviteWorkspaceMemberRejectsWhenSMTPNotConfigured(t *testing.T) {
+	database := pgtest.Open(t)
+	ctx := context.Background()
+
+	baseID := uniqueTestID(t)
+	ownerID := baseID
+	ownerEmail := fmt.Sprintf("owner-smtp-%d@example.com", baseID)
+	inviteeEmail := fmt.Sprintf("invitee-smtp-%d@example.com", baseID)
+
+	billingService, err := billingapplication.NewService(
+		billingpostgres.NewAccountRepository(database.Pool),
+		billingpostgres.NewWorkspaceOwnershipLookup(database.Pool),
+		[]billingdomain.CapabilityRule{
+			{Key: "time_tracking", MinimumPlan: billingdomain.PlanFree},
+		},
+		log.NopLogger(),
+	)
+	if err != nil {
+		t.Fatalf("new billing service: %v", err)
+	}
+
+	tenantService, err := tenantapplication.NewService(tenantpostgres.NewStore(database.Pool), billingService, log.NopLogger())
+	if err != nil {
+		t.Fatalf("new tenant service: %v", err)
+	}
+	tenantResult, err := tenantService.CreateOrganization(ctx, tenantapplication.CreateOrganizationCommand{
+		Name:          "SMTP Test Org",
+		WorkspaceName: "SMTP Test Workspace",
+	})
+	if err != nil {
+		t.Fatalf("create organization: %v", err)
+	}
+
+	record, err := identitydomain.RegisterUser(identitydomain.RegisterParams{
+		ID:       ownerID,
+		Email:    ownerEmail,
+		FullName: "SMTP Test Owner",
+		Password: "secret1",
+		APIToken: ownerEmail + "-token",
+	})
+	if err != nil {
+		t.Fatalf("register identity user: %v", err)
+	}
+	if err := identitypostgres.NewUserRepository(database.Pool).Save(ctx, record); err != nil {
+		t.Fatalf("save identity user: %v", err)
+	}
+
+	service, err := membershipapplication.NewService(
+		membershippostgres.NewStore(database.Pool),
+		membershipapplication.WithSMTPChecker(smtpNotConfigured{}),
+		membershipapplication.WithLogger(log.NopLogger()),
+	)
+	if err != nil {
+		t.Fatalf("new membership service: %v", err)
+	}
+
+	if _, err := service.EnsureWorkspaceOwner(ctx, membershipapplication.EnsureWorkspaceOwnerCommand{
+		WorkspaceID: int64(tenantResult.WorkspaceID),
+		UserID:      ownerID,
+	}); err != nil {
+		t.Fatalf("ensure owner: %v", err)
+	}
+
+	_, err = service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
+		WorkspaceID: int64(tenantResult.WorkspaceID),
+		RequestedBy: ownerID,
+		Email:       inviteeEmail,
+	})
+	if err != membershipapplication.ErrSMTPNotConfigured {
+		t.Fatalf("expected ErrSMTPNotConfigured, got %v", err)
+	}
+}
+
 func TestServiceEnsureWorkspaceOwnerRequiresExistingIdentityUserWithPostgresStore(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()

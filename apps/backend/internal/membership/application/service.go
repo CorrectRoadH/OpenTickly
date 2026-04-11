@@ -102,6 +102,9 @@ func (service *Service) InviteWorkspaceMember(
 	ctx context.Context,
 	command InviteWorkspaceMemberCommand,
 ) (WorkspaceMemberView, error) {
+	if err := service.requireSMTP(); err != nil {
+		return WorkspaceMemberView{}, err
+	}
 	if err := service.requireManager(ctx, command.WorkspaceID, command.RequestedBy); err != nil {
 		return WorkspaceMemberView{}, err
 	}
