@@ -1,6 +1,8 @@
 package publicapi
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -55,7 +57,9 @@ func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
 		_ = handler.files.Delete(ctx.Request().Context(), view.Branding.LogoStorageKey)
 	}
 
-	storageKey := workspaceLogoStorageKey(workspaceID, fileHeader.Filename)
+	hash := sha256.Sum256(content)
+	contentHash := hex.EncodeToString(hash[:8])
+	storageKey := workspaceLogoStorageKey(workspaceID, contentHash, fileHeader.Filename)
 	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
 		slog.Error("logo upload: failed to store file", "error", err, "key", storageKey)
 		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to store logo"})
@@ -116,7 +120,7 @@ func workspaceLogoBody(view tenantapplication.WorkspaceView) publictrackapi.Mode
 	}
 }
 
-func workspaceLogoStorageKey(workspaceID int64, fileName string) string {
+func workspaceLogoStorageKey(workspaceID int64, contentHash string, fileName string) string {
 	extension := strings.ToLower(strings.TrimSpace(filepath.Ext(fileName)))
-	return fmt.Sprintf("tenant/workspaces/%d/logo%s", workspaceID, extension)
+	return fmt.Sprintf("tenant/workspaces/%d/%s%s", workspaceID, contentHash, extension)
 }

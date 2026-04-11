@@ -38,8 +38,8 @@ test.describe("Story: upload and remove profile avatar", () => {
     const body = await avatarResponse.json();
     const avatarUrl: string = body.avatar_urls?.original ?? "";
 
-    // The URL must be a real /files/ path, not a fake CDN URL
-    expect(avatarUrl).toMatch(/^\/files\/identity\/avatars\/\d+\/avatar\.png$/);
+    // The URL must be a real /files/ path with content hash, not a fake CDN URL
+    expect(avatarUrl).toMatch(/^\/files\/identity\/avatars\/\d+\/[0-9a-f]{16}\.png$/);
 
     // Verify success toast appears
     await expect(page.getByText("Avatar uploaded")).toBeVisible({ timeout: 5_000 });

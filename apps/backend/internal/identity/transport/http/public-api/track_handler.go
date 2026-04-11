@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"crypto/sha256"
+	"encoding/hex"
 	"io"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
@@ -575,8 +577,10 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 		_ = handler.files.Delete(ctx.Request().Context(), user.AvatarStorageKey)
 	}
 
+	hash := sha256.Sum256(content)
+	contentHash := hex.EncodeToString(hash[:8])
 	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileHeader.Filename)))
-	storageKey := fmt.Sprintf("identity/avatars/%d/avatar%s", user.ID, ext)
+	storageKey := fmt.Sprintf("identity/avatars/%d/%s%s", user.ID, contentHash, ext)
 
 	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
 		slog.Error("avatar upload: failed to store file", "error", err, "key", storageKey)
