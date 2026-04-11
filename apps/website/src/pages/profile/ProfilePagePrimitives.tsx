@@ -1,5 +1,4 @@
-import { Upload, Trash2 } from "lucide-react";
-import { type ReactElement, type ReactNode, useRef, useState } from "react";
+import { type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
@@ -8,6 +7,7 @@ import { AppCheckbox, AppPanel, SelectDropdown } from "@opentoggl/web-ui";
 import { deleteAvatars, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 import type { PostAvatarsResponses } from "../../shared/api/generated/public-track/types.gen.ts";
+import { ImageUploadZone } from "../../shared/ui/ImageUploadZone.tsx";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const sectionCardClassName =
@@ -169,11 +169,8 @@ export function ProfileHeroCard({
   rows: ReadonlyArray<{ label: string; value: string }>;
 }): ReactElement {
   const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
 
   async function handleUpload(file: File): Promise<void> {
-    setUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -190,21 +187,16 @@ export function ProfileHeroCard({
       toast.success(t("toast:avatarUploaded"));
     } catch (err) {
       toast.error(err instanceof WebApiError ? err.userMessage : t("toast:failedToUploadAvatar"));
-    } finally {
-      setUploading(false);
     }
   }
 
   async function handleDelete(): Promise<void> {
-    setUploading(true);
     try {
       await unwrapWebApiResult(deleteAvatars());
       onAvatarChange?.(null);
       toast.success(t("toast:avatarRemoved"));
     } catch (err) {
       toast.error(err instanceof WebApiError ? err.userMessage : t("toast:failedToRemoveAvatar"));
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -212,51 +204,19 @@ export function ProfileHeroCard({
     <AppPanel className="p-0" tone="transparent">
       <div className="flex flex-col md:flex-row md:min-h-[331px] md:items-start">
         <div className="flex items-center justify-center p-6 md:flex md:h-[331px] md:w-[268px] md:items-start">
-          <div className="group relative flex size-[160px] items-start rounded-[80px] border border-[var(--track-border)] bg-[var(--track-surface)] md:size-[220px] md:rounded-[110px]">
-            <input
-              accept="image/png,image/jpeg,image/gif"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) {
-                  void handleUpload(file);
-                }
-                event.target.value = "";
-              }}
-              ref={fileInputRef}
-              type="file"
+          <ImageUploadZone
+            imageUrl={avatarImageUrl}
+            onDelete={handleDelete}
+            onUpload={handleUpload}
+            variant="circle"
+          >
+            <UserAvatar
+              className="size-[156px] rounded-[78px] bg-[var(--track-surface)] md:size-[216px] md:rounded-[108px]"
+              imageUrl={avatarImageUrl ?? undefined}
+              name={profileName}
+              textClassName="text-5xl font-semibold md:text-6xl"
             />
-            <div className="flex h-full w-full items-center justify-center py-[2px]">
-              <UserAvatar
-                className="size-[156px] rounded-[78px] bg-[var(--track-surface)] md:size-[216px] md:rounded-[108px]"
-                imageUrl={avatarImageUrl ?? undefined}
-                name={profileName}
-                textClassName="text-5xl font-semibold md:text-6xl"
-              />
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-[80px] bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 md:rounded-[110px]">
-              <button
-                className="flex size-10 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
-                disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
-                title={t("uploadAvatar")}
-                type="button"
-              >
-                <Upload className="size-5" />
-              </button>
-              {avatarImageUrl ? (
-                <button
-                  className="flex size-10 items-center justify-center rounded-full bg-white/20 text-red-300 hover:bg-white/30"
-                  disabled={uploading}
-                  onClick={() => void handleDelete()}
-                  title={t("removeAvatar")}
-                  type="button"
-                >
-                  <Trash2 className="size-5" />
-                </button>
-              ) : null}
-            </div>
-          </div>
+          </ImageUploadZone>
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col px-4 md:min-h-[331px] md:pl-3">
