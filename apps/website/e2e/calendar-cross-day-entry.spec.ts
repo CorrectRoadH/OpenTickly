@@ -154,8 +154,10 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       // Both segments in the same week — verify they occupy adjacent columns
       await expect(timeGridEntries).toHaveCount(2);
 
-      // Wait briefly for the calendar to stabilize to avoid detached DOM nodes.
-      await page.waitForTimeout(500);
+      // Wait for calendar layout to stabilize before querying DOM positions.
+      await page.evaluate(
+        () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+      );
 
       const firstCol = await timeGridEntries.first().evaluate((el) => {
         const slot = el.closest(".rbc-day-slot");
@@ -175,7 +177,9 @@ test.describe("Calendar: cross-day (overnight) time entries", () => {
       // in the last column of the week grid (today is the last day of the week).
       await expect(timeGridEntries).toHaveCount(1, { timeout: 10_000 });
 
-      await page.waitForTimeout(500);
+      await page.evaluate(
+        () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+      );
       const colInfo = await timeGridEntries.first().evaluate((el) => {
         const slot = el.closest(".rbc-day-slot");
         if (!slot?.parentElement) return { index: -1, total: 0 };

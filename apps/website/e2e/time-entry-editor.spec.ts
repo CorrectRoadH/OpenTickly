@@ -80,8 +80,6 @@ test.describe("Story: edit a stopped time entry", () => {
     const descInput = dialog.getByLabel("Time entry description");
     await descInput.fill("Dirty edit");
     await expect(descInput).toHaveValue("Dirty edit");
-    // Wait for React to propagate the dirty state from the description change
-    await page.waitForTimeout(100);
     await page.keyboard.press("Escape");
 
     const discardPrompt = page.getByTestId("time-entry-editor-discard-confirmation");
@@ -217,7 +215,10 @@ test.describe("Story: edit a stopped time entry", () => {
 
     // Only assert scroll tracking if the page was actually scrollable
     if (scrolled > 50) {
-      await page.waitForTimeout(100);
+      // Wait for scroll layout to settle
+      await page.evaluate(
+        () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+      );
       const entryBoxAfter = await entryButton.boundingBox();
       const dialogBoxAfter = await dialog.boundingBox();
       expect(entryBoxAfter).not.toBeNull();

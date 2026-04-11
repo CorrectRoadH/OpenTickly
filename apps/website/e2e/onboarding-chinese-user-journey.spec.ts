@@ -27,7 +27,6 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     // Step 1 (language): select 中文, then click Continue (still English at this point)
     await dialog.getByRole("button", { name: "中文" }).click();
     await dialog.getByRole("button", { name: "Continue" }).click();
-    await page.waitForTimeout(300);
 
     // After language step completes, i18n switches to Chinese immediately.
     // Steps 2-4 buttons are now in Chinese: "继续" (Continue), "开始追踪" (Start tracking).
@@ -40,12 +39,10 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
         break;
       } else if (await continueBtn.isVisible().catch(() => false)) {
         await continueBtn.click();
-        await page.waitForTimeout(300);
       } else {
         break;
       }
     }
-    await page.waitForTimeout(500);
 
     // ===== 第3步：验证 Timer 页面显示中文 =====
     // onboarding 完成后保存偏好到后端，LanguageSync 切换到中文
@@ -87,7 +84,6 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     // 语言下拉框是自定义 SelectDropdown
     await page.getByRole("button", { name: "中文" }).click();
     await page.getByRole("option", { name: "English" }).click();
-    await page.waitForTimeout(500);
 
     // ===== 第5步：验证 UI 立即更新为英文 =====
     await expect(page.getByRole("heading", { name: "Account Settings" })).toBeVisible();
@@ -111,7 +107,6 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
 
     await page.getByRole("button", { name: "English" }).click();
     await page.getByRole("option", { name: "中文" }).click();
-    await page.waitForTimeout(500);
 
     // 验证 UI 立即更新为中文
     await expect(page.getByRole("heading", { name: "账户设置" })).toBeVisible();

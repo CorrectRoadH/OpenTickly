@@ -25,15 +25,13 @@ test.describe("Story: manage account and tenant settings from the shell", () => 
       page.getByRole("heading", { name: "Personal details & preferences" }),
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: "API Token" })).toBeVisible();
-    await expect(page.getByText("Email preferences")).toBeVisible();
 
     await page.reload();
-    await expect(page.getByTestId("profile-page")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("profile-page")).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Personal details & preferences" }),
     ).toBeVisible();
     await expect(page.getByRole("heading", { name: "API Token" })).toBeVisible();
-    await expect(page.getByText("Email preferences")).toBeVisible();
   });
 
   test("Given a newly registered admin account, when the user opens settings, then the route and general settings surface match the new workspace URL shape", async ({

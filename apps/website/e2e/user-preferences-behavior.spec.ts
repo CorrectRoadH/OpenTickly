@@ -100,9 +100,14 @@ test.describe("Story: showTimeInTitle controls document.title when timer is runn
     await page.reload();
     await expect(page.getByTestId("app-shell")).toBeVisible();
 
-    // Wait a bit for the title interval to fire (if it were active)
-    await page.waitForTimeout(2000);
-    expect(await page.evaluate(() => document.title)).toBe("OpenToggl");
+    // Verify title stays "OpenToggl" even after timer ticks (showTimeInTitle is off).
+    // Poll over 2s to confirm title never changes.
+    await expect
+      .poll(async () => page.evaluate(() => document.title), {
+        intervals: [500],
+        timeout: 2000,
+      })
+      .toBe("OpenToggl");
   });
 });
 

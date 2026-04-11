@@ -96,9 +96,50 @@ Non-TDD work still requires proportional verification:
 
 A task is complete only when it passes tests **and** matches `docs/`/`openapi/` definitions.
 
-## E2E Flaky Test Tracking
+## E2E Stability Standards
 
-Playwright config has `retries: 1` and a JSON reporter.每次跑完测试后执行：
+Tests must only wait for **state signals**, never for time. The single rule: if a default 5s assertion timeout isn't enough, the test is waiting for the wrong thing.
+
+### Banned: `waitForTimeout`
+
+`page.waitForTimeout()` is banned in E2E tests. It is both slow (wastes CI time) and flaky (too short on slow runners).
+
+- **Only exception**: DnD tests that simulate mouse step timing (`waitForTimeout(50)`).
+- **Replace with**: auto-retry assertions (`expect(locator).toBeVisible()`, `.toHaveText()`, `.toHaveURL()`).
+
+### Required: page-ready gate after navigation
+
+After `page.goto()` or `page.reload()`, always wait for the page-level container testid before any interaction or assertion:
+
+```ts
+// ✅ Correct — wait for page content to be ready
+await page.goto("/overview");
+await expect(page.getByTestId("workspace-overview-page")).toBeVisible();
+await page.getByRole("link", { name: "Timer" }).click();
+
+// ❌ Wrong — visible ≠ clickable when Suspense/loading overlays exist
+await page.goto("/overview");
+await expect(page.getByRole("link", { name: "Timer" })).toBeVisible();
+await page.getByRole("link", { name: "Timer" }).click();
+```
+
+### Required: UI confirmation after API writes
+
+After creating data via `page.evaluate(fetch(...))`, wait for the UI to reflect it before proceeding:
+
+```ts
+await createTimeEntryForWorkspace(page, {...});
+await page.goto("/timer");
+await expect(page.getByText("My Entry")).toBeVisible(); // wait for data
+```
+
+### `actionTimeout` in playwright.config.ts
+
+Set `actionTimeout: 5_000` so a stuck `.click()` fails in 5s with a precise locator error, instead of burning the full 30s test timeout with an unhelpful "test timeout exceeded" message. This makes tests **faster to fail**, not slower to pass.
+
+### Flaky Test Tracking
+
+Playwright config has `retries: 1` and a JSON reporter. 每次跑完测试后执行：
 
 ```bash
 vp run website#test:e2e:stats

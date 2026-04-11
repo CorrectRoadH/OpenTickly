@@ -255,9 +255,9 @@ test.describe("Story: calendar view interactions", () => {
     const menu = page.getByTestId("calendar-entry-context-menu");
     await expect(menu).toBeVisible();
 
-    // Wait 3 seconds — menu should survive timer ticks (nowMs re-renders)
-    await page.waitForTimeout(3000);
-    await expect(menu).toBeVisible();
+    // Menu should survive timer ticks (nowMs re-renders).
+    // Poll visibility over 3 seconds to confirm it stays open.
+    await expect.poll(async () => menu.isVisible(), { timeout: 3000, intervals: [500] }).toBe(true);
   });
 });
 

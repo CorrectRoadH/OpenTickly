@@ -682,8 +682,10 @@ test.describe("Timer page family mainline", () => {
     // Should not show a stale or negative value
     expect(elapsedText).not.toContain("492847");
 
-    // Wait a moment and verify elapsed updates
-    await page.waitForTimeout(1500);
+    // Wait for elapsed display to advance (timer ticks every second)
+    await expect
+      .poll(async () => page.getByTestId("timer-elapsed").textContent(), { timeout: 3000 })
+      .not.toBe(elapsedText);
     const elapsedTextAfter = await page.getByTestId("timer-elapsed").textContent();
     expect(elapsedTextAfter).toMatch(/\d{1,2}:\d{2}:\d{2}/);
   });
@@ -882,7 +884,9 @@ test.describe("Timer page family mainline", () => {
 
     // Scroll the window down
     await page.evaluate(() => window.scrollBy(0, 500));
-    await page.waitForTimeout(100);
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
 
     const after = await weekRangeButton.evaluate(
       (el: HTMLElement) => el.getBoundingClientRect().top,
@@ -915,13 +919,17 @@ test.describe("Timer page family mainline", () => {
 
     // Scroll to top first
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForTimeout(100);
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
 
     const before = await dayHeader.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
     // Scroll down via window
     await page.evaluate(() => window.scrollBy(0, 500));
-    await page.waitForTimeout(100);
+    await page.evaluate(
+      () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+    );
 
     const after = await dayHeader.evaluate((el: HTMLElement) => el.getBoundingClientRect().top);
 
@@ -1172,12 +1180,10 @@ test.describe("VAL-ENTRY-001 & VAL-CROSS-005: TimerView persistence", () => {
     // Should not show a stale value like what might come from raw duration
     expect(runningElapsed1).not.toContain("492847");
 
-    // Wait and verify elapsed updates (advances from start time)
-    await page.waitForTimeout(1500);
-    const runningElapsed2 = await page.getByTestId("timer-elapsed").textContent();
-    expect(runningElapsed2).toMatch(/\d{1,2}:\d{2}:\d{2}/);
-    // The second reading should be greater than the first (time is advancing)
-    expect(runningElapsed2).not.toBe(runningElapsed1);
+    // Wait for elapsed display to advance (timer ticks every second)
+    await expect
+      .poll(async () => page.getByTestId("timer-elapsed").textContent(), { timeout: 3000 })
+      .not.toBe(runningElapsed1);
 
     // Stop the timer
     await page.getByRole("button", { name: "Stop timer" }).click();

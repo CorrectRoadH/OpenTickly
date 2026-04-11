@@ -224,6 +224,7 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     // Start on overview page (after login lands on /timer, navigate away to overview)
     await page.goto(new URL("/overview", page.url()).toString());
     await expect(page).toHaveURL(/\/overview(?:\?.*)?$/);
+    await expect(page.getByTestId("workspace-overview-page")).toBeVisible();
 
     // Verify Timer nav link is visible
     const timerNavLink = page.getByRole("link", { name: "Timer" });
@@ -359,7 +360,7 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     // PAGE 1: Navigate to /timer via shell click (Timer nav link)
     await page.goto(new URL("/overview", page.url()).toString());
-    await expect(page.getByRole("link", { name: "Timer" })).toBeVisible();
+    await expect(page.getByTestId("workspace-overview-page")).toBeVisible();
     await page.getByRole("link", { name: "Timer" }).click();
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();

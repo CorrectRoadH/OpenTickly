@@ -166,11 +166,8 @@ test.describe("Timer Composer Suggestions", () => {
     const descriptionInput = page.getByLabel("Time entry description");
     await descriptionInput.fill("肖");
 
-    // Wait a bit for filtering to happen
-    await page.waitForTimeout(500);
-
     // The suggestions should be filtered to show only matching entries
-    await expect(suggestionsDialog).toContainText("给肖建飞", { timeout: 5000 });
+    await expect(suggestionsDialog).toContainText("给肖建飞");
     await expect(suggestionsDialog).not.toContainText("Another completely different task");
   });
 });

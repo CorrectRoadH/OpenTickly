@@ -28,8 +28,10 @@ async function switchPageLanguage(page: import("@playwright/test").Page, lang: s
       await i18n.changeLanguage(lng);
     }
   }, lang);
-  // Allow React to re-render with the new language.
-  await page.waitForTimeout(500);
+  // Wait for React to re-render with the new language.
+  await page.evaluate(
+    () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))),
+  );
 }
 
 test.describe("Mobile calendar: entry positioning (CJK locale)", () => {
