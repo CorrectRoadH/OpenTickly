@@ -1,4 +1,5 @@
 import { AppButton, AppSurfaceState, PageHeader, SurfaceCard } from "@opentoggl/web-ui";
+import { useQueryClient } from "@tanstack/react-query";
 import { type ReactElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useForm, useWatch } from "react-hook-form";
@@ -13,6 +14,7 @@ import {
   useResetApiTokenMutation,
   useProfileQuery,
   useUpdatePreferencesMutation,
+  sessionQueryKey,
 } from "../../shared/query/web-shell.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useSession } from "../../shared/session/session-context.tsx";
@@ -28,6 +30,7 @@ import {
 
 export function ProfilePage(): ReactElement {
   const { t } = useTranslation("profile");
+  const queryClient = useQueryClient();
   const session = useSession();
   const profileQuery = useProfileQuery();
   const preferencesQuery = usePreferencesQuery();
@@ -200,6 +203,7 @@ export function ProfilePage(): ReactElement {
             avatarImageUrl={profileQuery.data.image_url ?? session.user.imageUrl}
             onAvatarChange={() => {
               void profileQuery.refetch();
+              void queryClient.invalidateQueries({ queryKey: sessionQueryKey });
             }}
             profileName={profileName || t("unnamedUser")}
             rows={heroRows}
