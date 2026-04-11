@@ -9,7 +9,7 @@
   "none": "Ninguno",
   "selectMembers": "Seleccionar miembro(s)",
   "noMembersFound": "No se encontraron miembros",
-  "membersSelected": "{{count}} miembro{{count !== 1 ? 's' : ''}} seleccionado{{count !== 1 ? 's' : ''}}",
+  "membersSelected": "{{count}} miembros seleccionados",
   "approverLevel1": "Aprobador(es) Nivel 1",
   "selectTimesheetApprover": "Seleccionar aprobador de hoja de tiempo",
   "period": "Período",

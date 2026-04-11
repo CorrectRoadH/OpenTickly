@@ -13,7 +13,7 @@
   "clientRenamed": "클라이언트 이름이 변경되었습니다",
   "clientDeleted": "클라이언트가 삭제되었습니다",
   "clientArchived": "클라이언트가 보관되었습니다",
-  "itemsSelected": "{{count}}개 항목{{count !== 1 ? 's' : ''}} 선택됨",
+  "itemsSelected": "{{count}}개 항목 선택됨",
   "edit": "편집",
   "archive": "보관",
   "delete": "삭제",

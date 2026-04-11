@@ -9,7 +9,7 @@
   "none": "Aucun",
   "selectMembers": "Sélectionner le(s) membre(s)",
   "noMembersFound": "Aucun membre trouvé",
-  "membersSelected": "{{count}} membre{{count !== 1 ? 's' : ''}} sélectionné{{count !== 1 ? 's' : ''}}",
+  "membersSelected": "{{count}} membres sélectionnés",
   "approverLevel1": "Approbateur(s) Niveau 1",
   "selectTimesheetApprover": "Sélectionner un approbateur de feuille de temps",
   "period": "Période",

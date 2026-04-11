@@ -9,7 +9,7 @@
   "none": "None",
   "selectMembers": "Select member(s)",
   "noMembersFound": "No members found",
-  "membersSelected": "{{count}} member{{count !== 1 ? 's' : ''}} selected",
+  "membersSelected": "{{count}} members selected",
   "approverLevel1": "Approver(s) Level 1",
   "selectTimesheetApprover": "Select timesheet approver",
   "period": "Period",

@@ -13,7 +13,7 @@
   "clientRenamed": "Cliente renombrado",
   "clientDeleted": "Cliente eliminado",
   "clientArchived": "Cliente archivado",
-  "itemsSelected": "{{count}} elemento{{count !== 1 ? 's' : ''}} seleccionado{{count !== 1 ? 's' : ''}}",
+  "itemsSelected": "{{count}} elementos seleccionados",
   "edit": "Editar",
   "archive": "Archivar",
   "delete": "Eliminar",

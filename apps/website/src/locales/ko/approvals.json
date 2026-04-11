@@ -9,7 +9,7 @@
   "none": "없음",
   "selectMembers": "멤버 선택",
   "noMembersFound": "멤버를 찾을 수 없습니다",
-  "membersSelected": "{{count}}명의 멤버{{count !== 1 ? 's' : ''}} 선택됨",
+  "membersSelected": "{{count}}명의 멤버 선택됨",
   "approverLevel1": "승인자 레벨 1",
   "selectTimesheetApprover": "근무표 승인자 선택",
   "period": "기간",
