@@ -91,8 +91,7 @@ function MobileProtectedBoundary({ children }: { children: ReactNode }) {
 
   return (
     <SessionProvider sessionBootstrap={sessionQuery.data}>
-      <LanguageSync />
-      {children}
+      <LanguageSync>{children}</LanguageSync>
     </SessionProvider>
   );
 }

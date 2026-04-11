@@ -100,6 +100,16 @@ A task is complete only when it passes tests **and** matches `docs/`/`openapi/` 
 
 Tests must only wait for **state signals**, never for time. The single rule: if a default 5s assertion timeout isn't enough, the test is waiting for the wrong thing.
 
+### Banned: inflated timeouts as fixes
+
+Bumping a timeout to make a flaky test pass hides a real bug. When an assertion needs more than the default 5s:
+
+1. **Diagnose**: the app is making the user wait for something that should already be settled (e.g. language flash, stale cache, unblocked render).
+2. **Fix the app**: block rendering until the prerequisite state is ready (e.g. `LanguageSync` blocks children until i18n is applied, not fire-and-forget in a `useEffect`).
+3. **Then the test passes at default timeout** with no hack.
+
+`{ timeout: 10000 }` on a locator assertion is a code smell, not a solution.
+
 ### Banned: `waitForTimeout`
 
 `page.waitForTimeout()` is banned in E2E tests. It is both slow (wastes CI time) and flaky (too short on slow runners).

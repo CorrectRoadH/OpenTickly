@@ -43,6 +43,7 @@ type ProfileRequest struct {
 
 type PreferencesRequest struct {
 	DateFormat      string                `json:"date_format"`
+	LanguageCode    string                `json:"language_code"`
 	TimeOfDayFormat string                `json:"timeofday_format"`
 	AlphaFeatures   []domain.AlphaFeature `json:"alpha_features"`
 }
@@ -285,6 +286,7 @@ func (handler *Handler) UpdatePreferences(ctx context.Context, sessionID string,
 
 	update := domain.Preferences{
 		DateFormat:      request.DateFormat,
+		LanguageCode:    request.LanguageCode,
 		TimeOfDayFormat: normalizeTimeOfDayFormat(request.TimeOfDayFormat),
 		AlphaFeatures:   request.AlphaFeatures,
 	}

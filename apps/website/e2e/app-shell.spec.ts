@@ -359,9 +359,11 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
     });
 
     // PAGE 1: Navigate to /timer via shell click (Timer nav link)
+    // When a timer is running the sidebar replaces the "Timer" label with
+    // a live elapsed-time badge, so match by href instead of accessible name.
     await page.goto(new URL("/overview", page.url()).toString());
     await expect(page.getByTestId("workspace-overview-page")).toBeVisible();
-    await page.getByRole("link", { name: "Timer" }).click();
+    await page.locator('nav a[href="/timer"]').click();
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
 

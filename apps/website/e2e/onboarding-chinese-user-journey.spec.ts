@@ -28,21 +28,19 @@ test.describe("用户旅程：新用户注册到追踪时间（中文版）", ()
     await dialog.getByRole("button", { name: "中文" }).click();
     await dialog.getByRole("button", { name: "Continue" }).click();
 
-    // After language step completes, i18n switches to Chinese immediately.
-    // Steps 2-4 buttons are now in Chinese: "继续" (Continue), "开始追踪" (Start tracking).
-    for (let i = 0; i < 3; i++) {
-      const continueBtn = dialog.getByRole("button", { name: "继续" });
-      const startBtn = dialog.getByRole("button", { name: "开始追踪" });
-
-      if (await startBtn.isVisible().catch(() => false)) {
-        await startBtn.click();
-        break;
-      } else if (await continueBtn.isVisible().catch(() => false)) {
-        await continueBtn.click();
-      } else {
-        break;
-      }
-    }
+    // After language step, i18n switches to Chinese. Click through remaining
+    // steps explicitly, waiting for each step's heading before clicking.
+    // Step 2: ai-workflow
+    await expect(dialog.getByText("与你的 AI 工具无缝集成")).toBeVisible();
+    await dialog.getByRole("button", { name: "继续" }).click();
+    // Step 3: star-us
+    await expect(dialog.getByText("一切就绪！")).toBeVisible();
+    await dialog.getByRole("button", { name: "继续" }).click();
+    // Step 4: import-data (last step — "开始追踪" completes onboarding)
+    await expect(dialog.getByText("导入 Toggl 数据")).toBeVisible();
+    await dialog.getByRole("button", { name: "开始追踪" }).click();
+    // Wait for onboarding dialog to close (async mutations in handleCompleteStep)
+    await expect(dialog).not.toBeVisible();
 
     // ===== 第3步：验证 Timer 页面显示中文 =====
     // onboarding 完成后保存偏好到后端，LanguageSync 切换到中文
