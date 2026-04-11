@@ -2,6 +2,7 @@ package publicapi
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -541,7 +542,12 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		slog.Error("avatar upload: failed to read form file",
+			"error", err,
+			"content_type", ctx.Request().Header.Get("Content-Type"),
+			"content_length", ctx.Request().ContentLength,
+		)
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid content type for image"})
 	}
 
 	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileHeader.Filename)))

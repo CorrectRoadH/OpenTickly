@@ -5,8 +5,9 @@ import { toast } from "sonner";
 
 import { AppCheckbox, AppPanel, SelectDropdown } from "@opentoggl/web-ui";
 
-import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
+import { deleteAvatars, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
+import type { PostAvatarsResponses } from "../../shared/api/generated/public-track/types.gen.ts";
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 
 const sectionCardClassName =
@@ -177,9 +178,11 @@ export function ProfileHeroCard({
       const formData = new FormData();
       formData.append("file", file);
       const result = await unwrapWebApiResult(
-        postAvatars({
-          body: formData as never,
-          bodySerializer: (body) => body as FormData,
+        client.post<PostAvatarsResponses>({
+          body: formData,
+          bodySerializer: null,
+          headers: { "Content-Type": null },
+          url: "/avatars",
         }),
       );
       const url = result.avatar_urls?.["original"] ?? null;

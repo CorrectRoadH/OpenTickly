@@ -31,9 +31,10 @@ func newAuditLogMiddleware(handlers *routeHandlers) echo.MiddlewareFunc {
 				return next(ctx)
 			}
 
-			// Capture request body
+			// Capture request body (skip multipart uploads — reading their body
+			// truncates the stream and causes "unexpected EOF" in the handler).
 			var requestBody string
-			if req.Body != nil {
+			if req.Body != nil && !isMultipartUploadPath(req.URL.Path) {
 				bodyBytes, err := io.ReadAll(io.LimitReader(req.Body, auditLogMaxBodySize))
 				if err == nil {
 					requestBody = string(bodyBytes)

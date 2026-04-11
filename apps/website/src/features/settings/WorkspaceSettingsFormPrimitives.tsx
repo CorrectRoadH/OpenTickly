@@ -5,8 +5,9 @@ import { toast } from "sonner";
 
 import { AppCheckbox } from "@opentoggl/web-ui";
 
-import { postWorkspaceLogo, deleteWorkspaceLogo } from "../../shared/api/public/track/index.ts";
+import { deleteWorkspaceLogo, client } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
+import type { PostWorkspaceLogoResponses } from "../../shared/api/generated/public-track/types.gen.ts";
 
 export function SettingsCard(props: {
   children: ReactElement | ReactElement[];
@@ -47,10 +48,11 @@ export function LogoCard({
       const formData = new FormData();
       formData.append("file", file);
       const result = await unwrapWebApiResult(
-        postWorkspaceLogo({
-          path: { workspace_id: workspaceId },
-          body: formData as never,
-          bodySerializer: (body) => body as FormData,
+        client.post<PostWorkspaceLogoResponses>({
+          body: formData,
+          bodySerializer: null,
+          headers: { "Content-Type": null },
+          url: `/workspaces/${workspaceId}/logo`,
         }),
       );
       onLogoChange(result.logo ?? "");
