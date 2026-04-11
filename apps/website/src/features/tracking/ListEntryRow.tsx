@@ -1,6 +1,8 @@
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
+
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { DollarIcon, PlayIcon } from "../../shared/ui/icons.tsx";
 import { LiveDuration } from "./LiveDuration.tsx";
@@ -101,18 +103,13 @@ export function ListEntryRow({
     >
       <div className="flex min-w-0 items-center gap-0">
         <div className="flex w-[30px] shrink-0 items-center justify-center">
-          <input
+          <AppCheckbox
             aria-label={`Select ${entry.description?.trim() || "time entry"}`}
             checked={isSelected}
-            className={`size-[13px] cursor-pointer appearance-none rounded-[3px] border bg-transparent opacity-0 transition group-hover:opacity-100 ${
-              isSelected
-                ? "!opacity-100 border-[var(--track-accent)] bg-[var(--track-accent)]"
-                : "border-[var(--track-border)]"
-            }`}
+            className={`opacity-0 transition group-hover:opacity-100 ${isSelected ? "!opacity-100" : ""}`}
             onChange={() => {
               if (typeof entryId === "number") toggleEntry(entryId);
             }}
-            type="checkbox"
           />
         </div>
 

@@ -1,5 +1,6 @@
 import { type ReactElement, useCallback, useRef, useState } from "react";
 
+import { AppCheckbox } from "./AppCheckbox.tsx";
 import { useDismiss } from "./useDismiss.ts";
 
 type CheckboxFilterOption<T extends string | number> = {
@@ -105,25 +106,7 @@ export function CheckboxFilterDropdown<T extends string | number>({
                     role="checkbox"
                     type="button"
                   >
-                    <span
-                      className={`flex size-3.5 shrink-0 items-center justify-center rounded border transition ${
-                        checked
-                          ? "border-[var(--track-accent)] bg-[var(--track-accent)]"
-                          : "border-[var(--track-overlay-border-strong)] bg-transparent"
-                      }`}
-                    >
-                      {checked ? (
-                        <svg className="size-2.5 text-white" fill="none" viewBox="0 0 12 12">
-                          <path
-                            d="M2.5 6L5 8.5L9.5 3.5"
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                          />
-                        </svg>
-                      ) : null}
-                    </span>
+                    <AppCheckbox checked={checked} className="pointer-events-none" tabIndex={-1} />
                     <span className="truncate">{option.label}</span>
                   </button>
                 );

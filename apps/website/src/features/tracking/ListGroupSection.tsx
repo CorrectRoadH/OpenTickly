@@ -1,5 +1,7 @@
 import type { ReactElement } from "react";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
+
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { ListEntryRow } from "./ListEntryRow.tsx";
@@ -84,19 +86,11 @@ export function ListGroupSection({
       }}
     >
       <li className="col-span-full flex h-[50px] items-center px-5">
-        <input
+        <AppCheckbox
           aria-label={`Select all entries for ${formatGroupLabel(group.key, timezone)}`}
           checked={groupChecked}
-          className={`size-[13px] shrink-0 cursor-pointer appearance-none rounded-[3px] border bg-transparent ${
-            groupChecked || groupIndeterminate
-              ? "border-[var(--track-accent)] bg-[var(--track-accent)]"
-              : "border-[var(--track-border)]"
-          }`}
+          indeterminate={groupIndeterminate}
           onChange={() => toggleGroup(group)}
-          ref={(el) => {
-            if (el) el.indeterminate = groupIndeterminate;
-          }}
-          type="checkbox"
         />
         <p className="ml-3 flex-1 text-[14px] font-medium text-white">
           {formatGroupLabel(group.key, timezone)}

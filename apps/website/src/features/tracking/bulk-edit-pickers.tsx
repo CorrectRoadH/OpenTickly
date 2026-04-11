@@ -1,6 +1,8 @@
 import { type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
+
 import { WebApiError } from "../../shared/api/web-client.ts";
 import { PickerDropdown } from "../../shared/ui/PickerDropdown.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
@@ -423,11 +425,11 @@ export function TagPickerDropdown({
             onClick={() => onToggle(tag.id)}
             type="button"
           >
-            <input
+            <AppCheckbox
               checked={checked}
-              className="size-3.5 cursor-pointer accent-[var(--track-accent)]"
+              className="pointer-events-none"
+              tabIndex={-1}
               onChange={() => onToggle(tag.id)}
-              type="checkbox"
             />
             <span className="truncate">{tag.name}</span>
           </button>

@@ -3,6 +3,8 @@ import { type InputHTMLAttributes, type ReactElement, useRef, useState } from "r
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
+
 import { postWorkspaceLogo, deleteWorkspaceLogo } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
 
@@ -200,19 +202,12 @@ export function CheckboxOption(props: {
 }): ReactElement {
   return (
     <label className="flex cursor-pointer items-center gap-2 text-[14px] font-medium leading-[17px] text-[var(--track-text-soft)]">
-      <input
+      <AppCheckbox
         checked={props.checked}
-        className="sr-only"
         onChange={(event) => {
           props.onChange(event.target.checked);
         }}
-        type="checkbox"
       />
-      <span className="flex size-[14px] items-center justify-center rounded-[4px] border border-[var(--track-border)] bg-[var(--track-surface)]">
-        {props.checked ? (
-          <span className="size-[8px] rounded-[2px] bg-[var(--track-accent-secondary)]" />
-        ) : null}
-      </span>
       <span>{props.label}</span>
     </label>
   );

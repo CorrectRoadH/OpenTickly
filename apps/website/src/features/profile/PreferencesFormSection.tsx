@@ -1,6 +1,6 @@
-import { AppButton, AppPanel } from "@opentoggl/web-ui";
+import { AppButton, AppCheckbox, AppPanel } from "@opentoggl/web-ui";
 import { type ReactElement } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -63,18 +63,54 @@ export function PreferencesFormSection({
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-          <ToggleField label={t("collapseTimeEntries")}>
-            <input type="checkbox" {...form.register("collapseTimeEntries")} />
-          </ToggleField>
-          <ToggleField label={t("showGoalsView")}>
-            <input type="checkbox" {...form.register("isGoalsViewShown")} />
-          </ToggleField>
-          <ToggleField label={t("keyboardShortcutsEnabledLabel")}>
-            <input type="checkbox" {...form.register("keyboardShortcutsEnabled")} />
-          </ToggleField>
-          <ToggleField label={t("showRunningTimeInTitle")}>
-            <input type="checkbox" {...form.register("showTimeInTitle")} />
-          </ToggleField>
+          <Controller
+            control={form.control}
+            name="collapseTimeEntries"
+            render={({ field }) => (
+              <ToggleField label={t("collapseTimeEntries")}>
+                <AppCheckbox
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              </ToggleField>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="isGoalsViewShown"
+            render={({ field }) => (
+              <ToggleField label={t("showGoalsView")}>
+                <AppCheckbox
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              </ToggleField>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="keyboardShortcutsEnabled"
+            render={({ field }) => (
+              <ToggleField label={t("keyboardShortcutsEnabledLabel")}>
+                <AppCheckbox
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              </ToggleField>
+            )}
+          />
+          <Controller
+            control={form.control}
+            name="showTimeInTitle"
+            render={({ field }) => (
+              <ToggleField label={t("showRunningTimeInTitle")}>
+                <AppCheckbox
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                />
+              </ToggleField>
+            )}
+          />
         </div>
 
         <AppButton type="submit">{t("savePreferences")}</AppButton>

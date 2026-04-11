@@ -2,6 +2,8 @@ import type { ReactElement } from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppCheckbox } from "@opentoggl/web-ui";
+
 import { DatePickerButton } from "../../shared/ui/DatePickerButton.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { useFilteredList } from "../../shared/ui/useFilteredList.ts";
@@ -176,12 +178,10 @@ export function BulkEditDialog({
         </div>
 
         <label className="flex items-center gap-2 px-1 text-[12px] text-[var(--track-text-muted)]">
-          <input
+          <AppCheckbox
             checked={removeExistingTags}
-            className="size-3.5 cursor-pointer accent-[var(--track-accent)]"
             data-testid="bulk-edit-remove-tags"
             onChange={() => setRemoveExistingTags((v) => !v)}
-            type="checkbox"
           />
           {t("removeExistingTags")}
         </label>

@@ -3,7 +3,7 @@ import { type ReactElement, type ReactNode, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 
-import { AppPanel, SelectDropdown } from "@opentoggl/web-ui";
+import { AppCheckbox, AppPanel, SelectDropdown } from "@opentoggl/web-ui";
 
 import { postAvatars, deleteAvatars } from "../../shared/api/public/track/index.ts";
 import { unwrapWebApiResult, WebApiError } from "../../shared/api/web-client.ts";
@@ -58,21 +58,13 @@ export function CheckboxRow({
 }): ReactElement {
   return (
     <label className={`flex cursor-pointer items-start px-0 py-[5px] ${className}`.trim()}>
-      <span className="relative mt-[3px] mr-[10px] flex size-[14px] shrink-0 items-center justify-center">
-        <input
-          checked={checked}
-          className="peer absolute inset-0 cursor-pointer opacity-0"
-          onChange={(event) => {
-            onChange(event.target.checked);
-          }}
-          type="checkbox"
-        />
-        <span className="flex size-[14px] items-center justify-center rounded-[4px] border border-[var(--track-border)] bg-[var(--track-surface)] peer-checked:border-[var(--track-accent)] peer-checked:bg-[var(--track-accent)]">
-          {checked ? (
-            <span className="text-[10px] font-semibold leading-none text-black">✓</span>
-          ) : null}
-        </span>
-      </span>
+      <AppCheckbox
+        checked={checked}
+        className="mt-[3px] mr-[10px]"
+        onChange={(event) => {
+          onChange(event.target.checked);
+        }}
+      />
       <span>
         <span className="block text-[14px] font-medium leading-[normal] text-[var(--track-text)]">
           {label}
