@@ -19,6 +19,10 @@ export default {
     for (const lang of i18n.languages) {
       const isDefault = lang === i18n.defaultLanguage;
       const prefix = isDefault ? "" : `/${lang}`;
+
+      // Prerender i18n home pages
+      if (!isDefault) paths.push(`/${lang}`);
+
       const getUrl = createGetUrl(`${prefix}/docs`);
 
       for await (const entry of glob("**/*.mdx", { cwd: `content/docs/${lang}` })) {

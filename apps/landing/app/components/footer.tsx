@@ -46,7 +46,7 @@ export default function Footer({ locale }: { locale: string }) {
             <p className="font-semibold text-[var(--track-text)]">Language</p>
             {i18n.languages.map((lang) => {
               const isDefault = lang === i18n.defaultLanguage;
-              const href = isDefault ? "/" : `/${lang}/`;
+              const href = isDefault ? "/" : `/${lang}`;
               const isCurrent = lang === locale;
               return (
                 <a

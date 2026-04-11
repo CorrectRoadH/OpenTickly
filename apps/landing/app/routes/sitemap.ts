@@ -31,7 +31,7 @@ async function getSitemapEntries(): Promise<SitemapEntry[]> {
     // Add localized home pages (skip default, already added above)
     if (!isDefault) {
       entries.push({
-        pathname: `${prefix}/`,
+        pathname: prefix,
         lastModified: homeLastModified,
         changeFrequency: "weekly",
         priority: 0.9,
