@@ -2,6 +2,8 @@ package publicapi
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -33,12 +35,35 @@ func (handler *Handler) PostPublicTrackWorkspaceLogo(ctx echo.Context) error {
 
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		return ctx.JSON(http.StatusBadRequest, "Bad Request")
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid content type for image"})
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid content type for image"})
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Failed to read uploaded file"})
+	}
+
+	// Delete old logo blob if one exists.
+	view, err := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
+	if err == nil && view.Branding.LogoStorageKey != "" {
+		_ = handler.files.Delete(ctx.Request().Context(), view.Branding.LogoStorageKey)
+	}
+
+	storageKey := workspaceLogoStorageKey(workspaceID, fileHeader.Filename)
+	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
+		slog.Error("logo upload: failed to store file", "error", err, "key", storageKey)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to store logo"})
 	}
 
 	if err := handler.tenant.UpdateWorkspaceBranding(ctx.Request().Context(), tenantapplication.UpdateWorkspaceBrandingCommand{
 		WorkspaceID:    tenantdomain.WorkspaceID(workspaceID),
-		LogoStorageKey: workspaceLogoStorageKey(workspaceID, fileHeader.Filename),
+		LogoStorageKey: storageKey,
 	}); err != nil {
 		return mapError(err)
 	}
@@ -52,6 +77,12 @@ func (handler *Handler) DeletePublicTrackWorkspaceLogo(ctx echo.Context) error {
 	}
 	if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
 		return err
+	}
+
+	// Delete old logo blob if one exists.
+	view, err := handler.tenant.GetWorkspace(ctx.Request().Context(), tenantdomain.WorkspaceID(workspaceID))
+	if err == nil && view.Branding.LogoStorageKey != "" {
+		_ = handler.files.Delete(ctx.Request().Context(), view.Branding.LogoStorageKey)
 	}
 
 	if err := handler.tenant.UpdateWorkspaceBranding(ctx.Request().Context(), tenantapplication.UpdateWorkspaceBrandingCommand{

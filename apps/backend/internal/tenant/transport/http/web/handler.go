@@ -221,7 +221,7 @@ func brandingURL(storageKey string) *string {
 	if storageKey == "" {
 		return lo.ToPtr("")
 	}
-	return lo.ToPtr("https://cdn.example.com/" + storageKey)
+	return lo.ToPtr("/files/" + storageKey)
 }
 
 func publicProjectAccess(limitPublicProjectData bool) tenantdomain.WorkspacePublicProjectAccess {

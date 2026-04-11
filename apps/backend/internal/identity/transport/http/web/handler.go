@@ -438,6 +438,6 @@ func webAvatarURL(storageKey string) *string {
 	if storageKey == "" {
 		return nil
 	}
-	url := "https://cdn.example.com/" + storageKey
+	url := "/files/" + storageKey
 	return &url
 }

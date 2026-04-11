@@ -31,7 +31,7 @@ type publicTrackOpenAPIServer struct {
 func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerInterface {
 	return &publicTrackOpenAPIServer{
 		publicTrackUnimplementedServer: &publicTrackUnimplementedServer{},
-		identity:                       identitypublicapi.NewPublicTrackHandler(handlers.identityAPI, handlers.referenceApp),
+		identity:                       identitypublicapi.NewPublicTrackHandler(handlers.identityAPI, handlers.referenceApp, handlers.fileStore),
 		tenant: tenantpublicapi.NewHandler(
 			handlers.tenantApp,
 			handlers.billingApp,
@@ -39,6 +39,7 @@ func newPublicTrackOpenAPIServer(handlers *routeHandlers) publictrackapi.ServerI
 			handlers.membershipApp,
 			handlers.userHomes,
 			handlers,
+			handlers.fileStore,
 		),
 		membership: membershippublicapi.NewHandler(handlers.membershipApp, handlers, handlers.tenantApp),
 		importing: importingpublicapi.NewHandler(

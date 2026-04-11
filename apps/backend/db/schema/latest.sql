@@ -703,6 +703,13 @@ create unique index webhook_subscriptions_description_workspace_unique
 create index webhook_subscriptions_workspace_id_idx
     on webhook_subscriptions (workspace_id) where (deleted_at is null);
 
+create table file_blobs (
+    storage_key text primary key,
+    content_type text not null,
+    content bytea not null,
+    created_at timestamptz not null default now()
+);
+
 create table webhook_subscription_event_filters (
     id bigserial primary key,
     subscription_id bigint not null references webhook_subscriptions (id) on delete cascade,

@@ -5,7 +5,7 @@ import { expect, test } from "@playwright/test";
 import { registerE2eUser } from "./fixtures/e2e-auth.ts";
 
 test.describe("Story: upload and remove profile avatar", () => {
-  test("Given a registered user on the profile page, when they upload an avatar image, then the server accepts the file and the avatar displays", async ({
+  test("Given a registered user on the profile page, when they upload an avatar image, then the server stores it and the image is accessible", async ({
     page,
   }) => {
     const email = `avatar-upload-${test.info().workerIndex}-${Date.now()}@example.com`;
@@ -35,8 +35,26 @@ test.describe("Story: upload and remove profile avatar", () => {
     const avatarResponse = await avatarResponsePromise;
     expect(avatarResponse.status()).toBe(200);
 
+    const body = await avatarResponse.json();
+    const avatarUrl: string = body.avatar_urls?.original ?? "";
+
+    // The URL must be a real /files/ path, not a fake CDN URL
+    expect(avatarUrl).toMatch(/^\/files\/identity\/avatars\/\d+\/avatar\.png$/);
+
     // Verify success toast appears
     await expect(page.getByText("Avatar uploaded")).toBeVisible({ timeout: 5_000 });
+
+    // Fetch the image URL directly and verify it serves real image bytes
+    const imageResponse = await page.request.get(avatarUrl);
+    expect(imageResponse.status()).toBe(200);
+    expect(imageResponse.headers()["content-type"]).toBe("image/png");
+    const imageBody = await imageResponse.body();
+    expect(imageBody.length).toBeGreaterThan(1000);
+    // Verify PNG signature
+    expect(imageBody[0]).toBe(0x89);
+    expect(imageBody[1]).toBe(0x50);
+    expect(imageBody[2]).toBe(0x4e);
+    expect(imageBody[3]).toBe(0x47);
   });
 });
 

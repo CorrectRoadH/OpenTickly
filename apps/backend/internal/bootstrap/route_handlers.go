@@ -25,6 +25,7 @@ import (
 	importingpostgres "opentoggl/backend/apps/backend/internal/importing/infra/postgres"
 	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/platform"
+	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershippostgres "opentoggl/backend/apps/backend/internal/membership/infra/postgres"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
@@ -62,6 +63,7 @@ type routeHandlers struct {
 	reportsApp    *reportsapplication.Service
 	governanceApp *governanceapplication.Service
 	webhooksApp   *webhooksapplication.Service
+	fileStore     *filestore.Store
 	userHomes     userHomeRepository
 	tenant        *tenantweb.Handler
 	tenantApp     *tenantapplication.Service
@@ -173,6 +175,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 	return &routeHandlers{
 		pool:            pool,
 		platformHandles: platformHandles,
+		fileStore:       filestore.NewStore(pool),
 		catalogApp:      catalogService,
 		identity:      identityHandler,
 		identityApp:   identityService,

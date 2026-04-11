@@ -146,6 +146,9 @@ export default defineConfig(() => {
         "/webhooks/api/v1": {
           target: webProxyTarget,
         },
+        "/files": {
+          target: webProxyTarget,
+        },
       },
     },
     test: {

@@ -8,10 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"io"
+
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	application "opentoggl/backend/apps/backend/internal/identity/application"
 	identitydomain "opentoggl/backend/apps/backend/internal/identity/domain"
 	platformapplication "opentoggl/backend/apps/backend/internal/platform/application"
+	"opentoggl/backend/apps/backend/internal/platform/filestore"
 
 	"github.com/labstack/echo/v4"
 	openapi_types "github.com/oapi-codegen/runtime/types"
@@ -21,6 +24,7 @@ import (
 type PublicTrackHandler struct {
 	identity  *Handler
 	reference *platformapplication.ReferenceService
+	files     *filestore.Store
 }
 
 type publicTrackPreferencesRequest struct {
@@ -33,10 +37,12 @@ type publicTrackPreferencesRequest struct {
 func NewPublicTrackHandler(
 	identity *Handler,
 	reference *platformapplication.ReferenceService,
+	files *filestore.Store,
 ) *PublicTrackHandler {
 	return &PublicTrackHandler{
 		identity:  identity,
 		reference: reference,
+		files:     files,
 	}
 }
 
@@ -415,15 +421,14 @@ func avatarURL(storageKey string) *string {
 	if storageKey == "" {
 		return nil
 	}
-	url := "https://cdn.example.com/" + storageKey
+	url := "/files/" + storageKey
 	return &url
 }
 
 func avatarResponse(storageKey string) publictrackapi.ModelsAvatar {
 	urls := publictrackapi.ModelsImageURLs{}
 	if storageKey != "" {
-		url := "https://cdn.example.com/" + storageKey
-		urls["original"] = url
+		urls["original"] = "/files/" + storageKey
 	}
 	return publictrackapi.ModelsAvatar{
 		AvatarUrls: &urls,
@@ -525,6 +530,10 @@ func (handler *PublicTrackHandler) DeletePublicTrackAvatars(ctx echo.Context) er
 		return err
 	}
 
+	if user.AvatarStorageKey != "" {
+		_ = handler.files.Delete(ctx.Request().Context(), user.AvatarStorageKey)
+	}
+
 	_, err = handler.identity.service.UpdateAvatar(ctx.Request().Context(), user.ID, "")
 	if err != nil {
 		response := mapError(err)
@@ -550,8 +559,29 @@ func (handler *PublicTrackHandler) PostPublicTrackAvatars(ctx echo.Context) erro
 		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid content type for image"})
 	}
 
+	file, err := fileHeader.Open()
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid content type for image"})
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, map[string]string{"message": "Failed to read uploaded file"})
+	}
+
+	// Delete old avatar blob if one exists.
+	if user.AvatarStorageKey != "" {
+		_ = handler.files.Delete(ctx.Request().Context(), user.AvatarStorageKey)
+	}
+
 	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileHeader.Filename)))
 	storageKey := fmt.Sprintf("identity/avatars/%d/avatar%s", user.ID, ext)
+
+	if err := handler.files.Put(ctx.Request().Context(), storageKey, fileHeader.Header.Get("Content-Type"), content); err != nil {
+		slog.Error("avatar upload: failed to store file", "error", err, "key", storageKey)
+		return ctx.JSON(http.StatusInternalServerError, map[string]string{"message": "Failed to store avatar"})
+	}
 
 	updated, err := handler.identity.service.UpdateAvatar(ctx.Request().Context(), user.ID, storageKey)
 	if err != nil {

@@ -128,5 +128,6 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 		publicWebhooksRoutes,
 		importRoutes,
 		adminRoutes,
+		newFileRoutes(assembledHandlers),
 	), nil
 }

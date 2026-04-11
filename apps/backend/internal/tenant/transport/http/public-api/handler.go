@@ -14,6 +14,7 @@ import (
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
+	"opentoggl/backend/apps/backend/internal/platform/filestore"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
 
@@ -57,6 +58,7 @@ type Handler struct {
 	membership *membershipapplication.Service
 	homes      HomeRepository
 	scope      ScopeAuthorizer
+	files      *filestore.Store
 }
 
 func NewHandler(
@@ -66,6 +68,7 @@ func NewHandler(
 	membership *membershipapplication.Service,
 	homes HomeRepository,
 	scope ScopeAuthorizer,
+	files *filestore.Store,
 ) *Handler {
 	return &Handler{
 		tenant:     tenant,
@@ -74,6 +77,7 @@ func NewHandler(
 		membership: membership,
 		homes:      homes,
 		scope:      scope,
+		files:      files,
 	}
 }
 
@@ -434,7 +438,7 @@ func brandingURL(storageKey string) string {
 	if storageKey == "" {
 		return ""
 	}
-	return "https://cdn.example.com/" + storageKey
+	return "/files/" + storageKey
 }
 
 func publicProjectAccess(limitPublicProjectData bool) tenantdomain.WorkspacePublicProjectAccess {
