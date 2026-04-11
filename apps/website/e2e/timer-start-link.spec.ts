@@ -205,6 +205,12 @@ test.describe("Timer start link", () => {
     await page.getByRole("button", { name: "Start timer" }).click();
     await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible({ timeout: 10_000 });
 
+    // Wait for the server to confirm the running entry before navigating,
+    // otherwise page.goto resets React Query cache and the guard may see stale data.
+    const { body: runningBefore } = await pollCurrentRunningEntry(page);
+    expect(runningBefore).not.toBeNull();
+    expect(runningBefore.description).toBe("already-running");
+
     // Now navigate with start-link params — should NOT replace the running entry
     const desc = `should-not-start-${Date.now()}`;
     await page.goto(`/timer?description=${encodeURIComponent(desc)}`);

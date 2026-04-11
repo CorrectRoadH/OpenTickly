@@ -359,6 +359,7 @@ test.describe("VAL-CROSS: Shell entry convergence", () => {
 
     // PAGE 1: Navigate to /timer via shell click (Timer nav link)
     await page.goto(new URL("/overview", page.url()).toString());
+    await expect(page.getByRole("link", { name: "Timer" })).toBeVisible();
     await page.getByRole("link", { name: "Timer" }).click();
     await expect(page).toHaveURL(/\/timer(?:\?.*)?$/);
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();

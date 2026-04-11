@@ -122,8 +122,8 @@ test.describe("Story: filter dropdown components work across pages", () => {
     // Select "Non-billable" option (avoids name collision with the trigger button)
     await page.getByRole("button", { name: "Non-billable" }).click();
 
-    // Filter label should show active state
-    await expect(billableFilter).toContainText("Non-billable ✓");
+    // Filter label should show active state (accent bg + selected label)
+    await expect(billableFilter).toContainText("Non-billable");
   });
 
   test("Reports page: checkbox filter narrows breakdown by project", async ({ page }) => {

@@ -108,7 +108,20 @@ func (s *Service) CreateSubscription(ctx context.Context, cmd CreateSubscription
 		UpdatedAt:      now,
 	}
 
-	return s.store.Create(ctx, sub)
+	created, err := s.store.Create(ctx, sub)
+	if err != nil {
+		return domain.Subscription{}, err
+	}
+
+	// Auto-validate: in a self-hosted context the user owns the callback URL,
+	// so a successful probe is sufficient proof. Skip the external handshake
+	// that Toggl SaaS uses to verify third-party URL ownership.
+	validated, err := s.store.SetValidated(ctx, created.WorkspaceID, created.ID)
+	if err != nil {
+		s.logger.WarnContext(ctx, "auto-validate after creation failed", "subscription_id", created.ID, "error", err)
+		return created, nil
+	}
+	return validated, nil
 }
 
 type UpdateSubscriptionCommand struct {

@@ -162,8 +162,13 @@ test.describe("Story: edit a stopped time entry", () => {
     await saveResponsePromise;
 
     await expect(dialog).not.toBeVisible();
-    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
 
+    // Wait for the time-entries list to refetch after the PUT invalidation
+    await page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
+    );
+
+    await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
     await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
     await expect(
