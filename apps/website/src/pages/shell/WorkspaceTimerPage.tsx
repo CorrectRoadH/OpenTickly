@@ -18,6 +18,7 @@ import { KeyboardShortcutsDialog } from "../../features/tracking/KeyboardShortcu
 import { SelfContainedTimeEntryEditor } from "../../features/tracking/SelfContainedTimeEntryEditor.tsx";
 import { resolveProjectColorValue } from "../../shared/lib/project-colors.ts";
 import { createPreferencesFormValues } from "../../shared/forms/profile-form.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { useRangePickerClose, WeekRangePicker } from "../../features/tracking/WeekRangePicker.tsx";
 import {
   formatDayLabel,
@@ -524,18 +525,20 @@ function TimerDateShortcuts({
  * Only mounts when the sidebar is open, so queries don't run when closed.
  */
 function ConnectedSidebar({ workspaceId }: { workspaceId: number }): ReactElement {
+  const { isGoalsViewShown } = useUserPreferences();
   const favoritesQuery = useFavoritesQuery(workspaceId);
-  const goalsQuery = useGoalsQuery(workspaceId, true);
+  const goalsQuery = useGoalsQuery(workspaceId, isGoalsViewShown);
   const deleteFavoriteMutation = useDeleteFavoriteMutation(workspaceId);
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
 
   const favorites = Array.isArray(favoritesQuery.data) ? favoritesQuery.data : [];
-  const goals = Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
+  const goals = isGoalsViewShown && Array.isArray(goalsQuery.data) ? goalsQuery.data : [];
 
   return (
     <GoalsFavoritesSidebar
       favorites={favorites}
       goals={goals}
+      showGoals={isGoalsViewShown}
       workspaceId={workspaceId}
       onDeleteFavorite={(favoriteId) => {
         void deleteFavoriteMutation.mutateAsync(favoriteId);

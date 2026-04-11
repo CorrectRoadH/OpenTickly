@@ -71,3 +71,11 @@ a {
   scrollbar-width: thin;
   scrollbar-color: var(--track-border) transparent;
 }
+
+/* Disable all CSS animations and transitions when user opts out via profile settings. */
+[data-reduce-motion] *,
+[data-reduce-motion] *::before,
+[data-reduce-motion] *::after {
+  animation-duration: 0s !important;
+  transition-duration: 0s !important;
+}

@@ -1,6 +1,8 @@
 import { motion } from "motion/react";
 import type { ReactElement } from "react";
 
+import { useUserPreferences } from "../query/useUserPreferences.ts";
+
 const activeIndicatorTransition = {
   damping: 40,
   mass: 0.45,
@@ -15,7 +17,9 @@ export function AnimatedActiveIndicator({
   className: string;
   layoutId: string;
 }): ReactElement {
-  if (typeof window === "undefined") {
+  const { showAnimations } = useUserPreferences();
+
+  if (typeof window === "undefined" || !showAnimations) {
     return <span aria-hidden="true" className={className} />;
   }
 

@@ -14,6 +14,7 @@ type GoalsFavoritesSidebarProps = {
   goals: HandlergoalsApiResponse[];
   onDeleteFavorite?: (favoriteId: number) => void;
   onStartFavorite?: (favorite: ModelsFavorite) => void;
+  showGoals?: boolean;
   workspaceId: number;
 };
 
@@ -22,6 +23,7 @@ export function GoalsFavoritesSidebar({
   goals,
   onDeleteFavorite,
   onStartFavorite,
+  showGoals = true,
   workspaceId,
 }: GoalsFavoritesSidebarProps): ReactElement {
   const { t } = useTranslation("goals");
@@ -31,31 +33,33 @@ export function GoalsFavoritesSidebar({
       className="sticky top-[var(--timer-header-height,0px)] flex h-fit max-h-[calc(100vh-var(--timer-header-height,0px))] w-[220px] shrink-0 flex-col overflow-y-auto border-l border-[var(--track-border)] bg-[var(--track-surface)]"
       data-testid="goals-favorites-sidebar"
     >
-      <SidebarSection
-        title={t("sidebarGoals")}
-        action={
-          <Link
-            aria-label={t("addGoals")}
-            className="flex size-5 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
-            to="/workspaces/$workspaceId/goals"
-            params={{ workspaceId: String(workspaceId) }}
-          >
-            <PlusIcon className="size-3" />
-          </Link>
-        }
-      >
-        {goals.length === 0 ? (
-          <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">
-            {t("noGoalsYetSidebar")}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-0.5 px-2 pb-2">
-            {goals.map((goal) => (
-              <GoalItem key={goal.goal_id} goal={goal} />
-            ))}
-          </div>
-        )}
-      </SidebarSection>
+      {showGoals ? (
+        <SidebarSection
+          title={t("sidebarGoals")}
+          action={
+            <Link
+              aria-label={t("addGoals")}
+              className="flex size-5 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:bg-[var(--track-row-hover)] hover:text-white"
+              to="/workspaces/$workspaceId/goals"
+              params={{ workspaceId: String(workspaceId) }}
+            >
+              <PlusIcon className="size-3" />
+            </Link>
+          }
+        >
+          {goals.length === 0 ? (
+            <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">
+              {t("noGoalsYetSidebar")}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-0.5 px-2 pb-2">
+              {goals.map((goal) => (
+                <GoalItem key={goal.goal_id} goal={goal} />
+              ))}
+            </div>
+          )}
+        </SidebarSection>
+      ) : null}
       <SidebarSection title={t("favorites")}>
         {favorites.length === 0 ? (
           <div className="px-4 pb-3 text-[12px] text-[var(--track-text-muted)]">

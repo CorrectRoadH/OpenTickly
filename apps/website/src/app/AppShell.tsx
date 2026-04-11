@@ -10,6 +10,7 @@ import { WorkspaceSwitcher } from "../features/session/WorkspaceSwitcher.tsx";
 import { KeyboardShortcutsDialog } from "../features/tracking/KeyboardShortcutsDialog.tsx";
 import { ChevronRightIcon, FocusIcon, MenuIcon, PlanIcon, TrackIcon } from "../shared/ui/icons.tsx";
 import { resolveEntryDurationSeconds } from "../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../shared/query/useUserPreferences.ts";
 import { shellNavigationItems } from "../shared/lib/shell-navigation.ts";
 import { UserAvatar } from "../shared/ui/UserAvatar.tsx";
 import {
@@ -53,11 +54,21 @@ export function AppShell({ children }: AppShellProps): ReactElement {
 
   const currentTimeEntryQuery = useCurrentTimeEntryQuery();
   const runningEntry = currentTimeEntryQuery.data;
+  const { showTimeInTitle, showAnimations } = useUserPreferences();
+
+  // Sync data-reduce-motion attribute on <html> for global CSS animation control.
+  useEffect(() => {
+    if (showAnimations) {
+      document.documentElement.removeAttribute("data-reduce-motion");
+    } else {
+      document.documentElement.setAttribute("data-reduce-motion", "");
+    }
+  }, [showAnimations]);
 
   // Update document.title every second when a timer is running.
   // Uses a self-contained interval so the Shell component never re-renders.
   useEffect(() => {
-    if (!runningEntry) {
+    if (!runningEntry || !showTimeInTitle) {
       document.title = "OpenToggl";
       return;
     }
@@ -74,7 +85,7 @@ export function AppShell({ children }: AppShellProps): ReactElement {
       clearInterval(id);
       document.title = "OpenToggl";
     };
-  }, [runningEntry]);
+  }, [runningEntry, showTimeInTitle]);
 
   // Timer badge in sidebar — LiveDuration handles its own tick internally,
   // so the Shell never re-renders for timer display.

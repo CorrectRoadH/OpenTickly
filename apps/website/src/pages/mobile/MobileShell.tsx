@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { type ReactElement, useEffect, useState } from "react";
 
 import { resolveEntryDurationSeconds } from "../../features/tracking/overview-data.ts";
+import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { LiveDuration } from "../../features/tracking/LiveDuration.tsx";
 import {
   useCurrentTimeEntryQuery,
@@ -40,6 +41,7 @@ export function MobileShell(): ReactElement {
   const startMutation = useStartTimeEntryMutation(session.currentWorkspace.id);
   const stopMutation = useStopTimeEntryMutation();
   const runningEntry = currentTimeEntryQuery.data;
+  const { showTimeInTitle } = useUserPreferences();
 
   // Fetch recent entries for continue suggestions
   const recentEntriesDateRange = (() => {
@@ -72,7 +74,7 @@ export function MobileShell(): ReactElement {
 
   // Update document.title every second when a timer is running (no re-render).
   useEffect(() => {
-    if (!runningEntry) {
+    if (!runningEntry || !showTimeInTitle) {
       document.title = "OpenToggl";
       return;
     }
@@ -89,7 +91,7 @@ export function MobileShell(): ReactElement {
       clearInterval(id);
       document.title = "OpenToggl";
     };
-  }, [runningEntry]);
+  }, [runningEntry, showTimeInTitle]);
 
   function handleStop() {
     if (!runningEntry?.id) return;
