@@ -10,6 +10,7 @@ type DatabaseConfig = platformconfig.DatabaseConfig
 type RedisConfig = platformconfig.RedisConfig
 type FileStoreConfig = platformconfig.FileStoreConfig
 type JobsConfig = platformconfig.JobsConfig
+type GovernanceConfig = platformconfig.GovernanceConfig
 
 func DefaultConfig() Config {
 	return Config{
@@ -20,6 +21,9 @@ func DefaultConfig() Config {
 		},
 		Jobs: JobsConfig{
 			QueueName: "default",
+		},
+		Governance: GovernanceConfig{
+			AuditLogRetentionDays: 90,
 		},
 	}
 }
@@ -34,6 +38,9 @@ func withDefaults(cfg Config) Config {
 	}
 	if cfg.Jobs.QueueName == "" {
 		cfg.Jobs.QueueName = defaults.Jobs.QueueName
+	}
+	if cfg.Governance.AuditLogRetentionDays <= 0 {
+		cfg.Governance.AuditLogRetentionDays = defaults.Governance.AuditLogRetentionDays
 	}
 	return cfg
 }

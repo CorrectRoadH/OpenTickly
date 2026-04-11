@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -34,6 +35,7 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	}
 	applyStringOverride(&cfg.FileStore.Namespace, getEnv("OPENTOGGL_FILESTORE_NAMESPACE"))
 	applyStringOverride(&cfg.Jobs.QueueName, getEnv("OPENTOGGL_JOBS_QUEUE_NAME"))
+	applyIntOverride(&cfg.Governance.AuditLogRetentionDays, getEnv("OPENTOGGL_AUDIT_LOG_RETENTION_DAYS"))
 
 	return withDefaults(cfg), nil
 }
@@ -46,6 +48,15 @@ func applyStringOverride(target *string, value string) {
 		return
 	}
 	*target = value
+}
+
+func applyIntOverride(target *int, value string) {
+	if value == "" {
+		return
+	}
+	if n, err := strconv.Atoi(value); err == nil {
+		*target = n
+	}
 }
 
 /**

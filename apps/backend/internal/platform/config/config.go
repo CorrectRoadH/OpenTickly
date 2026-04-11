@@ -9,6 +9,7 @@ type StartupConfig struct {
 	Redis       RedisConfig
 	FileStore   FileStoreConfig
 	Jobs        JobsConfig
+	Governance  GovernanceConfig
 }
 
 type ServerConfig struct {
@@ -29,4 +30,8 @@ type FileStoreConfig struct {
 
 type JobsConfig struct {
 	QueueName string
+}
+
+type GovernanceConfig struct {
+	AuditLogRetentionDays int
 }

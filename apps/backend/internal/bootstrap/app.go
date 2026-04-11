@@ -1,10 +1,12 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"strings"
 
+	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/platform"
@@ -14,10 +16,11 @@ import (
 )
 
 type App struct {
-	Config   Config
-	HTTP     *echo.Echo
-	Platform *platform.Handles
-	Modules  []ModuleDescriptor
+	Config        Config
+	HTTP          *echo.Echo
+	Platform      *platform.Handles
+	Modules       []ModuleDescriptor
+	governanceApp *governanceapplication.Service
 }
 
 func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
@@ -40,7 +43,7 @@ func NewApp(cfg Config) (*App, error) {
 	}
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	routeRegistrar, err := newHTTPRouteRegistrar(platform)
+	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(platform)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -61,14 +64,18 @@ func NewApp(cfg Config) (*App, error) {
 		HTTP: httpapp.NewServerWithOptions(health, routeRegistrar, httpapp.ServerOptions{
 			Readiness: readiness,
 		}),
-		Platform: platform,
-		Modules:  modules,
+		Platform:      platform,
+		Modules:       modules,
+		governanceApp: governanceService,
 	}
 	logStartupSuccess(cfg, moduleNames)
 	return app, nil
 }
 
 func (app *App) Start() error {
+	if days := app.Config.Governance.AuditLogRetentionDays; days > 0 && app.governanceApp != nil {
+		governanceapplication.StartAuditLogCleanupWorker(context.Background(), app.governanceApp, days)
+	}
 	return app.HTTP.Start(app.Config.Server.ListenAddress)
 }
 
@@ -90,35 +97,35 @@ func validateRequiredStartupConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, error) {
+func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
 	appLogger := log.NewZapLogger(slog.Default())
 	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	webRoutes, err := newWebRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	publicTrackRoutes, err := newPublicTrackRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	publicReportsRoutes, err := newPublicReportsRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	publicWebhooksRoutes, err := newPublicWebhooksRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	importRoutes, err := newImportRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	adminRoutes, err := newAdminRoutes(assembledHandlers)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return httpapp.ComposeRouteRegistrars(
@@ -129,5 +136,5 @@ func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, 
 		importRoutes,
 		adminRoutes,
 		newFileRoutes(assembledHandlers),
-	), nil
+	), assembledHandlers.governanceApp, nil
 }

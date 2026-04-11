@@ -5,6 +5,35 @@ import (
 	"strings"
 )
 
+const auditLogCleanupBatchSize = 1000
+
+func (service *Service) CleanupExpiredAuditLogs(ctx context.Context, retentionDays int) error {
+	cutoff := service.now().AddDate(0, 0, -retentionDays)
+	totalDeleted := int64(0)
+	for {
+		deleted, err := service.store.DeleteAuditLogsBefore(ctx, cutoff, auditLogCleanupBatchSize)
+		if err != nil {
+			service.logger.ErrorContext(ctx, "audit log cleanup batch failed",
+				"cutoff", cutoff,
+				"deleted_so_far", totalDeleted,
+				"error", err.Error(),
+			)
+			return err
+		}
+		totalDeleted += deleted
+		if deleted < int64(auditLogCleanupBatchSize) {
+			break
+		}
+	}
+	if totalDeleted > 0 {
+		service.logger.InfoContext(ctx, "audit log cleanup completed",
+			"cutoff", cutoff,
+			"total_deleted", totalDeleted,
+		)
+	}
+	return nil
+}
+
 func (service *Service) InsertAuditLog(ctx context.Context, command InsertAuditLogCommand) error {
 	if command.OrganizationID <= 0 {
 		return ErrInvalidOrganization

@@ -237,6 +237,7 @@ type TimelineEventView struct {
 type Store interface {
 	InsertAuditLog(context.Context, InsertAuditLogCommand) error
 	ListAuditLogs(context.Context, int64, ListAuditLogsFilter) ([]AuditLogView, error)
+	DeleteAuditLogsBefore(ctx context.Context, before time.Time, batchSize int) (int64, error)
 	GetTimeEntryConstraints(context.Context, int64) (TimeEntryConstraintsView, error)
 	SaveTimeEntryConstraints(context.Context, TimeEntryConstraintsView) error
 

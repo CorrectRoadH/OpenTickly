@@ -4,6 +4,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"time"
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 )
@@ -129,6 +130,21 @@ func (store *Store) ListAuditLogs(
 		logs = append(logs, view)
 	}
 	return logs, rows.Err()
+}
+
+func (store *Store) DeleteAuditLogsBefore(ctx context.Context, before time.Time, batchSize int) (int64, error) {
+	tag, err := store.pool.Exec(ctx, `
+		DELETE FROM governance_audit_logs
+		WHERE id IN (
+			SELECT id FROM governance_audit_logs
+			WHERE created_at < $1
+			ORDER BY created_at ASC
+			LIMIT $2
+		)`, before, batchSize)
+	if err != nil {
+		return 0, writeGovernanceError("delete expired audit logs", err)
+	}
+	return tag.RowsAffected(), nil
 }
 
 func itoa(value int) string {
