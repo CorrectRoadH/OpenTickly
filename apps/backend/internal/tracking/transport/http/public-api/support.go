@@ -8,6 +8,7 @@ import (
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -97,16 +98,8 @@ func intPointerFromInt64Pointer(value *int64) *int {
 	return lo.ToPtr(int(*value))
 }
 
-// trackTimeLayout mirrors the catalog package: ISO 8601 with a
-// numeric offset (+00:00) to match the official Toggl v9 response
-// shape exactly. See catalog/transport/http/public-api/support.go for
-// the rationale; keep the two in sync until we collapse them into a
-// single shared helper.
-const trackTimeLayout = "2006-01-02T15:04:05-07:00"
-
 func timePointer(value time.Time) *string {
-	formatted := value.UTC().Format(trackTimeLayout)
-	return &formatted
+	return tracktime.FormatUTCPtr(value)
 }
 
 func datePointer(value time.Time) *string {

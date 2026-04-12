@@ -11,6 +11,7 @@ import (
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -166,7 +167,7 @@ func apiTimesheet(view governanceapplication.TimesheetView) publictrackapi.Times
 			Name:             lo.ToPtr(review.Name),
 			RejectionComment: lo.ToPtr(review.RejectionComment),
 			ReviewLayer:      lo.ToPtr(review.ReviewLayer),
-			UpdatedAt:        lo.ToPtr(review.UpdatedAt.UTC().Format(time.RFC3339)),
+			UpdatedAt:        lo.ToPtr(review.UpdatedAt.UTC().Format(tracktime.Layout)),
 			UserId:           lo.ToPtr(int(review.UserID)),
 		})
 	}
@@ -219,7 +220,7 @@ func apiModelTimesheet(view governanceapplication.TimesheetView) publictrackapi.
 	return publictrackapi.ModelsTimesheet{
 		ApprovedOrRejectedAt:  dateTimePointer(view.ApprovedOrRejectedAt),
 		ApprovedOrRejectedId:  approvedOrRejectedID,
-		CreatedAt:             lo.ToPtr(view.CreatedAt.UTC().Format(time.RFC3339)),
+		CreatedAt:             lo.ToPtr(view.CreatedAt.UTC().Format(tracktime.Layout)),
 		ForceApproved:         lo.ToPtr(view.ForceApproved),
 		RejectionComment:      lo.ToPtr(view.RejectionComment),
 		ReminderSentAt:        dateTimePointer(view.ReminderSentAt),
@@ -230,7 +231,7 @@ func apiModelTimesheet(view governanceapplication.TimesheetView) publictrackapi.
 		TimesheetId:           lo.ToPtr(int(view.ID)),
 		TimesheetSetupId:      lo.ToPtr(int(view.TimesheetSetupID)),
 		Timezone:              lo.ToPtr(view.Timezone),
-		UpdatedAt:             lo.ToPtr(view.UpdatedAt.UTC().Format(time.RFC3339)),
+		UpdatedAt:             lo.ToPtr(view.UpdatedAt.UTC().Format(tracktime.Layout)),
 		WorkingHoursInMinutes: lo.ToPtr(view.WorkingHoursInMinutes),
 		WorkspaceId:           lo.ToPtr(int(view.WorkspaceID)),
 	}
@@ -288,7 +289,7 @@ func apiTrackedTimeEntry(view governanceapplication.TrackedTimeEntryView) public
 		taskID = lo.ToPtr(int(*view.TaskID))
 	}
 	return publictrackapi.GithubComTogglTogglApiInternalModelsTimeEntry{
-		At:          lo.ToPtr(view.UpdatedAt.UTC().Format(time.RFC3339)),
+		At:          lo.ToPtr(view.UpdatedAt.UTC().Format(tracktime.Layout)),
 		Billable:    lo.ToPtr(view.Billable),
 		ClientId:    clientID,
 		ClientName:  view.ClientName,
@@ -299,7 +300,7 @@ func apiTrackedTimeEntry(view governanceapplication.TrackedTimeEntryView) public
 		Pid:         projectID,
 		ProjectId:   projectID,
 		ProjectName: view.ProjectName,
-		Start:       lo.ToPtr(view.Start.UTC().Format(time.RFC3339)),
+		Start:       lo.ToPtr(view.Start.UTC().Format(tracktime.Layout)),
 		Stop:        dateTimePointer(view.Stop),
 		TagIds:      lo.ToPtr(tagIDs),
 		Tags:        lo.ToPtr(tagNames),
@@ -325,7 +326,7 @@ func dateTimePointer(value *time.Time) *string {
 	if value == nil {
 		return nil
 	}
-	formatted := value.UTC().Format(time.RFC3339)
+	formatted := value.UTC().Format(tracktime.Layout)
 	return lo.ToPtr(formatted)
 }
 

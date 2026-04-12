@@ -7,6 +7,7 @@ import (
 
 	"opentoggl/backend/apps/backend/internal/identity/application"
 	"opentoggl/backend/apps/backend/internal/identity/domain"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 )
 
 type Response struct {
@@ -195,7 +196,7 @@ func currentUserBody(user application.UserSnapshot) currentUserResponse {
 		CountryID:          user.CountryID,
 		HasPassword:        user.HasPassword,
 		TwoFactorEnabled:   user.TwoFactorEnabled,
-		At:                 time.Now().UTC().Format(time.RFC3339),
+		At:                 tracktime.FormatUTC(time.Now()),
 	}
 }
 

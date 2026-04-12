@@ -9,6 +9,7 @@ import (
 
 	billingapplication "opentoggl/backend/apps/backend/internal/billing/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -207,12 +208,12 @@ func invoiceViewToAPI(view billingapplication.InvoiceView) publictrackapi.Models
 
 	var deletedAtStr *string
 	if view.DeletedAt != nil {
-		formatted := view.DeletedAt.UTC().Format(time.RFC3339)
+		formatted := view.DeletedAt.UTC().Format(tracktime.Layout)
 		deletedAtStr = &formatted
 	}
 
-	createdAtStr := view.CreatedAt.UTC().Format(time.RFC3339)
-	updatedAtStr := view.UpdatedAt.UTC().Format(time.RFC3339)
+	createdAtStr := view.CreatedAt.UTC().Format(tracktime.Layout)
+	updatedAtStr := view.UpdatedAt.UTC().Format(tracktime.Layout)
 
 	return publictrackapi.ModelsUserInvoice{
 		BillingAddress:   lo.ToPtr(view.BillingAddress),

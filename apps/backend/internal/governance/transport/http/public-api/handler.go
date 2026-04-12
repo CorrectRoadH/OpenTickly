@@ -8,6 +8,7 @@ import (
 
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -85,7 +86,7 @@ func (handler *Handler) GetPublicTrackAuditLogs(ctx echo.Context) error {
 			RequestBody:    log.RequestBody,
 			ResponseBody:   log.ResponseBody,
 			Metadata:       log.Metadata,
-			CreatedAt:      log.CreatedAt.UTC().Format(time.RFC3339),
+			CreatedAt:      log.CreatedAt.UTC().Format(tracktime.Layout),
 		})
 	}
 	return ctx.JSON(http.StatusOK, response)

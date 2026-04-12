@@ -8,6 +8,7 @@ import (
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -47,7 +48,7 @@ func planBody(planID int, name string) publictrackapi.BillingFancyPlan {
 
 func usageCounterBody(name string, quotaRemaining int, quotaTotal int, resetsInSeconds int) publictrackapi.OrganizationUsageCounter {
 	count := quotaTotal - quotaRemaining
-	resetAt := time.Now().UTC().Add(time.Duration(resetsInSeconds) * time.Second).Format(time.RFC3339)
+	resetAt := tracktime.FormatUTC(time.Now().Add(time.Duration(resetsInSeconds) * time.Second))
 	return publictrackapi.OrganizationUsageCounter{
 		Count:   &count,
 		Limit:   &quotaTotal,

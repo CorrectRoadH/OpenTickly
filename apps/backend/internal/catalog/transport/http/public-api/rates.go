@@ -8,6 +8,7 @@ import (
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -183,6 +184,6 @@ func optionalTimePointer(value *time.Time) *string {
 	if value == nil {
 		return nil
 	}
-	formatted := value.UTC().Format(time.RFC3339)
+	formatted := value.UTC().Format(tracktime.Layout)
 	return &formatted
 }

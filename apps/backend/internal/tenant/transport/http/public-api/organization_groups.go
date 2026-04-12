@@ -3,10 +3,10 @@ package publicapi
 import (
 	"errors"
 	"net/http"
-	"time"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -135,7 +135,7 @@ func (handler *Handler) buildGroupResponse(
 	group catalogapplication.GroupView,
 ) publictrackapi.GroupOrganizationGroupResponse {
 	permissions := []string{"admin"}
-	at := group.CreatedAt.UTC().Format(time.RFC3339)
+	at := group.CreatedAt.UTC().Format(tracktime.Layout)
 
 	members, _ := handler.catalog.ListGroupMembers(ctx.Request().Context(), group.ID)
 	workspaces, _ := handler.catalog.ListGroupWorkspaces(ctx.Request().Context(), group.ID)

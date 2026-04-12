@@ -2,7 +2,6 @@ package publicapi
 
 import (
 	"net/http"
-	"time"
 
 	publictrackapi "opentoggl/backend/apps/backend/internal/http/generated/publictrack"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
@@ -10,6 +9,7 @@ import (
 	membershipdomain "opentoggl/backend/apps/backend/internal/membership/domain"
 	tenantapplication "opentoggl/backend/apps/backend/internal/tenant/application"
 	tenantdomain "opentoggl/backend/apps/backend/internal/tenant/domain"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -93,7 +93,7 @@ func (handler *Handler) GetPublicTrackOrganizationWorkspaceGroups(ctx echo.Conte
 	response := make([]publictrackapi.GroupOrganizationGroupResponse, 0, len(groups))
 	for _, group := range groups {
 		permissions := []string{"view"}
-		at := group.CreatedAt.UTC().Format(time.RFC3339)
+		at := group.CreatedAt.UTC().Format(tracktime.Layout)
 		response = append(response, publictrackapi.GroupOrganizationGroupResponse{
 			At:          lo.ToPtr(at),
 			GroupId:     lo.ToPtr(int(group.ID)),

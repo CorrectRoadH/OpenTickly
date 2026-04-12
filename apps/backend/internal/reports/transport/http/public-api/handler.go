@@ -17,6 +17,7 @@ import (
 	membershipapplication "opentoggl/backend/apps/backend/internal/membership/application"
 	reportsapplication "opentoggl/backend/apps/backend/internal/reports/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
@@ -964,7 +965,7 @@ func (handler *Handler) requireReportsScope(
 }
 
 func savedReportViewToAPI(v reportsapplication.SavedReportView) publictrackapi.ModelsSavedReport {
-	updatedAt := v.UpdatedAt.UTC().Format(time.RFC3339)
+	updatedAt := v.UpdatedAt.UTC().Format(tracktime.Layout)
 	uid := int(v.CreatedBy)
 	return publictrackapi.ModelsSavedReport{
 		Id:             lo.ToPtr(int(v.ID)),
@@ -980,7 +981,7 @@ func savedReportViewToAPI(v reportsapplication.SavedReportView) publictrackapi.M
 }
 
 func scheduledReportViewToAPI(v reportsapplication.ScheduledReportView) publictrackapi.ModelsScheduledReport {
-	createdAt := v.CreatedAt.UTC().Format(time.RFC3339)
+	createdAt := v.CreatedAt.UTC().Format(tracktime.Layout)
 	return publictrackapi.ModelsScheduledReport{
 		BookmarkId:  lo.ToPtr(int(v.ReportID)),
 		ReportId:    lo.ToPtr(int(v.ReportID)),

@@ -2,10 +2,10 @@ package publicapi
 
 import (
 	"net/http"
-	"time"
 
 	publicwebhooksapi "opentoggl/backend/apps/backend/internal/http/generated/publicwebhooks"
 	identityapplication "opentoggl/backend/apps/backend/internal/identity/application"
+	"opentoggl/backend/apps/backend/internal/tracktime"
 	webhooksapplication "opentoggl/backend/apps/backend/internal/webhooks/application"
 	"opentoggl/backend/apps/backend/internal/webhooks/domain"
 
@@ -206,14 +206,14 @@ func subscriptionToAPI(s domain.Subscription) publicwebhooksapi.ModelsWebhookSub
 		Secret:           lo.ToPtr(s.Secret),
 		Enabled:          lo.ToPtr(s.Enabled),
 		HasPendingEvents: lo.ToPtr(false),
-		CreatedAt:        lo.ToPtr(s.CreatedAt.UTC().Format(time.RFC3339)),
-		UpdatedAt:        lo.ToPtr(s.UpdatedAt.UTC().Format(time.RFC3339)),
+		CreatedAt:        tracktime.FormatUTCPtr(s.CreatedAt),
+		UpdatedAt:        tracktime.FormatUTCPtr(s.UpdatedAt),
 	}
 	if s.ValidatedAt != nil {
-		result.ValidatedAt = lo.ToPtr(s.ValidatedAt.UTC().Format(time.RFC3339))
+		result.ValidatedAt = tracktime.FormatUTCFromPtr(s.ValidatedAt)
 	}
 	if s.DeletedAt != nil {
-		result.DeletedAt = lo.ToPtr(s.DeletedAt.UTC().Format(time.RFC3339))
+		result.DeletedAt = tracktime.FormatUTCFromPtr(s.DeletedAt)
 	}
 	filters := make([]publicwebhooksapi.ModelsWebhookSubscriptionEventFilter, 0, len(s.EventFilters))
 	for _, f := range s.EventFilters {
