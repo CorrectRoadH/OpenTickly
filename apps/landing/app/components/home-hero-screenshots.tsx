@@ -42,6 +42,16 @@ const altByLocale: Record<Locale, Record<string, string>> = {
     free: "OpenToggl 무료 오픈소스 시간 추적",
     calendar: "OpenToggl 캘린더 뷰 (일별 추적 시간 표시)",
   },
+  pl: {
+    overview: "Przegląd śledzenia czasu OpenToggl z timerem i wpisami",
+    free: "OpenToggl — darmowe śledzenie czasu open source",
+    calendar: "Widok kalendarza OpenToggl pokazujący śledzony czas wg dnia",
+  },
+  pt: {
+    overview: "Visão geral do rastreamento de tempo do OpenToggl com timer e registros",
+    free: "OpenToggl rastreamento de tempo gratuito e de código aberto",
+    calendar: "Visualização de calendário do OpenToggl mostrando tempo rastreado por dia",
+  },
 };
 
 export default function HomeHeroScreenshots({ locale }: HomeHeroScreenshotsProps) {

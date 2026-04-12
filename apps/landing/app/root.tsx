@@ -23,6 +23,8 @@ const localeItems = [
   { name: "日本語", locale: "ja" },
   { name: "Français", locale: "fr" },
   { name: "한국어", locale: "ko" },
+  { name: "Polski", locale: "pl" },
+  { name: "Português", locale: "pt" },
 ];
 
 function useLocaleFromPath() {

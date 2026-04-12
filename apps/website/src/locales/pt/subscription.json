@@ -1,0 +1,21 @@
+{
+  "subscription": "Assinatura",
+  "selfHosted": "Auto-hospedado",
+  "selfHostedDescription": "Você está executando uma instância auto-hospedada do OpenToggl. Todos os recursos estão incluídos sem custo para {{organizationName}}.",
+  "workspace": "Workspace",
+  "access": "Acesso",
+  "allFeaturesIncluded": "Todos os recursos incluídos",
+  "billing": "Faturamento",
+  "none": "Nenhum",
+  "whatsIncluded": "O que está incluído",
+  "whatsIncludedDescription": "Todos os recursos estão disponíveis na sua instância auto-hospedada sem limites de uso.",
+  "unlimitedTimeTracking": "Registro de tempo ilimitado",
+  "unlimitedProjects": "Projetos ilimitados",
+  "unlimitedTeamMembers": "Membros da equipe ilimitados",
+  "reportsAndAnalytics": "Relatórios e análises",
+  "goalsAndFavorites": "Metas e favoritos",
+  "apiAccess": "Acesso à API",
+  "opentoggl": "OpenToggl",
+  "opentogglDescription": "O OpenToggl é a alternativa de código aberto e auto-hospedada ao Toggl Track. Seus dados de registro de tempo ficam na sua própria infraestrutura com controle total sobre privacidade, backups e personalização. Sem assinaturas, sem taxas por usuário, sem limites de uso.",
+  "viewOnGithub": "Ver no GitHub"
+}

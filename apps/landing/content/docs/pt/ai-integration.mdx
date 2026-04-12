@@ -1,0 +1,61 @@
+---
+title: Integração com IA
+description: Permita que agentes de IA operem o OpenToggl através do toggl-cli e pacotes de habilidades instaláveis.
+---
+
+A integração de IA do OpenToggl é construída em torno do [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) — uma CLI mantida especificamente para agentes de IA e automação. Duas formas de usar:
+
+- `toggl` CLI — opere diretamente pela linha de comando
+- Pacote de habilidades `SKILL.md` — instale em um ambiente de agente
+
+## Instalação
+
+Para ambientes de agente:
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+Instalação manual da CLI:
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## O que a CLI cobre
+
+Uma vez instalada, os agentes podem executar operações comuns como comandos em vez de criar requisições HTTP brutas:
+
+- Registros de tempo: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
+- Workspaces: `list`, `create`, `rename`, `delete`
+- Informações do usuário: `me`, `preferences`
+- Organizações: `organization list`, `organization show`
+
+## Conectando ao OpenToggl
+
+A CLI suporta tanto o Toggl Track oficial quanto o OpenToggl auto-hospedado. Escolha durante a primeira autenticação:
+
+- Toggl Track → conecta ao serviço oficial
+- OpenToggl → insira a URL da sua instância, ex: `https://sua-instancia.com/api/v9`
+
+## Por que uma CLI em vez de chamadas de API brutas
+
+- Os comandos mapeiam diretamente para tarefas comuns — os agentes não precisam entender a API subjacente
+- Autenticação integrada, sem gerenciamento manual de tokens
+- Cache local para leituras, invalidação automática de cache em escritas
+- O pacote de habilidades pode ser instalado e reutilizado em diferentes ambientes de agentes
+
+## Configuração recomendada
+
+1. Implante o OpenToggl (ou use a versão hospedada)
+2. Instale o toggl-cli ou o pacote de habilidades
+3. Autentique-se na sua instância
+4. Os agentes usam comandos da CLI para operações do dia a dia
+5. Para controle mais fino, consulte a documentação OpenAPI
+
+## Referências
+
+- Repositório [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)
+- Definição do pacote de habilidades `skills/toggl-cli/SKILL.md`
+- Contratos OpenAPI e documentação do produto OpenToggl

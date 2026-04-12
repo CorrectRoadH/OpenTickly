@@ -1,0 +1,61 @@
+---
+title: Integracja z AI
+description: Pozwól agentom AI obsługiwać OpenToggl przez toggl-cli i instalowalne paczki umiejętności.
+---
+
+Integracja AI w OpenToggl jest zbudowana wokół [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) — CLI utrzymywanego specjalnie dla agentów AI i automatyzacji. Dwa sposoby użycia:
+
+- `toggl` CLI — obsługa bezpośrednio z wiersza poleceń
+- `SKILL.md` paczka umiejętności — instalacja w środowisku agenta
+
+## Instalacja
+
+Dla środowisk agentowych:
+
+```bash
+npx skills add CorrectRoadH/toggl-cli
+```
+
+Ręczna instalacja CLI:
+
+```bash
+npm install -g @correctroadh/toggl-cli
+toggl --help
+```
+
+## Co obejmuje CLI
+
+Po zainstalowaniu agenci mogą uruchamiać typowe operacje jako komendy zamiast tworzyć surowe żądania HTTP:
+
+- Wpisy czasu: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
+- Przestrzenie robocze: `list`, `create`, `rename`, `delete`
+- Informacje o użytkowniku: `me`, `preferences`
+- Organizacje: `organization list`, `organization show`
+
+## Łączenie z OpenToggl
+
+CLI obsługuje zarówno oficjalny Toggl Track, jak i samodzielnie hostowany OpenToggl. Wybierz podczas pierwszej autoryzacji:
+
+- Toggl Track → łączy się z oficjalną usługą
+- OpenToggl → wpisz URL swojej instancji, np. `https://twoja-instancja.com/api/v9`
+
+## Dlaczego CLI zamiast surowych wywołań API
+
+- Komendy mapują się bezpośrednio na typowe zadania — agenci nie muszą rozumieć bazowego API
+- Wbudowana autoryzacja, bez ręcznego zarządzania tokenami
+- Lokalne cachowanie odczytów, automatyczne unieważnianie cache przy zapisach
+- Paczka umiejętności może być zainstalowana i ponownie używana w różnych środowiskach agentów
+
+## Zalecana konfiguracja
+
+1. Wdróż OpenToggl (lub użyj wersji hostowanej)
+2. Zainstaluj toggl-cli lub paczkę umiejętności
+3. Autoryzuj się na swojej instancji
+4. Agenci używają komend CLI do codziennych operacji
+5. Dla dokładniejszej kontroli, odwołaj się do dokumentacji OpenAPI
+
+## Referencje
+
+- Repozytorium [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)
+- Definicja paczki umiejętności `skills/toggl-cli/SKILL.md`
+- Kontrakty OpenAPI i dokumentacja produktu OpenToggl

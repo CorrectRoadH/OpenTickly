@@ -1,0 +1,12 @@
+{
+  "save": "Zapisz",
+  "cancel": "Anuluj",
+  "delete": "Usuń",
+  "loading": "Ładowanie…",
+  "languageUpdated": "Język zaktualizowany",
+  "failedToUpdateLanguage": "Nie udało się zaktualizować języka",
+  "pageNotFound": "Nie znaleziono strony",
+  "pageNotFoundDescription": "Strona, której szukasz, nie istnieje lub została przeniesiona.",
+  "goToTimer": "Przejdź do timera",
+  "signedInAs": "Zalogowany jako"
+}

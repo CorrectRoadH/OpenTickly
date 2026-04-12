@@ -1,0 +1,18 @@
+{
+  "languageTitle": "Wybierz swój język",
+  "languageDescription": "Wybierz preferowany język. Możesz to zmienić później w ustawieniach konta.",
+  "aiWorkflowTitle": "Współpracuje z Twoimi narzędziami AI",
+  "aiWorkflowDescription": "OpenToggl integruje się z agentami AI i asystentami kodowania przez CLI — pozwól swojemu AI automatycznie rejestrować czas podczas pracy.",
+  "aiWorkflowSetupGuide": "Zobacz przewodnik integracji AI",
+  "importDataTitle": "Zaimportuj dane z Toggl",
+  "importDataDescription": "Już używasz Toggl Track? Przenieś swoją historię do OpenToggl.",
+  "importDataButton": "Przejdź do importu",
+  "starUsTitle": "Wszystko gotowe!",
+  "starUsDescription": "OpenToggl jest open source i tworzony przez społeczność. Jeśli oszczędza Ci czas, gwiazdka na GitHub wiele dla nas znaczy.",
+  "continue": "Kontynuuj",
+  "starOnGitHub": "⭐ Gwiazdka na GitHub",
+  "startTracking": "Zacznij rejestrować",
+  "failedToComplete": "Nie udało się zakończyć wdrożenia",
+  "previous": "Wstecz",
+  "next": "Dalej"
+}

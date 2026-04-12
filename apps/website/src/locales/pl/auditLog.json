@@ -1,0 +1,21 @@
+{
+  "auditLog": "Dziennik audytu",
+  "action": "Akcja",
+  "source": "Źródło",
+  "entityType": "Typ encji",
+  "entityId": "ID encji",
+  "time": "Czas",
+  "noOrganizationAvailable": "Brak dostępnej organizacji.",
+  "loadingAuditLogs": "Ładowanie dziennika audytu...",
+  "unableToLoadAuditLogs": "Nie udało się załadować dziennika audytu. Odśwież, aby spróbować ponownie.",
+  "noAuditLogEntries": "Nie znaleziono wpisów w dzienniku audytu z ostatnich 30 dni.",
+  "sourceFilter": "Filtr źródła",
+  "allSources": "Wszystkie źródła",
+  "webCookie": "Web (Cookie)",
+  "apiTokenCli": "API (Token/CLI)",
+  "request": "Żądanie",
+  "response": "Odpowiedź",
+  "previous": "Poprzedni",
+  "next": "Następny",
+  "page": "Strona"
+}
