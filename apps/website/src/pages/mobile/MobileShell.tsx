@@ -113,9 +113,12 @@ export function MobileShell(): ReactElement {
     void startMutation.mutateAsync({
       billable: entry.billable,
       description: (entry.description ?? "").trim(),
+      projectColor: entry.project_color ?? null,
       projectId: resolveTimeEntryProjectId(entry),
+      projectName: entry.project_name ?? null,
       start: new Date().toISOString(),
       tagIds: entry.tag_ids ?? [],
+      tagNames: entry.tags ?? [],
     });
   }
 

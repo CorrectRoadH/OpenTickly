@@ -55,9 +55,12 @@ export function useStartTimeEntryMutation(workspaceId: number) {
     mutationFn: (request: {
       billable?: boolean;
       description: string;
+      projectColor?: string | null;
       projectId?: number | null;
+      projectName?: string | null;
       start: string;
       tagIds?: number[];
+      tagNames?: string[];
       taskId?: number | null;
     }) =>
       unwrapWebApiResult(
@@ -78,8 +81,7 @@ export function useStartTimeEntryMutation(workspaceId: number) {
           },
         }),
       ),
-    onMutate: async (request) => {
-      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+    onMutate: (request) => {
       const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
       const optimistic: GithubComTogglTogglApiInternalModelsTimeEntry = {
         id: -Date.now(),
@@ -90,10 +92,15 @@ export function useStartTimeEntryMutation(workspaceId: number) {
         duration: -1,
         billable: request.billable ?? false,
         project_id: request.projectId ?? null,
+        project_name: request.projectName ?? undefined,
+        project_color: request.projectColor ?? undefined,
         tag_ids: request.tagIds ?? [],
+        tags: request.tagNames ?? undefined,
         task_id: request.taskId ?? null,
       };
+      // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, optimistic);
+      void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
       return { previous };
     },
     onError: (_err, _vars, context) => {

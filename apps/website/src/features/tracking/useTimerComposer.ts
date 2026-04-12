@@ -136,9 +136,12 @@ export function useTimerComposer() {
     await startTimeEntryMutation.mutateAsync({
       billable: entry.billable,
       description: continuedDescription,
+      projectColor: entry.project_color ?? null,
       projectId: resolveTimeEntryProjectId(entry),
+      projectName: entry.project_name ?? null,
       start: new Date().toISOString(),
       tagIds: entry.tag_ids ?? [],
+      tagNames: entry.tags ?? [],
       taskId: entry.task_id ?? entry.tid ?? null,
     });
     setRunningDescription(continuedDescription);

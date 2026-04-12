@@ -37,7 +37,9 @@ export function MobileTimerPage(): ReactElement {
     void startMutation.mutateAsync({
       billable: fav.billable,
       description: fav.description ?? "",
+      projectColor: fav.project_color ?? null,
       projectId: fav.project_id ?? null,
+      projectName: fav.project_name ?? null,
       start: new Date().toISOString(),
       tagIds: fav.tag_ids ?? [],
     });
