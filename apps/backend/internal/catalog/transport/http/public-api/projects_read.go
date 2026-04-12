@@ -271,28 +271,51 @@ func projectViewToAPI(view catalogapplication.ProjectView) publictrackapi.Github
 		status = lo.ToPtr(publictrackapi.ModelsProjectStatus("archived"))
 	}
 
+	// Toggl reports actual_hours and actual_seconds as null when the
+	// project has never been tracked against, and as integers when
+	// there is time data (e.g. actual_hours=1 paired with
+	// actual_seconds=4413, integer truncation). Our domain stores
+	// ActualSeconds as a non-nullable int64 with 0 for untracked, so
+	// treat zero as "untracked" and emit null for both fields, then
+	// derive actual_hours via integer division for non-zero values.
+	// total_count is always emitted on list responses; upstream returns
+	// 0 for accounts without paginated analytics, which matches what
+	// we can promise today.
+	var actualHours, actualSeconds *int
+	if view.ActualSeconds > 0 {
+		actualSeconds = lo.ToPtr(int(view.ActualSeconds))
+		actualHours = lo.ToPtr(int(view.ActualSeconds / 3600))
+	}
+	var estimatedHours *int
+	if view.EstimatedSeconds != nil {
+		estimatedHours = lo.ToPtr(int(*view.EstimatedSeconds / 3600))
+	}
+
 	project := publictrackapi.GithubComTogglTogglApiInternalModelsProject{
-		Active:          lo.ToPtr(view.Active),
-		ActualSeconds:   lo.ToPtr(int(view.ActualSeconds)),
-		At:              timePointer(view.CreatedAt),
-		Billable:        lo.ToPtr(view.Billable),
-		CanTrackTime:    lo.ToPtr(view.Active),
-		ClientId:        intPointerFromInt64Pointer(view.ClientID),
-		ClientName:      view.ClientName,
-		Color:           lo.ToPtr(view.Color),
-		CreatedAt:       timePointer(view.CreatedAt),
-		Id:              lo.ToPtr(int(view.ID)),
-		IsPrivate:       lo.ToPtr(view.IsPrivate),
-		Name:            lo.ToPtr(view.Name),
-		Pinned:          lo.ToPtr(view.Pinned),
-		Recurring:       lo.ToPtr(view.Recurring),
+		Active:           lo.ToPtr(view.Active),
+		ActualHours:      actualHours,
+		ActualSeconds:    actualSeconds,
+		At:               timePointer(view.CreatedAt),
+		Billable:         lo.ToPtr(view.Billable),
+		CanTrackTime:     lo.ToPtr(view.Active),
+		ClientId:         intPointerFromInt64Pointer(view.ClientID),
+		ClientName:       view.ClientName,
+		Color:            lo.ToPtr(view.Color),
+		CreatedAt:        timePointer(view.CreatedAt),
+		Id:               lo.ToPtr(int(view.ID)),
+		IsPrivate:        lo.ToPtr(view.IsPrivate),
+		Name:             lo.ToPtr(view.Name),
+		Pinned:           lo.ToPtr(view.Pinned),
+		Recurring:        lo.ToPtr(view.Recurring),
 		ServerDeletedAt:  nil,
 		StartDate:        resolveProjectStartDate(view),
 		Status:           status,
 		Template:         lo.ToPtr(view.Template),
+		TotalCount:       lo.ToPtr(0),
 		Wid:              lo.ToPtr(int(view.WorkspaceID)),
 		WorkspaceId:      lo.ToPtr(int(view.WorkspaceID)),
 		Currency:         view.Currency,
+		EstimatedHours:   estimatedHours,
 		EstimatedSeconds: intPointerFromInt64Pointer(view.EstimatedSeconds),
 		FixedFee:         float32PointerFromFloat64(view.FixedFee),
 		Rate:             float32PointerFromFloat64(view.Rate),

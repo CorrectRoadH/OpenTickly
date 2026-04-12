@@ -298,6 +298,94 @@ func TestMeProjectsAggregatesAcrossAllUserWorkspaces(t *testing.T) {
 	}
 }
 
+// TestMeProjectsEmitsOfficialTogglDerivedFieldShape locks the shape
+// of derived/rollup fields — actual_hours, actual_seconds,
+// estimated_hours, total_count — against what api.track.toggl.com
+// actually returns. Specifically:
+//
+//   - A freshly created project with no time tracked emits
+//     actual_hours=null and actual_seconds=null (not 0), matching a
+//     live Toggl response for an untouched project.
+//   - total_count is emitted on every project entry (per upstream
+//     quirk, the field lives on the item not the array) with value 0
+//     when the account has no paginated analytics.
+//
+// These fields were missing from our response previously, breaking
+// typed clients that deserialize them as required.
+func TestMeProjectsEmitsOfficialTogglDerivedFieldShape(t *testing.T) {
+	database := pgtest.Open(t)
+	email := uniqueTestEmail("me-projects-derived-fields")
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    email,
+		"fullname": "Derived Fields",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("register: %d body=%s", register.Code, register.Body.String())
+	}
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	workspaceID := *registerBody.CurrentWorkspaceID
+	auth := basicAuthorization(email, "secret1")
+
+	create := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
+		map[string]any{"name": "Fresh Project", "workspace_id": workspaceID, "active": true},
+		auth,
+	)
+	if create.Code != http.StatusOK {
+		t.Fatalf("create: %d body=%s", create.Code, create.Body.String())
+	}
+
+	resp := performAuthorizedJSONRequest(
+		t, app, http.MethodGet, "/api/v9/me/projects", nil, auth,
+	)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("me projects: %d body=%s", resp.Code, resp.Body.String())
+	}
+	var projects []map[string]any
+	mustDecodeJSON(t, resp.Body.Bytes(), &projects)
+	if len(projects) != 1 {
+		t.Fatalf("expected 1 project, got %d", len(projects))
+	}
+	p := projects[0]
+
+	// Fresh project: no time tracked → Toggl emits null, not 0.
+	if v, present := p["actual_hours"]; !present || v != nil {
+		t.Fatalf("actual_hours must be present and null on fresh project, got present=%v value=%v", present, v)
+	}
+	if v, present := p["actual_seconds"]; !present || v != nil {
+		t.Fatalf("actual_seconds must be present and null on fresh project, got present=%v value=%v", present, v)
+	}
+
+	// estimated_hours: we have no estimate stored → null.
+	if v, present := p["estimated_hours"]; !present || v != nil {
+		t.Fatalf("estimated_hours must be present and null with no estimate, got present=%v value=%v", present, v)
+	}
+
+	// total_count must be emitted on every list entry (omitempty would
+	// strip it without explicit population). Upstream emits 0 for
+	// accounts without paginated analytics.
+	if v, ok := p["total_count"].(float64); !ok || v != 0 {
+		t.Fatalf("total_count must be present as number 0, got %#v", p["total_count"])
+	}
+}
+
 // TestMeProjectsEmitsOfficialTogglTimeFormat locks the serialization
 // format of time-valued fields (at, created_at) on /me/projects to
 // match official api.track.toggl.com exactly: ISO 8601 with an
