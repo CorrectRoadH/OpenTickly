@@ -12,6 +12,8 @@ const server = createFromSource(source, {
     ja: cjkTokenizer,
     fr: "french",
     ko: cjkTokenizer,
+    pl: "english",
+    pt: "portuguese",
   },
 });
 
