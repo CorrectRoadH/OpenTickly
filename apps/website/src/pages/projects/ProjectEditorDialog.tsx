@@ -1,83 +1,123 @@
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
+import type { GithubComTogglTogglApiInternalModelsProject } from "../../shared/api/generated/public-track/types.gen.ts";
+import {
+  useClientsQuery,
+  useCreateClientMutation,
+  useCreateProjectMutation,
+  useUpdateProjectMutation,
+} from "../../shared/query/web-shell.ts";
+import { useSession } from "../../shared/session/session-context.tsx";
+import { WebApiError } from "../../shared/api/web-client.ts";
 import { TRACK_COLOR_SWATCHES } from "../../shared/lib/project-colors.ts";
 import { ColorSwatchPicker } from "../../shared/ui/ColorSwatchPicker.tsx";
 import { ModalDialog } from "../../shared/ui/ModalDialog.tsx";
 import { ProjectEditorAdvanced } from "./ProjectEditorAdvanced.tsx";
+import { useProjectForm, type ProjectFormAction } from "./useProjectForm.ts";
+
+export type ProjectEditorMode = "create" | "edit";
+
 type ProjectEditorDialogProps = {
-  billable: boolean;
-  clientId: number | null;
-  clients: Array<{ id: number; name: string }>;
-  color: string;
-  endDate: string;
-  estimatedHours: number;
-  fixedFee: number;
-  isPending?: boolean;
-  isPrivate: boolean;
-  name: string;
-  onBillableChange: (value: boolean) => void;
-  onClientChange: (clientId: number | null) => void;
+  mode: ProjectEditorMode;
+  project?: GithubComTogglTogglApiInternalModelsProject | null;
   onClose: () => void;
-  onColorChange: (value: string) => void;
-  onCreateClient: (name: string) => void;
-  onEndDateChange: (value: string) => void;
-  onEstimatedHoursChange: (value: number) => void;
-  onFixedFeeChange: (value: number) => void;
-  onNameChange: (value: string) => void;
-  onPrivacyChange: (value: boolean) => void;
-  onRecurringChange: (value: boolean) => void;
-  onStartDateChange: (value: string) => void;
-  onSubmit: () => void;
-  onTemplateChange: (value: boolean) => void;
-  recurring: boolean;
-  startDate: string;
-  submitLabel: string;
-  template: boolean;
-  title: string;
+  onSuccess?: (mode: ProjectEditorMode) => void;
 };
 
 export function ProjectEditorDialog({
-  billable,
-  clientId,
-  clients,
-  color,
-  endDate,
-  estimatedHours,
-  fixedFee,
-  isPending = false,
-  isPrivate,
-  name,
-  onBillableChange,
-  onClientChange,
+  mode,
+  project,
   onClose,
-  onColorChange,
-  onCreateClient,
-  onEndDateChange,
-  onEstimatedHoursChange,
-  onFixedFeeChange,
-  onNameChange,
-  onPrivacyChange,
-  onRecurringChange,
-  onStartDateChange,
-  onSubmit,
-  onTemplateChange,
-  recurring,
-  startDate,
-  submitLabel,
-  template,
-  title,
+  onSuccess,
 }: ProjectEditorDialogProps): ReactElement {
   const { t } = useTranslation("projects");
+  const session = useSession();
+  const workspaceId = session.currentWorkspace.id;
+
+  const [form, formDispatch] = useProjectForm(
+    mode === "edit" && project ? { type: "OPEN_EDIT", project } : { type: "OPEN_CREATE" },
+  );
+  const {
+    name,
+    color,
+    isPrivate,
+    template,
+    clientId,
+    billable,
+    startDate,
+    endDate,
+    recurring,
+    estimatedHours,
+    fixedFee,
+    editorProject,
+  } = form;
+
+  const clientsQuery = useClientsQuery(workspaceId);
+  const clients = (clientsQuery.data ?? [])
+    .filter((c): c is { id: number; name: string } => c.id != null && c.name != null)
+    .map((c) => ({ id: c.id, name: c.name }));
+
+  const createClientMutation = useCreateClientMutation(workspaceId);
+  const createProjectMutation = useCreateProjectMutation(workspaceId);
+  const updateProjectMutation = useUpdateProjectMutation(workspaceId);
+  const isPending =
+    createProjectMutation.isPending ||
+    updateProjectMutation.isPending ||
+    createClientMutation.isPending;
+
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const trimmedName = name.trim();
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function dispatch(action: ProjectFormAction) {
+    formDispatch(action);
+  }
+
+  async function handleCreateClient(clientName: string) {
+    const client = await createClientMutation.mutateAsync(clientName);
+    if (client?.id) {
+      dispatch({ type: "SET_CLIENT_ID", value: client.id });
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!trimmedName || isPending) return;
-    onSubmit();
+
+    const sharedFields = {
+      billable,
+      clientId: clientId ?? undefined,
+      color,
+      endDate: endDate || undefined,
+      estimatedHours: estimatedHours || undefined,
+      fixedFee: fixedFee || undefined,
+      isPrivate,
+      name: trimmedName,
+      recurring,
+      startDate: startDate || undefined,
+      template,
+    };
+
+    try {
+      if (mode === "edit" && editorProject?.id != null) {
+        await updateProjectMutation.mutateAsync({
+          ...sharedFields,
+          projectId: editorProject.id,
+        });
+      } else {
+        await createProjectMutation.mutateAsync(sharedFields);
+      }
+      onSuccess?.(mode);
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists"));
+    }
   }
+
+  const submitLabel = mode === "edit" ? t("save") : t("createProject");
+  const title = mode === "edit" ? t("editProject") : t("createNewProject");
 
   return (
     <ModalDialog
@@ -131,7 +171,7 @@ export function ProjectEditorDialog({
                     <ColorSwatchPicker
                       colors={TRACK_COLOR_SWATCHES}
                       onSelect={(option) => {
-                        onColorChange(option);
+                        dispatch({ type: "SET_COLOR", value: option });
                         setColorPickerOpen(false);
                       }}
                       selected={color}
@@ -142,7 +182,7 @@ export function ProjectEditorDialog({
               <input
                 aria-label={t("projectName")}
                 className="h-11 min-w-0 flex-1 rounded-md border border-[var(--track-border)] bg-[var(--track-control-surface)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-                onChange={(event) => onNameChange(event.target.value)}
+                onChange={(event) => dispatch({ type: "SET_NAME", value: event.target.value })}
                 placeholder={t("projectName")}
                 value={name}
               />
@@ -173,7 +213,7 @@ export function ProjectEditorDialog({
                     ? "bg-[var(--track-accent-soft)]"
                     : "bg-[var(--track-control-disabled-strong)]"
                 }`}
-                onClick={() => onPrivacyChange(!isPrivate)}
+                onClick={() => dispatch({ type: "SET_PRIVATE", value: !isPrivate })}
                 type="button"
               >
                 <span
@@ -207,15 +247,17 @@ export function ProjectEditorDialog({
                   endDate={endDate}
                   estimatedHours={estimatedHours}
                   fixedFee={fixedFee}
-                  onBillableChange={onBillableChange}
-                  onClientChange={onClientChange}
-                  onCreateClient={onCreateClient}
-                  onEndDateChange={onEndDateChange}
-                  onEstimatedHoursChange={onEstimatedHoursChange}
-                  onFixedFeeChange={onFixedFeeChange}
-                  onRecurringChange={onRecurringChange}
-                  onStartDateChange={onStartDateChange}
-                  onTemplateChange={onTemplateChange}
+                  onBillableChange={(v) => dispatch({ type: "SET_BILLABLE", value: v })}
+                  onClientChange={(v) => dispatch({ type: "SET_CLIENT_ID", value: v })}
+                  onCreateClient={handleCreateClient}
+                  onEndDateChange={(v) => dispatch({ type: "SET_END_DATE", value: v })}
+                  onEstimatedHoursChange={(v) =>
+                    dispatch({ type: "SET_ESTIMATED_HOURS", value: v })
+                  }
+                  onFixedFeeChange={(v) => dispatch({ type: "SET_FIXED_FEE", value: v })}
+                  onRecurringChange={(v) => dispatch({ type: "SET_RECURRING", value: v })}
+                  onStartDateChange={(v) => dispatch({ type: "SET_START_DATE", value: v })}
+                  onTemplateChange={(v) => dispatch({ type: "SET_TEMPLATE", value: v })}
                   recurring={recurring}
                   startDate={startDate}
                   template={template}

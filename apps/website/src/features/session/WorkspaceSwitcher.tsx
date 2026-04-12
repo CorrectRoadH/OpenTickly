@@ -39,7 +39,6 @@ export function WorkspaceSwitcher({
   const [optimisticDefaultWorkspaceId, setOptimisticDefaultWorkspaceId] = useState<number | null>(
     null,
   );
-  const [organizationName, setOrganizationName] = useState("");
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const listboxId = useId();
   const createOrganizationMutation = useCreateOrganizationMutation();
@@ -92,9 +91,7 @@ export function WorkspaceSwitcher({
     buttonRef.current?.focus();
   }
 
-  async function handleCreateOrganization() {
-    const nextOrganizationName = organizationName.trim();
-
+  async function handleCreateOrganization(nextOrganizationName: string) {
     if (!nextOrganizationName) {
       return;
     }
@@ -106,7 +103,6 @@ export function WorkspaceSwitcher({
     const createdWorkspaceId = createdOrganization.workspace_id ?? 0;
 
     setCreateDialogOpen(false);
-    setOrganizationName("");
 
     if (createdWorkspaceId > 0) {
       setOptimisticOrganization({
@@ -164,19 +160,16 @@ export function WorkspaceSwitcher({
           nameLabel={t("organizationName")}
           testId="create-organization-dialog"
           namePlaceholder={t("organizationName")}
-          nameValue={organizationName}
           onClose={() => {
             if (createOrganizationMutation.isPending) {
               return;
             }
 
             setCreateDialogOpen(false);
-            setOrganizationName("");
             buttonRef.current?.focus();
           }}
-          onNameChange={setOrganizationName}
-          onSubmit={() => {
-            void handleCreateOrganization();
+          onSubmit={(values) => {
+            void handleCreateOrganization(values.name);
           }}
           submitLabel={t("createOrganization")}
           title={t("newOrganization")}

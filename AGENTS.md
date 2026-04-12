@@ -72,6 +72,60 @@ Files in `openapi/` fall into two categories:
 2. Extend if 80% match exists.
 3. Extract to shared module instead of copy-pasting.
 
+## Rerender Hygiene (Frontend)
+
+A keystroke must re-render exactly the field being typed into. If typing in a dialog input re-renders a sibling chart, list, or the app shell, that is a bug — fix it structurally, do not paper it over with `React.memo` / `useMemo` / `useCallback` (React Compiler owns memoization in this repo).
+
+### Banned: lifting transient form state into page/shell components
+
+A dialog or popover that owns its own ephemeral inputs (text fields, selected color, toggle, step index) **must keep that state inside itself**. Do not make the parent page hold `[name, setName]`, `[email, setEmail]`, `[selectedColor, setColor]` etc. just to hand them back through controlled props. Every keystroke setting state on the parent re-renders every sibling it paints — charts (Recharts), tables, sidebars, the shell.
+
+```tsx
+// ❌ Wrong — page owns transient dialog state; every keystroke re-renders the page
+function Page() {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState("member");
+  return (
+    <>
+      <ExpensiveChart ... />
+      {open && (
+        <InviteDialog
+          email={email} role={role}
+          onEmailChange={setEmail} onRoleChange={setRole}
+          onSubmit={() => mutate({ email, role })}
+        />
+      )}
+    </>
+  );
+}
+
+// ✅ Correct — dialog owns its fields; parent only holds `open` and receives final values
+function Page() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <ExpensiveChart ... />
+      {open && (
+        <InviteDialog
+          onClose={() => setOpen(false)}
+          onSubmit={(values) => mutate(values)}
+        />
+      )}
+    </>
+  );
+}
+```
+
+Rule of thumb: a prop is "transient form state" if it only matters while the dialog is open and is thrown away on close. Those live inside the dialog. Props the parent actually needs to _react_ to (e.g. selected item id that drives a detail pane) stay lifted.
+
+### When the parent does need the value
+
+If the parent genuinely needs to observe a field mid-edit (e.g. live preview), lift only that one field — not the whole form — and isolate the preview in its own component so the rest of the page is unaffected.
+
+### Verifying
+
+For components whose re-render cost is visible (Recharts, large virtualized lists, the app shell), add a render-count regression test using a simple ref counter (see `shared/test/useRenderCount.ts`). Do not use `<Profiler>` for equality assertions — its subtree/phase semantics make counts flaky. Reserve Profiler for performance investigation, not regression tests.
+
 ## File Size & Organization
 
 Keep files under 300 lines. Split by responsibility, extract sub-components, separate logic from presentation, group by feature.

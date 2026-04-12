@@ -57,7 +57,6 @@ export function ClientsPage(): ReactElement {
   const renameClientMutation = useRenameClientMutation(workspaceId);
   const deleteClientMutation = useDeleteClientMutation(workspaceId);
   const archiveClientMutation = useArchiveClientMutation(workspaceId);
-  const [clientName, setClientName] = useState("");
   const [composerOpen, setComposerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<Set<"active" | "inactive">>(
@@ -100,14 +99,12 @@ export function ClientsPage(): ReactElement {
     return all;
   })();
 
-  async function handleCreateClient() {
-    const trimmedName = clientName.trim();
-    if (!trimmedName) {
+  async function handleCreateClient(name: string) {
+    if (!name) {
       return;
     }
 
-    await createClientMutation.mutateAsync(trimmedName);
-    setClientName("");
+    await createClientMutation.mutateAsync(name);
     setComposerOpen(false);
     setStatusMessage(t("clientCreated"));
   }
@@ -364,11 +361,9 @@ export function ClientsPage(): ReactElement {
           isPending={createClientMutation.isPending}
           nameLabel={t("clientName")}
           namePlaceholder={t("clientName")}
-          nameValue={clientName}
           onClose={() => setComposerOpen(false)}
-          onNameChange={setClientName}
-          onSubmit={() => {
-            void handleCreateClient();
+          onSubmit={(values) => {
+            void handleCreateClient(values.name);
           }}
           submitLabel={t("createClient")}
           title={t("createNewClient")}

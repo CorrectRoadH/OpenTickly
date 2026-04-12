@@ -38,7 +38,6 @@ export function TagsPage(): ReactElement {
   const updateTagMutation = useUpdateTagMutation(workspaceId);
   const deleteTagMutation = useDeleteTagMutation(workspaceId);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [tagName, setTagName] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [nameFilter, setNameFilter] = useState("");
 
@@ -56,15 +55,12 @@ export function TagsPage(): ReactElement {
       return false;
     return true;
   });
-  const trimmedTagName = tagName.trim();
-
-  async function handleCreateTag() {
-    if (trimmedTagName.length === 0) {
+  async function handleCreateTag(name: string) {
+    if (name.length === 0) {
       return;
     }
 
-    await createTagMutation.mutateAsync(trimmedTagName);
-    setTagName("");
+    await createTagMutation.mutateAsync(name);
     setCreateDialogOpen(false);
     setStatus(t("tagCreated"));
   }
@@ -189,11 +185,9 @@ export function TagsPage(): ReactElement {
           nameLabel={t("tagName")}
           testId="create-tag-dialog"
           namePlaceholder={t("tagName")}
-          nameValue={tagName}
           onClose={() => setCreateDialogOpen(false)}
-          onNameChange={setTagName}
-          onSubmit={() => {
-            void handleCreateTag();
+          onSubmit={(values) => {
+            void handleCreateTag(values.name);
           }}
           submitLabel={t("createTag")}
           title={t("createNewTag")}

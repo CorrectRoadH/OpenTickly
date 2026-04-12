@@ -31,8 +31,6 @@ import {
   useAddProjectGroupMutation,
   useArchiveProjectMutation,
   useClientsQuery,
-  useCreateClientMutation,
-  useCreateProjectMutation,
   useDeleteProjectGroupMutation,
   useDeleteProjectMutation,
   useGroupsQuery,
@@ -57,10 +55,14 @@ import {
   formatProjectHours,
   normalizeProjects,
 } from "./projects-page-helpers.ts";
-import { ProjectEditorDialog } from "./ProjectEditorDialog.tsx";
+import { ProjectEditorDialog, type ProjectEditorMode } from "./ProjectEditorDialog.tsx";
 import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
-import { useProjectForm } from "./useProjectForm.ts";
 import { useProjectFilters, type ProjectCategory } from "./useProjectFilters.ts";
+
+type ProjectEditorState =
+  | { mode: "create" }
+  | { mode: "edit"; project: GithubComTogglTogglApiInternalModelsProject }
+  | null;
 
 const PROJECT_STATUS_OPTIONS = (
   t: (key: string) => string,
@@ -99,23 +101,8 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const navigate = useNavigate();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
-  const [form, formDispatch] = useProjectForm();
+  const [editorState, setEditorState] = useState<ProjectEditorState>(null);
   const [filters, filterDispatch] = useProjectFilters(statusFilter);
-  const {
-    editorMode,
-    editorProject,
-    name: projectName,
-    color: projectColor,
-    isPrivate: projectPrivate,
-    template: projectTemplate,
-    clientId: projectClientId,
-    billable: projectBillable,
-    startDate: projectStartDate,
-    endDate: projectEndDate,
-    recurring: projectRecurring,
-    estimatedHours: projectEstimatedHours,
-    fixedFee: projectFixedFee,
-  } = form;
   const {
     filterClientIds,
     filterMemberIds,
@@ -131,7 +118,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
     selectedStatuses.has("archived") ? "all" : "active",
   );
   const workspaceUsersQuery = useWorkspaceUsersQuery(workspaceId);
-  const createProjectMutation = useCreateProjectMutation(workspaceId);
   const updateProjectMutation = useUpdateProjectMutation(workspaceId);
   const archiveProjectMutation = useArchiveProjectMutation(workspaceId);
   const restoreProjectMutation = useRestoreProjectMutation(workspaceId);
@@ -143,7 +129,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const addProjectGroupMutation = useAddProjectGroupMutation(workspaceId);
   const deleteProjectGroupMutation = useDeleteProjectGroupMutation(workspaceId);
   const clientsQuery = useClientsQuery(workspaceId);
-  const createClientMutation = useCreateClientMutation(workspaceId);
   // Fetch all project-user mappings for member filtering
   const projectUsersQuery = useQuery({
     queryKey: ["project-users-all", workspaceId],
@@ -216,16 +201,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       id: member.id as number,
       name: member.fullname?.trim() || member.email?.trim() || `User ${member.id}`,
     }));
-  const mutationPending =
-    createProjectMutation.isPending ||
-    updateProjectMutation.isPending ||
-    archiveProjectMutation.isPending ||
-    restoreProjectMutation.isPending ||
-    pinProjectMutation.isPending ||
-    unpinProjectMutation.isPending ||
-    deleteProjectMutation.isPending ||
-    createClientMutation.isPending;
-
   async function navigateToStatus(nextStatus: ProjectStatusFilter) {
     await navigate({
       params: { workspaceId: String(workspaceId) },
@@ -235,53 +210,21 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   }
 
   function openCreateDialog() {
-    formDispatch({ type: "OPEN_CREATE" });
+    setEditorState({ mode: "create" });
   }
 
   function openEditDialog(project: GithubComTogglTogglApiInternalModelsProject) {
-    formDispatch({ type: "OPEN_EDIT", project });
+    setEditorState({ mode: "edit", project });
   }
 
   function closeEditor() {
-    formDispatch({ type: "CLOSE" });
+    setEditorState(null);
   }
 
-  async function handleSubmitProject() {
-    const trimmedName = projectName.trim();
-    if (!trimmedName) {
-      return;
-    }
-
-    try {
-      const sharedFields = {
-        billable: projectBillable,
-        clientId: projectClientId ?? undefined,
-        color: projectColor,
-        endDate: projectEndDate || undefined,
-        estimatedHours: projectEstimatedHours || undefined,
-        fixedFee: projectFixedFee || undefined,
-        isPrivate: projectPrivate,
-        name: trimmedName,
-        recurring: projectRecurring,
-        startDate: projectStartDate || undefined,
-        template: projectTemplate,
-      };
-      if (editorMode === "edit" && editorProject?.id != null) {
-        await updateProjectMutation.mutateAsync({
-          ...sharedFields,
-          projectId: editorProject.id,
-        });
-      } else {
-        await createProjectMutation.mutateAsync(sharedFields);
-      }
-
-      closeEditor();
-      setStatusMessage(editorMode === "edit" ? t("projectUpdated") : t("projectCreated"));
-      if (statusFilter === "archived") {
-        await navigateToStatus("default");
-      }
-    } catch (err) {
-      toast.error(err instanceof WebApiError ? err.userMessage : t("projectNameAlreadyExists"));
+  function handleEditorSuccess(mode: ProjectEditorMode) {
+    setStatusMessage(mode === "edit" ? t("projectUpdated") : t("projectCreated"));
+    if (statusFilter === "archived") {
+      void navigateToStatus("default");
     }
   }
 
@@ -671,46 +614,12 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         ) : null}
       </PageLayout>
 
-      {editorMode ? (
+      {editorState ? (
         <ProjectEditorDialog
-          billable={projectBillable}
-          clientId={projectClientId}
-          clients={clientsList}
-          color={projectColor}
-          endDate={projectEndDate}
-          estimatedHours={projectEstimatedHours}
-          fixedFee={projectFixedFee}
-          isPending={mutationPending}
-          isPrivate={projectPrivate}
-          name={projectName}
-          onBillableChange={(v) => formDispatch({ type: "SET_BILLABLE", value: v })}
-          onClientChange={(v) => formDispatch({ type: "SET_CLIENT_ID", value: v })}
-          onClose={() => {
-            closeEditor();
-          }}
-          onColorChange={(v) => formDispatch({ type: "SET_COLOR", value: v })}
-          onCreateClient={async (clientName) => {
-            const client = await createClientMutation.mutateAsync(clientName);
-            if (client?.id) formDispatch({ type: "SET_CLIENT_ID", value: client.id });
-          }}
-          onEndDateChange={(v) => formDispatch({ type: "SET_END_DATE", value: v })}
-          onEstimatedHoursChange={(v) => formDispatch({ type: "SET_ESTIMATED_HOURS", value: v })}
-          onFixedFeeChange={(v) => formDispatch({ type: "SET_FIXED_FEE", value: v })}
-          onNameChange={(value) => {
-            formDispatch({ type: "SET_NAME", value });
-          }}
-          onPrivacyChange={(v) => formDispatch({ type: "SET_PRIVATE", value: v })}
-          onRecurringChange={(v) => formDispatch({ type: "SET_RECURRING", value: v })}
-          onStartDateChange={(v) => formDispatch({ type: "SET_START_DATE", value: v })}
-          onSubmit={() => {
-            void handleSubmitProject();
-          }}
-          onTemplateChange={(v) => formDispatch({ type: "SET_TEMPLATE", value: v })}
-          recurring={projectRecurring}
-          startDate={projectStartDate}
-          submitLabel={editorMode === "edit" ? t("save") : t("createProject")}
-          template={projectTemplate}
-          title={editorMode === "edit" ? t("editProject") : t("createNewProject")}
+          mode={editorState.mode}
+          project={editorState.mode === "edit" ? editorState.project : null}
+          onClose={closeEditor}
+          onSuccess={handleEditorSuccess}
         />
       ) : null}
     </>

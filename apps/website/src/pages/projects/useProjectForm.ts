@@ -101,6 +101,8 @@ function reducer(state: ProjectFormState, action: ProjectFormAction): ProjectFor
   }
 }
 
-export function useProjectForm(): [ProjectFormState, React.Dispatch<ProjectFormAction>] {
-  return useReducer(reducer, DEFAULT_STATE);
+export function useProjectForm(
+  initAction?: ProjectFormAction,
+): [ProjectFormState, React.Dispatch<ProjectFormAction>] {
+  return useReducer(reducer, initAction ? reducer(DEFAULT_STATE, initAction) : DEFAULT_STATE);
 }

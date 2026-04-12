@@ -4,9 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Cell, Pie, PieChart } from "recharts";
 import { AppButton, PageLayout, SurfaceCard } from "@opentoggl/web-ui";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
-import { WebApiError } from "../../shared/api/web-client.ts";
 import i18n from "../../app/i18n.ts";
 import {
   formatClockDuration,
@@ -21,7 +19,6 @@ import type {
   ModelsMostActiveUser,
 } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
-  useInviteWorkspaceMemberMutation,
   useProjectsQuery,
   useWorkspaceAllActivitiesQuery,
   useWorkspaceMembersQuery,
@@ -61,31 +58,6 @@ export function WorkspaceOverviewPage(): ReactElement {
   const teamActivity = buildTeamActivity(mostActiveQuery.data ?? [], memberCount);
   const projectCoverage = buildProjectCoverage(topActivityQuery.data ?? []);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
-  const inviteMutation = useInviteWorkspaceMemberMutation(workspaceId);
-  const handleInviteSubmit = () => {
-    inviteMutation.mutate(
-      { email: inviteEmail.trim(), role: inviteRole },
-      {
-        onSuccess: () => {
-          toast.success(t("toast:invitationSent", { email: inviteEmail.trim() }));
-          setInviteDialogOpen(false);
-          setInviteEmail("");
-          setInviteRole("member");
-        },
-        onError: (error) => {
-          const message =
-            error instanceof WebApiError ? error.userMessage : "Failed to send invitation";
-          if (message.includes("SMTP") || message.includes("email sending")) {
-            toast.error(t("toast:emailSendingNotConfigured"));
-          } else {
-            toast.error(message);
-          }
-        },
-      },
-    );
-  };
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const handleRefreshCharts = () => {
@@ -296,17 +268,7 @@ export function WorkspaceOverviewPage(): ReactElement {
         </div>
       </PageLayout>
 
-      {inviteDialogOpen ? (
-        <InviteMemberDialog
-          email={inviteEmail}
-          isPending={inviteMutation.isPending}
-          onClose={() => setInviteDialogOpen(false)}
-          onEmailChange={setInviteEmail}
-          onRoleChange={setInviteRole}
-          onSubmit={handleInviteSubmit}
-          role={inviteRole}
-        />
-      ) : null}
+      {inviteDialogOpen ? <InviteMemberDialog onClose={() => setInviteDialogOpen(false)} /> : null}
     </>
   );
 }

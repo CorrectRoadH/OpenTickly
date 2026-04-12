@@ -1,19 +1,21 @@
-import { type FormEvent, type ReactElement } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 
 import { ColorSwatchPicker } from "./ColorSwatchPicker.tsx";
 import { ModalDialog } from "./ModalDialog.tsx";
 
+export type CreateNameValues = {
+  name: string;
+  color?: string;
+};
+
 type CreateNameDialogProps = {
   colorOptions?: readonly string[];
+  defaultColor?: string;
   isPending?: boolean;
   nameLabel: string;
   namePlaceholder: string;
-  nameValue: string;
   onClose: () => void;
-  onColorSelect?: (color: string) => void;
-  onNameChange: (value: string) => void;
-  onSubmit: () => void;
-  selectedColor?: string;
+  onSubmit: (values: CreateNameValues) => void;
   submitLabel: string;
   testId?: string;
   title: string;
@@ -21,30 +23,27 @@ type CreateNameDialogProps = {
 
 export function CreateNameDialog({
   colorOptions,
+  defaultColor,
   isPending = false,
   nameLabel,
   namePlaceholder,
-  nameValue,
   onClose,
-  onColorSelect,
-  onNameChange,
   onSubmit,
-  selectedColor,
   submitLabel,
   testId,
   title,
 }: CreateNameDialogProps): ReactElement {
-  const trimmedValue = nameValue.trim();
-  const showColorPicker =
-    Boolean(colorOptions?.length) && Boolean(onColorSelect) && Boolean(selectedColor);
+  const [name, setName] = useState("");
+  const [color, setColor] = useState<string | undefined>(defaultColor);
+  const trimmedName = name.trim();
+  const showColorPicker = Boolean(colorOptions?.length) && Boolean(color);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!trimmedValue || isPending) {
+    if (!trimmedName || isPending) {
       return;
     }
-
-    onSubmit();
+    onSubmit({ name: trimmedName, color });
   }
 
   return (
@@ -60,7 +59,7 @@ export function CreateNameDialog({
           </button>
           <button
             className="flex h-9 items-center rounded-md bg-[var(--track-button)] px-4 text-[12px] font-medium text-black disabled:opacity-60"
-            disabled={isPending || !trimmedValue}
+            disabled={isPending || !trimmedName}
             form="create-name-form"
             type="submit"
           >
@@ -80,9 +79,9 @@ export function CreateNameDialog({
             <input
               aria-label={nameLabel}
               className="h-11 w-full rounded-md border border-[var(--track-border)] bg-[var(--track-surface-error)] px-3 text-[14px] text-white outline-none focus:border-[var(--track-accent-soft)]"
-              onChange={(event) => onNameChange(event.target.value)}
+              onChange={(event) => setName(event.target.value)}
               placeholder={namePlaceholder}
-              value={nameValue}
+              value={name}
             />
           </label>
 
@@ -94,8 +93,8 @@ export function CreateNameDialog({
               <div className="rounded-xl border border-[var(--track-border)] bg-[var(--track-input-bg)] p-3">
                 <ColorSwatchPicker
                   colors={colorOptions!}
-                  onSelect={(color) => onColorSelect?.(color)}
-                  selected={selectedColor!}
+                  onSelect={(next) => setColor(next)}
+                  selected={color!}
                 />
               </div>
             </div>

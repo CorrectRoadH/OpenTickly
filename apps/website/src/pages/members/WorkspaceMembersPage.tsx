@@ -14,7 +14,6 @@ import { WebApiError } from "../../shared/api/web-client.ts";
 import { MembersIcon, PlusIcon, SearchIcon } from "../../shared/ui/icons.tsx";
 import {
   useDisableWorkspaceMemberMutation,
-  useInviteWorkspaceMemberMutation,
   useRemoveWorkspaceMemberMutation,
   useRestoreWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
@@ -56,14 +55,10 @@ export function WorkspaceMembersPage(): ReactElement {
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
-  const inviteMutation = useInviteWorkspaceMemberMutation(workspaceId);
   const disableMutation = useDisableWorkspaceMemberMutation(workspaceId);
   const restoreMutation = useRestoreWorkspaceMemberMutation(workspaceId);
   const removeMutation = useRemoveWorkspaceMemberMutation(workspaceId);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState("member");
-  const [status, setStatus] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<MemberStatusFilter>("all");
   const [search, setSearch] = useState("");
 
@@ -87,23 +82,6 @@ export function WorkspaceMembersPage(): ReactElement {
   const activeCount = members.filter((m) => isActiveMember(m.status)).length;
   const disabledCount = members.filter((m) => m.status === "disabled").length;
   const invitedCount = members.filter((m) => m.status === "invited").length;
-
-  async function handleInvite() {
-    const trimmed = inviteEmail.trim();
-    if (!trimmed) return;
-
-    try {
-      await inviteMutation.mutateAsync({ email: trimmed, role: inviteRole });
-      setInviteEmail("");
-      setInviteRole("member");
-      setInviteDialogOpen(false);
-      setStatus(t("invitationSent"));
-    } catch (error) {
-      const message =
-        error instanceof WebApiError ? error.userMessage : t("couldNotSendInvitation");
-      toast.error(message);
-    }
-  }
 
   function renderMemberRow(member: (typeof members)[number]): ReactNode {
     const canDisable = member.status === "joined" || member.status === "restored";
@@ -147,7 +125,7 @@ export function WorkspaceMembersPage(): ReactElement {
             onDisable={(id) => {
               void disableMutation
                 .mutateAsync(id)
-                .then(() => setStatus(t("memberDisabled")))
+                .then(() => toast.success(t("memberDisabled")))
                 .catch((error) =>
                   toast.error(
                     error instanceof WebApiError ? error.userMessage : t("couldNotDisableMember"),
@@ -157,7 +135,7 @@ export function WorkspaceMembersPage(): ReactElement {
             onRemove={(id) => {
               void removeMutation
                 .mutateAsync(id)
-                .then(() => setStatus(t("memberRemoved")))
+                .then(() => toast.success(t("memberRemoved")))
                 .catch((error) =>
                   toast.error(
                     error instanceof WebApiError ? error.userMessage : t("couldNotRemoveMember"),
@@ -167,7 +145,7 @@ export function WorkspaceMembersPage(): ReactElement {
             onRestore={(id) => {
               void restoreMutation
                 .mutateAsync(id)
-                .then(() => setStatus(t("memberRestored")))
+                .then(() => toast.success(t("memberRestored")))
                 .catch((error) =>
                   toast.error(
                     error instanceof WebApiError ? error.userMessage : t("couldNotRestoreMember"),
@@ -225,9 +203,6 @@ export function WorkspaceMembersPage(): ReactElement {
             size="sm"
             value={search}
           />
-          {status ? (
-            <span className="ml-auto text-[12px] text-[var(--track-accent-text)]">{status}</span>
-          ) : null}
         </div>
       </header>
 
@@ -265,19 +240,7 @@ export function WorkspaceMembersPage(): ReactElement {
         rows={filteredMembers}
       />
 
-      {inviteDialogOpen ? (
-        <InviteMemberDialog
-          email={inviteEmail}
-          isPending={inviteMutation.isPending}
-          onClose={() => setInviteDialogOpen(false)}
-          onEmailChange={setInviteEmail}
-          onRoleChange={setInviteRole}
-          onSubmit={() => {
-            void handleInvite();
-          }}
-          role={inviteRole}
-        />
-      ) : null}
+      {inviteDialogOpen ? <InviteMemberDialog onClose={() => setInviteDialogOpen(false)} /> : null}
     </div>
   );
 }
