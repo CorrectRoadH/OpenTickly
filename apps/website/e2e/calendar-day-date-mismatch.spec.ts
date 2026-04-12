@@ -116,11 +116,51 @@ test.describe("Calendar: selected date matches displayed entries", () => {
   });
 
   test("5-day view: navigating forward shows correct date range entries", async ({ page }) => {
-    const { todayDesc, tomorrowDesc } = await setupTwoDayEntries(
-      page,
-      test.info(),
-      "fiveday-mismatch",
-    );
+    // Place entries on known weekdays within the current 5-day (Mon-Fri) range
+    // so the test is reliable regardless of which day of the week CI runs.
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun … 6=Sat
+    // Roll back to this week's Monday (weekStartsOn=1)
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((day - 1 + 7) % 7));
+    monday.setHours(0, 0, 0, 0);
+
+    const tuesday = new Date(monday);
+    tuesday.setDate(monday.getDate() + 1);
+
+    const monDesc = `mon-entry-${Date.now()}`;
+    const tueDesc = `tue-entry-${Date.now()}`;
+
+    const email = `fiveday-mismatch-${test.info().workerIndex}-${Date.now()}@example.com`;
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "FiveDay User",
+      password,
+    });
+    await page.context().clearCookies();
+    const session = await loginE2eUser(page, test.info(), { email, password });
+
+    const monStart = new Date(monday);
+    monStart.setHours(10, 0, 0, 0);
+    const monStop = new Date(monday);
+    monStop.setHours(11, 0, 0, 0);
+    await createTimeEntryForWorkspace(page, {
+      description: monDesc,
+      start: monStart.toISOString(),
+      stop: monStop.toISOString(),
+      workspaceId: session.currentWorkspaceId,
+    });
+
+    const tueStart = new Date(tuesday);
+    tueStart.setHours(14, 0, 0, 0);
+    const tueStop = new Date(tuesday);
+    tueStop.setHours(15, 0, 0, 0);
+    await createTimeEntryForWorkspace(page, {
+      description: tueDesc,
+      start: tueStart.toISOString(),
+      stop: tueStop.toISOString(),
+      workspaceId: session.currentWorkspaceId,
+    });
 
     await page.reload();
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
@@ -130,56 +170,41 @@ test.describe("Calendar: selected date matches displayed entries", () => {
     const calendarView = page.getByTestId("timer-calendar-view");
     await expect(calendarView).toBeVisible({ timeout: 10_000 });
 
-    // Both entries should be visible in week view (default) since they're
-    // within the same week
-    const todayEntry = calendarView
+    // Monday entry should be visible in week view (default)
+    const monEntry = calendarView
       .locator(".rbc-time-content")
       .locator(`[data-testid^="calendar-entry-"]`)
-      .filter({ hasText: todayDesc });
-    await expect(todayEntry).toBeVisible({ timeout: 10_000 });
+      .filter({ hasText: monDesc });
+    await expect(monEntry).toBeVisible({ timeout: 10_000 });
 
-    // Switch to 5-day view — data may already be cached, so no waitForResponse.
+    // Switch to 5-day view — both entries are Mon & Tue, always within Mon-Fri
     await page.getByTestId("calendar-subview-select").click();
     await page.getByRole("option", { name: "5 days view" }).click();
 
-    // In 5-day view (work week), the calendar should show Mon–Fri.
-    // Both today and tomorrow entries should be visible if both fall
-    // within the displayed 5-day range.
-    // The key assertion: the header date range and the visible entries
-    // should be consistent — entries shown must belong to the displayed dates.
-
-    // Verify today's entry is in a column whose header matches today's date
-    const todayDayName = new Intl.DateTimeFormat("en-US", { weekday: "short" })
-      .format(new Date())
-      .toUpperCase();
-    const todayHeader = calendarView.getByTestId(
-      `calendar-day-header-${todayDayName.toLowerCase()}`,
-    );
-    // The header should exist if today is a weekday (Mon-Fri)
-    const todayIsWeekday = new Date().getDay() >= 1 && new Date().getDay() <= 5;
-    if (todayIsWeekday) {
-      await expect(todayHeader).toBeVisible({ timeout: 5_000 });
-      // Today's entry should still be visible in the time grid
-      await expect(todayEntry).toBeVisible({ timeout: 5_000 });
-    }
+    // Both entries should be visible in the current 5-day range
+    await expect(monEntry).toBeVisible({ timeout: 5_000 });
+    const tueEntry = calendarView
+      .locator(".rbc-time-content")
+      .locator(`[data-testid^="calendar-entry-"]`)
+      .filter({ hasText: tueDesc });
+    await expect(tueEntry).toBeVisible({ timeout: 5_000 });
 
     // Navigate forward one week — data may come from cache.
     const nextWeekButton = page.getByRole("button", { name: /next\s*week/i });
     await nextWeekButton.click();
 
-    // After navigating forward one week, neither today's nor tomorrow's
-    // entry should be visible (they're in the previous week)
-    const todayEntryAfterNav = calendarView
+    // After navigating forward one week, neither entry should be visible
+    const monEntryAfterNav = calendarView
       .locator(".rbc-time-content")
       .locator(`[data-testid^="calendar-entry-"]`)
-      .filter({ hasText: todayDesc });
-    const tomorrowEntryAfterNav = calendarView
+      .filter({ hasText: monDesc });
+    const tueEntryAfterNav = calendarView
       .locator(".rbc-time-content")
       .locator(`[data-testid^="calendar-entry-"]`)
-      .filter({ hasText: tomorrowDesc });
+      .filter({ hasText: tueDesc });
 
-    await expect(todayEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
-    await expect(tomorrowEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
+    await expect(monEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
+    await expect(tueEntryAfterNav).toHaveCount(0, { timeout: 10_000 });
   });
 
   test("Day view: calendar date header matches the navigated date", async ({ page }) => {
