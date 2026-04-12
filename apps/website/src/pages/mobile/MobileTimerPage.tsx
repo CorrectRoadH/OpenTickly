@@ -106,6 +106,7 @@ export function MobileTimerPage(): ReactElement {
                     key={entry.id ?? i}
                     entry={entry}
                     onContinue={composer.handleContinueEntry}
+                    onEdit={setEditingEntry}
                   />
                 ))}
               </div>

@@ -197,6 +197,25 @@ test.describe("Edit Time Entry Duration", () => {
     await expect(page.getByText(ENTRY_DESCRIPTION).first()).toBeVisible();
   });
 
+  test("User taps an entry in the This Week grouped list (not Recent) and opens the editor", async ({
+    page,
+  }) => {
+    await page.goto(new URL("/m/timer", page.url()).toString());
+
+    // Entry appears both in "Recent" (top) and "This Week" (grouped by day, below).
+    // Each section renders its own `Edit {description}` button, so there are 2 of them.
+    const editButtons = page.getByRole("button", { name: `Edit ${ENTRY_DESCRIPTION}` });
+    await expect(editButtons.first()).toBeVisible();
+    await expect(editButtons).toHaveCount(2);
+
+    // Tap the SECOND one — the one inside the "This Week" grouped list.
+    // This is the entry the user sees below the "Recent" section.
+    await editButtons.nth(1).click();
+
+    // Editor must open.
+    await expect(page.getByTestId("mobile-time-entry-editor")).toBeVisible();
+  });
+
   test("User edits an entry on Calendar tab, changes both start and end time", async ({ page }) => {
     await page.goto(new URL("/m/calendar", page.url()).toString());
 
