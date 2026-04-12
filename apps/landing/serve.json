@@ -1,5 +1,4 @@
 {
   "cleanUrls": true,
-  "trailingSlash": false,
-  "rewrites": [{ "source": "/**", "destination": "/__spa-fallback.html" }]
+  "trailingSlash": false
 }
