@@ -24,6 +24,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -62,6 +67,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -86,6 +92,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      matrix:
+        goarch: [amd64, arm64]
 
     steps:
       - name: Checkout repository
@@ -112,11 +121,11 @@ jobs:
 
       - name: Build binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+          CGO_ENABLED=0 GOOS=linux GOARCH=${{ matrix.goarch }} \
             go build -trimpath -ldflags="-s -w -X main.version=${{ github.ref_name }}" \
-            -o opentoggl-linux-amd64 ./apps/backend
+            -o opentoggl-linux-${{ matrix.goarch }} ./apps/backend
 
       - name: Upload binary to release
         uses: softprops/action-gh-release@v2
         with:
-          files: opentoggl-linux-amd64
+          files: opentoggl-linux-${{ matrix.goarch }}

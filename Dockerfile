@@ -1,4 +1,4 @@
-FROM node:22.12.0-bookworm-slim AS website-builder
+FROM --platform=$BUILDPLATFORM node:22.12.0-bookworm-slim AS website-builder
 
 WORKDIR /workspace
 
@@ -11,9 +11,11 @@ COPY packages ./packages
 RUN pnpm install --filter @opentoggl/website... --no-frozen-lockfile --ignore-scripts
 RUN pnpm --filter @opentoggl/website run build
 
-FROM golang:1.25-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
 
 ARG OPENTOGGL_VERSION=dev
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /workspace
 
@@ -22,7 +24,9 @@ RUN go mod download
 COPY apps ./apps
 COPY --from=website-builder /workspace/apps/website/dist ./apps/backend/internal/web/dist
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w -X main.version=${OPENTOGGL_VERSION}" -o /out/opentoggl ./apps/backend
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-s -w -X main.version=${OPENTOGGL_VERSION}" \
+    -o /out/opentoggl ./apps/backend
 
 FROM alpine:3.22
 
