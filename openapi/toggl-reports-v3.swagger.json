@@ -2730,7 +2730,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -2763,7 +2764,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -2785,14 +2787,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -2995,7 +2999,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "date_format": {
@@ -3082,7 +3087,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -3104,14 +3110,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -3215,7 +3223,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -3281,7 +3290,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -3303,14 +3313,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -3340,7 +3352,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -3410,7 +3423,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -3432,14 +3446,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -3835,7 +3851,8 @@
           "description": "Client IDs, optional. A nil entry on this list means that only projects without client will be selected.",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "currency": {
@@ -4607,7 +4624,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "collapse": {
@@ -4685,7 +4703,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "resolution": {
@@ -4715,14 +4734,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -4755,7 +4776,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "collapse": {
@@ -4829,7 +4851,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -4855,14 +4878,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -4937,7 +4962,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -4982,7 +5008,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -5008,14 +5035,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -5170,7 +5199,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -5211,7 +5241,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "resolution": {
@@ -5237,14 +5268,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -5419,7 +5452,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "date_format": {
@@ -5471,7 +5505,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -5493,14 +5528,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {
@@ -5534,7 +5571,8 @@
           "description": "Client IDs, optional, filtering attribute. To filter records with no clients, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "description": {
@@ -5575,7 +5613,8 @@
           "description": "Project IDs, optional, filtering attribute. To filter records with no projects, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "rounding": {
@@ -5597,14 +5636,16 @@
           "description": "Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "task_ids": {
           "description": "Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].",
           "type": "array",
           "items": {
-            "type": "integer"
+            "type": "integer",
+            "x-nullable": true
           }
         },
         "time_entry_ids": {

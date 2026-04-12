@@ -695,29 +695,43 @@ type weeklyRowKey struct {
 // matchesQueryFilters returns true when the entry passes all active filters
 // (project_ids, tag_ids, description substring) on the query.
 func matchesQueryFilters(entry trackingapplication.TimeEntryView, query Query) bool {
-	if len(query.ProjectIDs) > 0 {
-		entryProjectID := derefInt64(entry.ProjectID)
-		if !slices.Contains(query.ProjectIDs, entryProjectID) {
+	// Project filter: OR between "no project" flag and explicit ID list.
+	if query.NoProject || len(query.ProjectIDs) > 0 {
+		hasNoProject := entry.ProjectID == nil
+		inList := false
+		if entry.ProjectID != nil && len(query.ProjectIDs) > 0 {
+			inList = slices.Contains(query.ProjectIDs, *entry.ProjectID)
+		}
+		if !((query.NoProject && hasNoProject) || inList) {
 			return false
 		}
 	}
 
-	if len(query.TagIDs) > 0 {
-		matched := false
-		for _, entryTag := range entry.TagIDs {
-			if slices.Contains(query.TagIDs, entryTag) {
-				matched = true
-				break
+	// Tag filter: OR between "no tags" flag and explicit ID list.
+	if query.NoTag || len(query.TagIDs) > 0 {
+		hasNoTags := len(entry.TagIDs) == 0
+		anyInList := false
+		if len(query.TagIDs) > 0 {
+			for _, entryTag := range entry.TagIDs {
+				if slices.Contains(query.TagIDs, entryTag) {
+					anyInList = true
+					break
+				}
 			}
 		}
-		if !matched {
+		if !((query.NoTag && hasNoTags) || anyInList) {
 			return false
 		}
 	}
 
-	if len(query.TaskIDs) > 0 {
-		entryTaskID := derefInt64(entry.TaskID)
-		if entryTaskID == 0 || !slices.Contains(query.TaskIDs, entryTaskID) {
+	// Task filter: OR between "no task" flag and explicit ID list.
+	if query.NoTask || len(query.TaskIDs) > 0 {
+		hasNoTask := entry.TaskID == nil
+		inList := false
+		if entry.TaskID != nil && len(query.TaskIDs) > 0 {
+			inList = slices.Contains(query.TaskIDs, *entry.TaskID)
+		}
+		if !((query.NoTask && hasNoTask) || inList) {
 			return false
 		}
 	}

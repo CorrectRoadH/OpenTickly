@@ -15,6 +15,14 @@ type Query struct {
 	TaskIDs     []int64
 	Timezone    string
 	WorkspaceID int64
+	// NoProject filters for entries with no project assigned. When combined
+	// with ProjectIDs, semantics are OR: entries without a project OR whose
+	// project is in the list (Toggl "[null]" filter convention).
+	NoProject bool
+	// NoTag filters for entries with no tags assigned (OR-combined with TagIDs).
+	NoTag bool
+	// NoTask filters for entries with no task assigned (OR-combined with TaskIDs).
+	NoTask bool
 }
 
 type WeeklyRow struct {

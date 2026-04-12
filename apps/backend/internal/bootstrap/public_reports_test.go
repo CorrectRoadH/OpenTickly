@@ -167,3 +167,152 @@ func TestPublicReportsRoutesServeWeeklyAndSummaryData(t *testing.T) {
 		t.Fatalf("expected one summary group, got %#v", summaryBody.Report)
 	}
 }
+
+// TestPublicReportsSearchTimeEntriesNullProjectFilter verifies the Toggl
+// documented "[null]" filter semantics: POST
+// /reports/api/v3/workspace/{id}/search/time_entries with project_ids: [null]
+// returns only entries without a project (and similarly for tag_ids: [null]).
+// Regression test for a validator 400 that rejected [null] as non-nullable.
+func TestPublicReportsSearchTimeEntriesNullProjectFilter(t *testing.T) {
+	database := pgtest.Open(t)
+	uniqueEmail := uniqueTestEmail("reports-null-filter")
+	entryStart := time.Date(2026, time.March, 23, 9, 0, 0, 0, time.UTC)
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    uniqueEmail,
+		"fullname": "Reports Null Filter",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("expected register status 201, got %d body=%s", register.Code, register.Body.String())
+	}
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	workspaceID := *registerBody.CurrentWorkspaceID
+	authorization := basicAuthorization(uniqueEmail, "secret1")
+
+	createProject := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
+		map[string]any{"name": "Billable Project"},
+		authorization,
+	)
+	if createProject.Code != http.StatusOK {
+		t.Fatalf("expected project create status 200, got %d body=%s", createProject.Code, createProject.Body.String())
+	}
+	var projectBody map[string]any
+	mustDecodeJSON(t, createProject.Body.Bytes(), &projectBody)
+	projectID := int64(projectBody["id"].(float64))
+
+	// Entry A: has a project.
+	withProject := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/time_entries",
+		map[string]any{
+			"created_with": "reports-null-test",
+			"description":  "with project",
+			"duration":     1800,
+			"project_id":   projectID,
+			"start":        entryStart.Format(time.RFC3339),
+			"stop":         entryStart.Add(30 * time.Minute).Format(time.RFC3339),
+			"workspace_id": workspaceID,
+		},
+		authorization,
+	)
+	if withProject.Code != http.StatusOK {
+		t.Fatalf("entry w/ project: status %d body=%s", withProject.Code, withProject.Body.String())
+	}
+
+	// Entry B: no project.
+	withoutProject := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/time_entries",
+		map[string]any{
+			"created_with": "reports-null-test",
+			"description":  "no project",
+			"duration":     600,
+			"start":        entryStart.Add(2 * time.Hour).Format(time.RFC3339),
+			"stop":         entryStart.Add(2*time.Hour + 10*time.Minute).Format(time.RFC3339),
+			"workspace_id": workspaceID,
+		},
+		authorization,
+	)
+	if withoutProject.Code != http.StatusOK {
+		t.Fatalf("entry w/o project: status %d body=%s", withoutProject.Code, withoutProject.Body.String())
+	}
+
+	// Baseline: no filter returns both entries.
+	all := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/reports/api/v3/workspace/"+intToString(workspaceID)+"/search/time_entries",
+		map[string]any{"start_date": "2026-03-23", "end_date": "2026-03-23"},
+		authorization,
+	)
+	if all.Code != http.StatusOK {
+		t.Fatalf("baseline search: status %d body=%s", all.Code, all.Body.String())
+	}
+	var allRows []map[string]any
+	mustDecodeJSON(t, all.Body.Bytes(), &allRows)
+	if len(allRows) != 2 {
+		t.Fatalf("baseline expected 2 rows, got %d: %v", len(allRows), allRows)
+	}
+
+	// project_ids: [null] must return only the entry without a project.
+	nullProject := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/reports/api/v3/workspace/"+intToString(workspaceID)+"/search/time_entries",
+		map[string]any{
+			"start_date":  "2026-03-23",
+			"end_date":    "2026-03-23",
+			"project_ids": []any{nil},
+		},
+		authorization,
+	)
+	if nullProject.Code != http.StatusOK {
+		t.Fatalf("[null] search: status %d body=%s", nullProject.Code, nullProject.Body.String())
+	}
+	var nullRows []map[string]any
+	mustDecodeJSON(t, nullProject.Body.Bytes(), &nullRows)
+	if len(nullRows) != 1 {
+		t.Fatalf("[null] project filter expected 1 row, got %d: %v", len(nullRows), nullRows)
+	}
+	if desc, _ := nullRows[0]["description"].(string); desc != "no project" {
+		t.Fatalf("[null] project filter expected description 'no project', got %q", desc)
+	}
+	if _, hasProject := nullRows[0]["project_id"]; hasProject {
+		t.Fatalf("expected no project_id on returned row, got %v", nullRows[0])
+	}
+
+	// project_ids: [null, projectID] — OR semantics: both entries.
+	mixed := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/reports/api/v3/workspace/"+intToString(workspaceID)+"/search/time_entries",
+		map[string]any{
+			"start_date":  "2026-03-23",
+			"end_date":    "2026-03-23",
+			"project_ids": []any{nil, projectID},
+		},
+		authorization,
+	)
+	if mixed.Code != http.StatusOK {
+		t.Fatalf("[null, id] search: status %d body=%s", mixed.Code, mixed.Body.String())
+	}
+	var mixedRows []map[string]any
+	mustDecodeJSON(t, mixed.Body.Bytes(), &mixedRows)
+	if len(mixedRows) != 2 {
+		t.Fatalf("[null, id] expected 2 rows, got %d: %v", len(mixedRows), mixedRows)
+	}
+}

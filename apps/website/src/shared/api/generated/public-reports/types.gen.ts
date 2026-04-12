@@ -30,7 +30,7 @@ export type BasePost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -55,7 +55,7 @@ export type BasePost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -72,11 +72,11 @@ export type BasePost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -161,7 +161,7 @@ export type DetailedExportPdfPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   date_format?:
     | "MM/DD/YYYY"
     | "DD-MM-YYYY"
@@ -227,7 +227,7 @@ export type DetailedExportPdfPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -244,11 +244,11 @@ export type DetailedExportPdfPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -290,7 +290,7 @@ export type DetailedPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -343,7 +343,7 @@ export type DetailedPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -360,11 +360,11 @@ export type DetailedPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -383,7 +383,7 @@ export type DetailedSearchExportPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -440,7 +440,7 @@ export type DetailedSearchExportPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -457,11 +457,11 @@ export type DetailedSearchExportPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -656,7 +656,7 @@ export type DtoProjectProfitability = {
   /**
    * Client IDs, optional. A nil entry on this list means that only projects without client will be selected.
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Currency, example: "usd".
    */
@@ -1111,7 +1111,7 @@ export type SummaryExportPdfPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Whether collapse others, optional, default false.
    */
@@ -1176,7 +1176,7 @@ export type SummaryExportPdfPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Graph resolution, optional. Allow clients to explicitly request a resolution.
    */
@@ -1201,11 +1201,11 @@ export type SummaryExportPdfPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -1225,7 +1225,7 @@ export type SummaryExportPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Whether collapse others, optional, default false.
    */
@@ -1286,7 +1286,7 @@ export type SummaryExportPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -1307,11 +1307,11 @@ export type SummaryExportPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -1350,7 +1350,7 @@ export type SummaryReportPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -1387,7 +1387,7 @@ export type SummaryReportPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -1408,11 +1408,11 @@ export type SummaryReportPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -1477,7 +1477,7 @@ export type TotalsReportPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -1510,7 +1510,7 @@ export type TotalsReportPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Graph resolution, optional. Allow clients to explicitly request a resolution.
    */
@@ -1531,11 +1531,11 @@ export type TotalsReportPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * Time entry IDs, optional.
    */
@@ -1616,7 +1616,7 @@ export type WeeklyExportPdfPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Date format, optional, default "MM/DD/YYYY". Can be "MM/DD/YYYY", "DD-MM-YYYY", "MM-DD-YYYY", "YYYY-MM-DD", "DD/MM/YYYY" or "DD.MM.YYYY".
    */
@@ -1658,7 +1658,7 @@ export type WeeklyExportPdfPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -1675,11 +1675,11 @@ export type WeeklyExportPdfPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */
@@ -1702,7 +1702,7 @@ export type WeeklyExportPost = {
   /**
    * Client IDs, optional, filtering attribute. To filter records with no clients, use [null].
    */
-  client_ids?: Array<number>;
+  client_ids?: Array<number | null>;
   /**
    * Description, optional, filtering attribute.
    */
@@ -1735,7 +1735,7 @@ export type WeeklyExportPost = {
   /**
    * Project IDs, optional, filtering attribute. To filter records with no projects, use [null].
    */
-  project_ids?: Array<number>;
+  project_ids?: Array<number | null>;
   /**
    * Whether time should be rounded, optional, default from user preferences.
    */
@@ -1752,11 +1752,11 @@ export type WeeklyExportPost = {
   /**
    * Tag IDs, optional, filtering attribute. To filter records with no tags, use [null].
    */
-  tag_ids?: Array<number>;
+  tag_ids?: Array<number | null>;
   /**
    * Task IDs, optional, filtering attribute. To filter records with no tasks, use [null].
    */
-  task_ids?: Array<number>;
+  task_ids?: Array<number | null>;
   /**
    * TimeEntryIDs filters by time entries. This was added to support retro-compatibility with reports v2.
    */

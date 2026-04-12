@@ -1,9 +1,11 @@
 package publicapi
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
@@ -882,6 +884,78 @@ func intsToInt64s(values []int) []int64 {
 		result[index] = int64(value)
 	}
 	return result
+}
+
+// nullableIDFilters carries the parsed ID lists plus "no X" flags for each of
+// the four filter fields that Toggl documents as supporting a [null] entry to
+// mean "records with no X". The body is read from the request once and the
+// raw JSON is re-inspected so nulls are preserved (the generated DTOs model
+// these as []int which silently decodes null to 0).
+type nullableIDFilters struct {
+	ProjectIDs []int64
+	NoProject  bool
+	TagIDs     []int64
+	NoTag      bool
+	TaskIDs    []int64
+	NoTask     bool
+	ClientIDs  []int64
+	NoClient   bool
+}
+
+// bindWithNullableIDs decodes the request body into the provided typed DTO and
+// additionally parses project_ids / tag_ids / task_ids / client_ids as a
+// []*int to distinguish null entries from integer IDs. It must be called
+// before any other consumer reads the request body.
+func bindWithNullableIDs(ctx echo.Context, typed any) (nullableIDFilters, error) {
+	body, err := io.ReadAll(ctx.Request().Body)
+	if err != nil {
+		return nullableIDFilters{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	}
+	// Restore the body so subsequent ctx.Bind / downstream readers still work.
+	ctx.Request().Body = io.NopCloser(bytes.NewReader(body))
+
+	if len(body) == 0 {
+		return nullableIDFilters{}, nil
+	}
+
+	if err := json.Unmarshal(body, typed); err != nil {
+		return nullableIDFilters{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	}
+
+	var lenient struct {
+		ProjectIds *[]*int `json:"project_ids"`
+		TagIds     *[]*int `json:"tag_ids"`
+		TaskIds    *[]*int `json:"task_ids"`
+		ClientIds  *[]*int `json:"client_ids"`
+	}
+	if err := json.Unmarshal(body, &lenient); err != nil {
+		// Typed decode already succeeded; a lenient-decode failure just means
+		// there are no nullable IDs to extract.
+		return nullableIDFilters{}, nil
+	}
+
+	filters := nullableIDFilters{}
+	filters.ProjectIDs, filters.NoProject = partitionNullableIDs(lenient.ProjectIds)
+	filters.TagIDs, filters.NoTag = partitionNullableIDs(lenient.TagIds)
+	filters.TaskIDs, filters.NoTask = partitionNullableIDs(lenient.TaskIds)
+	filters.ClientIDs, filters.NoClient = partitionNullableIDs(lenient.ClientIds)
+	return filters, nil
+}
+
+func partitionNullableIDs(values *[]*int) ([]int64, bool) {
+	if values == nil {
+		return nil, false
+	}
+	ids := make([]int64, 0, len(*values))
+	hasNull := false
+	for _, v := range *values {
+		if v == nil {
+			hasNull = true
+			continue
+		}
+		ids = append(ids, int64(*v))
+	}
+	return ids, hasNull
 }
 
 func (handler *Handler) requireReportsScope(
