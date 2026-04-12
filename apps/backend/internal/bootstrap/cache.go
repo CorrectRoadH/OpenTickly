@@ -315,27 +315,15 @@ func newCachedCatalogStore(inner catalogapplication.Store, rc *platform.RedisCli
 }
 
 // --- read caches ---
-
-func (c *cachedCatalogStore) ListProjects(ctx context.Context, workspaceID int64, filter catalogapplication.ListProjectsFilter) ([]catalogapplication.ProjectView, error) {
-	key := fmt.Sprintf("catalog:projects:%d", workspaceID)
-	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.ProjectView, error) {
-		return c.Store.ListProjects(ctx, workspaceID, filter)
-	})
-}
-
-func (c *cachedCatalogStore) ListTags(ctx context.Context, workspaceID int64, filter catalogapplication.ListTagsFilter) ([]catalogapplication.TagView, error) {
-	key := fmt.Sprintf("catalog:tags:%d", workspaceID)
-	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.TagView, error) {
-		return c.Store.ListTags(ctx, workspaceID, filter)
-	})
-}
-
-func (c *cachedCatalogStore) ListClients(ctx context.Context, workspaceID int64, filter catalogapplication.ListClientsFilter) ([]catalogapplication.ClientView, error) {
-	key := fmt.Sprintf("catalog:clients:%d", workspaceID)
-	return platform.CacheAside(c.rc, ctx, key, catalogListTTL, func() ([]catalogapplication.ClientView, error) {
-		return c.Store.ListClients(ctx, workspaceID, filter)
-	})
-}
+//
+// List endpoints (ListProjects/ListTags/ListClients) are intentionally
+// NOT cached. The filter argument meaningfully changes the result set
+// (active-only vs include-archived, search, pagination) and the old
+// workspace-keyed cache served a narrower result to callers asking for
+// a wider view, breaking /me/projects and /workspaces/{id}/projects
+// correctness. Per-workspace reads remain cheap (single indexed scan);
+// if this becomes a hot path, add a filter-aware key + SCAN-based
+// invalidation rather than bringing back the ambiguous shared key.
 
 func (c *cachedCatalogStore) GetProject(ctx context.Context, workspaceID int64, projectID int64) (catalogapplication.ProjectView, bool, error) {
 	key := fmt.Sprintf("catalog:project:%d:%d", workspaceID, projectID)
@@ -365,13 +353,13 @@ func (c *cachedCatalogStore) GetClient(ctx context.Context, workspaceID int64, c
 }
 
 // --- write invalidation ---
-
+//
+// List caches were removed (see above); invalidation now only needs to
+// clear single-item caches (catalog:project:<ws>:<id> etc.) on the
+// mutation call sites.
 func (c *cachedCatalogStore) catalogInvalidateWorkspace(ctx context.Context, workspaceID int64) {
-	_ = c.rc.Del(ctx,
-		fmt.Sprintf("catalog:projects:%d", workspaceID),
-		fmt.Sprintf("catalog:tags:%d", workspaceID),
-		fmt.Sprintf("catalog:clients:%d", workspaceID),
-	)
+	_ = workspaceID
+	_ = ctx
 }
 
 func (c *cachedCatalogStore) CreateProject(ctx context.Context, cmd catalogapplication.CreateProjectCommand) (catalogapplication.ProjectView, error) {
@@ -401,11 +389,7 @@ func (c *cachedCatalogStore) DeleteProject(ctx context.Context, workspaceID int6
 }
 
 func (c *cachedCatalogStore) CreateTag(ctx context.Context, cmd catalogapplication.CreateTagCommand) (catalogapplication.TagView, error) {
-	v, err := c.Store.CreateTag(ctx, cmd)
-	if err == nil {
-		_ = c.rc.Del(ctx, fmt.Sprintf("catalog:tags:%d", cmd.WorkspaceID))
-	}
-	return v, err
+	return c.Store.CreateTag(ctx, cmd)
 }
 
 func (c *cachedCatalogStore) UpdateTag(ctx context.Context, tag catalogapplication.TagView) error {

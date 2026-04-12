@@ -65,6 +65,22 @@ func (handlers *routeHandlers) WorkspaceOrganizationID(ctx echo.Context, workspa
 	return int64(ws.OrganizationID), nil
 }
 
+func (handlers *routeHandlers) ListPublicTrackUserWorkspaces(ctx echo.Context) ([]int64, error) {
+	user, err := handlers.requirePublicTrackUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	workspaces, err := handlers.tenantApp.ListWorkspacesByUserID(ctx.Request().Context(), user.ID)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	}
+	ids := make([]int64, 0, len(workspaces))
+	for _, workspace := range workspaces {
+		ids = append(ids, int64(workspace.ID))
+	}
+	return ids, nil
+}
+
 func (handlers *routeHandlers) RequirePublicTrackHome(
 	ctx echo.Context,
 ) (organizationID int64, workspaceID int64, err error) {

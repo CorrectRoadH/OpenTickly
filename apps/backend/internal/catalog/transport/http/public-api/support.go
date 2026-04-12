@@ -21,6 +21,13 @@ type ScopeAuthorizer interface {
 	RequirePublicTrackHome(ctx echo.Context) (organizationID int64, workspaceID int64, err error)
 	RequirePublicTrackWorkspace(ctx echo.Context, workspaceID int64) error
 	WorkspaceOrganizationID(ctx echo.Context, workspaceID int64) (int64, error)
+	// ListPublicTrackUserWorkspaces returns every workspace ID the
+	// authenticated user is a member of. Used by cross-workspace /me/*
+	// list endpoints (projects, clients, tags, tasks) so they match
+	// official Toggl v9 semantics instead of collapsing to a single
+	// "home" workspace (which is unreliable — web_user_homes can drift
+	// out of sync with the actual membership set).
+	ListPublicTrackUserWorkspaces(ctx echo.Context) ([]int64, error)
 }
 
 type Handler struct {
@@ -167,19 +174,22 @@ func parseQueryInt64(raw string) (int64, bool) {
 	return value, true
 }
 
-func (handler *Handler) publicTrackWorkspaceID(ctx echo.Context) (int64, error) {
+// publicTrackWorkspaceIDs resolves the set of workspace IDs a request
+// should read from. When the route has an explicit workspace_id path
+// param (e.g. /workspaces/{id}/projects), returns just that one after
+// membership check. When there is no path param (e.g. /me/projects),
+// returns every workspace the authenticated user belongs to, so /me/*
+// list endpoints aggregate across all the user's workspaces — this is
+// both the official Toggl v9 semantic AND the only way to be robust to
+// web_user_homes drift.
+func (handler *Handler) publicTrackWorkspaceIDs(ctx echo.Context) ([]int64, error) {
 	if workspaceID, ok := parsePathID(ctx, "workspace_id"); ok {
 		if err := handler.scope.RequirePublicTrackWorkspace(ctx, workspaceID); err != nil {
-			return 0, err
+			return nil, err
 		}
-		return workspaceID, nil
+		return []int64{workspaceID}, nil
 	}
-
-	_, workspaceID, err := handler.scope.RequirePublicTrackHome(ctx)
-	if err != nil {
-		return 0, err
-	}
-	return workspaceID, nil
+	return handler.scope.ListPublicTrackUserWorkspaces(ctx)
 }
 
 func float32PointerFromFloat64(value *float64) *float32 {

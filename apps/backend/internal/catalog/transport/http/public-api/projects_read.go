@@ -60,10 +60,11 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
-	workspaceID, err := handler.publicTrackWorkspaceID(ctx)
+	workspaceIDs, err := handler.publicTrackWorkspaceIDs(ctx)
 	if err != nil {
 		return err
 	}
+	_, pathScoped := parsePathID(ctx, "workspace_id")
 
 	filter := catalogapplication.ListProjectsFilter{
 		Page:       max(queryInt(ctx, "page", 1), 1),
@@ -76,6 +77,16 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 			return ctx.JSON(http.StatusBadRequest, "Bad Request")
 		}
 		filter.Active = &active
+	} else if !pathScoped {
+		// Official /me/projects only returns active projects unless the
+		// caller explicitly opts in via include_archived=true. The
+		// workspace-scoped /workspaces/{id}/projects keeps its existing
+		// "return everything" default because Toggl's own workspace list
+		// includes archived projects too.
+		includeArchived, _ := queryBool(ctx, "include_archived")
+		if !includeArchived {
+			filter.Active = lo.ToPtr(true)
+		}
 	}
 	if onlyTemplates, ok := queryBool(ctx, "only_templates"); ok && onlyTemplates {
 		filter.OnlyTemplates = true
@@ -89,14 +100,15 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 	filter.Name = ctx.QueryParam("name")
 	filter.Search = ctx.QueryParam("search")
 
-	views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, filter)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-	}
-
-	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
-	for _, view := range views {
-		projects = append(projects, projectViewToAPI(view))
+	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0)
+	for _, workspaceID := range workspaceIDs {
+		views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, filter)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		}
+		for _, view := range views {
+			projects = append(projects, projectViewToAPI(view))
+		}
 	}
 	return ctx.JSON(http.StatusOK, projects)
 }
@@ -105,23 +117,24 @@ func (handler *Handler) GetPublicTrackProjectTemplates(ctx echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
-	workspaceID, err := handler.publicTrackWorkspaceID(ctx)
+	workspaceIDs, err := handler.publicTrackWorkspaceIDs(ctx)
 	if err != nil {
 		return err
 	}
 
-	views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectsFilter{
-		OnlyTemplates: true,
-		Page:          1,
-		PerPage:       200,
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
-	}
-
-	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0, len(views))
-	for _, view := range views {
-		projects = append(projects, projectViewToAPI(view))
+	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0)
+	for _, workspaceID := range workspaceIDs {
+		views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectsFilter{
+			OnlyTemplates: true,
+			Page:          1,
+			PerPage:       200,
+		})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		}
+		for _, view := range views {
+			projects = append(projects, projectViewToAPI(view))
+		}
 	}
 	return ctx.JSON(http.StatusOK, projects)
 }

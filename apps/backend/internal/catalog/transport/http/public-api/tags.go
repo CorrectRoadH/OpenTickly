@@ -15,23 +15,26 @@ func (handler *Handler) GetPublicTrackTags(ctx echo.Context) error {
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return err
 	}
-	workspaceID, err := handler.publicTrackWorkspaceID(ctx)
+	workspaceIDs, err := handler.publicTrackWorkspaceIDs(ctx)
 	if err != nil {
 		return err
 	}
 
-	views, err := handler.catalog.ListTags(ctx.Request().Context(), workspaceID, catalogapplication.ListTagsFilter{
+	filter := catalogapplication.ListTagsFilter{
 		Search:  ctx.QueryParam("search"),
 		Page:    max(queryInt(ctx, "page", 1), 1),
 		PerPage: max(min(queryInt(ctx, "per_page", 200), 200), 1),
-	})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
-	tags := make([]publictrackapi.ModelsTag, 0, len(views))
-	for _, view := range views {
-		tags = append(tags, tagViewToAPI(view))
+	tags := make([]publictrackapi.ModelsTag, 0)
+	for _, workspaceID := range workspaceIDs {
+		views, err := handler.catalog.ListTags(ctx.Request().Context(), workspaceID, filter)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		}
+		for _, view := range views {
+			tags = append(tags, tagViewToAPI(view))
+		}
 	}
 	return ctx.JSON(http.StatusOK, tags)
 }

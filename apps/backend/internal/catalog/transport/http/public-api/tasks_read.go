@@ -193,7 +193,7 @@ func (handler *Handler) listPublicTrackTasks(
 	if _, err := handler.scope.RequirePublicTrackUser(ctx); err != nil {
 		return catalogapplication.TaskPage{}, err
 	}
-	workspaceID, err := handler.publicTrackWorkspaceID(ctx)
+	workspaceIDs, err := handler.publicTrackWorkspaceIDs(ctx)
 	if err != nil {
 		return catalogapplication.TaskPage{}, err
 	}
@@ -238,11 +238,22 @@ func (handler *Handler) listPublicTrackTasks(
 	}
 	filter.Search = ctx.QueryParam("search")
 
-	pageView, err := handler.catalog.ListTasks(ctx.Request().Context(), workspaceID, filter)
-	if err != nil {
-		return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	aggregated := catalogapplication.TaskPage{
+		Tasks:     make([]catalogapplication.TaskView, 0),
+		Page:      filter.Page,
+		PerPage:   filter.PerPage,
+		SortField: filter.SortField,
+		SortOrder: filter.SortOrder,
 	}
-	return pageView, nil
+	for _, workspaceID := range workspaceIDs {
+		pageView, err := handler.catalog.ListTasks(ctx.Request().Context(), workspaceID, filter)
+		if err != nil {
+			return catalogapplication.TaskPage{}, echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+		}
+		aggregated.Tasks = append(aggregated.Tasks, pageView.Tasks...)
+		aggregated.TotalCount += pageView.TotalCount
+	}
+	return aggregated, nil
 }
 
 func taskViewToAPI(view catalogapplication.TaskView) publictrackapi.ModelsTask {
