@@ -25,18 +25,11 @@ var (
 	ErrInvitationWorkspacesRequired  = errors.New("organization invitation workspaces are required")
 	ErrInvitationEmailInvalid        = errors.New("organization invitation email is invalid")
 	ErrInvitationStateConflict       = errors.New("organization invitation state conflict")
-	ErrSMTPNotConfigured             = errors.New("email sending is not configured; configure SMTP in Instance Admin before sending invitations")
 )
 
-// SMTPChecker checks if SMTP is configured. Optional — when nil, SMTP check is skipped.
-type SMTPChecker interface {
-	IsSMTPConfigured() bool
-}
-
 type Service struct {
-	store       Store
-	smtpChecker SMTPChecker
-	logger      log.Logger
+	store  Store
+	logger log.Logger
 }
 
 func NewService(store Store, opts ...ServiceOption) (*Service, error) {
@@ -55,11 +48,6 @@ func NewService(store Store, opts ...ServiceOption) (*Service, error) {
 
 // ServiceOption configures optional dependencies on the membership Service.
 type ServiceOption func(*Service)
-
-// WithSMTPChecker sets the SMTP checker for invitation gating.
-func WithSMTPChecker(checker SMTPChecker) ServiceOption {
-	return func(s *Service) { s.smtpChecker = checker }
-}
 
 // WithLogger sets the logger for the membership Service.
 func WithLogger(logger log.Logger) ServiceOption {
@@ -102,9 +90,6 @@ func (service *Service) InviteWorkspaceMember(
 	ctx context.Context,
 	command InviteWorkspaceMemberCommand,
 ) (WorkspaceMemberView, error) {
-	if err := service.requireSMTP(); err != nil {
-		return WorkspaceMemberView{}, err
-	}
 	if err := service.requireManager(ctx, command.WorkspaceID, command.RequestedBy); err != nil {
 		return WorkspaceMemberView{}, err
 	}
@@ -274,9 +259,6 @@ func (service *Service) CreateOrganizationInvitations(
 	ctx context.Context,
 	command CreateOrganizationInvitationsCommand,
 ) ([]OrganizationInvitationView, error) {
-	if err := service.requireSMTP(); err != nil {
-		return nil, err
-	}
 	if command.OrganizationID <= 0 || command.SenderUserID <= 0 {
 		return nil, ErrInvitationEmailInvalid
 	}
@@ -381,13 +363,6 @@ func (service *Service) transitionWorkspaceMember(
 		return WorkspaceMemberView{}, err
 	}
 	return view, nil
-}
-
-func (service *Service) requireSMTP() error {
-	if service.smtpChecker != nil && !service.smtpChecker.IsSMTPConfigured() {
-		return ErrSMTPNotConfigured
-	}
-	return nil
 }
 
 func (service *Service) requireManager(ctx context.Context, workspaceID int64, requestedBy int64) error {

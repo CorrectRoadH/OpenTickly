@@ -257,12 +257,14 @@ func TestServiceListMembersWithLegacyOwnerRole(t *testing.T) {
 	}
 }
 
-// smtpNotConfigured is a stub SMTPChecker that always reports SMTP as not configured.
-type smtpNotConfigured struct{}
-
-func (s smtpNotConfigured) IsSMTPConfigured() bool { return false }
-
-func TestInviteWorkspaceMemberRejectsWhenSMTPNotConfigured(t *testing.T) {
+// TestInviteWorkspaceMemberSucceedsWithoutSMTP captures the inversion
+// of the previous "reject when SMTP missing" guard. The old behavior
+// blocked every workspace invite on self-hosted / offline instances
+// where SMTP was not configured — but the invite record itself can be
+// created independently of email delivery, and admins can hand out
+// the invitation link out-of-band. Creating the membership row is
+// now the source of truth; any email delivery is best-effort on top.
+func TestInviteWorkspaceMemberSucceedsWithoutSMTP(t *testing.T) {
 	database := pgtest.Open(t)
 	ctx := context.Background()
 
@@ -309,9 +311,9 @@ func TestInviteWorkspaceMemberRejectsWhenSMTPNotConfigured(t *testing.T) {
 		t.Fatalf("save identity user: %v", err)
 	}
 
+	// No SMTP checker configured — simulates the self-hosted default.
 	service, err := membershipapplication.NewService(
 		membershippostgres.NewStore(database.Pool),
-		membershipapplication.WithSMTPChecker(smtpNotConfigured{}),
 		membershipapplication.WithLogger(log.NopLogger()),
 	)
 	if err != nil {
@@ -325,13 +327,16 @@ func TestInviteWorkspaceMemberRejectsWhenSMTPNotConfigured(t *testing.T) {
 		t.Fatalf("ensure owner: %v", err)
 	}
 
-	_, err = service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
+	view, err := service.InviteWorkspaceMember(ctx, membershipapplication.InviteWorkspaceMemberCommand{
 		WorkspaceID: int64(tenantResult.WorkspaceID),
 		RequestedBy: ownerID,
 		Email:       inviteeEmail,
 	})
-	if err != membershipapplication.ErrSMTPNotConfigured {
-		t.Fatalf("expected ErrSMTPNotConfigured, got %v", err)
+	if err != nil {
+		t.Fatalf("invite without SMTP must succeed, got %v", err)
+	}
+	if view.Email != inviteeEmail {
+		t.Fatalf("expected invite email %q, got %q", inviteeEmail, view.Email)
 	}
 }
 

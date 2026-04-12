@@ -201,8 +201,6 @@ func float32PointerFromFloat64(value *float64) *float32 {
 
 func writeMembershipError(err error) error {
 	switch {
-	case errors.Is(err, membershipapplication.ErrSMTPNotConfigured):
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error()).SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceManagerRequired):
 		return echo.NewHTTPError(http.StatusForbidden, "Forbidden").SetInternal(err)
 	case errors.Is(err, membershipapplication.ErrWorkspaceMemberNotFound):

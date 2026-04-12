@@ -143,10 +143,9 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		return nil, err
 	}
 
-	smtpChecker := newEmailSenderFromDB(pool)
+	emailSender := newEmailSenderFromDB(pool)
 	membershipService, err := membershipapplication.NewService(
 		membershipStore,
-		membershipapplication.WithSMTPChecker(smtpChecker),
 		membershipapplication.WithLogger(appLogger),
 	)
 	if err != nil {
@@ -170,7 +169,7 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		return nil, err
 	}
 
-	emailVerifier := newEmailVerifierFromDB(pool, smtpChecker)
+	emailVerifier := newEmailVerifierFromDB(pool, emailSender)
 	identityService := identityapplication.NewService(identityapplication.Config{
 		Users:              newCachedUserRepository(identitypostgres.NewUserRepository(pool), cache),
 		Sessions:           newCachedSessionRepository(identitypostgres.NewSessionRepository(pool), cache),
