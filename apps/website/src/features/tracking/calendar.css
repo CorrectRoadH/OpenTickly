@@ -215,6 +215,7 @@
    as the visual line. The button position is set by JS in the component. */
 .calendar-indicator-play-btn {
   z-index: 4;
+  border: none;
 }
 
 /* ── Drag and drop ── */

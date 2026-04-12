@@ -51,6 +51,12 @@ async function expectIndicatorPlayButtonAligned(page: Page) {
   const playButtonCenterY = playButtonBox.y + playButtonBox.height / 2;
 
   expect(Math.abs(playButtonCenterY - indicatorCenterY)).toBeLessThanOrEqual(2);
+
+  // The play button must not have a visible border (RBC's default CSS adds
+  // border-left: 1px solid #ddd to day-column children, which shows as a
+  // stray white line next to the indicator).
+  const borderLeft = await playButton.evaluate((el) => getComputedStyle(el).borderLeftWidth);
+  expect(borderLeft).toBe("0px");
 }
 
 test.describe("Calendar event card continue button", () => {
