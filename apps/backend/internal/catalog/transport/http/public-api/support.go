@@ -144,8 +144,15 @@ func intPointerFromInt64Pointer(value *int64) *int {
 	return lo.ToPtr(int(*value))
 }
 
+// trackTimeLayout matches the official Toggl v9 at / created_at /
+// start / stop serialization: ISO 8601 with an explicit numeric offset
+// (+00:00) rather than Go's default RFC3339 "Z" shortcut. Strict ISO
+// parsers in third-party SDKs (notably some Rust and typed TypeScript
+// clients) reject the "Z" form, so we always emit the numeric offset.
+const trackTimeLayout = "2006-01-02T15:04:05-07:00"
+
 func timePointer(value time.Time) *string {
-	formatted := value.UTC().Format(time.RFC3339)
+	formatted := value.UTC().Format(trackTimeLayout)
 	return &formatted
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"opentoggl/backend/apps/backend/internal/platform"
@@ -294,6 +295,86 @@ func TestMeProjectsAggregatesAcrossAllUserWorkspaces(t *testing.T) {
 	}
 	if !seen[bobProjectID] {
 		t.Fatalf("expected bob shared project %d in /me/projects (alice is a member of bob's workspace), got %+v", bobProjectID, projects)
+	}
+}
+
+// TestMeProjectsEmitsOfficialTogglTimeFormat locks the serialization
+// format of time-valued fields (at, created_at) on /me/projects to
+// match official api.track.toggl.com exactly: ISO 8601 with an
+// explicit numeric offset, e.g. "2024-01-05T05:19:31+00:00", NOT
+// Go's default RFC3339 "Z" shortcut. Strict third-party parsers
+// (Rust reqwest + chrono's strict ISO, typed TypeScript SDKs) reject
+// the "Z" form, which is the kind of drift that breaks the toggl-cli
+// Go client on non-CLI languages.
+func TestMeProjectsEmitsOfficialTogglTimeFormat(t *testing.T) {
+	database := pgtest.Open(t)
+	email := uniqueTestEmail("me-projects-tz")
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    email,
+		"fullname": "TZ Tester",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("register: %d body=%s", register.Code, register.Body.String())
+	}
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	workspaceID := *registerBody.CurrentWorkspaceID
+	auth := basicAuthorization(email, "secret1")
+
+	create := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
+		map[string]any{"name": "TZ Probe", "workspace_id": workspaceID, "active": true},
+		auth,
+	)
+	if create.Code != http.StatusOK {
+		t.Fatalf("create: %d body=%s", create.Code, create.Body.String())
+	}
+
+	resp := performAuthorizedJSONRequest(
+		t, app, http.MethodGet, "/api/v9/me/projects", nil, auth,
+	)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("me projects: %d body=%s", resp.Code, resp.Body.String())
+	}
+	var projects []map[string]any
+	mustDecodeJSON(t, resp.Body.Bytes(), &projects)
+	if len(projects) == 0 {
+		t.Fatalf("expected at least 1 project")
+	}
+
+	// Every time-valued field must end with "+00:00" (or another
+	// numeric offset), never "Z". Iterate across projects and fields
+	// so any regression in a single field fails this test.
+	timeFields := []string{"at", "created_at"}
+	for _, p := range projects {
+		for _, field := range timeFields {
+			raw, ok := p[field].(string)
+			if !ok || raw == "" {
+				continue
+			}
+			if strings.HasSuffix(raw, "Z") {
+				t.Fatalf("field %q on /me/projects response must use numeric offset (official Toggl format), got %q", field, raw)
+			}
+			if !strings.Contains(raw, "+") && !strings.Contains(raw[len(raw)-6:], "-") {
+				t.Fatalf("field %q has no numeric offset: %q", field, raw)
+			}
+		}
 	}
 }
 
