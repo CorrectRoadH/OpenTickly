@@ -1,12 +1,16 @@
 /**
- * Story: A single user with multiple workspaces sees data scoped to the
- *        correct workspace. Projects and entries created in workspace A
- *        are distinct from workspace B.
+ * Story: A single user with multiple workspaces sees data from every
+ *        workspace they belong to via the /me/* endpoints, matching
+ *        official Toggl v9 semantics (verified empirically against
+ *        api.track.toggl.com). Workspace-scoped /workspaces/{id}/*
+ *        endpoints remain per-workspace.
  *
  * Acceptance:
- * - User's default workspace contains data created via CLI
- * - Data created via API in a second workspace is separate
- * - The CLI's project/entry list reflects the user's home workspace scope
+ * - CLI's project list (→ GET /me/projects) aggregates across all
+ *   workspaces the user is a member of
+ * - CLI's entry list (→ GET /me/time_entries) aggregates the same way
+ * - A workspace the user can see via `workspace list` contributes its
+ *   projects and entries to the aggregated /me/* views
  */
 import { describe, it, expect, beforeAll } from "vitest";
 import { toggl, togglJson } from "../helpers/toggl.ts";
@@ -63,7 +67,7 @@ describe("Story: single user, multi-workspace data scoping", () => {
     });
   });
 
-  it("CLI project list shows WS-A projects (user's home workspace)", async () => {
+  it("CLI project list includes projects from the user's default workspace", async () => {
     const projects = await togglJson<Project[]>(["project", "list"], { user });
     const names = projects.map((p) => p.name);
     expect(names).toContain("WS-A Project");
@@ -76,10 +80,20 @@ describe("Story: single user, multi-workspace data scoping", () => {
     expect(entries.some((e) => e.description === "WS-A Work")).toBe(true);
   });
 
-  it("WS-A project list does not contain WS-B project", async () => {
+  it("CLI project list aggregates projects across all user workspaces", async () => {
+    // `toggl project list` hits GET /me/projects (see upstream
+    // toggl-cli src/api/client.rs). Per official Toggl v9, /me/projects
+    // returns projects from EVERY workspace the user is a member of,
+    // not just the default one — empirically verified with two curls
+    // against api.track.toggl.com (default workspace + a second
+    // workspace each holding one project → response contains both).
+    // A previous revision of this test asserted the opposite based on
+    // a since-fixed OpenToggl backend bug that collapsed /me/projects
+    // to the user's home workspace via web_user_homes.
     const projects = await togglJson<Project[]>(["project", "list"], { user });
     const names = projects.map((p) => p.name);
-    expect(names).not.toContain("WS-B Project");
+    expect(names).toContain("WS-A Project");
+    expect(names).toContain("WS-B Project");
   });
 
   it("user has two workspaces visible", async () => {

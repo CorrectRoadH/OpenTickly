@@ -28,7 +28,8 @@ export async function registerE2eUser(
 
   await page.getByRole("button", { name: "Register" }).click();
 
-  await page.waitForURL(/\/timer(?:\?.*)?$/);
+  // See loginE2eUser for the rationale on waitUntil: 'domcontentloaded'.
+  await page.waitForURL(/\/timer(?:\?.*)?$/, { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   // Complete the post-registration onboarding dialog if it appears.
@@ -59,7 +60,14 @@ export async function loginE2eUser(
   await page.getByLabel("Password").fill(options.password);
 
   await page.getByRole("button", { name: "Log in" }).click();
-  await page.waitForURL(/\/timer(?:\?.*)?$/);
+  // Default waitForURL waits for the 'load' event, which only fires
+  // once every network request the /timer first-paint kicks off has
+  // finished. That couples login readiness to the slowest unrelated
+  // API on the page and caused a flake when a single /me/* request
+  // was momentarily slow on a cold worker. URL match + the
+  // app-shell visibility gate on the next line is the real
+  // "logged in and on the timer page" signal.
+  await page.waitForURL(/\/timer(?:\?.*)?$/, { waitUntil: "domcontentloaded" });
   await expect(page.getByTestId("app-shell")).toBeVisible();
 
   await completeOnboardingDialogIfVisible(page);
