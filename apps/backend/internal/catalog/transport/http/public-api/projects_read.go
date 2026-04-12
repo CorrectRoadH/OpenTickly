@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -13,6 +14,59 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/samber/lo"
 )
+
+// trackProjectResponse wraps the generated project model to patch two
+// wire-shape drifts between the oapi-codegen output and what official
+// api.track.toggl.com emits:
+//
+//   - The codegen applied `omitempty` to a handful of nullable premium
+//     fields (rate, fixed_fee, recurring_parameters). Upstream emits
+//     those as explicit null when absent; omitempty strips them, which
+//     breaks strict typed clients that deserialize them as required
+//     nullable. Force-null on marshal fixes the shape.
+//   - The codegen carries a `current_period` field that upstream does
+//     not emit on /me/projects or /workspaces/{id}/projects. Drop it
+//     from the marshalled output so our response is byte-for-byte
+//     comparable.
+//
+// The workaround lives on the wrapper rather than on the generated
+// struct so regeneration (which overwrites generated code) can't
+// accidentally undo the patch. Keep the list of force-null and drop
+// fields minimal — every entry here is an observed drift against the
+// live upstream response, not a speculative tweak.
+type trackProjectResponse struct {
+	publictrackapi.GithubComTogglTogglApiInternalModelsProject
+}
+
+var trackProjectForceNullFields = []string{
+	"rate",
+	"fixed_fee",
+	"recurring_parameters",
+}
+
+var trackProjectDropFields = []string{
+	"current_period",
+}
+
+func (p trackProjectResponse) MarshalJSON() ([]byte, error) {
+	raw, err := json.Marshal(p.GithubComTogglTogglApiInternalModelsProject)
+	if err != nil {
+		return nil, err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return nil, err
+	}
+	for _, key := range trackProjectForceNullFields {
+		if _, present := fields[key]; !present {
+			fields[key] = json.RawMessage("null")
+		}
+	}
+	for _, key := range trackProjectDropFields {
+		delete(fields, key)
+	}
+	return json.Marshal(fields)
+}
 
 func (handler *Handler) GetPublicTrackProjectUsers(ctx echo.Context) error {
 	workspaceID, ok := parsePathID(ctx, "workspace_id")
@@ -100,14 +154,14 @@ func (handler *Handler) GetPublicTrackProjects(ctx echo.Context) error {
 	filter.Name = ctx.QueryParam("name")
 	filter.Search = ctx.QueryParam("search")
 
-	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0)
+	projects := make([]trackProjectResponse, 0)
 	for _, workspaceID := range workspaceIDs {
 		views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, filter)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		for _, view := range views {
-			projects = append(projects, projectViewToAPI(view))
+			projects = append(projects, trackProjectResponse{projectViewToAPI(view)})
 		}
 	}
 	return ctx.JSON(http.StatusOK, projects)
@@ -122,7 +176,7 @@ func (handler *Handler) GetPublicTrackProjectTemplates(ctx echo.Context) error {
 		return err
 	}
 
-	projects := make([]publictrackapi.GithubComTogglTogglApiInternalModelsProject, 0)
+	projects := make([]trackProjectResponse, 0)
 	for _, workspaceID := range workspaceIDs {
 		views, err := handler.catalog.ListProjects(ctx.Request().Context(), workspaceID, catalogapplication.ListProjectsFilter{
 			OnlyTemplates: true,
@@ -133,7 +187,7 @@ func (handler *Handler) GetPublicTrackProjectTemplates(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 		}
 		for _, view := range views {
-			projects = append(projects, projectViewToAPI(view))
+			projects = append(projects, trackProjectResponse{projectViewToAPI(view)})
 		}
 	}
 	return ctx.JSON(http.StatusOK, projects)
@@ -162,7 +216,7 @@ func (handler *Handler) GetPublicTrackProject(ctx echo.Context) error {
 		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
-	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
+	return ctx.JSON(http.StatusOK, trackProjectResponse{projectViewToAPI(view)})
 }
 
 func (handler *Handler) GetPublicTrackProjectRecurringPeriod(ctx echo.Context) error {

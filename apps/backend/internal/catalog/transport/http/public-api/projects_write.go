@@ -48,7 +48,7 @@ func (handler *Handler) PostPublicTrackProjects(ctx echo.Context) error {
 	if err != nil {
 		return writePublicTrackCatalogError(ctx, err)
 	}
-	return ctx.JSON(http.StatusOK, projectViewToAPI(view))
+	return ctx.JSON(http.StatusOK, trackProjectResponse{projectViewToAPI(view)})
 }
 
 func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
@@ -97,7 +97,7 @@ func (handler *Handler) PutPublicTrackProject(ctx echo.Context) error {
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
-	return ctx.JSON(http.StatusOK, projectViewToAPI(updated))
+	return ctx.JSON(http.StatusOK, trackProjectResponse{projectViewToAPI(updated)})
 }
 
 func (handler *Handler) PostPublicTrackPinnedProject(ctx echo.Context) error {
@@ -131,7 +131,7 @@ func (handler *Handler) PostPublicTrackPinnedProject(ctx echo.Context) error {
 		}
 		return writePublicTrackCatalogError(ctx, err)
 	}
-	return ctx.JSON(http.StatusOK, projectViewToAPI(project))
+	return ctx.JSON(http.StatusOK, trackProjectResponse{projectViewToAPI(project)})
 }
 
 func (handler *Handler) DeletePublicTrackProject(

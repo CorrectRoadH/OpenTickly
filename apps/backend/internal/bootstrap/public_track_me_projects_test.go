@@ -298,6 +298,93 @@ func TestMeProjectsAggregatesAcrossAllUserWorkspaces(t *testing.T) {
 	}
 }
 
+// TestMeProjectsMatchesOfficialTogglNullableFieldShape locks the wire
+// shape for nullable premium fields (rate, fixed_fee,
+// recurring_parameters) and for the non-upstream current_period
+// field. Live api.track.toggl.com response for a non-premium project:
+//
+//	"rate": null,
+//	"fixed_fee": null,
+//	"recurring_parameters": null,
+//	// no "current_period" key at all
+//
+// oapi-codegen marked the nullable premium fields with `omitempty`
+// (dropping them from JSON when nil) and exposes a current_period
+// field that upstream does not send on list/get responses. The
+// trackProjectResponse wrapper patches both drifts on marshal.
+func TestMeProjectsMatchesOfficialTogglNullableFieldShape(t *testing.T) {
+	database := pgtest.Open(t)
+	email := uniqueTestEmail("me-projects-nullable-shape")
+
+	app, err := NewApp(Config{
+		ServiceName: "opentoggl-api",
+		Server:      ServerConfig{ListenAddress: ":0"},
+		Database:    DatabaseConfig{PrimaryDSN: database.ConnString()},
+		Redis:       RedisConfig{Address: "redis://127.0.0.1:6379/0"},
+	})
+	if err != nil {
+		t.Fatalf("NewApp returned error: %v", err)
+	}
+	t.Cleanup(app.Platform.Database.Close)
+
+	register := performJSONRequest(t, app, http.MethodPost, "/web/v1/auth/register", map[string]any{
+		"email":    email,
+		"fullname": "Nullable Shape",
+		"password": "secret1",
+	}, "")
+	if register.Code != http.StatusCreated {
+		t.Fatalf("register: %d body=%s", register.Code, register.Body.String())
+	}
+	var registerBody struct {
+		CurrentWorkspaceID *int64 `json:"current_workspace_id"`
+	}
+	mustDecodeJSON(t, register.Body.Bytes(), &registerBody)
+	workspaceID := *registerBody.CurrentWorkspaceID
+	auth := basicAuthorization(email, "secret1")
+
+	create := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/api/v9/workspaces/"+intToString(workspaceID)+"/projects",
+		map[string]any{"name": "Shape Project", "workspace_id": workspaceID, "active": true},
+		auth,
+	)
+	if create.Code != http.StatusOK {
+		t.Fatalf("create: %d body=%s", create.Code, create.Body.String())
+	}
+
+	resp := performAuthorizedJSONRequest(
+		t, app, http.MethodGet, "/api/v9/me/projects", nil, auth,
+	)
+	if resp.Code != http.StatusOK {
+		t.Fatalf("me projects: %d body=%s", resp.Code, resp.Body.String())
+	}
+	var projects []map[string]any
+	mustDecodeJSON(t, resp.Body.Bytes(), &projects)
+	if len(projects) != 1 {
+		t.Fatalf("expected 1 project, got %d", len(projects))
+	}
+	p := projects[0]
+
+	// Every nullable premium field must be *present* and null —
+	// missing (due to omitempty) breaks strict typed clients.
+	for _, field := range []string{"rate", "fixed_fee", "recurring_parameters"} {
+		v, present := p[field]
+		if !present {
+			t.Fatalf("nullable field %q must be present in response, got missing", field)
+		}
+		if v != nil {
+			t.Fatalf("nullable field %q must be null on non-premium project, got %#v", field, v)
+		}
+	}
+
+	// current_period is NOT in the official response and must not
+	// appear in ours either, even for non-recurring projects where
+	// our generated struct leaves it as null.
+	if _, present := p["current_period"]; present {
+		t.Fatalf("current_period must not be emitted — upstream Toggl does not include it on /me/projects")
+	}
+}
+
 // TestMeProjectsEmitsOfficialTogglDerivedFieldShape locks the shape
 // of derived/rollup fields — actual_hours, actual_seconds,
 // estimated_hours, total_count — against what api.track.toggl.com
