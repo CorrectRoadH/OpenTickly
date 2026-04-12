@@ -36,10 +36,10 @@ const workspacePermissionsQueryKey = (workspaceId: number) =>
   ["workspace-permissions", workspaceId] as const;
 const workspaceDashboardAllActivitiesQueryKey = (workspaceId: number) =>
   ["workspace-dashboard-all-activities", workspaceId] as const;
-const workspaceDashboardMostActiveQueryKey = (workspaceId: number) =>
-  ["workspace-dashboard-most-active", workspaceId] as const;
-const workspaceDashboardTopActivityQueryKey = (workspaceId: number) =>
-  ["workspace-dashboard-top-activity", workspaceId] as const;
+const workspaceDashboardMostActiveQueryKey = (workspaceId: number, since?: number) =>
+  ["workspace-dashboard-most-active", workspaceId, since ?? null] as const;
+const workspaceDashboardTopActivityQueryKey = (workspaceId: number, since?: number) =>
+  ["workspace-dashboard-top-activity", workspaceId, since ?? null] as const;
 
 export function useWorkspaceSettingsQuery(workspaceId: number) {
   return useQuery({
@@ -230,7 +230,7 @@ export function useWorkspaceAllActivitiesQuery(workspaceId: number) {
   });
 }
 
-export function useWorkspaceMostActiveQuery(workspaceId: number) {
+export function useWorkspaceMostActiveQuery(workspaceId: number, since?: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
@@ -238,13 +238,16 @@ export function useWorkspaceMostActiveQuery(workspaceId: number) {
           path: {
             workspace_id: workspaceId,
           },
+          // Upstream Toggl OpenAPI declares `since` as formData on a GET (invalid),
+          // so the generated type drops it. Backend + real API both accept it as a query param.
+          ...(since !== undefined ? ({ query: { since } } as object) : {}),
         }),
       ),
-    queryKey: workspaceDashboardMostActiveQueryKey(workspaceId),
+    queryKey: workspaceDashboardMostActiveQueryKey(workspaceId, since),
   });
 }
 
-export function useWorkspaceTopActivityQuery(workspaceId: number) {
+export function useWorkspaceTopActivityQuery(workspaceId: number, since?: number) {
   return useQuery({
     queryFn: () =>
       unwrapWebApiResult(
@@ -252,9 +255,11 @@ export function useWorkspaceTopActivityQuery(workspaceId: number) {
           path: {
             workspace_id: workspaceId,
           },
+          // See note on useWorkspaceMostActiveQuery re: missing `since` in generated type.
+          ...(since !== undefined ? ({ query: { since } } as object) : {}),
         }),
       ),
-    queryKey: workspaceDashboardTopActivityQueryKey(workspaceId),
+    queryKey: workspaceDashboardTopActivityQueryKey(workspaceId, since),
   });
 }
 

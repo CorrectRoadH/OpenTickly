@@ -37,10 +37,11 @@ export function WorkspaceOverviewPage(): ReactElement {
   const memberCount = session.currentOrganization?.userCount ?? 1;
   const weekDays = getCurrentWeekDays(beginningOfWeek);
   const timezone = session.user.timezone ?? "UTC";
+  const weekStartSeconds = Math.floor(weekDays[0].getTime() / 1000);
   const projectsQuery = useProjectsQuery(workspaceId, "all");
   const allActivitiesQuery = useWorkspaceAllActivitiesQuery(workspaceId);
-  const topActivityQuery = useWorkspaceTopActivityQuery(workspaceId);
-  const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId);
+  const topActivityQuery = useWorkspaceTopActivityQuery(workspaceId, weekStartSeconds);
+  const mostActiveQuery = useWorkspaceMostActiveQuery(workspaceId, weekStartSeconds);
   const membersQuery = useWorkspaceMembersQuery(workspaceId);
   const memberNameById = (() => {
     const lookup = new Map<number, string>();
