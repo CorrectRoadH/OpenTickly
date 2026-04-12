@@ -375,14 +375,18 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntries(
 		return err
 	}
 	var request publicreportsapi.SummaryReportPost
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 	query, err := buildQuery(int64(workspaceID), user, request.StartDate, request.EndDate)
 	if err != nil {
 		return err
 	}
-	applySummaryPostFilters(&query, request)
+	applyNullableIDFilters(&query, filters)
+	if request.Description != nil {
+		query.Description = *request.Description
+	}
 	report, err := handler.reports.BuildSummaryReport(ctx.Request().Context(), query)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
@@ -428,14 +432,18 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntries(
 		return err
 	}
 	var request publicreportsapi.BasePost
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 	query, err := buildQuery(int64(workspaceID), user, request.StartDate, request.EndDate)
 	if err != nil {
 		return err
 	}
-	applyBasePostFilters(&query, request)
+	applyNullableIDFilters(&query, filters)
+	if request.Description != nil {
+		query.Description = *request.Description
+	}
 	report, err := handler.reports.BuildWeeklyReport(ctx.Request().Context(), query)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
@@ -584,8 +592,9 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityProjec
 	}
 
 	var request publicreportsapi.DtoProjectProfitability
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 
 	location, err := time.LoadLocation(user.Timezone)
@@ -599,6 +608,9 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityProjec
 		Timezone:    user.Timezone,
 		Currency:    request.Currency,
 		Billable:    request.Billable,
+		ProjectIDs:  filters.ProjectIDs,
+		ClientIDs:   filters.ClientIDs,
+		NoClient:    filters.NoClient,
 	}
 	if request.StartDate != nil {
 		startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
@@ -613,12 +625,6 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdProfitabilityProjec
 			return echo.NewHTTPError(http.StatusBadRequest, "Invalid parameters").SetInternal(err)
 		}
 		query.EndDate = endDate
-	}
-	if request.ProjectIds != nil {
-		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
-	}
-	if request.ClientIds != nil {
-		query.ClientIDs = intsToInt64s(*request.ClientIds)
 	}
 
 	rows, err := handler.reports.BuildProjectProfitability(ctx.Request().Context(), query)
@@ -851,31 +857,16 @@ func buildQuery(
 	}, nil
 }
 
-func applyBasePostFilters(query *reportsapplication.Query, request publicreportsapi.BasePost) {
-	if request.ProjectIds != nil {
-		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
-	}
-	if request.TagIds != nil {
-		query.TagIDs = intsToInt64s(*request.TagIds)
-	}
-	if request.TaskIds != nil {
-		query.TaskIDs = intsToInt64s(*request.TaskIds)
-	}
-	if request.Description != nil {
-		query.Description = *request.Description
-	}
-}
-
-func applySummaryPostFilters(query *reportsapplication.Query, request publicreportsapi.SummaryReportPost) {
-	if request.ProjectIds != nil {
-		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
-	}
-	if request.TagIds != nil {
-		query.TagIDs = intsToInt64s(*request.TagIds)
-	}
-	if request.Description != nil {
-		query.Description = *request.Description
-	}
+// applyNullableIDFilters writes the project/tag/task id lists and their
+// corresponding "no X" flags into the query, preserving the [null] filter
+// semantic documented by Toggl.
+func applyNullableIDFilters(query *reportsapplication.Query, filters nullableIDFilters) {
+	query.ProjectIDs = filters.ProjectIDs
+	query.NoProject = filters.NoProject
+	query.TagIDs = filters.TagIDs
+	query.NoTag = filters.NoTag
+	query.TaskIDs = filters.TaskIDs
+	query.NoTask = filters.NoTask
 }
 
 func intsToInt64s(values []int) []int64 {

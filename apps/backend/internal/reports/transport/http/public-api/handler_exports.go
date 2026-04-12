@@ -74,8 +74,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesEx
 	}
 
 	var request publicreportsapi.SummaryReportPost
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 
 	location := loadLocation(user.Timezone)
@@ -90,7 +91,10 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdSummaryTimeEntriesEx
 	}
 	_ = startDate
 	_ = endDate
-	applySummaryPostFilters(&query, request)
+	applyNullableIDFilters(&query, filters)
+	if request.Description != nil {
+		query.Description = *request.Description
+	}
 
 	report, err := handler.reports.BuildSummaryReport(ctx.Request().Context(), query)
 	if err != nil {
@@ -135,23 +139,16 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdWeeklyTimeEntriesCsv
 	}
 
 	var request publicreportsapi.WeeklyExportPost
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 
 	query, err := buildQuery(int64(workspaceID), user, request.StartDate, request.EndDate)
 	if err != nil {
 		return err
 	}
-	if request.ProjectIds != nil {
-		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
-	}
-	if request.TagIds != nil {
-		query.TagIDs = intsToInt64s(*request.TagIds)
-	}
-	if request.TaskIds != nil {
-		query.TaskIDs = intsToInt64s(*request.TaskIds)
-	}
+	applyNullableIDFilters(&query, filters)
 	if request.Description != nil {
 		query.Description = *request.Description
 	}

@@ -25,8 +25,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 	}
 
 	var request publicreportsapi.DtoProjectProfitability
-	if err := ctx.Bind(&request); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+	filters, err := bindWithNullableIDs(ctx, &request)
+	if err != nil {
+		return err
 	}
 
 	location := loadLocation(user.Timezone)
@@ -36,6 +37,9 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 		Timezone:    user.Timezone,
 		Currency:    request.Currency,
 		Billable:    request.Billable,
+		ProjectIDs:  filters.ProjectIDs,
+		ClientIDs:   filters.ClientIDs,
+		NoClient:    filters.NoClient,
 	}
 	if request.StartDate != nil {
 		s, err := parseDate(*request.StartDate, location)
@@ -50,12 +54,6 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 			return err
 		}
 		query.EndDate = e
-	}
-	if request.ProjectIds != nil {
-		query.ProjectIDs = intsToInt64s(*request.ProjectIds)
-	}
-	if request.ClientIds != nil {
-		query.ClientIDs = intsToInt64s(*request.ClientIds)
 	}
 
 	rows, err := handler.reports.BuildProjectProfitability(ctx.Request().Context(), query)

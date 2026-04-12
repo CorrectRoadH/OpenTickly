@@ -160,8 +160,12 @@ type ProjectProfitabilityQuery struct {
 	EndDate     time.Time
 	ProjectIDs  []int64
 	ClientIDs   []int64
-	Billable    *bool
-	Currency    string
+	// NoClient filters for projects with no client assigned. When combined
+	// with ClientIDs, semantics are OR (Toggl "A nil entry on this list"
+	// convention).
+	NoClient bool
+	Billable *bool
+	Currency string
 }
 
 // ProjectProfitabilityRow is the result for a single project.

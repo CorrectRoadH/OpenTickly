@@ -532,9 +532,13 @@ func (service *Service) BuildProjectProfitability(ctx context.Context, query Pro
 		if len(query.ProjectIDs) > 0 && !slices.Contains(query.ProjectIDs, projectID) {
 			continue
 		}
-		if len(query.ClientIDs) > 0 {
-			clientID := derefInt64(entry.ClientID)
-			if !slices.Contains(query.ClientIDs, clientID) {
+		if query.NoClient || len(query.ClientIDs) > 0 {
+			hasNoClient := entry.ClientID == nil
+			inList := false
+			if entry.ClientID != nil && len(query.ClientIDs) > 0 {
+				inList = slices.Contains(query.ClientIDs, *entry.ClientID)
+			}
+			if !((query.NoClient && hasNoClient) || inList) {
 				continue
 			}
 		}

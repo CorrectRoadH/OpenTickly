@@ -315,4 +315,45 @@ func TestPublicReportsSearchTimeEntriesNullProjectFilter(t *testing.T) {
 	if len(mixedRows) != 2 {
 		t.Fatalf("[null, id] expected 2 rows, got %d: %v", len(mixedRows), mixedRows)
 	}
+
+	// Summary report with project_ids:[null] should also honor the filter and
+	// only total the no-project entry (10 min = 600s).
+	summary := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/reports/api/v3/workspace/"+intToString(workspaceID)+"/summary/time_entries",
+		map[string]any{
+			"start_date":  "2026-03-23",
+			"end_date":    "2026-03-23",
+			"project_ids": []any{nil},
+		},
+		authorization,
+	)
+	if summary.Code != http.StatusOK {
+		t.Fatalf("summary [null] search: status %d body=%s", summary.Code, summary.Body.String())
+	}
+	var summaryBody publicreportsapi.SavedSummaryReportData
+	mustDecodeJSON(t, summary.Body.Bytes(), &summaryBody)
+	if summaryBody.Totals == nil || summaryBody.Totals.Seconds == nil || *summaryBody.Totals.Seconds != 600 {
+		t.Fatalf("summary [null] expected 600s total, got %#v", summaryBody.Totals)
+	}
+
+	// Weekly report with project_ids:[null] likewise.
+	weekly := performAuthorizedJSONRequest(
+		t, app, http.MethodPost,
+		"/reports/api/v3/workspace/"+intToString(workspaceID)+"/weekly/time_entries",
+		map[string]any{
+			"start_date":  "2026-03-23",
+			"end_date":    "2026-03-29",
+			"project_ids": []any{nil},
+		},
+		authorization,
+	)
+	if weekly.Code != http.StatusOK {
+		t.Fatalf("weekly [null] search: status %d body=%s", weekly.Code, weekly.Body.String())
+	}
+	var weeklyBody publicreportsapi.SavedWeeklyReportData
+	mustDecodeJSON(t, weekly.Body.Bytes(), &weeklyBody)
+	if weeklyBody.Totals == nil || weeklyBody.Totals.Seconds == nil || *weeklyBody.Totals.Seconds != 600 {
+		t.Fatalf("weekly [null] expected 600s total, got %#v", weeklyBody.Totals)
+	}
 }
