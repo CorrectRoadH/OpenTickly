@@ -511,16 +511,9 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdDataTrendsProjects(
 		location = time.UTC
 	}
 
-	if request.StartDate == nil || request.EndDate == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
-	}
-	startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
-	}
-	endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		return err
 	}
 
 	query := reportsapplication.ProjectDataTrendsQuery{
@@ -753,16 +746,9 @@ func (handler *Handler) PostInsightsApiV1WorkspaceWorkspaceIdTrendsProjectsExten
 		location = time.UTC
 	}
 
-	if request.StartDate == nil || request.EndDate == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
-	}
-	startDate, err := time.ParseInLocation(time.DateOnly, *request.StartDate, location)
+	startDate, endDate, err := resolveDateBounds(request.StartDate, request.EndDate, location)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
-	}
-	endDate, err := time.ParseInLocation(time.DateOnly, *request.EndDate, location)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
+		return err
 	}
 
 	query := reportsapplication.ProjectDataTrendsQuery{
@@ -829,26 +815,14 @@ func buildQuery(
 	startDate *string,
 	endDate *string,
 ) (reportsapplication.Query, error) {
-	if startDate == nil || endDate == nil {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
-	}
-
 	location, err := time.LoadLocation(user.Timezone)
 	if err != nil {
 		location = time.UTC
 	}
-	start, err := time.ParseInLocation(time.DateOnly, *startDate, location)
+	start, end, err := resolveDateBounds(startDate, endDate, location)
 	if err != nil {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
+		return reportsapplication.Query{}, err
 	}
-	end, err := time.ParseInLocation(time.DateOnly, *endDate, location)
-	if err != nil {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "Bad Request").SetInternal(err)
-	}
-	if end.Before(start) {
-		return reportsapplication.Query{}, echo.NewHTTPError(http.StatusBadRequest, "end date must not be before start date")
-	}
-
 	return reportsapplication.Query{
 		EndDate:     end,
 		RequestedBy: user.ID,

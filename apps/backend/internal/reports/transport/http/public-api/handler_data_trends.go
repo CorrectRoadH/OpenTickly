@@ -468,9 +468,21 @@ func parseDate(s string, loc *time.Location) (time.Time, error) {
 	return t, nil
 }
 
-func parseDateRange(startStr *string, endStr *string, loc *time.Location) (time.Time, time.Time, error) {
-	if startStr == nil || endStr == nil {
+// resolveDateBounds implements the official Toggl Reports v3 date-range
+// semantics: "At least one parameter must be set". Only one of start_date /
+// end_date is required; the missing bound is mirrored to the provided one,
+// producing a single-day window. This matches the live api.track.toggl.com
+// behavior observed across summary/weekly/detailed/data_trends/projects
+// endpoints. When both are present, end must not precede start.
+func resolveDateBounds(startStr *string, endStr *string, loc *time.Location) (time.Time, time.Time, error) {
+	if startStr == nil && endStr == nil {
 		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "At least one parameter must be set")
+	}
+	if startStr == nil {
+		startStr = endStr
+	}
+	if endStr == nil {
+		endStr = startStr
 	}
 	start, err := time.ParseInLocation(time.DateOnly, *startStr, loc)
 	if err != nil {
@@ -480,7 +492,15 @@ func parseDateRange(startStr *string, endStr *string, loc *time.Location) (time.
 	if err != nil {
 		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "Wrong format date").SetInternal(err)
 	}
+	if end.Before(start) {
+		return time.Time{}, time.Time{}, echo.NewHTTPError(http.StatusBadRequest, "end date must not be before start date")
+	}
 	return start, end, nil
+}
+
+// parseDateRange is the handler-facing alias for resolveDateBounds.
+func parseDateRange(startStr *string, endStr *string, loc *time.Location) (time.Time, time.Time, error) {
+	return resolveDateBounds(startStr, endStr, loc)
 }
 
 func intSetFromRequest(ids *[]int) map[int64]bool {

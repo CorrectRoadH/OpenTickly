@@ -1,6 +1,7 @@
 package publicapi
 
 import (
+	"encoding/json"
 	"net/http"
 
 	catalogapplication "opentoggl/backend/apps/backend/internal/catalog/application"
@@ -90,6 +91,55 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProfitabilityProject
 // Projects Summary
 // ---------------------------------------------------------------------------
 
+// projectsSummaryRow wraps the generated UsersProjectUsersSummaryRow to fix
+// two wire-shape drifts between the oapi-codegen output (driven by the
+// upstream Toggl Reports v3 swagger) and the live api.track.toggl.com
+// response for POST /reports/api/v3/workspace/{id}/projects/summary:
+//
+//   - The generated struct tags every field with omitempty because the
+//     swagger does not mark them required. Upstream always emits all
+//     four fields on the wire, including project_id: null when time was
+//     tracked without a project. Forcing full output keeps the shape
+//     byte-compatible with official for third-party clients (e.g. the
+//     obsidian-toggl-integration plugin, which sends only start_date and
+//     consumes {user_id, project_id, tracked_seconds}).
+//   - project_id must serialize as an explicit JSON null (not omitted)
+//     when the backing pointer is nil, so the field is always present.
+//
+// Overriding MarshalJSON on a wrapper (rather than patching the generated
+// struct) is the repo's standard fix for upstream swagger drift — see
+// catalog/transport/http/public-api/projects_read.go for the same pattern.
+// Regeneration cannot undo this because the wrapper lives in handler code.
+type projectsSummaryRow struct {
+	publicreportsapi.UsersProjectUsersSummaryRow
+}
+
+var projectsSummaryForceNullFields = []string{"project_id"}
+
+func (r projectsSummaryRow) MarshalJSON() ([]byte, error) {
+	raw, err := json.Marshal(r.UsersProjectUsersSummaryRow)
+	if err != nil {
+		return nil, err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return nil, err
+	}
+	// Always emit the four documented fields; fill missing integer
+	// fields with 0, and nullable project_id with null.
+	for _, key := range []string{"user_id", "tracked_seconds", "billable_seconds"} {
+		if _, present := fields[key]; !present {
+			fields[key] = json.RawMessage("0")
+		}
+	}
+	for _, key := range projectsSummaryForceNullFields {
+		if _, present := fields[key]; !present {
+			fields[key] = json.RawMessage("null")
+		}
+	}
+	return json.Marshal(fields)
+}
+
 func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 	ctx echo.Context,
 	workspaceID int,
@@ -123,48 +173,49 @@ func (handler *Handler) PostReportsApiV3WorkspaceWorkspaceIdProjectsSummary(
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
 	}
 
-	// Get project info.
-	projects, err := handler.catalog.ListProjects(ctx.Request().Context(), int64(workspaceID), catalogapplication.ListProjectsFilter{})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal Server Error").SetInternal(err)
+	// Aggregate per (user_id, project_id) preserving nil project_id as a
+	// separate bucket so "no project" time is still emitted (matches official).
+	type key struct {
+		userID    int64
+		projectID int64
+		noProject bool
 	}
-	projectMap := map[int64]catalogapplication.ProjectView{}
-	for _, p := range projects {
-		projectMap[p.ID] = p
+	type bucket struct {
+		tracked  int
+		billable int
 	}
-
-	// Aggregate per project.
-	type accum struct {
-		totalSeconds    int
-		billableSeconds int
-		userSet         map[int64]struct{}
-	}
-	projectStats := map[int64]*accum{}
+	totals := map[key]*bucket{}
 	for _, e := range entries {
-		pid := derefInt64Ptr(e.ProjectID)
-		acc, ok := projectStats[pid]
+		k := key{userID: e.UserID}
+		if e.ProjectID == nil {
+			k.noProject = true
+		} else {
+			k.projectID = *e.ProjectID
+		}
+		b, ok := totals[k]
 		if !ok {
-			acc = &accum{userSet: map[int64]struct{}{}}
-			projectStats[pid] = acc
+			b = &bucket{}
+			totals[k] = b
 		}
-		acc.totalSeconds += e.Duration
+		b.tracked += e.Duration
 		if e.Billable {
-			acc.billableSeconds += e.Duration
+			b.billable += e.Duration
 		}
-		acc.userSet[e.UserID] = struct{}{}
 	}
 
-	// Build per-project user responses.
-	result := make([]publicreportsapi.DtoProjectUserResponse, 0)
-	for pid, acc := range projectStats {
-		for uid := range acc.userSet {
-			result = append(result, publicreportsapi.DtoProjectUserResponse{
-				ProjectId: lo.ToPtr(int(pid)),
-				UserId:    lo.ToPtr(int(uid)),
-				Id:        lo.ToPtr(int(uid)),
-			})
+	result := make([]projectsSummaryRow, 0, len(totals))
+	for k, b := range totals {
+		row := projectsSummaryRow{
+			UsersProjectUsersSummaryRow: publicreportsapi.UsersProjectUsersSummaryRow{
+				UserId:          lo.ToPtr(int(k.userID)),
+				TrackedSeconds:  lo.ToPtr(b.tracked),
+				BillableSeconds: lo.ToPtr(b.billable),
+			},
 		}
-		_ = acc
+		if !k.noProject {
+			row.ProjectId = lo.ToPtr(int(k.projectID))
+		}
+		result = append(result, row)
 	}
 
 	return ctx.JSON(http.StatusOK, result)
