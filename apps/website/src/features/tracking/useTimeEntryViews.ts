@@ -12,10 +12,10 @@ import {
   summarizeProjects,
   sumForDate,
 } from "./overview-data.ts";
+import { type QueryRangeMode, resolveTimeEntryQueryRange } from "./resolve-query-range.ts";
 import { stabilizeEntryGroups, stabilizeTimeEntryList } from "./time-entry-stability.ts";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWeekNavigation } from "./useWeekNavigation.ts";
-import { formatTrackQueryDate } from "./week-range.ts";
 
 const LIST_INITIAL_DAYS = 9;
 const LIST_PAGE_INCREMENT = 7;
@@ -24,8 +24,14 @@ export function useTimeEntryViews(options: {
   workspaceId: number;
   timezone: string;
   showAllEntries?: boolean;
+  /**
+   * "week" (default): calendar/timesheet views fetch the currently-selected
+   * Mon-Sun week. "rolling": always fetch a rolling N-day window ending today —
+   * use this for mobile so previous days remain visible on Mondays.
+   */
+  rangeMode?: QueryRangeMode;
 }) {
-  const { workspaceId, timezone, showAllEntries = false } = options;
+  const { workspaceId, timezone, showAllEntries = false, rangeMode = "week" } = options;
   const { collapseTimeEntries } = useUserPreferences();
 
   const view = useTimerViewStore((s) => s.view);
@@ -35,23 +41,20 @@ export function useTimeEntryViews(options: {
   // List view pagination
   const [listDaysLoaded, setListDaysLoaded] = useState(LIST_INITIAL_DAYS);
 
-  const listQueryRange = (() => {
-    if (listDateRange) return listDateRange;
-    const end = new Date();
-    end.setDate(end.getDate() + 1);
-    const start = new Date();
-    start.setDate(start.getDate() - listDaysLoaded);
-    return {
-      endDate: formatTrackQueryDate(end),
-      startDate: formatTrackQueryDate(start),
-    };
-  })();
-
   const loadMoreEntries = () => {
     setListDaysLoaded((prev) => prev + LIST_PAGE_INCREMENT);
   };
 
-  const timeEntriesQuery = useTimeEntriesQuery(view === "list" ? listQueryRange : { ...weekRange });
+  const queryRange = resolveTimeEntryQueryRange({
+    rangeMode,
+    view,
+    listDateRange,
+    weekRange,
+    daysLoaded: listDaysLoaded,
+    today: new Date(),
+  });
+
+  const timeEntriesQuery = useTimeEntriesQuery(queryRange);
   const recentTimeEntriesQuery = useTimeEntriesQuery({});
 
   const visibleEntriesRef = useRef<ReturnType<typeof sortTimeEntries>>([]);

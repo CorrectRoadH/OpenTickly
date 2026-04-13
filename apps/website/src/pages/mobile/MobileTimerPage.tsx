@@ -24,7 +24,12 @@ export function MobileTimerPage(): ReactElement {
   const { t } = useTranslation("mobile");
   const { workspaceId, timezone } = useWorkspaceData();
   const composer = useTimerComposer();
-  const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries: false });
+  const views = useTimeEntryViews({
+    workspaceId,
+    timezone,
+    showAllEntries: false,
+    rangeMode: "rolling",
+  });
   const [editingEntry, setEditingEntry] =
     useState<GithubComTogglTogglApiInternalModelsTimeEntry | null>(null);
   const favoritesQuery = useFavoritesQuery(workspaceId);
