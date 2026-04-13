@@ -29,6 +29,8 @@ const ogLocaleMap: Record<string, string> = {
   ja: "ja_JP",
   fr: "fr_FR",
   ko: "ko_KR",
+  pl: "pl_PL",
+  pt: "pt_PT",
 };
 
 const hreflangMap: Record<string, string> = {
@@ -38,28 +40,33 @@ const hreflangMap: Record<string, string> = {
   ja: "ja",
   fr: "fr",
   ko: "ko",
+  pl: "pl",
+  pt: "pt",
 };
+
+// Strip a leading `/<locale>` segment (and only a full segment) from a pathname.
+function stripLocalePrefix(pathname: string, locale: string): string {
+  const prefix = `/${locale}`;
+  if (pathname === prefix) return "/";
+  if (pathname.startsWith(`${prefix}/`)) return pathname.slice(prefix.length);
+  return pathname;
+}
 
 function buildHreflangEntries(pathname: string, currentLocale: string, siteUrl: string) {
   const defaultLang = i18n.defaultLanguage;
   const entries: Array<{ lang: string; href: string }> = [];
 
+  // Path without any locale prefix (i.e. the default-language version of the URL).
+  const basePathname =
+    currentLocale === defaultLang ? pathname : stripLocalePrefix(pathname, currentLocale);
+
   for (const lang of i18n.languages) {
     const isDefault = lang === defaultLang;
-    const isCurrentDefault = currentLocale === defaultLang;
-
-    let altPathname: string;
-    if (isDefault && isCurrentDefault) {
-      altPathname = pathname;
-    } else if (isDefault && !isCurrentDefault) {
-      altPathname = pathname.replace(`/${currentLocale}`, "") || "/";
-    } else if (!isDefault && isCurrentDefault) {
-      altPathname = `/${lang}${pathname === "/" ? "/" : pathname}`;
-    } else if (lang === currentLocale) {
-      altPathname = pathname;
-    } else {
-      altPathname = pathname.replace(`/${currentLocale}`, `/${lang}`);
-    }
+    const altPathname = isDefault
+      ? basePathname
+      : basePathname === "/"
+        ? `/${lang}`
+        : `/${lang}${basePathname}`;
 
     entries.push({
       lang: hreflangMap[lang] ?? lang,
@@ -68,11 +75,9 @@ function buildHreflangEntries(pathname: string, currentLocale: string, siteUrl: 
   }
 
   // x-default points to the default language version
-  const defaultPathname =
-    currentLocale === defaultLang ? pathname : pathname.replace(`/${currentLocale}`, "") || "/";
   entries.push({
     lang: "x-default",
-    href: buildCanonicalUrl(defaultPathname, siteUrl),
+    href: buildCanonicalUrl(basePathname, siteUrl),
   });
 
   return entries;

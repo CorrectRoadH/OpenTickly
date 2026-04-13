@@ -26,6 +26,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   return {
     slugs: page.slugs,
     path: page.path,
+    url: page.url,
     locale,
     pageTree: await source.serializePageTree(source.getPageTree(locale)),
   };
@@ -36,20 +37,17 @@ const clientLoader = browserCollections.docs.createClientLoader({
     { toc, frontmatter, default: Mdx },
     {
       markdownUrl,
+      pathname,
       path,
       locale,
     }: {
       markdownUrl: string;
+      pathname: string;
       path: string;
       locale: string;
     },
   ) {
     const siteUrl = resolveSiteUrl();
-    const prefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
-    const pathname =
-      path === "index.mdx"
-        ? `${prefix}/docs`
-        : `${prefix}/docs/${path.replace(/\/index\.mdx$|\.mdx$/g, "")}`;
     const description = frontmatter.description ?? "OpenToggl documentation";
 
     return (
@@ -85,7 +83,7 @@ const clientLoader = browserCollections.docs.createClientLoader({
 });
 
 export default function Page({ loaderData }: Route.ComponentProps) {
-  const { pageTree, slugs, path } = useFumadocsLoader(loaderData);
+  const { pageTree, slugs } = useFumadocsLoader(loaderData);
   const locale = loaderData.locale;
   const prefix = locale === i18n.defaultLanguage ? "" : `/${locale}`;
   const markdownUrl = `${prefix}/llms.mdx/docs/${[...slugs, "index.mdx"].join("/")}`;
@@ -94,7 +92,8 @@ export default function Page({ loaderData }: Route.ComponentProps) {
     <DocsLayout {...baseOptions(locale)} tree={pageTree}>
       {clientLoader.useContent(loaderData.path, {
         markdownUrl,
-        path,
+        pathname: loaderData.url,
+        path: loaderData.path,
         locale,
       })}
     </DocsLayout>
