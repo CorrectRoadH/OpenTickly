@@ -117,14 +117,20 @@ Acesse o OpenToggl em `http://<seu-ip-synology>:8080`.
 
 ## fnOS (飞牛)
 
-O [fnOS](https://www.fnnas.com) suporta implantação de apps Docker.
+O [fnOS](https://www.fnnas.com) traz um gerenciador Docker nativo com suporte a projetos Compose.
 
-1. Abra o gerenciamento **Docker** no fnOS
-2. Crie um novo projeto Compose
-3. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
-4. Implante e inicie o projeto
+1. Abra o app **Docker** na área de trabalho do fnOS (instale-o pelo Centro de Aplicativos se não estiver presente)
+2. Na barra lateral esquerda, escolha **Compose** > **Novo projeto**
+3. Defina o **Nome do projeto** como `opentoggl`
+4. Deixe o **Caminho de armazenamento** no padrão (geralmente `/vol1/1000/docker/opentoggl`)
+5. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) em **Conteúdo Compose**
+6. Clique em **Implantar** e aguarde até que os três contêineres fiquem verdes (healthy)
 
 Acesse o OpenToggl em `http://<seu-ip-fnos>:8080`.
+
+<Callout type="info">
+  Se o **Centro de Segurança > Firewall** estiver ativado, adicione uma regra de entrada liberando TCP `8080` para que outros dispositivos da LAN consigam acessar.
+</Callout>
 
 ---
 

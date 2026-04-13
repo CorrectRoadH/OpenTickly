@@ -117,14 +117,20 @@ Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합
 
 ## fnOS (飞牛)
 
-[fnOS](https://www.fnnas.com)는 Docker 앱 배포를 지원합니다.
+[fnOS](https://www.fnnas.com)는 Compose 프로젝트를 지원하는 Docker 관리자를 기본 제공합니다.
 
-1. fnOS에서 **Docker** 관리 열기
-2. 새 Compose 프로젝트 생성
-3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
-4. 배포 및 시작
+1. fnOS 데스크톱에서 **Docker** 앱 열기 (없으면 앱 센터에서 설치)
+2. 왼쪽 사이드바에서 **Compose** > **새 프로젝트** 선택
+3. **프로젝트 이름** 에 `opentoggl` 입력
+4. **저장 경로** 는 기본값 유지 (보통 `/vol1/1000/docker/opentoggl`)
+5. **Compose 내용** 에 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
+6. **배포** 클릭 후 세 개의 컨테이너가 모두 초록색(healthy)이 될 때까지 대기
 
 `http://<fnOS IP>:8080`에서 OpenToggl에 접속.
+
+<Callout type="info">
+  **보안 센터 > 방화벽** 이 활성화되어 있다면, LAN 내 다른 기기에서 접근할 수 있도록 TCP `8080` 인바운드 규칙을 허용해야 합니다.
+</Callout>
 
 ---
 

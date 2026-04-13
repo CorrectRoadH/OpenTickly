@@ -117,14 +117,24 @@ Access OpenToggl at `http://<your-synology-ip>:8080`.
 
 ## fnOS (飞牛)
 
-[fnOS](https://www.fnnas.com) supports Docker app deployment.
+[fnOS](https://www.fnnas.com) ships with a built-in Docker manager that supports Compose projects.
 
-1. Open **Docker** management in fnOS
-2. Create a new Compose project
-3. Paste the content of [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
-4. Deploy and start the project
+1. Open the **Docker** app from the fnOS desktop (install it from the App Center if missing)
+2. In the left sidebar, choose **Compose** > **New Project**
+3. Set **Project Name** to `opentoggl`
+4. Leave **Storage Path** at the default (usually `/vol1/1000/docker/opentoggl`)
+5. Paste the content of [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) into **Compose Content**
+6. Click **Deploy** and wait for all three containers to turn green (healthy)
 
 Access OpenToggl at `http://<your-fnos-ip>:8080`.
+
+<Callout type="info">
+  If **Security Center > Firewall** is enabled, add an inbound rule allowing TCP `8080` so other devices on your LAN can reach the instance.
+</Callout>
+
+<Callout type="info">
+  Sharing your setup on the fnOS community forum? A forum-ready template (Chinese, matching local conventions) lives at [`docs/community/fnnas-deploy.md`](https://github.com/CorrectRoadH/opentoggl/blob/main/docs/community/fnnas-deploy.md).
+</Callout>
 
 ---
 

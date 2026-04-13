@@ -116,14 +116,24 @@ docker compose down -v   # 停止服务并删除所有数据
 
 ## 飞牛 (fnOS)
 
-[fnOS](https://www.fnnas.com) 支持 Docker 应用部署。
+[fnOS](https://www.fnnas.com) 自带 Docker 管理，支持 Compose 项目。
 
-1. 在 fnOS 中打开 **Docker** 管理
-2. 创建新的 Compose 项目
-3. 粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 的内容
-4. 部署并启动项目
+1. 打开飞牛桌面的 **Docker** 应用（应用中心可搜到）
+2. 左侧选 **Compose** > **新建项目**
+3. **项目名称** 填 `opentoggl`
+4. **存储路径** 保持默认（通常是 `/vol1/1000/docker/opentoggl`）
+5. **Compose 内容** 粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 的内容
+6. 点击 **部署**，等三个容器全部变为 healthy（绿色）
 
 通过 `http://<你的飞牛 IP>:8080` 访问 OpenToggl。
+
+<Callout type="info">
+  如果开启了 **安全中心 > 防火墙**，需要在入站规则里放行 TCP `8080`，否则局域网其他设备访问不到。
+</Callout>
+
+<Callout type="info">
+  想在论坛发部署分享帖？仓库里有一份按飞牛论坛风格写好的模板：[`docs/community/fnnas-deploy.md`](https://github.com/CorrectRoadH/opentoggl/blob/main/docs/community/fnnas-deploy.md)。
+</Callout>
 
 ---
 
