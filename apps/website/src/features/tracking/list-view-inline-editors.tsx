@@ -121,7 +121,7 @@ export function ListRowTagPicker({
         className={`flex h-[30px] w-full items-center gap-1 overflow-hidden rounded transition ${
           hasTags
             ? "text-[var(--track-text-muted)]"
-            : "justify-center text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+            : "justify-center text-[var(--track-text-muted)]"
         }`}
         onClick={() => {
           setOpen((prev) => !prev);

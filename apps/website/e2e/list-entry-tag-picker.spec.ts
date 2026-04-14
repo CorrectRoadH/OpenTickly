@@ -59,12 +59,13 @@ test.describe("List entry tag picker", () => {
     const row = page.locator(`[data-testid="time-entry-list-row"][data-entry-id="${entryId}"]`);
     await expect(row).toBeVisible();
 
-    // Hover to reveal hover-only affordances (tag button is opacity-0
-    // until the row is hovered when the entry has no tags yet).
-    await row.hover();
-
+    // The tag button must be visible without hovering the row. Earlier
+    // the icon was hidden behind `opacity-0 group-hover:opacity-100`, which
+    // made users think the tag picker was broken because they could not
+    // see the entry point. Lock that in with an opacity assertion.
     const tagButton = row.getByRole("button", { name: "Select tags" });
     await expect(tagButton).toBeVisible();
+    await expect(tagButton).toHaveCSS("opacity", "1");
     await tagButton.click();
 
     // Picker dropdown appears.

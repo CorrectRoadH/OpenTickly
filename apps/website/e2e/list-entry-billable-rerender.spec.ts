@@ -66,14 +66,15 @@ test.describe("List entry re-render hygiene", () => {
     const witnessBaseline = await counterB.textContent();
     expect(witnessBaseline).toMatch(/^renders: \d+$/);
 
-    // Locate A's row and its billable button.
+    // Locate A's row and its billable button. The button must be visible
+    // without hovering the row — earlier it was `opacity-0
+    // group-hover:opacity-100`, which made the control effectively
+    // invisible until the user mouse-hovered. Lock that in.
     const rowA = page.locator(`[data-testid="time-entry-list-row"][data-entry-id="${entryIdA}"]`);
     await expect(rowA).toBeVisible();
-
-    // Hover so hover-only affordances (like billable when non-billable) reveal.
-    await rowA.hover();
     const billableButton = rowA.getByRole("button", { name: "Set as billable" });
     await expect(billableButton).toBeVisible();
+    await expect(billableButton).toHaveCSS("opacity", "1");
     await billableButton.click();
 
     // Wait for the optimistic update to flip the aria-label so we know the

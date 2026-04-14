@@ -204,9 +204,7 @@ function ListEntryRowImpl({
       <button
         aria-label={entry.billable ? "Set as non-billable" : "Set as billable"}
         className={`flex size-[30px] items-center justify-center rounded transition ${
-          entry.billable
-            ? "text-[var(--track-warning-text)]"
-            : "text-[var(--track-text-muted)] opacity-0 group-hover:opacity-100"
+          entry.billable ? "text-[var(--track-warning-text)]" : "text-[var(--track-text-muted)]"
         }`}
         onClick={() => onBillableToggle?.(entry)}
         type="button"
