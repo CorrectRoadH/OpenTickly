@@ -1,7 +1,35 @@
-import { type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useRenderCount } from "@uidotdev/usehooks";
 
 import { AppCheckbox } from "./AppCheckbox.tsx";
+
+type DirectoryTableRowMeta = {
+  renderCount: number;
+  rowId: number | string;
+};
+
+const DirectoryTableRowContext = createContext<DirectoryTableRowMeta | null>(null);
+
+/**
+ * Dev-only badge that surfaces the surrounding DirectoryTable row's render
+ * count. Place it inline wherever it reads best — typically next to the
+ * row's primary label. Renders nothing in production builds.
+ */
+export function DirectoryTableRenderCountBadge({ className }: { className?: string }) {
+  const ctx = useContext(DirectoryTableRowContext);
+  if (!import.meta.env.DEV || ctx == null) return null;
+  return (
+    <span
+      className={
+        className ??
+        "pointer-events-none shrink-0 font-mono text-[10px] text-[var(--track-text-muted)]"
+      }
+      data-testid={`directory-table-rendercount-${ctx.rowId}`}
+    >
+      renders: {ctx.renderCount}
+    </span>
+  );
+}
 
 export type DirectoryTableColumn = {
   key: string;
@@ -208,12 +236,6 @@ function DirectoryTableRow<T>({
   selected: boolean;
 }) {
   const renderCount = useRenderCount();
-  // First data column index in the CSS grid (1-based). Leading tracks are
-  // the optional selectable checkbox and optional expand toggle. The
-  // dev-only render-count badge is placed in that first data track with
-  // justify-self: end so it sits at the right edge of the row's primary
-  // content (typically the name cell).
-  const firstDataColumn = 1 + (selectable ? 1 : 0) + (expandable ? 1 : 0);
   return (
     <div data-testid={rowTestId != null ? `${rowTestId}-${rowId}` : undefined}>
       <div
@@ -253,16 +275,9 @@ function DirectoryTableRow<T>({
             </svg>
           </button>
         )}
-        {renderRow(row)}
-        {import.meta.env.DEV ? (
-          <span
-            className="pointer-events-none justify-self-end self-center pl-2 font-mono text-[10px] text-[var(--track-text-muted)]"
-            data-testid={`directory-table-rendercount-${rowId}`}
-            style={{ gridColumn: `${firstDataColumn} / span 1` }}
-          >
-            renders: {renderCount}
-          </span>
-        ) : null}
+        <DirectoryTableRowContext.Provider value={{ renderCount, rowId }}>
+          {renderRow(row)}
+        </DirectoryTableRowContext.Provider>
       </div>
       {expandable && expanded && renderExpandedContent && (
         <div

@@ -10,6 +10,7 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   DirectoryTableCell,
+  DirectoryTableRenderCountBadge,
   IconButton,
   PageLayout,
   RadioFilterDropdown,
@@ -55,14 +56,11 @@ import {
   formatProjectHours,
   normalizeProjects,
 } from "./projects-page-helpers.ts";
-import { ProjectEditorDialog, type ProjectEditorMode } from "./ProjectEditorDialog.tsx";
+import { ProjectEditorDialogHost } from "./ProjectEditorDialogHost.tsx";
+import { type ProjectEditorMode } from "./ProjectEditorDialog.tsx";
+import { openCreateProjectEditor, openEditProjectEditor } from "./project-editor-store.ts";
 import { ProjectRowActionsMenu } from "./ProjectRowActionsMenu.tsx";
 import { useProjectFilters, type ProjectCategory } from "./useProjectFilters.ts";
-
-type ProjectEditorState =
-  | { mode: "create" }
-  | { mode: "edit"; project: GithubComTogglTogglApiInternalModelsProject }
-  | null;
 
 const PROJECT_STATUS_OPTIONS = (
   t: (key: string) => string,
@@ -101,7 +99,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
   const navigate = useNavigate();
   const session = useSession();
   const workspaceId = session.currentWorkspace.id;
-  const [editorState, setEditorState] = useState<ProjectEditorState>(null);
   const [filters, filterDispatch] = useProjectFilters(statusFilter);
   const {
     filterClientIds,
@@ -207,18 +204,6 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       search: { status: nextStatus },
       to: "/projects/$workspaceId/list",
     });
-  }
-
-  function openCreateDialog() {
-    setEditorState({ mode: "create" });
-  }
-
-  function openEditDialog(project: GithubComTogglTogglApiInternalModelsProject) {
-    setEditorState({ mode: "edit", project });
-  }
-
-  function closeEditor() {
-    setEditorState(null);
   }
 
   function handleEditorSuccess(mode: ProjectEditorMode) {
@@ -423,7 +408,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             if (selectedIds.size === 1) {
               const projectId = [...selectedIds][0];
               const project = projects.find((p) => p.id === projectId);
-              if (project) openEditDialog(project);
+              if (project) openEditProjectEditor(project);
             }
           }}
           size="sm"
@@ -486,7 +471,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
       <PageLayout
         title={t("projects")}
         headerActions={
-          <AppButton onClick={openCreateDialog} data-testid="projects-create-button">
+          <AppButton onClick={openCreateProjectEditor} data-testid="projects-create-button">
             <PlusIcon className="size-3.5" />
             {t("newProject")}
           </AppButton>
@@ -538,6 +523,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                   >
                     {project.name ?? t("untitledProject")}
                   </a>
+                  <DirectoryTableRenderCountBadge />
                 </div>
                 <DirectoryTableCell>{project.client_name ?? ""}</DirectoryTableCell>
                 <DirectoryTableCell>
@@ -576,14 +562,14 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
                 </div>
                 <div className="flex items-center justify-end">
                   <ProjectRowActionsMenu
-                    onAddMember={() => openEditDialog(project)}
+                    onAddMember={() => openEditProjectEditor(project)}
                     onArchiveToggle={() => {
                       void handleArchiveToggle(project);
                     }}
                     onDelete={(mode, reassignProjectId) => {
                       void handleDelete(project, mode, reassignProjectId);
                     }}
-                    onEdit={() => openEditDialog(project)}
+                    onEdit={() => openEditProjectEditor(project)}
                     onTemplateToggle={() => {
                       void handleTemplateToggle(project);
                     }}
@@ -601,7 +587,10 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             emptyDescription={statusFilter === "all" ? t("createFirstProjectHint") : undefined}
             emptyAction={
               statusFilter === "all" ? (
-                <AppButton onClick={openCreateDialog} data-testid="projects-empty-state-create">
+                <AppButton
+                  onClick={openCreateProjectEditor}
+                  data-testid="projects-empty-state-create"
+                >
                   <PlusIcon className="size-3.5" />
                   {t("newProject")}
                 </AppButton>
@@ -614,14 +603,7 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
         ) : null}
       </PageLayout>
 
-      {editorState ? (
-        <ProjectEditorDialog
-          mode={editorState.mode}
-          project={editorState.mode === "edit" ? editorState.project : null}
-          onClose={closeEditor}
-          onSuccess={handleEditorSuccess}
-        />
-      ) : null}
+      <ProjectEditorDialogHost onSuccess={handleEditorSuccess} />
     </>
   );
 }

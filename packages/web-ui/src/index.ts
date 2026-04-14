@@ -31,7 +31,11 @@ export {
 export { AppCheckbox } from "./AppCheckbox.tsx";
 export { CheckboxFilterDropdown } from "./CheckboxFilterDropdown.tsx";
 export { RadioFilterDropdown } from "./RadioFilterDropdown.tsx";
-export { DirectoryTable, type DirectoryTableColumn } from "./DirectoryTable.tsx";
+export {
+  DirectoryTable,
+  DirectoryTableRenderCountBadge,
+  type DirectoryTableColumn,
+} from "./DirectoryTable.tsx";
 export { IconButton } from "./IconButton.tsx";
 export { SelectButton, SelectDropdown, type SelectOption } from "./SelectButton.tsx";
 export {
