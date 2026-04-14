@@ -187,10 +187,12 @@ export function CalendarView({
   };
 
   return (
-    <div
-      className="border-t border-[var(--track-border)] bg-[var(--track-surface)]"
-      data-testid="timer-calendar-view"
-    >
+    // No border-top here: `.rbc-time-header` owns the visual separator via its
+    // own `border-top` (calendar.css). A second border on this wrapper stacks
+    // with the timer bar's `border-bottom` when the page is scrolled to the
+    // top (sticky is inactive, day-header is in natural flow), making the
+    // seam visually jump from 1px to 2px once the user scrolls back to top.
+    <div className="bg-[var(--track-surface)]" data-testid="timer-calendar-view">
       <DnDCalendar
         components={calendarComponents}
         date={calendarDate}

@@ -4,17 +4,22 @@ import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fi
 
 /**
  * The calendar day-header row (RBC's TimeGridHeader → `.rbc-time-header`)
- * must stay pinned at the top of the calendar as the user scrolls the
- * whole page — it must not scroll away with the grid body, and no
- * single scroll position may leave the day numbers outside the viewport
- * or above the timer bar.
+ * must sit FLUSH under the timer bar at every scroll position — no gap
+ * below it, no overlap behind it.
  *
- * A previous single-scrollTo assertion was too weak — it only sampled
- * one position, so a partial failure (e.g. header slipping behind the
- * timer bar at large scroll offsets, or RBC transforming the header on
- * some scroll threshold) would not be caught. This spec continuously
- * steps the window through many scroll offsets and asserts at every
- * single step.
+ * The "flush" requirement is symmetric. The previous assertion rejected
+ * only one side of the asymmetry — it caught `headerTop > barBottom`
+ * (gap), but allowed `headerTop < barBottom` (bar covering the top of
+ * the header) as long as `headerTop > -0.5`. The visible "half-hidden
+ * header" regression sits squarely in that gap: `--timer-header-height`
+ * is set once from `el.offsetHeight` in WorkspaceTimerPage's header ref
+ * callback, but that ref only fires when WTP itself re-renders. When
+ * the ProjectFilterStrip renders later (after the time-entry query
+ * resolves — only the strip's subtree re-renders, not WTP), the bar
+ * grows by ~34px but `--timer-header-height` stays at its smaller,
+ * stale value, so `.rbc-time-header` sticks 34px above the bar's
+ * actual bottom. The old drift check saw zero drift (the value is
+ * consistently wrong, not changing), so it passed too.
  */
 test.describe("Calendar day header sticky", () => {
   test("page loads unscrolled", async ({ page }) => {
@@ -85,6 +90,11 @@ test.describe("Calendar day header sticky", () => {
     await page.goto(new URL("/timer", page.url()).toString());
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
+    // The ProjectFilterStrip renders only after the time-entry query
+    // resolves and specifically grows the timer bar. Its presence is the
+    // scenario under which the stale --timer-header-height regression
+    // appears, so we explicitly wait for it before measuring.
+    await expect(page.getByTestId("project-filter-strip")).toBeVisible();
 
     // Sanity: CSS contract must still be in place so the failure mode, if
     // any, is "sticky is declared but something breaks it" rather than
@@ -128,13 +138,14 @@ test.describe("Calendar day header sticky", () => {
       headerTop: number;
       headerBottom: number;
       viewportHeight: number;
+      offset: number;
       reason: string;
     }> = [];
-    // After the page has scrolled past the header's natural page-Y, the
-    // header's viewport `top` must be constant — that's what "fixed"
-    // means to the user. If RBC or a parent transform makes it drift by
-    // even 1px between steps, flag it.
-    let pinnedTopOnce: number | null = null;
+    const offsetsByStep: number[] = [];
+
+    // Allow up to 2px of sub-pixel slack for rounding. Anything more is
+    // a visible misalignment the user can see.
+    const FLUSH_SLACK = 2;
 
     for (const target of stopsToVisit) {
       await page.evaluate((y) => window.scrollTo(0, y), target);
@@ -172,61 +183,52 @@ test.describe("Calendar day header sticky", () => {
           headerTop: snapshot.headerTop ?? -1,
           headerBottom: snapshot.headerBottom ?? -1,
           viewportHeight: snapshot.viewportHeight,
+          offset: 0,
           reason: "missing element",
         });
         continue;
       }
 
-      // Invariant 1: header must sit flush under the timer bar. It may
-      // not be below bar's bottom (would mean there's a gap and content
-      // is showing between bar and header). It may not be *above* the
-      // viewport either (scrolled off).
-      //   0 <= headerTop <= barBottom + 2px slack (sub-pixel rounding)
-      if (snapshot.headerTop < -0.5 || snapshot.headerTop > snapshot.barBottom + 2) {
+      // Invariant: the day header must sit FLUSH under the timer bar.
+      // `offset = headerTop - barBottom`:
+      //   offset < -FLUSH_SLACK → bar is covering the top of the header
+      //     (the "half-hidden header" regression — `--timer-header-height`
+      //     is stale / smaller than the bar's actual rendered height, so
+      //     `.rbc-time-header` sticks above `barBottom`).
+      //   offset >  FLUSH_SLACK → visible gap between the bar and the
+      //     header (calendar grid peeks through).
+      // Only `|offset| ≤ FLUSH_SLACK` is acceptable.
+      const offset = snapshot.headerTop - snapshot.barBottom;
+      offsetsByStep.push(offset);
+      if (Math.abs(offset) > FLUSH_SLACK) {
         failures.push({
           scrollY: snapshot.scrollY,
           barBottom: snapshot.barBottom,
           headerTop: snapshot.headerTop,
           headerBottom: snapshot.headerBottom,
           viewportHeight: snapshot.viewportHeight,
-          reason: "headerTop out of pinned range",
+          offset,
+          reason:
+            offset < 0
+              ? `bar covers header by ${(-offset).toFixed(1)}px`
+              : `gap between bar and header: ${offset.toFixed(1)}px`,
         });
       }
 
-      // Invariant 2: header must be visible — its bottom must be below
-      // the bar's bottom, and above the viewport bottom.
-      if (
-        snapshot.headerBottom <= snapshot.barBottom ||
-        snapshot.headerBottom > snapshot.viewportHeight
-      ) {
+      // The header must still live inside the viewport (its bottom must
+      // not fall below the viewport). Its top sits just under the bar
+      // by the flush invariant above, so we don't need a separate
+      // "above the bar" check here.
+      if (snapshot.headerBottom > snapshot.viewportHeight) {
         failures.push({
           scrollY: snapshot.scrollY,
           barBottom: snapshot.barBottom,
           headerTop: snapshot.headerTop,
           headerBottom: snapshot.headerBottom,
           viewportHeight: snapshot.viewportHeight,
-          reason: "headerBottom not in viewport below bar",
+          offset,
+          reason: "headerBottom below viewport",
         });
-      }
-
-      // Invariant 3 ("fixed-like"): once the page has scrolled past the
-      // header's original page-Y, the header's viewport top must be a
-      // constant — it must not drift between scroll steps. Drift of >1px
-      // is the visible "the header is still scrolling" glitch the user
-      // reported ("往下滚还是复现").
-      if (snapshot.scrollY > 200) {
-        if (pinnedTopOnce === null) {
-          pinnedTopOnce = snapshot.headerTop;
-        } else if (Math.abs(snapshot.headerTop - pinnedTopOnce) > 1) {
-          failures.push({
-            scrollY: snapshot.scrollY,
-            barBottom: snapshot.barBottom,
-            headerTop: snapshot.headerTop,
-            headerBottom: snapshot.headerBottom,
-            viewportHeight: snapshot.viewportHeight,
-            reason: `headerTop drifted from ${pinnedTopOnce} to ${snapshot.headerTop}`,
-          });
-        }
       }
     }
 
@@ -234,6 +236,24 @@ test.describe("Calendar day header sticky", () => {
     // just the first — useful for debugging a sticky regression that
     // only manifests at, say, scroll > 1500.
     expect(failures, JSON.stringify(failures, null, 2)).toEqual([]);
+
+    // Seam-jump guard: the gap between the bar and the day-header must
+    // not vary across scroll positions. A sibling wrapper with its own
+    // `border-top` (same color as the bar's `border-bottom`) would be
+    // hidden by the day-header when sticky is active but exposed in
+    // natural flow at scrollY=0 — visibly changing the seam from 1px
+    // to 2px. FLUSH_SLACK alone can't catch this (it tolerates up to
+    // 2px), so we separately assert consistency.
+    const offsets = offsetsByStep;
+    expect(offsets.length, "no snapshots captured").toBeGreaterThan(0);
+    const minOffset = Math.min(...offsets);
+    const maxOffset = Math.max(...offsets);
+    expect(
+      maxOffset - minOffset,
+      `offset varied across scroll steps: min=${minOffset.toFixed(2)}, max=${maxOffset.toFixed(2)}. ` +
+        `The seam between the timer bar and the day header changed between scroll positions, ` +
+        `which is the visible "gap jumps from 1px to 2px at scroll top" regression.`,
+    ).toBeLessThanOrEqual(0.5);
   });
 
   // Some layout bugs only surface on real wheel-driven scrolling because
@@ -265,6 +285,11 @@ test.describe("Calendar day header sticky", () => {
     await page.goto(new URL("/timer", page.url()).toString());
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
+    // Wait for the project filter strip — its post-mount appearance is
+    // what grows the timer bar past the value that was captured into
+    // `--timer-header-height`, so measuring before it shows up would
+    // miss the regression.
+    await expect(page.getByTestId("project-filter-strip")).toBeVisible();
 
     // Position the mouse over the calendar body before wheeling.
     const calendarBox = await page.getByTestId("timer-calendar-view").boundingBox();
@@ -309,19 +334,14 @@ test.describe("Calendar day header sticky", () => {
     expect(maxScrollSeen).toBeGreaterThan(200);
 
     // Every sample where the page is scrolled past the bar must have the
-    // header pinned flush under it. A single drift > 1px or an overlap
-    // with the bar fails the whole test — and the reason array shows
-    // every bad step, not just the first.
+    // header pinned FLUSH under the bar — |headerTop - barBottom| ≤ 2.
+    // The flush check is symmetric: it rejects both a gap below the bar
+    // AND a bar-over-header overlap (the "half-hidden header" regression).
+    const FLUSH_SLACK = 2;
     const bad = samples
       .filter((s) => s.scrollY > 200)
-      .filter(
-        (s) =>
-          !(
-            s.headerTop >= -0.5 &&
-            s.headerTop <= s.barBottom + 2 &&
-            Math.abs(s.headerTop - s.barBottom) < s.barBottom + 10
-          ),
-      );
+      .map((s) => ({ ...s, offset: s.headerTop - s.barBottom }))
+      .filter((s) => Math.abs(s.offset) > FLUSH_SLACK);
     expect(bad, JSON.stringify(bad, null, 2)).toEqual([]);
   });
 });

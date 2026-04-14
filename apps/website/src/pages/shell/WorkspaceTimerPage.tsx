@@ -91,6 +91,7 @@ export function WorkspaceTimerPage({
   const [hideSecondaryHeaderLabels, setHideSecondaryHeaderLabels] = useState(false);
   const [deleteToast, setDeleteToast] = useState<DeletedEntrySnapshot | null>(null);
   const deleteToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const headerRef = useRef<HTMLElement | null>(null);
   const headerControlsRef = useRef<HTMLDivElement | null>(null);
 
   // View state from Zustand — the only data subscriptions in WTP
@@ -148,6 +149,36 @@ export function WorkspaceTimerPage({
     };
   }, []);
 
+  // Publish the sticky timer bar's rendered height to `--timer-header-height`
+  // so `.rbc-time-header` (position: sticky; top: var(--timer-header-height))
+  // sits flush under the bar. A ResizeObserver is required, not just a ref
+  // callback — the bar's descendants (ProjectFilterStrip, TimerHeaderStats)
+  // subscribe to data via React Query and grow the bar after their queries
+  // resolve WITHOUT re-rendering WorkspaceTimerPage itself. A one-shot ref
+  // callback therefore captured the pre-strip height and left the sticky
+  // day-header pinned ~34px above the bar's actual bottom, so the bar
+  // visibly covered the top of it. See e2e/calendar-header-sticky.spec.ts.
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+
+    const sync = () => {
+      const height = node.offsetHeight;
+      const px = `${height}px`;
+      node.style.setProperty("--timer-header-height", px);
+      document.documentElement.style.setProperty("--timer-header-height", px);
+    };
+
+    sync();
+
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(sync);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
   // Header density observer
   useEffect(() => {
     const node = headerControlsRef.current;
@@ -187,13 +218,7 @@ export function WorkspaceTimerPage({
     >
       <header
         className="sticky top-0 z-20 border-b border-[var(--track-border)] bg-[var(--track-surface)]"
-        ref={(el) => {
-          if (el) {
-            const height = el.offsetHeight;
-            el.style.setProperty("--timer-header-height", `${height}px`);
-            document.documentElement.style.setProperty("--timer-header-height", `${height}px`);
-          }
-        }}
+        ref={headerRef}
       >
         <TimerComposerBar
           initialDate={initialDate}
