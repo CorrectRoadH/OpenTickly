@@ -72,11 +72,15 @@ test.describe("List entry tag picker", () => {
     const picker = page.getByTestId("bulk-edit-tag-picker");
     await expect(picker).toBeVisible();
 
-    // Click the tag option — it must toggle onto the entry.
+    // Click the tag option — it must toggle onto the entry. The picker
+    // stays open (multi-select pattern) so users can add more tags; the
+    // row's button content flips from the icon to the selected tag names.
     await picker.getByRole("button", { name: tagName }).click();
+    await expect(row.getByRole("button", { name: "Select tags" })).toContainText(tagName);
 
-    // Tag appears on the row (rendered as the tagName text inside the
-    // tag-picker button when the entry has at least one tag).
-    await expect(row.getByText(tagName)).toBeVisible();
+    // Un-toggling the same option inside the still-open picker removes
+    // the tag from the entry — covers the hasTags=true code path too.
+    await picker.getByRole("button", { name: tagName }).click();
+    await expect(row.getByRole("button", { name: "Select tags" })).not.toContainText(tagName);
   });
 });
