@@ -282,44 +282,81 @@ export function useUpdateTimeEntryMutation() {
         }),
       ),
     onMutate: ({ request, timeEntryId }) => {
+      const applyPatch = (
+        entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+      ): GithubComTogglTogglApiInternalModelsTimeEntry => ({
+        ...entry,
+        ...(request.description !== undefined && { description: request.description }),
+        ...(request.billable !== undefined && { billable: request.billable }),
+        // `project_name` / `project_color` are server-denormalized fields. Clear
+        // them on optimistic project change so the row doesn't render the old
+        // project's name/color while the server responds with the fresh
+        // denormalized values.
+        ...(request.projectId !== undefined && {
+          project_id: request.projectId,
+          ...(request.projectId === null && {
+            project_name: undefined,
+            project_color: undefined,
+          }),
+        }),
+        ...(request.start !== undefined && { start: request.start }),
+        ...(request.stop !== undefined && { stop: request.stop }),
+        ...(request.tagIds !== undefined && { tag_ids: request.tagIds }),
+        ...(request.taskId !== undefined && { task_id: request.taskId }),
+      });
+
       const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);
+      const previousLists = queryClient.getQueriesData<
+        GithubComTogglTogglApiInternalModelsTimeEntry[]
+      >({ queryKey: ["time-entries"] });
+
       // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(
         currentTimeEntryQueryKey,
         (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) => {
           if (current?.id !== timeEntryId) return current;
-          return {
-            ...current,
-            ...(request.description !== undefined && { description: request.description }),
-            ...(request.billable !== undefined && { billable: request.billable }),
-            ...(request.projectId !== undefined && { project_id: request.projectId }),
-            ...(request.start !== undefined && { start: request.start }),
-            ...(request.stop !== undefined && { stop: request.stop }),
-            ...(request.tagIds !== undefined && { tag_ids: request.tagIds }),
-            ...(request.taskId !== undefined && { task_id: request.taskId }),
-          };
+          return applyPatch(current);
         },
       );
+      // Optimistically patch the list cache too — without this, list-view
+      // mutations (tag toggle, billable, project pick, inline description
+      // edit) wait for a full network round-trip + invalidation refetch
+      // before the row reflects the change. Same shape as the delete
+      // mutation's optimistic list patch below.
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => old?.map((entry) => (entry.id === timeEntryId ? applyPatch(entry) : entry)),
+      );
       void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
-      return { previousCurrent };
+      void queryClient.cancelQueries({ queryKey: ["time-entries"] });
+      return { previousCurrent, previousLists };
     },
     onError: (_err, _vars, context) => {
-      if (navigator.onLine && context?.previousCurrent !== undefined) {
+      if (!navigator.onLine) return;
+      if (context?.previousCurrent !== undefined) {
         queryClient.setQueryData(currentTimeEntryQueryKey, context.previousCurrent);
+      }
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
       }
     },
     onSuccess: async (data) => {
+      // Patch the response data in-place so denormalized fields
+      // (project_name, project_color, tag string list) settle from the
+      // server WITHOUT a full refetch. The full invalidate that used to
+      // run here triggered a list-wide refetch on every keystroke /
+      // toggle, which compounded the picker-cascade slowdown.
       queryClient.setQueryData(
         currentTimeEntryQueryKey,
         (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) =>
           current?.id === data.id ? data : current,
       );
-      await queryClient.invalidateQueries({
-        queryKey: ["time-entries"],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: currentTimeEntryQueryKey,
-      });
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => old?.map((entry) => (entry.id === data.id ? data : entry)),
+      );
     },
   });
 }

@@ -161,11 +161,9 @@ test.describe("Story: edit a stopped time entry", () => {
 
     await expect(dialog).not.toBeVisible();
 
-    // Wait for the time-entries list to refetch after the PUT invalidation
-    await page.waitForResponse(
-      (resp) => resp.url().includes("/time_entries") && resp.request().method() === "GET",
-    );
-
+    // The list cache is patched in-place from the PUT response — no
+    // follow-up GET refetch fires. Re-open the entry and rely on the
+    // auto-retry assertion to settle on the saved time.
     await expect(page.getByRole("button", { name: ENTRY_DESCRIPTION }).first()).toBeVisible();
     await page.getByRole("button", { name: ENTRY_DESCRIPTION }).first().click();
     await expect(page.getByTestId("time-entry-editor-dialog")).toBeVisible();
