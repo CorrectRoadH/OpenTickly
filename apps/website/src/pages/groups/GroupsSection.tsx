@@ -6,6 +6,7 @@ import {
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
+  DirectoryTableRenderCountBadge,
   DropdownMenu,
   IconButton,
   useDropdownClose,
@@ -197,6 +198,7 @@ export function GroupsSection({ organizationId }: GroupsSectionProps): ReactElem
           <>
             <div className="flex h-[44px] items-center gap-2">
               <span className="truncate text-white">{group.name}</span>
+              <DirectoryTableRenderCountBadge />
             </div>
             <div className="flex h-[44px] items-center text-[12px] text-[var(--track-text-muted)]">
               {group.users?.length ?? 0}

@@ -6,6 +6,7 @@ import {
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
+  DirectoryTableRenderCountBadge,
   SelectDropdown,
 } from "@opentoggl/web-ui";
 import { toast } from "sonner";
@@ -95,7 +96,10 @@ export function WorkspaceMembersPage(): ReactElement {
           </span>
         </div>
         <div className="flex h-[54px] flex-col justify-center overflow-hidden">
-          <span className="truncate text-[12px] text-white">{member.name}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-[12px] text-white">{member.name}</span>
+            <DirectoryTableRenderCountBadge />
+          </span>
           <span className="truncate text-[11px] text-[var(--track-text-muted)]">
             {member.email}
           </span>

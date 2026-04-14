@@ -6,6 +6,7 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   DirectoryTableCell,
+  DirectoryTableRenderCountBadge,
   PageLayout,
   SelectDropdown,
 } from "@opentoggl/web-ui";
@@ -146,7 +147,12 @@ export function GoalsPage(): ReactElement {
   function renderGoalRow(goal: HandlergoalsApiResponse): ReactNode {
     return (
       <>
-        <DirectoryTableCell>{goal.name ?? ""}</DirectoryTableCell>
+        <DirectoryTableCell>
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="truncate">{goal.name ?? ""}</span>
+            <DirectoryTableRenderCountBadge />
+          </span>
+        </DirectoryTableCell>
         <DirectoryTableCell>{goal.user_name ?? t("me")}</DirectoryTableCell>
         <DirectoryTableCell>
           <span>

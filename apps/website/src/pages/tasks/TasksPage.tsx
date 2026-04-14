@@ -6,6 +6,7 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   DirectoryTableCell,
+  DirectoryTableRenderCountBadge,
 } from "@opentoggl/web-ui";
 
 import { MoreIcon, PlusIcon } from "../../shared/ui/icons.tsx";
@@ -122,7 +123,10 @@ export function TasksPage({ projectId, workspaceId }: TasksPageProps): ReactElem
                   <span className="size-2 rounded-full bg-[var(--track-accent)]" />
                 </div>
                 <DirectoryTableCell>
-                  <span className="truncate text-[14px] text-white">{task.name}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-[14px] text-white">{task.name}</span>
+                    <DirectoryTableRenderCountBadge />
+                  </span>
                 </DirectoryTableCell>
                 <DirectoryTableCell>{task.active === false ? "Done" : "Active"}</DirectoryTableCell>
                 <div className="flex items-center justify-end text-[var(--track-text-muted)]">

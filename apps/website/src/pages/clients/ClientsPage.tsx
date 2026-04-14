@@ -8,6 +8,7 @@ import {
   DirectoryStatusFilter,
   DirectoryTable,
   type DirectoryTableColumn,
+  DirectoryTableRenderCountBadge,
   IconButton,
   PageLayout,
 } from "@opentoggl/web-ui";
@@ -323,6 +324,7 @@ export function ClientsPage(): ReactElement {
                   <span className="text-[14px] text-[var(--track-text-muted)]">
                     ({g.projects.length})
                   </span>
+                  <DirectoryTableRenderCountBadge />
                 </div>
                 <div className="flex h-[44px] items-center justify-end">
                   <ClientRowActions

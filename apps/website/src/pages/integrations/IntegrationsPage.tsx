@@ -8,6 +8,7 @@ import {
   DirectoryTable,
   type DirectoryTableColumn,
   DirectoryTableCell,
+  DirectoryTableRenderCountBadge,
   PageHeader,
   SurfaceCard,
 } from "@opentoggl/web-ui";
@@ -168,7 +169,10 @@ export function IntegrationsPage(): ReactElement {
               renderRow={(sub: ModelsWebhookSubscription) => (
                 <>
                   <DirectoryTableCell>
-                    <span className="font-medium text-white">{sub.description}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate font-medium text-white">{sub.description}</span>
+                      <DirectoryTableRenderCountBadge />
+                    </span>
                   </DirectoryTableCell>
                   <DirectoryTableCell>
                     <span className="block truncate text-[var(--track-text-muted)]">

@@ -5,6 +5,7 @@ import {
   DirectorySurfaceMessage,
   DirectoryTable,
   type DirectoryTableColumn,
+  DirectoryTableRenderCountBadge,
   PageLayout,
 } from "@opentoggl/web-ui";
 
@@ -149,7 +150,7 @@ export function TagsPage(): ReactElement {
                 style={{ backgroundColor: resolveProjectColorValue({ name: tag.name }) }}
               />
             </div>
-            <div className="flex h-[44px] items-center overflow-hidden">
+            <div className="flex h-[44px] items-center gap-2 overflow-hidden">
               <a
                 aria-label={t("tagDetailsFor", { name: tag.name })}
                 className="truncate text-[14px] text-white"
@@ -158,6 +159,7 @@ export function TagsPage(): ReactElement {
               >
                 {tag.name}
               </a>
+              <DirectoryTableRenderCountBadge />
             </div>
             <div className="flex h-[44px] items-center justify-end">
               <TagRowActions
