@@ -523,27 +523,42 @@ func (store *Store) UpdateTimeEntry(
 	ctx context.Context,
 	record trackingapplication.UpdateTimeEntryRecord,
 ) (trackingapplication.TimeEntryView, error) {
+	// The RETURNING clause must surface the SAME denormalized fields that
+	// GetTimeEntry / ListTimeEntries return (client_name, project_name,
+	// task_name, project_active, project_color), otherwise the frontend's
+	// `onSuccess` handler replaces its optimistic row with a server entry
+	// whose project_name is NULL — blanking the project label on mobile
+	// row display (see apps/website/e2e/mobile/mobile-timer.spec.ts:357).
+	// Wrap the UPDATE in a CTE so the outer SELECT can LEFT JOIN the
+	// catalog tables the same way GetTimeEntry does at line 85-87.
 	row := store.pool.QueryRow(
 		ctx,
-		`update tracking_time_entries
-		set client_id = $4,
-			project_id = $5,
-			task_id = $6,
-			description = $7,
-			billable = $8,
-			start_time = $9,
-			stop_time = $10,
-			duration_seconds = $11,
-			created_with = $12,
-			tag_ids = $13,
-			expense_ids = $14,
-			updated_at = now()
-		where workspace_id = $1 and user_id = $2 and id = $3
-		returning id, workspace_id, user_id, client_id, project_id, task_id, description, billable,
-			start_time, stop_time, duration_seconds, created_with, tag_ids,
-			expense_ids, deleted_at, created_at, updated_at,
-			null::text as client_name, null::text as project_name, null::text as task_name, null::boolean as project_active, null::text as project_color,
-			`+tagNamesReturning+``,
+		`with updated as (
+			update tracking_time_entries
+			set client_id = $4,
+				project_id = $5,
+				task_id = $6,
+				description = $7,
+				billable = $8,
+				start_time = $9,
+				stop_time = $10,
+				duration_seconds = $11,
+				created_with = $12,
+				tag_ids = $13,
+				expense_ids = $14,
+				updated_at = now()
+			where workspace_id = $1 and user_id = $2 and id = $3
+			returning *
+		)
+		select te.id, te.workspace_id, te.user_id, te.client_id, te.project_id, te.task_id,
+			te.description, te.billable, te.start_time, te.stop_time, te.duration_seconds,
+			te.created_with, te.tag_ids, te.expense_ids, te.deleted_at, te.created_at, te.updated_at,
+			c.name, p.name, t.name, p.active, p.color,
+			`+tagNamesSubquery+`
+		from updated te
+		left join catalog_clients c on c.id = te.client_id
+		left join catalog_projects p on p.id = te.project_id
+		left join catalog_tasks t on t.id = te.task_id`,
 		record.WorkspaceID,
 		record.UserID,
 		record.ID,
