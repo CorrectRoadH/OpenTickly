@@ -477,3 +477,117 @@ describe("Offline optimistic mutations", () => {
     });
   });
 });
+
+/**
+ * Same-tick optimistic-write assertions.
+ *
+ * The tests above use `await act(...)` which drains microtasks, so an
+ * optimistic write happening one microtask late still "looks" instant.
+ * That hides the "慢一拍" bug on mobile: if onMutate is `async () => {
+ * await cancelQueries(); setQueryData(...); }`, the cache update is
+ * deferred to the next microtask and the re-render misses the current
+ * event turn.
+ *
+ * These tests fire `.mutate()` with NO act and NO await, then read the
+ * cache synchronously. They pass only when the optimistic write runs in
+ * the synchronous prefix of onMutate (setQueryData FIRST; cancelQueries
+ * in the background via `void`).
+ */
+describe("Optimistic writes must land in the same synchronous tick", () => {
+  let queryClient: QueryClient;
+  const runningEntry = makeTimeEntry();
+
+  beforeEach(() => {
+    queryClient = createTestQueryClient();
+    vi.clearAllMocks();
+    // All mutations hang so no onSuccess runs during the assertion.
+    mockPatchStop.mockReturnValue(new Promise(() => {}));
+    mockPutUpdate.mockReturnValue(new Promise(() => {}));
+    mockPostCreate.mockReturnValue(new Promise(() => {}));
+    mockDeleteTE.mockReturnValue(new Promise(() => {}));
+  });
+
+  it("Start writes the optimistic running entry before mutate() returns", () => {
+    queryClient.setQueryData(["current-time-entry"], null);
+    const { result } = renderHook(() => useStartTimeEntryMutation(WORKSPACE_ID), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({ description: "New task", start: "2026-03-30T12:00:00Z" });
+
+    const cached = queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry>([
+      "current-time-entry",
+    ]);
+    expect(cached).not.toBeNull();
+    expect(cached?.description).toBe("New task");
+  });
+
+  it("Stop clears the current entry before mutate() returns", () => {
+    queryClient.setQueryData(["current-time-entry"], runningEntry);
+    const { result } = renderHook(() => useStopTimeEntryMutation(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({ timeEntryId: runningEntry.id!, workspaceId: WORKSPACE_ID });
+
+    expect(queryClient.getQueryData(["current-time-entry"])).toBeNull();
+  });
+
+  it("Update patches the current entry before mutate() returns", () => {
+    const stoppedEntry = makeTimeEntry({ duration: 3600, stop: "2026-03-30T11:00:00Z" });
+    queryClient.setQueryData(["current-time-entry"], stoppedEntry);
+    const { result } = renderHook(() => useUpdateTimeEntryMutation(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({
+      request: { description: "Updated description" },
+      timeEntryId: stoppedEntry.id!,
+      workspaceId: WORKSPACE_ID,
+    });
+
+    const cached = queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry>([
+      "current-time-entry",
+    ]);
+    expect(cached?.description).toBe("Updated description");
+  });
+
+  it("Create prepends the optimistic entry to the list before mutate() returns", () => {
+    const existing = makeTimeEntry({ id: 1001, duration: 3600 });
+    const listKey = ["time-entries", null, null, false];
+    queryClient.setQueryData(listKey, [existing]);
+    const { result } = renderHook(() => useCreateTimeEntryMutation(WORKSPACE_ID), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({
+      description: "Manual entry",
+      duration: 1800,
+      start: "2026-03-30T08:00:00Z",
+      stop: "2026-03-30T08:30:00Z",
+    });
+
+    const cached =
+      queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(listKey);
+    expect(cached).toHaveLength(2);
+    expect(cached![0].description).toBe("Manual entry");
+  });
+
+  it("Delete removes the entry from the list before mutate() returns", () => {
+    const entry1 = makeTimeEntry({ id: 1001, description: "Entry 1" });
+    const entry2 = makeTimeEntry({ id: 1002, description: "Entry 2" });
+    const listKey = ["time-entries", null, null, false];
+    queryClient.setQueryData(listKey, [entry1, entry2]);
+    queryClient.setQueryData(["current-time-entry"], null);
+    const { result } = renderHook(() => useDeleteTimeEntryMutation(), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    result.current.mutate({ timeEntryId: entry1.id!, workspaceId: WORKSPACE_ID });
+
+    const cached =
+      queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(listKey);
+    expect(cached).toHaveLength(1);
+    expect(cached![0].id).toBe(1002);
+  });
+});

@@ -156,9 +156,7 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
           },
         }),
       ),
-    onMutate: async (request) => {
-      await queryClient.cancelQueries({ queryKey: ["time-entries"] });
-
+    onMutate: (request) => {
       const previousLists = queryClient.getQueriesData<
         GithubComTogglTogglApiInternalModelsTimeEntry[]
       >({ queryKey: ["time-entries"] });
@@ -177,10 +175,12 @@ export function useCreateTimeEntryMutation(workspaceId: number) {
         task_id: request.taskId ?? null,
       };
 
+      // setQueriesData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
         { queryKey: ["time-entries"] },
         (old) => (old ? [optimistic, ...old] : [optimistic]),
       );
+      void queryClient.cancelQueries({ queryKey: ["time-entries"] });
 
       return { previousLists };
     },
@@ -216,10 +216,11 @@ export function useStopTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: async () => {
-      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+    onMutate: () => {
       const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
+      // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, null);
+      void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
       return { previous };
     },
     onError: (_err, _vars, context) => {
@@ -280,9 +281,9 @@ export function useUpdateTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: async ({ request, timeEntryId }) => {
-      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
+    onMutate: ({ request, timeEntryId }) => {
       const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);
+      // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(
         currentTimeEntryQueryKey,
         (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) => {
@@ -299,6 +300,7 @@ export function useUpdateTimeEntryMutation() {
           };
         },
       );
+      void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
       return { previousCurrent };
     },
     onError: (_err, _vars, context) => {
@@ -335,25 +337,24 @@ export function useDeleteTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: async ({ timeEntryId }) => {
-      await queryClient.cancelQueries({ queryKey: ["time-entries"] });
-      await queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
-
+    onMutate: ({ timeEntryId }) => {
       const previousLists = queryClient.getQueriesData<
         GithubComTogglTogglApiInternalModelsTimeEntry[]
       >({ queryKey: ["time-entries"] });
       const previousCurrent = queryClient.getQueryData(currentTimeEntryQueryKey);
 
+      // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
         { queryKey: ["time-entries"] },
         (old) => old?.filter((e) => e.id !== timeEntryId),
       );
-
       queryClient.setQueryData(
         currentTimeEntryQueryKey,
         (current: GithubComTogglTogglApiInternalModelsTimeEntry | null | undefined) =>
           current?.id === timeEntryId ? null : current,
       );
+      void queryClient.cancelQueries({ queryKey: ["time-entries"] });
+      void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
 
       return { previousLists, previousCurrent };
     },
