@@ -340,11 +340,25 @@ test.describe("Assign Project to Time Entry", () => {
     await projectPicker.getByRole("button", { name: PROJECT_NAME }).click();
     await expect(projectPicker).not.toBeVisible();
 
-    // Save
+    // Save — `handleSave` closes the editor synchronously and fires the
+    // PUT as a void background mutation for snappiness. If we called
+    // `page.reload()` right here, we'd race the in-flight PUT and the
+    // reload would abort it before the server persists the change. Wait
+    // for the PUT to complete before reloading so the assertion actually
+    // tests server-side persistence, not request-cancellation behavior.
+    const savePromise = page.waitForResponse(
+      (resp) => resp.url().includes("/time_entries/") && resp.request().method() === "PUT",
+    );
     await editor.getByRole("button", { name: "Save changes" }).click();
     await expect(editor).not.toBeVisible();
+    // First prove the optimistic cache patch surfaces the project
+    // instantly — without reloading. This also doubles as a gate that
+    // keeps the editor's close-then-mutate path honest.
+    await expect(page.getByText(PROJECT_NAME).first()).toBeVisible();
+    await savePromise;
 
-    // Reload and verify project shows next to entry
+    // Now verify persistence — fresh page load pulls fresh data from the
+    // server, so the project must still be there.
     await page.reload();
     await expect(page.getByText(PROJECT_NAME).first()).toBeVisible();
   });

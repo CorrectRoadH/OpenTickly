@@ -22,7 +22,10 @@ import { createTimeEntryForWorkspace, loginE2eUser, registerE2eUser } from "./fi
  * consistently wrong, not changing), so it passed too.
  */
 test.describe("Calendar day header sticky", () => {
-  test("page loads unscrolled", async ({ page }) => {
+  test("page opens scrolled to now, with the sticky header still pinned", async ({ page }) => {
+    // Freeze at 10:00 local so "now" lands mid-day and forces a non-zero
+    // auto-scroll. At 00:00 we'd get target < 0 and skip the scroll,
+    // which wouldn't exercise the regression path.
     await page.clock.install({ time: new Date("2026-04-14T10:00:00Z") });
     const email = `cal-sticky-init-${test.info().workerIndex}-${Date.now()}@example.com`;
     const password = "secret-pass";
@@ -48,20 +51,38 @@ test.describe("Calendar day header sticky", () => {
     await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
     await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
 
-    // Regression for "一进来就只是这样了": the calendar must not auto-scroll
-    // the window on mount. A stale `scrollIntoView` in CalendarView used to
-    // shove scrollY to ~1000px, hiding the whole top chrome.
-    const initial = await page.evaluate(() => {
+    // The calendar auto-scrolls the window so the current-time indicator
+    // sits just below the sticky header. This spec locks in the
+    // reconciliation of two once-in-tension properties:
+    //   - `barTop === 0` — the `sticky top-0` header is still pinned
+    //     (8062128b's intent: user never loses the timer composer /
+    //      range picker / view tabs).
+    //   - the current-time indicator is within the viewport — we
+    //     actually scroll to now (reverting the earlier "do nothing" stub
+    //     that left the user staring at midnight).
+    // scrollY > 0 is expected here; the old "scrollY === 0" invariant
+    // was too strict — it conflated "window unscrolled" with "header
+    // pinned", and the latter is what actually matters.
+    const state = await page.evaluate(() => {
       const bar = document.querySelector<HTMLElement>(
         '[data-testid="tracking-timer-page"] > header',
       );
+      const indicator = document.querySelector<HTMLElement>(".rbc-current-time-indicator");
       return {
         barTop: bar ? bar.getBoundingClientRect().top : null,
+        indicatorTop: indicator ? indicator.getBoundingClientRect().top : null,
         scrollY: window.scrollY,
+        viewportHeight: window.innerHeight,
       };
     });
-    expect(initial.scrollY).toBe(0);
-    expect(initial.barTop).toBe(0);
+    expect(state.barTop).toBe(0);
+    expect(state.scrollY).toBeGreaterThan(0);
+    expect(state.indicatorTop).not.toBeNull();
+    if (state.indicatorTop !== null && state.viewportHeight !== null) {
+      // Indicator visible in viewport (below the header, above the fold).
+      expect(state.indicatorTop).toBeGreaterThan(0);
+      expect(state.indicatorTop).toBeLessThan(state.viewportHeight);
+    }
   });
 
   test("day header stays pinned at every scroll step, not just one", async ({ page }) => {

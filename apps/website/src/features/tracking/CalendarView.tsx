@@ -122,15 +122,50 @@ export function CalendarView({
     return n;
   })();
 
-  // Previously this effect called `indicator.scrollIntoView({ block: "center" })`
-  // on mount. Since `.rbc-time-content` is `overflow: visible` (calendar.css:89,
-  // intentional — the calendar uses window-level scroll, no internal scrollbar),
-  // `scrollIntoView` walks up to the window and scrolls it to center the
-  // current-time indicator — pushing the page to scrollY ≈ 1000px. Users land
-  // on the page already half-scrolled, with the TimerComposerBar / range picker
-  // hidden behind the auto-scroll (see e2e/calendar-header-sticky.spec.ts).
-  // If we want a "jump to now" affordance back, it should be an explicit
-  // in-page button, not an implicit window scroll on every mount.
+  // Scroll-to-now on mount. The calendar uses window-level scroll (no
+  // internal scrollbar, by design — see calendar.css:89), so we scroll
+  // the window. The earlier implementation used
+  // `indicator.scrollIntoView({ block: "center" })` which scrolled past
+  // the TimerComposerBar and hid it (8062128b removed it outright).
+  // Here we compute the target explicitly: land the current-time
+  // indicator ~40px below the sticky header, so the header stays pinned
+  // (its `position: sticky` holds barTop at 0) AND the user sees "now"
+  // without manually scrolling. If the indicator is already above that
+  // line (e.g. very early in the day), we leave the window unscrolled.
+  useEffect(() => {
+    // `.rbc-current-time-indicator` is added by RBC several layout passes
+    // after our mount, so a single `requestAnimationFrame` is sometimes
+    // too early. Retry for up to ~20 frames (~330ms) and bail out once
+    // the indicator is in the DOM.
+    let cancelled = false;
+    let rafHandle = 0;
+    let attemptsLeft = 20;
+    const tryScroll = () => {
+      if (cancelled) return;
+      const indicator = document.querySelector<HTMLElement>(".rbc-current-time-indicator");
+      if (!indicator) {
+        if (attemptsLeft-- > 0) {
+          rafHandle = requestAnimationFrame(tryScroll);
+        }
+        return;
+      }
+      const header = document.querySelector<HTMLElement>(
+        '[data-testid="tracking-timer-page"] > header',
+      );
+      const headerHeight = header?.getBoundingClientRect().height ?? 0;
+      const indicatorRect = indicator.getBoundingClientRect();
+      const indicatorAbsoluteY = indicatorRect.top + window.scrollY;
+      const target = indicatorAbsoluteY - headerHeight - 40;
+      if (target > 0) {
+        window.scrollTo({ top: target, behavior: "instant" });
+      }
+    };
+    rafHandle = requestAnimationFrame(tryScroll);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafHandle);
+    };
+  }, []);
 
   const [contextMenuState, setContextMenuState] = useState<{
     entry: GithubComTogglTogglApiInternalModelsTimeEntry;

@@ -281,23 +281,44 @@ export function useUpdateTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: ({ request, timeEntryId }) => {
+    onMutate: ({ request, timeEntryId, workspaceId }) => {
+      // `project_name` / `project_color` are server-denormalized fields
+      // that rows render directly (the list view's ProjectPicker reads
+      // `entry.project_name`, not the projects query). On optimistic
+      // project change we need to patch them from the workspace's
+      // projects cache — otherwise the row flashes blank / stale until
+      // the PUT response lands, and if the user navigates away before
+      // that (or the test calls `page.reload()`), the UI never reflects
+      // the save. We scan `["projects", workspaceId, *]` because status
+      // filters ("all" / "active" / "archived") each keep their own
+      // cache entry but the project metadata inside is identical.
+      const selectedProject = (() => {
+        if (request.projectId == null) return null;
+        const cached = queryClient.getQueriesData<unknown>({
+          queryKey: ["projects", workspaceId],
+        });
+        for (const [, data] of cached) {
+          const list = Array.isArray(data)
+            ? (data as Array<{ color?: string | null; id?: number | null; name?: string | null }>)
+            : [];
+          const match = list.find((project) => project.id === request.projectId);
+          if (match) return match;
+        }
+        return null;
+      })();
+
       const applyPatch = (
         entry: GithubComTogglTogglApiInternalModelsTimeEntry,
       ): GithubComTogglTogglApiInternalModelsTimeEntry => ({
         ...entry,
         ...(request.description !== undefined && { description: request.description }),
         ...(request.billable !== undefined && { billable: request.billable }),
-        // `project_name` / `project_color` are server-denormalized fields. Clear
-        // them on optimistic project change so the row doesn't render the old
-        // project's name/color while the server responds with the fresh
-        // denormalized values.
         ...(request.projectId !== undefined && {
           project_id: request.projectId,
-          ...(request.projectId === null && {
-            project_name: undefined,
-            project_color: undefined,
-          }),
+          project_name:
+            request.projectId === null ? undefined : (selectedProject?.name ?? undefined),
+          project_color:
+            request.projectId === null ? undefined : (selectedProject?.color ?? undefined),
         }),
         ...(request.start !== undefined && { start: request.start }),
         ...(request.stop !== undefined && { stop: request.stop }),
