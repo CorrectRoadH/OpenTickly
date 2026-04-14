@@ -122,15 +122,15 @@ export function CalendarView({
     return n;
   })();
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const indicator = document.querySelector(".rbc-current-time-indicator");
-      if (indicator) {
-        indicator.scrollIntoView({ block: "center", behavior: "instant" });
-      }
-    });
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  // Previously this effect called `indicator.scrollIntoView({ block: "center" })`
+  // on mount. Since `.rbc-time-content` is `overflow: visible` (calendar.css:89,
+  // intentional — the calendar uses window-level scroll, no internal scrollbar),
+  // `scrollIntoView` walks up to the window and scrolls it to center the
+  // current-time indicator — pushing the page to scrollY ≈ 1000px. Users land
+  // on the page already half-scrolled, with the TimerComposerBar / range picker
+  // hidden behind the auto-scroll (see e2e/calendar-header-sticky.spec.ts).
+  // If we want a "jump to now" affordance back, it should be an explicit
+  // in-page button, not an implicit window scroll on every mount.
 
   const [contextMenuState, setContextMenuState] = useState<{
     entry: GithubComTogglTogglApiInternalModelsTimeEntry;

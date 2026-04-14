@@ -89,4 +89,61 @@ test.describe("Calendar day header re-render hygiene", () => {
     // If the bug exists, witness bumps to `r:<baseline+1>`.
     await expect(witness).toHaveText(baseline ?? "");
   });
+
+  // This one reproduces the user's "一往下滚还是复现" observation: in real
+  // use the page has a *running* entry. A running entry is what makes
+  // CalendarView actually do meaningful work on every nowMinuteMs tick —
+  // `buildEvents` re-derives the running segment, rebuilding the events
+  // array and (transitively) the inline `calendarComponents` object. If
+  // that object loses identity stability, RBC's header subtree
+  // unmounts+remounts on every minute tick. That is the remount the user
+  // sees while they scroll (scrolling just happens to overlap the tick).
+  test("running entry + minute tick does not remount today's header", async ({ page }) => {
+    await page.clock.install({ time: new Date("2026-04-14T10:00:30Z") });
+
+    const email = `cal-hdr-running-${test.info().workerIndex}-${Date.now()}@example.com`;
+    const password = "secret-pass";
+    await registerE2eUser(page, test.info(), {
+      email,
+      fullName: "Calendar Header Running",
+      password,
+    });
+    await page.context().clearCookies();
+    await loginE2eUser(page, test.info(), { email, password });
+
+    await page.goto(new URL("/timer", page.url()).toString());
+    await expect(page.getByTestId("tracking-timer-page")).toBeVisible();
+
+    // Start a running entry through the real UI so the query cache state
+    // matches production exactly (useCurrentTimeEntryQuery polls at 30s,
+    // its `data` becomes non-null, buildEvents produces the running
+    // segment, dailyTotals for today re-derives).
+    await page.getByLabel("Time entry description").fill("running witness");
+    await page.getByRole("button", { name: "Start timer" }).click();
+    await expect(page.getByRole("button", { name: "Stop timer" })).toBeVisible();
+
+    await expect(page.getByTestId("timer-calendar-view")).toBeVisible();
+    const witness = page.getByTestId("calendar-day-header-rendercount-tue");
+    await expect(witness).toHaveText(/^r:\d+$/);
+    const baseline = await witness.textContent();
+
+    // Cross multiple minute boundaries + one refetchInterval of the
+    // current-entry query (30s). This is the real wall-clock window the
+    // user observes while scrolling with devtools open.
+    await page.clock.fastForward(125_000); // 2m5s
+
+    // The tolerance is strict: the count may NOT decrease (remount) and
+    // must not increase by more than a small handful of minute ticks.
+    // A remount flips "r:N" down to "r:1" or similar low value — that is
+    // the specific failure mode this spec locks out.
+    const after = await witness.textContent();
+    expect(after).toMatch(/^r:\d+$/);
+    const baselineN = Number((baseline ?? "r:0").slice(2));
+    const afterN = Number((after ?? "r:0").slice(2));
+    // Never remount (which would make afterN < baselineN because counter
+    // resets to 1). And never blow up on each tick (cap at +4 across 2m:
+    // 2 minute ticks + maybe 1 refetch).
+    expect(afterN).toBeGreaterThanOrEqual(baselineN);
+    expect(afterN - baselineN).toBeLessThanOrEqual(4);
+  });
 });
