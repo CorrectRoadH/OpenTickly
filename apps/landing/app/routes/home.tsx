@@ -29,12 +29,14 @@ import {
 } from "@/lib/seo";
 
 const localizedDescriptions: Record<string, string> = {
-  en: defaultDescription,
-  zh: "OpenToggl 是一款免费开源的时间追踪与时间管理应用，兼容 Toggl API，支持自托管，适合个人和团队使用。",
-  es: "OpenToggl es una aplicación gratuita y de código abierto para el seguimiento del tiempo, compatible con la API de Toggl y autoalojable.",
-  ja: "OpenToggl は無料のオープンソース時間管理アプリです。Toggl API 互換でセルフホスト可能。個人・チーム向け。",
-  fr: "OpenToggl est une application open source gratuite de suivi du temps, compatible avec l'API Toggl et auto-hébergeable.",
-  ko: "OpenToggl은 무료 오픈소스 시간 추적 앱입니다. Toggl API 호환, 셀프호스팅 지원, 개인 및 팀용.",
+  en: "OpenToggl is an open-source Toggl alternative: 100% Toggl API-compatible, one-command Docker self-hosting, your data stays yours. No seat limits — free for individuals and teams.",
+  zh: "OpenToggl 是开源的 Toggl 替代方案：100% 兼容 Toggl API，一键 Docker 自托管，数据完全在你手里。无座位限制，个人与团队免费使用。",
+  es: "OpenToggl es la alternativa open source a Toggl: 100% compatible con la API de Toggl, autoalojamiento con Docker en un comando, tus datos siguen siendo tuyos. Sin límite de asientos, gratis para individuos y equipos.",
+  ja: "OpenToggl はオープンソースの Toggl 代替ツール。Toggl API に 100% 互換、Docker ワンコマンドでセルフホスト、データはあなたの手の中に。シート数無制限、個人・チームとも無料で利用可能。",
+  fr: "OpenToggl est l'alternative open source à Toggl : 100 % compatible avec l'API Toggl, auto-hébergement Docker en une commande, vos données restent les vôtres. Sans limite d'utilisateurs, gratuit pour les particuliers et les équipes.",
+  ko: "OpenToggl은 오픈소스 Toggl 대안입니다. Toggl API 100% 호환, Docker 한 줄 명령으로 셀프호스팅, 데이터는 전적으로 본인 관리. 좌석 수 제한 없이 개인과 팀 모두 무료로 사용 가능.",
+  pl: "OpenToggl to otwartoźródłowa alternatywa dla Toggl: w 100% zgodna z API Toggl, samodzielny hosting Dockera jedną komendą, Twoje dane pozostają Twoje. Bez limitu miejsc — darmowa dla osób i zespołów.",
+  pt: "OpenToggl é a alternativa open source ao Toggl: 100% compatível com a API do Toggl, auto-hospedagem Docker em um comando, seus dados continuam seus. Sem limite de assentos — grátis para indivíduos e equipes.",
 };
 
 const featureIcons = [RefreshCw, Server, Unlock];

@@ -1,6 +1,6 @@
 ---
 title: 自托管
-description: 使用 Docker Compose 在自己的基础设施上部署 OpenToggl，支持 CasaOS、群晖、飞牛等平台。
+description: 在自己的基础设施上部署 OpenToggl：支持 Docker Compose、CasaOS、ZimaOS、群晖 NAS、飞牛 OS 等。可直接从 Toggl 导入数据，100% 保留 API 兼容性，数据完全由自己掌控。
 ---
 
 ## Docker Compose
@@ -85,7 +85,7 @@ docker compose down -v   # 停止服务并删除所有数据
 
 ## CasaOS
 
-[CasaOS](https://casaos.io) 支持通过 Docker Compose 文件安装应用。
+[CasaOS](https://casaos.zimaspace.com/) 支持通过 Docker Compose 文件安装应用。
 
 1. 打开 CasaOS 控制面板
 2. 前往 **应用商店** > **自定义安装** > **导入 docker-compose**
@@ -94,6 +94,12 @@ docker compose down -v   # 停止服务并删除所有数据
 5. 从控制面板启动应用
 
 安装后，通过 `http://<你的CasaOS IP>:8080` 访问 OpenToggl。
+
+---
+
+## ZimaOS
+
+ZimaOS（面向 Zimablade / Zimacube 硬件的操作系统）与 CasaOS 共用同一套应用商店，安装流程完全相同。使用 **应用商店** > **自定义安装** > **导入 docker-compose**，粘贴 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)。通过 `http://<你的ZimaOS IP>:8080` 访问 OpenToggl。
 
 ---
 

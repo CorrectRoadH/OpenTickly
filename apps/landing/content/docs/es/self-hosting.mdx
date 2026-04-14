@@ -1,6 +1,6 @@
 ---
 title: Autoalojamiento
-description: Despliega OpenToggl en tu propia infraestructura con Docker Compose, CasaOS, Synology, fnOS y más.
+description: Despliega OpenToggl en tu propia infraestructura — Docker Compose, CasaOS, ZimaOS, Synology NAS, fnOS y más. Importa tus datos de Toggl directamente, mantén 100% de compatibilidad con la API y controla tus datos de principio a fin.
 ---
 
 ## Docker Compose
@@ -85,7 +85,7 @@ docker compose down -v   # Detiene servicios y elimina todos los datos
 
 ## CasaOS
 
-[CasaOS](https://casaos.io) soporta instalación de apps desde un archivo Docker Compose.
+[CasaOS](https://casaos.zimaspace.com/) soporta instalación de apps desde un archivo Docker Compose.
 
 1. Abre el panel de CasaOS
 2. Ve a **App Store** > **Instalación personalizada** > **Importar docker-compose**
@@ -94,6 +94,12 @@ docker compose down -v   # Detiene servicios y elimina todos los datos
 5. Inicia la app desde tu panel
 
 Después de la instalación, accede a OpenToggl en `http://<tu-ip-casaos>:8080`.
+
+---
+
+## ZimaOS
+
+ZimaOS (el sistema operativo para Zimablade / Zimacube) trae la misma App Store que CasaOS, por lo que el flujo de instalación es idéntico. Usa **App Store** > **Instalación personalizada** > **Importar docker-compose** y pega [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml). Accede a OpenToggl en `http://<tu-ip-zimaos>:8080`.
 
 ---
 

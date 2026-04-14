@@ -12,7 +12,7 @@ export function baseOptions(locale?: string): BaseLayoutProps {
   return {
     nav: {
       title: "OpenToggl",
-      url: `${prefix}/`,
+      url: prefix || "/",
     },
     links: [
       {

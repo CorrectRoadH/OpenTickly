@@ -1,6 +1,6 @@
 ---
 title: セルフホスト
-description: Docker Compose、CasaOS、Synology、fnOS などで OpenToggl を自分のインフラにデプロイ。
+description: OpenToggl を自分のインフラにデプロイ — Docker Compose、CasaOS、ZimaOS、Synology NAS、fnOS など対応。Toggl からデータを直接インポートでき、API 互換性を 100% 保ちながら、データを完全に自分で管理。
 ---
 
 ## Docker Compose
@@ -85,7 +85,7 @@ docker compose down -v   # サービス停止、全データ削除
 
 ## CasaOS
 
-[CasaOS](https://casaos.io) は Docker Compose ファイルからのアプリインストールに対応しています。
+[CasaOS](https://casaos.zimaspace.com/) は Docker Compose ファイルからのアプリインストールに対応しています。
 
 1. CasaOS ダッシュボードを開く
 2. **App Store** > **カスタムインストール** > **docker-compose をインポート**
@@ -94,6 +94,12 @@ docker compose down -v   # サービス停止、全データ削除
 5. ダッシュボードからアプリを起動
 
 インストール後、`http://<CasaOS の IP>:8080` で OpenToggl にアクセス。
+
+---
+
+## ZimaOS
+
+ZimaOS（Zimablade / Zimacube 向け OS）は CasaOS と同じ App Store を搭載しているため、インストール手順も同じです。**App Store** > **カスタムインストール** > **docker-compose をインポート** から [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) を貼り付けてください。`http://<ZimaOS の IP>:8080` で OpenToggl にアクセスできます。
 
 ---
 
