@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration, resolveEntryDurationSeconds } from "./overview-data.ts";
+import { useRenderCount } from "@uidotdev/usehooks";
+
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import { PlayIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import type { CalendarEvent } from "./calendar-types.ts";
@@ -34,6 +36,7 @@ export function CalendarEventCard({
   const entryId = event.id;
   const isDraft = event.resource.isDraft;
   const allowDirectEdit = !event.resource.isLocked && !isRunning && !isDraft;
+  const renderCount = useRenderCount();
 
   // Draft entries auto-open the editor anchored to their real DOM position
   useEffect(() => {
@@ -72,6 +75,14 @@ export function CalendarEventCard({
           >
             {entry.description?.trim() || t("addDescription")}
           </span>
+          {import.meta.env.DEV ? (
+            <span
+              className="truncate font-mono text-[11px] leading-tight text-[var(--track-text-muted)]"
+              data-testid={`calendar-entry-rendercount-${entryId ?? "unknown"}`}
+            >
+              renders: {renderCount}
+            </span>
+          ) : null}
           {entry.project_name ? (
             <span
               className="truncate text-[12px] font-medium leading-tight"

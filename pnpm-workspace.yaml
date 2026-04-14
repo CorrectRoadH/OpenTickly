@@ -9,6 +9,7 @@ catalog:
   "@orama/tokenizers": ^3.1.18
   "@types/node": ^24
   "@types/react-big-calendar": ^1.16.3
+  '@uidotdev/usehooks': ^2.4.1
   babel-plugin-react-compiler: ^1.0.0
   date-fns: ^4.1.0
   execa: ^9.6.1
