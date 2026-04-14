@@ -17,6 +17,12 @@ import { ListView } from "./ListView.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
+import {
+  type StableListViewProject,
+  type StableListViewTag,
+  stabilizeListViewProjects,
+  stabilizeListViewTags,
+} from "./time-entry-stability.ts";
 import type { BulkEditUpdates } from "./BulkEditDialog.tsx";
 
 type DeletedEntrySnapshot = {
@@ -219,7 +225,14 @@ export function ConnectedListView({
 
   const noopFavorite = () => {};
 
-  const listViewProjects = projectOptions
+  // Stabilize list-view projects across re-renders so per-item references
+  // survive unrelated parent re-renders. The `.map()` below otherwise
+  // produces fresh objects each time, defeating the `shallowListEqual`
+  // branch of `ListEntryRow`'s memo and cascading into every row on
+  // every mutation settle. See `stabilizeListViewProjects` for the
+  // equivalence contract.
+  const projectsStableRef = useRef<StableListViewProject[]>([]);
+  const listViewProjectsRaw: StableListViewProject[] = projectOptions
     .filter((project) => project.id != null && project.active !== false)
     .map((project) => ({
       clientName: project.client_name ?? undefined,
@@ -229,6 +242,19 @@ export function ConnectedListView({
       pinned: project.pinned === true,
     }))
     .sort((a, b) => Number(b.pinned) - Number(a.pinned));
+  const listViewProjects = stabilizeListViewProjects(
+    projectsStableRef.current,
+    listViewProjectsRaw,
+  );
+  projectsStableRef.current = listViewProjects;
+
+  // `tagOptions` items already come from the react-query cache with
+  // stable identity, but the surrounding array churns because
+  // `normalizeTags` filters on every render. Stabilize the array so the
+  // row memo can short-circuit in O(1) via `prev === next`.
+  const tagsStableRef = useRef<StableListViewTag[]>([]);
+  const listViewTags = stabilizeListViewTags(tagsStableRef.current, tagOptions);
+  tagsStableRef.current = listViewTags;
 
   const workspaceName =
     session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace";
@@ -260,7 +286,7 @@ export function ConnectedListView({
       onSplitEntry={onSplitEntry}
       onProjectChange={onProjectChange}
       projects={listViewProjects}
-      tags={tagOptions}
+      tags={listViewTags}
       timeofdayFormat={timeofdayFormat}
       timezone={timezone}
       workspaceName={workspaceName}

@@ -112,6 +112,86 @@ function areDisplayEntriesEquivalent(left: DisplayEntry, right: DisplayEntry): b
   );
 }
 
+/**
+ * Reference-stability contract for list-view project rows.
+ *
+ * `ConnectedListView` derives its `projects` prop via
+ * `projectOptions.filter().map().sort()` on every render, producing fresh
+ * `{ id, name, color, pinned, clientName }` objects each time. The
+ * `ListEntryRow` memo boundary falls back on per-item identity via
+ * `shallowListEqual`, so these fresh objects defeat the memo and cascade
+ * into every list row on every ConnectedListView re-render — which is
+ * what lets a single tag-toggle mutation bump `renders: N` on every
+ * sibling row. Re-using prior item references when the visible fields
+ * match closes that gap.
+ */
+export type StableListViewProject = {
+  clientName?: string;
+  color: string;
+  id: number;
+  name: string;
+  pinned: boolean;
+};
+
+function areListViewProjectsEquivalent(
+  left: StableListViewProject,
+  right: StableListViewProject,
+): boolean {
+  return (
+    left.id === right.id &&
+    left.name === right.name &&
+    left.color === right.color &&
+    left.pinned === right.pinned &&
+    left.clientName === right.clientName
+  );
+}
+
+export function stabilizeListViewProjects(
+  previous: StableListViewProject[],
+  next: StableListViewProject[],
+): StableListViewProject[] {
+  if (
+    previous.length === next.length &&
+    previous.every((item, index) => {
+      const candidate = next[index];
+      return candidate !== undefined && areListViewProjectsEquivalent(item, candidate);
+    })
+  ) {
+    return previous;
+  }
+
+  const previousById = new Map(previous.map((item) => [item.id, item]));
+  return next.map((item) => {
+    const prior = previousById.get(item.id);
+    return prior && areListViewProjectsEquivalent(prior, item) ? prior : item;
+  });
+}
+
+/**
+ * Reference-stability contract for list-view tag rows.
+ *
+ * The items inside `tagOptions` already come from the react-query cache
+ * with stable identity, but the containing array is rebuilt by
+ * `normalizeTags` on every render. `shallowListEqual` still passes
+ * because per-item identity holds — but stabilizing the array itself
+ * lets the memo boundary short-circuit via `prev === next` in O(1)
+ * instead of O(N).
+ */
+export type StableListViewTag = {
+  id: number;
+  name: string;
+};
+
+export function stabilizeListViewTags(
+  previous: StableListViewTag[],
+  next: StableListViewTag[],
+): StableListViewTag[] {
+  if (previous.length === next.length && previous.every((item, index) => item === next[index])) {
+    return previous;
+  }
+  return next;
+}
+
 export function stabilizeEntryGroups(
   previousGroups: EntryGroup[],
   nextGroups: EntryGroup[],
