@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import { transparentize } from "polished";
 import { useTranslation } from "react-i18next";
 
@@ -11,7 +11,19 @@ import { PlayIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import type { CalendarEvent } from "./calendar-types.ts";
 import { colorToOverlay, vividColor } from "./calendar-types.ts";
 
-export function CalendarEventCard({
+// react-big-calendar re-invokes `components.event(props)` multiple times
+// per click (its internal selection/DnD state updates). Those invocations
+// return fresh React elements, which normally forces React to re-render
+// the child. This component's props are stable across those invocations
+// once CalendarView owns its callbacks as stable handlers — so a memo
+// boundary lets React skip the redundant work.
+//
+// This is a component-boundary memo (not in-component useMemo/useCallback),
+// which is the idiomatic fix when a third-party parent (RBC here) rerenders
+// independently of our own state. React Compiler does not cover that case.
+export const CalendarEventCard = memo(CalendarEventCardImpl);
+
+function CalendarEventCardImpl({
   event,
   onContextMenu,
   onContinueEntry,

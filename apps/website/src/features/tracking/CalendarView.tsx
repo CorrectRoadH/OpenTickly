@@ -119,11 +119,24 @@ export function CalendarView({
     y: number;
   } | null>(null);
 
+  // Stable handler so every call to `components.event(props)` below passes
+  // the same onContextMenu reference. Inline-constructing this arrow made
+  // CalendarEventCard's prop identity change on every RBC-internal render
+  // (e.g. after clicking an event), defeating memoization and forcing all
+  // event cards to re-render each time any one was clicked.
+  const handleEventContextMenu = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    x: number,
+    y: number,
+  ) => {
+    setContextMenuState({ entry, x, y });
+  };
+
   const calendarComponents = {
     event: (props: EventProps<CalendarEvent>) => (
       <CalendarEventCard
         event={props.event}
-        onContextMenu={(entry, x, y) => setContextMenuState({ entry, x, y })}
+        onContextMenu={handleEventContextMenu}
         onContinueEntry={onContinueEntry}
         onEditEntry={onEditEntry}
       />
