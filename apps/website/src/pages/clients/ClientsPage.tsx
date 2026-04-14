@@ -352,6 +352,13 @@ export function ClientsPage(): ReactElement {
             )}
             rowKey={(g) => g.client.id}
             rows={groupedClients}
+            isRowEqual={(a, b) =>
+              a.client.id === b.client.id &&
+              a.client.name === b.client.name &&
+              a.client.archived === b.client.archived &&
+              a.projects.length === b.projects.length &&
+              a.projects.every((project, index) => project === b.projects[index])
+            }
             selectable
             selectedIds={selectedIds}
           />

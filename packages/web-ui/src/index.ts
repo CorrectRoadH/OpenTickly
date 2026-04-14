@@ -46,6 +46,7 @@ export {
   pageLayoutTabIndicatorClass,
 } from "./PageLayout.tsx";
 export { Dialog, DialogBody, DialogFooter, DialogHeader } from "./Dialog.tsx";
+export { useStableList } from "./useStableList.ts";
 export { appTheme } from "./theme.ts";
 export { MarketingCard, MarketingEyebrow, MarketingSection } from "./MarketingPrimitives.tsx";
 export { useDismiss } from "./useDismiss.ts";

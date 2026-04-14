@@ -6,6 +6,7 @@ import { AppCheckbox } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { DollarIcon, PlayIcon } from "../../shared/ui/icons.tsx";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import { LiveDuration } from "./LiveDuration.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import {
@@ -73,7 +74,8 @@ function arePropsEqual(
     prev.timezone === next.timezone &&
     prev.workspaceName === next.workspaceName &&
     shallowListEqual(prev.tags, next.tags) &&
-    shallowListEqual(prev.projects, next.projects)
+    shallowListEqual(prev.projects, next.projects) &&
+    shallowListEqual(prev.tasks, next.tasks)
   );
 }
 
@@ -98,9 +100,11 @@ function ListEntryRowImpl({
   onProjectChange,
   onSplitEntry,
   onTagsChange,
+  onTaskChange,
   projects,
   subIdx,
   tags,
+  tasks,
   timeofdayFormat,
   timezone,
   toggleEntry,
@@ -130,9 +134,15 @@ function ListEntryRowImpl({
   ) => void;
   onSplitEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
+  onTaskChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number,
+    taskId: number,
+  ) => void;
   projects: TimeEntryEditorProject[];
   subIdx: number;
   tags: TimeEntryEditorTag[];
+  tasks: ProjectPickerTask[];
   timeofdayFormat: TimeFormat;
   timezone: string;
   toggleEntry: (id: number) => void;
@@ -206,7 +216,9 @@ function ListEntryRowImpl({
             <ListRowProjectPicker
               entry={entry}
               onProjectChange={onProjectChange}
+              onTaskChange={onTaskChange}
               projects={projects}
+              tasks={tasks}
               workspaceName={workspaceName}
             />
           </div>

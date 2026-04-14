@@ -1,12 +1,15 @@
 import { type ReactElement, useRef } from "react";
+import { useStableList } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import {
   useBulkDeleteTimeEntriesMutation,
   useBulkEditTimeEntriesMutation,
   useCreateTimeEntryMutation,
+  useCreateWorkspaceFavoriteMutation,
   useDeleteTimeEntryMutation,
   useStartTimeEntryMutation,
+  useTasksQuery,
   useUpdateTimeEntryMutation,
 } from "../../shared/query/web-shell.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
@@ -17,13 +20,17 @@ import { ListView } from "./ListView.tsx";
 import { useTimerViewStore } from "./store/timer-view-store.ts";
 import { useWorkspaceData } from "./useWorkspaceData.ts";
 import { useTimeEntryViews } from "./useTimeEntryViews.ts";
-import {
-  type StableListViewProject,
-  type StableListViewTag,
-  stabilizeListViewProjects,
-  stabilizeListViewTags,
-} from "./time-entry-stability.ts";
 import type { BulkEditUpdates } from "./BulkEditDialog.tsx";
+
+type ListViewProject = {
+  clientName?: string;
+  color: string;
+  id: number;
+  name: string;
+  pinned: boolean;
+};
+type ListViewTag = { id: number; name: string };
+type ListViewTask = { id: number; name: string; projectId: number };
 
 type DeletedEntrySnapshot = {
   billable: boolean;
@@ -48,6 +55,7 @@ export function ConnectedListView({
   const views = useTimeEntryViews({ workspaceId, timezone, showAllEntries });
 
   const createTimeEntryMutation = useCreateTimeEntryMutation(workspaceId);
+  const createWorkspaceFavoriteMutation = useCreateWorkspaceFavoriteMutation(workspaceId);
   const deleteTimeEntryMutation = useDeleteTimeEntryMutation();
   const startTimeEntryMutation = useStartTimeEntryMutation(workspaceId);
   const updateTimeEntryMutation = useUpdateTimeEntryMutation();
@@ -56,6 +64,7 @@ export function ConnectedListView({
 
   const mutRef = useRef({
     create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
     del: deleteTimeEntryMutation,
     update: updateTimeEntryMutation,
     bulkEdit: bulkEditMutation,
@@ -63,6 +72,7 @@ export function ConnectedListView({
   });
   mutRef.current = {
     create: createTimeEntryMutation,
+    createFavorite: createWorkspaceFavoriteMutation,
     del: deleteTimeEntryMutation,
     update: updateTimeEntryMutation,
     bulkEdit: bulkEditMutation,
@@ -191,6 +201,26 @@ export function ConnectedListView({
     }
   };
 
+  // Selecting a task from the inline project picker must assign BOTH the
+  // host project and the task on the time entry in a single round-trip.
+  // The shared `ProjectPickerDropdown` surfaces tasks as flat search
+  // results and as per-project expandables; this handler backs the
+  // `onTaskSelect` prop that `ListRowProjectPicker` threads through.
+  const onTaskChange = (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number,
+    taskId: number,
+  ) => {
+    const wid = entry.workspace_id ?? entry.wid;
+    if (typeof entry.id === "number" && typeof wid === "number") {
+      void mutRef.current.update.mutateAsync({
+        request: { projectId, taskId },
+        timeEntryId: entry.id,
+        workspaceId: wid,
+      });
+    }
+  };
+
   const onSplitEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
     if (entry.start && entry.stop) {
       useTimerViewStore.getState().setPendingSplit(true);
@@ -223,38 +253,61 @@ export function ConnectedListView({
     await mutRef.current.bulkDelete.mutateAsync(ids);
   };
 
-  const noopFavorite = () => {};
+  const onFavoriteEntry = (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => {
+    void mutRef.current.createFavorite.mutateAsync({
+      billable: entry.billable ?? false,
+      description: (entry.description ?? "").trim(),
+      projectId: resolveTimeEntryProjectId(entry),
+      tagIds: entry.tag_ids ?? [],
+      taskId: entry.task_id ?? entry.tid ?? null,
+    });
+  };
 
-  // Stabilize list-view projects across re-renders so per-item references
-  // survive unrelated parent re-renders. The `.map()` below otherwise
-  // produces fresh objects each time, defeating the `shallowListEqual`
-  // branch of `ListEntryRow`'s memo and cascading into every row on
-  // every mutation settle. See `stabilizeListViewProjects` for the
-  // equivalence contract.
-  const projectsStableRef = useRef<StableListViewProject[]>([]);
-  const listViewProjectsRaw: StableListViewProject[] = projectOptions
-    .filter((project) => project.id != null && project.active !== false)
-    .map((project) => ({
-      clientName: project.client_name ?? undefined,
-      color: resolveProjectColorValue(project),
-      id: project.id as number,
-      name: project.name ?? "Untitled project",
-      pinned: project.pinned === true,
-    }))
-    .sort((a, b) => Number(b.pinned) - Number(a.pinned));
-  const listViewProjects = stabilizeListViewProjects(
-    projectsStableRef.current,
-    listViewProjectsRaw,
+  // Stabilize list-view projects/tags across re-renders so per-item
+  // references survive unrelated parent re-renders. The `.map()` below
+  // otherwise produces fresh objects each time, defeating the
+  // `shallowListEqual` branch of `ListEntryRow`'s memo and cascading
+  // into every row on every mutation settle.
+  const listViewProjects = useStableList<ListViewProject>(
+    projectOptions
+      .filter((project) => project.id != null && project.active !== false)
+      .map((project) => ({
+        clientName: project.client_name ?? undefined,
+        color: resolveProjectColorValue(project),
+        id: project.id as number,
+        name: project.name ?? "Untitled project",
+        pinned: project.pinned === true,
+      }))
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned)),
+    (project) => project.id,
+    (a, b) =>
+      a.id === b.id &&
+      a.name === b.name &&
+      a.color === b.color &&
+      a.pinned === b.pinned &&
+      a.clientName === b.clientName,
   );
-  projectsStableRef.current = listViewProjects;
+  const listViewTags = useStableList<ListViewTag>(
+    tagOptions,
+    (tag) => tag.id,
+    (a, b) => a === b,
+  );
 
-  // `tagOptions` items already come from the react-query cache with
-  // stable identity, but the surrounding array churns because
-  // `normalizeTags` filters on every render. Stabilize the array so the
-  // row memo can short-circuit in O(1) via `prev === next`.
-  const tagsStableRef = useRef<StableListViewTag[]>([]);
-  const listViewTags = stabilizeListViewTags(tagsStableRef.current, tagOptions);
-  tagsStableRef.current = listViewTags;
+  const tasksQuery = useTasksQuery(workspaceId);
+  const listViewTasks = useStableList<ListViewTask>(
+    (tasksQuery.data?.data ?? [])
+      .filter(
+        (task) =>
+          task.id != null && !!task.name && task.project_id != null && task.active !== false,
+      )
+      .map((task) => ({
+        id: task.id as number,
+        name: task.name as string,
+        projectId: task.project_id as number,
+      })),
+    (task) => task.id,
+    (a, b) => a.id === b.id && a.name === b.name && a.projectId === b.projectId,
+  );
 
   const workspaceName =
     session.availableWorkspaces.find((w) => w.id === workspaceId)?.name ?? "Workspace";
@@ -280,13 +333,15 @@ export function ConnectedListView({
       onDuplicateEntry={onDuplicateEntry}
       onDescriptionChange={onDescriptionChange}
       onEditEntry={handleEntryEdit}
-      onFavoriteEntry={noopFavorite}
+      onFavoriteEntry={onFavoriteEntry}
       onTagsChange={onTagsChange}
       onBillableToggle={onBillableToggle}
       onSplitEntry={onSplitEntry}
       onProjectChange={onProjectChange}
+      onTaskChange={onTaskChange}
       projects={listViewProjects}
       tags={listViewTags}
+      tasks={listViewTasks}
       timeofdayFormat={timeofdayFormat}
       timezone={timezone}
       workspaceName={workspaceName}

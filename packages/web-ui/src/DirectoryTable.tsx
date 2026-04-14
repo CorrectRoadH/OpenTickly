@@ -1,7 +1,8 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, memo, useContext, type ReactNode } from "react";
 import { useRenderCount } from "@uidotdev/usehooks";
 
 import { AppCheckbox } from "./AppCheckbox.tsx";
+import { useStableList } from "./useStableList.ts";
 
 type DirectoryTableRowMeta = {
   renderCount: number;
@@ -62,6 +63,13 @@ type DirectoryTableProps<T> = {
   pagination?: ReactNode;
   "data-testid"?: string;
   "data-row-testid"?: string;
+  /**
+   * Optional per-row equality. When provided, DirectoryTable reuses prior
+   * row references across renders so `DirectoryTableRow`'s memo boundary
+   * can short-circuit on unchanged rows. List only the fields that affect
+   * rendering.
+   */
+  isRowEqual?: (a: T, b: T) => boolean;
 };
 
 function buildGridTemplate(
@@ -97,13 +105,19 @@ export function DirectoryTable<T>({
   renderExpandedContent,
   footer,
   pagination,
+  isRowEqual,
   "data-testid": testId,
   "data-row-testid": rowTestId,
   "data-empty-testid": emptyTestId,
 }: DirectoryTableProps<T>) {
   const gridTemplate = buildGridTemplate(columns, selectable, expandable);
 
-  const isEmpty = rows.length === 0 && !isLoading;
+  // Stabilize row references so DirectoryTableRow's memo can short-circuit
+  // unchanged rows. A no-op when `isRowEqual` is omitted.
+  const identityEqual = (a: T, b: T): boolean => a === b;
+  const stableRows = useStableList(rows, rowKey, isRowEqual ?? identityEqual);
+
+  const isEmpty = stableRows.length === 0 && !isLoading;
 
   return (
     <div data-testid={testId}>
@@ -118,10 +132,14 @@ export function DirectoryTable<T>({
               <AppCheckbox
                 aria-label="Select all"
                 checked={
-                  selectedIds != null && selectedIds.size > 0 && selectedIds.size === rows.length
+                  selectedIds != null &&
+                  selectedIds.size > 0 &&
+                  selectedIds.size === stableRows.length
                 }
                 indeterminate={
-                  selectedIds != null && selectedIds.size > 0 && selectedIds.size < rows.length
+                  selectedIds != null &&
+                  selectedIds.size > 0 &&
+                  selectedIds.size < stableRows.length
                 }
                 onChange={onToggleSelectAll}
               />
@@ -167,7 +185,7 @@ export function DirectoryTable<T>({
           </div>
         )
       ) : (
-        rows.map((row) => {
+        stableRows.map((row) => {
           const id = rowKey(row);
           const selected = !!(selectable && selectedIds?.has(id as number));
           const expanded = !!(expandable && expandedIds?.has(id));
@@ -206,21 +224,7 @@ export function DirectoryTable<T>({
   );
 }
 
-function DirectoryTableRow<T>({
-  columns: _columns,
-  expandable,
-  expanded,
-  gridTemplate,
-  onToggleExpand,
-  onToggleSelect,
-  renderExpandedContent,
-  renderRow,
-  row,
-  rowId,
-  rowTestId,
-  selectable,
-  selected,
-}: {
+type DirectoryTableRowProps<T> = {
   columns: DirectoryTableColumn[];
   expandable?: boolean;
   expanded: boolean;
@@ -234,7 +238,23 @@ function DirectoryTableRow<T>({
   rowTestId?: string;
   selectable?: boolean;
   selected: boolean;
-}) {
+};
+
+function DirectoryTableRowImpl<T>({
+  columns: _columns,
+  expandable,
+  expanded,
+  gridTemplate,
+  onToggleExpand,
+  onToggleSelect,
+  renderExpandedContent,
+  renderRow,
+  row,
+  rowId,
+  rowTestId,
+  selectable,
+  selected,
+}: DirectoryTableRowProps<T>) {
   const renderCount = useRenderCount();
   return (
     <div data-testid={rowTestId != null ? `${rowTestId}-${rowId}` : undefined}>
@@ -292,3 +312,7 @@ function DirectoryTableRow<T>({
     </div>
   );
 }
+
+const DirectoryTableRow = memo(DirectoryTableRowImpl) as <T>(
+  props: DirectoryTableRowProps<T>,
+) => ReturnType<typeof DirectoryTableRowImpl>;

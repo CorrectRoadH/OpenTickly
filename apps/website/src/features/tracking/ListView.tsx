@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import { ListGroupSection } from "./ListGroupSection.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import {
@@ -33,8 +34,10 @@ export function ListView({
   onProjectChange,
   onSplitEntry,
   onTagsChange,
+  onTaskChange,
   projects,
   tags,
+  tasks,
   timeofdayFormat,
   timezone,
   workspaceName,
@@ -62,8 +65,14 @@ export function ListView({
   ) => void;
   onSplitEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
+  onTaskChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number,
+    taskId: number,
+  ) => void;
   projects?: TimeEntryEditorProject[];
   tags?: TimeEntryEditorTag[];
+  tasks?: ProjectPickerTask[];
   timeofdayFormat: TimeFormat;
   timezone: string;
   workspaceName?: string;
@@ -82,6 +91,7 @@ export function ListView({
   const [expandedGroupKeys, setExpandedGroupKeys] = useState<Set<string>>(new Set());
   const resolvedProjects = projects ?? [];
   const resolvedTags = tags ?? [];
+  const resolvedTasks = tasks ?? [];
   const resolvedWorkspaceName = workspaceName ?? "Workspace";
 
   const expandGroup = (groupKey: string) => {
@@ -160,9 +170,11 @@ export function ListView({
           onProjectChange={onProjectChange}
           onSplitEntry={onSplitEntry}
           onTagsChange={onTagsChange}
+          onTaskChange={onTaskChange}
           projects={resolvedProjects}
           selectedIds={selectedIds}
           tags={resolvedTags}
+          tasks={resolvedTasks}
           timeofdayFormat={timeofdayFormat}
           timezone={timezone}
           toggleEntry={toggleEntry}

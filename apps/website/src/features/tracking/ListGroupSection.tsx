@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { AppCheckbox } from "@opentoggl/web-ui";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { ListEntryRow } from "./ListEntryRow.tsx";
 import {
@@ -34,9 +35,11 @@ export function ListGroupSection({
   onProjectChange,
   onSplitEntry,
   onTagsChange,
+  onTaskChange,
   projects,
   selectedIds,
   tags,
+  tasks,
   timeofdayFormat,
   timezone,
   toggleEntry,
@@ -66,9 +69,15 @@ export function ListGroupSection({
   ) => void;
   onSplitEntry?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   onTagsChange?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry, tagIds: number[]) => void;
+  onTaskChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number,
+    taskId: number,
+  ) => void;
   projects: TimeEntryEditorProject[];
   selectedIds: Set<number>;
   tags: TimeEntryEditorTag[];
+  tasks: ProjectPickerTask[];
   timeofdayFormat: TimeFormat;
   timezone: string;
   toggleEntry: (id: number) => void;
@@ -128,9 +137,11 @@ export function ListGroupSection({
             onProjectChange={onProjectChange}
             onSplitEntry={onSplitEntry}
             onTagsChange={onTagsChange}
+            onTaskChange={onTaskChange}
             projects={projects}
             subIdx={subIdx}
             tags={tags}
+            tasks={tasks}
             timeofdayFormat={timeofdayFormat}
             timezone={timezone}
             toggleEntry={toggleEntry}

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { ProjectsIcon, TagsIcon } from "../../shared/ui/icons.tsx";
 import { ProjectPickerDropdown, TagPickerDropdown } from "./bulk-edit-pickers.tsx";
+import type { ProjectPickerTask } from "./bulk-edit-pickers.tsx";
 import type { TimeEntryEditorProject, TimeEntryEditorTag } from "./TimeEntryEditorDialog.tsx";
 import { resolveEntryColor } from "./overview-data.ts";
 
@@ -143,7 +144,15 @@ export function ListRowTagPicker({
       {open ? (
         <div
           className="absolute right-0 top-full z-50 mt-1 w-[280px]"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            // Preserve focus on the trigger button so its onBlur doesn't
+            // close the dropdown mid-click — but let INPUT elements (the
+            // picker's search field) receive focus so they're typable.
+            // Same pattern as TimerComposerBar's project / tag pickers.
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault();
+            }
+          }}
         >
           <TagPickerDropdown
             filteredTags={filteredTags}
@@ -170,7 +179,9 @@ export function ListRowTagPicker({
 export function ListRowProjectPicker({
   entry,
   onProjectChange,
+  onTaskChange,
   projects,
+  tasks,
   workspaceName,
 }: {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
@@ -178,14 +189,32 @@ export function ListRowProjectPicker({
     entry: GithubComTogglTogglApiInternalModelsTimeEntry,
     projectId: number | null,
   ) => void;
+  onTaskChange?: (
+    entry: GithubComTogglTogglApiInternalModelsTimeEntry,
+    projectId: number,
+    taskId: number,
+  ) => void;
   projects: TimeEntryEditorProject[];
+  tasks?: ProjectPickerTask[];
   workspaceName: string;
 }) {
   const { t } = useTranslation("tracking");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const hasProject = !!entry.project_name;
+  // Resolve project display from the projects list using project_id so that
+  // the optimistic update (which patches project_id immediately but leaves
+  // the server-denormalized project_name/project_color undefined until the
+  // PUT round-trip completes) still flips this button to the "has project"
+  // branch in the same tick. Before this, picking a project on an empty
+  // entry looked stuck on "Add a project" until the server responded.
+  const projectIdFromEntry = entry.project_id ?? entry.pid ?? null;
+  const resolvedProject =
+    projectIdFromEntry != null ? projects.find((p) => p.id === projectIdFromEntry) : undefined;
+  const hasProject = resolvedProject != null || !!entry.project_name;
+  const displayName = resolvedProject?.name ?? entry.project_name ?? "";
+  const displayColor = resolvedProject?.color ?? resolveEntryColor(entry);
+  const displayClientName = resolvedProject?.clientName ?? entry.client_name ?? undefined;
 
   return (
     <div className="relative" ref={containerRef}>
@@ -201,15 +230,15 @@ export function ListRowProjectPicker({
         >
           <span
             className="size-[9px] shrink-0 rounded-full"
-            style={{ backgroundColor: resolveEntryColor(entry) }}
+            style={{ backgroundColor: displayColor }}
           />
-          <span className="truncate" style={{ color: resolveEntryColor(entry) }}>
-            {entry.project_name}
+          <span className="truncate" style={{ color: displayColor }}>
+            {displayName}
           </span>
-          {entry.client_name ? (
+          {displayClientName ? (
             <span className="truncate text-[var(--track-text-muted)]">
               <span className="mx-0.5">·</span>
-              <span>{entry.client_name}</span>
+              <span>{displayClientName}</span>
             </span>
           ) : null}
         </button>
@@ -230,14 +259,31 @@ export function ListRowProjectPicker({
       {open ? (
         <div
           className="absolute left-0 top-full z-50 mt-1 w-[280px]"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={(e) => {
+            // Preserve focus on the trigger button so its onBlur doesn't
+            // close the dropdown mid-click — but let INPUT elements (the
+            // picker's search field) receive focus so they're typable.
+            // Same pattern as TimerComposerBar's project / tag pickers.
+            if ((e.target as HTMLElement).tagName !== "INPUT") {
+              e.preventDefault();
+            }
+          }}
         >
           <ProjectPickerDropdown
             onSelect={(projectId) => {
               setOpen(false);
               onProjectChange?.(entry, projectId);
             }}
+            onTaskSelect={
+              onTaskChange
+                ? (projectId, taskId) => {
+                    setOpen(false);
+                    onTaskChange(entry, projectId, taskId);
+                  }
+                : undefined
+            }
             projects={projects}
+            tasks={tasks}
             workspaceName={workspaceName}
           />
         </div>

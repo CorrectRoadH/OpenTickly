@@ -492,6 +492,21 @@ export function ProjectsPage({ statusFilter }: ProjectsPageProps): ReactElement 
             columns={PROJECT_COLUMNS(t)}
             rows={projects}
             rowKey={(p) => p.id!}
+            isRowEqual={(a, b) =>
+              a.id === b.id &&
+              a.name === b.name &&
+              a.color === b.color &&
+              a.client_name === b.client_name &&
+              a.active === b.active &&
+              a.pinned === b.pinned &&
+              a.is_private === b.is_private &&
+              a.billable === b.billable &&
+              a.start_date === b.start_date &&
+              a.end_date === b.end_date &&
+              a.current_period?.start_date === b.current_period?.start_date &&
+              a.actual_seconds === b.actual_seconds &&
+              a.actual_hours === b.actual_hours
+            }
             selectable
             selectedIds={selectedIds}
             onToggleSelect={(id) =>

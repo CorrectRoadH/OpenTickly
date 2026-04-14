@@ -125,6 +125,7 @@ export function TagsPage(): ReactElement {
         columns={TAG_COLUMNS}
         rows={filteredTags}
         rowKey={(tag) => tag.id}
+        isRowEqual={(a, b) => a.id === b.id && a.name === b.name && a.deleted_at === b.deleted_at}
         data-testid="tags-list"
         data-row-testid="tag-row"
         emptyIcon={<TagsIcon className="size-5" />}

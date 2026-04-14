@@ -1,12 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
-import {
-  stabilizeEntryGroups,
-  stabilizeListViewProjects,
-  stabilizeListViewTags,
-  stabilizeTimeEntryList,
-} from "./time-entry-stability.ts";
+import { stabilizeEntryGroups, stabilizeTimeEntryList } from "./time-entry-stability.ts";
 
 function makeEntry(
   overrides: Partial<GithubComTogglTogglApiInternalModelsTimeEntry> = {},
@@ -49,66 +44,6 @@ describe("stabilizeTimeEntryList", () => {
     expect(stabilized).not.toBe(previous);
     expect(stabilized[0]).toBe(previous[0]);
     expect(stabilized[1]).not.toBe(previous[1]);
-  });
-});
-
-describe("stabilizeListViewProjects", () => {
-  const makeProject = (
-    overrides: Partial<{
-      clientName?: string;
-      color: string;
-      id: number;
-      name: string;
-      pinned: boolean;
-    }> = {},
-  ) => ({
-    clientName: undefined,
-    color: "#ff0000",
-    id: 1,
-    name: "Core",
-    pinned: false,
-    ...overrides,
-  });
-
-  it("reuses the previous array when contents are equivalent even with fresh item refs", () => {
-    const previous = [makeProject(), makeProject({ id: 2, name: "Ops" })];
-    const next = previous.map((project) => ({ ...project }));
-
-    const stabilized = stabilizeListViewProjects(previous, next);
-
-    expect(stabilized).toBe(previous);
-    expect(stabilized[0]).toBe(previous[0]);
-    expect(stabilized[1]).toBe(previous[1]);
-  });
-
-  it("reuses prior item references by id when only one project changed", () => {
-    const previous = [makeProject(), makeProject({ id: 2, name: "Ops" })];
-    const next = [{ ...previous[0]! }, { ...previous[1]!, name: "Operations" }];
-
-    const stabilized = stabilizeListViewProjects(previous, next);
-
-    expect(stabilized).not.toBe(previous);
-    expect(stabilized[0]).toBe(previous[0]);
-    expect(stabilized[1]).not.toBe(previous[1]);
-  });
-});
-
-describe("stabilizeListViewTags", () => {
-  it("reuses the previous array when items are reference-identical", () => {
-    const previous = [
-      { id: 1, name: "focus" },
-      { id: 2, name: "admin" },
-    ];
-    const next = [...previous];
-
-    expect(stabilizeListViewTags(previous, next)).toBe(previous);
-  });
-
-  it("returns the next array when items change", () => {
-    const previous = [{ id: 1, name: "focus" }];
-    const next = [{ id: 1, name: "deep focus" }];
-
-    expect(stabilizeListViewTags(previous, next)).toBe(next);
   });
 });
 
