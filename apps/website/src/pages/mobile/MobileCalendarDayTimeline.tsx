@@ -88,9 +88,14 @@ export function MobileCalendarDayTimeline({
           </div>
         ))}
 
-        {/* Current time indicator */}
+        {/* Current time indicator — purely visual, must not block taps on
+            entries that overlap "now" (e.g. an entry running across the
+            current minute). Without `pointer-events-none` the red line's
+            full-width div intercepts clicks targeting the entry button
+            beneath it, breaking the mobile calendar editor flow on CI
+            runs that happen to land inside the entry's time range. */}
         <div
-          className="absolute left-10 right-0 z-10 border-t-2 border-[var(--track-accent)]"
+          className="pointer-events-none absolute left-10 right-0 z-10 border-t-2 border-[var(--track-accent)]"
           style={{ top: (nowMinutes / 60) * HOUR_HEIGHT }}
         >
           <div className="absolute -left-1.5 -top-[5px] size-[8px] rounded-full bg-[var(--track-accent)]" />
