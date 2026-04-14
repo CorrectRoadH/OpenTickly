@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { useRenderCount } from "@uidotdev/usehooks";
 
 import { AppCheckbox } from "./AppCheckbox.tsx";
 
@@ -140,63 +141,26 @@ export function DirectoryTable<T>({
       ) : (
         rows.map((row) => {
           const id = rowKey(row);
-          const selected = selectable && selectedIds?.has(id as number);
-          const expanded = expandable && expandedIds?.has(id);
+          const selected = !!(selectable && selectedIds?.has(id as number));
+          const expanded = !!(expandable && expandedIds?.has(id));
 
           return (
-            <div data-testid={rowTestId != null ? `${rowTestId}-${id}` : undefined} key={id}>
-              <div
-                className={`group/row grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
-                  selected
-                    ? "border-l-2 border-l-[var(--track-accent)] bg-[var(--track-accent-soft)]"
-                    : ""
-                }`}
-                style={{ gridTemplateColumns: gridTemplate }}
-              >
-                {selectable && (
-                  <div className="flex items-center">
-                    <AppCheckbox
-                      aria-label="Select row"
-                      checked={!!selected}
-                      onChange={() => onToggleSelect?.(id as number)}
-                    />
-                  </div>
-                )}
-                {expandable && (
-                  <button
-                    className="flex items-center justify-center text-[var(--track-text-muted)]"
-                    onClick={() => onToggleExpand?.(id)}
-                    type="button"
-                  >
-                    <svg
-                      className={`size-3 transition-transform duration-[120ms] ${expanded ? "rotate-90" : ""}`}
-                      fill="none"
-                      style={{ transitionTimingFunction: "var(--ease-spring)" }}
-                      viewBox="0 0 12 12"
-                    >
-                      <path
-                        d="M4.5 3L7.5 6L4.5 9"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                  </button>
-                )}
-                {renderRow(row)}
-              </div>
-              {expandable && expanded && renderExpandedContent && (
-                <div
-                  className="px-5"
-                  style={{
-                    paddingLeft: `calc(20px + ${selectable ? "42px" : "0px"} + 28px)`,
-                  }}
-                >
-                  {renderExpandedContent(row)}
-                </div>
-              )}
-            </div>
+            <DirectoryTableRow
+              columns={columns}
+              expandable={expandable}
+              expanded={expanded}
+              gridTemplate={gridTemplate}
+              key={id}
+              onToggleExpand={onToggleExpand}
+              onToggleSelect={onToggleSelect}
+              renderExpandedContent={renderExpandedContent}
+              renderRow={renderRow}
+              row={row}
+              rowId={id}
+              rowTestId={rowTestId}
+              selectable={selectable}
+              selected={selected}
+            />
           );
         })
       )}
@@ -210,6 +174,106 @@ export function DirectoryTable<T>({
 
       {/* Pagination */}
       {pagination}
+    </div>
+  );
+}
+
+function DirectoryTableRow<T>({
+  columns: _columns,
+  expandable,
+  expanded,
+  gridTemplate,
+  onToggleExpand,
+  onToggleSelect,
+  renderExpandedContent,
+  renderRow,
+  row,
+  rowId,
+  rowTestId,
+  selectable,
+  selected,
+}: {
+  columns: DirectoryTableColumn[];
+  expandable?: boolean;
+  expanded: boolean;
+  gridTemplate: string;
+  onToggleExpand?: (id: number | string) => void;
+  onToggleSelect?: (id: number) => void;
+  renderExpandedContent?: (row: T) => ReactNode;
+  renderRow: (row: T) => ReactNode;
+  row: T;
+  rowId: number | string;
+  rowTestId?: string;
+  selectable?: boolean;
+  selected: boolean;
+}) {
+  const renderCount = useRenderCount();
+  // First data column index in the CSS grid (1-based). Leading tracks are
+  // the optional selectable checkbox and optional expand toggle. The
+  // dev-only render-count badge is placed in that first data track with
+  // justify-self: end so it sits at the right edge of the row's primary
+  // content (typically the name cell).
+  const firstDataColumn = 1 + (selectable ? 1 : 0) + (expandable ? 1 : 0);
+  return (
+    <div data-testid={rowTestId != null ? `${rowTestId}-${rowId}` : undefined}>
+      <div
+        className={`group/row relative grid items-center px-5 transition-colors hover:bg-[var(--track-row-hover)] ${
+          selected ? "border-l-2 border-l-[var(--track-accent)] bg-[var(--track-accent-soft)]" : ""
+        }`}
+        style={{ gridTemplateColumns: gridTemplate }}
+      >
+        {selectable && (
+          <div className="flex items-center">
+            <AppCheckbox
+              aria-label="Select row"
+              checked={selected}
+              onChange={() => onToggleSelect?.(rowId as number)}
+            />
+          </div>
+        )}
+        {expandable && (
+          <button
+            className="flex items-center justify-center text-[var(--track-text-muted)]"
+            onClick={() => onToggleExpand?.(rowId)}
+            type="button"
+          >
+            <svg
+              className={`size-3 transition-transform duration-[120ms] ${expanded ? "rotate-90" : ""}`}
+              fill="none"
+              style={{ transitionTimingFunction: "var(--ease-spring)" }}
+              viewBox="0 0 12 12"
+            >
+              <path
+                d="M4.5 3L7.5 6L4.5 9"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </button>
+        )}
+        {renderRow(row)}
+        {import.meta.env.DEV ? (
+          <span
+            className="pointer-events-none justify-self-end self-center pl-2 font-mono text-[10px] text-[var(--track-text-muted)]"
+            data-testid={`directory-table-rendercount-${rowId}`}
+            style={{ gridColumn: `${firstDataColumn} / span 1` }}
+          >
+            renders: {renderCount}
+          </span>
+        ) : null}
+      </div>
+      {expandable && expanded && renderExpandedContent && (
+        <div
+          className="px-5"
+          style={{
+            paddingLeft: `calc(20px + ${selectable ? "42px" : "0px"} + 28px)`,
+          }}
+        >
+          {renderExpandedContent(row)}
+        </div>
+      )}
     </div>
   );
 }

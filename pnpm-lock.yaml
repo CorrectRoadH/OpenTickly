@@ -389,6 +389,9 @@ importers:
 
   packages/web-ui:
     dependencies:
+      '@uidotdev/usehooks':
+        specifier: 'catalog:'
+        version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       baseui:
         specifier: ^15.0.0
         version: 15.0.2(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(styletron-react@6.1.1(react@18.3.1))

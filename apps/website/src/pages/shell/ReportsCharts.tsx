@@ -1,4 +1,5 @@
 import { type ReactElement, useState } from "react";
+import { useRenderCount } from "@uidotdev/usehooks";
 import { useTranslation } from "react-i18next";
 import {
   Bar,
@@ -39,6 +40,7 @@ const DAY_NAMES: Record<string, string> = {
 
 export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): ReactElement {
   const { t } = useTranslation("reports");
+  const renderCount = useRenderCount();
   const data = weekRows.map((row) => ({
     name: row.label,
     seconds: row.seconds,
@@ -65,7 +67,17 @@ export function DurationChart({ weekRows }: { weekRows: ReportsDayRow[] }): Reac
       className="rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] p-5"
       data-testid="reports-duration-chart"
     >
-      <h2 className="text-[14px] font-semibold leading-[23px] text-white">{t("durationByDay")}</h2>
+      <h2 className="flex items-center gap-2 text-[14px] font-semibold leading-[23px] text-white">
+        {t("durationByDay")}
+        {import.meta.env.DEV ? (
+          <span
+            className="font-mono text-[11px] font-normal text-[var(--track-text-muted)]"
+            data-testid="reports-duration-chart-rendercount"
+          >
+            renders: {renderCount}
+          </span>
+        ) : null}
+      </h2>
       <div className="mt-4 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface-muted)] px-4 pb-4 pt-3">
         <ResponsiveContainer height={248 + bottomMargin} width="100%">
           <BarChart data={data} margin={{ top: 16, right: 4, left: 0, bottom: bottomMargin }}>

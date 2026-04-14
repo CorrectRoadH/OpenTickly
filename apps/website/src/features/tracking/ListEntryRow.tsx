@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { useRenderCount } from "@uidotdev/usehooks";
 import { useTranslation } from "react-i18next";
 
 import { AppCheckbox } from "@opentoggl/web-ui";
@@ -88,6 +89,7 @@ export function ListEntryRow({
   const entryId = entry.id;
   const isCollapsedRow = groupCount > 1 && !isExpanded && subIdx === 0;
   const isExpandedGroup = groupCount > 1 && isExpanded;
+  const renderCount = useRenderCount();
 
   return (
     <li
@@ -140,6 +142,14 @@ export function ListEntryRow({
               isRunning={isRunningTimeEntry(entry)}
               onChange={onDescriptionChange}
             />
+            {import.meta.env.DEV ? (
+              <span
+                className="shrink-0 font-mono text-[11px] leading-tight text-[var(--track-text-muted)]"
+                data-testid={`list-entry-rendercount-${entryId ?? "unknown"}`}
+              >
+                renders: {renderCount}
+              </span>
+            ) : null}
             <ListRowProjectPicker
               entry={entry}
               onProjectChange={onProjectChange}

@@ -13,6 +13,7 @@
     "check": "vp check"
   },
   "dependencies": {
+    "@uidotdev/usehooks": "catalog:",
     "baseui": "^15.0.0",
     "react-compiler-runtime": "catalog:",
     "styletron-engine-atomic": "^1.6.2",
