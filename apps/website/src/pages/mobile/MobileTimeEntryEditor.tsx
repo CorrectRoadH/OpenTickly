@@ -57,9 +57,15 @@ export function MobileTimeEntryEditor({
 
   const duration = formatClockDuration(durationSeconds, durationFormat);
 
-  async function handleSave() {
+  // Close the modal synchronously and fire the mutation in the background.
+  // The mutation's onMutate already patched the cache, so the list/timer
+  // reflect the edit instantly; holding the modal open waiting for the
+  // server round-trip was the remaining source of "慢一拍" on mobile.
+  // On error, the mutation's onError rolls the cache back.
+  function handleSave() {
     if (!entry.id) return;
-    await updateMutation.mutateAsync({
+    onClose();
+    void updateMutation.mutateAsync({
       request: {
         billable,
         description: description.trim(),
@@ -71,13 +77,12 @@ export function MobileTimeEntryEditor({
       timeEntryId: entry.id,
       workspaceId,
     });
-    onClose();
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!entry.id) return;
-    await deleteMutation.mutateAsync({ timeEntryId: entry.id, workspaceId });
     onClose();
+    void deleteMutation.mutateAsync({ timeEntryId: entry.id, workspaceId });
   }
 
   const selectedProject = projects.find((p) => p.id === projectId) ?? null;
@@ -234,7 +239,7 @@ export function MobileTimeEntryEditor({
           aria-label={t("saveChanges")}
           className="text-[14px] font-semibold text-[var(--track-accent)]"
           disabled={updateMutation.isPending}
-          onClick={() => void handleSave()}
+          onClick={() => handleSave()}
           type="button"
         >
           {updateMutation.isPending ? t("saving") : t("save")}
@@ -350,7 +355,7 @@ export function MobileTimeEntryEditor({
             aria-label={t("deleteThisTimeEntry")}
             className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-2.5 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)]"
             disabled={deleteMutation.isPending}
-            onClick={() => void handleDelete()}
+            onClick={() => handleDelete()}
             type="button"
           >
             <TrashIcon className="size-4" />
