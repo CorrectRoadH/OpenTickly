@@ -54,12 +54,31 @@ export function CalendarView({
   weekStartsOn = 1,
   zoom = 0,
 }: CalendarViewProps): ReactElement {
-  // Minute-resolution tick -- only re-renders CalendarView once per minute
+  // Two independent ticks, co-scheduled on one setInterval to keep re-render
+  // cadence predictable:
+  //  - nowMinuteMs advances every minute, drives buildEvents for the
+  //    running-entry live length in the grid.
+  //  - todayDayStartMs advances at most once per local day, drives the
+  //    isToday highlight in the day header.
+  // Deriving `today` from its own state (instead of `new Date()` inline)
+  // is what lets React Compiler keep `calendarComponents` ref-stable on
+  // minute rollovers — without this, the inline `header` arrow closes
+  // over a brand-new Date every render, forcing RBC to unmount+remount
+  // the TimeGridHeader subtree. See e2e/calendar-header-rerender.spec.ts.
   const [nowMinuteMs, setNowMinuteMs] = useState(() => Math.floor(Date.now() / 60_000) * 60_000);
+  const [todayDayStartMs, setTodayDayStartMs] = useState(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  });
   useEffect(() => {
     const id = setInterval(() => {
-      const next = Math.floor(Date.now() / 60_000) * 60_000;
-      setNowMinuteMs((prev) => (prev === next ? prev : next));
+      const nextMinute = Math.floor(Date.now() / 60_000) * 60_000;
+      setNowMinuteMs((prev) => (prev === nextMinute ? prev : nextMinute));
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      const nextDay = d.getTime();
+      setTodayDayStartMs((prev) => (prev === nextDay ? prev : nextDay));
     }, 5_000);
     return () => clearInterval(id);
   }, []);
@@ -75,7 +94,7 @@ export function CalendarView({
 
   const events = buildEvents(entries, draftEntry, runningEntry, nowMinuteMs);
   const dailyTotals = buildDailyTotals(entries, weekDays, timezone);
-  const today = new Date();
+  const today = new Date(todayDayStartMs);
 
   const currentView =
     subview === "day" ? Views.DAY : subview === "five-day" ? Views.WORK_WEEK : Views.WEEK;

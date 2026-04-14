@@ -1,7 +1,20 @@
+import { memo } from "react";
+import { useRenderCount } from "@uidotdev/usehooks";
+
 import i18n from "../../app/i18n.ts";
 import { formatDayTotal } from "./calendar-types.ts";
 
-export function CalendarDayHeader({
+// Component-boundary memo: CalendarView owns the `nowMinuteMs` ticker for
+// running-entry live updates, so it re-renders every minute. Without this
+// memo boundary, every day header re-renders with it, which is also what
+// made RBC's TimeGridHeader flash on minute rollovers (see
+// e2e/calendar-header-rerender.spec.ts). React Compiler owns most
+// memoization in this repo, but it cannot skip a child render across a
+// third-party-component boundary (RBC's internal TimeGridHeader) — that's
+// why a memo wrapper is the right tool here.
+export const CalendarDayHeader = memo(CalendarDayHeaderImpl);
+
+function CalendarDayHeaderImpl({
   date,
   dailyTotals,
   timezone,
@@ -12,6 +25,7 @@ export function CalendarDayHeader({
   timezone: string;
   today: Date;
 }) {
+  const renderCount = useRenderCount();
   const dayNum = date.getDate();
   const dayName = new Intl.DateTimeFormat(i18n.language, { weekday: "short" })
     .format(date)
@@ -52,6 +66,14 @@ export function CalendarDayHeader({
           {totalSeconds > 0 ? formatDayTotal(totalSeconds) : "0:00:00"}
         </span>
       </span>
+      {import.meta.env.DEV ? (
+        <span
+          className="ml-auto font-mono text-[10px] leading-none text-[var(--track-text-muted)]"
+          data-testid={`calendar-day-header-rendercount-${dayName.toLowerCase()}`}
+        >
+          r:{renderCount}
+        </span>
+      ) : null}
     </div>
   );
 }
