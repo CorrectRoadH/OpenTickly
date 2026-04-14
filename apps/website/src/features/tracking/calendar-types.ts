@@ -73,15 +73,19 @@ export function splitAtMidnight(start: Date, end: Date): Array<{ end: Date; star
     const nextMidnight = new Date(cursor);
     nextMidnight.setHours(24, 0, 0, 0);
 
-    if (nextMidnight >= end) {
+    if (nextMidnight > end) {
       segments.push({ end, start: cursor });
       break;
     }
 
     // End the segment 1ms before midnight so react-big-calendar keeps it
     // in the time grid instead of promoting it to an all-day header event.
+    // This also covers the nextMidnight === end case (entry stopping exactly
+    // at midnight of the next day): we clip the tail and break without
+    // emitting a zero-duration segment on the following day.
     const segmentEnd = new Date(nextMidnight.getTime() - 1);
     segments.push({ end: segmentEnd, start: cursor });
+    if (nextMidnight.getTime() === end.getTime()) break;
     cursor = nextMidnight;
   }
 
