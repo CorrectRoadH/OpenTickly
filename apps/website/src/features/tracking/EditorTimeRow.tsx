@@ -108,7 +108,6 @@ export function EditorTimeRow(): ReactElement {
               datePickerTriggerRef={stopDatePickerTriggerRef}
               editing={timeEditor === "stop"}
               hasError={ctx.ui.timeInputError === "stop"}
-              hideDateButton
               onDateClick={() => {
                 dispatch({ type: "SET_TIME_EDITOR", timeEditor: null });
                 dispatch({ type: "SET_TIME_PICKER", timePicker: "stop" });
@@ -136,6 +135,7 @@ export function EditorTimeRow(): ReactElement {
             {duration}
           </span>
           <AppButton
+            className="ml-auto"
             disabled={isSaving}
             onClick={() => {
               if (!isSaving) {
@@ -188,7 +188,6 @@ function TimeDisplay({
   datePickerTriggerRef,
   editing,
   hasError = false,
-  hideDateButton = false,
   onDateClick,
   onEditEnd,
   onEditStart,
@@ -204,7 +203,6 @@ function TimeDisplay({
   datePickerTriggerRef?: Ref<HTMLButtonElement | null>;
   editing: boolean;
   hasError?: boolean;
-  hideDateButton?: boolean;
   onDateClick: () => void;
   onEditEnd: () => void;
   onEditStart: () => void;
@@ -229,10 +227,14 @@ function TimeDisplay({
 
   const borderColor = hasError
     ? "border-rose-400"
-    : "border-[var(--track-control-border-contrast)]";
+    : editing
+      ? "border-[var(--track-accent-secondary)]"
+      : "border-[var(--track-control-border-contrast)] hover:border-[var(--track-overlay-text-soft)]";
 
   return (
-    <div className="relative flex items-center gap-1.5">
+    <div
+      className={`relative flex h-[38px] shrink-0 items-center rounded-[10px] border bg-[var(--track-control-surface)] transition ${borderColor}`}
+    >
       {editing ? (
         <label className="block">
           <span className="sr-only">{t("editTime")}</span>
@@ -241,9 +243,7 @@ function TimeDisplay({
             aria-invalid={hasError}
             autoFocus
             data-testid={dialogRootTestId ? `${dialogRootTestId}-time-input` : undefined}
-            className={`h-[38px] w-[90px] min-w-0 rounded-[10px] border bg-[var(--track-control-surface)] px-3 text-[12px] font-semibold tabular-nums text-white outline-none ${
-              hasError ? "border-rose-400" : "border-[var(--track-accent-secondary)]"
-            }`}
+            className="h-[36px] w-[68px] min-w-0 rounded-l-[9px] bg-transparent pl-3 pr-1 text-[12px] font-semibold tabular-nums text-white outline-none"
             value={draft}
             inputMode="numeric"
             onBlur={(event) => {
@@ -275,26 +275,24 @@ function TimeDisplay({
       ) : (
         <button
           aria-label={timeAriaLabel}
-          className={`flex h-[38px] w-[90px] items-center whitespace-nowrap rounded-[10px] border px-3 text-[12px] font-semibold tabular-nums text-white transition hover:border-[var(--track-overlay-text-soft)] ${borderColor}`}
+          className="flex h-full items-center whitespace-nowrap pl-3 pr-1 text-[12px] font-semibold tabular-nums text-white"
           onClick={onEditStart}
           type="button"
         >
-          <span>{formatClockTime(time, timezone, timeofdayFormat)}</span>
+          {formatClockTime(time, timezone, timeofdayFormat)}
         </button>
       )}
-      {!hideDateButton ? (
-        <button
-          aria-label={dateAriaLabel}
-          className="flex size-[38px] shrink-0 items-center justify-center rounded-[10px] border border-[var(--track-control-border-contrast)] text-[var(--track-overlay-icon-subtle)] transition hover:border-[var(--track-overlay-text-soft)] hover:text-white"
-          onClick={onDateClick}
-          ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
-          type="button"
-        >
-          <CalendarIcon className="size-4" />
-        </button>
-      ) : null}
+      <button
+        aria-label={dateAriaLabel}
+        className="flex h-full items-center justify-center pl-1 pr-2.5 text-[var(--track-overlay-icon-subtle)] transition hover:text-white"
+        onClick={onDateClick}
+        ref={datePickerTriggerRef as React.LegacyRef<HTMLButtonElement>}
+        type="button"
+      >
+        <CalendarIcon className="size-3.5" />
+      </button>
       {hasError ? (
-        <span className="absolute -bottom-5 left-0 text-[11px] text-rose-400">
+        <span className="absolute -bottom-5 left-0 whitespace-nowrap text-[11px] text-rose-400">
           {t("invalidTime")}
         </span>
       ) : null}

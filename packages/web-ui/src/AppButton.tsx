@@ -25,7 +25,7 @@ type AppLinkButtonProps = AppButtonStyleProps &
   };
 
 const base =
-  "inline-flex items-center justify-center gap-1.5 rounded-[8px] border font-semibold select-none transition-[transform,box-shadow,border-color,background-color,color] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
+  "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[8px] border font-semibold select-none transition-[transform,box-shadow,border-color,background-color,color] duration-[var(--duration-fast)] disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0";
 
 const normal =
   "border-[var(--track-accent)] bg-[var(--track-button)] text-[var(--track-button-text)] shadow-[var(--track-depth-accent-shadow)] hover:-translate-y-px hover:bg-[var(--track-accent-fill-hover)] hover:shadow-[var(--track-depth-accent-shadow-hover)] active:translate-y-px active:shadow-[var(--track-depth-shadow-active)]";
