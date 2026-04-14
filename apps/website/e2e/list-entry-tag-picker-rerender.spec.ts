@@ -150,6 +150,13 @@ test.describe("List entry tag picker re-render hygiene", () => {
     // 1. Picker itself: a well-behaved picker re-renders a small, bounded
     //    number of times per toggle (optimistic entry update +
     //    persisted echo). A runaway loop produces dozens of renders.
+    //
+    //    Threshold of 4 = 2 real commits (optimistic + server) × 2 for
+    //    StrictMode (which double-invokes the function body in DEV, and
+    //    `useRenderCount` increments a ref inside the body — so the
+    //    displayed `r:N` advances by 2 per actual commit). The original
+    //    runaway bug surfaced as r:1→r:9+ / renders:67, so 4 still
+    //    catches the regression with a wide margin.
     const pickerAfterText = await pickerCounter.textContent();
     const pickerAfter = Number((pickerAfterText ?? "r:0").slice(2));
     expect.soft(pickerAfter).toBeGreaterThanOrEqual(pickerBaseline);
@@ -160,7 +167,7 @@ test.describe("List entry tag picker re-render hygiene", () => {
           `single tag toggle (baseline r:${pickerBaseline}, after r:${pickerAfter}). ` +
           `Users report the top-right r:N counter ticks continuously while the picker is open.`,
       )
-      .toBeLessThanOrEqual(3);
+      .toBeLessThanOrEqual(4);
 
     // 2. Sibling rows: the memo in ListEntryRow should short-circuit
     //    because neither the entry nor any reference-stable prop

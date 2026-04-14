@@ -5,6 +5,7 @@ import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
 import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
+import { normalizeProjects, normalizeTags } from "../../features/tracking/useWorkspaceData.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
 import {
   useDeleteTimeEntryMutation,
@@ -44,8 +45,15 @@ export function MobileTimeEntryEditor({
   const [startIso, setStartIso] = useState(entry.start ?? "");
   const [stopIso, setStopIso] = useState(entry.stop ?? "");
 
-  const projects = Array.isArray(projectsQuery.data) ? projectsQuery.data : [];
-  const tags = Array.isArray(tagsQuery.data) ? tagsQuery.data : [];
+  // The projects/tags queries may arrive as a plain array OR as a wrapped
+  // `{ projects: [...] }` / `{ data: [...] }` envelope — see `normalizeProjects`.
+  // Guarding with `Array.isArray` silently drops the wrapped shape, which left
+  // `selectedProject` null after picking a project and then sent
+  // `projectName: null` to the optimistic patch, so the row stayed blank
+  // until the PUT returned. Normalize through the same helpers the list
+  // view uses so all call sites share one source of truth.
+  const projects = normalizeProjects(projectsQuery.data);
+  const tags = normalizeTags(tagsQuery.data);
 
   const durationSeconds = (() => {
     if (!startIso || !stopIso) return 0;
