@@ -251,7 +251,9 @@ export function useUpdateTimeEntryMutation() {
       request: {
         billable?: boolean;
         description?: string;
+        projectColor?: string | null;
         projectId?: number | null;
+        projectName?: string | null;
         start?: string;
         stop?: string;
         tagIds?: number[];
@@ -281,32 +283,17 @@ export function useUpdateTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: ({ request, timeEntryId, workspaceId }) => {
+    onMutate: ({ request, timeEntryId }) => {
       // `project_name` / `project_color` are server-denormalized fields
-      // that rows render directly (the list view's ProjectPicker reads
-      // `entry.project_name`, not the projects query). On optimistic
-      // project change we need to patch them from the workspace's
-      // projects cache — otherwise the row flashes blank / stale until
-      // the PUT response lands, and if the user navigates away before
-      // that (or the test calls `page.reload()`), the UI never reflects
-      // the save. We scan `["projects", workspaceId, *]` because status
-      // filters ("all" / "active" / "archived") each keep their own
-      // cache entry but the project metadata inside is identical.
-      const selectedProject = (() => {
-        if (request.projectId == null) return null;
-        const cached = queryClient.getQueriesData<unknown>({
-          queryKey: ["projects", workspaceId],
-        });
-        for (const [, data] of cached) {
-          const list = Array.isArray(data)
-            ? (data as Array<{ color?: string | null; id?: number | null; name?: string | null }>)
-            : [];
-          const match = list.find((project) => project.id === request.projectId);
-          if (match) return match;
-        }
-        return null;
-      })();
-
+      // that rows render directly (MobileTimeEntryRow reads
+      // `entry.project_name`, the list view's ProjectPicker too, not
+      // the projects query). On optimistic project change the caller
+      // MUST pass the matching `projectName` / `projectColor` — they
+      // already hold the picked project object from the picker list.
+      // Reading the projects cache from here would be a second, fragile
+      // source of truth (cache may be wrapped `{ projects: [...] }` or
+      // `{ data: [...] }` instead of a plain Array — see
+      // `normalizeProjects` — and/or not yet populated on first paint).
       const applyPatch = (
         entry: GithubComTogglTogglApiInternalModelsTimeEntry,
       ): GithubComTogglTogglApiInternalModelsTimeEntry => ({
@@ -315,10 +302,9 @@ export function useUpdateTimeEntryMutation() {
         ...(request.billable !== undefined && { billable: request.billable }),
         ...(request.projectId !== undefined && {
           project_id: request.projectId,
-          project_name:
-            request.projectId === null ? undefined : (selectedProject?.name ?? undefined),
+          project_name: request.projectId === null ? undefined : (request.projectName ?? undefined),
           project_color:
-            request.projectId === null ? undefined : (selectedProject?.color ?? undefined),
+            request.projectId === null ? undefined : (request.projectColor ?? undefined),
         }),
         ...(request.start !== undefined && { start: request.start }),
         ...(request.stop !== undefined && { stop: request.stop }),

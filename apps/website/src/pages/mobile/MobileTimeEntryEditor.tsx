@@ -69,7 +69,9 @@ export function MobileTimeEntryEditor({
       request: {
         billable,
         description: description.trim(),
+        projectColor: selectedProject?.color ?? null,
         projectId,
+        projectName: selectedProject?.name ?? null,
         start: startIso,
         stop: stopIso,
         tagIds,

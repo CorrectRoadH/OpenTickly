@@ -102,7 +102,9 @@ export function ConnectedTimesheetView({
         request: {
           billable: entry.billable,
           description: entry.description ?? "",
+          projectColor: entry.project_color ?? null,
           projectId: resolveTimeEntryProjectId(entry),
+          projectName: entry.project_name ?? null,
           start: entry.start,
           stop: toTrackIso(nextStop),
           tagIds: entry.tag_ids ?? [],
@@ -136,7 +138,9 @@ export function ConnectedTimesheetView({
       request: {
         billable: firstEntry.billable,
         description: firstEntry.description ?? "",
+        projectColor: firstEntry.project_color ?? null,
         projectId: resolveTimeEntryProjectId(firstEntry),
+        projectName: firstEntry.project_name ?? null,
         start: firstEntry.start,
         stop: toTrackIso(nextStop),
         tagIds: firstEntry.tag_ids ?? [],

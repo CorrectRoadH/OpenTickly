@@ -157,7 +157,9 @@ export function ConnectedCalendarView({
       request: {
         billable: targetEntry.billable,
         description: targetEntry.description ?? "",
+        projectColor: targetEntry.project_color ?? null,
         projectId: resolveTimeEntryProjectId(targetEntry),
+        projectName: targetEntry.project_name ?? null,
         start: toTrackIso(nextStart),
         stop: nextStop ? toTrackIso(nextStop) : undefined,
         tagIds: targetEntry.tag_ids ?? [],
@@ -193,7 +195,9 @@ export function ConnectedCalendarView({
       request: {
         billable: targetEntry.billable,
         description: targetEntry.description ?? "",
+        projectColor: targetEntry.project_color ?? null,
         projectId: resolveTimeEntryProjectId(targetEntry),
+        projectName: targetEntry.project_name ?? null,
         start: toTrackIso(new Date(nextStartMs)),
         stop: toTrackIso(new Date(nextStopMs)),
         tagIds: targetEntry.tag_ids ?? [],

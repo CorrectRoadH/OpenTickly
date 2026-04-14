@@ -241,12 +241,16 @@ export function useTimeEntryEditor(
     }
     setError(null);
     onClose();
+    const selectedProject =
+      projectId == null ? null : (projects.find((p) => p.id === projectId) ?? null);
     updateTimeEntryMutation
       .mutateAsync({
         request: {
           billable: entry.billable,
           description: description.trim(),
+          projectColor: selectedProject?.color ?? null,
           projectId,
+          projectName: selectedProject?.name ?? null,
           start: entry.start,
           stop: entry.stop,
           tagIds,
@@ -347,11 +351,15 @@ export function useTimeEntryEditor(
       return;
     }
     try {
+      const splitSelectedProject =
+        projectId == null ? null : (projects.find((p) => p.id === projectId) ?? null);
       await updateTimeEntryMutation.mutateAsync({
         request: {
           billable: entry.billable,
           description: description.trim(),
+          projectColor: splitSelectedProject?.color ?? null,
           projectId,
+          projectName: splitSelectedProject?.name ?? null,
           start: entry.start,
           stop: new Date(resolvedSplitMs).toISOString(),
           tagIds,

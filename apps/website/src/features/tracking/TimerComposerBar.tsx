@@ -170,8 +170,14 @@ export function TimerComposerBar({
           if (composer.runningEntry?.id != null) {
             const wid = composer.runningEntry.workspace_id ?? composer.runningEntry.wid;
             if (typeof wid === "number") {
+              const picked =
+                projectId == null ? null : (projectOptions.find((p) => p.id === projectId) ?? null);
               void composer.updateTimeEntryMutation.mutateAsync({
-                request: { projectId },
+                request: {
+                  projectColor: picked?.color ?? null,
+                  projectId,
+                  projectName: picked?.name ?? null,
+                },
                 timeEntryId: composer.runningEntry.id,
                 workspaceId: wid,
               });

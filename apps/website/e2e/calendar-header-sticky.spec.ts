@@ -63,6 +63,16 @@ test.describe("Calendar day header sticky", () => {
     // scrollY > 0 is expected here; the old "scrollY === 0" invariant
     // was too strict — it conflated "window unscrolled" with "header
     // pinned", and the latter is what actually matters.
+    //
+    // Wait for a deterministic signal from CalendarView that its
+    // scroll-to-now effect has run — previously we raced a 20-frame rAF
+    // retry budget and read scrollY before the indicator had been
+    // positioned on slower runners. `data-scroll-to-now="done"` means
+    // the effect found the indicator and applied `window.scrollTo`.
+    await expect(page.getByTestId("timer-calendar-view")).toHaveAttribute(
+      "data-scroll-to-now",
+      "done",
+    );
     const state = await page.evaluate(() => {
       const bar = document.querySelector<HTMLElement>(
         '[data-testid="tracking-timer-page"] > header',

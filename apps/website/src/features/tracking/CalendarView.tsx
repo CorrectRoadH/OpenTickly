@@ -1,4 +1,4 @@
-import React, { type ReactElement, useEffect, useState } from "react";
+import React, { type ReactElement, useEffect, useRef, useState } from "react";
 import { Calendar, Views } from "react-big-calendar";
 import withDragAndDropModule from "react-big-calendar/lib/addons/dragAndDrop";
 import type { EventProps, SlotInfo } from "react-big-calendar";
@@ -132,39 +132,51 @@ export function CalendarView({
   // (its `position: sticky` holds barTop at 0) AND the user sees "now"
   // without manually scrolling. If the indicator is already above that
   // line (e.g. very early in the day), we leave the window unscrolled.
+  //
+  // `.rbc-current-time-indicator` is added by RBC several layout passes
+  // after our mount, so we can't read its position in a single frame.
+  // We use a MutationObserver on the calendar wrapper — no time budget,
+  // no flaky frame-count cap — and signal completion via the
+  // `data-scroll-to-now` attribute on the wrapper:
+  //   "pending"  — effect mounted, indicator not yet resolved
+  //   "done"     — indicator found, window scrolled
+  //   "skipped"  — indicator found, target ≤ 0 so we left scrollY alone
+  // E2E gates on this attribute instead of timing guesses.
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    // `.rbc-current-time-indicator` is added by RBC several layout passes
-    // after our mount, so a single `requestAnimationFrame` is sometimes
-    // too early. Retry for up to ~20 frames (~330ms) and bail out once
-    // the indicator is in the DOM.
-    let cancelled = false;
-    let rafHandle = 0;
-    let attemptsLeft = 20;
-    const tryScroll = () => {
-      if (cancelled) return;
-      const indicator = document.querySelector<HTMLElement>(".rbc-current-time-indicator");
-      if (!indicator) {
-        if (attemptsLeft-- > 0) {
-          rafHandle = requestAnimationFrame(tryScroll);
-        }
-        return;
-      }
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const applyScrollFor = (indicator: HTMLElement) => {
       const header = document.querySelector<HTMLElement>(
         '[data-testid="tracking-timer-page"] > header',
       );
       const headerHeight = header?.getBoundingClientRect().height ?? 0;
-      const indicatorRect = indicator.getBoundingClientRect();
-      const indicatorAbsoluteY = indicatorRect.top + window.scrollY;
+      const indicatorAbsoluteY = indicator.getBoundingClientRect().top + window.scrollY;
       const target = indicatorAbsoluteY - headerHeight - 40;
       if (target > 0) {
         window.scrollTo({ top: target, behavior: "instant" });
+        wrapper.dataset.scrollToNow = "done";
+      } else {
+        wrapper.dataset.scrollToNow = "skipped";
       }
     };
-    rafHandle = requestAnimationFrame(tryScroll);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(rafHandle);
-    };
+
+    const existing = wrapper.querySelector<HTMLElement>(".rbc-current-time-indicator");
+    if (existing) {
+      applyScrollFor(existing);
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      const el = wrapper.querySelector<HTMLElement>(".rbc-current-time-indicator");
+      if (el) {
+        applyScrollFor(el);
+        observer.disconnect();
+      }
+    });
+    observer.observe(wrapper, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, []);
 
   const [contextMenuState, setContextMenuState] = useState<{
@@ -227,7 +239,12 @@ export function CalendarView({
     // with the timer bar's `border-bottom` when the page is scrolled to the
     // top (sticky is inactive, day-header is in natural flow), making the
     // seam visually jump from 1px to 2px once the user scrolls back to top.
-    <div className="bg-[var(--track-surface)]" data-testid="timer-calendar-view">
+    <div
+      className="bg-[var(--track-surface)]"
+      data-scroll-to-now="pending"
+      data-testid="timer-calendar-view"
+      ref={wrapperRef}
+    >
       <DnDCalendar
         components={calendarComponents}
         date={calendarDate}

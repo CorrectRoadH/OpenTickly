@@ -193,8 +193,14 @@ export function ConnectedListView({
   ) => {
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof entry.id === "number" && typeof wid === "number") {
+      const picked =
+        projectId == null ? null : (projectOptions.find((p) => p.id === projectId) ?? null);
       void mutRef.current.update.mutateAsync({
-        request: { projectId },
+        request: {
+          projectColor: picked?.color ?? null,
+          projectId,
+          projectName: picked?.name ?? null,
+        },
         timeEntryId: entry.id,
         workspaceId: wid,
       });
@@ -213,8 +219,14 @@ export function ConnectedListView({
   ) => {
     const wid = entry.workspace_id ?? entry.wid;
     if (typeof entry.id === "number" && typeof wid === "number") {
+      const picked = projectOptions.find((p) => p.id === projectId) ?? null;
       void mutRef.current.update.mutateAsync({
-        request: { projectId, taskId },
+        request: {
+          projectColor: picked?.color ?? null,
+          projectId,
+          projectName: picked?.name ?? null,
+          taskId,
+        },
         timeEntryId: entry.id,
         workspaceId: wid,
       });
