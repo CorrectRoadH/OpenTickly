@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { useRenderCount } from "@uidotdev/usehooks";
 import { useTranslation } from "react-i18next";
 
@@ -26,7 +26,44 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
   return !entry.stop && typeof entry.duration === "number" && entry.duration < 0;
 }
 
-export function ListEntryRow({
+// Memo boundary so that unrelated list rows skip re-rendering when a single
+// entry is mutated. Upstream `stabilizeEntryGroups` preserves entry object
+// identity for unchanged entries across time-entries query updates, so a
+// shallow check on `entry` is a reliable "nothing to draw here" signal.
+//
+// We use a custom comparator rather than default shallow equality because
+// several props in this tree are not ref-stable across list-parent renders
+// (e.g. the `projects` / `tags` arrays come from recomputed `.map().sort()`
+// chains, and mutation callbacks are regenerated from closures over React
+// Query handles). The visual output of a row only depends on the props
+// enumerated below; callbacks dispatch actions that capture the current
+// entry, so their identity does not affect what the row draws.
+//
+// Staleness trade-off: if `projects` or `tags` metadata changes (e.g. a
+// project is renamed) without the row's own entry changing, the row will
+// keep showing the old name until the entry itself is updated. That's an
+// accepted trade for avoiding O(N) re-renders per unrelated mutation.
+function arePropsEqual(
+  prev: Parameters<typeof ListEntryRowImpl>[0],
+  next: Parameters<typeof ListEntryRowImpl>[0],
+): boolean {
+  return (
+    prev.entry === next.entry &&
+    prev.isSelected === next.isSelected &&
+    prev.isExpanded === next.isExpanded &&
+    prev.groupCount === next.groupCount &&
+    prev.groupKey === next.groupKey &&
+    prev.subIdx === next.subIdx &&
+    prev.durationFormat === next.durationFormat &&
+    prev.timeofdayFormat === next.timeofdayFormat &&
+    prev.timezone === next.timezone &&
+    prev.workspaceName === next.workspaceName
+  );
+}
+
+export const ListEntryRow = memo(ListEntryRowImpl, arePropsEqual);
+
+function ListEntryRowImpl({
   durationFormat,
   entry,
   groupCount,
