@@ -1,4 +1,5 @@
 import { type ChangeEvent, type ReactElement, type ReactNode } from "react";
+import { useRenderCount } from "@uidotdev/usehooks";
 import { AppInput } from "@opentoggl/web-ui";
 
 import { SearchIcon } from "./icons.tsx";
@@ -32,11 +33,20 @@ export function PickerDropdown({
   testId,
   width = "w-full",
 }: PickerDropdownProps): ReactElement {
+  const renderCount = useRenderCount();
   return (
     <div
       className={`absolute left-0 top-[calc(100%+4px)] z-20 ${width} rounded-[8px] border border-[var(--track-overlay-border)] bg-[var(--track-overlay-surface)] py-3 shadow-[0_14px_32px_var(--track-shadow-overlay)]`}
       data-testid={testId}
     >
+      {import.meta.env.DEV ? (
+        <span
+          className="pointer-events-none absolute right-2 top-1 font-mono text-[10px] leading-none text-[var(--track-text-muted)]"
+          data-testid={testId ? `${testId}-rendercount` : "picker-dropdown-rendercount"}
+        >
+          r:{renderCount}
+        </span>
+      ) : null}
       {header ? <div className="px-4 pb-3">{header}</div> : null}
       {search ? <PickerSearchField {...search} /> : null}
       <div className={`${maxHeight} overflow-y-auto px-1 py-1`}>{children}</div>

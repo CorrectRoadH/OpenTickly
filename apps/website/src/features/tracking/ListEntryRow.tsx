@@ -31,18 +31,32 @@ function isRunningTimeEntry(entry: GithubComTogglTogglApiInternalModelsTimeEntry
 // identity for unchanged entries across time-entries query updates, so a
 // shallow check on `entry` is a reliable "nothing to draw here" signal.
 //
-// We use a custom comparator rather than default shallow equality because
-// several props in this tree are not ref-stable across list-parent renders
-// (e.g. the `projects` / `tags` arrays come from recomputed `.map().sort()`
-// chains, and mutation callbacks are regenerated from closures over React
-// Query handles). The visual output of a row only depends on the props
-// enumerated below; callbacks dispatch actions that capture the current
-// entry, so their identity does not affect what the row draws.
+// `tags` and `projects` propagate through the workspace data queries as
+// arrays that are regenerated every parent render (via `.filter().map()
+// .sort()` chains in ConnectedListView / useWorkspaceData). Comparing
+// them by reference would make the memo useless. But we cannot omit
+// them either — when a query transitions from pending to loaded their
+// *content* goes from empty to populated, and rows that first rendered
+// during the pending phase would be locked into empty inline pickers.
 //
-// Staleness trade-off: if `projects` or `tags` metadata changes (e.g. a
-// project is renamed) without the row's own entry changing, the row will
-// keep showing the old name until the entry itself is updated. That's an
-// accepted trade for avoiding O(N) re-renders per unrelated mutation.
+// The individual tag / project objects INSIDE those arrays come from
+// the react-query cache and are reference-stable while their data is
+// unchanged. So we compare length plus per-item identity: O(M+N) per
+// parent render, cheap for realistic workspace sizes and correct under
+// both "data not yet loaded" and "unrelated mutation" scenarios.
+//
+// Mutation callbacks are intentionally omitted — they are regenerated
+// every parent render but their identity does not affect what the row
+// draws; each callback closes over the current entry passed through.
+function shallowListEqual<T>(prev: readonly T[], next: readonly T[]): boolean {
+  if (prev === next) return true;
+  if (prev.length !== next.length) return false;
+  for (let i = 0; i < prev.length; i++) {
+    if (prev[i] !== next[i]) return false;
+  }
+  return true;
+}
+
 function arePropsEqual(
   prev: Parameters<typeof ListEntryRowImpl>[0],
   next: Parameters<typeof ListEntryRowImpl>[0],
@@ -57,7 +71,9 @@ function arePropsEqual(
     prev.durationFormat === next.durationFormat &&
     prev.timeofdayFormat === next.timeofdayFormat &&
     prev.timezone === next.timezone &&
-    prev.workspaceName === next.workspaceName
+    prev.workspaceName === next.workspaceName &&
+    shallowListEqual(prev.tags, next.tags) &&
+    shallowListEqual(prev.projects, next.projects)
   );
 }
 
@@ -197,7 +213,7 @@ function ListEntryRowImpl({
         </div>
       </div>
 
-      <div className="min-w-0 overflow-hidden">
+      <div className="min-w-0">
         <ListRowTagPicker entry={entry} onTagsChange={onTagsChange} tags={tags} />
       </div>
 
