@@ -122,6 +122,26 @@ export function MobileTimerPage(): ReactElement {
         </section>
       ) : null}
 
+      {/* Loading skeleton — only shown before first response, so returning
+          users (cached data) skip straight to content. */}
+      {views.timeEntriesQuery.isPending &&
+      !views.timeEntriesQuery.data &&
+      goals.length === 0 &&
+      favorites.length === 0 ? (
+        <div className="flex flex-col gap-3 px-4 py-4" data-testid="mobile-timer-loading">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="size-8 shrink-0 animate-pulse rounded-full bg-white/5" />
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <div className="h-3 w-2/3 animate-pulse rounded bg-white/5" />
+                <div className="h-2.5 w-1/3 animate-pulse rounded bg-white/5" />
+              </div>
+              <div className="h-3 w-10 animate-pulse rounded bg-white/5" />
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       {/* Empty state */}
       {goals.length === 0 &&
       favorites.length === 0 &&
@@ -129,9 +149,12 @@ export function MobileTimerPage(): ReactElement {
       views.groupedEntries.length === 0 &&
       views.timeEntriesQuery.isSuccess ? (
         <div
-          className="flex flex-col items-center gap-2 px-4 py-12 text-center"
+          className="flex flex-col items-center gap-3 px-4 py-16 text-center"
           data-testid="mobile-timer-empty-state"
         >
+          <div className="flex size-14 items-center justify-center rounded-full border border-[var(--track-border)] bg-[var(--track-accent)]/10 text-[var(--track-accent)]">
+            <PlayIcon className="size-6" />
+          </div>
           <p className="text-[14px] font-medium text-[var(--track-text-muted)]">
             {t("noRecentEntries")}
           </p>
