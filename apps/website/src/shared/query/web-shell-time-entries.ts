@@ -82,7 +82,10 @@ export function useStartTimeEntryMutation(workspaceId: number) {
         }),
       ),
     onMutate: (request) => {
-      const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
+      const previous =
+        queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry | null>(
+          currentTimeEntryQueryKey,
+        );
       const previousLists = queryClient.getQueriesData<
         GithubComTogglTogglApiInternalModelsTimeEntry[]
       >({ queryKey: ["time-entries"] });
@@ -103,15 +106,27 @@ export function useStartTimeEntryMutation(workspaceId: number) {
       };
       // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, optimistic);
-      // Also drop the running entry into every time-entries list cache so
+      // Drop the new running entry into every time-entries list cache so
       // the calendar timeline, the timer list, and the recent-entries row
-      // show the new block at tap time instead of after the server PUT
-      // returns. Before this, the mobile composer would flash "running"
-      // while the Calendar/Timer pages below it still looked empty until
-      // the network round-tripped.
+      // show the new block at tap time. Also flip the previous running
+      // entry (if any) to stopped in those same lists — Toggl's server
+      // auto-stops the prior timer on start, so rendering two running
+      // blocks while the server round-trips is a visual glitch.
+      const previousRunningId = previous?.id;
+      const stopNowIso = request.start; // same instant the new timer begins
       queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
         { queryKey: ["time-entries"] },
-        (old) => (old ? [optimistic, ...old] : [optimistic]),
+        (old) => {
+          const patched =
+            old?.map((entry) => {
+              if (previousRunningId == null || entry.id !== previousRunningId) return entry;
+              const startMs = entry.start ? new Date(entry.start).getTime() : Date.now();
+              const stopMs = new Date(stopNowIso).getTime();
+              const durationSec = Math.max(0, Math.round((stopMs - startMs) / 1000));
+              return { ...entry, stop: stopNowIso, duration: durationSec };
+            }) ?? [];
+          return [optimistic, ...patched];
+        },
       );
       void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
       void queryClient.cancelQueries({ queryKey: ["time-entries"] });

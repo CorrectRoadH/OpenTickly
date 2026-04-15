@@ -35,10 +35,16 @@ export function MobileCalendarPage(): ReactElement {
   })();
 
   // Tapping an empty slot in the timeline creates a 30-minute draft at
-  // that time and immediately opens the editor on it — most calendar apps
+  // that time and opens the editor on it — most calendar apps
   // (Google Calendar, Toggl desktop, Fantastical) behave this way, and
   // before this the calendar on mobile was read-only, with users forced
   // to go back to the timer page just to log retroactive time.
+  //
+  // The mutation's onMutate paints the block on the timeline at tap
+  // time, so the user sees feedback instantly; the editor itself only
+  // opens once the server returns a real id, because downstream save /
+  // delete mutations key on that id. Typical round-trip is <300ms; on a
+  // slow connection the user still sees the tentative block immediately.
   async function handleEmptySlotTap(minutesFromMidnight: number) {
     // Build a Date for the selected day at the tapped minute, in the user's timezone.
     const y = selectedDate.getFullYear();
@@ -48,13 +54,11 @@ export function MobileCalendarPage(): ReactElement {
     const minute = minutesFromMidnight % 60;
     const localStart = new Date(y, m, d, hour, minute, 0, 0);
     const localStop = new Date(localStart.getTime() + 30 * 60 * 1000);
-    const startIso = localStart.toISOString();
-    const stopIso = localStop.toISOString();
     try {
       const created = await createMutation.mutateAsync({
         duration: 30 * 60,
-        start: startIso,
-        stop: stopIso,
+        start: localStart.toISOString(),
+        stop: localStop.toISOString(),
       });
       if (created) {
         setEditingEntry(created as GithubComTogglTogglApiInternalModelsTimeEntry);
