@@ -195,11 +195,17 @@ export function MobileShell(): ReactElement {
             </div>
             {!draftDescription ? (
               recentStoppedEntries.length > 0 ? (
-                <div className="flex gap-2 overflow-x-auto">
+                <div
+                  className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  style={{
+                    maskImage:
+                      "linear-gradient(to right, transparent 0, black 16px, black calc(100% - 24px), transparent 100%)",
+                  }}
+                >
                   {recentStoppedEntries.map((entry) => (
                     <button
                       aria-label={t("continueEntry", { description: entry.description })}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1 text-left transition active:bg-white/4"
+                      className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--track-border)] px-3 py-1.5 text-left transition active:scale-95 active:bg-white/5"
                       key={entry.id}
                       onClick={() => handleContinue(entry)}
                       type="button"

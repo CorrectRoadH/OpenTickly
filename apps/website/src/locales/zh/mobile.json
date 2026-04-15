@@ -62,5 +62,7 @@
   "profile": "个人资料",
   "untitled": "未命名",
   "closePickerLabel": "关闭{{name}}选择器",
-  "startFavorite": "开始 {{label}}"
+  "startFavorite": "开始 {{label}}",
+  "scrollToNow": "滚动到当前时间",
+  "now": "现在"
 }

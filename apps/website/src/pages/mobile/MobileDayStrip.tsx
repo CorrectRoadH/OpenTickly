@@ -35,10 +35,10 @@ export function MobileDayStrip({
   const selectedStr = selectedDate.toDateString();
 
   return (
-    <div className="flex items-center gap-1 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-2 py-2">
+    <div className="flex items-center gap-1 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-1 py-1.5">
       <button
         aria-label={t("previousWeek")}
-        className="flex size-7 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
+        className="flex size-10 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition hover:text-white active:bg-white/5"
         onClick={() => handleShift(-1)}
         type="button"
       >
@@ -54,18 +54,19 @@ export function MobileDayStrip({
           return (
             <button
               key={dayStr}
-              className={`flex flex-col items-center gap-0.5 rounded-lg px-1.5 py-1 transition ${
+              aria-pressed={isSelected}
+              className={`flex min-h-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-2.5 py-1.5 transition active:scale-95 ${
                 isSelected
                   ? "bg-[var(--track-accent)] text-black"
                   : isToday
-                    ? "text-[var(--track-accent)]"
-                    : "text-[var(--track-text-muted)] hover:text-white"
+                    ? "text-[var(--track-accent)] hover:bg-white/5"
+                    : "text-[var(--track-text-muted)] hover:bg-white/5 hover:text-white"
               }`}
               onClick={() => onSelectDate(day)}
               type="button"
             >
               <span className="text-[10px] font-medium">{t(dayKeys[day.getDay()])}</span>
-              <span className="text-[14px] font-semibold leading-none">{day.getDate()}</span>
+              <span className="text-[15px] font-semibold leading-none">{day.getDate()}</span>
             </button>
           );
         })}
@@ -73,7 +74,7 @@ export function MobileDayStrip({
 
       <button
         aria-label={t("nextWeek")}
-        className="flex size-7 shrink-0 items-center justify-center rounded text-[var(--track-text-muted)] transition hover:text-white"
+        className="flex size-10 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition hover:text-white active:bg-white/5"
         onClick={() => handleShift(1)}
         type="button"
       >

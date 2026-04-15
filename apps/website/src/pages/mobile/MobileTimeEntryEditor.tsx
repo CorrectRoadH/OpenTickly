@@ -107,8 +107,9 @@ export function MobileTimeEntryEditor({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-[var(--track-surface)] text-[var(--track-text)]"
+      className="fixed inset-0 z-50 flex flex-col bg-[var(--track-surface)] pb-[env(safe-area-inset-bottom)] text-[var(--track-text)]"
       data-testid="mobile-time-entry-editor"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       {/* Project picker overlay */}
       {projectPickerOpen ? (
@@ -235,10 +236,10 @@ export function MobileTimeEntryEditor({
       ) : null}
 
       {/* Header */}
-      <div className="flex h-[52px] items-center justify-between border-b border-[var(--track-border)] px-4">
+      <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--track-border)] px-2">
         <button
           aria-label={t("cancelEditing")}
-          className="text-[14px] text-[var(--track-text-muted)]"
+          className="flex h-11 items-center rounded-full px-3 text-[14px] text-[var(--track-text-muted)] transition active:bg-white/5"
           onClick={onClose}
           type="button"
         >
@@ -247,7 +248,7 @@ export function MobileTimeEntryEditor({
         <span className="text-[14px] font-semibold text-white">{t("editEntry")}</span>
         <button
           aria-label={t("saveChanges")}
-          className="text-[14px] font-semibold text-[var(--track-accent)]"
+          className="flex h-11 items-center rounded-full px-3 text-[14px] font-semibold text-[var(--track-accent)] transition active:bg-white/5 disabled:opacity-60"
           disabled={updateMutation.isPending}
           onClick={() => handleSave()}
           type="button"
@@ -262,9 +263,15 @@ export function MobileTimeEntryEditor({
         <div className="border-b border-[var(--track-border)] px-4 py-3">
           <input
             aria-label={t("timeEntryDescription")}
-            autoFocus
             className="w-full bg-transparent text-[15px] text-white placeholder-[var(--track-text-muted)] outline-none"
+            enterKeyHint="done"
             onChange={(e) => setDescription(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                (e.currentTarget as HTMLInputElement).blur();
+              }
+            }}
             placeholder={t("whatAreYouWorkingOn")}
             value={description}
           />
@@ -311,17 +318,20 @@ export function MobileTimeEntryEditor({
         {/* Billable */}
         <FieldRow label={t("billable")}>
           <button
-            className={`size-5 rounded border transition ${
-              billable
-                ? "border-[var(--track-accent)] bg-[var(--track-accent)]"
-                : "border-[var(--track-border)]"
+            aria-checked={billable}
+            aria-label={t("billable")}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+              billable ? "bg-[var(--track-accent)]" : "bg-[var(--track-border)]"
             }`}
             onClick={() => setBillable((v) => !v)}
+            role="switch"
             type="button"
           >
-            {billable ? (
-              <Check aria-hidden="true" className="size-5 text-black" size={20} strokeWidth={2} />
-            ) : null}
+            <span
+              className={`absolute top-[2px] block size-5 rounded-full bg-white shadow transition-transform ${
+                billable ? "translate-x-[22px]" : "translate-x-[2px]"
+              }`}
+            />
           </button>
         </FieldRow>
 

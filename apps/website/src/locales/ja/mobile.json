@@ -62,5 +62,7 @@
   "profile": "プロフィール",
   "untitled": "無題",
   "closePickerLabel": "{{name}}ピッカーを閉じる",
-  "startFavorite": "{{label}}を開始"
+  "startFavorite": "{{label}}を開始",
+  "scrollToNow": "現在時刻へスクロール",
+  "now": "現在"
 }

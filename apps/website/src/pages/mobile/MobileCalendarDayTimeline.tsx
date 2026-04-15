@@ -72,72 +72,110 @@ export function MobileCalendarDayTimeline({
     }
   }, []);
 
-  return (
-    <div ref={scrollRef} className="flex-1 overflow-y-auto">
-      <div className="relative" style={{ height: (TOTAL_MINUTES / 60) * HOUR_HEIGHT }}>
-        {/* Hour grid lines */}
-        {HOURS.map((hour) => (
-          <div
-            key={hour}
-            className="absolute left-0 right-0 border-t border-[var(--track-border)]"
-            style={{ top: hour * HOUR_HEIGHT }}
-          >
-            <span className="absolute -top-[8px] left-2 text-[10px] tabular-nums text-[var(--track-text-muted)]">
-              {String(hour).padStart(2, "0")}:00
-            </span>
-          </div>
-        ))}
+  // Track whether the current-time indicator is visible in the scroll
+  // viewport so we can show a "jump to now" pill when it isn't.
+  const [nowVisible, setNowVisible] = useState(true);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    function update() {
+      const node = scrollRef.current;
+      if (!node) return;
+      const nowY = (nowMinutes / 60) * HOUR_HEIGHT;
+      const top = node.scrollTop;
+      const bottom = top + node.clientHeight;
+      setNowVisible(nowY >= top + 20 && nowY <= bottom - 20);
+    }
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    return () => el.removeEventListener("scroll", update);
+  }, [nowMinutes]);
 
-        {/* Current time indicator — purely visual, must not block taps on
+  function scrollToNow() {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: Math.max(0, (nowMinutes / 60 - 1) * HOUR_HEIGHT), behavior: "smooth" });
+  }
+
+  return (
+    <div className="relative flex flex-1 flex-col overflow-hidden">
+      {!nowVisible ? (
+        <button
+          aria-label={t("scrollToNow")}
+          className="absolute bottom-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-[var(--track-border)] bg-[var(--track-panel)] px-3 py-1.5 text-[12px] font-medium text-[var(--track-accent)] shadow-lg transition active:scale-95"
+          onClick={scrollToNow}
+          type="button"
+        >
+          <span className="inline-block size-[6px] rounded-full bg-[var(--track-accent)]" />
+          {t("now")}
+        </button>
+      ) : null}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div className="relative" style={{ height: (TOTAL_MINUTES / 60) * HOUR_HEIGHT }}>
+          {/* Hour grid lines */}
+          {HOURS.map((hour) => (
+            <div
+              key={hour}
+              className="absolute left-0 right-0 border-t border-[var(--track-border)]"
+              style={{ top: hour * HOUR_HEIGHT }}
+            >
+              <span className="absolute -top-[8px] left-2 text-[10px] tabular-nums text-[var(--track-text-muted)]">
+                {String(hour).padStart(2, "0")}:00
+              </span>
+            </div>
+          ))}
+
+          {/* Current time indicator — purely visual, must not block taps on
             entries that overlap "now" (e.g. an entry running across the
             current minute). Without `pointer-events-none` the red line's
             full-width div intercepts clicks targeting the entry button
             beneath it, breaking the mobile calendar editor flow on CI
             runs that happen to land inside the entry's time range. */}
-        <div
-          className="pointer-events-none absolute left-10 right-0 z-10 border-t-2 border-[var(--track-accent)]"
-          style={{ top: (nowMinutes / 60) * HOUR_HEIGHT }}
-        >
-          <div className="absolute -left-1.5 -top-[5px] size-[8px] rounded-full bg-[var(--track-accent)]" />
-        </div>
+          <div
+            className="pointer-events-none absolute left-10 right-0 z-10 border-t-2 border-[var(--track-accent)]"
+            style={{ top: (nowMinutes / 60) * HOUR_HEIGHT }}
+          >
+            <div className="absolute -left-1.5 -top-[5px] size-[8px] rounded-full bg-[var(--track-accent)]" />
+          </div>
 
-        {/* Time entries */}
-        <div className="absolute bottom-0 left-14 right-2 top-0">
-          {entries.map((entry, index) => {
-            const key = resolveLayoutKey(entry, index);
-            const layout = layouts.get(key);
-            if (!layout) return null;
+          {/* Time entries */}
+          <div className="absolute bottom-0 left-14 right-2 top-0">
+            {entries.map((entry, index) => {
+              const key = resolveLayoutKey(entry, index);
+              const layout = layouts.get(key);
+              if (!layout) return null;
 
-            const color = resolveEntryColor(entry);
-            const seconds = resolveEntryDurationSeconds(entry, nowMs);
-            const description = entry.description?.trim() || t("noDescription");
+              const color = resolveEntryColor(entry);
+              const seconds = resolveEntryDurationSeconds(entry, nowMs);
+              const description = entry.description?.trim() || t("noDescription");
 
-            return (
-              <button
-                key={key}
-                aria-label={t("editTimeEntry", { description })}
-                className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
-                onClick={() => onEntryTap?.(entry)}
-                type="button"
-                style={{
-                  top: (layout.top / 60) * HOUR_HEIGHT,
-                  height: Math.max(20, (layout.height / 60) * HOUR_HEIGHT),
-                  left: `${layout.left}%`,
-                  width: `${layout.width}%`,
-                  backgroundColor: color,
-                }}
-              >
-                <p className="truncate text-[11px] font-medium leading-tight text-white">
-                  {description}
-                </p>
-                {layout.height >= 30 ? (
-                  <p className="text-[10px] leading-tight text-white/70">
-                    {formatClockDuration(seconds, durationFormat)}
+              return (
+                <button
+                  key={key}
+                  aria-label={t("editTimeEntry", { description })}
+                  className="absolute overflow-hidden rounded-[4px] border border-white/10 px-1.5 py-0.5 text-left"
+                  onClick={() => onEntryTap?.(entry)}
+                  type="button"
+                  style={{
+                    top: (layout.top / 60) * HOUR_HEIGHT,
+                    height: Math.max(20, (layout.height / 60) * HOUR_HEIGHT),
+                    left: `${layout.left}%`,
+                    width: `${layout.width}%`,
+                    backgroundColor: color,
+                  }}
+                >
+                  <p className="truncate text-[11px] font-medium leading-tight text-white">
+                    {description}
                   </p>
-                ) : null}
-              </button>
-            );
-          })}
+                  {layout.height >= 30 ? (
+                    <p className="text-[10px] leading-tight text-white/70">
+                      {formatClockDuration(seconds, durationFormat)}
+                    </p>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

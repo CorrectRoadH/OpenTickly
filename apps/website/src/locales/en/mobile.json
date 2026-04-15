@@ -62,5 +62,7 @@
   "profile": "Profile",
   "untitled": "Untitled",
   "closePickerLabel": "Close {{name}} picker",
-  "startFavorite": "Start {{label}}"
+  "startFavorite": "Start {{label}}",
+  "scrollToNow": "Scroll to current time",
+  "now": "Now"
 }

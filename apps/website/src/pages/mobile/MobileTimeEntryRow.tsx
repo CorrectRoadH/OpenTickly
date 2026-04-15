@@ -35,10 +35,10 @@ export function MobileTimeEntryRow({
   const hasTags = tagNames.length > 0;
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
+    <div className="flex items-center gap-3 px-4 py-2.5 transition active:bg-white/[0.03]">
       <button
         aria-label={t("continueTimeEntry", { description })}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:border-[var(--track-accent)] hover:text-[var(--track-accent)]"
+        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-[var(--track-border)] text-[var(--track-text-muted)] transition hover:border-[var(--track-accent)] hover:text-[var(--track-accent)] active:scale-90 active:border-[var(--track-accent)] active:text-[var(--track-accent)]"
         onClick={() => onContinue(entry)}
         type="button"
       >

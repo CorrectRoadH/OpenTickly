@@ -62,5 +62,7 @@
   "profile": "프로필",
   "untitled": "제목 없음",
   "closePickerLabel": "{{name}} 선택기 닫기",
-  "startFavorite": "{{label}} 시작"
+  "startFavorite": "{{label}} 시작",
+  "scrollToNow": "현재 시간으로 스크롤",
+  "now": "현재"
 }

@@ -62,5 +62,7 @@
   "profile": "Perfil",
   "untitled": "Sin título",
   "closePickerLabel": "Cerrar selector de {{name}}",
-  "startFavorite": "Iniciar {{label}}"
+  "startFavorite": "Iniciar {{label}}",
+  "scrollToNow": "Desplazar a la hora actual",
+  "now": "Ahora"
 }

@@ -18,13 +18,14 @@ export function MobilePickerOverlay({
   const [search, setSearch] = useState("");
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col bg-[var(--track-surface)]"
+      className="fixed inset-0 z-[60] flex flex-col bg-[var(--track-surface)] pb-[env(safe-area-inset-bottom)]"
       data-testid={testId}
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <div className="flex h-[52px] items-center gap-3 border-b border-[var(--track-border)] px-4">
+      <div className="flex h-[52px] shrink-0 items-center gap-3 border-b border-[var(--track-border)] px-2">
         <button
           aria-label={t("closePickerLabel", { name: title.toLowerCase() })}
-          className="shrink-0 text-[var(--track-text-muted)]"
+          className="flex size-11 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
           onClick={onClose}
           type="button"
         >
