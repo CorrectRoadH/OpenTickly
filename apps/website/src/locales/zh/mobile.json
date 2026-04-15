@@ -64,5 +64,7 @@
   "closePickerLabel": "关闭{{name}}选择器",
   "startFavorite": "开始 {{label}}",
   "scrollToNow": "滚动到当前时间",
-  "now": "现在"
+  "now": "现在",
+  "running": "进行中",
+  "endBeforeStart": "结束时间早于开始时间"
 }

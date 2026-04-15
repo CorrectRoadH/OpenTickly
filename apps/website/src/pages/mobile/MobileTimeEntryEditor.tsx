@@ -55,15 +55,15 @@ export function MobileTimeEntryEditor({
   const projects = normalizeProjects(projectsQuery.data);
   const tags = normalizeTags(tagsQuery.data);
 
+  const isRunning = !stopIso;
   const durationSeconds = (() => {
-    if (!startIso || !stopIso) return 0;
-    return Math.max(
-      0,
-      Math.round((new Date(stopIso).getTime() - new Date(startIso).getTime()) / 1000),
-    );
+    if (!startIso) return 0;
+    const endMs = stopIso ? new Date(stopIso).getTime() : Date.now();
+    return Math.round((endMs - new Date(startIso).getTime()) / 1000);
   })();
+  const invalidRange = !isRunning && durationSeconds < 0;
 
-  const duration = formatClockDuration(durationSeconds, durationFormat);
+  const duration = formatClockDuration(Math.max(0, durationSeconds), durationFormat);
 
   // Close the modal synchronously and fire the mutation in the background.
   // The mutation's onMutate already patched the cache, so the list/timer
@@ -245,11 +245,19 @@ export function MobileTimeEntryEditor({
         >
           {t("cancel")}
         </button>
-        <span className="text-[14px] font-semibold text-white">{t("editEntry")}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[14px] font-semibold text-white">{t("editEntry")}</span>
+          {isRunning ? (
+            <span className="flex items-center gap-1 rounded-full bg-[var(--track-accent)]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--track-accent)]">
+              <span className="inline-block size-[6px] animate-pulse rounded-full bg-[var(--track-accent)]" />
+              {t("running")}
+            </span>
+          ) : null}
+        </div>
         <button
           aria-label={t("saveChanges")}
           className="flex h-11 items-center rounded-full px-3 text-[14px] font-semibold text-[var(--track-accent)] transition active:bg-white/5 disabled:opacity-60"
-          disabled={updateMutation.isPending}
+          disabled={updateMutation.isPending || invalidRange}
           onClick={() => handleSave()}
           type="button"
         >
@@ -365,8 +373,19 @@ export function MobileTimeEntryEditor({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("duration")}</span>
-            <span className="text-[14px] tabular-nums text-white">{duration}</span>
+            <span
+              className={`text-[14px] tabular-nums ${
+                invalidRange ? "text-[var(--track-danger-text)]" : "text-white"
+              }`}
+            >
+              {duration}
+            </span>
           </div>
+          {invalidRange ? (
+            <p className="mt-2 text-[12px] text-[var(--track-danger-text)]">
+              {t("endBeforeStart")}
+            </p>
+          ) : null}
         </div>
 
         {/* Delete */}

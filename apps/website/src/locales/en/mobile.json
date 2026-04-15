@@ -64,5 +64,7 @@
   "closePickerLabel": "Close {{name}} picker",
   "startFavorite": "Start {{label}}",
   "scrollToNow": "Scroll to current time",
-  "now": "Now"
+  "now": "Now",
+  "running": "Running",
+  "endBeforeStart": "End time is before start time"
 }

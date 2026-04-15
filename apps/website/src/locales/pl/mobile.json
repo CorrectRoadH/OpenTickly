@@ -64,5 +64,7 @@
   "closePickerLabel": "Zamknij selektor {{name}}",
   "startFavorite": "Rozpocznij {{label}}",
   "scrollToNow": "Przewiń do bieżącego czasu",
-  "now": "Teraz"
+  "now": "Teraz",
+  "running": "W trakcie",
+  "endBeforeStart": "Godzina zakończenia jest przed godziną rozpoczęcia"
 }

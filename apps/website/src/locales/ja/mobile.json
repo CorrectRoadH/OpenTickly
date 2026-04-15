@@ -64,5 +64,7 @@
   "closePickerLabel": "{{name}}ピッカーを閉じる",
   "startFavorite": "{{label}}を開始",
   "scrollToNow": "現在時刻へスクロール",
-  "now": "現在"
+  "now": "現在",
+  "running": "進行中",
+  "endBeforeStart": "終了時刻が開始時刻より前です"
 }

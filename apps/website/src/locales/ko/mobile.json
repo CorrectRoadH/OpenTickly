@@ -64,5 +64,7 @@
   "closePickerLabel": "{{name}} 선택기 닫기",
   "startFavorite": "{{label}} 시작",
   "scrollToNow": "현재 시간으로 스크롤",
-  "now": "현재"
+  "now": "현재",
+  "running": "실행 중",
+  "endBeforeStart": "종료 시간이 시작 시간보다 이릅니다"
 }
