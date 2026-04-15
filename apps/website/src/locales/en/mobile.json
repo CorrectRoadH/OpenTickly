@@ -72,5 +72,7 @@
   "noTimeTrackedHint": "Entries logged this week will show up here.",
   "clearDraft": "Clear description",
   "today": "Today",
-  "jumpToToday": "Jump to today"
+  "jumpToToday": "Jump to today",
+  "noMatches": "No matches for \"{{query}}\"",
+  "noTagsYet": "No tags yet"
 }

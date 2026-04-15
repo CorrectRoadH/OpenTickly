@@ -129,19 +129,29 @@ export function MobileTimeEntryEditor({
               : active;
             return (
               <>
-                <button
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4"
-                  onClick={() => {
-                    setProjectId(null);
-                    setProjectPickerOpen(false);
-                  }}
-                  type="button"
-                >
-                  <span className="size-2.5 shrink-0 rounded-full bg-[var(--track-text-muted)]" />
-                  <span className="text-[14px] text-[var(--track-text-muted)]">
-                    {t("noProject")}
-                  </span>
-                </button>
+                {/* Hide the "No project" action while searching — it's
+                    not a search hit, and leaving it at the top of a
+                    filtered list makes the no-match case confusing. */}
+                {query ? null : (
+                  <button
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4"
+                    onClick={() => {
+                      setProjectId(null);
+                      setProjectPickerOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span className="size-2.5 shrink-0 rounded-full bg-[var(--track-text-muted)]" />
+                    <span className="text-[14px] text-[var(--track-text-muted)]">
+                      {t("noProject")}
+                    </span>
+                  </button>
+                )}
+                {query && filtered.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+                    {t("noMatches", { query: search.trim() })}
+                  </p>
+                ) : null}
                 {filtered.map((p) => (
                   <button
                     className={`flex w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/4 ${
@@ -199,6 +209,11 @@ export function MobileTimeEntryEditor({
               .filter((tag) => !query || (tag.name ?? "").toLowerCase().includes(query));
             return (
               <>
+                {filtered.length === 0 ? (
+                  <p className="px-4 py-8 text-center text-[13px] text-[var(--track-text-muted)]">
+                    {query ? t("noMatches", { query: search.trim() }) : t("noTagsYet")}
+                  </p>
+                ) : null}
                 {filtered.map((tag) => {
                   const active = tagIds.includes(tag.id);
                   return (

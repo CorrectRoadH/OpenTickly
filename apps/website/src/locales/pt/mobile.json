@@ -72,5 +72,7 @@
   "noTimeTrackedHint": "Os registros desta semana aparecerão aqui.",
   "clearDraft": "Limpar descrição",
   "today": "Hoje",
-  "jumpToToday": "Ir para hoje"
+  "jumpToToday": "Ir para hoje",
+  "noMatches": "Sem resultados para \"{{query}}\"",
+  "noTagsYet": "Sem etiquetas ainda"
 }

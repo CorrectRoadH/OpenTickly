@@ -72,5 +72,7 @@
   "noTimeTrackedHint": "今週記録されたエントリがここに表示されます。",
   "clearDraft": "説明をクリア",
   "today": "今日",
-  "jumpToToday": "今日へ移動"
+  "jumpToToday": "今日へ移動",
+  "noMatches": "\"{{query}}\" に一致する結果はありません",
+  "noTagsYet": "タグはまだありません"
 }

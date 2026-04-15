@@ -72,5 +72,7 @@
   "noTimeTrackedHint": "Les entrées de cette semaine apparaîtront ici.",
   "clearDraft": "Effacer la description",
   "today": "Aujourd'hui",
-  "jumpToToday": "Aller à aujourd'hui"
+  "jumpToToday": "Aller à aujourd'hui",
+  "noMatches": "Aucun résultat pour \"{{query}}\"",
+  "noTagsYet": "Aucune étiquette pour l'instant"
 }

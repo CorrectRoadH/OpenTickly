@@ -72,5 +72,7 @@
   "noTimeTrackedHint": "이번 주에 기록한 항목이 여기에 표시됩니다.",
   "clearDraft": "설명 지우기",
   "today": "오늘",
-  "jumpToToday": "오늘로 이동"
+  "jumpToToday": "오늘로 이동",
+  "noMatches": "\"{{query}}\"와(과) 일치하는 항목 없음",
+  "noTagsYet": "아직 태그가 없습니다"
 }
