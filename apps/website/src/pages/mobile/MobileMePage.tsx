@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import type { ReactElement } from "react";
+import { type ReactElement, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 import { UserAvatar } from "../../shared/ui/UserAvatar.tsx";
 import { useLogoutMutation, useUpdateWebSessionMutation } from "../../shared/query/web-shell.ts";
@@ -16,13 +17,20 @@ export function MobileMePage(): ReactElement {
   const updateWebSessionMutation = useUpdateWebSessionMutation();
 
   const profileName = session.user.fullName || session.user.email || t("profile");
+  const [switchingOrgId, setSwitchingOrgId] = useState<number | null>(null);
 
-  function handleWorkspaceChange(workspaceId: number) {
+  function handleWorkspaceChange(workspaceId: number, orgId: number) {
     const previousWorkspaceId = session.currentWorkspace.id;
+    setSwitchingOrgId(orgId);
     setCurrentWorkspaceId(workspaceId);
-    void updateWebSessionMutation.mutateAsync({ workspace_id: workspaceId }).catch(() => {
-      setCurrentWorkspaceId(previousWorkspaceId);
-    });
+    void updateWebSessionMutation
+      .mutateAsync({ workspace_id: workspaceId })
+      .catch(() => {
+        setCurrentWorkspaceId(previousWorkspaceId);
+      })
+      .finally(() => {
+        setSwitchingOrgId(null);
+      });
   }
 
   function handleLogout() {
@@ -54,15 +62,17 @@ export function MobileMePage(): ReactElement {
       <div className="border-b border-[var(--track-border)]">
         {session.availableOrganizations.map((org) => {
           const isCurrent = org.isCurrent;
+          const isSwitching = switchingOrgId === org.id;
           return (
             <button
               key={org.id}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition ${
+              className={`flex min-h-[52px] w-full items-center gap-3 px-4 py-3 text-left transition active:bg-white/[0.03] ${
                 isCurrent ? "bg-[var(--track-accent)]/8" : "hover:bg-[var(--track-row-hover)]"
               }`}
+              disabled={isSwitching}
               onClick={() => {
                 if (org.defaultWorkspaceId) {
-                  handleWorkspaceChange(org.defaultWorkspaceId);
+                  handleWorkspaceChange(org.defaultWorkspaceId, org.id);
                 }
               }}
               type="button"
@@ -75,6 +85,12 @@ export function MobileMePage(): ReactElement {
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
+                {isSwitching ? (
+                  <Loader2
+                    aria-hidden="true"
+                    className="size-4 animate-spin text-[var(--track-accent)]"
+                  />
+                ) : null}
                 {org.isDefault ? (
                   <span className="text-[11px] text-[var(--track-text-muted)]">{t("default")}</span>
                 ) : null}
@@ -120,7 +136,7 @@ function SectionHeader({ title }: { title: string }): ReactElement {
 function MenuLink({ label, onClick }: { label: string; onClick: () => void }): ReactElement {
   return (
     <button
-      className="flex w-full items-center justify-between px-4 py-3 text-[14px] text-white transition hover:bg-[var(--track-row-hover)]"
+      className="flex min-h-[48px] w-full items-center justify-between px-4 py-3 text-[14px] text-white transition hover:bg-[var(--track-row-hover)] active:bg-white/[0.03]"
       onClick={onClick}
       type="button"
     >

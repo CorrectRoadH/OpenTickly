@@ -48,7 +48,7 @@ export function PwaInstallBanner(): ReactElement | null {
       </div>
       <button
         aria-label={t("closeBanner")}
-        className="shrink-0 p-1 text-[var(--track-text-muted)]"
+        className="-my-1 flex size-9 shrink-0 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
         onClick={dismiss}
         type="button"
       >

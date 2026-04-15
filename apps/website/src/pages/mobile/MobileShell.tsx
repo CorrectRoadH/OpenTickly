@@ -126,6 +126,7 @@ export function MobileShell(): ReactElement {
     <div
       className="flex h-[100dvh] flex-col bg-[var(--track-surface)] text-[var(--track-text)]"
       data-testid="app-shell"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <OfflineBanner />
       <PwaInstallBanner />

@@ -373,7 +373,7 @@ export function MobileTimeEntryEditor({
         <div className="px-4 py-4">
           <button
             aria-label={t("deleteThisTimeEntry")}
-            className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-2.5 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)]"
+            className="flex w-full items-center justify-center gap-2 rounded-[8px] border border-[var(--track-danger-border-muted)] py-3 text-[14px] text-[var(--track-danger-text)] transition hover:bg-[var(--track-danger-surface-muted)] active:scale-[0.98] active:bg-[var(--track-danger-surface-muted)]"
             disabled={deleteMutation.isPending}
             onClick={() => handleDelete()}
             type="button"
