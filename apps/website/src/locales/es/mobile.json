@@ -70,5 +70,7 @@
   "tapSlotToCreate": "Toca cualquier franja para registrar una entrada",
   "noTimeTrackedThisWeek": "Sin tiempo registrado esta semana",
   "noTimeTrackedHint": "Las entradas registradas esta semana aparecerán aquí.",
-  "clearDraft": "Borrar descripción"
+  "clearDraft": "Borrar descripción",
+  "today": "Hoy",
+  "jumpToToday": "Ir a hoy"
 }

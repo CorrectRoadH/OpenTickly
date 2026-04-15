@@ -31,8 +31,13 @@ export function MobileDayStrip({
     onSelectDate(shiftWeek(selectedDate, delta));
   }
 
-  const todayStr = new Date().toDateString();
+  const today = new Date();
+  const todayStr = today.toDateString();
   const selectedStr = selectedDate.toDateString();
+  // Is the current week view showing a week that contains today? If not,
+  // surface a "today" pill so users stuck four weeks back don't need to
+  // tap the next arrow ten times.
+  const currentWeekContainsToday = weekDays.some((d) => d.toDateString() === todayStr);
 
   return (
     <div className="flex items-center gap-1 border-b border-[var(--track-border)] bg-[var(--track-panel)] px-1 py-1.5">
@@ -80,6 +85,17 @@ export function MobileDayStrip({
       >
         <ChevronRightIcon className="size-4" />
       </button>
+
+      {!currentWeekContainsToday ? (
+        <button
+          aria-label={t("jumpToToday")}
+          className="ml-1 flex h-8 shrink-0 items-center rounded-full border border-[var(--track-border)] bg-[var(--track-surface)] px-2.5 text-[11px] font-semibold text-[var(--track-accent)] transition active:scale-95"
+          onClick={() => onSelectDate(today)}
+          type="button"
+        >
+          {t("today")}
+        </button>
+      ) : null}
     </div>
   );
 }

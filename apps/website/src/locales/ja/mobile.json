@@ -70,5 +70,7 @@
   "tapSlotToCreate": "空いている時間帯をタップして記録を追加",
   "noTimeTrackedThisWeek": "今週の記録はまだありません",
   "noTimeTrackedHint": "今週記録されたエントリがここに表示されます。",
-  "clearDraft": "説明をクリア"
+  "clearDraft": "説明をクリア",
+  "today": "今日",
+  "jumpToToday": "今日へ移動"
 }

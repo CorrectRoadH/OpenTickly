@@ -70,5 +70,7 @@
   "tapSlotToCreate": "Toque em um horário livre para criar um registro",
   "noTimeTrackedThisWeek": "Sem tempo registrado esta semana",
   "noTimeTrackedHint": "Os registros desta semana aparecerão aqui.",
-  "clearDraft": "Limpar descrição"
+  "clearDraft": "Limpar descrição",
+  "today": "Hoje",
+  "jumpToToday": "Ir para hoje"
 }

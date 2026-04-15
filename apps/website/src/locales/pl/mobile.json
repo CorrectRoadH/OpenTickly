@@ -70,5 +70,7 @@
   "tapSlotToCreate": "Dotknij pustego slotu, aby dodać wpis",
   "noTimeTrackedThisWeek": "Brak czasu zarejestrowanego w tym tygodniu",
   "noTimeTrackedHint": "Wpisy z tego tygodnia pojawią się tutaj.",
-  "clearDraft": "Wyczyść opis"
+  "clearDraft": "Wyczyść opis",
+  "today": "Dziś",
+  "jumpToToday": "Przejdź do dzisiaj"
 }

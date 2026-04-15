@@ -70,5 +70,7 @@
   "tapSlotToCreate": "Touchez un créneau pour enregistrer une entrée",
   "noTimeTrackedThisWeek": "Aucun temps enregistré cette semaine",
   "noTimeTrackedHint": "Les entrées de cette semaine apparaîtront ici.",
-  "clearDraft": "Effacer la description"
+  "clearDraft": "Effacer la description",
+  "today": "Aujourd'hui",
+  "jumpToToday": "Aller à aujourd'hui"
 }
