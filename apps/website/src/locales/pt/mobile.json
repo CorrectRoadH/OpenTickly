@@ -66,5 +66,8 @@
   "scrollToNow": "Rolar para agora",
   "now": "Agora",
   "running": "Em andamento",
-  "endBeforeStart": "O horário de fim é antes do início"
+  "endBeforeStart": "O horário de fim é antes do início",
+  "tapSlotToCreate": "Toque em um horário livre para criar um registro",
+  "noTimeTrackedThisWeek": "Sem tempo registrado esta semana",
+  "noTimeTrackedHint": "Os registros desta semana aparecerão aqui."
 }

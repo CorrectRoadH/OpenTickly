@@ -112,6 +112,16 @@ export function MobileReportPage(): ReactElement {
           {t("loading")}
         </p>
       ) : null}
+
+      {weeklyReportQuery.isSuccess && (!model || model.weekRows.length === 0) ? (
+        <div
+          className="flex flex-col items-center gap-2 px-4 py-12 text-center"
+          data-testid="mobile-report-empty-state"
+        >
+          <p className="text-[14px] font-medium text-white">{t("noTimeTrackedThisWeek")}</p>
+          <p className="text-[12px] text-[var(--track-text-muted)]">{t("noTimeTrackedHint")}</p>
+        </div>
+      ) : null}
     </div>
   );
 }

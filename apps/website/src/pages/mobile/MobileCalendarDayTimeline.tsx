@@ -20,6 +20,7 @@ const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 type MobileCalendarDayTimelineProps = {
   entries: GithubComTogglTogglApiInternalModelsTimeEntry[];
+  onEmptySlotTap?: (minutesFromMidnight: number) => void;
   onEntryTap?: (entry: GithubComTogglTogglApiInternalModelsTimeEntry) => void;
   timezone: string;
   viewDate?: Date;
@@ -27,6 +28,7 @@ type MobileCalendarDayTimelineProps = {
 
 export function MobileCalendarDayTimeline({
   entries,
+  onEmptySlotTap,
   onEntryTap,
   timezone,
   viewDate,
@@ -111,7 +113,22 @@ export function MobileCalendarDayTimeline({
         </button>
       ) : null}
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
-        <div className="relative" style={{ height: (TOTAL_MINUTES / 60) * HOUR_HEIGHT }}>
+        <div
+          className="relative"
+          onClick={(e) => {
+            if (!onEmptySlotTap) return;
+            // If the tap bubbled up from an entry button (or any element
+            // inside one), ignore — that tap is for editing, not creating.
+            if ((e.target as HTMLElement).closest("button")) return;
+            const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+            const y = e.clientY - rect.top;
+            // Snap to nearest 15-minute slot; clamp so the entry fits.
+            const raw = Math.round((y / HOUR_HEIGHT) * 60);
+            const snapped = Math.max(0, Math.min(TOTAL_MINUTES - 30, Math.round(raw / 15) * 15));
+            onEmptySlotTap(snapped);
+          }}
+          style={{ height: (TOTAL_MINUTES / 60) * HOUR_HEIGHT }}
+        >
           {/* Hour grid lines */}
           {HOURS.map((hour) => (
             <div

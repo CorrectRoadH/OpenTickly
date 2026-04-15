@@ -66,5 +66,8 @@
   "scrollToNow": "Scroll to current time",
   "now": "Now",
   "running": "Running",
-  "endBeforeStart": "End time is before start time"
+  "endBeforeStart": "End time is before start time",
+  "tapSlotToCreate": "Tap any time slot to log an entry",
+  "noTimeTrackedThisWeek": "No time tracked this week",
+  "noTimeTrackedHint": "Entries logged this week will show up here."
 }

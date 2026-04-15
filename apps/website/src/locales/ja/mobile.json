@@ -66,5 +66,8 @@
   "scrollToNow": "現在時刻へスクロール",
   "now": "現在",
   "running": "進行中",
-  "endBeforeStart": "終了時刻が開始時刻より前です"
+  "endBeforeStart": "終了時刻が開始時刻より前です",
+  "tapSlotToCreate": "空いている時間帯をタップして記録を追加",
+  "noTimeTrackedThisWeek": "今週の記録はまだありません",
+  "noTimeTrackedHint": "今週記録されたエントリがここに表示されます。"
 }

@@ -66,5 +66,8 @@
   "scrollToNow": "현재 시간으로 스크롤",
   "now": "현재",
   "running": "실행 중",
-  "endBeforeStart": "종료 시간이 시작 시간보다 이릅니다"
+  "endBeforeStart": "종료 시간이 시작 시간보다 이릅니다",
+  "tapSlotToCreate": "시간대를 탭하여 기록을 추가",
+  "noTimeTrackedThisWeek": "이번 주에 기록된 시간이 없습니다",
+  "noTimeTrackedHint": "이번 주에 기록한 항목이 여기에 표시됩니다."
 }

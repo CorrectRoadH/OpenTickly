@@ -66,5 +66,8 @@
   "scrollToNow": "Przewiń do bieżącego czasu",
   "now": "Teraz",
   "running": "W trakcie",
-  "endBeforeStart": "Godzina zakończenia jest przed godziną rozpoczęcia"
+  "endBeforeStart": "Godzina zakończenia jest przed godziną rozpoczęcia",
+  "tapSlotToCreate": "Dotknij pustego slotu, aby dodać wpis",
+  "noTimeTrackedThisWeek": "Brak czasu zarejestrowanego w tym tygodniu",
+  "noTimeTrackedHint": "Wpisy z tego tygodnia pojawią się tutaj."
 }
