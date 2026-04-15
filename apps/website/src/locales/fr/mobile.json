@@ -69,5 +69,6 @@
   "endBeforeStart": "L'heure de fin est avant l'heure de début",
   "tapSlotToCreate": "Touchez un créneau pour enregistrer une entrée",
   "noTimeTrackedThisWeek": "Aucun temps enregistré cette semaine",
-  "noTimeTrackedHint": "Les entrées de cette semaine apparaîtront ici."
+  "noTimeTrackedHint": "Les entrées de cette semaine apparaîtront ici.",
+  "clearDraft": "Effacer la description"
 }

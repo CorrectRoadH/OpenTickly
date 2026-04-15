@@ -134,7 +134,7 @@ export function MobileShell(): ReactElement {
         <MobileTimeEntryEditor entry={editingEntry} onClose={() => setEditingEntry(null)} />
       ) : null}
       {/* Page content */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <Outlet />
       </div>
 
@@ -183,15 +183,30 @@ export function MobileShell(): ReactElement {
         ) : (
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <input
-                className="min-w-0 flex-1 rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none focus:border-[var(--track-accent)]"
-                onChange={(e) => setDraftDescription(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleStart();
-                }}
-                placeholder={t("whatAreYouWorkingOn")}
-                value={draftDescription}
-              />
+              <div className="relative min-w-0 flex-1">
+                <input
+                  className="w-full rounded-[8px] border border-[var(--track-border)] bg-[var(--track-surface)] px-3 py-2 pr-9 text-[14px] text-white placeholder-[var(--track-text-muted)] outline-none focus:border-[var(--track-accent)]"
+                  enterKeyHint="go"
+                  onChange={(e) => setDraftDescription(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleStart();
+                  }}
+                  placeholder={t("whatAreYouWorkingOn")}
+                  value={draftDescription}
+                />
+                {draftDescription ? (
+                  <button
+                    aria-label={t("clearDraft")}
+                    className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--track-text-muted)] transition active:bg-white/5"
+                    onClick={() => setDraftDescription("")}
+                    type="button"
+                  >
+                    <span aria-hidden="true" className="text-[18px] leading-none">
+                      ×
+                    </span>
+                  </button>
+                ) : null}
+              </div>
               <TimerActionButton isRunning={false} onClick={handleStart} size="sm" />
             </div>
             {!draftDescription ? (

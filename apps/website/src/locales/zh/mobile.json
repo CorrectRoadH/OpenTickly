@@ -69,5 +69,6 @@
   "endBeforeStart": "结束时间早于开始时间",
   "tapSlotToCreate": "点击任意空白时段添加记录",
   "noTimeTrackedThisWeek": "本周暂无时间记录",
-  "noTimeTrackedHint": "本周记录的条目会显示在这里。"
+  "noTimeTrackedHint": "本周记录的条目会显示在这里。",
+  "clearDraft": "清除描述"
 }

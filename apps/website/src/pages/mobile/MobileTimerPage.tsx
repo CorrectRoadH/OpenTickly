@@ -166,7 +166,7 @@ export function MobileTimerPage(): ReactElement {
 
 function SectionHeader({ title }: { title: string }): ReactElement {
   return (
-    <h2 className="px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)]">
+    <h2 className="sticky top-0 z-[1] bg-[var(--track-surface)]/95 px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--track-text-muted)] backdrop-blur-sm">
       {title}
     </h2>
   );

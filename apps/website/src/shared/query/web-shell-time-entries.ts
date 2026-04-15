@@ -83,6 +83,9 @@ export function useStartTimeEntryMutation(workspaceId: number) {
       ),
     onMutate: (request) => {
       const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
+      const previousLists = queryClient.getQueriesData<
+        GithubComTogglTogglApiInternalModelsTimeEntry[]
+      >({ queryKey: ["time-entries"] });
       const optimistic: GithubComTogglTogglApiInternalModelsTimeEntry = {
         id: -Date.now(),
         workspace_id: workspaceId,
@@ -100,22 +103,51 @@ export function useStartTimeEntryMutation(workspaceId: number) {
       };
       // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, optimistic);
+      // Also drop the running entry into every time-entries list cache so
+      // the calendar timeline, the timer list, and the recent-entries row
+      // show the new block at tap time instead of after the server PUT
+      // returns. Before this, the mobile composer would flash "running"
+      // while the Calendar/Timer pages below it still looked empty until
+      // the network round-tripped.
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => (old ? [optimistic, ...old] : [optimistic]),
+      );
       void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
-      return { previous };
+      void queryClient.cancelQueries({ queryKey: ["time-entries"] });
+      return { previous, previousLists };
     },
     onError: (_err, _vars, context) => {
-      if (navigator.onLine && context?.previous !== undefined) {
+      if (!navigator.onLine) return;
+      if (context?.previous !== undefined) {
         queryClient.setQueryData(currentTimeEntryQueryKey, context.previous);
+      }
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
       }
     },
     onSuccess: async (data) => {
       queryClient.setQueryData(currentTimeEntryQueryKey, data);
-      await queryClient.invalidateQueries({
-        queryKey: ["time-entries"],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: currentTimeEntryQueryKey,
-      });
+      // Swap the negative-id optimistic row for the server row in every
+      // list cache. This keeps the UI stable across the followup
+      // invalidate refetch — before this, the lists re-fetched, briefly
+      // dropping the just-started entry before the new one reappeared.
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) => {
+          if (!old) return old;
+          const withoutOptimistic = old.filter(
+            (e) => !(typeof e.id === "number" && e.id < 0 && e.start === data.start),
+          );
+          return withoutOptimistic.some((e) => e.id === data.id)
+            ? withoutOptimistic
+            : [data, ...withoutOptimistic];
+        },
+      );
+      await queryClient.invalidateQueries({ queryKey: ["time-entries"] });
+      await queryClient.invalidateQueries({ queryKey: currentTimeEntryQueryKey });
     },
   });
 }
@@ -216,16 +248,46 @@ export function useStopTimeEntryMutation() {
           },
         }),
       ),
-    onMutate: () => {
-      const previous = queryClient.getQueryData(currentTimeEntryQueryKey);
+    onMutate: ({ timeEntryId }) => {
+      const previous =
+        queryClient.getQueryData<GithubComTogglTogglApiInternalModelsTimeEntry | null>(
+          currentTimeEntryQueryKey,
+        );
+      const previousLists = queryClient.getQueriesData<
+        GithubComTogglTogglApiInternalModelsTimeEntry[]
+      >({ queryKey: ["time-entries"] });
+
+      const nowIso = new Date().toISOString();
       // setQueryData FIRST so the UI re-renders in the same tick; cancel in the background.
       queryClient.setQueryData(currentTimeEntryQueryKey, null);
+
+      // Flip the running entry to a stopped entry in every list so the
+      // calendar block and the recent-entries row settle to their final
+      // layout on tap instead of re-arranging when the server responds.
+      queryClient.setQueriesData<GithubComTogglTogglApiInternalModelsTimeEntry[]>(
+        { queryKey: ["time-entries"] },
+        (old) =>
+          old?.map((entry) => {
+            if (entry.id !== timeEntryId) return entry;
+            const startMs = entry.start ? new Date(entry.start).getTime() : Date.now();
+            const durationSec = Math.max(0, Math.round((Date.now() - startMs) / 1000));
+            return { ...entry, stop: nowIso, duration: durationSec };
+          }),
+      );
+
       void queryClient.cancelQueries({ queryKey: currentTimeEntryQueryKey });
-      return { previous };
+      void queryClient.cancelQueries({ queryKey: ["time-entries"] });
+      return { previous, previousLists };
     },
     onError: (_err, _vars, context) => {
-      if (navigator.onLine && context?.previous !== undefined) {
+      if (!navigator.onLine) return;
+      if (context?.previous !== undefined) {
         queryClient.setQueryData(currentTimeEntryQueryKey, context.previous);
+      }
+      if (context?.previousLists) {
+        for (const [key, data] of context.previousLists) {
+          queryClient.setQueryData(key, data);
+        }
       }
     },
     onSuccess: async () => {
