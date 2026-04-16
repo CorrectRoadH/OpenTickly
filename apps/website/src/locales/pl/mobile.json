@@ -37,6 +37,8 @@
   "deleteThisTimeEntry": "Usuń ten wpis czasu",
   "editStartTime": "Edytuj czas rozpoczęcia",
   "editEndTime": "Edytuj czas zakończenia",
+  "hour": "Godzina",
+  "minute": "Minuta",
   "timeEntryDescription": "Opis wpisu czasu",
   "offlineSynced": "Operacje offline zsynchronizowane",
   "connectionRestored": "Połączenie przywrócone",

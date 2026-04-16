@@ -37,6 +37,8 @@
   "deleteThisTimeEntry": "删除此时间条目",
   "editStartTime": "编辑开始时间",
   "editEndTime": "编辑结束时间",
+  "hour": "小时",
+  "minute": "分钟",
   "timeEntryDescription": "时间条目描述",
   "offlineSynced": "离线操作已同步完成",
   "connectionRestored": "已恢复连接",

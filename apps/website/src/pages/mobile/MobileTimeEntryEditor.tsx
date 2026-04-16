@@ -1,9 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { type ReactElement, useState } from "react";
 
-import i18n from "../../app/i18n.ts";
 import type { GithubComTogglTogglApiInternalModelsTimeEntry } from "../../shared/api/generated/public-track/types.gen.ts";
 import { formatClockDuration } from "../../features/tracking/overview-data.ts";
+import {
+  applyTimeInputValue,
+  getTimeZoneParts,
+  toTimeInputValue,
+} from "../../features/tracking/time-entry-editor-utils.ts";
 import { resolveTimeEntryProjectId } from "../../features/tracking/time-entry-ids.ts";
 import { normalizeProjects, normalizeTags } from "../../features/tracking/useWorkspaceData.ts";
 import { useUserPreferences } from "../../shared/query/useUserPreferences.ts";
@@ -17,6 +21,7 @@ import { useSession } from "../../shared/session/session-context.tsx";
 import { Check, ChevronRight } from "lucide-react";
 import { PinIcon, TrashIcon } from "../../shared/ui/icons.tsx";
 import { MobilePickerOverlay } from "./MobilePickerOverlay.tsx";
+import { MobileTimePicker } from "./MobileTimePicker.tsx";
 
 type MobileTimeEntryEditorProps = {
   entry: GithubComTogglTogglApiInternalModelsTimeEntry;
@@ -104,6 +109,19 @@ export function MobileTimeEntryEditor({
 
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState<"start" | "end" | null>(null);
+
+  const pickerIso = timePickerOpen === "end" ? stopIso : startIso;
+  const pickerHM = pickerIso
+    ? getTimeZoneParts(new Date(pickerIso), timezone)
+    : { hours: 0, minutes: 0 };
+  const pickerSetter = timePickerOpen === "end" ? setStopIso : setStartIso;
+  const pickerTitle =
+    timePickerOpen === "end"
+      ? t("editEndTime")
+      : timePickerOpen === "start"
+        ? t("editStartTime")
+        : "";
 
   return (
     <div
@@ -250,6 +268,23 @@ export function MobileTimeEntryEditor({
         </MobilePickerOverlay>
       ) : null}
 
+      {/* Time picker sheet */}
+      {timePickerOpen ? (
+        <MobileTimePicker
+          hour={pickerHM.hours}
+          minute={pickerHM.minutes}
+          onChange={(h, m) => {
+            if (!pickerIso) return;
+            const hhmm = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+            const next = applyTimeInputValue(new Date(pickerIso), hhmm, timezone);
+            if (next) pickerSetter(next.toISOString());
+          }}
+          onClose={() => setTimePickerOpen(null)}
+          testId="mobile-time-picker"
+          title={pickerTitle}
+        />
+      ) : null}
+
       {/* Header */}
       <div className="flex h-[52px] shrink-0 items-center justify-between border-b border-[var(--track-border)] px-2">
         <button
@@ -362,29 +397,30 @@ export function MobileTimeEntryEditor({
         <div className="border-b border-[var(--track-border)] px-4 py-3">
           <div className="flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("start")}</span>
-            <input
+            <button
               aria-label={t("editStartTime")}
-              className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
-              onChange={(e) => {
-                const parsed = parseTimeInput(e.target.value, startIso, timezone);
-                if (parsed) setStartIso(parsed);
-              }}
-              type="time"
-              value={toTimeInputValue(startIso, timezone)}
-            />
+              className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none transition active:opacity-70"
+              data-testid="mobile-start-time-trigger"
+              onClick={() => setTimePickerOpen("start")}
+              style={{ fontFamily: "var(--font-mono), monospace" }}
+              type="button"
+            >
+              {startIso ? toTimeInputValue(new Date(startIso), timezone) : "--:--"}
+            </button>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("end")}</span>
-            <input
+            <button
               aria-label={t("editEndTime")}
-              className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none"
-              onChange={(e) => {
-                const parsed = parseTimeInput(e.target.value, stopIso, timezone);
-                if (parsed) setStopIso(parsed);
-              }}
-              type="time"
-              value={toTimeInputValue(stopIso, timezone)}
-            />
+              className="bg-transparent text-right text-[14px] tabular-nums text-white outline-none transition active:opacity-70 disabled:opacity-50"
+              data-testid="mobile-end-time-trigger"
+              disabled={isRunning}
+              onClick={() => setTimePickerOpen("end")}
+              style={{ fontFamily: "var(--font-mono), monospace" }}
+              type="button"
+            >
+              {stopIso ? toTimeInputValue(new Date(stopIso), timezone) : "--:--"}
+            </button>
           </div>
           <div className="mt-2 flex items-center justify-between">
             <span className="text-[13px] text-[var(--track-text-muted)]">{t("duration")}</span>
@@ -428,45 +464,4 @@ function FieldRow({ children, label }: { children: ReactElement; label: string }
       {children}
     </div>
   );
-}
-
-function toTimeInputValue(iso: string, timezone: string): string {
-  if (!iso) return "";
-  const date = new Date(iso);
-  const h = new Intl.DateTimeFormat(i18n.language, {
-    hour: "2-digit",
-    hour12: false,
-    timeZone: timezone,
-  }).format(date);
-  const m = new Intl.DateTimeFormat(i18n.language, {
-    minute: "2-digit",
-    timeZone: timezone,
-  }).format(date);
-  return `${h.padStart(2, "0")}:${m.padStart(2, "0")}`;
-}
-
-function parseTimeInput(timeValue: string, currentIso: string, timezone: string): string | null {
-  if (!timeValue || !currentIso) return null;
-  const [hours, minutes] = timeValue.split(":").map(Number);
-  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
-  const current = new Date(currentIso);
-  // Build a new date preserving the date portion, adjusting time
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(current);
-  const utcDate = new Date(
-    `${parts}T${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`,
-  );
-  // Adjust for timezone offset
-  const offset = getTimezoneOffsetMs(utcDate, timezone);
-  return new Date(utcDate.getTime() - offset).toISOString();
-}
-
-function getTimezoneOffsetMs(date: Date, timezone: string): number {
-  const utcStr = date.toLocaleString("en-US", { timeZone: "UTC" });
-  const tzStr = date.toLocaleString("en-US", { timeZone: timezone });
-  return new Date(tzStr).getTime() - new Date(utcStr).getTime();
 }

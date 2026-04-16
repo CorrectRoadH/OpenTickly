@@ -37,6 +37,8 @@
   "deleteThisTimeEntry": "이 시간 항목 삭제",
   "editStartTime": "시작 시간 편집",
   "editEndTime": "종료 시간 편집",
+  "hour": "시",
+  "minute": "분",
   "timeEntryDescription": "시간 항목 설명",
   "offlineSynced": "오프라인 작업이 동기화되었습니다",
   "connectionRestored": "연결이 복원되었습니다",

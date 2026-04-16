@@ -37,6 +37,8 @@
   "deleteThisTimeEntry": "このタイムエントリを削除",
   "editStartTime": "開始時刻を編集",
   "editEndTime": "終了時刻を編集",
+  "hour": "時",
+  "minute": "分",
   "timeEntryDescription": "タイムエントリの説明",
   "offlineSynced": "オフライン操作が同期されました",
   "connectionRestored": "接続が復元されました",
