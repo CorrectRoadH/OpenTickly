@@ -1,61 +1,34 @@
 ---
 title: AI 연동
-description: Claude, Cursor 등 AI 에이전트가 toggl-cli와 설치 가능한 스킬 팩을 통해 자동 시간 기록, 타이머 시작/정지, 프로젝트·태그 관리를 수행하도록 하세요. AI 워크플로우를 위해 설계된 오픈소스 시간 추적.
+description: Claude, Cursor 등 AI 에이전트가 toggl-cli와 설치형 스킬 팩을 통해 자동으로 시간을 기록하고, 타이머를 시작·정지하며, 프로젝트와 태그를 관리하도록 하세요. AI 워크플로를 위해 설계된 오픈소스 시간 추적.
 ---
 
-OpenToggl의 AI 연동은 [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)를 중심으로 구축되어 있습니다. AI 에이전트와 자동화를 위해 전문적으로 관리되는 CLI입니다. 두 가지 사용 방법:
+[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)를 사용하면 Claude Code, OpenClaw, Hermes Agent, Codex, Cursor 등의 AI 에이전트를 연동할 수 있습니다. 에이전트가 커맨드라인을 통해 직접 OpenToggl 인스턴스를 조작하여 자동으로 시간을 기록하고, 타이머를 시작·정지하며, 프로젝트와 태그를 관리하도록 만들 수 있습니다.
 
 - `toggl` CLI — 커맨드라인에서 직접 조작
-- `SKILL.md` 스킬 팩 — 에이전트 환경에 설치
+- `SKILL.md` 스킬 팩 — 에이전트 환경에 설치하여 바로 사용
 
 ## 설치
 
-에이전트 환경:
-
 ```bash
+npm install -g @correctroadh/toggl-cli
+
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-CLI 수동 설치:
+## 설정
+
+이 CLI는 Toggl과 OpenToggl을 동시에 지원하며, 기본적으로는 공식 Toggl API를 가리킵니다. 자신의 인스턴스로 바꾸려면 인증 시 `--api-type opentoggl`과 `--api-url`을 추가하세요.
+
+Toggl에는 시간당 30회 API 제한이 있으므로, AI 에이전트의 잠재력을 최대한 끌어내려면 OpenToggl과 함께 사용하는 것을 강력히 권장합니다.
 
 ```bash
-npm install -g @correctroadh/toggl-cli
-toggl --help
+toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-## CLI가 지원하는 기능
-
-설치 후 에이전트는 HTTP 요청을 직접 만드는 대신 명령어로 일반적인 작업을 수행할 수 있습니다:
-
-- 타임 엔트리: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
-- 워크스페이스: `list`, `create`, `rename`, `delete`
-- 사용자 정보: `me`, `preferences`
-- 조직: `organization list`, `organization show`
-
-## OpenToggl에 연결
-
-CLI는 공식 Toggl Track과 OpenToggl 셀프호스팅 모두 지원합니다. 첫 인증 시 선택하세요:
-
-- Toggl Track → 공식 서비스에 연결
-- OpenToggl → 인스턴스 URL 입력, 예: `https://your-instance.com/api/v9`
-
-## API 직접 호출 대신 CLI를 쓰는 이유
-
-- 명령어가 일반적인 작업에 직접 대응 — 에이전트가 하위 API를 이해할 필요 없음
-- 인증 내장, 수동 토큰 관리 불필요
-- 읽기 작업의 로컬 캐시, 쓰기 시 자동 캐시 무효화
-- 스킬 팩을 에이전트 환경에 설치하고 재사용 가능
-
-## 추천 설정
-
-1. OpenToggl 배포 (또는 호스팅 버전 사용)
-2. toggl-cli 또는 스킬 팩 설치
-3. 인스턴스에 인증
-4. 에이전트가 CLI 명령어로 일상 작업 수행
-5. 더 세밀한 제어가 필요하면 OpenAPI 문서 참조
+`YOUR_API_TOKEN`은 OpenToggl 웹 UI의 프로필 아바타 → Profile → API Token에서 확인할 수 있습니다.
 
 ## 참고
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 저장소
 - `skills/toggl-cli/SKILL.md` 스킬 팩 정의
-- OpenToggl OpenAPI 컨트랙트 및 제품 문서

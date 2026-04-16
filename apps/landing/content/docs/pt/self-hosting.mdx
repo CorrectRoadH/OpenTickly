@@ -1,164 +1,164 @@
 ---
 title: Auto-hospedagem
-description: Implante o OpenToggl na sua própria infraestrutura — Docker Compose, CasaOS, ZimaOS, Synology NAS, fnOS e mais. Importe seus dados do Toggl diretamente, mantenha 100% de compatibilidade com a API e controle seus dados de ponta a ponta.
+description: Implante o OpenToggl na sua própria máquina — um único comando do Docker Compose sobe Web + API + Postgres + Redis e você está no ar em 5 minutos. 100% compatível com a API do Toggl; os clientes oficiais se conectam diretamente.
 ---
 
-## Docker Compose
+Rodar o OpenToggl na sua própria máquina exige apenas um `docker-compose.yml`. Abaixo, um passeio completo do zero até o sistema funcionando.
 
-A forma mais rápida de auto-hospedar o OpenToggl.
+## Requisitos do sistema
 
-### Início Rápido
+- Qualquer máquina Linux, macOS ou Windows com **Docker Engine 20.10+** e **Docker Compose v2** instalados
+- Cerca de 1 GB de memória e 1 GB de espaço em disco
+- Uma porta TCP livre (padrão `8080`)
+
+Se ainda não tem o Docker, siga o [guia oficial](https://docs.docker.com/engine/install/) para instalá-lo antes de continuar.
+
+---
+
+## Implantar o servidor
+
+### Passo 1 — Baixar o `docker-compose.yml`
+
+Crie um novo diretório e baixe o arquivo compose oficial:
 
 ```bash
 mkdir -p opentoggl && cd opentoggl
 
 wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+```
 
+Esse compose define três containers:
+
+- **`opentoggl`** — Interface web + REST API (exposto externamente na porta `8080`)
+- **`postgres`** — Banco de dados (apenas na rede interna, não exposto)
+- **`redis`** — Cache e fila de tarefas em segundo plano (apenas na rede interna, não exposto)
+
+### Passo 2 — (Opcional) Configurar o `.env`
+
+Os valores padrão funcionam imediatamente. Para alterar a porta ou as senhas, crie um `.env` no mesmo diretório:
+
+```bash
+# Porta externa da interface web e da API
+OPENTOGGL_PORT=8080
+
+# Antes de colocar em produção, recomendamos fortemente trocar por senhas fortes
+OPENTOGGL_POSTGRES_PASSWORD=postgres
+OPENTOGGL_REDIS_PASSWORD=opentoggl
+```
+
+Essas três variáveis são as **únicas** configurações sobrescrevíveis em todo o arquivo compose — todo o resto (nome do banco, usuário, imagem, strings de conexão internas) é fixado diretamente no arquivo para evitar desvios de configuração. Para personalizações mais profundas, edite o `docker-compose.yml` diretamente.
+
+<Callout type="warn">
+  Em produção, sempre troque as duas senhas. Os valores padrão servem apenas para testes locais. Mesmo que o Postgres/Redis
+  não exponham portas ao host, definir uma senha é o mínimo de defesa contra invasões na rede interna.
+</Callout>
+
+### Passo 3 — Iniciar os containers
+
+```bash
 docker compose up -d
 ```
 
-Aguarde todos os serviços ficarem saudáveis e verifique:
+---
 
-```bash
-curl -fsS http://localhost:8080/healthz
-curl -fsS http://localhost:8080/readyz
-```
+## Acessar a aplicação web
 
-Pronto. Abra `http://localhost:8080` no seu navegador.
+Abra `http://<seu IP>:8080` no navegador, registre a primeira conta e já pode começar a registrar tempo.
 
-### Arquitetura
+### Mobile
 
-O arquivo compose inicia três serviços em uma rede interna isolada:
+Por enquanto não há aplicativo móvel oficial, mas você pode adicionar a interface web à tela inicial do celular (PWA). Clientes Toggl de terceiros, como o timery, já estão em contato com os desenvolvedores para oferecer suporte ao OpenToggl.
 
-| Serviço     | Função         | Exposto ao host |
-| ----------- | -------------- | --------------- |
-| `opentoggl` | Web + API      | Sim (`8080`)    |
-| `postgres`  | Banco de dados | Não             |
-| `redis`     | Cache / Fila   | Não             |
+---
 
-Postgres e Redis não são expostos à rede do host. Apenas o serviço `opentoggl` publica uma porta.
+## Conectar agentes de IA
 
-### Configuração
+O OpenToggl não tem o limite de 30 chamadas de API por hora, o que significa que agentes como Claude e Cursor podem ser usados à vontade. Combine com o [`toggl-cli`](/pt/docs/ai-integration), instale o pacote de habilidades no ambiente do agente e, em poucos minutos, a IA já pode iniciar e parar temporizadores e organizar projetos por você.
 
-Todos os padrões funcionam imediatamente. Substitua via variáveis de ambiente ou um arquivo `.env` no mesmo diretório do `docker-compose.yml`:
-
-| Variável                      | Padrão                                  | Descrição                                                         |
-| ----------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`                                  | Porta do host para a interface web e API                          |
-| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | Imagem do container (fixe em uma tag de versão para estabilidade) |
-| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | Nome do banco de dados                                            |
-| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | Usuário do banco de dados                                         |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | Senha do banco de dados                                           |
-| `OPENTOGGL_DATABASE_URL`      | auto                                    | String de conexão completa (substitui variáveis PG individuais)   |
-| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | String de conexão do Redis                                        |
-
-### Atualização
+## Atualização
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-As migrações de schema são executadas automaticamente na inicialização.
-
-### Backup e Restauração
-
-Os dados do banco são armazenados no volume nomeado `opentoggl-postgres-data`.
-
-```bash
-# Backup
-docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
-
-# Restauração
-docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
-```
-
-### Desinstalar
-
-```bash
-docker compose down      # Para os serviços, mantém os dados
-docker compose down -v   # Para os serviços e exclui todos os dados
-```
-
 ---
 
-## CasaOS
+## Implantar em NAS / Homelab
 
-O [CasaOS](https://casaos.zimaspace.com/) suporta a instalação de apps a partir de um arquivo Docker Compose.
+O OpenToggl roda em qualquer plataforma que suporte Docker Compose. Os guias abaixo apenas encaixam o fluxo acima na interface de cada sistema — os comandos por baixo dos panos são exatamente os mesmos.
+
+### CasaOS
 
 1. Abra o painel do CasaOS
-2. Vá em **App Store** > **Instalação Personalizada** > **Importar docker-compose**
+2. Vá em **App Store** → **Instalação Personalizada** → **Importar docker-compose**
 3. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
 4. Ajuste a porta da **Interface Web** para `8080` e salve
-5. Inicie o app pelo seu painel
+5. Inicie pelo painel
 
-Após a instalação, acesse o OpenToggl em `http://<seu-ip-casaos>:8080`.
+Acesse em `http://<seu IP do CasaOS>:8080`.
 
----
+### ZimaOS
 
-## ZimaOS
+O ZimaOS (sistema oficial do Zimablade / Zimacube) compartilha a mesma App Store do CasaOS, então os passos são idênticos: **App Store** → **Instalação Personalizada** → **Importar docker-compose** e cole o arquivo compose.
 
-O ZimaOS (sistema operacional para Zimablade / Zimacube) traz a mesma App Store do CasaOS, então o fluxo de instalação é idêntico. Use **App Store** > **Instalação Personalizada** > **Importar docker-compose** e cole o [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml). Acesse o OpenToggl em `http://<seu-ip-zimaos>:8080`.
+### Synology
 
----
+O Synology DSM 7.2+ suporta Docker Compose através do **Container Manager**:
 
-## Synology (群晖)
-
-O Synology DSM 7.2+ suporta Docker Compose através do **Container Manager**.
-
-1. Abra **Container Manager** > **Projeto** > **Criar**
-2. Defina um nome de projeto (ex: `opentoggl`)
-3. Escolha **Usar docker-compose.yml** e cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
-4. Clique em **Próximo** e finalize o assistente
-
-Acesse o OpenToggl em `http://<seu-ip-synology>:8080`.
+1. Abra **Container Manager** → **Projeto** → **Criar**
+2. Defina um nome de projeto, por exemplo `opentoggl`
+3. Escolha **Usar docker-compose.yml** e cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+4. Avance pelo assistente até concluir
 
 <Callout type="info">
-  Se a porta 8080 conflitar com o DSM, adicione `OPENTOGGL_PORT=9090` (ou qualquer porta livre) nas
-  configurações de ambiente antes de criar o projeto.
+  Se a porta `8080` entrar em conflito com o DSM, adicione `OPENTOGGL_PORT=9090` (ou qualquer porta livre) nas configurações de ambiente antes de criar o projeto.
 </Callout>
 
----
+### fnOS
 
-## fnOS (飞牛)
+O [fnOS](https://www.fnnas.com) traz um painel Docker nativo:
 
-O [fnOS](https://www.fnnas.com) traz um gerenciador Docker nativo com suporte a projetos Compose.
+1. Abra o app **Docker** na área de trabalho do fnOS
+2. Na barra lateral esquerda, escolha **Compose** → **Novo projeto**
+3. Nome do projeto `opentoggl`, mantenha o caminho de armazenamento padrão
+4. Em **Conteúdo Compose**, cole o [arquivo compose](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)
+5. Clique em **Implantar** e aguarde até que os três containers fiquem verdes
 
-1. Abra o app **Docker** na área de trabalho do fnOS (instale-o pelo Centro de Aplicativos se não estiver presente)
-2. Na barra lateral esquerda, escolha **Compose** > **Novo projeto**
-3. Defina o **Nome do projeto** como `opentoggl`
-4. Deixe o **Caminho de armazenamento** no padrão (geralmente `/vol1/1000/docker/opentoggl`)
-5. Cole o conteúdo do [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) em **Conteúdo Compose**
-6. Clique em **Implantar** e aguarde até que os três contêineres fiquem verdes (healthy)
+### Outras plataformas
 
-Acesse o OpenToggl em `http://<seu-ip-fnos>:8080`.
-
-<Callout type="info">
-  Se o **Centro de Segurança > Firewall** estiver ativado, adicione uma regra de entrada liberando TCP `8080` para que outros dispositivos da LAN consigam acessar.
-</Callout>
-
----
-
-## Outras Plataformas NAS / Homelab
-
-O OpenToggl funciona em qualquer plataforma que suporte Docker Compose, incluindo:
+As plataformas abaixo seguem exatamente o mesmo fluxo de Docker Compose:
 
 - **Unraid** — via Community Applications ou plugin Compose Manager
-- **TrueNAS SCALE** — via app personalizado com Docker Compose
-- **Proxmox LXC** — instale o Docker dentro de um container LXC, depois siga o guia do Docker Compose
-
-Os passos são os mesmos: obtenha o `docker-compose.yml`, execute `docker compose up -d`, acesse a porta `8080`.
+- **TrueNAS SCALE** — app personalizado + Docker Compose
+- **Proxmox LXC** — instale o Docker dentro de um container LXC e siga os passos de [Implantar o servidor](#implantar-o-servidor)
 
 ---
 
-## Verifique Sua Instância
+## Referência de configuração
 
-Independentemente da plataforma, execute estas verificações para confirmar uma implantação saudável:
+O arquivo compose inteiro tem apenas três configurações sobrescrevíveis:
 
-```bash
-curl -fsS http://<seu-ip>:8080/healthz
-curl -fsS http://<seu-ip>:8080/readyz
-```
+| Variável                      | Padrão      | Descrição                                              |
+| ----------------------------- | ----------- | ------------------------------------------------------ |
+| `OPENTOGGL_PORT`              | `8080`      | Porta externa da interface web e da API                |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Senha do Postgres (obrigatório trocar em produção)     |
+| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Senha do Redis (obrigatório trocar em produção)        |
 
-Ambos devem ter sucesso. Se sim, está tudo pronto.
+Todas as outras configurações (nome do banco, usuário, tag da imagem, strings de conexão internas, nomes de volume) estão fixadas diretamente no `docker-compose.yml`. Para alterá-las, edite o arquivo.
+
+### Endpoints de health check
+
+| Caminho    | Finalidade                                      |
+| ---------- | ----------------------------------------------- |
+| `/readyz`  | Checagem de prontidão (depende de DB + Redis)   |
+| `/healthz` | Checagem de liveness (se o processo está vivo)  |
+
+---
+
+## Próximos passos
+
+- [Integração com IA](/pt/docs/ai-integration) — conecte Claude, Cursor e outros à sua própria instância
+- [Repositório no GitHub](https://github.com/CorrectRoadH/opentoggl) — código-fonte, Issues, Discussions
+- Teve problemas na implantação? Relate em [Issues](https://github.com/CorrectRoadH/opentoggl/issues)

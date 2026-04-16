@@ -1,61 +1,34 @@
 ---
 title: AI 連携
-description: Claude や Cursor などの AI エージェントに、toggl-cli とインストール可能なスキルパックを通じて時間記録・タイマー操作・プロジェクトやタグ管理を任せましょう。AI ワークフロー向けに設計されたオープンソース時間追跡。
+description: Claude、Cursor などの AI エージェントに、toggl-cli とインストール可能なスキルパックを通じて、時間の記録、タイマーの開始・停止、プロジェクトやタグの管理を自動で任せましょう。AI ワークフローのために設計されたオープンソースの時間追跡。
 ---
 
-OpenToggl の AI 連携は [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) を中心に構築されています。AI エージェントと自動化のために専用にメンテナンスされている CLI です。2つの使い方があります：
+[`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) を使って Claude Code、OpenClaw、Hermes Agent、Codex、Cursor などの AI エージェントを接続し、コマンドラインから直接 OpenToggl インスタンスを操作させましょう。時間の記録、タイマーの開始・停止、プロジェクトやタグの管理を自動化できます。
 
 - `toggl` CLI — コマンドラインから直接操作
-- `SKILL.md` スキルパック — エージェント環境にインストール
+- `SKILL.md` スキルパック — エージェント環境に入れればワンタッチで利用可能
 
 ## インストール
 
-エージェント環境の場合：
-
 ```bash
+npm install -g @correctroadh/toggl-cli
+
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-CLI を手動インストール：
+## 設定
+
+この CLI は Toggl と OpenToggl の両方に対応しており、デフォルトでは公式 Toggl API を指しています。自分のインスタンスに向けたい場合は、認証時に `--api-type opentoggl` と `--api-url` を指定してください。
+
+ただし Toggl には 1 時間あたり 30 回という API 制限があるため、AI エージェントの真価を解放するには OpenToggl と組み合わせることを強くおすすめします。
 
 ```bash
-npm install -g @correctroadh/toggl-cli
-toggl --help
+toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-## CLI でできること
-
-インストール後、エージェントは HTTP リクエストを組み立てる代わりにコマンドで操作できます：
-
-- タイムエントリ：`start`、`stop`、`continue`、`running`、`show`、`edit`、`delete`
-- ワークスペース：`list`、`create`、`rename`、`delete`
-- ユーザー情報：`me`、`preferences`
-- 組織：`organization list`、`organization show`
-
-## OpenToggl への接続
-
-CLI は公式 Toggl Track と OpenToggl セルフホストの両方に対応しています。初回認証時に選択してください：
-
-- Toggl Track → 公式サービスに接続
-- OpenToggl → インスタンスの URL を入力（例：`https://your-instance.com/api/v9`）
-
-## なぜ API 直接呼び出しではなく CLI なのか
-
-- コマンドが一般的なタスクに直接対応 — エージェントが API の詳細を理解する必要がない
-- 認証が組み込み済み、トークンの手動管理が不要
-- 読み取り操作のローカルキャッシュ、書き込み時の自動キャッシュ無効化
-- スキルパックはエージェント環境に横断的にインストール・再利用可能
-
-## おすすめの構成
-
-1. OpenToggl をデプロイ（またはホスト版を利用）
-2. toggl-cli またはスキルパックをインストール
-3. インスタンスに認証
-4. エージェントは CLI コマンドで日常操作
-5. より細かい制御が必要な場合は OpenAPI ドキュメントを参照
+`YOUR_API_TOKEN` は OpenToggl Web UI のプロフィールアイコン → Profile → API Token から取得できます。
 
 ## 参考
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) リポジトリ
 - `skills/toggl-cli/SKILL.md` スキルパック定義
-- OpenToggl の OpenAPI コントラクトとプロダクトドキュメント

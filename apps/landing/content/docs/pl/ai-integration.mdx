@@ -1,61 +1,34 @@
 ---
 title: Integracja z AI
-description: Pozwól Claude, Cursor i innym agentom AI automatycznie rejestrować czas, uruchamiać i zatrzymywać timery oraz zarządzać projektami i tagami przez toggl-cli i instalowalne paczki umiejętności. Otwartoźródłowy time tracking dla przepływów AI.
+description: Pozwól Claude, Cursor i innym agentom AI — za pośrednictwem toggl-cli oraz instalowalnej paczki umiejętności — automatycznie rejestrować czas, uruchamiać i zatrzymywać timery oraz zarządzać projektami i tagami. Otwartoźródłowe śledzenie czasu zaprojektowane pod przepływy AI.
 ---
 
-Integracja AI w OpenToggl jest zbudowana wokół [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) — CLI utrzymywanego specjalnie dla agentów AI i automatyzacji. Dwa sposoby użycia:
+Użyj [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), aby podłączyć Claude Code, OpenClaw, Hermes Agent, Codex, Cursor i innych agentów AI — niech obsługują Twoją instancję OpenToggl bezpośrednio z wiersza poleceń, automatycznie rejestrując czas, startując i zatrzymując timery oraz zarządzając projektami i tagami.
 
-- `toggl` CLI — obsługa bezpośrednio z wiersza poleceń
-- `SKILL.md` paczka umiejętności — instalacja w środowisku agenta
+- `toggl` CLI — bezpośrednia obsługa z wiersza poleceń
+- Paczka umiejętności `SKILL.md` — wgrywasz do środowiska agenta i korzystasz jednym kliknięciem
 
 ## Instalacja
 
-Dla środowisk agentowych:
-
 ```bash
+npm install -g @correctroadh/toggl-cli
+
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-Ręczna instalacja CLI:
+## Konfiguracja
+
+CLI jest jednocześnie kompatybilne z Toggl i OpenToggl, domyślnie kierując zapytania do oficjalnego Toggl API. Aby przełączyć je na własną instancję, podczas autoryzacji dodaj `--api-type opentoggl` oraz `--api-url`:
+
+Ponieważ Toggl ma limit 30 wywołań API na godzinę, zdecydowanie zalecamy używanie CLI razem z OpenToggl, aby w pełni uwolnić potencjał agentów AI:
 
 ```bash
-npm install -g @correctroadh/toggl-cli
-toggl --help
+toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-## Co obejmuje CLI
+`YOUR_API_TOKEN` znajdziesz w interfejsie webowym OpenToggl: awatar użytkownika → Profile → API Token.
 
-Po zainstalowaniu agenci mogą uruchamiać typowe operacje jako komendy zamiast tworzyć surowe żądania HTTP:
-
-- Wpisy czasu: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
-- Przestrzenie robocze: `list`, `create`, `rename`, `delete`
-- Informacje o użytkowniku: `me`, `preferences`
-- Organizacje: `organization list`, `organization show`
-
-## Łączenie z OpenToggl
-
-CLI obsługuje zarówno oficjalny Toggl Track, jak i samodzielnie hostowany OpenToggl. Wybierz podczas pierwszej autoryzacji:
-
-- Toggl Track → łączy się z oficjalną usługą
-- OpenToggl → wpisz URL swojej instancji, np. `https://twoja-instancja.com/api/v9`
-
-## Dlaczego CLI zamiast surowych wywołań API
-
-- Komendy mapują się bezpośrednio na typowe zadania — agenci nie muszą rozumieć bazowego API
-- Wbudowana autoryzacja, bez ręcznego zarządzania tokenami
-- Lokalne cachowanie odczytów, automatyczne unieważnianie cache przy zapisach
-- Paczka umiejętności może być zainstalowana i ponownie używana w różnych środowiskach agentów
-
-## Zalecana konfiguracja
-
-1. Wdróż OpenToggl (lub użyj wersji hostowanej)
-2. Zainstaluj toggl-cli lub paczkę umiejętności
-3. Autoryzuj się na swojej instancji
-4. Agenci używają komend CLI do codziennych operacji
-5. Dla dokładniejszej kontroli, odwołaj się do dokumentacji OpenAPI
-
-## Referencje
+## Materiały
 
 - Repozytorium [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli)
 - Definicja paczki umiejętności `skills/toggl-cli/SKILL.md`
-- Kontrakty OpenAPI i dokumentacja produktu OpenToggl

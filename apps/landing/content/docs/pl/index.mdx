@@ -1,46 +1,16 @@
 ---
 title: Czym jest OpenToggl
-description: "Otwartoźródłowa dokumentacja OpenToggl: szybki start, samodzielny hosting Docker, kompatybilność z API Toggl oraz integracja z agentami AI. Od instalacji po podłączenie Claude i Cursor — wszystko w jednym miejscu."
+description: "Otwartoźródłowa dokumentacja OpenToggl: szybki start, samodzielne wdrożenie przez Docker, uwagi dotyczące zgodności z Toggl API oraz przewodnik integracji z agentami AI. Kompletne odniesienie — od instalacji po podłączenie Claude i Cursor."
 ---
 
-OpenToggl to otwartoźródłowe narzędzie do śledzenia czasu. Cel jest prosty: być kompatybilnym z Toggl i pozwolić Ci posiadać swoje dane.
+OpenToggl to darmowa, stawiająca na prywatność i przyjazna AI alternatywa dla Toggl.
 
-Co to oznacza w praktyce:
+Toggl to świetny produkt, ale jest zbyt drogi, a Twoje dane tak naprawdę do Ciebie nie należą. Do tego limit 30 wywołań API na godzinę bywa frustrujący — agent AI potrafi wyczerpać godzinny przydział w niecałą minutę.
 
-- Kompatybilność z `Track API v9`, `Reports API v3`, `Webhooks API v1`
-- Pełny interfejs webowy w zestawie
-- Działa w wersji hostowanej lub samodzielnie hostowanej
-- Import danych z Toggl
+Celem OpenToggl jest pełna zgodność z Toggl, dzięki której możesz bez strat migrować dane użytkownika w obie strony między oboma serwisami. Zachowujesz cały dotychczasowy przepływ pracy i przyzwyczajenia. Nic się nie zmienia — tyle że jest wygodniej, taniej i bardziej prywatnie.
 
 <Cards>
-  <Card title="Integracja z AI" href="/docs/ai-integration" />
-  <Card title="Samodzielny hosting" href="/docs/self-hosting" />
+  <Card title="Integracja z AI" href="/pl/docs/ai-integration" />
+  <Card title="Samodzielny hosting" href="/pl/docs/self-hosting" />
   <Card title="Repozytorium GitHub" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
-
-## Dlaczego ten projekt istnieje
-
-Toggl jest świetny, ale Twoje dane znajdują się na cudzych serwerach. OpenToggl zapewnia to samo API i to samo doświadczenie, ale możesz go wdrożyć samodzielnie.
-
-Projekt wykorzystuje kontrakty OpenAPI i dokumentację produktu jako standard implementacji:
-
-- Wersja samodzielna i hostowana są identyczne
-- Dokumentacja, kontrakty i kod są zsynchronizowane
-- Bez niedopracowanych wydań
-
-## Układ repozytorium
-
-- `docs/` — Definicje produktu
-- `openapi/` — Kontrakty OpenAPI
-- `apps/` — Kod źródłowy frontendu i backendu
-- `docs/self-hosting/` — Przewodniki samodzielnego hostingu
-
-## Aktualny zakres
-
-- Śledzenie czasu i zarządzanie przestrzeniami roboczymi przez Track API
-- Raportowanie przez Reports API
-- Zarządzanie webhookami przez Webhooks API
-- Interfejs webowy do wszystkiego powyższego
-- Import danych z Toggl
-
-O AI: OpenToggl nie jest osobnym produktem AI. Ale jego stabilne API, dokładna dokumentacja i wsparcie samodzielnego hostingu sprawiają, że jest naturalnym wyborem dla agentów i automatyzacji.

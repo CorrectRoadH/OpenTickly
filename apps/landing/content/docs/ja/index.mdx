@@ -1,46 +1,16 @@
 ---
 title: OpenToggl とは
-description: OpenToggl オープンソースドキュメント：クイックスタート、Docker セルフホスト、Toggl API 互換性、AI エージェント連携まで。インストールから Claude・Cursor 連携まで一つのリファレンスで。
+description: OpenToggl オープンソースドキュメント：クイックスタート、Docker セルフホスト、Toggl API 互換性、AI エージェント連携ガイド。インストールから Claude・Cursor 連携まで、完全なリファレンスを網羅します。
 ---
 
-OpenToggl はオープンソースのタイムトラッキングツールです。目標はシンプル：Toggl と互換性を持ち、データを自分で管理できること。
+OpenToggl は、無料・プライバシーファースト・AI フレンドリーな Toggl の代替です。
 
-具体的には：
+Toggl は素晴らしいプロダクトですが、価格が高く、データが本当の意味で自分のものにはなりません。しかも 1 時間あたり 30 回という API レート制限は頭痛の種で、AI エージェントなら 1 分で 1 時間分の枠を使い切ってしまうことさえあります。
 
-- `Track API v9`、`Reports API v3`、`Webhooks API v1` と互換
-- フル機能の Web インターフェース付き
-- ホスト版・セルフホスト版の両方に対応
-- Toggl からデータをインポート可能
+OpenToggl のゴールは Toggl との互換性を保つことです。両者の間でユーザーデータを無損失に行き来でき、ワークフローも使い勝手もそのまま維持できます。何も変わらない、ただより使いやすく、より安く、よりプライベートになるだけです。
 
 <Cards>
   <Card title="AI 連携" href="/ja/docs/ai-integration" />
   <Card title="セルフホスト" href="/ja/docs/self-hosting" />
   <Card title="GitHub リポジトリ" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
-
-## このプロジェクトが存在する理由
-
-Toggl は優れたツールですが、データは他人のサーバーにあります。OpenToggl は同じ API、同じ体験を提供しつつ、自分でデプロイできます。
-
-プロジェクトは OpenAPI コントラクトとプロダクトドキュメントを実装基準としています：
-
-- セルフホスト版とホスト版は完全に同一
-- ドキュメント、コントラクト、コードは常に同期
-- 中途半端なリリースはしない
-
-## リポジトリ構成
-
-- `docs/` — プロダクト定義
-- `openapi/` — OpenAPI コントラクト
-- `apps/` — フロントエンド・バックエンドのソースコード
-- `docs/self-hosting/` — セルフホストガイド
-
-## 現在のスコープ
-
-- Track API によるタイムトラッキングとワークスペース管理
-- Reports API によるレポート
-- Webhooks API による Webhook 管理
-- 上記すべての Web UI
-- Toggl データのインポート
-
-AI について：OpenToggl は独立した AI プロダクトではありません。ただし、安定した API、充実したドキュメント、セルフホスト対応により、エージェントや自動化に最適です。

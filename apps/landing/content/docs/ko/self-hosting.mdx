@@ -1,164 +1,164 @@
 ---
 title: 셀프호스팅
-description: OpenToggl을 자체 인프라에 배포하세요 — Docker Compose, CasaOS, ZimaOS, Synology NAS, fnOS 등 지원. Toggl에서 데이터를 바로 가져오고, API 호환성을 100% 유지하며, 데이터를 완전히 직접 관리하세요.
+description: OpenToggl을 자체 장비에 배포하세요 — Docker Compose 명령어 하나로 Web + API + Postgres + Redis를 띄우고 5분 안에 서비스를 시작할 수 있습니다. Toggl API와 100% 호환되므로 공식 클라이언트에서 바로 연결할 수 있습니다.
 ---
 
-## Docker Compose
+OpenToggl을 자체 장비에서 운영하는 데 필요한 것은 `docker-compose.yml` 하나뿐입니다. 아래에서 처음부터 동작하는 상태까지 전 과정을 함께 따라가 봅시다.
 
-OpenToggl을 셀프호스팅하는 가장 빠른 방법.
+## 시스템 요구 사항
 
-### 빠른 시작
+- **Docker Engine 20.10+** 와 **Docker Compose v2** 가 설치된 Linux, macOS, Windows 장비
+- 약 1 GB 메모리, 1 GB 디스크 공간
+- 사용 가능한 TCP 포트 하나 (기본값 `8080`)
+
+Docker가 설치되어 있지 않다면, 먼저 [공식 가이드](https://docs.docker.com/engine/install/)를 참고해 설치한 뒤 돌아오세요.
+
+---
+
+## 서버 배포
+
+### 1단계 — `docker-compose.yml` 다운로드
+
+새 디렉터리를 만들고 공식 compose 파일을 가져옵니다.
 
 ```bash
 mkdir -p opentoggl && cd opentoggl
 
 wget -O docker-compose.yml \
   https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml
+```
 
+이 compose 파일에는 컨테이너 세 개가 정의되어 있습니다.
+
+- **`opentoggl`** — Web UI + REST API (`8080` 포트를 외부에 노출)
+- **`postgres`** — 데이터베이스 (내부 네트워크 전용, 외부에 노출하지 않음)
+- **`redis`** — 캐시 및 백그라운드 작업 큐 (내부 네트워크 전용, 외부에 노출하지 않음)
+
+### 2단계 — (선택) `.env` 설정
+
+기본값만으로도 바로 동작합니다. 포트나 비밀번호를 변경해야 한다면 같은 디렉터리에 `.env` 파일을 하나 만드세요.
+
+```bash
+# Web UI 와 API 의 외부 노출 포트
+OPENTOGGL_PORT=8080
+
+# 운영 배포 전에는 반드시 강력한 비밀번호로 바꾸세요
+OPENTOGGL_POSTGRES_PASSWORD=postgres
+OPENTOGGL_REDIS_PASSWORD=opentoggl
+```
+
+이 세 변수가 compose 파일 전체에서 **유일하게** 덮어쓸 수 있는 설정입니다. 나머지(데이터베이스 이름, 사용자, 이미지, 내부 연결 문자열 등)는 모두 파일에 고정되어 있어 설정 드리프트를 방지합니다. 더 깊이 있는 커스터마이즈가 필요하면 `docker-compose.yml`을 직접 편집하세요.
+
+<Callout type="warn">
+  운영 환경에서는 두 비밀번호를 반드시 모두 교체하세요. 기본값은 로컬에서 잠깐 써 보는 용도에만 적합합니다. Postgres와 Redis가
+  호스트 포트에 노출되지 않더라도, 내부망 침해 시 피해를 줄이기 위해 비밀번호를 설정하는 것은 기본기입니다.
+</Callout>
+
+### 3단계 — 컨테이너 시작
+
+```bash
 docker compose up -d
 ```
 
-모든 서비스가 정상이 되면 확인:
+---
 
-```bash
-curl -fsS http://localhost:8080/healthz
-curl -fsS http://localhost:8080/readyz
-```
+## 웹 애플리케이션 접속
 
-완료. 브라우저에서 `http://localhost:8080`을 열어주세요.
+브라우저에서 `http://<당신의 IP>:8080`을 열고 첫 계정을 등록하면 바로 시간 기록을 시작할 수 있습니다.
 
-### 아키텍처
+### 모바일
 
-compose 파일은 격리된 내부 네트워크에서 세 개의 서비스를 시작합니다:
+현재 공식 모바일 앱은 없지만, 웹 UI를 휴대폰 홈 화면에 추가해 PWA로 사용할 수 있습니다. timery 같은 서드파티 Toggl 클라이언트는 OpenToggl 지원을 위해 개발자에게 연락 중입니다.
 
-| 서비스      | 역할         | 호스트 노출 |
-| ----------- | ------------ | ----------- |
-| `opentoggl` | Web + API    | 예 (`8080`) |
-| `postgres`  | 데이터베이스 | 아니오      |
-| `redis`     | 캐시 / 큐    | 아니오      |
+---
 
-Postgres와 Redis는 호스트 네트워크에 노출되지 않습니다. `opentoggl` 서비스만 포트를 공개합니다.
+## AI 에이전트 연동
 
-### 설정
+OpenToggl에는 시간당 30회 API 제한이 없습니다. 즉 Claude, Cursor 같은 에이전트를 마음껏 사용할 수 있다는 뜻입니다. [`toggl-cli`](/ko/docs/ai-integration)와 스킬 팩을 에이전트 환경에 설치하면, 몇 분 안에 AI가 타이머를 시작·정지하고 프로젝트를 정리하도록 만들 수 있습니다.
 
-기본값으로 바로 동작합니다. 환경 변수 또는 `docker-compose.yml`과 같은 디렉토리의 `.env` 파일로 덮어쓸 수 있습니다:
-
-| 변수                          | 기본값                                  | 설명                                           |
-| ----------------------------- | --------------------------------------- | ---------------------------------------------- |
-| `OPENTOGGL_PORT`              | `8080`                                  | Web UI 및 API의 호스트 포트                    |
-| `OPENTOGGL_IMAGE`             | `ghcr.io/correctroadh/opentoggl:latest` | 컨테이너 이미지 (안정성을 위해 버전 태그 권장) |
-| `OPENTOGGL_POSTGRES_DB`       | `opentoggl`                             | 데이터베이스 이름                              |
-| `OPENTOGGL_POSTGRES_USER`     | `postgres`                              | 데이터베이스 사용자                            |
-| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`                              | 데이터베이스 비밀번호                          |
-| `OPENTOGGL_DATABASE_URL`      | 자동                                    | 전체 연결 문자열 (개별 PG 변수 덮어쓰기)       |
-| `OPENTOGGL_REDIS_URL`         | `redis://redis:6379/0`                  | Redis 연결 문자열                              |
-
-### 업그레이드
+## 업그레이드
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-스키마 마이그레이션은 시작 시 자동으로 실행됩니다.
-
-### 백업 및 복원
-
-데이터베이스 데이터는 `opentoggl-postgres-data` 네임드 볼륨에 저장됩니다.
-
-```bash
-# 백업
-docker compose exec postgres pg_dump -U postgres opentoggl > backup.sql
-
-# 복원
-docker compose exec -T postgres psql -U postgres opentoggl < backup.sql
-```
-
-### 제거
-
-```bash
-docker compose down      # 서비스 중지, 데이터 유지
-docker compose down -v   # 서비스 중지 및 모든 데이터 삭제
-```
-
 ---
 
-## CasaOS
+## NAS / 홈랩에 배포
 
-[CasaOS](https://casaos.zimaspace.com/)는 Docker Compose 파일에서 앱을 설치할 수 있습니다.
+OpenToggl은 Docker Compose를 지원하는 어떤 플랫폼에서도 실행할 수 있습니다. 아래 항목들은 위 과정을 각 플랫폼의 UI에 맞춰 적용한 것일 뿐, 내부적으로 실행되는 명령은 완전히 동일합니다.
 
-1. CasaOS 대시보드 열기
-2. **App Store** > **커스텀 설치** > **docker-compose 가져오기**
-3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
-4. **Web UI** 포트를 `8080`으로 설정하고 저장
-5. 대시보드에서 앱 실행
+### CasaOS
 
-설치 후 `http://<CasaOS IP>:8080`에서 OpenToggl에 접속.
+1. CasaOS 대시보드를 엽니다
+2. **App Store** → **커스텀 설치** → **docker-compose 가져오기** 로 이동합니다
+3. [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용을 붙여넣습니다
+4. **Web UI** 포트를 `8080`으로 설정하고 저장합니다
+5. 대시보드에서 앱을 실행합니다
 
----
+`http://<CasaOS IP>:8080`에서 접속할 수 있습니다.
 
-## ZimaOS
+### ZimaOS
 
-ZimaOS(Zimablade / Zimacube 하드웨어용 OS)는 CasaOS와 동일한 App Store를 탑재하므로 설치 방법이 같습니다. **App Store** > **커스텀 설치** > **docker-compose 가져오기**에서 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)을 붙여넣으세요. `http://<ZimaOS IP>:8080`에서 OpenToggl에 접속할 수 있습니다.
+ZimaOS(Zimablade / Zimacube의 공식 OS)는 CasaOS와 동일한 App Store를 사용하므로 절차가 완전히 같습니다. **App Store** → **커스텀 설치** → **docker-compose 가져오기** 에서 compose 파일을 붙여넣으면 됩니다.
 
----
-
-## Synology (시놀로지)
+### Synology
 
 Synology DSM 7.2+는 **Container Manager**를 통해 Docker Compose를 지원합니다.
 
-1. **Container Manager** > **프로젝트** > **생성** 열기
-2. 프로젝트 이름 설정 (예: `opentoggl`)
-3. **docker-compose.yml 사용**을 선택하고 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
-4. **다음**을 클릭하고 마법사 완료
-
-`http://<Synology IP>:8080`에서 OpenToggl에 접속.
+1. **Container Manager** → **프로젝트** → **생성** 을 엽니다
+2. 프로젝트 이름을 예를 들어 `opentoggl`로 설정합니다
+3. **docker-compose.yml 사용** 을 선택하고 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)을 붙여넣습니다
+4. 마법사의 다음 단계를 따라 끝까지 진행합니다
 
 <Callout type="info">
-  포트 8080이 DSM과 충돌하면, 프로젝트 생성 전 환경 설정에서 `OPENTOGGL_PORT=9090` (또는 빈 포트)을
-  추가하세요.
+  `8080`이 DSM과 충돌한다면, 프로젝트를 만들기 전에 환경 설정에서 `OPENTOGGL_PORT=9090`(또는 비어 있는 임의의 포트)을 추가하세요.
 </Callout>
 
----
+### fnOS
 
-## fnOS (飞牛)
+[fnOS](https://www.fnnas.com)는 Docker 패널을 기본 제공합니다.
 
-[fnOS](https://www.fnnas.com)는 Compose 프로젝트를 지원하는 Docker 관리자를 기본 제공합니다.
+1. fnOS 데스크톱에서 **Docker** 앱을 엽니다
+2. 왼쪽 사이드바에서 **Compose** → **새 프로젝트** 를 선택합니다
+3. 프로젝트 이름은 `opentoggl`, 저장 경로는 기본값을 유지합니다
+4. **Compose 내용** 에 [compose 파일](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml)을 붙여넣습니다
+5. **배포** 를 클릭하고, 세 개의 컨테이너가 모두 초록색이 될 때까지 기다립니다
 
-1. fnOS 데스크톱에서 **Docker** 앱 열기 (없으면 앱 센터에서 설치)
-2. 왼쪽 사이드바에서 **Compose** > **새 프로젝트** 선택
-3. **프로젝트 이름** 에 `opentoggl` 입력
-4. **저장 경로** 는 기본값 유지 (보통 `/vol1/1000/docker/opentoggl`)
-5. **Compose 내용** 에 [`docker-compose.yml`](https://raw.githubusercontent.com/CorrectRoadH/opentoggl/main/docker-compose.yml) 내용 붙여넣기
-6. **배포** 클릭 후 세 개의 컨테이너가 모두 초록색(healthy)이 될 때까지 대기
+### 기타 플랫폼
 
-`http://<fnOS IP>:8080`에서 OpenToggl에 접속.
+다음 플랫폼들도 동일한 Docker Compose 흐름을 따릅니다.
 
-<Callout type="info">
-  **보안 센터 > 방화벽** 이 활성화되어 있다면, LAN 내 다른 기기에서 접근할 수 있도록 TCP `8080` 인바운드 규칙을 허용해야 합니다.
-</Callout>
-
----
-
-## 기타 NAS / Homelab 플랫폼
-
-OpenToggl은 Docker Compose를 지원하는 모든 플랫폼에서 실행됩니다:
-
-- **Unraid** — Community Applications 또는 Compose Manager 플러그인 경유
-- **TrueNAS SCALE** — Docker Compose를 사용한 커스텀 앱 경유
-- **Proxmox LXC** — LXC 컨테이너에 Docker를 설치한 후 Docker Compose 가이드를 따르기
-
-단계는 동일: `docker-compose.yml` 가져오기, `docker compose up -d` 실행, 포트 `8080` 접속.
+- **Unraid** — Community Applications 또는 Compose Manager 플러그인
+- **TrueNAS SCALE** — 커스텀 앱 + Docker Compose
+- **Proxmox LXC** — LXC 컨테이너 안에 Docker를 설치한 뒤 [서버 배포](#서버-배포) 단계를 따르기
 
 ---
 
-## 인스턴스 확인
+## 설정 참고
 
-플랫폼에 관계없이, 다음 검사로 배포가 정상인지 확인:
+전체 compose 파일에서 덮어쓸 수 있는 설정은 세 개뿐입니다.
 
-```bash
-curl -fsS http://<당신의 IP>:8080/healthz
-curl -fsS http://<당신의 IP>:8080/readyz
-```
+| 변수                          | 기본값      | 설명                             |
+| ----------------------------- | ----------- | -------------------------------- |
+| `OPENTOGGL_PORT`              | `8080`      | Web UI 와 API 의 외부 노출 포트  |
+| `OPENTOGGL_POSTGRES_PASSWORD` | `postgres`  | Postgres 비밀번호 (운영 시 필수) |
+| `OPENTOGGL_REDIS_PASSWORD`    | `opentoggl` | Redis 비밀번호 (운영 시 필수)    |
 
-둘 다 성공하면 준비 완료입니다.
+그 외 모든 설정(데이터베이스 이름, 사용자, 이미지 태그, 내부 연결 문자열, 볼륨 이름 등)은 `docker-compose.yml`에 그대로 고정되어 있습니다. 변경이 필요하면 파일을 직접 수정하세요.
+
+### 헬스 체크 엔드포인트
+
+| 경로       | 용도                             |
+| ---------- | -------------------------------- |
+| `/readyz`  | 준비 상태 확인 (DB + Redis 의존) |
+| `/healthz` | 생존 확인 (프로세스 동작 여부)   |
+
+---
+
+## 다음 단계
+
+- [AI 연동](/ko/docs/ai-integration) — Claude, Cursor를 자신의 인스턴스에 연결하기
+- [GitHub 저장소](https://github.com/CorrectRoadH/opentoggl) — 소스 코드, Issues, Discussions
+- 배포 중 문제가 생겼나요? [Issues](https://github.com/CorrectRoadH/opentoggl/issues)에서 알려주세요

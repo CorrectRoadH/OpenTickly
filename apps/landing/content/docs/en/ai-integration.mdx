@@ -3,59 +3,32 @@ title: AI Integration
 description: Let Claude, Cursor, and other AI agents auto-track time, start and stop timers, and manage projects and tags through toggl-cli and installable skill packs. Open-source time tracking built for AI workflows.
 ---
 
-OpenToggl's AI integration is built around [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) — a CLI maintained specifically for AI agents and automation. Two ways to use it:
+Use [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) to hook up Claude Code, OpenClaw, Hermes Agent, Codex, Cursor and other AI agents — letting them drive your OpenToggl instance directly from the command line to auto-track time, start and stop timers, and manage projects and tags.
 
 - `toggl` CLI — operate directly from the command line
-- `SKILL.md` skill pack — install into an agent environment
+- `SKILL.md` skill pack — install into an agent environment, one-command use
 
 ## Install
 
-For agent environments:
-
 ```bash
+npm install -g @correctroadh/toggl-cli
+
 npx skills add CorrectRoadH/toggl-cli
 ```
 
-Manual CLI install:
+## Configure
+
+The CLI is compatible with both Toggl and OpenToggl, and defaults to the official Toggl API. To point it at your own instance, pass `--api-type opentoggl` and `--api-url` during auth:
+
+Because Toggl has a 30 requests/hour API limit, we strongly recommend pairing the CLI with OpenToggl to unlock the full potential of AI agents:
 
 ```bash
-npm install -g @correctroadh/toggl-cli
-toggl --help
+toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
 ```
 
-## What the CLI covers
-
-Once installed, agents can run common operations as commands instead of crafting raw HTTP requests:
-
-- Time entries: `start`, `stop`, `continue`, `running`, `show`, `edit`, `delete`
-- Workspaces: `list`, `create`, `rename`, `delete`
-- User info: `me`, `preferences`
-- Organizations: `organization list`, `organization show`
-
-## Connecting to OpenToggl
-
-The CLI supports both official Toggl Track and OpenToggl self-hosted. Choose during first-time auth:
-
-- Toggl Track → connects to the official service
-- OpenToggl → enter your instance URL, e.g. `https://your-instance.com/api/v9`
-
-## Why a CLI instead of raw API calls
-
-- Commands map directly to common tasks — agents don't need to understand the underlying API
-- Built-in auth, no manual token management
-- Local caching for reads, automatic cache invalidation on writes
-- Skill pack can be installed and reused across agent environments
-
-## Recommended setup
-
-1. Deploy OpenToggl (or use the hosted version)
-2. Install toggl-cli or the skill pack
-3. Authenticate to your instance
-4. Agents use CLI commands for day-to-day operations
-5. For finer control, refer to the OpenAPI docs
+You can find `YOUR_API_TOKEN` in the OpenToggl web UI under your avatar → Profile → API Token.
 
 ## References
 
 - [`CorrectRoadH/toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) repository
 - `skills/toggl-cli/SKILL.md` skill pack definition
-- OpenToggl OpenAPI contracts and product docs

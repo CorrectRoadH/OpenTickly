@@ -1,46 +1,16 @@
 ---
 title: Qué es OpenToggl
-description: "Documentación open source de OpenToggl: inicio rápido, autoalojamiento con Docker, notas de compatibilidad con la API de Toggl e integración con agentes de IA. De la instalación a Claude y Cursor, todo en una referencia."
+description: "Documentación open source de OpenToggl: inicio rápido, autoalojamiento con Docker, notas de compatibilidad con la API de Toggl y guía de integración con agentes de IA. Referencia completa desde la instalación hasta conectar Claude y Cursor."
 ---
 
-OpenToggl es una herramienta de seguimiento de tiempo open source. El objetivo es simple: ser compatible con Toggl y que tú controles tus datos.
+OpenToggl es una alternativa a Toggl gratuita, centrada en la privacidad y pensada para la IA.
 
-En la práctica:
+Toggl es un gran producto, pero es caro y tus datos en realidad no te pertenecen. Además, el límite de 30 llamadas por hora a la API resulta frustrante: un agente de IA puede consumir una hora entera de cuota en un minuto.
 
-- Compatible con `Track API v9`, `Reports API v3`, `Webhooks API v1`
-- Interfaz web completa incluida
-- Funciona alojado o autoalojado
-- Importa tus datos desde Toggl
+El objetivo de OpenToggl es mantenerse alineado con Toggl para que puedas migrar los datos de usuario en ambos sentidos sin pérdida. Conservas todo el flujo y los hábitos de uso. Nada cambia, solo se vuelve más práctico, más barato y más privado.
 
 <Cards>
   <Card title="Integración con IA" href="/es/docs/ai-integration" />
   <Card title="Autoalojamiento" href="/es/docs/self-hosting" />
   <Card title="Repositorio en GitHub" href="https://github.com/CorrectRoadH/opentoggl" />
 </Cards>
-
-## Por qué existe este proyecto
-
-Toggl está bien, pero tus datos viven en servidores ajenos. OpenToggl te da la misma API y la misma experiencia, pero puedes desplegarlo tú mismo.
-
-El proyecto usa contratos OpenAPI y documentación de producto como estándar de implementación:
-
-- Las versiones autoalojada y alojada son idénticas
-- Documentación, contratos y código se mantienen sincronizados
-- Sin lanzamientos a medias
-
-## Estructura del repositorio
-
-- `docs/` — Definiciones de producto
-- `openapi/` — Contratos OpenAPI
-- `apps/` — Código fuente del frontend y backend
-- `docs/self-hosting/` — Guías de autoalojamiento
-
-## Alcance actual
-
-- Seguimiento de tiempo y gestión de workspaces vía Track API
-- Reportes vía Reports API
-- Gestión de webhooks vía Webhooks API
-- Interfaz web para todo lo anterior
-- Importación de datos de Toggl
-
-Sobre IA: OpenToggl no es un producto de IA independiente. Pero su API estable, documentación completa y soporte para autoalojamiento lo hacen ideal para agentes y automatización.
