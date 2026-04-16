@@ -1,4 +1,5 @@
 import { Navigate, createRoute } from "@tanstack/react-router";
+import { LoaderCircle } from "lucide-react";
 import { Suspense, type ReactNode } from "react";
 
 import { LanguageSync } from "../app/AuthenticatedAppFrame.tsx";
@@ -19,6 +20,19 @@ import {
   MobileShell,
   MobileTimerPage,
 } from "./route-tree-lazy-pages.tsx";
+
+// Fallback for the per-tab Suspense boundaries. Sized to the tab content area
+// (NOT full screen) so the composer bar and bottom nav stay visible while the
+// tab page mounts. Since the four tab pages share a Vite chunk with
+// MobileShell, this fallback almost never renders in practice — it's a
+// defensive visible state for any microtask-level suspend or for future
+// tab-level Suspense queries. Full-screen `pageSpinner` would hide the shell
+// chrome and be visually jarring here.
+const mobileTabSpinner = (
+  <div className="flex h-full items-center justify-center">
+    <LoaderCircle className="size-6 animate-spin text-[var(--track-text-muted)]" />
+  </div>
+);
 
 /* ---------- mobile layout ---------- */
 
@@ -98,7 +112,7 @@ function MobileProtectedBoundary({ children }: { children: ReactNode }) {
 
 function MobileTimerRouteComponent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={mobileTabSpinner}>
       <MobileTimerPage />
     </Suspense>
   );
@@ -106,7 +120,7 @@ function MobileTimerRouteComponent() {
 
 function MobileCalendarRouteComponent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={mobileTabSpinner}>
       <MobileCalendarPage />
     </Suspense>
   );
@@ -114,7 +128,7 @@ function MobileCalendarRouteComponent() {
 
 function MobileReportRouteComponent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={mobileTabSpinner}>
       <MobileReportPage />
     </Suspense>
   );
@@ -122,7 +136,7 @@ function MobileReportRouteComponent() {
 
 function MobileMeRouteComponent() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={mobileTabSpinner}>
       <MobileMePage />
     </Suspense>
   );

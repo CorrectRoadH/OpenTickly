@@ -159,6 +159,9 @@ type PublicAuthRouteProps = {
   mode: "login" | "register";
 };
 
+// `/login` and `/register` branch on session state: already logged in → bounce
+// home; otherwise show the form. Split into three named pieces so the
+// dispatcher reads top-to-bottom without duplicated Suspense blocks.
 function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
   const sessionQuery = useSessionBootstrapQuery();
 
@@ -166,21 +169,25 @@ function PublicAuthRoute({ mode }: PublicAuthRouteProps) {
     return <SessionPendingPanel />;
   }
 
-  if (isSessionAccessDenied(sessionQuery.error)) {
-    return (
-      <Suspense fallback={pageSpinner}>
-        <AuthPage mode={mode} />
-      </Suspense>
-    );
+  // Session bootstrap succeeded → user is already authenticated.
+  if (sessionQuery.data && !sessionQuery.isError) {
+    return <LoggedInHomeRedirect />;
   }
 
-  if (sessionQuery.isError || !sessionQuery.data) {
-    return (
-      <Suspense fallback={pageSpinner}>
-        <AuthPage mode={mode} />
-      </Suspense>
-    );
-  }
+  // 401/403 (normal unauthenticated) or any other failure → treat as logged
+  // out and show the form. We don't differentiate because the outcome is the
+  // same and `isSessionAccessDenied` is just a subset of `isError`.
+  return <PublicAuthForm mode={mode} />;
+}
 
+function LoggedInHomeRedirect() {
   return <Navigate replace to={resolveHomePath()} />;
+}
+
+function PublicAuthForm({ mode }: PublicAuthRouteProps) {
+  return (
+    <Suspense fallback={pageSpinner}>
+      <AuthPage mode={mode} />
+    </Suspense>
+  );
 }
