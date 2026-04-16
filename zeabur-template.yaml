@@ -141,7 +141,25 @@ spec:
       domainKey: PUBLIC_DOMAIN
       spec:
         source:
-          image: ghcr.io/correctroadh/opentoggl:0.2.6
+          image: ghcr.io/correctroadh/opentoggl:0.2
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Zeabur's `dependencies` only controls start order, not readiness.
+              # opentoggl does a strict 3s ping of postgres+redis at startup and
+              # exits if either is not yet accepting connections. Wrap the binary
+              # in a retry loop so the first attempt does not look like an error.
+              n=0
+              while ! /usr/local/bin/opentoggl serve; do
+                n=$((n+1))
+                if [ "$n" -ge 30 ]; then
+                  echo "[startup] giving up after $n attempts" >&2
+                  exit 1
+                fi
+                echo "[startup] attempt $n failed, retry in 2s (likely waiting for postgres/redis to accept connections)" >&2
+                sleep 2
+              done
         ports:
           - id: web
             port: 8080
