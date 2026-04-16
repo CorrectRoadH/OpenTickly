@@ -18,21 +18,21 @@ OpenToggl 的目标是与 Toggl 保持一致，你可以 0 损失的迁入与迁
 
 ![Screenshot](apps/landing/public/hero/opentoggl-calendar-view.webp)
 
-## 可与 `toggl-cli` 配合使用
+## 与 AI 集成
 
-OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 配合使用，所以你可以把同一套 CLI 工作流指向自己的实例。
+OpenToggl 可以直接与 [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli) 配合使用，使 AI 帮助你记录、管理、复盘你的时间。可以应用柳比歇夫时间管理法来找出你的时间黑洞。
 
-```shell
-toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
-```
+详细文档见[这里](https://opentoggl.com/zh/docs/ai-integration)
 
 ## Self-Hosting
+
+通过 Docker Compose 部署，可部署在你的家庭服务器上，包括 Nas、CasaOS/ZimaOS、群晖、TrueNas 等。
 
 [阅读自部署文档](https://opentoggl.com/zh/docs/self-hosting)
 
 ## 手机端 PWA 支持
 
-Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 Android）可以添加到主屏幕，像原生 App 一样使用——支持离线、全屏独立模式、快速启动，无需应用商店。
+Web UI 是一个可安装的 Progressive Web App (PWA)。在手机上（iOS 和 Android）可以添加到主屏幕。
 
 ## Roadmap
 

@@ -18,21 +18,21 @@ OpenToggl aims to stay aligned with Toggl, so you can move your data in and out 
 
 ![Screenshot](apps/landing/public/hero/opentoggl-calendar-view.webp)
 
-## Works with `toggl-cli`
+## AI Integration
 
-OpenToggl works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so you can point the same CLI workflow at your own instance.
+OpenToggl works directly with [`toggl-cli`](https://github.com/CorrectRoadH/toggl-cli), so AI can help you record, manage, and review your time. Apply the Lyubishchev time management method to find the black holes in your day.
 
-```shell
-toggl auth <YOUR_API_TOKEN> --api-type opentoggl --api-url https://your-instance.com/api/v9
-```
+Read the full docs [here](https://opentoggl.com/docs/ai-integration).
 
 ## Self-Hosting
+
+Deploy via Docker Compose on your own home server — NAS, CasaOS/ZimaOS, Synology, TrueNAS, and more.
 
 [Read the self-hosting docs](https://opentoggl.com/docs/self-hosting)
 
 ## Mobile PWA Support
 
-The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Android) you can add it to your home screen and use it like a native app — with offline support, full-screen standalone mode, and fast startup. No app store needed.
+The web UI is an installable Progressive Web App (PWA). On mobile (iOS and Android) you can add it to your home screen and use it like a native app.
 
 ## Roadmap
 
