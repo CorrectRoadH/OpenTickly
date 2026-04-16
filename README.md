@@ -16,7 +16,7 @@ Toggl is a great product, but it's expensive and your data doesn't really belong
 
 OpenToggl aims to stay aligned with Toggl, so you can move your data in and out between the two without any loss. Keep every workflow and habit you already have. Nothing changes — it just gets better, cheaper, and more private.
 
-![Screenshot](apps/landing/public/hero/3.png)
+![Screenshot](apps/landing/public/hero/opentoggl-calendar-view.webp)
 
 ## Works with `toggl-cli`
 
