@@ -10,6 +10,7 @@ type StartupConfig struct {
 	FileStore   FileStoreConfig
 	Jobs        JobsConfig
 	Governance  GovernanceConfig
+	Telemetry   TelemetryConfig
 }
 
 type ServerConfig struct {
@@ -34,4 +35,11 @@ type JobsConfig struct {
 
 type GovernanceConfig struct {
 	AuditLogRetentionDays int
+}
+
+// TelemetryConfig controls the anonymous version-check pinger.
+// Enabled by default; set OPENTOGGL_TELEMETRY=off to opt out.
+type TelemetryConfig struct {
+	Enabled  bool
+	Endpoint string // empty → upstream default
 }

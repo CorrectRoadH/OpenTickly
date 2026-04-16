@@ -36,6 +36,7 @@ import (
 	webhookspostgres "opentoggl/backend/apps/backend/internal/webhooks/infra/postgres"
 	tenantpostgres "opentoggl/backend/apps/backend/internal/tenant/infra/postgres"
 	tenantweb "opentoggl/backend/apps/backend/internal/tenant/transport/http/web"
+	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	trackingapplication "opentoggl/backend/apps/backend/internal/tracking/application"
 	trackingpostgres "opentoggl/backend/apps/backend/internal/tracking/infra/postgres"
 
@@ -54,25 +55,26 @@ type routeHandlers struct {
 	pool            *pgxpool.Pool
 	platformHandles *platform.Handles
 	catalogApp      *catalogapplication.Service
-	identity      *identityweb.Handler
-	identityApp   *identityapplication.Service
-	identityAPI   *identitypublicapi.Handler
-	membershipApp *membershipapplication.Service
-	importingApp  *importingapplication.Service
-	trackingApp   *trackingapplication.Service
-	reportsApp    *reportsapplication.Service
-	governanceApp *governanceapplication.Service
-	webhooksApp   *webhooksapplication.Service
-	fileStore     *filestore.Store
-	userHomes     userHomeRepository
-	tenant        *tenantweb.Handler
-	tenantApp     *tenantapplication.Service
-	billingApp    *billingapplication.Service
-	invoiceApp    *billingapplication.InvoiceService
-	referenceApp  *platformapplication.ReferenceService
+	identity        *identityweb.Handler
+	identityApp     *identityapplication.Service
+	identityAPI     *identitypublicapi.Handler
+	membershipApp   *membershipapplication.Service
+	importingApp    *importingapplication.Service
+	trackingApp     *trackingapplication.Service
+	reportsApp      *reportsapplication.Service
+	governanceApp   *governanceapplication.Service
+	webhooksApp     *webhooksapplication.Service
+	fileStore       *filestore.Store
+	userHomes       userHomeRepository
+	tenant          *tenantweb.Handler
+	tenantApp       *tenantapplication.Service
+	billingApp      *billingapplication.Service
+	invoiceApp      *billingapplication.InvoiceService
+	referenceApp    *platformapplication.ReferenceService
+	telemetryPinger *telemetryapplication.Pinger // nil when OPENTOGGL_TELEMETRY=off
 }
 
-func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger) (*routeHandlers, error) {
+func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, appLogger log.Logger, telemetryPinger *telemetryapplication.Pinger) (*routeHandlers, error) {
 	cache := platformHandles.Cache
 
 	referenceService, err := platformapplication.NewReferenceService()
@@ -201,21 +203,22 @@ func newRouteHandlers(pool *pgxpool.Pool, platformHandles *platform.Handles, app
 		platformHandles: platformHandles,
 		fileStore:       filestore.NewStore(pool),
 		catalogApp:      catalogService,
-		identity:      identityHandler,
-		identityApp:   identityService,
-		identityAPI:   identitypublicapi.NewHandler(identityService),
-		membershipApp: membershipService,
-		importingApp:  importingService,
-		trackingApp:   trackingService,
-		reportsApp:    reportsService,
-		governanceApp: governanceService,
-		webhooksApp:   webhooksService,
-		userHomes:     userHomes,
-		tenant:        tenantHandler,
-		tenantApp:     tenantService,
-		billingApp:    billingService,
-		invoiceApp:    invoiceService,
-		referenceApp:  referenceService,
+		identity:        identityHandler,
+		identityApp:     identityService,
+		identityAPI:     identitypublicapi.NewHandler(identityService),
+		membershipApp:   membershipService,
+		importingApp:    importingService,
+		trackingApp:     trackingService,
+		reportsApp:      reportsService,
+		governanceApp:   governanceService,
+		webhooksApp:     webhooksService,
+		userHomes:       userHomes,
+		tenant:          tenantHandler,
+		tenantApp:       tenantService,
+		billingApp:      billingService,
+		invoiceApp:      invoiceService,
+		referenceApp:    referenceService,
+		telemetryPinger: telemetryPinger,
 	}, nil
 }
 

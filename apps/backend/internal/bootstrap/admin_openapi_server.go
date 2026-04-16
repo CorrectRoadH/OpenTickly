@@ -38,7 +38,11 @@ func newAdminRoutes(handlers *routeHandlers) (httpapp.RouteRegistrar, error) {
 	if err != nil {
 		return nil, err
 	}
-	handler := instanceadmintransport.NewHandler(service, &platformHealthChecker{platform: handlers.platformHandles})
+	var updateFeed instanceadmintransport.UpdateFeed
+	if handlers.telemetryPinger != nil {
+		updateFeed = handlers.telemetryPinger
+	}
+	handler := instanceadmintransport.NewHandler(service, &platformHealthChecker{platform: handlers.platformHandles}, updateFeed)
 
 	server := &adminOpenAPIServer{handler: handler}
 

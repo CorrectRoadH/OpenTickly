@@ -51,6 +51,7 @@ export type {
   GetRegistrationPolicyData,
   GetRegistrationPolicyResponse,
   GetRegistrationPolicyResponses,
+  InstanceAnnouncement,
   InstanceConfig,
   InstanceHealth,
   InstanceUser,

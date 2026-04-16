@@ -59,6 +59,21 @@ export type InstanceVersion = {
   update_available: boolean;
   release_url?: string;
   changelog_url: string;
+  released_at?: string;
+  announcements: Array<InstanceAnnouncement>;
+};
+
+/**
+ * Announcement sourced from the upstream update worker; surfaced to admins in the overview tab.
+ */
+export type InstanceAnnouncement = {
+  id: string;
+  title: string;
+  severity: "info" | "warning" | "critical";
+  published_at: string;
+  expires_at?: string;
+  link?: string;
+  body_markdown: string;
 };
 
 export type DependencyHealth = {

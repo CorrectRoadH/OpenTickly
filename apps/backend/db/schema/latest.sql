@@ -721,3 +721,12 @@ create table webhook_subscription_event_filters (
 
 create index webhook_subscription_event_filters_subscription_id_idx
     on webhook_subscription_event_filters (subscription_id);
+
+-- Singleton row carrying this self-hosted instance's stable identity. Used by
+-- the telemetry pinger to report anonymous daily check-ins to the upstream
+-- update service, and by the admin instance-version endpoint.
+create table instance_identity (
+    id smallint primary key default 1 check (id = 1),
+    instance_id uuid not null default gen_random_uuid(),
+    first_seen_at timestamptz not null default now()
+);

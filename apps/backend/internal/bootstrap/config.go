@@ -11,6 +11,7 @@ type RedisConfig = platformconfig.RedisConfig
 type FileStoreConfig = platformconfig.FileStoreConfig
 type JobsConfig = platformconfig.JobsConfig
 type GovernanceConfig = platformconfig.GovernanceConfig
+type TelemetryConfig = platformconfig.TelemetryConfig
 
 func DefaultConfig() Config {
 	return Config{
@@ -24,6 +25,9 @@ func DefaultConfig() Config {
 		},
 		Governance: GovernanceConfig{
 			AuditLogRetentionDays: 90,
+		},
+		Telemetry: TelemetryConfig{
+			Enabled: true,
 		},
 	}
 }

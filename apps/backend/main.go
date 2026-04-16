@@ -15,6 +15,7 @@ import (
 	"os"
 
 	"opentoggl/backend/apps/backend/internal/bootstrap"
+	"opentoggl/backend/apps/backend/internal/buildinfo"
 	instanceadmintransport "opentoggl/backend/apps/backend/internal/instance-admin/transport/http/admin"
 	"opentoggl/backend/apps/backend/internal/platform/migrate"
 )
@@ -31,6 +32,7 @@ func main() {
 	if len(v) > 0 && v[0] == 'v' {
 		v = v[1:]
 	}
+	buildinfo.Version = v
 	instanceadmintransport.CurrentVersion = v
 
 	if err := run(os.Args[1:]); err != nil {

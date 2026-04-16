@@ -1,9 +1,10 @@
 import { AppLinkButton, AppSurfaceState, SurfaceCard } from "@opentoggl/web-ui";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { Github, Zap } from "lucide-react";
+import { AlertTriangle, Github, Info, Megaphone, Zap } from "lucide-react";
 
 import i18n from "../../app/i18n.ts";
+import type { InstanceAnnouncement } from "../../shared/api/generated/admin/types.gen.ts";
 import {
   useInstanceHealthQuery,
   useInstanceVersionQuery,
@@ -14,6 +15,7 @@ export function AdminOverviewTab(): ReactElement {
     <div className="flex flex-col gap-5">
       <OnboardingBanner />
       <VersionCard />
+      <AnnouncementsSection />
       <HealthSection />
     </div>
   );
@@ -105,6 +107,13 @@ function VersionCard(): ReactElement {
               </span>
             )}
           </div>
+          {version?.released_at ? (
+            <div className="mt-1 text-[12px] text-[var(--track-text-muted)]">
+              {t("instanceAdmin:releasedOn", {
+                date: new Date(version.released_at).toLocaleDateString(i18n.language),
+              })}
+            </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-3">
           {version?.update_available && version.release_url ? (
@@ -120,6 +129,90 @@ function VersionCard(): ReactElement {
         </div>
       </div>
     </SurfaceCard>
+  );
+}
+
+// AnnouncementsSection renders the list of active announcements surfaced by
+// the upstream update worker. The data rides the same query as VersionCard —
+// empty lists collapse the section entirely so admins without notices see a
+// clean page.
+function AnnouncementsSection(): ReactElement | null {
+  const { t } = useTranslation();
+  const versionQuery = useInstanceVersionQuery();
+  const announcements = versionQuery.data?.announcements;
+
+  if (!announcements || announcements.length === 0) return null;
+
+  return (
+    <SurfaceCard>
+      <div className="p-5">
+        <div className="mb-3 flex items-center gap-2">
+          <Megaphone
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--track-text-muted)]"
+            size={16}
+          />
+          <h3 className="text-[14px] font-semibold text-[var(--track-text)]">
+            {t("instanceAdmin:announcements")}
+          </h3>
+        </div>
+        <ul className="flex flex-col gap-3">
+          {announcements.map((a) => (
+            <AnnouncementItem key={a.id} announcement={a} />
+          ))}
+        </ul>
+      </div>
+    </SurfaceCard>
+  );
+}
+
+const announcementAccentBySeverity: Record<InstanceAnnouncement["severity"], string> = {
+  info: "border-l-[var(--track-accent)] bg-[var(--track-accent)]/5",
+  warning: "border-l-yellow-400 bg-yellow-500/5",
+  critical: "border-l-red-400 bg-red-500/10",
+};
+
+function AnnouncementItem({ announcement }: { announcement: InstanceAnnouncement }): ReactElement {
+  const { t } = useTranslation();
+  const accent = announcementAccentBySeverity[announcement.severity];
+  const SeverityIcon = announcement.severity === "info" ? Info : AlertTriangle;
+
+  return (
+    <li
+      className={`flex flex-col gap-2 rounded-md border border-[var(--track-border)] border-l-4 p-4 ${accent}`}
+    >
+      <div className="flex items-center gap-2">
+        <SeverityIcon
+          aria-hidden="true"
+          className="h-4 w-4 text-[var(--track-text-muted)]"
+          size={16}
+        />
+        <span className="text-[14px] font-medium text-[var(--track-text)]">
+          {announcement.title}
+        </span>
+        <span className="ml-auto text-[12px] text-[var(--track-text-muted)]">
+          {new Date(announcement.published_at).toLocaleDateString(i18n.language)}
+        </span>
+      </div>
+      {announcement.body_markdown ? (
+        <p className="whitespace-pre-line text-[13px] leading-relaxed text-[var(--track-text-soft)]">
+          {announcement.body_markdown}
+        </p>
+      ) : null}
+      {announcement.link ? (
+        <div>
+          <AppLinkButton
+            href={announcement.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="ghost"
+            size="sm"
+          >
+            {t("instanceAdmin:announcementLearnMore")}
+          </AppLinkButton>
+        </div>
+      ) : null}
+    </li>
   );
 }
 

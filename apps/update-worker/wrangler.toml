@@ -1,0 +1,33 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "opentoggl-update-worker"
+main = "src/index.ts"
+compatibility_date = "2025-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Serves ping + content. Deploy with `vp run update-worker#deploy`.
+# Production domain is configured via `routes` in the Cloudflare dashboard.
+
+[observability]
+enabled = true
+
+# Analytics Engine dataset — stores one data point per /v1/check request.
+# Schema (see src/analytics.ts):
+#   indexes = [instance_id]  # for DAU cardinality via COUNT(DISTINCT)
+#   blobs   = [version, go_version, os, arch, locale]
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "opentoggl_checkins"
+
+[vars]
+# Latest advertised tag. Override per-environment (e.g. "latest" for prod, "canary" for staging).
+LATEST_TAG = "latest"
+# Rate limit: max requests per minute per IP. Soft guard; CF handles real DDoS.
+CHECK_RATE_LIMIT_PER_MIN = "30"
+
+[env.production]
+name = "opentoggl-update-worker"
+vars = { LATEST_TAG = "latest" }
+
+[env.staging]
+name = "opentoggl-update-worker-staging"
+vars = { LATEST_TAG = "canary" }

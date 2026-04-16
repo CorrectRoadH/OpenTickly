@@ -20,8 +20,9 @@ type sendTestEmailResponse struct {
 
 // Handler implements adminapi.ServerInterface for the instance-admin module.
 type Handler struct {
-	service  *application.Service
-	platform HealthChecker
+	service    *application.Service
+	platform   HealthChecker
+	updateFeed UpdateFeed
 }
 
 // HealthChecker provides dependency health probes for the admin health endpoint.
@@ -30,8 +31,11 @@ type HealthChecker interface {
 	PingRedis() (time.Duration, error)
 }
 
-func NewHandler(service *application.Service, platform HealthChecker) *Handler {
-	return &Handler{service: service, platform: platform}
+// NewHandler builds an admin handler. `updateFeed` may be nil when the
+// operator has set OPENTOGGL_TELEMETRY=off — in that case the version endpoint
+// falls back to returning only the compiled-in version with no update info.
+func NewHandler(service *application.Service, platform HealthChecker, updateFeed UpdateFeed) *Handler {
+	return &Handler{service: service, platform: platform, updateFeed: updateFeed}
 }
 
 func (h *Handler) GetBootstrapState(ctx echo.Context) error {

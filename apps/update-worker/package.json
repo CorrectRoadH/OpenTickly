@@ -1,0 +1,25 @@
+{
+  "name": "@opentoggl/update-worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:content": "node scripts/build-content.mjs",
+    "dev": "vp run build:content && wrangler dev",
+    "deploy": "vp run build:content && wrangler deploy",
+    "check": "vp run build:content && tsc --noEmit",
+    "test": "vp run build:content && vp test run"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251115.0",
+    "@types/node": "catalog:",
+    "gray-matter": "^4.0.3",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "^3.95.0"
+  }
+}

@@ -545,9 +545,53 @@
           },
           "changelog_url": {
             "type": "string"
+          },
+          "released_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "announcements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstanceAnnouncement"
+            }
           }
         },
-        "required": ["current_version", "update_available", "changelog_url"]
+        "required": ["current_version", "update_available", "changelog_url", "announcements"]
+      },
+      "InstanceAnnouncement": {
+        "type": "object",
+        "description": "Announcement sourced from the upstream update worker; surfaced to admins in the overview tab.",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["info", "warning", "critical"]
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "nullable": true
+          },
+          "body_markdown": {
+            "type": "string"
+          }
+        },
+        "required": ["id", "title", "severity", "published_at", "body_markdown"]
       },
       "DependencyHealth": {
         "type": "object",

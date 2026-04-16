@@ -2,25 +2,30 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
 
+	"opentoggl/backend/apps/backend/internal/buildinfo"
 	governanceapplication "opentoggl/backend/apps/backend/internal/governance/application"
 	httpapp "opentoggl/backend/apps/backend/internal/http"
 	"opentoggl/backend/apps/backend/internal/log"
 	"opentoggl/backend/apps/backend/internal/platform"
+	"opentoggl/backend/apps/backend/internal/telemetry"
+	telemetryapplication "opentoggl/backend/apps/backend/internal/telemetry/application"
 	"opentoggl/backend/apps/backend/internal/web"
 
 	"github.com/labstack/echo/v4"
 )
 
 type App struct {
-	Config        Config
-	HTTP          *echo.Echo
-	Platform      *platform.Handles
-	Modules       []ModuleDescriptor
-	governanceApp *governanceapplication.Service
+	Config          Config
+	HTTP            *echo.Echo
+	Platform        *platform.Handles
+	Modules         []ModuleDescriptor
+	governanceApp   *governanceapplication.Service
+	telemetryPinger *telemetry.Pinger
 }
 
 func NewAppFromEnvironment(getEnv func(string) string) (*App, error) {
@@ -43,7 +48,8 @@ func NewApp(cfg Config) (*App, error) {
 	}
 	modules := defaultModules()
 	platform := newPlatformServices(cfg)
-	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(platform)
+	telemetryPinger := newTelemetryPinger(cfg, platform)
+	routeRegistrar, governanceService, err := newHTTPRouteRegistrar(platform, telemetryPinger)
 	if err != nil {
 		logStartupAssemblyFailure(cfg, err)
 		return nil, err
@@ -64,17 +70,41 @@ func NewApp(cfg Config) (*App, error) {
 		HTTP: httpapp.NewServerWithOptions(health, routeRegistrar, httpapp.ServerOptions{
 			Readiness: readiness,
 		}),
-		Platform:      platform,
-		Modules:       modules,
-		governanceApp: governanceService,
+		Platform:        platform,
+		Modules:         modules,
+		governanceApp:   governanceService,
+		telemetryPinger: telemetryPinger,
 	}
 	logStartupSuccess(cfg, moduleNames)
 	return app, nil
 }
 
+// newTelemetryPinger constructs the pinger when telemetry is enabled.
+// Returns nil if OPENTOGGL_TELEMETRY=off or the subsystem fails to build —
+// in either case, Start() simply skips kicking off the goroutine.
+func newTelemetryPinger(cfg Config, p *platform.Handles) *telemetry.Pinger {
+	pinger, err := telemetry.NewPinger(p.Database.Pool(), telemetry.Options{
+		Enabled:  cfg.Telemetry.Enabled,
+		Endpoint: cfg.Telemetry.Endpoint,
+		Version:  buildinfo.Version,
+	})
+	if err != nil {
+		if errors.Is(err, telemetryapplication.ErrDisabled) {
+			slog.Info("telemetry disabled by config", "env", "OPENTOGGL_TELEMETRY=off")
+			return nil
+		}
+		slog.Warn("telemetry init failed", "error", err)
+		return nil
+	}
+	return pinger
+}
+
 func (app *App) Start() error {
 	if days := app.Config.Governance.AuditLogRetentionDays; days > 0 && app.governanceApp != nil {
 		governanceapplication.StartAuditLogCleanupWorker(context.Background(), app.governanceApp, days)
+	}
+	if app.telemetryPinger != nil {
+		telemetry.StartWorker(context.Background(), app.telemetryPinger)
 	}
 	return app.HTTP.Start(app.Config.Server.ListenAddress)
 }
@@ -97,9 +127,9 @@ func validateRequiredStartupConfig(cfg Config) error {
 	return nil
 }
 
-func newHTTPRouteRegistrar(platform *platform.Handles) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
+func newHTTPRouteRegistrar(platform *platform.Handles, pinger *telemetry.Pinger) (httpapp.RouteRegistrar, *governanceapplication.Service, error) {
 	appLogger := log.NewZapLogger(slog.Default())
-	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger)
+	assembledHandlers, err := newRouteHandlers(platform.Database.Pool(), platform, appLogger, pinger)
 	if err != nil {
 		return nil, nil, err
 	}

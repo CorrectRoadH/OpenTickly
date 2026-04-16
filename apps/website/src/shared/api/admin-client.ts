@@ -1,6 +1,7 @@
 import type {
   InstanceHealth,
   InstanceUserList,
+  InstanceVersion,
   RegistrationPolicy,
   InstanceConfig,
   OrganizationList,
@@ -84,13 +85,9 @@ export function fetchOrganizations(): Promise<OrganizationList> {
   return adminFetch("/admin/v1/organizations");
 }
 
-export type InstanceVersionInfo = {
-  current_version: string;
-  latest_version?: string;
-  update_available: boolean;
-  release_url?: string;
-  changelog_url: string;
-};
+// InstanceVersionInfo is the generated OpenAPI type; exported alias keeps the
+// name the rest of the frontend already imports.
+export type InstanceVersionInfo = InstanceVersion;
 
 export function fetchInstanceVersion(): Promise<InstanceVersionInfo> {
   return adminFetch("/admin/v1/version");

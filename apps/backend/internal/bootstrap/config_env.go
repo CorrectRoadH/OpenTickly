@@ -36,6 +36,8 @@ func ConfigFromEnvironment(getEnv func(string) string) (Config, error) {
 	applyStringOverride(&cfg.FileStore.Namespace, getEnv("OPENTOGGL_FILESTORE_NAMESPACE"))
 	applyStringOverride(&cfg.Jobs.QueueName, getEnv("OPENTOGGL_JOBS_QUEUE_NAME"))
 	applyIntOverride(&cfg.Governance.AuditLogRetentionDays, getEnv("OPENTOGGL_AUDIT_LOG_RETENTION_DAYS"))
+	applyBoolOverride(&cfg.Telemetry.Enabled, getEnv("OPENTOGGL_TELEMETRY"))
+	applyStringOverride(&cfg.Telemetry.Endpoint, getEnv("OPENTOGGL_TELEMETRY_ENDPOINT"))
 
 	return withDefaults(cfg), nil
 }
@@ -56,6 +58,19 @@ func applyIntOverride(target *int, value string) {
 	}
 	if n, err := strconv.Atoi(value); err == nil {
 		*target = n
+	}
+}
+
+// applyBoolOverride parses common truthy/falsy strings. Unrecognized values
+// leave the target untouched so typos don't silently disable features.
+func applyBoolOverride(target *bool, value string) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "":
+		return
+	case "off", "false", "0", "no", "disabled":
+		*target = false
+	case "on", "true", "1", "yes", "enabled":
+		*target = true
 	}
 }
 
