@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "geo-tracking-plan": {
+      "source": "yaojingang/yao-geo-skills",
+      "sourceType": "github",
+      "computedHash": "5cd7b5aa47ec1a56d384533351aa5b2a7f1e8ac3aa9a080be4db69f72b4930be"
+    },
+    "geoflow-cli-ops": {
+      "source": "yaojingang/yao-geo-skills",
+      "sourceType": "github",
+      "computedHash": "2a8451504239a0bbc95fde4a7e7be49042bbe917c43f20ef6f5a904f4bfff271"
+    }
+  }
+}

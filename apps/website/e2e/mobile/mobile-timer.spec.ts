@@ -1,4 +1,4 @@
-import { devices, expect, test } from "@playwright/test";
+import { devices, expect, test, type Locator, type Page } from "@playwright/test";
 
 import {
   createProjectForWorkspace,
@@ -8,6 +8,54 @@ import {
   registerE2eUser,
 } from "../fixtures/e2e-auth.ts";
 import { pollCurrentRunningEntry } from "../fixtures/e2e-api.ts";
+
+/**
+ * Drives the `MobileTimePicker` bottom-sheet wheel picker.
+ *
+ * The component replaced `<input type="time">` (commit c0e0a7a4) with two
+ * CSS scroll-snap wheels (`role="listbox"`, 40px per item). Tests can't
+ * simulate inertial touch drag reliably, so we set `scrollTop` directly and
+ * dispatch a bubbling `scroll` event, then wait for the 120ms debounce to
+ * flip `aria-selected` on the target option — that's the state signal we
+ * gate on, per the "no waitForTimeout" rule.
+ */
+async function setMobileTimeWheel(
+  page: Page,
+  editor: Locator,
+  field: "start" | "end",
+  hour: number,
+  minute: number,
+): Promise<void> {
+  const triggerTestId = field === "start" ? "mobile-start-time-trigger" : "mobile-end-time-trigger";
+  await editor.getByTestId(triggerTestId).click();
+
+  const picker = page.getByTestId("mobile-time-picker");
+  await expect(picker).toBeVisible();
+
+  const ITEM_HEIGHT = 40;
+  for (const [testId, value] of [
+    ["mobile-time-picker-hour", hour],
+    ["mobile-time-picker-minute", minute],
+  ] as const) {
+    const wheel = picker.getByTestId(testId);
+    await wheel.evaluate((el, top) => {
+      el.scrollTop = top;
+      el.dispatchEvent(new Event("scroll", { bubbles: true }));
+    }, value * ITEM_HEIGHT);
+    await expect(wheel.locator('[role="option"][aria-selected="true"]')).toHaveAttribute(
+      "data-value",
+      String(value),
+    );
+  }
+
+  // Tap the backdrop (top-left of the fixed overlay) to close. The inner
+  // sheet stops propagation, so (10, 10) is guaranteed to hit the backdrop.
+  await picker.click({ position: { x: 10, y: 10 } });
+  await expect(picker).not.toBeVisible();
+
+  const expected = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  await expect(editor.getByTestId(triggerTestId)).toHaveText(expected);
+}
 
 test.use({ ...devices["iPhone 13"] });
 
@@ -186,8 +234,9 @@ test.describe("Edit Time Entry Duration", () => {
     await expect(editor.getByText("Edit Entry")).toBeVisible();
 
     // User changes start time from 10:00 to 09:30 (extends to 1.5 hours)
-    const startTimeInput = editor.getByLabel("Edit start time");
-    await startTimeInput.fill("09:30");
+    // The mobile editor uses a wheel picker (MobileTimePicker), not a native
+    // time input — see `setMobileTimeWheel` above.
+    await setMobileTimeWheel(page, editor, "start", 9, 30);
 
     // User saves the changes
     await editor.getByRole("button", { name: "Save changes" }).click();
@@ -233,9 +282,10 @@ test.describe("Edit Time Entry Duration", () => {
     const editor = page.getByTestId("mobile-time-entry-editor");
     await expect(editor.getByText("Edit Entry")).toBeVisible();
 
-    // Change start to 09:00 and end to 12:00 (3 hour duration)
-    await editor.getByLabel("Edit start time").fill("09:00");
-    await editor.getByLabel("Edit end time").fill("12:00");
+    // Change start to 09:00 and end to 12:00 (3 hour duration) via the
+    // wheel picker sheet.
+    await setMobileTimeWheel(page, editor, "start", 9, 0);
+    await setMobileTimeWheel(page, editor, "end", 12, 0);
 
     // Save
     await editor.getByRole("button", { name: "Save changes" }).click();
